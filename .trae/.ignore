@@ -1141,3 +1141,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+_bmad/
+.trae/
+.agents/
+.*/
