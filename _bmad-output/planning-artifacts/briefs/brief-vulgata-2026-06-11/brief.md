@@ -41,15 +41,23 @@ Vulgata serves a spectrum of users across the enterprise, each interacting with 
 
 ## The Solution
 
-Vulgata scans source code across multiple systems and repositories, using a team of LLM-powered agents to read, understand, and document the business logic embedded in the code. The output is a structured, linked knowledge graph where every business rule traces back to the code that implements it, and every cross-system dependency is explicitly mapped.
+Vulgata scans source code across multiple systems and repositories, using a team of LLM-powered agents to read, understand, and document the business logic embedded in the code. The output is a structured, linked knowledge graph where every business rule traces back to the code that implements it, and every cross-system dependency is explicitly mapped. Documents are immutable projections of code — the only mutation path is code change → re-scan → regenerate.
+
+### Pre-Scan Profiling
+
+Before dispatching worker agents, the orchestrator performs a reconnaissance pass over the repository: identifying languages, frameworks, conventions, and valid source directories. This profiling phase produces a scan filter that excludes non-code files and feeds framework-specific patterns into the RPC detection system, ensuring agents only process meaningful code units.
 
 ### How Scanning Works
 
 For each repository, an orchestrator agent dispatches worker agents to process code units — functions, methods, classes, files — one by one. Each agent reads the code, identifies the business logic, and produces a structured document linked to its source location. Documents are organized in the same tree structure as the source code, making navigation intuitive. Documents fall into two categories: *code logic documents* describe what the code does structurally; *business logic documents* describe the business rules and processes built on top of that code. Non-technical users can focus on business logic documents; developers and AI agents can consume both.
 
+### RPC Detection Layer
+
+Detecting cross-system calls is a distinct capability from understanding code. Vulgata includes a dedicated RPC Detection Layer — a prompt-driven subsystem with a per-system pattern catalog that tells agents how each system makes remote calls (SOFA RPC, HTTP, message queues, shared databases). The layer combines pattern-based detection with object flow analysis (tracing how RPC client objects are created) and service topology resolution (mapping service codes to target systems via MCP tools). A Prompt Workbench enables rapid iteration on detection prompts against known code patterns during development, ensuring detection quality before production scans.
+
 ### Cross-System Intelligence
 
-When an agent encounters code that calls another system — an RPC, a message queue, a shared database — it records an uncertainty. A dedicated uncertainty resolution system picks this up: if the target system has already been scanned, it retrieves the relevant document and links it; if the target system is currently being scanned, the source system waits for that scan to complete (avoiding deadlocks) but continues responding to queries from other systems in the meantime; if not yet scanned, the question is queued or surfaced to the user. The result is that Vulgata can answer questions like "what happens during a risk evaluation?" by tracing the flow across every system involved, linking each step to the code that implements it.
+When an agent encounters code that calls another system, it records the endpoint using a three-state uncertainty model: *scanned and linked* (target document exists), *discovered but unscanned* (endpoint recorded, target not yet processed), or *unknown* (no evidence of the target). A dedicated uncertainty resolution system manages these states: if the target system has already been scanned, it retrieves the relevant document and links it; if the target system is currently being scanned, the source system waits for that scan to complete (avoiding deadlocks) but continues responding to queries from other systems in the meantime; if not yet scanned, the question is queued or surfaced to the user. The result is that Vulgata can answer questions like "what happens during a risk evaluation?" by tracing the flow across every system involved, linking each step to the code that implements it.
 
 ### Third-Party Libraries
 
@@ -61,25 +69,33 @@ During scanning, agents may encounter ambiguities they cannot resolve from code 
 
 ### Living Knowledge
 
-Vulgata monitors connected git repositories. When changes are pushed, it incrementally re-scans only the affected code units, updates linked documents, and re-evaluates related uncertainties. Document history is preserved, allowing users to see what changed and when.
+Vulgata monitors connected git repositories. When changes are pushed, it incrementally re-scans only the affected code units, updates linked documents, and re-evaluates related uncertainties. Document history is preserved, allowing users to see what changed and when. *(May be deferred if time is tight — the core scanning pipeline takes priority.)*
 
 ### Interaction
 
-Users access Vulgata through a Blazor web application with two primary interfaces: a management dashboard for configuring systems, repositories, and scans; and a chat interface where users ask natural-language questions and receive answers grounded in the extracted knowledge. Users can specify which systems or repositories to query, upload supplementary files, and view scan progress in real time. External AI coding agents can also query Vulgata's knowledge base via MCP, making it a knowledge backend for the entire development toolchain.
+Users access Vulgata through a Blazor web application with two primary interfaces: a management dashboard for configuring systems, repositories, and scans; and a chat interface where users ask natural-language questions and receive answers grounded in the extracted knowledge. Users can specify which systems or repositories to query, upload supplementary files, and view scan progress in real time.
+
+The dashboard includes a **live knowledge graph visualization** — as the scan progresses, documents appear as nodes and cross-system links light up as they are resolved, giving users a real-time view of the knowledge graph as it is built.
+
+For search and retrieval, Vulgata adopts an **LLM-wiki approach**: an auto-generated index (index.md) catalogs every document with a one-line summary, and the chat agent reads the index to select relevant documents, then reads them in full to synthesize answers. This avoids the infrastructure overhead of vector databases and embedding pipelines while providing higher-quality answers for structured, interlinked documents. An append-only activity log (log.md) provides a timeline of all scans and queries.
+
+External AI coding agents can also query Vulgata's knowledge base via MCP, making it a knowledge backend for the entire development toolchain.
 
 ## What Makes This Different
 
 Most code documentation tools operate within a single repository. They generate API docs, call graphs, or wiki pages — useful, but blind to the reality that enterprise business logic spans many systems. The few tools that attempt cross-repository analysis are heavyweight enterprise platforms: expensive, complex to configure, and difficult to integrate into existing workflows.
 
-Vulgata takes a fundamentally different approach on four fronts:
+Vulgata takes a fundamentally different approach on five fronts:
 
-**Cross-system by design, not by accident.** Vulgata's scanning architecture treats cross-system dependencies as first-class citizens. When code in System A calls System B, that is not a dead end — it is the start of a trace. The uncertainty resolution system actively pursues these connections, linking documents across repository boundaries to build a complete picture of how business logic flows.
+**Cross-system by design, not by accident.** Vulgata's scanning architecture treats cross-system dependencies as first-class citizens. When code in System A calls System B, that is not a dead end — it is the start of a trace. The RPC Detection Layer and three-state uncertainty model actively pursue these connections, linking documents across repository boundaries to build a complete picture of how business logic flows.
 
 **LLM-native, not LLM-wrapped.** Vulgata does not use LLMs as a thin summarization layer on top of static analysis. The agents *are* the analysis engine — reading code, reasoning about business intent, asking clarifying questions, and resolving ambiguities through conversation with users and other agents. This allows Vulgata to handle the messy, convention-driven, poorly-documented reality of enterprise codebases in ways that rule-based static analysis cannot.
 
 **Knowledge for everyone, not just developers.** The document classification system — code logic vs. business logic — means that a product manager asking "what happens during risk evaluation?" sees a business process narrative, not a stack trace. A developer tracing the same flow sees the full technical detail. Both views are grounded in the same source of truth. And with MCP integration, even other AI agents can consume this knowledge, making Vulgata a knowledge layer for the entire toolchain.
 
 **Lightweight and self-contained.** Vulgata runs as a single deployable web application. No enterprise license, no multi-week onboarding, no consultant-led configuration. Connect a git repository, start a scan, ask questions. This makes it viable for teams and departments that would never get budget approval for a heavyweight enterprise platform — and makes it a compelling competition demo that can be shown working end-to-end in minutes.
+
+**LLM-wiki, not RAG.** Vulgata treats generated documents as a living wiki, not a collection of text chunks to be retrieved. An auto-generated index catalogs every document; the chat agent reads the index, selects relevant pages, and reads them in full to synthesize answers. Cross-system links are pre-resolved during scanning — the knowledge compounds with every scan, rather than being re-derived from fragments on every query. This approach requires zero vector database infrastructure while producing higher-quality answers for structured, interlinked knowledge.
 
 ## Success Criteria
 
@@ -97,14 +113,20 @@ Vulgata takes a fundamentally different approach on four fronts:
 
 - Blazor web application with authentication, a management dashboard, and a chat interface
 - System and repository management: create, configure, and link systems and repositories
+- Magentic orchestration validation spike (Week 1): validate Microsoft Agent Framework's Magentic pattern with Vulgata-like custom agent types before committing to the full architecture
+- Pre-scan profiling: repository reconnaissance to identify languages, frameworks, conventions, and valid source files before dispatching workers
 - Multi-agent scanning: orchestrator dispatches worker agents to process code units, producing structured documents in a source-tree-aligned hierarchy
 - Document classification: code logic documents and business logic documents, with cross-system links
-- Cross-system uncertainty resolution: detect calls across system boundaries, link to scanned targets, queue unresolved targets, surface questions to users
+- RPC Detection Layer: per-system pattern catalog for cross-system call detection, combining pattern-based detection with object flow analysis
+- Prompt Workbench: development-time tool for iterative prompt testing against known code patterns, feeding validated prompts into the RPC Pattern Catalog
+- Service Topology MCP tool: resolves detected RPC service codes to target systems via a mock service platform
+- Cross-system uncertainty resolution: three-state model (scanned, discovered-but-unscanned, unknown); link to scanned targets, queue unresolved targets, surface questions to users
 - Third-party library handling: standalone repos with on-demand partial scanning and lock mechanism; inference for unknown libraries without source
 - Human-in-the-loop: agents surface ambiguities as questions; user answers marked as human input with lower priority than code-derived facts
-- Git monitoring and incremental re-scan: detect remote changes, re-scan only affected code units, preserve document history
+- Git monitoring and incremental re-scan: detect remote changes, re-scan only affected code units, preserve document history *(may be deferred if time is tight)*
 - Database connection tools: LLM can inspect schema and query sample data from configured databases
-- Document search and retrieval: beyond basic keyword search, candidates include LLM-powered semantic search and vector database indexing to support effective cross-document queries
+- Document search and retrieval: LLM-wiki approach — auto-generated index.md catalogs all documents; chat agent reads index, selects relevant pages, reads full content to synthesize answers; append-only log.md for activity timeline
+- Live knowledge graph visualization: Blazor.Diagrams-based real-time graph showing documents as nodes and cross-system links as they are resolved during scanning
 - Supplementary context: users can upload files and add context to systems and repositories
 - Real-time scan progress: dashboard shows agent count, files processed, errors, and pending questions
 - MCP integration: external AI coding agents can query Vulgata's knowledge base; MCP tools customizable at repo, system, or global level *(lowest priority — may be deferred if time is tight)*
@@ -116,6 +138,8 @@ Vulgata takes a fundamentally different approach on four fronts:
 - Automated compliance reporting or audit trail generation
 - High-availability deployment or multi-instance orchestration
 - Integration with enterprise SSO or identity providers
+- Audition Agent (independent document verification)
+- Answer confidence scoring and chat boundary guards
 
 ## Vision
 
