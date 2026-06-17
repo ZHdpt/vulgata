@@ -2,7 +2,7 @@
 title: "PRD: Vulgata"
 status: draft
 created: 2026-06-12
-updated: 2026-06-12
+updated: 2026-06-16
 ---
 
 # PRD: Vulgata
@@ -29,33 +29,75 @@ Beyond the competition, three forces make this the right moment: (1) LLM inferen
 
 *Every domain term used in this PRD is defined here. FRs, UJs, and SMs use these terms exactly. No synonyms.*
 
-- **System** — A logical grouping of repositories that together implement a business capability (e.g., "Mobile Banking," "Risk Assessment"). A system contains one or more repositories. Cardinality: 1 system → N repositories.
-- **Repository** — A git repository containing source code. Belongs to exactly one system, or can be standalone (for shared libraries not owned by any system). Linked to a remote git URL.
-- **Scan** — The process of reading a repository's source code with LLM-powered agents and producing structured documents. A scan targets either a single repository or an entire system (all its repositories). Scans are incremental when triggered by code changes.
-- **Code Unit** — The smallest unit of code processed by a worker agent. Typically a function, method, class, or file — determined by the language and framework detected during pre-scan profiling.
-- **Document** — A structured markdown file produced by a worker agent, linked to one or more code units. Immutable — can only change when the linked code changes and is re-scanned. Two classifications: Code Logic Document and Business Logic Document.
-- **Code Logic Document** — A document describing what code does structurally: architecture, data flow, call chains, framework usage. Readable by developers and AI agents.
-- **Business Logic Document** — A document describing the business rules and processes implemented by code: validation rules, decision flows, regulatory checks, business process steps. Readable by non-technical users. Built on top of Code Logic Documents.
-- **Orchestrator Agent** — The agent responsible for managing a scan: dispatching worker agents, tracking progress, handling errors, and coordinating cross-system dependency resolution.
-- **Worker Agent** — An agent dispatched by the orchestrator to process a specific code unit. Reads the code, identifies business logic, and produces a document.
-- **Uncertainty** — A metadata field attached to a document when the generating agent cannot determine something with confidence. Three states: resolved (linked to a document in another system), discovered-but-unresolved (endpoint recorded, target not yet scanned), unknown (no evidence of the target). Uncertainties are collected and processed by the uncertainty resolution system.
-- **Cross-System Communication Detection** — A prompt-driven subsystem that identifies when code in one System communicates with another System. Covers RPC, HTTP APIs, message queues, file-based communication (local filesystem, remote filesystem, OSS, HDFS, etc.), and cross-system page navigation (in native and web apps). For each detected communication, identifies the provider role and consumer role, tags consumer count per interface, and handles cases where provider or consumer is absent (not in any scanned System). Uses a per-system Communication Pattern Catalog, object flow analysis, and service topology resolution. Note: cross-system page navigation (e.g., navigating from one app to a page in another system) is inherently loose-coupled — provider and consumer identification may be unreliable and is flagged as low-confidence when detected.
-- **Communication Pattern Catalog** — A per-system configuration file specifying how that System communicates externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-system navigation patterns. Written by the System Owner configuring the scan.
-- **Provider Role** — The System (or external entity) that exposes a communication interface (RPC service, HTTP endpoint, message queue topic, file location, navigable page). Tagged on each detected cross-system communication.
-- **Consumer Role** — The System (or external entity) that calls or reads from a communication interface. Tagged on each detected cross-system communication. Multiple consumers may exist per interface; consumer count is tracked.
-- **Service Topology** — The mapping of service codes and communication endpoints to target Systems. Resolved via an MCP tool that queries a mock service platform.
+### Core Concepts
+
+- **System** — A logical grouping of repositories that together implement a business capability (e.g., "Mobile Banking," "Risk Assessment"). Purely organizational — used for dashboard grouping and chat context selection. Has no detection significance. Cardinality: 1 system → N repositories.
+- **Repository** — A git repository containing source code. Belongs to exactly one system, or can be standalone (for shared libraries not owned by any system). Linked to a remote git URL. The fundamental unit of scanning and detection.
+- **Scan** — The process of reading a single repository's source code with LLM-powered agents and producing structured documents. Scans are always per-repository. Scanning all repos in a System is a convenience trigger that queues N independent repo scans. Scans are incremental when triggered by code changes.
+- **Code Unit** — The smallest unit of code processed by a worker agent. Typically a function, method, class, or file — determined by CodeGraph/tree-sitter during pre-scan profiling with exact line ranges.
+- **Document** — A structured markdown file produced by a worker agent, linked to one or more code units. Immutable — can only change when the linked code changes and is re-scanned. Two classifications: Code Logic Document and Business Logic Document. Organized in a tree structure mirroring the source directory hierarchy.
+- **Code Logic Document** — A document describing what code does structurally: architecture, data flow, call chains, framework usage. Readable by developers and AI agents. Generated in Pass 1.
+- **Business Logic Document** — A document describing the business rules and processes implemented by code: validation rules, decision flows, regulatory checks, business process steps. Readable by non-technical users. Synthesized from Code Logic Documents in Pass 2.
+
+### Scanning Pipeline
+
+- **Scan Coordinator** — A non-LLM background service that manages the operational lifecycle of scans: queuing requests, enforcing concurrency limits, performing git operations, spawning Orchestrator Agents, and triggering cross-repo resolution after each repo scan completes. Not an LLM agent — deterministic application code.
+- **Orchestrator Agent** — An LLM-powered agent scoped to a single repository scan. Dispatches Worker Agents in superstep batches, coordinates cross-verification, handles errors, and triggers post-scan steps (reverse_index rebuild, index.md write, log.md append, cross-repo stale notices).
+- **Worker Agent** — An LLM agent dispatched by the Orchestrator to process a single Code Unit (Pass 1) or synthesize Business Logic Documents from Code Logic Documents (Pass 2). Detects cross-repo communication and produces structured output with metadata.
+- **Superstep** — A batch of related Code Units dispatched concurrently to Worker Agents, enabling cross-verification within the batch before the next superstep begins.
+- **Pass 1** — The first phase of document generation: Code Logic Documents are produced per Code Unit, with intra-repo REFERENCES edges created immediately and cross-repo calls recorded as uncertainties.
+- **Pass 2** — The second phase: one Worker per System synthesizes Business Logic Documents from the completed Code Logic Documents, identifying business flows autonomously from the graph structure.
+- **Document Pre-Allocation** — Bulk-creating documents rows for every filtered Code Unit before any Worker runs, so all document IDs are known and intra-repo REFERENCES edges can be created immediately. Eliminates dangling references within the same repo.
+- **Cross-Verification** — When two Worker Agents process related Code Units in the same superstep, they read each other's draft output and confirm or dispute claims. Disputed edges are kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution.
+
+### Graph & Relationships
+
+- **Edge** — A typed, directed relationship between two Documents in the document graph. Stored in a single edges table with edge_type discriminator.
+- **REFERENCES Edge** — A doc→doc dependency edge: Document A's content references or depends on Document B. Used for both intra-repo and cross-repo relationships. Cross-repo-ness is discovered at query time when source.repo_id != target.repo_id — not a separate edge type.
+- **GENERATED_FROM Edge** — A provenance edge from a Business Logic Document to the Code Logic Document(s) it was synthesized from. Drives two-pass re-scan impact analysis: if a CL Doc changes, all BL Docs with GENERATED_FROM edges to it are flagged stale.
+- **Version Chain** — A linked list of document versions via superseded_by_id, preserving full history. Old versions are never deleted (immutability guarantee).
+- **Dangling Link** — A cross-repo uncertainty that never resolves — a known unknown. Recorded with available identifying information; does not block scan completion. Acceptable per FR-6.4.
+
+### Cross-Repository Communication Detection
+
+- **Cross-Repository Communication Detection** — A prompt-driven subsystem that identifies when code in one Repository communicates with another Repository. Covers RPC, HTTP APIs, message queues, file-based communication (local filesystem, remote filesystem, OSS, HDFS, etc.), and cross-repo page navigation (in native and web apps). Detection happens during Worker Agent processing (Model A — Worker-embedded). For each detected communication, identifies the provider role and consumer role, tags consumer count per interface, and handles cases where provider or consumer is absent (not in any scanned Repository). Uses the Communication Pattern Catalog, object flow analysis, and service topology resolution. Note: cross-repo page navigation is inherently loose-coupled — provider and consumer identification may be unreliable and is flagged as low-confidence when detected.
+- **Communication Pattern Catalog** — A per-system configuration specifying how that System's repositories communicate externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-repo navigation patterns. Written by the System Owner. [NOTE: Architecture decision is to move this to per-repo (matching the repo-boundary scan model), but that migration is deferred to a separate design doc. V1 ships with per-system CP as specified.]
+- **Provider Role** — The Repository (or external entity) that exposes a communication interface (RPC service, HTTP endpoint, message queue topic, file location, navigable page). Tagged on each detected cross-repo communication.
+- **Consumer Role** — The Repository (or external entity) that calls or reads from a communication interface. Tagged on each detected cross-repo communication. Multiple consumers may exist per interface; consumer count is tracked.
+- **Service Topology** — The mapping of service codes and communication endpoints to target Repositories. Resolved via an MCP tool that queries a mock service platform.
+
+### Uncertainty & Resolution
+
+- **Uncertainty** — A first-class entity attached to a document when the generating agent cannot determine something with confidence. Four states: resolved (linked to a document in another repo), unresolved/cross_repo (target repo known, waiting for scan), unresolved/unknown_target (no repo identified), wontfix (terminal non-resolution — human decision). Uncertainties are collected and processed by the cross-repo resolution engine.
+- **Cross-Repository Resolution** — Deterministic post-processing (not an LLM agent) that runs after a repository scan completes. Matches unresolved cross-repo uncertainties against the newly-scanned repo's documents using repo-qualified endpoint matching. Creates REFERENCES edges for matches. Bidirectional — resolves both outgoing and incoming uncertainties.
+- **Deadlock-Breaking Protocol** — When two repos have mutual pending cross-repo uncertainties, the repo with fewer pending resolves first; if tied, the older scan yields. Prevents circular dependency stalls.
+
+### Re-Scan & Impact
+
+- **Impact Analysis** — A 4-step SQL cascade that finds all Documents affected by a set of changed source files: direct impact (reverse_index) → intra-repo transitive closure (recursive CTE) → cross-repo reachability → uncertainty reopening.
+- **Two-Phase Change Detection** — Phase 1 (line-overlap filter via reverse_index) eliminates most candidates; Phase 2 (hash comparison via source_hash) verifies the remaining candidates. Fast AND correct for incremental re-scan.
+- **Source Anchoring** — Three-layer traceability: CodeGraph parses source into Code Units (structural), document_sources links Documents to Code Units (semantic), reverse_index provides O(1) line→document lookup (fast).
+- **File Identity Hash** — SHA-256 of the first 4096 bytes of a source file, used to detect renames during incremental re-scan.
+- **Cross-Repo Stale Notice** — An informational record posted when a document changes, notifying other repos that link to it. No automatic cascade — each repo's owner decides when to re-scan. Eventually consistent by design.
+
+### Resource Management
+
+- **Concurrency Control** — Configurable limits on concurrent scans (global) and workers per scan, enforced by the Scan Coordinator. Prevents resource exhaustion. Limits can be changed dynamically during scans.
+
+### Tools & Interfaces
+
 - **Prompt Workbench** — A development-time tool for iterating on agent prompts against known code patterns. Feeds validated prompts into the Communication Pattern Catalog.
-- **Pre-Scan Profiling** — The initial reconnaissance phase of a scan: identifies languages, frameworks, conventions, and valid source files before dispatching worker agents.
+- **Pre-Scan Profiling** — The initial reconnaissance phase of a scan: CodeGraph parses source into code_units, identifies languages and frameworks, applies scan filter excluding non-code files, and groups code_units into supersteps.
 - **LLM-Wiki** — Vulgata's search and retrieval approach: an auto-generated index (index.md) catalogs every document; the chat agent reads the index, selects relevant documents, reads them in full, and synthesizes answers. No vector database or embedding pipeline.
-- **index.md** — Auto-generated after each scan. One entry per document with path, title, and one-line summary.
-- **log.md** — Append-only activity log with parseable timestamps. Records all scans, queries, and system events.
+- **index.md** — Auto-generated after each scan. YAML frontmatter with structured entries (doc_id, title, doc_type, system, repo, key_symbols, summary, path). One entry per document.
+- **log.md** — Append-only activity log with parseable timestamps in format `## [YYYY-MM-DD HH:MM] operation | target`. Records all scans, queries, and system events.
 - **Business Mode** — Chat interface mode producing business-level narrative answers without code references. Uses a lighter UI theme and a system prompt focused on business process explanation. For non-technical users.
 - **IT Mode** — Chat interface mode producing full technical answers with code references and source links. Uses a darker UI theme and a system prompt focused on technical detail. For developers and AI agents.
 - **System Owner** — A user role responsible for adding and configuring systems in Vulgata: creating systems, linking repositories, configuring Communication Pattern Catalogs, assigning LLM Providers to agents, and starting scans. Distinct from knowledge-seeking users and platform administrators.
 - **MCP (Model Context Protocol)** — Anthropic's open protocol for AI-tool integration. Vulgata both consumes MCP tools (for scanning and chat) and exposes its knowledge base as an MCP server (for external AI coding agents).
 - **Human-in-the-Loop (HITL)** — The mechanism by which agents surface ambiguities as questions to users during scanning. User answers are marked as human input and carry lower priority than code-derived facts.
-- **CodeGraph** — A pre-indexed code intelligence system that provides structural information (call graphs, symbol resolution, dependency maps) to accelerate scanning.
-- **LLM Provider** — A configured LLM backend (e.g., DeepSeek V4, self-hosted model) with an endpoint, API key, and supported APIs (chat, responses, messages). Multiple providers can be configured; each agent can be assigned a specific provider.
+- **CodeGraph** — A pre-indexed code intelligence system that provides structural information (call graphs, symbol resolution, dependency maps) to accelerate scanning. Used during pre-scan profiling for deterministic code_unit extraction.
+- **LLM Provider** — A configured LLM backend (e.g., DeepSeek V4, self-hosted model) with an endpoint, API key, and supported APIs (chat, responses, messages). Multiple providers can be configured; each agent can be assigned a specific provider. Per-system default + per-repository override.
 - **LSP (Language Server Protocol)** — Optional integration for scanning. Provides IDE-level code intelligence (symbol resolution, type information, references) to augment LLM-based analysis. V1 only if time permits.
 
 ## 4. Target User

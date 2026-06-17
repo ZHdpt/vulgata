@@ -6,30 +6,6 @@
 
 ---
 
-## Why This Part Is Designed As It Is
-
-The document graph is the structural backbone of Vulgata. It must answer five questions correctly under the constraints of a 9-week, 2-person + AI competition timeline:
-
-| Question | Why It Matters |
-|----------|---------------|
-| Where is each document in the source tree? | FR-4.6 — tree navigation is how users browse |
-| What source code produced each document? | FR-4.3, FR-11.7 — every claim must cite its origin |
-| If these N files change, what documents break? | FR-9.3 — incremental re-scan must be precise |
-| Which documents in other repos link to this one? | FR-6.2 — cross-repo tracing is the primary demo success criterion |
-| Can we render this as a live graph? | FR-12.6, NFR-1.3 — the competition demo's visual centerpiece |
-
-**The trap we avoided:** Building a custom graph engine, event-sourcing layer, or distributed graph database. At demo scale (~200 documents, ~500 edges), SQLite recursive CTEs provide identical graph traversal capability with zero custom infrastructure. The adjacency list IS the graph database.
-
-**The insight we stole:** Cross-repo is not a schema — it's a query-time emergent property. Any edge where `source.repo_id != target.repo_id` is a cross-repo link. No separate table, no dual-write, no bridge schema. One `edges` table, one recursive CTE, all queries uniform.
-
-**The keystone we adapted:** A `reverse_index` table (one row per source line per document) makes the most operationally critical query — "which documents came from these changed files?" — answerable in O(1). Stolen from ArborGraph, implemented relationally.
-
-**The gap we closed:** Uncertainty is a first-class table with a status lifecycle, not "unknown = no row" in an edges table. You cannot render what you do not store. Every uncertainty state (resolved, discovered-but-unresolved, unknown) is a row the Blazor.Diagrams renderer can display.
-
-Three independent teams starting from relational, filesystem-native, and graph-native philosophies converged on these same patterns. That convergence is the strongest evidence that this design is correct.
-
----
-
 ## Architecture Overview
 
 **Stack:** SQLite via EF Core, WAL mode, single Docker container (ASP.NET Core + Blazor Server)
@@ -890,6 +866,31 @@ entries:
 5. Reads each document's full markdown body from `content_md_path`
 6. Follows `REFERENCES` edges to related documents (cross-repo if applicable)
 7. Synthesizes answer with citations to source documents (FR-11.6, FR-11.7)
+
+---
+
+## Why This Part Is Designed As It Is
+
+The document graph is the structural backbone of Vulgata. It must answer five questions correctly under the constraints of a 9-week, 2-person + AI competition timeline:
+
+| Question | Why It Matters |
+|----------|---------------|
+| Where is each document in the source tree? | FR-4.6 — tree navigation is how users browse |
+| What source code produced each document? | FR-4.3, FR-11.7 — every claim must cite its origin |
+| If these N files change, what documents break? | FR-9.3 — incremental re-scan must be precise |
+| Which documents in other repos link to this one? | FR-6.2 — cross-repo tracing is the primary demo success criterion |
+| Can we render this as a live graph? | FR-12.6, NFR-1.3 — the competition demo's visual centerpiece |
+
+**The trap we avoided:** Building a custom graph engine, event-sourcing layer, or distributed graph database. At demo scale (~200 documents, ~500 edges), SQLite recursive CTEs provide identical graph traversal capability with zero custom infrastructure. The adjacency list IS the graph database.
+
+**The insight we stole:** Cross-repo is not a schema — it's a query-time emergent property. Any edge where `source.repo_id != target.repo_id` is a cross-repo link. No separate table, no dual-write, no bridge schema. One `edges` table, one recursive CTE, all queries uniform.
+
+**The keystone we adapted:** A `reverse_index` table (one row per source line per document) makes the most operationally critical query — "which documents came from these changed files?" — answerable in O(1). Stolen from ArborGraph, implemented relationally.
+
+**The gap we closed:** Uncertainty is a first-class table with a status lifecycle, not "unknown = no row" in an edges table. You cannot render what you do not store. Every uncertainty state (resolved, discovered-but-unresolved, unknown) is a row the Blazor.Diagrams renderer can display.
+
+Three independent teams starting from relational, filesystem-native, and graph-native philosophies converged on these same patterns. That convergence is the strongest evidence that this design is correct.
+
 
 ---
 
