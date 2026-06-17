@@ -11,3 +11,8 @@ Default label vocabulary (needs-triage, needs-info, ready-for-agent, ready-for-h
 ### Domain docs
 
 Multi-context layout via `CONTEXT-MAP.md`. See `docs/agents/domain.md`.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
