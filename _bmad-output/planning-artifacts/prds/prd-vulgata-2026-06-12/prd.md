@@ -9,7 +9,7 @@ updated: 2026-06-16
 
 ## 0. Document Purpose
 
-This PRD defines the V1 scope for Vulgata, an LLM-powered cross-system business logic extraction platform. It is written for the development team (2 people + AI coding agents), competition judges evaluating the project, and downstream BMad workflows (architecture, epics, stories). The PRD builds on the product brief, PRFAQ, brainstorming session, domain research, and technical research already completed. It uses a Glossary-anchored vocabulary — every domain term is defined once and used consistently throughout. Features are grouped with nested functional requirements (FRs) numbered globally. Assumptions are tagged inline and indexed.
+This PRD defines the V1 scope for Vulgata, an LLM-powered cross-repository business logic extraction platform. It is written for the development team (2 people + AI coding agents), competition judges evaluating the project, and downstream BMad workflows (architecture, epics, stories). The PRD builds on the product brief, PRFAQ, brainstorming session, domain research, and technical research already completed. It uses a Glossary-anchored vocabulary — every domain term is defined once and used consistently throughout. Features are grouped with nested functional requirements (FRs) numbered globally. Assumptions are tagged inline and indexed.
 
 ## 1. Vision
 
@@ -21,9 +21,9 @@ The V1 demo scope covers two systems consisting of approximately a dozen reposit
 
 ## 2. Why Now
 
-Vulgata is being developed for an internal AI programming competition with a 9-week timeline (June 12 → August 15, 2026). The competition rubric allocates points across four dimensions: innovation and creativity (30 points), technical implementation and complexity (25 points), practical value and deployability (25 points), and user experience and interaction design (20 points). The primary success criterion is a working end-to-end live demo that traces a real cross-system business flow.
+Vulgata is being developed for an internal AI programming competition with a 9-week timeline (June 12 → August 15, 2026). The competition rubric allocates points across four dimensions: innovation and creativity (30 points), technical implementation and complexity (25 points), practical value and deployability (25 points), and user experience and interaction design (20 points). The primary success criterion is a working end-to-end live demo that traces a real cross-repo business flow.
 
-Beyond the competition, three forces make this the right moment: (1) LLM inference costs have dropped to <1 CNY per million input tokens, making agent-based code analysis economically viable; (2) the Microsoft Agent Framework provides production-grade multi-agent orchestration with MCP integration; (3) the industry is shifting from "AI as code generator" to "AI as code understander" — and no existing tool addresses the cross-system business logic extraction problem that Vulgata targets.
+Beyond the competition, three forces make this the right moment: (1) LLM inference costs have dropped to <1 CNY per million input tokens, making agent-based code analysis economically viable; (2) the Microsoft Agent Framework provides production-grade multi-agent orchestration with MCP integration; (3) the industry is shifting from "AI as code generator" to "AI as code understander" — and no existing tool addresses the cross-repository business logic extraction problem that Vulgata targets.
 
 ## 3. Glossary
 
@@ -110,13 +110,13 @@ Beyond the competition, three forces make this the right moment: (1) LLM inferen
 
 ### 4.2 Key User Journeys
 
-- **UJ-1. Lin the PM asks how risk evaluation works.** Lin, a product manager planning a feature change, logs into Vulgata, selects the Mobile Banking System, ensures she is in Business Mode, and asks "what happens during a risk evaluation in the mobile app?" She receives a step-by-step business narrative tracing the flow across Systems. She can toggle to IT Mode at any time to see the technical details behind any step.
+- **UJ-1. Lin the PM asks how risk evaluation works.** Lin, a product manager planning a feature change, logs into Vulgata, selects the Mobile Banking System, ensures she is in Business Mode, and asks "what happens during a risk evaluation in the mobile app?" She receives a step-by-step business narrative tracing the flow across Repositories. She can toggle to IT Mode at any time to see the technical details behind any step.
 
 - **UJ-2. Chen the new hire explores the systems.** Chen, a new business analyst in her first week, opens Vulgata, browses the System overview, and asks "how does loan approval work?" in Business Mode. The chat guides her through the relevant Systems and Documents. She reads the Business Logic Documents to understand the process without touching code.
 
-- **UJ-3. Wang the developer traces a cross-system flow.** Wang, a developer assigned to build a new feature, switches to IT Mode and asks the same risk evaluation question. He receives the full technical trace with code references, follows the cross-system links to understand every communication (RPC, HTTP, message queue, file), and reads the Code Logic Documents for implementation detail.
+- **UJ-3. Wang the developer traces a cross-repo flow.** Wang, a developer assigned to build a new feature, switches to IT Mode and asks the same risk evaluation question. He receives the full technical trace with code references, follows the cross-repo links to understand every communication (RPC, HTTP, message queue, file), and reads the Code Logic Documents for implementation detail.
 
-- **UJ-4. Zhang the System Owner onboards his systems.** Zhang manages two Systems in his department. He creates both Systems in the dashboard, adds their Repositories with git URLs, configures the Communication Pattern Catalog for each System's communication mechanisms, assigns LLM Providers to the orchestrator and worker agents, and starts the first Scan. He monitors progress on the dashboard as Documents appear and cross-system links resolve. When agents surface questions, he answers them to improve Scan quality.
+- **UJ-4. Zhang the System Owner onboards his systems.** Zhang manages two Systems in his department. He creates both Systems in the dashboard, adds their Repositories with git URLs, configures the Communication Pattern Catalog for each System's communication mechanisms, assigns LLM Providers to the orchestrator and worker agents, and starts the first Scan. He monitors progress on the dashboard as Documents appear and cross-repo links resolve. When agents surface questions, he answers them to improve Scan quality.
 
 ## 5. Features
 
@@ -150,48 +150,51 @@ System-level configuration of LLM backends. Enables per-agent provider assignmen
 
 ### 5.4 Scanning Pipeline
 
-The core engine. Pre-scan profiling → orchestrator dispatches workers → document generation → index/log generation.
+The core engine. Scan Coordinator queues repo scans → Orchestrator Agent per repo dispatches workers in two passes → document generation → index/log generation → cross-repo resolution.
 
-- **FR-4.1:** Pre-Scan Profiling shall run before worker dispatch. It shall identify: programming languages present, frameworks in use, coding conventions, and valid source file paths. It shall produce a scan filter excluding non-code files (build artifacts, generated code, test fixtures, configuration data).
-- **FR-4.2:** The Orchestrator Agent shall dispatch Worker Agents to process Code Units in batches (supersteps). Each superstep fans out a batch of code units to workers, then fans in results before dispatching the next batch.
-- **FR-4.3:** Each Worker Agent shall read its assigned Code Unit, identify the business logic, and produce a structured Document linked to the source code location.
-- **FR-4.4:** Worker Agents shall produce Code Logic Documents describing structural code behavior: architecture, data flow, call chains, framework usage.
-- **FR-4.5:** Worker Agents shall produce Business Logic Documents describing business rules and processes: validation rules, decision flows, regulatory checks, business process steps.
-- **FR-4.6:** Generated Documents shall be organized in a tree structure mirroring the source code directory hierarchy.
-- **FR-4.7:** After each Scan completes, the system shall auto-generate index.md — one entry per Document with file path, title, and one-line summary.
+- **FR-4.1:** Pre-Scan Profiling shall run before worker dispatch. It shall use CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter excluding non-code files (build artifacts, generated code, test fixtures, configuration data).
+- **FR-4.2:** The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and spawn one Orchestrator Agent per Repository scan. The Orchestrator Agent shall dispatch Worker Agents to process Code Units in batches (supersteps). Each superstep fans out a batch of code units to workers, then fans in results before dispatching the next batch.
+- **FR-4.3:** Each Worker Agent shall read its assigned Code Unit, identify the business logic, and produce a structured Document linked to the source code location. Worker Agents shall detect cross-repo communication during Code Unit processing (Model A — Worker-embedded detection).
+- **FR-4.4:** In Pass 1, Worker Agents shall produce Code Logic Documents describing structural code behavior: architecture, data flow, call chains, framework usage. Intra-repo REFERENCES edges shall be created immediately via Document Pre-Allocation. Cross-repo calls shall be recorded as Uncertainties.
+- **FR-4.5:** In Pass 2, one Worker Agent per System shall synthesize Business Logic Documents from the completed Code Logic Documents, identifying business flows autonomously from the graph structure. Business Logic Documents shall have GENERATED_FROM edges to their source Code Logic Documents.
+- **FR-4.6:** Generated Documents shall be organized in a tree structure mirroring the source code directory hierarchy. The tree shall be computed from document paths at display time (virtual tree); no synthetic directory-document rows shall be created.
+- **FR-4.7:** After each Scan completes, the system shall auto-generate index.md with YAML frontmatter — structured entries per Document with doc_id, title, doc_type, system, repo, key_symbols, summary, and path.
 - **FR-4.8:** The system shall maintain an append-only log.md recording all Scans, queries, and system events with parseable timestamps in the format `## [YYYY-MM-DD HH:MM] operation | target`.
-- **FR-4.9:** The scanning pipeline shall integrate with CodeGraph for pre-indexed structural information (call graphs, symbol resolution, dependency maps) to accelerate agent processing.
-- **FR-4.10:** Documents shall be immutable — the only mutation path is code change → re-scan → regenerate. Human edits to Documents are not supported.
+- **FR-4.9:** The scanning pipeline shall integrate with CodeGraph for pre-indexed structural information (call graphs, symbol resolution, dependency maps) to accelerate agent processing and provide deterministic code_unit boundaries.
+- **FR-4.10:** Documents shall be immutable — the only mutation path is code change → re-scan → regenerate. Human edits to Documents are not supported. Previous versions shall be preserved via a superseded_by_id linked list (Version Chain).
 - **FR-4.11:** Week 1 shall include a Magentic orchestration validation spike: validate that the Microsoft Agent Framework's Magentic pattern works with Vulgata's custom agent types before committing to the full architecture. If the spike fails, fall back to a simpler agent pattern.
-- **FR-4.12:** When two Worker Agents process related Code Units (e.g., caller and callee within the same System), they shall cross-verify business logic claims where possible. Cross-verified claims shall be tagged as such in the generated Documents.
+- **FR-4.12:** When two Worker Agents process related Code Units (e.g., caller and callee within the same Repository) in the same superstep, they shall cross-verify business logic claims where possible. Disputed edges shall be kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution. Cross-verified claims shall be tagged as such in the generated Documents.
 
-### 5.5 Cross-System Communication Detection
+### 5.5 Cross-Repository Communication Detection
 
-Identifies all ways systems communicate, tags provider/consumer roles, and feeds the uncertainty resolution pipeline. This is the subsystem that makes cross-system tracing possible.
+The subsystem that identifies when code in one Repository communicates with another Repository. Detection happens during Worker Agent processing (Model A — Worker-embedded). Covers RPC, HTTP APIs, message queues, file-based communication, and page navigation.
 
-- **FR-5.1:** System Owners shall configure a Communication Pattern Catalog per System, specifying how that System communicates externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-system navigation patterns.
-- **FR-5.2:** The detection layer shall identify RPC calls crossing System boundaries, using the Communication Pattern Catalog and object flow analysis.
-- **FR-5.3:** The detection layer shall identify HTTP API calls crossing System boundaries.
-- **FR-5.4:** The detection layer shall identify message queue production and consumption crossing System boundaries.
-- **FR-5.5:** The detection layer shall identify file-based communication crossing System boundaries — including local filesystem paths, remote filesystem mounts, and storage systems (OSS, HDFS, etc.).
-- **FR-5.6:** The detection layer shall identify cross-system page navigation in native and web applications. Detected navigations shall be flagged as low-confidence due to inherently loose coupling.
-- **FR-5.7:** For each detected communication, the system shall identify and tag the Provider Role — the System (or external entity) that exposes the interface.
-- **FR-5.8:** For each detected communication, the system shall identify and tag the Consumer Role — the System (or external entity) that calls or reads from the interface.
-- **FR-5.9:** The system shall track consumer count per communication interface. An interface with zero known consumers or zero known providers is valid — the absent party is recorded as an unresolved uncertainty.
-- **FR-5.10:** Detection shall function when the provider or consumer is absent (not in any scanned System). The absent party shall be recorded as an unresolved uncertainty with whatever identifying information is available (endpoint URL, topic name, file path, page route).
-- **FR-5.11:** The Prompt Workbench shall provide a development-time interface for iterating on detection prompts against known code patterns. Validated prompts shall be exportable to the Communication Pattern Catalog.
-- **FR-5.12:** The detection layer shall perform object flow analysis — tracing how communication client objects are created, configured, and invoked — to supplement pattern-based detection.
-- **FR-5.13:** The detection layer shall resolve communication endpoints to target Systems via a Service Topology MCP tool that queries a mock service platform. [ASSUMPTION: The mock service platform is pre-populated with known service-to-system mappings before the demo.]
-- **FR-5.14:** The system shall inject organization-wide communication framework knowledge into all agent prompts as a baseline, supplementing per-system Communication Pattern Catalogs. This ensures agents have a starting point for communication detection even when per-system catalogs are incomplete.
+- **FR-5.1:** System Owners shall configure a Communication Pattern Catalog per System specifying how that System's repositories communicate externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-repo navigation patterns. [NOTE: Architecture decision is to move this to per-repo, but that migration is deferred. V1 ships with per-System CP.]
+- **FR-5.2:** The detection layer shall identify when code in one Repository communicates with another Repository. Communication types include: RPC calls (SOFA, Dubbo, gRPC), HTTP API calls (REST, GraphQL), message queue production and consumption, file-based communication (local filesystem, remote filesystem, OSS, HDFS, etc.), and cross-repo page navigation (in native and web apps).
+- **FR-5.3:** For each detected cross-repo communication, the system shall identify the provider role (the Repository or external entity exposing the interface) and the consumer role (the Repository or external entity calling or reading from the interface).
+- **FR-5.4:** The system shall track consumer count per communication interface — a single provider interface may have multiple consumers across different Repositories.
+- **FR-5.5:** The system shall handle cases where the provider or consumer is absent (not in any scanned Repository). Absent entities shall be recorded as external references with available identifying information (service name, URL pattern, topic name, file path, etc.).
+- **FR-5.6:** Cross-repo page navigation detection (e.g., navigating from one app to a page in another repo's app) shall be flagged as low-confidence due to inherently loose coupling. Provider and consumer identification may be unreliable for page navigation.
+- **FR-5.7:** The system shall use object flow analysis to trace communication targets through object creation and provenance, resolving indirect calls where the target is accessed through intermediate objects or factories.
+- **FR-5.8:** The Communication Pattern Catalog shall be used during scanning to guide detection. The Worker Agent's prompt shall dynamically inject the current System's Communication Pattern Catalog.
+- **FR-5.9:** The Prompt Workbench shall provide a development-time tool for iterating on agent prompts against known code patterns, feeding validated prompts into the Communication Pattern Catalog.
+- **FR-5.10:** The system shall record all detected RPC endpoints as named entities even when the provider is unscanned or unknown. These named entities shall be discoverable through the chat interface.
+- **FR-5.11:** The system shall handle file-based communication detection: local filesystem paths, remote filesystem mounts, OSS object storage, HDFS, and other file storage systems. File paths shall be treated as communication endpoints with provider and consumer roles.
+- **FR-5.12:** The system shall detect cross-repo page navigation: URL patterns, deep links, and app-to-app navigation flows in both native and web applications. Page navigation detection shall be flagged as low-confidence (see FR-5.6).
+- **FR-5.13:** The system shall resolve communication endpoints to target Repositories using a Service Topology — the mapping of service codes and communication endpoints to Repositories. This shall be resolved via an MCP tool that queries a mock service platform. [ASSUMPTION: The mock service platform is pre-populated with known service-to-repo mappings before the demo.]
+- **FR-5.14:** The detection system shall be extensible — new communication patterns shall be addable to the Communication Pattern Catalog without code changes. The catalog format shall support organization-wide framework knowledge (e.g., "all services in this organization use SOFA RPC with these conventions").
 
 ### 5.6 Uncertainty Resolution
 
-Processes detected-but-unresolved cross-system communications, links documents across System boundaries, and manages scan dependencies.
+Handles the gaps that cross-repo detection creates. Uncertainties are first-class entities with four states. Resolution is deterministic post-processing triggered after each repo scan completes.
 
-- **FR-6.1:** The system shall maintain a 3-state uncertainty model for each detected cross-system communication: **resolved** (linked to a Document in the target System), **discovered-but-unresolved** (endpoint recorded, target not yet scanned), **unknown** (no evidence of the target System).
-- **FR-6.2:** When a target System has been scanned, the system shall resolve uncertainties by linking the source Document to the relevant target Document. The link shall include the target Document path and a one-line summary.
-- **FR-6.3:** When a target System is currently being scanned, the source System's scan shall wait for the target scan to complete (avoiding deadlocks) but shall continue responding to uncertainty queries from other Systems.
-- **FR-6.4:** Dangling links (discovered-but-unresolved uncertainties that never resolve) are acceptable. Each dangling link is a known unknown — recorded with available identifying information — and does not block scan completion.
+- **FR-6.1:** When a Worker Agent detects a cross-repo communication but the target Repository has not been scanned, it shall record an Uncertainty with status `unresolved` and sub_status `cross_repo`. The Uncertainty shall include the endpoint identifier, protocol, and any available identifying information.
+- **FR-6.2:** Cross-Repository Resolution shall run after each Repository scan completes. It shall match unresolved cross-repo uncertainties against the newly-scanned repo's documents using repo-qualified endpoint matching. Matched uncertainties shall be resolved and REFERENCES edges created. Resolution is bidirectional — both outgoing and incoming uncertainties are resolved.
+- **FR-6.3:** When two Repositories have mutual pending cross-repo uncertainties (deadlock), the Deadlock-Breaking Protocol shall apply: the repo with fewer pending uncertainties resolves first; if tied, the older scan yields.
+- **FR-6.4:** The system shall support Dangling Links — cross-repo uncertainties that never resolve. These shall be recorded with available identifying information and shall not block scan completion. The `wontfix` terminal state shall be available for human-accepted dangling links.
+- **FR-6.5:** The system shall provide a chat-accessible uncertainty summary: "This Document has N unresolved cross-repo links" with the endpoint identifiers and target repo names where known.
+- **FR-6.6:** Cross-Repo Stale Notices shall be posted when a document changes, notifying other repos that link to it. No automatic cascade — each repo's owner decides when to re-scan. Eventually consistent by design.
+- **FR-6.7:** The system shall provide an Impact Analysis query that finds all Documents affected by a set of changed source files: direct impact → intra-repo transitive closure → cross-repo reachability → uncertainty reopening. Cycle detection via UNION (not UNION ALL) with depth guard.
 
 ### 5.7 Human-in-the-Loop
 
@@ -204,12 +207,12 @@ Surfaces agent questions to users during scanning. User answers improve scan qua
 
 ### 5.8 Third-Party Library Handling
 
-Handles dependencies on external libraries without treating every import as a cross-system boundary.
+Handles dependencies on external libraries without treating every import as a cross-repo boundary.
 
 - **FR-8.1:** System Owners shall add libraries with organization-owned source code as standalone Repositories (not belonging to any System).
 - **FR-8.2:** Standalone Repositories shall be scanned partially and on-demand — only the Code Units actually called by other Repositories are scanned, triggered by the Worker Agent responsible for the caller.
 - **FR-8.3:** The system shall use a lock mechanism to prevent concurrent scanning of the same standalone Repository from multiple callers.
-- **FR-8.4:** Well-known common libraries (standard libraries, widely-used open-source packages) shall be treated as understood and shall not generate cross-system uncertainties.
+- **FR-8.4:** Well-known common libraries (standard libraries, widely-used open-source packages) shall be treated as understood and shall not generate cross-repo uncertainties.
 - **FR-8.5:** For unknown libraries without available source code, the system shall attempt LLM-based inference of behavior. If inference fails, the user shall be notified to provide context manually.
 
 ### 5.9 Git Monitoring & Incremental Scan
@@ -239,7 +242,7 @@ The primary user-facing surface for knowledge consumption. Two modes, LLM-wiki r
 - **FR-11.3:** Users shall switch between Business Mode and IT Mode at any time during a chat session. The UI theme shall change immediately; the system prompt shall change for subsequent messages.
 - **FR-11.4:** Users shall select which Systems or Repositories to include as context for their questions. When no selection is made, all Systems the user has access to are included.
 - **FR-11.5:** Users shall upload files (documents, images) as supplementary context for their questions.
-- **FR-11.6:** The chat agent shall use LLM-wiki retrieval: (a) read index.md to identify relevant Documents, (b) select 3-5 most relevant Documents, (c) read each selected Document in full, (d) follow cross-system links to related Documents, (e) synthesize an answer with citations to source Documents.
+- **FR-11.6:** The chat agent shall use LLM-wiki retrieval: (a) read index.md to identify relevant Documents, (b) select 3-5 most relevant Documents, (c) read each selected Document in full, (d) follow cross-repo links to related Documents, (e) synthesize an answer with citations to source Documents.
 - **FR-11.7:** Every answer shall include citations linking claims to the source Documents and, where applicable, to the source code lines that generated those Documents.
 
 ### 5.12 Dashboard & Scan Progress
@@ -251,7 +254,7 @@ Real-time visibility into scanning operations. Includes the live knowledge graph
 - **FR-12.3:** During an active Scan, the dashboard shall display the count of files processed and total files to process.
 - **FR-12.4:** During an active Scan, the dashboard shall display the count of errors encountered.
 - **FR-12.5:** The dashboard shall display pending Human-in-the-Loop questions with the ability to view, answer, or dismiss each.
-- **FR-12.6:** The dashboard shall include a live knowledge graph visualization using Blazor.Diagrams. As the Scan progresses: Documents shall appear as nodes, cross-system links shall appear as edges when resolved, and unresolved uncertainties shall appear as dashed edges to placeholder nodes.
+- **FR-12.6:** The dashboard shall include a live knowledge graph visualization using Blazor.Diagrams. As the Scan progresses: Documents shall appear as nodes, cross-repo links shall appear as edges when resolved, and unresolved uncertainties shall appear as dashed edges to placeholder nodes.
 
 ### 5.13 MCP Integration
 
@@ -260,7 +263,7 @@ Model Context Protocol integration for tool consumption and knowledge serving. *
 - **FR-13.1:** The scanning pipeline shall be able to consume MCP tools registered at the Repository, System, or global level.
 - **FR-13.2:** The chat interface shall be able to consume MCP tools registered at the Repository, System, or global level.
 - **FR-13.3:** MCP tools shall require separate approval for scanning use and chat use. A tool approved for scanning is not automatically available in chat, and vice versa.
-- **FR-13.4:** Vulgata shall expose its knowledge base (Documents, index.md, cross-system links) as an MCP server, allowing external AI coding agents to query business logic.
+- **FR-13.4:** Vulgata shall expose its knowledge base (Documents, index.md, cross-repo links) as an MCP server, allowing external AI coding agents to query business logic.
 - **FR-13.5:** MCP tools shall be configurable at three levels: Repository (scoped to one repo), System (scoped to all repos in a system), and Global (available to all systems).
 
 ### 5.14 User-Supplied Context
@@ -286,7 +289,7 @@ Optional Language Server Protocol integration for IDE-level code intelligence du
 
 - **NFR-1.1:** A Scan of a repository with ~10,000 source files shall complete within a timeframe that allows the demo to be prepared in advance (scans are not performed live during the demo). Exact scan duration depends on LLM API throughput, agent count, and code complexity — benchmarking during development will establish realistic expectations.
 - **NFR-1.2:** Chat responses shall be delivered within 30 seconds for questions spanning up to 5 Documents.
-- **NFR-1.3:** The live knowledge graph visualization shall update within 5 seconds of a Document being generated or a cross-system link being resolved.
+- **NFR-1.3:** The live knowledge graph visualization shall update within 5 seconds of a Document being generated or a cross-repo link being resolved.
 
 ### 6.2 Security
 
@@ -317,9 +320,9 @@ Optional Language Server Protocol integration for IDE-level code intelligence du
 
 ## 7. Success Metrics
 
-- **SM-1 (Competition Demo):** A live demo traces a cross-system business question ("what happens during a risk evaluation in the mobile app?") across at least two Systems, with every step linked to source code. The demo runs live, not as a recording.
+- **SM-1 (Competition Demo):** A live demo traces a cross-repo business question ("what happens during a risk evaluation in the mobile app?") across at least two Repositories, with every step linked to source code. The demo runs live, not as a recording.
 - **SM-2 (Scan Quality):** Generated Business Logic Documents are readable and understandable by a non-technical reviewer (product manager or business analyst) without developer assistance.
-- **SM-3 (Cross-System Accuracy):** When System A communicates with System B, the Document for System A references the correct Document in System B. Provider and consumer roles are correctly tagged.
+- **SM-3 (Cross-Repo Accuracy):** When Repository A communicates with Repository B, the Document for Repository A references the correct Document in Repository B. Provider and consumer roles are correctly tagged.
 - **SM-4 (Chat Quality):** A non-technical user can log in, select a System, ask a business question in Business Mode, and receive an answer they understand — without training or documentation.
 - **SM-5 (Incremental Update):** After an initial Scan, pushing a code change triggers an incremental re-scan that updates only affected Documents. *(Deferrable — measured only if FR-9.x is implemented.)*
 
@@ -343,12 +346,12 @@ Optional Language Server Protocol integration for IDE-level code intelligence du
 
 *Questions that should be resolved before or during architecture. Not blockers for PRD approval.*
 
-- **OQ-1:** What are the specific demo repositories, and do they contain compelling cross-system communication patterns (RPC, HTTP, message queue, file, page navigation)?
-- **OQ-2:** What communication mechanisms do the demo Systems use, and can the Communication Pattern Catalog cover them?
+- **OQ-1:** What are the specific demo repositories, and do they contain compelling cross-repo communication patterns (RPC, HTTP, message queue, file, page navigation)?
+- **OQ-2:** What communication mechanisms do the demo Repositories use, and can the Communication Pattern Catalog cover them?
 - **OQ-3:** Will the Business Logic Documents produced by the scanning pipeline actually be readable by a non-technical reviewer?
 - **OQ-4:** What is the fallback LLM Provider if DeepSeek V4 is unavailable during the demo?
 - **OQ-5:** What is the target scan duration for the demo repositories? (To be established during development benchmarking.)
-- **OQ-6:** How are System-to-System communication patterns discovered when the System Owner does not know all of them upfront? (Human-in-the-Loop discovery vs. pre-configuration.)
+- **OQ-6:** How are cross-repo communication patterns discovered when the System Owner does not know all of them upfront? (Human-in-the-Loop discovery vs. pre-configuration.)
 - **OQ-7:** How do we validate document correctness before the demo? (Manual review of critical paths, cross-verification between agents, sample question testing.)
 
 ## 10. Out of Scope
@@ -363,7 +366,7 @@ Optional Language Server Protocol integration for IDE-level code intelligence du
 - Audition Agent (independent document verification)
 - Answer confidence scoring and chat boundary guards
 - gRPC communication detection (not used in the target organization)
-- Database shared access as a cross-system communication pattern
+- Database shared access as a cross-repo communication pattern
 - Production database access
 - Webhook-based git change detection
 - WCAG compliance
