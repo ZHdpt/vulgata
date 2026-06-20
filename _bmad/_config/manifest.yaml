@@ -1,21 +1,24 @@
 installation:
   version: 6.8.0
   installDate: 2026-06-11T03:22:55.498Z
-  lastUpdated: 2026-06-17T01:50:26.606Z
+  lastUpdated: 2026-06-20T12:34:01.637Z
 modules:
   - name: core
     version: 6.8.0
     installDate: 2026-06-11T03:22:55.445Z
-    lastUpdated: 2026-06-17T01:50:26.605Z
+    lastUpdated: 2026-06-20T12:34:01.637Z
     source: built-in
     npmPackage: null
     repoUrl: null
   - name: bmm
     version: 6.8.0
     installDate: 2026-06-11T03:22:55.413Z
-    lastUpdated: 2026-06-17T01:50:26.606Z
+    lastUpdated: 2026-06-20T12:34:01.637Z
     source: built-in
     npmPackage: null
     repoUrl: null
 ides:
   - trae
+  - claude-code
+  - codex
+  - github-copilot
