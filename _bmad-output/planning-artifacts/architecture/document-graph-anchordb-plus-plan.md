@@ -8,13 +8,13 @@
 
 ## Architecture Overview
 
-**Stack:** SQLite via EF Core, WAL mode, single Docker container (ASP.NET Core + Blazor Server)
+**Stack:** PostgreSQL 17 via EF Core (Npgsql), docker-compose deployment (ASP.NET Core + Blazor Server + PostgreSQL)
 **Scale target:** ~2 Systems, ~12 repos, ~200 documents, ~500 edges (competition demo)
 **Query philosophy:** Every graph operation is a single SQL statement. No custom graph engine.
 
 ### Core Insight
 
-> The adjacency list IS the graph database. A single `edges` table with `edge_type` discriminator, plus recursive CTEs, provides path traversal, blast radius, and dependency chains without leaving SQLite. Cross-repo is not a schema concept — it's discovered at query time when `source_document.repo_id != target_document.repo_id`.
+> The adjacency list IS the graph database. A single `edges` table with `edge_type` discriminator, plus recursive CTEs, provides path traversal, blast radius, and dependency chains without leaving PostgreSQL. Cross-repo is not a schema concept — it's discovered at query time when `source_document.repo_id != target_document.repo_id`.
 
 ---
 
@@ -25,21 +25,21 @@ Top-level business systems being analyzed.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `name` | TEXT | Display name |
 | `slug` | TEXT UNIQUE | URL-safe identifier |
 | `description` | TEXT | |
 | `scan_status` | ENUM | not_started, scanning, complete, stale |
-| `last_scan_at` | DATETIME | |
-| `created_at` | DATETIME | |
-| `updated_at` | DATETIME | |
+| `last_scan_at` | TIMESTAMPTZ | |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | |
 
 ### 2. `repositories`
 Git repositories belonging to a system.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `system_id` | FK → systems | |
 | `name` | TEXT | |
 | `slug` | TEXT | URL-safe identifier, derived from name (lowercased, hyphenated) |
@@ -49,23 +49,23 @@ Git repositories belonging to a system.
 | `language` | ENUM | Detected during pre-scan profiling |
 | `last_commit_hash` | TEXT | Git HEAD at last scan |
 | `scan_status` | ENUM | not_started, scanning, complete, stale |
-| `created_at` | DATETIME | |
-| `updated_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | |
 
 ### 3. `communication_patterns`
 Per-system configuration of how that system communicates externally (PRD: Communication Pattern Catalog). This is the data backing the Service Topology MCP tool. Written by the System Owner. **Note:** The architecture decision is to move this to per-repo (matching the repo-boundary scan model), but that migration is deferred to a separate design doc. V1 ships with per-system CP as specified in the PRD.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `system_id` | FK → systems | Which system this pattern applies to |
 | `pattern_type` | ENUM | rpc, http, mq, file, page_navigation (PRD §5.5) |
 | `endpoint_pattern` | TEXT | Regex or prefix pattern for matching endpoints (e.g., `RiskService\.\w+`, `/api/v1/.*`) |
 | `target_system_id` | FK → systems | Nullable — which system is typically the target of calls matching this pattern |
 | `normalization_rule` | TEXT | How to normalize endpoint identifiers for matching (e.g., "strip query params from HTTP URLs", "convert topic separators '.' → '/'") |
 | `is_active` | BOOL | Whether this pattern is used during scanning |
-| `created_at` | DATETIME | |
-| `updated_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | |
 
 INDEX(system_id, pattern_type), INDEX(endpoint_pattern)
 
@@ -80,7 +80,7 @@ Core document nodes — both code-linked and business-logic documents.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `system_id` | FK → systems | |
 | `repo_id` | FK → repositories | Nullable for non-code-linked docs |
 | `path` | TEXT | Hierarchical path: `src/auth/login.md` |
@@ -96,8 +96,8 @@ Core document nodes — both code-linked and business-logic documents.
 | `superseded_by_id` | FK self → documents | **Version chain head** — linked list for history |
 | `metadata_json` | TEXT | Arbitrary LLM-generated metadata |
 | `scan_id` | FK → scans | Which scan produced this version |
-| `created_at` | DATETIME | |
-| `updated_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | |
 
 **Key relationships:**
 - `parent_document_id` forms the tree hierarchy (answers "where is this organized?")
@@ -109,7 +109,7 @@ Source code anchors — determined by CodeGraph/tree-sitter at pre-scan profilin
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `repo_id` | FK → repositories | |
 | `file_path` | TEXT | Relative to repo root |
 | `file_identity_hash` | TEXT | SHA-256 of first 4096 bytes — **rename detection** |
@@ -120,7 +120,7 @@ Source code anchors — determined by CodeGraph/tree-sitter at pre-scan profilin
 | `unit_type` | ENUM | function, method, class, file |
 | `source_hash` | TEXT | SHA-256 of source text within line range |
 | `range_confidence` | ENUM | CodeGraph-validated: high, medium, low |
-| `created_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
 
 **Why CodeGraph determines boundaries, not LLMs:** LLMs hallucinate line ranges. A document claiming to describe lines 42-156 when the function actually spans 42-189 silently breaks citation accuracy (FR-11.7) and incremental re-scan (FR-9.3). CodeGraph provides deterministic, AST-verified boundaries. Confidence is tagged so reviewers know which ranges to double-check.
 
@@ -129,11 +129,11 @@ M:N link between documents and code units, with role semantics.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `document_id` | FK → documents | |
 | `code_unit_id` | FK → code_units | |
 | `role` | ENUM | **primary** (document is about this code), **referenced** (code was cited) |
-| `created_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
 
 UNIQUE(document_id, code_unit_id)
 
@@ -142,7 +142,7 @@ UNIQUE(document_id, code_unit_id)
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `source_document_id` | FK → documents | |
 | `target_document_id` | FK → documents | |
 | `edge_type` | ENUM | **REFERENCES** (doc cites/calls/links to another doc), **GENERATED_FROM** (Business Logic Doc was built from a Code Logic Doc — the two-pass provenance chain) |
@@ -154,14 +154,14 @@ UNIQUE(document_id, code_unit_id)
 | `confidence` | REAL | 0.0–1.0 — LLM-generated edges have lower confidence |
 | `metadata_json` | TEXT | Edge-specific metadata |
 | `scan_id` | FK → scans | |
-| `created_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
 
 -- No UNIQUE constraint on edges. Multiple REFERENCES edges between the same two
 -- documents are valid — e.g., when two repos communicate through different
 -- channels (RPC + MQ) between the same logical services, producing edges with
 -- different protocol/endpoint_identifier. Application-level dedup (SELECT-before-
 -- INSERT) handles intra-repo deduplication where a redundant edge is detected.
--- V2 adds partial unique indexes (SQLite 3.35+) for cross-repo edges.
+-- V2 adds partial unique indexes (PostgreSQL supports this natively) for cross-repo edges.
 
 **Design note — what lives where and why:**
 
@@ -197,7 +197,7 @@ First-class uncertainty tracking — every state is a row, including "unknown."
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `document_id` | FK → documents | Which document has the uncertainty |
 | `type` | ENUM | unresolved_call, external_system, database_query, ambiguous_logic, human_input_needed |
 | `status` | ENUM | **unresolved** (= PRD "discovered-but-unresolved"), **resolved** (= PRD "resolved"), **wontfix** (terminal non-resolution — human decision, FR-6.4 acceptable) |
@@ -209,8 +209,8 @@ First-class uncertainty tracking — every state is a row, including "unknown."
 | `target_repo_id` | FK → repositories | Nullable — which repository is believed to be the target |
 | `resolved_by_document_id` | FK → documents | Nullable — which document resolved it |
 | `resolved_by_human_input` | TEXT | Nullable — HITL answer |
-| `created_at` | DATETIME | |
-| `resolved_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
+| `resolved_at` | TIMESTAMPTZ | |
 
 **PRD alignment:** The PRD defines 3 user-facing states: resolved, discovered-but-unresolved, unknown. The database uses 3 status values + a sub_status column:
 - `status = 'resolved'` = PRD "resolved"
@@ -225,7 +225,7 @@ O(1) source→document lookup. One row per source line per document.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `repo_id` | FK → repositories | |
 | `code_unit_id` | FK → code_units | Denormalized for speed |
 | `file_path` | TEXT | Denormalized |
@@ -234,7 +234,7 @@ O(1) source→document lookup. One row per source line per document.
 
 INDEX(repo_id, file_path, line_number), INDEX(document_id), INDEX(code_unit_id)
 
-**Scale:** At 200 documents × avg 30 lines each = 6,000 rows. Trivial for SQLite (<5ms). At enterprise scale (100K+ docs), switch to SQLite R-tree for spatial line-range queries.
+**Scale:** At 200 documents × avg 30 lines each = 6,000 rows. Trivial for PostgreSQL (<5ms). At enterprise scale (100K+ docs), PostgreSQL GiST indexes provide spatial line-range query optimization.
 
 **Regeneration:** Dropped and rebuilt atomically after each scan. Not incrementally patched — at 6K rows, full rebuild is faster than surgical patching with consistency verification.
 
@@ -243,7 +243,7 @@ Authoritative index catalog for LLM-wiki retrieval. Generated after each scan.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `document_id` | FK → documents | |
 | `doc_type` | ENUM | code_logic, business_logic |
 | `system_slug` | TEXT | |
@@ -252,7 +252,7 @@ Authoritative index catalog for LLM-wiki retrieval. Generated after each scan.
 | `summary` | TEXT | One-line description for LLM selection |
 | `path` | TEXT | Document path in tree |
 | `scan_id` | FK → scans | |
-| `created_at` | DATETIME | |
+| `created_at` | TIMESTAMPTZ | |
 
 This is what gets rendered as YAML-frontmatter `index.md`. The LLM-wiki retrieval pattern: (1) read index.md, (2) parse structured entries, (3) filter by relevance, (4) read 3-5 full documents, (5) follow cross-repo links, (6) synthesize with citations.
 
@@ -261,14 +261,14 @@ Audit trail of each scan execution.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `repo_id` | FK → repositories | |
 | `trigger` | ENUM | manual, git_webhook, scheduled |
 | `status` | ENUM | running, completed, failed, cancelled |
 | `base_commit_hash` | TEXT | |
 | `target_commit_hash` | TEXT | |
-| `started_at` | DATETIME | |
-| `completed_at` | DATETIME | |
+| `started_at` | TIMESTAMPTZ | |
+| `completed_at` | TIMESTAMPTZ | |
 | `documents_created` | INT | |
 | `documents_updated` | INT | |
 | `documents_unchanged` | INT | |
@@ -282,13 +282,13 @@ Informational only — no automatic cascade triggering.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | GUID PK | |
+| `id` | UUID PK | |
 | `source_document_id` | FK → documents | The document that changed |
 | `target_repo_id` | FK → repositories | The repository that should know about it |
 | `target_document_id` | FK → documents | The document in the target system that links here |
 | `change_type` | ENUM | content_changed, edge_changed, deleted |
-| `notified_at` | DATETIME | |
-| `acknowledged_at` | DATETIME | Nullable |
+| `notified_at` | TIMESTAMPTZ | |
+| `acknowledged_at` | TIMESTAMPTZ | Nullable |
 
 **Why informational only:** Automatic cascade (Repo A change → trigger Repo B re-scan → triggers Repo C re-scan...) creates re-scan storms and deadlocks across repo boundaries. Instead, each repo's System Owner sees stale notices and decides when to re-scan. The graph is eventually consistent by design.
 
@@ -332,10 +332,10 @@ Dispatched by the Orchestrator to process a single code_unit (Pass 1) or a set o
 |-------|-----------|-----------|
 | Concurrent scans (global) | 1 | Scan Coordinator queue + `repositories.scan_status` guard |
 | Workers per scan | 5 | Orchestrator superstep fan-out limit |
-| SQLite writers | 1 (WAL mode) | EF Core transaction serialization |
-| SQLite readers during scan | Unlimited (WAL mode) | Concurrent reads allowed |
+| PostgreSQL writers | Unlimited (MVCC) | Multi-Version Concurrency Control — no write serialization |
+| PostgreSQL readers during scan | Unlimited (MVCC) | Concurrent reads never blocked by writes |
 
-**V1 rationale:** A single concurrent scan is sufficient for the demo (~12 repos, scanned sequentially or one-at-a-time). SQLite WAL mode allows users to browse existing documents while a scan writes new ones. V2 adds concurrent scan support with PostgreSQL.
+**V1 rationale:** A single concurrent scan is sufficient for the demo (~12 repos, scanned sequentially or one-at-a-time). PostgreSQL MVCC allows users to browse existing documents while a scan writes new ones with no contention. V2 adds concurrent scan support with higher worker limits.
 
 ---
 
@@ -742,7 +742,7 @@ When a repo scan completes, the resolution engine queries `uncertainties` with `
 ### Data Flow
 
 ```
-SQLite (12 tables)
+PostgreSQL (12 tables)
     ↓ EF Core queries
 GraphStateService (singleton, in-memory)
     ↓ SignalR hub push
@@ -762,7 +762,7 @@ WHERE d.system_id = @systemId
   AND d.is_current = 1
 ORDER BY d.depth, d.sort_order
 ```
-~200 nodes, ~400 edges — <50ms on SQLite.
+~200 nodes, ~400 edges — <50ms on PostgreSQL.
 
 **UncertaintyOverlay** — render open questions as diamond nodes:
 ```sql
@@ -881,7 +881,7 @@ The document graph is the structural backbone of Vulgata. It must answer five qu
 | Which documents in other repos link to this one? | FR-6.2 — cross-repo tracing is the primary demo success criterion |
 | Can we render this as a live graph? | FR-12.6, NFR-1.3 — the competition demo's visual centerpiece |
 
-**The trap we avoided:** Building a custom graph engine, event-sourcing layer, or distributed graph database. At demo scale (~200 documents, ~500 edges), SQLite recursive CTEs provide identical graph traversal capability with zero custom infrastructure. The adjacency list IS the graph database.
+**The trap we avoided:** Building a custom graph engine, event-sourcing layer, or distributed graph database. At demo scale (~200 documents, ~500 edges), PostgreSQL recursive CTEs provide identical graph traversal capability with zero custom infrastructure. The adjacency list IS the graph database.
 
 **The insight we stole:** Cross-repo is not a schema — it's a query-time emergent property. Any edge where `source.repo_id != target.repo_id` is a cross-repo link. No separate table, no dual-write, no bridge schema. One `edges` table, one recursive CTE, all queries uniform.
 
@@ -900,26 +900,26 @@ Three independent teams starting from relational, filesystem-native, and graph-n
 
 | Included | Excluded |
 |----------|----------|
-| All 12 tables, EF Core + SQLite, WAL mode | Event sourcing |
+| All 12 tables, EF Core + PostgreSQL (Npgsql) | Event sourcing |
 | CodeGraph for deterministic code_unit extraction | Surgical document patching |
-| SignalR + Blazor.Diagrams live graph | Full-text search (FTS5) |
+| SignalR + Blazor.Diagrams live graph | Full-text search (pg_trgm) |
 | Automatic cross-repo uncertainty resolution with deadlock-breaking | Multi-language tree-sitter parsers |
 | Two-phase change detection for incremental re-scan | Performance optimization for >1000 docs |
 | index.md with YAML frontmatter for LLM-wiki | Cross-repo scan orchestration for circular dependencies |
 | Manual + automatic cross-repo edge creation | Graph query API for external consumers |
 | Document version history via superseded_by_id linked list | |
 | Git webhook → incremental re-scan of changed files | |
-| Single Docker container deploy | |
+| docker-compose deploy (app + PostgreSQL) | |
 
 ### V2 (Post-Competition)
 
 - Event sourcing layered on top of scan + document tables (backfilled from existing data)
 - Surgical document patching (diff-based, only update changed sections)
-- Full-text search via SQLite FTS5
+- Full-text search via PostgreSQL `pg_trgm` (trigram) or `tsvector`
 - Multi-language tree-sitter parsers
 - Graph query API (REST + GraphQL)
 - Cross-repo scan orchestration (deadlock detection for circular dependencies)
-- Performance optimization for >1000 documents (SQLite R-tree for spatial line-range queries)
+- Performance optimization for >1000 documents (PostgreSQL GiST indexes for spatial line-range queries)
 - In-memory graph materialization at startup for sub-millisecond traversal
 
 ### Migration Path
@@ -931,7 +931,7 @@ V1 tables are a subset of V2. V2 adds tables (`event_log`, `document_patches`) a
 ## What Each Competing Plan Contributed
 
 ### From AnchorDB (Foundation)
-SQLite + EF Core as sole storage engine, adjacency-list edges table, recursive CTEs for impact analysis, `parent_document_id` tree hierarchy, `superseded_by_id` linked-list version history, 4-phase scan workflow, uniform cross-repo edge handling.
+PostgreSQL + EF Core as sole storage engine, adjacency-list edges table, recursive CTEs for impact analysis, `parent_document_id` tree hierarchy, `superseded_by_id` linked-list version history, 4-phase scan workflow, uniform cross-repo edge handling.
 
 ### From ArborGraph (Keystone Feature)
 Reverse-index table (one row per source line per document) enabling O(1) source→document lookup. Two-phase sub-file change detection. Scan journal with atomic writes. Cooperative file locking. Explicit rename handling via `file_identity_hash`. The philosophical insight that tree and graph answer different questions.
@@ -946,7 +946,7 @@ Cross-repo as emergent topological property (not a schema concept). Typed edge v
 | Idea | Source | Rationale |
 |------|--------|-----------|
 | Event sourcing in V1 | Riverbed (original) | Building a custom event store in 9 weeks is not credible |
-| Separate graph DB (Neo4j, etc.) | Riverbed (original) | Violates single-container deploy (NFR-4.1); CTEs provide same capability |
+| Separate graph DB (Neo4j, etc.) | Riverbed (original) | Violates docker-compose deploy (NFR-4.1); CTEs provide same capability |
 | "Unknown = no row" | AnchorDB (original) | Makes uncertainty invisible to renderer; every state must be a row |
 | vis.js/D3 for visualization | ArborGraph (original) | Violates FR-12.6 (requires Blazor.Diagrams) |
 | Bidirectional edge storage | Riverbed (original) | Doubles edge count, creates consistency problems; reverse via JOIN swap |
