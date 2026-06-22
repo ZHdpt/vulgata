@@ -34,7 +34,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 - Primary domain: Full-stack web application with multi-agent LLM orchestration backend
 - Complexity level: High — multi-agent orchestration, cross-repo detection, document graph with recursive traversal, real-time graph visualization, incremental re-scan with impact analysis
-- Estimated architectural components: 9 major subsystems (Web UI, Scan Coordinator, Orchestrator Agent, Worker Agents, Cross-Repo Resolution, Document Graph Store, Chat Agent, Dashboard Hub, LLM Provider Manager)
+- Estimated architectural components: 9 major subsystems (Web UI, Scan Coordinator, Orchestrator Agent, Worker Agents, Cross-Repo Resolution, Document Graph Store, Chat Agent, 管理后台 Hub, LLM Provider Manager)
 
 ### Technical Constraints & Dependencies
 
@@ -44,7 +44,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 - PostgreSQL + EF Core for demo; docker-compose deployment
 - MVVM pattern for UI; DDD where possible for domain logic
 - Source structure must accommodate future Java/Python/Node projects (separate top-level directories)
-- No aggressive UI/UX assumptions — UX resources absent for now
+- UI/UX per DESIGN.md and EXPERIENCE.md in `docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/`
 - Latest stable/prerelease versions of frameworks and libraries preferred
 
 **Key Dependencies:**
@@ -64,7 +64,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 | ------------------------------ | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Authentication & Authorization | All UI surfaces, API endpoints              | ASP.NET Core Identity + role-based access; shapes middleware pipeline                                                |
 | Concurrency Control            | Scan pipeline, worker dispatch              | Configurable limits at multiple levels; prevents resource exhaustion                                                 |
-| Real-time Updates              | Dashboard, live graph                       | SignalR hub for scan progress, document generation, link resolution events                                           |
+| Real-time Updates              | 管理后台, live graph                         | SignalR hub for scan progress, document generation, link resolution events                                           |
 | LLM Provider Management        | All agent execution                         | Multi-provider config, per-agent assignment, connection testing, API key encryption                                  |
 | Agent Error Handling           | Worker agents, orchestrator                 | Retry once, record failure, continue; graceful API degradation                                                       |
 | Observability                  | System-wide                                 | log.md (append-only, parseable) + structured .NET logging                                                            |
@@ -129,7 +129,7 @@ The system decomposes into 9 independently testable subsystems with clean, unidi
 | SP-6 | Cross-Repository Resolution | Deterministic | SP-7                  | Low — pure SQL + matching     |
 | SP-7 | Document Graph Store        | Data Layer    | None (infrastructure) | Medium — schema stability     |
 | SP-8 | Chat Agent                  | LLM           | SP-7                  | Medium — retrieval quality    |
-| SP-9 | Dashboard & Live Graph      | UI (SignalR)  | SP-3, SP-7            | Medium — real-time perf       |
+| SP-9 | 管理后台 & Live Graph       | UI (SignalR)  | SP-3, SP-7            | Medium — real-time perf       |
 
 **Development Ordering Implication:**
 
@@ -173,6 +173,7 @@ vulgata/
 ├── src/
 │   ├── dotnet/
 │   │   ├── Vulgata.Web/                 # Blazor Web App (UI host + SignalR + Identity)
+│   │   ├── Vulgata.Web.ViewModels/      # MVVM ViewModels (CommunityToolkit.Mvvm)
 │   │   ├── Vulgata.Core/                # Domain layer (DDD entities, value objects, domain services)
 │   │   ├── Vulgata.Infrastructure/      # Persistence (EF Core), Git, CodeGraph, LLM clients
 │   │   ├── Vulgata.Agents/              # MAF agent definitions, workflows, prompts
@@ -192,10 +193,11 @@ vulgata/
 
 | Project                    | Layer               | Key Contents                                                                                                                                                                                                           |
 | -------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Vulgata.Web**            | Presentation + Host | Blazor components (Views), MVVM ViewModels, SignalR hubs, Identity setup (ApplicationUser, ApplicationDbContext), Program.cs host configuration. References all other projects.                                        |
+| **Vulgata.Web**            | Presentation + Host | Blazor components (Pages, Layouts, Shared), SignalR hubs, Identity setup (ApplicationUser, ApplicationDbContext), Program.cs host configuration. Top navbar with 对话/管理后台 routes. References all other projects. |
 | **Vulgata.Core**           | Domain (DDD)        | Entities (System, Repository, ScanRun, Document, Edge, Uncertainty), ValueObjects, DomainServices interfaces, Repository interfaces, DomainEvents. Zero external dependencies.                                         |
 | **Vulgata.Infrastructure** | Infrastructure      | VulgataDbContext + EF Core migrations, Repository implementations, GitCloneService (shells out to git), CodeGraphCliService (shells out to codegraph CLI), LLMProviderManager, OpenAI client. References Vulgata.Core. |
 | **Vulgata.Agents**         | Application (MAF)   | OrchestratorAgent, WorkerAgent, ChatAgent, MAF workflow definitions, embedded prompt resources. References Vulgata.Core and Vulgata.Infrastructure.                                                                    |
+| **Vulgata.Web.ViewModels**  | Presentation (MVVM) | MVVM ViewModels using CommunityToolkit.Mvvm. Separate project for testability without web host. References Vulgata.Shared.                                                                                            |
 | **Vulgata.Shared**         | Cross-cutting       | DTOs, API contracts, enum definitions, role name constants. Zero or minimal dependencies.                                                                                                                              |
 
 ### Identity & Authorization
@@ -208,7 +210,7 @@ vulgata/
 | ----------- | ---------------------------------------------------------- | ------------- |
 | Admin       | Full system access: all CRUD, all scans, all configuration | FR-1.1        |
 | SystemOwner | Manage own systems/repositories, run scans, view results   | FR-1.2        |
-| User        | Read-only: view documents, use chat, view dashboard        | FR-1.3        |
+| User        | Read-only: view documents, use chat, view 管理后台          | FR-1.3        |
 
 **Implementation:**
 
@@ -239,15 +241,60 @@ vulgata/
 
 | Feature                                 | Component Library                                       |
 | --------------------------------------- | ------------------------------------------------------- |
-| App shell, navigation, layout           | Fluent UI (FluentNavMenu, FluentLayout)                 |
-| Forms, inputs, selects, buttons         | Fluent UI (FluentTextField, FluentSelect, FluentButton) |
-| Data tables (systems, repos, providers) | Fluent UI (FluentDataGrid)                              |
-| Dialogs, cards, progress bars           | Fluent UI (FluentDialog, FluentCard, FluentProgressBar) |
+| Top navbar (品牌 + 对话/管理后台 + bell)  | Fluent UI (FluentNavbar, FluentNavMenu)                 |
+| 管理后台 holy grail layout               | Blazor nested layouts + Fluent UI                       |
 | Chat interface                          | Fluent UI (FluentTextArea, FluentMessageBar)            |
+| Forms, inputs, selects, buttons         | Fluent UI (FluentTextField, FluentSelect, FluentButton) |
+| Data tables (system/repo list)          | Fluent UI (FluentDataGrid)                              |
+| Dialogs, cards, progress bars           | Fluent UI (FluentDialog, FluentCard, FluentProgressBar) |
 | Auth pages (login, register)            | Built-in Identity Razor pages + Fluent UI styling       |
 | Knowledge graph canvas                  | Z.Blazor.Diagrams (specialized graph rendering)         |
+| System/Repo tree view                   | Fluent UI (FluentTreeView)                              |
+| Notification slide-out panel            | Fluent UI (FluentPanel)                                 |
+| Document viewer (Markdown)              | Fluent UI + Markdown rendering library                  |
 
 **Rationale:** Fluent UI Blazor is the official Microsoft component library with a modern Microsoft look, no JS build chain, and comprehensive coverage of standard UI patterns. Z.Blazor.Diagrams is the only exception — used exclusively for the live knowledge graph visualization, which requires specialized node/edge rendering not available in standard component libraries.
+
+### Blazor Layout & Routing Strategy
+
+**Top-Level Routes:**
+- `/` or `/chat` → `ChatPage.razor` (default landing after login, uses `MainLayout`)
+- `/management` → `ManagementLayout.razor` (holy grail layout with sub-routes)
+- `/auth/login` → `LoginPage.razor`
+- `/auth/register` → `RegisterPage.razor`
+
+**MainLayout (Top Navbar):**
+```
+┌──────────────────────────────────────────────────┐
+│ 品牌标识 | 对话 | 管理后台         🔔(铃铛) 👤(头像) │
+├──────────────────────────────────────────────────┤
+│ @Body (child route renders here)                 │
+└──────────────────────────────────────────────────┘
+```
+
+**ManagementLayout (Holy Grail, nested under `/management`):**
+```
+┌──────────────────────────────────────────────────┐
+│ 管理后台顶栏: 系统管理 | 图谱 | 文档 | 扫描历史 | 设置 │
+├────────────┬─────────────────────────────────────┤
+│ 左侧栏       │  @Body (sub-route renders here)     │
+│ (导航 + 树)  │                                      │
+└────────────┴─────────────────────────────────────┘
+```
+
+**管理后台 Sub-Routes:**
+| Route | Page | Left Sidebar | Main Content |
+|---|---|---|---|
+| `/management` or `/management/dashboard` | `DashboardPage.razor` | System tree view | System detail / Repo detail (split view) |
+| `/management/graph` | `GraphPage.razor` | — (hidden) | Full-screen Z.Blazor.Diagrams canvas with floating toolbar |
+| `/management/documents` | `DocumentsPage.razor` | Document tree (virtual dir) | Markdown document viewer (split-pane) |
+| `/management/scan-history` | `ScanHistoryPage.razor` | Scan run list | Scan detail + results |
+| `/management/settings` | `SettingsPage.razor` | Settings nav | LLM Provider config / User management |
+
+**Dashboard (系统管理) — inline creation:**
+- "+ 新建系统" button on tree view → opens `CreateSystemDialog.razor`
+- "+ 新建仓库" button on system detail DataGrid → opens `CreateRepoDialog.razor`
+- No separate create pages — dialogs keep context.
 
 ### Key NuGet Packages
 
@@ -303,7 +350,7 @@ vulgata/
 - Interfaces: `I` prefix (`ISystemRepository`, `IDocumentGraphStore`)
 - Domain model types (entities, value objects, aggregates): no suffix — context implies role (`System`, `ScanRun`, `Document`, `Edge`)
 - Architectural role types: keep suffix for clarity (`ISystemRepository`, `ScanCoordinatorService`, `DocumentValidator`, `OrchestratorAgent`, `ScanHub`, `SystemsViewModel`)
-- Blazor components: feature folders under `Pages/` and `Components/`, routable pages get `Page` suffix (`SystemsPage.razor`)
+- Blazor components: feature folders under `Pages/` and `Components/`, routable pages get `Page` suffix (`ChatPage.razor`, `DashboardPage.razor`)
 - MAF agents: role-based + `Agent` suffix (`OrchestratorAgent`, `WorkerAgent`, `ChatAgent`)
 - ViewModels: `{Feature}ViewModel` (`SystemsViewModel`, `ScanProgressViewModel`)
 - Domain events: past-tense noun (`ScanCompletedDomainEvent`, `DocumentGeneratedDomainEvent`)
@@ -641,45 +688,37 @@ vulgata/
 │   │   │   │   ├── App.razor                # Root component, render mode assignment
 │   │   │   │   ├── Routes.razor             # Route table
 │   │   │   │   ├── Layout/
-│   │   │   │   │   ├── MainLayout.razor
+│   │   │   │   │   ├── MainLayout.razor        # Top navbar (品牌 + 对话 | 管理后台 + 🔔 + 👤)
 │   │   │   │   │   ├── MainLayout.razor.css
-│   │   │   │   │   ├── NavMenu.razor
-│   │   │   │   │   └── NavMenu.razor.css
+│   │   │   │   │   └── ManagementLayout.razor  # Nested holy grail layout (sidebar + content)
 │   │   │   │   ├── Pages/
-│   │   │   │   │   ├── HomePage.razor
-│   │   │   │   │   ├── Systems/
-│   │   │   │   │   │   ├── SystemsPage.razor          # List systems
-│   │   │   │   │   │   ├── SystemCreatePage.razor     # Create system
-│   │   │   │   │   │   └── SystemDetailPage.razor     # View/edit system
-│   │   │   │   │   ├── Repositories/
-│   │   │   │   │   │   ├── RepositoriesPage.razor
-│   │   │   │   │   │   ├── RepositoryCreatePage.razor
-│   │   │   │   │   │   └── RepositoryDetailPage.razor
-│   │   │   │   │   ├── Scans/
-│   │   │   │   │   │   ├── ScansPage.razor            # Scan history
-│   │   │   │   │   │   ├── ScanRunPage.razor          # Scan detail + progress
-│   │   │   │   │   │   └── ScanCreatePage.razor       # Trigger new scan
-│   │   │   │   │   ├── Documents/
-│   │   │   │   │   │   ├── DocumentsPage.razor        # Document list/search
-│   │   │   │   │   │   └── DocumentDetailPage.razor   # Document viewer
-│   │   │   │   │   ├── Graph/
-│   │   │   │   │   │   └── GraphPage.razor            # Knowledge graph (WASM)
 │   │   │   │   │   ├── Chat/
-│   │   │   │   │   │   └── ChatPage.razor             # Chat agent interface
-│   │   │   │   │   ├── Dashboard/
-│   │   │   │   │   │   └── DashboardPage.razor        # System overview
-│   │   │   │   │   ├── Admin/
-│   │   │   │   │   │   ├── ProvidersPage.razor        # LLM provider config
-│   │   │   │   │   │   └── UsersPage.razor            # User management
+│   │   │   │   │   │   └── ChatPage.razor             # Default route "/" — chat interface
+│   │   │   │   │   ├── Management/                     # 管理后台 — holy grail layout
+│   │   │   │   │   │   ├── Dashboard/                  # 系统管理 — system/repo scan progress
+│   │   │   │   │   │   │   └── DashboardPage.razor     # System tree (left) + System/Repo detail (right)
+│   │   │   │   │   │   ├── Graph/
+│   │   │   │   │   │   │   └── GraphPage.razor         # Full-screen Z.Blazor.Diagrams + toolbar
+│   │   │   │   │   │   ├── Documents/
+│   │   │   │   │   │   │   └── DocumentsPage.razor     # Split-pane: doc tree (left) + viewer (right)
+│   │   │   │   │   │   ├── ScanHistory/
+│   │   │   │   │   │   │   └── ScanHistoryPage.razor   # Scan run list + detail
+│   │   │   │   │   │   └── Settings/
+│   │   │   │   │   │       └── SettingsPage.razor       # LLM Provider config + User management
 │   │   │   │   │   └── Auth/
 │   │   │   │   │       ├── LoginPage.razor
 │   │   │   │   │       └── RegisterPage.razor
-│   │   │   │   └── Shared/                            # Reusable UI components
-│   │   │   │       ├── LoadingOverlay.razor
-│   │   │   │       ├── ErrorDisplay.razor
-│   │   │   │       ├── EmptyState.razor
-│   │   │   │       ├── ConfirmDialog.razor
-│   │   │   │       └── ScanProgressBar.razor
+│   │   │   │   ├── Shared/                              # Reusable UI components
+│   │   │   │   │   ├── LoadingOverlay.razor
+│   │   │   │   │   ├── ErrorDisplay.razor
+│   │   │   │   │   ├── EmptyState.razor
+│   │   │   │   │   ├── ConfirmDialog.razor
+│   │   │   │   │   ├── ScanProgressBar.razor
+│   │   │   │   │   ├── NotificationPanel.razor          # Slide-out HITL notification panel
+│   │   │   │   │   ├── CreateSystemDialog.razor         # Inline system creation dialog
+│   │   │   │   │   ├── CreateRepoDialog.razor           # Inline repo creation dialog
+│   │   │   │   │   ├── ModeSelector.razor               # 业务模式/技术模式 toggle
+│   │   │   │   │   └── InlineSelector.razor             # System/repo multi-select for chat
 │   │   │   ├── Hubs/
 │   │   │   │   ├── ScanHub.cs                # Scan progress + document events
 │   │   │   │   └── GraphHub.cs               # Node/edge change events
@@ -689,27 +728,19 @@ vulgata/
 │   │   │
 │   │   ├── Vulgata.Web.ViewModels/           # MVVM ViewModels
 │   │   │   ├── Vulgata.Web.ViewModels.csproj
-│   │   │   ├── Systems/
-│   │   │   │   ├── SystemsViewModel.cs
-│   │   │   │   └── SystemDetailViewModel.cs
-│   │   │   ├── Repositories/
-│   │   │   │   ├── RepositoriesViewModel.cs
-│   │   │   │   └── RepositoryDetailViewModel.cs
-│   │   │   ├── Scans/
-│   │   │   │   ├── ScansViewModel.cs
-│   │   │   │   └── ScanRunViewModel.cs
-│   │   │   ├── Documents/
-│   │   │   │   ├── DocumentsViewModel.cs
-│   │   │   │   └── DocumentDetailViewModel.cs
-│   │   │   ├── Graph/
-│   │   │   │   └── GraphViewModel.cs
 │   │   │   ├── Chat/
 │   │   │   │   └── ChatViewModel.cs
-│   │   │   ├── Dashboard/
-│   │   │   │   └── DashboardViewModel.cs
-│   │   │   ├── Admin/
-│   │   │   │   ├── ProvidersViewModel.cs
-│   │   │   │   └── UsersViewModel.cs
+│   │   │   ├── Management/
+│   │   │   │   ├── Dashboard/
+│   │   │   │   │   └── DashboardViewModel.cs         # System tree + System/Repo detail
+│   │   │   │   ├── Graph/
+│   │   │   │   │   └── GraphViewModel.cs             # Graph layout, filter, zoom state
+│   │   │   │   ├── Documents/
+│   │   │   │   │   └── DocumentsViewModel.cs         # Doc tree + viewer state
+│   │   │   │   ├── ScanHistory/
+│   │   │   │   │   └── ScanHistoryViewModel.cs       # Scan run list + detail
+│   │   │   │   └── Settings/
+│   │   │   │       └── SettingsViewModel.cs          # LLM config + user mgmt
 │   │   │   └── Auth/
 │   │   │       ├── LoginViewModel.cs
 │   │   │       └── RegisterViewModel.cs
@@ -949,7 +980,7 @@ vulgata/
 | FR-8 (Document Viewing)       | `Vulgata.Web/Pages/Documents/`, `Vulgata.Web.ViewModels/`                                        | SP-1             |
 | FR-9 (Git Monitoring)         | `Vulgata.Infrastructure/Services/GitCloneService.cs`                                             | SP-3             |
 | FR-10 (Database Tools)        | `Vulgata.Infrastructure/Queries/`                                                                | SP-7             |
-| FR-11 (LLM Provider Config)   | `Vulgata.Web/Pages/Admin/`, `Vulgata.Infrastructure/Services/LLMProviderManager.cs`              | SP-1             |
+| FR-11 (LLM Provider Config)   | `Vulgata.Web/Pages/Management/Settings/`, `Vulgata.Infrastructure/Services/LLMProviderManager.cs` | SP-1             |
 | FR-12 (Chat Agent)            | `Vulgata.Agents/ChatAgent.cs`, `Vulgata.Web/Pages/Chat/`                                         | SP-8             |
 | FR-13 (MCP Integration)       | `Vulgata.Infrastructure/` (deferred)                                                             | —                |
 | FR-14 (User-Supplied Context) | `Vulgata.Web/Pages/`, `Vulgata.Core`                                                             | SP-1             |
@@ -1104,7 +1135,7 @@ User clicks Scan → ScanRun created (Queued)
 | FR-8 (Document Viewing)       | ✅                          | Documents pages + ViewModels                                  |
 | FR-9 (Git Monitoring)         | ✅                          | GitCloneService (clone/pull at scan time)                     |
 | FR-10 (Database Tools)        | ✅                          | Query services (recursive CTE, graph traversal)               |
-| FR-11 (LLM Provider Config)   | ✅                          | ProvidersPage + LLMProviderManager                            |
+| FR-11 (LLM Provider Config)   | ✅                          | SettingsPage + LLMProviderManager                              |
 | FR-12 (Chat Agent)            | ✅                          | ChatAgent + ChatPage                                          |
 | FR-13 (MCP Integration)       | ⚠️ Deferred                | Documented as V1 deferral; architecture supports adding later |
 | FR-14 (User-Supplied Context) | ✅                          | Pages + Core context injection                                |
