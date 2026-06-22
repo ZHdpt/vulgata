@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vulgata — 管理界面 + 扫描仪表盘</title>
+    <style>
+        /* ============================================================
+   DESIGN.md tokens applied: Library Oak theme
+   Colors: primary #445E7A, accent #B98B6B
+   Typography: Noto Serif SC for section headers
+   ============================================================ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            background: #E8E4DE;
+            display: flex;
+            gap: 32px;
+            padding: 32px;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .browser {
+            width: 760px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+            position: relative;
+        }
+
+        .browser-chrome {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #FFFFFF;
+            border-bottom: 1px solid #D9D3CA;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .browser-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .browser-dot.r {
+            background: #E06767;
+        }
+
+        .browser-dot.y {
+            background: #E0B867;
+        }
+
+        .browser-dot.g {
+            background: #67C067;
+        }
+
+        .browser-title {
+            margin-left: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #445E7A;
+            opacity: 0.6;
+        }
+
+        .scenario-label {
+            position: absolute;
+            top: 56px;
+            left: -8px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 3px 10px;
+            border-radius: 0 6px 6px 0;
+            background: #D9D3CA;
+            color: #445E7A;
+        }
+
+        .app {
+            background: #F6F4F0;
+            min-height: 620px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 48px;
+            border-bottom: 1px solid #D9D3CA;
+            background: #FFFFFF;
+        }
+
+        .brand {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #445E7A;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-link {
+            font-size: 0.75rem;
+            color: #445E7A;
+            opacity: 0.7;
+            cursor: pointer;
+        }
+
+        .bell {
+            position: relative;
+            font-size: 1.15rem;
+            color: #445E7A;
+            cursor: pointer;
+        }
+
+        .bell-badge {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #B98B6B;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+        }
+
+        /* Sidebar — System Tree */
+        .sidebar {
+            width: 240px;
+            background: #FFFFFF;
+            border-right: 1px solid #D9D3CA;
+            padding: 16px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 0 16px 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #445E7A;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .tree-item {
+            padding: 8px 16px 8px 24px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-left: 3px solid transparent;
+        }
+
+        .tree-item:hover {
+            background: #EDE9E3;
+        }
+
+        .tree-item.system {
+            font-weight: 600;
+            padding-left: 16px;
+            color: #1D2026;
+        }
+
+        .tree-item.repo {
+            padding-left: 36px;
+            color: #4A5568;
+        }
+
+        .tree-item.active {
+            background: #EDE9E3;
+            border-left-color: #B98B6B;
+            font-weight: 600;
+        }
+
+        .tree-arrow {
+            font-size: 0.65rem;
+            width: 14px;
+            color: #9CA3AF;
+        }
+
+        .scan-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .scan-dot.running {
+            background: #48BB78;
+            animation: pulse 1.5s infinite;
+        }
+
+        .scan-dot.done {
+            background: #48BB78;
+        }
+
+        .scan-dot.idle {
+            background: #CBD5E0;
+        }
+
+        .scan-dot.failed {
+            background: #E06767;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.3
+            }
+        }
+
+        /* Detail panel */
+        .detail {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-family: 'Noto Serif SC', 'SimSun', serif;
+            font-size: 20px;
+            font-weight: 400;
+            color: #445E7A;
+            line-height: 1.35;
+            margin-bottom: 4px;
+        }
+
+        .section-subtitle {
+            font-size: 0.78rem;
+            color: #7A7A7A;
+        }
+
+        /* Repo metadata card */
+        .card {
+            background: #FFFFFF;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #D9D3CA;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.82rem;
+            border-bottom: 1px solid #F0EDE8;
+        }
+
+        .card-row:last-child {
+            border-bottom: none;
+        }
+
+        .card-label {
+            color: #7A7A7A;
+        }
+
+        .card-value {
+            color: #1D2026;
+            font-weight: 500;
+        }
+
+        /* Scan status section */
+        .scan-status-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            background: #F0F7F0;
+            border-radius: 8px;
+            border: 1px solid #C6E6C6;
+        }
+
+        .scan-pulse-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #48BB78;
+            animation: pulse 1.2s infinite;
+        }
+
+        .scan-info {
+            flex: 1;
+        }
+
+        .scan-info .status-text {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #1D2026;
+        }
+
+        .scan-info .status-detail {
+            font-size: 0.75rem;
+            color: #7A7A7A;
+            margin-top: 2px;
+        }
+
+        .scan-entrance {
+            padding: 8px 16px;
+            background: #445E7A;
+            color: #FFF;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            animation: pulse 2s infinite;
+        }
+
+        /* Progress mini-bar */
+        .progress-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .progress-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: #E5E0DA;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #445E7A;
+            border-radius: 3px;
+        }
+
+        .progress-text {
+            font-size: 0.72rem;
+            color: #7A7A7A;
+            white-space: nowrap;
+        }
+
+        /* Phase steps */
+        .phase-steps {
+            display: flex;
+            gap: 0;
+            margin-top: 10px;
+        }
+
+        .phase-step {
+            flex: 1;
+            text-align: center;
+            font-size: 0.68rem;
+            padding: 6px 4px;
+            position: relative;
+            color: #9CA3AF;
+        }
+
+        .phase-step.done {
+            color: #48BB78;
+        }
+
+        .phase-step.active {
+            color: #445E7A;
+            font-weight: 600;
+        }
+
+        .phase-step::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #D9D3CA;
+        }
+
+        .phase-step.done::after {
+            background: #48BB78;
+        }
+
+        .phase-step.active::after {
+            background: #445E7A;
+        }
+
+        /* HITL panel (slide-out) */
+        .hitl-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 340px;
+            height: 100%;
+            background: #FFFFFF;
+            border-left: 1px solid #D9D3CA;
+            box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 10;
+        }
+
+        .hitl-panel.show {
+            display: flex;
+        }
+
+        .hitl-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #445E7A;
+        }
+
+        .hitl-card {
+            background: #FFFAF5;
+            border: 1px solid #E8D5C0;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.78rem;
+            line-height: 1.5;
+        }
+
+        .hitl-card .repo-tag {
+            font-size: 0.68rem;
+            color: #B98B6B;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .hitl-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .hitl-btn {
+            padding: 5px 14px;
+            border-radius: 4px;
+            border: 1px solid #D9D3CA;
+            font-size: 0.72rem;
+            cursor: pointer;
+            background: #FFF;
+        }
+
+        .hitl-btn.primary {
+            background: #445E7A;
+            color: #FFF;
+            border-color: #445E7A;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="browser" style="position:relative">
+        <div class="scenario-label">张 · 管理界面</div>
+        <div class="browser-chrome">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-title">Vulgata — 管理系统</span>
+        </div>
+        <div class="app">
+            <div class="topbar">
+                <span class="brand">Vulgata</span>
+                <div class="topbar-right">
+                    <span class="nav-link">返回对话</span>
+                    <span class="bell">🔔<span class="bell-badge">2</span></span>
+                </div>
+            </div>
+            <div class="content">
+                <!-- System Tree Sidebar -->
+                <div class="sidebar">
+                    <div class="sidebar-header">系统概览</div>
+                    <div class="tree-item system">
+                        <span class="tree-arrow">▼</span> 🏦 核心银行系统
+                    </div>
+                    <div class="tree-item repo active">
+                        <span class="scan-dot running"></span> core-banking-api
+                    </div>
+                    <div class="tree-item repo">
+                        <span class="scan-dot done"></span> loan-engine
+                    </div>
+                    <div class="tree-item repo">
+                        <span class="scan-dot idle"></span> ledger-service
+                    </div>
+                    <div class="tree-item system">
+                        <span class="tree-arrow">▶</span> 📱 移动银行系统
+                    </div>
+                    <div class="tree-item repo">
+                        <span class="scan-dot done"></span> mobile-banking-app
+                    </div>
+                    <div class="tree-item repo">
+                        <span class="scan-dot failed"></span> push-notification-svc
+                    </div>
+                </div>
+
+                <!-- Repo Detail Panel -->
+                <div class="detail">
+                    <div>
+                        <div class="section-title">core-banking-api</div>
+                        <div class="section-subtitle">核心银行系统 · API 网关</div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-row">
+                            <span class="card-label">描述</span>
+                            <span class="card-value">核心银行系统 REST API 网关</span>
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">Git URL</span>
+                            <span class="card-value">git@internal:core-banking/core-banking-api.git</span>
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">上次扫描</span>
+                            <span class="card-value">—</span>
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">文档数量</span>
+                            <span class="card-value">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Scan Status — running -->
+                    <div class="scan-status-row">
+                        <span class="scan-pulse-dot"></span>
+                        <div class="scan-info">
+                            <div class="status-text">扫描中…</div>
+                            <div class="status-detail">阶段 2/4 · 3 个 Worker 活跃 · 0 个错误</div>
+                            <div class="progress-row">
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" style="width:62%"></div>
+                                </div>
+                                <span class="progress-text">186 / 302 文件</span>
+                            </div>
+                        </div>
+                        <button class="scan-entrance">📊 仪表盘</button>
+                    </div>
+
+                    <!-- Phase indicator -->
+                    <div class="phase-steps">
+                        <div class="phase-step done">预扫描分析<br>✓</div>
+                        <div class="phase-step active">代码逻辑文档<br>生成中…</div>
+                        <div class="phase-step">业务逻辑文档</div>
+                        <div class="phase-step">后处理</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

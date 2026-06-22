@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vulgata — Color Theme Variations</title>
+    <style>
+        /* ============================================================
+   GLOBAL — system font stack, no external deps
+   ============================================================ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            background: #F5F3F0;
+            color: #1E2A3A;
+            padding: 32px 40px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: #6B7280;
+            font-size: 0.9rem;
+            margin-bottom: 40px;
+        }
+
+        .variation {
+            margin-bottom: 56px;
+            border: 1px solid #E5E0DA;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #FFFFFF;
+        }
+
+        .var-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid #E5E0DA;
+        }
+
+        .var-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .var-register {
+            font-size: 0.85rem;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+
+        .tokens-section {
+            padding: 20px 28px;
+            border-bottom: 1px solid #F0EDE8;
+        }
+
+        .tokens-section h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #9CA3AF;
+            margin-bottom: 12px;
+        }
+
+        .token-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            white-space: nowrap;
+        }
+
+        .modes {
+            display: flex;
+        }
+
+        .mode {
+            flex: 1;
+            padding: 28px;
+        }
+
+        .mode:first-child {
+            border-right: 1px solid #E5E0DA;
+        }
+
+        .mode-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        /* Chat snippet layout */
+        .chat-snippet {
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 280px;
+        }
+
+        .chat-topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .chat-mode-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+
+        .chat-system-tag {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .msg-user {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 14px;
+        }
+
+        .msg-user-bubble {
+            max-width: 75%;
+            padding: 10px 16px;
+            border-radius: 16px 16px 4px 16px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .msg-assistant {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .msg-assistant-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 4px 16px 16px 16px;
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+
+        .citation {
+            font-size: 0.68rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🎨 vulgata — Color Theme Variations</h1>
+    <p class="page-subtitle">5 warm navy / steel-blue themes · Business mode (light) + IT mode (dark) side by side ·
+        Anchor family: warm navy / steel blue</p>
+
+    <!-- ============================================================
+     VARIATION 1: Trusted Vault
+     ============================================================ -->
+    <div class="variation">
+        <div class="var-header">
+            <div class="var-name">1. Trusted Vault</div>
+            <div class="var-register">Stable, institutional, secure — bank-vault solidity with muted navy warmth</div>
+        </div>
+        <div class="tokens-section">
+            <h3>Semantic Tokens</h3>
+            <div class="token-chips">
+                <span class="chip" style="background:#3B5998;color:#FFF">primary #3B5998</span>
+                <span class="chip" style="background:#FFFFFF;color:#3B5998">primary-fg #FFF</span>
+                <span class="chip" style="background:#C8956C;color:#FFF">accent #C8956C</span>
+                <span class="chip" style="background:#2B2B2B;color:#C8956C">accent-fg #2B2B2B</span>
+                <span class="chip" style="background:#F8F6F3;color:#1E2A3A">bg-light #F8F6F3</span>
+                <span class="chip" style="background:#1B2430;color:#E8E4DF">bg-dark #1B2430</span>
+                <span class="chip" style="background:#5C7AB5;color:#FFF">primary-dark #5C7AB5</span>
+                <span class="chip" style="background:#D4A87C;color:#1B2430">accent-dark #D4A87C</span>
+            </div>
+        </div>
+        <div class="modes">
+            <div class="mode" style="background:#F8F6F3">
+                <div class="mode-label" style="color:#8B7E6A">☀️ 业务模式 (Business)</div>
+                <div class="chat-snippet" style="background:#FFFFFF">
+                    <div class="chat-topbar">
+                        <span class="chat-mode-badge" style="background:#3B5998;color:#FFF">业务模式</span>
+                        <span class="chat-system-tag" style="background:#F0EDE8;color:#3B5998">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#3B5998;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#F0EDE8;color:#1E2A3A">
+                            风险评估流程包含以下步骤：<br>
+                            ① 客户发起贷款/转账等敏感操作<br>
+                            ② 风控引擎接收请求，评估交易风险等级...<br>
+                            <span class="citation">📄 引用: 风控引擎业务逻辑文档</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mode" style="background:#1B2430">
+                <div class="mode-label" style="color:#8A99B0">🌙 技术模式 (IT)</div>
+                <div class="chat-snippet" style="background:#243040">
+                    <div class="chat-topbar" style="border-color:rgba(255,255,255,0.08)">
+                        <span class="chat-mode-badge" style="background:#5C7AB5;color:#FFF">技术模式</span>
+                        <span class="chat-system-tag" style="background:#2A3A50;color:#8A99B0">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#5C7AB5;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#2A3A50;color:#E8E4DF">
+                            <code style="font-size:0.76rem">RiskEngine.evaluate()</code> 在
+                            <code>risk-engine/EvaluateService.java:42</code><br>
+                            通过 RPC 调用 <code>LoanService.processApproval()</code><br>
+                            <span class="citation">📄 src/risk/EvaluateService.java:42-68</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+     VARIATION 2: Warm Harbor
+     ============================================================ -->
+    <div class="variation">
+        <div class="var-header">
+            <div class="var-name">2. Warm Harbor</div>
+            <div class="var-register">Approachable, guiding, human-centered — welcoming amber-steel balance</div>
+        </div>
+        <div class="tokens-section">
+            <h3>Semantic Tokens</h3>
+            <div class="token-chips">
+                <span class="chip" style="background:#4A6FA5;color:#FFF">primary #4A6FA5</span>
+                <span class="chip" style="background:#FFFFFF;color:#4A6FA5">primary-fg #FFF</span>
+                <span class="chip" style="background:#E8A44C;color:#FFF">accent #E8A44C</span>
+                <span class="chip" style="background:#1E1A16;color:#E8A44C">accent-fg #1E1A16</span>
+                <span class="chip" style="background:#FBF9F5;color:#2C303A">bg-light #FBF9F5</span>
+                <span class="chip" style="background:#1C222B;color:#EDE8DE">bg-dark #1C222B</span>
+                <span class="chip" style="background:#6B8CC5;color:#FFF">primary-dark #6B8CC5</span>
+                <span class="chip" style="background:#EDBC75;color:#1C222B">accent-dark #EDBC75</span>
+            </div>
+        </div>
+        <div class="modes">
+            <div class="mode" style="background:#FBF9F5">
+                <div class="mode-label" style="color:#B8A07A">☀️ 业务模式 (Business)</div>
+                <div class="chat-snippet" style="background:#FFFFFF;border:1px solid #F0EDE8">
+                    <div class="chat-topbar">
+                        <span class="chat-mode-badge" style="background:#4A6FA5;color:#FFF">业务模式</span>
+                        <span class="chat-system-tag" style="background:#F5F1EA;color:#4A6FA5">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#4A6FA5;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#F5F1EA;color:#2C303A">
+                            风险评估流程包含以下步骤：<br>
+                            ① 客户发起贷款/转账等敏感操作<br>
+                            ② 风控引擎接收请求，评估交易风险等级...<br>
+                            <span class="citation">📄 引用: 风控引擎业务逻辑文档</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mode" style="background:#1C222B">
+                <div class="mode-label" style="color:#7B8DA8">🌙 技术模式 (IT)</div>
+                <div class="chat-snippet" style="background:#253040">
+                    <div class="chat-topbar" style="border-color:rgba(255,255,255,0.08)">
+                        <span class="chat-mode-badge" style="background:#6B8CC5;color:#FFF">技术模式</span>
+                        <span class="chat-system-tag" style="background:#2E3D55;color:#8EA0BA">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#6B8CC5;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#2E3D55;color:#EDE8DE">
+                            <code>RiskEngine.evaluate()</code> 在 <code>risk-engine/EvaluateService.java:42</code><br>
+                            通过 RPC 调用 <code>LoanService.processApproval()</code><br>
+                            <span class="citation">📄 src/risk/EvaluateService.java:42-68</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+     VARIATION 3: Precision Edge
+     ============================================================ -->
+    <div class="variation">
+        <div class="var-header">
+            <div class="var-name">3. Precision Edge</div>
+            <div class="var-register">Analytical, sharp, focused — crisp cool-navy, no distractions</div>
+        </div>
+        <div class="tokens-section">
+            <h3>Semantic Tokens</h3>
+            <div class="token-chips">
+                <span class="chip" style="background:#2C5282;color:#FFF">primary #2C5282</span>
+                <span class="chip" style="background:#FFFFFF;color:#2C5282">primary-fg #FFF</span>
+                <span class="chip" style="background:#48BB78;color:#FFF">accent #48BB78</span>
+                <span class="chip" style="background:#1A202C;color:#48BB78">accent-fg #1A202C</span>
+                <span class="chip" style="background:#F7F8FA;color:#1A202C">bg-light #F7F8FA</span>
+                <span class="chip" style="background:#171923;color:#E2E8F0">bg-dark #171923</span>
+                <span class="chip" style="background:#4A7AB5;color:#FFF">primary-dark #4A7AB5</span>
+                <span class="chip" style="background:#68D391;color:#171923">accent-dark #68D391</span>
+            </div>
+        </div>
+        <div class="modes">
+            <div class="mode" style="background:#F7F8FA">
+                <div class="mode-label" style="color:#718096">☀️ 业务模式 (Business)</div>
+                <div class="chat-snippet" style="background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
+                    <div class="chat-topbar">
+                        <span class="chat-mode-badge" style="background:#2C5282;color:#FFF">业务模式</span>
+                        <span class="chat-system-tag" style="background:#EDF2F7;color:#2C5282">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#2C5282;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#EDF2F7;color:#1A202C">
+                            风险评估流程包含以下步骤：<br>
+                            ① 客户发起贷款/转账等敏感操作<br>
+                            ② 风控引擎接收请求，评估交易风险等级...<br>
+                            <span class="citation">📄 引用: 风控引擎业务逻辑文档</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mode" style="background:#171923">
+                <div class="mode-label" style="color:#718096">🌙 技术模式 (IT)</div>
+                <div class="chat-snippet" style="background:#1F2937">
+                    <div class="chat-topbar" style="border-color:rgba(255,255,255,0.06)">
+                        <span class="chat-mode-badge" style="background:#4A7AB5;color:#FFF">技术模式</span>
+                        <span class="chat-system-tag" style="background:#2D3748;color:#A0AEC0">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#4A7AB5;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#2D3748;color:#E2E8F0">
+                            <code>RiskEngine.evaluate()</code> 在 <code>risk-engine/EvaluateService.java:42</code><br>
+                            通过 RPC 调用 <code>LoanService.processApproval()</code><br>
+                            <span class="citation">📄 src/risk/EvaluateService.java:42-68</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+     VARIATION 4: Library Oak
+     ============================================================ -->
+    <div class="variation">
+        <div class="var-header">
+            <div class="var-name">4. Library Oak</div>
+            <div class="var-register">Scholarly, contemplative, wise — deep warm blue-grays with oak-toned accents</div>
+        </div>
+        <div class="tokens-section">
+            <h3>Semantic Tokens</h3>
+            <div class="token-chips">
+                <span class="chip" style="background:#445E7A;color:#FFF">primary #445E7A</span>
+                <span class="chip" style="background:#FFFFFF;color:#445E7A">primary-fg #FFF</span>
+                <span class="chip" style="background:#B98B6B;color:#FFF">accent #B98B6B</span>
+                <span class="chip" style="background:#2A2018;color:#B98B6B">accent-fg #2A2018</span>
+                <span class="chip" style="background:#F6F4F0;color:#2D3138">bg-light #F6F4F0</span>
+                <span class="chip" style="background:#1D2026;color:#E5DDD2">bg-dark #1D2026</span>
+                <span class="chip" style="background:#6A83A2;color:#FFF">primary-dark #6A83A2</span>
+                <span class="chip" style="background:#D4A88C;color:#1D2026">accent-dark #D4A88C</span>
+            </div>
+        </div>
+        <div class="modes">
+            <div class="mode" style="background:#F6F4F0">
+                <div class="mode-label" style="color:#A89880">☀️ 业务模式 (Business)</div>
+                <div class="chat-snippet" style="background:#FFFDF9;border:1px solid #E8E2D8">
+                    <div class="chat-topbar" style="border-color:#E8E2D8">
+                        <span class="chat-mode-badge" style="background:#445E7A;color:#FFF">业务模式</span>
+                        <span class="chat-system-tag" style="background:#EFEAE0;color:#445E7A">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#445E7A;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#EFEAE0;color:#2D3138">
+                            风险评估流程包含以下步骤：<br>
+                            ① 客户发起贷款/转账等敏感操作<br>
+                            ② 风控引擎接收请求，评估交易风险等级...<br>
+                            <span class="citation">📄 引用: 风控引擎业务逻辑文档</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mode" style="background:#1D2026">
+                <div class="mode-label" style="color:#8A8290">🌙 技术模式 (IT)</div>
+                <div class="chat-snippet" style="background:#282C36">
+                    <div class="chat-topbar" style="border-color:rgba(255,255,255,0.07)">
+                        <span class="chat-mode-badge" style="background:#6A83A2;color:#FFF">技术模式</span>
+                        <span class="chat-system-tag" style="background:#353A46;color:#9AA4B8">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#6A83A2;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#353A46;color:#E5DDD2">
+                            <code>RiskEngine.evaluate()</code> 在 <code>risk-engine/EvaluateService.java:42</code><br>
+                            通过 RPC 调用 <code>LoanService.processApproval()</code><br>
+                            <span class="citation">📄 src/risk/EvaluateService.java:42-68</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+     VARIATION 5: Morning Tide
+     ============================================================ -->
+    <div class="variation">
+        <div class="var-header">
+            <div class="var-name">5. Morning Tide</div>
+            <div class="var-register">Fresh, energizing, forward-looking — steel-teal with morning-light clarity</div>
+        </div>
+        <div class="tokens-section">
+            <h3>Semantic Tokens</h3>
+            <div class="token-chips">
+                <span class="chip" style="background:#3A6888;color:#FFF">primary #3A6888</span>
+                <span class="chip" style="background:#FFFFFF;color:#3A6888">primary-fg #FFF</span>
+                <span class="chip" style="background:#5BA4A6;color:#FFF">accent #5BA4A6</span>
+                <span class="chip" style="background:#1A2528;color:#5BA4A6">accent-fg #1A2528</span>
+                <span class="chip" style="background:#F6FAFB;color:#1E2D33">bg-light #F6FAFB</span>
+                <span class="chip" style="background:#16242A;color:#E2EEF0">bg-dark #16242A</span>
+                <span class="chip" style="background:#5C90AD;color:#FFF">primary-dark #5C90AD</span>
+                <span class="chip" style="background:#7EC8CA;color:#16242A">accent-dark #7EC8CA</span>
+            </div>
+        </div>
+        <div class="modes">
+            <div class="mode" style="background:#F6FAFB">
+                <div class="mode-label" style="color:#7FA4A8">☀️ 业务模式 (Business)</div>
+                <div class="chat-snippet" style="background:#FFFFFF;border:1px solid #E4F0F2">
+                    <div class="chat-topbar" style="border-color:#E4F0F2">
+                        <span class="chat-mode-badge" style="background:#3A6888;color:#FFF">业务模式</span>
+                        <span class="chat-system-tag" style="background:#EDF5F7;color:#3A6888">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#3A6888;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#EDF5F7;color:#1E2D33">
+                            风险评估流程包含以下步骤：<br>
+                            ① 客户发起贷款/转账等敏感操作<br>
+                            ② 风控引擎接收请求，评估交易风险等级...<br>
+                            <span class="citation">📄 引用: 风控引擎业务逻辑文档</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mode" style="background:#16242A">
+                <div class="mode-label" style="color:#5C8A90">🌙 技术模式 (IT)</div>
+                <div class="chat-snippet" style="background:#1F323A">
+                    <div class="chat-topbar" style="border-color:rgba(255,255,255,0.08)">
+                        <span class="chat-mode-badge" style="background:#5C90AD;color:#FFF">技术模式</span>
+                        <span class="chat-system-tag" style="background:#2A404A;color:#8AB8C0">📱 移动银行系统</span>
+                    </div>
+                    <div class="msg-user">
+                        <div class="msg-user-bubble" style="background:#5C90AD;color:#FFF">风险评估的完整流程是什么？</div>
+                    </div>
+                    <div class="msg-assistant">
+                        <div class="msg-assistant-bubble" style="background:#2A404A;color:#E2EEF0">
+                            <code>RiskEngine.evaluate()</code> 在 <code>risk-engine/EvaluateService.java:42</code><br>
+                            通过 RPC 调用 <code>LoanService.processApproval()</code><br>
+                            <span class="citation">📄 src/risk/EvaluateService.java:42-68</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

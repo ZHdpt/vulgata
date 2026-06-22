@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vulgata — Chat 界面（对话界面）</title>
+    <style>
+        /* ============================================================
+   DESIGN.md tokens applied: Library Oak theme
+   Colors: primary #445E7A/#6A83A2, accent #B98B6B/#D4A88C
+   Typography: Noto Serif SC display, system sans body
+   Rounded: Fluent defaults 4/8/12
+   ============================================================ */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            background: #E8E4DE;
+            display: flex;
+            gap: 32px;
+            padding: 32px;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .page-label {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #8B7E6A;
+            font-weight: 700;
+        }
+
+        /* Browser frame */
+        .browser {
+            width: 520px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+            position: relative;
+        }
+
+        .browser-chrome {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid;
+        }
+
+        .browser-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .browser-dot.r {
+            background: #E06767;
+        }
+
+        .browser-dot.y {
+            background: #E0B867;
+        }
+
+        .browser-dot.g {
+            background: #67C067;
+        }
+
+        .browser-title {
+            margin-left: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            opacity: 0.6;
+        }
+
+        /* App content area */
+        .app {
+            min-height: 620px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* App topbar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 48px;
+            border-bottom: 1px solid;
+        }
+
+        .brand {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-link {
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .nav-link:hover {
+            opacity: 1;
+        }
+
+        .bell {
+            position: relative;
+            font-size: 1.15rem;
+            cursor: pointer;
+        }
+
+        .bell-badge {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #FFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mode bar */
+        .mode-bar {
+            display: flex;
+            padding: 14px 20px 10px;
+            gap: 0;
+        }
+
+        .mode-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .mode-tab.active {
+            color: #FFF;
+        }
+
+        /* Context bar (system/repo selector) */
+        .context-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            margin: 0 20px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+        }
+
+        .context-label {
+            opacity: 0.6;
+            font-size: 0.72rem;
+        }
+
+        .context-tag {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .context-tag .x {
+            cursor: pointer;
+            opacity: 0.6;
+            font-size: 0.65rem;
+        }
+
+        /* Chat area */
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Welcome banner (empty state) */
+        .welcome {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 12px;
+        }
+
+        .welcome h1 {
+            font-size: 28px;
+            font-weight: 400;
+            line-height: 1.35;
+        }
+
+        .welcome p {
+            font-size: 0.85rem;
+            opacity: 0.55;
+            max-width: 320px;
+        }
+
+        /* Message bubbles */
+        .msg {
+            display: flex;
+            margin-bottom: 4px;
+        }
+
+        .msg.assistant {
+            justify-content: flex-start;
+        }
+
+        .msg.user {
+            justify-content: flex-end;
+        }
+
+        .msg-bubble {
+            max-width: 82%;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.84rem;
+            line-height: 1.6;
+        }
+
+        .msg.assistant .msg-bubble {
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg.user .msg-bubble {
+            border-bottom-right-radius: 4px;
+        }
+
+        .citation-row {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid;
+            font-size: 0.7rem;
+        }
+
+        .citation-row span {
+            opacity: 0.7;
+        }
+
+        /* Input bar */
+        .input-bar {
+            display: flex;
+            gap: 10px;
+            padding: 14px 20px;
+            border-top: 1px solid;
+        }
+
+        .input-bar input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid;
+            font-size: 0.84rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .input-bar button {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #FFF;
+        }
+
+        /* ============ LIGHT MODE (Business) ============ */
+        .light {
+            background: #F6F4F0;
+        }
+
+        .light .browser-chrome {
+            background: #EDE9E3;
+            border-color: #D9D3CA;
+        }
+
+        .light .browser-title {
+            color: #445E7A;
+        }
+
+        .light .app {
+            background: #F6F4F0;
+            color: #1D2026;
+        }
+
+        .light .topbar {
+            background: #FFFFFF;
+            border-color: #D9D3CA;
+        }
+
+        .light .brand {
+            color: #445E7A;
+        }
+
+        .light .nav-link {
+            color: #445E7A;
+        }
+
+        .light .bell {
+            color: #445E7A;
+        }
+
+        .light .bell-badge {
+            background: #B98B6B;
+        }
+
+        .light .mode-tab {
+            background: #EDE9E3;
+            color: #7A7A7A;
+        }
+
+        .light .mode-tab.active {
+            background: #445E7A;
+            color: #FFF;
+        }
+
+        .light .context-bar {
+            background: #FFFFFF;
+            border: 1px solid #D9D3CA;
+        }
+
+        .light .context-tag {
+            background: #B98B6B;
+            color: #FFF;
+        }
+
+        .light .msg.assistant .msg-bubble {
+            background: #EDE9E3;
+            color: #1D2026;
+        }
+
+        .light .msg.user .msg-bubble {
+            background: #445E7A;
+            color: #FFF;
+        }
+
+        .light .citation-row {
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .light .welcome h1 {
+            color: #445E7A;
+        }
+
+        .light .input-bar {
+            background: #FFFFFF;
+            border-color: #D9D3CA;
+        }
+
+        .light .input-bar input {
+            background: #F6F4F0;
+            border-color: #D9D3CA;
+            color: #1D2026;
+        }
+
+        .light .input-bar input::placeholder {
+            color: #B0ACA5;
+        }
+
+        .light .input-bar button {
+            background: #445E7A;
+        }
+
+        /* ============ DARK MODE (IT) ============ */
+        .dark {
+            background: #1D2026;
+        }
+
+        .dark .browser-chrome {
+            background: #24272E;
+            border-color: #383B44;
+        }
+
+        .dark .browser-title {
+            color: #9A9DA5;
+        }
+
+        .dark .app {
+            background: #1D2026;
+            color: #F6F4F0;
+        }
+
+        .dark .topbar {
+            background: #24272E;
+            border-color: #383B44;
+        }
+
+        .dark .brand {
+            color: #6A83A2;
+        }
+
+        .dark .nav-link {
+            color: #6A83A2;
+        }
+
+        .dark .bell {
+            color: #6A83A2;
+        }
+
+        .dark .bell-badge {
+            background: #D4A88C;
+        }
+
+        .dark .mode-tab {
+            background: #282B33;
+            color: #9A9DA5;
+        }
+
+        .dark .mode-tab.active {
+            background: #6A83A2;
+            color: #FFF;
+        }
+
+        .dark .context-bar {
+            background: #24272E;
+            border: 1px solid #383B44;
+        }
+
+        .dark .context-tag {
+            background: #D4A88C;
+            color: #1D2026;
+        }
+
+        .dark .msg.assistant .msg-bubble {
+            background: #282B33;
+            color: #F6F4F0;
+        }
+
+        .dark .msg.user .msg-bubble {
+            background: #6A83A2;
+            color: #FFF;
+        }
+
+        .dark .citation-row {
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .dark .welcome h1 {
+            color: #6A83A2;
+        }
+
+        .dark .input-bar {
+            background: #24272E;
+            border-color: #383B44;
+        }
+
+        .dark .input-bar input {
+            background: #1D2026;
+            border-color: #383B44;
+            color: #F6F4F0;
+        }
+
+        .dark .input-bar input::placeholder {
+            color: #6B6E77;
+        }
+
+        .dark .input-bar button {
+            background: #6A83A2;
+        }
+
+        /* Scenario labels */
+        .scenario-label {
+            position: absolute;
+            top: 56px;
+            left: -8px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 3px 10px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .business .scenario-label {
+            background: #D9D3CA;
+            color: #445E7A;
+        }
+
+        .it .scenario-label {
+            background: #383B44;
+            color: #9A9DA5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ============================
+  SCREEN 1: 业务模式 — 林的产品经理对话 (with messages)
+  ============================ -->
+    <div class="browser business" style="position:relative">
+        <div class="scenario-label">林 · 业务模式</div>
+        <div class="browser-chrome light" style="border-radius:12px 12px 0 0">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-title">Vulgata</span>
+        </div>
+        <div class="app light">
+            <div class="topbar">
+                <span class="brand">Vulgata</span>
+                <div class="topbar-right">
+                    <span class="nav-link">管理</span>
+                    <span class="bell">🔔<span class="bell-badge">2</span></span>
+                </div>
+            </div>
+            <div class="mode-bar">
+                <div class="mode-tab active">业务模式</div>
+                <div class="mode-tab">技术模式</div>
+            </div>
+            <div class="context-bar">
+                <span class="context-label">系统范围：</span>
+                <span class="context-tag">📱 移动银行系统 <span class="x">×</span></span>
+                <span class="context-tag">🏦 核心银行系统 <span class="x">×</span></span>
+            </div>
+            <div class="chat-area">
+                <div class="msg user">
+                    <div class="msg-bubble">风险评估的完整流程是什么？</div>
+                </div>
+                <div class="msg assistant">
+                    <div class="msg-bubble">
+                        风险评估流程涉及三个系统协同工作：<br><br>
+                        ① <strong>手机银行</strong>接收用户发起的贷款或转账请求<br>
+                        ② <strong>风控引擎</strong>接收请求，根据预设规则评估该交易的风险等级（低/中/高）<br>
+                        ③ 中低风险交易交由<strong>核心银行系统</strong>完成资金操作；高风险交易触发人工审核<br><br>
+                        整个过程中还会调用反欺诈系统和征信接口进行辅助判断。
+                        <div class="citation-row">
+                            <span>📄 引用：风控引擎业务逻辑文档 · 核心银行审批流程 · 反欺诈规则清单</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="msg user">
+                    <div class="msg-bubble">如果客户信用评级是 C 级呢？</div>
+                </div>
+                <div class="msg assistant">
+                    <div class="msg-bubble">
+                        C 级客户会触发更严格的校验流程：<br><br>
+                        ① 风控引擎会将风险等级<strong>自动上调一级</strong>（低→中，中→高）<br>
+                        ② 增加了<strong>收入验证</strong>环节，需提交近三个月银行流水<br>
+                        ③ 高风险交易即便金额较小也需要<strong>支行经理审批</strong>
+                        <div class="citation-row">
+                            <span>📄 引用：信用评级规则文档 · 风控引擎评级逻辑</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="input-bar">
+                <input type="text" placeholder="描述你想了解的业务流程…">
+                <button>发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================
+  SCREEN 2: 技术模式 — 王的开发追踪对话 (with code)
+  ============================ -->
+    <div class="browser it" style="position:relative">
+        <div class="scenario-label">王 · 技术模式</div>
+        <div class="browser-chrome dark" style="border-radius:12px 12px 0 0">
+            <span class="browser-dot r"></span><span class="browser-dot y"></span><span class="browser-dot g"></span>
+            <span class="browser-title">Vulgata</span>
+        </div>
+        <div class="app dark">
+            <div class="topbar">
+                <span class="brand">Vulgata</span>
+                <div class="topbar-right">
+                    <span class="nav-link">管理</span>
+                    <span class="bell">🔔<span class="bell-badge" style="display:none"></span></span>
+                </div>
+            </div>
+            <div class="mode-bar">
+                <div class="mode-tab">业务模式</div>
+                <div class="mode-tab active">技术模式</div>
+            </div>
+            <div class="context-bar">
+                <span class="context-label">系统范围：</span>
+                <span class="context-tag">📱 移动银行系统 <span class="x">×</span></span>
+            </div>
+            <div class="chat-area">
+                <div class="msg user">
+                    <div class="msg-bubble">风险评分计算涉及哪些跨仓库调用？</div>
+                </div>
+                <div class="msg assistant">
+                    <div class="msg-bubble">
+                        <code style="font-size:0.78rem">RiskEngine.evaluate()</code> 的跨仓库调用链：<br><br>
+                        ① <strong>RPC 调用</strong> → <code>LoanService.processApproval()</code><br>
+                        &nbsp;&nbsp;&nbsp;<span style="opacity:0.6">📁 riskeng-service /
+                            EvaluateService.java:42</span><br>
+                        ② <strong>消息队列</strong> → <code>LedgerService.record()</code><br>
+                        &nbsp;&nbsp;&nbsp;<span style="opacity:0.6">📁 ledger-service /
+                            LedgerController.java:88</span><br>
+                        ③ <strong>HTTP</strong> → <code>AntiFraudClient.check()</code><br>
+                        &nbsp;&nbsp;&nbsp;<span style="opacity:0.6">📁 antifraud-service /
+                            AntiFraudClient.java:23</span>
+                        <div class="citation-row">
+                            <span>📄 src/risk/EvaluateService.java:42-68 · src/ledger/LedgerController.java:88 ·
+                                src/antifraud/AntiFraudClient.java:23</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="msg user">
+                    <div class="msg-bubble">这段逻辑在哪个仓库改了最近一次？</div>
+                </div>
+                <div class="msg assistant">
+                    <div class="msg-bubble">
+                        <code>RiskEngine.evaluate()</code> 最近变更：<br><br>
+                        📅 <strong>2026-06-18</strong> · 提交人：wang-dev<br>
+                        ✏️ "重构风控评分逻辑，将外部征信查询提取为独立 Pass"<br>
+                        📁 riskeng-service · <code>EvaluateService.java</code> ·
+                        <code>RiskScoreCalculator.java</code><br><br>
+                        关联文档：<span style="opacity:0.7">重构方案-风控引擎.md</span>
+                        <div class="citation-row">
+                            <span>📄 提交 8a3f2c1 · 重构方案-风控引擎.md</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="input-bar">
+                <input type="text" placeholder="输入函数名、接口路径或技术问题…">
+                <button>发送</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
