@@ -1,0 +1,40 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Vulgata.Web.Data
+
+@inject SignInManager<ApplicationUser> SignInManager
+
+<ul class="nav nav-pills flex-column">
+    <li class="nav-item">
+        <NavLink class="nav-link" href="Account/Manage" Match="NavLinkMatch.All">个人资料</NavLink>
+    </li>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="Account/Manage/Email">邮箱</NavLink>
+    </li>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="Account/Manage/ChangePassword">密码</NavLink>
+    </li>
+    @if (hasExternalLogins)
+    {
+        <li class="nav-item">
+            <NavLink class="nav-link" href="Account/Manage/ExternalLogins">外部登录</NavLink>
+        </li>
+    }
+    <li class="nav-item">
+        <NavLink class="nav-link" href="Account/Manage/TwoFactorAuthentication">双因素认证</NavLink>
+    </li>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="Account/Manage/Passkeys">通行密钥</NavLink>
+    </li>
+    <li class="nav-item">
+        <NavLink class="nav-link" href="Account/Manage/PersonalData">个人数据</NavLink>
+    </li>
+</ul>
+
+@code {
+    private bool hasExternalLogins;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+    }
+}

@@ -1,0 +1,73 @@
+﻿@implements IDisposable
+@inject NavigationManager NavigationManager
+
+@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <header class="top-nav">
+        <a class="brand" href="/">Vulgata</a>
+
+        <nav class="primary-nav">
+            <NavLink href="/" Match="NavLinkMatch.All">对话</NavLink>
+            <AuthorizeView Roles="Administrator,SystemOwner">
+                <NavLink href="/management">管理后台</NavLink>
+            </AuthorizeView>
+        </nav>
+
+        <div class="actions">
+            <FluentButton Class="icon-button" Appearance="Appearance.Stealth" Title="通知">
+                🔔
+            </FluentButton>
+
+            <AuthorizeView>
+                <Authorized>
+                    <details class="avatar-menu">
+                        <summary>@(context.User.Identity?.Name ?? "用户")</summary>
+                        <div class="avatar-dropdown">
+                            <a href="/Account/Manage">个人资料</a>
+                            <form action="Account/Logout" method="post">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+                                <button type="submit">退出登录</button>
+                            </form>
+                        </div>
+                    </details>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="auth-link" href="/Account/Login">登录</a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </header>
+
+    <main class="page-content">
+        @Body
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    页面发生未处理错误。
+    <a href="." class="reload">刷新</a>
+    <span class="dismiss">✕</span>
+</div>
+
+@code {
+    private string? _currentUrl;
+
+    protected override void OnInitialized()
+    {
+        _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

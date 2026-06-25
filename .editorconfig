@@ -1,0 +1,41 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.cs]
+# Async methods MUST have Async suffix
+dotnet_naming_rule.async_suffix_required.severity = error
+dotnet_naming_rule.async_suffix_required.symbols = async_methods
+dotnet_naming_rule.async_suffix_required.style = async_suffix_style
+dotnet_naming_symbols.async_methods.applicable_kinds = method
+dotnet_naming_symbols.async_methods.applicable_accessibilities = *
+dotnet_naming_symbols.async_methods.required_modifiers = async
+dotnet_naming_style.async_suffix_style.capitalization = pascal_case
+dotnet_naming_style.async_suffix_style.required_suffix = Async
+
+# Private fields: _camelCase
+dotnet_naming_rule.private_fields_camel_underscore.severity = error
+dotnet_naming_rule.private_fields_camel_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_camel_underscore.style = camel_underscore_style
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.camel_underscore_style.capitalization = camel_case
+dotnet_naming_style.camel_underscore_style.required_prefix = _
+
+# Types and methods: PascalCase
+dotnet_naming_rule.pascal_case.severity = error
+dotnet_naming_rule.pascal_case.symbols = public_symbols
+dotnet_naming_rule.pascal_case.style = pascal_case_style
+dotnet_naming_symbols.public_symbols.applicable_kinds = class, struct, interface, enum, property, method
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public, internal
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# Roslyn analyzers
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+dotnet_analyzer_diagnostic.category-Design.severity = suggestion

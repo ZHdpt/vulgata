@@ -1,0 +1,78 @@
+@implements IDisposable
+@inject NavigationManager NavigationManager
+
+@inherits LayoutComponentBase
+
+<div class="management-shell">
+    <header class="management-top">
+        <a class="brand" href="/">Vulgata</a>
+
+        <nav class="top-nav-links">
+            <a href="/">对话</a>
+            <a class="active-link" href="/management">管理后台</a>
+        </nav>
+
+        <div class="actions">
+            <FluentButton Class="icon-button" Appearance="Appearance.Stealth" Title="通知">🔔</FluentButton>
+            <details class="avatar-menu">
+                <AuthorizeView>
+                    <Authorized>
+                        <summary>@(context.User.Identity?.Name ?? "用户")</summary>
+                    </Authorized>
+                    <NotAuthorized>
+                        <summary>用户</summary>
+                    </NotAuthorized>
+                </AuthorizeView>
+                <div class="avatar-dropdown">
+                    <a href="/Account/Manage">个人资料</a>
+                    <form action="/Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+                        <button type="submit">退出登录</button>
+                    </form>
+                </div>
+            </details>
+        </div>
+    </header>
+
+    <div class="management-tabs">
+        <NavLink href="/management" Match="NavLinkMatch.All">系统管理</NavLink>
+        <NavLink href="/management/graph">图谱</NavLink>
+        <NavLink href="/management/documents">文档</NavLink>
+        <NavLink href="/management/scan-history">扫描历史</NavLink>
+        <NavLink href="/management/settings">设置</NavLink>
+    </div>
+
+    <div class="holy-grail">
+        <aside class="left-sidebar">
+            <h3>系统树</h3>
+            <p>系统/仓库树将于 Epic 2 完成。</p>
+            <FluentButton Appearance="Appearance.Accent">+ 新建系统</FluentButton>
+        </aside>
+
+        <main class="main-content">
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    private string? _currentUrl;
+
+    protected override void OnInitialized()
+    {
+        _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

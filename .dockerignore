@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/node_modules/
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.nupkg
+Dockerfile*
+docker-compose*.yml

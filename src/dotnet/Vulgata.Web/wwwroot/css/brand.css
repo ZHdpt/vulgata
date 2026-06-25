@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC&display=swap');
+/* NOTE: Google Fonts CDN is a single point of failure for users behind firewalls (e.g., China GFW).
+   Consider self-hosting the font file or providing a local fallback for production. */
+
+:root {
+    --vulgata-primary: #445E7A;
+    --vulgata-primary-foreground: #FFFFFF;
+    --vulgata-accent: #B98B6B;
+    --vulgata-accent-foreground: #FFFFFF;
+
+    --vulgata-bg: #F6F4F0;
+    --vulgata-fg: #1D2026;
+    --vulgata-surface: #FFFFFF;
+    --vulgata-muted: #EDE9E3;
+    --vulgata-muted-fg: #7A7A7A;
+    --vulgata-border: #D9D3CA;
+}
+
+[data-theme="dark"] {
+    --vulgata-primary: #6A83A2;
+    --vulgata-accent: #D4A88C;
+    --vulgata-accent-foreground: #1D2026;
+
+    --vulgata-bg: #1D2026;
+    --vulgata-fg: #F6F4F0;
+    --vulgata-surface: #24272E;
+    --vulgata-muted: #282B33;
+    --vulgata-muted-fg: #9A9DA5;
+    --vulgata-border: #383B44;
+}
+
+.display-serif {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 400;
+}
+
+.display-serif-lg {
+    font-size: 32px;
+    line-height: 1.3;
+}
+
+.display-serif-sm {
+    font-size: 22px;
+    line-height: 1.35;
+}
+
+.primary-button {
+    background: var(--vulgata-primary);
+    color: var(--vulgata-primary-foreground);
+}
+
+.context-tag {
+    background: var(--vulgata-accent);
+    color: var(--vulgata-accent-foreground);
+}

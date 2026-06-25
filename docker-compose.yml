@@ -1,0 +1,42 @@
+services:
+  vulgata:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: vulgata-app
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=vulgata;Username=vulgata;Password=${DB_PASSWORD:-vulgata_dev}
+    volumes:
+      - ./prompts:/app/prompts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: vulgata-postgres
+    environment:
+      POSTGRES_DB: vulgata
+      POSTGRES_USER: vulgata
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vulgata_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vulgata -d vulgata"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

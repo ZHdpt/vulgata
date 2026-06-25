@@ -1,0 +1,137 @@
+.management-shell {
+    min-height: 100vh;
+    background: var(--vulgata-bg);
+    color: var(--vulgata-fg);
+}
+
+.management-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--vulgata-border);
+    background: var(--vulgata-surface);
+    padding: 0.75rem 1rem;
+}
+
+.brand {
+    color: var(--vulgata-primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.top-nav-links {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.top-nav-links a {
+    color: var(--vulgata-fg);
+    text-decoration: none;
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+}
+
+.top-nav-links .active-link {
+    background: var(--vulgata-primary);
+    color: var(--vulgata-primary-foreground);
+}
+
+.management-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--vulgata-border);
+    background: var(--vulgata-surface);
+    padding: 0.65rem 1rem;
+}
+
+.management-tabs ::deep a {
+    color: var(--vulgata-fg);
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+}
+
+.management-tabs ::deep a.active {
+    background: var(--vulgata-primary);
+    color: var(--vulgata-primary-foreground);
+}
+
+.holy-grail {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    min-height: calc(100vh - 126px);
+}
+
+.left-sidebar {
+    border-right: 1px solid var(--vulgata-border);
+    background: var(--vulgata-muted);
+    padding: 1rem;
+}
+
+.main-content {
+    padding: 1rem;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.avatar-menu {
+    position: relative;
+}
+
+.avatar-menu summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.avatar-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.avatar-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: absolute;
+    right: 0;
+    margin-top: 0.5rem;
+    min-width: 8.5rem;
+    border: 1px solid var(--vulgata-border);
+    border-radius: 8px;
+    background: var(--vulgata-surface);
+    padding: 0.65rem;
+}
+
+.avatar-dropdown form {
+    margin: 0;
+}
+
+.avatar-dropdown button {
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--vulgata-fg);
+    padding: 0;
+    text-align: left;
+}
+
+.avatar-dropdown a {
+    color: var(--vulgata-fg);
+    text-decoration: none;
+}
+
+@media (max-width: 900px) {
+    .holy-grail {
+        grid-template-columns: 1fr;
+    }
+
+    .left-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--vulgata-border);
+    }
+}

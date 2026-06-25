@@ -1,0 +1,136 @@
+.app-shell {
+    min-height: 100vh;
+    background: var(--vulgata-bg);
+    color: var(--vulgata-fg);
+}
+
+.top-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--vulgata-border);
+    background: var(--vulgata-surface);
+    padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    color: var(--vulgata-primary);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+.primary-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.primary-nav ::deep a {
+    color: var(--vulgata-fg);
+    text-decoration: none;
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+}
+
+.primary-nav ::deep a.active {
+    background: var(--vulgata-primary);
+    color: var(--vulgata-primary-foreground);
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.icon-button {
+    font-size: 1.2rem;
+}
+
+.auth-link,
+.avatar-menu summary,
+.avatar-dropdown a,
+.avatar-dropdown button {
+    color: var(--vulgata-fg);
+    font-size: 0.9rem;
+}
+
+.avatar-menu {
+    position: relative;
+}
+
+.avatar-menu summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.avatar-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.avatar-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: absolute;
+    right: 0;
+    margin-top: 0.5rem;
+    min-width: 8.5rem;
+    border: 1px solid var(--vulgata-border);
+    border-radius: 8px;
+    background: var(--vulgata-surface);
+    padding: 0.65rem;
+}
+
+.avatar-dropdown form {
+    margin: 0;
+}
+
+.avatar-dropdown button {
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 0;
+}
+
+.page-content {
+    padding: 1.25rem;
+}
+
+@media (max-width: 900px) {
+    .top-nav {
+        flex-wrap: wrap;
+    }
+
+    .primary-nav {
+        order: 3;
+        width: 100%;
+    }
+}
+
+#blazor-error-ui {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

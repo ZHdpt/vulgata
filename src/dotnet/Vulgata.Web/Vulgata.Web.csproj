@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-Vulgata_Web-f28a6614-53f7-42aa-957d-11b92a60b31b</UserSecretsId>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vulgata.Core\Vulgata.Core.csproj" />
+    <ProjectReference Include="..\Vulgata.Infrastructure\Vulgata.Infrastructure.csproj" />
+    <ProjectReference Include="..\Vulgata.Agents\Vulgata.Agents.csproj" />
+    <ProjectReference Include="..\Vulgata.Shared\Vulgata.Shared.csproj" />
+    <ProjectReference Include="..\Vulgata.Web.ViewModels\Vulgata.Web.ViewModels.csproj" />
+  </ItemGroup>
+
+</Project>
