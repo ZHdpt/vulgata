@@ -8,9 +8,9 @@ The default invocation is headless: input goes in, JSON comes out. The contract 
 {
   "status": "complete",
   "files": [
-    "_bmad-output/specs/spec-quarter-drop/SPEC.md",
-    "_bmad-output/specs/spec-quarter-drop/glossary.md",
-    "_bmad-output/specs/spec-quarter-drop/.decision-log.md"
+    "docs/bmad/specs/spec-quarter-drop/SPEC.md",
+    "docs/bmad/specs/spec-quarter-drop/glossary.md",
+    "docs/bmad/specs/spec-quarter-drop/.decision-log.md"
   ]
 }
 ```

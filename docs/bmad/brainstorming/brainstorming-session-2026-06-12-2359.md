@@ -11,7 +11,7 @@ techniques_used:
   - 'Five Whys'
   - 'Decision Tree Mapping'
 ideas_generated: 18
-context_file: g:\source\repos\vulgata\_bmad-output\planning-artifacts\briefs\brief-vulgata-2026-06-11\brief.md
+context_file: g:\source\repos\vulgata\docs/bmad\planning-artifacts\briefs\brief-vulgata-2026-06-11\brief.md
 ---
 
 # Brainstorming Session Results

@@ -1,6 +1,6 @@
 # Input Reconciliation: PRD vs. Source Documents
 
-**PRD:** [prd.md](file:///g:/source/repos/vulgata/_bmad-output/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md)
+**PRD:** [prd.md](file:///g:/source/repos/vulgata/docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md)
 **Date:** 2026-06-16
 
 ---

@@ -4,12 +4,12 @@ stage: verdict
 created: 2026-06-12
 updated: 2026-06-12
 inputs:
-  - _bmad-output/planning-artifacts/briefs/brief-vulgata-2026-06-11/brief.md
-  - _bmad-output/planning-artifacts/briefs/brief-vulgata-2026-06-11/addendum.md
-  - _bmad-output/planning-artifacts/briefs/brief-vulgata-2026-06-11/.decision-log.md
-  - _bmad-output/brainstorming/brainstorming-session-2026-06-12-2359.md
-  - _bmad-output/planning-artifacts/research/domain-enterprise-code-analysis-llm-business-logic-extraction-research-2026-06-12.md
-  - _bmad-output/planning-artifacts/research/technical-vulgata-core-technologies-research-2026-06-12.md
+  - docs/bmad/planning-artifacts/briefs/brief-vulgata-2026-06-11/brief.md
+  - docs/bmad/planning-artifacts/briefs/brief-vulgata-2026-06-11/addendum.md
+  - docs/bmad/planning-artifacts/briefs/brief-vulgata-2026-06-11/.decision-log.md
+  - docs/bmad/brainstorming/brainstorming-session-2026-06-12-2359.md
+  - docs/bmad/planning-artifacts/research/domain-enterprise-code-analysis-llm-business-logic-extraction-research-2026-06-12.md
+  - docs/bmad/planning-artifacts/research/technical-vulgata-core-technologies-research-2026-06-12.md
   - docs/requirement-draft.md
   - docs/judge-rubric.txt
 ---

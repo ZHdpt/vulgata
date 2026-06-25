@@ -16,8 +16,8 @@ document_output_language = "English"
 output_folder = "{project-root}/docs/bmad"
 
 [modules.bmm]
-planning_artifacts = "{project-root}/_bmad-output/planning-artifacts"
-implementation_artifacts = "{project-root}/_bmad-output/implementation-artifacts"
+planning_artifacts = "{project-root}/docs/bmad/planning-artifacts"
+implementation_artifacts = "{project-root}/docs/bmad/implementation-artifacts"
 project_knowledge = "{project-root}/docs"
 
 [agents.bmad-agent-analyst]
