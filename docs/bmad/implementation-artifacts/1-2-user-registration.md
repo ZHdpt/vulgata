@@ -4,7 +4,7 @@ baseline_commit: c1704719eb762752e5bd461ba9fe51512023fa95
 
 # Story 1.2: User Registration
 
-Status: review
+Status: done
 
 ## Story
 
