@@ -4,7 +4,7 @@ baseline_commit: f9d4fa9eb762752e5bd461ba9fe51512023fa95
 
 # Story 1.3: Login & Logout
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -107,6 +107,10 @@ so that I can access my authorized features and protect my session.
     - [x] 6.6 Test: `ProtectedRoute_Unauthenticated_RedirectsToLogin` — GET "/" without auth cookie, assert redirect to "/Account/Login?returnUrl=%2F"
     - [x] 6.7 Test: `Login_WithReturnUrl_RedirectsToOriginalTarget` — POST login with returnUrl, assert redirect to original URL
     - [x] 6.8 Use the same test infrastructure pattern established in Story 1.2 (`IdentityRegistrationTests.cs` as reference) for component-level unit tests where applicable. For HTTP-level tests (cookie assertion, redirect verification), use `WebApplicationFactory<Program>` with `AllowAutoRedirect = false` as shown in the code examples above. Note: Story 1.2 used component-level tests with test doubles because registration tests don't require real HTTP cookies; login/logout tests DO require real HTTP for cookie round-trips.
+
+### Review Findings
+
+- [ ] [Review][Patch] Correct the malformed `baseline_commit` frontmatter value so Story 1.3 review automation resolves the intended baseline SHA [docs/bmad/implementation-artifacts/1-3-login-and-logout.md:2]
 
 ## Dev Notes
 
