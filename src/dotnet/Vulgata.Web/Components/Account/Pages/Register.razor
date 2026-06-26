@@ -133,12 +133,12 @@
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "邮箱字段是必需的。")]
+        [EmailAddress(ErrorMessage = "邮箱字段不是有效的电子邮件地址。")]
         [Display(Name = "邮箱")]
         public string Email { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessage = "密码字段是必需的。")]
         [StringLength(100, ErrorMessage = "{0}长度必须在 {2} 到 {1} 之间。", MinimumLength = 8)]
         [DataType(DataType.Password)]
         [Display(Name = "密码")]

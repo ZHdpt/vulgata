@@ -48,9 +48,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.Password.RequireUppercase = true;
         options.Password.RequireNonAlphanumeric = true;
     })
+    .AddErrorDescriber<ChineseIdentityErrorDescriber>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
