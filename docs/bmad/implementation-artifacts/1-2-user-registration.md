@@ -4,7 +4,7 @@ baseline_commit: c1704719eb762752e5bd461ba9fe51512023fa95
 
 # Story 1.2: User Registration
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -90,6 +90,7 @@ so that I can access Vulgata.
 
 - [x] [Review][Decision] Choose a migration strategy for pre-Story-1.2 password hashes — `BcryptPasswordHasher.VerifyHashedPassword()` now calls `BCrypt.Net.BCrypt.EnhancedVerify(...)` directly. Runtime probing against a non-bcrypt hash throws `Invalid salt version`, and the login flow goes through `SignInManager.PasswordSignInAsync(...)`, so any accounts created before bcrypt was introduced need an explicit compatibility decision: add legacy PBKDF2 verification with rehash-on-success, or deliberately invalidate/reset existing passwords and document that rollout.
 - [x] [Review][Patch] Re-open Task 5 until verification exercises the real registration and migration paths [docs/bmad/implementation-artifacts/1-2-user-registration.md:324]
+- [ ] [Review][Patch] Enforce unique email in production Identity configuration and cover the real duplicate-email registration path with an executable test; `Program.cs` never sets `options.User.RequireUniqueEmail = true`, so production registration can fall back to `DuplicateUserName` (`用户名已存在。`) because username is set to email, while the focused harness only enables unique email inside tests [src/dotnet/Vulgata.Web/Program.cs:41]
 
 ## Dev Notes
 
