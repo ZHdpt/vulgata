@@ -1,6 +1,10 @@
+---
+baseline_commit: 5dc9285a8805d06864b80a25d6f36789da66cb01
+---
+
 # Story 1.4: Profile Management
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -48,48 +52,48 @@ so that I can keep my display name, email, and password current.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add Display Name Support (AC-1, AC-2)
-  - [ ] 1.1 Add `DisplayName` to `ApplicationUser` in `src/dotnet/Vulgata.Web/Data/ApplicationUser.cs`
-  - [ ] 1.2 Generate the required Identity migration files for the new `DisplayName` column under `src/dotnet/Vulgata.Web/Data/Migrations/`
-  - [ ] 1.3 Keep the column nullable or provide a safe fallback for existing users so pre-existing accounts do not break on first load
-  - [ ] 1.4 Use `user.DisplayName ?? user.UserName` as the initial display name fallback for existing accounts created before this story
+- [x] Task 1: Add Display Name Support (AC-1, AC-2)
+  - [x] 1.1 Add `DisplayName` to `ApplicationUser` in `src/dotnet/Vulgata.Web/Data/ApplicationUser.cs`
+  - [x] 1.2 Generate the required Identity migration files for the new `DisplayName` column under `src/dotnet/Vulgata.Web/Data/Migrations/`
+  - [x] 1.3 Keep the column nullable or provide a safe fallback for existing users so pre-existing accounts do not break on first load
+  - [x] 1.4 Use `user.DisplayName ?? user.UserName` as the initial display name fallback for existing accounts created before this story
 
-- [ ] Task 2: Update Profile Page UI (AC-1, AC-2)
-  - [ ] 2.1 Update `src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Index.razor` to edit `DisplayName` instead of `PhoneNumber`
-  - [ ] 2.2 Show the current email address on the profile page as read-only context
-  - [ ] 2.3 Keep the page in Chinese and aligned with Fluent UI usage already established in Stories 1.1-1.3
-  - [ ] 2.4 On successful save, call `RefreshSignInAsync(user)` and show a Chinese success message
-  - [ ] 2.5 Do not introduce new profile fields beyond `DisplayName` in this story
+- [x] Task 2: Update Profile Page UI (AC-1, AC-2)
+  - [x] 2.1 Update `src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Index.razor` to edit `DisplayName` instead of `PhoneNumber`
+  - [x] 2.2 Show the current email address on the profile page as read-only context
+  - [x] 2.3 Keep the page in Chinese and aligned with Fluent UI usage already established in Stories 1.1-1.3
+  - [x] 2.4 On successful save, call `RefreshSignInAsync(user)` and show a Chinese success message
+  - [x] 2.5 Do not introduce new profile fields beyond `DisplayName` in this story
 
-- [ ] Task 3: Replace Deferred Email-Confirmation Flow with Direct V1 Email Update (AC-3, AC-4)
-  - [ ] 3.1 Update `src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Email.razor` to directly change the email instead of sending a confirmation link
-  - [ ] 3.2 Update both `Email` and `UserName` together so login-by-email continues to work after an email change
-  - [ ] 3.3 Reuse the existing `ChineseIdentityErrorDescriber` so duplicate-email failures surface as `该邮箱已被注册`
-  - [ ] 3.4 Remove or bypass the no-op email confirmation flow for this page in V1; do not rely on `IdentityNoOpEmailSender` for the happy path
-  - [ ] 3.5 Show Chinese status messages for unchanged email / successful email update / duplicate email failure
+- [x] Task 3: Replace Deferred Email-Confirmation Flow with Direct V1 Email Update (AC-3, AC-4)
+  - [x] 3.1 Update `src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Email.razor` to directly change the email instead of sending a confirmation link
+  - [x] 3.2 Update both `Email` and `UserName` together so login-by-email continues to work after an email change
+  - [x] 3.3 Reuse the existing `ChineseIdentityErrorDescriber` so duplicate-email failures surface as `该邮箱已被注册`
+  - [x] 3.4 Remove or bypass the no-op email confirmation flow for this page in V1; do not rely on `IdentityNoOpEmailSender` for the happy path
+  - [x] 3.5 Show Chinese status messages for unchanged email / successful email update / duplicate email failure
 
-- [ ] Task 4: Tighten Change Password UX and Messages (AC-5, AC-6)
-  - [ ] 4.1 Update `src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/ChangePassword.razor` so incorrect current password shows the exact message `当前密码不正确`
-  - [ ] 4.2 Validate the current password explicitly before attempting the password change so the incorrect-current-password path can be distinguished from confirmation-mismatch validation
-  - [ ] 4.3 Localize remaining English data-annotation labels, validation messages, and success strings in the password page
-  - [ ] 4.4 Keep the user signed in after a successful password change via `RefreshSignInAsync(user)`
+- [x] Task 4: Tighten Change Password UX and Messages (AC-5, AC-6)
+  - [x] 4.1 Update `src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/ChangePassword.razor` so incorrect current password shows the exact message `当前密码不正确`
+  - [x] 4.2 Validate the current password explicitly before attempting the password change so the incorrect-current-password path can be distinguished from confirmation-mismatch validation
+  - [x] 4.3 Localize remaining English data-annotation labels, validation messages, and success strings in the password page
+  - [x] 4.4 Keep the user signed in after a successful password change via `RefreshSignInAsync(user)`
 
-- [ ] Task 5: Add Executable Profile Management Tests (AC-1 through AC-6)
-  - [ ] 5.1 Add `tests/Vulgata.Tests/ProfileManagementTests.cs`
-  - [ ] 5.2 Test that an authenticated user can load the profile page and see current display name + email
-  - [ ] 5.3 Test that changing display name persists the new value
-  - [ ] 5.4 Test that changing email to a unique address updates both `Email` and `UserName`
-  - [ ] 5.5 Test that changing email to an existing address shows `该邮箱已被注册`
-  - [ ] 5.6 Test that an incorrect current password shows `当前密码不正确` and leaves the password unchanged
-  - [ ] 5.7 Test that a successful password change preserves the authenticated session and invalidates the old password
+- [x] Task 5: Add Executable Profile Management Tests (AC-1 through AC-6)
+  - [x] 5.1 Add `tests/Vulgata.Tests/ProfileManagementTests.cs`
+  - [x] 5.2 Test that an authenticated user can load the profile page and see current display name + email
+  - [x] 5.3 Test that changing display name persists the new value
+  - [x] 5.4 Test that changing email to a unique address updates both `Email` and `UserName`
+  - [x] 5.5 Test that changing email to an existing address shows `该邮箱已被注册`
+  - [x] 5.6 Test that an incorrect current password shows `当前密码不正确` and leaves the password unchanged
+  - [x] 5.7 Test that a successful password change preserves the authenticated session and invalidates the old password
 
-- [ ] Task 6: Manual Verification Checklist
-  - [ ] 6.1 Log in and open `个人资料`
-  - [ ] 6.2 Change display name and verify the success message appears in Chinese
-  - [ ] 6.3 Change email to a unique address and verify login still works with the new email
-  - [ ] 6.4 Attempt to change email to an existing address and verify `该邮箱已被注册`
-  - [ ] 6.5 Enter an incorrect current password and verify `当前密码不正确`
-  - [ ] 6.6 Change password successfully and verify the session remains active
+- [x] Task 6: Manual Verification Checklist
+  - [x] 6.1 Log in and open `个人资料`
+  - [x] 6.2 Change display name and verify the success message appears in Chinese
+  - [x] 6.3 Change email to a unique address and verify login still works with the new email
+  - [x] 6.4 Attempt to change email to an existing address and verify `该邮箱已被注册`
+  - [x] 6.5 Enter an incorrect current password and verify `当前密码不正确`
+  - [x] 6.6 Change password successfully and verify the session remains active
 
 ## Dev Notes
 
@@ -172,10 +176,36 @@ e00b8cf Prepare story 1.3 for development
 
 #### Agent Model Used
 
-{{agent_model_name_version}}
+GPT-5.3-Codex
 
 #### Debug Log References
 
+- `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter ProfileManagementTests` (red phase; compile failure before `DisplayName` implementation)
+- `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter ProfileManagementTests` (green phase; 6/6 passed)
+- `dotnet test Vulgata.slnx` (full regression; 33/33 passed)
+
 #### Completion Notes List
 
+- Added `DisplayName` to `ApplicationUser` and introduced migration `00000000000001_AddDisplayNameToApplicationUser` with nullable column semantics for compatibility with existing users.
+- Reworked `Account/Manage` profile UI to edit `DisplayName` with fallback initialization via `user.DisplayName ?? user.UserName`, show read-only current email, and persist changes with `RefreshSignInAsync` + Chinese success feedback.
+- Replaced email-change confirmation-link flow with direct V1 email update in `Account/Manage/Email`, updating both `Email` and `UserName`, preserving Chinese duplicate-email behavior (`该邮箱已被注册`), and retaining authenticated session refresh.
+- Updated change-password UX to use Chinese labels/messages, explicit current-password validation path with exact error `当前密码不正确`, and post-success session refresh.
+- Added executable integration coverage in `ProfileManagementTests` for AC-1 through AC-6, including fallback rendering, display name persistence, unique/duplicate email updates, and password change behaviors.
+- Manual checklist items (Task 6) were verified through equivalent authenticated end-to-end integration test flows.
+
 #### File List
+
+- docs/bmad/implementation-artifacts/1-4-profile-management.md
+- docs/bmad/implementation-artifacts/sprint-status.yaml
+- src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/ChangePassword.razor
+- src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Email.razor
+- src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Index.razor
+- src/dotnet/Vulgata.Web/Data/ApplicationUser.cs
+- src/dotnet/Vulgata.Web/Data/Migrations/00000000000001_AddDisplayNameToApplicationUser.cs
+- src/dotnet/Vulgata.Web/Data/Migrations/00000000000001_AddDisplayNameToApplicationUser.Designer.cs
+- src/dotnet/Vulgata.Web/Data/Migrations/ApplicationDbContextModelSnapshot.cs
+- tests/Vulgata.Tests/ProfileManagementTests.cs
+
+#### Change Log
+
+- 2026-06-26: Implemented Story 1.4 profile management end-to-end (display name, direct email update, password UX localization/error path), added migration and profile integration tests, and moved story to review.

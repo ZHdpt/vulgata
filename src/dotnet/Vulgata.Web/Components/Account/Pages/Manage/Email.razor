@@ -1,15 +1,11 @@
 ﻿@page "/Account/Manage/Email"
 
 @using System.ComponentModel.DataAnnotations
-@using System.Text
-@using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 @using Vulgata.Web.Data
 
 @inject UserManager<ApplicationUser> UserManager
-@inject IEmailSender<ApplicationUser> EmailSender
-@inject NavigationManager NavigationManager
+@inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>管理邮箱</PageTitle>
@@ -17,41 +13,30 @@
 <h3>管理邮箱</h3>
 
 <StatusMessage Message="@message" />
+@if (!string.IsNullOrEmpty(validationError))
+{
+    <div class="alert alert-danger" role="alert">@validationError</div>
+}
 <div class="row">
     <div class="col-xl-6">
-        <form @onsubmit="OnSendEmailVerificationAsync" @formname="send-verification" id="send-verification-form"
-              method="post">
-            <AntiforgeryToken />
-        </form>
         <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
-            @if (isEmailConfirmed)
-            {
-                <div class="form-floating mb-3 input-group">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="Enter your email"
-                           disabled />
-                    <div class="input-group-append">
-                        <span class="h-100 input-group-text text-success font-weight-bold">✓</span>
-                    </div>
-                    <label for="email" class="form-label">Email</label>
-                </div>
-            }
-            else
-            {
-                <div class="form-floating mb-3">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="Enter your email"
-                           disabled />
-                    <label for="email" class="form-label">邮箱</label>
-                    <button type="submit" class="btn btn-link" form="send-verification-form">发送验证邮件</button>
-                </div>
-            }
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control" autocomplete="email"
-                           aria-required="true" placeholder="Enter a new email" />
-                <label for="Input.NewEmail" class="form-label">新邮箱</label>
-                <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
-            </div>
+            <FluentTextField
+                Value="@email"
+                id="email"
+                ReadOnly="true"
+                Label="当前邮箱" />
+
+            <FluentTextField
+                @bind-Value="Input.NewEmail"
+                id="Input.NewEmail"
+                autocomplete="email"
+                aria-required="true"
+                placeholder="请输入新邮箱"
+                Label="新邮箱" />
+            <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
+
             <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Class="w-100">更改邮箱</FluentButton>
         </EditForm>
     </div>
@@ -59,9 +44,9 @@
 
 @code {
     private string? message;
+    private string? validationError;
     private ApplicationUser? user;
     private string? email;
-    private bool isEmailConfirmed;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -81,18 +66,13 @@
         }
 
         email = await UserManager.GetEmailAsync(user);
-        isEmailConfirmed = await UserManager.IsEmailConfirmedAsync(user);
-
         Input.NewEmail ??= email;
     }
 
     private async Task OnValidSubmitAsync()
     {
-        if (Input.NewEmail is null || Input.NewEmail == email)
-        {
-            message = "Your email is unchanged.";
-            return;
-        }
+        message = null;
+        validationError = null;
 
         if (user is null)
         {
@@ -100,48 +80,61 @@
             return;
         }
 
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateChangeEmailTokenAsync(user, Input.NewEmail);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmailChange").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["email"] = Input.NewEmail, ["code"] = code });
-
-        await EmailSender.SendConfirmationLinkAsync(user, Input.NewEmail, HtmlEncoder.Default.Encode(callbackUrl));
-
-        message = "Confirmation link to change email sent. Please check your email.";
-    }
-
-    private async Task OnSendEmailVerificationAsync()
-    {
-        if (email is null)
+        string newEmail = Input.NewEmail?.Trim() ?? string.Empty;
+        if (string.Equals(newEmail, email, StringComparison.OrdinalIgnoreCase))
         {
+            message = "邮箱未发生变化。";
             return;
         }
 
-        if (user is null)
+        string? originalEmail = user.Email;
+        string? originalUserName = user.UserName;
+        bool originalEmailConfirmed = user.EmailConfirmed;
+
+        user.Email = newEmail;
+        user.UserName = newEmail;
+        user.EmailConfirmed = true;
+
+        IdentityResult updateResult = await UserManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
         {
-            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+            user.Email = originalEmail;
+            user.UserName = originalUserName;
+            user.EmailConfirmed = originalEmailConfirmed;
+
+            IdentityError[] errors = FilterEmailUpdateErrors(updateResult.Errors).ToArray();
+            validationError = errors.FirstOrDefault(error => error.Code == nameof(IdentityErrorDescriber.DuplicateEmail))?.Description;
+            if (validationError is null)
+            {
+                message = $"Error: {string.Join("，", errors.Select(error => error.Description))}";
+            }
+
             return;
         }
 
-        var userId = await UserManager.GetUserIdAsync(user);
-        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-
-        await EmailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(callbackUrl));
-
-        message = "Verification email sent. Please check your email.";
+        await SignInManager.RefreshSignInAsync(user);
+        email = newEmail;
+        Input.NewEmail = newEmail;
+        message = "邮箱已更新。";
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "New email")]
+        [Required(ErrorMessage = "新邮箱字段是必需的。")]
+        [EmailAddress(ErrorMessage = "新邮箱字段不是有效的电子邮件地址。")]
+        [Display(Name = "新邮箱")]
         public string? NewEmail { get; set; }
+    }
+
+    private static IEnumerable<IdentityError> FilterEmailUpdateErrors(IEnumerable<IdentityError> errors)
+    {
+        IdentityError[] materializedErrors = errors.ToArray();
+
+        if (!materializedErrors.Any(error => error.Code == nameof(IdentityErrorDescriber.DuplicateEmail)))
+        {
+            return materializedErrors;
+        }
+
+        return materializedErrors.Where(error => error.Code != nameof(IdentityErrorDescriber.DuplicateUserName));
     }
 }
