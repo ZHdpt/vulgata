@@ -4,7 +4,7 @@ baseline_commit: f9d4fa91ed7679e972ff6a394b980f7d87a9dd32
 
 # Story 1.3: Login & Logout
 
-Status: review
+Status: done
 
 ## Story
 
@@ -110,7 +110,7 @@ so that I can access my authorized features and protect my session.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Correct the malformed `baseline_commit` frontmatter value so Story 1.3 review automation resolves the intended baseline SHA [docs/bmad/implementation-artifacts/1-3-login-and-logout.md:2]
+- [x] [Review][Patch] Correct the malformed `baseline_commit` frontmatter value so Story 1.3 review automation resolves the intended baseline SHA [docs/bmad/implementation-artifacts/1-3-login-and-logout.md:2]
 
 ## Dev Notes
 
