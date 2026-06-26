@@ -27,14 +27,14 @@
                             <a href="/Account/Manage">个人资料</a>
                             <form action="Account/Logout" method="post">
                                 <AntiforgeryToken />
-                                <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+                                <input type="hidden" name="ReturnUrl" value="Account/Login" />
                                 <button type="submit">退出登录</button>
                             </form>
                         </div>
                     </details>
                 </Authorized>
                 <NotAuthorized>
-                    <a class="auth-link" href="/Account/Login">登录</a>
+                    <a class="auth-link" href="@GetLoginHref()">登录</a>
                 </NotAuthorized>
             </AuthorizeView>
         </div>
@@ -64,6 +64,18 @@
     {
         _currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
         StateHasChanged();
+    }
+
+    private string GetLoginHref()
+    {
+        string returnUrl = string.IsNullOrWhiteSpace(_currentUrl)
+            ? "/"
+            : (_currentUrl.StartsWith("/", StringComparison.Ordinal) ? _currentUrl : $"/{_currentUrl}");
+
+        return NavigationManager.GetUriWithQueryParameters("/Account/Login", new Dictionary<string, object?>
+        {
+            ["returnUrl"] = returnUrl,
+        });
     }
 
     public void Dispose()

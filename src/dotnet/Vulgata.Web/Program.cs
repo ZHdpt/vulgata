@@ -99,3 +99,7 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 await app.RunAsync();
+
+public partial class Program
+{
+}

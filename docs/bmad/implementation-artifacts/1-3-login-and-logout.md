@@ -4,7 +4,7 @@ baseline_commit: f9d4fa9eb762752e5bd461ba9fe51512023fa95
 
 # Story 1.3: Login & Logout
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -56,57 +56,57 @@ so that I can access my authorized features and protect my session.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Fix Login Error Message (AC-2)
-  - [ ] 1.1 In `Login.razor`, change error message from `"错误：登录失败，请检查邮箱或密码。"` to `"邮箱或密码错误"`
-  - [ ] 1.2 Verify the error is displayed ONLY after a failed password login attempt (not on initial GET render, not on passkey errors)
-  - [ ] 1.3 Ensure the error message does NOT distinguish between "email not found" vs "wrong password" — always the same generic message
+- [x] Task 1: Fix Login Error Message (AC-2)
+    - [x] 1.1 In `Login.razor`, change error message from `"错误：登录失败，请检查邮箱或密码。"` to `"邮箱或密码错误"`
+    - [x] 1.2 Verify the error is displayed ONLY after a failed password login attempt (not on initial GET render, not on passkey errors)
+    - [x] 1.3 Ensure the error message does NOT distinguish between "email not found" vs "wrong password" — always the same generic message
 
-- [ ] Task 2: Clean Up Login Page UI (AC-1, AC-6, UX-DR-4)
-  - [ ] 2.1 Remove `PasskeySubmit` component and all passkey-related razor markup from `Login.razor`
-  - [ ] 2.2 Remove `PasskeyInputModel Passkey` property from `InputModel`
-  - [ ] 2.3 Remove `PasskeySignInAsync` code path from `LoginUser()` — simplify to only `PasswordSignInAsync`
-  - [ ] 2.4 Remove `ExternalLoginPicker` component and the entire "使用其他方式登录" section
-  - [ ] 2.5 Remove "重新发送邮箱确认" link (not needed — `RequireConfirmedAccount = false` in V1)
-  - [ ] 2.6 Replace Bootstrap `form-floating` / `InputText` with Fluent UI components:
-    - Email field: `FluentTextField` with `type="email"`, `autocomplete="username webauthn"`, placeholder "name@example.com"
-    - Password field: `FluentTextField` with `type="password"`, `autocomplete="current-password"`, placeholder "密码"
-    - Retain `InputCheckbox` for "记住我" (checkbox is fine as-is)
-  - [ ] 2.7 Verify `Appearance.Accent` on the submit button matches brand primary button spec (per DESIGN.md)
-  - [ ] 2.8 Verify page title is "登录" and headings use Chinese labels
-  - [ ] 2.9 Retain the "忘记密码？" and "注册新用户" links (functional per template scaffolding)
-- [ ] 2.10 Do NOT remove `PasskeyCreationOptions` and `PasskeyRequestOptions` endpoints — they are still used by `Manage/Passkeys.razor` (passkey creation in profile management, Story 1.4 scope). Only remove the passkey sign-in code path from `Login.razor`.
-- [ ] 2.11 Do NOT delete `PasskeySubmit.razor` — it is also used by `Manage/Passkeys.razor` and `App.razor` loads its JS module. Keep the component; only remove the `<PasskeySubmit>` usage from `Login.razor`.
+- [x] Task 2: Clean Up Login Page UI (AC-1, AC-6, UX-DR-4)
+    - [x] 2.1 Remove `PasskeySubmit` component and all passkey-related razor markup from `Login.razor`
+    - [x] 2.2 Remove `PasskeyInputModel Passkey` property from `InputModel`
+    - [x] 2.3 Remove `PasskeySignInAsync` code path from `LoginUser()` — simplify to only `PasswordSignInAsync`
+    - [x] 2.4 Remove `ExternalLoginPicker` component and the entire "使用其他方式登录" section
+    - [x] 2.5 Remove "重新发送邮箱确认" link (not needed — `RequireConfirmedAccount = false` in V1)
+    - [x] 2.6 Replace Bootstrap `form-floating` / `InputText` with Fluent UI components:
+        - Email field: `FluentTextField` with `type="email"`, `autocomplete="username webauthn"`, placeholder "name@example.com"
+        - Password field: `FluentTextField` with `type="password"`, `autocomplete="current-password"`, placeholder "密码"
+        - Retain `InputCheckbox` for "记住我" (checkbox is fine as-is)
+    - [x] 2.7 Verify `Appearance.Accent` on the submit button matches brand primary button spec (per DESIGN.md)
+    - [x] 2.8 Verify page title is "登录" and headings use Chinese labels
+    - [x] 2.9 Retain the "忘记密码？" and "注册新用户" links (functional per template scaffolding)
+- [x] 2.10 Do NOT remove `PasskeyCreationOptions` and `PasskeyRequestOptions` endpoints — they are still used by `Manage/Passkeys.razor` (passkey creation in profile management, Story 1.4 scope). Only remove the passkey sign-in code path from `Login.razor`.
+- [x] 2.11 Do NOT delete `PasskeySubmit.razor` — it is also used by `Manage/Passkeys.razor` and `App.razor` loads its JS module. Keep the component; only remove the `<PasskeySubmit>` usage from `Login.razor`.
 
-- [ ] Task 3: Fix Logout Redirect to Login Page (AC-3)
-  - [ ] 3.1 In `MainLayout.razor`, update the logout form: change `ReturnUrl` from `_currentUrl` to a fixed redirect to `Account/Login`
-  - [ ] 3.2 Verify the `/Account/Logout` endpoint (`IdentityComponentsEndpointRouteBuilderExtensions.cs`) calls `SignInManager.SignOutAsync()` and then redirects
-  - [ ] 3.3 Confirm no stale cookie remains after logout (test by accessing a protected page after logout)
+- [x] Task 3: Fix Logout Redirect to Login Page (AC-3)
+    - [x] 3.1 In `MainLayout.razor`, update the logout form: change `ReturnUrl` from `_currentUrl` to a fixed redirect to `Account/Login`
+    - [x] 3.2 Verify the `/Account/Logout` endpoint (`IdentityComponentsEndpointRouteBuilderExtensions.cs`) calls `SignInManager.SignOutAsync()` and then redirects
+    - [x] 3.3 Confirm no stale cookie remains after logout (test by accessing a protected page after logout)
 
-- [ ] Task 4: Verify Authenticated Navbar Elements (AC-4)
-  - [ ] 4.1 Verify `MainLayout.razor` displays all required elements for authenticated users: "Vulgata" brand, "对话", "管理后台" (if Admin/SystemOwner), bell icon, user avatar
-  - [ ] 4.2 Verify `<AuthorizeView Roles="Administrator,SystemOwner">` wraps "管理后台" nav link correctly
-  - [ ] 4.3 Verify "退出登录" form in avatar dropdown posts to `Account/Logout` with AntiforgeryToken
-  - [ ] 4.4 Verify "登录" link is displayed for unauthenticated users (NotAuthorized template)
-  - [ ] 4.5 Verify the avatar dropdown preserves current URL tracking for redirect after login (`_currentUrl` field used for ReturnUrl on login link)
+- [x] Task 4: Verify Authenticated Navbar Elements (AC-4)
+    - [x] 4.1 Verify `MainLayout.razor` displays all required elements for authenticated users: "Vulgata" brand, "对话", "管理后台" (if Admin/SystemOwner), bell icon, user avatar
+    - [x] 4.2 Verify `<AuthorizeView Roles="Administrator,SystemOwner">` wraps "管理后台" nav link correctly
+    - [x] 4.3 Verify "退出登录" form in avatar dropdown posts to `Account/Logout` with AntiforgeryToken
+    - [x] 4.4 Verify "登录" link is displayed for unauthenticated users (NotAuthorized template)
+    - [x] 4.5 Verify the avatar dropdown preserves current URL tracking for redirect after login (`_currentUrl` field used for ReturnUrl on login link)
 
-- [ ] Task 5: Verify Protected Route Redirect (AC-5)
-  - [ ] 5.1 Verify `RedirectToLogin.razor` includes `returnUrl` in the redirect: `Account/Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}`
-  - [ ] 5.2 Verify `[Authorize]` attribute is applied to all protected pages:
-    - `ChatPage.razor` at route "/"
-    - `DashboardPage.razor` at route "/management"
-    - All Management sub-pages (`GraphPage`, `DocumentsPage`, `ScanHistoryPage`, `SettingsPage`)
-  - [ ] 5.3 Verify `Login.razor` correctly reads `ReturnUrl` from query string and passes it to `IdentityRedirectManager.RedirectTo(ReturnUrl ?? "/")` on success
-  - [ ] 5.4 Verify `NotFound.razor` has appropriate auth handling (no redirect loop for unauthenticated users on 404s)
+- [x] Task 5: Verify Protected Route Redirect (AC-5)
+    - [x] 5.1 Verify `RedirectToLogin.razor` includes `returnUrl` in the redirect: `Account/Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}`
+    - [x] 5.2 Verify `[Authorize]` attribute is applied to all protected pages:
+        - `ChatPage.razor` at route "/"
+        - `DashboardPage.razor` at route "/management"
+        - All Management sub-pages (`GraphPage`, `DocumentsPage`, `ScanHistoryPage`, `SettingsPage`)
+    - [x] 5.3 Verify `Login.razor` correctly reads `ReturnUrl` from query string and passes it to `IdentityRedirectManager.RedirectTo(ReturnUrl ?? "/")` on success
+    - [x] 5.4 Verify `NotFound.razor` has appropriate auth handling (no redirect loop for unauthenticated users on 404s)
 
-- [ ] Task 6: Add Login/Logout Tests (AC-1, AC-2, AC-3, AC-5)
-  - [ ] 6.1 Add integration test class `LoginLogoutTests.cs` in `tests/Vulgata.Tests/`
-  - [ ] 6.2 Test: `Login_WithValidCredentials_RedirectsToChatPage` — create user via factory, POST login form, assert 302 redirect to "/"
-  - [ ] 6.3 Test: `Login_WithInvalidPassword_ShowsGenericError` — POST login form with wrong password, assert "邮箱或密码错误" in response, assert NOT authenticated (no auth cookie)
-  - [ ] 6.4 Test: `Login_WithNonexistentEmail_ShowsSameGenericError` — POST login form with unregistered email, assert same "邮箱或密码错误" (no email enumeration)
-  - [ ] 6.5 Test: `Logout_ClearsCookieAndRedirectsToLogin` — login, then POST logout, assert redirect to "/Account/Login", assert auth cookie cleared
-  - [ ] 6.6 Test: `ProtectedRoute_Unauthenticated_RedirectsToLogin` — GET "/" without auth cookie, assert redirect to "/Account/Login?returnUrl=%2F"
-  - [ ] 6.7 Test: `Login_WithReturnUrl_RedirectsToOriginalTarget` — POST login with returnUrl, assert redirect to original URL
-  - [ ] 6.8 Use the same test infrastructure pattern established in Story 1.2 (`IdentityRegistrationTests.cs` as reference) for component-level unit tests where applicable. For HTTP-level tests (cookie assertion, redirect verification), use `WebApplicationFactory<Program>` with `AllowAutoRedirect = false` as shown in the code examples above. Note: Story 1.2 used component-level tests with test doubles because registration tests don't require real HTTP cookies; login/logout tests DO require real HTTP for cookie round-trips.
+- [x] Task 6: Add Login/Logout Tests (AC-1, AC-2, AC-3, AC-5)
+    - [x] 6.1 Add integration test class `LoginLogoutTests.cs` in `tests/Vulgata.Tests/`
+    - [x] 6.2 Test: `Login_WithValidCredentials_RedirectsToChatPage` — create user via factory, POST login form, assert 302 redirect to "/"
+    - [x] 6.3 Test: `Login_WithInvalidPassword_ShowsGenericError` — POST login form with wrong password, assert "邮箱或密码错误" in response, assert NOT authenticated (no auth cookie)
+    - [x] 6.4 Test: `Login_WithNonexistentEmail_ShowsSameGenericError` — POST login form with unregistered email, assert same "邮箱或密码错误" (no email enumeration)
+    - [x] 6.5 Test: `Logout_ClearsCookieAndRedirectsToLogin` — login, then POST logout, assert redirect to "/Account/Login", assert auth cookie cleared
+    - [x] 6.6 Test: `ProtectedRoute_Unauthenticated_RedirectsToLogin` — GET "/" without auth cookie, assert redirect to "/Account/Login?returnUrl=%2F"
+    - [x] 6.7 Test: `Login_WithReturnUrl_RedirectsToOriginalTarget` — POST login with returnUrl, assert redirect to original URL
+    - [x] 6.8 Use the same test infrastructure pattern established in Story 1.2 (`IdentityRegistrationTests.cs` as reference) for component-level unit tests where applicable. For HTTP-level tests (cookie assertion, redirect verification), use `WebApplicationFactory<Program>` with `AllowAutoRedirect = false` as shown in the code examples above. Note: Story 1.2 used component-level tests with test doubles because registration tests don't require real HTTP cookies; login/logout tests DO require real HTTP for cookie round-trips.
 
 ## Dev Notes
 
@@ -423,10 +423,36 @@ From `DESIGN.md` and `EXPERIENCE.md`:
 
 ### Agent Model Used
 
-GitHub Copilot (deepseek-v4-pro)
+GitHub Copilot (GPT-5.3-Codex)
+
+### Implementation Plan
+
+- Complete the in-progress Story 1.3 app changes by fixing the remaining build regression, then finish the HTTP integration test slice and re-run full validation before returning the story to review.
 
 ### Debug Log References
 
+- 2026-06-26: Reproduced the solution build failure and fixed `MainLayout.razor` login-link return URL generation (`StartsWith` char/string mismatch).
+- 2026-06-26: Reworked `LoginLogoutTests.cs` to submit the rendered Blazor form payload, including hidden handler fields, instead of manually posting only antiforgery values.
+- 2026-06-26: Re-ran `dotnet build .\Vulgata.slnx`, `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter LoginLogoutTests`, and the full `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj` regression suite.
+
 ### Completion Notes List
 
+- Verified the Login page now uses Fluent UI inputs, retains Chinese copy, and returns the generic `邮箱或密码错误` message for both wrong-password and nonexistent-email failures.
+- Verified logout posts through antiforgery-protected forms, clears the Identity cookie, redirects directly to `/Account/Login`, and preserves login return URLs for unauthenticated navigation.
+- Added and stabilized HTTP integration coverage for successful login, failed login, logout, protected-route redirects, and return URL round-trips using `WebApplicationFactory<Program>` with SQLite-backed test overrides.
+- Validation passed: `dotnet build .\Vulgata.slnx`; `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter LoginLogoutTests`; `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj`.
+
 ### File List
+
+- Directory.Packages.props
+- src/dotnet/Vulgata.Web/Components/Account/Pages/Login.razor
+- src/dotnet/Vulgata.Web/Components/Layout/MainLayout.razor
+- src/dotnet/Vulgata.Web/Program.cs
+- tests/Vulgata.Tests/LoginLogoutTests.cs
+- tests/Vulgata.Tests/Vulgata.Tests.csproj
+- docs/bmad/implementation-artifacts/1-3-login-and-logout.md
+- docs/bmad/implementation-artifacts/sprint-status.yaml
+
+### Change Log
+
+- 2026-06-26: Completed Story 1.3 login/logout validation, fixed the final MainLayout build regression, and finished the HTTP integration test harness for login, logout, redirects, and cookie behavior.
