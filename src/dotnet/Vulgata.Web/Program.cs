@@ -38,16 +38,7 @@ builder.Services.AddDbContext<VulgataDbContext>(options =>
         npgsqlOptions.EnableRetryOnFailure(3)));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
-        options.Password.RequiredLength = 8;
-        options.Password.RequireDigit = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequireNonAlphanumeric = true;
-    })
+builder.Services.AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.Configure)
     .AddErrorDescriber<ChineseIdentityErrorDescriber>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()

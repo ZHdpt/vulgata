@@ -81,7 +81,7 @@
 
         if (!result.Succeeded)
         {
-            identityErrors = result.Errors;
+            identityErrors = GetRegistrationErrors(result.Errors);
             return;
         }
 
@@ -129,6 +129,19 @@
             throw new NotSupportedException("The default UI requires a user store with email support.");
         }
         return (IUserEmailStore<ApplicationUser>)UserStore;
+    }
+
+    private static IEnumerable<IdentityError> GetRegistrationErrors(IEnumerable<IdentityError> errors)
+    {
+        IdentityError[] materializedErrors = errors.ToArray();
+
+        // Registration uses email as the username, so a duplicate email can also trigger DuplicateUserName.
+        if (!materializedErrors.Any(error => error.Code == nameof(IdentityErrorDescriber.DuplicateEmail)))
+        {
+            return materializedErrors;
+        }
+
+        return materializedErrors.Where(error => error.Code != nameof(IdentityErrorDescriber.DuplicateUserName));
     }
 
     private sealed class InputModel

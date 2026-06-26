@@ -4,7 +4,7 @@ baseline_commit: c1704719eb762752e5bd461ba9fe51512023fa95
 
 # Story 1.2: User Registration
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -90,7 +90,7 @@ so that I can access Vulgata.
 
 - [x] [Review][Decision] Choose a migration strategy for pre-Story-1.2 password hashes — `BcryptPasswordHasher.VerifyHashedPassword()` now calls `BCrypt.Net.BCrypt.EnhancedVerify(...)` directly. Runtime probing against a non-bcrypt hash throws `Invalid salt version`, and the login flow goes through `SignInManager.PasswordSignInAsync(...)`, so any accounts created before bcrypt was introduced need an explicit compatibility decision: add legacy PBKDF2 verification with rehash-on-success, or deliberately invalidate/reset existing passwords and document that rollout.
 - [x] [Review][Patch] Re-open Task 5 until verification exercises the real registration and migration paths [docs/bmad/implementation-artifacts/1-2-user-registration.md:324]
-- [ ] [Review][Patch] Enforce unique email in production Identity configuration and cover the real duplicate-email registration path with an executable test; `Program.cs` never sets `options.User.RequireUniqueEmail = true`, so production registration can fall back to `DuplicateUserName` (`用户名已存在。`) because username is set to email, while the focused harness only enables unique email inside tests [src/dotnet/Vulgata.Web/Program.cs:41]
+- [x] [Review][Patch] Enforce unique email in production Identity configuration and cover the real duplicate-email registration path with an executable test; `Program.cs` never sets `options.User.RequireUniqueEmail = true`, so production registration can fall back to `DuplicateUserName` (`用户名已存在。`) because username is set to email, while the focused harness only enables unique email inside tests [src/dotnet/Vulgata.Web/Program.cs:41]
 
 ## Dev Notes
 
@@ -323,6 +323,9 @@ GPT-5.3-Codex
 - 2026-06-26: `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter IdentityRegistrationTests --nologo` passed with 13/13 tests after graceful legacy-hash handling fix.
 - 2026-06-26: `dotnet build .\Vulgata.slnx --nologo` succeeded with 0 errors.
 - 2026-06-26: `dotnet test .\Vulgata.slnx --logger "console;verbosity=minimal" --nologo` passed with 17/17 tests.
+- 2026-06-26: `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter IdentityRegistrationTests --nologo` passed with 14/14 tests after routing executable registration coverage through the production Identity configuration path and normalizing duplicate-email display output.
+- 2026-06-26: `dotnet build .\Vulgata.slnx --nologo` succeeded with 16 warnings and 0 errors after the duplicate-email review fix.
+- 2026-06-26: `dotnet test .\Vulgata.slnx --logger "console;verbosity=minimal" --nologo` passed with 18/18 tests after the duplicate-email review fix.
 
 ### Completion Notes List
 
@@ -334,6 +337,8 @@ GPT-5.3-Codex
 - Closed Task 5 checklist using executable evidence from automated registration flow tests plus repository-level schema/config assertions.
 - Applied the approved rollout decision for pre-bcrypt hashes: legacy/non-bcrypt hashes now fail verification gracefully and require password reset instead of throwing.
 - Strengthened executable verification depth with Identity-pipeline tests that assert registration stores a bcrypt hash and legacy PBKDF2 users fail sign-in cleanly without exceptions.
+- Centralized production Identity option wiring in `IdentityOptionsConfiguration`, enabling `RequireUniqueEmail` in the same configuration path used by `Program.cs` and the executable registration tests.
+- Normalized registration failures so duplicate-email submissions surface only `该邮箱已被注册` when Identity returns both `DuplicateUserName` and `DuplicateEmail` because the app uses email as username.
 
 ### File List
 
@@ -343,6 +348,7 @@ GPT-5.3-Codex
 - `src/dotnet/Vulgata.Web/Components/Account/Pages/Register.razor`
 - `src/dotnet/Vulgata.Web/Data/BcryptPasswordHasher.cs`
 - `src/dotnet/Vulgata.Web/Data/ChineseIdentityErrorDescriber.cs`
+- `src/dotnet/Vulgata.Web/Data/IdentityOptionsConfiguration.cs`
 - `src/dotnet/Vulgata.Web/Program.cs`
 - `src/dotnet/Vulgata.Web/Vulgata.Web.csproj`
 - `tests/Vulgata.Tests/IdentityRegistrationTests.cs`
@@ -353,3 +359,4 @@ GPT-5.3-Codex
 - 2026-06-26: Implemented Story 1.2 bcrypt hashing, Chinese Identity/validation messaging, and automated regression coverage; story remains in-progress pending live runtime verification.
 - 2026-06-26: Completed Story 1.2 verification continuation, finished Task 5 checklist with automated evidence, and moved story status to review.
 - 2026-06-26: Resolved post-review follow-ups by implementing graceful legacy-hash invalidation/reset behavior and executable migration-path verification; story returned to review.
+- 2026-06-26: Fixed the duplicate-email review follow-up by enforcing unique email in the production Identity configuration, aligning executable registration tests with that configuration, and filtering duplicate username echoes from the registration UI; story returned to review.

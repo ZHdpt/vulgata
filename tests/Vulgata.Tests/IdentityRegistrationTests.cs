@@ -129,6 +129,13 @@ public class IdentityRegistrationTests
             passwordHasher ?? new BcryptPasswordHasher<ApplicationUser>(),
             errorDescriber ?? new ChineseIdentityErrorDescriber());
 
+    private static IdentityOptions CreateProductionIdentityOptions()
+    {
+        IdentityOptions options = new();
+        IdentityOptionsConfiguration.Configure(options);
+        return options;
+    }
+
     private static object CreateIdentityRedirectManager(NavigationManager navigationManager)
     {
         Type redirectManagerType = typeof(ApplicationUser).Assembly.GetType("Vulgata.Web.Components.Account.IdentityRedirectManager")
@@ -303,6 +310,32 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
+    public async Task RegisterUserRejectsDuplicateEmailThroughProductionIdentityConfiguration()
+    {
+        ApplicationUser existingUser = new()
+        {
+            Id = "existing-user-id",
+            UserName = "duplicate@example.com",
+            NormalizedUserName = "DUPLICATE@EXAMPLE.COM",
+            Email = "duplicate@example.com",
+            NormalizedEmail = "DUPLICATE@EXAMPLE.COM",
+        };
+
+        RegistrationHarness harness = CreateExecutableRegistrationHarness(
+            email: "duplicate@example.com",
+            password: "Aa1!Aa1!",
+            confirmPassword: "Aa1!Aa1!",
+            existingUsers: [existingUser]);
+
+        await harness.RegisterAsync();
+
+        Assert.False(harness.SignInManager.SignInCalled);
+        Assert.Null(harness.NavigationManager.LastNavigatedUri);
+        Assert.Null(harness.UserStore.CreatedUser);
+        Assert.Equal("错误：该邮箱已被注册", harness.Message);
+    }
+
+    [Fact]
     public async Task RegisterUserReturnsChineseDuplicateEmailMessageWhenCreationFails()
     {
         IdentityResult duplicateEmailFailure = IdentityResult.Failed(
@@ -330,12 +363,22 @@ public class IdentityRegistrationTests
         string repoRoot = GetRepoRoot();
         string programFile = Path.Combine(repoRoot, "src", "dotnet", "Vulgata.Web", "Program.cs");
         string content = File.ReadAllText(programFile);
+        IdentityOptions options = CreateProductionIdentityOptions();
 
-        Assert.Contains("options.SignIn.RequireConfirmedAccount = false;", content, StringComparison.Ordinal);
+        Assert.Contains("AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.Configure)", content, StringComparison.Ordinal);
         Assert.Contains(".AddErrorDescriber<ChineseIdentityErrorDescriber>()", content, StringComparison.Ordinal);
         Assert.Contains("AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>()", content, StringComparison.Ordinal);
         Assert.Contains("await identityDb.Database.MigrateAsync();", content, StringComparison.Ordinal);
         Assert.Contains("await vulgataDb.Database.MigrateAsync();", content, StringComparison.Ordinal);
+
+        Assert.False(options.SignIn.RequireConfirmedAccount);
+        Assert.True(options.User.RequireUniqueEmail);
+        Assert.Equal(IdentitySchemaVersions.Version3, options.Stores.SchemaVersion);
+        Assert.Equal(8, options.Password.RequiredLength);
+        Assert.True(options.Password.RequireDigit);
+        Assert.True(options.Password.RequireLowercase);
+        Assert.True(options.Password.RequireUppercase);
+        Assert.True(options.Password.RequireNonAlphanumeric);
     }
 
     [Fact]
@@ -615,22 +658,10 @@ public class IdentityRegistrationTests
         IPasswordHasher<ApplicationUser> passwordHasher,
         IdentityErrorDescriber errorDescriber) : UserManager<ApplicationUser>(
         store,
-        Microsoft.Extensions.Options.Options.Create(new IdentityOptions
-        {
-            SignIn = { RequireConfirmedAccount = false },
-            User = { RequireUniqueEmail = true },
-            Password =
-            {
-                RequiredLength = 8,
-                RequireDigit = true,
-                RequireLowercase = true,
-                RequireUppercase = true,
-                RequireNonAlphanumeric = true,
-            },
-        }),
+        Microsoft.Extensions.Options.Options.Create(IdentityRegistrationTests.CreateProductionIdentityOptions()),
         passwordHasher,
-        new IUserValidator<ApplicationUser>[] { new UserValidator<ApplicationUser>() },
-        new IPasswordValidator<ApplicationUser>[] { new PasswordValidator<ApplicationUser>() },
+        new IUserValidator<ApplicationUser>[] { new UserValidator<ApplicationUser>(errorDescriber) },
+        new IPasswordValidator<ApplicationUser>[] { new PasswordValidator<ApplicationUser>(errorDescriber) },
         new UpperInvariantLookupNormalizer(),
         errorDescriber,
         new NullServiceProvider(),
