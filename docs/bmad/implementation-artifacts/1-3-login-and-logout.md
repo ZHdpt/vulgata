@@ -1,10 +1,10 @@
 ---
-baseline_commit: f9d4fa9eb762752e5bd461ba9fe51512023fa95
+baseline_commit: f9d4fa91ed7679e972ff6a394b980f7d87a9dd32
 ---
 
 # Story 1.3: Login & Logout
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -438,6 +438,7 @@ GitHub Copilot (GPT-5.3-Codex)
 - 2026-06-26: Reproduced the solution build failure and fixed `MainLayout.razor` login-link return URL generation (`StartsWith` char/string mismatch).
 - 2026-06-26: Reworked `LoginLogoutTests.cs` to submit the rendered Blazor form payload, including hidden handler fields, instead of manually posting only antiforgery values.
 - 2026-06-26: Re-ran `dotnet build .\Vulgata.slnx`, `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter LoginLogoutTests`, and the full `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj` regression suite.
+- 2026-06-26: Resolved the malformed Story 1.3 `baseline_commit` value to the full `f9d4fa91ed7679e972ff6a394b980f7d87a9dd32` SHA so review automation can locate the intended baseline commit.
 
 ### Completion Notes List
 
@@ -445,6 +446,7 @@ GitHub Copilot (GPT-5.3-Codex)
 - Verified logout posts through antiforgery-protected forms, clears the Identity cookie, redirects directly to `/Account/Login`, and preserves login return URLs for unauthenticated navigation.
 - Added and stabilized HTTP integration coverage for successful login, failed login, logout, protected-route redirects, and return URL round-trips using `WebApplicationFactory<Program>` with SQLite-backed test overrides.
 - Validation passed: `dotnet build .\Vulgata.slnx`; `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter LoginLogoutTests`; `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj`.
+- Corrected the Story 1.3 `baseline_commit` metadata to the full `f9d4fa91ed7679e972ff6a394b980f7d87a9dd32` SHA and returned the story to review for the next review pass.
 
 ### File List
 
@@ -460,3 +462,4 @@ GitHub Copilot (GPT-5.3-Codex)
 ### Change Log
 
 - 2026-06-26: Completed Story 1.3 login/logout validation, fixed the final MainLayout build regression, and finished the HTTP integration test harness for login, logout, redirects, and cookie behavior.
+- 2026-06-26: Fixed the malformed Story 1.3 `baseline_commit` metadata and restored the story status to review.
