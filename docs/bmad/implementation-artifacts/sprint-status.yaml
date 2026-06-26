@@ -45,7 +45,7 @@ development_status:
   epic-1: in-progress
   1-1-solution-scaffolding-and-docker-deployment: done
   1-2-user-registration: done
-  1-3-login-and-logout: backlog
+  1-3-login-and-logout: ready-for-dev
   1-4-profile-management: backlog
   1-5-role-seeding-and-authorization-policies: backlog
   1-6-administrator-role-assignment: backlog
