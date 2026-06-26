@@ -1,0 +1,13 @@
+{
+    "hooks": {
+        "PostToolUse": [
+            {
+                "type": "command",
+                "command": "codegraph sync",
+                "windows": "pwsh -NoProfile -File .github/hooks/scripts/sync-codegraph-on-edit.ps1",
+                "timeout": 15000,
+                "cwd": "${workspaceFolder}"
+            }
+        ]
+    }
+}
