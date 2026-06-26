@@ -4,7 +4,7 @@ baseline_commit: c1704719eb762752e5bd461ba9fe51512023fa95
 
 # Story 1.2: User Registration
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -88,8 +88,8 @@ so that I can access Vulgata.
 
 ### Review Findings
 
-- [ ] [Review][Decision] Choose a migration strategy for pre-Story-1.2 password hashes — `BcryptPasswordHasher.VerifyHashedPassword()` now calls `BCrypt.Net.BCrypt.EnhancedVerify(...)` directly. Runtime probing against a non-bcrypt hash throws `Invalid salt version`, and the login flow goes through `SignInManager.PasswordSignInAsync(...)`, so any accounts created before bcrypt was introduced need an explicit compatibility decision: add legacy PBKDF2 verification with rehash-on-success, or deliberately invalidate/reset existing passwords and document that rollout.
-- [ ] [Review][Patch] Re-open Task 5 until verification exercises the real registration and migration paths [docs/bmad/implementation-artifacts/1-2-user-registration.md:324]
+- [x] [Review][Decision] Choose a migration strategy for pre-Story-1.2 password hashes — `BcryptPasswordHasher.VerifyHashedPassword()` now calls `BCrypt.Net.BCrypt.EnhancedVerify(...)` directly. Runtime probing against a non-bcrypt hash throws `Invalid salt version`, and the login flow goes through `SignInManager.PasswordSignInAsync(...)`, so any accounts created before bcrypt was introduced need an explicit compatibility decision: add legacy PBKDF2 verification with rehash-on-success, or deliberately invalidate/reset existing passwords and document that rollout.
+- [x] [Review][Patch] Re-open Task 5 until verification exercises the real registration and migration paths [docs/bmad/implementation-artifacts/1-2-user-registration.md:324]
 
 ## Dev Notes
 
@@ -318,6 +318,10 @@ GPT-5.3-Codex
 - 2026-06-26: `dotnet test .\Vulgata.slnx --logger "console;verbosity=minimal"` passed with 12/12 tests.
 - 2026-06-26: `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter IdentityRegistrationTests --nologo` passed with 10/10 tests.
 - 2026-06-26: `dotnet test .\Vulgata.slnx --logger "console;verbosity=minimal" --nologo` passed with 14/14 tests.
+- 2026-06-26: `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter IdentityRegistrationTests --nologo` failed with 2/13 tests (`Invalid salt version`) during red phase for legacy-hash handling.
+- 2026-06-26: `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter IdentityRegistrationTests --nologo` passed with 13/13 tests after graceful legacy-hash handling fix.
+- 2026-06-26: `dotnet build .\Vulgata.slnx --nologo` succeeded with 0 errors.
+- 2026-06-26: `dotnet test .\Vulgata.slnx --logger "console;verbosity=minimal" --nologo` passed with 17/17 tests.
 
 ### Completion Notes List
 
@@ -327,6 +331,8 @@ GPT-5.3-Codex
 - Added focused automated coverage for bcrypt hashing, Chinese Identity errors, registration validation messages, schema/config checks, and program wiring.
 - Added scenario-level registration tests to verify successful registration performs sign-in and redirects to `/`, and duplicate-email failures render the Chinese error message.
 - Closed Task 5 checklist using executable evidence from automated registration flow tests plus repository-level schema/config assertions.
+- Applied the approved rollout decision for pre-bcrypt hashes: legacy/non-bcrypt hashes now fail verification gracefully and require password reset instead of throwing.
+- Strengthened executable verification depth with Identity-pipeline tests that assert registration stores a bcrypt hash and legacy PBKDF2 users fail sign-in cleanly without exceptions.
 
 ### File List
 
@@ -345,3 +351,4 @@ GPT-5.3-Codex
 
 - 2026-06-26: Implemented Story 1.2 bcrypt hashing, Chinese Identity/validation messaging, and automated regression coverage; story remains in-progress pending live runtime verification.
 - 2026-06-26: Completed Story 1.2 verification continuation, finished Task 5 checklist with automated evidence, and moved story status to review.
+- 2026-06-26: Resolved post-review follow-ups by implementing graceful legacy-hash invalidation/reset behavior and executable migration-path verification; story returned to review.

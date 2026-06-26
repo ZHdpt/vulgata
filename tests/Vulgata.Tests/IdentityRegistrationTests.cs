@@ -89,6 +89,46 @@ public class IdentityRegistrationTests
         return new RegistrationHarness(component, input, userStore, userManager, signInManager, emailSender, navigationManager);
     }
 
+    private static RegistrationHarness CreateExecutableRegistrationHarness(
+        string email,
+        string password,
+        string confirmPassword,
+        IEnumerable<ApplicationUser>? existingUsers = null,
+        string? returnUrl = null)
+    {
+        Type registerType = GetRegisterComponentType();
+        object component = Activator.CreateInstance(registerType, nonPublic: true)
+            ?? throw new InvalidOperationException("Register component could not be created.");
+        object input = CreateRegisterInput(email, password, confirmPassword);
+
+        TestUserStore userStore = new(existingUsers);
+        UserManager<ApplicationUser> userManager = CreateExecutableUserManager(userStore);
+        TestSignInManager signInManager = new(userManager);
+        TestEmailSender emailSender = new();
+        RecordingNavigationManager navigationManager = new();
+
+        SetProperty(component, "UserManager", userManager);
+        SetProperty(component, "UserStore", userStore);
+        SetProperty(component, "SignInManager", signInManager);
+        SetProperty(component, "EmailSender", emailSender);
+        SetProperty(component, "Logger", GetNullLogger(registerType));
+        SetProperty(component, "NavigationManager", navigationManager);
+        SetProperty(component, "RedirectManager", CreateIdentityRedirectManager(navigationManager));
+        SetProperty(component, "Input", input);
+        SetProperty(component, "ReturnUrl", returnUrl);
+
+        return new RegistrationHarness(component, input, userStore, userManager, signInManager, emailSender, navigationManager);
+    }
+
+    private static UserManager<ApplicationUser> CreateExecutableUserManager(
+        TestUserStore store,
+        IPasswordHasher<ApplicationUser>? passwordHasher = null,
+        IdentityErrorDescriber? errorDescriber = null) =>
+        new ExecutableTestUserManager(
+            store,
+            passwordHasher ?? new BcryptPasswordHasher<ApplicationUser>(),
+            errorDescriber ?? new ChineseIdentityErrorDescriber());
+
     private static object CreateIdentityRedirectManager(NavigationManager navigationManager)
     {
         Type redirectManagerType = typeof(ApplicationUser).Assembly.GetType("Vulgata.Web.Components.Account.IdentityRedirectManager")
@@ -165,6 +205,18 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
+    public void VerifyHashedPasswordReturnsFailedForLegacyPbkdf2HashWithoutThrowing()
+    {
+        ApplicationUser user = new();
+        string legacyHash = new PasswordHasher<ApplicationUser>().HashPassword(user, "Aa1!Aa1!");
+        BcryptPasswordHasher<ApplicationUser> hasher = new();
+
+        PasswordVerificationResult result = hasher.VerifyHashedPassword(user, legacyHash, "Aa1!Aa1!");
+
+        Assert.Equal(PasswordVerificationResult.Failed, result);
+    }
+
+    [Fact]
     public void ChineseIdentityErrorDescriberReturnsChineseRegistrationMessages()
     {
         ChineseIdentityErrorDescriber describer = new();
@@ -232,6 +284,25 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
+    public async Task RegisterUserStoresBcryptPasswordHashThroughIdentityPipeline()
+    {
+        RegistrationHarness harness = CreateExecutableRegistrationHarness(
+            email: "new.user@example.com",
+            password: "Aa1!Aa1!",
+            confirmPassword: "Aa1!Aa1!");
+
+        await harness.RegisterAsync();
+
+        Assert.NotNull(harness.UserStore.StoredPasswordHash);
+        Assert.True(
+            harness.UserStore.StoredPasswordHash!.StartsWith("$2a$", StringComparison.Ordinal)
+            || harness.UserStore.StoredPasswordHash.StartsWith("$2b$", StringComparison.Ordinal)
+            || harness.UserStore.StoredPasswordHash.StartsWith("$2y$", StringComparison.Ordinal));
+        Assert.True(harness.SignInManager.SignInCalled);
+        Assert.Equal("/", harness.NavigationManager.LastNavigatedUri);
+    }
+
+    [Fact]
     public async Task RegisterUserReturnsChineseDuplicateEmailMessageWhenCreationFails()
     {
         IdentityResult duplicateEmailFailure = IdentityResult.Failed(
@@ -281,18 +352,48 @@ public class IdentityRegistrationTests
         Assert.Contains(mismatchResults, result => result.ErrorMessage == "密码与确认密码不一致。");
     }
 
+    [Fact]
+    public async Task PasswordSignInAsyncFailsCleanlyForLegacyPbkdf2Hashes()
+    {
+        ApplicationUser legacyUser = new()
+        {
+            Id = "legacy-user-id",
+            UserName = "legacy@example.com",
+            NormalizedUserName = "LEGACY@EXAMPLE.COM",
+            Email = "legacy@example.com",
+            NormalizedEmail = "LEGACY@EXAMPLE.COM",
+        };
+        legacyUser.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(legacyUser, "Aa1!Aa1!");
+
+        TestUserStore userStore = new([legacyUser]);
+        UserManager<ApplicationUser> userManager = CreateExecutableUserManager(userStore);
+        TestSignInManager signInManager = new(userManager);
+
+        SignInResult result = await signInManager.PasswordSignInAsync(
+            "legacy@example.com",
+            "Aa1!Aa1!",
+            isPersistent: false,
+            lockoutOnFailure: false);
+
+        Assert.False(result.Succeeded);
+        Assert.False(result.IsNotAllowed);
+        Assert.False(result.IsLockedOut);
+        Assert.False(result.RequiresTwoFactor);
+        Assert.False(signInManager.SignInCalled);
+    }
+
     private sealed class RegistrationHarness(
         object component,
         object input,
         TestUserStore userStore,
-        TestUserManager userManager,
+        UserManager<ApplicationUser> userManager,
         TestSignInManager signInManager,
         TestEmailSender emailSender,
         RecordingNavigationManager navigationManager)
     {
         public TestUserStore UserStore { get; } = userStore;
 
-        public TestUserManager UserManager { get; } = userManager;
+        public UserManager<ApplicationUser> UserManager { get; } = userManager;
 
         public TestSignInManager SignInManager { get; } = signInManager;
 
@@ -313,8 +414,25 @@ public class IdentityRegistrationTests
         }
     }
 
-    private sealed class TestUserStore : IUserEmailStore<ApplicationUser>
+    private sealed class TestUserStore : IUserEmailStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>
     {
+        private readonly Dictionary<string, ApplicationUser> _usersById = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, ApplicationUser> _usersByNormalizedEmail = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, ApplicationUser> _usersByNormalizedUserName = new(StringComparer.Ordinal);
+
+        public TestUserStore(IEnumerable<ApplicationUser>? seededUsers = null)
+        {
+            if (seededUsers is null)
+            {
+                return;
+            }
+
+            foreach (ApplicationUser user in seededUsers)
+            {
+                TrackUser(user);
+            }
+        }
+
         public bool SetUserNameCalled { get; private set; }
 
         public bool SetEmailCalled { get; private set; }
@@ -323,8 +441,17 @@ public class IdentityRegistrationTests
 
         public string? StoredEmail { get; private set; }
 
-        public Task<IdentityResult> CreateAsync(ApplicationUser user, CancellationToken cancellationToken) =>
-            Task.FromResult(IdentityResult.Success);
+        public string? StoredPasswordHash { get; private set; }
+
+        public ApplicationUser? CreatedUser { get; private set; }
+
+        public Task<IdentityResult> CreateAsync(ApplicationUser user, CancellationToken cancellationToken)
+        {
+            user.Id ??= Guid.NewGuid().ToString("N");
+            CreatedUser = user;
+            TrackUser(user);
+            return Task.FromResult(IdentityResult.Success);
+        }
 
         public Task<IdentityResult> DeleteAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(IdentityResult.Success);
@@ -333,14 +460,23 @@ public class IdentityRegistrationTests
         {
         }
 
-        public Task<ApplicationUser?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) =>
-            Task.FromResult<ApplicationUser?>(null);
+        public Task<ApplicationUser?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+        {
+            _usersByNormalizedEmail.TryGetValue(normalizedEmail, out ApplicationUser? user);
+            return Task.FromResult(user);
+        }
 
-        public Task<ApplicationUser?> FindByIdAsync(string userId, CancellationToken cancellationToken) =>
-            Task.FromResult<ApplicationUser?>(null);
+        public Task<ApplicationUser?> FindByIdAsync(string userId, CancellationToken cancellationToken)
+        {
+            _usersById.TryGetValue(userId, out ApplicationUser? user);
+            return Task.FromResult(user);
+        }
 
-        public Task<ApplicationUser?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken) =>
-            Task.FromResult<ApplicationUser?>(null);
+        public Task<ApplicationUser?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
+        {
+            _usersByNormalizedUserName.TryGetValue(normalizedUserName, out ApplicationUser? user);
+            return Task.FromResult(user);
+        }
 
         public Task<string?> GetEmailAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(user.Email);
@@ -348,17 +484,23 @@ public class IdentityRegistrationTests
         public Task<bool> GetEmailConfirmedAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(false);
 
-        public Task<string> GetNormalizedEmailAsync(ApplicationUser user, CancellationToken cancellationToken) =>
-            Task.FromResult(user.NormalizedEmail ?? string.Empty);
+        public Task<string?> GetNormalizedEmailAsync(ApplicationUser user, CancellationToken cancellationToken) =>
+            Task.FromResult(user.NormalizedEmail);
 
-        public Task<string> GetNormalizedUserNameAsync(ApplicationUser user, CancellationToken cancellationToken) =>
-            Task.FromResult(user.NormalizedUserName ?? string.Empty);
+        public Task<string?> GetNormalizedUserNameAsync(ApplicationUser user, CancellationToken cancellationToken) =>
+            Task.FromResult(user.NormalizedUserName);
+
+        public Task<string?> GetPasswordHashAsync(ApplicationUser user, CancellationToken cancellationToken) =>
+            Task.FromResult(user.PasswordHash);
 
         public Task<string> GetUserIdAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(user.Id);
 
         public Task<string?> GetUserNameAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(user.UserName);
+
+        public Task<bool> HasPasswordAsync(ApplicationUser user, CancellationToken cancellationToken) =>
+            Task.FromResult(!string.IsNullOrEmpty(user.PasswordHash));
 
         public Task SetEmailAsync(ApplicationUser user, string? email, CancellationToken cancellationToken)
         {
@@ -374,12 +516,27 @@ public class IdentityRegistrationTests
         public Task SetNormalizedEmailAsync(ApplicationUser user, string? normalizedEmail, CancellationToken cancellationToken)
         {
             user.NormalizedEmail = normalizedEmail;
+            if (!string.IsNullOrEmpty(normalizedEmail))
+            {
+                _usersByNormalizedEmail[normalizedEmail] = user;
+            }
             return Task.CompletedTask;
         }
 
         public Task SetNormalizedUserNameAsync(ApplicationUser user, string? normalizedName, CancellationToken cancellationToken)
         {
             user.NormalizedUserName = normalizedName;
+            if (!string.IsNullOrEmpty(normalizedName))
+            {
+                _usersByNormalizedUserName[normalizedName] = user;
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task SetPasswordHashAsync(ApplicationUser user, string? passwordHash, CancellationToken cancellationToken)
+        {
+            StoredPasswordHash = passwordHash;
+            user.PasswordHash = passwordHash;
             return Task.CompletedTask;
         }
 
@@ -391,8 +548,29 @@ public class IdentityRegistrationTests
             return Task.CompletedTask;
         }
 
-        public Task<IdentityResult> UpdateAsync(ApplicationUser user, CancellationToken cancellationToken) =>
-            Task.FromResult(IdentityResult.Success);
+        public Task<IdentityResult> UpdateAsync(ApplicationUser user, CancellationToken cancellationToken)
+        {
+            TrackUser(user);
+            return Task.FromResult(IdentityResult.Success);
+        }
+
+        private void TrackUser(ApplicationUser user)
+        {
+            if (!string.IsNullOrEmpty(user.Id))
+            {
+                _usersById[user.Id] = user;
+            }
+
+            if (!string.IsNullOrEmpty(user.NormalizedEmail))
+            {
+                _usersByNormalizedEmail[user.NormalizedEmail] = user;
+            }
+
+            if (!string.IsNullOrEmpty(user.NormalizedUserName))
+            {
+                _usersByNormalizedUserName[user.NormalizedUserName] = user;
+            }
+        }
     }
 
     private sealed class TestUserManager(TestUserStore store) : UserManager<ApplicationUser>(
@@ -430,6 +608,36 @@ public class IdentityRegistrationTests
 
         public override Task<string> GetUserIdAsync(ApplicationUser user) =>
             Task.FromResult(user.Id ?? "test-user-id");
+    }
+
+    private sealed class ExecutableTestUserManager(
+        TestUserStore store,
+        IPasswordHasher<ApplicationUser> passwordHasher,
+        IdentityErrorDescriber errorDescriber) : UserManager<ApplicationUser>(
+        store,
+        Microsoft.Extensions.Options.Options.Create(new IdentityOptions
+        {
+            SignIn = { RequireConfirmedAccount = false },
+            User = { RequireUniqueEmail = true },
+            Password =
+            {
+                RequiredLength = 8,
+                RequireDigit = true,
+                RequireLowercase = true,
+                RequireUppercase = true,
+                RequireNonAlphanumeric = true,
+            },
+        }),
+        passwordHasher,
+        new IUserValidator<ApplicationUser>[] { new UserValidator<ApplicationUser>() },
+        new IPasswordValidator<ApplicationUser>[] { new PasswordValidator<ApplicationUser>() },
+        new UpperInvariantLookupNormalizer(),
+        errorDescriber,
+        new NullServiceProvider(),
+        NullLogger<UserManager<ApplicationUser>>.Instance)
+    {
+        public override Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user) =>
+            Task.FromResult("confirmation-token");
     }
 
     private sealed class TestSignInManager(UserManager<ApplicationUser> userManager) : SignInManager<ApplicationUser>(
