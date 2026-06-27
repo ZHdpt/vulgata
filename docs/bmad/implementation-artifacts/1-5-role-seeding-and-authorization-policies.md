@@ -4,7 +4,7 @@ baseline_commit: 26cbcbb490890e5f337ccb5c931137314ffc2ea6
 
 # Story 1.5: Role Seeding & Authorization Policies
 
-Status: review
+Status: done
 
 ## Story
 
@@ -188,3 +188,4 @@ GPT-5.3-Codex
 #### Change Log
 
 - 2026-06-27: Implemented Story 1.5 role seeding and authorization policies; added integration tests and moved story to review.
+- 2026-06-27: Code review completed with no findings; story marked done.
