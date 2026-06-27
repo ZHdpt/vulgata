@@ -106,7 +106,7 @@
             validationError = errors.FirstOrDefault(error => error.Code == nameof(IdentityErrorDescriber.DuplicateEmail))?.Description;
             if (validationError is null)
             {
-                message = $"Error: {string.Join("，", errors.Select(error => error.Description))}";
+                message = $"错误：{string.Join("，", errors.Select(error => error.Description))}";
             }
 
             return;

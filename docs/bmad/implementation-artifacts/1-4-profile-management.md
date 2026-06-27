@@ -4,7 +4,7 @@ baseline_commit: 5dc9285a8805d06864b80a25d6f36789da66cb01
 
 # Story 1.4: Profile Management
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -97,7 +97,7 @@ so that I can keep my display name, email, and password current.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Localize the remaining generic failure messages on the profile-management pages so the user never sees the English `Error:` prefix in Story 1.4 flows [src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Index.razor:89]
+- [x] [Review][Patch] Localize the remaining generic failure messages on the profile-management pages so the user never sees the English `Error:` prefix in Story 1.4 flows [src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Index.razor:89]
 
 ## Dev Notes
 
@@ -187,6 +187,8 @@ GPT-5.3-Codex
 - `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter ProfileManagementTests` (red phase; compile failure before `DisplayName` implementation)
 - `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter ProfileManagementTests` (green phase; 6/6 passed)
 - `dotnet test Vulgata.slnx` (full regression; 33/33 passed)
+- `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter ProfileManagementTests` (review-fix validation; 7/7 passed, including localized generic failure-message regression coverage)
+- `dotnet test Vulgata.slnx` (review-fix full regression; 34/34 passed)
 
 #### Completion Notes List
 
@@ -196,6 +198,7 @@ GPT-5.3-Codex
 - Updated change-password UX to use Chinese labels/messages, explicit current-password validation path with exact error `当前密码不正确`, and post-success session refresh.
 - Added executable integration coverage in `ProfileManagementTests` for AC-1 through AC-6, including fallback rendering, display name persistence, unique/duplicate email updates, and password change behaviors.
 - Manual checklist items (Task 6) were verified through equivalent authenticated end-to-end integration test flows.
+- Resolved the Story 1.4 review patch by localizing the remaining generic profile-management failure messages and preserving danger styling for localized status alerts.
 
 #### File List
 
@@ -204,6 +207,7 @@ GPT-5.3-Codex
 - src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/ChangePassword.razor
 - src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Email.razor
 - src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Index.razor
+- src/dotnet/Vulgata.Web/Components/Account/Shared/StatusMessage.razor
 - src/dotnet/Vulgata.Web/Data/ApplicationUser.cs
 - src/dotnet/Vulgata.Web/Data/Migrations/00000000000001_AddDisplayNameToApplicationUser.cs
 - src/dotnet/Vulgata.Web/Data/Migrations/00000000000001_AddDisplayNameToApplicationUser.Designer.cs
@@ -213,3 +217,4 @@ GPT-5.3-Codex
 #### Change Log
 
 - 2026-06-26: Implemented Story 1.4 profile management end-to-end (display name, direct email update, password UX localization/error path), added migration and profile integration tests, and moved story to review.
+- 2026-06-27: Localized the remaining generic Story 1.4 profile-management failure messages, added regression coverage for the password complexity failure path, and returned the story to review.

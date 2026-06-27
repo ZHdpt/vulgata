@@ -151,6 +151,36 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
     }
 
     [Fact]
+    public async Task ChangePassword_WithWeakNewPassword_ShowsLocalizedGenericError()
+    {
+        const string email = "profile.password.weak-new@example.com";
+        const string oldPassword = "Valid1!Pass";
+        const string weakNewPassword = "alllowercase1";
+
+        string userId = await CreateUserAsync(email, oldPassword);
+
+        using HttpClient client = CreateClient();
+        await LoginAsync(client, email, oldPassword);
+
+        Dictionary<string, string> formFields = await GetFormFieldsAsync(client, "/Account/Manage/ChangePassword", "/Account/Manage/ChangePassword");
+        formFields["Input.OldPassword"] = oldPassword;
+        formFields["Input.NewPassword"] = weakNewPassword;
+        formFields["Input.ConfirmPassword"] = weakNewPassword;
+
+        using FormUrlEncodedContent postData = new(formFields);
+        HttpResponseMessage response = await client.PostAsync("/Account/Manage/ChangePassword", postData);
+        string rawHtml = await response.Content.ReadAsStringAsync();
+        string html = WebUtility.HtmlDecode(rawHtml);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("alert-danger", rawHtml, StringComparison.Ordinal);
+        Assert.Contains("错误：", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Error:", html, StringComparison.Ordinal);
+        Assert.True(await CheckPasswordAsync(userId, oldPassword));
+        Assert.False(await CheckPasswordAsync(userId, weakNewPassword));
+    }
+
+    [Fact]
     public async Task ChangePassword_WithValidInputs_PreservesSessionAndInvalidatesOldPassword()
     {
         const string email = "profile.password.success@example.com";

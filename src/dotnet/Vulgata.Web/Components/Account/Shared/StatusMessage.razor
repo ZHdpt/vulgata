@@ -1,6 +1,6 @@
 ﻿@if (!string.IsNullOrEmpty(DisplayMessage))
 {
-    var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
+    var statusMessageClass = IsErrorMessage(DisplayMessage) ? "danger" : "success";
     <div class="alert alert-@statusMessageClass" role="alert">
         @DisplayMessage
     </div>
@@ -16,6 +16,11 @@
     private HttpContext HttpContext { get; set; } = default!;
 
     private string? DisplayMessage => Message ?? messageFromCookie;
+
+    private static bool IsErrorMessage(string message) =>
+        message.StartsWith("Error:", StringComparison.Ordinal)
+        || message.StartsWith("错误：", StringComparison.Ordinal)
+        || message.StartsWith("错误:", StringComparison.Ordinal);
 
     protected override void OnInitialized()
     {

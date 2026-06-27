@@ -86,7 +86,7 @@
             if (!updateResult.Succeeded)
             {
                 RedirectManager.RedirectToCurrentPageWithStatus(
-                    $"Error: {string.Join("，", updateResult.Errors.Select(error => error.Description))}",
+                    $"错误：{string.Join("，", updateResult.Errors.Select(error => error.Description))}",
                     HttpContext);
                 return;
             }

@@ -46,7 +46,7 @@ development_status:
   1-1-solution-scaffolding-and-docker-deployment: done
   1-2-user-registration: done
   1-3-login-and-logout: done
-  1-4-profile-management: in-progress
+  1-4-profile-management: review
   1-5-role-seeding-and-authorization-policies: backlog
   1-6-administrator-role-assignment: backlog
   epic-1-retrospective: optional
