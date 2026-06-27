@@ -5,4 +5,18 @@
 <PageTitle>设置</PageTitle>
 
 <h1 class="display-serif display-serif-sm">设置</h1>
-<p>设置页占位，后续故事将实现 LLM 提供商与用户管理。</p>
+<p>可在此查看和进入可用的设置项。</p>
+
+<section aria-label="设置导航">
+	<h2>平台设置</h2>
+	<ul>
+		<li>LLM 提供商配置（后续故事实现）</li>
+		<AuthorizeView Roles="@RoleNames.Administrator">
+			<li><a href="/management/settings/users">用户管理</a></li>
+		</AuthorizeView>
+	</ul>
+</section>
+
+<AuthorizeView Roles="@RoleNames.Administrator">
+	<p class="text-muted">管理员可管理用户角色。</p>
+</AuthorizeView>

@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Shared;
 using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
@@ -457,11 +458,12 @@ public class IdentityRegistrationTests
         }
     }
 
-    private sealed class TestUserStore : IUserEmailStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>
+    private sealed class TestUserStore : IUserEmailStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>, IUserRoleStore<ApplicationUser>
     {
         private readonly Dictionary<string, ApplicationUser> _usersById = new(StringComparer.Ordinal);
         private readonly Dictionary<string, ApplicationUser> _usersByNormalizedEmail = new(StringComparer.Ordinal);
         private readonly Dictionary<string, ApplicationUser> _usersByNormalizedUserName = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, HashSet<string>> _rolesByUserId = new(StringComparer.Ordinal);
 
         public TestUserStore(IEnumerable<ApplicationUser>? seededUsers = null)
         {
@@ -496,8 +498,11 @@ public class IdentityRegistrationTests
             return Task.FromResult(IdentityResult.Success);
         }
 
-        public Task<IdentityResult> DeleteAsync(ApplicationUser user, CancellationToken cancellationToken) =>
-            Task.FromResult(IdentityResult.Success);
+        public Task<IdentityResult> DeleteAsync(ApplicationUser user, CancellationToken cancellationToken)
+        {
+            UntrackUser(user);
+            return Task.FromResult(IdentityResult.Success);
+        }
 
         public void Dispose()
         {
@@ -536,6 +541,17 @@ public class IdentityRegistrationTests
         public Task<string?> GetPasswordHashAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(user.PasswordHash);
 
+        public Task<IList<string>> GetRolesAsync(ApplicationUser user, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(user.Id)
+                || !_rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+            {
+                return Task.FromResult<IList<string>>([]);
+            }
+
+            return Task.FromResult<IList<string>>(roles.OrderBy(role => role, StringComparer.Ordinal).ToArray());
+        }
+
         public Task<string> GetUserIdAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(user.Id);
 
@@ -544,6 +560,63 @@ public class IdentityRegistrationTests
 
         public Task<bool> HasPasswordAsync(ApplicationUser user, CancellationToken cancellationToken) =>
             Task.FromResult(!string.IsNullOrEmpty(user.PasswordHash));
+
+        public Task<bool> IsInRoleAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(user.Id)
+                || !_rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+            {
+                return Task.FromResult(false);
+            }
+
+            return Task.FromResult(roles.Contains(CanonicalizeRoleName(roleName)));
+        }
+
+        public Task AddToRoleAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(user.Id))
+            {
+                throw new InvalidOperationException("Users must have an identifier before roles can be assigned.");
+            }
+
+            if (!_rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+            {
+                roles = new HashSet<string>(StringComparer.Ordinal);
+                _rolesByUserId[user.Id] = roles;
+            }
+
+            roles.Add(CanonicalizeRoleName(roleName));
+            TrackUser(user);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveFromRoleAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken)
+        {
+            if (!string.IsNullOrEmpty(user.Id)
+                && _rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+            {
+                roles.Remove(CanonicalizeRoleName(roleName));
+                if (roles.Count == 0)
+                {
+                    _rolesByUserId.Remove(user.Id);
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task<IList<ApplicationUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
+        {
+            string canonicalRole = CanonicalizeRoleName(roleName);
+            ApplicationUser[] users = _usersById.Values
+                .Where(user => !string.IsNullOrEmpty(user.Id)
+                    && _rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles)
+                    && roles.Contains(canonicalRole))
+                .DistinctBy(user => user.Id, StringComparer.Ordinal)
+                .ToArray();
+
+            return Task.FromResult<IList<ApplicationUser>>(users);
+        }
 
         public Task SetEmailAsync(ApplicationUser user, string? email, CancellationToken cancellationToken)
         {
@@ -614,6 +687,33 @@ public class IdentityRegistrationTests
                 _usersByNormalizedUserName[user.NormalizedUserName] = user;
             }
         }
+
+        private void UntrackUser(ApplicationUser user)
+        {
+            if (!string.IsNullOrEmpty(user.Id))
+            {
+                _usersById.Remove(user.Id);
+                _rolesByUserId.Remove(user.Id);
+            }
+
+            if (!string.IsNullOrEmpty(user.NormalizedEmail))
+            {
+                _usersByNormalizedEmail.Remove(user.NormalizedEmail);
+            }
+
+            if (!string.IsNullOrEmpty(user.NormalizedUserName))
+            {
+                _usersByNormalizedUserName.Remove(user.NormalizedUserName);
+            }
+        }
+
+        private static string CanonicalizeRoleName(string roleName) => roleName.ToUpperInvariant() switch
+        {
+            "ADMINISTRATOR" => RoleNames.Administrator,
+            "SYSTEMOWNER" => RoleNames.SystemOwner,
+            "USER" => RoleNames.User,
+            _ => roleName,
+        };
     }
 
     private sealed class TestUserManager(TestUserStore store) : UserManager<ApplicationUser>(
@@ -643,7 +743,13 @@ public class IdentityRegistrationTests
         public override Task<IdentityResult> CreateAsync(ApplicationUser user, string password)
         {
             user.Id ??= "test-user-id";
-            return Task.FromResult(CreateResult);
+
+            if (!CreateResult.Succeeded)
+            {
+                return Task.FromResult(CreateResult);
+            }
+
+            return store.CreateAsync(user, CancellationToken.None);
         }
 
         public override Task<string> GenerateEmailConfirmationTokenAsync(ApplicationUser user) =>

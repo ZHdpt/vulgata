@@ -1,21 +1,82 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Vulgata.Shared;
 
 namespace Vulgata.Web.Data;
+
+public sealed class AdministratorOnlyRequirement : IAuthorizationRequirement
+{
+}
+
+public sealed class AdministratorOnlyHandler(UserManager<ApplicationUser> userManager)
+    : AuthorizationHandler<AdministratorOnlyRequirement>
+{
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AdministratorOnlyRequirement requirement)
+    {
+        ApplicationUser? user = await GetCurrentUserAsync(context);
+        if (user is null)
+        {
+            return;
+        }
+
+        if (await userManager.IsInRoleAsync(user, RoleNames.Administrator))
+        {
+            context.Succeed(requirement);
+        }
+    }
+
+    private async Task<ApplicationUser?> GetCurrentUserAsync(AuthorizationHandlerContext context)
+    {
+        if (context.User.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }
+
+        string? userId = userManager.GetUserId(context.User);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return null;
+        }
+
+        return await userManager.FindByIdAsync(userId);
+    }
+}
 
 public sealed class ManagementAccessRequirement : IAuthorizationRequirement
 {
 }
 
-public sealed class ManagementAccessHandler : AuthorizationHandler<ManagementAccessRequirement>
+public sealed class ManagementAccessHandler(UserManager<ApplicationUser> userManager)
+    : AuthorizationHandler<ManagementAccessRequirement>
 {
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, ManagementAccessRequirement requirement)
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, ManagementAccessRequirement requirement)
     {
-        if (context.User.IsInRole(RoleNames.Administrator) || context.User.IsInRole(RoleNames.SystemOwner))
+        ApplicationUser? user = await GetCurrentUserAsync(context);
+        if (user is null)
+        {
+            return;
+        }
+
+        if (await userManager.IsInRoleAsync(user, RoleNames.Administrator)
+            || await userManager.IsInRoleAsync(user, RoleNames.SystemOwner))
         {
             context.Succeed(requirement);
         }
+    }
 
-        return Task.CompletedTask;
+    private async Task<ApplicationUser?> GetCurrentUserAsync(AuthorizationHandlerContext context)
+    {
+        if (context.User.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }
+
+        string? userId = userManager.GetUserId(context.User);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return null;
+        }
+
+        return await userManager.FindByIdAsync(userId);
     }
 }

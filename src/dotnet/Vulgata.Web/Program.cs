@@ -50,7 +50,10 @@ builder.Services.AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.C
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthorizationPolicyNames.AdministratorOnly, policy =>
-        policy.RequireRole(RoleNames.Administrator));
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new AdministratorOnlyRequirement());
+    });
 
     options.AddPolicy(AuthorizationPolicyNames.ManagementAccess, policy =>
     {
@@ -59,7 +62,8 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
-builder.Services.AddSingleton<IAuthorizationHandler, ManagementAccessHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, AdministratorOnlyHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ManagementAccessHandler>();
 builder.Services.AddScoped<RoleSeeder>();
 
 builder.Services.ConfigureApplicationCookie(options =>

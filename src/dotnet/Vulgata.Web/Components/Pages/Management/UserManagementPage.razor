@@ -1,0 +1,246 @@
+@page "/management/settings/users"
+@layout ManagementLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.AdministratorOnly)]
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Vulgata.Web.Components.Account
+@using Vulgata.Web.Components.Account.Shared
+@using Vulgata.Web.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>用户管理</PageTitle>
+
+<h1 class="display-serif display-serif-sm">用户管理</h1>
+<p>管理员可以在此授予或移除管理员权限。</p>
+
+<StatusMessage />
+
+<form action="/management/settings/users" @formname="user-management-action" @onsubmit="OnSubmitAsync" method="post" class="d-none" aria-hidden="true">
+    <AntiforgeryToken />
+    <input type="hidden" name="Action" value="" />
+    <input type="hidden" name="UserId" value="" />
+    <button type="submit" aria-hidden="true" tabindex="-1">提交</button>
+</form>
+
+@if (_rows.Count == 0)
+{
+    <p>暂无注册用户。</p>
+}
+else
+{
+    <table class="table" aria-label="用户和角色列表">
+        <thead>
+            <tr>
+                <th scope="col">邮箱</th>
+                <th scope="col">角色</th>
+                <th scope="col">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (UserRoleRow row in _rows)
+            {
+                <tr>
+                    <td>@row.Email</td>
+                    <td>@string.Join(", ", row.Roles)</td>
+                    <td>
+                        @if (row.IsAdministrator)
+                        {
+                            if (row.CanRemoveAdministrator)
+                            {
+                                <form action="/management/settings/users" @formname="@($"remove-admin-{row.UserId}")" @onsubmit="OnSubmitAsync" method="post">
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="Action" value="remove" />
+                                    <input type="hidden" name="UserId" value="@row.UserId" />
+                                    <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Neutral">移除管理员</FluentButton>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">至少需要保留一名管理员</span>
+                            }
+                        }
+                        else
+                        {
+                            <form action="/management/settings/users" @formname="@($"grant-admin-{row.UserId}")" @onsubmit="OnSubmitAsync" method="post">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="Action" value="grant" />
+                                <input type="hidden" name="UserId" value="@row.UserId" />
+                                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">授予管理员</FluentButton>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private string? Action { get; set; }
+
+    [SupplyParameterFromForm]
+    private string? UserId { get; set; }
+
+    private IReadOnlyList<UserRoleRow> _rows = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRowsAsync();
+    }
+
+    private async Task OnSubmitAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Action) || string.IsNullOrWhiteSpace(UserId))
+        {
+            RedirectWithStatus("错误：请求参数无效。", isError: true);
+            return;
+        }
+
+        ApplicationUser? user = await UserManager.FindByIdAsync(UserId);
+        if (user is null)
+        {
+            RedirectWithStatus("错误：未找到指定用户。", isError: true);
+            return;
+        }
+
+        if (Action.Equals("grant", StringComparison.OrdinalIgnoreCase))
+        {
+            await GrantAdministratorAsync(user);
+            return;
+        }
+
+        if (Action.Equals("remove", StringComparison.OrdinalIgnoreCase))
+        {
+            await RemoveAdministratorAsync(user);
+            return;
+        }
+
+        RedirectWithStatus("错误：未知操作。", isError: true);
+    }
+
+    private async Task GrantAdministratorAsync(ApplicationUser user)
+    {
+        if (await UserManager.IsInRoleAsync(user, RoleNames.Administrator))
+        {
+            RedirectWithStatus("该用户已是管理员。");
+            return;
+        }
+
+        IdentityResult result = await UserManager.AddToRoleAsync(user, RoleNames.Administrator);
+        if (!result.Succeeded)
+        {
+            RedirectWithStatus(BuildErrorMessage(result.Errors), isError: true);
+            return;
+        }
+
+        RedirectWithStatus("已授予管理员权限。");
+    }
+
+    private async Task RemoveAdministratorAsync(ApplicationUser user)
+    {
+        if (!await UserManager.IsInRoleAsync(user, RoleNames.Administrator))
+        {
+            RedirectWithStatus("该用户当前不是管理员。");
+            return;
+        }
+
+        IList<ApplicationUser> administrators = await UserManager.GetUsersInRoleAsync(RoleNames.Administrator);
+        if (administrators.Count <= 1)
+        {
+            RedirectWithStatus("错误：至少需要保留一名管理员。", isError: true);
+            return;
+        }
+
+        IdentityResult removeResult = await UserManager.RemoveFromRoleAsync(user, RoleNames.Administrator);
+        if (!removeResult.Succeeded)
+        {
+            RedirectWithStatus(BuildErrorMessage(removeResult.Errors), isError: true);
+            return;
+        }
+
+        bool hasSystemOwner = await UserManager.IsInRoleAsync(user, RoleNames.SystemOwner);
+        bool hasUserRole = await UserManager.IsInRoleAsync(user, RoleNames.User);
+
+        if (!hasSystemOwner && !hasUserRole)
+        {
+            IdentityResult addUserRoleResult = await UserManager.AddToRoleAsync(user, RoleNames.User);
+            if (!addUserRoleResult.Succeeded)
+            {
+                RedirectWithStatus(BuildErrorMessage(addUserRoleResult.Errors), isError: true);
+                return;
+            }
+        }
+
+        RedirectWithStatus("已移除管理员权限。");
+    }
+
+    private void RedirectWithStatus(string message, bool isError = false)
+    {
+        string statusMessage = isError && !message.StartsWith("错误：", StringComparison.Ordinal)
+            ? $"错误：{message}"
+            : message;
+
+        RedirectManager.RedirectToWithStatus("/management/settings/users", statusMessage, HttpContext);
+    }
+
+    private async Task LoadRowsAsync()
+    {
+        List<ApplicationUser> users = await UserManager.Users
+            .OrderBy(user => user.Email)
+            .ThenBy(user => user.UserName)
+            .ToListAsync();
+
+        IList<ApplicationUser> administrators = await UserManager.GetUsersInRoleAsync(RoleNames.Administrator);
+        bool canRemoveAdministrator = administrators.Count > 1;
+
+        List<UserRoleRow> rows = [];
+        foreach (ApplicationUser user in users)
+        {
+            IList<string> roles = await UserManager.GetRolesAsync(user);
+            string[] orderedRoles = roles
+                .OrderBy(GetRolePriority)
+                .ThenBy(role => role, StringComparer.Ordinal)
+                .ToArray();
+
+            bool isAdministrator = orderedRoles.Contains(RoleNames.Administrator, StringComparer.Ordinal);
+            rows.Add(new UserRoleRow(
+                user.Id,
+                user.Email ?? user.UserName ?? "(未命名用户)",
+                orderedRoles.Length == 0 ? ["(无角色)"] : orderedRoles,
+                isAdministrator,
+                isAdministrator && canRemoveAdministrator));
+        }
+
+        _rows = rows;
+    }
+
+    private static int GetRolePriority(string roleName) => roleName switch
+    {
+        RoleNames.Administrator => 0,
+        RoleNames.SystemOwner => 1,
+        RoleNames.User => 2,
+        _ => 3,
+    };
+
+    private static string BuildErrorMessage(IEnumerable<IdentityError> errors)
+    {
+        string details = string.Join("；", errors.Select(error => error.Description));
+        return string.IsNullOrWhiteSpace(details)
+            ? "错误：角色变更失败，请稍后重试。"
+            : $"错误：{details}";
+    }
+
+    private sealed record UserRoleRow(
+        string UserId,
+        string Email,
+        IReadOnlyList<string> Roles,
+        bool IsAdministrator,
+        bool CanRemoveAdministrator);
+}

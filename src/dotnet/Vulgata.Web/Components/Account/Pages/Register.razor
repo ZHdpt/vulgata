@@ -5,6 +5,7 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Vulgata.Shared
 @using Vulgata.Web.Data
 
 @inject UserManager<ApplicationUser> UserManager
@@ -89,6 +90,14 @@ error.Description))}";
             return;
         }
 
+        IdentityResult roleAssignmentResult = await AssignInitialRoleAsync(user);
+        if (!roleAssignmentResult.Succeeded)
+        {
+            identityErrors = roleAssignmentResult.Errors;
+            await UserManager.DeleteAsync(user);
+            return;
+        }
+
         Logger.LogInformation("User created a new account with password.");
 
         var userId = await UserManager.GetUserIdAsync(user);
@@ -111,6 +120,16 @@ error.Description))}";
             await SignInManager.SignInAsync(user, isPersistent: false);
             RedirectManager.RedirectTo(ReturnUrl ?? "/");
         }
+    }
+
+    private async Task<IdentityResult> AssignInitialRoleAsync(ApplicationUser user)
+    {
+        IList<ApplicationUser> administrators = await UserManager.GetUsersInRoleAsync(RoleNames.Administrator);
+        string targetRole = administrators.Count == 0
+            ? RoleNames.Administrator
+            : RoleNames.User;
+
+        return await UserManager.AddToRoleAsync(user, targetRole);
     }
 
     private ApplicationUser CreateUser()
