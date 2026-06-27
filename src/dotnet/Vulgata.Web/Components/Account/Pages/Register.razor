@@ -15,6 +15,7 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IAdministratorRoleCoordinator AdministratorRoleCoordinator
 
 <PageTitle>注册</PageTitle>
 
@@ -123,14 +124,7 @@ error.Description))}";
     }
 
     private async Task<IdentityResult> AssignInitialRoleAsync(ApplicationUser user)
-    {
-        IList<ApplicationUser> administrators = await UserManager.GetUsersInRoleAsync(RoleNames.Administrator);
-        string targetRole = administrators.Count == 0
-            ? RoleNames.Administrator
-            : RoleNames.User;
-
-        return await UserManager.AddToRoleAsync(user, targetRole);
-    }
+        => await AdministratorRoleCoordinator.AssignInitialRoleAsync(user);
 
     private ApplicationUser CreateUser()
     {

@@ -73,6 +73,7 @@ public class IdentityRegistrationTests
         {
             CreateResult = createResult ?? IdentityResult.Success,
         };
+        AdministratorRoleCoordinator administratorRoleCoordinator = new(userManager);
         TestSignInManager signInManager = new(userManager);
         TestEmailSender emailSender = new();
         RecordingNavigationManager navigationManager = new();
@@ -84,6 +85,7 @@ public class IdentityRegistrationTests
         SetProperty(component, "Logger", GetNullLogger(registerType));
         SetProperty(component, "NavigationManager", navigationManager);
         SetProperty(component, "RedirectManager", CreateIdentityRedirectManager(navigationManager));
+        SetProperty(component, "AdministratorRoleCoordinator", administratorRoleCoordinator);
         SetProperty(component, "Input", input);
         SetProperty(component, "ReturnUrl", returnUrl);
 
@@ -104,6 +106,7 @@ public class IdentityRegistrationTests
 
         TestUserStore userStore = new(existingUsers);
         UserManager<ApplicationUser> userManager = CreateExecutableUserManager(userStore);
+        AdministratorRoleCoordinator administratorRoleCoordinator = new(userManager);
         TestSignInManager signInManager = new(userManager);
         TestEmailSender emailSender = new();
         RecordingNavigationManager navigationManager = new();
@@ -115,6 +118,7 @@ public class IdentityRegistrationTests
         SetProperty(component, "Logger", GetNullLogger(registerType));
         SetProperty(component, "NavigationManager", navigationManager);
         SetProperty(component, "RedirectManager", CreateIdentityRedirectManager(navigationManager));
+        SetProperty(component, "AdministratorRoleCoordinator", administratorRoleCoordinator);
         SetProperty(component, "Input", input);
         SetProperty(component, "ReturnUrl", returnUrl);
 
@@ -129,6 +133,16 @@ public class IdentityRegistrationTests
             store,
             passwordHasher ?? new BcryptPasswordHasher<ApplicationUser>(),
             errorDescriber ?? new ChineseIdentityErrorDescriber());
+
+    private static ApplicationUser CreateSeededUser(string id, string email) =>
+        new()
+        {
+            Id = id,
+            UserName = email,
+            NormalizedUserName = email.ToUpperInvariant(),
+            Email = email,
+            NormalizedEmail = email.ToUpperInvariant(),
+        };
 
     private static IdentityOptions CreateProductionIdentityOptions()
     {
@@ -308,6 +322,93 @@ public class IdentityRegistrationTests
             || harness.UserStore.StoredPasswordHash.StartsWith("$2y$", StringComparison.Ordinal));
         Assert.True(harness.SignInManager.SignInCalled);
         Assert.Equal("/", harness.NavigationManager.LastNavigatedUri);
+    }
+
+    [Fact]
+    public async Task AdministratorRoleCoordinator_AssignInitialRoleAsync_ConcurrentCallsPromoteExactlyOneAdministrator()
+    {
+        TestUserStore store = new();
+        ApplicationUser firstUser = CreateSeededUser("first-user-id", "first.user@example.com");
+        ApplicationUser secondUser = CreateSeededUser("second-user-id", "second.user@example.com");
+
+        await store.CreateAsync(firstUser, CancellationToken.None);
+        await store.CreateAsync(secondUser, CancellationToken.None);
+
+        AdministratorRoleCoordinator firstCoordinator = new(new TestUserManager(store));
+        AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store));
+        TaskCompletionSource start = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        Task<IdentityResult> firstAssignment = Task.Run(async () =>
+        {
+            await start.Task;
+            return await firstCoordinator.AssignInitialRoleAsync(firstUser);
+        });
+
+        Task<IdentityResult> secondAssignment = Task.Run(async () =>
+        {
+            await start.Task;
+            return await secondCoordinator.AssignInitialRoleAsync(secondUser);
+        });
+
+        start.SetResult();
+
+        IdentityResult[] results = await Task.WhenAll(firstAssignment, secondAssignment);
+
+        Assert.All(results, result => Assert.True(result.Succeeded));
+
+        IList<string> firstRoles = await store.GetRolesAsync(firstUser, CancellationToken.None);
+        IList<string> secondRoles = await store.GetRolesAsync(secondUser, CancellationToken.None);
+        string[][] roleSets = [firstRoles.ToArray(), secondRoles.ToArray()];
+
+        Assert.Equal(1, roleSets.Count(roles => roles.Contains(RoleNames.Administrator, StringComparer.Ordinal)));
+        Assert.Equal(1, roleSets.Count(roles => roles.Contains(RoleNames.User, StringComparer.Ordinal)));
+    }
+
+    [Fact]
+    public async Task AdministratorRoleCoordinator_RemoveAdministratorAsync_ConcurrentCallsPreserveLastAdministrator()
+    {
+        TestUserStore store = new();
+        ApplicationUser firstAdministrator = CreateSeededUser("first-admin-id", "first.admin@example.com");
+        ApplicationUser secondAdministrator = CreateSeededUser("second-admin-id", "second.admin@example.com");
+
+        await store.CreateAsync(firstAdministrator, CancellationToken.None);
+        await store.CreateAsync(secondAdministrator, CancellationToken.None);
+        await store.AddToRoleAsync(firstAdministrator, RoleNames.Administrator, CancellationToken.None);
+        await store.AddToRoleAsync(secondAdministrator, RoleNames.Administrator, CancellationToken.None);
+
+        AdministratorRoleCoordinator firstCoordinator = new(new TestUserManager(store));
+        AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store));
+        TaskCompletionSource start = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        Task<AdministratorRoleRemovalResult> firstRemoval = Task.Run(async () =>
+        {
+            await start.Task;
+            return await firstCoordinator.RemoveAdministratorAsync(firstAdministrator);
+        });
+
+        Task<AdministratorRoleRemovalResult> secondRemoval = Task.Run(async () =>
+        {
+            await start.Task;
+            return await secondCoordinator.RemoveAdministratorAsync(secondAdministrator);
+        });
+
+        start.SetResult();
+
+        AdministratorRoleRemovalResult[] results = await Task.WhenAll(firstRemoval, secondRemoval);
+
+        Assert.Equal(1, results.Count(result => result.Outcome == AdministratorRoleRemovalOutcome.Success));
+        Assert.Equal(1, results.Count(result => result.Outcome == AdministratorRoleRemovalOutcome.LastAdministratorBlocked));
+
+        IList<ApplicationUser> administrators = await store.GetUsersInRoleAsync(RoleNames.Administrator, CancellationToken.None);
+        Assert.Single(administrators);
+
+        ApplicationUser demotedUser = administrators[0].Id == firstAdministrator.Id
+            ? secondAdministrator
+            : firstAdministrator;
+
+        IList<string> demotedRoles = await store.GetRolesAsync(demotedUser, CancellationToken.None);
+        Assert.DoesNotContain(RoleNames.Administrator, demotedRoles);
+        Assert.Contains(RoleNames.User, demotedRoles);
     }
 
     [Fact]

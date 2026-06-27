@@ -65,6 +65,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAuthorizationHandler, AdministratorOnlyHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, ManagementAccessHandler>();
 builder.Services.AddScoped<RoleSeeder>();
+builder.Services.AddScoped<IAdministratorRoleCoordinator, AdministratorRoleCoordinator>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

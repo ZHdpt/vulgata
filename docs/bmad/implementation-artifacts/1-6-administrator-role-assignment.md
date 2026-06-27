@@ -4,7 +4,7 @@ baseline_commit: e7b2d65a9206d99267e33caa8fd2796db5b64221
 
 # Story 1.6: Administrator Role Assignment
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -88,8 +88,8 @@ so that I can delegate platform management.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Concurrent first-user registration can assign `Administrator` to more than one account, so the bootstrap is not deterministic as written [src/dotnet/Vulgata.Web/Components/Account/Pages/Register.razor:125]
-- [ ] [Review][Patch] Concurrent administrator removals can still drop the system to zero administrators because the last-admin guard reads and removes in separate steps [src/dotnet/Vulgata.Web/Components/Pages/Management/UserManagementPage.razor:154]
+- [x] [Review][Patch] Concurrent first-user registration can assign `Administrator` to more than one account, so the bootstrap is not deterministic as written [src/dotnet/Vulgata.Web/Components/Account/Pages/Register.razor:125]
+- [x] [Review][Patch] Concurrent administrator removals can still drop the system to zero administrators because the last-admin guard reads and removes in separate steps [src/dotnet/Vulgata.Web/Components/Pages/Management/UserManagementPage.razor:154]
 
 ## Dev Notes
 
@@ -161,6 +161,8 @@ GPT-5.3-Codex
 
 - `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter "FullyQualifiedName~AdministratorRoleAssignmentTests"`
 - `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter "FullyQualifiedName~IdentityRegistrationTests.RegisterUserStoresBcryptPasswordHashThroughIdentityPipeline|FullyQualifiedName~IdentityRegistrationTests.RegisterUserSignsInAndRedirectsToChatPageAfterSuccessfulRegistration"`
+- `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter "FullyQualifiedName~IdentityRegistrationTests.AdministratorRoleCoordinator_AssignInitialRoleAsync_ConcurrentCallsPromoteExactlyOneAdministrator|FullyQualifiedName~IdentityRegistrationTests.AdministratorRoleCoordinator_RemoveAdministratorAsync_ConcurrentCallsPreserveLastAdministrator"`
+- `dotnet test .\tests\Vulgata.Tests\Vulgata.Tests.csproj --filter "FullyQualifiedName~AdministratorRoleAssignmentTests|FullyQualifiedName~IdentityRegistrationTests.RegisterUserStoresBcryptPasswordHashThroughIdentityPipeline|FullyQualifiedName~IdentityRegistrationTests.RegisterUserSignsInAndRedirectsToChatPageAfterSuccessfulRegistration|FullyQualifiedName~IdentityRegistrationTests.AdministratorRoleCoordinator_AssignInitialRoleAsync_ConcurrentCallsPromoteExactlyOneAdministrator|FullyQualifiedName~IdentityRegistrationTests.AdministratorRoleCoordinator_RemoveAdministratorAsync_ConcurrentCallsPreserveLastAdministrator"`
 - `dotnet build .\Vulgata.slnx`
 - `dotnet test .\Vulgata.slnx`
 
@@ -169,6 +171,8 @@ GPT-5.3-Codex
 - Verified the existing Story 1.6 app implementation against administrator role bootstrap, administrator-only user management, non-admin denial, administrator grant/remove flows, fallback-role preservation, and last-administrator protection.
 - Updated `AdministratorRoleAssignmentTests` so the harness finds Blazor SSR forms through the generated handler hidden input instead of relying on literal `formname` attributes, and made hidden-input extraction resilient to attribute ordering.
 - Extended `IdentityRegistrationTests` in-memory Identity doubles with role-store behavior so Story 1.6's first-user administrator bootstrap works without regressing earlier registration tests.
+- Added `AdministratorRoleCoordinator` and routed registration bootstrap plus administrator removal through a shared serialized role-mutation path to eliminate check-then-mutate races identified in review.
+- Added deterministic concurrency tests that execute the two critical mutations in parallel and assert exactly one bootstrap administrator and preserved single-administrator floor on concurrent removals.
 - Validation passed with the focused Story 1.6 suite, the targeted registration regression tests, the full solution build, and the full solution test suite.
 - Manual verification checklist scenarios were exercised through executed end-to-end integration coverage on the real host/test pipeline rather than a separate browser-only pass.
 
@@ -179,6 +183,7 @@ GPT-5.3-Codex
 - src/dotnet/Vulgata.Web/Components/Account/Pages/Register.razor
 - src/dotnet/Vulgata.Web/Components/Pages/Management/SettingsPage.razor
 - src/dotnet/Vulgata.Web/Components/Pages/Management/UserManagementPage.razor
+- src/dotnet/Vulgata.Web/Data/AdministratorRoleCoordinator.cs
 - src/dotnet/Vulgata.Web/Data/ManagementAccessRequirement.cs
 - src/dotnet/Vulgata.Web/Program.cs
 - tests/Vulgata.Tests/AdministratorRoleAssignmentTests.cs
@@ -186,4 +191,5 @@ GPT-5.3-Codex
 
 #### Change Log
 
+- 2026-06-27: Addressed Story 1.6 review concurrency findings by serializing first-user administrator bootstrap and administrator demotion flows, added deterministic concurrency tests, and returned story status to review.
 - 2026-06-27: Validated Story 1.6 administrator role assignment, fixed Blazor form discovery in the new test harness, updated registration test doubles for first-user role bootstrap coverage, and moved the story to review.
