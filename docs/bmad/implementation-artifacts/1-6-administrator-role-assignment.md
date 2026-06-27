@@ -4,7 +4,7 @@ baseline_commit: e7b2d65a9206d99267e33caa8fd2796db5b64221
 
 # Story 1.6: Administrator Role Assignment
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -85,6 +85,11 @@ so that I can delegate platform management.
   - [x] 6.4 Grant administrator to another user and verify their access updates
   - [x] 6.5 Remove administrator from a user and verify the fallback role behavior
   - [x] 6.6 Verify non-admins cannot see or open the user-management page
+
+### Review Findings
+
+- [ ] [Review][Patch] Concurrent first-user registration can assign `Administrator` to more than one account, so the bootstrap is not deterministic as written [src/dotnet/Vulgata.Web/Components/Account/Pages/Register.razor:125]
+- [ ] [Review][Patch] Concurrent administrator removals can still drop the system to zero administrators because the last-admin guard reads and removes in separate steps [src/dotnet/Vulgata.Web/Components/Pages/Management/UserManagementPage.razor:154]
 
 ## Dev Notes
 
