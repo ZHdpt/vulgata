@@ -48,7 +48,7 @@ development_status:
   1-3-login-and-logout: done
   1-4-profile-management: done
   1-5-role-seeding-and-authorization-policies: done
-  1-6-administrator-role-assignment: backlog
+  1-6-administrator-role-assignment: ready-for-dev
   epic-1-retrospective: optional
   epic-2: backlog
   2-1-system-crud-admin: backlog
