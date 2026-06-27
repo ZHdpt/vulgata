@@ -4,7 +4,7 @@ baseline_commit: 5dc9285a8805d06864b80a25d6f36789da66cb01
 
 # Story 1.4: Profile Management
 
-Status: review
+Status: done
 
 ## Story
 
