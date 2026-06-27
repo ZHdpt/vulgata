@@ -4,7 +4,7 @@ baseline_commit: 5dc9285a8805d06864b80a25d6f36789da66cb01
 
 # Story 1.4: Profile Management
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -94,6 +94,10 @@ so that I can keep my display name, email, and password current.
   - [x] 6.4 Attempt to change email to an existing address and verify `该邮箱已被注册`
   - [x] 6.5 Enter an incorrect current password and verify `当前密码不正确`
   - [x] 6.6 Change password successfully and verify the session remains active
+
+### Review Findings
+
+- [ ] [Review][Patch] Localize the remaining generic failure messages on the profile-management pages so the user never sees the English `Error:` prefix in Story 1.4 flows [src/dotnet/Vulgata.Web/Components/Account/Pages/Manage/Index.razor:89]
 
 ## Dev Notes
 
