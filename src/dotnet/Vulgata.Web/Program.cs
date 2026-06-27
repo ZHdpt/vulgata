@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Shared;
 using Vulgata.Web.Components;
 using Vulgata.Web.Components.Account;
 using Vulgata.Web.Data;
@@ -39,10 +41,32 @@ builder.Services.AddDbContext<VulgataDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.Configure)
+    .AddRoles<IdentityRole>()
     .AddErrorDescriber<ChineseIdentityErrorDescriber>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicyNames.AdministratorOnly, policy =>
+        policy.RequireRole(RoleNames.Administrator));
+
+    options.AddPolicy(AuthorizationPolicyNames.ManagementAccess, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.AddRequirements(new ManagementAccessRequirement());
+    });
+});
+
+builder.Services.AddSingleton<IAuthorizationHandler, ManagementAccessHandler>();
+builder.Services.AddScoped<RoleSeeder>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 
 builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
 
@@ -84,6 +108,11 @@ try
     startupLogger.LogInformation("Applying Vulgata domain database migrations...");
     await vulgataDb.Database.MigrateAsync();
     startupLogger.LogInformation("Vulgata domain migrations applied successfully.");
+
+    var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
+    startupLogger.LogInformation("Seeding identity roles...");
+    await roleSeeder.SeedAsync();
+    startupLogger.LogInformation("Identity role seeding completed.");
 }
 catch (Exception ex)
 {

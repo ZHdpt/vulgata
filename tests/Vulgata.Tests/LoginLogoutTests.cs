@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Shared;
 using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
@@ -64,7 +65,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         foreach (string page in managementPages)
         {
             string content = ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Pages", "Management", page);
-            Assert.Contains("@attribute [Authorize(Roles = \"Administrator,SystemOwner\")]", content, StringComparison.Ordinal);
+            Assert.Contains($"@attribute [Authorize(Policy = {nameof(AuthorizationPolicyNames)}.{nameof(AuthorizationPolicyNames.ManagementAccess)})]", content, StringComparison.Ordinal);
         }
 
         string notFoundContent = ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Pages", "NotFound.razor");

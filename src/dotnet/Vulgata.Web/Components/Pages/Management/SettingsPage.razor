@@ -1,6 +1,6 @@
 @page "/management/settings"
 @layout ManagementLayout
-@attribute [Authorize(Roles = "Administrator,SystemOwner")]
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
 
 <PageTitle>设置</PageTitle>
 

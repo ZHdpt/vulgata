@@ -1,6 +1,6 @@
 @page "/management/graph"
 @layout ManagementLayout
-@attribute [Authorize(Roles = "Administrator,SystemOwner")]
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
 
 <PageTitle>图谱</PageTitle>
 

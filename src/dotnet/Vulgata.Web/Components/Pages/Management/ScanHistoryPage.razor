@@ -1,6 +1,6 @@
 @page "/management/scan-history"
 @layout ManagementLayout
-@attribute [Authorize(Roles = "Administrator,SystemOwner")]
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
 
 <PageTitle>扫描历史</PageTitle>
 

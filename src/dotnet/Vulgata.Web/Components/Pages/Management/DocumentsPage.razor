@@ -1,6 +1,6 @@
 @page "/management/documents"
 @layout ManagementLayout
-@attribute [Authorize(Roles = "Administrator,SystemOwner")]
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
 
 <PageTitle>文档</PageTitle>
 

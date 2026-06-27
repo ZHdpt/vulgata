@@ -9,7 +9,7 @@
 
         <nav class="primary-nav">
             <NavLink href="/" Match="NavLinkMatch.All">对话</NavLink>
-            <AuthorizeView Roles="Administrator,SystemOwner">
+            <AuthorizeView Policy="@AuthorizationPolicyNames.ManagementAccess">
                 <NavLink href="/management">管理后台</NavLink>
             </AuthorizeView>
         </nav>
