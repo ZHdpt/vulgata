@@ -46,6 +46,32 @@ public sealed class System
         UpdatedAt = now;
     }
 
+    public Repository AddRepository(
+        string name,
+        string gitUrl,
+        string? description,
+        string? context,
+        DateTimeOffset now)
+    {
+        Repository repository = Repository.Create(Id, name, gitUrl, description, context, now);
+        _repositories.Add(repository);
+        UpdatedAt = now;
+        return repository;
+    }
+
+    public bool RemoveRepository(Guid repositoryId, DateTimeOffset now)
+    {
+        Repository? repository = _repositories.FirstOrDefault(r => r.Id == repositoryId);
+        if (repository is null)
+        {
+            return false;
+        }
+
+        _repositories.Remove(repository);
+        UpdatedAt = now;
+        return true;
+    }
+
     public static string NormalizeName(string name) => (name ?? string.Empty).Trim().ToUpperInvariant();
 
     private static string? NormalizeOptional(string? value)

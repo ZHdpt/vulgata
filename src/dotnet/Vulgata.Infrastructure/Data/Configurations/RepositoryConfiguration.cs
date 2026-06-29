@@ -19,9 +19,22 @@ public sealed class RepositoryConfiguration : IEntityTypeConfiguration<Repositor
             .IsRequired()
             .HasMaxLength(200);
 
+        builder.Property(r => r.NormalizedName)
+            .IsRequired()
+            .HasMaxLength(200);
+
         builder.Property(r => r.GitUrl)
             .IsRequired()
             .HasMaxLength(2000);
+
+        builder.Property(r => r.Description)
+            .HasMaxLength(2000);
+
+        builder.Property(r => r.Context)
+            .HasMaxLength(10000);
+
+        builder.HasIndex(r => new { r.SystemId, r.NormalizedName })
+            .IsUnique();
 
         builder.HasOne(r => r.System)
             .WithMany(s => s.Repositories)
