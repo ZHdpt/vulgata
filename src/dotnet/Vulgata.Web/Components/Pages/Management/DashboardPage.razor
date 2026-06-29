@@ -68,6 +68,16 @@ else
     <FluentButton Appearance="Appearance.Accent" OnClick="StartCreateSystem" Style="margin-top:1rem">+ 新建系统</FluentButton>
 }
 
+@if (_pendingDeleteSystem is not null)
+{
+    <FluentDialog @bind-Visible="_showDeleteConfirmation" Title="确认删除"
+                  PrimaryActionText="确认删除" SecondaryActionText="取消"
+                  PrimaryAction="@(async () => await ConfirmDeleteAsync())"
+                  SecondaryAction="CancelDelete">
+        <p>确定要删除系统 <strong>@_pendingDeleteSystem.Name</strong> 吗？此操作不可撤销。</p>
+    </FluentDialog>
+}
+
 @if (_showForm)
 {
     <hr />
@@ -110,6 +120,9 @@ else
     private string _userId = string.Empty;
 
     private CreateSystemRequest _formModel = new();
+
+    private SystemEntity? _pendingDeleteSystem;
+    private bool _showDeleteConfirmation;
 
     protected override async Task OnInitializedAsync()
     {
@@ -234,6 +247,25 @@ else
 
     private async Task DeleteSystemAsync(SystemEntity system)
     {
+        _pendingDeleteSystem = system;
+        _showDeleteConfirmation = true;
+    }
+
+    private void CancelDelete()
+    {
+        _pendingDeleteSystem = null;
+        _showDeleteConfirmation = false;
+        _loadError = null;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (_pendingDeleteSystem is null) return;
+
+        SystemEntity system = _pendingDeleteSystem;
+        _pendingDeleteSystem = null;
+        _showDeleteConfirmation = false;
+
         try
         {
             SystemDeleteResult result = await SystemRepository.DeleteIfNoDependenciesAsync(system.Id);

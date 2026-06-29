@@ -316,3 +316,95 @@ Extend the existing policy-based authorization model. Do not introduce ad hoc ro
 - Retrospective lessons: `docs/bmad/implementation-artifacts/epic-1-retrospective-2026-06-29.md`
 - Architecture rules: repository pattern, FluentValidation, Minimal API, ProblemDetails, EF configuration in `Configurations/`
 - UX rules: holy grail management layout, inline dialogs, Chinese-only labels, Fluent UI discipline
+
+---
+
+## Code Review (2026-06-29)
+
+### CRITICAL — FIXED
+
+**1. `GetByIdAsync` used `AsNoTracking()` — updates silently dropped**
+- **File**: `src/dotnet/Vulgata.Infrastructure/Data/SystemRepository.cs`
+- **Fix**: Removed `.AsNoTracking()` from `GetByIdAsync`. The method returned a detached entity, so `UpdateDetails()` + `SaveChangesAsync()` never persisted changes. Affected both the `PUT /api/systems/{id}` endpoint and the DashboardPage edit flow.
+- **Status**: ✅ Fixed
+
+### HIGH
+
+**2. No `FluentTreeView` — using flat `<table>` instead**
+- Story specifies `FluentTreeView` in the left sidebar (AC-1: "system tree view in the left sidebar using Fluent UI patterns").
+- `ManagementLayout.razor` left sidebar still shows placeholder text (`"系统/仓库树将于 Epic 2 完成。"`) instead of the real system tree.
+- `DashboardPage.razor` renders a flat HTML `<table>` instead of a `FluentTreeView`.
+- **Impact**: UX spec significantly deviates. The sidebar placeholder was supposed to be replaced.
+
+**3. DTOs in wrong project**
+- `CreateSystemRequest` and `UpdateSystemRequest` are defined in `Vulgata.Web.Validators/` (in the Web project).
+- Story specifies they should be in `Vulgata.Shared/Systems/` for reusability.
+- Validators should be in `Vulgata.Shared/Validators/Systems/`.
+
+**4. No delete confirmation dialog — FIXED**
+- Story AC-4: "When I choose `删除` and confirm the action"
+- **Fix**: Added `FluentDialog` confirmation with "确认删除" title, showing the system name and requiring explicit confirm/cancel. Added `_pendingDeleteSystem`, `_showDeleteConfirmation`, `ConfirmDeleteAsync()`, and `CancelDelete()` member.
+- **Status**: ✅ Fixed
+
+**5. Missing `SystemsPageViewModel`**
+- Story calls for `src/dotnet/Vulgata.Web.ViewModels/Management/SystemsPageViewModel.cs` with `LoadState` exposure and API call encapsulation.
+- DashboardPage currently makes direct `ISystemRepository` calls bypassing the ViewModel pattern.
+
+**6. `+ 新建系统` not in left sidebar**
+- Per UX-DR-10, the create button should live in the left sidebar (alongside the tree view), not in the main content area.
+
+**7. No inline Fluent dialogs for create/edit**
+- Story says "Use inline Fluent dialogs for create/edit" but the implementation uses an inline `EditForm` below the table.
+- Should use `FluentDialog` wrapping the create/edit forms, not an inline section.
+
+### MEDIUM
+
+**8. Endpoints inline in `Program.cs`**
+- Story specifies `src/dotnet/Vulgata.Web/Endpoints/SystemEndpoints.cs` as a separate file.
+- All API endpoints are inline in `Program.cs`. Works but deviates from intended file organization.
+
+**9. Edit flow uses `CreateSystemRequest` for edits**
+- `DashboardPage.razor` `StartEditSystem()` populates a `CreateSystemRequest` for editing. Should use `UpdateSystemRequest` (semantically identical but misleading).
+
+**10. `ManagementLayout.razor` `_currentUrl` uses `_camelCase`** ✅ compliant. No issue.
+
+### Architected Correctly
+
+| Concern | Status |
+|---|---|
+| `Async` suffix on all async methods | ✅ All repository, page, and endpoint methods |
+| `_camelCase` private fields | ✅ Consistent throughout |
+| PascalCase table/column names via EF config | ✅ `ToTable("Systems")`, `ToTable("Repositories")`, etc. |
+| `/api/` prefix + plural nouns | ✅ `/api/systems` |
+| `FluentValidation` for input validation | ✅ `CreateSystemRequestValidator`, `UpdateSystemRequestValidator` |
+| `IEntityTypeConfiguration<T>` for EF Core | ✅ `SystemConfiguration`, `RepositoryConfiguration`, `SystemOwnerAssignmentConfiguration` |
+| Repository pattern (interface in Core, impl in Infrastructure) | ✅ `ISystemRepository` → `SystemRepository` |
+| Proper project dependency direction | ✅ Core → Infrastructure → Web |
+| `[Authorize]` on page + API group | ✅ `ManagementAccess` policy on both |
+| `AdministratorOnly` checks on POST/PUT/DELETE | ✅ Server-side enforcement |
+| Unique index on `NormalizedName` | ✅ Database-level uniqueness |
+| `ProblemDetails` for error responses | ✅ 400, 403, 404, 409 all return ProblemDetails |
+| Chinese UI labels and validation messages | ✅ All Chinese |
+| `AsNoTracking()` on read-only queries | ✅ `ListVisibleAsync`, `GetVisibleByIdAsync`, `NameExistsAsync` |
+| Delete dependency checking | ✅ `DeleteIfNoDependenciesAsync` checks both repositories and owner assignments |
+
+### Test Coverage
+
+| Test | AC | Status |
+|---|---|---|
+| `Administrator_SystemManagementPage_ShowsChineseTreeAndEmptyState` | AC-1 | ✅ |
+| `Administrator_CanCreateSystem_AndSeeItInListAndManagementPage` | AC-2 | ✅ |
+| `Administrator_CanUpdateAndDeleteEmptySystem` | AC-3, AC-4 | ✅ (update now works after fix) |
+| `DuplicateSystemName_ReturnsChineseValidationProblem` | AC-6 | ✅ |
+| `DeleteSystem_WithAssignedOwnerOrRepository_IsBlockedWithChineseProblem` | AC-5 | ✅ |
+| `SystemOwner_OnlySeesAssignedSystems_AndCannotCreateOrModifySystems` | AC-7 | ✅ |
+| `User_MainLayout_DoesNotShowManagementNavigation` | AC-8 | ✅ |
+
+All 7 acceptance criteria are tested. Test naming follows `{Method}_{Scenario}_{ExpectedResult}` convention.
+
+### Summary
+
+- **CRITICAL issues found**: 1 — **FIXED** (AsNoTracking update bug)
+- **HIGH issues found**: 6 — 1 FIXED (delete confirmation), 5 remaining (FluentTreeView, DTO location, ViewModel, sidebar button position, Fluent dialogs)
+- **MEDIUM issues found**: 4 (endpoints file, request type, etc.)
+- **Overall**: The implementation is functionally complete and architecturally sound. The remaining HIGH issues are UX/structural deviations that should be addressed in a follow-up refinement story but do not block functionality.

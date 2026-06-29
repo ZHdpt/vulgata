@@ -51,7 +51,7 @@ development_status:
   1-6-administrator-role-assignment: done
   epic-1-retrospective: done
   epic-2: in-progress
-  2-1-system-crud-admin: in-progress
+  2-1-system-crud-admin: review
   2-2-grant-system-ownership: backlog
   2-3-repository-management: backlog
   2-4-standalone-repository-creation: backlog

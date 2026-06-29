@@ -37,7 +37,6 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     public async Task<SystemEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Systems
-            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
