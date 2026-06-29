@@ -1,7 +1,7 @@
 ---
 story_key: 3-2-per-system-llm-provider-override
 title: Story 3.2: Per-System LLM Provider Override
-Status: ready-for-dev
+Status: in-progress
 Epic: 3
 Story: 2
 created: 2026-06-29

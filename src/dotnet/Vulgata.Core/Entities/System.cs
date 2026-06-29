@@ -4,6 +4,7 @@ public sealed class System
 {
     private readonly List<Repository> _repositories = [];
     private readonly List<SystemOwnerAssignment> _ownerAssignments = [];
+    private readonly List<SystemLlmProviderOverride> _llmProviderOverrides = [];
 
     private System()
     {
@@ -34,6 +35,8 @@ public sealed class System
     public IReadOnlyCollection<Repository> Repositories => _repositories;
 
     public IReadOnlyCollection<SystemOwnerAssignment> OwnerAssignments => _ownerAssignments;
+
+    public IReadOnlyCollection<SystemLlmProviderOverride> LlmProviderOverrides => _llmProviderOverrides;
 
     public void UpdateDetails(string name, string? description, string? context, DateTimeOffset now)
     {

@@ -2,6 +2,8 @@ namespace Vulgata.Core.Entities;
 
 public sealed class LlmProvider
 {
+    private readonly List<SystemLlmProviderOverride> _systemLlmProviderOverrides = [];
+
     private LlmProvider()
     {
     }
@@ -37,6 +39,8 @@ public sealed class LlmProvider
     public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
+
+    public IReadOnlyCollection<SystemLlmProviderOverride> SystemLlmProviderOverrides => _systemLlmProviderOverrides;
 
     public void UpdateDetails(
         string name,

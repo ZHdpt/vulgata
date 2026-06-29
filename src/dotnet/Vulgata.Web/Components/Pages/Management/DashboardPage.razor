@@ -6,6 +6,7 @@
 @using System.Security.Claims
 @using FluentValidation
 @using Microsoft.AspNetCore.Components.Authorization
+@using Vulgata.Core.Entities
 @using SystemEntity = Vulgata.Core.Entities.System
 @using Vulgata.Core.DomainServices
 @using Vulgata.Shared.Repositories
@@ -14,6 +15,7 @@
 
 @inject ISystemRepository SystemRepository
 @inject IRepositoryManagementCoordinator RepositoryManagementCoordinator
+@inject ISystemLlmProviderOverrideCoordinator SystemLlmProviderOverrideCoordinator
 @inject IValidator<CreateRepositoryRequest> RepositoryRequestValidator
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
@@ -139,6 +141,28 @@ else
 
             <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
                           OnClick="@(() => StartCreateRepository(system))" Style="margin-bottom:0.5rem">+ 新建仓库</FluentButton>
+
+            <section style="margin-bottom:1rem">
+                <h3 style="margin-top:0.75rem">LLM Provider 覆盖</h3>
+                <table class="table" aria-label="@system.Name LLM Provider 覆盖列表">
+                    <thead>
+                        <tr>
+                            <th scope="col">代理角色</th>
+                            <th scope="col">当前 Provider</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (AgentType agentType in Enum.GetValues<AgentType>())
+                        {
+                            SystemLlmProviderOverrideSummaryDto? overrideItem = GetSystemOverride(system.Id, agentType);
+                            <tr>
+                                <td>@GetAgentTypeDisplayName(agentType)</td>
+                                <td>@(overrideItem?.ProviderName ?? "使用全局默认提供商")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
         }
     }
 }
@@ -256,6 +280,7 @@ else
 @code {
     private List<SystemEntity>? _systems;
     private Dictionary<Guid, List<RepositorySummaryDto>> _repositories = [];
+    private Dictionary<Guid, List<SystemLlmProviderOverrideSummaryDto>> _systemLlmOverrides = [];
     private List<RepositorySummaryDto> _standaloneRepositories = [];
     private string? _loadError;
     private string? _saveError;
@@ -300,6 +325,7 @@ else
                 .ListStandaloneVisibleAsync(_userId, _isAdministrator))
                 .ToList();
             _repositories = [];
+            _systemLlmOverrides = [];
 
             foreach (SystemEntity system in _systems)
             {
@@ -308,6 +334,14 @@ else
                     _userId,
                     _isAdministrator);
                 _repositories[system.Id] = repositories.ToList();
+
+                SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> overridesResult =
+                    await SystemLlmProviderOverrideCoordinator.ListAsync(system.Id, _userId, _isAdministrator);
+
+                _systemLlmOverrides[system.Id] =
+                    overridesResult.Outcome == SystemLlmProviderOverrideMutationOutcome.Success && overridesResult.Value is not null
+                        ? overridesResult.Value.ToList()
+                        : [];
             }
         }
         catch (Exception ex)
@@ -316,6 +350,7 @@ else
             _systems = [];
             _standaloneRepositories = [];
             _repositories = [];
+            _systemLlmOverrides = [];
         }
     }
 
@@ -619,5 +654,26 @@ else
         {
             _loadError = $"删除失败：{ex.Message}";
         }
+    }
+
+    private SystemLlmProviderOverrideSummaryDto? GetSystemOverride(Guid systemId, AgentType agentType)
+    {
+        if (!_systemLlmOverrides.TryGetValue(systemId, out List<SystemLlmProviderOverrideSummaryDto>? overrides))
+        {
+            return null;
+        }
+
+        return overrides.FirstOrDefault(item => item.AgentType == (int)agentType);
+    }
+
+    private static string GetAgentTypeDisplayName(AgentType agentType)
+    {
+        return agentType switch
+        {
+            AgentType.Orchestrator => "编排代理",
+            AgentType.Worker => "工作代理",
+            AgentType.Chat => "对话代理",
+            _ => "未知代理",
+        };
     }
 }
