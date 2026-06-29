@@ -38,8 +38,8 @@
 <section aria-label="设置导航">
     <h2>平台设置</h2>
     <ul>
-        <li>LLM 提供商配置（后续故事实现）</li>
         <AuthorizeView Roles="@RoleNames.Administrator">
+            <li><a href="/management/settings/llm-providers">LLM 提供商配置</a></li>
             <li><a href="/management/settings/users">用户管理</a></li>
         </AuthorizeView>
     </ul>

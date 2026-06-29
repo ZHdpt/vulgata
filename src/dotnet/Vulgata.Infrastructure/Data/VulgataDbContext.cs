@@ -9,6 +9,7 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
 {
     public DbSet<SystemEntity> Systems => Set<SystemEntity>();
     public DbSet<RepositoryEntity> Repositories => Set<RepositoryEntity>();
+    public DbSet<LlmProvider> LlmProviders => Set<LlmProvider>();
     public DbSet<SystemOwnerAssignment> SystemOwnerAssignments => Set<SystemOwnerAssignment>();
     public DbSet<GlobalContext> GlobalContexts => Set<GlobalContext>();
     public DbSet<PendingContextChange> PendingContextChanges => Set<PendingContextChange>();

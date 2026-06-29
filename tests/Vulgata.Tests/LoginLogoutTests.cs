@@ -412,6 +412,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
             {
                 services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
                 services.RemoveAll<DbContextOptions<VulgataDbContext>>();
+                services.RemoveAll<IDbContextFactory<VulgataDbContext>>();
                 services.RemoveAll<IConfigureOptions<DbContextOptions<ApplicationDbContext>>>();
                 services.RemoveAll<IConfigureOptions<DbContextOptions<VulgataDbContext>>>();
                 services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
@@ -425,7 +426,14 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
                             sqliteOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName))
                         .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
-                services.AddDbContext<VulgataDbContext>(options =>
+                services.AddDbContext<VulgataDbContext>(
+                    options => options
+                        .UseSqlite(ConnectionString)
+                        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)),
+                    contextLifetime: ServiceLifetime.Scoped,
+                    optionsLifetime: ServiceLifetime.Singleton);
+
+                services.AddDbContextFactory<VulgataDbContext>(options =>
                     options
                         .UseSqlite(ConnectionString)
                         .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));

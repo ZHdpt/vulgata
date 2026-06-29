@@ -1,0 +1,411 @@
+@page "/management/settings/llm-providers"
+@layout ManagementLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.AdministratorOnly)]
+@rendermode InteractiveServer
+
+@using FluentValidation
+@using Vulgata.Core.Entities
+@using Vulgata.Shared.LlmProviders
+@using Vulgata.Web.Data
+@using Vulgata.Web.Validators
+
+@inject ILlmProviderManagementCoordinator Coordinator
+@inject IValidator<CreateLlmProviderRequest> CreateValidator
+@inject IValidator<UpdateLlmProviderRequest> UpdateValidator
+
+<PageTitle>LLM 提供商管理</PageTitle>
+
+<h1 class="display-serif display-serif-sm">LLM 提供商管理</h1>
+<p>在这里维护全局可用的 LLM 提供商配置，并为不同代理角色设置默认候选。</p>
+
+@if (_errorMessage is not null)
+{
+    <FluentMessageBar Severity="MessageSeverity.Error">@_errorMessage</FluentMessageBar>
+}
+
+@if (_statusMessage is not null)
+{
+    <FluentMessageBar Severity="MessageSeverity.Success">@_statusMessage</FluentMessageBar>
+}
+
+<div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+    <FluentButton Appearance="Appearance.Accent" OnClick="OpenCreateDialog" Disabled="@_isBusy">新增提供商</FluentButton>
+</div>
+
+@if (_isLoading)
+{
+    <FluentProgressRing />
+}
+else if (_providers.Count == 0)
+{
+    <p>尚未配置任何 LLM 提供商。</p>
+}
+else
+{
+    <FluentDataGrid Items="@_providers.AsQueryable()" TGridItem="LlmProviderSummaryDto" GridTemplateColumns="1.2fr 1.4fr 1fr 1fr 1fr 1.6fr">
+        <PropertyColumn Property="@(provider => provider.Name)" Title="名称" Sortable="true" />
+        <PropertyColumn Property="@(provider => provider.BaseEndpointUrl)" Title="基础地址" Sortable="true" />
+        <TemplateColumn Title="支持的 API 类型" Context="provider">
+            @FormatApiTypes(provider.SupportedApiTypes)
+        </TemplateColumn>
+        <TemplateColumn Title="默认代理角色" Context="provider">
+            @FormatAgentType(provider.DefaultAgentType)
+        </TemplateColumn>
+        <TemplateColumn Title="最后更新时间" Context="provider">
+            @provider.UpdatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+        </TemplateColumn>
+        <TemplateColumn Title="操作" Context="provider">
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@_isBusy"
+                              OnClick="@(() => OpenEditDialog(provider))">编辑</FluentButton>
+                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@(_isBusy || _testingProviderId == provider.Id)"
+                              OnClick="@(() => TestConnectionAsync(provider))">测试连接</FluentButton>
+                <FluentButton Appearance="Appearance.Accent" Size="Size.Small" Disabled="@_isBusy"
+                              OnClick="@(() => DeleteProviderAsync(provider))">删除</FluentButton>
+            </div>
+        </TemplateColumn>
+    </FluentDataGrid>
+}
+
+@if (_showDialog)
+{
+    <FluentDialog @bind-Visible="_showDialog"
+                  Title="@(_editingProvider is null ? "新增提供商" : "编辑提供商")"
+                  PrimaryActionText="保存"
+                  SecondaryActionText="取消"
+                  PrimaryAction="@(async () => await SaveAsync())"
+                  SecondaryAction="CancelDialog">
+        @if (_formErrorMessage is not null)
+        {
+            <FluentMessageBar Severity="MessageSeverity.Error">@_formErrorMessage</FluentMessageBar>
+        }
+
+        <div style="display:grid;gap:1rem">
+            <FluentTextField @bind-Value="_form.Name" Label="名称" Required="true" />
+            <FluentTextField @bind-Value="_form.BaseEndpointUrl" Label="基础地址" Required="true" type="url" />
+            <FluentTextField @bind-Value="_form.ApiKey"
+                             Label="@(_editingProvider is null ? "API 密钥" : "API 密钥（留空则保留现有值）")"
+                             type="password" />
+
+            @if (_editingProvider is not null && _editingProvider.HasApiKey)
+            {
+                <p class="text-muted">当前已配置 API 密钥；如果不需要更换，请保持为空。</p>
+            }
+
+            <fieldset style="border:1px solid #d6d6d6;padding:1rem">
+                <legend style="font-size:1rem;margin:0 0.5rem">支持的 API 类型</legend>
+                <div style="display:grid;gap:0.5rem">
+                    <FluentCheckbox @bind-Value="_form.ChatCompletions" Label="Chat Completions" />
+                    <FluentCheckbox @bind-Value="_form.Responses" Label="Responses" />
+                    <FluentCheckbox @bind-Value="_form.Messages" Label="Messages" />
+                </div>
+            </fieldset>
+
+            <div>
+                <label for="default-agent" style="display:block;margin-bottom:0.5rem">默认代理角色</label>
+                <InputSelect id="default-agent" @bind-Value="_form.DefaultAgentType" class="form-select">
+                    <option value="@AgentType.Orchestrator">编排代理</option>
+                    <option value="@AgentType.Worker">工作代理</option>
+                    <option value="@AgentType.Chat">对话代理</option>
+                </InputSelect>
+            </div>
+        </div>
+    </FluentDialog>
+}
+
+@code {
+    private readonly List<LlmProviderSummaryDto> _providers = [];
+    private ProviderFormModel _form = new();
+    private LlmProviderSummaryDto? _editingProvider;
+    private string? _statusMessage;
+    private string? _errorMessage;
+    private string? _formErrorMessage;
+    private bool _isLoading = true;
+    private bool _isBusy;
+    private bool _showDialog;
+    private Guid? _testingProviderId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProvidersAsync();
+    }
+
+    private async Task LoadProvidersAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        try
+        {
+            IReadOnlyList<LlmProviderSummaryDto> providers = await Coordinator.ListAsync();
+            _providers.Clear();
+            _providers.AddRange(providers);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"加载 LLM 提供商失败：{ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenCreateDialog()
+    {
+        _editingProvider = null;
+        _form = new ProviderFormModel();
+        _formErrorMessage = null;
+        _showDialog = true;
+    }
+
+    private void OpenEditDialog(LlmProviderSummaryDto provider)
+    {
+        ApiTypeFlags supportedApiTypes = (ApiTypeFlags)provider.SupportedApiTypes;
+        _editingProvider = provider;
+        _form = new ProviderFormModel
+        {
+            Name = provider.Name,
+            BaseEndpointUrl = provider.BaseEndpointUrl,
+            ChatCompletions = supportedApiTypes.HasFlag(ApiTypeFlags.ChatCompletions),
+            Responses = supportedApiTypes.HasFlag(ApiTypeFlags.Responses),
+            Messages = supportedApiTypes.HasFlag(ApiTypeFlags.Messages),
+            DefaultAgentType = (AgentType)provider.DefaultAgentType,
+        };
+        _formErrorMessage = null;
+        _showDialog = true;
+    }
+
+    private void CancelDialog()
+    {
+        _showDialog = false;
+        _editingProvider = null;
+        _formErrorMessage = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        _isBusy = true;
+        _formErrorMessage = null;
+        _statusMessage = null;
+        _errorMessage = null;
+
+        try
+        {
+            if (_editingProvider is null)
+            {
+                CreateLlmProviderRequest request = BuildCreateRequest();
+                FluentValidation.Results.ValidationResult validationResult = await CreateValidator.ValidateAsync(request);
+                if (!validationResult.IsValid)
+                {
+                    _formErrorMessage = string.Join("；", validationResult.Errors.Select(error => error.ErrorMessage));
+                    return;
+                }
+
+                LlmProviderMutationResult<LlmProviderSummaryDto> result = await Coordinator.CreateAsync(request);
+                if (result.Outcome == LlmProviderMutationOutcome.DuplicateName)
+                {
+                    _formErrorMessage = result.Message;
+                    return;
+                }
+
+                if (result.Value is not null)
+                {
+                    _statusMessage = "LLM 提供商已创建。";
+                    await LoadProvidersAsync();
+                    CancelDialog();
+                }
+            }
+            else
+            {
+                UpdateLlmProviderRequest request = BuildUpdateRequest();
+                FluentValidation.Results.ValidationResult validationResult = await UpdateValidator.ValidateAsync(request);
+                if (!validationResult.IsValid)
+                {
+                    _formErrorMessage = string.Join("；", validationResult.Errors.Select(error => error.ErrorMessage));
+                    return;
+                }
+
+                LlmProviderMutationResult<LlmProviderSummaryDto> result = await Coordinator.UpdateAsync(_editingProvider.Id, request);
+                if (result.Outcome == LlmProviderMutationOutcome.NotFound)
+                {
+                    _formErrorMessage = "LLM 提供商不存在。";
+                    return;
+                }
+
+                if (result.Outcome == LlmProviderMutationOutcome.DuplicateName)
+                {
+                    _formErrorMessage = result.Message;
+                    return;
+                }
+
+                if (result.Value is not null)
+                {
+                    _statusMessage = "LLM 提供商已更新。";
+                    await LoadProvidersAsync();
+                    CancelDialog();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _formErrorMessage = $"保存失败：{ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task DeleteProviderAsync(LlmProviderSummaryDto provider)
+    {
+        _isBusy = true;
+        _statusMessage = null;
+        _errorMessage = null;
+
+        try
+        {
+            LlmProviderMutationResult<bool> result = await Coordinator.DeleteAsync(provider.Id);
+            if (result.Outcome == LlmProviderMutationOutcome.NotFound)
+            {
+                _errorMessage = "LLM 提供商不存在。";
+                return;
+            }
+
+            _statusMessage = "LLM 提供商已删除。";
+            await LoadProvidersAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"删除失败：{ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task TestConnectionAsync(LlmProviderSummaryDto provider)
+    {
+        _statusMessage = null;
+        _errorMessage = null;
+        _testingProviderId = provider.Id;
+
+        try
+        {
+            LlmProviderConnectionTestResult result = await Coordinator.TestConnectionAsync(provider.Id);
+            if (result.Outcome == LlmProviderConnectionTestOutcome.Success)
+            {
+                _statusMessage = result.Message;
+                return;
+            }
+
+            _errorMessage = result.Message;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"连接测试失败：{ex.Message}";
+        }
+        finally
+        {
+            _testingProviderId = null;
+        }
+    }
+
+    private CreateLlmProviderRequest BuildCreateRequest()
+    {
+        return new CreateLlmProviderRequest
+        {
+            Name = _form.Name,
+            BaseEndpointUrl = _form.BaseEndpointUrl,
+            ApiKey = _form.ApiKey,
+            SupportedApiTypes = BuildSupportedApiTypes(),
+            DefaultAgentType = _form.DefaultAgentType,
+        };
+    }
+
+    private UpdateLlmProviderRequest BuildUpdateRequest()
+    {
+        return new UpdateLlmProviderRequest
+        {
+            Name = _form.Name,
+            BaseEndpointUrl = _form.BaseEndpointUrl,
+            ApiKey = _form.ApiKey,
+            SupportedApiTypes = BuildSupportedApiTypes(),
+            DefaultAgentType = _form.DefaultAgentType,
+        };
+    }
+
+    private ApiTypeFlags BuildSupportedApiTypes()
+    {
+        ApiTypeFlags supportedApiTypes = ApiTypeFlags.None;
+
+        if (_form.ChatCompletions)
+        {
+            supportedApiTypes |= ApiTypeFlags.ChatCompletions;
+        }
+
+        if (_form.Responses)
+        {
+            supportedApiTypes |= ApiTypeFlags.Responses;
+        }
+
+        if (_form.Messages)
+        {
+            supportedApiTypes |= ApiTypeFlags.Messages;
+        }
+
+        return supportedApiTypes;
+    }
+
+    private static string FormatApiTypes(int supportedApiTypes)
+    {
+        ApiTypeFlags flags = (ApiTypeFlags)supportedApiTypes;
+        List<string> labels = [];
+
+        if (flags.HasFlag(ApiTypeFlags.ChatCompletions))
+        {
+            labels.Add("Chat Completions");
+        }
+
+        if (flags.HasFlag(ApiTypeFlags.Responses))
+        {
+            labels.Add("Responses");
+        }
+
+        if (flags.HasFlag(ApiTypeFlags.Messages))
+        {
+            labels.Add("Messages");
+        }
+
+        return labels.Count == 0 ? "未设置" : string.Join("、", labels);
+    }
+
+    private static string FormatAgentType(int defaultAgentType)
+    {
+        return (AgentType)defaultAgentType switch
+        {
+            AgentType.Orchestrator => "编排代理",
+            AgentType.Worker => "工作代理",
+            AgentType.Chat => "对话代理",
+            _ => "未知",
+        };
+    }
+
+    private sealed class ProviderFormModel
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public string BaseEndpointUrl { get; set; } = string.Empty;
+
+        public string ApiKey { get; set; } = string.Empty;
+
+        public bool ChatCompletions { get; set; }
+
+        public bool Responses { get; set; }
+
+        public bool Messages { get; set; }
+
+        public AgentType DefaultAgentType { get; set; } = AgentType.Orchestrator;
+    }
+}
