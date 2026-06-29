@@ -17,6 +17,16 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<RepositoryEntity>> ListStandaloneAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Repositories
+            .AsNoTracking()
+            .Where(repository => repository.SystemId == null)
+            .OrderBy(repository => repository.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<RepositoryEntity?> GetByIdAsync(
         Guid repositoryId,
         CancellationToken cancellationToken = default)
@@ -36,6 +46,16 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
                 cancellationToken);
     }
 
+    public async Task<RepositoryEntity?> GetStandaloneByIdAsync(
+        Guid repositoryId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Repositories
+            .FirstOrDefaultAsync(
+                repository => repository.SystemId == null && repository.Id == repositoryId,
+                cancellationToken);
+    }
+
     public async Task<bool> NameExistsAsync(
         Guid systemId,
         string name,
@@ -47,6 +67,25 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
         IQueryable<RepositoryEntity> query = dbContext.Repositories
             .AsNoTracking()
             .Where(repository => repository.SystemId == systemId && repository.NormalizedName == normalizedName);
+
+        if (excludeRepositoryId.HasValue)
+        {
+            query = query.Where(repository => repository.Id != excludeRepositoryId.Value);
+        }
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<bool> StandaloneNameExistsAsync(
+        string name,
+        Guid? excludeRepositoryId = null,
+        CancellationToken cancellationToken = default)
+    {
+        string normalizedName = RepositoryEntity.NormalizeName(name);
+
+        IQueryable<RepositoryEntity> query = dbContext.Repositories
+            .AsNoTracking()
+            .Where(repository => repository.SystemId == null && repository.NormalizedName == normalizedName);
 
         if (excludeRepositoryId.HasValue)
         {

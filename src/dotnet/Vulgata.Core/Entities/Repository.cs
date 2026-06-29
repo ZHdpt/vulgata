@@ -7,14 +7,14 @@ public sealed class Repository
     }
 
     private Repository(
-        Guid systemId,
+        Guid? systemId,
         string name,
         string gitUrl,
         string? description,
         string? context,
         DateTimeOffset now)
     {
-        if (systemId == Guid.Empty)
+        if (systemId.HasValue && systemId.Value == Guid.Empty)
         {
             throw new ArgumentException("系统标识不能为空。", nameof(systemId));
         }
@@ -29,7 +29,7 @@ public sealed class Repository
 
     public Guid Id { get; private set; }
 
-    public Guid SystemId { get; private set; }
+    public Guid? SystemId { get; private set; }
 
     public string Name { get; private set; } = string.Empty;
 
@@ -45,7 +45,7 @@ public sealed class Repository
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    public System System { get; private set; } = null!;
+    public System? System { get; private set; }
 
     public static Repository Create(
         Guid systemId,
@@ -55,6 +55,14 @@ public sealed class Repository
         string? context,
         DateTimeOffset now) =>
         new(systemId, name, gitUrl, description, context, now);
+
+    public static Repository CreateStandalone(
+        string name,
+        string gitUrl,
+        string? description,
+        string? context,
+        DateTimeOffset now) =>
+        new(null, name, gitUrl, description, context, now);
 
     public void UpdateDetails(
         string name,

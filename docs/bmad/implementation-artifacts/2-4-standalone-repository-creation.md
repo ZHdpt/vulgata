@@ -1,7 +1,7 @@
 ---
 story_key: 2-4-standalone-repository-creation
 title: Story 2.4: Standalone Repository Creation
-Status: ready-for-dev
+Status: in-progress
 Epic: 2
 Story: 4
 created: 2026-06-29
@@ -96,6 +96,41 @@ references:
 **Then** 现有 `/api/systems/{systemId}/repositories` 行为必须保持不变  
 **And** 已授权 `SystemOwner` 对所属系统仓库的创建/查看能力不得被破坏  
 **And** 系统详情中的仓库列表不得混入独立仓库
+
+## Tasks / Subtasks
+
+- [ ] Task 1: 放宽 `Repository` 聚合约束以支持独立仓库 (AC-2, AC-7)
+  - [ ] 1.1 将 `Repository.SystemId` 与 `Repository.System` 调整为可空，并保留现有系统内仓库创建路径
+  - [ ] 1.2 为独立仓库增加明确的受控工厂入口，例如 `CreateStandalone(...)`
+  - [ ] 1.3 保持 `System.AddRepository(...)` 继续通过聚合根创建系统内仓库，避免回归 Story 2.3
+
+- [ ] Task 2: 扩展仓储与唯一性策略 (AC-2, AC-4, AC-5, AC-7)
+  - [ ] 2.1 为仓储增加独立仓库的列表、详情与重名检查方法
+  - [ ] 2.2 在 EF 配置中同时保证系统内仓库按系统唯一、独立仓库按空作用域唯一
+  - [ ] 2.3 为域数据库补充迁移并同步测试 SQLite 建表/索引逻辑
+
+- [ ] Task 3: 通过协调器与 API 统一独立仓库管理能力 (AC-2, AC-3, AC-4, AC-5, AC-6, AC-7)
+  - [ ] 3.1 复用现有 `CreateRepositoryRequest`、DTO 与 Git 可达性校验服务
+  - [ ] 3.2 在协调器中显式表达“所有具备 `ManagementAccess` 的用户都能看到独立仓库”
+  - [ ] 3.3 新增 `GET /api/repositories/standalone` 与 `POST /api/repositories/standalone`，并保持系统内仓库 API 行为不变
+
+- [ ] Task 4: 增量演进管理后台 UI (AC-1, AC-2, AC-5, AC-6, AC-7)
+  - [ ] 4.1 在系统列表之外新增 `独立仓库` 区域与 `+ 新建独立仓库` 操作
+  - [ ] 4.2 统一通过协调器处理仓库创建与刷新，避免页面复制 Git 校验/重名逻辑
+  - [ ] 4.3 保持所有文案、列标题、错误提示为简体中文，并确保独立仓库不会混入系统详情列表
+
+- [ ] Task 5: 增加 Story 2.4 集成测试覆盖 (AC-2, AC-3, AC-4, AC-5, AC-6, AC-7)
+  - [ ] 5.1 覆盖 `SystemOwner` 成功创建独立仓库且数据库 `SystemId` 为 `null`
+  - [ ] 5.2 覆盖独立仓库对所有具备 `ManagementAccess` 的用户可见
+  - [ ] 5.3 覆盖独立仓库重名被拒绝且返回中文提示
+  - [ ] 5.4 覆盖独立仓库 Git URL 不可达仍返回 `Git URL 不可达：...`
+  - [ ] 5.5 覆盖普通 `User` 无法访问独立仓库接口
+  - [ ] 5.6 覆盖 Story 2.3 的系统内仓库用例不回归
+
+- [ ] Task 6: 验证与收尾
+  - [ ] 6.1 运行 Story 2.4 相关集成测试并确认红绿循环完成
+  - [ ] 6.2 运行完整构建与测试，确认无回归
+  - [ ] 6.3 更新故事文件的 Dev Agent Record、File List、Change Log 与最终状态
 
 ## 功能需求提炼
 
@@ -271,3 +306,25 @@ references:
 - `SystemId` 改为可空后，EF 关系、唯一索引和旧查询条件都会受影响；这不是纯 UI 改动。
 - SQLite 与 PostgreSQL 对 `NULL` 唯一性处理不同，必须用测试锁定预期行为。
 - 若直接把“独立仓库”塞进系统循环或系统授权逻辑，后续 Epic 6 的按需扫描入口会变得更难扩展。
+
+## Dev Agent Record
+
+### Agent Model Used
+
+GPT-5.3-Codex
+
+### Debug Log References
+
+- Pending
+
+### Completion Notes List
+
+- Pending
+
+### File List
+
+- Pending
+
+### Change Log
+
+- 2026-06-29: Story moved to in-progress and execution checklist initialized for implementation.

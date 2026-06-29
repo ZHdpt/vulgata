@@ -10,8 +10,16 @@ public interface IRepositoryManagementCoordinator
 {
     Task<IReadOnlyList<RepositorySummaryDto>> ListVisibleAsync(Guid systemId, string userId, bool isAdministrator, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<RepositorySummaryDto>> ListStandaloneVisibleAsync(string userId, bool isAdministrator, CancellationToken cancellationToken = default);
+
     Task<RepositoryMutationResult<RepositoryDetailDto>> CreateAsync(
         Guid systemId,
+        CreateRepositoryRequest request,
+        string userId,
+        bool isAdministrator,
+        CancellationToken cancellationToken = default);
+
+    Task<RepositoryMutationResult<RepositoryDetailDto>> CreateStandaloneAsync(
         CreateRepositoryRequest request,
         string userId,
         bool isAdministrator,
@@ -74,6 +82,15 @@ public sealed class RepositoryManagementCoordinator(
         return repositories.Select(MapToSummary).ToList();
     }
 
+    public async Task<IReadOnlyList<RepositorySummaryDto>> ListStandaloneVisibleAsync(
+        string userId,
+        bool isAdministrator,
+        CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<RepositoryEntity> repositories = await repositoryRepository.ListStandaloneAsync(cancellationToken);
+        return repositories.Select(MapToSummary).ToList();
+    }
+
     public async Task<RepositoryMutationResult<RepositoryDetailDto>> CreateAsync(
         Guid systemId,
         CreateRepositoryRequest request,
@@ -105,6 +122,44 @@ public sealed class RepositoryManagementCoordinator(
         }
 
         RepositoryEntity repository = system.AddRepository(
+            request.Name,
+            request.GitUrl,
+            request.Description,
+            request.Context,
+            DateTimeOffset.UtcNow);
+
+        await repositoryRepository.AddAsync(repository, cancellationToken);
+        await repositoryRepository.SaveChangesAsync(cancellationToken);
+
+        return RepositoryMutationResult<RepositoryDetailDto>.Success(MapToDetail(repository));
+    }
+
+    public async Task<RepositoryMutationResult<RepositoryDetailDto>> CreateStandaloneAsync(
+        CreateRepositoryRequest request,
+        string userId,
+        bool isAdministrator,
+        CancellationToken cancellationToken = default)
+    {
+        bool exists = await repositoryRepository.StandaloneNameExistsAsync(
+            request.Name,
+            cancellationToken: cancellationToken);
+        if (exists)
+        {
+            return RepositoryMutationResult<RepositoryDetailDto>.DuplicateName("独立仓库名称已存在。");
+        }
+
+        GitRemoteValidationResult validationResult = await gitRemoteValidationService.ValidateAsync(request.GitUrl, cancellationToken);
+        if (validationResult.Status == GitRemoteValidationStatus.AuthenticationRequired)
+        {
+            return RepositoryMutationResult<RepositoryDetailDto>.GitAuthenticationRequired(validationResult.Message);
+        }
+
+        if (validationResult.Status == GitRemoteValidationStatus.Unreachable)
+        {
+            return RepositoryMutationResult<RepositoryDetailDto>.GitUnreachable(validationResult.Message);
+        }
+
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
             request.Name,
             request.GitUrl,
             request.Description,

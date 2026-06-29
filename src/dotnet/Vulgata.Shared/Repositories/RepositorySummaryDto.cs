@@ -4,7 +4,7 @@ public class RepositorySummaryDto
 {
     public Guid Id { get; set; }
 
-    public Guid SystemId { get; set; }
+    public Guid? SystemId { get; set; }
 
     public string Name { get; set; } = string.Empty;
 

@@ -35,6 +35,7 @@ public sealed class SystemConfiguration : IEntityTypeConfiguration<SystemEntity>
         builder.HasMany(s => s.Repositories)
             .WithOne(r => r.System)
             .HasForeignKey(r => r.SystemId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(s => s.OwnerAssignments)

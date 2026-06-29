@@ -623,6 +623,77 @@ repoApi.MapDelete("/{repositoryId:guid}", async (
     return Results.NoContent();
 });
 
+RouteGroupBuilder standaloneRepoApi = app.MapGroup("/api/repositories/standalone")
+    .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
+
+standaloneRepoApi.MapGet("/", async (
+    IRepositoryManagementCoordinator repositoryCoordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    IReadOnlyList<RepositorySummaryDto> repositories = await repositoryCoordinator.ListStandaloneVisibleAsync(
+        userId,
+        isAdministrator,
+        cancellationToken);
+
+    return Results.Ok(repositories);
+});
+
+standaloneRepoApi.MapPost("/", async (
+    CreateRepositoryRequest request,
+    IValidator<CreateRepositoryRequest> validator,
+    IRepositoryManagementCoordinator repositoryCoordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    if (!validationResult.IsValid)
+    {
+        return Results.ValidationProblem(validationResult.ToDictionary());
+    }
+
+    RepositoryMutationResult<RepositoryDetailDto> result = await repositoryCoordinator.CreateStandaloneAsync(
+        request,
+        userId,
+        isAdministrator,
+        cancellationToken);
+
+    if (result.Outcome == RepositoryMutationOutcome.Success && result.Value is not null)
+    {
+        return Results.Created($"/api/repositories/standalone/{result.Value.Id}", result.Value);
+    }
+
+    if (result.Outcome == RepositoryMutationOutcome.DuplicateName)
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["Name"] = [result.Message ?? "独立仓库名称已存在。"],
+        });
+    }
+
+    if (result.Outcome == RepositoryMutationOutcome.GitAuthenticationRequired
+        || result.Outcome == RepositoryMutationOutcome.GitUnreachable)
+    {
+        return Results.Problem(
+            detail: $"Git URL 不可达：{result.Message}",
+            statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    return Results.Problem(
+        detail: "独立仓库创建失败。",
+        statusCode: StatusCodes.Status500InternalServerError);
+});
+
 static string BuildIdentityErrorMessage(IEnumerable<IdentityError>? errors)
 {
     if (errors is null)

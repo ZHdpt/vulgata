@@ -4,15 +4,17 @@
 @rendermode InteractiveServer
 
 @using System.Security.Claims
+@using FluentValidation
 @using Microsoft.AspNetCore.Components.Authorization
 @using SystemEntity = Vulgata.Core.Entities.System
-@using RepositoryEntity = Vulgata.Core.Entities.Repository
 @using Vulgata.Core.DomainServices
 @using Vulgata.Shared.Repositories
+@using Vulgata.Web.Data
 @using Vulgata.Web.Validators
 
 @inject ISystemRepository SystemRepository
-@inject IRepositoryRepository RepositoryRepository
+@inject IRepositoryManagementCoordinator RepositoryManagementCoordinator
+@inject IValidator<CreateRepositoryRequest> RepositoryRequestValidator
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>系统管理</PageTitle>
@@ -28,32 +30,13 @@
 {
     <FluentProgressRing />
 }
-else if (_systems.Count == 0)
-{
-    <p>尚未添加任何系统。创建你的第一个系统开始扫描。</p>
-}
 else
 {
-    @foreach (SystemEntity system in _systems)
-    {
-        <h2 style="margin-top:1.5rem">@system.Name</h2>
-        @if (!string.IsNullOrWhiteSpace(system.Description))
-        {
-            <p>@system.Description</p>
-        }
-        @if (_isAdministrator)
-        {
-            <div style="margin-bottom:0.5rem">
-                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                              OnClick="@(() => StartEditSystem(system))">编辑</FluentButton>
-                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                              OnClick="@(() => OpenOwnerManagement(system))">管理所有者</FluentButton>
-                <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
-                              OnClick="@(() => DeleteSystemAsync(system))">删除</FluentButton>
-            </div>
-        }
+    <section style="margin-bottom:1.5rem">
+        <h2 style="margin-top:1.5rem">独立仓库</h2>
+        <p>不归属于任何系统，所有具备管理权限的用户都可见。</p>
 
-        <table class="table" aria-label="@system.Name 仓库列表">
+        <table class="table" aria-label="独立仓库列表">
             <thead>
                 <tr>
                     <th scope="col">仓库名称</th>
@@ -64,15 +47,15 @@ else
                 </tr>
             </thead>
             <tbody>
-                @if (_repositories.TryGetValue(system.Id, out List<RepositoryEntity>? repos) && repos.Count > 0)
+                @if (_standaloneRepositories.Count > 0)
                 {
-                    @foreach (RepositoryEntity repo in repos)
+                    @foreach (RepositorySummaryDto repository in _standaloneRepositories)
                     {
                         <tr>
-                            <td>@repo.Name</td>
-                            <td>未扫描</td>
-                            <td>-</td>
-                            <td>0</td>
+                            <td>@repository.Name</td>
+                            <td>@repository.ScanStatus</td>
+                            <td>@(repository.LastScannedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td>@repository.DocumentCount</td>
                             <td>
                                 <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
                                               Disabled="true">查看</FluentButton>
@@ -83,14 +66,80 @@ else
                 else
                 {
                     <tr>
-                        <td colspan="5">暂无仓库</td>
+                        <td colspan="5">暂无独立仓库</td>
                     </tr>
                 }
             </tbody>
         </table>
 
         <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
-                      OnClick="@(() => StartCreateRepository(system))" Style="margin-bottom:0.5rem">+ 新建仓库</FluentButton>
+                      OnClick="StartCreateStandaloneRepository" Style="margin-bottom:0.5rem">+ 新建独立仓库</FluentButton>
+    </section>
+
+    @if (_systems.Count == 0)
+    {
+        <p>尚未添加任何系统。创建你的第一个系统开始扫描。</p>
+    }
+    else
+    {
+        @foreach (SystemEntity system in _systems)
+        {
+            <h2 style="margin-top:1.5rem">@system.Name</h2>
+            @if (!string.IsNullOrWhiteSpace(system.Description))
+            {
+                <p>@system.Description</p>
+            }
+            @if (_isAdministrator)
+            {
+                <div style="margin-bottom:0.5rem">
+                    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                  OnClick="@(() => StartEditSystem(system))">编辑</FluentButton>
+                    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                  OnClick="@(() => OpenOwnerManagement(system))">管理所有者</FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
+                                  OnClick="@(() => DeleteSystemAsync(system))">删除</FluentButton>
+                </div>
+            }
+
+            <table class="table" aria-label="@system.Name 仓库列表">
+                <thead>
+                    <tr>
+                        <th scope="col">仓库名称</th>
+                        <th scope="col">扫描状态</th>
+                        <th scope="col">最近扫描时间</th>
+                        <th scope="col">文档数量</th>
+                        <th scope="col">查看</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_repositories.TryGetValue(system.Id, out List<RepositorySummaryDto>? repositories) && repositories.Count > 0)
+                    {
+                        @foreach (RepositorySummaryDto repository in repositories)
+                        {
+                            <tr>
+                                <td>@repository.Name</td>
+                                <td>@repository.ScanStatus</td>
+                                <td>@(repository.LastScannedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                <td>@repository.DocumentCount</td>
+                                <td>
+                                    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                                  Disabled="true">查看</FluentButton>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5">暂无仓库</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
+                          OnClick="@(() => StartCreateRepository(system))" Style="margin-bottom:0.5rem">+ 新建仓库</FluentButton>
+        }
     }
 }
 
@@ -115,8 +164,6 @@ else
     <h2>@(_editingSystem is null ? "新建系统" : "编辑系统")</h2>
 
     <EditForm Model="@_formModel" OnValidSubmit="SaveSystemAsync" FormName="system-form">
-        <FluentValidationValidator />
-
         <FluentTextField @bind-Value="_formModel.Name" Label="系统名称" Required="true" />
         <FluentValidationMessage For="@(() => _formModel.Name)" />
 
@@ -146,8 +193,6 @@ else
                   PrimaryAction="@(async () => await CreateRepositoryAsync())"
                   SecondaryAction="CancelRepositoryForm">
         <EditForm Model="@_repoFormModel" FormName="repository-form">
-            <FluentValidationValidator />
-
             <FluentTextField @bind-Value="_repoFormModel.Name" Label="仓库名称" Required="true" />
             <FluentValidationMessage For="@(() => _repoFormModel.Name)" />
 
@@ -168,13 +213,32 @@ else
     </FluentDialog>
 }
 
-@if (_pendingDeleteRepo is not null)
+@if (_showStandaloneRepositoryForm)
 {
-    <FluentDialog @bind-Visible="_showDeleteRepoConfirmation" Title="确认删除"
-                  PrimaryActionText="确认删除" SecondaryActionText="取消"
-                  PrimaryAction="@(async () => await ConfirmDeleteRepositoryAsync())"
-                  SecondaryAction="CancelDeleteRepo">
-        <p>确定要删除仓库 <strong>@_pendingDeleteRepo.Name</strong> 吗？</p>
+    <FluentDialog @bind-Visible="_showStandaloneRepositoryForm" Title="新建独立仓库"
+                  PrimaryActionText="创建" SecondaryActionText="取消"
+                  PrimaryAction="@(async () => await CreateStandaloneRepositoryAsync())"
+                  SecondaryAction="CancelStandaloneRepositoryForm">
+        <EditForm Model="@_standaloneRepoFormModel" FormName="standalone-repository-form">
+            <p>该仓库不属于任何系统，所有具备管理权限的用户都可见。</p>
+
+            <FluentTextField @bind-Value="_standaloneRepoFormModel.Name" Label="仓库名称" Required="true" />
+            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Name)" />
+
+            <FluentTextField @bind-Value="_standaloneRepoFormModel.GitUrl" Label="Git 远程地址" Required="true" />
+            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.GitUrl)" />
+
+            <FluentTextField @bind-Value="_standaloneRepoFormModel.Description" Label="仓库描述" />
+            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Description)" />
+
+            <FluentTextArea @bind-Value="_standaloneRepoFormModel.Context" Label="补充上下文" Rows="3" />
+            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Context)" />
+
+            @if (_standaloneRepoError is not null)
+            {
+                <FluentMessageBar Severity="MessageSeverity.Error">@_standaloneRepoError</FluentMessageBar>
+            }
+        </EditForm>
     </FluentDialog>
 }
 
@@ -189,26 +253,28 @@ else
 
 @code {
     private List<SystemEntity>? _systems;
-    private Dictionary<Guid, List<RepositoryEntity>> _repositories = [];
+    private Dictionary<Guid, List<RepositorySummaryDto>> _repositories = [];
+    private List<RepositorySummaryDto> _standaloneRepositories = [];
     private string? _loadError;
     private string? _saveError;
     private string? _repoError;
+    private string? _standaloneRepoError;
     private bool _isAdministrator;
     private bool _isSaving;
     private bool _showForm;
     private bool _showRepositoryForm;
+    private bool _showStandaloneRepositoryForm;
     private SystemEntity? _editingSystem;
 
     private string _userId = string.Empty;
 
     private CreateSystemRequest _formModel = new();
     private CreateRepositoryRequest _repoFormModel = new();
+    private CreateRepositoryRequest _standaloneRepoFormModel = new();
     private SystemEntity? _repoTargetSystem;
 
     private SystemEntity? _pendingDeleteSystem;
     private bool _showDeleteConfirmation;
-    private RepositoryEntity? _pendingDeleteRepo;
-    private bool _showDeleteRepoConfirmation;
     private SystemEntity? _ownerManagementSystem;
     private bool _showOwnerManagement;
 
@@ -228,24 +294,44 @@ else
         {
             _loadError = null;
             _systems = (await SystemRepository.ListVisibleAsync(_userId, _isAdministrator)).ToList();
+            _standaloneRepositories = (await RepositoryManagementCoordinator
+                .ListStandaloneVisibleAsync(_userId, _isAdministrator))
+                .ToList();
             _repositories = [];
+
             foreach (SystemEntity system in _systems)
             {
-                IReadOnlyList<RepositoryEntity> repos = await RepositoryRepository.ListBySystemAsync(system.Id);
-                _repositories[system.Id] = repos.ToList();
+                IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListVisibleAsync(
+                    system.Id,
+                    _userId,
+                    _isAdministrator);
+                _repositories[system.Id] = repositories.ToList();
             }
         }
         catch (Exception ex)
         {
             _loadError = $"加载系统列表失败：{ex.Message}";
             _systems = [];
+            _standaloneRepositories = [];
+            _repositories = [];
         }
     }
 
     private async Task ReloadRepositoriesAsync(Guid systemId)
     {
-        IReadOnlyList<RepositoryEntity> repos = await RepositoryRepository.ListBySystemAsync(systemId);
-        _repositories[systemId] = repos.ToList();
+        IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListVisibleAsync(
+            systemId,
+            _userId,
+            _isAdministrator);
+        _repositories[systemId] = repositories.ToList();
+    }
+
+    private async Task ReloadStandaloneRepositoriesAsync()
+    {
+        IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListStandaloneVisibleAsync(
+            _userId,
+            _isAdministrator);
+        _standaloneRepositories = repositories.ToList();
     }
 
     private void StartCreateSystem()
@@ -292,44 +378,53 @@ else
         _repoError = null;
     }
 
+    private void StartCreateStandaloneRepository()
+    {
+        _standaloneRepoFormModel = new CreateRepositoryRequest();
+        _standaloneRepoError = null;
+        _showStandaloneRepositoryForm = true;
+    }
+
+    private void CancelStandaloneRepositoryForm()
+    {
+        _showStandaloneRepositoryForm = false;
+        _standaloneRepoFormModel = new CreateRepositoryRequest();
+        _standaloneRepoError = null;
+    }
+
     private async Task CreateRepositoryAsync()
     {
-        if (_repoTargetSystem is null) return;
+        if (_repoTargetSystem is null)
+        {
+            return;
+        }
 
-        _repoError = null;
+        _repoError = await ValidateRepositoryRequestAsync(_repoFormModel);
+        if (_repoError is not null)
+        {
+            return;
+        }
+
+        Guid systemId = _repoTargetSystem.Id;
 
         try
         {
-            SystemEntity? system = await SystemRepository.GetVisibleByIdAsync(
-                _repoTargetSystem.Id, _userId, _isAdministrator);
-            if (system is null)
+            RepositoryMutationResult<RepositoryDetailDto> result = await RepositoryManagementCoordinator.CreateAsync(
+                systemId,
+                _repoFormModel,
+                _userId,
+                _isAdministrator);
+
+            if (result.Outcome != RepositoryMutationOutcome.Success || result.Value is null)
             {
-                _repoError = "系统不存在或无权操作。";
+                _repoError = BuildRepositoryErrorMessage(result, "系统不存在或无权操作。");
                 return;
             }
-
-            bool nameExists = await RepositoryRepository.NameExistsAsync(
-                system.Id, _repoFormModel.Name);
-            if (nameExists)
-            {
-                _repoError = "仓库名称已存在。";
-                return;
-            }
-
-            RepositoryEntity repo = system.AddRepository(
-                _repoFormModel.Name,
-                _repoFormModel.GitUrl,
-                _repoFormModel.Description,
-                _repoFormModel.Context,
-                DateTimeOffset.UtcNow);
-
-            await RepositoryRepository.AddAsync(repo);
-            await RepositoryRepository.SaveChangesAsync();
 
             _showRepositoryForm = false;
             _repoTargetSystem = null;
             _repoFormModel = new CreateRepositoryRequest();
-            await ReloadRepositoriesAsync(system.Id);
+            await ReloadRepositoriesAsync(systemId);
         }
         catch (Exception ex)
         {
@@ -337,36 +432,59 @@ else
         }
     }
 
-    private async Task DeleteRepositoryAsync(RepositoryEntity repo)
+    private async Task CreateStandaloneRepositoryAsync()
     {
-        _pendingDeleteRepo = repo;
-        _showDeleteRepoConfirmation = true;
-    }
-
-    private void CancelDeleteRepo()
-    {
-        _pendingDeleteRepo = null;
-        _showDeleteRepoConfirmation = false;
-    }
-
-    private async Task ConfirmDeleteRepositoryAsync()
-    {
-        if (_pendingDeleteRepo is null) return;
-
-        RepositoryEntity repo = _pendingDeleteRepo;
-        _pendingDeleteRepo = null;
-        _showDeleteRepoConfirmation = false;
+        _standaloneRepoError = await ValidateRepositoryRequestAsync(_standaloneRepoFormModel);
+        if (_standaloneRepoError is not null)
+        {
+            return;
+        }
 
         try
         {
-            RepositoryRepository.Remove(repo);
-            await RepositoryRepository.SaveChangesAsync();
-            await ReloadRepositoriesAsync(repo.SystemId);
+            RepositoryMutationResult<RepositoryDetailDto> result = await RepositoryManagementCoordinator.CreateStandaloneAsync(
+                _standaloneRepoFormModel,
+                _userId,
+                _isAdministrator);
+
+            if (result.Outcome != RepositoryMutationOutcome.Success || result.Value is null)
+            {
+                _standaloneRepoError = BuildRepositoryErrorMessage(result, "独立仓库创建失败。");
+                return;
+            }
+
+            _showStandaloneRepositoryForm = false;
+            _standaloneRepoFormModel = new CreateRepositoryRequest();
+            await ReloadStandaloneRepositoriesAsync();
         }
         catch (Exception ex)
         {
-            _loadError = $"删除仓库失败：{ex.Message}";
+            _standaloneRepoError = $"创建独立仓库失败：{ex.Message}";
         }
+    }
+
+    private static string BuildRepositoryErrorMessage<T>(RepositoryMutationResult<T> result, string defaultMessage)
+    {
+        return result.Outcome switch
+        {
+            RepositoryMutationOutcome.SystemNotFound => defaultMessage,
+            RepositoryMutationOutcome.RepositoryNotFound => "仓库不存在。",
+            RepositoryMutationOutcome.DuplicateName => result.Message ?? "仓库名称已存在。",
+            RepositoryMutationOutcome.GitAuthenticationRequired or RepositoryMutationOutcome.GitUnreachable =>
+                $"Git URL 不可达：{result.Message}",
+            _ => defaultMessage,
+        };
+    }
+
+    private async Task<string?> ValidateRepositoryRequestAsync(CreateRepositoryRequest request)
+    {
+        FluentValidation.Results.ValidationResult validationResult = await RepositoryRequestValidator.ValidateAsync(request);
+        if (validationResult.IsValid)
+        {
+            return null;
+        }
+
+        return validationResult.Errors.Select(error => error.ErrorMessage).FirstOrDefault();
     }
 
     private void OpenOwnerManagement(SystemEntity system)

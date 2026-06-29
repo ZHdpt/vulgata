@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Infrastructure.Data;
+using RepositoryEntity = Vulgata.Core.Entities.Repository;
 using Vulgata.Shared;
 using Vulgata.Shared.Systems;
 using Vulgata.Web.Data;
@@ -89,6 +90,210 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.DoesNotContain("+ 新建系统", html, StringComparison.Ordinal);
 
         _ = hiddenSystemId;
+    }
+
+    [Fact]
+    public async Task ManagementUsers_CanCreateAndViewStandaloneRepositories_WithoutMixingIntoSystems()
+    {
+        await EnsureApplicationStartedAsync();
+        await ResetDomainStateAsync();
+
+        const string adminEmail = "story24.admin.standalone@example.com";
+        const string ownerEmail = "story24.owner.standalone@example.com";
+
+        await CreateUserWithRolesAsync(adminEmail, "Valid1!Pass", RoleNames.Administrator);
+        string ownerUserId = await CreateUserWithRolesAsync(ownerEmail, "Valid1!Pass", RoleNames.User);
+
+        using HttpClient adminClient = CreateClient();
+        await LoginAsync(adminClient, adminEmail, "Valid1!Pass");
+
+        Guid assignedSystemId = await CreateSystemAsync(adminClient, "共享平台", "共享系统", "共享上下文");
+        await AssignOwnerAsync(adminClient, assignedSystemId, ownerUserId);
+
+        string adminBareRepositoryPath = await CreateBareRepositoryAsync();
+        HttpResponseMessage adminCreateResponse = await adminClient.PostAsJsonAsync("/api/repositories/standalone", new
+        {
+            name = "基础共享库",
+            gitUrl = adminBareRepositoryPath,
+            description = "管理员创建的共享库",
+            context = "供所有管理用户查看",
+        });
+
+        RepositoryDetailResponse adminCreated = await ReadRequiredAsync<RepositoryDetailResponse>(adminCreateResponse);
+
+        Assert.Equal(HttpStatusCode.Created, adminCreateResponse.StatusCode);
+        Assert.Null(adminCreated.SystemId);
+
+        using HttpClient ownerClient = CreateClient();
+        await LoginAsync(ownerClient, ownerEmail, "Valid1!Pass");
+
+        string ownerBareRepositoryPath = await CreateBareRepositoryAsync();
+        HttpResponseMessage ownerCreateResponse = await ownerClient.PostAsJsonAsync("/api/repositories/standalone", new
+        {
+            name = "团队共享库",
+            gitUrl = ownerBareRepositoryPath,
+            description = "系统所有者创建的共享库",
+            context = "仍不属于任何系统",
+        });
+
+        RepositoryDetailResponse ownerCreated = await ReadRequiredAsync<RepositoryDetailResponse>(ownerCreateResponse);
+
+        Assert.Equal(HttpStatusCode.Created, ownerCreateResponse.StatusCode);
+        Assert.Null(ownerCreated.SystemId);
+
+        HttpResponseMessage standaloneListResponse = await ownerClient.GetAsync("/api/repositories/standalone");
+        List<RepositorySummaryResponse> standaloneRepositories = await ReadRequiredAsync<List<RepositorySummaryResponse>>(standaloneListResponse);
+
+        Assert.Equal(HttpStatusCode.OK, standaloneListResponse.StatusCode);
+        Assert.Equal(2, standaloneRepositories.Count);
+        Assert.Contains(standaloneRepositories, repository => repository.Name == "基础共享库");
+        Assert.Contains(standaloneRepositories, repository => repository.Name == "团队共享库");
+
+        await using (AsyncServiceScope scope = _factory.Services.CreateAsyncScope())
+        {
+            VulgataDbContext dbContext = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            RepositoryEntity? persistedRepository = await dbContext.Repositories
+                .AsNoTracking()
+                .SingleOrDefaultAsync(repository => repository.Id == ownerCreated.Id);
+
+            Assert.NotNull(persistedRepository);
+            Assert.Null(persistedRepository!.SystemId);
+        }
+
+        HttpResponseMessage systemListResponse = await ownerClient.GetAsync($"/api/systems/{assignedSystemId}/repositories");
+        List<RepositorySummaryResponse> systemRepositories = await ReadRequiredAsync<List<RepositorySummaryResponse>>(systemListResponse);
+
+        Assert.Equal(HttpStatusCode.OK, systemListResponse.StatusCode);
+        Assert.Empty(systemRepositories);
+
+        HttpResponseMessage pageResponse = await ownerClient.GetAsync("/management");
+        string html = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
+        Assert.Contains("独立仓库", html, StringComparison.Ordinal);
+        Assert.Contains("+ 新建独立仓库", html, StringComparison.Ordinal);
+        Assert.Contains("基础共享库", html, StringComparison.Ordinal);
+        Assert.Contains("团队共享库", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task CreateStandaloneRepository_WithDuplicateName_ReturnsChineseValidationError()
+    {
+        await EnsureApplicationStartedAsync();
+        await ResetDomainStateAsync();
+
+        const string adminEmail = "story24.admin.duplicate@example.com";
+        const string ownerEmail = "story24.owner.duplicate@example.com";
+
+        await CreateUserWithRolesAsync(adminEmail, "Valid1!Pass", RoleNames.Administrator);
+        await CreateUserWithRolesAsync(ownerEmail, "Valid1!Pass", RoleNames.SystemOwner);
+
+        using HttpClient adminClient = CreateClient();
+        await LoginAsync(adminClient, adminEmail, "Valid1!Pass");
+
+        string firstBareRepositoryPath = await CreateBareRepositoryAsync();
+        HttpResponseMessage firstCreateResponse = await adminClient.PostAsJsonAsync("/api/repositories/standalone", new
+        {
+            name = "共享组件库",
+            gitUrl = firstBareRepositoryPath,
+            description = "首次创建",
+            context = "用于重名校验",
+        });
+
+        RepositoryDetailResponse firstCreated = await ReadRequiredAsync<RepositoryDetailResponse>(firstCreateResponse);
+        Assert.Equal(HttpStatusCode.Created, firstCreateResponse.StatusCode);
+        Assert.Null(firstCreated.SystemId);
+
+        using HttpClient ownerClient = CreateClient();
+        await LoginAsync(ownerClient, ownerEmail, "Valid1!Pass");
+
+        string secondBareRepositoryPath = await CreateBareRepositoryAsync();
+        HttpResponseMessage duplicateCreateResponse = await ownerClient.PostAsJsonAsync("/api/repositories/standalone", new
+        {
+            name = "共享组件库",
+            gitUrl = secondBareRepositoryPath,
+            description = "重复名称",
+            context = "应拒绝",
+        });
+
+        ValidationProblemDetails validationProblem = await ReadRequiredAsync<ValidationProblemDetails>(duplicateCreateResponse);
+
+        Assert.Equal(HttpStatusCode.BadRequest, duplicateCreateResponse.StatusCode);
+        Assert.True(validationProblem.Errors.TryGetValue("Name", out string[]? nameErrors));
+        Assert.NotNull(nameErrors);
+        Assert.Contains(nameErrors!, message => message.Contains("独立仓库名称已存在", StringComparison.Ordinal));
+
+        HttpResponseMessage standaloneListResponse = await ownerClient.GetAsync("/api/repositories/standalone");
+        List<RepositorySummaryResponse> standaloneRepositories = await ReadRequiredAsync<List<RepositorySummaryResponse>>(standaloneListResponse);
+
+        Assert.Single(standaloneRepositories);
+        Assert.Equal("共享组件库", standaloneRepositories[0].Name);
+    }
+
+    [Fact]
+    public async Task CreateStandaloneRepository_WithUnreachableGitUrl_ReturnsChineseProblem_AndDoesNotPersist()
+    {
+        await EnsureApplicationStartedAsync();
+        await ResetDomainStateAsync();
+
+        const string ownerEmail = "story24.owner.unreachable@example.com";
+        await CreateUserWithRolesAsync(ownerEmail, "Valid1!Pass", RoleNames.SystemOwner);
+
+        using HttpClient ownerClient = CreateClient();
+        await LoginAsync(ownerClient, ownerEmail, "Valid1!Pass");
+
+        string missingRepositoryPath = Path.Combine(Path.GetTempPath(), "vulgata-tests", Guid.NewGuid().ToString("N"), "standalone-missing.git");
+
+        HttpResponseMessage createResponse = await ownerClient.PostAsJsonAsync("/api/repositories/standalone", new
+        {
+            name = "不可达独立仓库",
+            gitUrl = missingRepositoryPath,
+            description = "测试不可达地址",
+            context = "不应写入",
+        });
+
+        ProblemDetails problem = await ReadRequiredAsync<ProblemDetails>(createResponse);
+
+        Assert.Equal(HttpStatusCode.BadRequest, createResponse.StatusCode);
+        Assert.StartsWith("Git URL 不可达：", problem.Detail ?? string.Empty, StringComparison.Ordinal);
+
+        HttpResponseMessage listResponse = await ownerClient.GetAsync("/api/repositories/standalone");
+        List<RepositorySummaryResponse> repositories = await ReadRequiredAsync<List<RepositorySummaryResponse>>(listResponse);
+
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+        Assert.Empty(repositories);
+    }
+
+    [Fact]
+    public async Task User_CannotAccessStandaloneRepositoryEndpoints()
+    {
+        await EnsureApplicationStartedAsync();
+        await ResetDomainStateAsync();
+
+        const string userEmail = "story24.user.forbidden@example.com";
+        await CreateUserWithRolesAsync(userEmail, "Valid1!Pass", RoleNames.User);
+
+        using HttpClient userClient = CreateClient();
+        await LoginAsync(userClient, userEmail, "Valid1!Pass");
+
+        HttpResponseMessage listResponse = await userClient.GetAsync("/api/repositories/standalone");
+
+        Assert.Equal(HttpStatusCode.Forbidden, listResponse.StatusCode);
+
+        string bareRepositoryPath = await CreateBareRepositoryAsync();
+        HttpResponseMessage createResponse = await userClient.PostAsJsonAsync("/api/repositories/standalone", new
+        {
+            name = "普通用户仓库",
+            gitUrl = bareRepositoryPath,
+            description = "普通用户不应创建成功",
+            context = "禁止访问",
+        });
+
+        Assert.Equal(HttpStatusCode.Forbidden, createResponse.StatusCode);
+
+        HttpResponseMessage pageResponse = await userClient.GetAsync("/");
+        string html = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
+        Assert.DoesNotContain("管理后台", html, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -372,6 +577,12 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
             """);
 
         await ExecuteNonQueryAsync(connection, """
+            CREATE UNIQUE INDEX IF NOT EXISTS IX_Repositories_Standalone_NormalizedName
+            ON Repositories (NormalizedName)
+            WHERE SystemId IS NULL;
+            """);
+
+        await ExecuteNonQueryAsync(connection, """
             CREATE TABLE IF NOT EXISTS SystemOwnerAssignments (
                 Id TEXT NOT NULL PRIMARY KEY,
                 SystemId TEXT NOT NULL,
@@ -534,6 +745,7 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
     private class RepositorySummaryResponse
     {
         public Guid Id { get; set; }
+        public Guid? SystemId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string ScanStatus { get; set; } = string.Empty;
         public DateTimeOffset? LastScannedAt { get; set; }
@@ -542,7 +754,6 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
 
     private sealed class RepositoryDetailResponse : RepositorySummaryResponse
     {
-        public Guid SystemId { get; set; }
         public string GitUrl { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Context { get; set; }
