@@ -54,7 +54,7 @@ development_status:
   2-1-system-crud-admin: done
   2-2-grant-system-ownership: done
   2-3-repository-management: done
-  2-4-standalone-repository-creation: in-progress
+  2-4-standalone-repository-creation: done
   2-5-user-supplied-context: backlog
   epic-2-retrospective: optional
   epic-3: backlog

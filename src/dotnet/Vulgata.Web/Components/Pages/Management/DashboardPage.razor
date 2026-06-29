@@ -164,6 +164,8 @@ else
     <h2>@(_editingSystem is null ? "新建系统" : "编辑系统")</h2>
 
     <EditForm Model="@_formModel" OnValidSubmit="SaveSystemAsync" FormName="system-form">
+        <FluentValidationValidator />
+
         <FluentTextField @bind-Value="_formModel.Name" Label="系统名称" Required="true" />
         <FluentValidationMessage For="@(() => _formModel.Name)" />
 

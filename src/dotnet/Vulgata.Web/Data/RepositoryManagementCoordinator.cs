@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Shared.Repositories;
@@ -167,7 +168,15 @@ public sealed class RepositoryManagementCoordinator(
             DateTimeOffset.UtcNow);
 
         await repositoryRepository.AddAsync(repository, cancellationToken);
-        await repositoryRepository.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await repositoryRepository.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return RepositoryMutationResult<RepositoryDetailDto>.DuplicateName("独立仓库名称已存在。");
+        }
 
         return RepositoryMutationResult<RepositoryDetailDto>.Success(MapToDetail(repository));
     }

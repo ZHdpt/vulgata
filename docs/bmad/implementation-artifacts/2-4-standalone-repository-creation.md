@@ -1,7 +1,7 @@
 ---
 story_key: 2-4-standalone-repository-creation
 title: Story 2.4: Standalone Repository Creation
-Status: in-progress
+Status: done
 Epic: 2
 Story: 4
 created: 2026-06-29
@@ -307,7 +307,71 @@ references:
 - SQLite 与 PostgreSQL 对 `NULL` 唯一性处理不同，必须用测试锁定预期行为。
 - 若直接把“独立仓库”塞进系统循环或系统授权逻辑，后续 Epic 6 的按需扫描入口会变得更难扩展。
 
-## Dev Agent Record
+## Code Review Record
+
+### Reviewer
+
+Claude (deepseek-v4-pro) via bmad-code-review workflow
+
+### Review Date
+
+2026-06-29
+
+### Reviewed Commit
+
+9e3bc15 (HEAD) — "Implement story 2.4 standalone repository creation"
+
+### Diff Stats
+
+12 files changed, 679 insertions(+), 104 deletions(-)
+
+### Review Layers Executed
+
+- **Blind Hunter** (adversarial, diff-only): ✅ Complete
+- **Edge Case Hunter** (diff + project read access): ✅ Complete  
+- **Acceptance Auditor** (diff + spec + context): ✅ Complete
+
+### Acceptance Criteria Audit
+
+| AC | Status | Notes |
+|----|--------|-------|
+| AC-1: 管理后台展示独立仓库区域 | ✅ PASS | Standalone section renders before system list with Chinese labels, Fluent UI table, all required columns, `+ 新建独立仓库` button |
+| AC-2: 创建独立仓库 | ✅ PASS | Dialog with name/gitUrl/description/context; Git validation via coordinator; `CreateStandalone` factory sets `SystemId = null`; refreshes standalone area |
+| AC-3: 不可达 Git URL 阻止创建 | ✅ PASS | API returns `Git URL 不可达：{details}` as ProblemDetails; record not persisted |
+| AC-4: 独立仓库名称独立作用域内唯一 | ✅ PASS | `StandaloneNameExistsAsync` checks `SystemId IS NULL` scope; returns Chinese error; system-repo uniqueness unchanged |
+| AC-5: SystemOwner & Administrator 可见 | ✅ PASS | Route group requires `ManagementAccess`; coordinator lists all standalone repos regardless of userId/isAdministrator; explicitly expressed |
+| AC-6: 普通用户不可见 | ✅ PASS | `HttpStatusCode.Forbidden` for regular users; management nav hidden on home page |
+| AC-7: 不回归 Story 2.3 系统内仓库 | ✅ PASS | `/api/systems/{systemId}/repositories` unchanged; system detail repos filtered by systemId; standalone repos not mixed in |
+
+### Bugs Found & Fixed
+
+#### 🔴 Critical: FluentValidationValidator accidentally removed from system form
+
+**File**: `DashboardPage.razor`  
+**Finding**: The `<FluentValidationValidator />` was removed from the system create/edit `<EditForm>`, but `<FluentValidationMessage>` components remain. `CreateSystemRequestValidator` exists and is registered in DI. Without the validator in EditContext, client-side validation messages are silently suppressed.  
+**Fix**: Restored `<FluentValidationValidator />` in the system form.  
+**Status**: ✅ Fixed
+
+#### 🟡 High: Race condition on standalone repository name uniqueness
+
+**File**: `RepositoryManagementCoordinator.cs` → `CreateStandaloneAsync`  
+**Finding**: The method checks `StandaloneNameExistsAsync` then calls `SaveChangesAsync`. Two concurrent requests can both pass the existence check and collide on the DB unique index (`IX_Repositories_Standalone_NormalizedName`), throwing an unhandled `DbUpdateException` that surfaces as a 500 error instead of a clean Chinese validation message.  
+**Fix**: Added `try/catch (DbUpdateException)` around `SaveChangesAsync` that returns `DuplicateName("独立仓库名称已存在。")`.  
+**Status**: ✅ Fixed
+
+### Non-Blocking Observations
+
+1. **Unused parameters** (`userId`, `isAdministrator`) in `ListStandaloneVisibleAsync`: Accepted per AC-5 — standalone repos are visible to all ManagementAccess users without per-user filtering. Parameters are retained for interface consistency.
+
+2. **Pre-existing risk in `CreateAsync`**: The same `DbUpdateException` race condition exists for system repo creation. Noted for future hardening; not in Story 2.4 scope.
+
+3. **Dead code removed**: Delete-repository flow (`_pendingDeleteRepo`, `ConfirmDeleteRepositoryAsync`) was removed. This was unreachable dead code (no delete button existed in UI). The coordinator's `DeleteAsync` remains available for API consumers.
+
+4. **SQLite/PostgreSQL index compatibility**: EF `HasFilter("\"SystemId\" IS NULL")` (PostgreSQL) and SQLite `WHERE SystemId IS NULL` both use the same filtered partial unique index pattern. Tests cover both paths.
+
+### Review Verdict
+
+**APPROVED with fixes applied.** All 7 acceptance criteria pass. Two bugs found and fixed. No blocking issues remain.
 
 ### Agent Model Used
 
