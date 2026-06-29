@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Vulgata.Infrastructure.Data;
 
 #nullable disable
@@ -9,9 +10,10 @@ using Vulgata.Infrastructure.Data;
 namespace Vulgata.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(VulgataDbContext))]
-    partial class VulgataDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629160000_AddSystemLlmProviderOverrides")]
+    partial class AddSystemLlmProviderOverrides
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasDefaultSchema("vulgata")

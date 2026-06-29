@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
 using Vulgata.Shared.Systems;
 using Vulgata.Web.Data;
@@ -452,15 +454,11 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
 
     private async Task<int> CountOverridesAsync(Guid systemId)
     {
-        await using SqliteConnection connection = new(_factory.ConnectionString);
-        await connection.OpenAsync();
-
-        await using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(*) FROM SystemLlmProviderOverrides WHERE SystemId = $systemId;";
-        command.Parameters.AddWithValue("$systemId", systemId.ToString());
-
-        object? count = await command.ExecuteScalarAsync();
-        return Convert.ToInt32(count);
+        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
+        VulgataDbContext dbContext = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+        return await dbContext.SystemLlmProviderOverrides
+            .Where(item => item.SystemId == systemId)
+            .CountAsync();
     }
 
     private async Task<EffectiveProviderResult> GetEffectiveProviderAsync(
