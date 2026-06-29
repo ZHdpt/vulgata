@@ -1,0 +1,297 @@
+@using Microsoft.AspNetCore.Identity
+@using Vulgata.Shared.Systems
+@using Vulgata.Web.Data
+
+@inject ISystemOwnershipCoordinator OwnershipCoordinator
+
+@if (Visible)
+{
+    <FluentDialog Visible="Visible" VisibleChanged="OnDialogVisibilityChanged" Title="@GetDialogTitle()"
+                  PrimaryActionText="关闭" SecondaryActionText="刷新"
+                  PrimaryAction="CloseAsync" SecondaryAction="ReloadAsync">
+        @if (_loadError is not null)
+        {
+            <FluentMessageBar Severity="MessageSeverity.Error">@_loadError</FluentMessageBar>
+        }
+
+        @if (_statusMessage is not null)
+        {
+            <FluentMessageBar Severity="MessageSeverity.Success">@_statusMessage</FluentMessageBar>
+        }
+
+        @if (_isLoading)
+        {
+            <FluentProgressRing />
+        }
+        else
+        {
+            <section>
+                <h3>当前系统所有者</h3>
+                @if (_owners.Count == 0)
+                {
+                    <p>暂无系统所有者。</p>
+                }
+                else
+                {
+                    <table class="table" aria-label="系统所有者列表">
+                        <thead>
+                            <tr>
+                                <th scope="col">显示名称</th>
+                                <th scope="col">邮箱</th>
+                                <th scope="col">分配时间</th>
+                                <th scope="col">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (SystemOwnerAssignmentDto owner in _owners)
+                            {
+                                <tr>
+                                    <td>@owner.DisplayName</td>
+                                    <td>@owner.Email</td>
+                                    <td>@owner.AssignedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                                      Disabled="@_isSubmitting"
+                                                      OnClick="@(() => RemoveOwnerAsync(owner))">移除</FluentButton>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+
+            <section style="margin-top:1rem">
+                <h3>添加系统所有者</h3>
+                <FluentTextField @bind-Value="_keyword" Label="搜索候选用户（邮箱或用户名）" />
+                <div style="margin-top:0.5rem">
+                    <FluentButton Appearance="Appearance.Neutral" Disabled="@_isSubmitting"
+                                  OnClick="SearchCandidatesAsync">搜索</FluentButton>
+                </div>
+
+                @if (_candidates.Count == 0)
+                {
+                    <p style="margin-top:0.75rem">未找到可分配用户。</p>
+                }
+                else
+                {
+                    <table class="table" aria-label="可分配用户列表" style="margin-top:0.75rem">
+                        <thead>
+                            <tr>
+                                <th scope="col">显示名称</th>
+                                <th scope="col">邮箱</th>
+                                <th scope="col">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (SystemOwnerCandidateDto candidate in _candidates)
+                            {
+                                <tr>
+                                    <td>@candidate.DisplayName</td>
+                                    <td>@candidate.Email</td>
+                                    <td>
+                                        <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
+                                                      Disabled="@_isSubmitting"
+                                                      OnClick="@(() => AssignOwnerAsync(candidate))">添加</FluentButton>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+        }
+    </FluentDialog>
+}
+
+@code {
+    [Parameter]
+    public Guid SystemId { get; set; }
+
+    [Parameter]
+    public string SystemName { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> VisibleChanged { get; set; }
+
+    private readonly List<SystemOwnerAssignmentDto> _owners = [];
+    private readonly List<SystemOwnerCandidateDto> _candidates = [];
+    private string _keyword = string.Empty;
+    private string? _loadError;
+    private string? _statusMessage;
+    private bool _isLoading;
+    private bool _isSubmitting;
+    private Guid _loadedSystemId;
+    private bool _hasLoadedCurrentSystem;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Visible || SystemId == Guid.Empty)
+        {
+            return;
+        }
+
+        if (_loadedSystemId != SystemId)
+        {
+            _keyword = string.Empty;
+            _hasLoadedCurrentSystem = false;
+        }
+
+        if (!_hasLoadedCurrentSystem)
+        {
+            _loadedSystemId = SystemId;
+            await ReloadAsync();
+            _hasLoadedCurrentSystem = true;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        if (SystemId == Guid.Empty)
+        {
+            return;
+        }
+
+        _isLoading = true;
+        _loadError = null;
+
+        try
+        {
+            IReadOnlyList<SystemOwnerAssignmentDto> owners = await OwnershipCoordinator.ListOwnersAsync(SystemId);
+            IReadOnlyList<SystemOwnerCandidateDto> candidates =
+                await OwnershipCoordinator.ListOwnerCandidatesAsync(SystemId, _keyword);
+
+            _owners.Clear();
+            _owners.AddRange(owners);
+
+            _candidates.Clear();
+            _candidates.AddRange(candidates);
+        }
+        catch (Exception ex)
+        {
+            _loadError = $"加载系统所有者失败：{ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SearchCandidatesAsync()
+    {
+        _statusMessage = null;
+        await ReloadAsync();
+    }
+
+    private async Task AssignOwnerAsync(SystemOwnerCandidateDto candidate)
+    {
+        _isSubmitting = true;
+        _loadError = null;
+        _statusMessage = null;
+
+        try
+        {
+            SystemOwnershipAssignmentResult result = await OwnershipCoordinator.AssignOwnerAsync(SystemId, candidate.UserId);
+            switch (result.Outcome)
+            {
+                case SystemOwnershipAssignmentOutcome.Assigned:
+                    _statusMessage = "已添加系统所有者。";
+                    await ReloadAsync();
+                    break;
+                case SystemOwnershipAssignmentOutcome.SystemNotFound:
+                    _loadError = "系统不存在。";
+                    break;
+                case SystemOwnershipAssignmentOutcome.UserNotFound:
+                    _loadError = "用户不存在。";
+                    break;
+                case SystemOwnershipAssignmentOutcome.UserIsAdministrator:
+                    _loadError = "管理员已具备全局权限，无需分配系统所有者。";
+                    break;
+                case SystemOwnershipAssignmentOutcome.AlreadyAssigned:
+                    _loadError = "该用户已是该系统的所有者。";
+                    break;
+                default:
+                    _loadError = BuildIdentityErrorMessage(result.IdentityResult?.Errors);
+                    break;
+            }
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private async Task RemoveOwnerAsync(SystemOwnerAssignmentDto owner)
+    {
+        _isSubmitting = true;
+        _loadError = null;
+        _statusMessage = null;
+
+        try
+        {
+            SystemOwnershipRemovalResult result = await OwnershipCoordinator.RemoveOwnerAsync(SystemId, owner.UserId);
+            switch (result.Outcome)
+            {
+                case SystemOwnershipRemovalOutcome.Removed:
+                    _statusMessage = "已移除系统所有者分配。";
+                    await ReloadAsync();
+                    break;
+                case SystemOwnershipRemovalOutcome.SystemNotFound:
+                    _loadError = "系统不存在。";
+                    break;
+                case SystemOwnershipRemovalOutcome.AssignmentNotFound:
+                    _loadError = "系统所有者分配不存在。";
+                    break;
+                default:
+                    _loadError = BuildIdentityErrorMessage(result.IdentityResult?.Errors);
+                    break;
+            }
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        _loadError = null;
+        _statusMessage = null;
+        _isSubmitting = false;
+        _isLoading = false;
+
+        await OnDialogVisibilityChanged(false);
+    }
+
+    private async Task OnDialogVisibilityChanged(bool visible)
+    {
+        Visible = visible;
+
+        if (!visible)
+        {
+            _hasLoadedCurrentSystem = false;
+        }
+
+        await VisibleChanged.InvokeAsync(visible);
+    }
+
+    private string GetDialogTitle() => string.IsNullOrWhiteSpace(SystemName)
+        ? "管理系统所有者"
+        : $"管理系统所有者 - {SystemName}";
+
+    private static string BuildIdentityErrorMessage(IEnumerable<IdentityError>? errors)
+    {
+        if (errors is null)
+        {
+            return "系统所有者角色变更失败，请稍后重试。";
+        }
+
+        string detail = string.Join("；", errors.Select(error => error.Description));
+        return string.IsNullOrWhiteSpace(detail)
+            ? "系统所有者角色变更失败，请稍后重试。"
+            : detail;
+    }
+}

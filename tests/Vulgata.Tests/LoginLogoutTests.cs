@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
@@ -429,6 +430,17 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
                         .UseSqlite(ConnectionString)
                         .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
             });
+        }
+
+        protected override IHost CreateHost(IHostBuilder builder)
+        {
+            IHost host = base.CreateHost(builder);
+
+            using IServiceScope scope = host.Services.CreateScope();
+            VulgataDbContext domainDb = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            domainDb.Database.EnsureCreated();
+
+            return host;
         }
 
         protected override void Dispose(bool disposing)

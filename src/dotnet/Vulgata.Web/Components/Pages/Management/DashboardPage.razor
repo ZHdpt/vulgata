@@ -53,6 +53,8 @@ else
                         <td>
                             <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
                                           OnClick="@(() => StartEditSystem(system))">编辑</FluentButton>
+                            <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                          OnClick="@(() => OpenOwnerManagement(system))">管理所有者</FluentButton>
                             <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
                                           OnClick="@(() => DeleteSystemAsync(system))">删除</FluentButton>
                         </td>
@@ -108,6 +110,15 @@ else
     </EditForm>
 }
 
+@if (_ownerManagementSystem is not null)
+{
+    <ManageSystemOwnersDialog
+        SystemId="_ownerManagementSystem.Id"
+        SystemName="_ownerManagementSystem.Name"
+        Visible="_showOwnerManagement"
+        VisibleChanged="OnOwnerManagementVisibilityChanged" />
+}
+
 @code {
     private List<SystemEntity>? _systems;
     private string? _loadError;
@@ -123,6 +134,8 @@ else
 
     private SystemEntity? _pendingDeleteSystem;
     private bool _showDeleteConfirmation;
+    private SystemEntity? _ownerManagementSystem;
+    private bool _showOwnerManagement;
 
     protected override async Task OnInitializedAsync()
     {
@@ -174,6 +187,24 @@ else
         _showForm = false;
         _editingSystem = null;
         _saveError = null;
+    }
+
+    private void OpenOwnerManagement(SystemEntity system)
+    {
+        _ownerManagementSystem = system;
+        _showOwnerManagement = true;
+    }
+
+    private Task OnOwnerManagementVisibilityChanged(bool visible)
+    {
+        _showOwnerManagement = visible;
+
+        if (!visible)
+        {
+            _ownerManagementSystem = null;
+        }
+
+        return Task.CompletedTask;
     }
 
     private async Task SaveSystemAsync()

@@ -19,6 +19,14 @@ public interface ISystemRepository
     Task<SystemDeleteResult> DeleteIfNoDependenciesAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<SystemDependencyCounts> GetDependencyCountsAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<SystemOwnerAssignmentWriteResult> AssignOwnerAsync(Guid systemId, string userId, DateTimeOffset now, CancellationToken cancellationToken = default);
+
+    Task<bool> RemoveOwnerAsync(Guid systemId, string userId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<SystemOwnerAssignmentSummary>> ListOwnersAsync(Guid systemId, CancellationToken cancellationToken = default);
+
+    Task<int> CountOwnerAssignmentsByUserAsync(string userId, CancellationToken cancellationToken = default);
 }
 
 public enum SystemDeleteOutcome
@@ -42,3 +50,21 @@ public sealed record SystemDependencyCounts(int RepositoryCount, int OwnerAssign
 {
     public int TotalCount => RepositoryCount + OwnerAssignmentCount;
 }
+
+public enum SystemOwnerAssignmentWriteOutcome
+{
+    Assigned,
+    SystemNotFound,
+    AlreadyAssigned,
+}
+
+public sealed record SystemOwnerAssignmentWriteResult(SystemOwnerAssignmentWriteOutcome Outcome)
+{
+    public static SystemOwnerAssignmentWriteResult Assigned { get; } = new(SystemOwnerAssignmentWriteOutcome.Assigned);
+
+    public static SystemOwnerAssignmentWriteResult SystemNotFound { get; } = new(SystemOwnerAssignmentWriteOutcome.SystemNotFound);
+
+    public static SystemOwnerAssignmentWriteResult AlreadyAssigned { get; } = new(SystemOwnerAssignmentWriteOutcome.AlreadyAssigned);
+}
+
+public sealed record SystemOwnerAssignmentSummary(string UserId, DateTimeOffset AssignedAt);

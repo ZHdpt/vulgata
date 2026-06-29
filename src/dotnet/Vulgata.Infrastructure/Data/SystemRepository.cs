@@ -107,4 +107,79 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
 
         return new SystemDependencyCounts(repositoryCount, ownerAssignmentCount);
     }
+
+    public async Task<SystemOwnerAssignmentWriteResult> AssignOwnerAsync(
+        Guid systemId,
+        string userId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken = default)
+    {
+        bool systemExists = await dbContext.Systems
+            .AsNoTracking()
+            .AnyAsync(s => s.Id == systemId, cancellationToken);
+
+        if (!systemExists)
+        {
+            return SystemOwnerAssignmentWriteResult.SystemNotFound;
+        }
+
+        string normalizedUserId = (userId ?? string.Empty).Trim();
+        bool alreadyAssigned = await dbContext.SystemOwnerAssignments
+            .AsNoTracking()
+            .AnyAsync(a => a.SystemId == systemId && a.UserId == normalizedUserId, cancellationToken);
+
+        if (alreadyAssigned)
+        {
+            return SystemOwnerAssignmentWriteResult.AlreadyAssigned;
+        }
+
+        Vulgata.Core.Entities.SystemOwnerAssignment assignment =
+            Vulgata.Core.Entities.SystemOwnerAssignment.Create(systemId, normalizedUserId, now);
+
+        await dbContext.SystemOwnerAssignments.AddAsync(assignment, cancellationToken);
+        return SystemOwnerAssignmentWriteResult.Assigned;
+    }
+
+    public async Task<bool> RemoveOwnerAsync(
+        Guid systemId,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        string normalizedUserId = (userId ?? string.Empty).Trim();
+
+        Vulgata.Core.Entities.SystemOwnerAssignment? assignment = await dbContext.SystemOwnerAssignments
+            .FirstOrDefaultAsync(a => a.SystemId == systemId && a.UserId == normalizedUserId, cancellationToken);
+
+        if (assignment is null)
+        {
+            return false;
+        }
+
+        dbContext.SystemOwnerAssignments.Remove(assignment);
+        return true;
+    }
+
+    public async Task<IReadOnlyList<SystemOwnerAssignmentSummary>> ListOwnersAsync(
+        Guid systemId,
+        CancellationToken cancellationToken = default)
+    {
+        return await dbContext.SystemOwnerAssignments
+            .AsNoTracking()
+            .Where(a => a.SystemId == systemId)
+            .OrderBy(a => a.AssignedAt)
+            .Select(a => new SystemOwnerAssignmentSummary(a.UserId, a.AssignedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> CountOwnerAssignmentsByUserAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        string normalizedUserId = (userId ?? string.Empty).Trim();
+
+        return await dbContext.SystemOwnerAssignments
+            .AsNoTracking()
+            .Where(a => a.UserId == normalizedUserId)
+            .CountAsync(cancellationToken);
+    }
 }

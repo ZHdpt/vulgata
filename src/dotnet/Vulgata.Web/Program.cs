@@ -9,6 +9,8 @@ using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
+using Vulgata.Shared.Systems;
+using Vulgata.Shared.Validators.Systems;
 using Vulgata.Web.Components;
 using Vulgata.Web.Components.Account;
 using Vulgata.Web.Data;
@@ -72,9 +74,11 @@ builder.Services.AddScoped<IAuthorizationHandler, AdministratorOnlyHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, ManagementAccessHandler>();
 builder.Services.AddScoped<RoleSeeder>();
 builder.Services.AddScoped<IAdministratorRoleCoordinator, AdministratorRoleCoordinator>();
+builder.Services.AddScoped<ISystemOwnershipCoordinator, SystemOwnershipCoordinator>();
 
 builder.Services.AddScoped<ISystemRepository, SystemRepository>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSystemRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AssignSystemOwnerRequestValidator>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -307,6 +311,185 @@ systemsApi.MapDelete("/{id:guid}", async (
         detail: $"请先移除依赖（{result.RepositoryCount} 个仓库、{result.OwnerAssignmentCount} 个所有者分配），再删除该系统。",
         statusCode: StatusCodes.Status409Conflict);
 });
+
+systemsApi.MapGet("/{systemId:guid}/owners", async (
+    Guid systemId,
+    ISystemRepository repository,
+    ISystemOwnershipCoordinator ownershipCoordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    if (!authResult.Succeeded)
+    {
+        return Results.Problem(
+            detail: "只有管理员可以管理系统所有者。",
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    if (await repository.GetByIdAsync(systemId, cancellationToken) is null)
+    {
+        return Results.Problem(
+            detail: "系统不存在。",
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    IReadOnlyList<SystemOwnerAssignmentDto> owners = await ownershipCoordinator.ListOwnersAsync(systemId, cancellationToken);
+    return Results.Ok(owners);
+});
+
+systemsApi.MapGet("/{systemId:guid}/owner-candidates", async (
+    Guid systemId,
+    string? keyword,
+    ISystemRepository repository,
+    ISystemOwnershipCoordinator ownershipCoordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    if (!authResult.Succeeded)
+    {
+        return Results.Problem(
+            detail: "只有管理员可以管理系统所有者。",
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    if (await repository.GetByIdAsync(systemId, cancellationToken) is null)
+    {
+        return Results.Problem(
+            detail: "系统不存在。",
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    IReadOnlyList<SystemOwnerCandidateDto> candidates =
+        await ownershipCoordinator.ListOwnerCandidatesAsync(systemId, keyword, cancellationToken);
+
+    return Results.Ok(candidates);
+});
+
+systemsApi.MapPost("/{systemId:guid}/owners", async (
+    Guid systemId,
+    AssignSystemOwnerRequest request,
+    IValidator<AssignSystemOwnerRequest> validator,
+    ISystemOwnershipCoordinator ownershipCoordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    if (!authResult.Succeeded)
+    {
+        return Results.Problem(
+            detail: "只有管理员可以管理系统所有者。",
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    if (!validationResult.IsValid)
+    {
+        return Results.ValidationProblem(validationResult.ToDictionary());
+    }
+
+    SystemOwnershipAssignmentResult result = await ownershipCoordinator.AssignOwnerAsync(
+        systemId,
+        request.UserId,
+        cancellationToken);
+
+    if (result.Outcome == SystemOwnershipAssignmentOutcome.Assigned)
+    {
+        return Results.NoContent();
+    }
+
+    if (result.Outcome == SystemOwnershipAssignmentOutcome.SystemNotFound)
+    {
+        return Results.Problem(
+            detail: "系统不存在。",
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    if (result.Outcome == SystemOwnershipAssignmentOutcome.UserNotFound)
+    {
+        return Results.Problem(
+            detail: "用户不存在。",
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    if (result.Outcome == SystemOwnershipAssignmentOutcome.UserIsAdministrator)
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["UserId"] = ["管理员已具备全局权限，无需分配系统所有者。"],
+        });
+    }
+
+    if (result.Outcome == SystemOwnershipAssignmentOutcome.AlreadyAssigned)
+    {
+        return Results.Problem(
+            detail: "该用户已是该系统的所有者。",
+            statusCode: StatusCodes.Status409Conflict);
+    }
+
+    return Results.Problem(
+        detail: BuildIdentityErrorMessage(result.IdentityResult?.Errors),
+        statusCode: StatusCodes.Status500InternalServerError);
+});
+
+systemsApi.MapDelete("/{systemId:guid}/owners/{userId}", async (
+    Guid systemId,
+    string userId,
+    ISystemOwnershipCoordinator ownershipCoordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    if (!authResult.Succeeded)
+    {
+        return Results.Problem(
+            detail: "只有管理员可以管理系统所有者。",
+            statusCode: StatusCodes.Status403Forbidden);
+    }
+
+    SystemOwnershipRemovalResult result = await ownershipCoordinator.RemoveOwnerAsync(systemId, userId, cancellationToken);
+
+    if (result.Outcome == SystemOwnershipRemovalOutcome.Removed)
+    {
+        return Results.NoContent();
+    }
+
+    if (result.Outcome == SystemOwnershipRemovalOutcome.SystemNotFound)
+    {
+        return Results.Problem(
+            detail: "系统不存在。",
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    if (result.Outcome == SystemOwnershipRemovalOutcome.AssignmentNotFound)
+    {
+        return Results.Problem(
+            detail: "系统所有者分配不存在。",
+            statusCode: StatusCodes.Status404NotFound);
+    }
+
+    return Results.Problem(
+        detail: BuildIdentityErrorMessage(result.IdentityResult?.Errors),
+        statusCode: StatusCodes.Status500InternalServerError);
+});
+
+static string BuildIdentityErrorMessage(IEnumerable<IdentityError>? errors)
+{
+    if (errors is null)
+    {
+        return "系统所有者角色变更失败，请稍后重试。";
+    }
+
+    string detail = string.Join("；", errors.Select(error => error.Description));
+    return string.IsNullOrWhiteSpace(detail)
+        ? "系统所有者角色变更失败，请稍后重试。"
+        : detail;
+}
 
 await app.RunAsync();
 

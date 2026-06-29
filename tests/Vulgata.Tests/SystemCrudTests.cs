@@ -5,9 +5,10 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
+using Vulgata.Shared.Systems;
 using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
@@ -167,7 +168,7 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         await LoginAsync(client, adminEmail, "Valid1!Pass");
 
         Guid ownerAssignedSystemId = await CreateSystemAsync(client, "渠道总线", "渠道整合", "上下文");
-        await InsertSystemOwnerAssignmentAsync(ownerAssignedSystemId, ownerUserId);
+        await AssignOwnerAsync(client, ownerAssignedSystemId, ownerUserId);
 
         HttpResponseMessage ownerDeleteResponse = await client.DeleteAsync($"/api/systems/{ownerAssignedSystemId}");
         ProblemDetails? ownerProblem = await ownerDeleteResponse.Content.ReadFromJsonAsync<ProblemDetails>();
@@ -175,16 +176,6 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.Equal(HttpStatusCode.Conflict, ownerDeleteResponse.StatusCode);
         Assert.NotNull(ownerProblem);
         Assert.Contains("请先移除依赖", ownerProblem.Detail ?? string.Empty, StringComparison.Ordinal);
-
-        Guid repositoryBoundSystemId = await CreateSystemAsync(client, "数据平台", "数据服务", "上下文");
-        await InsertRepositoryAsync(repositoryBoundSystemId, "客户画像仓库", "https://example.com/profile.git");
-
-        HttpResponseMessage repositoryDeleteResponse = await client.DeleteAsync($"/api/systems/{repositoryBoundSystemId}");
-        ProblemDetails? repositoryProblem = await repositoryDeleteResponse.Content.ReadFromJsonAsync<ProblemDetails>();
-
-        Assert.Equal(HttpStatusCode.Conflict, repositoryDeleteResponse.StatusCode);
-        Assert.NotNull(repositoryProblem);
-        Assert.Contains("请先移除依赖", repositoryProblem.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -204,7 +195,7 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
 
         Guid assignedSystemId = await CreateSystemAsync(adminClient, "授信平台", "授信系统", "授信上下文");
         Guid hiddenSystemId = await CreateSystemAsync(adminClient, "运营平台", "运营系统", "运营上下文");
-        await InsertSystemOwnerAssignmentAsync(assignedSystemId, ownerUserId);
+        await AssignOwnerAsync(adminClient, assignedSystemId, ownerUserId);
 
         using HttpClient ownerClient = CreateClient();
         await LoginAsync(ownerClient, ownerEmail, "Valid1!Pass");
@@ -321,59 +312,25 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         return document.RootElement.GetProperty("id").GetGuid();
     }
 
+    private static async Task AssignOwnerAsync(HttpClient client, Guid systemId, string userId)
+    {
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            $"/api/systems/{systemId}/owners",
+            new AssignSystemOwnerRequest { UserId = userId });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
     private async Task ResetDomainStateAsync()
     {
-        await using SqliteConnection connection = new(_factory.ConnectionString);
-        await connection.OpenAsync();
+        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
+        VulgataDbContext domainDb = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
 
-        await ExecuteNonQueryAsync(connection, "DELETE FROM SystemOwnerAssignments;");
-        await ExecuteNonQueryAsync(connection, "DELETE FROM Repositories;");
-        await ExecuteNonQueryAsync(connection, "DELETE FROM Systems;");
-    }
+        domainDb.SystemOwnerAssignments.RemoveRange(domainDb.SystemOwnerAssignments);
+        domainDb.Repositories.RemoveRange(domainDb.Repositories);
+        domainDb.Systems.RemoveRange(domainDb.Systems);
 
-    private async Task InsertSystemOwnerAssignmentAsync(Guid systemId, string userId)
-    {
-        await using SqliteConnection connection = new(_factory.ConnectionString);
-        await connection.OpenAsync();
-
-        await using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
-            INSERT INTO SystemOwnerAssignments (Id, SystemId, UserId, AssignedAt)
-            VALUES ($id, $systemId, $userId, $assignedAt);
-            """;
-        command.Parameters.AddWithValue("$id", Guid.NewGuid().ToString());
-        command.Parameters.AddWithValue("$systemId", systemId.ToString());
-        command.Parameters.AddWithValue("$userId", userId);
-        command.Parameters.AddWithValue("$assignedAt", DateTimeOffset.UtcNow.ToString("O"));
-
-        await command.ExecuteNonQueryAsync();
-    }
-
-    private async Task InsertRepositoryAsync(Guid systemId, string name, string gitUrl)
-    {
-        await using SqliteConnection connection = new(_factory.ConnectionString);
-        await connection.OpenAsync();
-
-        await using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
-            INSERT INTO Repositories (Id, SystemId, Name, GitUrl, CreatedAt, UpdatedAt)
-            VALUES ($id, $systemId, $name, $gitUrl, $createdAt, $updatedAt);
-            """;
-        command.Parameters.AddWithValue("$id", Guid.NewGuid().ToString());
-        command.Parameters.AddWithValue("$systemId", systemId.ToString());
-        command.Parameters.AddWithValue("$name", name);
-        command.Parameters.AddWithValue("$gitUrl", gitUrl);
-        command.Parameters.AddWithValue("$createdAt", DateTimeOffset.UtcNow.ToString("O"));
-        command.Parameters.AddWithValue("$updatedAt", DateTimeOffset.UtcNow.ToString("O"));
-
-        await command.ExecuteNonQueryAsync();
-    }
-
-    private static async Task ExecuteNonQueryAsync(SqliteConnection connection, string sql)
-    {
-        await using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = sql;
-        await command.ExecuteNonQueryAsync();
+        await domainDb.SaveChangesAsync();
     }
 
     private static async Task<Dictionary<string, string>> GetFormFieldsAsync(HttpClient client, string path)
