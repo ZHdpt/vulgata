@@ -35,21 +35,21 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-25
-last_updated: 2026-06-27
+last_updated: 2026-06-29
 project: vulgata
 project_key: NOKEY
 tracking_system: file-system
 story_location: docs/bmad/implementation-artifacts
 
 development_status:
-  epic-1: in-progress
+  epic-1: done
   1-1-solution-scaffolding-and-docker-deployment: done
   1-2-user-registration: done
   1-3-login-and-logout: done
   1-4-profile-management: done
   1-5-role-seeding-and-authorization-policies: done
   1-6-administrator-role-assignment: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
   epic-2: backlog
   2-1-system-crud-admin: backlog
   2-2-grant-system-ownership: backlog
