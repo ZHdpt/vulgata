@@ -47,6 +47,8 @@ public sealed class Repository
 
     public System? System { get; private set; }
 
+    public DatabaseConnection? DatabaseConnection { get; private set; }
+
     public static Repository Create(
         Guid systemId,
         string name,

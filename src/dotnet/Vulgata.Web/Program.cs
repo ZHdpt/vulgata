@@ -94,21 +94,26 @@ builder.Services.AddScoped<ISystemOwnershipCoordinator, SystemOwnershipCoordinat
 
 builder.Services.AddScoped<ISystemRepository, SystemRepository>();
 builder.Services.AddScoped<IRepositoryRepository, RepositoryRepository>();
+builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
 builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
 builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
+builder.Services.AddScoped<IRepositoryDatabaseConnectionCoordinator, RepositoryDatabaseConnectionCoordinator>();
 builder.Services.AddScoped<ILlmProviderConnectionTestService, LlmProviderConnectionTestService>();
+builder.Services.AddScoped<IDatabaseConnectionTestService, DatabaseConnectionTestService>();
 builder.Services.AddScoped<ILlmProviderManagementCoordinator, LlmProviderManagementCoordinator>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideCoordinator, SystemLlmProviderOverrideCoordinator>();
 builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
 builder.Services.AddScoped<IScanStateService, NoOpScanStateService>();
 builder.Services.AddScoped<IContextCompositionService, ContextCompositionService>();
 builder.Services.AddSingleton<IApiKeyEncryptionService, ApiKeyEncryptionService>();
+builder.Services.AddSingleton<IDatabaseConnectionEncryptionService, DatabaseConnectionEncryptionService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSystemRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AssignSystemOwnerRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRepositoryRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateLlmProviderRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpsertSystemLlmProviderOverrideRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpsertDatabaseConnectionRequestValidator>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -940,6 +945,127 @@ standaloneRepoApi.MapPost("/", async (
     return Results.Problem(
         detail: "独立仓库创建失败。",
         statusCode: StatusCodes.Status500InternalServerError);
+});
+
+RouteGroupBuilder repositoryDatabaseConnectionApi = app.MapGroup("/api/repositories/{repositoryId:guid}/database-connection")
+    .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
+
+repositoryDatabaseConnectionApi.MapGet("/", async (
+    Guid repositoryId,
+    IRepositoryDatabaseConnectionCoordinator coordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result = await coordinator.GetAsync(
+        repositoryId,
+        userId,
+        isAdministrator,
+        cancellationToken);
+
+    if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
+    {
+        return Results.Problem(detail: result.Message ?? "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+    }
+
+    return Results.Ok(result.Value);
+});
+
+repositoryDatabaseConnectionApi.MapPut("/", async (
+    Guid repositoryId,
+    UpsertDatabaseConnectionRequest request,
+    IValidator<UpsertDatabaseConnectionRequest> validator,
+    IRepositoryDatabaseConnectionCoordinator coordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    if (!validationResult.IsValid)
+    {
+        return Results.ValidationProblem(validationResult.ToDictionary());
+    }
+
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result = await coordinator.UpsertAsync(
+        repositoryId,
+        request,
+        userId,
+        isAdministrator,
+        cancellationToken);
+
+    if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
+    {
+        return Results.Problem(detail: result.Message ?? "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+    }
+
+    return Results.Ok(result.Value);
+});
+
+repositoryDatabaseConnectionApi.MapDelete("/", async (
+    Guid repositoryId,
+    IRepositoryDatabaseConnectionCoordinator coordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    RepositoryDatabaseConnectionMutationResult<bool> result = await coordinator.DeleteAsync(
+        repositoryId,
+        userId,
+        isAdministrator,
+        cancellationToken);
+
+    if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
+    {
+        return Results.Problem(detail: result.Message ?? "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+    }
+
+    return Results.NoContent();
+});
+
+repositoryDatabaseConnectionApi.MapPost("/test", async (
+    Guid repositoryId,
+    IRepositoryDatabaseConnectionCoordinator coordinator,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
+    CancellationToken cancellationToken) =>
+{
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    RepositoryDatabaseConnectionTestResult result = await coordinator.TestConnectionAsync(
+        repositoryId,
+        userId,
+        isAdministrator,
+        cancellationToken);
+
+    if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.RepositoryNotFound)
+    {
+        return Results.Problem(detail: result.Message, statusCode: StatusCodes.Status404NotFound);
+    }
+
+    if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.Success)
+    {
+        return Results.Ok(new RepositoryDatabaseConnectionTestResponse
+        {
+            Success = true,
+            Message = result.Message,
+        });
+    }
+
+    return Results.Problem(detail: result.Message, statusCode: StatusCodes.Status400BadRequest);
 });
 
 RouteGroupBuilder llmProvidersApi = app.MapGroup("/api/llm-providers")

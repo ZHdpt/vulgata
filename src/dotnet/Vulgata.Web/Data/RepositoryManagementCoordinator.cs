@@ -229,6 +229,19 @@ public sealed class RepositoryManagementCoordinator(
 
     private static RepositoryDetailDto MapToDetail(RepositoryEntity repository)
     {
+        RepositoryDatabaseConnectionSummaryDto? databaseConnectionSummary = repository.DatabaseConnection is null
+            ? null
+            : new RepositoryDatabaseConnectionSummaryDto
+            {
+                RepositoryId = repository.DatabaseConnection.RepositoryId,
+                DatabaseType = (int)repository.DatabaseConnection.DatabaseType,
+                IsConfigured = true,
+                HasConnectionString = !string.IsNullOrWhiteSpace(repository.DatabaseConnection.EncryptedConnectionString),
+                HasUsername = !string.IsNullOrWhiteSpace(repository.DatabaseConnection.EncryptedUsername),
+                HasPassword = !string.IsNullOrWhiteSpace(repository.DatabaseConnection.EncryptedPassword),
+                UpdatedAt = repository.DatabaseConnection.UpdatedAt,
+            };
+
         return new RepositoryDetailDto
         {
             Id = repository.Id,
@@ -240,6 +253,7 @@ public sealed class RepositoryManagementCoordinator(
             ScanStatus = "未扫描",
             LastScannedAt = null,
             DocumentCount = 0,
+            DatabaseConnection = databaseConnectionSummary,
         };
     }
 }

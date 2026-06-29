@@ -9,6 +9,7 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
 {
     public DbSet<SystemEntity> Systems => Set<SystemEntity>();
     public DbSet<RepositoryEntity> Repositories => Set<RepositoryEntity>();
+    public DbSet<DatabaseConnection> DatabaseConnections => Set<DatabaseConnection>();
     public DbSet<LlmProvider> LlmProviders => Set<LlmProvider>();
     public DbSet<SystemLlmProviderOverride> SystemLlmProviderOverrides => Set<SystemLlmProviderOverride>();
     public DbSet<SystemOwnerAssignment> SystemOwnerAssignments => Set<SystemOwnerAssignment>();

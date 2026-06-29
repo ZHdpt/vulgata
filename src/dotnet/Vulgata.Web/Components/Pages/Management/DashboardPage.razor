@@ -15,13 +15,16 @@
 
 @inject ISystemRepository SystemRepository
 @inject IRepositoryManagementCoordinator RepositoryManagementCoordinator
+@inject IRepositoryDatabaseConnectionCoordinator RepositoryDatabaseConnectionCoordinator
 @inject ISystemLlmProviderOverrideCoordinator SystemLlmProviderOverrideCoordinator
 @inject IValidator<CreateRepositoryRequest> RepositoryRequestValidator
+@inject IValidator<UpsertDatabaseConnectionRequest> DatabaseConnectionValidator
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>系统管理</PageTitle>
 
 <h1 class="display-serif display-serif-sm">系统管理</h1>
+<p>在仓库详情中可维护数据库连接并执行测试连接。</p>
 
 @if (_loadError is not null)
 {
@@ -60,7 +63,7 @@ else
                             <td>@repository.DocumentCount</td>
                             <td>
                                 <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                                              Disabled="true">查看</FluentButton>
+                                              OnClick="@(() => OpenRepositoryDetailAsync(repository))">查看</FluentButton>
                             </td>
                         </tr>
                     }
@@ -125,7 +128,7 @@ else
                                 <td>@repository.DocumentCount</td>
                                 <td>
                                     <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                                                  Disabled="true">查看</FluentButton>
+                                                  OnClick="@(() => OpenRepositoryDetailAsync(repository))">查看</FluentButton>
                                 </td>
                             </tr>
                         }
@@ -239,6 +242,63 @@ else
     </FluentDialog>
 }
 
+@if (_showRepositoryDetail && _selectedRepository is not null)
+{
+    <FluentDialog @bind-Visible="_showRepositoryDetail" Title="仓库详情"
+                  PrimaryActionText="保存" SecondaryActionText="关闭"
+                  PrimaryAction="@(async () => await SaveDatabaseConnectionAsync())"
+                  SecondaryAction="CloseRepositoryDetail">
+        <div style="display:grid;gap:0.75rem">
+            <div><strong>仓库名称：</strong>@_selectedRepository.Name</div>
+
+            <section style="padding:0.5rem 0;border-top:1px solid #d6d6d6">
+                <h3 style="margin:0 0 0.5rem 0">数据库连接</h3>
+                <div><strong>状态：</strong>@(_selectedRepositoryDatabaseConnection?.IsConfigured == true ? "已配置" : "未配置")</div>
+                <div><strong>数据库类型：</strong>@GetDatabaseTypeDisplayName(_selectedRepositoryDatabaseConnection?.DatabaseType)</div>
+                <div><strong>连接字符串：</strong>@(_selectedRepositoryDatabaseConnection?.HasConnectionString == true ? "已配置" : "未配置")</div>
+                <div><strong>用户名：</strong>@(_selectedRepositoryDatabaseConnection?.HasUsername == true ? "已配置" : "未配置")</div>
+                <div><strong>密码：</strong>@(_selectedRepositoryDatabaseConnection?.HasPassword == true ? "已配置" : "未配置")</div>
+                <div><strong>最后更新时间：</strong>@(_selectedRepositoryDatabaseConnection?.UpdatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+            </section>
+
+            @if (_databaseConnectionError is not null)
+            {
+                <FluentMessageBar Severity="MessageSeverity.Error">@_databaseConnectionError</FluentMessageBar>
+            }
+
+            @if (_databaseConnectionStatus is not null)
+            {
+                <FluentMessageBar Severity="MessageSeverity.Success">@_databaseConnectionStatus</FluentMessageBar>
+            }
+
+            <div>
+                <label for="database-type" style="display:block;margin-bottom:0.5rem">数据库类型</label>
+                <InputSelect id="database-type" @bind-Value="_databaseConnectionForm.DatabaseType" class="form-select">
+                    <option value="@DatabaseType.PostgreSQL">PostgreSQL</option>
+                    <option value="@DatabaseType.SqlServer">SqlServer</option>
+                    <option value="@DatabaseType.MySql">MySql</option>
+                    <option value="@DatabaseType.Sqlite">Sqlite</option>
+                    <option value="@DatabaseType.Oracle">Oracle</option>
+                    <option value="@DatabaseType.Other">Other</option>
+                </InputSelect>
+            </div>
+
+            <FluentTextField @bind-Value="_databaseConnectionForm.ConnectionString" Label="连接字符串" Required="true" />
+            <FluentTextField @bind-Value="_databaseConnectionForm.Username" Label="用户名（留空则保留现有值）" />
+            <FluentTextField @bind-Value="_databaseConnectionForm.Password" Label="密码（留空则保留现有值）" type="password" />
+
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                              Disabled="@_isDatabaseConnectionBusy"
+                              OnClick="@(async () => await TestDatabaseConnectionAsync())">测试连接</FluentButton>
+                <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
+                              Disabled="@_isDatabaseConnectionBusy"
+                              OnClick="@(async () => await DeleteDatabaseConnectionAsync())">删除</FluentButton>
+            </div>
+        </div>
+    </FluentDialog>
+}
+
 @if (_showStandaloneRepositoryForm)
 {
     <FluentDialog @bind-Visible="_showStandaloneRepositoryForm" Title="新建独立仓库"
@@ -286,11 +346,15 @@ else
     private string? _saveError;
     private string? _repoError;
     private string? _standaloneRepoError;
+    private string? _databaseConnectionError;
+    private string? _databaseConnectionStatus;
     private bool _isAdministrator;
     private bool _isSaving;
+    private bool _isDatabaseConnectionBusy;
     private bool _showForm;
     private bool _showRepositoryForm;
     private bool _showStandaloneRepositoryForm;
+    private bool _showRepositoryDetail;
     private SystemEntity? _editingSystem;
 
     private string _userId = string.Empty;
@@ -298,6 +362,9 @@ else
     private CreateSystemRequest _formModel = new();
     private CreateRepositoryRequest _repoFormModel = new();
     private CreateRepositoryRequest _standaloneRepoFormModel = new();
+    private UpsertDatabaseConnectionRequest _databaseConnectionForm = new();
+    private RepositorySummaryDto? _selectedRepository;
+    private RepositoryDatabaseConnectionSummaryDto? _selectedRepositoryDatabaseConnection;
     private SystemEntity? _repoTargetSystem;
 
     private SystemEntity? _pendingDeleteSystem;
@@ -427,6 +494,198 @@ else
         _showStandaloneRepositoryForm = false;
         _standaloneRepoFormModel = new CreateRepositoryRequest();
         _standaloneRepoError = null;
+    }
+
+    private async Task OpenRepositoryDetailAsync(RepositorySummaryDto repository)
+    {
+        _selectedRepository = repository;
+        _showRepositoryDetail = true;
+        _databaseConnectionError = null;
+        _databaseConnectionStatus = null;
+        _databaseConnectionForm = new UpsertDatabaseConnectionRequest
+        {
+            DatabaseType = DatabaseType.PostgreSQL,
+            ConnectionString = string.Empty,
+            Username = string.Empty,
+            Password = string.Empty,
+        };
+
+        await ReloadSelectedRepositoryDatabaseConnectionAsync();
+    }
+
+    private void CloseRepositoryDetail()
+    {
+        _showRepositoryDetail = false;
+        _selectedRepository = null;
+        _selectedRepositoryDatabaseConnection = null;
+        _databaseConnectionError = null;
+        _databaseConnectionStatus = null;
+        _databaseConnectionForm = new UpsertDatabaseConnectionRequest();
+    }
+
+    private async Task SaveDatabaseConnectionAsync()
+    {
+        if (_selectedRepository is null || _isDatabaseConnectionBusy)
+        {
+            return;
+        }
+
+        _databaseConnectionError = null;
+        _databaseConnectionStatus = null;
+
+        FluentValidation.Results.ValidationResult validationResult = await DatabaseConnectionValidator.ValidateAsync(_databaseConnectionForm);
+        if (!validationResult.IsValid)
+        {
+            _databaseConnectionError = validationResult.Errors.Select(error => error.ErrorMessage).FirstOrDefault();
+            return;
+        }
+
+        _isDatabaseConnectionBusy = true;
+
+        try
+        {
+            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+                await RepositoryDatabaseConnectionCoordinator.UpsertAsync(
+                    _selectedRepository.Id,
+                    _databaseConnectionForm,
+                    _userId,
+                    _isAdministrator);
+
+            if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound || result.Value is null)
+            {
+                _databaseConnectionError = result.Message ?? "仓库不存在。";
+                return;
+            }
+
+            _selectedRepositoryDatabaseConnection = result.Value;
+            _databaseConnectionStatus = "数据库连接已保存。";
+            _databaseConnectionForm.ConnectionString = string.Empty;
+            _databaseConnectionForm.Username = string.Empty;
+            _databaseConnectionForm.Password = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _databaseConnectionError = $"数据库连接保存失败：{ex.Message}";
+        }
+        finally
+        {
+            _isDatabaseConnectionBusy = false;
+        }
+    }
+
+    private async Task DeleteDatabaseConnectionAsync()
+    {
+        if (_selectedRepository is null || _isDatabaseConnectionBusy)
+        {
+            return;
+        }
+
+        _isDatabaseConnectionBusy = true;
+        _databaseConnectionError = null;
+        _databaseConnectionStatus = null;
+
+        try
+        {
+            RepositoryDatabaseConnectionMutationResult<bool> result =
+                await RepositoryDatabaseConnectionCoordinator.DeleteAsync(
+                    _selectedRepository.Id,
+                    _userId,
+                    _isAdministrator);
+
+            if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
+            {
+                _databaseConnectionError = result.Message ?? "仓库不存在。";
+                return;
+            }
+
+            _selectedRepositoryDatabaseConnection = new RepositoryDatabaseConnectionSummaryDto
+            {
+                RepositoryId = _selectedRepository.Id,
+                IsConfigured = false,
+                HasConnectionString = false,
+                HasUsername = false,
+                HasPassword = false,
+            };
+            _databaseConnectionStatus = "数据库连接已删除。";
+        }
+        catch (Exception ex)
+        {
+            _databaseConnectionError = $"数据库连接删除失败：{ex.Message}";
+        }
+        finally
+        {
+            _isDatabaseConnectionBusy = false;
+        }
+    }
+
+    private async Task TestDatabaseConnectionAsync()
+    {
+        if (_selectedRepository is null || _isDatabaseConnectionBusy)
+        {
+            return;
+        }
+
+        _isDatabaseConnectionBusy = true;
+        _databaseConnectionError = null;
+        _databaseConnectionStatus = null;
+
+        try
+        {
+            RepositoryDatabaseConnectionTestResult result = await RepositoryDatabaseConnectionCoordinator.TestConnectionAsync(
+                _selectedRepository.Id,
+                _userId,
+                _isAdministrator);
+
+            if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.Success)
+            {
+                _databaseConnectionStatus = result.Message;
+                return;
+            }
+
+            _databaseConnectionError = result.Message;
+        }
+        catch (Exception ex)
+        {
+            _databaseConnectionError = $"连接测试失败：{ex.Message}";
+        }
+        finally
+        {
+            _isDatabaseConnectionBusy = false;
+        }
+    }
+
+    private async Task ReloadSelectedRepositoryDatabaseConnectionAsync()
+    {
+        if (_selectedRepository is null)
+        {
+            _selectedRepositoryDatabaseConnection = null;
+            return;
+        }
+
+        RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+            await RepositoryDatabaseConnectionCoordinator.GetAsync(
+                _selectedRepository.Id,
+                _userId,
+                _isAdministrator);
+
+        if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.Success && result.Value is not null)
+        {
+            _selectedRepositoryDatabaseConnection = result.Value;
+            if (result.Value.DatabaseType.HasValue)
+            {
+                _databaseConnectionForm.DatabaseType = (DatabaseType)result.Value.DatabaseType.Value;
+            }
+            return;
+        }
+
+        _selectedRepositoryDatabaseConnection = new RepositoryDatabaseConnectionSummaryDto
+        {
+            RepositoryId = _selectedRepository.Id,
+            IsConfigured = false,
+            HasConnectionString = false,
+            HasUsername = false,
+            HasPassword = false,
+        };
     }
 
     private async Task CreateRepositoryAsync()
@@ -675,5 +934,15 @@ else
             AgentType.Chat => "对话代理",
             _ => "未知代理",
         };
+    }
+
+    private static string GetDatabaseTypeDisplayName(int? databaseType)
+    {
+        if (!databaseType.HasValue || !Enum.IsDefined(typeof(DatabaseType), databaseType.Value))
+        {
+            return "-";
+        }
+
+        return ((DatabaseType)databaseType.Value).ToString();
     }
 }

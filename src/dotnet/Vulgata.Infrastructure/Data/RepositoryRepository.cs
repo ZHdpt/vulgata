@@ -32,6 +32,7 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
         CancellationToken cancellationToken = default)
     {
         return await dbContext.Repositories
+            .Include(repository => repository.DatabaseConnection)
             .FirstOrDefaultAsync(repository => repository.Id == repositoryId, cancellationToken);
     }
 
@@ -41,6 +42,7 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
         CancellationToken cancellationToken = default)
     {
         return await dbContext.Repositories
+            .Include(repository => repository.DatabaseConnection)
             .FirstOrDefaultAsync(
                 repository => repository.SystemId == systemId && repository.Id == repositoryId,
                 cancellationToken);
@@ -51,6 +53,7 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
         CancellationToken cancellationToken = default)
     {
         return await dbContext.Repositories
+            .Include(repository => repository.DatabaseConnection)
             .FirstOrDefaultAsync(
                 repository => repository.SystemId == null && repository.Id == repositoryId,
                 cancellationToken);

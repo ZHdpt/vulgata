@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Vulgata.Infrastructure.Data;
 
 #nullable disable
@@ -9,9 +10,10 @@ using Vulgata.Infrastructure.Data;
 namespace Vulgata.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(VulgataDbContext))]
-    partial class VulgataDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629173000_AddRepositoryDatabaseConnections")]
+    partial class AddRepositoryDatabaseConnections
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasDefaultSchema("vulgata")
@@ -298,6 +300,17 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("SystemOwnerAssignments", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
+                        .WithOne("DatabaseConnection")
+                        .HasForeignKey("Vulgata.Core.Entities.DatabaseConnection", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Repository");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.Repository", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.System", "System")
@@ -308,17 +321,6 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("DatabaseConnection");
 
                     b.Navigation("System");
-                });
-
-            modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
-                {
-                    b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
-                        .WithOne("DatabaseConnection")
-                        .HasForeignKey("Vulgata.Core.Entities.DatabaseConnection", "RepositoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Repository");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.SystemLlmProviderOverride", b =>
