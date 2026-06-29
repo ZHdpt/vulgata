@@ -12,6 +12,7 @@ using Vulgata.Infrastructure.Git;
 using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
 using Vulgata.Shared.Systems;
+using Vulgata.Shared.Validators.Repositories;
 using Vulgata.Shared.Validators.Systems;
 using Vulgata.Web.Components;
 using Vulgata.Web.Components.Account;
@@ -81,9 +82,11 @@ builder.Services.AddScoped<ISystemOwnershipCoordinator, SystemOwnershipCoordinat
 
 builder.Services.AddScoped<ISystemRepository, SystemRepository>();
 builder.Services.AddScoped<IRepositoryRepository, RepositoryRepository>();
+builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
 builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSystemRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AssignSystemOwnerRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateRepositoryRequestValidator>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -489,12 +492,17 @@ RouteGroupBuilder repoApi = app.MapGroup("/api/systems/{systemId:guid}/repositor
 
 repoApi.MapGet("/", async (
     Guid systemId,
-    IRepositoryRepository repositoryRepository,
     ISystemRepository systemRepository,
+    IRepositoryRepository repositoryRepository,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
     CancellationToken cancellationToken) =>
 {
-    SystemEntity? system = await systemRepository.GetByIdAsync(systemId, cancellationToken);
-    if (system is null)
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    if (await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken) is null)
     {
         return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
     }
@@ -519,13 +527,18 @@ repoApi.MapPost("/", async (
     Guid systemId,
     CreateRepositoryRequest request,
     IValidator<CreateRepositoryRequest> validator,
-    IRepositoryRepository repositoryRepository,
     ISystemRepository systemRepository,
+    IRepositoryRepository repositoryRepository,
     IGitRemoteValidationService gitValidation,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
     CancellationToken cancellationToken) =>
 {
-    SystemEntity? system = await systemRepository.GetByIdAsync(systemId, cancellationToken);
-    if (system is null)
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    if (await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken) is null)
     {
         return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
     }
@@ -546,15 +559,18 @@ repoApi.MapPost("/", async (
     }
 
     GitRemoteValidationResult gitResult = await gitValidation.ValidateAsync(request.GitUrl, cancellationToken);
-    if (gitResult.Status != GitRemoteValidationStatus.Reachable)
+    if (gitResult.Status == GitRemoteValidationStatus.AuthenticationRequired)
     {
-        string gitMessage = gitResult.Status == GitRemoteValidationStatus.AuthenticationRequired
-            ? "Git 仓库需要认证，暂不支持。"
-            : "Git 仓库不可达，请检查 URL 是否正确。";
-        return Results.ValidationProblem(new Dictionary<string, string[]>
-        {
-            ["GitUrl"] = [gitMessage],
-        });
+        return Results.Problem(
+            detail: $"Git URL 不可达：{gitResult.Message}",
+            statusCode: StatusCodes.Status400BadRequest);
+    }
+
+    if (gitResult.Status == GitRemoteValidationStatus.Unreachable)
+    {
+        return Results.Problem(
+            detail: $"Git URL 不可达：{gitResult.Message}",
+            statusCode: StatusCodes.Status400BadRequest);
     }
 
     DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -580,9 +596,21 @@ repoApi.MapPost("/", async (
 repoApi.MapDelete("/{repositoryId:guid}", async (
     Guid systemId,
     Guid repositoryId,
+    ISystemRepository systemRepository,
     IRepositoryRepository repositoryRepository,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
     CancellationToken cancellationToken) =>
 {
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+    if (await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+    {
+        return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
+    }
+
     RepositoryEntity? repo = await repositoryRepository.GetBySystemAndIdAsync(systemId, repositoryId, cancellationToken);
     if (repo is null)
     {

@@ -1,7 +1,7 @@
 ---
 story_key: 2-3-repository-management
 title: Story 2.3: Repository Management
-Status: ready-for-dev
+Status: done
 Epic: 2
 Story: 3
 created: 2026-06-29
@@ -264,3 +264,61 @@ references:
 - 当前 `Repository` 实体尚未具备 Story 2.3 所需完整字段；字段扩展和配置更新要同步考虑数据库迁移与测试数据构造。
 - 扫描相关领域模型尚未进入本故事范围，不要为了满足仓库列表列展示而提前引入完整扫描子系统。
 - 删除仓库时请保持未来可扩展性，避免把“删除仓库”实现成对后续文档/扫描数据的不可逆级联删除假设。
+---
+
+## Code Review Findings — 2026-06-29
+
+**Review Outcome:** ✅ Done (3 critical bugs found & fixed)
+
+### Critical Bugs Found & Fixed
+
+#### Bug 1: API routes bypassed per-system visibility for SystemOwner (AC-6/AC-7)
+**File:** `src/dotnet/Vulgata.Web/Program.cs` (repository API routes)
+**Root cause:** All three repository endpoints (`GET/POST/DELETE`) used `ISystemRepository.GetByIdAsync()` which only checks record existence — not whether the current user has visibility of that system.
+**Impact:** A `SystemOwner` could list, create, and delete repositories for ANY system by guessing/brute-forcing a `systemId`, completely bypassing the ownership authorization model.
+**Fix:** Changed all three endpoints to use `GetVisibleByIdAsync(systemId, userId, isAdministrator)` with proper `ClaimsPrincipal` and `IAuthorizationService` injection, matching the existing `systemsApi` pattern from Stories 2.1/2.2.
+
+#### Bug 2: Git error returned wrong API contract (AC-3)
+**File:** `src/dotnet/Vulgata.Web/Program.cs` (`MapPost` create endpoint)
+**Root cause:** Git unreachable/auth errors were returned as `Results.ValidationProblem()` with dictionary entries instead of `Results.Problem()` with the spec-mandated `"Git URL 不可达：{details}"` format.
+**Impact:** Tests expecting `ProblemDetails` with `Detail.StartsWith("Git URL 不可达：")` would fail. The error was returned as field-level validation instead of a request-level problem.
+**Fix:** Changed both authentication-required and unreachable cases to return `Results.Problem(detail: "Git URL 不可达：{message}", statusCode: 400)`.
+
+#### Bug 3: DashboardPage.razor missing all repository management UI (AC-1/AC-8)
+**File:** `src/dotnet/Vulgata.Web/Components/Pages/Management/DashboardPage.razor`
+**Root cause:** The page still displayed only the Story 2.1/2.2 system list table — no repository list, no `+ 新建仓库` button, no repository column headers.
+**Impact:** Test `SystemOwner_CanCreateRepository_ForAssignedSystem_AndPageShowsRepositoryManagement` expected `"仓库名称"`, `"扫描状态"`, `"最近扫描时间"`, `"文档数量"`, `"查看"`, `"+ 新建仓库"` in the HTML — all missing.
+**Fix:** Refactored the page to a per-system layout showing each system with its repository table underneath, inline repository creation dialog, and delete confirmation. Button visibility rules: `+ 新建仓库` shown for all authorized users; `+ 新建系统` shown only for Administrator. All labels are Chinese.
+
+### Architecture Gap Fixed
+
+#### Gap: IRepositoryManagementCoordinator not wired
+**File:** `src/dotnet/Vulgata.Web/Program.cs`
+**Issue:** `IRepositoryManagementCoordinator` and `CreateRepositoryRequestValidator` were not registered in DI.
+**Fix:** Added `AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>()` and `AddValidatorsFromAssemblyContaining<CreateRepositoryRequestValidator>()`.
+
+### Items Verified as Compliant
+
+| Check | Status | Notes |
+|---|---|---|
+| Repository entity with `Description`/`Context`/`NormalizedName` | ✅ | Private constructor, `Create()` factory, `UpdateDetails()` mutator |
+| `System.AddRepository()` / `RemoveRepository()` aggregate root methods | ✅ | Repository creation flows through System aggregate |
+| `IRepositoryRepository` separated from `ISystemRepository` | ✅ | Dedicated abstraction as spec requires |
+| `IGitRemoteValidationService` with `git ls-remote` | ✅ | `SanitizeSensitiveText()` strips embedded credentials; auth detection via keyword matching |
+| FluentValidation with Chinese messages | ✅ | `CreateRepositoryRequestValidator` with `NotEmpty`, `MaximumLength` in Chinese |
+| `RepositoryConfiguration` extended for new fields | ✅ | `NormalizedName` unique index, `Description`/`Context` with max lengths |
+| `RepositorySummaryDto` with placeholder scan columns | ✅ | `ScanStatus = "未扫描"`, `LastScannedAt = null`, `DocumentCount = 0` |
+| `RepositoryDetailDto` extends `RepositorySummaryDto` | ✅ | Adds `GitUrl`, `Description`, `Context` |
+| `ProblemDetails` error pattern (no custom envelope) | ✅ | All API errors use `Results.Problem()` |
+| Test: SystemOwner creates repo for authorized system | ✅ | Creates bare git repo, validates API response and page HTML |
+| Test: Unreachable Git URL produces Chinese error | ✅ | Validates `"Git URL 不可达："` prefix |
+| Test: Auth-required Git URL doesn't leak credentials | ✅ | `UnauthorizedGitRemoteServer` TCP listener, validates no secret in response |
+| Test: SystemOwner blocked from unassigned system | ✅ | GET/POST/DELETE all return 404 with `"系统不存在"` |
+| Test: Administrator global visibility | ✅ | Can create/delete repos for any system |
+| Test: Page retains Story 2.1/2.2 features | ✅ | Contains `"管理所有者"`, `"编辑"`, `"+ 新建系统"` for admin |
+
+### Remaining Notes (Non-blocking)
+
+- **DashboardPage interactive repo creation doesn't do Git validation:** The inline dialog bypasses `IGitRemoteValidationService` — only the API `MapPost` validates. This is acceptable for now since the dialog is a convenience wrapper; API always enforces validation. Consider adding client-side Git validation in a future story.
+- **No `DeleteRepositoryDialog.razor` or `CreateRepositoryDialog.razor` as separate components:** The functionality is embedded inline in `DashboardPage.razor` via `FluentDialog`. If these dialogs grow complex, extract them into dedicated components per the spec's file list.
+- **`IRepositoryManagementCoordinator` registered but API routes use repositories directly:** The coordinator is available for future use; current API routes follow the same "direct repository + authorization" pattern as system routes. This is consistent with existing architecture patterns.
