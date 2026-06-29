@@ -56,14 +56,14 @@ public sealed class DatabaseConnectionTestService(ILogger<DatabaseConnectionTest
             logger.LogInformation("SQLite database connection test succeeded.");
             return new DatabaseConnectionTestAttemptResult(true, "连接测试成功。");
         }
-        catch (SqliteException ex)
+        catch (SqliteException)
         {
-            logger.LogWarning(ex, "SQLite database connection test failed.");
+            logger.LogWarning("SQLite database connection test failed.");
             return new DatabaseConnectionTestAttemptResult(false, "SQLite 连接失败。请检查连接字符串是否正确，并确认目标库可访问。");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            logger.LogWarning(ex, "Unexpected database connection test failure.");
+            logger.LogWarning("Unexpected database connection test failure.");
             return new DatabaseConnectionTestAttemptResult(false, "连接测试失败。请检查数据库地址与网络连通性。");
         }
     }

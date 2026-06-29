@@ -984,15 +984,15 @@ repositoryDatabaseConnectionApi.MapPut("/", async (
     IAuthorizationService authorization,
     CancellationToken cancellationToken) =>
 {
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
     FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
     }
-
-    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-    bool isAdministrator = authResult.Succeeded;
-    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
     RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result = await coordinator.UpsertAsync(
         repositoryId,

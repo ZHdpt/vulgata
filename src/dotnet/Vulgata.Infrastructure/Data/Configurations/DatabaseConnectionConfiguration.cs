@@ -20,7 +20,7 @@ public sealed class DatabaseConnectionConfiguration : IEntityTypeConfiguration<D
 
         builder.Property(connection => connection.EncryptedConnectionString)
             .IsRequired()
-            .HasMaxLength(4000);
+            .HasMaxLength(8000);
 
         builder.Property(connection => connection.DatabaseType)
             .HasConversion<int>();

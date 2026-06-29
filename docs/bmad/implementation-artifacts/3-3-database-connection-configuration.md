@@ -1,11 +1,13 @@
 ---
 story_key: 3-3-database-connection-configuration
 title: Story 3.3: Database Connection Configuration
-Status: ready-for-dev
+Status: done
 Epic: 3
 Story: 3
 created: 2026-06-29
+completed: 2026-06-29
 baseline_commit: e2df714a599870542a2172a4a67b5d7bd3ae98c7
+review_commit: 3b447f6
 depends_on:
   - 1-5-role-seeding-and-authorization-policies
   - 1-6-administrator-role-assignment

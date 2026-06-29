@@ -31,8 +31,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.Property<string>("EncryptedConnectionString")
                         .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
 
                     b.Property<string>("EncryptedPassword")
                         .HasMaxLength(4000)

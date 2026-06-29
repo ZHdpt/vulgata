@@ -16,7 +16,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     RepositoryId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EncryptedConnectionString = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: false),
+                    EncryptedConnectionString = table.Column<string>(type: "character varying(8000)", maxLength: 8000, nullable: false),
                     DatabaseType = table.Column<int>(type: "integer", nullable: false),
                     EncryptedUsername = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     EncryptedPassword = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
