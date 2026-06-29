@@ -53,7 +53,7 @@ development_status:
   epic-2: in-progress
   2-1-system-crud-admin: done
   2-2-grant-system-ownership: done
-  2-3-repository-management: backlog
+  2-3-repository-management: ready-for-dev
   2-4-standalone-repository-creation: backlog
   2-5-user-supplied-context: backlog
   epic-2-retrospective: optional
