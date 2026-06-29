@@ -95,18 +95,22 @@ public sealed class SystemOwnershipCoordinator(
             {
                 if (userLookup.TryGetValue(assignment.UserId, out ApplicationUser? user))
                 {
-                    return new SystemOwnerAssignmentDto(
-                        user.Id,
-                        BuildDisplayName(user),
-                        user.Email ?? user.UserName ?? string.Empty,
-                        assignment.AssignedAt);
+                    return new SystemOwnerAssignmentDto
+                    {
+                        UserId = user.Id,
+                        DisplayName = BuildDisplayName(user),
+                        Email = user.Email ?? user.UserName ?? string.Empty,
+                        AssignedAt = assignment.AssignedAt,
+                    };
                 }
 
-                return new SystemOwnerAssignmentDto(
-                    assignment.UserId,
-                    $"已删除用户（{assignment.UserId}）",
-                    string.Empty,
-                    assignment.AssignedAt);
+                return new SystemOwnerAssignmentDto
+                {
+                    UserId = assignment.UserId,
+                    DisplayName = $"已删除用户（{assignment.UserId}）",
+                    Email = string.Empty,
+                    AssignedAt = assignment.AssignedAt,
+                };
             })
             .ToList();
     }
@@ -146,10 +150,12 @@ public sealed class SystemOwnershipCoordinator(
             .ToListAsync(cancellationToken);
 
         return users
-            .Select(user => new SystemOwnerCandidateDto(
-                user.Id,
-                BuildDisplayName(user),
-                user.Email ?? user.UserName ?? string.Empty))
+            .Select(user => new SystemOwnerCandidateDto
+            {
+                UserId = user.Id,
+                DisplayName = BuildDisplayName(user),
+                Email = user.Email ?? user.UserName ?? string.Empty,
+            })
             .ToList();
     }
 

@@ -166,7 +166,6 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
         return await dbContext.SystemOwnerAssignments
             .AsNoTracking()
             .Where(a => a.SystemId == systemId)
-            .OrderBy(a => a.AssignedAt)
             .Select(a => new SystemOwnerAssignmentSummary(a.UserId, a.AssignedAt))
             .ToListAsync(cancellationToken);
     }

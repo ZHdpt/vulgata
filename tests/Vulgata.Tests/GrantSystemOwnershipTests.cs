@@ -108,17 +108,19 @@ public sealed class GrantSystemOwnershipTests : IClassFixture<LoginLogoutTests.C
         Guid systemId = await CreateSystemAsync(client, "风控策略平台", "风险控制", "风控上下文");
 
         HttpResponseMessage candidatesResponse = await client.GetAsync($"/api/systems/{systemId}/owner-candidates");
-        List<SystemOwnerCandidateDto> candidates = await ReadRequiredAsync<List<SystemOwnerCandidateDto>>(candidatesResponse);
 
         Assert.Equal(HttpStatusCode.OK, candidatesResponse.StatusCode);
+
+        List<SystemOwnerCandidateDto> candidates = await ReadRequiredAsync<List<SystemOwnerCandidateDto>>(candidatesResponse);
         Assert.DoesNotContain(candidates, candidate => candidate.UserId == adminCandidateUserId);
         Assert.Contains(candidates, candidate => candidate.UserId == userCandidateUserId);
 
         string keyword = Uri.EscapeDataString("user.candidate");
         HttpResponseMessage keywordResponse = await client.GetAsync($"/api/systems/{systemId}/owner-candidates?keyword={keyword}");
-        List<SystemOwnerCandidateDto> filtered = await ReadRequiredAsync<List<SystemOwnerCandidateDto>>(keywordResponse);
 
         Assert.Equal(HttpStatusCode.OK, keywordResponse.StatusCode);
+
+        List<SystemOwnerCandidateDto> filtered = await ReadRequiredAsync<List<SystemOwnerCandidateDto>>(keywordResponse);
         Assert.All(filtered, candidate =>
             Assert.Contains("user.candidate", candidate.Email, StringComparison.OrdinalIgnoreCase));
     }
