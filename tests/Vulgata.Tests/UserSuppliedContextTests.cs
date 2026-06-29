@@ -229,7 +229,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         await EnsureDomainTablesAsync(connection);
 
         await ExecuteNonQueryAsync(connection, "DELETE FROM PendingContextChanges;");
-        await ExecuteNonQueryAsync(connection, "DELETE FROM GlobalContextSettings;");
+        await ExecuteNonQueryAsync(connection, "DELETE FROM GlobalContexts;");
         await ExecuteNonQueryAsync(connection, "DELETE FROM SystemOwnerAssignments;");
         await ExecuteNonQueryAsync(connection, "DELETE FROM Repositories;");
         await ExecuteNonQueryAsync(connection, "DELETE FROM Systems;");
@@ -303,10 +303,9 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
             """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE TABLE IF NOT EXISTS GlobalContextSettings (
-                Id INTEGER NOT NULL PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS GlobalContexts (
+                Id TEXT NOT NULL PRIMARY KEY,
                 Context TEXT NULL,
-                CreatedAt TEXT NOT NULL,
                 UpdatedAt TEXT NOT NULL
             );
             """);

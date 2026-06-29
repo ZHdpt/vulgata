@@ -11,6 +11,7 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<RepositoryEntity> Repositories => Set<RepositoryEntity>();
     public DbSet<SystemOwnerAssignment> SystemOwnerAssignments => Set<SystemOwnerAssignment>();
     public DbSet<GlobalContext> GlobalContexts => Set<GlobalContext>();
+    public DbSet<PendingContextChange> PendingContextChanges => Set<PendingContextChange>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
