@@ -19,7 +19,8 @@
 
 <StatusMessage />
 
-<form action="/management/settings/users" @formname="user-management-action" @onsubmit="OnSubmitAsync" method="post" class="d-none" aria-hidden="true">
+<form action="/management/settings/users" @formname="user-management-action" @onsubmit="OnSubmitAsync" method="post"
+      class="d-none" aria-hidden="true">
     <AntiforgeryToken />
     <input type="hidden" name="Action" value="" />
     <input type="hidden" name="UserId" value="" />
@@ -51,7 +52,8 @@ else
                         {
                             if (row.CanRemoveAdministrator)
                             {
-                                <form action="/management/settings/users" @formname="@($"remove-admin-{row.UserId}")" @onsubmit="OnSubmitAsync" method="post">
+                                <form action="/management/settings/users" @formname="@($"remove-admin-{row.UserId}")"
+                                      @onsubmit="OnSubmitAsync" method="post">
                                     <AntiforgeryToken />
                                     <input type="hidden" name="Action" value="remove" />
                                     <input type="hidden" name="UserId" value="@row.UserId" />
@@ -65,7 +67,8 @@ else
                         }
                         else
                         {
-                            <form action="/management/settings/users" @formname="@($"grant-admin-{row.UserId}")" @onsubmit="OnSubmitAsync" method="post">
+                            <form action="/management/settings/users" @formname="@($"grant-admin-{row.UserId}")"
+                                  @onsubmit="OnSubmitAsync" method="post">
                                 <AntiforgeryToken />
                                 <input type="hidden" name="Action" value="grant" />
                                 <input type="hidden" name="UserId" value="@row.UserId" />

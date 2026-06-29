@@ -4,7 +4,7 @@ baseline_commit: e7b2d65a9206d99267e33caa8fd2796db5b64221
 
 # Story 1.6: Administrator Role Assignment
 
-Status: review
+Status: done
 
 ## Story
 
