@@ -42,7 +42,8 @@ else if (_providers.Count == 0)
 }
 else
 {
-    <FluentDataGrid Items="@_providers.AsQueryable()" TGridItem="LlmProviderSummaryDto" GridTemplateColumns="1.2fr 1.4fr 1fr 1fr 1fr 1.6fr">
+    <FluentDataGrid Items="@_providers.AsQueryable()" TGridItem="LlmProviderSummaryDto"
+                    GridTemplateColumns="1.2fr 1.4fr 1fr 1fr 1fr 1.6fr">
         <PropertyColumn Property="@(provider => provider.Name)" Title="名称" Sortable="true" />
         <PropertyColumn Property="@(provider => provider.BaseEndpointUrl)" Title="基础地址" Sortable="true" />
         <TemplateColumn Title="支持的 API 类型" Context="provider">
@@ -58,7 +59,8 @@ else
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                 <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@_isBusy"
                               OnClick="@(() => OpenEditDialog(provider))">编辑</FluentButton>
-                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@(_isBusy || _testingProviderId == provider.Id)"
+                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                              Disabled="@(_isBusy || _testingProviderId == provider.Id)"
                               OnClick="@(() => TestConnectionAsync(provider))">测试连接</FluentButton>
                 <FluentButton Appearance="Appearance.Accent" Size="Size.Small" Disabled="@_isBusy"
                               OnClick="@(() => DeleteProviderAsync(provider))">删除</FluentButton>
@@ -69,12 +71,8 @@ else
 
 @if (_showDialog)
 {
-    <FluentDialog @bind-Visible="_showDialog"
-                  Title="@(_editingProvider is null ? "新增提供商" : "编辑提供商")"
-                  PrimaryActionText="保存"
-                  SecondaryActionText="取消"
-                  PrimaryAction="@(async () => await SaveAsync())"
-                  SecondaryAction="CancelDialog">
+    <FluentDialog @bind-Visible="_showDialog" Title="@(_editingProvider is null ? "新增提供商" : "编辑提供商")" PrimaryActionText="保存"
+                  SecondaryActionText="取消" PrimaryAction="@(async () => await SaveAsync())" SecondaryAction="CancelDialog">
         @if (_formErrorMessage is not null)
         {
             <FluentMessageBar Severity="MessageSeverity.Error">@_formErrorMessage</FluentMessageBar>
@@ -83,8 +81,7 @@ else
         <div style="display:grid;gap:1rem">
             <FluentTextField @bind-Value="_form.Name" Label="名称" Required="true" />
             <FluentTextField @bind-Value="_form.BaseEndpointUrl" Label="基础地址" Required="true" type="url" />
-            <FluentTextField @bind-Value="_form.ApiKey"
-                             Label="@(_editingProvider is null ? "API 密钥" : "API 密钥（留空则保留现有值）")"
+            <FluentTextField @bind-Value="_form.ApiKey" Label="@(_editingProvider is null ? "API 密钥" : "API 密钥（留空则保留现有值）")"
                              type="password" />
 
             @if (_editingProvider is not null && _editingProvider.HasApiKey)
