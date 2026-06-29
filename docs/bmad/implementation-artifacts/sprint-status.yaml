@@ -50,13 +50,13 @@ development_status:
   1-5-role-seeding-and-authorization-policies: done
   1-6-administrator-role-assignment: done
   epic-1-retrospective: done
-  epic-2: in-progress
+  epic-2: done
   2-1-system-crud-admin: done
   2-2-grant-system-ownership: done
   2-3-repository-management: done
   2-4-standalone-repository-creation: done
-  2-5-user-supplied-context: ready-for-dev
-  epic-2-retrospective: optional
+  2-5-user-supplied-context: done
+  epic-2-retrospective: done
   epic-3: backlog
   3-1-llm-provider-configuration-admin: backlog
   3-2-per-system-llm-provider-override: backlog
