@@ -10,6 +10,7 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<SystemEntity> Systems => Set<SystemEntity>();
     public DbSet<RepositoryEntity> Repositories => Set<RepositoryEntity>();
     public DbSet<SystemOwnerAssignment> SystemOwnerAssignments => Set<SystemOwnerAssignment>();
+    public DbSet<GlobalContext> GlobalContexts => Set<GlobalContext>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

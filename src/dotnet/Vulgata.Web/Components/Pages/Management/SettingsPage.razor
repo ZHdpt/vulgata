@@ -1,22 +1,99 @@
 @page "/management/settings"
 @layout ManagementLayout
 @attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Vulgata.Core.Entities
+@using Vulgata.Infrastructure.Data
+
+@inject IDbContextFactory<VulgataDbContext> DbContextFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>设置</PageTitle>
 
 <h1 class="display-serif display-serif-sm">设置</h1>
 <p>可在此查看和进入可用的设置项。</p>
 
+<AuthorizeView Roles="@RoleNames.Administrator">
+    <Authorized>
+        <section aria-label="全局上下文">
+            <h2>全局上下文（适用于所有系统）</h2>
+            <p class="text-muted">此处输入的内容将在扫描和问答时作为补充信息提供给所有系统和仓库。</p>
+
+            @if (_globalSaveMessage is not null)
+            {
+                <FluentMessageBar Severity="MessageSeverity.Success">@_globalSaveMessage</FluentMessageBar>
+            }
+
+            <FluentTextArea @bind-Value="_globalContext" Label="全局上下文" Rows="8" />
+            <FluentButton Appearance="Appearance.Accent" OnClick="SaveGlobalContextAsync"
+                          Disabled="@_isSavingGlobal" Style="margin-top:0.5rem">保存全局上下文</FluentButton>
+        </section>
+    </Authorized>
+</AuthorizeView>
+
 <section aria-label="设置导航">
-	<h2>平台设置</h2>
-	<ul>
-		<li>LLM 提供商配置（后续故事实现）</li>
-		<AuthorizeView Roles="@RoleNames.Administrator">
-			<li><a href="/management/settings/users">用户管理</a></li>
-		</AuthorizeView>
-	</ul>
+    <h2>平台设置</h2>
+    <ul>
+        <li>LLM 提供商配置（后续故事实现）</li>
+        <AuthorizeView Roles="@RoleNames.Administrator">
+            <li><a href="/management/settings/users">用户管理</a></li>
+        </AuthorizeView>
+    </ul>
 </section>
 
 <AuthorizeView Roles="@RoleNames.Administrator">
-	<p class="text-muted">管理员可管理用户角色。</p>
+    <p class="text-muted">管理员可管理用户角色。</p>
 </AuthorizeView>
+
+@code {
+    private string _globalContext = string.Empty;
+    private string? _globalSaveMessage;
+    private bool _isSavingGlobal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!authState.User.IsInRole(RoleNames.Administrator)) return;
+
+        await using VulgataDbContext db = await DbContextFactory.CreateDbContextAsync();
+        GlobalContext? existing = await db.GlobalContexts.OrderByDescending(g => g.UpdatedAt).FirstOrDefaultAsync();
+        _globalContext = existing?.Context ?? string.Empty;
+    }
+
+    private async Task SaveGlobalContextAsync()
+    {
+        _isSavingGlobal = true;
+        _globalSaveMessage = null;
+
+        try
+        {
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+            await using VulgataDbContext db = await DbContextFactory.CreateDbContextAsync();
+            GlobalContext? existing = await db.GlobalContexts.OrderByDescending(g => g.UpdatedAt).FirstOrDefaultAsync();
+
+            if (existing is null)
+            {
+                db.GlobalContexts.Add(new GlobalContext(_globalContext, now));
+            }
+            else
+            {
+                existing.UpdateContext(_globalContext, now);
+            }
+
+            await db.SaveChangesAsync();
+            _globalSaveMessage = "全局上下文已保存。";
+        }
+        catch (Exception ex)
+        {
+            _globalSaveMessage = $"保存失败：{ex.Message}";
+        }
+        finally
+        {
+            _isSavingGlobal = false;
+        }
+    }
+}
