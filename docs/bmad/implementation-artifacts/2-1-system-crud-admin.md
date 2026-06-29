@@ -1,10 +1,11 @@
 ---
 story_key: 2-1-system-crud-admin
 title: Story 2.1: System CRUD Admin
-Status: ready-for-dev
+Status: in-progress
 Epic: 2
 Story: 1
 created: 2026-06-29
+baseline_commit: 2bf8c0d2b71a3bdd6f37a736f846b916005d4bed
 depends_on:
   - 1-5-role-seeding-and-authorization-policies
   - 1-6-administrator-role-assignment

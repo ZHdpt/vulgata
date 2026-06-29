@@ -1,8 +1,260 @@
 @page "/management"
 @layout ManagementLayout
 @attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using SystemEntity = Vulgata.Core.Entities.System
+@using Vulgata.Core.DomainServices
+@using Vulgata.Web.Validators
+
+@inject ISystemRepository SystemRepository
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>系统管理</PageTitle>
 
 <h1 class="display-serif display-serif-sm">系统管理</h1>
-<p>系统和仓库管理界面将在 Epic 2 完整实现。</p>
+
+@if (_loadError is not null)
+{
+    <FluentMessageBar Severity="MessageSeverity.Error">@_loadError</FluentMessageBar>
+}
+
+@if (_systems is null)
+{
+    <FluentProgressRing />
+}
+else if (_systems.Count == 0)
+{
+    <p>尚未添加任何系统。创建你的第一个系统开始扫描。</p>
+}
+else
+{
+    <table class="table" aria-label="系统列表">
+        <thead>
+            <tr>
+                <th scope="col">名称</th>
+                <th scope="col">描述</th>
+                @if (_isAdministrator)
+                {
+                    <th scope="col">操作</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (SystemEntity system in _systems)
+            {
+                <tr>
+                    <td>@system.Name</td>
+                    <td>@system.Description</td>
+                    @if (_isAdministrator)
+                    {
+                        <td>
+                            <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                          OnClick="@(() => StartEditSystem(system))">编辑</FluentButton>
+                            <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
+                                          OnClick="@(() => DeleteSystemAsync(system))">删除</FluentButton>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (_isAdministrator)
+{
+    <FluentButton Appearance="Appearance.Accent" OnClick="StartCreateSystem" Style="margin-top:1rem">+ 新建系统</FluentButton>
+}
+
+@if (_showForm)
+{
+    <hr />
+    <h2>@(_editingSystem is null ? "新建系统" : "编辑系统")</h2>
+
+    <EditForm Model="@_formModel" OnValidSubmit="SaveSystemAsync" FormName="system-form">
+        <FluentValidationValidator />
+
+        <FluentTextField @bind-Value="_formModel.Name" Label="系统名称" Required="true" />
+        <FluentValidationMessage For="@(() => _formModel.Name)" />
+
+        <FluentTextField @bind-Value="_formModel.Description" Label="系统描述" />
+        <FluentValidationMessage For="@(() => _formModel.Description)" />
+
+        <FluentTextArea @bind-Value="_formModel.Context" Label="补充上下文" Rows="4" />
+        <FluentValidationMessage For="@(() => _formModel.Context)" />
+
+        @if (_saveError is not null)
+        {
+            <FluentMessageBar Severity="MessageSeverity.Error">@_saveError</FluentMessageBar>
+        }
+
+        <div style="margin-top:1rem">
+            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
+                          Disabled="@_isSaving">保存</FluentButton>
+            <FluentButton Appearance="Appearance.Neutral" OnClick="CancelForm">取消</FluentButton>
+        </div>
+    </EditForm>
+}
+
+@code {
+    private List<SystemEntity>? _systems;
+    private string? _loadError;
+    private string? _saveError;
+    private bool _isAdministrator;
+    private bool _isSaving;
+    private bool _showForm;
+    private SystemEntity? _editingSystem;
+
+    private string _userId = string.Empty;
+
+    private CreateSystemRequest _formModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal user = authState.User;
+        _userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+        _isAdministrator = user.IsInRole(RoleNames.Administrator);
+
+        await LoadSystemsAsync();
+    }
+
+    private async Task LoadSystemsAsync()
+    {
+        try
+        {
+            _loadError = null;
+            _systems = (await SystemRepository.ListVisibleAsync(_userId, _isAdministrator)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _loadError = $"加载系统列表失败：{ex.Message}";
+            _systems = [];
+        }
+    }
+
+    private void StartCreateSystem()
+    {
+        _editingSystem = null;
+        _formModel = new CreateSystemRequest();
+        _saveError = null;
+        _showForm = true;
+    }
+
+    private void StartEditSystem(SystemEntity system)
+    {
+        _editingSystem = system;
+        _formModel = new CreateSystemRequest
+        {
+            Name = system.Name,
+            Description = system.Description,
+            Context = system.Context,
+        };
+        _saveError = null;
+        _showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        _showForm = false;
+        _editingSystem = null;
+        _saveError = null;
+    }
+
+    private async Task SaveSystemAsync()
+    {
+        if (_isSaving) return;
+
+        _isSaving = true;
+        _saveError = null;
+
+        try
+        {
+            if (_editingSystem is null)
+            {
+                bool nameExists = await SystemRepository.NameExistsAsync(_formModel.Name);
+                if (nameExists)
+                {
+                    _saveError = "系统名称已存在。";
+                    _isSaving = false;
+                    return;
+                }
+
+                SystemEntity newSystem = new(
+                    _formModel.Name,
+                    _formModel.Description,
+                    _formModel.Context,
+                    DateTimeOffset.UtcNow);
+
+                await SystemRepository.AddAsync(newSystem);
+                await SystemRepository.SaveChangesAsync();
+            }
+            else
+            {
+                bool nameExists = await SystemRepository.NameExistsAsync(_formModel.Name, _editingSystem.Id);
+                if (nameExists)
+                {
+                    _saveError = "系统名称已存在。";
+                    _isSaving = false;
+                    return;
+                }
+
+                SystemEntity? existing = await SystemRepository.GetByIdAsync(_editingSystem.Id);
+                if (existing is null)
+                {
+                    _saveError = "系统不存在或已被删除。";
+                    _isSaving = false;
+                    return;
+                }
+
+                existing.UpdateDetails(
+                    _formModel.Name,
+                    _formModel.Description,
+                    _formModel.Context,
+                    DateTimeOffset.UtcNow);
+
+                await SystemRepository.SaveChangesAsync();
+            }
+
+            _showForm = false;
+            _editingSystem = null;
+            await LoadSystemsAsync();
+        }
+        catch (Exception ex)
+        {
+            _saveError = $"保存失败：{ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task DeleteSystemAsync(SystemEntity system)
+    {
+        try
+        {
+            SystemDeleteResult result = await SystemRepository.DeleteIfNoDependenciesAsync(system.Id);
+
+            if (result.Outcome == SystemDeleteOutcome.Deleted)
+            {
+                await SystemRepository.SaveChangesAsync();
+                await LoadSystemsAsync();
+            }
+            else if (result.Outcome == SystemDeleteOutcome.HasDependencies)
+            {
+                _loadError = "请先移除依赖（仓库或系统所有者分配），再删除该系统。";
+            }
+            else
+            {
+                _loadError = "系统不存在或已被删除。";
+            }
+        }
+        catch (Exception ex)
+        {
+            _loadError = $"删除失败：{ex.Message}";
+        }
+    }
+}

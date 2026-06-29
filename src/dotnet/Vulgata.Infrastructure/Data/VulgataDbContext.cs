@@ -1,9 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using SystemEntity = Vulgata.Core.Entities.System;
+using RepositoryEntity = Vulgata.Core.Entities.Repository;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Data;
 
 public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbContext(options)
 {
+    public DbSet<SystemEntity> Systems => Set<SystemEntity>();
+    public DbSet<RepositoryEntity> Repositories => Set<RepositoryEntity>();
+    public DbSet<SystemOwnerAssignment> SystemOwnerAssignments => Set<SystemOwnerAssignment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
