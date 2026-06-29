@@ -59,6 +59,6 @@ development_status:
   epic-2-retrospective: done
   epic-3: in-progress
   3-1-llm-provider-configuration-admin: done
-  3-2-per-system-llm-provider-override: backlog
+  3-2-per-system-llm-provider-override: ready-for-dev
   3-3-database-connection-configuration: backlog
   epic-3-retrospective: optional
