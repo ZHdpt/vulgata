@@ -55,6 +55,11 @@ public sealed class LlmProviderConnectionTestService(
                 (int)response.StatusCode);
             return new LlmProviderConnectionAttemptResult(false, $"服务返回状态码 {(int)response.StatusCode}。");
         }
+        catch (UriFormatException ex)
+        {
+            logger.LogWarning(ex, "LLM provider connection test has invalid endpoint URL for provider {ProviderId}.", provider.Id);
+            return new LlmProviderConnectionAttemptResult(false, "提供商基础地址格式无效。");
+        }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             logger.LogWarning("LLM provider connection test timed out for provider {ProviderId}.", provider.Id);
