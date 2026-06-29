@@ -55,7 +55,7 @@ development_status:
   2-2-grant-system-ownership: done
   2-3-repository-management: done
   2-4-standalone-repository-creation: done
-  2-5-user-supplied-context: backlog
+  2-5-user-supplied-context: ready-for-dev
   epic-2-retrospective: optional
   epic-3: backlog
   3-1-llm-provider-configuration-admin: backlog
