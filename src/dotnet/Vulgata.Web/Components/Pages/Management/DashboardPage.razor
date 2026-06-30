@@ -78,8 +78,8 @@ else
             </tbody>
         </table>
 
-        <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
-                      OnClick="StartCreateStandaloneRepository" Style="margin-bottom:0.5rem">+ 新建独立仓库</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="StartCreateStandaloneRepository"
+                      Style="margin-bottom:0.5rem">+ 新建独立仓库</FluentButton>
     </section>
 
     @if (_systems.Count == 0)
@@ -98,12 +98,12 @@ else
             @if (_isAdministrator)
             {
                 <div style="margin-bottom:0.5rem">
-                    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                                  OnClick="@(() => StartEditSystem(system))">编辑</FluentButton>
-                    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                                  OnClick="@(() => OpenOwnerManagement(system))">管理所有者</FluentButton>
-                    <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
-                                  OnClick="@(() => DeleteSystemAsync(system))">删除</FluentButton>
+                    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" OnClick="@(() => StartEditSystem(system))">编辑
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" OnClick="@(() => OpenOwnerManagement(system))">管理所有者
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="@(() => DeleteSystemAsync(system))">删除
+                    </FluentButton>
                 </div>
             }
 
@@ -118,7 +118,8 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @if (_repositories.TryGetValue(system.Id, out List<RepositorySummaryDto>? repositories) && repositories.Count > 0)
+                    @if (_repositories.TryGetValue(system.Id, out List<RepositorySummaryDto>? repositories) && repositories.Count >
+        0)
                     {
                         @foreach (RepositorySummaryDto repository in repositories)
                         {
@@ -143,8 +144,8 @@ else
                 </tbody>
             </table>
 
-            <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
-                          OnClick="@(() => StartCreateRepository(system))" Style="margin-bottom:0.5rem">+ 新建仓库</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="@(() => StartCreateRepository(system))"
+                          Style="margin-bottom:0.5rem">+ 新建仓库</FluentButton>
 
             <section style="margin-bottom:1rem">
                 <h3 style="margin-top:0.75rem">LLM Provider 覆盖</h3>
@@ -178,10 +179,8 @@ else
 
 @if (_pendingDeleteSystem is not null)
 {
-    <FluentDialog @bind-Visible="_showDeleteConfirmation" Title="确认删除"
-                  PrimaryActionText="确认删除" SecondaryActionText="取消"
-                  PrimaryAction="@(async () => await ConfirmDeleteAsync())"
-                  SecondaryAction="CancelDelete">
+    <FluentDialog @bind-Visible="_showDeleteConfirmation" Title="确认删除" PrimaryActionText="确认删除" SecondaryActionText="取消"
+                  PrimaryAction="@(async () => await ConfirmDeleteAsync())" SecondaryAction="CancelDelete">
         <p>确定要删除系统 <strong>@_pendingDeleteSystem.Name</strong> 吗？此操作不可撤销。</p>
     </FluentDialog>
 }
@@ -209,8 +208,7 @@ else
         }
 
         <div style="margin-top:1rem">
-            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit"
-                          Disabled="@_isSaving">保存</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Disabled="@_isSaving">保存</FluentButton>
             <FluentButton Appearance="Appearance.Neutral" OnClick="CancelForm">取消</FluentButton>
         </div>
     </EditForm>
@@ -218,10 +216,8 @@ else
 
 @if (_showRepositoryForm)
 {
-    <FluentDialog @bind-Visible="_showRepositoryForm" Title="新建仓库"
-                  PrimaryActionText="创建" SecondaryActionText="取消"
-                  PrimaryAction="@(async () => await CreateRepositoryAsync())"
-                  SecondaryAction="CancelRepositoryForm">
+    <FluentDialog @bind-Visible="_showRepositoryForm" Title="新建仓库" PrimaryActionText="创建" SecondaryActionText="取消"
+                  PrimaryAction="@(async () => await CreateRepositoryAsync())" SecondaryAction="CancelRepositoryForm">
         <EditForm Model="@_repoFormModel" FormName="repository-form">
             <FluentTextField @bind-Value="_repoFormModel.Name" Label="仓库名称" Required="true" />
             <FluentValidationMessage For="@(() => _repoFormModel.Name)" />
@@ -245,98 +241,95 @@ else
 
 @if (_showRepositoryDetail && _selectedRepository is not null)
 {
-    <FluentDialog @bind-Visible="_showRepositoryDetail" Title="仓库详情"
-                  PrimaryActionText="保存" SecondaryActionText="关闭"
-                  PrimaryAction="@(async () => await SaveDatabaseConnectionAsync())"
-                  SecondaryAction="CloseRepositoryDetail">
+    <FluentDialog @bind-Visible="_showRepositoryDetail" Title="仓库详情" PrimaryActionText="保存" SecondaryActionText="关闭"
+                  PrimaryAction="@(async () => await SaveDatabaseConnectionAsync())" SecondaryAction="CloseRepositoryDetail">
         <div style="display:grid;gap:0.75rem">
             <div><strong>仓库名称：</strong>@_selectedRepository.Name</div>
 
             <section style="padding:0.5rem 0;border-top:1px solid #d6d6d6">
                 <h3 style="margin:0 0 0.5rem 0">数据库连接</h3>
-                <div><strong>状态：</strong>@(_selectedRepositoryDatabaseConnection?.IsConfigured == true ? "已配置" : "未配置")</div>
-                <div><strong>数据库类型：</strong>@GetDatabaseTypeDisplayName(_selectedRepositoryDatabaseConnection?.DatabaseType)</div>
-                <div><strong>连接字符串：</strong>@(_selectedRepositoryDatabaseConnection?.HasConnectionString == true ? "已配置" : "未配置")</div>
-                <div><strong>用户名：</strong>@(_selectedRepositoryDatabaseConnection?.HasUsername == true ? "已配置" : "未配置")</div>
-                <div><strong>密码：</strong>@(_selectedRepositoryDatabaseConnection?.HasPassword == true ? "已配置" : "未配置")</div>
-                <div><strong>最后更新时间：</strong>@(_selectedRepositoryDatabaseConnection?.UpdatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
-            </section>
+                <div><strong>状态：</strong>@(_selectedRepositoryDatabaseConnection?.IsConfigured == true ? "已配置" : "未配置")
+                </div>
+                <div><strong>数据库类型：</strong>@GetDatabaseTypeDisplayName(_selectedRepositoryDatabaseConnection?.DatabaseType)
+                </div>
+                <div><strong>连接字符串：</strong>@(_selectedRepositoryDatabaseConnection?.HasConnectionString == true ? "已配置" :
+                               "未配置")</div>
+                    <div><strong>用户名：</strong>@(_selectedRepositoryDatabaseConnection?.HasUsername == true ? "已配置" : "未配置")
+                    </div>
+                    <div><strong>密码：</strong>@(_selectedRepositoryDatabaseConnection?.HasPassword == true ? "已配置" : "未配置")</div>
+                    <div>
+                        <strong>最后更新时间：</strong>@(_selectedRepositoryDatabaseConnection?.UpdatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+                    </section>
 
-            @if (_databaseConnectionError is not null)
-            {
-                <FluentMessageBar Severity="MessageSeverity.Error">@_databaseConnectionError</FluentMessageBar>
-            }
+                    @if (_databaseConnectionError is not null)
+                    {
+                        <FluentMessageBar Severity="MessageSeverity.Error">@_databaseConnectionError</FluentMessageBar>
+                    }
 
-            @if (_databaseConnectionStatus is not null)
-            {
-                <FluentMessageBar Severity="MessageSeverity.Success">@_databaseConnectionStatus</FluentMessageBar>
-            }
+                    @if (_databaseConnectionStatus is not null)
+                    {
+                        <FluentMessageBar Severity="MessageSeverity.Success">@_databaseConnectionStatus</FluentMessageBar>
+                    }
 
-            <div>
-                <label for="database-type" style="display:block;margin-bottom:0.5rem">数据库类型</label>
-                <InputSelect id="database-type" @bind-Value="_databaseConnectionForm.DatabaseType" class="form-select">
-                    <option value="@DatabaseType.PostgreSql">PostgreSQL</option>
-                    <option value="@DatabaseType.SqlServer">SqlServer</option>
-                    <option value="@DatabaseType.MySql">MySql</option>
-                    <option value="@DatabaseType.Sqlite">Sqlite</option>
-                    <option value="@DatabaseType.Oracle">Oracle</option>
-                    <option value="@DatabaseType.Other">Other</option>
-                </InputSelect>
-            </div>
+                    <div>
+                        <label for="database-type" style="display:block;margin-bottom:0.5rem">数据库类型</label>
+                        <InputSelect id="database-type" @bind-Value="_databaseConnectionForm.DatabaseType" class="form-select">
+                            <option value="@DatabaseType.PostgreSql">PostgreSQL</option>
+                            <option value="@DatabaseType.SqlServer">SqlServer</option>
+                            <option value="@DatabaseType.MySql">MySql</option>
+                            <option value="@DatabaseType.Sqlite">Sqlite</option>
+                            <option value="@DatabaseType.Oracle">Oracle</option>
+                            <option value="@DatabaseType.Other">Other</option>
+                        </InputSelect>
+                    </div>
 
-            <FluentTextField @bind-Value="_databaseConnectionForm.ConnectionString" Label="连接字符串" Required="true" />
-            <FluentTextField @bind-Value="_databaseConnectionForm.Username" Label="用户名（留空则保留现有值）" />
-            <FluentTextField @bind-Value="_databaseConnectionForm.Password" Label="密码（留空则保留现有值）" type="password" />
+                    <FluentTextField @bind-Value="_databaseConnectionForm.ConnectionString" Label="连接字符串" Required="true" />
+                    <FluentTextField @bind-Value="_databaseConnectionForm.Username" Label="用户名（留空则保留现有值）" />
+                    <FluentTextField @bind-Value="_databaseConnectionForm.Password" Label="密码（留空则保留现有值）" type="password" />
 
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                              Disabled="@_isDatabaseConnectionBusy"
-                              OnClick="@(async () => await TestDatabaseConnectionAsync())">测试连接</FluentButton>
-                <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
-                              Disabled="@_isDatabaseConnectionBusy"
-                              OnClick="@(async () => await DeleteDatabaseConnectionAsync())">删除</FluentButton>
-            </div>
-        </div>
-    </FluentDialog>
-}
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                        <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@_isDatabaseConnectionBusy"
+                                      OnClick="@(async () => await TestDatabaseConnectionAsync())">测试连接</FluentButton>
+                        <FluentButton Appearance="Appearance.Accent" Size="Size.Small" Disabled="@_isDatabaseConnectionBusy"
+                                      OnClick="@(async () => await DeleteDatabaseConnectionAsync())">删除</FluentButton>
+                    </div>
+                </div>
+            </FluentDialog>
+        }
 
-@if (_showStandaloneRepositoryForm)
-{
-    <FluentDialog @bind-Visible="_showStandaloneRepositoryForm" Title="新建独立仓库"
-                  PrimaryActionText="创建" SecondaryActionText="取消"
-                  PrimaryAction="@(async () => await CreateStandaloneRepositoryAsync())"
-                  SecondaryAction="CancelStandaloneRepositoryForm">
-        <EditForm Model="@_standaloneRepoFormModel" FormName="standalone-repository-form">
-            <p>该仓库不属于任何系统，所有具备管理权限的用户都可见。</p>
+        @if (_showStandaloneRepositoryForm)
+        {
+            <FluentDialog @bind-Visible="_showStandaloneRepositoryForm" Title="新建独立仓库" PrimaryActionText="创建"
+                          SecondaryActionText="取消" PrimaryAction="@(async () => await CreateStandaloneRepositoryAsync())"
+                          SecondaryAction="CancelStandaloneRepositoryForm">
+                <EditForm Model="@_standaloneRepoFormModel" FormName="standalone-repository-form">
+                    <p>该仓库不属于任何系统，所有具备管理权限的用户都可见。</p>
 
-            <FluentTextField @bind-Value="_standaloneRepoFormModel.Name" Label="仓库名称" Required="true" />
-            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Name)" />
+                    <FluentTextField @bind-Value="_standaloneRepoFormModel.Name" Label="仓库名称" Required="true" />
+                    <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Name)" />
 
-            <FluentTextField @bind-Value="_standaloneRepoFormModel.GitUrl" Label="Git 远程地址" Required="true" />
-            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.GitUrl)" />
+                    <FluentTextField @bind-Value="_standaloneRepoFormModel.GitUrl" Label="Git 远程地址" Required="true" />
+                    <FluentValidationMessage For="@(() => _standaloneRepoFormModel.GitUrl)" />
 
-            <FluentTextField @bind-Value="_standaloneRepoFormModel.Description" Label="仓库描述" />
-            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Description)" />
+                    <FluentTextField @bind-Value="_standaloneRepoFormModel.Description" Label="仓库描述" />
+                    <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Description)" />
 
-            <FluentTextArea @bind-Value="_standaloneRepoFormModel.Context" Label="补充上下文" Rows="3" />
-            <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Context)" />
+                    <FluentTextArea @bind-Value="_standaloneRepoFormModel.Context" Label="补充上下文" Rows="3" />
+                    <FluentValidationMessage For="@(() => _standaloneRepoFormModel.Context)" />
 
-            @if (_standaloneRepoError is not null)
-            {
-                <FluentMessageBar Severity="MessageSeverity.Error">@_standaloneRepoError</FluentMessageBar>
-            }
-        </EditForm>
-    </FluentDialog>
-}
+                    @if (_standaloneRepoError is not null)
+                    {
+                        <FluentMessageBar Severity="MessageSeverity.Error">@_standaloneRepoError</FluentMessageBar>
+                    }
+                </EditForm>
+            </FluentDialog>
+        }
 
-@if (_ownerManagementSystem is not null)
-{
-    <ManageSystemOwnersDialog
-        SystemId="_ownerManagementSystem.Id"
-        SystemName="_ownerManagementSystem.Name"
-        Visible="_showOwnerManagement"
-        VisibleChanged="OnOwnerManagementVisibilityChanged" />
-}
+        @if (_ownerManagementSystem is not null)
+        {
+            <ManageSystemOwnersDialog SystemId="_ownerManagementSystem.Id" SystemName="_ownerManagementSystem.Name"
+                                      Visible="_showOwnerManagement" VisibleChanged="OnOwnerManagementVisibilityChanged" />
+        }
 
 @code {
     private List<SystemEntity>? _systems;
@@ -516,7 +509,7 @@ else
         _databaseConnectionStatus = null;
         _databaseConnectionForm = new UpsertDatabaseConnectionRequest
         {
-                DatabaseType = DatabaseType.PostgreSql,
+            DatabaseType = DatabaseType.PostgreSql,
             ConnectionString = string.Empty,
             Username = string.Empty,
             Password = string.Empty,

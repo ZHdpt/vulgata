@@ -22,15 +22,11 @@
         <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
-            <FluentTextField
-                Value="@email"
-                id="email"
-                ReadOnly="true"
-                Label="当前邮箱" />
+            <FluentTextField Value="@email" id="email" ReadOnly="true" Label="当前邮箱" />
 
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control"
-                           autocomplete="email" aria-required="true" placeholder="请输入新邮箱" />
+                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control" autocomplete="email"
+                           aria-required="true" placeholder="请输入新邮箱" />
                 <label for="Input.NewEmail">新邮箱</label>
                 <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
             </div>
@@ -101,7 +97,8 @@
             user.EmailConfirmed = originalEmailConfirmed;
 
             IdentityError[] errors = FilterEmailUpdateErrors(updateResult.Errors).ToArray();
-            validationError = errors.FirstOrDefault(error => error.Code == nameof(IdentityErrorDescriber.DuplicateEmail))?.Description;
+            validationError = errors.FirstOrDefault(error => error.Code ==
+nameof(IdentityErrorDescriber.DuplicateEmail))?.Description;
             if (validationError is null)
             {
                 message = $"错误：{string.Join("，", errors.Select(error => error.Description))}";
