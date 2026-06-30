@@ -5,12 +5,9 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.Extensions.DependencyInjection
-@using Vulgata.Web.Components.Account
-@using Vulgata.Web.Components.Account.Shared
 @using Vulgata.Web.Data
 
 @inject UserManager<ApplicationUser> UserManager
-@inject IdentityRedirectManager RedirectManager
 @inject IAdministratorRoleCoordinator AdministratorRoleCoordinator
 @inject IServiceScopeFactory ScopeFactory
 
@@ -19,15 +16,13 @@
 <h1 class="display-serif display-serif-sm">用户管理</h1>
 <p>管理员可以在此授予或移除管理员权限。</p>
 
-<StatusMessage />
-
-<form action="/management/settings/users" @formname="user-management-action" @onsubmit="OnSubmitAsync" method="post"
-      class="d-none" aria-hidden="true">
-    <AntiforgeryToken />
-    <input type="hidden" name="Action" value="" />
-    <input type="hidden" name="UserId" value="" />
-    <button type="submit" aria-hidden="true" tabindex="-1">提交</button>
-</form>
+@if (!string.IsNullOrEmpty(_statusMessage))
+{
+    var statusClass = _isStatusError ? "danger" : "success";
+    <div class="alert alert-@statusClass" role="alert">
+        @_statusMessage
+    </div>
+}
 
 @if (_rows.Count == 0)
 {
@@ -54,13 +49,11 @@ else
                         {
                             if (row.CanRemoveAdministrator)
                             {
-                                <form action="/management/settings/users" @formname="@($"remove-admin-{row.UserId}")"
-                                      @onsubmit="OnSubmitAsync" method="post">
-                                    <AntiforgeryToken />
-                                    <input type="hidden" name="Action" value="remove" />
-                                    <input type="hidden" name="UserId" value="@row.UserId" />
-                                    <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Neutral">移除管理员</FluentButton>
-                                </form>
+                                <FluentButton Appearance="Appearance.Neutral"
+                                              OnClick="@(async () => await RemoveAdministratorAsync(row.UserId))"
+                                              disabled="@_isProcessing">
+                                    移除管理员
+                                </FluentButton>
                             }
                             else
                             {
@@ -69,13 +62,11 @@ else
                         }
                         else
                         {
-                            <form action="/management/settings/users" @formname="@($"grant-admin-{row.UserId}")"
-                                  @onsubmit="OnSubmitAsync" method="post">
-                                <AntiforgeryToken />
-                                <input type="hidden" name="Action" value="grant" />
-                                <input type="hidden" name="UserId" value="@row.UserId" />
-                                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">授予管理员</FluentButton>
-                            </form>
+                            <FluentButton Appearance="Appearance.Accent"
+                                          OnClick="@(async () => await GrantAdministratorAsync(row.UserId))"
+                                          disabled="@_isProcessing">
+                                授予管理员
+                            </FluentButton>
                         }
                     </td>
                 </tr>
@@ -85,97 +76,98 @@ else
 }
 
 @code {
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
-
-    [SupplyParameterFromForm]
-    private string? Action { get; set; }
-
-    [SupplyParameterFromForm]
-    private string? UserId { get; set; }
-
     private IReadOnlyList<UserRoleRow> _rows = [];
+    private string? _statusMessage;
+    private bool _isStatusError;
+    private bool _isProcessing;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadRowsAsync();
     }
 
-    private async Task OnSubmitAsync()
+    private async Task GrantAdministratorAsync(string userId)
     {
-        if (string.IsNullOrWhiteSpace(Action) || string.IsNullOrWhiteSpace(UserId))
+        _isProcessing = true;
+        _statusMessage = null;
+        _isStatusError = false;
+
+        try
         {
-            RedirectWithStatus("错误：请求参数无效。", isError: true);
-            return;
-        }
-
-        ApplicationUser? user = await UserManager.FindByIdAsync(UserId);
-        if (user is null)
-        {
-            RedirectWithStatus("错误：未找到指定用户。", isError: true);
-            return;
-        }
-
-        if (Action.Equals("grant", StringComparison.OrdinalIgnoreCase))
-        {
-            await GrantAdministratorAsync(user);
-            return;
-        }
-
-        if (Action.Equals("remove", StringComparison.OrdinalIgnoreCase))
-        {
-            await RemoveAdministratorAsync(user);
-            return;
-        }
-
-        RedirectWithStatus("错误：未知操作。", isError: true);
-    }
-
-    private async Task GrantAdministratorAsync(ApplicationUser user)
-    {
-        if (await UserManager.IsInRoleAsync(user, RoleNames.Administrator))
-        {
-            RedirectWithStatus("该用户已是管理员。");
-            return;
-        }
-
-        IdentityResult result = await UserManager.AddToRoleAsync(user, RoleNames.Administrator);
-        if (!result.Succeeded)
-        {
-            RedirectWithStatus(BuildErrorMessage(result.Errors), isError: true);
-            return;
-        }
-
-        RedirectWithStatus("已授予管理员权限。");
-    }
-
-    private async Task RemoveAdministratorAsync(ApplicationUser user)
-    {
-        AdministratorRoleRemovalResult result = await AdministratorRoleCoordinator.RemoveAdministratorAsync(user);
-        switch (result.Outcome)
-        {
-            case AdministratorRoleRemovalOutcome.NotAdministrator:
-                RedirectWithStatus("该用户当前不是管理员。");
+            ApplicationUser? user = await UserManager.FindByIdAsync(userId);
+            if (user is null)
+            {
+                SetStatus("错误：未找到指定用户。", isError: true);
                 return;
-            case AdministratorRoleRemovalOutcome.LastAdministratorBlocked:
-                RedirectWithStatus("错误：至少需要保留一名管理员。", isError: true);
+            }
+
+            if (await UserManager.IsInRoleAsync(user, RoleNames.Administrator))
+            {
+                SetStatus("该用户已是管理员。");
                 return;
-            case AdministratorRoleRemovalOutcome.Failed:
-                RedirectWithStatus(BuildErrorMessage(result.IdentityResult?.Errors ?? []), isError: true);
+            }
+
+            IdentityResult result = await UserManager.AddToRoleAsync(user, RoleNames.Administrator);
+            if (!result.Succeeded)
+            {
+                SetStatus(BuildErrorMessage(result.Errors), isError: true);
                 return;
-            default:
-                RedirectWithStatus("已移除管理员权限。");
-                return;
+            }
+
+            SetStatus("已授予管理员权限。");
+            await LoadRowsAsync();
+        }
+        finally
+        {
+            _isProcessing = false;
         }
     }
 
-    private void RedirectWithStatus(string message, bool isError = false)
+    private async Task RemoveAdministratorAsync(string userId)
     {
-        string statusMessage = isError && !message.StartsWith("错误：", StringComparison.Ordinal)
+        _isProcessing = true;
+        _statusMessage = null;
+        _isStatusError = false;
+
+        try
+        {
+            ApplicationUser? user = await UserManager.FindByIdAsync(userId);
+            if (user is null)
+            {
+                SetStatus("错误：未找到指定用户。", isError: true);
+                return;
+            }
+
+            AdministratorRoleRemovalResult result = await AdministratorRoleCoordinator.RemoveAdministratorAsync(user);
+            switch (result.Outcome)
+            {
+                case AdministratorRoleRemovalOutcome.NotAdministrator:
+                    SetStatus("该用户当前不是管理员。");
+                    return;
+                case AdministratorRoleRemovalOutcome.LastAdministratorBlocked:
+                    SetStatus("错误：至少需要保留一名管理员。", isError: true);
+                    return;
+                case AdministratorRoleRemovalOutcome.Failed:
+                    SetStatus(BuildErrorMessage(result.IdentityResult?.Errors ?? []), isError: true);
+                    return;
+                default:
+                    SetStatus("已移除管理员权限。");
+                    await LoadRowsAsync();
+                    return;
+            }
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private void SetStatus(string message, bool isError = false)
+    {
+        _statusMessage = isError && !message.StartsWith("错误：", StringComparison.Ordinal)
             ? $"错误：{message}"
             : message;
-
-        RedirectManager.RedirectToWithStatus("/management/settings/users", statusMessage, HttpContext);
+        _isStatusError = isError;
     }
 
     private async Task LoadRowsAsync()
