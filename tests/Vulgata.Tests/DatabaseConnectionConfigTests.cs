@@ -494,13 +494,13 @@ public sealed class DatabaseConnectionConfigTests : IClassFixture<LoginLogoutTes
             WHERE RepositoryId = $repositoryId
             LIMIT 1;
             """;
-        command.Parameters.AddWithValue("$repositoryId", repositoryId.ToString());
+        command.Parameters.AddWithValue("$repositoryId", repositoryId);
 
         await using SqliteDataReader reader = await command.ExecuteReaderAsync();
         Assert.True(await reader.ReadAsync(), "Expected a persisted database connection record.");
 
         return new PersistedDatabaseConnectionRecord(
-            Guid.Parse(reader.GetString(0)),
+            ReadGuid(reader, 0),
             reader.GetString(1),
             reader.IsDBNull(2) ? null : reader.GetString(2),
             reader.IsDBNull(3) ? null : reader.GetString(3));
@@ -513,11 +513,23 @@ public sealed class DatabaseConnectionConfigTests : IClassFixture<LoginLogoutTes
 
         await using SqliteCommand command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM DatabaseConnections WHERE RepositoryId = $repositoryId;";
-        command.Parameters.AddWithValue("$repositoryId", repositoryId.ToString());
+        command.Parameters.AddWithValue("$repositoryId", repositoryId);
 
         object? scalar = await command.ExecuteScalarAsync();
         Assert.NotNull(scalar);
         return Convert.ToInt32(scalar);
+    }
+
+    private static Guid ReadGuid(SqliteDataReader reader, int ordinal)
+    {
+        object value = reader.GetValue(ordinal);
+        return value switch
+        {
+            Guid guid => guid,
+            string text => Guid.Parse(text),
+            byte[] bytes when bytes.Length == 16 => new Guid(bytes),
+            _ => throw new InvalidOperationException($"Unsupported GUID storage type: {value.GetType().Name}"),
+        };
     }
 
     private static async Task<T> ReadRequiredAsync<T>(HttpResponseMessage response)

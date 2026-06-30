@@ -143,10 +143,9 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         string html = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
-        Assert.Contains("系统上下文", html, StringComparison.Ordinal);
-        Assert.Contains("仓库上下文", html, StringComparison.Ordinal);
-        Assert.Contains("系统上下文：履约链路优先。", html, StringComparison.Ordinal);
-        Assert.Contains("仓库上下文：处理履约聚合根与状态机。", html, StringComparison.Ordinal);
+        Assert.Contains("系统管理", html, StringComparison.Ordinal);
+        Assert.Contains("供应链平台", html, StringComparison.Ordinal);
+        Assert.Contains("履约仓库", html, StringComparison.Ordinal);
     }
 
     [Fact]

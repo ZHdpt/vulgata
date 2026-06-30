@@ -15,7 +15,7 @@ public sealed class ContextCompositionService(IDbContextFactory<VulgataDbContext
 
         // 1. Global context
         Core.Entities.GlobalContext? global = await db.GlobalContexts
-            .OrderByDescending(g => g.UpdatedAt)
+            .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
 
         // 2. System context (skip for standalone repositories)

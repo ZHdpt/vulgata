@@ -119,6 +119,29 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (IsApiRequest(context.Request))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (IsApiRequest(context.Request))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
@@ -141,7 +164,9 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseWhen(
+    context => !IsApiRequest(context.Request),
+    branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
@@ -1238,9 +1263,7 @@ settingsApi.MapGet("/global-context", async (
     CancellationToken cancellationToken) =>
 {
     await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
-    GlobalContext? global = await db.GlobalContexts
-        .OrderByDescending(g => g.UpdatedAt)
-        .FirstOrDefaultAsync(cancellationToken);
+    GlobalContext? global = await db.GlobalContexts.FirstOrDefaultAsync(cancellationToken);
 
     PendingContextChange? pending = await db.PendingContextChanges
         .Where(p => p.ScopeType == ContextScopeType.Global && p.ScopeKey == "global")
@@ -1300,9 +1323,7 @@ settingsApi.MapPut("/global-context", async (
 
         await db.SaveChangesAsync(cancellationToken);
 
-        GlobalContext? currentGlobal = await db.GlobalContexts
-            .OrderByDescending(g => g.UpdatedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+        GlobalContext? currentGlobal = await db.GlobalContexts.FirstOrDefaultAsync(cancellationToken);
 
         return Results.Ok(new ContextStateResponse
         {
@@ -1314,9 +1335,7 @@ settingsApi.MapPut("/global-context", async (
     }
 
     // No scan running — apply immediately
-    GlobalContext? existing = await db.GlobalContexts
-        .OrderByDescending(g => g.UpdatedAt)
-        .FirstOrDefaultAsync(cancellationToken);
+    GlobalContext? existing = await db.GlobalContexts.FirstOrDefaultAsync(cancellationToken);
 
     if (existing is null)
     {
@@ -1443,7 +1462,13 @@ systemContextApi.MapPut("/", async (
     }
 
     // No scan — apply immediately
-    system.UpdateDetails(system.Name, system.Description, string.IsNullOrEmpty(normalizedContext) ? null : normalizedContext, now);
+    SystemEntity? trackedSystem = await systemRepository.GetByIdAsync(systemId, cancellationToken);
+    if (trackedSystem is null)
+    {
+        return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
+    }
+
+    trackedSystem.UpdateDetails(trackedSystem.Name, trackedSystem.Description, string.IsNullOrEmpty(normalizedContext) ? null : normalizedContext, now);
     await systemRepository.SaveChangesAsync(cancellationToken);
 
     // Clear any pending
@@ -1472,13 +1497,34 @@ RouteGroupBuilder repoContextApi = app.MapGroup("/api/repositories/{repositoryId
 repoContextApi.MapGet("/", async (
     Guid repositoryId,
     IRepositoryRepository repositoryRepository,
+    ISystemRepository systemRepository,
+    ClaimsPrincipal user,
+    IAuthorizationService authorization,
     IDbContextFactory<VulgataDbContext> dbFactory,
     CancellationToken cancellationToken) =>
 {
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
+    string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
     RepositoryEntity? repo = await repositoryRepository.GetByIdAsync(repositoryId, cancellationToken);
     if (repo is null)
     {
         return Results.Problem(detail: "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+    }
+
+    if (repo.SystemId.HasValue && !isAdministrator)
+    {
+        SystemEntity? visibleSystem = await systemRepository.GetVisibleByIdAsync(
+            repo.SystemId.Value,
+            userId,
+            isAdministrator,
+            cancellationToken);
+
+        if (visibleSystem is null)
+        {
+            return Results.Problem(detail: "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+        }
     }
 
     await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
@@ -1499,18 +1545,35 @@ repoContextApi.MapPut("/", async (
     Guid repositoryId,
     HttpRequest request,
     IRepositoryRepository repositoryRepository,
+    ISystemRepository systemRepository,
     ClaimsPrincipal user,
     IAuthorizationService authorization,
     IDbContextFactory<VulgataDbContext> dbFactory,
     IScanStateService scanState,
     CancellationToken cancellationToken) =>
 {
+    AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
+    bool isAdministrator = authResult.Succeeded;
     string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
     RepositoryEntity? repo = await repositoryRepository.GetByIdAsync(repositoryId, cancellationToken);
     if (repo is null)
     {
         return Results.Problem(detail: "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+    }
+
+    if (repo.SystemId.HasValue && !isAdministrator)
+    {
+        SystemEntity? visibleSystem = await systemRepository.GetVisibleByIdAsync(
+            repo.SystemId.Value,
+            userId,
+            isAdministrator,
+            cancellationToken);
+
+        if (visibleSystem is null)
+        {
+            return Results.Problem(detail: "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+        }
     }
 
     ContextSaveRequest? body = await request.ReadFromJsonAsync<ContextSaveRequest>(cancellationToken);
@@ -1586,6 +1649,9 @@ static string BuildIdentityErrorMessage(IEnumerable<IdentityError>? errors)
         ? "系统所有者角色变更失败，请稍后重试。"
         : detail;
 }
+
+static bool IsApiRequest(HttpRequest request) =>
+    request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
 
 await app.RunAsync();
 

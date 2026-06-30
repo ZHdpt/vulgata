@@ -60,7 +60,7 @@
 		if (!authState.User.IsInRole(RoleNames.Administrator)) return;
 
 		await using VulgataDbContext db = await DbContextFactory.CreateDbContextAsync();
-		GlobalContext? existing = await db.GlobalContexts.OrderByDescending(g => g.UpdatedAt).FirstOrDefaultAsync();
+		GlobalContext? existing = await db.GlobalContexts.AsNoTracking().FirstOrDefaultAsync();
 		_globalContext = existing?.Context ?? string.Empty;
 	}
 
@@ -73,7 +73,7 @@
 		{
 			DateTimeOffset now = DateTimeOffset.UtcNow;
 			await using VulgataDbContext db = await DbContextFactory.CreateDbContextAsync();
-			GlobalContext? existing = await db.GlobalContexts.OrderByDescending(g => g.UpdatedAt).FirstOrDefaultAsync();
+			GlobalContext? existing = await db.GlobalContexts.FirstOrDefaultAsync();
 
 			if (existing is null)
 			{

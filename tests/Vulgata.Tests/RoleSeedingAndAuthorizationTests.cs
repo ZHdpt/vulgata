@@ -262,6 +262,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
             {
                 services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
                 services.RemoveAll<DbContextOptions<VulgataDbContext>>();
+                services.RemoveAll<IDbContextFactory<VulgataDbContext>>();
                 services.RemoveAll<IConfigureOptions<DbContextOptions<ApplicationDbContext>>>();
                 services.RemoveAll<IConfigureOptions<DbContextOptions<VulgataDbContext>>>();
                 services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
@@ -275,7 +276,14 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
                             sqliteOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName))
                         .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
-                services.AddDbContext<VulgataDbContext>(options =>
+                services.AddDbContext<VulgataDbContext>(
+                    options => options
+                        .UseSqlite(connectionString)
+                        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)),
+                    contextLifetime: ServiceLifetime.Scoped,
+                    optionsLifetime: ServiceLifetime.Singleton);
+
+                services.AddDbContextFactory<VulgataDbContext>(options =>
                     options
                         .UseSqlite(connectionString)
                         .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
