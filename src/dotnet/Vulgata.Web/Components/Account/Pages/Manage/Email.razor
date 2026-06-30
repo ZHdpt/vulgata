@@ -28,14 +28,12 @@
                 ReadOnly="true"
                 Label="当前邮箱" />
 
-            <FluentTextField
-                @bind-Value="Input.NewEmail"
-                id="Input.NewEmail"
-                autocomplete="email"
-                aria-required="true"
-                placeholder="请输入新邮箱"
-                Label="新邮箱" />
-            <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control"
+                           autocomplete="email" aria-required="true" placeholder="请输入新邮箱" />
+                <label for="Input.NewEmail">新邮箱</label>
+                <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
+            </div>
 
             <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Class="w-100">更改邮箱</FluentButton>
         </EditForm>

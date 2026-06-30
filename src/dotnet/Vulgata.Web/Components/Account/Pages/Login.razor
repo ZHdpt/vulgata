@@ -19,25 +19,18 @@
         <h2>使用本地账户登录</h2>
         <hr />
         <ValidationSummary class="text-danger" role="alert" />
-        <FluentTextField
-            @bind-Value="Input.Email"
-            id="Input.Email"
-            type="email"
-            autocomplete="username webauthn"
-            aria-required="true"
-            placeholder="name@example.com"
-            Label="邮箱" />
-        <ValidationMessage For="() => Input.Email" class="text-danger" />
-
-        <FluentTextField
-            @bind-Value="Input.Password"
-            id="Input.Password"
-            type="password"
-            autocomplete="current-password"
-            aria-required="true"
-            placeholder="密码"
-            Label="密码" />
-        <ValidationMessage For="() => Input.Password" class="text-danger" />
+        <div class="form-floating mb-3">
+            <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control"
+                       autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
+            <label for="Input.Email">邮箱</label>
+            <ValidationMessage For="() => Input.Email" class="text-danger" />
+        </div>
+        <div class="form-floating mb-3">
+            <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
+                       autocomplete="current-password" aria-required="true" placeholder="密码" />
+            <label for="Input.Password">密码</label>
+            <ValidationMessage For="() => Input.Password" class="text-danger" />
+        </div>
 
         <div>
             <label>

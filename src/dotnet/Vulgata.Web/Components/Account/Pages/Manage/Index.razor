@@ -24,13 +24,12 @@
                 ReadOnly="true"
                 Label="当前邮箱" />
 
-            <FluentTextField
-                @bind-Value="Input.DisplayName"
-                id="Input.DisplayName"
-                autocomplete="nickname"
-                placeholder="请输入显示名称"
-                Label="显示名称" />
-            <ValidationMessage For="() => Input.DisplayName" class="text-danger" />
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.DisplayName" id="Input.DisplayName" class="form-control"
+                           autocomplete="nickname" placeholder="请输入显示名称" />
+                <label for="Input.DisplayName">显示名称</label>
+                <ValidationMessage For="() => Input.DisplayName" class="text-danger" />
+            </div>
 
             <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Class="w-100">保存</FluentButton>
         </EditForm>
