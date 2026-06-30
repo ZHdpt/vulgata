@@ -5,6 +5,7 @@
 @using System.Security.Claims
 @using FluentValidation
 @using FluentValidation.Results
+@using Microsoft.Extensions.DependencyInjection
 @using Vulgata.Core.DomainServices
 @using Vulgata.Core.Entities
 @using Vulgata.Shared.Repositories
@@ -19,6 +20,7 @@
 @inject IValidator<CreateRepositoryRequest> RepositoryRequestValidator
 @inject IValidator<UpsertDatabaseConnectionRequest> DatabaseConnectionValidator
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IServiceScopeFactory ScopeFactory
 
 <PageTitle>系统管理</PageTitle>
 
@@ -383,11 +385,22 @@ else
 
     private async Task LoadSystemsAsync()
     {
+        // Resolve services from an isolated scope to prevent DbContext concurrency
+        // when the InteractiveServer double-render (pre-render + interactive) or
+        // Npgsql retry-on-failure overlaps queries on the same VulgataDbContext.
+        await using AsyncServiceScope scope = ScopeFactory.CreateAsyncScope();
+        ISystemRepository systemRepo =
+            scope.ServiceProvider.GetRequiredService<ISystemRepository>();
+        IRepositoryManagementCoordinator repoCoord =
+            scope.ServiceProvider.GetRequiredService<IRepositoryManagementCoordinator>();
+        ISystemLlmProviderOverrideCoordinator overrideCoord =
+            scope.ServiceProvider.GetRequiredService<ISystemLlmProviderOverrideCoordinator>();
+
         try
         {
             _loadError = null;
-            _systems = (await SystemRepository.ListVisibleAsync(_userId, _isAdministrator)).ToList();
-            _standaloneRepositories = (await RepositoryManagementCoordinator
+            _systems = (await systemRepo.ListVisibleAsync(_userId, _isAdministrator)).ToList();
+            _standaloneRepositories = (await repoCoord
                 .ListStandaloneVisibleAsync(_userId, _isAdministrator))
                 .ToList();
             _repositories = [];
@@ -395,14 +408,14 @@ else
 
             foreach (SystemEntity system in _systems)
             {
-                IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListVisibleAsync(
+                IReadOnlyList<RepositorySummaryDto> repositories = await repoCoord.ListVisibleAsync(
                     system.Id,
                     _userId,
                     _isAdministrator);
                 _repositories[system.Id] = repositories.ToList();
 
                 SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> overridesResult =
-                    await SystemLlmProviderOverrideCoordinator.ListAsync(system.Id, _userId, _isAdministrator);
+                    await overrideCoord.ListAsync(system.Id, _userId, _isAdministrator);
 
                 _systemLlmOverrides[system.Id] =
                     overridesResult.Outcome == SystemLlmProviderOverrideMutationOutcome.Success && overridesResult.Value is not null

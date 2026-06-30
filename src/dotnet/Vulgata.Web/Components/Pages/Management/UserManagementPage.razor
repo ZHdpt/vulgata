@@ -4,6 +4,7 @@
 
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.DependencyInjection
 @using Vulgata.Web.Components.Account
 @using Vulgata.Web.Components.Account.Shared
 @using Vulgata.Web.Data
@@ -11,6 +12,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject IAdministratorRoleCoordinator AdministratorRoleCoordinator
+@inject IServiceScopeFactory ScopeFactory
 
 <PageTitle>用户管理</PageTitle>
 
@@ -178,18 +180,26 @@ else
 
     private async Task LoadRowsAsync()
     {
-        List<ApplicationUser> users = await UserManager.Users
+        // Resolve a fresh UserManager from an isolated scope to prevent DbContext
+        // concurrency when Npgsql's EnableRetryOnFailure retries overlap with
+        // the next query on the same ApplicationDbContext instance.
+        await using AsyncServiceScope scope = ScopeFactory.CreateAsyncScope();
+        UserManager<ApplicationUser> scopedUserManager =
+            scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        List<ApplicationUser> users = await scopedUserManager.Users
             .OrderBy(user => user.Email)
             .ThenBy(user => user.UserName)
             .ToListAsync();
 
-        IList<ApplicationUser> administrators = await UserManager.GetUsersInRoleAsync(RoleNames.Administrator);
+        IList<ApplicationUser> administrators =
+            await scopedUserManager.GetUsersInRoleAsync(RoleNames.Administrator);
         bool canRemoveAdministrator = administrators.Count > 1;
 
         List<UserRoleRow> rows = [];
         foreach (ApplicationUser user in users)
         {
-            IList<string> roles = await UserManager.GetRolesAsync(user);
+            IList<string> roles = await scopedUserManager.GetRolesAsync(user);
             string[] orderedRoles = roles
                 .OrderBy(GetRolePriority)
                 .ThenBy(role => role, StringComparer.Ordinal)
