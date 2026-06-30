@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Shared;
 
 namespace Vulgata.Web.Data;
@@ -8,12 +9,15 @@ public sealed class AdministratorOnlyRequirement : IAuthorizationRequirement
 {
 }
 
-public sealed class AdministratorOnlyHandler(UserManager<ApplicationUser> userManager)
+public sealed class AdministratorOnlyHandler(IServiceScopeFactory scopeFactory)
     : AuthorizationHandler<AdministratorOnlyRequirement>
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AdministratorOnlyRequirement requirement)
     {
-        ApplicationUser? user = await GetCurrentUserAsync(context);
+        await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        ApplicationUser? user = await GetCurrentUserAsync(context, userManager);
         if (user is null)
         {
             return;
@@ -25,7 +29,7 @@ public sealed class AdministratorOnlyHandler(UserManager<ApplicationUser> userMa
         }
     }
 
-    private async Task<ApplicationUser?> GetCurrentUserAsync(AuthorizationHandlerContext context)
+    private static async Task<ApplicationUser?> GetCurrentUserAsync(AuthorizationHandlerContext context, UserManager<ApplicationUser> userManager)
     {
         if (context.User.Identity?.IsAuthenticated != true)
         {
@@ -46,12 +50,15 @@ public sealed class ManagementAccessRequirement : IAuthorizationRequirement
 {
 }
 
-public sealed class ManagementAccessHandler(UserManager<ApplicationUser> userManager)
+public sealed class ManagementAccessHandler(IServiceScopeFactory scopeFactory)
     : AuthorizationHandler<ManagementAccessRequirement>
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, ManagementAccessRequirement requirement)
     {
-        ApplicationUser? user = await GetCurrentUserAsync(context);
+        await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        ApplicationUser? user = await GetCurrentUserAsync(context, userManager);
         if (user is null)
         {
             return;
@@ -64,7 +71,7 @@ public sealed class ManagementAccessHandler(UserManager<ApplicationUser> userMan
         }
     }
 
-    private async Task<ApplicationUser?> GetCurrentUserAsync(AuthorizationHandlerContext context)
+    private static async Task<ApplicationUser?> GetCurrentUserAsync(AuthorizationHandlerContext context, UserManager<ApplicationUser> userManager)
     {
         if (context.User.Identity?.IsAuthenticated != true)
         {
