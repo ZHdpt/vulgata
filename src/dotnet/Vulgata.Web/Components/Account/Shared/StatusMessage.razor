@@ -24,6 +24,8 @@
 
     protected override void OnInitialized()
     {
+        if (HttpContext is null) return;
+
         messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
 
         if (messageFromCookie is not null)
