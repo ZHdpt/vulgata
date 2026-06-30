@@ -70,7 +70,7 @@ public class IdentityRegistrationTests
         {
             CreateResult = createResult ?? IdentityResult.Success,
         };
-        AdministratorRoleCoordinator administratorRoleCoordinator = new(userManager);
+        AdministratorRoleCoordinator administratorRoleCoordinator = new(userManager, NullLogger<AdministratorRoleCoordinator>.Instance);
         TestSignInManager signInManager = new(userManager);
         TestEmailSender emailSender = new();
         RecordingNavigationManager navigationManager = new();
@@ -103,7 +103,7 @@ public class IdentityRegistrationTests
 
         TestUserStore userStore = new(existingUsers);
         UserManager<ApplicationUser> userManager = CreateExecutableUserManager(userStore);
-        AdministratorRoleCoordinator administratorRoleCoordinator = new(userManager);
+        AdministratorRoleCoordinator administratorRoleCoordinator = new(userManager, NullLogger<AdministratorRoleCoordinator>.Instance);
         TestSignInManager signInManager = new(userManager);
         TestEmailSender emailSender = new();
         RecordingNavigationManager navigationManager = new();
@@ -331,8 +331,8 @@ public class IdentityRegistrationTests
         await store.CreateAsync(firstUser, CancellationToken.None);
         await store.CreateAsync(secondUser, CancellationToken.None);
 
-        AdministratorRoleCoordinator firstCoordinator = new(new TestUserManager(store));
-        AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store));
+        AdministratorRoleCoordinator firstCoordinator = new(new TestUserManager(store), NullLogger<AdministratorRoleCoordinator>.Instance);
+        AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store), NullLogger<AdministratorRoleCoordinator>.Instance);
         TaskCompletionSource start = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         Task<IdentityResult> firstAssignment = Task.Run(async () =>
@@ -373,8 +373,8 @@ public class IdentityRegistrationTests
         await store.AddToRoleAsync(firstAdministrator, RoleNames.Administrator, CancellationToken.None);
         await store.AddToRoleAsync(secondAdministrator, RoleNames.Administrator, CancellationToken.None);
 
-        AdministratorRoleCoordinator firstCoordinator = new(new TestUserManager(store));
-        AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store));
+        AdministratorRoleCoordinator firstCoordinator = new(new TestUserManager(store), NullLogger<AdministratorRoleCoordinator>.Instance);
+        AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store), NullLogger<AdministratorRoleCoordinator>.Instance);
         TaskCompletionSource start = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         Task<AdministratorRoleRemovalResult> firstRemoval = Task.Run(async () =>

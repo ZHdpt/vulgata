@@ -15,6 +15,7 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
+@inject IAdministratorRoleCoordinator AdministratorRoleCoordinator
 
 <PageTitle>Register</PageTitle>
 
@@ -157,6 +158,14 @@
             result = await UserManager.AddLoginAsync(user, externalLoginInfo);
             if (result.Succeeded)
             {
+                IdentityResult roleAssignmentResult = await AdministratorRoleCoordinator.AssignInitialRoleAsync(user);
+                if (!roleAssignmentResult.Succeeded)
+                {
+                    message = $"Error: {string.Join(", ", roleAssignmentResult.Errors.Select(error => error.Description))}";
+                    await UserManager.DeleteAsync(user);
+                    return;
+                }
+
                 Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
 
                 var userId = await UserManager.GetUserIdAsync(user);

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Vulgata.Shared;
 
 namespace Vulgata.Web.Data;
@@ -29,7 +30,7 @@ public sealed record AdministratorRoleRemovalResult(AdministratorRoleRemovalOutc
     public static AdministratorRoleRemovalResult Failed(IdentityResult result) => new(AdministratorRoleRemovalOutcome.Failed, result);
 }
 
-public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> userManager) : IAdministratorRoleCoordinator
+public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> userManager, ILogger<AdministratorRoleCoordinator> logger) : IAdministratorRoleCoordinator
 {
     private static readonly SemaphoreSlim _roleMutationLock = new(1, 1);
 
@@ -43,12 +44,28 @@ public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> us
                 ? RoleNames.Administrator
                 : RoleNames.User;
 
+            logger.LogInformation(
+                "Assigning initial role to user {UserId} ({Email}). Found {AdminCount} existing administrator(s). Target role: {TargetRole}",
+                user.Id, user.Email, administrators.Count, targetRole);
+
             if (await userManager.IsInRoleAsync(user, targetRole))
             {
+                logger.LogInformation("User {UserId} already in role {TargetRole}, skipping assignment", user.Id, targetRole);
                 return IdentityResult.Success;
             }
 
-            return await userManager.AddToRoleAsync(user, targetRole);
+            IdentityResult addResult = await userManager.AddToRoleAsync(user, targetRole);
+            if (addResult.Succeeded)
+            {
+                logger.LogInformation("Successfully assigned role {TargetRole} to user {UserId}", targetRole, user.Id);
+            }
+            else
+            {
+                logger.LogError("Failed to assign role {TargetRole} to user {UserId}: {Errors}",
+                    targetRole, user.Id, string.Join(", ", addResult.Errors.Select(e => e.Description)));
+            }
+
+            return addResult;
         }
         finally
         {
