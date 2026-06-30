@@ -2,6 +2,10 @@ namespace Vulgata.Core.Entities;
 
 public sealed class DatabaseConnection
 {
+    private DatabaseConnection()
+    {
+    }
+
     private DatabaseConnection(
         Guid repositoryId,
         string encryptedConnectionString,
