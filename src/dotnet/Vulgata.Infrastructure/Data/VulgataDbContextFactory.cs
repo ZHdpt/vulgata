@@ -9,8 +9,12 @@ public sealed class VulgataDbContextFactory : IDesignTimeDbContextFactory<Vulgat
     {
         var optionsBuilder = new DbContextOptionsBuilder<VulgataDbContext>();
         optionsBuilder.UseNpgsql("Host=localhost;Database=vulgata;Username=vulgata;Password=vulgata",
-            npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(3));
+            npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+                npgsqlOptions.EnableRetryOnFailure(3);
+            });
 
-        return new VulgataDbContext(optionsBuilder.Options);
+        return new(optionsBuilder.Options);
     }
 }

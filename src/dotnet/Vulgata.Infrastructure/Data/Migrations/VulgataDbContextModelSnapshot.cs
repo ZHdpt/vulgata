@@ -298,6 +298,17 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("SystemOwnerAssignments", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
+                        .WithOne("DatabaseConnection")
+                        .HasForeignKey("Vulgata.Core.Entities.DatabaseConnection", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Repository");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.Repository", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.System", "System")
@@ -308,17 +319,6 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("DatabaseConnection");
 
                     b.Navigation("System");
-                });
-
-            modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
-                {
-                    b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
-                        .WithOne("DatabaseConnection")
-                        .HasForeignKey("Vulgata.Core.Entities.DatabaseConnection", "RepositoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Repository");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.SystemLlmProviderOverride", b =>

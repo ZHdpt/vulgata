@@ -53,12 +53,18 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }));
 builder.Services.AddDbContext<VulgataDbContext>(
     options => options.UseNpgsql(connectionString, npgsqlOptions =>
-        npgsqlOptions.EnableRetryOnFailure(3)),
+    {
+        npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+        npgsqlOptions.EnableRetryOnFailure(3);
+    }),
     contextLifetime: ServiceLifetime.Scoped,
     optionsLifetime: ServiceLifetime.Singleton);
 builder.Services.AddDbContextFactory<VulgataDbContext>(options =>
     options.UseNpgsql(connectionString, npgsqlOptions =>
-        npgsqlOptions.EnableRetryOnFailure(3)));
+    {
+        npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+        npgsqlOptions.EnableRetryOnFailure(3);
+    }));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.Configure)

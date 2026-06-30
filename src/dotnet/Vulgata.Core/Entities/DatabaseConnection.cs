@@ -2,10 +2,6 @@ namespace Vulgata.Core.Entities;
 
 public sealed class DatabaseConnection
 {
-    private DatabaseConnection()
-    {
-    }
-
     private DatabaseConnection(
         Guid repositoryId,
         string encryptedConnectionString,
@@ -68,7 +64,7 @@ public sealed class DatabaseConnection
         UpdatedAt = now;
     }
 
-    private static string NormalizeRequired(string value) => (value ?? string.Empty).Trim();
+    private static string NormalizeRequired(string value) => value.Trim();
 
     private static string? NormalizeOptional(string? value)
     {
