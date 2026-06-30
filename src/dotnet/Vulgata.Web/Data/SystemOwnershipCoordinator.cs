@@ -68,7 +68,7 @@ public sealed class SystemOwnershipCoordinator(
     UserManager<ApplicationUser> userManager)
     : ISystemOwnershipCoordinator
 {
-    private static readonly SemaphoreSlim OwnershipMutationLock = new(1, 1);
+    private static readonly SemaphoreSlim _ownershipMutationLock = new(1, 1);
 
     public async Task<IReadOnlyList<SystemOwnerAssignmentDto>> ListOwnersAsync(
         Guid systemId,
@@ -170,7 +170,7 @@ public sealed class SystemOwnershipCoordinator(
             return SystemOwnershipAssignmentResult.UserNotFound;
         }
 
-        await OwnershipMutationLock.WaitAsync(cancellationToken);
+        await _ownershipMutationLock.WaitAsync(cancellationToken);
         try
         {
             ApplicationUser? user = await userManager.FindByIdAsync(normalizedUserId);
@@ -217,7 +217,7 @@ public sealed class SystemOwnershipCoordinator(
         }
         finally
         {
-            OwnershipMutationLock.Release();
+            _ownershipMutationLock.Release();
         }
     }
 
@@ -232,7 +232,7 @@ public sealed class SystemOwnershipCoordinator(
             return SystemOwnershipRemovalResult.AssignmentNotFound;
         }
 
-        await OwnershipMutationLock.WaitAsync(cancellationToken);
+        await _ownershipMutationLock.WaitAsync(cancellationToken);
         try
         {
             if (await systemRepository.GetByIdAsync(systemId, cancellationToken) is null)
@@ -284,7 +284,7 @@ public sealed class SystemOwnershipCoordinator(
         }
         finally
         {
-            OwnershipMutationLock.Release();
+            _ownershipMutationLock.Release();
         }
     }
 

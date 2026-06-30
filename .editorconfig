@@ -36,6 +36,17 @@ dotnet_naming_symbols.public_symbols.applicable_kinds = class, struct, interface
 dotnet_naming_symbols.public_symbols.applicable_accessibilities = public, internal
 dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 
+csharp_style_expression_bodied_methods = when_on_single_line
+
 # Roslyn analyzers
 dotnet_analyzer_diagnostic.category-Style.severity = warning
 dotnet_analyzer_diagnostic.category-Design.severity = suggestion
+
+# Minimal suppression block for the current highest-volume diagnostics
+dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.IDE0058.severity = none
+dotnet_diagnostic.IDE0160.severity = none
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1515.severity = none
+dotnet_diagnostic.IDE0008.severity = none
+dotnet_diagnostic.IDE0046.severity = none

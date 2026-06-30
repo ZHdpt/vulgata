@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using SystemEntity = Vulgata.Core.Entities.System;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
+using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Infrastructure.Data;
 
@@ -59,7 +61,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
 
     public async Task<SystemEntity> AddAsync(SystemEntity system, CancellationToken cancellationToken = default)
     {
-        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<SystemEntity> entry =
+        EntityEntry<SystemEntity> entry =
             await dbContext.Systems.AddAsync(system, cancellationToken);
         return entry.Entity;
     }
@@ -133,8 +135,8 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
             return SystemOwnerAssignmentWriteResult.AlreadyAssigned;
         }
 
-        Vulgata.Core.Entities.SystemOwnerAssignment assignment =
-            Vulgata.Core.Entities.SystemOwnerAssignment.Create(systemId, normalizedUserId, now);
+        SystemOwnerAssignment assignment =
+            SystemOwnerAssignment.Create(systemId, normalizedUserId, now);
 
         await dbContext.SystemOwnerAssignments.AddAsync(assignment, cancellationToken);
         return SystemOwnerAssignmentWriteResult.Assigned;
@@ -147,7 +149,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     {
         string normalizedUserId = (userId ?? string.Empty).Trim();
 
-        Vulgata.Core.Entities.SystemOwnerAssignment? assignment = await dbContext.SystemOwnerAssignments
+        SystemOwnerAssignment? assignment = await dbContext.SystemOwnerAssignments
             .FirstOrDefaultAsync(a => a.SystemId == systemId && a.UserId == normalizedUserId, cancellationToken);
 
         if (assignment is null)

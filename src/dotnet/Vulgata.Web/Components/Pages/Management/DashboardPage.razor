@@ -2,16 +2,15 @@
 @layout ManagementLayout
 @attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
 @rendermode InteractiveServer
-
 @using System.Security.Claims
 @using FluentValidation
-@using Microsoft.AspNetCore.Components.Authorization
-@using Vulgata.Core.Entities
-@using SystemEntity = Vulgata.Core.Entities.System
+@using FluentValidation.Results
 @using Vulgata.Core.DomainServices
+@using Vulgata.Core.Entities
 @using Vulgata.Shared.Repositories
 @using Vulgata.Web.Data
 @using Vulgata.Web.Validators
+@using SystemEntity = Vulgata.Core.Entities.System
 
 @inject ISystemRepository SystemRepository
 @inject IRepositoryManagementCoordinator RepositoryManagementCoordinator
@@ -274,7 +273,7 @@ else
             <div>
                 <label for="database-type" style="display:block;margin-bottom:0.5rem">数据库类型</label>
                 <InputSelect id="database-type" @bind-Value="_databaseConnectionForm.DatabaseType" class="form-select">
-                    <option value="@DatabaseType.PostgreSQL">PostgreSQL</option>
+                    <option value="@DatabaseType.PostgreSql">PostgreSQL</option>
                     <option value="@DatabaseType.SqlServer">SqlServer</option>
                     <option value="@DatabaseType.MySql">MySql</option>
                     <option value="@DatabaseType.Sqlite">Sqlite</option>
@@ -504,7 +503,7 @@ else
         _databaseConnectionStatus = null;
         _databaseConnectionForm = new UpsertDatabaseConnectionRequest
         {
-            DatabaseType = DatabaseType.PostgreSQL,
+                DatabaseType = DatabaseType.PostgreSql,
             ConnectionString = string.Empty,
             Username = string.Empty,
             Password = string.Empty,
@@ -533,7 +532,7 @@ else
         _databaseConnectionError = null;
         _databaseConnectionStatus = null;
 
-        FluentValidation.Results.ValidationResult validationResult = await DatabaseConnectionValidator.ValidateAsync(_databaseConnectionForm);
+        ValidationResult validationResult = await DatabaseConnectionValidator.ValidateAsync(_databaseConnectionForm);
         if (!validationResult.IsValid)
         {
             _databaseConnectionError = validationResult.Errors.Select(error => error.ErrorMessage).FirstOrDefault();
@@ -774,7 +773,7 @@ else
 
     private async Task<string?> ValidateRepositoryRequestAsync(CreateRepositoryRequest request)
     {
-        FluentValidation.Results.ValidationResult validationResult = await RepositoryRequestValidator.ValidateAsync(request);
+        ValidationResult validationResult = await RepositoryRequestValidator.ValidateAsync(request);
         if (validationResult.IsValid)
         {
             return null;

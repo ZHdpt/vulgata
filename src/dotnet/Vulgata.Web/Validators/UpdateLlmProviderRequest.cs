@@ -18,7 +18,7 @@ public sealed class UpdateLlmProviderRequest
 
 public sealed class UpdateLlmProviderRequestValidator : AbstractValidator<UpdateLlmProviderRequest>
 {
-    private const ApiTypeFlags SupportedApiTypeMask =
+    private const ApiTypeFlags _supportedApiTypeMask =
         ApiTypeFlags.ChatCompletions | ApiTypeFlags.Responses | ApiTypeFlags.Messages;
 
     public UpdateLlmProviderRequestValidator()
@@ -37,7 +37,7 @@ public sealed class UpdateLlmProviderRequestValidator : AbstractValidator<Update
 
         RuleFor(request => request.SupportedApiTypes)
             .Must(value => value != ApiTypeFlags.None).WithMessage("至少选择一种 API 类型。")
-            .Must(value => (value & ~SupportedApiTypeMask) == 0).WithMessage("支持的 API 类型无效。");
+            .Must(value => (value & ~_supportedApiTypeMask) == 0).WithMessage("支持的 API 类型无效。");
 
         RuleFor(request => request.DefaultAgentType)
             .IsInEnum().WithMessage("默认代理角色无效。");

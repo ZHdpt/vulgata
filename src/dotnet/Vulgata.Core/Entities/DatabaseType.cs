@@ -2,7 +2,7 @@ namespace Vulgata.Core.Entities;
 
 public enum DatabaseType
 {
-    PostgreSQL = 0,
+    PostgreSql = 0,
     SqlServer = 1,
     MySql = 2,
     Sqlite = 3,

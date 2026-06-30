@@ -19,7 +19,7 @@ namespace Vulgata.Tests;
 
 public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogoutTests.CustomWebApplicationFactory>
 {
-    private static readonly string[] SeededRoles = [RoleNames.Administrator, RoleNames.SystemOwner, RoleNames.User];
+    private static readonly string[] _seededRoles = [RoleNames.Administrator, RoleNames.SystemOwner, RoleNames.User];
 
     private readonly LoginLogoutTests.CustomWebApplicationFactory _factory;
 
@@ -38,7 +38,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
         await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
         RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        foreach (string roleName in SeededRoles)
+        foreach (string roleName in _seededRoles)
         {
             Assert.True(await roleManager.RoleExistsAsync(roleName), $"Expected seeded role '{roleName}' to exist after startup.");
         }
@@ -62,8 +62,8 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
             int firstStartupCount = await StartHostAndCountSeededRolesAsync(connectionString);
             int secondStartupCount = await StartHostAndCountSeededRolesAsync(connectionString);
 
-            Assert.Equal(SeededRoles.Length, firstStartupCount);
-            Assert.Equal(SeededRoles.Length, secondStartupCount);
+            Assert.Equal(_seededRoles.Length, firstStartupCount);
+            Assert.Equal(_seededRoles.Length, secondStartupCount);
         }
         finally
         {
@@ -148,7 +148,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
         await using AsyncServiceScope scope = factory.Services.CreateAsyncScope();
         ApplicationDbContext identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        return await identityDb.Roles.CountAsync(role => role.Name != null && SeededRoles.Contains(role.Name));
+        return await identityDb.Roles.CountAsync(role => role.Name != null && _seededRoles.Contains(role.Name));
     }
 
     private async Task CreateUserWithRoleAsync(string email, string password, string roleName)
@@ -237,7 +237,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
     private static string GetLocationPath(HttpResponseMessage response)
     {
         Uri location = response.Headers.Location
-            ?? throw new InvalidOperationException("Expected a redirect location header.");
+                       ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri
             ? location.PathAndQuery

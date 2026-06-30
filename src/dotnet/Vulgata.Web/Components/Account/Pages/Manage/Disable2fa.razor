@@ -1,5 +1,4 @@
 ﻿@page "/Account/Manage/Disable2fa"
-
 @using Microsoft.AspNetCore.Identity
 @using Vulgata.Web.Data
 
@@ -58,8 +57,8 @@
             return;
         }
 
-        var disable2faResult = await UserManager.SetTwoFactorEnabledAsync(user, false);
-        if (!disable2faResult.Succeeded)
+        var disable2FaResult = await UserManager.SetTwoFactorEnabledAsync(user, false);
+        if (!disable2FaResult.Succeeded)
         {
             throw new InvalidOperationException("Unexpected error occurred disabling 2FA.");
         }

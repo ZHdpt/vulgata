@@ -1,16 +1,17 @@
+using BCrypt.Net;
 using Microsoft.AspNetCore.Identity;
 
 namespace Vulgata.Web.Data;
 
 public class BcryptPasswordHasher<TUser> : IPasswordHasher<TUser> where TUser : class
 {
-    private static readonly string[] SupportedPrefixes = ["$2a$", "$2b$", "$2y$"];
+    private static readonly string[] _supportedPrefixes = ["$2a$", "$2b$", "$2y$"];
 
     public string HashPassword(TUser user, string password)
     {
         ArgumentNullException.ThrowIfNull(password);
 
-        return BCrypt.Net.BCrypt.EnhancedHashPassword(password, 12, BCrypt.Net.HashType.SHA384);
+        return BCrypt.Net.BCrypt.EnhancedHashPassword(password, 12, HashType.SHA384);
     }
 
     public PasswordVerificationResult VerifyHashedPassword(TUser user, string hashedPassword, string providedPassword)
@@ -28,11 +29,11 @@ public class BcryptPasswordHasher<TUser> : IPasswordHasher<TUser> where TUser : 
                 ? PasswordVerificationResult.Success
                 : PasswordVerificationResult.Failed;
         }
-        catch (BCrypt.Net.SaltParseException)
+        catch (SaltParseException)
         {
             return PasswordVerificationResult.Failed;
         }
-        catch (BCrypt.Net.HashInformationException)
+        catch (HashInformationException)
         {
             return PasswordVerificationResult.Failed;
         }
@@ -40,7 +41,7 @@ public class BcryptPasswordHasher<TUser> : IPasswordHasher<TUser> where TUser : 
 
     private static bool HasSupportedBcryptPrefix(string hashedPassword)
     {
-        foreach (string prefix in SupportedPrefixes)
+        foreach (string prefix in _supportedPrefixes)
         {
             if (hashedPassword.StartsWith(prefix, StringComparison.Ordinal))
             {

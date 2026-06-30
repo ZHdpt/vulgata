@@ -1,13 +1,10 @@
 @page "/management/settings"
-@layout ManagementLayout
-@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
-@rendermode InteractiveServer
-
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Vulgata.Core.Entities
 @using Vulgata.Infrastructure.Data
+@layout ManagementLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
+@rendermode InteractiveServer
 
 @inject IDbContextFactory<VulgataDbContext> DbContextFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider

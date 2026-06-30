@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Core.DomainServices;
@@ -31,10 +31,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddFluentUIComponents();
 builder.Services.AddProblemDetails();
 builder.Services.AddDataProtection();
-builder.Services.AddHttpClient("LlmProviderConnectionTest", client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(10);
-});
+builder.Services.AddHttpClient("LlmProviderConnectionTest", client => { client.Timeout = TimeSpan.FromSeconds(10); });
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -164,6 +161,7 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 app.UseWhen(
     context => !IsApiRequest(context.Request),
     branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
@@ -248,7 +246,7 @@ systemsApi.MapPost("/", async (
             statusCode: StatusCodes.Status403Forbidden);
     }
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
@@ -300,7 +298,7 @@ systemsApi.MapPut("/{id:guid}", async (
             statusCode: StatusCodes.Status403Forbidden);
     }
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
@@ -446,7 +444,7 @@ systemsApi.MapPost("/{systemId:guid}/owners", async (
             statusCode: StatusCodes.Status403Forbidden);
     }
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
@@ -597,7 +595,7 @@ static void MapSystemLlmProviderOverrideEndpoints(RouteGroupBuilder routeGroup)
         bool isAdministrator = authResult.Succeeded;
         string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
-        FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+        ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
             return Results.ValidationProblem(validationResult.ToDictionary());
@@ -667,7 +665,7 @@ static void MapSystemLlmProviderOverrideEndpoints(RouteGroupBuilder routeGroup)
         bool isAdministrator = authResult.Succeeded;
         string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
-        FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+        ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
             return Results.ValidationProblem(validationResult.ToDictionary());
@@ -821,7 +819,7 @@ repoApi.MapPost("/", async (
         return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
     }
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
@@ -934,7 +932,7 @@ standaloneRepoApi.MapPost("/", async (
     bool isAdministrator = authResult.Succeeded;
     string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
@@ -1013,7 +1011,7 @@ repositoryDatabaseConnectionApi.MapPut("/", async (
     bool isAdministrator = authResult.Succeeded;
     string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
@@ -1130,7 +1128,7 @@ llmProvidersApi.MapPost("/", async (
             statusCode: StatusCodes.Status403Forbidden);
     }
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());
@@ -1165,7 +1163,7 @@ llmProvidersApi.MapPut("/{id:guid}", async (
             statusCode: StatusCodes.Status403Forbidden);
     }
 
-    FluentValidation.Results.ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+    ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
     if (!validationResult.IsValid)
     {
         return Results.ValidationProblem(validationResult.ToDictionary());

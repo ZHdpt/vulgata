@@ -7,9 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
 using Vulgata.Shared.Systems;
 using Vulgata.Web.Data;
@@ -244,86 +242,86 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
     private static async Task EnsureDomainTablesAsync(SqliteConnection connection)
     {
         await ExecuteNonQueryAsync(connection, """
-            CREATE TABLE IF NOT EXISTS Systems (
-                Id TEXT NOT NULL PRIMARY KEY,
-                Name TEXT NOT NULL,
-                NormalizedName TEXT NOT NULL,
-                Description TEXT NULL,
-                Context TEXT NULL,
-                CreatedAt TEXT NOT NULL,
-                UpdatedAt TEXT NOT NULL
-            );
-            """);
+                                               CREATE TABLE IF NOT EXISTS Systems (
+                                                   Id TEXT NOT NULL PRIMARY KEY,
+                                                   Name TEXT NOT NULL,
+                                                   NormalizedName TEXT NOT NULL,
+                                                   Description TEXT NULL,
+                                                   Context TEXT NULL,
+                                                   CreatedAt TEXT NOT NULL,
+                                                   UpdatedAt TEXT NOT NULL
+                                               );
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE UNIQUE INDEX IF NOT EXISTS IX_Systems_NormalizedName
-            ON Systems (NormalizedName);
-            """);
+                                               CREATE UNIQUE INDEX IF NOT EXISTS IX_Systems_NormalizedName
+                                               ON Systems (NormalizedName);
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE TABLE IF NOT EXISTS Repositories (
-                Id TEXT NOT NULL PRIMARY KEY,
-                SystemId TEXT NULL,
-                Name TEXT NOT NULL,
-                GitUrl TEXT NOT NULL,
-                Description TEXT NULL,
-                Context TEXT NULL,
-                NormalizedName TEXT NOT NULL,
-                CreatedAt TEXT NOT NULL,
-                UpdatedAt TEXT NOT NULL,
-                FOREIGN KEY (SystemId) REFERENCES Systems(Id) ON DELETE RESTRICT
-            );
-            """);
+                                               CREATE TABLE IF NOT EXISTS Repositories (
+                                                   Id TEXT NOT NULL PRIMARY KEY,
+                                                   SystemId TEXT NULL,
+                                                   Name TEXT NOT NULL,
+                                                   GitUrl TEXT NOT NULL,
+                                                   Description TEXT NULL,
+                                                   Context TEXT NULL,
+                                                   NormalizedName TEXT NOT NULL,
+                                                   CreatedAt TEXT NOT NULL,
+                                                   UpdatedAt TEXT NOT NULL,
+                                                   FOREIGN KEY (SystemId) REFERENCES Systems(Id) ON DELETE RESTRICT
+                                               );
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE UNIQUE INDEX IF NOT EXISTS IX_Repositories_SystemId_NormalizedName
-            ON Repositories (SystemId, NormalizedName);
-            """);
+                                               CREATE UNIQUE INDEX IF NOT EXISTS IX_Repositories_SystemId_NormalizedName
+                                               ON Repositories (SystemId, NormalizedName);
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE UNIQUE INDEX IF NOT EXISTS IX_Repositories_Standalone_NormalizedName
-            ON Repositories (NormalizedName)
-            WHERE SystemId IS NULL;
-            """);
+                                               CREATE UNIQUE INDEX IF NOT EXISTS IX_Repositories_Standalone_NormalizedName
+                                               ON Repositories (NormalizedName)
+                                               WHERE SystemId IS NULL;
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE TABLE IF NOT EXISTS SystemOwnerAssignments (
-                Id TEXT NOT NULL PRIMARY KEY,
-                SystemId TEXT NOT NULL,
-                UserId TEXT NOT NULL,
-                AssignedAt TEXT NOT NULL,
-                FOREIGN KEY (SystemId) REFERENCES Systems(Id) ON DELETE RESTRICT
-            );
-            """);
+                                               CREATE TABLE IF NOT EXISTS SystemOwnerAssignments (
+                                                   Id TEXT NOT NULL PRIMARY KEY,
+                                                   SystemId TEXT NOT NULL,
+                                                   UserId TEXT NOT NULL,
+                                                   AssignedAt TEXT NOT NULL,
+                                                   FOREIGN KEY (SystemId) REFERENCES Systems(Id) ON DELETE RESTRICT
+                                               );
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE UNIQUE INDEX IF NOT EXISTS IX_SystemOwnerAssignments_SystemId_UserId
-            ON SystemOwnerAssignments (SystemId, UserId);
-            """);
+                                               CREATE UNIQUE INDEX IF NOT EXISTS IX_SystemOwnerAssignments_SystemId_UserId
+                                               ON SystemOwnerAssignments (SystemId, UserId);
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE TABLE IF NOT EXISTS GlobalContexts (
-                Id TEXT NOT NULL PRIMARY KEY,
-                Context TEXT NULL,
-                UpdatedAt TEXT NOT NULL
-            );
-            """);
+                                               CREATE TABLE IF NOT EXISTS GlobalContexts (
+                                                   Id TEXT NOT NULL PRIMARY KEY,
+                                                   Context TEXT NULL,
+                                                   UpdatedAt TEXT NOT NULL
+                                               );
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE TABLE IF NOT EXISTS PendingContextChanges (
-                Id TEXT NOT NULL PRIMARY KEY,
-                ScopeType INTEGER NOT NULL,
-                ScopeKey TEXT NOT NULL,
-                Context TEXT NULL,
-                CreatedAt TEXT NOT NULL,
-                UpdatedAt TEXT NOT NULL
-            );
-            """);
+                                               CREATE TABLE IF NOT EXISTS PendingContextChanges (
+                                                   Id TEXT NOT NULL PRIMARY KEY,
+                                                   ScopeType INTEGER NOT NULL,
+                                                   ScopeKey TEXT NOT NULL,
+                                                   Context TEXT NULL,
+                                                   CreatedAt TEXT NOT NULL,
+                                                   UpdatedAt TEXT NOT NULL
+                                               );
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE UNIQUE INDEX IF NOT EXISTS IX_PendingContextChanges_ScopeType_ScopeKey
-            ON PendingContextChanges (ScopeType, ScopeKey);
-            """);
+                                               CREATE UNIQUE INDEX IF NOT EXISTS IX_PendingContextChanges_ScopeType_ScopeKey
+                                               ON PendingContextChanges (ScopeType, ScopeKey);
+                                               """);
     }
 
     private async Task<string> CreateUserWithRolesAsync(string email, string password, params string[] roles)
@@ -437,7 +435,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         startInfo.ArgumentList.Add(directory);
 
         using Process process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Unable to start git to create a bare repository.");
+                                ?? throw new InvalidOperationException("Unable to start git to create a bare repository.");
 
         string stdout = await process.StandardOutput.ReadToEndAsync();
         string stderr = await process.StandardError.ReadToEndAsync();
@@ -492,7 +490,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
     private static string GetLocationPath(HttpResponseMessage response)
     {
         Uri location = response.Headers.Location
-            ?? throw new InvalidOperationException("Expected a redirect location header.");
+                       ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri
             ? location.PathAndQuery

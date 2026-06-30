@@ -1,5 +1,4 @@
 using System.Net;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -7,8 +6,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -66,7 +65,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         foreach (string page in managementPages)
         {
             string content = ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Pages", "Management", page);
-            Assert.Contains($"@attribute [Authorize(Policy = {nameof(AuthorizationPolicyNames)}.{nameof(AuthorizationPolicyNames.ManagementAccess)})]", content, StringComparison.Ordinal);
+            Assert.Contains($"@attribute [Authorize(Policy = {nameof(AuthorizationPolicyNames)}.{nameof(AuthorizationPolicyNames.ManagementAccess)})]", content,
+                StringComparison.Ordinal);
         }
 
         string notFoundContent = ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Pages", "NotFound.razor");
@@ -208,7 +208,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
 
         string location = response.Headers.Location?.OriginalString
-            ?? throw new InvalidOperationException("Expected a redirect location for unauthenticated access.");
+                          ?? throw new InvalidOperationException("Expected a redirect location for unauthenticated access.");
         string? returnUrl = GetQueryParameterValue(location, "returnUrl") ?? GetQueryParameterValue(location, "ReturnUrl");
 
         Assert.Contains("Account/Login", location, StringComparison.OrdinalIgnoreCase);
@@ -352,7 +352,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
     private static string GetLocationPath(HttpResponseMessage response)
     {
         Uri location = response.Headers.Location
-            ?? throw new InvalidOperationException("Expected a redirect location header.");
+                       ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri
             ? location.PathAndQuery
@@ -374,7 +374,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         }
 
         return directory?.FullName
-            ?? throw new InvalidOperationException("Repository root could not be found. Ensure Vulgata.slnx exists at the solution root.");
+               ?? throw new InvalidOperationException("Repository root could not be found. Ensure Vulgata.slnx exists at the solution root.");
     }
 
     public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
@@ -396,7 +396,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
         public string ConnectionString { get; }
 
-        protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
 

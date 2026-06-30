@@ -31,11 +31,11 @@ public sealed record AdministratorRoleRemovalResult(AdministratorRoleRemovalOutc
 
 public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> userManager) : IAdministratorRoleCoordinator
 {
-    private static readonly SemaphoreSlim RoleMutationLock = new(1, 1);
+    private static readonly SemaphoreSlim _roleMutationLock = new(1, 1);
 
     public async Task<IdentityResult> AssignInitialRoleAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
-        await RoleMutationLock.WaitAsync(cancellationToken);
+        await _roleMutationLock.WaitAsync(cancellationToken);
         try
         {
             IList<ApplicationUser> administrators = await userManager.GetUsersInRoleAsync(RoleNames.Administrator);
@@ -52,13 +52,13 @@ public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> us
         }
         finally
         {
-            RoleMutationLock.Release();
+            _roleMutationLock.Release();
         }
     }
 
     public async Task<AdministratorRoleRemovalResult> RemoveAdministratorAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
-        await RoleMutationLock.WaitAsync(cancellationToken);
+        await _roleMutationLock.WaitAsync(cancellationToken);
         try
         {
             if (!await userManager.IsInRoleAsync(user, RoleNames.Administrator))
@@ -93,7 +93,7 @@ public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> us
         }
         finally
         {
-            RoleMutationLock.Release();
+            _roleMutationLock.Release();
         }
     }
 }

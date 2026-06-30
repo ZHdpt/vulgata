@@ -6,10 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
-using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
 using Vulgata.Web.Data;
 
@@ -26,7 +23,7 @@ public class IdentityRegistrationTests
         }
 
         return dir?.FullName
-            ?? throw new InvalidOperationException("Repository root could not be found. Ensure Vulgata.slnx exists at the solution root.");
+               ?? throw new InvalidOperationException("Repository root could not be found. Ensure Vulgata.slnx exists at the solution root.");
     }
 
     private static IReadOnlyList<ValidationResult> ValidateRegisterInput(string email, string password, string confirmPassword)
@@ -46,9 +43,9 @@ public class IdentityRegistrationTests
     private static object CreateRegisterInput(string email, string password, string confirmPassword)
     {
         Type inputModelType = GetRegisterComponentType().GetNestedType("InputModel", BindingFlags.NonPublic)
-            ?? throw new InvalidOperationException("Register input model type could not be found.");
+                              ?? throw new InvalidOperationException("Register input model type could not be found.");
         object input = Activator.CreateInstance(inputModelType, nonPublic: true)
-            ?? throw new InvalidOperationException("Register input model could not be created.");
+                       ?? throw new InvalidOperationException("Register input model could not be created.");
 
         inputModelType.GetProperty("Email")!.SetValue(input, email);
         inputModelType.GetProperty("Password")!.SetValue(input, password);
@@ -65,7 +62,7 @@ public class IdentityRegistrationTests
     {
         Type registerType = GetRegisterComponentType();
         object component = Activator.CreateInstance(registerType, nonPublic: true)
-            ?? throw new InvalidOperationException("Register component could not be created.");
+                           ?? throw new InvalidOperationException("Register component could not be created.");
         object input = CreateRegisterInput(email, password, confirmPassword);
 
         TestUserStore userStore = new();
@@ -101,7 +98,7 @@ public class IdentityRegistrationTests
     {
         Type registerType = GetRegisterComponentType();
         object component = Activator.CreateInstance(registerType, nonPublic: true)
-            ?? throw new InvalidOperationException("Register component could not be created.");
+                           ?? throw new InvalidOperationException("Register component could not be created.");
         object input = CreateRegisterInput(email, password, confirmPassword);
 
         TestUserStore userStore = new(existingUsers);
@@ -154,7 +151,7 @@ public class IdentityRegistrationTests
     private static object CreateIdentityRedirectManager(NavigationManager navigationManager)
     {
         Type redirectManagerType = typeof(ApplicationUser).Assembly.GetType("Vulgata.Web.Components.Account.IdentityRedirectManager")
-            ?? throw new InvalidOperationException("Identity redirect manager type could not be found.");
+                                   ?? throw new InvalidOperationException("Identity redirect manager type could not be found.");
 
         return Activator.CreateInstance(
                    redirectManagerType,
@@ -178,14 +175,14 @@ public class IdentityRegistrationTests
     private static void SetProperty(object instance, string name, object? value)
     {
         PropertyInfo property = instance.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
+                                ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
         property.SetValue(instance, value);
     }
 
     private static object? GetPropertyValue(object instance, string name)
     {
         PropertyInfo property = instance.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
+                                ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
         return property.GetValue(instance);
     }
 
@@ -286,7 +283,7 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
-    public async Task RegisterUserSignsInAndRedirectsToChatPageAfterSuccessfulRegistration()
+    public async Task RegisterUserSignsInAndRedirectsToChatPageAfterSuccessfulRegistrationAsync()
     {
         RegistrationHarness harness = CreateRegistrationHarness(
             email: "user@example.com",
@@ -306,7 +303,7 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
-    public async Task RegisterUserStoresBcryptPasswordHashThroughIdentityPipeline()
+    public async Task RegisterUserStoresBcryptPasswordHashThroughIdentityPipelineAsync()
     {
         RegistrationHarness harness = CreateExecutableRegistrationHarness(
             email: "new.user@example.com",
@@ -412,7 +409,7 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
-    public async Task RegisterUserRejectsDuplicateEmailThroughProductionIdentityConfiguration()
+    public async Task RegisterUserRejectsDuplicateEmailThroughProductionIdentityConfigurationAsync()
     {
         ApplicationUser existingUser = new()
         {
@@ -438,7 +435,7 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
-    public async Task RegisterUserReturnsChineseDuplicateEmailMessageWhenCreationFails()
+    public async Task RegisterUserReturnsChineseDuplicateEmailMessageWhenCreationFailsAsync()
     {
         IdentityResult duplicateEmailFailure = IdentityResult.Failed(
             new IdentityError
@@ -498,7 +495,7 @@ public class IdentityRegistrationTests
     }
 
     [Fact]
-    public async Task PasswordSignInAsyncFailsCleanlyForLegacyPbkdf2Hashes()
+    public async Task PasswordSignInAsyncFailsCleanlyForLegacyPbkdf2HashesAsync()
     {
         ApplicationUser legacyUser = new()
         {
@@ -551,10 +548,10 @@ public class IdentityRegistrationTests
         public async Task RegisterAsync()
         {
             MethodInfo registerUser = component.GetType().GetMethod("RegisterUser", BindingFlags.Instance | BindingFlags.Public)
-                ?? throw new InvalidOperationException("RegisterUser method could not be found.");
+                                      ?? throw new InvalidOperationException("RegisterUser method could not be found.");
 
             Task execution = (Task)(registerUser.Invoke(component, [new EditContext(input)])
-                ?? throw new InvalidOperationException("RegisterUser invocation returned null."));
+                                    ?? throw new InvalidOperationException("RegisterUser invocation returned null."));
             await execution;
         }
     }
@@ -711,8 +708,8 @@ public class IdentityRegistrationTests
             string canonicalRole = CanonicalizeRoleName(roleName);
             ApplicationUser[] users = _usersById.Values
                 .Where(user => !string.IsNullOrEmpty(user.Id)
-                    && _rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles)
-                    && roles.Contains(canonicalRole))
+                               && _rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles)
+                               && roles.Contains(canonicalRole))
                 .DistinctBy(user => user.Id, StringComparer.Ordinal)
                 .ToArray();
 
@@ -737,6 +734,7 @@ public class IdentityRegistrationTests
             {
                 _usersByNormalizedEmail[normalizedEmail] = user;
             }
+
             return Task.CompletedTask;
         }
 
@@ -747,6 +745,7 @@ public class IdentityRegistrationTests
             {
                 _usersByNormalizedUserName[normalizedName] = user;
             }
+
             return Task.CompletedTask;
         }
 
@@ -865,7 +864,7 @@ public class IdentityRegistrationTests
         IPasswordHasher<ApplicationUser> passwordHasher,
         IdentityErrorDescriber errorDescriber) : UserManager<ApplicationUser>(
         store,
-        Microsoft.Extensions.Options.Options.Create(IdentityRegistrationTests.CreateProductionIdentityOptions()),
+        Microsoft.Extensions.Options.Options.Create(CreateProductionIdentityOptions()),
         passwordHasher,
         new IUserValidator<ApplicationUser>[] { new UserValidator<ApplicationUser>(errorDescriber) },
         new IPasswordValidator<ApplicationUser>[] { new PasswordValidator<ApplicationUser>(errorDescriber) },
