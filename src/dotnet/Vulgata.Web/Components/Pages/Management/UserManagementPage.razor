@@ -50,8 +50,7 @@ else
                             if (row.CanRemoveAdministrator)
                             {
                                 <FluentButton Appearance="Appearance.Neutral"
-                                              OnClick="@(async () => await RemoveAdministratorAsync(row.UserId))"
-                                              disabled="@_isProcessing">
+                                              OnClick="@(async () => await RemoveAdministratorAsync(row.UserId))" disabled="@_isProcessing">
                                     移除管理员
                                 </FluentButton>
                             }
@@ -63,8 +62,7 @@ else
                         else
                         {
                             <FluentButton Appearance="Appearance.Accent"
-                                          OnClick="@(async () => await GrantAdministratorAsync(row.UserId))"
-                                          disabled="@_isProcessing">
+                                          OnClick="@(async () => await GrantAdministratorAsync(row.UserId))" disabled="@_isProcessing">
                                 授予管理员
                             </FluentButton>
                         }
