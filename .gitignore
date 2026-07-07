@@ -210,6 +210,7 @@ $RECYCLE.BIN/
 .claude/*.local.json
 .claude/**/*.log
 CLAUDE.local.md
+.claude/worktrees/
 # .claude/
 
 # Gemini CLI
