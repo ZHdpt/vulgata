@@ -157,10 +157,21 @@ Allowed graph outputs:
 Pass 1 must also emit:
 
 - Source Anchoring payloads
-- entry-point tags where applicable
+- entry-point tags where applicable, including:
+   - `entry_point_kind`
+   - `entry_point_label`
+   - protocol or framework hints
+   - route, topic, schedule, command, component, or event metadata where applicable
+   - source confidence
 - `verification_notes`
 - `disagreements`
 - deferred enrichment dependencies only when a later unit may materially improve this Document
+
+V1 cross-verification is lightweight:
+
+- superstep grouping should prefer direct caller/callee, same file/module, same endpoint surface, and shared resource/config references so related outputs are likely available
+- workers use related outputs to populate `verification_notes` and `disagreements`
+- disagreements become scan warnings or low-confidence notes unless they block a stable edge, source anchor, or dispatch-site decision
 
 ## 7. Bounded Refinement
 
@@ -208,6 +219,32 @@ Trace state includes:
 - confidence floor
 - termination reason
 
+Trace expansion rules:
+
+- allow revisiting a Document only when the path state materially differs
+- cap recursion depth and repeated-state count
+- summarize repeated loops as repeated behavior instead of expanding forever
+
+Examples of repeated behavior to summarize rather than expand forever:
+
+- retry loops
+- polling loops
+- state-machine transitions
+- recursive tree traversal
+
+Recommended termination boundaries:
+
+- response returned to caller
+- durable state change completed
+- database write or transaction boundary
+- message published to another async flow
+- external communication handoff
+- cross-repo endpoint handoff
+- page navigation handoff
+- known framework lifecycle boundary
+- max traversal budget reached
+- unresolved dispatch site that blocks further traversal
+
 ## 9. Flow-Group Clustering
 
 V1 clustering is deterministic.
@@ -231,6 +268,17 @@ Algorithm:
 
 V1 favors under-merging over bloated Business Logic Documents.
 
+For V1, **utility-only** means validation, mapping, logging, serialization, simple DTO access, or infrastructure helpers with no durable business effect.
+
+If a merge would exceed the cap, keep separate groups and record the shared sub-flow as repeated support instead of forcing one oversized Business Logic Document.
+
+Shared sub-flow BL Documents are optional in V1 and should only be created when all of these are true:
+
+- the shared segment has a meaningful business name
+- the segment is used by multiple flow groups
+- the segment is large enough that repeating it would make top-level BL Documents confusing
+- the segment has a stable boundary in the graph
+
 ## 10. Pass 2 Business Logic Generation
 
 The Pass 2 Worker receives a prepared flow-group packet:
@@ -238,6 +286,7 @@ The Pass 2 Worker receives a prepared flow-group packet:
 - flow group ID
 - ordered traces
 - trace steps
+- trace termination reasons and loop summaries
 - candidate selections and unresolved candidate groups
 - dispatch bindings and unresolved dispatch sites
 - endpoint bindings and unresolved endpoint hints
@@ -356,7 +405,7 @@ V1 incremental re-scan uses predictable regeneration:
 2. CodeGraph reparses changed files
 3. reverse index and source hashes identify affected Document Versions
 4. affected Code Logic Documents are regenerated
-5. direct declared refinements inside the affected set may run once
+5. direct declared refinements inside the affected set may run once, including one bounded refinement of other Documents that explicitly declared a dependency on a re-scanned Document inside that affected set
 6. affected Business Logic Documents are marked stale and regenerated through normal Pass 2 flow planning
 7. Cross-Repository stale notices are created where appropriate
 

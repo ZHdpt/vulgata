@@ -26,6 +26,23 @@ Relational tables are authoritative for:
 
 `content_jsonb` may render copies of facts for display, but it is not the only source of truth for graph or trace facts.
 
+## 1A. Inherited Tables
+
+This document focuses on the minimum V1 table and contract shapes that were added or materially changed by the July scanning plan. Several inherited relational tables remain required and should be preserved from the original AnchorDB+ base design in [document-graph-anchordb-plus-plan.md](document-graph-anchordb-plus-plan.md).
+
+Inherited tables that still exist conceptually in V1:
+
+- `systems`
+- `repositories`
+- `scans`
+- `code_units`
+- `document_sources`
+- `reverse_index`
+- `cross_repo_stale_notices`
+- `communication_patterns`
+
+If implementation names change, these ownership boundaries and facts must still exist.
+
 ## 2. Document Identity
 
 V1 distinguishes:
@@ -35,7 +52,7 @@ V1 distinguishes:
 
 Generated edges point at Document Versions. Same-scan references may be staged against Logical Documents, but scan finalization must resolve them to generated versions or downgrade them to uncertainties.
 
-Minimum Document Version additions:
+Minimum `documents` table shape for V1:
 
 ```text
 documents
@@ -47,9 +64,14 @@ documents
   status
   title
   path
+  parent_document_id
+  depth
+  sort_order
+  version
   content_jsonb
   content_markdown
   export_md_path
+  metadata_jsonb
   schema_version
   is_current
   superseded_by_id
@@ -57,7 +79,10 @@ documents
   resolution_outdated_at
   resolution_outdated_reason
   created_at
+  updated_at
 ```
+
+If the implementation splits Logical Document rows from immutable Document Version rows, these fields must still be represented across the chosen tables.
 
 ## 3. Source Anchoring
 
@@ -72,6 +97,42 @@ Source Anchoring records must preserve:
 - Document Version ID that made the claim
 
 These payloads support source citations even after file renames or line drift.
+
+## 3A. Entry Point Records
+
+Entry points must have a queryable home in V1 because Pass 2 planning starts from Pass 1 entry-point metadata.
+
+Recommended minimal table:
+
+```text
+entry_points
+  id
+  scan_id
+  repository_id
+  system_id
+  logical_document_id
+  document_version_id
+  source_code_unit_id
+  entry_point_kind        -- http_route, rpc_endpoint, queue_consumer, scheduled_task,
+                           -- cli_command, event_handler, page_route, ui_interaction,
+                           -- app_bootstrap, workflow_trigger
+  entry_point_label
+  protocol
+  route_pattern
+  topic_name
+  schedule_text
+  command_name
+  event_name
+  component_name
+  source_confidence
+  metadata_jsonb
+  created_at
+```
+
+The same Document Version may be both:
+
+- an `entry_points` row source
+- a `communication_endpoints` provider surface
 
 ## 4. Graph Tables
 
@@ -258,6 +319,37 @@ flow_trace_endpoint_bindings
 
 Unresolved branches are rows with unresolved/capped status, not only JSON arrays.
 
+## 7A. Document-Level Search Entries
+
+`index_entries` remains part of the minimum V1 retrieval model.
+
+```text
+index_entries
+  id
+  document_id
+  document_version_id
+  repository_id
+  system_id
+  doc_type
+  title
+  path
+  summary
+  key_symbols
+  business_terms_jsonb
+  technical_terms_jsonb
+  search_text
+  search_vector
+  scan_id
+  created_at
+```
+
+Build rules:
+
+- materialize from document metadata plus `content_jsonb`
+- rebuild by replacing rows for a Document Version when that version is committed
+- treat `index_entries` as the canonical document-level retrieval index
+- treat generated `index.md` or equivalent export as a render target, not the authoritative search source
+
 ## 8. Document Sections
 
 `document_sections` is required for V1 retrieval.
@@ -369,6 +461,7 @@ V1 search uses:
 
 - PostgreSQL full-text where it works well
 - `document_sections`
+- `index_entries`
 - exact symbol and endpoint matching
 - business-term aliases
 - trigram fallback for Chinese and mixed Chinese/English
@@ -396,6 +489,8 @@ Initial indexes:
 
 - `documents(repository_id, is_current, doc_type)`
 - `documents(logical_document_id, is_current)`
+- `entry_points(repository_id, entry_point_kind)`
+- `entry_points(document_version_id)`
 - `edges(source_document_version_id, edge_type)`
 - `edges(target_document_version_id, edge_type)`
 - `edges(candidate_group_id)`
@@ -406,7 +501,13 @@ Initial indexes:
 - `flow_groups(scan_id, repository_id)`
 - `flow_traces(flow_group_id)`
 - `flow_trace_steps(flow_trace_id, step_order)`
+- `flow_trace_candidate_selections(flow_trace_id)`
+- `flow_trace_dispatch_bindings(flow_trace_id)`
 - `flow_trace_dispatch_bindings(dispatch_site_id)`
+- `flow_trace_endpoint_bindings(flow_trace_id)`
+- `index_entries(document_version_id)`
+- `index_entries(repository_id, doc_type)`
 - `document_sections(document_version_id, section_kind)`
 - trigram index on `document_sections.search_text`
+- trigram index on `index_entries.search_text`
 
