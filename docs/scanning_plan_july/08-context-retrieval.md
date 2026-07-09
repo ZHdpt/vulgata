@@ -2,7 +2,7 @@
 
 **Parent:** [AnchorDB+ v2 — Winning Document Graph Architecture](../bmad/planning-artifacts/architecture/document-graph-anchordb-plus-plan.md)
 **Extracted:** 2026-07-06
-**Status:** Review pending — extracting from original plan; questions raised below.
+**Status:** Section 08 completed - database-backed agentic LLM-wiki retrieval agreed.
 
 ---
 
@@ -146,3 +146,580 @@ Blazor.Diagrams (renders DiagramNode + DiagramLink)
 - **Repo-scoped retrieval** is a critical feature. The chat agent needs tooling that accepts `repo_id` as a parameter. The `index_entries` table already has `repo_slug` — this should be used for filtering.
 - **Agentic retrieval** (the agent uses tools to search, read, follow edges) is more flexible than pre-computed retrieval pipelines. The agent can dynamically decide how many documents to read, when to follow edges, and when to stop — based on whether it has enough context to answer.
 - `log.md` is probably not worth indexing separately. The `scans` table answers operational questions, and query history could be tracked in its own table if needed.
+
+---
+
+## Finalized Direction for Section 08
+
+### 1. Core decision
+
+V1 should use **database-backed agentic LLM-wiki retrieval**.
+
+That means Vulgata keeps the LLM-wiki idea:
+
+- retrieve a small set of relevant Documents
+- read the selected Documents in coherent form
+- follow graph relationships when needed
+- synthesize an answer with citations
+
+But the Chat Agent should not literally read a large `index.md` file as the canonical search step.
+
+Instead, the Chat Agent should use typed retrieval tools over:
+
+- `index_entries`
+- `documents.content_markdown`
+- `documents.content_jsonb`
+- relational `edges`
+- `uncertainties`
+- `communication_endpoints`
+- structured scan/event tables
+
+`index.md` remains an exported wiki artifact, not the retrieval source of truth.
+
+### 2. Retrieval architecture
+
+The recommended V1 architecture has three layers.
+
+#### Layer 1 - Deterministic retrieval service
+
+Application code owns:
+
+- authorization filtering
+- repo/System scope filtering
+- full-text and metadata search
+- graph expansion
+- confidence filtering
+- document budget enforcement
+- citation payload construction
+
+#### Layer 2 - Chat Agent retrieval tools
+
+The Chat Agent calls typed tools such as:
+
+- `search_documents`
+- `get_document`
+- `get_document_sections`
+- `expand_related_documents`
+- `get_uncertainty_summary`
+- `get_endpoint_context`
+- `get_scan_status`
+
+The agent chooses which tools to call and when to stop, but it does not hand-parse indexes or freely query tables.
+
+#### Layer 3 - Answer synthesis
+
+The Chat Agent synthesizes the answer from a bounded evidence packet.
+
+The answer should:
+
+- follow Business Mode or IT Mode rules
+- cite Documents and source lines where available
+- preserve uncertainty and low-confidence notes
+- avoid flattening unresolved branches into certain facts
+
+### 3. V1 search strategy
+
+V1 should use **hybrid structured search without mandatory embeddings**.
+
+Recommended V1 search signals:
+
+- PostgreSQL full-text search over title, summary, key symbols, business terms, technical terms, and rendered content
+- metadata filters over System, Repository, doc type, status, confidence, scan recency, and access scope
+- exact/partial symbol matching for IT Mode
+- business-term matching for Business Mode
+- endpoint identifier matching for cross-repo communication questions
+- graph expansion from high-ranked seed Documents
+
+Embeddings through `pgvector` should be designed as an optional upgrade path, not required for the first V1 retrieval implementation.
+
+Why:
+
+- PostgreSQL full-text search needs no new provider or embedding model
+- generated Documents are structured and summarized by design
+- graph expansion carries much of the "semantic" relationship signal
+- embeddings add operational cost and provider capability questions
+- section 07 already keeps `content_jsonb` and section structure ready for future embedding rows
+
+If retrieval quality is poor with full-text plus graph expansion, `pgvector` can be added later without replacing the retrieval architecture.
+
+### 4. Database-backed LLM-wiki interpretation
+
+The original FR-11.6 LLM-wiki workflow remains valid as a user-facing product behavior, but its implementation should be reinterpreted.
+
+Original phrase:
+
+```text
+read index.md -> select 3-5 Documents -> read each -> follow cross-repo links -> synthesize
+```
+
+Recommended implementation:
+
+```text
+query index_entries/search indexes -> select seed Documents -> read content_markdown or sections -> expand via graph tools -> synthesize
+```
+
+This keeps the spirit of LLM-wiki retrieval while avoiding the scaling and reliability problems of placing the whole index in the prompt.
+
+### 5. Scope handling
+
+Retrieval must always run inside an authorization-aware scope.
+
+Inputs:
+
+- current user ID and roles
+- selected Systems
+- selected Repositories
+- mode: Business Mode or IT Mode
+- optional uploaded-message context
+- user query
+
+Scope rules:
+
+- if the user selects Repositories, seed search starts in those Repositories
+- if the user selects Systems, seed search includes their Repositories
+- standalone Repositories are included only when explicitly selected or when graph expansion reaches them through authorized edges
+- all retrieval results must be filtered by the user's access rights
+- cross-repo expansion may read outside the selected scope only through explicit graph relationships and only if the target is authorized
+
+If no Systems or Repositories are selected, Vulgata should auto-scope:
+
+1. extract query terms, symbols, business entities, and endpoint-like strings
+2. search `index_entries` across all authorized Systems and Repositories
+3. rank candidate scopes by match quality and recency
+4. pick a small scope, usually top 1-3 Systems or Repositories
+5. tell the user which scope was selected
+
+### 6. Mode-aware retrieval
+
+Business Mode and IT Mode should use the same retrieval substrate but different ranking and answer policies.
+
+#### Business Mode
+
+Prefer:
+
+- Business Logic Documents
+- BL sections that summarize flow, actors, decisions, business rules, and exceptions
+- cross-repo handoff explanations
+- high-confidence summaries
+
+Avoid by default:
+
+- raw source-code detail
+- deep Code Logic Document chains
+- implementation-only helper Documents
+
+Business Mode may still load Code Logic Documents when:
+
+- no suitable BL Document exists
+- a BL Document cites a CL Document needed to verify a claim
+- the user asks for detail that requires source grounding
+
+#### IT Mode
+
+Prefer:
+
+- Code Logic Documents
+- source anchors and file paths
+- call chains
+- endpoints, dispatch sites, candidate groups, and uncertainties
+- supporting Business Logic Documents for broader process context
+
+IT Mode should include code references and source line citations when available.
+
+### 7. Retrieval flow
+
+Recommended V1 flow:
+
+1. Build retrieval scope from user selection or auto-scope.
+2. Run `search_documents` against database-backed search indexes.
+3. Select seed Documents:
+   - 2-4 BL Documents for Business Mode when available
+   - 3-5 CL Documents for IT Mode or code-specific questions
+4. Load selected Documents:
+   - full `content_markdown` for short Documents
+   - relevant sections from `content_jsonb` or `document_sections` for large Documents
+5. Expand graph context:
+   - outgoing/incoming `REFERENCES`
+   - `GENERATED_FROM` from BL to CL when verification is needed
+   - cross-repo `REFERENCES`
+   - endpoint-linked relationships
+   - unresolved uncertainties related to selected Documents
+6. Re-rank and trim the evidence packet.
+7. Synthesize the answer with citations.
+
+The default retrieval budget should be small and predictable.
+
+Recommended initial budget:
+
+- 3-5 seed Documents
+- up to 5 graph-expanded Documents
+- maximum 10 Documents total
+- section-level loading when total content would exceed the context budget
+
+### 8. Graph expansion policy
+
+Graph expansion should be deterministic and budgeted.
+
+Recommended expansion order:
+
+1. For BL Documents, follow `GENERATED_FROM` to supporting CL Documents when the user needs source grounding.
+2. Follow high-confidence `REFERENCES` edges relevant to the query.
+3. Follow cross-repo `REFERENCES` when they represent business-relevant handoffs.
+4. Read endpoint context when the query asks about integrations or consumers/providers.
+5. Include uncertainty summaries when a selected Document has unresolved dependencies.
+
+Graph expansion should avoid:
+
+- low-confidence edges below the retrieval threshold unless the user asks about uncertainty
+- utility/helper Documents unless they explain a business decision
+- unlimited transitive traversal
+- treating dispatch-site hints as resolved edges
+
+Dispatch-site and candidate-branch metadata from section 06 must be preserved in the evidence packet.
+
+### 9. Cross-repo retrieval policy
+
+V1 should automatically follow cross-repo `REFERENCES` when all of these are true:
+
+- the target Document is authorized for the current user
+- the edge or endpoint match is relevant to the query
+- the target fits inside the retrieval budget
+- the answer would be materially incomplete without it
+
+The Chat Agent should not stop to ask permission merely because a related Document is in another Repository.
+
+Instead, the answer should disclose scope expansion, for example:
+
+```text
+我还参考了 risk-service，因为 checkout-service 的风控调用指向那里。
+```
+
+When a cross-repo edge points to an unauthorized or unscanned target:
+
+- do not expose restricted content
+- mention only the allowed uncertainty summary
+- cite the source Document's uncertainty or endpoint record
+
+For unresolved cross-repo links:
+
+- include the uncertainty summary
+- state whether the target Repository is known, unknown, unscanned, or ambiguous
+- do not fabricate provider behavior
+
+### 10. Context window management
+
+Context control should be handled before synthesis, not left to the final LLM prompt.
+
+Recommended rules:
+
+- prefer summaries first, then full Documents only when needed
+- prefer BL Documents for broad business questions
+- use section-level retrieval for large Documents
+- cap total Document count
+- include trace metadata for BL Documents when unresolved branches matter
+- deduplicate shared CL Documents across multiple BL Documents
+- drop low-value utility Documents first
+- preserve citations for every retained claim source
+
+For broad questions, the agent should provide a high-level answer and cite key BL Documents rather than trying to load an entire System.
+
+### 11. `log.md` and operational questions
+
+Do not index `log.md` for RAG in V1.
+
+Operational questions should be answered from structured tables:
+
+- scan history
+- scan status
+- stale notices
+- query history if/when stored
+- repository scan timestamps
+- document version metadata
+
+`log.md` remains an exported chronological view for humans.
+
+Examples:
+
+- "When was this repo last scanned?" -> query scan table
+- "What changed in the last scan?" -> query scan/version metadata
+- "Is this answer stale?" -> query scan recency and stale notices
+
+### 12. Retrieval tools
+
+Recommended V1 tool contracts:
+
+#### `search_documents`
+
+Inputs:
+
+- query
+- selected system IDs
+- selected repository IDs
+- mode
+- doc type preference
+- max results
+
+Returns:
+
+- document ID
+- title
+- doc type
+- System/Repository
+- path
+- summary
+- confidence
+- search score
+- matched fields
+- latest scan metadata
+
+#### `get_document`
+
+Inputs:
+
+- document ID
+- include mode: `summary`, `sections`, `full`
+
+Returns:
+
+- metadata
+- content Markdown or selected sections
+- citation anchors
+- source anchors
+- uncertainty summary
+
+#### `expand_related_documents`
+
+Inputs:
+
+- seed document IDs
+- relation kinds
+- max depth
+- max results
+- include cross-repo boolean
+
+Returns:
+
+- related Documents
+- edge metadata
+- confidence
+- reason for inclusion
+
+#### `get_endpoint_context`
+
+Inputs:
+
+- endpoint ID or endpoint identifier text
+- max consumers/providers
+
+Returns:
+
+- provider endpoint metadata
+- consumer Documents
+- provider Documents where known
+- unresolved endpoint-linked uncertainties
+
+#### `get_uncertainty_summary`
+
+Inputs:
+
+- document IDs
+- include resolved boolean
+
+Returns:
+
+- unresolved cross-repo links
+- unknown targets
+- ambiguous targets
+- dangling links
+- resolution status
+
+#### `get_scan_status`
+
+Inputs:
+
+- System IDs or Repository IDs
+
+Returns:
+
+- last scan time
+- scan status
+- stale notices
+- failed/partial document counts
+- unresolved uncertainty counts
+
+### 13. Ranking model
+
+V1 ranking should be explainable and deterministic.
+
+Suggested ranking factors:
+
+- full-text score
+- title and symbol exact matches
+- business term matches
+- selected scope match
+- doc type preference by mode
+- recency of scan
+- confidence
+- graph proximity to seed Documents
+- endpoint match strength
+- unresolved/stale penalty
+
+The retrieval service should return matched fields and inclusion reasons so the Chat Agent can explain why a Document was used when needed.
+
+### 14. Confidence and stale handling
+
+Default retrieval should exclude Documents with confidence below `0.5`, unless the user asks specifically about uncertain or low-confidence areas.
+
+Answers should flag:
+
+- low-confidence sources
+- unresolved uncertainties
+- stale source Documents
+- Cross-Repo Stale Notices
+- partial scan gaps
+- unscanned target Repositories
+
+Do not hide uncertainty from Business Mode. Business Mode should phrase it plainly, not technically.
+
+### 15. Section-level retrieval
+
+Section-level retrieval is useful but should be materialized as a derived index, not hand-parsed from JSONB during every chat turn.
+
+Recommended path:
+
+- V1 minimum: query `index_entries`, then read full `content_markdown`
+- V1 improved: materialize `document_sections` from `content_jsonb`
+- V2: add section embeddings if full-text search is not enough
+
+`document_sections` can include:
+
+- document ID
+- section ID
+- section kind
+- heading
+- content text or Markdown
+- search vector
+- token estimate
+- citation anchors
+
+### 16. Embeddings and `pgvector`
+
+Do not require embeddings for initial V1.
+
+Design for them by:
+
+- keeping stable document and section IDs
+- storing schema versions
+- materializing sections
+- keeping retrieval services abstracted behind tools
+
+Add `pgvector` when:
+
+- full-text plus graph expansion misses too many relevant Documents
+- natural-language business questions frequently fail due to synonym gaps
+- the team has a reliable embedding model available inside allowed infrastructure
+
+When embeddings are added, use hybrid ranking rather than replacing structured search.
+
+### 17. Citation policy
+
+Every answer should cite the Documents used for substantive claims.
+
+IT Mode citations should prefer:
+
+- Code Logic Documents
+- source file paths and line ranges
+- endpoint records where relevant
+
+Business Mode citations should prefer:
+
+- Business Logic Documents
+- concise source Document references
+- uncertainty summaries when a claim is incomplete
+
+If a claim comes from graph traversal rather than prose, cite the source and target Documents and include the edge reason in the internal evidence packet.
+
+### 18. Practical answers to the original six questions
+
+#### Q1 - Repo-scoped retrieval
+
+Answer:
+
+- retrieval is always scope-aware and authorization-aware
+- selected Repositories constrain seed search
+- cross-repo graph expansion may include authorized related Repositories when relevant
+
+#### Q2 - LLM-wiki limitations
+
+Answer:
+
+- keep LLM-wiki as the product pattern
+- implement it through database-backed tools, not by reading `index.md`
+- use `index_entries`, full-text search, structured Documents, and graph expansion
+
+#### Q3 - RAG and embeddings
+
+Answer:
+
+- do not require embeddings for initial V1
+- use PostgreSQL full-text search plus graph-enhanced retrieval first
+- keep `pgvector` as an upgrade path
+
+#### Q4 - `log.md` indexing
+
+Answer:
+
+- do not index `log.md` for RAG
+- answer operational questions from structured scan/event tables
+- keep `log.md` as an exported human-readable timeline
+
+#### Q5 - Context window management
+
+Answer:
+
+- use budgeted retrieval
+- prefer summaries and BL Documents for broad questions
+- load sections or full Documents only as needed
+- cap graph expansion
+
+#### Q6 - Cross-repo retrieval
+
+Answer:
+
+- automatically follow authorized, relevant cross-repo `REFERENCES` within budget
+- disclose cross-repo expansion in the answer
+- represent unresolved or unauthorized targets as uncertainty, not invented content
+
+### 19. What section 08 assumes from earlier sections
+
+Section 08 assumes:
+
+- section 04 provides `communication_endpoints` and endpoint-aware cross-repo relationships
+- section 06 stores BL trace, branch, dispatch, and unresolved metadata
+- section 07 stores canonical Documents in PostgreSQL with `content_jsonb`, `content_markdown`, and database-backed indexes
+
+### 20. What section 08 hands to implementation
+
+Section 08 hands these assumptions forward:
+
+- retrieval should be implemented as application services and typed Chat Agent tools
+- `index.md` and `log.md` remain exports, not canonical retrieval inputs
+- V1 retrieval should start with PostgreSQL full-text/metadata search plus graph expansion
+- embeddings are optional and should be hidden behind the retrieval service
+- cross-repo expansion is automatic when authorized, relevant, and within budget
+- answer synthesis must preserve uncertainty, stale notices, and dispatch/candidate ambiguity
+
+### 21. Resolved decisions summary
+
+The completed decisions for section 08 are:
+
+1. V1 uses database-backed agentic LLM-wiki retrieval.
+2. The Chat Agent uses typed retrieval tools rather than reading `index.md`.
+3. Seed search is scope-aware, authorization-aware, and mode-aware.
+4. V1 search starts with PostgreSQL full-text, metadata ranking, and graph expansion.
+5. Embeddings and `pgvector` are optional upgrade paths, not initial requirements.
+6. Cross-repo `REFERENCES` are followed automatically when authorized, relevant, and budgeted.
+7. `log.md` is not indexed for RAG; operational questions use structured tables.
+8. Context windows are managed by budgets, section loading, and graph expansion caps.
+9. Citations must link claims to Documents and source anchors where available.
+10. Uncertainty, stale notices, dispatch-site ambiguity, and candidate branches must remain visible in answers.

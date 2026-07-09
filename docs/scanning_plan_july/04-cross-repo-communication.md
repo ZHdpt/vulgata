@@ -2,13 +2,13 @@
 
 **Parent:** [AnchorDB+ v2 — Winning Document Graph Architecture](../bmad/planning-artifacts/architecture/document-graph-anchordb-plus-plan.md)
 **Extracted:** 2026-07-06
-**Status:** Review pending — extracting from original plan; questions raised below.
+**Status:** Section 04 completed — endpoint and dispatch-site direction agreed and ready to use as input for sections 03, 05, 06, and 08.
 
 ---
 
-## TODO — Open Questions from July Review
+## Original Open Questions
 
-> These are concerns raised that need to be addressed before finalizing this section.
+> These were the questions used to drive review. They are kept for traceability; the resolved position is documented below.
 
 1. **Each cross-repo communication should have its own identifier stored in the database.** The current plan stores endpoint identifiers in two places:
    - `edges.endpoint_identifier` — on resolved edges
@@ -119,3 +119,210 @@ Agent cannot identify target → unresolved/unknown_target
 - The `communication_endpoints` table proposal makes cross-repo edges more structured. Instead of "endpoint_identifier is a string that might match another string," it becomes "endpoint_id is an FK that must match a provider's endpoint."
 - This also helps the chat agent: when a user asks "what calls the RiskService?", the agent can query `communication_endpoints` for the canonical identifier, then find all edges referencing it.
 - The `communication_patterns` table was designed for the System Owner to pre-configure patterns. If agents can auto-discover endpoints, the System Owner's role shifts from "define patterns" to "review and confirm discovered endpoints."
+
+---
+
+## Proposed Direction for Section 04
+
+This section should now be interpreted together with the refined section-03 dispatch-site model.
+
+### 1. Core distinction: endpoints are provider entities, dispatch sites are consumer-side abstract invocations
+
+The design should distinguish two different things.
+
+#### Communication endpoint
+
+A persisted canonical provider-side interface such as:
+
+- HTTP route
+- RPC operation
+- gRPC service method
+- message topic or queue contract
+- GraphQL operation surface
+
+This is what another repo may ultimately call.
+
+#### Dispatch site
+
+A persisted consumer-side abstract invocation record created when a worker sees a cross-repo communication action but the concrete target depends on:
+
+- caller path
+- DI binding
+- generated-client configuration
+- environment configuration
+- framework runtime behavior
+
+So section 04 should not treat all cross-repo calls as immediate endpoint matches. Some of them are only endpoint-**hinted** dispatch sites at Pass 1 time.
+
+### 2. Recommended V1 model
+
+V1 should persist both:
+
+1. **communication_endpoints** as canonical provider-side entities
+2. **dispatch_sites** as canonical consumer-side abstract invocation records when local evidence is insufficient for a stable edge
+
+This keeps section 04 aligned with section 03 and section 02.
+
+### 3. Provider-side endpoint entity
+
+The `communication_endpoints` table is still the right direction, but it should be understood as a provider/interface catalog, not as the only abstraction for all cross-repo communication behavior.
+
+Recommended V1 purpose:
+
+- store canonical provider-side callable surfaces
+- support normalization and matching
+- support resolution of consumer observations
+- support retrieval queries like "what calls this interface?"
+
+Recommended additional semantics for the entity:
+
+- endpoint entity may exist before all caller relationships are known
+- endpoint entity may be discovered from code, config, specs, or framework metadata
+- endpoint entity may represent an operation contract even if no cross-repo caller has been resolved yet
+
+### 4. Consumer-side outcomes in Pass 1
+
+When a Pass 1 worker sees cross-repo communication behavior, it should choose one of four outcomes.
+
+#### Case A — exact endpoint known locally
+
+If local evidence identifies a concrete endpoint strongly enough:
+
+- create or match the `communication_endpoints` row
+- create a `REFERENCES` edge if the target document is already known, or create the endpoint-linked unresolved record needed for later resolution
+
+Examples:
+
+- explicit REST route call to one known service path
+- gRPC call bound to one known service method
+- queue publish to one known topic contract
+
+#### Case B — small bounded endpoint set known locally
+
+If local evidence yields a small bounded set:
+
+- create or match the candidate endpoint entities
+- persist candidate-set `REFERENCES` edges only when the bounded set is justified from the local unit itself
+
+#### Case C — caller-bound or environment-bound endpoint resolution
+
+If the concrete endpoint depends on caller path, DI binding, generated-client config, or runtime environment:
+
+- persist a **dispatch site**
+- store protocol and endpoint/contract hints on that dispatch site
+- do **not** force speculative base edges or fake exact endpoint matches
+
+This is the key refinement needed for generated clients and RPC proxy behavior.
+
+#### Case D — too little evidence even for a meaningful dispatch site
+
+If the worker cannot identify a credible contract, operation, endpoint family, or runtime mechanism:
+
+- create an `uncertainties` row
+- do not create endpoint matches or dispatch-site bindings that are too weak to defend
+
+### 5. Relationship between dispatch sites and endpoint entities
+
+Dispatch sites should be allowed to carry endpoint-facing hints such as:
+
+- `protocol`
+- `operation_name`
+- `contract_symbol`
+- `endpoint_identifier_hint`
+- `candidate_endpoint_ids`
+- `normalization_context`
+
+This means a dispatch site is not itself an endpoint. It is a consumer-side abstract invocation that may later bind to one or more endpoint entities.
+
+### 6. Resolution flow with dispatch sites
+
+Recommended flow:
+
+1. consumer worker sees proxy/client call
+2. worker extracts local evidence
+3. worker chooses:
+   - exact endpoint reference
+   - bounded candidate endpoint set
+   - dispatch site with endpoint hints
+   - uncertainty
+4. provider repo scan discovers or confirms `communication_endpoints`
+5. matching logic connects endpoint entities to unresolved consumer records
+6. Pass 2 may use caller-path and config evidence to bind dispatch sites to concrete endpoint targets for a specific trace
+
+So section 04 should support both:
+
+- **base-layer endpoint resolution**
+- **trace-time dispatch-site binding**
+
+### 7. Relationship to `communication_patterns`
+
+The refined recommendation for V1 is:
+
+- `communication_endpoints` are the canonical discovered/confirmed interface entities
+- `communication_patterns` are supporting normalization/detection rules
+- System Owner review applies to both discovered endpoints and important patterns
+
+So `communication_patterns` should become a helper layer, not the primary source of truth.
+
+### 8. Generated clients and RPC proxies
+
+Generated clients are exactly the place where section 04 must align with section 03.
+
+Recommended rule:
+
+- if a generated client maps locally and deterministically to one endpoint, treat it like Case A
+- if the generated client exposes a stable contract but the actual binding is caller-/config-dependent, treat it like Case C and record a dispatch site
+- if the generated client is too opaque to support either, treat it like Case D and record uncertainty
+
+### 9. What section 04 should hand to other sections
+
+Section 04 should hand these assumptions forward:
+
+- section 03 can rely on endpoint entities as the provider-side resolution target for RPC-like references
+- section 05 can use CodeGraph and framework metadata to populate endpoint evidence and dispatch-site hints
+- section 06 can bind dispatch sites to concrete endpoint targets at trace time when caller/config evidence allows it
+- section 08 can query endpoints as stable integration surfaces without confusing them with every consumer-side invocation form
+
+### 10. Remaining non-blocking implementation choices
+
+Section 04 does not appear to have remaining **blocking design questions**. The remaining choices are implementation-level and can be decided later without reopening the core communication model.
+
+Examples:
+
+1. whether `dispatch_sites` should be a separate table or a minimal persisted artifact store with equivalent stable IDs in V1
+2. the exact normalization function library per protocol
+3. the exact schema for endpoint-hint fields on dispatch sites
+4. the exact promotion flow from discovered endpoint to confirmed endpoint after review
+5. whether candidate endpoint IDs are stored directly on dispatch sites or resolved through a separate association table
+
+These are important, but they do not change the agreed direction:
+
+- provider-side endpoint entities are canonical
+- consumer-side abstract invocations may become dispatch sites
+- generated clients and RPC proxies do not always map directly to stable base edges
+- `communication_patterns` is a helper layer, not the primary source of truth
+
+### 11. Resolved decisions summary
+
+The completed decisions for section 04 are:
+
+1. `communication_endpoints` are canonical provider-side interface entities
+2. dispatch sites are the consumer-side abstraction for caller-/environment-bound communication behavior
+3. Pass 1 has four allowed cross-repo outcomes:
+   - exact endpoint
+   - bounded endpoint set
+   - dispatch site with endpoint hints
+   - uncertainty
+4. generated clients and RPC proxies may resolve to endpoints directly, to dispatch sites, or to uncertainty depending on evidence quality
+5. `communication_patterns` becomes a supporting normalization/detection layer rather than the primary source of truth
+6. Pass 2 may bind dispatch sites to concrete endpoint targets at trace time when caller/config evidence is strong enough
+
+### 12. Practical V1 stance
+
+Section 04 should now be treated as complete enough for downstream design work.
+
+That means later sections may assume:
+
+- exact endpoint mappings are possible but not mandatory for every cross-repo invocation
+- some cross-repo communication will only exist as dispatch sites in the base layer
+- endpoint resolution and trace-time dispatch-site binding are complementary, not competing, mechanisms
