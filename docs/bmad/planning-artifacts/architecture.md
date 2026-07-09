@@ -22,6 +22,15 @@ completedAt: '2026-06-18'
 
 _This document builds collaboratively through step-by-step discovery. Sections are appended as we work through each architectural decision together._
 
+## July 2026 Scanning Update
+
+The scanning subsystem was refined after this June architecture document. Use these July-merged artifacts as the implementation handoff for scanning:
+
+- [Vulgata V1 Scanning Technical Plan](architecture/scanning-v1-technical-plan.md)
+- [Vulgata V1 Scanning Data Contracts](architecture/scanning-v1-data-contracts.md)
+
+Where these documents conflict with older scanning, document graph, orchestration, storage, or retrieval details below, the July scanning artifacts supersede the older text.
+
 ## Project Context Analysis
 
 ### Requirements Overview
@@ -1265,4 +1274,3 @@ User clicks Scan → ScanRun created (Queued)
 4. SP-3 (Scan Coordinator) — non-LLM pipeline infrastructure
 5. SP-4 + SP-5 (Agent Orchestration + Worker) — after MAF spike validates approach
 6. SP-8 + SP-9 (Chat + Dashboard/Graph) — pure consumers, build last with real data
-

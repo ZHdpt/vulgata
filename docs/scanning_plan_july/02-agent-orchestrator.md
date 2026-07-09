@@ -267,6 +267,13 @@ Transition:
 - on approval → `pre_scan_approved`
 - on rejection or blocking ambiguity → `pre_scan_failed` or rerun pre-scan with overrides
 
+V1 auto-approval policy:
+
+- default to auto-approval when pre-scan produces usable scope buckets and framework/communication hypotheses
+- do not block on ordinary low-confidence hints; carry them as Pass 1 warnings
+- require human review only for blocking ambiguity that would materially change scan scope, skip important source, or require unsupported resource interpretation
+- for demo runs, if review is not completed within the configured SLA, continue with conservative scan scope and record a warning
+
 #### Step 4 — Pass 1 planning
 
 Actions:
@@ -274,7 +281,7 @@ Actions:
 - move workflow to `pass1_planning`
 - create `code_units` workset from pre-scan scope and CodeGraph output
 - exclude files in low-priority/excluded buckets from standalone doc generation
-- pre-allocate document records for selected code units
+- pre-allocate logical Document slots or planned version rows for selected code units
 - compute deterministic supersteps
 
 Superstep grouping inputs:
@@ -289,6 +296,14 @@ Superstep grouping inputs:
 Output:
 
 - ordered list of Pass 1 job groups
+
+Document identity rule:
+
+- pre-allocation creates stable job and reference targets, not finished generated Documents
+- planned/provisional rows may be completed once by the owning job, but they are not immutable generated Document versions until the persistence service validates and commits the Worker Agent result
+- same-scan references may target logical Document IDs while jobs are still running
+- scan finalization must resolve those references to generated Document version IDs or downgrade them to uncertainties before exposing them through retrieval or graph traversal
+- a generated `REFERENCES` edge must never point only at a mutable placeholder
 
 #### Step 5 — Pass 1 execution
 
@@ -331,6 +346,15 @@ Examples of material enrichment:
 - `A` calls `B`, and `B`'s finished document clarifies a major downstream effect that materially improves `A`'s Code Logic document
 - a dispatch site in `A` can only be bound after a later-scanned provider or callee document becomes available
 - a framework resource or injected implementation was unresolved when `A` ran but becomes bounded later in Pass 1
+
+The material-enrichment decision must be deterministic. The orchestrator should schedule a refinement job only when a later result satisfies an explicit dependency declared by the earlier job and at least one of these predicates is true:
+
+- an unresolved uncertainty can be downgraded to a dispatch site, candidate set, or exact `REFERENCES` edge
+- a dispatch site can gain stronger binding hints or a trace-relevant bounded candidate set
+- an endpoint, resource, or configuration artifact named by the earlier job becomes available
+- the later job is a direct callee/provider/resource explicitly listed in the earlier job's deferred dependencies
+
+The orchestrator should not ask an LLM whether enrichment is "material." If none of the predicates match, the dependency is recorded as satisfied-without-refinement.
 
 Transition:
 
@@ -466,6 +490,13 @@ LLM workers should interact with the workflow only through typed tools.
 - `get_related_outputs(job_id)`
    - returns completed outputs from the same superstep or same flow cluster
 
+Cross-verification is mandatory but lightweight in V1:
+
+- Pass 1 workers should read related outputs supplied in the job packet or through `get_related_outputs`
+- result contracts should include `verification_notes` and `disagreements`
+- disagreements are persisted as scan warnings or low-confidence notes, not as a separate review workflow unless they block a stable edge or source anchor
+- superstep grouping should prefer direct caller/callee, same file/module, same endpoint surface, and shared resource/config references so related outputs are likely available
+
 - `get_existing_document(document_id)`
    - returns the current document if regenerating or cross-checking
 
@@ -476,7 +507,10 @@ LLM workers should interact with the workflow only through typed tools.
 - `submit_pass1_result_with_dependencies(job_id, document, document_sources, edges, uncertainties, metadata, deferred_dependencies)`
    - same as `submit_pass1_result`, but allows the worker to declare that this document should be reconsidered if specific later job outputs become available
 
-- `submit_pass2_result(job_id, documents, generated_from_edges, references_edges, metadata)`
+- `submit_pass2_result(job_id, documents, generated_from_edges, semantic_reference_requests, metadata)`
+   - Pass 2 may submit `GENERATED_FROM` edges from Business Logic Documents to the Code Logic Documents actually used in synthesis.
+   - Pass 2 must not create new base Code Logic `REFERENCES` edges from narrative interpretation.
+   - Any BL-to-BL semantic reference request must be validated by the persistence service against existing flow-group, trace, endpoint, or graph evidence before it becomes a stored `REFERENCES` edge.
 
 - `report_job_failure(job_id, error_type, details)`
 
@@ -622,6 +656,74 @@ The Pass 2 worker reads:
 
 Pass 2 is therefore **graph-first**, not file-first.
 
+### 9.3 Worker prompt contract
+
+Worker prompts should be externalized under `src/dotnet/Vulgata.Agents/Prompts/` and embedded as resources by the Agents project when implementation begins. Prompts should not be hardcoded in orchestration code.
+
+Minimum V1 prompt set:
+
+```text
+Prompts/
+  pass1-code-logic-worker.md
+  pass1-refinement-worker.md
+  pass2-business-flow-worker.md
+  chat-retrieval-synthesis.md
+```
+
+`pass1-code-logic-worker.md` must include:
+
+- assigned Code Unit boundaries and instruction not to turn the job into freeform subsystem exploration
+- the Pass 1 edge-emission rubric from section 05
+- Source Anchoring requirements
+- rules for dispatch sites vs candidate-set `REFERENCES` vs uncertainties
+- required output fields: structured document payload, source anchors, edges, dispatch sites, uncertainties, entry-point tags, deferred enrichment dependencies, `verification_notes`, and `disagreements`
+
+`pass1-refinement-worker.md` must include:
+
+- the original source slice, existing Document Version, and satisfied dependency evidence
+- instruction to update only facts justified by the satisfied dependency
+- instruction to preserve unresolved uncertainty when the deterministic enrichment predicate was too weak to settle it
+
+`pass2-business-flow-worker.md` must include:
+
+- flow group ID, ordered traces, trace steps, candidate selections, dispatch bindings, endpoint bindings, and unresolved trace records
+- instruction to explain the prepared graph slice, not rediscover the graph
+- instruction to preserve generation-time resolution state
+- output fields for BL Document payload, `GENERATED_FROM` edges, semantic reference requests, confidence summary, and unresolved branch notes
+
+Prompt few-shot examples should be small and focused on the edge/dispatch/uncertainty rubric. They should not encode repository-specific business logic.
+
+### 9.4 V1 LLM budget model
+
+The scan workflow should estimate cost before dispatching jobs and record actual usage after each LLM call.
+
+Recommended budget fields:
+
+```text
+scan_llm_usage
+  scan_id
+  agent_type              -- pre_scan, pass1_worker, pass1_refinement, pass2_worker, chat
+  call_count
+  input_tokens
+  output_tokens
+  estimated_cost_units
+```
+
+Planning formulas:
+
+- pre-scan calls = `repositories_scanned`
+- Pass 1 worker calls ~= `code_units_in_scope`
+- Pass 1 refinement calls <= `code_units_with_satisfied_material_dependencies`
+- Pass 2 worker calls = `flow_groups`
+- chat calls per question = `retrieval_tool_rounds + synthesis_call`
+
+Default V1 token guardrails:
+
+- Pass 1 job packet should fit a configured per-worker input budget
+- Pass 2 job packet should trim CL Documents by section before full-document content
+- chat synthesis should cap evidence packet size before the final LLM call
+- provider prices should remain configuration, not baked into prompts or workflow code
+
 ### 10. Deterministic vs LLM responsibilities
 
 The split should be explicit.
@@ -709,7 +811,7 @@ Examples:
 
 3. exact failure threshold values for allowing partial completion vs terminating the scan
 
-4. exact concurrency defaults per worker kind in V1
+4. exact concurrency defaults per worker kind after V1
 
 5. whether the Scan Coordinator and Repo Workflow Orchestrator remain separate components in code or are merged into one service
 
@@ -719,6 +821,14 @@ These are important, but they do not change the agreed direction:
 - pull-based typed job dispatch
 - bounded LLM worker responsibilities
 - graph-first and context-packet-based scanning behavior
+
+V1 concurrency stance:
+
+- keep `MaxConcurrentScans = 1` for the August 15 path
+- keep `MaxWorkersPerScan = 5` as the default cap across Pass 1, refinement, and Pass 2 workers
+- do not overlap Pass 2 for one Repository with Pass 1 for another Repository in V1
+- run Cross-Repository Resolution after each Repository scan completes, but keep it short, deterministic, and serialized with scan finalization
+- revisit multi-repo overlap only after the single-repo workflow is stable
 
 ### 14. Resolved decisions summary
 
@@ -732,3 +842,5 @@ The completed decisions for section 02 are:
 6. off-job references are handled through bounded expansion, uncertainty emission, or explicit escalation
 7. HITL exists only as a bounded exception path in Pass 1
 8. Pass 2 jobs are built from deterministic flow-group planning, not one monolithic system prompt
+9. material enrichment is decided by deterministic predicates over declared dependencies
+10. V1 keeps scan concurrency simple: one Repository scan at a time, up to five workers per scan

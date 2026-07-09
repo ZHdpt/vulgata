@@ -6,7 +6,7 @@
 
 ---
 
-## TODO — Open Questions from July Review
+## Original Open Questions from July Review
 
 > These are concerns raised that need to be addressed before finalizing this section.
 
@@ -348,17 +348,26 @@ Suggested fields:
 
 This should be produced by workers through typed result contracts rather than freeform strings whenever possible.
 
+Candidate group contract:
+
+- `candidate_group_id` is scoped to the source Document version unless explicitly promoted to a reusable logical group
+- generated IDs should be deterministic from source Document identity, normalized call/site identity, and candidate target identities
+- all members of a candidate group must share the same source Document and invocation/relationship site
+- refinement may replace a candidate group with a new group version, but it should not silently reuse the same ID for changed membership
+- trace-level candidate selections belong in durable trace binding tables, not only inside edge metadata
+
 ### 10. Impact-analysis behavior under ambiguous references
 
 Impact analysis should include low-confidence candidate-set references, but the UI should distinguish them from exact references.
 
 Recommended behavior:
 
-- traversal includes all persisted `REFERENCES` edges
+- traversal includes persisted `REFERENCES` edges that are eligible for impact traversal
 - visualization and reports should surface confidence and candidate-group semantics
 - dispatch sites are **not** traversed as ordinary downstream edges in the base graph
 - dispatch sites may still contribute **advisory impact notices** when their binding hints match a changed provider, endpoint, contract, or implementation surface
 - uncertainty-only cases are not traversed as edges because no target is yet known
+- BL-to-BL semantic references created for navigation or narrative context should not drive code-change impact traversal unless they are backed by `GENERATED_FROM`, endpoint, or trace evidence that makes the dependency operationally relevant
 
 This preserves recall while avoiding fake certainty.
 
@@ -483,18 +492,21 @@ This layer is used for:
 
 #### Layer 2 — Trace-specific binding layer
 
-Stores or computes:
+Stores durable records for any trace that is used to generate a Business Logic Document, and may compute throwaway records for exploratory traces:
 
 - which candidate-set branch was selected on a path
 - which dispatch site was bound on a path
 - what caller or config evidence caused the binding
 - where ambiguity remained unresolved
+- the trace steps, entry point, termination reason, and confidence floor
+- the flow group that consumed the trace
 
 This layer is used for:
 
 - Pass 2 flow extraction
 - BL document synthesis
 - explanation of actual or likely execution paths
+- section 08 retrieval and citation of branch/dispatch decisions
 
 ### 10C. Practical graph shape for the generic case
 

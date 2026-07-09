@@ -6,7 +6,7 @@
 
 ---
 
-## TODO — Open Questions from July Review
+## Original Open Questions from July Review
 
 > These are concerns raised that need to be addressed before finalizing this section.
 
@@ -167,11 +167,13 @@ But the Chat Agent should not literally read a large `index.md` file as the cano
 Instead, the Chat Agent should use typed retrieval tools over:
 
 - `index_entries`
+- `document_sections`
 - `documents.content_markdown`
 - `documents.content_jsonb`
 - relational `edges`
 - `uncertainties`
 - `communication_endpoints`
+- `flow_groups`, `flow_traces`, trace steps, and trace bindings
 - structured scan/event tables
 
 `index.md` remains an exported wiki artifact, not the retrieval source of truth.
@@ -191,6 +193,7 @@ Application code owns:
 - confidence filtering
 - document budget enforcement
 - citation payload construction
+- redaction of unauthorized Repository, Document, endpoint, Edge, and Uncertainty details
 
 #### Layer 2 - Chat Agent retrieval tools
 
@@ -202,6 +205,8 @@ The Chat Agent calls typed tools such as:
 - `expand_related_documents`
 - `get_uncertainty_summary`
 - `get_endpoint_context`
+- `get_flow_trace_context`
+- `get_source_anchor_context`
 - `get_scan_status`
 
 The agent chooses which tools to call and when to stop, but it does not hand-parse indexes or freely query tables.
@@ -224,11 +229,13 @@ V1 should use **hybrid structured search without mandatory embeddings**.
 Recommended V1 search signals:
 
 - PostgreSQL full-text search over title, summary, key symbols, business terms, technical terms, and rendered content
+- materialized `document_sections` search over section text and section kinds
 - metadata filters over System, Repository, doc type, status, confidence, scan recency, and access scope
 - exact/partial symbol matching for IT Mode
 - business-term matching for Business Mode
 - endpoint identifier matching for cross-repo communication questions
 - graph expansion from high-ranked seed Documents
+- trigram, exact-token, and business-term alias fallback for Chinese, mixed Chinese/English, and identifier-heavy queries
 
 Embeddings through `pgvector` should be designed as an optional upgrade path, not required for the first V1 retrieval implementation.
 
@@ -237,10 +244,18 @@ Why:
 - PostgreSQL full-text search needs no new provider or embedding model
 - generated Documents are structured and summarized by design
 - graph expansion carries much of the "semantic" relationship signal
+- Chinese and mixed-language matching can start with section search, business-term aliases, exact symbols, and trigram fallback before requiring embeddings
 - embeddings add operational cost and provider capability questions
 - section 07 already keeps `content_jsonb` and section structure ready for future embedding rows
 
 If retrieval quality is poor with full-text plus graph expansion, `pgvector` can be added later without replacing the retrieval architecture.
+
+Chinese search caveat:
+
+- PostgreSQL built-in full-text search should not be treated as a complete Chinese tokenizer.
+- V1 should rely on exact identifier matching, business-term aliases extracted into retrieval metadata, `document_sections.search_text`, and trigram indexes for Chinese or mixed Chinese/English queries.
+- A proper tokenizer such as `zhparser`, an application-side tokenizer, or embeddings can be evaluated after the deadline if retrieval quality demands it and the extension is acceptable for the Docker/PostgreSQL deployment.
+- The V1 acceptance bar is reliable recall for known business terms, source symbols, endpoint identifiers, and section headings, not general-purpose Chinese semantic search.
 
 ### 4. Database-backed LLM-wiki interpretation
 
@@ -280,6 +295,15 @@ Scope rules:
 - standalone Repositories are included only when explicitly selected or when graph expansion reaches them through authorized edges
 - all retrieval results must be filtered by the user's access rights
 - cross-repo expansion may read outside the selected scope only through explicit graph relationships and only if the target is authorized
+
+Authorization contract:
+
+- Repository authorization is the outer boundary. In the current management model, Administrators can see all Repositories, while SystemOwners see Repositories through visible Systems; standalone Repository visibility must be treated as an explicit policy choice before chat uses it for cross-repo expansion.
+- Document authorization is inherited from the owning Repository unless a later Document-level policy narrows it.
+- Edge authorization requires both endpoint Documents to be authorized before the target title, Repository name, endpoint name, or behavior can be disclosed.
+- Endpoint authorization follows the owning Repository for provider-side endpoints and the source Repository for consumer-side hints; cross-repo endpoint names are redacted unless the relevant Repository is authorized.
+- Uncertainty summaries must be redaction-aware. If the target Repository or endpoint is unauthorized, the summary may say that an external dependency exists only if that fact is allowed by policy; it must not leak restricted Repository names, route names, endpoint names, or business behavior.
+- Trace and flow-group records are readable only when every included Document or endpoint detail is authorized or redacted in the returned evidence packet.
 
 If no Systems or Repositories are selected, Vulgata should auto-scope:
 
@@ -336,14 +360,15 @@ Recommended V1 flow:
    - 2-4 BL Documents for Business Mode when available
    - 3-5 CL Documents for IT Mode or code-specific questions
 4. Load selected Documents:
-   - full `content_markdown` for short Documents
-   - relevant sections from `content_jsonb` or `document_sections` for large Documents
+   - relevant sections from `document_sections`
+   - full `content_markdown` only for short Documents or when the answer needs whole-document continuity
 5. Expand graph context:
    - outgoing/incoming `REFERENCES`
    - `GENERATED_FROM` from BL to CL when verification is needed
    - cross-repo `REFERENCES`
    - endpoint-linked relationships
    - unresolved uncertainties related to selected Documents
+   - flow traces, trace steps, candidate selections, and dispatch-site bindings for selected BL Documents
 6. Re-rank and trim the evidence packet.
 7. Synthesize the answer with citations.
 
@@ -354,7 +379,7 @@ Recommended initial budget:
 - 3-5 seed Documents
 - up to 5 graph-expanded Documents
 - maximum 10 Documents total
-- section-level loading when total content would exceed the context budget
+- section-level loading by default, with full-document reads only when budget allows and continuity is needed
 
 ### 8. Graph expansion policy
 
@@ -375,7 +400,7 @@ Graph expansion should avoid:
 - unlimited transitive traversal
 - treating dispatch-site hints as resolved edges
 
-Dispatch-site and candidate-branch metadata from section 06 must be preserved in the evidence packet.
+Dispatch-site and candidate-branch records from section 06 must be preserved in the evidence packet when they explain why a path was selected, left unresolved, or downgraded.
 
 ### 9. Cross-repo retrieval policy
 
@@ -398,6 +423,7 @@ When a cross-repo edge points to an unauthorized or unscanned target:
 
 - do not expose restricted content
 - mention only the allowed uncertainty summary
+- redact target Repository, endpoint, route, and behavior details when the user is not authorized to see them
 - cite the source Document's uncertainty or endpoint record
 
 For unresolved cross-repo links:
@@ -578,17 +604,27 @@ Answers should flag:
 - Cross-Repo Stale Notices
 - partial scan gaps
 - unscanned target Repositories
+- BL Documents whose generation-time resolution state differs from current graph truth
+- `resolution_outdated_at` or equivalent stale-notice markers
 
 Do not hide uncertainty from Business Mode. Business Mode should phrase it plainly, not technically.
 
+When retrieval combines stale Document prose with newer graph evidence:
+
+- keep generation-time evidence and query-time evidence separate in the internal evidence packet
+- cite the stale BL Document for what it claimed at generation time
+- cite the newly resolved target CL/BL Document, endpoint, or Edge for current graph truth
+- tell the user plainly that the BL Document was generated before the later Cross-Repository Resolution
+- never let a stale BL statement such as "provider unscanned" override a newer authorized target Document
+
 ### 15. Section-level retrieval
 
-Section-level retrieval is useful but should be materialized as a derived index, not hand-parsed from JSONB during every chat turn.
+Section-level retrieval is required for V1 and should be materialized as a derived index, not hand-parsed from JSONB during every chat turn.
 
 Recommended path:
 
-- V1 minimum: query `index_entries`, then read full `content_markdown`
-- V1 improved: materialize `document_sections` from `content_jsonb`
+- V1 minimum: query `index_entries` and `document_sections`, then read only relevant sections by default
+- V1 fallback: read full `content_markdown` for short Documents or when section retrieval cannot preserve continuity
 - V2: add section embeddings if full-text search is not enough
 
 `document_sections` can include:
@@ -628,7 +664,7 @@ Every answer should cite the Documents used for substantive claims.
 IT Mode citations should prefer:
 
 - Code Logic Documents
-- source file paths and line ranges
+- Source Anchoring payloads with commit, file path, Code Unit ID, line range, and snippet or snippet hash
 - endpoint records where relevant
 
 Business Mode citations should prefer:
@@ -637,7 +673,16 @@ Business Mode citations should prefer:
 - concise source Document references
 - uncertainty summaries when a claim is incomplete
 
-If a claim comes from graph traversal rather than prose, cite the source and target Documents and include the edge reason in the internal evidence packet.
+If a claim comes from graph traversal rather than prose, cite the source and target Documents and include the Edge reason in the internal evidence packet.
+
+Citation payloads should be built from Source Anchoring records, not ad hoc JSONB strings. The payload should include enough identity to survive file renames and line drift:
+
+- repository ID and scanned commit
+- file path at scan time
+- Code Unit ID
+- line range
+- source hash or snippet hash
+- Document version ID that made the claim
 
 ### 18. Practical answers to the original six questions
 
@@ -656,13 +701,14 @@ Answer:
 - keep LLM-wiki as the product pattern
 - implement it through database-backed tools, not by reading `index.md`
 - use `index_entries`, full-text search, structured Documents, and graph expansion
+- use `document_sections` for default evidence loading instead of relying on whole-document reads
 
 #### Q3 - RAG and embeddings
 
 Answer:
 
 - do not require embeddings for initial V1
-- use PostgreSQL full-text search plus graph-enhanced retrieval first
+- use PostgreSQL full-text search, section search, exact symbol matching, business-term aliases, trigram fallback, and graph-enhanced retrieval first
 - keep `pgvector` as an upgrade path
 
 #### Q4 - `log.md` indexing
@@ -679,7 +725,7 @@ Answer:
 
 - use budgeted retrieval
 - prefer summaries and BL Documents for broad questions
-- load sections or full Documents only as needed
+- load sections by default and full Documents only when needed
 - cap graph expansion
 
 #### Q6 - Cross-repo retrieval
@@ -689,14 +735,15 @@ Answer:
 - automatically follow authorized, relevant cross-repo `REFERENCES` within budget
 - disclose cross-repo expansion in the answer
 - represent unresolved or unauthorized targets as uncertainty, not invented content
+- redact unauthorized Repository, endpoint, route, Edge, and behavior details
 
 ### 19. What section 08 assumes from earlier sections
 
 Section 08 assumes:
 
 - section 04 provides `communication_endpoints` and endpoint-aware cross-repo relationships
-- section 06 stores BL trace, branch, dispatch, and unresolved metadata
-- section 07 stores canonical Documents in PostgreSQL with `content_jsonb`, `content_markdown`, and database-backed indexes
+- section 06 stores BL trace, branch, dispatch, endpoint, and unresolved evidence as durable records
+- section 07 stores canonical Documents in PostgreSQL with `content_jsonb`, `content_markdown`, `document_sections`, `resolution_outdated_at` or equivalent stale markers, and database-backed indexes
 
 ### 20. What section 08 hands to implementation
 
@@ -704,10 +751,12 @@ Section 08 hands these assumptions forward:
 
 - retrieval should be implemented as application services and typed Chat Agent tools
 - `index.md` and `log.md` remain exports, not canonical retrieval inputs
-- V1 retrieval should start with PostgreSQL full-text/metadata search plus graph expansion
+- V1 retrieval should start with PostgreSQL full-text/metadata search, section search, language/symbol fallbacks, and graph expansion
+- Chinese and mixed-language retrieval should use trigram/exact/business-term fallback in V1 rather than depend on PostgreSQL built-in tokenization alone
 - embeddings are optional and should be hidden behind the retrieval service
 - cross-repo expansion is automatic when authorized, relevant, and within budget
 - answer synthesis must preserve uncertainty, stale notices, and dispatch/candidate ambiguity
+- stale BL prose must be separated from newer query-time graph evidence
 
 ### 21. Resolved decisions summary
 
@@ -716,10 +765,13 @@ The completed decisions for section 08 are:
 1. V1 uses database-backed agentic LLM-wiki retrieval.
 2. The Chat Agent uses typed retrieval tools rather than reading `index.md`.
 3. Seed search is scope-aware, authorization-aware, and mode-aware.
-4. V1 search starts with PostgreSQL full-text, metadata ranking, and graph expansion.
+4. V1 search starts with PostgreSQL full-text, section search, metadata ranking, language/symbol fallbacks, and graph expansion.
 5. Embeddings and `pgvector` are optional upgrade paths, not initial requirements.
 6. Cross-repo `REFERENCES` are followed automatically when authorized, relevant, and budgeted.
 7. `log.md` is not indexed for RAG; operational questions use structured tables.
 8. Context windows are managed by budgets, section loading, and graph expansion caps.
 9. Citations must link claims to Documents and source anchors where available.
 10. Uncertainty, stale notices, dispatch-site ambiguity, and candidate branches must remain visible in answers.
+11. Repository, Document, Edge, endpoint, trace, and Uncertainty details are redacted unless authorized.
+12. `document_sections` is part of V1 retrieval, while full-document reads are a fallback for short or continuity-sensitive Documents.
+13. Chinese retrieval does not depend on built-in PostgreSQL tokenization alone; V1 uses exact, alias, section, and trigram fallback.

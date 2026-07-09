@@ -234,6 +234,19 @@ This better matches the intended job:
 - limited human/system-owner review
 - preparation for deeper Pass 1 analysis
 
+### 6A. Review gate default for V1
+
+The pre-scan review gate should be generous by default for the August 15 V1 path.
+
+Recommended V1 auto-approval rule:
+
+- auto-approve when the pre-scan report identifies language/framework, scan-scope buckets, likely communication kinds, and no unsupported resource that blocks Pass 1
+- do not require human review just because the report has low-confidence hints, incomplete endpoint guesses, or candidate hotspots; those belong to Pass 1 confirmation
+- require human review only when the pre-scan result would exclude a large source area, when a plain-text resource appears business-critical but ambiguous, when framework detection fails, or when a binary/unsupported resource is likely necessary for scanning
+- if no human responds before the demo-time review SLA, continue with conservative defaults and record the unresolved item as a scan warning
+
+This keeps production-quality review semantics without letting the V1 demo queue block on routine uncertainty.
+
 ### 7. Final working position for Section 01
 
 Section 01 should assume:
@@ -243,6 +256,7 @@ Section 01 should assume:
 3. entry point discovery moves to Pass 1
 4. communication pattern authoring is not manual-first
 5. pre-scan proposes candidate communication kinds and hotspots; Pass 1 confirms concrete endpoints
+6. pre-scan review auto-approves by default unless there is a blocking ambiguity that would make Pass 1 unsafe or misleading
 
 ### 8. Sampling strategy for the single LLM pre-scan
 

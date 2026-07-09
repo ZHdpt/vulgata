@@ -163,6 +163,12 @@ V1 should persist both:
 
 This keeps section 04 aligned with section 03 and section 02.
 
+Deadline decision:
+
+- `dispatch_sites` is a first-class relational table in V1, not a generic artifact store
+- endpoint hints that can have many candidates use a join table
+- trace-specific dispatch bindings belong to the Pass 2 flow-trace tables described in section 07, not on the base dispatch-site row
+
 ### 3. Provider-side endpoint entity
 
 The `communication_endpoints` table is still the right direction, but it should be understood as a provider/interface catalog, not as the only abstraction for all cross-repo communication behavior.
@@ -234,6 +240,47 @@ Dispatch sites should be allowed to carry endpoint-facing hints such as:
 
 This means a dispatch site is not itself an endpoint. It is a consumer-side abstract invocation that may later bind to one or more endpoint entities.
 
+Recommended V1 schema:
+
+```text
+dispatch_sites
+  id
+  scan_id
+  repository_id
+  source_document_id
+  source_document_version_id
+  source_code_unit_id
+  call_symbol
+  receiver_kind
+  receiver_type_hint
+  dispatch_kind
+  resolution_scope        -- local, caller_bound, config_bound, runtime_open
+  protocol                -- http, rpc, mq, file, page_navigation, unknown
+  endpoint_identifier_hint
+  contract_symbol
+  operation_name
+  normalization_context_jsonb
+  confidence
+  status                  -- unresolved, candidate, bound_in_trace, promoted_to_edge, wontfix
+  created_at
+
+dispatch_site_endpoint_candidates
+  id
+  dispatch_site_id
+  communication_endpoint_id
+  rank
+  confidence
+  evidence_jsonb
+```
+
+Implementation notes:
+
+- `source_document_version_id` points at the generated Document Version that observed the dispatch site.
+- `source_document_id` or logical identity is retained for current-version lookup.
+- `dispatch_site_endpoint_candidates` is optional per row; weak hints can stay in `endpoint_identifier_hint` until provider endpoints exist.
+- A trace binding may select one candidate for one flow trace without promoting that choice to a base `REFERENCES` edge.
+- Promotion to an exact `REFERENCES` edge is allowed only when later Pass 1 evidence makes the target stable from the source unit itself.
+
 ### 6. Resolution flow with dispatch sites
 
 Recommended flow:
@@ -289,11 +336,9 @@ Section 04 does not appear to have remaining **blocking design questions**. The 
 
 Examples:
 
-1. whether `dispatch_sites` should be a separate table or a minimal persisted artifact store with equivalent stable IDs in V1
-2. the exact normalization function library per protocol
-3. the exact schema for endpoint-hint fields on dispatch sites
-4. the exact promotion flow from discovered endpoint to confirmed endpoint after review
-5. whether candidate endpoint IDs are stored directly on dispatch sites or resolved through a separate association table
+1. the exact normalization function library per protocol
+2. the exact promotion flow from discovered endpoint to confirmed endpoint after review
+3. exact index tuning for `dispatch_sites` and `dispatch_site_endpoint_candidates`
 
 These are important, but they do not change the agreed direction:
 
@@ -316,6 +361,7 @@ The completed decisions for section 04 are:
 4. generated clients and RPC proxies may resolve to endpoints directly, to dispatch sites, or to uncertainty depending on evidence quality
 5. `communication_patterns` becomes a supporting normalization/detection layer rather than the primary source of truth
 6. Pass 2 may bind dispatch sites to concrete endpoint targets at trace time when caller/config evidence is strong enough
+7. V1 stores `dispatch_sites` and candidate endpoint associations relationally
 
 ### 12. Practical V1 stance
 

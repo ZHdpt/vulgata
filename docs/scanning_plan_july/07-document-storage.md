@@ -6,7 +6,7 @@
 
 ---
 
-## TODO — Open Questions from July Review
+## Original Open Questions from July Review
 
 > These are concerns raised that need to be addressed before finalizing this section.
 
@@ -236,14 +236,20 @@ The rule should be:
 
 Relational tables remain authoritative for:
 
-- Document identity, type, status, tree placement, and Version Chain
+- logical Document identity, Document version identity, type, status, tree placement, and Version Chain
 - `document_sources`
 - `edges`
 - `uncertainties`
 - `dispatch_sites`
 - `communication_endpoints`
+- `flow_groups`
+- `flow_traces`
+- `flow_trace_steps`
+- trace candidate selections and dispatch-site bindings
 - `reverse_index`
 - `index_entries`
+- `document_sections`
+- Source Anchoring and citation payload records derived from `code_units`, `document_sources`, and `reverse_index`
 
 JSONB stores:
 
@@ -253,9 +259,15 @@ JSONB stores:
 - source/reference IDs used inside sections
 - retrieval terms
 - Pass 1 metadata that is useful for display
-- Pass 2 trace metadata that is useful for explanation
+- rendered Pass 2 trace summaries that are useful for explanation
 
-Do not rely on JSONB arrays as the only source of truth for `REFERENCES` edges, `GENERATED_FROM` edges, or Source Anchoring. Those must stay relational.
+Do not rely on JSONB arrays as the only source of truth for `REFERENCES` edges, `GENERATED_FROM` edges, Source Anchoring, flow traces, candidate selections, dispatch-site bindings, endpoint bindings, or unresolved trace items. Those must stay relational.
+
+Schema ownership:
+
+- Section 04 owns `communication_endpoints`, `dispatch_sites`, and `dispatch_site_endpoint_candidates`.
+- Section 07 owns document body/version storage, retrieval indexes, and Pass 2 flow-trace persistence tables.
+- Section 08 consumes these tables through retrieval services; it should not define new storage truth.
 
 ### 6. Rendered Markdown
 
@@ -274,7 +286,7 @@ This gives Vulgata:
 - fast full-document reads for the chat agent
 - simple display in the document viewer
 - stable export content
-- a migration path toward section-level retrieval
+- a deterministic source for V1 section-level retrieval
 
 If a Worker Agent submits Markdown directly, the persistence layer should still wrap it into a JSONB envelope rather than treating raw Markdown as the only canonical body.
 
@@ -282,22 +294,28 @@ If a Worker Agent submits Markdown directly, the persistence layer should still 
 
 Section 06 requires BL Documents to preserve path-state semantics.
 
-For Business Logic Documents, `content_jsonb` or structured metadata should include:
+For Business Logic Documents, relational trace tables should include:
 
 - source flow group ID
 - entry point document IDs
 - trace IDs used
+- trace steps
 - selected candidate groups
 - unresolved candidate groups
 - dispatch-site bindings
 - unresolved dispatch sites
+- endpoint bindings
+- trace termination reasons
+- resolution state at generation
 - endpoint IDs referenced
 - uncertainty IDs referenced
 - confidence summary
 
 This metadata is not just decoration. Section 08 needs it so chat can avoid flattening unresolved branches into certain business facts.
 
-Recommended BL extension:
+`content_jsonb` should include a rendered copy of the same identifiers for display and export, but the database records above remain authoritative.
+
+Recommended BL render copy:
 
 ```json
 {
@@ -327,11 +345,101 @@ Recommended BL extension:
 }
 ```
 
+### 7A. Flow-trace persistence schema
+
+V1 should implement the Pass 2 trace evidence as relational tables owned by the document storage model.
+
+Recommended minimum schema:
+
+```text
+flow_groups
+  id
+  scan_id
+  repository_id
+  business_logic_document_id
+  business_logic_document_version_id
+  title
+  entry_point_document_ids_jsonb
+  grouping_score_jsonb
+  trace_count
+  confidence
+  created_at
+
+flow_traces
+  id
+  flow_group_id
+  entry_point_document_id
+  entry_point_document_version_id
+  confidence_floor
+  termination_reason
+  resolution_state_jsonb
+  created_at
+
+flow_trace_steps
+  id
+  flow_trace_id
+  step_order
+  document_id
+  document_version_id
+  edge_id
+  step_kind              -- reference, candidate_selection, dispatch_binding, endpoint_handoff, uncertainty, termination
+  condition_text
+  confidence
+  evidence_jsonb
+
+flow_trace_candidate_selections
+  id
+  flow_trace_id
+  candidate_group_id
+  selected_document_id
+  selected_document_version_id
+  status                 -- selected, unresolved, capped
+  basis
+  confidence
+
+flow_trace_dispatch_bindings
+  id
+  flow_trace_id
+  dispatch_site_id
+  selected_document_id
+  selected_document_version_id
+  selected_endpoint_id
+  status                 -- bound, candidate, unresolved
+  basis
+  confidence
+
+flow_trace_endpoint_bindings
+  id
+  flow_trace_id
+  communication_endpoint_id
+  target_document_id
+  target_document_version_id
+  status                 -- resolved, unscanned, unauthorized, ambiguous
+  basis
+  confidence
+```
+
+Implementation notes:
+
+- unresolved candidate groups and unresolved dispatch sites are rows with `status = unresolved`, not only JSON arrays
+- `resolution_state_jsonb` records generation-time cross-repo and authorization state for retrieval, but queryable IDs stay in the binding tables
+- `business_logic_document_version_id` may be null until the BL Document version is committed, then filled in the same transaction or immediate post-commit update
+- if a later Cross-Repository Resolution changes a trace target, affected BL Document versions should receive `resolution_outdated_at`
+
 ### 8. Versioning model
 
 Generated Documents remain immutable.
 
 The Version Chain should continue to use `superseded_by_id`.
+
+V1 should distinguish two identities:
+
+- **Logical Document identity:** the stable slot addressed by jobs, UI routes, same-scan references, and re-scan matching.
+- **Document Version identity:** the immutable generated snapshot stored in `documents` or an equivalent version table.
+
+Pre-allocation should create a logical slot or a planned/provisional version row. A planned row is not a generated Document and must not be exposed as graph truth. Once a Worker Agent result is validated and committed, that version becomes immutable. Any later refinement or re-scan creates a new version, links the prior version through the Version Chain, and updates the logical current pointer.
+
+Edges are versioned facts. A generated edge must point to generated Document versions. During a scan, references may be staged against logical identities, but scan finalization must resolve them to concrete generated versions or downgrade them to uncertainties. When a target version is later superseded, old edges are preserved for history and current retrieval should either follow the logical current version with a stale notice or force regeneration of affected Documents according to the re-scan policy.
 
 Recommended V1 rule:
 
@@ -339,6 +447,7 @@ Recommended V1 rule:
 - do not mutate old document versions
 - do not optimize by storing JSON diffs in V1
 - compute diffs between versions on demand or in a derived table later
+- include `resolution_outdated_at` and `resolution_outdated_reason` on Document versions or an equivalent stale-notice table for BL Documents whose generation-time cross-repo state no longer matches current graph truth
 
 This preserves auditability and keeps incremental re-scan simple.
 
@@ -359,6 +468,8 @@ Recommended write sequence:
    - `edges`
    - `uncertainties`
    - `dispatch_sites`
+   - `flow_groups`, `flow_traces`, trace steps, and trace bindings when writing Pass 2 output
+   - `document_sections`
    - other scan-output rows
 5. Post-scan jobs rebuild:
    - `reverse_index`
@@ -397,18 +508,48 @@ Section 07 should not fully decide retrieval strategy, but it should store enoug
 Recommended derived retrieval structures:
 
 - `index_entries` for document-level search and summaries
-- optional `document_sections` for section-level retrieval
-- optional PostgreSQL full-text search vectors over title, summary, key symbols, and content
+- `document_sections` for section-level retrieval
+- PostgreSQL full-text search vectors over title, summary, key symbols, business terms, technical terms, and section content
+- trigram or exact-symbol fallback indexes for Chinese, mixed-language, and identifier-heavy queries
 - optional embeddings later through `pgvector`
 
 For V1, the minimum should be:
 
 - document-level `index_entries`
-- `content_markdown` full-document reads
-- `content_jsonb` section structure
+- materialized `document_sections` derived from `content_jsonb`
+- `content_markdown` full-document reads for short Documents and display
 - relational graph traversal through `edges`
 
-If section 08 adopts section-level retrieval, `document_sections` can be materialized from `content_jsonb` without changing the canonical document model.
+Section 08 assumes section-level retrieval from V1. `document_sections` can still be materialized from `content_jsonb` without changing the canonical document model.
+
+Recommended `document_sections` schema:
+
+```text
+document_sections
+  id
+  document_id
+  document_version_id
+  section_id
+  section_order
+  section_kind
+  heading
+  content_markdown
+  token_estimate
+  source_anchor_refs_jsonb
+  document_refs_jsonb
+  uncertainty_refs_jsonb
+  search_text
+  search_vector
+  created_at
+```
+
+Build/rebuild rules:
+
+- materialize `document_sections` from `content_jsonb.sections` whenever a Document Version is committed
+- rebuild rows for a version by deleting and re-inserting that version's sections in the same transaction or post-commit index job
+- `search_vector` covers English and identifier-heavy text where PostgreSQL full-text is useful
+- `search_text` plus trigram indexes support Chinese, mixed Chinese/English, and exact symbol fallback
+- retrieval should rank section hits first, then fall back to full `content_markdown` for short Documents or continuity-sensitive answers
 
 ### 12. Migration stance
 
@@ -475,6 +616,7 @@ Answer:
 Answer:
 
 - preserve immutable full Document versions through the Version Chain
+- distinguish Logical Document identity from immutable Document Version identity
 - store full JSONB and Markdown snapshots per version in V1
 - defer section-level diff storage until it proves necessary
 
@@ -484,7 +626,8 @@ Section 07 assumes:
 
 - section 03 keeps graph truth in relational `edges`
 - section 05 preserves Source Anchoring through `document_sources` and `reverse_index`
-- section 06 requires BL Document metadata for flow traces, branch decisions, dispatch bindings, and unresolved states
+- section 06 requires durable records for flow traces, branch decisions, dispatch bindings, endpoint bindings, and unresolved states
+- section 04 owns endpoint and dispatch-site base tables, while section 07 owns Pass 2 trace binding tables
 
 ### 15. What section 07 hands to section 08
 
@@ -492,9 +635,10 @@ Section 07 hands these assumptions forward:
 
 - retrieval should query database indexes, not parse `index.md` as the canonical source
 - `content_markdown` is available for full-document reads
-- `content_jsonb` is available for section-aware retrieval
+- `document_sections` is available for section-aware retrieval, materialized from `content_jsonb`
 - graph traversal should use relational `edges`
-- unresolved dispatch and candidate-branch metadata is available for answer grounding
+- unresolved dispatch and candidate-branch metadata is available relationally for answer grounding
+- BL Document versions expose `resolution_outdated_at` or equivalent stale-notice data when Cross-Repository Resolution changes generation-time assumptions
 - `index.md` and `log.md` are exported views, not retrieval sources of truth
 
 ### 16. Resolved decisions summary
@@ -511,3 +655,7 @@ The completed decisions for section 07 are:
 8. Generated Document versions remain immutable full snapshots in V1.
 9. `index.md` and `log.md` are generated views over database state.
 10. Section 08 should retrieve from database indexes plus graph traversal, not from filesystem parsing.
+11. V1 distinguishes Logical Document identity from immutable Document Version identity.
+12. `document_sections` is a V1 retrieval requirement, not an optional later optimization.
+13. Section 07 owns the V1 schema for `flow_groups`, `flow_traces`, trace steps, trace bindings, and `document_sections`.
+14. BL Document versions need a queryable `resolution_outdated_at` marker or equivalent stale-notice row.

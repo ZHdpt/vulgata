@@ -6,7 +6,7 @@
 
 ---
 
-## TODO — Open Questions from July Review
+## Original Open Questions from July Review
 
 > These are concerns raised that need to be addressed before finalizing this section.
 
@@ -89,6 +89,20 @@ Each worker receives one `code_unit` — the source text within `line_start`..`l
 **Layer 2 — Semantic (document_sources):** During document generation, the LLM agent emits structured metadata declaring which `code_units` a document is "generated from" (primary role) or "mentions" (referenced role).
 
 **Layer 3 — Fast Lookup (reverse_index):** Populated atomically post-generation: for every line in every `code_unit` that a document has a primary link to, insert one row.
+
+Citation payload rule:
+
+Every Source Anchoring record used for citation should preserve enough identity to survive file renames and line drift:
+
+- repository ID
+- scanned commit hash
+- file path at scan time
+- Code Unit ID
+- line start and line end
+- source hash or snippet hash
+- Document version ID that made the claim
+
+Rendered document citations may display only the path and line range, but retrieval should keep the full payload internally.
 
 ### Two-Phase Change Detection (for incremental re-scan)
 
@@ -204,6 +218,17 @@ Do not revisit just because:
 
 So the trigger should be **material enrichment**, not mere existence of more context.
 
+For V1, "material enrichment" must be decided by deterministic predicates, not a fresh LLM orchestration judgment.
+
+Schedule a refinement only when the earlier Code Logic Document declared a dependency and the later result can:
+
+- convert an uncertainty into a dispatch site, candidate set, or exact `REFERENCES` edge
+- improve a dispatch site with stronger binding hints or a bounded candidate set
+- provide an endpoint, resource, or configuration artifact explicitly named in the dependency
+- clarify a direct callee/provider/resource relationship that the earlier job marked as important
+
+If the later result merely adds detail without changing one of those facts, preserve the existing document and leave enrichment to Pass 2 retrieval context.
+
 ### 7. How the revisit should work
 
 The revisit should be a **bounded refinement wave**, not a full uncontrolled rescan.
@@ -235,6 +260,20 @@ To prevent `A -> B -> C -> ...` from causing endless rescans, V1 should enforce 
 - unresolved cases fall back to explicit uncertainty instead of more revisits
 
 This keeps Pass 1 convergent.
+
+### 8A. Incremental re-scan behavior
+
+V1 incremental re-scan should favor predictable regeneration over complex refinement replay.
+
+Recommended rule:
+
+- changed Code Units produce new Code Logic Document versions
+- direct and transitive impact analysis marks dependent Documents stale using `REFERENCES` and `GENERATED_FROM`
+- if a re-scanned document declares direct deferred dependencies that are satisfied within the same re-scan batch, run the same one-step refinement rule as initial Pass 1
+- do not chase refinement waves outside the affected set during V1 incremental re-scan
+- if the changed output may affect a Business Logic Document, mark the BL Document stale and regenerate it through normal Pass 2 flow-group planning rather than patching the prose in place
+
+This keeps re-scan quality close to initial scan quality without turning every incremental scan into a full system scan.
 
 ### 9. Relation to dispatch and binding
 

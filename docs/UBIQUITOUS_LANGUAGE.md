@@ -6,21 +6,23 @@
 
 | Term | Definition | Aliases to avoid |
 |------|------------|------------------|
-| **Scan Coordinator** | A non-LLM background service that manages the operational lifecycle of scans: queuing requests, enforcing concurrency limits, triggering cross-repo resolution, and monitoring orchestrator health. | Scan Scheduler, Scan Manager |
-| **Orchestrator Agent** | An LLM-powered agent scoped to a single repository scan. Dispatches Worker Agents in superstep batches, coordinates cross-verification, and triggers post-scan steps. | Scan Orchestrator |
-| **Worker Agent** | An LLM agent dispatched by the Orchestrator to process a single Code Unit (Pass 1) or synthesize Business Logic Documents from Code Logic Documents (Pass 2). | Scanner, Document Generator |
-| **Superstep** | A batch of related Code Units dispatched concurrently to Worker Agents, enabling cross-verification within the batch before the next superstep begins. | Batch, Wave |
+| **Scan Coordinator** | A non-LLM background service that manages the operational lifecycle of scans: queuing requests, enforcing concurrency limits, triggering Cross-Repository Resolution, and monitoring scan workflow health. | Scan Scheduler, Scan Manager |
+| **Orchestrator** | A deterministic per-Repository workflow service that plans scan states, creates jobs, groups supersteps and flow groups, enforces retry/concurrency policy, and dispatches Worker Agents through typed tools. | Orchestrator Agent, Magnet Orchestrator |
+| **Worker Agent** | An LLM agent dispatched by the Orchestrator to process a single Code Unit (Pass 1) or synthesize a Business Logic Document for one flow group (Pass 2). | Scanner, Document Generator |
+| **Superstep** | A deterministic batch of related Code Units dispatched concurrently to Worker Agents, enabling bounded cross-verification within the batch before the next superstep begins. | Batch, Wave |
 | **Pass 1** | The first phase of document generation: Code Logic Documents are produced per Code Unit, with intra-repo REFERENCES edges and cross-repo uncertainties. | CL Doc Generation |
-| **Pass 2** | The second phase: one Worker per System synthesizes Business Logic Documents from the completed Code Logic Documents, identifying business flows autonomously. | BL Doc Generation |
-| **Document Pre-Allocation** | Bulk-creating `documents` rows for every filtered Code Unit before any Worker runs, so all document IDs are known and intra-repo REFERENCES edges can be created immediately. | Pre-seeding |
+| **Pass 2** | The second phase: deterministic planning traces path-aware graph slices from entry points, clusters them into flow groups, and dispatches one Worker Agent per flow group to synthesize Business Logic Documents from Code Logic Documents and trace evidence. | BL Doc Generation |
+| **Document Pre-Allocation** | Creating logical Document slots or planned version rows for filtered Code Units before Worker Agents run, so same-scan references can target stable identities without treating unfinished placeholders as generated Documents. | Pre-seeding |
 
 ## Graph & Relationships
 
 | Term | Definition | Aliases to avoid |
 |------|------------|------------------|
-| **Edge** | A typed, directed relationship between two Documents in the graph. | Link, Connection |
-| **REFERENCES Edge** | A doc→doc dependency edge: Document A's content references or depends on Document B. Used for both intra-repo and cross-repo relationships. | Dependency Edge, Call Edge |
-| **GENERATED_FROM Edge** | A provenance edge from a Business Logic Document to the Code Logic Document(s) it was synthesized from. Drives two-pass re-scan impact analysis. | Provenance Edge, Derivation Edge |
+| **Edge** | A typed, directed relationship between two Document Versions in the graph, usually surfaced through a current-version view of Logical Documents. | Link, Connection |
+| **Logical Document** | A stable semantic slot for a Document across scans or refinements, such as "this Code Unit's Code Logic Document" or "this flow group's Business Logic Document." | Mutable Document |
+| **Document Version** | An immutable generated snapshot of a Logical Document. Version Chain links preserve history, while retrieval normally reads the current version for an authorized Logical Document. | Revision |
+| **REFERENCES Edge** | A dependency edge: one Document Version's content references or depends on another Document Version. Used for both intra-repo and cross-repo relationships. | Dependency Edge, Call Edge |
+| **GENERATED_FROM Edge** | A provenance edge from a Business Logic Document Version to the Code Logic Document Version(s) it was synthesized from. Drives two-pass re-scan impact analysis. | Provenance Edge, Derivation Edge |
 | **Cross-Repo Edge** | Not a separate edge type — any REFERENCES edge where `source.repo_id != target.repo_id` is cross-repo. Discovered at query time, not stored as a schema concept. | Cross-System Edge (deprecated) |
 | **Dangling Link** | A cross-repo uncertainty that never resolves — a known unknown. Recorded with available identifying information; does not block scan completion. | Orphan Link, Unresolved Reference |
 | **Version Chain** | A linked list of document versions via `superseded_by_id`, preserving full history. Old versions are never deleted. | Document History, Revision Chain |
@@ -53,11 +55,11 @@
 
 - A **System** contains one or more **Repositories** (organizational grouping only — no detection significance).
 - A **Scan** targets exactly one **Repository**.
-- An **Orchestrator Agent** manages one **Scan** and dispatches N **Worker Agents**.
-- A **Worker Agent** processes one **Code Unit** (Pass 1) or one **System's** CL Docs (Pass 2).
+- An **Orchestrator** manages one **Scan** and dispatches N **Worker Agents**.
+- A **Worker Agent** processes one **Code Unit** (Pass 1) or one flow group's Code Logic Documents and trace evidence (Pass 2).
 - A **Code Logic Document** is generated from one or more **Code Units** (via `document_sources`).
 - A **Business Logic Document** is generated from one or more **Code Logic Documents** (via `GENERATED_FROM` edges).
-- A **REFERENCES Edge** connects two **Documents** — intra-repo or cross-repo, determined at query time.
+- A **REFERENCES Edge** connects two **Document Versions** — intra-repo or cross-repo, determined at query time.
 - An **Uncertainty** belongs to one **Document** and may resolve to a **Document** in another **Repository**.
 - **Cross-Repository Resolution** runs after each **Repository Scan** completes and is bidirectional (resolves both outgoing and incoming uncertainties).
 
@@ -77,7 +79,7 @@
 
 > **Dev:** "And if a Business Logic Document was generated before the cross-repo target was scanned?"
 
-> **Domain expert:** "Known V1 limitation. The BL Doc body may say 'unscanned.' The chat agent compensates at query time by following the now-resolved cross-repo edge. Full BL Doc regeneration on cross-repo resolution is V2."
+> **Domain expert:** "Known V1 limitation. The BL Doc body may say 'unscanned.' The Chat Agent may use the now-resolved Cross-Repository edge at query time, but it must mark the BL Doc as generated before that resolution and cite both the stale BL Doc and the newer target evidence. Full BL Doc regeneration on Cross-Repository Resolution is V2."
 
 ## Flagged Ambiguities
 

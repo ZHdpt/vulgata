@@ -235,6 +235,46 @@ These are places where two documents propose approaches that may conflict.
 
 **Resolution adopted:** PostgreSQL is the canonical Document store. `content_jsonb` stores structured payloads, `content_markdown` stores deterministic rendered Markdown, and filesystem Markdown is export-only. Section 08 uses database-backed agentic LLM-wiki retrieval with PostgreSQL full-text/metadata search plus graph expansion first; `pgvector` remains an optional upgrade path.
 
+### Post-grill hardening decisions
+
+The clean-context `grill-with-docs` review on 2026-07-09 accepted these refinements:
+
+| Concern | Resolution |
+|---------|------------|
+| Document identity vs immutable Version Chain | Distinguish Logical Document identity from immutable Document Version identity. Pre-allocation creates slots or planned rows; generated edges resolve to generated versions or become uncertainties. |
+| Pass 2 trace evidence in JSONB | Flow groups, traces, trace steps, candidate selections, dispatch bindings, endpoint bindings, and unresolved trace items are durable queryable records. JSONB only renders a copy. |
+| Cross-Repository Resolution after BL prose exists | BL Documents record resolution state at generation. Later graph resolution marks affected BL prose stale/resolution-outdated; retrieval separates generation-time prose from query-time evidence. |
+| Cross-repo retrieval authorization | Retrieval filters and redacts at Repository, Document, Edge, endpoint, trace, and Uncertainty summary levels. |
+| Section-level retrieval | `document_sections` is a V1 requirement, not an optional optimization. |
+| `page_navigation` ambiguity | Route ownership, topology, host/tenant/base-path evidence, and confidence thresholds are required before creating cross-repo `REFERENCES` edges. |
+| Pass 2 edge emission | Pass 2 creates `GENERATED_FROM` normally, but cannot invent base Code Logic `REFERENCES` from narrative; BL-to-BL semantic references require validation and impact-traversal metadata. |
+| Chinese and mixed-language retrieval | PostgreSQL full-text is paired with section search, exact symbols, business-term aliases, and trigram fallback before embeddings become mandatory. |
+
+### Deadline-scope review decisions
+
+The August 15 implementation path accepts these additional review results:
+
+| Concern | Decision |
+|---------|----------|
+| `dispatch_sites` schema unresolved | V1 uses a real `dispatch_sites` table plus `dispatch_site_endpoint_candidates`; Section 04 owns the base schema. |
+| Flow trace table ownership | Section 07 owns `flow_groups`, `flow_traces`, `flow_trace_steps`, candidate selections, dispatch bindings, endpoint bindings, and `document_sections`. |
+| Flow-group clustering unspecified | Section 06 defines deterministic scoring and favors under-merging over bloated BL Documents. |
+| Worker prompt design absent | Section 02 defines the minimum prompt templates and required prompt constraints; prompts live in `Vulgata.Agents/Prompts/`. |
+| Material enrichment unclear | Section 02 and 05 use deterministic predicates over declared dependencies; no LLM orchestration judgment. |
+| Incremental re-scan and refinement | V1 uses predictable stale/regenerate behavior and only direct declared refinement inside the affected set. |
+| Pre-scan review bottleneck | Section 01 and 02 default to auto-approval unless ambiguity blocks safe Pass 1 execution. |
+| BL resolution-outdated marker | Sections 06-08 use `resolution_outdated_at` or equivalent stale-notice data. |
+| Cross-verification underspecified | Section 02 requires lightweight `verification_notes` and `disagreements` in worker results. |
+| Multi-repo concurrency | V1 keeps `MaxConcurrentScans = 1` and `MaxWorkersPerScan = 5`; richer overlap is deferred. |
+| LLM budget model | Section 02 records per-agent call counts, token usage, and configurable estimated cost units. |
+
+Deferred beyond the August 15 path:
+
+- advanced multi-repo scan overlap
+- full tokenizer/embedding search upgrades beyond exact, alias, section, and trigram fallback
+- elaborate cross-verification review workflows
+- deep incremental re-scan refinement replay outside the affected set
+
 ---
 
 ## Suggested Resolution Order
@@ -261,7 +301,7 @@ Based on the dependency analysis, here's the recommended order to resolve these 
 5. **08 — Context Retrieval** (completed enough for downstream work)
    - Q1-Q6: database-backed agentic LLM-wiki retrieval, typed tools, full-text/metadata search, graph expansion, optional embeddings
 
-Sections 01 through 08 are now complete enough that they no longer block downstream implementation planning.
+Sections 01 through 08 are now complete enough that they no longer block downstream implementation planning or merged technical-planning artifacts.
 
 > **Note:** 07 and 08 had a mutual dependency. The resolved pair is: PostgreSQL-first document storage plus database-backed agentic LLM-wiki retrieval.
 

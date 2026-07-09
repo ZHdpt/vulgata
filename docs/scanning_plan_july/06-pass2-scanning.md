@@ -6,11 +6,11 @@
 
 ---
 
-## TODO — Open Questions from July Review
+## Original Open Questions from July Review
 
 > These are concerns raised that need to be addressed before finalizing this section.
 
-1. **Entry points should be recorded during Pass 1.** The current Pass 2 design dispatches a single worker per system and asks it to "identify business flows autonomously from the CL Doc graph." This is fragile:
+1. **Entry points should be recorded during Pass 1.** The design under review dispatched a single worker per system and asked it to "identify business flows autonomously from the CL Doc graph." This was fragile:
    - The worker has to re-discover entry points by analyzing all CL Docs
    - Entry point identification (controller handlers, queue consumers, scheduled tasks) is structural and should be done during Pass 1
    - **Proposal:** During Pass 1, each worker tags its document with `entry_point = true` in `metadata_json` if the code_unit is an entry point. The orchestrator collects all entry points and provides them to the Pass 2 worker as starting points for flow tracing.
@@ -34,7 +34,7 @@
 3. **Overlapping flows.** Multiple entry points may share downstream CL Docs (e.g., both "Checkout" and "Refund" flows call `PaymentProcessor`). How should this be represented?
    - One BL Doc per entry point, with shared CL Docs appearing in multiple BL Docs
    - A shared "sub-flow" BL Doc for the shared segment, referenced by both top-level BL Docs
-   - Current plan: one worker decides autonomously. Should this be algorithmic?
+   - Design under review: one worker decides autonomously. Should this be algorithmic?
 
 4. **Frontend applications need a different approach.** The current scanning model assumes backend code with clear function boundaries and call chains. Frontend apps are different:
    - **No clear "entry points" in the same sense.** A React component tree has many possible entry paths (routes, user interactions, event handlers).
@@ -48,7 +48,7 @@
    - For server-rendered apps (Blazor Server, Next.js SSR): treat like backend with page-level entry points?
    - How do `page_navigation` edges between frontend apps get resolved? A "navigate to /dashboard" in App A and a "route /dashboard" in App B — how do they match?
 
-5. **Pass 2 dispatch granularity.** Current plan: one worker per system. This limits parallelism and creates a single point of failure. Alternatives:
+5. **Pass 2 dispatch granularity.** The design under review used one worker per system. This limited parallelism and created a single point of failure. Alternatives:
    - One worker per entry point (parallel, but may produce overlapping/contradictory BL Docs)
    - One worker per cluster of related entry points (balance between parallelism and coherence)
    - Two-phase: first cluster entry points into flow groups (algorithmic), then dispatch one worker per group
@@ -59,14 +59,16 @@
 
 ### Pass 2: Business Logic Documents
 
+> Superseded by the finalized direction below: V1 now uses deterministic flow tracing and one Pass 2 Worker Agent per flow group, not one autonomous worker per System.
+
 After all CL Docs for a system are generated (or failed), the orchestrator begins Pass 2.
 
-**Dispatch strategy — one worker per system (not per flow):** The original design proposed dispatching per "business flow" identified from the graph, but this has a circular dependency: flows can't be identified without analyzing the graph, which is the Pass 2 work itself. Instead, V1 dispatches a single Pass 2 worker per system. The worker receives:
+**Dispatch strategy — one worker per system (not per flow):** The original design proposed dispatching per "business flow" identified from the graph, but had a circular dependency: flows could not be identified without analyzing the graph, which was the Pass 2 work itself. That older version dispatched a single Pass 2 worker per system. The worker received:
 - The full set of CL Docs in the system (their markdown bodies, metadata, and REFERENCES edges)
 - The Communication Pattern Catalog for the system
-- A prompt instructing it to identify business flows autonomously from the CL Doc graph
+- A prompt that instructed it to identify business flows autonomously from the CL Doc graph
 
-**Flow identification (done by the worker, not the orchestrator):** The worker analyzes the REFERENCES graph between CL Docs and identifies clusters that form business processes. Heuristics: entry points (controller handlers, queue consumers, scheduled tasks), termination points (database writes, external API calls, response returns), path coherence (a sequence of CL Docs that together process a single user action or business event). The worker names each flow (e.g., "Risk Evaluation," "Loan Approval") and produces one BL Doc per flow.
+**Flow identification (done by the worker, not the orchestrator):** In the older version, the worker analyzed the REFERENCES graph between CL Docs and identified clusters that formed business processes. Heuristics were entry points (controller handlers, queue consumers, scheduled tasks), termination points (database writes, external API calls, response returns), and path coherence (a sequence of CL Docs that together process a single user action or business event). The worker named each flow (e.g., "Risk Evaluation," "Loan Approval") and produced one BL Doc per flow.
 
 **Generation:** For each identified flow, the worker synthesizes a business-level narrative: validation rules, decision flows, regulatory checks, process steps. Each BL Doc is written to `content_md_path` with `doc_type = 'business_logic'`, `status = 'generated'`. Its `parent_document_id` points to a logical path (e.g., `business-flows/risk-evaluation/`).
 
@@ -80,13 +82,13 @@ confidence = 0.85  (LLM-generated, not deterministic)
 
 These edges drive two-pass re-scan: when a CL Doc changes, any BL Doc with a `GENERATED_FROM` edge to it is flagged stale.
 
-**Cross-BL-Doc references:** If the worker identifies that one business flow feeds into another, it inserts a `REFERENCES` edge between the two BL Docs. BL-to-BL REFERENCES edges are structurally identical to CL-to-CL REFERENCES edges.
+**Cross-BL-Doc references:** The original plan allowed a worker to insert a `REFERENCES` edge between two BL Docs when one business flow fed another. The finalized direction below constrains this: Pass 2 submits semantic reference requests, and persistence only materializes them when cited flow-group, trace, endpoint, or existing graph evidence supports the relationship.
 
 **BL Doc regeneration on re-scan:** During incremental re-scan, the impact analysis recursive CTE walks both `REFERENCES` and `GENERATED_FROM` edges. CL Doc changes propagate through `GENERATED_FROM` to flag BL Docs stale.
 
 ### Known V1 Limitation — BL Doc stale markers after cross-repo resolution
 
-When a BL Doc is generated before its cross-repo targets have been scanned, the BL Doc body may contain "unscanned" or placeholder references. Cross-repo resolution creates the REFERENCES edge but does NOT trigger BL Doc regeneration. The LLM-wiki chat agent compensates at query time by following the now-resolved cross-repo edge and synthesizing a complete answer. Full BL Doc regeneration on cross-repo resolution is deferred to V2.
+When a BL Doc is generated before its cross-repo targets have been scanned, the BL Doc body may contain "unscanned" or placeholder references. Cross-Repository Resolution may later create the `REFERENCES` edge, but it does not trigger BL Doc regeneration in V1. At query time, the Chat Agent may use the newer authorized graph evidence, but it must mark the BL Doc prose as generation-time evidence and cite the newer target evidence separately. Full BL Doc regeneration on Cross-Repository Resolution is deferred to V2.
 
 ---
 
@@ -357,6 +359,13 @@ A practical V1 trace state should include:
 
 Candidate-group selections and dispatch-site bindings should be trace-local. They should not rewrite the base graph unless a later Pass 1 refinement establishes that the target is stable from the source unit itself.
 
+Durability rule:
+
+- any trace used to create a flow group or Business Logic Document must be persisted as queryable records
+- the minimum durable set is `flow_groups`, `flow_traces`, `flow_trace_steps`, candidate selections, dispatch-site bindings, endpoint bindings, unresolved candidate groups, unresolved dispatch sites, and trace termination reasons
+- `content_jsonb` may render a copy of this trace evidence for display, but it is not the authoritative source for graph traversal, retrieval, staleness, or citation
+- exploratory traces that are discarded before flow-group construction may remain transient
+
 ### 5. Trace transition rules
 
 For each `(doc_id, path_state)` state, the planner should evaluate outgoing graph facts in this order.
@@ -446,6 +455,29 @@ Recommended grouping signals:
 
 Do not merge two flows merely because they share a common helper. Shared utility, validation, logging, mapping, or repository methods should usually appear in multiple BL Documents through multiple `GENERATED_FROM` edges.
 
+Deterministic V1 clustering algorithm:
+
+1. Build one initial cluster per entry-point trace set.
+2. Remove utility-only CL Documents from overlap scoring. Utility-only means validation, mapping, logging, serialization, simple DTO access, or infrastructure helpers with no durable business effect.
+3. Compute pairwise cluster score:
+   - `+4` same normalized endpoint/topic/route/action family
+   - `+4` same terminal business effect, durable write, published message, or outgoing provider endpoint
+   - `+3` non-utility CL Document overlap >= 50%
+   - `+2` non-utility CL Document overlap between 25% and 49%
+   - `+2` same aggregate/workflow/business-event identifier
+   - `+1` strong shared domain terms in CL summaries
+   - `-4` different terminal effects
+   - `-3` overlap is only utility/helper documents
+4. Merge clusters with score `>= 5`.
+5. Recompute scores after each merge until no pair reaches the threshold.
+6. Cap a flow group at a configured maximum trace count and token estimate; if a merge would exceed the cap, keep separate groups and record the shared sub-flow as repeated support.
+
+Tie-breakers:
+
+- prefer under-merged groups over bloated BL Documents for V1
+- never merge solely on helper overlap or domain-term overlap
+- if two groups are borderline, keep separate and let retrieval connect them later through shared CL Documents and endpoints
+
 ### 7. Shared sub-flows
 
 V1 should allow the same CL Document to support multiple BL Documents.
@@ -502,6 +534,7 @@ The document metadata should include:
 - source flow group ID
 - entry point document IDs
 - trace IDs used
+- resolution state at generation
 - selected candidate groups
 - unresolved candidate groups
 - dispatch-site bindings
@@ -520,6 +553,14 @@ Do not create `GENERATED_FROM` edges to:
 - dispatch sites themselves
 
 Those should be referenced in metadata until a Document target exists.
+
+Pass 2 `REFERENCES` rule:
+
+- Pass 2 may always create `GENERATED_FROM` edges from a Business Logic Document to the Code Logic Documents actually used in synthesis.
+- Pass 2 must not create new base Code Logic `REFERENCES` edges from business narrative alone.
+- If Pass 2 proposes a BL-to-BL semantic `REFERENCES` edge, it must submit it as a semantic reference request with cited flow-group, trace, endpoint, or existing graph evidence.
+- The persistence service decides whether to materialize the request, and the resulting edge metadata must say whether the edge is eligible for impact traversal.
+- When evidence is only narrative adjacency, keep it as document metadata or a viewer relation rather than a graph dependency.
 
 ### 10. Cross-repo and unresolved output behavior
 
@@ -542,7 +583,15 @@ If a dispatch site has endpoint hints but no concrete binding:
 - describe the abstract handoff if business-relevant
 - keep it unresolved in trace metadata
 
-This preserves the known V1 limitation: Cross-Repository Resolution may later create new `REFERENCES` edges, but it does not automatically regenerate stale BL Document prose in V1.
+Every BL Document should record the resolution state it saw at generation time:
+
+- resolved target Document versions used in synthesis
+- unresolved uncertainty IDs and endpoint IDs
+- known but unscanned target Repositories
+- ambiguous target sets
+- dispatch or candidate branches left unresolved
+
+This preserves the known V1 limitation: Cross-Repository Resolution may later create new `REFERENCES` edges, but it does not automatically regenerate stale BL Document prose in V1. When later resolution changes the graph truth behind a BL Document, V1 should set `resolution_outdated_at` or an equivalent stale-notice row on the affected BL Document version so section 08 can distinguish generation-time prose from query-time evidence.
 
 ### 11. Frontend and page-navigation handling
 
@@ -572,19 +621,23 @@ For server-rendered or hybrid frameworks such as Blazor Server, Next.js SSR, MVC
 - server-side handler logic can be traced like backend code
 - component event handlers can be traced like UI interactions
 
-`page_navigation` should be treated as a loose communication protocol.
+`page_navigation` should be treated as a loose communication protocol with a higher ambiguity burden than API or message endpoints.
 
 Recommended rule:
 
 - provider side: page route or route pattern may become a `communication_endpoint` with `protocol = page_navigation`
 - consumer side: navigation action may become an exact reference, candidate endpoint set, dispatch site, or uncertainty using the same Pass 1 rubric
-- matching should use normalized route, app/base path, route parameters, and Service Topology evidence when available
+- matching should use normalized route, app/base path, route parameters, deployment topology, tenant or host context, and Service Topology evidence when available
+- route ownership evidence is required before creating a cross-repo `REFERENCES` edge
+- identical route strings across multiple apps should default to an uncertainty or candidate endpoint set unless topology evidence narrows ownership
 - confidence should usually be lower than RPC or HTTP API matching because the coupling is user-driven and less contractual
 
 If a user action in App A navigates to `/dashboard` and App B owns a matching route:
 
 - create a cross-repo `REFERENCES` edge only when route ownership and target repository evidence are strong
 - otherwise create an endpoint-linked uncertainty or dispatch site with route hints
+
+If App B and App C both expose `/dashboard`, V1 should not choose between them from route text alone.
 
 ### 12. V1 simplifications
 
@@ -622,6 +675,7 @@ Answer:
 Answer:
 
 - the orchestrator should cluster traces into flow groups
+- V1 clustering uses deterministic scoring over endpoint/action family, terminal effect, non-utility CL overlap, aggregate/workflow identifiers, and domain terms
 - shared CL Documents may feed multiple BL Documents
 - shared sub-flow BL Documents are optional and should be rare in V1
 
@@ -672,3 +726,7 @@ The completed decisions for section 06 are:
 8. Shared CL Documents may support multiple BL Documents through multiple `GENERATED_FROM` edges.
 9. Frontend repositories use route, interaction, state/store, and page-navigation-aware Pass 2 rules.
 10. `page_navigation` follows the endpoint/dispatch/uncertainty model with lower default confidence.
+11. Trace evidence used for BL Documents is persisted relationally; JSONB contains only a rendered copy for display/retrieval convenience.
+12. Cross-Repository Resolution can make BL prose stale; retrieval must distinguish generation-time resolution state from query-time graph evidence.
+13. V1 flow-group clustering uses deterministic scoring and favors under-merging over bloated BL Documents.
+14. Later Cross-Repository Resolution marks affected BL Document versions with `resolution_outdated_at` or equivalent stale-notice data.
