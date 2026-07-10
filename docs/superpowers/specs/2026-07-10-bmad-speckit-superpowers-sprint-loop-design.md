@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-10
 
-**Status:** Approved for implementation
+**Status:** Awaiting revised-spec approval
 
 **Scope:** Repository-local Codex workflow for implementing BMad stories across one or more epics
 
@@ -27,7 +27,9 @@ The workflow must be directly usable in Codex against Vulgata's existing BMad pl
 6. Enforce test-first implementation and return Critical or High review findings to development.
 7. Run economical E2E automation only when observable risk warrants it.
 8. Prevent an epic from becoming `done` until its architecture gate has been resolved.
-9. Preserve existing BMad statuses, SpecKit templates, the Vulgata Constitution, ADRs, and Ubiquitous Language.
+9. Run `speckit-analyze` at its original SpecKit position: after task generation and before implementation.
+10. Commit accepted artifacts and verified code increments to version control at explicit workflow checkpoints.
+11. Preserve existing BMad statuses, SpecKit templates, the Vulgata Constitution, ADRs, and Ubiquitous Language.
 
 ## Non-goals
 
@@ -103,6 +105,7 @@ Project-scoped agents live under `.codex/agents/`. Codex currently supports proj
 | `plan-architect` | `gpt-5.6`, high | workspace write | Run `speckit-plan` and make detailed technical decisions |
 | `plan-judge` | `gpt-5.6`, high | read-only | Challenge feasibility, architecture, Constitution compliance, and testability |
 | `task-author` | `gpt-5.6`, medium | workspace write | Run `speckit-tasks` with explicit test-first ordering |
+| `artifact-analyst` | `gpt-5.6`, high | read-only | Run `speckit-analyze` after tasks and report cross-artifact consistency findings |
 | `tdd-implementer` | `gpt-5.6`, high | workspace write | Implement a bounded task group with red-green-refactor evidence |
 | `acceptance-reviewer` | `gpt-5.6`, high | read-only | Review the diff against BMad and SpecKit requirements |
 | `quality-reviewer` | `gpt-5.6`, high | read-only | Review correctness, security, edge cases, architecture, and documented standards |
@@ -208,15 +211,31 @@ The specification remains technology-agnostic and focused on what and why. Techn
 4. Return Critical or High findings to a new planning pass.
 5. Advance only after an accepted plan has no unresolved clarification or Constitution gate failure.
 
-### 5. Generate and analyze tasks
+### 5. Generate tasks
 
 1. Dispatch `task-author` to run `speckit-tasks`.
 2. Require test tasks before their corresponding implementation tasks.
 3. Require exact paths, dependencies, story labels, independent validation criteria, and bounded task groups.
-4. Run `speckit-analyze` read-only across `spec.md`, `plan.md`, and `tasks.md`.
-5. Remediate Critical or High consistency findings through the responsible author, then rerun analysis.
 
-### 6. Implement with TDD
+### 6. Analyze the SpecKit artifacts
+
+This stage preserves the original SpecKit ordering:
+
+```text
+speckit-specify -> speckit-plan -> speckit-tasks -> speckit-analyze -> speckit-implement
+```
+
+The additional independent spec and plan judges are gates around that flow; they do not replace or move `speckit-analyze`.
+
+1. Immediately after `speckit-tasks`, dispatch the read-only `artifact-analyst` to run `speckit-analyze` across `spec.md`, `plan.md`, and `tasks.md`.
+2. Persist its structured report and coverage metrics without changing the analyzed artifacts.
+3. If no Critical or High findings exist, record the accepted analysis gate and advance to implementation.
+4. If blocking findings exist, present the report and proposed remediation to the user as required by the original read-only SpecKit analysis contract.
+5. After explicit approval, route each finding to the author responsible for `spec.md`, `plan.md`, or `tasks.md`.
+6. Regenerate dependent downstream artifacts when an upstream artifact changes, then rerun `speckit-analyze` at this same stage.
+7. Do not dispatch an implementer until the latest analysis report has no Critical or High findings.
+
+### 7. Implement with TDD
 
 The orchestrator groups tasks only when they share a coherent behavior and file ownership. For each group:
 
@@ -228,7 +247,7 @@ The orchestrator groups tasks only when they share a coherent behavior and file 
 
 Parallel implementation is allowed only for task groups with disjoint file ownership and no incomplete dependency. The orchestrator serializes merges and shared-file edits.
 
-### 7. Review and correct
+### 8. Review and correct
 
 After implementation, dispatch `acceptance-reviewer` and `quality-reviewer` in parallel against the same pinned diff and source commit.
 
@@ -237,7 +256,7 @@ After implementation, dispatch `acceptance-reviewer` and `quality-reviewer` in p
 
 The orchestrator does not merge the axes. Any blocking finding is routed back to a fresh `tdd-implementer` with the raw finding and evidence. The correction must add or adjust a failing regression test before production code when behavior changes. Both affected review axes rerun after the fix.
 
-### 8. Decide and run E2E automation
+### 9. Decide and run E2E automation
 
 The E2E gate is required when the story changes any of:
 
@@ -251,7 +270,7 @@ It may be skipped for documentation-only work, internal refactoring with unchang
 
 When required, dispatch `e2e-runner`. It may add or update test code and run the existing framework. It must not change production code. A product failure returns to `tdd-implementer`; a defective test may be corrected by `e2e-runner`. The E2E gate reruns after either correction.
 
-### 9. Verify and complete
+### 10. Verify and complete
 
 1. Run story-specific tests.
 2. Run `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj`.
@@ -318,6 +337,47 @@ It does not preload another agent's conclusions unless the receiving agent is ex
 
 The architecture skill produces its report in the OS temporary directory as designed; the workflow state records its path, source commit, and disposition summary. Architecture findings do not authorize unrelated refactoring. After the gate is resolved, the orchestrator offers the BMad retrospective and only then marks the epic `done`.
 
+## Version-Control Checkpoints
+
+The orchestrator is the sole version-control committer. Worker, author, judge, reviewer, and E2E agents return changes and evidence but never run concurrent commits. This keeps stage boundaries reproducible and prevents parallel agents from racing over the index or branch.
+
+### Preflight
+
+Before the first mutation, the orchestrator:
+
+1. records the current branch, `HEAD`, and worktree status;
+2. requires a non-detached branch unless the Codex host provides an explicit native branch handoff;
+3. identifies pre-existing user changes and excludes them from staging and story ownership;
+4. stops if active-story changes cannot be separated safely from unrelated changes;
+5. never switches branches, pushes, rebases, merges, or opens a pull request unless the user separately requests it.
+
+### Required commits
+
+| Checkpoint | Preconditions | Commit contents |
+|---|---|---|
+| BMad story prepared | Story context validated and status is `ready-for-dev` | BMad story file and sprint-status transition |
+| Specification accepted | Spec judge returns `ACCEPT` | `spec.md`, requirements checklist, workflow mapping, and gate evidence |
+| Plan accepted | Plan judge returns `ACCEPT` and Constitution checks pass | `plan.md` and generated research/design/contract artifacts |
+| Tasks analyzed | `speckit-analyze` has no Critical or High findings | `tasks.md`, persisted analysis evidence, and workflow checkpoint |
+| Task group verified | Red-green-refactor evidence exists and targeted tests pass | One cohesive implementation increment and its tests |
+| Review correction verified | The relevant fresh review passes after a blocking finding | Focused regression test, correction, and updated review evidence |
+| Story completed | Full build/tests and required E2E gate pass | Final story record, completed task/state metadata, and BMad status transition |
+| Epic gate completed | Architecture findings are dispositioned and epic verification passes | Architecture disposition, retrospective/status artifacts, and epic completion transition |
+
+The orchestrator may combine adjacent artifact-only checkpoints when they produce no useful independent recovery point, but it must not combine unaccepted artifacts with implementation code or combine unrelated stories in one commit.
+
+### Commit rules
+
+- Stage explicit owned paths; never use a blanket add that could capture unrelated changes.
+- Inspect the staged diff and run the checkpoint's verification before committing.
+- Do not commit a rejected gate, failing implementation, failing tests, secrets, credentials, or the temporary HTML architecture report.
+- Include the BMad story or epic key and stage in each commit message, for example `feat(4-1): implement Code Unit extraction` or `docs(4-1): accept SpecKit plan`.
+- Assign a unique checkpoint ID before committing and include it in `workflow-state.json` plus commit trailers (`BMad-Story`, `Workflow-Stage`, and `Workflow-Checkpoint`). On resume, resolve the immutable commit SHA from that checkpoint ID in Git history; do not try to embed a commit's own SHA inside its contents.
+- Pin all subsequent review diffs to committed SHAs rather than a moving worktree whenever possible.
+- Review fixes receive focused follow-up commits; they are not silently squashed during the workflow.
+- Resume verifies that checkpoint SHAs are ancestors of the current `HEAD`. Divergence stops for user direction; the orchestrator never repairs history with reset, rebase, or force push.
+- No push or remote mutation is implied by a local commit.
+
 ## Failure, Resume, and Idempotency
 
 - Each stage records its input commit and artifact hashes before advancing.
@@ -327,6 +387,7 @@ The architecture skill produces its report in the OS temporary directory as desi
 - A missing or malformed artifact restarts from the earliest stage that owns it.
 - A dirty worktree is allowed only when changes belong to the active story and their ownership is recorded. Unrelated user changes are preserved and excluded from agent write scopes.
 - Status and state updates occur after evidence is durable, never before.
+- A stage that requires a VCS checkpoint is not complete until its commit succeeds and its checkpoint ID resolves to an immutable SHA in Git history.
 - The orchestrator stops on source-authority conflicts, unsafe external actions, repeated correction failure, or tests requiring unavailable infrastructure.
 
 ## Security and Cost Controls
@@ -377,10 +438,12 @@ The workflow is complete when:
 - Fresh judge agents gate the specification and plan.
 - A high-reasoning planning agent produces the technical design.
 - SpecKit tasks and analysis gate implementation.
+- `speckit-analyze` runs immediately after `speckit-tasks` and reruns after any approved artifact remediation.
 - Fresh implementers follow red-green-refactor and return verifiable evidence.
 - Independent acceptance and quality reviews cause blocking findings to loop back to development.
 - The economical E2E agent runs only when the recorded decision predicate requires it.
 - Epic completion is blocked until architecture findings are dispositioned.
+- Accepted artifacts, verified implementation increments, review fixes, and story/epic lifecycle transitions are committed at explicit VCS checkpoints.
 - Skills, agents, schemas, documentation, and validation evidence are committed and reproducible.
 
 ## Chosen Packaging
