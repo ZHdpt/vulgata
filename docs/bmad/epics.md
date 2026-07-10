@@ -28,23 +28,23 @@ FR-2.3: System Owners shall remove Repositories from a System.
 FR-2.4: System Owners shall create standalone Repositories (not belonging to any System) for shared libraries whose source code is owned by the organization.
 FR-2.5: The system shall validate git URL reachability when a Repository is added.
 
-FR-3.1: Administrators shall configure LLM Providers at the global level. Each provider has a name, base endpoint URL, API key, supported API types (chat completions, responses, messages), and a default agent-type assignment (orchestrator, worker, chat).
+FR-3.1: Administrators shall configure LLM Providers at the global level. Each provider has a name, base endpoint URL, API key, supported API types (chat completions, responses, messages), and default LLM task-type assignments (pre-scan, worker, chat).
 FR-3.2: The system shall support multiple LLM Providers simultaneously.
-FR-3.3: System Owners may override the global default LLM Provider for each agent role within their System.
+FR-3.3: System Owners may override the global default LLM Provider for each LLM task role within their System. The deterministic Orchestrator does not require an LLM Provider assignment.
 FR-3.4: The system shall provide a connection test for each configured LLM Provider.
 FR-3.5: System Owners shall configure database connections per Repository — specifying connection string, database type, and access credentials.
 
 FR-4.1: Pre-Scan Profiling shall run before worker dispatch. It shall use CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter excluding non-code files. After profiling, agents may surface questions to the System Owner; the scan waits for user answers and approval before proceeding to worker dispatch.
-FR-4.2: The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and spawn one Orchestrator Agent per Repository scan. The Orchestrator Agent shall dispatch Worker Agents to process Code Units in batches (supersteps).
+FR-4.2: The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and trigger one deterministic Orchestrator per Repository scan. The Orchestrator shall dispatch Worker Agents through typed jobs to process Code Units in batches (supersteps).
 FR-4.3: Each Worker Agent shall read its assigned Code Unit, identify the business logic, and produce a structured Document linked to the source code location. Worker Agents shall detect cross-repo communication during Code Unit processing (Model A — Worker-embedded detection).
 FR-4.4: In Pass 1, Worker Agents shall produce Code Logic Documents describing structural code behavior. Intra-repo REFERENCES edges shall be created immediately via Document Pre-Allocation. Cross-repo calls shall be recorded as Uncertainties.
-FR-4.5: In Pass 2, one Worker Agent per System shall synthesize Business Logic Documents from the completed Code Logic Documents, identifying business flows autonomously from the graph structure. Business Logic Documents shall have GENERATED_FROM edges to their source Code Logic Documents.
+FR-4.5: In Pass 2, the Orchestrator shall perform graph-first, path-aware flow tracing from Pass 1 entry points and deterministically cluster traces into flow groups. One Worker Agent per flow group shall synthesize a Business Logic Document from the prepared trace packet and Code Logic Documents. Business Logic Documents shall have GENERATED_FROM edges to the Code Logic Document Versions actually used.
 FR-4.6: Generated Documents shall be organized in a tree structure mirroring the source code directory hierarchy. The tree shall be computed from document paths at display time (virtual tree).
-FR-4.7: After each Scan completes, the system shall auto-generate index.md with YAML frontmatter — structured entries per Document with doc_id, title, doc_type, system, repo, key_symbols, summary, and path.
+FR-4.7: After each Scan commits Document Versions, the system shall materialize PostgreSQL-backed retrieval indexes, including `index_entries` and `document_sections`, from document metadata and `content_jsonb`. The system may also auto-generate `index.md` as an export/readability artifact, but `index.md` is not the canonical retrieval source.
 FR-4.8: The system shall maintain an append-only log.md recording all Scans, queries, and system events with parseable timestamps.
 FR-4.9: The scanning pipeline shall integrate with CodeGraph for pre-indexed structural information (call graphs, symbol resolution, dependency maps).
 FR-4.10: Documents shall be immutable — the only mutation path is code change → re-scan → regenerate. Previous versions shall be preserved via a superseded_by_id linked list (Version Chain).
-FR-4.11: Week 1 shall include a Magentic orchestration validation spike: validate that the Microsoft Agent Framework's Magentic pattern works with Vulgata's custom agent types before committing to the full architecture.
+FR-4.11: Week 1 shall include a Worker Agent execution adapter validation spike: validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control before committing to the Worker Agent adapter.
 FR-4.12: When two Worker Agents process related Code Units in the same superstep, they shall cross-verify business logic claims. Disputed edges shall be kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution.
 FR-4.13: During scanning, Worker Agents shall be able to inspect database schemas (tables, columns, types, constraints) via a tool interface.
 FR-4.14: During scanning, Worker Agents shall be able to query sample data (limited rows) via a tool interface.
@@ -94,7 +94,7 @@ FR-11.2: IT Mode shall present a darker UI theme and use a system prompt focused
 FR-11.3: Users shall switch between Business Mode and IT Mode at any time during a chat session.
 FR-11.4: Users shall select which Systems or Repositories to include as context for their questions.
 FR-11.5: Users shall upload files (documents, images) as supplementary context for their questions.
-FR-11.6: The chat agent shall use LLM-wiki retrieval: read index.md, select 3-5 most relevant Documents, read each in full, follow cross-repo links, synthesize an answer with citations.
+FR-11.6: The Chat Agent shall use typed LLM-Wiki retrieval tools over database-backed indexes and graph tables: search, section retrieval, graph expansion, uncertainty, endpoint, flow-trace, source-anchor, and scan-status context. Retrieval shall be section-level by default and `index.md` shall not be the canonical retrieval input.
 FR-11.7: Every answer shall include citations linking claims to the source Documents and source code lines.
 FR-11.8: When no Systems or Repositories are selected, Vulgata shall autonomously determine which Systems or Repositories are relevant to the user's question.
 
@@ -108,7 +108,7 @@ FR-12.6: The dashboard shall include a live knowledge graph visualization using 
 FR-13.1: The scanning pipeline shall be able to consume MCP tools registered at the Repository, System, or global level. (DEFERRED)
 FR-13.2: The chat interface shall be able to consume MCP tools registered at the Repository, System, or global level. (DEFERRED)
 FR-13.3: MCP tools shall require separate approval for scanning use and chat use. (DEFERRED)
-FR-13.4: Vulgata shall expose its knowledge base as an MCP server, allowing external AI coding agents to query business logic. (DEFERRED)
+FR-13.4: Vulgata shall expose its knowledge base through the same authorization-aware retrieval model used by chat, including Documents, `index_entries`, `document_sections`, graph relationships, flow traces, uncertainties, source anchors, and cross-repo links. (DEFERRED)
 FR-13.5: MCP tools shall be configurable at three levels: Repository, System, and Global. (DEFERRED)
 
 FR-14.1: Administrators shall supply context at the global level (applies to all Systems).
@@ -131,7 +131,7 @@ NFR-2.2: API keys for LLM Providers and database connections shall be stored enc
 NFR-2.3: Source code and generated Documents shall never leave the organization's infrastructure when using a self-hosted LLM Provider.
 NFR-2.4: Database connection tools shall only connect to non-production environments or read-only replicas. Write operations on connected databases shall be blocked.
 
-NFR-3.1: A failed Worker Agent task shall not fail the entire Scan. The orchestrator shall retry the task once, then record the failure and continue.
+NFR-3.1: A failed Worker Agent task shall not fail the entire Scan. The Orchestrator shall retry the task once, then record the failure and continue.
 NFR-3.2: The system shall gracefully handle LLM API unavailability — queuing or pausing agent tasks until the API recovers.
 NFR-3.3: Scan state shall be persisted such that a server restart does not lose progress on an in-progress Scan.
 
@@ -151,7 +151,7 @@ From Architecture — Technical implementation requirements that affect epic and
 - **Database**: PostgreSQL 17 via EF Core with Npgsql provider. Two DbContexts (ApplicationDbContext for Identity, VulgataDbContext for domain) sharing one database with separate schemas. Migrations run at startup via MigrateAsync().
 - **Container Deployment**: docker-compose with two containers (Blazor app + PostgreSQL 17). Multi-stage Dockerfile. Git and CodeGraph CLI installed in runtime stage. Non-root user.
 - **UI Framework**: Microsoft Fluent UI Blazor as primary component library. Z.Blazor.Diagrams for graph visualization only. CommunityToolkit.Mvvm for MVVM source generators.
-- **Agent Framework**: Microsoft.Agents.AI.Foundry + Microsoft.Agents.AI.Workflows (prerelease). Magentic orchestration pattern. Week 1 validation spike required with documented fallback.
+- **Agent Framework**: Microsoft.Agents.AI.Foundry + Microsoft.Agents.AI.Workflows (prerelease) for Worker Agent execution. Week 1 Worker Agent adapter validation spike required with documented fallback.
 - **LLM Client**: OpenAI SDK for DeepSeek V4 via OpenAI-compatible endpoint. Multi-provider with automatic failover.
 - **Real-time**: ASP.NET Core SignalR with two hubs (ScanHub, GraphHub). Diff-based graph updates. All hubs require [Authorize].
 - **Code Analysis**: CodeGraph CLI for pre-scan structural analysis. Shell invocation via CodeGraphCliService.
@@ -231,19 +231,19 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-2.3 | Epic 2 | Remove Repositories from a System |
 | FR-2.4 | Epic 2 | Create standalone Repositories |
 | FR-2.5 | Epic 2 | Validate git URL reachability |
-| FR-3.1 | Epic 3 | Configure LLM Providers at global level with default agent-type assignment |
+| FR-3.1 | Epic 3 | Configure LLM Providers at global level with default LLM task-type assignment |
 | FR-3.2 | Epic 3 | Support multiple LLM Providers simultaneously |
-| FR-3.3 | Epic 3 | System Owners may override global default provider per agent role |
+| FR-3.3 | Epic 3 | System Owners may override global default provider per LLM task role |
 | FR-3.4 | Epic 3 | Connection test for each LLM Provider |
 | FR-3.5 | Epic 3 | Configure database connections per Repository (connection string, type, credentials) |
 | FR-4.1 | Epic 4 | Pre-Scan Profiling: CodeGraph → Code Units; agents may ask questions; scan waits for approval |
-| FR-4.11 | Spike Gate | Week 1 Magentic orchestration validation spike (go/no-go gate) |
-| FR-4.2 | Epic 5 | Scan Coordinator: queue, concurrency, git ops, spawn Orchestrator per repo |
+| FR-4.11 | Spike Gate | Week 1 Worker Agent execution adapter validation spike (go/no-go gate) |
+| FR-4.2 | Epic 5 | Scan Coordinator + deterministic Orchestrator: queue, concurrency, git ops, typed Worker Agent dispatch |
 | FR-4.3 | Epic 5 | Worker Agent: read Code Unit, identify business logic, produce Document |
 | FR-4.4 | Epic 5 | Pass 1: Code Logic Documents, intra-repo REFERENCES, cross-repo Uncertainties |
-| FR-4.5 | Epic 5 | Pass 2: Business Logic Documents with GENERATED_FROM edges |
+| FR-4.5 | Epic 5 | Pass 2: path-aware flow tracing, flow-group clustering, BL Docs with GENERATED_FROM edges |
 | FR-4.6 | Epic 5 | Document tree structure mirroring source directory hierarchy |
-| FR-4.7 | Epic 5 | Auto-generate index.md with YAML frontmatter after each Scan |
+| FR-4.7 | Epic 5 | Materialize `index_entries` and `document_sections`; export `index.md` only as readability artifact |
 | FR-4.8 | Epic 5 | Append-only log.md with parseable timestamps |
 | FR-4.9 | Epic 5 | CodeGraph integration for pre-indexed structural information |
 | FR-4.10 | Epic 5 | Document immutability with Version Chain (superseded_by_id) |
@@ -291,7 +291,7 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-11.3 | Epic 9 | Switch between Business Mode and IT Mode at any time |
 | FR-11.4 | Epic 9 | Select Systems/Repositories as chat context |
 | FR-11.5 | Epic 9 | Upload files as supplementary chat context |
-| FR-11.6 | Epic 9 | LLM-wiki retrieval: index.md → select → read → follow → synthesize |
+| FR-11.6 | Epic 9 | Database-backed LLM-Wiki retrieval: typed tools → sections → graph expansion → synthesize |
 | FR-11.7 | Epic 9 | Citations linking claims to source Documents and code lines |
 | FR-11.8 | Epic 9 | Auto-determine relevant Systems/Repos when none selected |
 | FR-9.1 | Epic 10 | Monitor git repos for remote changes (periodic polling) |
@@ -302,7 +302,7 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-13.1 | Deferred | MCP tool consumption for scanning pipeline |
 | FR-13.2 | Deferred | MCP tool consumption for chat interface |
 | FR-13.3 | Deferred | Separate MCP approval for scanning vs chat |
-| FR-13.4 | Deferred | Expose knowledge base as MCP server |
+| FR-13.4 | Deferred | Expose authorization-aware knowledge base retrieval as MCP server |
 | FR-13.5 | Deferred | MCP tools at Repository/System/Global levels |
 | FR-14.1 | Epic 2 | Administrators supply context at global level |
 | FR-14.2 | Epic 2 | User-supplied context at System level |
@@ -325,14 +325,14 @@ System Owners can create and manage Systems, add/remove Repositories with git UR
 **Architecture:** SP-2 — System and Repository domain entities (aggregate roots), ISystemRepository/IRepositoryRepository, CRUD pages with Fluent UI DataGrid, git URL reachability check, user-supplied context with scope-based application timing rules (global=Admin only, system/repo=SystemOwner).
 
 ### Epic 3: LLM Provider & Database Connection Configuration
-Administrators configure multiple LLM backends at the global level with default agent-type assignments, and test connections. System Owners may override global defaults per agent role within their System. System Owners also configure database connections per Repository for schema inspection and sample data queries during scanning. Includes automatic provider failover and API key encryption.
+Administrators configure multiple LLM backends at the global level with default LLM task-type assignments, and test connections. System Owners may override global defaults per LLM task role within their System. The deterministic Orchestrator does not need an LLM Provider assignment. System Owners also configure database connections per Repository for schema inspection and sample data queries during scanning. Includes automatic provider failover and API key encryption.
 **FRs covered:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-3.5
 **Architecture:** LLMProvider entity, LLMProviderManager with multi-provider failover, API key encryption via ASP.NET Core Data Protection, connection testing, global default + per-System override provider assignment, database connection configuration per Repository, Admin configuration pages.
 
-### Pre-Epic Gate: Magentic Validation Spike
-Before any scanning infrastructure is built, validate that the Microsoft Agent Framework's Magentic orchestration pattern works with Vulgata's custom agent types. This is a go/no-go decision point — if MAF fails, a documented fallback architecture must be selected before work on Epics 4-10 begins.
+### Pre-Epic Gate: Worker Agent Execution Adapter Validation Spike
+Before any scanning infrastructure is built, validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control. This is a go/no-go decision point for the Worker Agent execution adapter; if MAF fails, a documented fallback adapter must be selected before Worker Agent implementation proceeds.
 **FRs covered:** FR-4.11
-**Architecture:** Isolated prototype — instantiate an OrchestratorAgent and a WorkerAgent using the Magentic pattern, dispatch a mock superstep, verify task delegation and result collection. Document fallback options (direct OpenAI SDK, LangChain.NET, custom state machine) with migration effort estimates.
+**Architecture:** Isolated prototype — instantiate the deterministic Orchestrator harness and a Worker Agent execution adapter, dispatch mock typed jobs, verify tool-call wiring and result collection. Document fallback options (direct OpenAI SDK, LangChain.NET, custom worker adapter) with migration effort estimates.
 
 ### Epic 4: Pre-Scan Profiling
 Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter. After profiling, agents may surface clarifying questions to the System Owner; the scan pauses and waits for user answers and approval before proceeding to worker dispatch.
@@ -340,9 +340,9 @@ Before worker dispatch, the system profiles each Repository using CodeGraph/tree
 **Architecture:** CodeGraphCliService shell invocation, Code Unit data model (file path, line range, language, framework), scan filter rules, agent question surface (HITL integration), approval gate state machine. Output: structured list of Code Units ready for Epic 5 dispatch.
 
 ### Epic 5: Core Single Repository Scanning
-The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, and LLM-powered agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties but left unresolved — they will be completed in Epic 7 after cross-repo detection is operational. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
+The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, deterministic Orchestrator planning the per-Repository workflow, and LLM-powered Worker Agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties and dispatch sites; resolution runs deterministically after Repository scans complete. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
 **FRs covered:** FR-4.2, FR-4.3, FR-4.4, FR-4.5, FR-4.6, FR-4.7, FR-4.8, FR-4.9, FR-4.10, FR-4.12, FR-4.13, FR-4.14, FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5, FR-6.6, FR-6.7
-**Architecture:** SP-3 + SP-4 + SP-5 + SP-7 — Document/Edge/Uncertainty/ScanRun/DocumentVersion entities, all repositories + recursive CTE query services, index.md/log.md generation, BackgroundService + Channel<T> scan job worker, GitCloneService, CodeGraphCliService, concurrency control, OrchestratorAgent + WorkerAgent (MAF), superstep dispatch, Pass 1 CL Docs + Pass 2 BL Docs, cross-verification, document pre-allocation, uncertainty recording engine with cross-repo deferral, deadlock-breaking protocol, dangling links, stale notices, impact analysis, database schema inspection + sample data query tools, minimal scan progress dashboard.
+**Architecture:** SP-3 + SP-4 + SP-5 + SP-7 — Logical Document/Document Version, Edge, Uncertainty, ScanRun, entry point, endpoint, dispatch-site, flow-group, flow-trace, `index_entries`, and `document_sections` entities; recursive CTE query services; export `index.md`/`log.md` generation; BackgroundService + Channel<T> scan job worker; GitCloneService; CodeGraphCliService; V1 concurrency control; deterministic Orchestrator; Worker Agent execution adapter; superstep dispatch; Pass 1 CL Docs; bounded refinement; Pass 2 path-aware trace planning and flow-group BL Docs; lightweight cross-verification; document pre-allocation; uncertainty recording engine with cross-repo deferral; deadlock-breaking protocol; dangling links; stale notices; impact analysis; database schema inspection + sample data query tools; minimal scan progress dashboard.
 
 ### Epic 6: Third-Party Library Handling
 System Owners can add organization-owned libraries as standalone repositories for partial on-demand scanning. Well-known libraries are treated as understood; unknown libraries trigger LLM-based inference with user notification fallback.
@@ -360,9 +360,9 @@ System Owners see live scan progress (minimal version available after Epic 5, en
 **Architecture:** SP-9 — ScanHub + GraphHub (SignalR with [Authorize]), Blazor.Diagrams live graph (nodes=Documents, edges=REFERENCES, dashed=uncertainties, yellow=disputed), scan progress dashboard (status, workers, files, errors), HITL question management (notifications, answer, dismiss), diff-based graph updates with viewport preservation, SignalR reconnection with state replay.
 
 ### Epic 9: Chat Interface
-Users ask natural-language questions in Business Mode (non-technical narrative) or IT Mode (technical detail with code references) and receive grounded answers with citations using LLM-wiki retrieval across scanned documents. When no Systems or Repositories are selected, Vulgata autonomously determines the relevant scope.
+Users ask natural-language questions in Business Mode (non-technical narrative) or IT Mode (technical detail with code references) and receive grounded answers with citations using database-backed LLM-Wiki retrieval across scanned Documents. When no Systems or Repositories are selected, Vulgata autonomously determines the relevant scope.
 **FRs covered:** FR-11.1, FR-11.2, FR-11.3, FR-11.4, FR-11.5, FR-11.6, FR-11.7, FR-11.8
-**Architecture:** SP-8 — ChatAgent (MAF), LLM-wiki retrieval pipeline (index.md → select 3-5 docs → read full → follow cross-repo links → synthesize), Business/IT dual mode with theme switching and system prompt changes, System/Repository context selection, auto-scope determination when nothing selected, file upload support, citation linking to source Documents and code lines.
+**Architecture:** SP-8 — Chat Agent, typed retrieval tools over `index_entries`, `document_sections`, graph relationships, endpoint records, flow traces, uncertainties, and source anchors; Business/IT dual mode with theme switching and system prompt changes; System/Repository context selection; auto-scope determination when nothing selected; file upload support; citation linking to source Documents and code lines.
 
 ### Epic 10: Git Monitoring & Incremental Re-scan ⚠️ Deferrable
 Documents stay current with code changes — periodic git polling detects remote changes, pulls updates, and incrementally re-scans only affected Code Units using two-phase change detection.
@@ -377,26 +377,26 @@ Architecture supports adding these later via Infrastructure project and MCP/LSP 
 
 ## Stories
 
-### Pre-Epic Gate: Magentic Validation Spike
+### Pre-Epic Gate: Worker Agent Execution Adapter Validation Spike
 
-#### Story SP.1: Magentic Orchestration Validation Spike
+#### Story SP.1: Worker Agent Execution Adapter Validation Spike
 
 As a **developer**,
-I want to validate that the Microsoft Agent Framework's Magentic orchestration pattern can coordinate custom OrchestratorAgent and WorkerAgent types,
-So that the team can commit to MAF for Epics 4-10 or select a documented fallback.
+I want to validate that the Microsoft Agent Framework can execute Vulgata Worker Agents through typed jobs under deterministic Orchestrator control,
+So that the team can commit to an execution adapter for Worker Agent tasks or select a documented fallback.
 
 **Acceptance Criteria:**
 
 **Given** a .NET console prototype project with Microsoft.Agents.AI.Foundry and Microsoft.Agents.AI.Workflows packages referenced
-**When** an OrchestratorAgent dispatches a mock superstep (batch of 3 synthetic Code Units) to WorkerAgents using the Magentic pattern
-**Then** all 3 WorkerAgents shall receive and process their assigned Code Units independently
-**And** the OrchestratorAgent shall collect and aggregate all WorkerAgent results
-**And** each WorkerAgent shall log its assigned Code Unit path, start time, end time, and status (Completed/Failed)
+**When** the deterministic Orchestrator harness dispatches a mock superstep (batch of 3 synthetic Code Units) as typed Worker Agent jobs
+**Then** all 3 Worker Agents shall receive and process their assigned Code Units independently
+**And** the Orchestrator shall collect and aggregate all Worker Agent results through the adapter
+**And** each Worker Agent shall log its assigned Code Unit path, start time, end time, and status (Completed/Failed)
 
-**Given** one WorkerAgent is configured to throw an exception during processing
-**When** the OrchestratorAgent dispatches the superstep
-**Then** the failed WorkerAgent task shall be retried once
-**And** the OrchestratorAgent shall continue processing remaining WorkerAgents
+**Given** one Worker Agent is configured to throw an exception during processing
+**When** the Orchestrator dispatches the superstep
+**Then** the failed Worker Agent task shall be retried once
+**And** the Orchestrator shall continue processing remaining Worker Agents
 **And** the final result shall include both successful results and the failed task with error details
 
 **Given** the spike completes successfully
@@ -801,18 +801,18 @@ So that agents have supplementary information when scanning and answering questi
 #### Story 3.1: LLM Provider Configuration (Admin)
 
 As an **administrator**,
-I want to configure multiple LLM providers at the global level with default agent-type assignments and test connections,
-So that the platform has reliable LLM access with automatic failover for all agent types.
+I want to configure multiple LLM providers at the global level with default LLM task-type assignments and test connections,
+So that the platform has reliable LLM access with automatic failover for all LLM-powered tasks.
 
 **Acceptance Criteria:**
 
 **Given** I am logged in as an Administrator
 **When** I navigate to 管理后台 → 设置 → LLM 提供商
-**Then** I shall see a list of all configured LLM Providers with their name, base URL, supported API types, and default agent-type assignment
+**Then** I shall see a list of all configured LLM Providers with their name, base URL, supported API types, and default LLM task-type assignment
 **And** a "添加提供商" button shall be available
 
 **Given** I click "添加提供商"
-**When** I enter a provider name (required), base endpoint URL (required), API key (required, masked input), supported API types — chat completions, responses, messages (multi-select checkboxes), and a default agent-type assignment — orchestrator, worker, chat (dropdown per agent type)
+**When** I enter a provider name (required), base endpoint URL (required), API key (required, masked input), supported API types — chat completions, responses, messages (multi-select checkboxes), and a default LLM task-type assignment — pre-scan, worker, chat (dropdown per task type)
 **Then** the API key shall be stored encrypted at rest via ASP.NET Core Data Protection (NFR-2.2)
 **And** the provider shall appear in the list
 
@@ -823,7 +823,7 @@ So that the platform has reliable LLM access with automatic failover for all age
 **And** the test shall not consume significant token quota (minimal payload)
 
 **Given** a provider in the list
-**When** I edit its name, URL, API key, API types, or default agent-type assignment
+**When** I edit its name, URL, API key, API types, or default LLM task-type assignment
 **Then** the changes shall be saved immediately
 **And** the provider's updated defaults shall apply to all Systems that use the global default (no per-System override set)
 
@@ -839,8 +839,8 @@ So that the platform has reliable LLM access with automatic failover for all age
 **And** if this provider was the only one configured, the system shall warn "删除后无可用提供商，扫描和对话功能将不可用"
 
 **Given** multiple providers are configured
-**When** the LLMProviderManager selects a provider for an agent task
-**Then** the default provider per agent type shall be used first
+**When** the LLMProviderManager selects a provider for an LLM task
+**Then** the default provider per task type shall be used first
 **And** on failure, the next available provider supporting the required API type shall be used (automatic failover)
 
 **Given** I am logged in as a SystemOwner or User
@@ -850,20 +850,20 @@ So that the platform has reliable LLM access with automatic failover for all age
 #### Story 3.2: Per-System LLM Provider Override
 
 As a **SystemOwner**,
-I want to override the global default LLM provider for each agent role within my System,
+I want to override the global default LLM provider for each LLM task role within my System,
 So that different Systems can use different LLM backends.
 
 **Acceptance Criteria:**
 
 **Given** I am logged in as a SystemOwner viewing a System I am assigned to
 **When** I navigate to the System's 设置 page
-**Then** I shall see an "LLM 提供商" section showing the current provider assignment for each agent type (orchestrator, worker, chat)
+**Then** I shall see an "LLM 提供商" section showing the current provider assignment for each LLM task type (pre-scan, worker, chat)
 **And** each shall default to "使用全局默认 — {provider name}"
 
 **Given** I am on the System LLM settings page
-**When** I select a different provider from the dropdown for the orchestrator agent type
-**Then** that System's scans shall use the selected provider for orchestration instead of the global default
-**And** the dropdown shall only show providers whose supported API types include the required capability for that agent role
+**When** I select a different provider from the dropdown for the pre-scan task type
+**Then** that System's pre-scan LLM profiling tasks shall use the selected provider instead of the global default
+**And** the dropdown shall only show providers whose supported API types include the required capability for that task role
 
 **Given** I have overridden the worker agent provider for System A
 **When** System A triggers a scan
@@ -873,11 +873,11 @@ So that different Systems can use different LLM backends.
 **Given** I have overridden a provider for my System
 **When** I select "使用全局默认" from the dropdown
 **Then** the override shall be cleared
-**And** the System shall revert to the global default for that agent type
+**And** the System shall revert to the global default for that LLM task type
 
 **Given** the global default provider is deleted by an Administrator while a System was using it without an override
 **When** the deletion completes
-**Then** the System's agent type shall fall back to the next available global default provider
+**Then** the System's LLM task type shall fall back to the next available global default provider
 **And** the SystemOwner shall see a notification "全局默认提供商已变更" on next visit
 
 **Given** I am a SystemOwner of System A
@@ -1062,17 +1062,24 @@ So that I can confirm communication patterns and resolve uncertainties before do
 #### Story 5.1: Document Graph Store Schema
 
 As a **developer**,
-I want a stable Document Graph Store with all domain entities, recursive CTE query services, and auto-generated index.md/log.md,
+I want a stable Document Graph Store with Logical Documents, immutable Document Versions, graph tables, retrieval indexes, flow trace persistence, and export artifacts,
 So that every downstream subsystem has a consistent data foundation to read from and write to.
 
 **Acceptance Criteria:**
 
 **Given** the VulgataDbContext is migrated
 **When** the schema is created
-**Then** the following tables shall exist: `documents` (id, repo_id, scan_id, doc_type CL/BL, file_path, title, summary, key_symbols, content_markdown, confidence 0.0–1.0, superseded_by_id FK self-ref, status, created_at, updated_at), `edges` (id, source_doc_id FK, target_doc_id FK, edge_type REFERENCES/GENERATED_FROM, confidence, is_cross_repo boolean, created_at), `uncertainties` (id, source_doc_id FK, target_repo_hint, endpoint_identifier, communication_type, status unresolved/resolved/wontfix, sub_status cross_repo/deadlocked/stale, resolved_by_edge_id FK→edges nullable, created_at, resolved_at), `scan_runs` (id, repo_id FK, system_id FK nullable, status not_started/profiling/awaiting_approval/scanning/completed/failed/expired, phase, started_at, completed_at, total_files, files_processed, errors_count), `document_versions` (id, document_id FK, content_markdown, source_hash, scan_id FK, created_at)
+**Then** the minimum V1 storage model shall represent:
+`documents` or equivalent Logical Document + Document Version tables with stable logical identity, immutable version identity, `content_jsonb`, `content_markdown`, `export_md_path`, `schema_version`, `is_current`, `superseded_by_id`, `scan_id`, `resolution_outdated_at`, and `resolution_outdated_reason`;
+`document_sources` and `reverse_index` for Source Anchoring and impact analysis;
+`edges` with Document Version endpoints, edge_type REFERENCES/GENERATED_FROM, resolution metadata, candidate-group metadata, confidence, and impact traversal eligibility;
+`entry_points`, `communication_endpoints`, `dispatch_sites`, and `dispatch_site_endpoint_candidates`;
+`uncertainties` with status, sub_status, endpoint identifiers, target Repository, and resolved Document Version fields;
+`flow_groups`, `flow_traces`, `flow_trace_steps`, `flow_trace_candidate_selections`, `flow_trace_dispatch_bindings`, and `flow_trace_endpoint_bindings`;
+`index_entries`, `document_sections`, and `scan_llm_usage`.
 **And** all timestamps shall use `timestamp with time zone`
 **And** all foreign keys shall be indexed
-**And** `documents` shall have a partial unique index on `(repo_id, file_path, symbol_name)` WHERE `superseded_by_id IS NULL`
+**And** current-version lookup indexes shall support Repository, Logical Document, Document Version, doc_type, entry point, edge traversal, uncertainty, endpoint, dispatch-site, flow trace, `index_entries`, and `document_sections` queries
 
 **Given** the document tree query is invoked
 **When** a repository's documents are queried by virtual path
@@ -1081,8 +1088,10 @@ So that every downstream subsystem has a consistent data foundation to read from
 
 **Given** a Scan completes for a repository
 **When** the post-scan hook runs
-**Then** an `index.md` file shall be generated with YAML frontmatter per document: `doc_id`, `title`, `doc_type`, `system` (name), `repo` (name), `key_symbols` (array), `summary` (1-2 lines), `path` (virtual path)
-**And** the index.md shall be stored in the `documents` table as a special SYSTEM document (not a code-derived document)
+**Then** `index_entries` shall be rebuilt from Document metadata and `content_jsonb`
+**And** `document_sections` shall be rebuilt from `content_jsonb.sections`
+**And** an `index.md` file may be generated with YAML frontmatter per current Document Version as an export/readability artifact
+**And** the generated `index.md` shall not be stored as the canonical retrieval source or as a special SYSTEM Document
 
 **Given** any scan, query, or system event occurs
 **When** events are logged
@@ -1129,45 +1138,46 @@ So that scans execute reliably without overwhelming the system.
 **Then** any in-progress scan shall be marked as Failed with a note "服务器重启，扫描中断"
 **And** the SystemOwner shall be notified of the failure on next dashboard visit
 
-**Given** the scan coordinator dispatches work to the OrchestratorAgent
-**When** the OrchestratorAgent starts processing (Story 5.3)
+**Given** the Scan Coordinator dispatches work to the Orchestrator
+**When** the Orchestrator starts processing (Story 5.3)
 **Then** the scan coordinator shall expose progress via SignalR ScanHub: `Phase`, `CurrentFile`, `FilesProcessed`, `TotalFiles`, `ReferencesFound`, `EstimatedSecondsRemaining`
 **And** the minimal dashboard (from Epic 4) shall display this progress
 
-#### Story 5.3: OrchestratorAgent & Superstep Dispatch
+#### Story 5.3: Orchestrator & Superstep Dispatch
 
 As a **developer**,
-I want an OrchestratorAgent that batches Code Units into supersteps using CodeGraph call-graph edges and dispatches Worker Agents,
+I want a deterministic Orchestrator that batches Code Units into supersteps using CodeGraph call-graph edges and dispatches Worker Agents through typed jobs,
 So that related Code Units are processed together and cross-verification is possible.
 
 **Acceptance Criteria:**
 
 **Given** a scan work item is ready and Code Units with `code_unit_edges` exist for the repository (from Epic 4)
-**When** the OrchestratorAgent starts
+**When** the Orchestrator starts
 **Then** it shall group Code Units into supersteps using a scheduling algorithm: caller/callee pairs from `code_unit_edges` shall be placed in the same superstep where possible
-**And** each superstep shall contain no more than a configurable max batch size (default: 10 Code Units)
+**And** each superstep shall respect `MaxWorkersPerScan` (default: 5 for V1)
 **And** superstep order shall respect dependency chains where a Code Unit's callees are processed before or alongside its caller
 
 **Given** a superstep is assembled
-**When** the OrchestratorAgent dispatches Worker Agents (Story 5.4)
-**Then** each Worker Agent shall receive: its assigned Code Unit, the Code Unit's call-graph context (callers + callees from `code_unit_edges`), the System's Communication Pattern Catalog (seeded in Epic 4), the user-supplied context (global + system + repo), and the confirmed communication types from the question gate
-**And** dispatch shall use the Magentic orchestration pattern (validated in the pre-epic spike)
+**When** the Orchestrator dispatches Worker Agents (Story 5.4)
+**Then** each Worker Agent shall receive a typed job packet with: its assigned Code Unit, exact source slice, file path and symbol name, neighboring symbols, CodeGraph callers/callees/imports/implementations, relevant resource files, pre-scan hints, the System's Communication Pattern Catalog (seeded in Epic 4), user-supplied context (global + system + repo), and related outputs for lightweight cross-verification
+**And** dispatch shall use the selected Worker Agent execution adapter validated in the pre-epic spike
 
 **Given** a Worker Agent task completes
 **When** the result is collected
-**Then** the OrchestratorAgent shall aggregate results and track superstep completion
+**Then** the Orchestrator shall aggregate results and track superstep completion
 **And** on Worker failure, the task shall be retried once with the fallback LLM provider
 **And** after retry exhaustion, the failure shall be recorded in the scan log and the scan shall continue with remaining tasks
 
 **Given** all supersteps complete
 **When** Pass 1 generation is done
-**Then** the OrchestratorAgent shall initiate Pass 2 (Story 5.5) by selecting one Worker Agent per System to synthesize Business Logic Documents
+**Then** the Orchestrator shall run bounded refinement only for satisfied material-enrichment predicates
+**And** the Orchestrator shall initiate Pass 2 (Story 5.5) by planning path-aware traces, clustering flow groups, and selecting one Worker Agent per flow group to synthesize Business Logic Documents
 
-**Given** the OrchestratorAgent runs
+**Given** the Orchestrator runs
 **When** scanning is in progress
 **Then** progress events (superstep started/completed, document generated) shall be pushed via the ScanHub for real-time dashboard updates
 
-#### Story 5.4: WorkerAgent — Pass 1 Code Logic Documents
+#### Story 5.4: Worker Agent — Pass 1 Code Logic Documents
 
 As a **SystemOwner**,
 I want Worker Agents to read Code Units and produce Code Logic Documents describing the structural code behavior,
@@ -1210,7 +1220,7 @@ So that the codebase is documented at a technical level with intra-repo referenc
 **And** on second failure, the Code Unit shall be marked as Failed with error details in the scan log
 **And** the scan shall continue with remaining Code Units
 
-#### Story 5.5: WorkerAgent — Pass 2 Business Logic Documents
+#### Story 5.5: Worker Agent — Pass 2 Business Logic Documents
 
 As a **SystemOwner**,
 I want the system to synthesize Business Logic Documents from completed Code Logic Documents,
@@ -1218,20 +1228,21 @@ So that business stakeholders can understand business processes without reading 
 
 **Acceptance Criteria:**
 
-**Given** Pass 1 is complete for a System (all repositories scanned, all CL Docs generated)
+**Given** Pass 1 is complete for a Repository and all required bounded refinements have either run or been explicitly skipped
 **When** Pass 2 begins
-**Then** one Worker Agent per System shall be assigned to synthesize Business Logic Documents
-**And** the Agent shall receive all CL Docs for the System plus their intra-repo REFERENCES edges as context
+**Then** the Orchestrator shall start from Pass 1 entry points, traverse REFERENCES edges, candidate groups, dispatch sites, endpoint records, and uncertainties with path state, persist flow traces used for BL generation, and cluster traces into flow groups
+**And** one Worker Agent per flow group shall be assigned to synthesize a Business Logic Document
+**And** the Worker Agent shall receive a prepared flow-group packet containing ordered traces, trace steps, termination reasons, loop summaries, candidate selections, unresolved candidate groups, dispatch bindings, endpoint bindings, relevant Code Logic Documents, relevant resource/config Documents, and Cross-Repository uncertainties
 
 **Given** the Worker Agent processes Pass 2
 **When** a Business Logic Document is generated
-**Then** it shall contain (doc_type=BL): title (business process name), summary (narrative in plain language, no code references — Business Mode compatible), key_business_entities (extracted from CL Docs), flow_description (step-by-step business process narrative), source_documents (array of doc_ids the BL Doc was synthesized from), and confidence
-**And** `GENERATED_FROM` edges shall connect the BL Doc to each source CL Doc
+**Then** it shall contain (doc_type=BL): title (business process name), summary (narrative in plain language, no code references — Business Mode compatible), key_business_entities, flow_description, trace_evidence_refs, unresolved_branch_notes, source_documents, generation-time resolution state, and confidence
+**And** `GENERATED_FROM` edges shall connect the Business Logic Document Version to each Code Logic Document Version actually used
 
 **Given** the BL Doc synthesis
 **When** the Worker Agent identifies a business flow that spans multiple repositories
 **Then** the BL Doc shall reference all involved repositories
-**And** cross-repo edges shall be flagged as `is_cross_repo = true`
+**And** Cross-Repository scope shall be derived from Repository boundaries on REFERENCES edges, endpoint bindings, and uncertainties rather than stored as a separate edge type
 **And** the BL Doc summary shall acknowledge cross-repo scope (e.g., "This process spans 手机银行, 风控引擎, and 核心系统")
 
 **Given** a BL Doc is generated
@@ -1242,8 +1253,9 @@ So that business stakeholders can understand business processes without reading 
 
 **Given** Pass 2 completes
 **When** all BL Docs are generated
-**Then** the index.md shall be regenerated to include BL Docs
-**And** the scan status shall transition to `Completed`
+**Then** `index_entries` and `document_sections` shall be rebuilt for the new Business Logic Document Versions
+**And** export artifacts such as `index.md` may be regenerated to include BL Docs
+**And** the scan status shall transition through post-scan and Cross-Repository Resolution states before `Completed`
 
 #### Story 5.6: Database Tools for Worker Agents
 
@@ -1321,7 +1333,7 @@ So that Epic 7 can complete the resolution with the full cross-repo detection re
 
 **Given** the impact analysis query is invoked
 **When** a set of changed source files is provided
-**Then** the query shall return: (1) directly impacted Documents, (2) intra-repo transitive closure via REFERENCES edges, (3) cross-repo reachability via is_cross_repo edges, (4) Uncertainties that should be reopened due to the change
+**Then** the query shall return: (1) directly impacted Documents, (2) intra-repo transitive closure via REFERENCES edges, (3) Cross-Repository reachability derived from source and target Repository IDs on REFERENCES edges, (4) Uncertainties that should be reopened due to the change
 **And** the query shall use recursive CTE with `SET max_recursion_depth` (PostgreSQL-specific, configurable limit)
 
 ---
@@ -1521,7 +1533,7 @@ So that my questions target the right codebase without manual selection when I'm
 
 **Given** I submit a question with no Systems or Repositories selected
 **When** the question is received (FR-11.8)
-**Then** Vulgata shall autonomously determine which Systems or Repositories are relevant by: (1) extracting keywords and entities from the question, (2) searching index.md across all accessible Systems for matching doc titles, key_symbols, and summaries, (3) ranking relevance by match count and recency, (4) selecting the top 3 matching Systems
+**Then** Vulgata shall autonomously determine which Systems or Repositories are relevant by: (1) extracting keywords and entities from the question, (2) calling `search_documents` over authorized `index_entries` and `document_sections` across all accessible Systems, including exact symbols, endpoint identifiers, business-term aliases, and Chinese/mixed-language trigram fallback, (3) ranking relevance by match strength and recency, (4) selecting the top 3 matching Systems
 **And** the auto-determined scope shall be displayed in the chat: "已自动选择以下系统：{system_names}" with an option to adjust
 
 **Given** I change the system/repo selection mid-session
@@ -1563,7 +1575,7 @@ So that the ChatAgent can incorporate information beyond the scanned codebase.
 **Then** a non-blaming error shall appear: "文件上传失败：{reason}" with retry option
 **And** the chat input shall remain intact
 
-#### Story 9.4: LLM-Wiki Retrieval Pipeline
+#### Story 9.4: Database-Backed LLM-Wiki Retrieval Pipeline
 
 As a **user**,
 I want the ChatAgent to find the most relevant documents, read them, follow cross-repo links, and synthesize an answer,
@@ -1573,8 +1585,9 @@ So that I get comprehensive, well-grounded responses across the scanned knowledg
 
 **Given** I submit a question in the Chat page
 **When** the ChatAgent begins retrieval
-**Then** it shall execute the LLM-wiki pipeline in order: (1) read the index.md for the selected Systems/Repos, (2) select 3-5 most relevant Documents based on title, key_symbols, and summary matching, (3) read each selected Document in full (including content_markdown), (4) follow outgoing cross-repo REFERENCES edges to read linked Documents from other repos, (5) synthesize a final answer grounded in the retrieved content
-**And** the pipeline shall have a maximum retrieval budget of 10 Documents total (3-5 direct + up to 5 cross-repo linked)
+**Then** it shall execute the LLM-Wiki pipeline through typed retrieval tools: (1) call `search_documents` for the selected Systems/Repos, (2) retrieve relevant sections using `get_document_sections`, (3) expand related Documents using `expand_related_documents`, (4) enrich evidence with `get_uncertainty_summary`, `get_endpoint_context`, `get_flow_trace_context`, and `get_source_anchor_context` as needed, (5) synthesize a final answer grounded in the retrieved sections and evidence
+**And** the pipeline shall be section-level by default and have a maximum retrieval budget of 10 Documents total (3-5 direct + up to 5 graph-expanded related Documents)
+**And** `index.md` shall not be read as the canonical retrieval input
 
 **Given** the retrieval identifies relevant Documents
 **When** reading each Document
@@ -1583,14 +1596,20 @@ So that I get comprehensive, well-grounded responses across the scanned knowledg
 
 **Given** a Document is too large for the context window
 **When** the ChatAgent reads it
-**Then** a summarization fallback shall apply: the Document shall be truncated to its `summary` field + first 2000 characters of `content_markdown`
-**And** the answer shall note "文档内容过长，已根据摘要回答"
+**Then** retrieval shall prefer relevant `document_sections` over full `content_markdown`
+**And** if section-level retrieval is still too large, a summarization fallback shall use the Document summary plus the highest-ranked sections
+**And** the answer shall note "文档内容过长，已根据摘要和相关章节回答"
 
 **Given** the retrieval finds zero relevant Documents
 **When** the pipeline completes
 **Then** the ChatAgent shall respond: "未找到相关文档。试试调整系统选择范围或换个问法。" (UX-DR-16 NoResults)
-**And** PostgreSQL full-text search shall run as a lightweight keyword fallback on document content
+**And** PostgreSQL full-text search shall run where it works well, with exact symbol/endpoint matching and trigram fallback for Chinese and mixed Chinese/English text
 **And** if full-text search also returns nothing, the response shall suggest "请确认相关系统已完成扫描"
+
+**Given** a retrieved Business Logic Document Version has `resolution_outdated_at` set
+**When** the ChatAgent synthesizes an answer
+**Then** it shall distinguish generation-time BL prose from query-time graph evidence
+**And** citations shall expose both the stale BL Document Version and the newer graph evidence where they differ
 
 **Given** the retrieval finds Documents but the LLM call fails
 **When** the error occurs

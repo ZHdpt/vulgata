@@ -2,7 +2,7 @@
 title: "PRD: Vulgata"
 status: draft
 created: 2026-06-12
-updated: 2026-06-16
+updated: 2026-07-10
 ---
 
 # PRD: Vulgata
@@ -33,20 +33,22 @@ Beyond the competition, three forces make this the right moment: (1) LLM inferen
 
 - **System** — A logical grouping of repositories that together implement a business capability (e.g., "Mobile Banking," "Risk Assessment"). Purely organizational — used for dashboard grouping and chat context selection. Has no detection significance. Cardinality: 1 system → N repositories.
 - **Repository** — A git repository containing source code. Belongs to exactly one system, or can be standalone (for shared libraries not owned by any system). Linked to a remote git URL. The fundamental unit of scanning and detection.
-- **Scan** — The process of reading a single repository's source code with LLM-powered agents and producing structured documents. Scans are always per-repository. Scanning all repos in a System is a convenience trigger that queues N independent repo scans. Scans are incremental when triggered by code changes.
-- **Code Unit** — The smallest unit of code processed by a worker agent. Typically a function, method, class, or file — determined by CodeGraph/tree-sitter during pre-scan profiling with exact line ranges.
-- **Document** — A structured markdown file produced by a worker agent, linked to one or more code units. Immutable — can only change when the linked code changes and is re-scanned. Two classifications: Code Logic Document and Business Logic Document. Organized in a tree structure mirroring the source directory hierarchy.
+- **Scan** — The process of reading a single Repository's source code through deterministic orchestration and LLM Worker Agents to produce structured Documents. Scans are always per-Repository. Scanning all Repositories in a System is a convenience trigger that queues N independent Repository scans. Scans are incremental when triggered by code changes.
+- **Code Unit** — The smallest unit of code processed by a Worker Agent. Typically a function, method, class, or file — determined by CodeGraph/tree-sitter during pre-scan profiling with exact line ranges.
+- **Document** — A generated knowledge artifact linked to source, graph, and retrieval metadata. V1 distinguishes a stable Logical Document from immutable Document Versions. Two classifications: Code Logic Document and Business Logic Document. Organized in a tree structure mirroring the source directory hierarchy.
+- **Logical Document** — A stable semantic slot for a Document across scans or refinements, such as "this Code Unit's Code Logic Document" or "this flow group's Business Logic Document."
+- **Document Version** — An immutable generated snapshot of a Logical Document. Version Chain links preserve history; retrieval normally reads the current authorized Document Version.
 - **Code Logic Document** — A document describing what code does structurally: architecture, data flow, call chains, framework usage. Readable by developers and AI agents. Generated in Pass 1.
 - **Business Logic Document** — A document describing the business rules and processes implemented by code: validation rules, decision flows, regulatory checks, business process steps. Readable by non-technical users. Synthesized from Code Logic Documents in Pass 2.
 
 ### Scanning Pipeline
 
-- **Scan Coordinator** — A non-LLM background service that manages the operational lifecycle of scans: queuing requests, enforcing concurrency limits, performing git operations, spawning Orchestrator Agents, and triggering cross-repo resolution after each repo scan completes. Not an LLM agent — deterministic application code.
-- **Orchestrator Agent** — An LLM-powered agent scoped to a single repository scan. Dispatches Worker Agents in superstep batches, coordinates cross-verification, handles errors, and triggers post-scan steps (reverse_index rebuild, index.md write, log.md append, cross-repo stale notices).
-- **Worker Agent** — An LLM agent dispatched by the Orchestrator to process a single Code Unit (Pass 1) or synthesize Business Logic Documents from Code Logic Documents (Pass 2). Detects cross-repo communication and produces structured output with metadata.
+- **Scan Coordinator** — A non-LLM background service that manages the operational lifecycle of scans: queuing requests, enforcing concurrency limits, performing git operations, triggering the per-Repository Orchestrator, and triggering Cross-Repository Resolution after each Repository scan completes. Deterministic application code.
+- **Orchestrator** — A deterministic per-Repository workflow service that plans scan states, creates jobs, groups supersteps and flow groups, enforces retry/concurrency policy, dispatches Worker Agents through typed jobs, and triggers post-scan steps.
+- **Worker Agent** — An LLM agent dispatched by the Orchestrator to process a single Code Unit (Pass 1) or synthesize one Business Logic Document for one flow group (Pass 2). Detects cross-repo communication and produces structured output with metadata.
 - **Superstep** — A batch of related Code Units dispatched concurrently to Worker Agents, enabling cross-verification within the batch before the next superstep begins.
 - **Pass 1** — The first phase of document generation: Code Logic Documents are produced per Code Unit, with intra-repo REFERENCES edges created immediately and cross-repo calls recorded as uncertainties.
-- **Pass 2** — The second phase: one Worker per System synthesizes Business Logic Documents from the completed Code Logic Documents, identifying business flows autonomously from the graph structure.
+- **Pass 2** — The second phase: deterministic planning traces path-aware graph slices from entry points, clusters them into flow groups, and dispatches one Worker Agent per flow group to synthesize Business Logic Documents from Code Logic Documents and trace evidence.
 - **Document Pre-Allocation** — Bulk-creating documents rows for every filtered Code Unit before any Worker runs, so all document IDs are known and intra-repo REFERENCES edges can be created immediately. Eliminates dangling references within the same repo.
 - **Cross-Verification** — When two Worker Agents process related Code Units in the same superstep, they read each other's draft output and confirm or dispute claims. Disputed edges are kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution.
 
@@ -88,8 +90,8 @@ Beyond the competition, three forces make this the right moment: (1) LLM inferen
 
 - **Prompt Workbench** — A development-time tool for iterating on agent prompts against known code patterns. Feeds validated prompts into the Communication Pattern Catalog.
 - **Pre-Scan Profiling** — The initial reconnaissance phase of a scan: CodeGraph parses source into code_units, identifies languages and frameworks, applies scan filter excluding non-code files, and groups code_units into supersteps.
-- **LLM-Wiki** — Vulgata's search and retrieval approach: an auto-generated index (index.md) catalogs every document; the chat agent reads the index, selects relevant documents, reads them in full, and synthesizes answers. No vector database or embedding pipeline.
-- **index.md** — Auto-generated after each scan. YAML frontmatter with structured entries (doc_id, title, doc_type, system, repo, key_symbols, summary, path). One entry per document.
+- **LLM-Wiki** — Vulgata's database-backed search and retrieval approach: `index_entries`, `document_sections`, graph tables, endpoint records, flow traces, and Source Anchoring are queried through typed retrieval tools; the Chat Agent synthesizes answers from returned sections and evidence. No vector database or embedding pipeline is required for V1.
+- **index.md** — Optional auto-generated export/readability artifact after each Scan. It may contain structured entries per Document, but it is not the canonical retrieval source.
 - **log.md** — Append-only activity log with parseable timestamps in format `## [YYYY-MM-DD HH:MM] operation | target`. Records all scans, queries, and system events.
 - **Business Mode** — Chat interface mode producing business-level narrative answers without code references. Uses a lighter UI theme and a system prompt focused on business process explanation. For non-technical users.
 - **IT Mode** — Chat interface mode producing full technical answers with code references and source links. Uses a darker UI theme and a system prompt focused on technical detail. For developers and AI agents.
@@ -116,7 +118,7 @@ Beyond the competition, three forces make this the right moment: (1) LLM inferen
 
 - **UJ-3. Wang the developer traces a cross-repo flow.** Wang, a developer assigned to build a new feature, switches to IT Mode and asks the same risk evaluation question. He receives the full technical trace with code references, follows the cross-repo links to understand every communication (RPC, HTTP, message queue, file), and reads the Code Logic Documents for implementation detail.
 
-- **UJ-4. Zhang the System Owner onboards his systems.** Zhang manages two Systems in his department. He creates both Systems in the dashboard, adds their Repositories with git URLs, configures the Communication Pattern Catalog for each System's communication mechanisms, assigns LLM Providers to the orchestrator and worker agents, and starts the first Scan. He monitors progress on the dashboard as Documents appear and cross-repo links resolve. When agents surface questions, he answers them to improve Scan quality.
+- **UJ-4. Zhang the System Owner onboards his systems.** Zhang manages two Systems in his department. He creates both Systems in the dashboard, adds their Repositories with git URLs, configures the Communication Pattern Catalog for each System's communication mechanisms, assigns LLM Providers to pre-scan, Worker Agent, and Chat Agent task roles, and starts the first Scan. He monitors progress on the dashboard as Documents appear and cross-repo links resolve. When agents surface questions, he answers them to improve Scan quality.
 
 ## 5. Features
 
@@ -141,28 +143,28 @@ The administrative surface for System Owners to onboard their systems into Vulga
 
 ### 5.3 LLM Provider Management
 
-System-level configuration of LLM backends. Enables per-agent provider assignment and self-hosted deployments.
+System-level configuration of LLM backends. Enables per-LLM-task provider assignment and self-hosted deployments.
 
-- **FR-3.1:** Administrators shall configure LLM Providers at the system level. Each provider has a name, base endpoint URL, API key, and supported API types (chat completions, responses, messages).
+- **FR-3.1:** Administrators shall configure LLM Providers at the global level. Each provider has a name, base endpoint URL, API key, supported API types (chat completions, responses, messages), and default LLM task-type assignments (pre-scan, Worker Agents, Chat Agent).
 - **FR-3.2:** The system shall support multiple LLM Providers simultaneously.
-- **FR-3.3:** System Owners shall assign a specific LLM Provider to each agent role (orchestrator agent, worker agents) within a System. Different agents may use different providers.
+- **FR-3.3:** System Owners shall assign a specific LLM Provider to each LLM task role (pre-scan profiling, Worker Agents, Chat Agent) within a System. Different LLM task roles may use different providers. The deterministic Orchestrator does not require an LLM Provider assignment.
 - **FR-3.4:** The system shall provide a connection test for each configured LLM Provider.
 
 ### 5.4 Scanning Pipeline
 
-The core engine. Scan Coordinator queues repo scans → Orchestrator Agent per repo dispatches workers in two passes → document generation → index/log generation → cross-repo resolution.
+The core engine. Scan Coordinator queues Repository scans → deterministic Orchestrator plans the per-Repository workflow → Worker Agents generate Documents in bounded jobs → retrieval indexes and exports are rebuilt → Cross-Repository Resolution runs.
 
 - **FR-4.1:** Pre-Scan Profiling shall run before worker dispatch. It shall use CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter excluding non-code files (build artifacts, generated code, test fixtures, configuration data).
-- **FR-4.2:** The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and spawn one Orchestrator Agent per Repository scan. The Orchestrator Agent shall dispatch Worker Agents to process Code Units in batches (supersteps). Each superstep fans out a batch of code units to workers, then fans in results before dispatching the next batch.
+- **FR-4.2:** The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and trigger one deterministic Orchestrator per Repository scan. The Orchestrator shall dispatch Worker Agents through typed jobs to process Code Units in batches (supersteps). Each superstep fans out a batch of Code Units to workers, then fans in results before dispatching the next batch.
 - **FR-4.3:** Each Worker Agent shall read its assigned Code Unit, identify the business logic, and produce a structured Document linked to the source code location. Worker Agents shall detect cross-repo communication during Code Unit processing (Model A — Worker-embedded detection).
 - **FR-4.4:** In Pass 1, Worker Agents shall produce Code Logic Documents describing structural code behavior: architecture, data flow, call chains, framework usage. Intra-repo REFERENCES edges shall be created immediately via Document Pre-Allocation. Cross-repo calls shall be recorded as Uncertainties.
-- **FR-4.5:** In Pass 2, one Worker Agent per System shall synthesize Business Logic Documents from the completed Code Logic Documents, identifying business flows autonomously from the graph structure. Business Logic Documents shall have GENERATED_FROM edges to their source Code Logic Documents.
+- **FR-4.5:** In Pass 2, the Orchestrator shall perform graph-first, path-aware flow tracing from Pass 1 entry points and deterministically cluster traces into flow groups. One Worker Agent per flow group shall synthesize a Business Logic Document from the prepared trace packet and Code Logic Documents. Business Logic Documents shall have GENERATED_FROM edges to the Code Logic Document Versions actually used.
 - **FR-4.6:** Generated Documents shall be organized in a tree structure mirroring the source code directory hierarchy. The tree shall be computed from document paths at display time (virtual tree); no synthetic directory-document rows shall be created.
-- **FR-4.7:** After each Scan completes, the system shall auto-generate index.md with YAML frontmatter — structured entries per Document with doc_id, title, doc_type, system, repo, key_symbols, summary, and path.
+- **FR-4.7:** After each Scan commits Document Versions, the system shall materialize PostgreSQL-backed retrieval indexes, including `index_entries` and `document_sections`, from document metadata and `content_jsonb`. The system may also auto-generate `index.md` as an export/readability artifact with structured entries, but `index.md` is not the canonical retrieval source.
 - **FR-4.8:** The system shall maintain an append-only log.md recording all Scans, queries, and system events with parseable timestamps in the format `## [YYYY-MM-DD HH:MM] operation | target`.
 - **FR-4.9:** The scanning pipeline shall integrate with CodeGraph for pre-indexed structural information (call graphs, symbol resolution, dependency maps) to accelerate agent processing and provide deterministic code_unit boundaries.
 - **FR-4.10:** Documents shall be immutable — the only mutation path is code change → re-scan → regenerate. Human edits to Documents are not supported. Previous versions shall be preserved via a superseded_by_id linked list (Version Chain).
-- **FR-4.11:** Week 1 shall include a Magentic orchestration validation spike: validate that the Microsoft Agent Framework's Magentic pattern works with Vulgata's custom agent types before committing to the full architecture. If the spike fails, fall back to a simpler agent pattern.
+- **FR-4.11:** Week 1 shall include a Worker Agent execution adapter validation spike: validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control before committing to the Worker Agent adapter. If the spike fails, fall back to a simpler Worker Agent execution adapter.
 - **FR-4.12:** When two Worker Agents process related Code Units (e.g., caller and callee within the same Repository) in the same superstep, they shall cross-verify business logic claims where possible. Disputed edges shall be kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution. Cross-verified claims shall be tagged as such in the generated Documents.
 
 ### 5.5 Cross-Repository Communication Detection
@@ -235,14 +237,14 @@ Enables LLM agents to inspect database schemas and query sample data during scan
 
 ### 5.11 Chat Interface
 
-The primary user-facing surface for knowledge consumption. Two modes, LLM-wiki retrieval, and source-grounded answers.
+The primary user-facing surface for knowledge consumption. Two modes, database-backed LLM-Wiki retrieval, and source-grounded answers.
 
 - **FR-11.1:** Business Mode shall present a lighter UI theme and use a system prompt focused on business process explanation. Answers shall be business-level narratives without code references.
 - **FR-11.2:** IT Mode shall present a darker UI theme and use a system prompt focused on technical detail. Answers shall include code references and source links.
 - **FR-11.3:** Users shall switch between Business Mode and IT Mode at any time during a chat session. The UI theme shall change immediately; the system prompt shall change for subsequent messages.
 - **FR-11.4:** Users shall select which Systems or Repositories to include as context for their questions. When no selection is made, all Systems the user has access to are included.
 - **FR-11.5:** Users shall upload files (documents, images) as supplementary context for their questions.
-- **FR-11.6:** The chat agent shall use LLM-wiki retrieval: (a) read index.md to identify relevant Documents, (b) select 3-5 most relevant Documents, (c) read each selected Document in full, (d) follow cross-repo links to related Documents, (e) synthesize an answer with citations to source Documents.
+- **FR-11.6:** The Chat Agent shall use typed LLM-Wiki retrieval tools over database-backed indexes and graph tables: `search_documents`, `get_document`, `get_document_sections`, `expand_related_documents`, `get_uncertainty_summary`, `get_endpoint_context`, `get_flow_trace_context`, `get_source_anchor_context`, and `get_scan_status`. Retrieval shall be section-level by default, graph-aware, authorization-aware, and able to synthesize answers with citations to source Documents and source anchors. `index.md` shall not be used as the canonical retrieval input.
 - **FR-11.7:** Every answer shall include citations linking claims to the source Documents and, where applicable, to the source code lines that generated those Documents.
 
 ### 5.12 Dashboard & Scan Progress
@@ -263,7 +265,7 @@ Model Context Protocol integration for tool consumption and knowledge serving. *
 - **FR-13.1:** The scanning pipeline shall be able to consume MCP tools registered at the Repository, System, or global level.
 - **FR-13.2:** The chat interface shall be able to consume MCP tools registered at the Repository, System, or global level.
 - **FR-13.3:** MCP tools shall require separate approval for scanning use and chat use. A tool approved for scanning is not automatically available in chat, and vice versa.
-- **FR-13.4:** Vulgata shall expose its knowledge base (Documents, index.md, cross-repo links) as an MCP server, allowing external AI coding agents to query business logic.
+- **FR-13.4:** Vulgata shall expose its knowledge base (Documents, `index_entries`, `document_sections`, graph relationships, flow traces, uncertainties, source anchors, and cross-repo links) as an MCP server, allowing external AI coding agents to query business logic through the same authorization-aware retrieval model used by chat.
 - **FR-13.5:** MCP tools shall be configurable at three levels: Repository (scoped to one repo), System (scoped to all repos in a system), and Global (available to all systems).
 
 ### 5.14 User-Supplied Context
@@ -300,7 +302,7 @@ Optional Language Server Protocol integration for IDE-level code intelligence du
 
 ### 6.3 Reliability
 
-- **NFR-3.1:** A failed Worker Agent task shall not fail the entire Scan. The orchestrator shall retry the task once, then record the failure and continue with remaining Code Units.
+- **NFR-3.1:** A failed Worker Agent task shall not fail the entire Scan. The Orchestrator shall retry the task once, then record the failure and continue with remaining Code Units.
 - **NFR-3.2:** The system shall gracefully handle LLM API unavailability — queuing or pausing agent tasks until the API recovers.
 - **NFR-3.3:** Scan state shall be persisted such that a server restart does not lose progress on an in-progress Scan. The specific persistence mechanism is deferred to architecture.
 
