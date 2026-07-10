@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-10
 
-**Status:** Awaiting revised-spec approval
+**Status:** Approved for implementation
 
 **Scope:** Repository-local Codex workflow for implementing BMad stories across one or more epics
 
