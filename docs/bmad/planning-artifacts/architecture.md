@@ -16,6 +16,7 @@ date: '2026-06-18'
 lastStep: 8
 status: 'complete'
 completedAt: '2026-06-18'
+updated: '2026-07-10'
 ---
 
 # Architecture Decision Document
@@ -29,27 +30,27 @@ The scanning subsystem was refined after this June architecture document. Use th
 - [Vulgata V1 Scanning Technical Plan](architecture/scanning-v1-technical-plan.md)
 - [Vulgata V1 Scanning Data Contracts](architecture/scanning-v1-data-contracts.md)
 
-Where these documents conflict with older scanning, document graph, orchestration, storage, or retrieval details below, the July scanning artifacts supersede the older text.
+Where these documents conflict with older scanning, document graph, orchestration, storage, or retrieval details below, the July scanning artifacts supersede the older text. On 2026-07-10, the main body of this architecture document was reconciled to the July scanning baseline; the two linked artifacts remain the detailed implementation source for scanning schemas and contracts.
 
 ## Project Context Analysis
 
 ### Requirements Overview
 
-**Functional Requirements:** 88 FRs across 15 feature groups. The scanning pipeline (FR-4.x, 12 FRs) and cross-repository communication detection (FR-5.x, 14 FRs) are the architecturally heaviest subsystems — they form the core engine. Authentication (FR-1.x), HITL (FR-7.x), user-supplied context (FR-14.x), and database tools (FR-10.x) are lighter supporting features. Git monitoring (FR-9.x), MCP integration (FR-13.x), and LSP support (FR-15.x) are deferrable or optional.
+**Functional Requirements:** 89 FRs across 15 feature groups. The scanning pipeline (FR-4.x, 12 FRs) and cross-repository communication detection (FR-5.x, 14 FRs) are the architecturally heaviest subsystems — they form the core engine. Authentication (FR-1.x), HITL (FR-7.x), user-supplied context (FR-14.x), chat auto-scope (FR-11.8), and database tools (FR-10.x) are lighter supporting features. Git monitoring (FR-9.x), MCP integration (FR-13.x), and LSP support (FR-15.x) are deferrable or optional.
 
 **Non-Functional Requirements:** 15 NFRs across 6 categories. The single Docker container constraint (NFR-4.1) is the most architecturally significant — it rules out multi-service deployments and external database dependencies. Security NFRs require encrypted secrets at rest and read-only database access. Reliability NFRs require worker retry, graceful API degradation, and scan state persistence.
 
 **Scale & Complexity:**
 
-- Primary domain: Full-stack web application with multi-agent LLM orchestration backend
-- Complexity level: High — multi-agent orchestration, cross-repo detection, document graph with recursive traversal, real-time graph visualization, incremental re-scan with impact analysis
-- Estimated architectural components: 9 major subsystems (Web UI, Scan Coordinator, Orchestrator Agent, Worker Agents, Cross-Repo Resolution, Document Graph Store, Chat Agent, 管理后台 Hub, LLM Provider Manager)
+- Primary domain: Full-stack web application with deterministic scan orchestration and LLM Worker Agent execution
+- Complexity level: High — deterministic scan orchestration, bounded LLM analysis, cross-repo detection, document graph with recursive traversal, flow-trace planning, real-time graph visualization, incremental re-scan with impact analysis
+- Estimated architectural components: 9 major subsystems (Web UI, Scan Coordinator, Orchestrator, Worker Agents, Cross-Repository Resolution, Document Graph Store, Chat Agent, 管理后台 Hub, LLM Provider Manager)
 
 ### Technical Constraints & Dependencies
 
 **Hard Constraints:**
 
-- .NET 10, C#, Blazor UI, Microsoft Agent Framework (Magentic orchestration)
+- .NET 10, C#, Blazor UI, deterministic Orchestrator, Microsoft Agent Framework for Worker Agent execution if the adapter spike validates it
 - PostgreSQL + EF Core for demo; docker-compose deployment
 - MVVM pattern for UI; DDD where possible for domain logic
 - Source structure must accommodate future Java/Python/Node projects (separate top-level directories)
@@ -58,14 +59,14 @@ Where these documents conflict with older scanning, document graph, orchestratio
 
 **Key Dependencies:**
 
-- `Microsoft.Agents.AI.Foundry` + `Microsoft.Agents.AI.Workflows` (prerelease) — agent orchestration
+- `Microsoft.Agents.AI.Foundry` + `Microsoft.Agents.AI.Workflows` (prerelease) — candidate Worker Agent execution and typed-tool adapter
 - `ModelContextProtocol` (prerelease) — MCP tool integration
 - `Microsoft.EntityFrameworkCore.Sqlite` — data persistence
 - `Z.Blazor.Diagrams` — live knowledge graph visualization
 - DeepSeek V4 via OpenAI-compatible endpoint — primary LLM provider
 - CodeGraph — pre-scan structural analysis (deterministic code unit extraction)
 
-**Pre-existing Decisions (50 logged):** Scan Coordinator (non-LLM) + per-repo Orchestrator (LLM agent) architecture; Worker-embedded cross-repo detection (Model A); two-pass document generation (Pass 1 CL Docs → Pass 2 BL Docs); document pre-allocation; deterministic cross-repo resolution; PostgreSQL + EF Core with recursive CTE; Blazor.Diagrams + SignalR for live graph; LLM-wiki search pattern; Communication Pattern Catalog per-system for V1.
+**Pre-existing Decisions (50 logged, reconciled with July 2026 scanning update):** Scan Coordinator (non-LLM) + deterministic per-Repository Orchestrator architecture; Worker-embedded cross-repo detection (Model A); two-pass document generation (Pass 1 CL Docs → Pass 2 flow-group BL Docs); document pre-allocation; deterministic Cross-Repository Resolution; PostgreSQL + EF Core with recursive CTE; `index_entries` and `document_sections` for retrieval; Blazor.Diagrams + SignalR for live graph; database-backed LLM-Wiki retrieval through typed tools; Communication Pattern Catalog per-system for V1.
 
 ### Cross-Cutting Concerns Identified
 
@@ -74,8 +75,8 @@ Where these documents conflict with older scanning, document graph, orchestratio
 | Authentication & Authorization | All UI surfaces, API endpoints              | ASP.NET Core Identity + role-based access; shapes middleware pipeline                                                |
 | Concurrency Control            | Scan pipeline, worker dispatch              | Configurable limits at multiple levels; prevents resource exhaustion                                                 |
 | Real-time Updates              | 管理后台, live graph                         | SignalR hub for scan progress, document generation, link resolution events                                           |
-| LLM Provider Management        | All agent execution                         | Multi-provider config, per-agent assignment, connection testing, API key encryption                                  |
-| Agent Error Handling           | Worker agents, orchestrator                 | Retry once, record failure, continue; graceful API degradation                                                       |
+| LLM Provider Management        | LLM task execution                          | Multi-provider config for pre-scan, worker, and chat tasks; connection testing; API key encryption                   |
+| Agent Error Handling           | Worker Agents, Orchestrator                 | Retry once, record failure, continue; graceful API degradation                                                       |
 | Observability                  | System-wide                                 | log.md (append-only, parseable) + structured .NET logging                                                            |
 | Configuration Externalization  | Agent prompts, CP catalogs, provider config | Prompts as configurable text resources; CP catalog documented format                                                 |
 | Data Isolation & Security      | Secrets, source code, documents             | Encrypted at rest for API keys/connection strings; read-only DB access; code never leaves infra with self-hosted LLM |
@@ -85,7 +86,7 @@ Where these documents conflict with older scanning, document graph, orchestratio
 **Critical Assumptions Requiring Architectural Mitigation:**
 
 1. **Cross-Repo Detection Accuracy (A3):** Design the document graph edge model with confidence levels (confirmed vs. inferred). The live graph should visually distinguish these. The chat agent should acknowledge uncertainty when traversing low-confidence edges. Include a pre-scan calibration step on known cross-repo call patterns.
-2. **MAF Magentic Fallback (A1):** The Week 1 validation spike must produce a binary decision with a documented fallback architecture. If Magentic fails, the fallback is direct superstep orchestration using MAF's lower-level workflow primitives (manual fan-out/fan-in without the manager agent). This fallback should be designed now, not during the spike.
+2. **Worker Agent Execution Adapter (A1):** The validation spike must produce a binary decision with a documented fallback adapter. The Orchestrator remains deterministic application code either way. If MAF cannot execute Vulgata Worker Agents and typed tool calls reliably, use a direct OpenAI SDK or custom worker adapter without changing the scan state machine.
 3. **BL Document Readability (A4):** The BL document schema must include mandatory non-technical elements: executive summary, glossary-anchored terminology, and visual flow descriptions. Implement a readability review gate during Pass 2 — sample documents assessed by a non-technical-simulating LLM before full generation.
 4. **LLM Provider Failover (A2):** The LLM Provider Manager must support automatic failover between configured providers. Worker agents should be able to retry with a fallback provider on failure. This is not optional — it's architectural insurance against demo-day API issues.
 5. **Scope Degradation Cut Lines (A5):** Beyond the already-deferred features, identify internal cut lines: (a) single-repo demo with manual cross-repo links if detection is unreliable, (b) pre-generated documents with live chat if scanning is too slow, (c) static graph screenshot if real-time Blazor.Diagrams proves unstable. Each cut line preserves the demo narrative while reducing risk.
@@ -118,11 +119,12 @@ Where these documents conflict with older scanning, document graph, orchestratio
 - Full MVCC concurrency → no read/write contention → graph queries and scan writes proceed simultaneously
 - In-memory graph cache → must support incremental updates during active scans, not just startup rebuild
 
-**LLM-Wiki Cascade:**
+**Database-Backed LLM-Wiki Cascade:**
 
-- index.md quality is critical → index generation prompt deserves as much attention as document generation prompts
-- Context window ceiling → define max document count and size per query; implement summarization fallback for large documents
-- No semantic fallback → add PostgreSQL full-text search as lightweight keyword search for index misses
+- `index_entries` and `document_sections` quality is critical → build them from committed Document Versions and `content_jsonb`
+- Context window ceiling → retrieve sections first, then summarize large Documents from summary + highest-ranked sections
+- Built-in PostgreSQL full-text search is not a complete Chinese tokenizer → use exact symbols, endpoint identifiers, business aliases, graph expansion, and trigram fallback for Chinese and mixed Chinese/English queries
+- `index.md` remains an export/readability artifact, not the canonical retrieval input
 
 ### Subsystem Decomposition
 
@@ -133,8 +135,8 @@ The system decomposes into 9 independently testable subsystems with clean, unidi
 | SP-1 | Web Application Shell       | Non-LLM       | None                  | Low — standard Blazor         |
 | SP-2 | System & Repository CRUD    | Non-LLM       | None                  | Low — standard EF Core CRUD   |
 | SP-3 | Scan Coordinator            | Non-LLM       | SP-2                  | Medium — concurrency, git ops |
-| SP-4 | Agent Orchestration         | LLM (MAF)     | SP-3, SP-5, SP-7      | High — MAF Magentic spike     |
-| SP-5 | Worker Agent Execution      | LLM           | SP-4 (dispatch)       | High — detection accuracy     |
+| SP-4 | Repo Workflow Orchestrator  | Deterministic | SP-3, SP-5, SP-7      | Medium — state machine, trace planning |
+| SP-5 | Worker Agent Execution      | LLM           | SP-4 (typed dispatch) | High — detection accuracy, adapter reliability |
 | SP-6 | Cross-Repository Resolution | Deterministic | SP-7                  | Low — pure SQL + matching     |
 | SP-7 | Document Graph Store        | Data Layer    | None (infrastructure) | Medium — schema stability     |
 | SP-8 | Chat Agent                  | LLM           | SP-7                  | Medium — retrieval quality    |
@@ -143,8 +145,8 @@ The system decomposes into 9 independently testable subsystems with clean, unidi
 **Development Ordering Implication:**
 
 - SP-1, SP-2, SP-3, SP-7 can start immediately (no LLM dependency)
-- SP-5 can be developed in parallel via Prompt Workbench during MAF spike
-- SP-4 depends on MAF spike outcome
+- SP-4 can start once SP-7's schema contracts are stable; it does not depend on LLM-led orchestration
+- SP-5 can be developed in parallel through prompt contracts and the Worker Agent execution adapter spike
 - SP-8, SP-9 are pure consumers — build last with real data
 
 **Architectural Keystone:** SP-7 (Document Graph Store). Its schema and query API must stabilize first — every other subsystem reads from or writes to it.
@@ -163,7 +165,7 @@ The system decomposes into 9 independently testable subsystems with clean, unidi
 | UI Components       | Microsoft Fluent UI Blazor              | Latest stable       | Official Microsoft library; DataGrid, forms, nav, dialogs; modern Microsoft look |
 | Graph Visualization | Z.Blazor.Diagrams                       | Latest stable       | Specialized graph canvas; only non-Fluent UI component                           |
 | MVVM Toolkit        | CommunityToolkit.Mvvm                   | Latest stable       | Source generators for ObservableProperty, RelayCommand                           |
-| Agent Framework     | Microsoft.Agents.AI.Foundry + Workflows | Latest prerelease   | MAF agent infrastructure + Magentic orchestration                                |
+| Agent Framework     | Microsoft.Agents.AI.Foundry + Workflows | Latest prerelease   | Candidate Worker Agent execution adapter; deterministic Orchestrator owns scheduling |
 | LLM Client          | OpenAI SDK                              | Latest stable       | DeepSeek V4 via OpenAI-compatible endpoint                                       |
 | Database            | PostgreSQL via EF Core                  | 17                  | Production-grade RDBMS; recursive CTEs for graph traversal; full concurrency     |
 | ORM                 | Npgsql.EntityFrameworkCore.PostgreSQL   | 9.x                 | EF Core PostgreSQL provider                                                      |
@@ -185,7 +187,7 @@ vulgata/
 │   │   ├── Vulgata.Web.ViewModels/      # MVVM ViewModels (CommunityToolkit.Mvvm)
 │   │   ├── Vulgata.Core/                # Domain layer (DDD entities, value objects, domain services)
 │   │   ├── Vulgata.Infrastructure/      # Persistence (EF Core), Git, CodeGraph, LLM clients
-│   │   ├── Vulgata.Agents/              # MAF agent definitions, workflows, prompts
+│   │   ├── Vulgata.Agents/              # Worker/Chat agent definitions, result contracts, prompts
 │   │   └── Vulgata.Shared/              # DTOs, contracts, constants shared across projects
 │   ├── java/                            # Future Java projects (placeholder)
 │   ├── python/                          # Future Python projects (placeholder)
@@ -204,8 +206,8 @@ vulgata/
 | -------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Vulgata.Web**            | Presentation + Host | Blazor components (Pages, Layouts, Shared), SignalR hubs, Identity setup (ApplicationUser, ApplicationDbContext), Program.cs host configuration. Top navbar with 对话/管理后台 routes. References all other projects. |
 | **Vulgata.Core**           | Domain (DDD)        | Entities (System, Repository, ScanRun, Document, Edge, Uncertainty), ValueObjects, DomainServices interfaces, Repository interfaces, DomainEvents. Zero external dependencies.                                         |
-| **Vulgata.Infrastructure** | Infrastructure      | VulgataDbContext + EF Core migrations, Repository implementations, GitCloneService (shells out to git), CodeGraphCliService (shells out to codegraph CLI), LLMProviderManager, OpenAI client. References Vulgata.Core. |
-| **Vulgata.Agents**         | Application (MAF)   | OrchestratorAgent, WorkerAgent, ChatAgent, MAF workflow definitions, embedded prompt resources. References Vulgata.Core and Vulgata.Infrastructure.                                                                    |
+| **Vulgata.Infrastructure** | Infrastructure      | VulgataDbContext + EF Core migrations, repository implementations, Orchestrator workflow services, GitCloneService (shells out to git), CodeGraphCliService (shells out to codegraph CLI), LLMProviderManager, OpenAI client. References Vulgata.Core. |
+| **Vulgata.Agents**         | Agent execution     | WorkerAgent, ChatAgent, Worker execution adapter contracts, structured result contracts, embedded prompt resources. References Vulgata.Core and infrastructure abstractions as needed.                                   |
 | **Vulgata.Web.ViewModels**  | Presentation (MVVM) | MVVM ViewModels using CommunityToolkit.Mvvm. Separate project for testability without web host. References Vulgata.Shared.                                                                                            |
 | **Vulgata.Shared**         | Cross-cutting       | DTOs, API contracts, enum definitions, role name constants. Zero or minimal dependencies.                                                                                                                              |
 
@@ -217,15 +219,15 @@ vulgata/
 
 | Role        | Access Level                                               | PRD Reference |
 | ----------- | ---------------------------------------------------------- | ------------- |
-| Admin       | Full system access: all CRUD, all scans, all configuration | FR-1.1        |
-| SystemOwner | Manage own systems/repositories, run scans, view results   | FR-1.2        |
-| User        | Read-only: view documents, use chat, view 管理后台          | FR-1.3        |
+| Administrator | Full system access: all CRUD, all scans, all configuration | FR-1.4        |
+| SystemOwner | Manage assigned systems/repositories, run scans, view results | FR-1.4        |
+| User        | Read-only chat and document access; no 管理后台 entry by default | FR-1.4        |
 
 **Implementation:**
 
-- `ApplicationUser` extends `IdentityUser` with a `SystemOwnerId` foreign key for scoping System Owners to their systems.
+- System ownership is represented as scoped assignments between users and Systems; SystemOwner access is limited to assigned Systems unless the user is also an Administrator.
 - `ApplicationDbContext` (Identity tables) and `VulgataDbContext` (domain tables) are separate DbContexts sharing the same PostgreSQL database.
-- Razor components use `[Authorize(Roles = "Admin")]` and `<AuthorizeView Roles="SystemOwner">` for access control.
+- Razor components use `[Authorize(Roles = "Administrator")]` and `<AuthorizeView Roles="SystemOwner">` for access control.
 - The Blazor template's built-in Login/Register/Manage pages are used with Fluent UI styling.
 
 ### Docker Strategy
@@ -311,8 +313,8 @@ vulgata/
 | --------------------------------------------------- | ------------------------------------------------------- |
 | `Microsoft.FluentUI.AspNetCore.Components`          | UI component library                                    |
 | `CommunityToolkit.Mvvm`                             | MVVM source generators                                  |
-| `Microsoft.Agents.AI.Foundry` (prerelease)          | MAF agent infrastructure                                |
-| `Microsoft.Agents.AI.Workflows` (prerelease)        | MAF workflow orchestration                              |
+| `Microsoft.Agents.AI.Foundry` (prerelease)          | Candidate Worker Agent execution infrastructure         |
+| `Microsoft.Agents.AI.Workflows` (prerelease)        | Candidate typed worker workflow adapter                 |
 | `Npgsql.EntityFrameworkCore.PostgreSQL`             | EF Core PostgreSQL provider                             |
 | `Microsoft.EntityFrameworkCore.Design`              | EF Core migrations tooling                              |
 | `Microsoft.AspNetCore.Identity.EntityFrameworkCore` | Identity with EF Core storage                           |
@@ -326,7 +328,7 @@ vulgata/
 - **In-process agents:** Worker exceptions could crash the application. Aggressive error boundaries and try/catch isolation required.
 - **CodeGraph as external CLI:** Shell invocation adds latency. Acceptable for demo scale; in-process integration possible post-V1.
 - **Fluent UI version coupling:** Component library updates may introduce breaking changes. Pin to specific version in V1.
-- **MAF prerelease packages:** API surface may change. Week 1 spike must validate compatibility; fallback to direct orchestration if needed.
+- **MAF prerelease packages:** API surface may change. Worker Agent adapter spike must validate compatibility; fallback to direct OpenAI SDK or custom worker adapter if needed.
 
 ## Implementation Patterns & Consistency Rules
 
@@ -358,9 +360,9 @@ vulgata/
 - Private fields: `_camelCase` (`_logger`, `_dbContext`, `_httpClient`)
 - Interfaces: `I` prefix (`ISystemRepository`, `IDocumentGraphStore`)
 - Domain model types (entities, value objects, aggregates): no suffix — context implies role (`System`, `ScanRun`, `Document`, `Edge`)
-- Architectural role types: keep suffix for clarity (`ISystemRepository`, `ScanCoordinatorService`, `DocumentValidator`, `OrchestratorAgent`, `ScanHub`, `SystemsViewModel`)
+- Architectural role types: keep suffix for clarity (`ISystemRepository`, `ScanCoordinatorService`, `OrchestratorService`, `DocumentValidator`, `ScanHub`, `SystemsViewModel`)
 - Blazor components: feature folders under `Pages/` and `Components/`, routable pages get `Page` suffix (`ChatPage.razor`, `DashboardPage.razor`)
-- MAF agents: role-based + `Agent` suffix (`OrchestratorAgent`, `WorkerAgent`, `ChatAgent`)
+- LLM agents: role-based + `Agent` suffix (`WorkerAgent`, `ChatAgent`)
 - ViewModels: `{Feature}ViewModel` (`SystemsViewModel`, `ScanProgressViewModel`)
 - Domain events: past-tense noun (`ScanCompletedDomainEvent`, `DocumentGeneratedDomainEvent`)
 - SignalR hub methods: past-tense noun (`ScanCompleted`, `DocumentGenerated`, `LinkResolved`)
@@ -378,7 +380,7 @@ vulgata/
 
 - EF Core entity configuration: `IEntityTypeConfiguration<T>` classes in `Vulgata.Infrastructure/Configurations/`
 - Domain service interfaces in `Vulgata.Core/DomainServices/`, implementations in `Vulgata.Infrastructure/Services/`
-- MAF agent definitions in `Vulgata.Agents/`, prompts as embedded resources in `Vulgata.Agents/Prompts/`
+- Worker and Chat Agent definitions in `Vulgata.Agents/`, prompts as embedded resources in `Vulgata.Agents/Prompts/`
 - FluentValidation validators co-located with validated types (e.g., `Vulgata.Shared/Validators/` for DTO validators)
 - Query services for complex read operations (recursive CTEs, graph traversal) in `Vulgata.Infrastructure/Queries/`
 
@@ -764,10 +766,17 @@ vulgata/
 │   │   │   │   ├── System.cs                 # Aggregate root
 │   │   │   │   ├── Repository.cs             # Entity (child of System)
 │   │   │   │   ├── ScanRun.cs                # Aggregate root
-│   │   │   │   ├── Document.cs               # Aggregate root
-│   │   │   │   ├── DocumentVersion.cs        # Entity (child of Document)
-│   │   │   │   ├── Edge.cs                   # Entity
-│   │   │   │   ├── Uncertainty.cs            # Entity
+│   │   │   │   ├── Document.cs               # Logical Document aggregate root
+│   │   │   │   ├── DocumentVersion.cs        # Immutable generated snapshot
+│   │   │   │   ├── DocumentSection.cs        # Section-level retrieval row
+│   │   │   │   ├── IndexEntry.cs             # Document-level retrieval row
+│   │   │   │   ├── Edge.cs                   # Document Version graph edge
+│   │   │   │   ├── Uncertainty.cs            # Known unknown
+│   │   │   │   ├── EntryPoint.cs             # Pass 2 trace start metadata
+│   │   │   │   ├── CommunicationEndpoint.cs  # Provider-side surface
+│   │   │   │   ├── DispatchSite.cs           # Consumer-side invocation
+│   │   │   │   ├── FlowGroup.cs              # Pass 2 clustered flow group
+│   │   │   │   ├── FlowTrace.cs              # Persisted trace evidence
 │   │   │   │   ├── CommunicationPattern.cs   # Entity (cross-repo catalog entry)
 │   │   │   │   └── LLMProvider.cs            # Entity (provider configuration)
 │   │   │   ├── ValueObjects/
@@ -784,6 +793,8 @@ vulgata/
 │   │   │   │   ├── IUncertaintyRepository.cs
 │   │   │   │   ├── ILLMProviderRepository.cs
 │   │   │   │   ├── IDocumentGraphQueryService.cs
+│   │   │   │   ├── IRetrievalQueryService.cs
+│   │   │   │   ├── IFlowTraceQueryService.cs
 │   │   │   │   └── ICrossRepoResolutionService.cs
 │   │   │   └── DomainEvents/
 │   │   │       ├── IDomainEvent.cs
@@ -805,8 +816,15 @@ vulgata/
 │   │   │   │   ├── ScanRunConfiguration.cs
 │   │   │   │   ├── DocumentConfiguration.cs
 │   │   │   │   ├── DocumentVersionConfiguration.cs
+│   │   │   │   ├── DocumentSectionConfiguration.cs
+│   │   │   │   ├── IndexEntryConfiguration.cs
 │   │   │   │   ├── EdgeConfiguration.cs
 │   │   │   │   ├── UncertaintyConfiguration.cs
+│   │   │   │   ├── EntryPointConfiguration.cs
+│   │   │   │   ├── CommunicationEndpointConfiguration.cs
+│   │   │   │   ├── DispatchSiteConfiguration.cs
+│   │   │   │   ├── FlowGroupConfiguration.cs
+│   │   │   │   ├── FlowTraceConfiguration.cs
 │   │   │   │   ├── CommunicationPatternConfiguration.cs
 │   │   │   │   └── LLMProviderConfiguration.cs
 │   │   │   ├── Repositories/                 # Interface implementations
@@ -819,11 +837,14 @@ vulgata/
 │   │   │   │   └── LLMProviderRepository.cs
 │   │   │   ├── Queries/                      # Complex read queries
 │   │   │   │   ├── DocumentGraphQueryService.cs    # Recursive CTE traversal
-│   │   │   │   └── CrossRepoResolutionService.cs   # Cross-repo matching
+│   │   │   │   ├── RetrievalQueryService.cs        # index_entries/document_sections search
+│   │   │   │   ├── FlowTraceQueryService.cs        # flow trace context
+│   │   │   │   └── CrossRepoResolutionService.cs   # Cross-Repository matching
 │   │   │   ├── Services/                     # Domain service implementations
 │   │   │   │   ├── DomainEventDispatcher.cs
 │   │   │   │   ├── GitCloneService.cs        # Shells out to git
 │   │   │   │   ├── CodeGraphCliService.cs    # Shells out to codegraph CLI
+│   │   │   │   ├── OrchestratorService.cs    # Deterministic per-Repository workflow
 │   │   │   │   └── LLMProviderManager.cs     # Multi-provider, failover, API key encryption
 │   │   │   ├── BackgroundJobs/
 │   │   │   │   ├── ScanJobWorker.cs          # BackgroundService + Channel<T>
@@ -834,20 +855,22 @@ vulgata/
 │   │   │       ├── VulgataDbContextModelSnapshot.cs
 │   │   │       └── ApplicationDbContextModelSnapshot.cs
 │   │   │
-│   │   ├── Vulgata.Agents/                   # MAF agent definitions
+│   │   ├── Vulgata.Agents/                   # Worker/Chat agent execution and prompts
 │   │   │   ├── Vulgata.Agents.csproj
 │   │   │   ├── DependencyInjection.cs        # AddVulgataAgents() extension
-│   │   │   ├── OrchestratorAgent.cs          # MAF agent: coordinates scan supersteps
-│   │   │   ├── WorkerAgent.cs                # MAF agent: code analysis + doc generation
-│   │   │   ├── ChatAgent.cs                  # MAF agent: document Q&A
-│   │   │   ├── Workflows/
-│   │   │   │   └── ScanWorkflow.cs           # MAF workflow: orchestrator → workers → cross-repo
+│   │   │   ├── WorkerAgent.cs                # LLM agent: code analysis + doc generation
+│   │   │   ├── ChatAgent.cs                  # LLM agent: document Q&A synthesis
+│   │   │   ├── Contracts/
+│   │   │   │   ├── Pass1Result.cs
+│   │   │   │   ├── Pass1RefinementResult.cs
+│   │   │   │   └── Pass2Result.cs
+│   │   │   ├── Execution/
+│   │   │   │   └── IWorkerAgentExecutor.cs   # Adapter boundary for MAF/OpenAI/custom execution
 │   │   │   └── Prompts/                      # Embedded resources
-│   │   │       ├── orchestrator-prompt.txt
-│   │   │       ├── worker-prompt.txt
-│   │   │       ├── chat-prompt.txt
-│   │   │       ├── cross-repo-detection.txt
-│   │   │       └── communication-pattern-catalog.md
+│   │   │       ├── pass1-code-logic-worker.md
+│   │   │       ├── pass1-refinement-worker.md
+│   │   │       ├── pass2-business-flow-worker.md
+│   │   │       └── chat-retrieval-synthesis.md
 │   │   │
 │   │   └── Vulgata.Shared/                   # DTOs, enums, constants
 │   │       ├── Vulgata.Shared.csproj
@@ -871,7 +894,7 @@ vulgata/
 │   │       │   ├── EdgeConfidence.cs
 │   │       │   └── AgentTaskState.cs         # Queued, Running, Completed, Failed, Cancelled
 │   │       ├── Constants/
-│   │       │   ├── RoleNames.cs              # Admin, SystemOwner, User
+│   │       │   ├── RoleNames.cs              # Administrator, SystemOwner, User
 │   │       │   └── RouteConstants.cs         # /api/systems, etc.
 │   │       └── Validators/
 │   │           ├── SystemDtoValidator.cs
@@ -907,8 +930,10 @@ vulgata/
 │       │       ├── GitCloneServiceTests.cs
 │       │       └── LLMProviderManagerTests.cs
 │       ├── Agents/
-│       │   ├── OrchestratorAgentTests.cs
-│       │   └── WorkerAgentTests.cs
+│       │   ├── WorkerAgentTests.cs
+│       │   └── ChatAgentTests.cs
+│       ├── Orchestration/
+│       │   └── OrchestratorServiceTests.cs
 │       ├── Web/
 │       │   └── ViewModels/
 │       │       ├── SystemsViewModelTests.cs
@@ -954,7 +979,7 @@ vulgata/
 
 - `Vulgata.Web` → references all other projects (composition root)
 - `Vulgata.Web.ViewModels` → references `Vulgata.Shared`, `Vulgata.Core` (domain services interfaces)
-- `Vulgata.Agents` → references `Vulgata.Core`, `Vulgata.Infrastructure`
+- `Vulgata.Agents` → references `Vulgata.Core` and infrastructure abstractions needed for Worker/Chat execution
 - `Vulgata.Infrastructure` → references `Vulgata.Core`
 - `Vulgata.Core` → zero project references (pure domain)
 - `Vulgata.Shared` → zero project references (standalone DTOs/enums)
@@ -964,55 +989,57 @@ vulgata/
 - Domain services: interfaces in `Core/DomainServices/`, implementations in `Infrastructure/Services/`
 - Repositories: interfaces in `Core/DomainServices/`, implementations in `Infrastructure/Repositories/`
 - Query services: interfaces in `Core/DomainServices/`, implementations in `Infrastructure/Queries/`
-- MAF agents: defined in `Agents/`, depend on Core interfaces + Infrastructure services
+- Orchestrator: deterministic workflow service in `Infrastructure/Services/`, depends on Core interfaces and the Worker Agent executor boundary
+- Worker/Chat Agents: defined in `Agents/`, depend on Core contracts and typed retrieval/tool interfaces
 - Background jobs: `Infrastructure/BackgroundJobs/`, registered as `IHostedService`
 
 **Data Boundaries:**
 
-- `VulgataDbContext`: owns all domain tables (Systems, Repositories, Documents, Edges, etc.)
+- `VulgataDbContext`: owns all domain tables (Systems, Repositories, Logical Documents, Document Versions, Edges, Uncertainties, endpoints, dispatch sites, flow traces, `index_entries`, `document_sections`, etc.)
 - `ApplicationDbContext`: owns Identity tables only; separate migration history
-- Both share single PostgreSQL database; separate schemas (`public` for domain, `identity` for auth)
+- Both share single PostgreSQL database; separate schemas (`vulgata` for domain, `identity` for auth)
 - Repository interfaces never expose `IQueryable<T>` or `DbSet<T>`
 - Query services encapsulate raw SQL/CTE queries behind interfaces in Core
 
 ### Requirements to Structure Mapping
 
-| FR Category                   | Primary Location                                                                                 | Subsystems       |
-| ----------------------------- | ------------------------------------------------------------------------------------------------ | ---------------- |
-| FR-1 (Auth)                   | `Vulgata.Web` (Identity pages), `Vulgata.Infrastructure` (ApplicationUser, ApplicationDbContext) | SP-1             |
-| FR-2 (System CRUD)            | `Vulgata.Web/Pages/Systems/`, `Vulgata.Core`, `Vulgata.Infrastructure`                           | SP-2             |
-| FR-3 (Repo CRUD)              | `Vulgata.Web/Pages/Repositories/`, `Vulgata.Core`, `Vulgata.Infrastructure`                      | SP-2             |
-| FR-4 (Scan Pipeline)          | `Vulgata.Infrastructure/BackgroundJobs/`, `Vulgata.Agents/`                                      | SP-3, SP-4, SP-5 |
-| FR-5 (Cross-Repo Detection)   | `Vulgata.Agents/` (Worker prompt), `Vulgata.Infrastructure/Queries/`                             | SP-5, SP-6       |
-| FR-6 (Document Generation)    | `Vulgata.Agents/` (Worker), `Vulgata.Core` (Document entity)                                     | SP-5             |
-| FR-7 (HITL)                   | `Vulgata.Web/Pages/`, `Vulgata.Core` (Uncertainty entity)                                        | SP-1             |
-| FR-8 (Document Viewing)       | `Vulgata.Web/Pages/Documents/`, `Vulgata.Web.ViewModels/`                                        | SP-1             |
-| FR-9 (Git Monitoring)         | `Vulgata.Infrastructure/Services/GitCloneService.cs`                                             | SP-3             |
-| FR-10 (Database Tools)        | `Vulgata.Infrastructure/Queries/`                                                                | SP-7             |
-| FR-11 (LLM Provider Config)   | `Vulgata.Web/Pages/Management/Settings/`, `Vulgata.Infrastructure/Services/LLMProviderManager.cs` | SP-1             |
-| FR-12 (Chat Agent)            | `Vulgata.Agents/ChatAgent.cs`, `Vulgata.Web/Pages/Chat/`                                         | SP-8             |
-| FR-13 (MCP Integration)       | `Vulgata.Infrastructure/` (deferred)                                                             | —                |
-| FR-14 (User-Supplied Context) | `Vulgata.Web/Pages/`, `Vulgata.Core`                                                             | SP-1             |
-| FR-15 (LSP Support)           | Deferred                                                                                         | —                |
+| FR Category                   | Primary Location                                                                                         | Subsystems       |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------- |
+| FR-1 (Auth)                   | `Vulgata.Web` (Identity pages), `Vulgata.Infrastructure` (ApplicationUser, ApplicationDbContext)         | SP-1             |
+| FR-2 (System & Repo CRUD)     | `Vulgata.Web/Components/Pages/Management/`, `Vulgata.Core`, `Vulgata.Infrastructure`                     | SP-2             |
+| FR-3 (LLM Provider Config)    | `Vulgata.Web/Components/Pages/Management/`, `Vulgata.Infrastructure/Services/LLMProviderManager.cs`      | SP-1, SP-2       |
+| FR-4 (Scan Pipeline)          | `Vulgata.Infrastructure/BackgroundJobs/`, `Vulgata.Infrastructure/Services/OrchestratorService.cs`, `Vulgata.Agents/` | SP-3, SP-4, SP-5 |
+| FR-5 (Cross-Repo Detection)   | `Vulgata.Agents/Prompts/`, endpoint/dispatch tables, `Vulgata.Infrastructure/Queries/`                   | SP-5, SP-6, SP-7 |
+| FR-6 (Uncertainty Resolution) | `Vulgata.Core` (Uncertainty), `Vulgata.Infrastructure/Queries/CrossRepoResolutionService.cs`             | SP-6, SP-7       |
+| FR-7 (HITL)                   | `Vulgata.Web/Components/Pages/Management/`, `Vulgata.Core` (Uncertainty)                                 | SP-1, SP-9       |
+| FR-8 (Third-Party Libraries)  | `Vulgata.Core`, `Vulgata.Infrastructure/Services/`, Worker Agent prompts                                 | SP-3, SP-5       |
+| FR-9 (Git Monitoring)         | `Vulgata.Infrastructure/Services/GitCloneService.cs`, impact-analysis queries                            | SP-3, SP-7       |
+| FR-10 (Database Tools)        | `Vulgata.Infrastructure/Queries/` and Worker Agent tool interfaces                                       | SP-5, SP-7       |
+| FR-11 (Chat Interface)        | `Vulgata.Agents/ChatAgent.cs`, typed retrieval tools, `Vulgata.Web/Components/Pages/Chat/`               | SP-8             |
+| FR-12 (Dashboard & Graph)     | `Vulgata.Web/Hubs/`, `Vulgata.Web/Components/Pages/Management/`, `Vulgata.Web.ViewModels/`               | SP-9             |
+| FR-13 (MCP Integration)       | `Vulgata.Infrastructure/` (deferred)                                                                     | —                |
+| FR-14 (User-Supplied Context) | `Vulgata.Web/Components/Pages/Management/`, `Vulgata.Core`                                               | SP-1, SP-2       |
+| FR-15 (LSP Support)           | Deferred                                                                                                 | —                |
 
 ### Integration Points
 
 **Internal Communication:**
 
-- Scan Coordinator → BackgroundService (Channel<T>): enqueues work items
-- BackgroundService → WorkerAgent: dispatches agent execution
-- WorkerAgent → VulgataDbContext: persists documents via repository
+- Scan Coordinator → BackgroundService (Channel<T>): enqueues Repository scan work items
+- BackgroundService → OrchestratorService: executes deterministic per-Repository workflow
+- OrchestratorService → WorkerAgent executor: dispatches typed pre-scan, Pass 1, refinement, and Pass 2 jobs
+- WorkerAgent executor → VulgataDbContext: persists Document Versions and structured graph facts via repositories/services
 - SaveChanges → DomainEventDispatcher: dispatches after commit
 - DomainEventDispatcher → SignalR Hub: pushes events to UI
-- ScanHub → Blazor WASM client: real-time scan progress
-- GraphHub → Blazor WASM client: diff-based graph updates
+- ScanHub → Blazor interactive server client: real-time scan progress
+- GraphHub → Blazor interactive server client: diff-based graph updates
 - ViewModels ↔ IMessenger: in-process UI eventing
 
 **External Integrations:**
 
 - Git CLI: `GitCloneService` shells out for clone/pull at scan time
 - CodeGraph CLI: `CodeGraphCliService` shells out for pre-scan structural analysis
-- LLM API: `LLMProviderManager` → OpenAI SDK → DeepSeek V4 (or configured provider)
+- LLM API: `LLMProviderManager` → OpenAI SDK → DeepSeek V4 (or configured provider) for pre-scan, worker, and chat LLM task roles
 - MCP: deferred for V1
 
 **Data Flow (Scan Pipeline):**
@@ -1020,15 +1047,19 @@ vulgata/
 ```
 User clicks Scan → ScanRun created (Queued)
   → ScanJobWorker dequeues → GitCloneService clones/pulls repo
-  → CodeGraphCliService extracts code units
-  → OrchestratorAgent groups into supersteps
-  → WorkerAgent processes each superstep (code analysis + doc generation)
-    → Cross-repo detection (Model A: embedded in Worker prompt)
-  → Documents persisted via DocumentRepository
+  → CodeGraphCliService extracts Code Units and Source Anchors
+  → OrchestratorService plans scan states and groups supersteps
+  → WorkerAgent executor processes typed Pass 1 jobs
+    → Cross-repo detection emits endpoints, dispatch sites, edges, and uncertainties
+  → Document Versions and graph facts persisted via repositories/services
+  → OrchestratorService runs bounded refinement predicates
+  → OrchestratorService plans flow traces and clusters flow groups
+  → Pass 2 WorkerAgent executor synthesizes BL Docs per flow group
+  → index_entries, document_sections, and export artifacts rebuilt
   → Domain events dispatched after commit
   → SignalR pushes ScanCompleted, DocumentGenerated to UI
-  → CrossRepoResolutionService matches patterns across repos
-  → Edges created, GraphHub pushes NodeAdded/EdgeAdded
+  → CrossRepoResolutionService matches endpoints/uncertainties across Repositories
+  → Edges and stale notices created, GraphHub pushes NodeAdded/EdgeAdded
 ```
 
 ### File Organization Patterns
@@ -1096,7 +1127,7 @@ User clicks Scan → ScanRun created (Queued)
 | .NET 10 + Fluent UI Blazor                    | ✅      | Fluent UI targets .NET 8+                    |
 | .NET 10 + Z.Blazor.Diagrams                   | ✅      | Targets .NET 8+                              |
 | Blazor Server + SignalR                       | ✅      | Built-in, same framework                     |
-| Blazor WASM (graph) + Minimal APIs            | ✅      | HttpClient calls /api/\*                     |
+| Blazor interactive server + Minimal APIs      | ✅      | UI components call /api/\* where endpoint boundaries are useful |
 | PostgreSQL 17 + EF Core + Npgsql              | ✅      | Full provider support, recursive CTEs        |
 | docker-compose + PostgreSQL + Git + CodeGraph | ✅      | App container + postgres:17-alpine           |
 | ASP.NET Core Identity + cookie auth + Blazor  | ✅      | Standard template pattern                    |
@@ -1137,15 +1168,15 @@ User clicks Scan → ScanRun created (Queued)
 | FR-1 (Auth)                   | ✅                          | ASP.NET Core Identity + roles, Auth pages                     |
 | FR-2 (System CRUD)            | ✅                          | Systems pages + ISystemRepository                             |
 | FR-3 (Repo CRUD)              | ✅                          | Repositories pages + IRepositoryRepository                    |
-| FR-4 (Scan Pipeline)          | ✅                          | BackgroundService + MAF agents + ScanWorkflow                 |
-| FR-5 (Cross-Repo Detection)   | ✅                          | Worker prompt injection + CrossRepoResolutionService          |
-| FR-6 (Document Generation)    | ✅                          | WorkerAgent + Document aggregate                              |
+| FR-4 (Scan Pipeline)          | ✅                          | BackgroundService + deterministic Orchestrator + Worker Agent executor |
+| FR-5 (Cross-Repo Detection)   | ✅                          | Worker prompt injection + endpoint/dispatch tables + CrossRepoResolutionService |
+| FR-6 (Uncertainty Resolution) | ✅                          | Uncertainty aggregate + deterministic Cross-Repository Resolution |
 | FR-7 (HITL)                   | ✅                          | Uncertainty entity + HITL pages                               |
 | FR-8 (Document Viewing)       | ✅                          | Documents pages + ViewModels                                  |
 | FR-9 (Git Monitoring)         | ✅                          | GitCloneService (clone/pull at scan time)                     |
 | FR-10 (Database Tools)        | ✅                          | Query services (recursive CTE, graph traversal)               |
 | FR-11 (LLM Provider Config)   | ✅                          | SettingsPage + LLMProviderManager                              |
-| FR-12 (Chat Agent)            | ✅                          | ChatAgent + ChatPage                                          |
+| FR-12 (Dashboard & Graph)     | ✅                          | ScanHub + GraphHub + management pages                         |
 | FR-13 (MCP Integration)       | ⚠️ Deferred                | Documented as V1 deferral; architecture supports adding later |
 | FR-14 (User-Supplied Context) | ✅                          | Pages + Core context injection                                |
 | FR-15 (LSP Support)           | ⚠️ Deferred                | Documented as V1 deferral                                     |
@@ -1188,7 +1219,7 @@ User clicks Scan → ScanRun created (Queued)
 | ----------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
 | MCP integration (FR-13)             | Deferred | Documented as V1 deferral; architecture supports adding later via Infrastructure project                            |
 | LSP support (FR-15)                 | Deferred | Documented as V1 deferral                                                                                           |
-| MAF Magentic spike not yet executed | High     | Week 1 validation spike required; fallback architecture (direct orchestration) designed in Project Context Analysis |
+| Worker Agent execution adapter not yet validated | High     | Validation spike required; fallback adapter can use direct OpenAI SDK or custom worker execution without changing deterministic Orchestrator |
 | Prompt Workbench not designed       | Medium   | Prompts are externalized as embedded resources; iteration tooling TBD during implementation                         |
 
 **Nice-to-Have Gaps:**
@@ -1250,7 +1281,7 @@ User clicks Scan → ScanRun created (Queued)
 
 **Areas for Future Enhancement:**
 
-- MAF Magentic spike outcome may require architecture adjustment (fallback designed)
+- Worker Agent execution adapter spike may require swapping the adapter implementation, but not changing deterministic Orchestrator responsibilities
 - OpenTelemetry for multi-agent observability post-V1
 - Redis backplane for SignalR if horizontal scaling of app tier needed
 - MCP integration when tool ecosystem matures
@@ -1272,5 +1303,5 @@ User clicks Scan → ScanRun created (Queued)
 2. SP-1 (Web Application Shell) — Blazor host, layout, auth, navigation
 3. SP-2 (System & Repository CRUD) — foundational data entry
 4. SP-3 (Scan Coordinator) — non-LLM pipeline infrastructure
-5. SP-4 + SP-5 (Agent Orchestration + Worker) — after MAF spike validates approach
+5. SP-4 + SP-5 (Orchestrator + Worker Agent execution) — Orchestrator can start from the July contracts; Worker execution proceeds after adapter validation
 6. SP-8 + SP-9 (Chat + Dashboard/Graph) — pure consumers, build last with real data

@@ -32,8 +32,6 @@ FR-3.1: Administrators shall configure LLM Providers at the global level. Each p
 FR-3.2: The system shall support multiple LLM Providers simultaneously.
 FR-3.3: System Owners may override the global default LLM Provider for each LLM task role within their System. The deterministic Orchestrator does not require an LLM Provider assignment.
 FR-3.4: The system shall provide a connection test for each configured LLM Provider.
-FR-3.5: System Owners shall configure database connections per Repository — specifying connection string, database type, and access credentials.
-
 FR-4.1: Pre-Scan Profiling shall run before worker dispatch. It shall use CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter excluding non-code files. After profiling, agents may surface questions to the System Owner; the scan waits for user answers and approval before proceeding to worker dispatch.
 FR-4.2: The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and trigger one deterministic Orchestrator per Repository scan. The Orchestrator shall dispatch Worker Agents through typed jobs to process Code Units in batches (supersteps).
 FR-4.3: Each Worker Agent shall read its assigned Code Unit, identify the business logic, and produce a structured Document linked to the source code location. Worker Agents shall detect cross-repo communication during Code Unit processing (Model A — Worker-embedded detection).
@@ -46,9 +44,6 @@ FR-4.9: The scanning pipeline shall integrate with CodeGraph for pre-indexed str
 FR-4.10: Documents shall be immutable — the only mutation path is code change → re-scan → regenerate. Previous versions shall be preserved via a superseded_by_id linked list (Version Chain).
 FR-4.11: Week 1 shall include a Worker Agent execution adapter validation spike: validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control before committing to the Worker Agent adapter.
 FR-4.12: When two Worker Agents process related Code Units in the same superstep, they shall cross-verify business logic claims. Disputed edges shall be kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution.
-FR-4.13: During scanning, Worker Agents shall be able to inspect database schemas (tables, columns, types, constraints) via a tool interface.
-FR-4.14: During scanning, Worker Agents shall be able to query sample data (limited rows) via a tool interface.
-
 FR-5.1: System Owners shall configure a Communication Pattern Catalog per System specifying how that System's repositories communicate externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-repo navigation patterns. RPC catalogs shall be included in the pre-scan context; agents may attempt to validate catalog entries during pre-scan profiling.
 FR-5.2: The detection layer shall identify when code in one Repository communicates with another Repository. Communication types include: RPC calls, HTTP API calls, message queue production and consumption, file-based communication, and cross-repo page navigation.
 FR-5.3: For each detected cross-repo communication, the system shall identify the provider role and the consumer role.
@@ -89,9 +84,13 @@ FR-9.3: After pulling changes, the system shall incrementally re-scan only the a
 FR-9.4: The system shall preserve Document history — previous versions of updated Documents shall be archived and accessible.
 FR-9.5: Incremental re-scan shall not start if a Scan is already in progress for the same Repository.
 
+FR-10.1: System Owners shall configure database connections per Repository — specifying connection string, database type, and access credentials.
+FR-10.2: During scanning, Worker Agents shall be able to inspect database schemas (tables, columns, types, constraints) via a tool interface.
+FR-10.3: During scanning, Worker Agents shall be able to query sample data (limited rows) via a tool interface.
+
 FR-11.1: Business Mode shall present a lighter UI theme and use a system prompt focused on business process explanation. Answers shall be business-level narratives without code references.
 FR-11.2: IT Mode shall present a darker UI theme and use a system prompt focused on technical detail. Answers shall include code references and source links.
-FR-11.3: Users shall switch between Business Mode and IT Mode at any time during a chat session.
+FR-11.3: Users shall switch between Business Mode and IT Mode from the chat interface by confirming a new chat session in the selected mode.
 FR-11.4: Users shall select which Systems or Repositories to include as context for their questions.
 FR-11.5: Users shall upload files (documents, images) as supplementary context for their questions.
 FR-11.6: The Chat Agent shall use typed LLM-Wiki retrieval tools over database-backed indexes and graph tables: search, section retrieval, graph expansion, uncertainty, endpoint, flow-trace, source-anchor, and scan-status context. Retrieval shall be section-level by default and `index.md` shall not be the canonical retrieval input.
@@ -168,7 +167,7 @@ From Architecture — Technical implementation requirements that affect epic and
 - **SignalR Reconnection**: On reconnect, server replays current scan/graph status. Scan progress uses structured model (Phase, CurrentFile, FilesProcessed, TotalFiles, ReferencesFound, EstimatedSecondsRemaining).
 - **Naming Conventions**: Async suffix mandatory. _camelCase private fields. PascalCase tables/columns. /api/ prefix + plural nouns. Past-tense domain events and hub methods.
 - **Project Structure**: 5 .NET projects (Web, Web.ViewModels, Core, Infrastructure, Agents) + Shared. Future Java/Python/Node placeholder directories.
-- **Security**: ASP.NET Core Identity with cookie auth. Three roles (Admin, SystemOwner, User) seeded at startup. API keys encrypted via ASP.NET Core Data Protection.
+- **Security**: ASP.NET Core Identity with cookie auth. Three roles (Administrator, SystemOwner, User) seeded at startup. API keys encrypted via ASP.NET Core Data Protection.
 - **Configuration Externalization**: Agent prompts as embedded resources in Vulgata.Agents/Prompts/. Communication Pattern Catalog as documented format.
 - **PostgreSQL Specific**: Recursive CTEs for graph traversal. MVCC for concurrent read/write. Connection pooling via Npgsql. Separate migration history tables for two DbContexts.
 - **Docker Volumes**: pgdata named volume for PostgreSQL persistence. ./prompts bind mount for prompt iteration.
@@ -225,7 +224,7 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-1.1 | Epic 1 | User registration with email and password |
 | FR-1.2 | Epic 1 | User login and logout |
 | FR-1.3 | Epic 1 | View and edit own profile |
-| FR-1.4 | Epic 1 | Role-based access (Admin, SystemOwner, User) |
+| FR-1.4 | Epic 1 | Role-based access (Administrator, SystemOwner, User) |
 | FR-2.1 | Epic 2 | Create, edit, delete Systems |
 | FR-2.2 | Epic 2 | Add Repositories to a System |
 | FR-2.3 | Epic 2 | Remove Repositories from a System |
@@ -235,7 +234,7 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-3.2 | Epic 3 | Support multiple LLM Providers simultaneously |
 | FR-3.3 | Epic 3 | System Owners may override global default provider per LLM task role |
 | FR-3.4 | Epic 3 | Connection test for each LLM Provider |
-| FR-3.5 | Epic 3 | Configure database connections per Repository (connection string, type, credentials) |
+| FR-10.1 | Epic 3 | Configure database connections per Repository (connection string, type, credentials) |
 | FR-4.1 | Epic 4 | Pre-Scan Profiling: CodeGraph → Code Units; agents may ask questions; scan waits for approval |
 | FR-4.11 | Spike Gate | Week 1 Worker Agent execution adapter validation spike (go/no-go gate) |
 | FR-4.2 | Epic 5 | Scan Coordinator + deterministic Orchestrator: queue, concurrency, git ops, typed Worker Agent dispatch |
@@ -248,15 +247,15 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-4.9 | Epic 5 | CodeGraph integration for pre-indexed structural information |
 | FR-4.10 | Epic 5 | Document immutability with Version Chain (superseded_by_id) |
 | FR-4.12 | Epic 5 | Cross-verification of related Code Units in same superstep |
-| FR-4.13 | Epic 5 | Worker Agent database schema inspection tool |
-| FR-4.14 | Epic 5 | Worker Agent sample data query tool (limited rows) |
-| FR-6.1 | Epic 5 | Record Uncertainty with unresolved/cross_repo status — cross-repo left unresolved, completed in Epic 7 |
-| FR-6.2 | Epic 5 | Cross-Repository Resolution after each repo scan (bidirectional) — resolves intra-repo only; cross-repo completed in Epic 7 |
-| FR-6.3 | Epic 5 | Deadlock-Breaking Protocol for mutual pending uncertainties |
+| FR-10.2 | Epic 5 | Worker Agent database schema inspection tool |
+| FR-10.3 | Epic 5 | Worker Agent sample data query tool (limited rows) |
+| FR-6.1 | Epic 5 | Record Uncertainty with unresolved/cross_repo status |
+| FR-6.2 | Epic 5 + Epic 7 | Epic 5 builds same-repo/best-effort infrastructure; Epic 7 completes bidirectional Cross-Repository Resolution with full detection evidence |
+| FR-6.3 | Epic 5 + Epic 7 | Deadlock-Breaking Protocol recorded in infrastructure and applied during final resolution |
 | FR-6.4 | Epic 5 | Dangling Links — wontfix terminal state |
-| FR-6.5 | Epic 5 | Chat-accessible uncertainty summary |
-| FR-6.6 | Epic 5 | Cross-Repo Stale Notices on document change |
-| FR-6.7 | Epic 5 | Impact Analysis query (direct → intra-repo → cross-repo → uncertainty) |
+| FR-6.5 | Epic 5 + Epic 8 | Chat/dashboard-accessible uncertainty summary |
+| FR-6.6 | Epic 5 + Epic 7 | Cross-Repo Stale Notices on document change after resolution updates graph truth |
+| FR-6.7 | Epic 5 + Epic 7 | Impact Analysis query (direct → intra-repo → cross-repo → uncertainty) |
 | FR-8.1 | Epic 6 | Add org-owned libraries as standalone Repositories |
 | FR-8.2 | Epic 6 | Partial on-demand scanning of standalone repos |
 | FR-8.3 | Epic 6 | Lock mechanism preventing concurrent standalone repo scanning |
@@ -288,7 +287,7 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-12.6 | Epic 8 | Live knowledge graph: Blazor.Diagrams, nodes, edges, dashed uncertainties |
 | FR-11.1 | Epic 9 | Business Mode: lighter UI, business narrative, no code refs |
 | FR-11.2 | Epic 9 | IT Mode: darker UI, technical detail, code references |
-| FR-11.3 | Epic 9 | Switch between Business Mode and IT Mode at any time |
+| FR-11.3 | Epic 9 | Switch between Business Mode and IT Mode via confirmed new session |
 | FR-11.4 | Epic 9 | Select Systems/Repositories as chat context |
 | FR-11.5 | Epic 9 | Upload files as supplementary chat context |
 | FR-11.6 | Epic 9 | Database-backed LLM-Wiki retrieval: typed tools → sections → graph expansion → synthesize |
@@ -317,17 +316,17 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 ### Epic 1: Foundation & Identity
 Users can register, log in, manage their profile, and access the application with role-based authorization. Establishes the Blazor Web App shell with Fluent UI layout, navigation, Docker + PostgreSQL infrastructure, and ASP.NET Core Identity with three seeded roles.
 **FRs covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4
-**Architecture:** SP-1 — Greenfield Blazor Web App starter template, docker-compose with PostgreSQL 17, ASP.NET Core Identity (cookie auth), Fluent UI shell, role seeding (Admin/SystemOwner/User), ApplicationUser + ApplicationDbContext.
+**Architecture:** SP-1 — Greenfield Blazor Web App starter template, docker-compose with PostgreSQL 17, ASP.NET Core Identity (cookie auth), Fluent UI shell, role seeding (Administrator/SystemOwner/User), ApplicationUser + ApplicationDbContext.
 
 ### Epic 2: System & Repository Management
 System Owners can create and manage Systems, add/remove Repositories with git URL validation, and supply context at system and repository levels. Administrators supply global-level context. Context changes are applied only when no scan is running or during HITL.
 **FRs covered:** FR-2.1, FR-2.2, FR-2.3, FR-2.4, FR-2.5, FR-14.1, FR-14.2, FR-14.3, FR-14.4
-**Architecture:** SP-2 — System and Repository domain entities (aggregate roots), ISystemRepository/IRepositoryRepository, CRUD pages with Fluent UI DataGrid, git URL reachability check, user-supplied context with scope-based application timing rules (global=Admin only, system/repo=SystemOwner).
+**Architecture:** SP-2 — System and Repository domain entities (aggregate roots), ISystemRepository/IRepositoryRepository, CRUD pages with Fluent UI DataGrid, git URL reachability check, user-supplied context with scope-based application timing rules (global=Administrator only, system/repo=SystemOwner).
 
 ### Epic 3: LLM Provider & Database Connection Configuration
 Administrators configure multiple LLM backends at the global level with default LLM task-type assignments, and test connections. System Owners may override global defaults per LLM task role within their System. The deterministic Orchestrator does not need an LLM Provider assignment. System Owners also configure database connections per Repository for schema inspection and sample data queries during scanning. Includes automatic provider failover and API key encryption.
-**FRs covered:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-3.5
-**Architecture:** LLMProvider entity, LLMProviderManager with multi-provider failover, API key encryption via ASP.NET Core Data Protection, connection testing, global default + per-System override provider assignment, database connection configuration per Repository, Admin configuration pages.
+**FRs covered:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-10.1
+**Architecture:** LLMProvider entity, LLMProviderManager with multi-provider failover, API key encryption via ASP.NET Core Data Protection, connection testing, global default + per-System override provider assignment, database connection configuration per Repository, Administrator configuration pages.
 
 ### Pre-Epic Gate: Worker Agent Execution Adapter Validation Spike
 Before any scanning infrastructure is built, validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control. This is a go/no-go decision point for the Worker Agent execution adapter; if MAF fails, a documented fallback adapter must be selected before Worker Agent implementation proceeds.
@@ -340,8 +339,8 @@ Before worker dispatch, the system profiles each Repository using CodeGraph/tree
 **Architecture:** CodeGraphCliService shell invocation, Code Unit data model (file path, line range, language, framework), scan filter rules, agent question surface (HITL integration), approval gate state machine. Output: structured list of Code Units ready for Epic 5 dispatch.
 
 ### Epic 5: Core Single Repository Scanning
-The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, deterministic Orchestrator planning the per-Repository workflow, and LLM-powered Worker Agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties and dispatch sites; resolution runs deterministically after Repository scans complete. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
-**FRs covered:** FR-4.2, FR-4.3, FR-4.4, FR-4.5, FR-4.6, FR-4.7, FR-4.8, FR-4.9, FR-4.10, FR-4.12, FR-4.13, FR-4.14, FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5, FR-6.6, FR-6.7
+The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, deterministic Orchestrator planning the per-Repository workflow, and LLM-powered Worker Agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties and dispatch sites; Epic 5 owns same-Repository resolution and best-effort matching against already-scanned Repositories, while final Cross-Repository Resolution is completed in Epic 7 after full detection evidence exists. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
+**FRs covered:** FR-4.2, FR-4.3, FR-4.4, FR-4.5, FR-4.6, FR-4.7, FR-4.8, FR-4.9, FR-4.10, FR-4.12, FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5, FR-6.6, FR-6.7, FR-10.2, FR-10.3
 **Architecture:** SP-3 + SP-4 + SP-5 + SP-7 — Logical Document/Document Version, Edge, Uncertainty, ScanRun, entry point, endpoint, dispatch-site, flow-group, flow-trace, `index_entries`, and `document_sections` entities; recursive CTE query services; export `index.md`/`log.md` generation; BackgroundService + Channel<T> scan job worker; GitCloneService; CodeGraphCliService; V1 concurrency control; deterministic Orchestrator; Worker Agent execution adapter; superstep dispatch; Pass 1 CL Docs; bounded refinement; Pass 2 path-aware trace planning and flow-group BL Docs; lightweight cross-verification; document pre-allocation; uncertainty recording engine with cross-repo deferral; deadlock-breaking protocol; dangling links; stale notices; impact analysis; database schema inspection + sample data query tools; minimal scan progress dashboard.
 
 ### Epic 6: Third-Party Library Handling
@@ -351,12 +350,12 @@ System Owners can add organization-owned libraries as standalone repositories fo
 
 ### Epic 7: Cross-Repository Detection
 The detection layer identifies when code in one Repository communicates with another across five communication types (RPC, HTTP, MQ, file-based, page navigation). Includes Communication Pattern Catalog configuration with RPC catalog validation during pre-scan, provider/consumer role tagging, object flow analysis, Prompt Workbench, Service Topology resolution, and extensible pattern support. This epic also completes the cross-repo uncertainties that were recorded but left unresolved during Epic 5 — it runs the resolution engine with the newly built cross-repo detection results.
-**FRs covered:** FR-5.1, FR-5.2, FR-5.3, FR-5.4, FR-5.5, FR-5.6, FR-5.7, FR-5.8, FR-5.9, FR-5.10, FR-5.11, FR-5.12, FR-5.13, FR-5.14
+**FRs covered:** FR-5.1, FR-5.2, FR-5.3, FR-5.4, FR-5.5, FR-5.6, FR-5.7, FR-5.8, FR-5.9, FR-5.10, FR-5.11, FR-5.12, FR-5.13, FR-5.14, FR-6.2, FR-6.3, FR-6.6, FR-6.7
 **Architecture:** SP-6 — CommunicationPattern entity + catalog, RPC catalog pre-scan validation, Worker prompt dynamic injection, provider/consumer role detection, consumer count tracking, absent entity external references, page navigation low-confidence flagging, object flow analysis, Prompt Workbench development tool, named RPC endpoint recording, file-based detection (local/remote/OSS/HDFS), page navigation detection (URLs/deep links/app-to-app), Service Topology MCP tool integration, extensible catalog format, cross-repo uncertainty resolution engine integration.
 
 ### Epic 8: Dashboard & Real-Time Monitoring
 System Owners see live scan progress (minimal version available after Epic 5, enhanced here) and a real-time knowledge graph visualization using Blazor.Diagrams showing Documents as nodes, cross-repo links as edges, and unresolved uncertainties as dashed edges. System Owners can answer agent questions surfaced during scanning via Human-in-the-Loop.
-**FRs covered:** FR-7.1, FR-7.2, FR-7.3, FR-7.4, FR-12.1, FR-12.2, FR-12.3, FR-12.4, FR-12.5, FR-12.6
+**FRs covered:** FR-7.1, FR-7.2, FR-7.3, FR-7.4, FR-6.5, FR-12.1, FR-12.2, FR-12.3, FR-12.4, FR-12.5, FR-12.6
 **Architecture:** SP-9 — ScanHub + GraphHub (SignalR with [Authorize]), Blazor.Diagrams live graph (nodes=Documents, edges=REFERENCES, dashed=uncertainties, yellow=disputed), scan progress dashboard (status, workers, files, errors), HITL question management (notifications, answer, dismiss), diff-based graph updates with viewport preservation, SignalR reconnection with state replay.
 
 ### Epic 9: Chat Interface
@@ -564,7 +563,7 @@ So that role-based access control is enforced from day one.
 **Given** I am logged in as a User
 **When** I attempt to access an Administrator-only page
 **Then** I shall be redirected to an "Access Denied" page
-**And** the 管理后台 nav link shall not be visible in my top navbar (SystemOwner-only and Admin, UX-DR-10)
+**And** the 管理后台 nav link shall not be visible in my top navbar (SystemOwner-only and Administrator, UX-DR-10)
 
 **Given** the role seeding mechanism
 **When** the application restarts
@@ -606,15 +605,15 @@ So that I can delegate platform management.
 
 ### Epic 2: System & Repository Management
 
-#### Story 2.1: System CRUD (Admin)
+#### Story 2.1: System CRUD (SystemOwner/Administrator)
 
-As an **administrator**,
+As a **SystemOwner or administrator**,
 I want to create, edit, and delete Systems,
 So that I can organize repositories into logical groupings.
 
 **Acceptance Criteria:**
 
-**Given** I am logged in as an Administrator
+**Given** I am logged in as a SystemOwner or Administrator
 **When** I navigate to 管理后台 → 系统管理
 **Then** I shall see the system tree view in the left sidebar (FluentTreeView, UX-DR-10)
 **And** the main content area shall show system stats when a system is selected
@@ -623,6 +622,7 @@ So that I can organize repositories into logical groupings.
 **When** I click "+ 新建系统" and enter a name (required), description (optional), and plain-text supplementary context (optional) in an inline CreateSystemDialog
 **Then** the System shall be created
 **And** it shall appear in the system tree immediately
+**And** if I am a SystemOwner, I shall be assigned as an owner of the newly-created System
 
 **Given** a System exists
 **When** I right-click the system node and select "编辑" (Edit) to open an edit dialog
@@ -645,7 +645,7 @@ So that I can organize repositories into logical groupings.
 **Given** I am logged in as a SystemOwner
 **When** I view the 系统管理 page
 **Then** I shall see only Systems I am assigned to in the tree
-**And** I shall not see the "+ 新建系统" button
+**And** I shall see the "+ 新建系统" button
 
 **Given** I am logged in as a regular User
 **When** I view the application
@@ -798,7 +798,7 @@ So that agents have supplementary information when scanning and answering questi
 
 ### Epic 3: LLM Provider & Database Connection Configuration
 
-#### Story 3.1: LLM Provider Configuration (Admin)
+#### Story 3.1: LLM Provider Configuration (Administrator)
 
 As an **administrator**,
 I want to configure multiple LLM providers at the global level with default LLM task-type assignments and test connections,
@@ -920,7 +920,7 @@ So that Worker Agents can inspect database schemas and query sample data during 
 
 **Given** I have configured a database connection for a Repository
 **When** that Repository is scanned
-**Then** Worker Agents shall be able to use the connection for schema inspection (FR-4.13) and sample data queries (FR-4.14) via tool interfaces
+**Then** Worker Agents shall be able to use the connection for schema inspection (FR-10.2) and sample data queries (FR-10.3) via tool interfaces implemented in Story 5.9
 
 **Given** I am a SystemOwner of Repository A
 **When** I view Repository B (not in my System)
@@ -1059,53 +1059,118 @@ So that I can confirm communication patterns and resolve uncertainties before do
 
 ### Epic 5: Core Single Repository Scanning
 
-#### Story 5.1: Document Graph Store Schema
+#### Story 5.1: Document Version & Source Anchor Store
 
-As a **developer**,
-I want a stable Document Graph Store with Logical Documents, immutable Document Versions, graph tables, retrieval indexes, flow trace persistence, and export artifacts,
-So that every downstream subsystem has a consistent data foundation to read from and write to.
+As a **SystemOwner**,
+I want each generated Document to be stored as an immutable version linked to exact source code anchors,
+So that scan results remain auditable, citeable, and safe to supersede when code changes.
 
 **Acceptance Criteria:**
 
 **Given** the VulgataDbContext is migrated
-**When** the schema is created
-**Then** the minimum V1 storage model shall represent:
-`documents` or equivalent Logical Document + Document Version tables with stable logical identity, immutable version identity, `content_jsonb`, `content_markdown`, `export_md_path`, `schema_version`, `is_current`, `superseded_by_id`, `scan_id`, `resolution_outdated_at`, and `resolution_outdated_reason`;
-`document_sources` and `reverse_index` for Source Anchoring and impact analysis;
-`edges` with Document Version endpoints, edge_type REFERENCES/GENERATED_FROM, resolution metadata, candidate-group metadata, confidence, and impact traversal eligibility;
-`entry_points`, `communication_endpoints`, `dispatch_sites`, and `dispatch_site_endpoint_candidates`;
-`uncertainties` with status, sub_status, endpoint identifiers, target Repository, and resolved Document Version fields;
-`flow_groups`, `flow_traces`, `flow_trace_steps`, `flow_trace_candidate_selections`, `flow_trace_dispatch_bindings`, and `flow_trace_endpoint_bindings`;
-`index_entries`, `document_sections`, and `scan_llm_usage`.
+**When** the document storage schema is created
+**Then** the minimum V1 storage model shall represent Logical Documents and immutable Document Versions with: stable logical identity, immutable version identity, `doc_type`, `content_jsonb`, `content_markdown`, `export_md_path`, `schema_version`, `is_current`, `superseded_by_id`, `scan_id`, `generation_status`, `resolution_outdated_at`, and `resolution_outdated_reason`
 **And** all timestamps shall use `timestamp with time zone`
 **And** all foreign keys shall be indexed
-**And** current-version lookup indexes shall support Repository, Logical Document, Document Version, doc_type, entry point, edge traversal, uncertainty, endpoint, dispatch-site, flow trace, `index_entries`, and `document_sections` queries
+**And** current-version lookup indexes shall support Repository, Logical Document, Document Version, and `doc_type` queries
+
+**Given** a Worker Agent produces a Document Version
+**When** the Document Version is committed
+**Then** `document_sources` shall store the Repository, file path, source hash, line range, symbol name, and Code Unit reference used to generate the Document Version
+**And** `reverse_index` shall map source files, source hashes, and Code Units back to impacted Document Versions for later impact analysis
+**And** citations shall resolve from a Document Version to exact source file and line-range anchors
+
+**Given** a Document Version is generated
+**When** stored
+**Then** the Document content shall be immutable — no UPDATE on content fields
+**And** when code changes trigger a re-scan (Epic 10), the new version shall be inserted with a `superseded_by_id` pointing to the old version
+**And** the old version's `is_current` shall become false and its status shall transition to `Superseded`
+**And** the Version Chain shall be traversable via `superseded_by_id`
+
+#### Story 5.2: Graph Edge, Endpoint & Uncertainty Store
+
+As a **SystemOwner**,
+I want scan results to persist references, communication surfaces, dispatch sites, and unresolved uncertainties as structured graph facts,
+So that Vulgata can resolve relationships deterministically and expose trustworthy graph and chat evidence.
+
+**Acceptance Criteria:**
+
+**Given** the VulgataDbContext is migrated
+**When** the graph fact schema is created
+**Then** `edges` shall store Document Version endpoints, edge_type `REFERENCES`/`GENERATED_FROM`, source and target Repository IDs, resolution metadata, candidate-group metadata, confidence, disputed flag, and impact traversal eligibility
+**And** same-scan references staged against Logical Documents shall be resolved to generated Document Versions during scan finalization or downgraded to Uncertainties
+**And** indexes shall support edge traversal by source Document Version, target Document Version, source Repository, target Repository, edge type, and confidence
+
+**Given** a Worker Agent identifies a provider-side communication surface
+**When** the Document Version is committed
+**Then** `communication_endpoints` shall store protocol, endpoint identifier, normalized identifier, provider Repository, provider Document Version, service/code hints, catalog evidence, and confidence
+**And** duplicate endpoint identifiers in the same Repository shall be collapsed into one canonical endpoint with multiple source evidence rows when appropriate
+
+**Given** a Worker Agent identifies a consumer-side invocation
+**When** the Document Version is committed
+**Then** `dispatch_sites` shall store the caller Document Version, protocol, endpoint identifier, normalized identifier, invocation expression, object-flow provenance, candidate target hints, and confidence
+**And** `dispatch_site_endpoint_candidates` shall store candidate endpoint matches with match reason, rank, confidence, and resolution status
+
+**Given** a target cannot be resolved during the Repository scan
+**When** the graph facts are committed
+**Then** an `uncertainties` row shall store status, sub_status, endpoint identifier, protocol, source Document Version, source Repository, target Repository hint, resolved Document Version fields, confidence, and HITL metadata
+**And** `cross_repo` Uncertainties shall remain unresolved until same-System evidence or Epic 7 detection/resolution can resolve them
+
+#### Story 5.3: Flow Trace & Provenance Store
+
+As a **SystemOwner**,
+I want Pass 2 business-flow synthesis to persist the traces and evidence it used,
+So that every Business Logic Document can explain which Code Logic Documents and graph paths generated it.
+
+**Acceptance Criteria:**
+
+**Given** Pass 1 has produced Code Logic Documents and graph facts
+**When** the Orchestrator plans Pass 2
+**Then** `entry_points` shall identify starting Document Versions and source symbols eligible for business-flow tracing
+**And** `flow_groups` shall store the Repository, scan, business-flow title candidate, grouping reason, and synthesis status
+**And** `flow_traces` shall store ordered trace IDs, entry point, termination reason, loop summary, and confidence
+
+**Given** a flow trace is persisted
+**When** it contains graph traversal decisions
+**Then** `flow_trace_steps` shall store ordered Document Version visits and edge traversals
+**And** `flow_trace_candidate_selections` shall store unresolved candidate groups, selected candidate, rejected candidates, and selection reason
+**And** `flow_trace_dispatch_bindings` and `flow_trace_endpoint_bindings` shall connect trace steps to dispatch sites and communication endpoints used during synthesis
+
+**Given** a Business Logic Document is generated
+**When** it is stored
+**Then** `GENERATED_FROM` edges shall connect the Business Logic Document Version to each Code Logic Document Version actually used
+**And** the Business Logic Document shall store references to its flow group and flow traces
+**And** query services shall be able to retrieve the trace evidence packet for chat citations and stale-notice analysis
+
+#### Story 5.4: Retrieval Indexes, Virtual Tree & Export Artifacts
+
+As a **user**,
+I want generated Documents to be searchable, browsable by source path, and exportable,
+So that chat and management views can find the right knowledge without reading `index.md` as canonical data.
+
+**Acceptance Criteria:**
+
+**Given** a Scan commits Document Versions for a repository
+**When** the post-scan hook runs
+**Then** `index_entries` shall be rebuilt from Document metadata and `content_jsonb`
+**And** `document_sections` shall be rebuilt from `content_jsonb.sections`
+**And** `scan_llm_usage` shall record LLM provider, task role, token usage where available, latency, and failure status for scan observability
+**And** `index_entries` and `document_sections` shall be treated as the canonical retrieval sources for chat and MCP knowledge serving
 
 **Given** the document tree query is invoked
 **When** a repository's documents are queried by virtual path
 **Then** the tree structure shall be computed from document paths at display time (no stored tree — virtual computation)
 **And** the query shall support depth limiting and path prefix filtering
+**And** directory nodes shall be derived from source paths rather than stored as synthetic Documents
 
 **Given** a Scan completes for a repository
-**When** the post-scan hook runs
-**Then** `index_entries` shall be rebuilt from Document metadata and `content_jsonb`
-**And** `document_sections` shall be rebuilt from `content_jsonb.sections`
-**And** an `index.md` file may be generated with YAML frontmatter per current Document Version as an export/readability artifact
+**When** export artifacts are generated
+**Then** an `index.md` file may be generated with YAML frontmatter per current Document Version as an export/readability artifact
 **And** the generated `index.md` shall not be stored as the canonical retrieval source or as a special SYSTEM Document
+**And** an append-only `log.md` shall record each scan/query/system event with ISO 8601 timestamp, event_type, actor, details JSON, and scan_id where applicable
+**And** `log.md` shall be stored as an export/system artifact but shall not replace structured scan state in the database
 
-**Given** any scan, query, or system event occurs
-**When** events are logged
-**Then** an append-only `log.md` shall record each event with: ISO 8601 timestamp, event_type (scan_started/scan_completed/query_executed/error_occurred), actor (user id or system), details (JSON payload), and scan_id where applicable
-**And** log.md shall be stored as a SYSTEM document in the documents table
-
-**Given** a Document is generated by a Worker Agent
-**When** stored
-**Then** the document shall be immutable — no UPDATE on content fields
-**And** when code changes trigger a re-scan (Epic 10), the new version shall be inserted with a `superseded_by_id` pointing to the old version
-**And** the old version's `status` shall transition to `Superseded`
-**And** the version chain shall be traversable via `superseded_by_id` linked list
-
-#### Story 5.2: Scan Coordinator
+#### Story 5.5: Scan Coordinator
 
 As a **SystemOwner**,
 I want a Scan Coordinator that manages the scan lifecycle — queuing, cloning, concurrency control, and state transitions,
@@ -1139,11 +1204,11 @@ So that scans execute reliably without overwhelming the system.
 **And** the SystemOwner shall be notified of the failure on next dashboard visit
 
 **Given** the Scan Coordinator dispatches work to the Orchestrator
-**When** the Orchestrator starts processing (Story 5.3)
+**When** the Orchestrator starts processing (Story 5.6)
 **Then** the scan coordinator shall expose progress via SignalR ScanHub: `Phase`, `CurrentFile`, `FilesProcessed`, `TotalFiles`, `ReferencesFound`, `EstimatedSecondsRemaining`
 **And** the minimal dashboard (from Epic 4) shall display this progress
 
-#### Story 5.3: Orchestrator & Superstep Dispatch
+#### Story 5.6: Orchestrator & Superstep Dispatch
 
 As a **developer**,
 I want a deterministic Orchestrator that batches Code Units into supersteps using CodeGraph call-graph edges and dispatches Worker Agents through typed jobs,
@@ -1158,7 +1223,7 @@ So that related Code Units are processed together and cross-verification is poss
 **And** superstep order shall respect dependency chains where a Code Unit's callees are processed before or alongside its caller
 
 **Given** a superstep is assembled
-**When** the Orchestrator dispatches Worker Agents (Story 5.4)
+**When** the Orchestrator dispatches Worker Agents (Story 5.7)
 **Then** each Worker Agent shall receive a typed job packet with: its assigned Code Unit, exact source slice, file path and symbol name, neighboring symbols, CodeGraph callers/callees/imports/implementations, relevant resource files, pre-scan hints, the System's Communication Pattern Catalog (seeded in Epic 4), user-supplied context (global + system + repo), and related outputs for lightweight cross-verification
 **And** dispatch shall use the selected Worker Agent execution adapter validated in the pre-epic spike
 
@@ -1171,13 +1236,13 @@ So that related Code Units are processed together and cross-verification is poss
 **Given** all supersteps complete
 **When** Pass 1 generation is done
 **Then** the Orchestrator shall run bounded refinement only for satisfied material-enrichment predicates
-**And** the Orchestrator shall initiate Pass 2 (Story 5.5) by planning path-aware traces, clustering flow groups, and selecting one Worker Agent per flow group to synthesize Business Logic Documents
+**And** the Orchestrator shall initiate Pass 2 (Story 5.8) by planning path-aware traces, clustering flow groups, and selecting one Worker Agent per flow group to synthesize Business Logic Documents
 
 **Given** the Orchestrator runs
 **When** scanning is in progress
 **Then** progress events (superstep started/completed, document generated) shall be pushed via the ScanHub for real-time dashboard updates
 
-#### Story 5.4: Worker Agent — Pass 1 Code Logic Documents
+#### Story 5.7: Worker Agent — Pass 1 Code Logic Documents
 
 As a **SystemOwner**,
 I want Worker Agents to read Code Units and produce Code Logic Documents describing the structural code behavior,
@@ -1199,7 +1264,7 @@ So that the codebase is documented at a technical level with intra-repo referenc
 **Given** the Worker Agent identifies a call to a symbol that may reside in another repository
 **When** the Code Unit is processed
 **Then** an `Uncertainty` shall be recorded with: status `unresolved`, sub_status `cross_repo`, the endpoint identifier, the inferred communication type (from the CP Catalog), the source document reference, and the target repo hint if known
-**And** the Uncertainty shall be left unresolved — cross-repo resolution is completed in Epic 7
+**And** the Uncertainty shall be left unresolved — final cross-repo resolution is completed in Epic 7 after full Cross-Repository Communication Detection
 
 **Given** two Worker Agents in the same superstep process related Code Units (caller/callee pair)
 **When** both documents are generated
@@ -1210,8 +1275,8 @@ So that the codebase is documented at a technical level with intra-repo referenc
 
 **Given** a Worker Agent encounters a database connection configured for the repository (Story 3.3)
 **When** the code references database tables or queries
-**Then** the Worker Agent may invoke the schema inspection tool (Story 5.6) to validate table/column references
-**And** may invoke the sample data query tool (Story 5.6) to understand data patterns
+**Then** the Worker Agent may invoke the schema inspection tool (Story 5.9) to validate table/column references
+**And** may invoke the sample data query tool (Story 5.9) to understand data patterns
 **And** database-derived information shall be cited in the document with a `db_source` annotation
 
 **Given** a Worker Agent fails during Code Unit processing
@@ -1220,7 +1285,7 @@ So that the codebase is documented at a technical level with intra-repo referenc
 **And** on second failure, the Code Unit shall be marked as Failed with error details in the scan log
 **And** the scan shall continue with remaining Code Units
 
-#### Story 5.5: Worker Agent — Pass 2 Business Logic Documents
+#### Story 5.8: Worker Agent — Pass 2 Business Logic Documents
 
 As a **SystemOwner**,
 I want the system to synthesize Business Logic Documents from completed Code Logic Documents,
@@ -1257,7 +1322,7 @@ So that business stakeholders can understand business processes without reading 
 **And** export artifacts such as `index.md` may be regenerated to include BL Docs
 **And** the scan status shall transition through post-scan and Cross-Repository Resolution states before `Completed`
 
-#### Story 5.6: Database Tools for Worker Agents
+#### Story 5.9: Database Tools for Worker Agents
 
 As a **SystemOwner**,
 I want Worker Agents to inspect database schemas and query sample data during scanning,
@@ -1291,11 +1356,11 @@ So that business logic involving database interactions is accurately documented.
 **Then** the Worker Agent shall record an `Uncertainty` with: "Referenced table/column {name} not found in database schema"
 **And** the uncertainty shall be surfaced for HITL review
 
-#### Story 5.7: Uncertainty Recording & Intra-Repo Resolution
+#### Story 5.10: Uncertainty Recording & Same-Repository Resolution Infrastructure
 
 As a **SystemOwner**,
-I want cross-repo calls detected during scanning to be recorded as Uncertainties with resolution infrastructure,
-So that Epic 7 can complete the resolution with the full cross-repo detection results.
+I want cross-repo calls detected during scanning to be recorded as Uncertainties with same-Repository and best-effort same-System resolution infrastructure,
+So that Epic 7 can complete final Cross-Repository Resolution after full detection evidence is available.
 
 **Acceptance Criteria:**
 
@@ -1449,12 +1514,385 @@ So that I receive a reasonable behavioral summary rather than a blank gap in the
 ---
 
 ### Epic 7: Cross-Repository Detection
-⏭️ **Skipped** — 14 FRs (FR-5.1–5.14). To be detailed if time permits before sprint start.
+
+#### Story 7.1: Communication Pattern Catalog Management
+
+As a **SystemOwner**,
+I want to define the communication patterns used by my System,
+So that Worker Agents can detect cross-Repository communication using organization-specific conventions instead of guessing.
+
+**Acceptance Criteria:**
+
+**Given** I am a SystemOwner viewing a System I manage
+**When** I open the Communication Pattern Catalog editor
+**Then** I shall be able to configure patterns for RPC frameworks, HTTP API conventions, message queue topics, file/storage paths, and cross-repo page navigation
+**And** each pattern shall include: pattern type, human-readable name, match rules, endpoint identifier extraction rule, provider/consumer hints, confidence default, examples, and active/inactive status
+
+**Given** I save a catalog
+**When** validation runs
+**Then** invalid match rules shall be rejected with field-level errors
+**And** duplicate active pattern names within the same System shall be rejected
+**And** the catalog shall be versioned so scans can record which catalog version influenced their results
+
+**Given** a scan is already running for the System
+**When** I edit the catalog
+**Then** the change shall be queued for the next scan and shall not alter the active scan's prompt context
+**And** I shall see "通信目录修改将在当前扫描完成后生效"
+
+**Given** a new communication pattern is needed
+**When** I add it through the catalog editor
+**Then** no code deployment shall be required for Worker Agents to receive the new pattern in future scans
+**And** the catalog format shall be documented in the UI help text with examples suitable for System Owners
+
+#### Story 7.2: Worker Prompt Injection & Detection Result Contract
+
+As a **SystemOwner**,
+I want each Worker Agent to receive the active Communication Pattern Catalog and return structured detection results,
+So that cross-Repository findings are consistent, parseable, and traceable to evidence.
+
+**Acceptance Criteria:**
+
+**Given** a Worker Agent job is created for Pass 1
+**When** the Orchestrator builds the typed job packet
+**Then** it shall include the active System Communication Pattern Catalog version and only the patterns relevant to the Code Unit's language/framework hints
+**And** the Worker prompt shall include pattern examples, endpoint extraction rules, and confidence guidance
+
+**Given** a Worker Agent detects external communication
+**When** it returns the Pass 1 result
+**Then** the result shall include a structured `detected_communications` collection with: communication type, source code location, endpoint identifier, normalized endpoint identifier, provider/consumer role, matched catalog pattern, confidence, evidence excerpt, object-flow provenance if known, and unresolved reason if not resolved
+**And** malformed detection results shall fail validation and be retried once as a bounded refinement request
+
+**Given** no catalog pattern matches but the Worker Agent sees likely cross-repo communication
+**When** the result is committed
+**Then** it shall create a low-confidence detection candidate
+**And** it shall surface a Human-in-the-Loop question asking the SystemOwner to confirm or add the missing catalog pattern
+
+#### Story 7.3: RPC and HTTP Endpoint Detection
+
+As a **SystemOwner**,
+I want Vulgata to detect RPC and HTTP provider/consumer relationships across Repositories,
+So that cross-service business flows can be traced through service boundaries.
+
+**Acceptance Criteria:**
+
+**Given** a Worker Agent processes code that exposes an RPC or HTTP endpoint
+**When** the provider-side pattern matches
+**Then** a `communication_endpoint` shall be recorded with protocol, endpoint identifier, normalized endpoint identifier, provider Repository, provider Document Version, source location, catalog evidence, and confidence
+**And** RPC endpoints shall be recorded as named entities even when no consumer has been scanned yet
+
+**Given** a Worker Agent processes code that calls an RPC or HTTP endpoint
+**When** the consumer-side pattern matches
+**Then** a `dispatch_site` shall be recorded with protocol, invocation expression, normalized endpoint identifier, source Document Version, caller Repository, and object-flow hints
+**And** the system shall attempt to match the dispatch site to known communication endpoints in already-scanned Repositories
+
+**Given** a provider and consumer are matched
+**When** the match is committed
+**Then** the REFERENCES edge shall identify provider and consumer roles
+**And** the provider endpoint's consumer count shall increase
+**And** the edge shall cite the dispatch-site evidence and provider endpoint evidence
+
+**Given** only one side is scanned
+**When** no matching Repository can be found
+**Then** the unresolved side shall be recorded as an external reference with available service name, URL, RPC interface, or endpoint identifier
+
+#### Story 7.4: Message Queue and File-Based Communication Detection
+
+As a **SystemOwner**,
+I want message queue and file/storage communication to be detected across Repositories,
+So that asynchronous and file-based business processes are not invisible in the knowledge graph.
+
+**Acceptance Criteria:**
+
+**Given** a Worker Agent processes producer or consumer code for a message queue
+**When** a catalog pattern matches a topic, queue, exchange, routing key, or subscription
+**Then** the system shall record a communication endpoint or dispatch site with protocol `mq`, normalized topic identifier, provider/consumer role, source location, and confidence
+**And** producer and consumer roles shall be matched by normalized topic and System catalog rules
+
+**Given** a Worker Agent processes file or object-storage access
+**When** a catalog pattern matches local filesystem, remote filesystem, OSS object storage, HDFS, or equivalent path conventions
+**Then** the system shall record a file-based communication endpoint with normalized storage system, path pattern, provider/consumer role, source Document Version, and confidence
+**And** wildcard or environment-specific paths shall be stored with both raw and normalized forms
+
+**Given** a file or message communication target cannot be resolved
+**When** the detection is committed
+**Then** the system shall create an Uncertainty with sub_status `cross_repo`, endpoint identifier, protocol, target hint where known, and candidate resolution notes
+**And** the dashboard shall later be able to present this Uncertainty for HITL review
+
+#### Story 7.5: Cross-Repo Page Navigation Detection
+
+As a **SystemOwner**,
+I want Vulgata to detect cross-Repository page navigation while marking it as low-confidence,
+So that UI navigation flows are visible without overstating loose coupling as hard service dependency.
+
+**Acceptance Criteria:**
+
+**Given** a Worker Agent processes frontend, mobile, or routing code
+**When** it detects URL patterns, deep links, app-to-app navigation, route names, or webview launches that match the Communication Pattern Catalog
+**Then** it shall record a page-navigation dispatch site with source route/screen, target URL or route pattern, source Document Version, and extracted target hints
+**And** ownership evidence shall include at least one of: route ownership, base path, host/tenant mapping, deployment topology, or Service Topology evidence
+**And** confidence shall default below service-call confidence unless ownership evidence confirms the target Repository
+
+**Given** page navigation is detected
+**When** provider or consumer role cannot be identified reliably
+**Then** the detection shall be stored as low-confidence
+**And** graph rendering shall use the unresolved/low-confidence visual treatment rather than a confirmed solid edge
+
+**Given** a SystemOwner reviews page-navigation Uncertainties
+**When** they confirm a target Repository or mark the link as external
+**Then** the Uncertainty shall record the human input and retain lower priority than code-derived facts if later evidence conflicts
+
+#### Story 7.6: Object Flow Analysis for Indirect Targets
+
+As a **SystemOwner**,
+I want Vulgata to trace communication targets through object creation and assignment,
+So that indirect service clients, factories, and configuration-driven targets can still be resolved.
+
+**Acceptance Criteria:**
+
+**Given** a Code Unit contains a communication call through a client object, injected dependency, factory, configuration object, or wrapper method
+**When** Worker Agent detection runs
+**Then** the detection result shall include object-flow provenance: source symbol, assignment chain, constructor/factory call, configuration key where known, and confidence
+**And** CodeGraph caller/callee/import evidence shall be included in the Worker job packet when available
+
+**Given** object-flow analysis finds multiple possible targets
+**When** the detection is committed
+**Then** candidate targets shall be stored in `dispatch_site_endpoint_candidates` with rank, confidence, and match reason
+**And** the Orchestrator shall not force a single target when confidence is below the configured threshold
+
+**Given** object-flow evidence is insufficient
+**When** no safe target can be selected
+**Then** the system shall create an Uncertainty and ask a HITL question only if the ambiguity affects a generated Document or cross-Repository edge
+
+#### Story 7.7: Service Topology MCP Resolution
+
+As a **SystemOwner**,
+I want Vulgata to use the mock Service Topology platform to map communication endpoints to Repositories,
+So that endpoint names can resolve even when code-level naming differs across Repositories.
+
+**Acceptance Criteria:**
+
+**Given** the Service Topology MCP tool is configured and approved for scanning
+**When** a communication endpoint or dispatch site has a service code, URL host, topic namespace, or other topology key
+**Then** the Cross-Repository Resolution service shall query the mock Service Topology tool for candidate Repositories
+**And** the query and response shall be recorded as resolution evidence without exposing secrets in prompts or logs
+
+**Given** the Service Topology returns one high-confidence Repository match
+**When** provider/consumer evidence supports the match
+**Then** the Uncertainty shall transition to `resolved`
+**And** a REFERENCES edge shall be created between the consumer and provider Document Versions
+
+**Given** the Service Topology returns no match or multiple conflicting matches
+**When** code evidence cannot decide
+**Then** the system shall preserve the Uncertainty with candidate Repository hints
+**And** the HITL dashboard shall show the candidates and evidence for SystemOwner review
+
+**Given** the target provider or consumer is not in any scanned Repository
+**When** resolution completes
+**Then** the absent entity shall be recorded as an external reference with the available identifier, protocol, service/topology hints, and confidence
+
+#### Story 7.8: Prompt Workbench for Detection Patterns
+
+As a **developer or SystemOwner**,
+I want a Prompt Workbench to test detection prompts against known code examples,
+So that catalog patterns and Worker prompt changes can be validated before they affect production scans.
+
+**Acceptance Criteria:**
+
+**Given** I open the Prompt Workbench
+**When** I select a Communication Pattern Catalog pattern and provide a code example
+**Then** the workbench shall run the Worker detection prompt against the example using the selected LLM provider
+**And** it shall show structured detection output, validation errors, confidence, and evidence excerpts
+
+**Given** I have expected detection output for a sample
+**When** the prompt run completes
+**Then** the workbench shall compare actual output to expected output
+**And** mismatches shall be highlighted by field: communication type, endpoint identifier, provider/consumer role, source location, and confidence
+
+**Given** a prompt or catalog pattern is validated
+**When** I choose to save it
+**Then** the updated pattern shall be saved as a new catalog version
+**And** existing scans shall continue using their original catalog version
+**And** the scan log shall record future scans that use the new version
+
+#### Story 7.9: Cross-Repository Resolution Finalization
+
+As a **SystemOwner**,
+I want unresolved cross-repo detections to resolve once enough provider, consumer, and topology evidence exists,
+So that Vulgata's graph shows actual Cross-Repository relationships rather than permanent unknowns.
+
+**Acceptance Criteria:**
+
+**Given** Epic 5 has recorded cross-repo Uncertainties and Epic 7 has committed provider/consumer detections
+**When** a Repository scan completes
+**Then** Cross-Repository Resolution shall evaluate unresolved dispatch sites, communication endpoints, topology candidates, and Uncertainties across all scanned Repositories in the same System
+**And** resolution shall use repo-qualified endpoint matching before falling back to lower-confidence name or topology hints
+
+**Given** a resolution match is accepted
+**When** the graph is updated
+**Then** the system shall create or update REFERENCES edges with provider/consumer roles, confidence, evidence links, and source/target Repository IDs
+**And** consumer counts per communication interface shall be recalculated from current resolved edges
+**And** resolved Uncertainties shall reference the edge or Document Version that resolved them
+
+**Given** mutual pending cross-repo Uncertainties create a resolution ordering conflict
+**When** the Deadlock-Breaking Protocol runs
+**Then** the Repository with fewer pending Uncertainties shall resolve first
+**And** if tied, the older scan yields
+**And** the decision shall be recorded in `log.md` and structured scan events
+
+**Given** resolution changes graph truth after a Business Logic Document was generated
+**When** the affected Document Version is queried
+**Then** Vulgata shall mark the affected Business Logic Document Version with `resolution_outdated_at` or an equivalent stale notice
+**And** no automatic cascade regeneration shall occur in V1
+**And** chat shall be able to cite both the stale Document Version and newer graph evidence
 
 ---
 
 ### Epic 8: Dashboard & Real-Time Monitoring
-⏭️ **Skipped** — 10 FRs (FR-7.1–7.4, FR-12.1–12.6). To be detailed if time permits before sprint start.
+
+#### Story 8.1: Scan Progress Dashboard
+
+As a **SystemOwner**,
+I want to see real-time scan status and progress for my Systems and Repositories,
+So that I know whether Vulgata is profiling, scanning, blocked, completed, or failed.
+
+**Acceptance Criteria:**
+
+**Given** I open 管理后台 → 系统管理
+**When** a System or Repository has scan history
+**Then** the detail panel shall show the latest scan status: not started, profiling, awaiting approval, scanning, completed, failed, or expired
+**And** status labels shall use Chinese UI text and Fluent UI state components
+
+**Given** a scan is active
+**When** ScanHub publishes progress
+**Then** the dashboard shall show active Worker Agent count, files processed, total files, current file or phase, references found, errors encountered, and estimated seconds remaining where available
+**And** refreshing progress shall not shift the surrounding layout
+
+**Given** a scan fails
+**When** the dashboard renders the failure
+**Then** it shall show a non-blaming error message with retry affordance where safe
+**And** technical details shall be available to SystemOwners without exposing API keys, database credentials, or source snippets beyond authorized scope
+
+#### Story 8.2: HITL Notification Center
+
+As a **SystemOwner**,
+I want agent questions to appear in a global notification center,
+So that I can quickly find ambiguities that need human input before scanning can continue.
+
+**Acceptance Criteria:**
+
+**Given** a Worker Agent or pre-scan gate creates a HITL question
+**When** the question is persisted
+**Then** the app shell bell icon shall show a pending-count badge
+**And** the notification panel shall list each question with System, Repository, scan phase, summary, created time, confidence, and urgency
+
+**Given** I click the bell icon
+**When** the notification panel opens
+**Then** HITL questions shall be grouped by System and Repository
+**And** each item shall provide "回答" and "忽略" actions
+**And** questions I am not authorized to answer shall not appear
+
+**Given** there are no pending questions
+**When** I open the notification panel
+**Then** it shall show the UX empty state text and no disabled fake actions
+
+#### Story 8.3: HITL Answer, Dismiss & Metadata Flow
+
+As a **SystemOwner**,
+I want to answer or dismiss agent questions with traceable metadata,
+So that human input improves scans without overwriting code-derived facts.
+
+**Acceptance Criteria:**
+
+**Given** I answer a HITL question
+**When** I submit the answer
+**Then** the answer shall be attached to the relevant Document, Uncertainty, scan run, or catalog candidate as metadata
+**And** the answer shall be marked as `human input`
+**And** the scan or pending refinement shall be notified that the answer is available
+
+**Given** human input conflicts with code-derived evidence
+**When** the graph or document generator evaluates the conflict
+**Then** code-derived facts shall retain higher priority
+**And** the conflict shall remain visible as a disputed or low-confidence item rather than silently overwriting evidence
+
+**Given** I dismiss a HITL question
+**When** dismissal is submitted
+**Then** the question shall leave the pending list with status `dismissed`
+**And** the scan shall either continue with lowered confidence or remain blocked according to the question's required/optional flag
+**And** the decision shall be recorded in scan events
+
+#### Story 8.4: SignalR State Replay and Authorization
+
+As a **SystemOwner**,
+I want real-time dashboard and graph updates to survive reconnects and respect authorization,
+So that monitoring remains accurate during long-running scans.
+
+**Acceptance Criteria:**
+
+**Given** ScanHub and GraphHub are registered
+**When** a client connects
+**Then** both hubs shall require authorization
+**And** hub groups shall be scoped by authorized System and Repository IDs
+**And** unauthorized users shall not receive scan, question, document, or graph events for inaccessible Systems
+
+**Given** the browser loses and regains the SignalR connection
+**When** the client reconnects
+**Then** the server shall replay the latest scan status, pending HITL count, and graph snapshot/diff sequence for the authorized scope
+**And** duplicate events shall not create duplicate UI rows or graph nodes
+
+**Given** hub delivery fails
+**When** the dashboard detects stale connection state
+**Then** it shall show a reconnecting indicator
+**And** the user shall still be able to refresh the page to retrieve current state from database-backed queries
+
+#### Story 8.5: Live Knowledge Graph Projection
+
+As a **SystemOwner**,
+I want a live knowledge graph page showing generated Documents, references, and unresolved Uncertainties,
+So that I can understand scan progress and relationship quality visually.
+
+**Acceptance Criteria:**
+
+**Given** a scan generates or updates a Document Version
+**When** GraphHub publishes a `NodeAdded`, `NodeUpdated`, or `NodeRemoved` diff event
+**Then** the graph page shall add or update a node for the current Logical Document/Document Version with doc type, title, Repository, status, and confidence
+**And** Code Logic Documents and Business Logic Documents shall use distinct type badges consistent with UX-DR-13
+
+**Given** a REFERENCES or GENERATED_FROM edge is created or updated
+**When** GraphHub publishes an `EdgeAdded`, `EdgeUpdated`, or `EdgeRemoved` diff event
+**Then** the graph shall render intra-repo edges as solid gray, cross-repo edges as dashed colored, unresolved Uncertainties as dashed edges to placeholder nodes, and disputed edges as yellow dashed lines with warning icon
+**And** edge metadata shall include source/target Document Versions, source/target Repositories, confidence, provider/consumer roles where available, and Uncertainty status where relevant
+
+**Given** graph updates arrive while the user is panning or zooming
+**When** nodes or edges change
+**Then** the viewport shall be preserved
+**And** updates shall animate within the 200-400ms UX budget without resetting layout
+
+#### Story 8.6: Graph Filtering, Details & Error States
+
+As a **SystemOwner**,
+I want graph controls and detail panels for scanning evidence,
+So that I can inspect the specific Documents, edges, and Uncertainties behind a graph view.
+
+**Acceptance Criteria:**
+
+**Given** I open 管理后台 → 图谱
+**When** the graph page renders
+**Then** it shall provide a floating toolbar with layout toggle (hierarchical/force-directed), zoom controls, and System/Repository filter
+**And** filters shall update the graph without navigating away from the page
+
+**Given** I select a graph node
+**When** the detail panel opens
+**Then** it shall show Document title, type, Repository, source path, summary, scan status, confidence, and a link to 管理后台 → 文档
+**And** failed or superseded Documents shall show their status and explanation
+
+**Given** I select a graph edge or unresolved placeholder
+**When** the detail panel opens
+**Then** it shall show edge type, confidence, provider/consumer role, evidence references, Uncertainty status, and any HITL actions available to my role
+
+**Given** there is no graph data
+**When** the page renders
+**Then** it shall show the UX empty state "尚无扫描数据。启动一次扫描后，知识图谱将在此展示。" with a primary action to go to 系统管理
+**And** graph loading and error states shall use the shared `LoadState` conventions
 
 ---
 
@@ -1664,7 +2102,7 @@ So that I can verify the information and navigate to the original source.
 ---
 
 ### Epic 10: Git Monitoring & Incremental Re-scan
-⏭️ **Skipped** — 5 FRs (FR-9.1–9.5). Deferrable. To be detailed if time permits before sprint start.
+**Deferred beyond initial Sprint Planning** — 5 FRs (FR-9.1–9.5). Detail this epic only if git monitoring and incremental re-scan are reprioritized into an implementation wave.
 
 ---
 

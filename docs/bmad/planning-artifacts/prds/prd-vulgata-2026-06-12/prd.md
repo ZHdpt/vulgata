@@ -112,7 +112,7 @@ Beyond the competition, three forces make this the right moment: (1) LLM inferen
 
 ### 4.2 Key User Journeys
 
-- **UJ-1. Lin the PM asks how risk evaluation works.** Lin, a product manager planning a feature change, logs into Vulgata, selects the Mobile Banking System, ensures she is in Business Mode, and asks "what happens during a risk evaluation in the mobile app?" She receives a step-by-step business narrative tracing the flow across Repositories. She can toggle to IT Mode at any time to see the technical details behind any step.
+- **UJ-1. Lin the PM asks how risk evaluation works.** Lin, a product manager planning a feature change, logs into Vulgata, selects the Mobile Banking System, ensures she is in Business Mode, and asks "what happens during a risk evaluation in the mobile app?" She receives a step-by-step business narrative tracing the flow across Repositories. When she wants technical detail, she switches to IT Mode, confirms a new chat session, and asks the question again to see the code-level trace.
 
 - **UJ-2. Chen the new hire explores the systems.** Chen, a new business analyst in her first week, opens Vulgata, browses the System overview, and asks "how does loan approval work?" in Business Mode. The chat guides her through the relevant Systems and Documents. She reads the Business Logic Documents to understand the process without touching code.
 
@@ -241,11 +241,12 @@ The primary user-facing surface for knowledge consumption. Two modes, database-b
 
 - **FR-11.1:** Business Mode shall present a lighter UI theme and use a system prompt focused on business process explanation. Answers shall be business-level narratives without code references.
 - **FR-11.2:** IT Mode shall present a darker UI theme and use a system prompt focused on technical detail. Answers shall include code references and source links.
-- **FR-11.3:** Users shall switch between Business Mode and IT Mode at any time during a chat session. The UI theme shall change immediately; the system prompt shall change for subsequent messages.
-- **FR-11.4:** Users shall select which Systems or Repositories to include as context for their questions. When no selection is made, all Systems the user has access to are included.
+- **FR-11.3:** Users shall switch between Business Mode and IT Mode from the chat interface. Switching modes shall show a confirmation dialog, save the current chat session, start a new chat session in the selected mode, update the UI theme, and use the selected mode's system prompt for that new session.
+- **FR-11.4:** Users shall select which Systems or Repositories to include as context for their questions. On first use, the selector shall default to all Systems the user has access to; users may clear or adjust this scope.
 - **FR-11.5:** Users shall upload files (documents, images) as supplementary context for their questions.
 - **FR-11.6:** The Chat Agent shall use typed LLM-Wiki retrieval tools over database-backed indexes and graph tables: `search_documents`, `get_document`, `get_document_sections`, `expand_related_documents`, `get_uncertainty_summary`, `get_endpoint_context`, `get_flow_trace_context`, `get_source_anchor_context`, and `get_scan_status`. Retrieval shall be section-level by default, graph-aware, authorization-aware, and able to synthesize answers with citations to source Documents and source anchors. `index.md` shall not be used as the canonical retrieval input.
 - **FR-11.7:** Every answer shall include citations linking claims to the source Documents and, where applicable, to the source code lines that generated those Documents.
+- **FR-11.8:** When no Systems or Repositories are selected, Vulgata shall autonomously determine which Systems or Repositories are relevant to the user's question using database-backed retrieval signals, and display the auto-determined scope with an option to adjust.
 
 ### 5.12 Dashboard & Scan Progress
 
