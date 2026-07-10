@@ -29,12 +29,20 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
     private readonly CustomWebApplicationFactory _factory;
 
     [Fact]
-    public void LoginPageSource_UsesFluentInputsAndRemovesOutOfScopeSections()
+    public void LoginPageSource_UsesPostCompatibleInputsAndRemovesOutOfScopeSections()
     {
         string content = ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Account", "Pages", "Login.razor");
 
-        Assert.Contains("<FluentTextField", content, StringComparison.Ordinal);
-        Assert.Contains("type=\"email\"", content, StringComparison.Ordinal);
+        Match emailInputMatch = Regex.Match(
+            content,
+            "<InputText\\b(?=[^>]*@bind-Value=\"Input\\.Email\")[^>]*>",
+            RegexOptions.Singleline);
+        Assert.True(emailInputMatch.Success, "Expected an InputText bound to Input.Email.");
+
+        string emailInput = emailInputMatch.Value;
+        Assert.Contains("type=\"email\"", emailInput, StringComparison.Ordinal);
+        Assert.Contains("id=\"Input.Email\"", emailInput, StringComparison.Ordinal);
+        Assert.Contains("class=\"form-control\"", emailInput, StringComparison.Ordinal);
         Assert.Contains("type=\"password\"", content, StringComparison.Ordinal);
         Assert.Contains("placeholder=\"密码\"", content, StringComparison.Ordinal);
         Assert.Contains("邮箱或密码错误", content, StringComparison.Ordinal);
@@ -44,8 +52,9 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain("PasskeyInputModel", content, StringComparison.Ordinal);
         Assert.DoesNotContain("ExternalLoginPicker", content, StringComparison.Ordinal);
         Assert.DoesNotContain("ResendEmailConfirmation", content, StringComparison.Ordinal);
-        Assert.DoesNotContain("form-floating", content, StringComparison.Ordinal);
-        Assert.DoesNotContain("form-control", content, StringComparison.Ordinal);
+        Assert.Contains("form-floating", content, StringComparison.Ordinal);
+        Assert.Contains("form-control", content, StringComparison.Ordinal);
+        Assert.DoesNotContain("<FluentTextField", content, StringComparison.Ordinal);
     }
 
     [Fact]
