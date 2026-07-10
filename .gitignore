@@ -198,6 +198,7 @@ $RECYCLE.BIN/
 # OpenAI Codex
 # AGENTS.md
 # .codex/
+.worktrees/
 
 # Aider
 .aider.input.history
