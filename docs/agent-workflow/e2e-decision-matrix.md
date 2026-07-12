@@ -16,16 +16,16 @@ The orchestrator records every applicable predicate, its evidence, the decision,
 The record contains:
 
 - `required`: boolean conclusion;
-- `predicates`: each row evaluated true/false with affected paths and behavior, including `triggered_required_predicates`;
-- `coverage_override`: null or an object containing exact test IDs, covered predicates, current-boundary passing evidence, and why coverage is complete;
+- `predicates`: one object per matrix row with `predicate_id`, `change_type`, `gate` (`required` or `may-skip`), `triggered`, repository-relative `affected_paths`, `affected_behavior`, and `evidence` IDs;
+- `coverage_override`: null or an object with nonempty `test_ids`, `covered_predicate_ids`, the exact current `source_boundary`, nonempty current-boundary `passing_evidence_ids`, and a `completeness_rationale`;
 - `rationale`: why execution or skip is safe;
 - `covering_tests`: exact tests and latest passing evidence when an existing integration test justifies a skip;
 - `owner`: `e2e-runner` for required execution, otherwise orchestrator;
-- `source_commit`: pinned implementation/review boundary;
+- `source_boundary`: the same nonrecursive boundary object used by reviews: `base_commit`, nullable `candidate_commit`, `diff_sha256`, `artifact_hashes`, and `owned_paths`;
 - `result`: `pending`, `passed`, `failed-product`, `failed-test`, `blocked`, `skipped-no-risk`, or `skipped-covered`;
 - `evidence_ids`: command/test evidence.
 
-“Tests exist” is insufficient. A coverage override must identify the tests, map them to every triggered Required predicate, show that they exercise the full changed behavior across each relevant observable boundary, and cite their passing run at the current reviewed boundary. Otherwise `required` stays true.
+“Tests exist” is insufficient. A coverage override must identify the tests, cover every triggered Required predicate ID, show that they exercise the full changed behavior across each relevant observable boundary, match the decision's current `source_boundary`, and cite nonempty passing evidence from that boundary. Otherwise `required` stays true. `skipped-covered` is valid only with this complete override.
 
 ## Runner Boundary
 

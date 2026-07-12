@@ -98,19 +98,19 @@ Project-scoped agents live under `.codex/agents/`. Codex currently supports proj
 
 | Agent | Model and effort | Access | Responsibility |
 |---|---|---|---|
-| `bmad-sprint-orchestrator` | `gpt-5.6`, high | workspace write | Own the queue, dispatch, gates, state, and lifecycle; do not implement feature code |
+| `bmad-sprint-orchestrator` | `gpt-5.6-sol`, high | workspace write | Own the queue, dispatch, gates, state, and lifecycle; do not implement feature code |
 | `story-context-synthesizer` | `gpt-5.6-terra`, medium | read-only | Produce a bounded source-grounded story brief |
-| `spec-author` | `gpt-5.6`, medium | workspace write | Run `speckit-specify` from the story brief |
-| `spec-judge` | `gpt-5.6`, high | read-only | Judge scope, completeness, testability, and BMad alignment |
-| `plan-architect` | `gpt-5.6`, high | workspace write | Run `speckit-plan` and make detailed technical decisions |
-| `plan-judge` | `gpt-5.6`, high | read-only | Challenge feasibility, architecture, Constitution compliance, and testability |
-| `task-author` | `gpt-5.6`, medium | workspace write | Run `speckit-tasks` with explicit test-first ordering |
-| `artifact-analyst` | `gpt-5.6`, high | read-only | Run `speckit-analyze` after tasks and report cross-artifact consistency findings |
-| `tdd-implementer` | `gpt-5.6`, high | workspace write | Implement a bounded task group with red-green-refactor evidence |
-| `acceptance-reviewer` | `gpt-5.6`, high | read-only | Review the diff against BMad and SpecKit requirements |
-| `quality-reviewer` | `gpt-5.6`, high | read-only | Review correctness, security, edge cases, architecture, and documented standards |
+| `spec-author` | `gpt-5.6-sol`, medium | workspace write | Run `speckit-specify` from the story brief |
+| `spec-judge` | `gpt-5.6-sol`, high | read-only | Judge scope, completeness, testability, and BMad alignment |
+| `plan-architect` | `gpt-5.6-sol`, high | workspace write | Run `speckit-plan` and make detailed technical decisions |
+| `plan-judge` | `gpt-5.6-sol`, high | read-only | Challenge feasibility, architecture, Constitution compliance, and testability |
+| `task-author` | `gpt-5.6-sol`, medium | workspace write | Run `speckit-tasks` with explicit test-first ordering |
+| `artifact-analyst` | `gpt-5.6-sol`, high | read-only | Run `speckit-analyze` after tasks and report cross-artifact consistency findings |
+| `tdd-implementer` | `gpt-5.6-sol`, high | workspace write | Implement a bounded task group with red-green-refactor evidence |
+| `acceptance-reviewer` | `gpt-5.6-sol`, high | read-only | Review the diff against BMad and SpecKit requirements |
+| `quality-reviewer` | `gpt-5.6-sol`, high | read-only | Review correctness, security, edge cases, architecture, and documented standards |
 | `e2e-runner` | `gpt-5.6-terra`, low | workspace write | Add and run E2E/API tests; never repair production code |
-| `epic-architecture-auditor` | `gpt-5.6`, high | read-only in repo | Run `improve-codebase-architecture` and emit its temporary report |
+| `epic-architecture-auditor` | `gpt-5.6-sol`, high | read-only in repo | Run `improve-codebase-architecture` and emit its temporary report |
 
 Agents are direct children of the orchestrator. The initial design keeps `agents.max_depth = 1` to avoid recursive fan-out. Task-level subagent-driven development is realized by the orchestrator dispatching a fresh implementer for each bounded task group and fresh reviewers afterward.
 

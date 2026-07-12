@@ -16,7 +16,7 @@
 - `speckit-analyze` is read-only and blocking remediation requires explicit user approval.
 - The active root agent is the orchestrator; all worker agents are direct children and `.codex/config.toml` sets `agents.max_depth = 1`.
 - The orchestrator is the sole Git committer. It stages explicit owned paths, records checkpoint trailers, never commits rejected or failing work, and never pushes or rewrites history implicitly.
-- Planning, judgment, implementation, and architecture audit use `gpt-5.6`; economical context/E2E work uses `gpt-5.6-terra`.
+- Planning, judgment, implementation, and architecture audit use `gpt-5.6-sol`; economical context/E2E work uses `gpt-5.6-terra`.
 - `e2e-runner` uses low reasoning, may edit tests, and may not edit production code.
 - Review agents use `sandbox_mode = "read-only"`.
 - Do not modify installed BMad, SpecKit, Superpowers, or Matt Pocock skill sources.
@@ -382,7 +382,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-Also write the two JSON schemas from `docs/agent-workflow/artifact-contracts.md` and the six-slot dispatch recipe from the approved design into `dispatch-contract.md`.
+Also write the two JSON schemas from `docs/agent-workflow/artifact-contracts.md` and the seven-slot dispatch recipe from the approved design into `dispatch-contract.md`.
 
 - [ ] **Step 5: Run the validator tests and verify GREEN**
 
@@ -409,7 +409,7 @@ Every file uses this shape with the exact catalog values below:
 ```toml
 name = "spec-judge"
 description = "Independently judge a SpecKit specification against BMad requirements and Vulgata authorities."
-model = "gpt-5.6"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 developer_instructions = """
@@ -419,19 +419,19 @@ Review only the artifacts and pinned sources in the dispatch contract. Return th
 
 | File/name | Description focus | Model | Effort | Sandbox | Mandatory instruction |
 |---|---|---|---|---|---|
-| `bmad-sprint-orchestrator` | Queue, dispatch, gates, state, sole commits | `gpt-5.6` | high | workspace-write | Load `run-bmad-sprint-loop`; never implement feature code |
+| `bmad-sprint-orchestrator` | Queue, dispatch, gates, state, sole commits | `gpt-5.6-sol` | high | workspace-write | Load `run-bmad-sprint-loop`; never implement feature code |
 | `story-context-synthesizer` | Source-grounded bounded story brief | `gpt-5.6-terra` | medium | read-only | Separate facts from inference and cite paths |
-| `spec-author` | Run `speckit-specify` from accepted inputs | `gpt-5.6` | medium | workspace-write | Preserve WHAT/WHY and quality checklist |
-| `spec-judge` | Independent spec judgment | `gpt-5.6` | high | read-only | Return verdict; never edit |
-| `plan-architect` | Run `speckit-plan` and technical design | `gpt-5.6` | high | workspace-write | Resolve research and Constitution gates |
-| `plan-judge` | Independent plan judgment | `gpt-5.6` | high | read-only | Challenge feasibility, seams, testability, compliance |
-| `task-author` | Run `speckit-tasks` | `gpt-5.6` | medium | workspace-write | Put failing tests before implementation and use exact paths |
-| `artifact-analyst` | Run read-only `speckit-analyze` after tasks | `gpt-5.6` | high | read-only | Never remediate; require user approval for blocking remediation |
-| `tdd-implementer` | Bounded red-green-refactor task group | `gpt-5.6` | high | workspace-write | No production code before observed failing test |
-| `acceptance-reviewer` | Diff vs BMad/SpecKit | `gpt-5.6` | high | read-only | Report missing, partial, wrong, and scope-creep behavior |
-| `quality-reviewer` | Standards, correctness, security, edge cases | `gpt-5.6` | high | read-only | Skip tooling-enforced style; cite documented standards |
+| `spec-author` | Run `speckit-specify` from accepted inputs | `gpt-5.6-sol` | medium | workspace-write | Preserve WHAT/WHY and quality checklist |
+| `spec-judge` | Independent spec judgment | `gpt-5.6-sol` | high | read-only | Return verdict; never edit |
+| `plan-architect` | Run `speckit-plan` and technical design | `gpt-5.6-sol` | high | workspace-write | Resolve research and Constitution gates |
+| `plan-judge` | Independent plan judgment | `gpt-5.6-sol` | high | read-only | Challenge feasibility, seams, testability, compliance |
+| `task-author` | Run `speckit-tasks` | `gpt-5.6-sol` | medium | workspace-write | Put failing tests before implementation and use exact paths |
+| `artifact-analyst` | Run read-only `speckit-analyze` after tasks | `gpt-5.6-sol` | high | read-only | Never remediate; require user approval for blocking remediation |
+| `tdd-implementer` | Bounded red-green-refactor task group | `gpt-5.6-sol` | high | workspace-write | No production code before observed failing test |
+| `acceptance-reviewer` | Diff vs BMad/SpecKit | `gpt-5.6-sol` | high | read-only | Report missing, partial, wrong, and scope-creep behavior |
+| `quality-reviewer` | Standards, correctness, security, edge cases | `gpt-5.6-sol` | high | read-only | Skip tooling-enforced style; cite documented standards |
 | `e2e-runner` | Conditional E2E/API tests | `gpt-5.6-terra` | low | workspace-write | Test files only; product failures return to implementer |
-| `epic-architecture-auditor` | Epic `improve-codebase-architecture` gate | `gpt-5.6` | high | read-only | Write report only to OS temp and require disposition |
+| `epic-architecture-auditor` | Epic `improve-codebase-architecture` gate | `gpt-5.6-sol` | high | read-only | Write report only to OS temp and require disposition |
 
 Use `sandbox_mode = "workspace-write"` exactly for write-capable agents. Each `developer_instructions` must include the mandatory instruction plus the dispatch contract's input/output and scope rules.
 

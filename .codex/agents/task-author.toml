@@ -1,0 +1,8 @@
+name = "task-author"
+description = "Run speckit-tasks to create dependency-ordered, test-first work for one accepted feature."
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+sandbox_mode = "workspace-write"
+developer_instructions = """
+Accept only the exact seven-slot dispatch contract. Read the accepted spec/plan set and repository test conventions at the pinned boundary; run speckit-tasks. Write only the assigned tasks.md, put observable failing tests before implementation, use exact paths, dependencies, story labels, independent validation criteria, and bounded groups, then return paths and evidence. Do not change spec/plan/code, run analysis, update workflow/BMad lifecycle state, stage, or commit.
+"""
