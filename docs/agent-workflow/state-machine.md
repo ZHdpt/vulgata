@@ -1,0 +1,109 @@
+# Sprint Loop State Machine
+
+## Sources of Truth
+
+BMad owns coarse lifecycle state. A story-local `workflow-state.json` owns resumable internal progress but cannot invent or override BMad status. State updates occur only after their evidence is durable.
+
+## BMad Lifecycle
+
+The only permitted status vocabulary is `backlog`, `ready-for-dev`, `in-progress`, `review`, and `done`.
+
+| From | Trigger and gate | To | Durable effect |
+|---|---|---|---|
+| `backlog` | BMad create-story produces validated story context | `ready-for-dev` | Story file and sprint status are checkpointed |
+| `ready-for-dev` | Queue selection, preflight, and context synthesis succeed; SpecKit cycle is about to start | `in-progress` | A story-activation checkpoint durably records the development record, sprint status, branch/HEAD, ownership, and activation checkpoint ID before `speckit-specify`; it contains no unaccepted SpecKit artifact |
+| `in-progress` | Every implementation task group has verified red-green-refactor evidence and the candidate boundary is pinned | `review` | A ready-for-review checkpoint durably records the story/status transition and candidate identity before acceptance and quality agents are dispatched |
+| `review` | Both independent reviews accept, required E2E passes or has a valid coverage override, final verification passes, the reviewed boundary remains current, and every task/checklist is complete | `done` | Story development record, workflow state, and sprint status are checkpointed |
+
+`done` is terminal for this workflow. A requested `done` story is rejected as new work. An `in-progress` or `review` story is resumed rather than duplicated. Any reverse transition or status not listed above requires the applicable BMad correction workflow and explicit user direction; the sprint loop does not invent it.
+
+## BMad Epic Lifecycle
+
+The epic status vocabulary is `backlog`, `in-progress`, and `done`.
+
+| From | Trigger and gate | To | Durable effect |
+|---|---|---|---|
+| `backlog` | The first story activation checkpoint succeeds | `in-progress` | Epic and sprint status changes are committed atomically with the story activation checkpoint |
+| `in-progress` | Every story is `done`; no story workflow is blocking; current build/tests and the latest-HEAD architecture gate pass; architecture dispositions are approved; retrospective is run or explicitly declined | `done` | Epic disposition, retrospective decision/artifacts, status, and final checkpoint are durable |
+
+An epic with active/done stories but `backlog` status is inconsistent and stops for correction rather than being silently advanced. “Offer retrospective” means the orchestrator presents the BMad retrospective after the architecture gate; the user may run it or explicitly decline it. The choice is recorded, and the epic cannot become `done` while the offer is unanswered.
+
+## Internal Stages
+
+The exact internal stage names are:
+
+```text
+context, specify, spec-review, plan, plan-review, tasks, analyze,
+implement, acceptance-review, quality-review, conditional-e2e, verify, complete
+```
+
+| Stage | Owner | Entry condition | Exit evidence and next stage |
+|---|---|---|---|
+| `context` | Orchestrator and `story-context-synthesizer` | Selected non-`done` story; preflight recorded | Cited brief and authority conflicts resolved → `specify` |
+| `specify` | `spec-author` | Valid context brief | `spec.md`, checklist, feature path, and mapping recorded → `spec-review` |
+| `spec-review` | Fresh `spec-judge` | Specification boundary pinned | `ACCEPT` with no blocking finding → `plan`; `REVISE` → fresh `specify`; `BLOCKED` → stop |
+| `plan` | `plan-architect` | Accepted specification | Plan artifact set and Constitution checks produced → `plan-review` |
+| `plan-review` | Fresh `plan-judge` | Complete planning set pinned | `ACCEPT` with no gate failure → `tasks`; `REVISE` → fresh `plan`; `BLOCKED` → stop |
+| `tasks` | `task-author` | Accepted plan | Dependency-ordered `tasks.md` with test-first groups → `analyze` |
+| `analyze` | Read-only `artifact-analyst` | Current `spec.md`, `plan.md`, and `tasks.md` | No Critical/High → `implement`; blocking findings → human approval gate, responsible author, dependent regeneration, then rerun `analyze` |
+| `implement` | Fresh `tdd-implementer` per group | Accepted analysis and unblocked dependency group | Red-green-refactor evidence and completed task group; after all groups, checkpoint `in-progress → review`, pin boundary, then enter both review axes |
+| `acceptance-review` | Fresh `acceptance-reviewer` | Story status is `review`; same pinned implementation boundary as quality review | Per-gate verdict recorded in `active_gates`; scalar stage remains here until both axes return |
+| `quality-review` | Fresh `quality-reviewer` | Story status is `review`; same pinned implementation boundary as acceptance review | Stored quality verdict is applied after acceptance joins; both axes `ACCEPT` → `conditional-e2e` |
+| `conditional-e2e` | Orchestrator; `e2e-runner` when required | Both review axes accepted | Required E2E passes, or skip rationale cites covering evidence → `verify` |
+| `verify` | Orchestrator | Tasks and gates complete | Story tests, web build, full tests, checklists, and unchanged review boundary pass → `complete` |
+| `complete` | Orchestrator | Verification evidence durable and story is already `review` | BMad transitions `review → done`; provisional complete state becomes trusted only after the final checkpoint trailer resolves in Git |
+
+Acceptance and quality reviews may run in parallel but are represented independently in `active_gates`. On entry, scalar `stage` is `acceptance-review` and both gate records become `active` with identical boundary identities. Returns are persisted in fixed acceptance-then-quality key order regardless of completion order. When both accept, history closes `acceptance-review`, records `quality-review` accepted from its stored verdict, and advances atomically. A blocking return invalidates both verdicts after correction because the boundary changes; neither review replaces the other.
+
+The BMad story remains `review` during review-driven implementation or E2E correction. Internal state returns to `implement`, creates a new pinned candidate, and reruns both reviews; it does not invent a reverse BMad status transition.
+
+## Gate Advancement and Human Decisions
+
+A validated `ACCEPT` from `spec-judge`, `plan-judge`, `acceptance-reviewer`, or `quality-reviewer` completes that gate. Once all required reviewers for a boundary accept, the orchestrator advances and creates the applicable local checkpoint without requesting duplicate user approval. A nonblocking analysis result, passing E2E gate, or passing verification behaves the same way.
+
+The workflow pauses for explicit user direction when the next action depends on authority outside the reviewing agent's contract: remediation of a Critical/High `speckit-analyze` finding; unresolved product intent/scope or three `REVISE` outcomes; a Strong architecture recommendation or ADR conflict; divergent history or destructive VCS recovery; inseparable worktree ownership; unavailable required infrastructure; unsafe external actions; or an ambiguous E2E failure. `REVISE` findings that remain inside already approved intent and scope follow the correction loop automatically for at most three attempts. `BLOCKED` stops immediately and does not consume an attempt.
+
+## Invalidation Dependencies
+
+Changing an input invalidates its owning stage and every dependent stage. The earliest invalid stage is rerun.
+
+| Changed or missing input | Earliest invalid stage | Also invalidates |
+|---|---|---|
+| BMad story, epic scope, PRD/architecture authority, Constitution, ADR, context doc, or Ubiquitous Language relevant to the story | `context` | Every later stage |
+| Story brief | `context` | `specify` through `complete` |
+| `spec.md`, requirements checklist, or story/feature mapping | `specify` | `spec-review` through `complete` |
+| Any plan artifact or Constitution check | `plan` | `plan-review` through `complete` |
+| `tasks.md` | `tasks` | `analyze` through `complete` |
+| Analysis report, analyzed artifact hash, or approved analysis remediation | `analyze` | `implement` through `complete`; upstream remediation additionally invalidates dependent plan/tasks as applicable |
+| Implementation or test file | `implement` | Both review axes, E2E decision/result, `verify`, and `complete` |
+| Review correction | `implement` | Every affected review axis and all later stages |
+| Tracked E2E/integration test only | `acceptance-review` | Both acceptance and quality verdicts, E2E decision/result, `verify`, and `complete`; ownership stays with `e2e-runner` and there is no test-only review bypass |
+| Production behavior covered by E2E | `implement` | Both reviews, E2E decision/result, `verify`, and `complete`; production correction returns to `tdd-implementer` |
+| Verification command set or final candidate boundary | `verify` | `complete`; changed production boundary returns to affected review axes |
+| Malformed or missing workflow state | Earliest stage provable from validated artifacts | All unproven later stages |
+
+An approved analysis correction to `spec.md` regenerates plan artifacts and tasks; a correction to plan artifacts regenerates tasks; a correction confined to `tasks.md` reruns analysis. In all cases, `speckit-analyze` runs again immediately before implementation.
+
+## Resume Algorithm
+
+1. Load complete BMad sprint state and the story's development record.
+2. Derive `docs/bmad/implementation-artifacts/workflow-activations/<story-key>.json`; for a story activated by this workflow, require and validate that record and its checkpoint before consulting any feature mapping.
+3. If the activation exists but is not yet superseded, resume `context`/`specify` from its proposed feature short name. If superseded, follow `superseded_by_state`, validate the one mapped feature directory and both mapping sides, then parse `workflow-state.json`.
+4. Legacy fallback: when an already-`in-progress`/`review` story predates activation records and its activation file is absent, read only the feature directory explicitly named in its BMad development record. Resume it when valid workflow state points back to the same story/epic/path, both sides are unique, and artifacts/checkpoint/ownership validate. Do not duplicate or stop solely for the absent activation file. Missing, inferred, partial, conflicting, duplicate, or many-to-one legacy mappings stop for user direction.
+5. Resolve the last checkpoint ID from Git trailers, obtain its immutable SHA, and verify it is an ancestor of current `HEAD`.
+6. Compare the recorded branch, preflight `HEAD`, repository/Git/worktree identities, exact status snapshot, owned/unrelated paths, artifact hashes, review diff identities, and gate evidence with current state.
+7. If inputs are unchanged and a stage is complete, treat rerun as a no-op.
+8. On changed, missing, or malformed inputs, select the earliest invalid owner from the dependency table and clear only dependent later claims.
+9. Record a recoverable agent/tool failure without advancing. Retry the same stage with a fresh direct-child agent when safe.
+10. Stop for user direction on divergent history or a destructive recovery proposal, inseparable unrelated edits, unresolved intent/scope or authority conflicts, unavailable required infrastructure, unsafe external actions, or three `REVISE` outcomes at one gate. Any `BLOCKED` verdict stops immediately without incrementing that counter.
+
+Resume never repairs divergence through reset, rebase, force push, or silent branch switching. A checkpointed stage is complete only when its local commit succeeds and the checkpoint ID resolves in Git history.
+
+## Idempotency and Failure Rules
+
+- State writes are atomic.
+- Completed stages with identical input commit and artifact hashes are no-ops.
+- Rejected gates and failing implementation/tests never advance or become checkpoints.
+- A dirty worktree is permitted only for exact paths recorded in `repository_preflight.owned_paths`; unrelated paths and their status remain untouched and unstaged. Missing or inseparable ownership stops for user direction.
+- Parallel disjoint work is serialized before shared-file changes, index operations, lifecycle updates, or commits.
+- A failure record contains stage, agent role, source boundary, command/error evidence, retryability, and the earliest safe resume stage.
