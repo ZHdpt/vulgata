@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Shared;
 using Vulgata.Shared.LlmProviders;
 using Vulgata.Web.Validators;
 
@@ -68,7 +69,7 @@ public sealed record LlmProviderConnectionTestResult(LlmProviderConnectionTestOu
 
 public sealed class LlmProviderManagementCoordinator(
     ILlmProviderRepository repository,
-    IApiKeyEncryptionService encryptionService,
+    ISecretEncryptionService encryptionService,
     ILlmProviderConnectionTestService connectionTestService)
     : ILlmProviderManagementCoordinator
 {
@@ -96,7 +97,7 @@ public sealed class LlmProviderManagementCoordinator(
             return LlmProviderMutationResult<LlmProviderSummaryDto>.DuplicateName("提供商名称已存在。");
         }
 
-        string encryptedApiKey = await encryptionService.EncryptAsync(request.ApiKey, cancellationToken);
+        string encryptedApiKey = await encryptionService.EncryptAsync(SecretPurposes.LlmApiKey, request.ApiKey, cancellationToken);
         LlmProvider provider = new(
             request.Name,
             request.BaseEndpointUrl,
@@ -138,7 +139,7 @@ public sealed class LlmProviderManagementCoordinator(
         string encryptedApiKey = provider.EncryptedApiKey;
         if (!string.IsNullOrWhiteSpace(request.ApiKey))
         {
-            encryptedApiKey = await encryptionService.EncryptAsync(request.ApiKey, cancellationToken);
+            encryptedApiKey = await encryptionService.EncryptAsync(SecretPurposes.LlmApiKey, request.ApiKey, cancellationToken);
         }
 
         provider.UpdateDetails(
@@ -189,7 +190,7 @@ public sealed class LlmProviderManagementCoordinator(
             return LlmProviderConnectionTestResult.MissingApiKey;
         }
 
-        string apiKey = await encryptionService.DecryptAsync(provider.EncryptedApiKey, cancellationToken);
+        string apiKey = await encryptionService.DecryptAsync(SecretPurposes.LlmApiKey, provider.EncryptedApiKey, cancellationToken);
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return LlmProviderConnectionTestResult.MissingApiKey;

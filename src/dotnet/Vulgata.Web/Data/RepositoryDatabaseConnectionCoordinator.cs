@@ -1,5 +1,6 @@
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
 using Vulgata.Web.Validators;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
@@ -77,7 +78,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
     IRepositoryRepository repositoryRepository,
     ISystemRepository systemRepository,
     IDatabaseConnectionRepository databaseConnectionRepository,
-    IDatabaseConnectionEncryptionService encryptionService,
+    ISecretEncryptionService encryptionService,
     IDatabaseConnectionTestService connectionTestService)
     : IRepositoryDatabaseConnectionCoordinator
 {
@@ -125,7 +126,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
 
         DatabaseConnection? databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
 
-        string encryptedConnectionString = await encryptionService.EncryptAsync(request.ConnectionString, cancellationToken);
+        string encryptedConnectionString = await encryptionService.EncryptAsync(SecretPurposes.DatabaseConnection, request.ConnectionString, cancellationToken);
 
         if (databaseConnection is null)
         {
@@ -149,13 +150,13 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
         string? updatedEncryptedUsername = databaseConnection.EncryptedUsername;
         if (!string.IsNullOrWhiteSpace(request.Username))
         {
-            updatedEncryptedUsername = await encryptionService.EncryptAsync(request.Username, cancellationToken);
+            updatedEncryptedUsername = await encryptionService.EncryptAsync(SecretPurposes.DatabaseConnection, request.Username, cancellationToken);
         }
 
         string? updatedEncryptedPassword = databaseConnection.EncryptedPassword;
         if (!string.IsNullOrWhiteSpace(request.Password))
         {
-            updatedEncryptedPassword = await encryptionService.EncryptAsync(request.Password, cancellationToken);
+            updatedEncryptedPassword = await encryptionService.EncryptAsync(SecretPurposes.DatabaseConnection, request.Password, cancellationToken);
         }
 
         databaseConnection.UpdateEncryptedDetails(
@@ -211,9 +212,9 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
             return RepositoryDatabaseConnectionTestResult.NotConfigured;
         }
 
-        string plainConnectionString = await encryptionService.DecryptAsync(databaseConnection.EncryptedConnectionString, cancellationToken);
-        string plainUsername = await encryptionService.DecryptAsync(databaseConnection.EncryptedUsername ?? string.Empty, cancellationToken);
-        string plainPassword = await encryptionService.DecryptAsync(databaseConnection.EncryptedPassword ?? string.Empty, cancellationToken);
+        string plainConnectionString = await encryptionService.DecryptAsync(SecretPurposes.DatabaseConnection, databaseConnection.EncryptedConnectionString, cancellationToken);
+        string plainUsername = await encryptionService.DecryptAsync(SecretPurposes.DatabaseConnection, databaseConnection.EncryptedUsername ?? string.Empty, cancellationToken);
+        string plainPassword = await encryptionService.DecryptAsync(SecretPurposes.DatabaseConnection, databaseConnection.EncryptedPassword ?? string.Empty, cancellationToken);
 
         DatabaseConnectionTestAttemptResult result = await connectionTestService.TestAsync(
             databaseConnection.DatabaseType,
@@ -234,7 +235,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
             return null;
         }
 
-        return await encryptionService.EncryptAsync(value, cancellationToken);
+        return await encryptionService.EncryptAsync(SecretPurposes.DatabaseConnection, value, cancellationToken);
     }
 
     private async Task<RepositoryEntity?> GetVisibleRepositoryAsync(

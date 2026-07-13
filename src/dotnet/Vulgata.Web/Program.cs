@@ -114,8 +114,7 @@ builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationServi
 builder.Services.AddScoped<IScanStateService, NoOpScanStateService>();
 builder.Services.AddScoped<IContextCompositionService, ContextCompositionService>();
 builder.Services.AddScoped<IContextManagementCoordinator, ContextManagementCoordinator>();
-builder.Services.AddSingleton<IApiKeyEncryptionService, ApiKeyEncryptionService>();
-builder.Services.AddSingleton<IDatabaseConnectionEncryptionService, DatabaseConnectionEncryptionService>();
+builder.Services.AddSingleton<ISecretEncryptionService, SecretEncryptionService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSystemRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AssignSystemOwnerRequestValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateRepositoryRequestValidator>();
