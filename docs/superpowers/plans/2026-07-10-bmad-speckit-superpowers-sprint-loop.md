@@ -431,7 +431,7 @@ Review only the artifacts and pinned sources in the dispatch contract. Return th
 | `acceptance-reviewer` | Diff vs BMad/SpecKit | `gpt-5.6-sol` | high | read-only | Report missing, partial, wrong, and scope-creep behavior |
 | `quality-reviewer` | Standards, correctness, security, edge cases | `gpt-5.6-sol` | high | read-only | Skip tooling-enforced style; cite documented standards |
 | `e2e-runner` | Conditional E2E/API tests | `gpt-5.6-terra` | low | workspace-write | Test files only; product failures return to implementer |
-| `epic-architecture-auditor` | Epic `improve-codebase-architecture` gate | `gpt-5.6-sol` | high | read-only | Write report only to OS temp and require disposition |
+| `epic-architecture-auditor` | Direct-child Explore work for the root-run epic architecture gate | `gpt-5.6-sol` | high | read-only | Return cited exploration evidence; never write the report or decide disposition |
 
 Use `sandbox_mode = "workspace-write"` exactly for write-capable agents. Each `developer_instructions` must include the mandatory instruction plus the dispatch contract's input/output and scope rules.
 
@@ -564,7 +564,7 @@ description: Use when every story in a BMad epic appears complete and the epic n
 ---
 ```
 
-The body must require, in order: all stories `done`; no blocking workflow state; current-commit build/tests; dispatch `epic-architecture-auditor` with `improve-codebase-architecture`; human disposition of every Strong recommendation and ADR conflict; the epic VCS checkpoint; retrospective offer; then and only then epic `done`. Include counters for release pressure, “architecture later,” passing-tests substitution, and temporary-report staging.
+The body must require, in order: all stories `done`; no blocking workflow state; current-commit build/tests; root execution of the `improve-codebase-architecture` epic-close audit profile with `epic-architecture-auditor` as direct-child independent Explore/classification judge; human disposition of every reserved finding; retrospective offer/choice; a provisional epic VCS checkpoint; trusted `done` only after its full-manifest binding; and any selected retrospective afterward in a separate transaction. Include counters for release pressure, “architecture later,” passing-tests substitution, and temporary-report staging.
 
 - [ ] **Step 3: Finalize metadata and validate**
 

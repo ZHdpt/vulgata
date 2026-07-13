@@ -1,0 +1,4 @@
+interface:
+  display_name: "Close BMad Epic"
+  short_description: "Verify and close a BMad epic safely"
+  default_prompt: "Use $close-bmad-epic to verify and close the active BMad epic."

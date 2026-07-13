@@ -30,6 +30,10 @@ This skill is _informed_ by the project's domain model. The domain language give
 
 ## Process
 
+### Read-only epic-close profile
+
+When `$close-bmad-epic` invokes this skill with `profile = epic-close-audit`, run Steps 1 and 2 under the caller's pinned, read-only audit checkout and return the complete classified candidate set. The caller, not this skill, owns the durable gate record. Do not ask the candidate-selection question or enter Step 3 inside the close transaction: return that pending interaction as follow-up work. The close workflow must either record allowed finding-specific dispositions or leave the epic open and route candidate selection, grilling, documentation/ADR edits, and implementation through its corrective-work loop. A later ordinary invocation resumes Steps 2–3 with the preserved candidates. This profile does not weaken Explore/report requirements; it only separates read-only discovery from side effects so an epic-close transaction cannot silently modify source or authority.
+
 ### 1. Explore
 
 Read the project's domain glossary and any ADRs in the area you're touching first.

@@ -49,8 +49,8 @@ The orchestrator pauses for explicit human direction when:
 - checkpoint ancestry diverges, a destructive VCS recovery is proposed, or active-story changes cannot be separated from unrelated user edits;
 - required verification needs unavailable infrastructure or an unsafe external action;
 - an E2E failure cannot be classified as product or test failure;
-- the epic audit emits Strong recommendations: explicitly approve each recorded disposition as resolved, rejected with a load-bearing reason, deferred through an explicit tracked decision, or accepted;
-- any ADR conflict is found during epic closure: explicitly approve its recorded disposition.
+- the epic audit emits a Critical/High finding, violated MUST, Strong recommendation, missing/invalid classification, or ADR conflict: explicitly approve each allowed finding-specific disposition; deferred Strong findings require an external tracked identifier, owner, rationale, and due/closure condition;
+- an ADR conflict is found: choose only conform implementation, supersede/amend the ADR through a tracked ADR decision, or block closure.
 
 A validated `ACCEPT` from an independent spec, plan, acceptance, or quality judge is the approval for that stage. The orchestrator persists it and advances without asking the operator to approve the same result again. Normal stage advancement, direct-child dispatch, local tests, explicit-path staging, and contract-defined local checkpoint commits likewise require no repeated prompt once the workflow has been invoked. Every reserved decision listed above retains its explicit human gate.
 
@@ -69,7 +69,7 @@ The orchestrator is the sole committer and creates recoverable local checkpoints
 | Story ready for review | Story record and sprint-status `in-progress → review` after all implementation groups, before reviewer dispatch |
 | Review correction verified | Focused regression test, correction, and passing fresh review evidence |
 | Story completed | Final story/state/task metadata and BMad `review → done` after accepted reviews, E2E decision/result, and full verification |
-| Epic gate completed | Complete latest-HEAD architecture record, retrospective/status artifacts, and epic `in-progress → done` transition |
+| Epic gate completed | Complete exact-source architecture record, every referenced command-evidence file, accepted disposition/ADR artifacts, retrospective choice, and provisional epic `in-progress → done` transition |
 
 Adjacent artifact-only checkpoints may combine only when no useful recovery boundary is lost. Unaccepted artifacts never combine with implementation, and unrelated stories never combine. Each commit uses explicit owned paths, passes `git diff --cached --check`, and records the checkpoint ID in its durable record. Story commits carry `BMad-Story` and `Workflow-Scope: story/<key>`; epic commits carry `BMad-Epic` and `Workflow-Scope: epic/<key>`. Both carry `Workflow-Stage` and `Workflow-Checkpoint`.
 
@@ -87,10 +87,16 @@ These are local commits only. The workflow does not switch branches, push, merge
 
 ## Epic Close Sequence
 
-1. Verify every epic story is `done` and no blocking workflow state remains.
-2. Confirm the epic is `in-progress`; run full build/tests at the current commit.
-3. Dispatch the read-only architecture auditor using `improve-codebase-architecture`.
-4. Keep its HTML report in the OS temporary directory; durably record and verify its hash, source commit, complete findings, evidence, and dispositions.
-5. Resolve all Strong recommendations and surface every ADR conflict through the human gate. If remediation changes tracked files or `HEAD`, rerun full build/tests and the architecture audit at the new `HEAD`.
-6. Offer the BMad retrospective; run it or record the user's explicit decline.
-7. Transition the epic `in-progress → done` and create the local epic checkpoint only after the current-HEAD gate and retrospective decision pass.
+1. Verify every story is bound `done`, the epic is `in-progress`, and no blocking/provisional workflow state remains.
+2. Pin `HEAD`. Create a clean disposable detached build/test worktree at that SHA and a separate fresh audit worktree. Prove commit/index/tree equality and no untracked audit input. Run full build/tests in the first; store full-schema command evidence plus hashed raw output under the epic gate `evidence/` directory.
+3. Create a separate fresh clean audit checkout at the same SHA. The root runs the documented `epic-close-audit` profile, dispatching `epic-architecture-auditor` as direct-child independent Explore/classification judge; grilling and side effects are deferred to corrective work.
+4. Canonically preserve the complete raw response and hash. Verify every candidate's blob/excerpt citations against the checkout and map stable raw IDs one-to-one without weakening classifications. Generate visible HTML cards from the normalized payload and validate every field/hash.
+5. Recheck source equality and resolve all reserved findings. Deferred Strong findings require external tracked work. ADR conflicts may conform, supersede/amend via tracked ADR decision, or block.
+6. Route production/test remediation through BMad correct-course and `$run-bmad-sprint-loop`; keep the epic `in-progress` and restart closure at new `HEAD`. Do not commit code remediation from the close skill.
+7. Offer the retrospective and record explicit `run-after-close` or `declined`. Preflight all retrospective activation/append/completion hooks, but do not create retrospective state or run it inside the close transaction.
+8. Dispose and separately record both clean worktrees before pending binding. New transactions require an empty index and clean target preimages. Hash the canonical rename-disabled parent-to-result change set, including explicit deletion tombstones and the final gate blob, and bind it in `Workflow-Manifest-SHA256`. Trust `done` only after direct-parent recomputation; mixed-index recovery preserves all bytes without writing.
+9. If scheduled, run `$bmad-retrospective` after binding under `retrospective-state.json`, allowlisted writes, and a separate checkpoint/resume. Its learning creates follow-up work, not close evidence.
+
+Before close commit and again during recovery, run the executable contract with `python .agents/skills/run-bmad-sprint-loop/scripts/validate_workflow.py --repo . --epic-gate <gate-path>`. Use `--epic-evidence` for an individual command record and `--retrospective-state` for the post-close transaction. Pending-binding validation derives repository identities, raw audit/citations, preimages, the complete staged/committed change set, evidence files, and checkpoint trailers from Git rather than trusting booleans in the record.
+
+Every pre-binding stop atomically updates canonical `architecture-gate.json` with transaction phase, worktree/index snapshots, status, earliest safe resume step, exact source/boundary, evidence paths, retryability, and failure. Resume resolves pending binding first, otherwise revalidates or restarts Step 1. Post-binding retrospective failure updates only its separate state.

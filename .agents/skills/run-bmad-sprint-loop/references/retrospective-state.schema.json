@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vulgata:workflow:retrospective-state:1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "epic_key", "status", "source_epic_checkpoint", "hooks", "write_manifest", "approved_manifest_sha256", "evidence_paths", "failure", "checkpoint"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "epic_key": {"type": "string", "minLength": 1},
+    "status": {"enum": ["active", "failed", "pending-binding"]},
+    "source_epic_checkpoint": {"$ref": "#/$defs/checkpoint"},
+    "hooks": {"type": "array", "items": {"$ref": "#/$defs/hook"}},
+    "write_manifest": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "approved_manifest_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+    "evidence_paths": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "failure": {"type": ["object", "null"]},
+    "checkpoint": {"anyOf": [{"$ref": "#/$defs/pendingCheckpoint"}, {"type": "null"}]}
+  },
+  "allOf": [{"if": {"properties": {"status": {"const": "pending-binding"}}}, "then": {"properties": {"failure": {"type": "null"}, "checkpoint": {"$ref": "#/$defs/pendingCheckpoint"}}}}],
+  "$defs": {
+    "hook": {"type": "object", "additionalProperties": false, "required": ["name", "decision"], "properties": {"name": {"type": "string", "minLength": 1}, "decision": {"enum": ["allow", "deny", "user-approved"]}}},
+    "checkpoint": {"type": "object", "additionalProperties": false, "required": ["id", "commit_sha", "manifest_sha256"], "properties": {"id": {"type": "string", "minLength": 1}, "commit_sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"}, "manifest_sha256": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"}}},
+    "pendingCheckpoint": {"type": "object", "additionalProperties": false, "required": ["id", "expected_parent"], "properties": {"id": {"type": "string", "minLength": 1}, "expected_parent": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"}}}
+  }
+}

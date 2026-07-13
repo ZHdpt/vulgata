@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import json
 import shutil
 import tempfile
@@ -8,7 +9,10 @@ from pathlib import Path
 
 from validate_workflow import (
     validate_agent_file,
+    validate_epic_command_evidence,
+    validate_epic_gate,
     validate_repository,
+    validate_retrospective_state,
     validate_verdict,
     validate_workflow_state,
 )
@@ -130,7 +134,11 @@ class WorkflowValidationTests(unittest.TestCase):
         "acceptance-reviewer": ("missing, partial, wrong", "scope-creep"),
         "quality-reviewer": ("skip style already enforced by tooling", "cite documented standards"),
         "e2e-runner": ("test files and test evidence only", "never change production code"),
-        "epic-architecture-auditor": ("os temporary directory", "never implement or decide dispositions"),
+            "epic-architecture-auditor": (
+                "independent explore/classification judge", "canonical absolute audit root", "git common/worktree identities",
+                "raw_candidate_id", "all applicable categories", "pinned blob oid", "excerpt sha-256",
+                "do not write or open the html report", "never implement",
+            ),
     }
 
     def test_verdict_accepts_complete_contract(self):
@@ -412,6 +420,103 @@ class WorkflowValidationTests(unittest.TestCase):
         skipped_rule = state["$defs"]["e2eDecision"]["allOf"][1]
         self.assertEqual("skipped-covered", skipped_rule["if"]["properties"]["result"]["const"])
         self.assertEqual(1, skipped_rule["then"]["properties"]["covering_tests"]["minItems"])
+
+    def test_epic_close_runtime_contracts_accept_valid_and_reject_unsafe_states(self):
+        evidence = {
+            "schema_version": "1.0", "evidence_id": "4/verify-build/1", "kind": "command",
+            "stage": "verify-build", "source_commit": SHA,
+            "artifact_paths": ["docs/bmad/implementation-artifacts/epic-gates/4/evidence/build.log"],
+            "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj", "exit_code": 0,
+            "observed_at": "2026-07-13T00:00:00Z",
+            "summary": "passed", "raw_output_path": "docs/bmad/implementation-artifacts/epic-gates/4/evidence/build.log", "raw_output_sha256": HASH,
+            "execution_worktree": "C:/tmp/build", "execution_worktree_head": SHA,
+            "execution_worktree_git_identity": "build-id", "boundary_clean": True,
+            "source_equality_validated_at": "2026-07-13T00:00:01Z", "environment_summary": ".NET 10",
+        }
+        self.assertEqual([], validate_epic_command_evidence(evidence))
+        bad_evidence = copy.deepcopy(evidence)
+        bad_evidence["execution_worktree_head"] = "c" * 40
+        bad_evidence["exit_code"] = 99
+        bad_evidence["command"] = "false"
+        self.assertTrue(validate_epic_command_evidence(bad_evidence))
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertTrue(any("missing" in error for error in validate_epic_command_evidence(evidence, Path(temp))))
+
+        gate_path = "docs/bmad/implementation-artifacts/epic-gates/4/architecture-gate.json"
+        audit_raw = "docs/bmad/implementation-artifacts/epic-gates/4/audit-raw/dispatch-1.json"
+        build_path = "docs/bmad/implementation-artifacts/epic-gates/4/evidence/build.json"
+        test_path = "docs/bmad/implementation-artifacts/epic-gates/4/evidence/test.json"
+        status_paths = ["docs/bmad/implementation-artifacts/sprint-status.yaml", "docs/bmad/epics.md"]
+        durable_paths = [gate_path, audit_raw, build_path, test_path, *status_paths]
+        non_gate = [{"path": path, "status": "A", "old_mode": None, "old_type": None, "old_oid": None,
+            "new_mode": "100644", "new_type": "blob", "new_oid": SHA} for path in durable_paths if path != gate_path]
+        gate = {
+            "schema_version": "1.0", "epic_key": "4", "status": "ready",
+            "transaction_phase": "prepared", "source_commit": SHA,
+            "repository_preflight": {"branch": "codex/test", "head": SHA, "repository_root": "G:/repo",
+                "git_common_dir": "G:/repo/.git", "worktree": "G:/repo", "index_empty_at_start": True,
+                "target_preimages": {path: None for path in durable_paths}},
+            "verification_boundary": {
+                "build": {"path": "C:/tmp/build", "git_identity": "build-id", "head": SHA,
+                    "tree_id": SHA, "index_id": SHA, "clean": True, "disposed": True},
+                "audit": {"path": "C:/tmp/audit", "git_identity": "audit-id", "head": SHA,
+                    "tree_id": SHA, "index_id": SHA, "clean": True, "disposed": True},
+                "source_equal": True},
+            "audit_validation": {"verdict": "ACCEPT", "audit_source_commit": SHA,
+                "authoritative_input_hashes": {"docs/UBIQUITOUS_LANGUAGE.md": HASH},
+                "raw_response_path": audit_raw, "raw_response_sha256": HASH,
+                "report_temporary_path": "C:/tmp/report.html", "report_sha256": HASH, "audit_iteration": 1,
+                "normalized_payload_sha256": HASH, "one_to_one_mapping": True, "citations_verified": True,
+                "visible_fields_equal": True, "schema_valid": True, "finding_count": 0, "finding_ids": [],
+                "reserved_finding_count": 0, "validated_at": "2026-07-13T00:00:02Z"},
+            "complete_findings": [], "dispositions": [], "build_evidence_paths": [build_path],
+            "test_evidence_paths": [test_path], "completion_status_paths": status_paths,
+            "durable_artifact_paths": durable_paths, "retrospective_decision": "declined",
+            "checkpoint": {"id": "cp", "expected_parent": SHA},
+            "manifest_constraints": {"expected_name_status": [{"path": path, "status": "A"} for path in durable_paths],
+                "non_gate_tuples": non_gate, "gate_descriptor": {"path": gate_path, "status": "A",
+                    "mode": "100644", "object_type": "blob", "semantic_projection_sha256": HASH}},
+            "earliest_safe_resume_step": 0, "retryability": "retryable", "failure": None,
+        }
+        projection = copy.deepcopy(gate)
+        projection["manifest_constraints"]["gate_descriptor"]["semantic_projection_sha256"] = None
+        gate["manifest_constraints"]["gate_descriptor"]["semantic_projection_sha256"] = hashlib.sha256(
+            json.dumps(projection, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        self.assertEqual([], validate_epic_gate(gate))
+        bad_gate = copy.deepcopy(gate)
+        bad_gate["audit_validation"]["reserved_finding_count"] = 1
+        bad_gate["manifest_constraints"]["gate_descriptor"]["oid"] = "d" * 40
+        errors = validate_epic_gate(bad_gate)
+        self.assertTrue(any("reserved" in error for error in errors))
+        self.assertTrue(any("self-referential" in error for error in errors))
+
+        unsafe_gate = copy.deepcopy(gate)
+        unsafe_gate["audit_validation"].update({"verdict": "REVISE", "finding_count": 1,
+            "finding_ids": ["arch-1"], "reserved_finding_count": 1})
+        unsafe_gate["complete_findings"] = [{"raw_candidate_id": "arch-1", "strength": "Strong",
+            "severity": "HIGH", "applicable_categories": ["critical-high", "must", "strong"],
+            "must_violation": True, "adr_conflict": False,
+            "citations": [{"path": "src/A.cs", "blob_oid": SHA, "range": "L1-L2", "excerpt_sha256": HASH}]}]
+        unsafe_gate["dispositions"] = [{"finding_id": "arch-1",
+            "category_decisions": {"critical-high": "risk-accepted", "strong": "accepted-known-debt"},
+            "user_approval_evidence_id": "approval-1", "status": "accepted"}]
+        unsafe_gate["repository_preflight"]["head"] = "c" * 40
+        unsafe_errors = validate_epic_gate(unsafe_gate)
+        self.assertTrue(any("preflight HEAD" in error for error in unsafe_errors))
+        self.assertTrue(any("every reserved category" in error for error in unsafe_errors))
+
+        retro_paths = ["docs/bmad/implementation-artifacts/epic-gates/4/retrospective-state.json", "docs/retro.md"]
+        retro_hash = hashlib.sha256(json.dumps(retro_paths, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()
+        retro = {"schema_version": "1.0", "epic_key": "4", "status": "active",
+            "source_epic_checkpoint": {"id": "cp", "commit_sha": SHA, "manifest_sha256": HASH},
+            "hooks": [], "write_manifest": retro_paths, "approved_manifest_sha256": retro_hash,
+            "evidence_paths": [], "failure": None,
+            "checkpoint": None}
+        self.assertEqual([], validate_retrospective_state(retro))
+        bad_retro = copy.deepcopy(retro)
+        bad_retro["status"] = "complete"
+        self.assertTrue(validate_retrospective_state(bad_retro))
 
 
 if __name__ == "__main__":

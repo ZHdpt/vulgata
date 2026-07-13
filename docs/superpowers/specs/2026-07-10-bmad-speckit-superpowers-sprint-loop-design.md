@@ -110,7 +110,7 @@ Project-scoped agents live under `.codex/agents/`. Codex currently supports proj
 | `acceptance-reviewer` | `gpt-5.6-sol`, high | read-only | Review the diff against BMad and SpecKit requirements |
 | `quality-reviewer` | `gpt-5.6-sol`, high | read-only | Review correctness, security, edge cases, architecture, and documented standards |
 | `e2e-runner` | `gpt-5.6-terra`, low | workspace write | Add and run E2E/API tests; never repair production code |
-| `epic-architecture-auditor` | `gpt-5.6-sol`, high | read-only in repo | Run `improve-codebase-architecture` and emit its temporary report |
+| `epic-architecture-auditor` | `gpt-5.6-sol`, high | read-only | Independently explore/classify the root-run architecture audit and return verifiable cited findings |
 
 Agents are direct children of the orchestrator. The initial design keeps `agents.max_depth = 1` to avoid recursive fan-out. Task-level subagent-driven development is realized by the orchestrator dispatching a fresh implementer for each bounded task group and fresh reviewers afterward.
 
@@ -331,11 +331,11 @@ It does not preload another agent's conclusions unless the receiving agent is ex
 1. Every story belonging to the epic is `done`.
 2. No unresolved blocking workflow state exists for those stories.
 3. Full build and test verification passes at the current commit.
-4. `epic-architecture-auditor` runs `improve-codebase-architecture` using Vulgata context and ADRs.
-5. Every Strong recommendation is resolved, rejected with a load-bearing reason, deferred through an explicit tracked decision, or accepted by the user.
+4. The root runs the documented `improve-codebase-architecture` epic-close audit profile and dispatches `epic-architecture-auditor` as its required direct-child independent Explore/classification judge, preserving `agents.max_depth = 1`; the root emits the temporary report. The raw response and citations are verified before one-to-one normalization; grilling and side effects route through corrective work.
+5. Every Strong recommendation is rejected with a load-bearing reason, deferred through an explicit tracked decision, or accepted as known debt by the user; claimed correction requires a changed source and fresh clearing audit.
 6. Any ADR conflict is surfaced explicitly.
 
-The architecture skill produces its report in the OS temporary directory as designed; the workflow state records its path, source commit, and disposition summary. Architecture findings do not authorize unrelated refactoring. After the gate is resolved, the orchestrator offers the BMad retrospective and only then marks the epic `done`.
+The architecture skill produces its report in the OS temporary directory as designed; the workflow records its source-bound classified payload and dispositions. After the gate resolves, the orchestrator records the retrospective choice, creates a provisional close checkpoint, and trusts `done` only after full-manifest binding. A selected retrospective runs afterward in a separate transaction.
 
 ## Version-Control Checkpoints
 

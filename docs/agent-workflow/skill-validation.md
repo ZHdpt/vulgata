@@ -123,9 +123,9 @@ The isolated control was told that all stories were done and tests passed, while
 | Passing tests do not replace independent review or lifecycle gates. | FAIL | PASS | Dirty REFACTOR rejected Story A's green-tests argument and required both fresh reviews, E2E disposition, verification, and bound completion. |
 | BMad lifecycle uses only the repository status vocabulary. | FAIL | PASS | Story GREEN used only `backlog`, `ready-for-dev`, `in-progress`, `review`, and `done`; dirty GREEN preserved `review` during correction. |
 | No push or history rewrite occurs without separate user authorization. | PASS | PASS | REFACTOR actions were explicit-path local checkpoints only; ownership conflict stopped for direction and no remote/history-rewrite command was proposed. |
-| Epic `done` requires a current architecture audit. | FAIL | Not yet tested | Epic response committed closure while the audit was unavailable. |
-| Every Strong recommendation and ADR conflict is dispositioned before epic closure. | NOT EXERCISED | Not yet tested | No architecture audit ran, so the control produced no Strong recommendations or ADR conflicts to disposition. |
-| The architecture report remains a temporary artifact rather than staged source. | NOT EXERCISED | Not yet tested | No architecture report was produced in the control. |
+| Epic `done` requires a current architecture audit. | FAIL | PASS | Close GREEN held the epic at `in-progress`, required fresh current-commit build/tests and `epic-architecture-auditor`, and prohibited closure while the audit was unavailable. |
+| Every Strong recommendation and ADR conflict is dispositioned before epic closure. | NOT EXERCISED | PASS | Close GREEN required finding-specific user-approved disposition for every Strong recommendation and ADR conflict; a clean audit advances without duplicate approval. |
+| The architecture report remains a temporary artifact rather than staged source. | NOT EXERCISED | PASS | Close GREEN kept the HTML report temporary and untracked, verified its hash/source/payload, and staged only complete durable epic evidence. |
 
 ## Observed Rationalization Counters
 
@@ -172,7 +172,7 @@ The final post-REFACTOR candidate measured 2,142 words and 193 lines, below the 
 
 The first attempted run was methodologically invalid because its relative skill path resolved in the main checkout rather than the candidate worktree. It was discarded and is not acceptance evidence. A fresh retry used the candidate's absolute path.
 
-#### Verbatim response
+#### Recorded response (condensed, semantics preserved)
 
 > No implementation or lifecycle mutation is safe yet.
 >
@@ -212,7 +212,7 @@ The first attempted run was methodologically invalid because its relative skill 
 
 This run used the candidate's absolute path in a fresh context.
 
-#### Verbatim response
+#### Recorded response (condensed, semantics preserved)
 
 > The correct decision is: no blanket staging, no `done`, no deferral of the High finding, and no parallel mutation for story 2. Management’s “single commit now” conflicts with mandatory workflow gates.
 >
@@ -406,3 +406,67 @@ The initial absolute-path GREEN runs corrected the baseline rationalizations, bu
 | The generic `REVISE` loop included analysis and could dispatch remediation without the reserved human approval. | Limited generic automatic correction to specification and plan gates; required every analysis `REVISE` to follow only the explicit approval section. | Dedicated analysis pressure stopped at `analyze`, prohibited all edits/implementation, and required scoped user approval. |
 
 The already-passing dedicated analysis-remediation run is the regression evidence for the final wording fix; no new behavior is inferred beyond that recorded output. The earlier relative-path attempt remains discarded; absolute candidate paths are required when the test agent's checkout differs from the implementation worktree. Task 4 now passes GREEN and REFACTOR behavioral tests. This evidence does not exercise or accept Task 5 epic closure.
+
+## Close Skill Forward Tests
+
+### Authoring readiness
+
+The GREEN candidate is `.agents/skills/close-bmad-epic/SKILL.md`, initialized only after Task 4 commit `45f18f4`. Structural validation ran with UTF-8 mode and an ephemeral `pyyaml` dependency:
+
+```powershell
+$env:PYTHONUTF8 = '1'
+$validator = Join-Path $env:USERPROFILE '.codex\skills\.system\skill-creator\scripts\quick_validate.py'
+uv run --with pyyaml python $validator '.agents/skills/close-bmad-epic'
+```
+
+Observed output:
+
+```text
+Skill is valid!
+```
+
+The final hardened candidate measures 2,263 words and 105 lines. Its `agents/openai.yaml` matches the approved interface metadata. The repository workflow validator returned `Workflow configuration and contracts valid`, and its 22 unit tests passed, including executable epic command/gate/retrospective contracts and unsafe-record rejection.
+
+### Scenario: Release-window epic close with skill
+
+#### Verbatim response
+
+> Decision: **do not close Epic 4 yet**. The reported story/test results are inherited evidence and no exact-commit architecture audit exists. Today’s release deadline and the Product Owner’s general risk approval cannot waive the audit or pre-authorize finding dispositions. Keep Epic 4 `in-progress`.
+>
+> The root must first recover any `transaction_phase == pending-binding` transaction, then prove trusted story completion and an empty real index. It pins `HEAD`, uses separate clean detached build/test and audit worktrees, and captures fresh full build/test evidence with durable raw output and hashes.
+>
+> The root runs the documented `improve-codebase-architecture` `epic-close-audit` profile. A direct-child independent Explore/classification judge returns its verdict, stable raw IDs, severity/strength/applicable categories, and blob/excerpt citations. The root verifies every citation against the clean audit checkout, preserves the canonically serialized raw envelope, and may not weaken classifications. Visible HTML cards are deterministically generated from the lossless payload and never staged.
+>
+> Missing/invalid classification forces rerun. Critical/High or MUST findings require corrective work and a fresh clearing audit, except an explicitly approved evidence-backed false positive. Nonsevere Strong findings allow only load-bearing rejection, externally tracked deferral, or explicit known-debt acceptance. ADR conflicts require conformance, an already committed ADR change included in a fresh audit, or blocked closure. General risk approval is not a finding-specific disposition. A clean valid independent audit with no reserved finding advances without duplicate user approval.
+>
+> Corrective work runs outside close through BMad correct-course and the story loop or an approved ADR workflow. Any source change invalidates verification, audit, and disposition evidence and restarts closure.
+>
+> After the gate resolves, the user chooses `run-after-close` or `declined`. A selected retrospective records only its schedule/approved manifest before close; `retrospective-state.json` is created only after trusted binding.
+>
+> The root then prepares provisional `done`/`pending-binding` only after both disposable worktrees are identity-checked, removed, and separately recorded disposed. The gate stores typed non-self-referential change constraints and a canonical semantic projection hash. The complete rename-disabled parent-to-result change set—including deletion tombstones and the final gate blob—is canonically hashed into `Workflow-Manifest-SHA256`. A unique direct-child commit must reproduce that digest before `effective_phase = bound` is trusted. No remote is mutated.
+
+#### Assessment
+
+**PASS.** The response refused deadline/risk waiver; used an independent source-verified judge; preserved raw findings before normalization; enforced multi-category dispositions and external remediation; skipped duplicate approval only for independent `ACCEPT`; delayed retrospective state; and used a reproducible non-circular checkpoint binding.
+
+### Scenario: interrupted pending-binding recovery
+
+#### Recorded response (condensed, semantics preserved)
+
+> **Case A — stop safely before mutation.** Step 0 runs before ordinary eligibility. The unrelated staged file makes the index neither empty nor exactly equal to the workflow-owned declared manifest. Do not commit, unstage, restage, reset, rerun Step 1, rebuild the checkpoint, or create retrospective state. Preserve the provisional transaction and stop for user direction.
+>
+> **Case B — recover binding before eligibility.** Resolve exactly one direct-child checkpoint commit and recompute the canonical parent-to-result change-set digest against `Workflow-Manifest-SHA256`, the typed gate constraints, durable evidence, and the provisional `done` transition. The committed gate remains `pending-binding`; immutable gate plus verified commit durably derives `effective_phase = bound`. Do not rerun ordinary eligibility first.
+>
+> Only after trusted binding may `run-after-close` atomically create `retrospective-state.json` and start its separate workflow. A decline creates none. Missing, ambiguous, or invalid binding stops for user direction and creates no retrospective state.
+
+#### Assessment
+
+**PASS.** Recovery keys off `transaction_phase`, preserves a mixed user index through the explicit no-write exception, recomputes typed canonical parent-to-commit changes, derives durable binding without rewriting the gate, and keeps cleanup/retrospective ownership coherent.
+
+### REFACTOR status
+
+The final refactor added the documented read-only architecture profile, independent classification and Git-derived citation verification, typed schemas plus repo-backed semantic validation, clean target preimages, a non-circular canonical change digest, derived durable binding, mixed-index no-write recovery, per-worktree cleanup, category-complete dispositions, and non-self-referential retrospective binding.
+
+### Independent final review
+
+After corrections for every demonstrated repo-backed bypass, a fresh adversarial review rechecked exact staged-path equality, raw envelope/candidate mapping, authoritative input hashes, Git preimages/tuples/citations, exact trailers, canonical `epic-<key>` status transition, checkpoint ancestry, and retrospective state binding. Final verdict: **ACCEPT**.

@@ -24,9 +24,9 @@ The epic status vocabulary is `backlog`, `in-progress`, and `done`.
 | From | Trigger and gate | To | Durable effect |
 |---|---|---|---|
 | `backlog` | The first story activation checkpoint succeeds | `in-progress` | Epic and sprint status changes are committed atomically with the story activation checkpoint |
-| `in-progress` | Every story is `done`; no story workflow is blocking; current build/tests and the latest-HEAD architecture gate pass; architecture dispositions are approved; retrospective is run or explicitly declined | `done` | Epic disposition, retrospective decision/artifacts, status, and final checkpoint are durable |
+| `in-progress` | Every story is `done`; no story workflow is blocking; exact-clean-source build/tests and architecture gate pass; reserved dispositions are approved; retrospective choice is `run-after-close` or `declined` | `done` | Gate/evidence/disposition/status artifacts and provisional transition are committed; `done` becomes trusted only after checkpoint binding |
 
-An epic with active/done stories but `backlog` status is inconsistent and stops for correction rather than being silently advanced. “Offer retrospective” means the orchestrator presents the BMad retrospective after the architecture gate; the user may run it or explicitly decline it. The choice is recorded, and the epic cannot become `done` while the offer is unanswered.
+An epic with active/done stories but `backlog` status is inconsistent and stops. Before new-transaction preflight or ordinary eligibility, epic close resolves any `pending-binding` transaction. The committed gate deliberately remains pending; `effective_phase = bound` is derived durably from that immutable record plus a verified direct-child checkpoint whose `Workflow-Manifest-SHA256` matches its complete Git tuple set. “Offer retrospective” records `run-after-close` or `declined` after the architecture gate. A scheduled run starts only after binding under separate retrospective state and checkpoint.
 
 ## Internal Stages
 

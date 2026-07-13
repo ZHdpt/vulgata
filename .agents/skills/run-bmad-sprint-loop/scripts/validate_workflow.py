@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
+import subprocess
 import tomllib
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -57,7 +60,11 @@ ROLE_INSTRUCTION_MARKERS = {
     "acceptance-reviewer": ("missing, partial, wrong", "scope-creep"),
     "quality-reviewer": ("skip style already enforced by tooling", "cite documented standards"),
     "e2e-runner": ("test files and test evidence only", "never change production code"),
-    "epic-architecture-auditor": ("os temporary directory", "never implement or decide dispositions"),
+    "epic-architecture-auditor": (
+        "independent explore/classification judge", "canonical absolute audit root", "git common/worktree identities",
+        "raw_candidate_id", "all applicable categories", "pinned blob oid", "excerpt sha-256",
+        "do not write or open the html report", "never implement",
+    ),
 }
 
 VERDICT_REQUIRED = {
@@ -68,6 +75,21 @@ STATE_REQUIRED = {
     "schema_version", "bmad_story_key", "bmad_epic_key", "feature_directory", "stage", "active_gates",
     "stage_history", "repository_preflight", "source_artifacts", "dispatches", "review_iterations",
     "e2e_decision", "verification", "last_checkpoint", "recoverable_failure", "updated_at",
+}
+EPIC_EVIDENCE_REQUIRED = {
+    "schema_version", "evidence_id", "kind", "stage", "source_commit", "artifact_paths", "command",
+    "exit_code", "observed_at", "summary", "raw_output_path", "raw_output_sha256", "execution_worktree",
+    "execution_worktree_head", "execution_worktree_git_identity", "boundary_clean", "source_equality_validated_at", "environment_summary",
+}
+EPIC_GATE_REQUIRED = {
+    "schema_version", "epic_key", "status", "transaction_phase", "source_commit", "repository_preflight",
+    "verification_boundary", "audit_validation", "complete_findings", "dispositions", "build_evidence_paths",
+    "test_evidence_paths", "completion_status_paths", "durable_artifact_paths", "retrospective_decision", "checkpoint", "manifest_constraints",
+    "earliest_safe_resume_step", "retryability", "failure",
+}
+RETRO_REQUIRED = {
+    "schema_version", "epic_key", "status", "source_epic_checkpoint", "hooks", "write_manifest", "approved_manifest_sha256",
+    "evidence_paths", "failure", "checkpoint",
 }
 
 
@@ -588,6 +610,705 @@ def validate_workflow_state(data: Any) -> list[str]:
     return errors
 
 
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, stderr=subprocess.DEVNULL).strip()
+
+
+def _has_trailer(body: str, key: str, value: str) -> bool:
+    return re.search(rf"^{re.escape(key)}: {re.escape(value)}$", body, re.MULTILINE) is not None
+
+
+def _tree_entry(repo: Path, commit: str, path: str) -> tuple[str, str, str] | None:
+    output = _git(repo, "ls-tree", commit, "--", path)
+    if not output:
+        return None
+    metadata, returned_path = output.split("\t", 1)
+    if returned_path != path:
+        return None
+    mode, object_type, oid = metadata.split()
+    return mode, object_type, oid
+
+
+def _index_entry(repo: Path, path: str) -> tuple[str, str, str] | None:
+    output = _git(repo, "ls-files", "--stage", "--", path)
+    if not output:
+        return None
+    lines = output.splitlines()
+    if len(lines) != 1:
+        raise ValueError("index path has multiple stages")
+    metadata, returned_path = lines[0].split("\t", 1)
+    mode, oid, stage = metadata.split()
+    if returned_path != path or stage != "0":
+        raise ValueError("index path is not a single stage-0 entry")
+    object_type = _git(repo, "cat-file", "-t", oid)
+    return mode, object_type, oid
+
+
+def validate_epic_command_evidence(
+    data: Any, repo: Path | None = None, expected_epic: str | None = None, expected_stage: str | None = None
+) -> list[str]:
+    errors: list[str] = []
+    root = _mapping(data, "evidence", errors)
+    if root is None:
+        return errors
+    _required(root, EPIC_EVIDENCE_REQUIRED, "missing ", errors)
+    _unknown(root, EPIC_EVIDENCE_REQUIRED, "evidence.", errors)
+    if root.get("schema_version") != "1.0": errors.append("evidence.schema_version must equal 1.0")
+    if root.get("kind") != "command": errors.append("evidence.kind must equal command")
+    if root.get("exit_code") != 0: errors.append("epic close command evidence must have exit_code 0")
+    expected_commands = {
+        "verify-build": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+        "verify-test": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+    }
+    if root.get("command") != expected_commands.get(root.get("stage")):
+        errors.append("epic close command does not match its verification stage")
+    _sha(root.get("source_commit"), "evidence.source_commit", errors)
+    _sha(root.get("execution_worktree_head"), "evidence.execution_worktree_head", errors)
+    if root.get("source_commit") != root.get("execution_worktree_head"):
+        errors.append("evidence execution worktree HEAD must equal source commit")
+    if root.get("boundary_clean") is not True: errors.append("evidence.boundary_clean must be true")
+    _hash(root.get("raw_output_sha256"), "evidence.raw_output_sha256", errors)
+    _repo_path(root.get("raw_output_path"), "evidence.raw_output_path", errors)
+    evidence_id = root.get("evidence_id")
+    epic_key = evidence_id.split("/", 1)[0] if isinstance(evidence_id, str) and "/" in evidence_id else None
+    if expected_epic is not None and epic_key != expected_epic:
+        errors.append("epic command evidence belongs to a different epic")
+    if expected_stage is not None and root.get("stage") != expected_stage:
+        errors.append("epic command evidence belongs to the wrong verification stage")
+    expected_prefix = f"docs/bmad/implementation-artifacts/epic-gates/{epic_key}/evidence/" if epic_key else None
+    raw_path = root.get("raw_output_path")
+    if expected_prefix is None or not isinstance(raw_path, str) or not raw_path.startswith(expected_prefix):
+        errors.append("epic close raw output must live under its epic gate evidence directory")
+    if isinstance(root.get("artifact_paths"), list) and raw_path not in root.get("artifact_paths"):
+        errors.append("raw output path must be listed in artifact_paths")
+    if repo is not None and isinstance(raw_path, str):
+        candidate = Path(repo) / raw_path
+        if not candidate.is_file():
+            errors.append("epic close raw output file is missing")
+        else:
+            actual_hash = hashlib.sha256(candidate.read_bytes()).hexdigest()
+            if actual_hash.lower() != str(root.get("raw_output_sha256", "")).lower():
+                errors.append("epic close raw output hash does not match")
+            raw_text = candidate.read_text(encoding="utf-8", errors="replace")
+            if re.search(r"(?:Build|Test Run) FAILED|\bFailed!\b|[1-9][0-9]* Error\(s\)", raw_text, re.IGNORECASE):
+                errors.append("epic close raw output reports failure despite exit_code 0")
+    _timestamp(root.get("observed_at"), "evidence.observed_at", errors)
+    _timestamp(root.get("source_equality_validated_at"), "evidence.source_equality_validated_at", errors)
+    _nonempty_string(root.get("execution_worktree_git_identity"), "evidence.execution_worktree_git_identity", errors)
+    return errors
+
+
+def validate_epic_gate(data: Any, repo: Path | None = None) -> list[str]:
+    errors: list[str] = []
+    root = _mapping(data, "epic gate", errors)
+    if root is None:
+        return errors
+    _required(root, EPIC_GATE_REQUIRED, "missing ", errors)
+    _unknown(root, EPIC_GATE_REQUIRED, "epic_gate.", errors)
+    if root.get("schema_version") != "1.0": errors.append("epic_gate.schema_version must equal 1.0")
+    _sha(root.get("source_commit"), "epic_gate.source_commit", errors)
+    phase = root.get("transaction_phase")
+    if phase not in {"idle", "prepared", "pending-binding"}: errors.append("epic_gate.transaction_phase is invalid")
+    if phase == "pending-binding" and root.get("status") != "provisional":
+        errors.append("pending-binding epic gate must be provisional")
+    if phase == "pending-binding" and repo is None:
+        errors.append("pending-binding epic gate validation requires repository context")
+    if phase == "pending-binding" and root.get("retrospective_decision") not in {"run-after-close", "declined"}:
+        errors.append("pending-binding epic gate requires a retrospective decision")
+    preflight = _mapping(root.get("repository_preflight"), "epic_gate.repository_preflight", errors)
+    if preflight is not None:
+        for field in ("branch", "repository_root", "git_common_dir", "worktree"):
+            _nonempty_string(preflight.get(field), f"epic_gate.repository_preflight.{field}", errors)
+        _sha(preflight.get("head"), "epic_gate.repository_preflight.head", errors)
+        if preflight.get("head") != root.get("source_commit"):
+            errors.append("epic gate preflight HEAD must equal source commit")
+        if preflight.get("index_empty_at_start") is not True:
+            errors.append("new epic close preflight index must be empty")
+        preimages = preflight.get("target_preimages")
+        if not isinstance(preimages, dict) or not preimages:
+            errors.append("epic gate preflight requires nonempty target preimages")
+        elif any(value is not None and (not isinstance(value, str) or not SHA_RE.fullmatch(value)) for value in preimages.values()):
+            errors.append("epic gate target preimages must be blob OIDs or null")
+        else:
+            for path in preimages:
+                _repo_path(path, f"epic gate target preimage path {path}", errors)
+    boundary = _mapping(root.get("verification_boundary"), "epic_gate.verification_boundary", errors)
+    if boundary is not None:
+        if boundary.get("source_equal") is not True:
+            errors.append("epic gate verification sources must be equal")
+        for name in ("build", "audit"):
+            worktree = boundary.get(name)
+            if not isinstance(worktree, dict):
+                errors.append(f"epic gate requires {name} worktree boundary")
+                continue
+            for field in ("path", "git_identity"):
+                _nonempty_string(worktree.get(field), f"epic_gate.verification_boundary.{name}.{field}", errors)
+            _sha(worktree.get("head"), f"epic_gate.verification_boundary.{name}.head", errors)
+            _sha(worktree.get("tree_id"), f"epic_gate.verification_boundary.{name}.tree_id", errors)
+            _sha(worktree.get("index_id"), f"epic_gate.verification_boundary.{name}.index_id", errors)
+            if worktree.get("head") != root.get("source_commit"):
+                errors.append(f"epic gate {name} worktree HEAD must equal source commit")
+            if worktree.get("tree_id") != worktree.get("index_id"):
+                errors.append(f"epic gate {name} tree and index IDs must match")
+            if worktree.get("clean") is not True:
+                errors.append(f"epic gate {name} worktree must be clean")
+            if phase == "pending-binding" and worktree.get("disposed") is not True:
+                errors.append(f"pending-binding requires disposed {name} worktree")
+    audit = _mapping(root.get("audit_validation"), "epic_gate.audit_validation", errors)
+    if audit is not None:
+        for field in ("verdict", "audit_source_commit", "authoritative_input_hashes", "raw_response_path", "raw_response_sha256",
+                      "report_temporary_path", "report_sha256", "audit_iteration", "normalized_payload_sha256",
+                      "one_to_one_mapping", "citations_verified", "visible_fields_equal", "schema_valid",
+                      "finding_count", "finding_ids", "reserved_finding_count", "validated_at"):
+            if field not in audit: errors.append(f"missing epic_gate.audit_validation.{field}")
+        _sha(audit.get("audit_source_commit"), "epic_gate.audit_validation.audit_source_commit", errors)
+        if audit.get("verdict") not in VALID_VERDICTS:
+            errors.append("epic architecture audit verdict is invalid")
+        if audit.get("audit_source_commit") != root.get("source_commit"):
+            errors.append("epic architecture audit source must equal gate source")
+        input_hashes = audit.get("authoritative_input_hashes")
+        if not isinstance(input_hashes, dict) or not input_hashes or any(not isinstance(value, str) or not HASH_RE.fullmatch(value) for value in input_hashes.values()):
+            errors.append("epic architecture audit requires authoritative input hashes")
+        _repo_path(audit.get("raw_response_path"), "epic_gate.audit_validation.raw_response_path", errors)
+        expected_audit_prefix = f"docs/bmad/implementation-artifacts/epic-gates/{root.get('epic_key')}/audit-raw/"
+        if not isinstance(audit.get("raw_response_path"), str) or not audit.get("raw_response_path").startswith(expected_audit_prefix):
+            errors.append("epic architecture raw response path is outside its audit-raw directory")
+        _hash(audit.get("raw_response_sha256"), "epic_gate.audit_validation.raw_response_sha256", errors)
+        _nonempty_string(audit.get("report_temporary_path"), "epic_gate.audit_validation.report_temporary_path", errors)
+        _hash(audit.get("report_sha256"), "epic_gate.audit_validation.report_sha256", errors)
+        _hash(audit.get("normalized_payload_sha256"), "epic_gate.audit_validation.normalized_payload_sha256", errors)
+        _timestamp(audit.get("validated_at"), "epic_gate.audit_validation.validated_at", errors)
+        if not isinstance(audit.get("audit_iteration"), int) or audit.get("audit_iteration") < 1:
+            errors.append("epic gate audit iteration must be positive")
+        for field in ("one_to_one_mapping", "citations_verified", "visible_fields_equal", "schema_valid"):
+            if audit.get(field) is not True: errors.append(f"epic_gate.audit_validation.{field} must be true")
+        if audit.get("verdict") == "ACCEPT" and audit.get("reserved_finding_count") != 0:
+            errors.append("ACCEPT architecture audit cannot contain reserved findings")
+    findings = _array(root.get("complete_findings"), "epic_gate.complete_findings", errors)
+    ids: set[str] = set()
+    findings_by_id: dict[str, dict[str, Any]] = {}
+    if findings is not None:
+        for index, finding in enumerate(findings):
+            item = _mapping(finding, f"epic_gate.complete_findings[{index}]", errors)
+            if item is None: continue
+            candidate_id = item.get("raw_candidate_id")
+            _nonempty_string(candidate_id, f"epic_gate.complete_findings[{index}].raw_candidate_id", errors)
+            if isinstance(candidate_id, str) and candidate_id in ids: errors.append(f"duplicate raw_candidate_id {candidate_id}")
+            if isinstance(candidate_id, str): ids.add(candidate_id)
+            if isinstance(candidate_id, str): findings_by_id[candidate_id] = item
+            if item.get("strength") not in {"Strong", "Worth exploring", "Speculative"}: errors.append(f"finding {candidate_id} has invalid strength")
+            if item.get("severity") not in VALID_SEVERITIES: errors.append(f"finding {candidate_id} has invalid severity")
+            categories = item.get("applicable_categories")
+            if not isinstance(categories, list) or not categories: errors.append(f"finding {candidate_id} requires applicable categories")
+            elif any(category not in {"critical-high", "must", "strong", "adr-conflict", "ordinary"} for category in categories):
+                errors.append(f"finding {candidate_id} has invalid applicable category")
+            else:
+                if item.get("severity") in BLOCKING_SEVERITIES and "critical-high" not in categories: errors.append(f"finding {candidate_id} missing critical-high category")
+                if item.get("strength") == "Strong" and "strong" not in categories: errors.append(f"finding {candidate_id} missing strong category")
+                if item.get("must_violation") is True and "must" not in categories: errors.append(f"finding {candidate_id} missing must category")
+                if item.get("adr_conflict") is True and "adr-conflict" not in categories: errors.append(f"finding {candidate_id} missing ADR category")
+            citations = item.get("citations")
+            if not isinstance(citations, list) or not citations: errors.append(f"finding {candidate_id} requires citations")
+            else:
+                for citation_index, citation in enumerate(citations):
+                    if not isinstance(citation, dict) or set(citation) != {"path", "blob_oid", "range", "excerpt_sha256"}:
+                        errors.append(f"finding {candidate_id} citation {citation_index} is incomplete")
+                        continue
+                    _repo_path(citation.get("path"), f"finding {candidate_id} citation path", errors)
+                    _sha(citation.get("blob_oid"), f"finding {candidate_id} citation blob", errors)
+                    _nonempty_string(citation.get("range"), f"finding {candidate_id} citation range", errors)
+                    _hash(citation.get("excerpt_sha256"), f"finding {candidate_id} citation excerpt", errors)
+    if audit is not None:
+        if audit.get("finding_count") != len(ids): errors.append("audit finding count must equal complete findings")
+        if not isinstance(audit.get("finding_ids"), list) or set(audit.get("finding_ids")) != ids:
+            errors.append("audit finding IDs must equal complete findings")
+    dispositions = root.get("dispositions")
+    disposition_ids: set[str] = set()
+    allowed = {
+        "critical-high": {"evidence-backed-false-positive"},
+        "must": {"evidence-backed-false-positive"},
+        "strong": {"load-bearing-rejection", "deferred-external-work", "accepted-known-debt"},
+        "adr-conflict": {"conform-implementation", "supersede-or-amend-adr", "block"},
+    }
+    if isinstance(dispositions, list):
+        for index, disposition in enumerate(dispositions):
+            if not isinstance(disposition, dict): errors.append(f"disposition {index} must be an object"); continue
+            finding_id = disposition.get("finding_id")
+            if finding_id not in findings_by_id: errors.append(f"disposition {index} references unknown finding"); continue
+            if finding_id in disposition_ids: errors.append(f"duplicate disposition for {finding_id}")
+            disposition_ids.add(finding_id)
+            decisions = disposition.get("category_decisions")
+            reserved = set(findings_by_id[finding_id].get("applicable_categories", [])) & set(allowed)
+            if not isinstance(decisions, dict) or set(decisions) != reserved:
+                errors.append(f"disposition {finding_id} must cover every reserved category exactly")
+            else:
+                for category, decision in decisions.items():
+                    if decision not in allowed[category]: errors.append(f"disposition {finding_id} has invalid {category} decision")
+                if any(decision in {"deferred-external-work", "supersede-or-amend-adr"} for decision in decisions.values()):
+                    tracked = disposition.get("tracked_work")
+                    if not isinstance(tracked, dict) or not all(isinstance(tracked.get(field), str) and tracked.get(field).strip() for field in ("id", "owner", "closure_condition")):
+                        errors.append(f"disposition {finding_id} requires tracked work id, owner, and closure condition")
+            _nonempty_string(disposition.get("rationale"), f"disposition {finding_id} rationale", errors)
+            source_evidence = disposition.get("source_bound_evidence")
+            if not isinstance(source_evidence, list) or not source_evidence:
+                errors.append(f"disposition {finding_id} requires source-bound evidence")
+            else:
+                for evidence_index, citation in enumerate(source_evidence):
+                    if not isinstance(citation, dict) or set(citation) != {"path", "blob_oid", "range", "excerpt_sha256"}:
+                        errors.append(f"disposition {finding_id} evidence {evidence_index} is not a complete citation")
+                        continue
+                    _repo_path(citation.get("path"), f"disposition {finding_id} evidence path", errors)
+                    _sha(citation.get("blob_oid"), f"disposition {finding_id} evidence blob", errors)
+                    if re.fullmatch(r"bytes:\d+-\d+", str(citation.get("range"))) is None: errors.append(f"disposition {finding_id} evidence range is invalid")
+                    _hash(citation.get("excerpt_sha256"), f"disposition {finding_id} evidence excerpt", errors)
+            _nonempty_string(disposition.get("user_approval_evidence_id"), f"disposition {finding_id} approval", errors)
+            if disposition.get("status") != "accepted": errors.append(f"disposition {finding_id} remains blocking")
+    reserved_ids = {candidate_id for candidate_id, item in findings_by_id.items() if set(item.get("applicable_categories", [])) & set(allowed)}
+    if audit is not None and audit.get("reserved_finding_count") != len(reserved_ids):
+        errors.append("audit reserved finding count must equal classified reserved findings")
+    if phase == "pending-binding" and disposition_ids != reserved_ids:
+        errors.append("pending-binding gate requires exactly one accepted disposition per reserved finding")
+    manifest = _mapping(root.get("manifest_constraints"), "epic_gate.manifest_constraints", errors)
+    if manifest is not None:
+        names = manifest.get("expected_name_status")
+        if not isinstance(names, list) or not names:
+            errors.append("epic gate manifest requires expected name-status entries")
+        else:
+            for index, item in enumerate(names):
+                if not isinstance(item, dict) or set(item) != {"path", "status"} or item.get("status") not in {"A", "M", "D", "T"}:
+                    errors.append(f"invalid expected name-status entry {index}")
+        tuples = manifest.get("non_gate_tuples")
+        tuple_fields = {"path", "status", "old_mode", "old_type", "old_oid", "new_mode", "new_type", "new_oid"}
+        if not isinstance(tuples, list):
+            errors.append("epic gate manifest requires non-gate tuples")
+        else:
+            for index, item in enumerate(tuples):
+                if not isinstance(item, dict) or set(item) != tuple_fields or item.get("status") not in {"A", "M", "D", "T"}:
+                    errors.append(f"invalid non-gate change tuple {index}")
+                    continue
+                old_present = item.get("old_oid") is not None
+                new_present = item.get("new_oid") is not None
+                if item.get("status") == "A" and (old_present or not new_present): errors.append(f"added tuple {index} has invalid sides")
+                if item.get("status") == "D" and (not old_present or new_present): errors.append(f"deleted tuple {index} has invalid tombstone")
+                if item.get("status") in {"M", "T"} and (not old_present or not new_present): errors.append(f"changed tuple {index} requires both sides")
+                for side in ("old", "new"):
+                    oid = item.get(f"{side}_oid")
+                    mode, object_type = item.get(f"{side}_mode"), item.get(f"{side}_type")
+                    if oid is not None:
+                        _sha(oid, f"change tuple {index} {side}_oid", errors)
+                        if not isinstance(mode, str) or re.fullmatch(r"[0-7]{6}", mode) is None: errors.append(f"change tuple {index} {side}_mode is invalid")
+                        if object_type not in {"blob", "tree", "commit"}: errors.append(f"change tuple {index} {side}_type is invalid")
+                    elif mode is not None or object_type is not None:
+                        errors.append(f"change tuple {index} absent {side} must null mode/type")
+        gate = _mapping(manifest.get("gate_descriptor"), "epic_gate.manifest_constraints.gate_descriptor", errors)
+        if gate is not None:
+            if set(gate) != {"path", "status", "mode", "object_type", "semantic_projection_sha256"}:
+                errors.append("gate descriptor fields are incomplete")
+            if any(key in gate for key in ("oid", "object_oid")):
+                errors.append("gate descriptor must not contain its self-referential object OID")
+            if gate.get("object_type") != "blob" or gate.get("status") not in {"A", "M"}:
+                errors.append("gate descriptor type/status is invalid")
+            if not isinstance(gate.get("mode"), str) or re.fullmatch(r"[0-7]{6}", gate.get("mode")) is None:
+                errors.append("gate descriptor mode is invalid")
+            _hash(gate.get("semantic_projection_sha256"), "epic_gate.manifest_constraints.gate_descriptor.semantic_projection_sha256", errors)
+            canonical_gate_path = f"docs/bmad/implementation-artifacts/epic-gates/{root.get('epic_key')}/architecture-gate.json"
+            if gate.get("path") != canonical_gate_path:
+                errors.append("gate descriptor path must be the canonical epic architecture gate")
+            projection = json.loads(json.dumps(root))
+            try:
+                projection["manifest_constraints"]["gate_descriptor"]["semantic_projection_sha256"] = None
+                projection_bytes = json.dumps(projection, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                projection_hash = hashlib.sha256(projection_bytes).hexdigest()
+                if str(gate.get("semantic_projection_sha256", "")).lower() != projection_hash:
+                    errors.append("gate semantic projection hash does not match canonical content")
+            except (KeyError, TypeError):
+                errors.append("gate semantic projection cannot be computed")
+        if isinstance(names, list) and isinstance(tuples, list) and gate is not None:
+            expected_pairs = {(item.get("path"), item.get("status")) for item in names if isinstance(item, dict)}
+            actual_pairs = {(item.get("path"), item.get("status")) for item in tuples if isinstance(item, dict)} | {(gate.get("path"), gate.get("status"))}
+            if expected_pairs != actual_pairs: errors.append("name-status set must equal non-gate tuples plus gate descriptor")
+            paths = [item.get("path") for item in names if isinstance(item, dict)]
+            normalized = [unicodedata.normalize("NFC", path) for path in paths if isinstance(path, str)]
+            if len(normalized) != len(set(normalized)) or len({path.casefold() for path in normalized}) != len(normalized):
+                errors.append("manifest paths contain duplicate or case-colliding entries")
+            if any(path != unicodedata.normalize("NFC", path) for path in paths if isinstance(path, str)):
+                errors.append("manifest paths must be Unicode NFC")
+            durable = root.get("durable_artifact_paths")
+            if not isinstance(durable, list) or set(paths) != set(durable):
+                errors.append("manifest paths must exactly equal durable artifact paths")
+            required_durable = {gate.get("path"), audit.get("raw_response_path") if audit else None}
+            for field in ("build_evidence_paths", "test_evidence_paths", "completion_status_paths"):
+                value = root.get(field)
+                if not isinstance(value, list) or not value:
+                    errors.append(f"epic gate requires nonempty {field}")
+                else:
+                    required_durable.update(value)
+            if not required_durable <= set(durable or []):
+                errors.append("durable artifact manifest omits required gate, audit, evidence, or status path")
+            preimages = root.get("repository_preflight", {}).get("target_preimages") if isinstance(root.get("repository_preflight"), dict) else None
+            if not isinstance(preimages, dict) or set(preimages) != set(durable or []):
+                errors.append("target preimages must exactly cover durable artifact paths")
+            status_paths = root.get("completion_status_paths")
+            if isinstance(status_paths, list) and "docs/bmad/implementation-artifacts/sprint-status.yaml" not in status_paths:
+                errors.append("completion status paths must include sprint-status.yaml")
+    checkpoint = _mapping(root.get("checkpoint"), "epic_gate.checkpoint", errors)
+    if checkpoint is not None:
+        _nonempty_string(checkpoint.get("id"), "epic_gate.checkpoint.id", errors)
+        _sha(checkpoint.get("expected_parent"), "epic_gate.checkpoint.expected_parent", errors)
+        if checkpoint.get("expected_parent") != root.get("source_commit"):
+            errors.append("epic checkpoint expected parent must equal source commit")
+    if repo is not None and phase == "pending-binding":
+        repo = Path(repo).resolve()
+        preflight = root.get("repository_preflight")
+        try:
+            observed_root = Path(_git(repo, "rev-parse", "--show-toplevel")).resolve()
+            common_raw = Path(_git(repo, "rev-parse", "--git-common-dir"))
+            observed_common = (repo / common_raw).resolve() if not common_raw.is_absolute() else common_raw.resolve()
+            observed_branch = _git(repo, "branch", "--show-current")
+            if not isinstance(preflight, dict) or Path(str(preflight.get("repository_root"))).resolve() != observed_root:
+                errors.append("epic gate repository root identity does not match Git")
+            if not isinstance(preflight, dict) or Path(str(preflight.get("worktree"))).resolve() != observed_root:
+                errors.append("epic gate worktree identity does not match Git")
+            if not isinstance(preflight, dict) or Path(str(preflight.get("git_common_dir"))).resolve() != observed_common:
+                errors.append("epic gate common Git directory does not match Git")
+            if not isinstance(preflight, dict) or preflight.get("branch") != observed_branch:
+                errors.append("epic gate branch does not match Git")
+        except (OSError, subprocess.CalledProcessError):
+            errors.append("epic gate repository identities cannot be resolved")
+        try:
+            source_tree = _git(repo, "rev-parse", f"{root.get('source_commit')}^{{tree}}")
+        except (OSError, subprocess.CalledProcessError):
+            errors.append("epic gate source commit/tree cannot be resolved")
+            source_tree = None
+        try:
+            current_head = _git(repo, "rev-parse", "HEAD")
+            checkpoint_id = root.get("checkpoint", {}).get("id") if isinstance(root.get("checkpoint"), dict) else None
+            if current_head != root.get("source_commit") and isinstance(checkpoint_id, str):
+                candidates = _git(repo, "log", "--all", "--format=%H", "--fixed-strings", f"--grep=Workflow-Checkpoint: {checkpoint_id}").splitlines()
+                matches = [commit for commit in candidates if _has_trailer(_git(repo, "show", "-s", "--format=%B", commit), "Workflow-Checkpoint", checkpoint_id)]
+                if len(matches) != 1:
+                    errors.append("epic pending checkpoint trailer must resolve exactly once")
+                else:
+                    close_commit = matches[0]
+                    body = _git(repo, "show", "-s", "--format=%B", close_commit)
+                    parent = _git(repo, "rev-parse", f"{close_commit}^")
+                    try:
+                        subprocess.check_call(["git", "-C", str(repo), "merge-base", "--is-ancestor", close_commit, current_head], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    except subprocess.CalledProcessError:
+                        errors.append("epic close checkpoint is not ancestral to active HEAD")
+                    trailer = re.search(r"^Workflow-Manifest-SHA256: ([0-9a-fA-F]{64})$", body, re.MULTILINE)
+                    if parent != root.get("source_commit"): errors.append("epic close checkpoint is not a direct child of source")
+                    if (not _has_trailer(body, "BMad-Epic", str(root.get("epic_key")))
+                            or not _has_trailer(body, "Workflow-Scope", f"epic/{root.get('epic_key')}")
+                            or not _has_trailer(body, "Workflow-Stage", "complete") or trailer is None):
+                        errors.append("epic close checkpoint trailers do not bind")
+                    digest, changed = _commit_change_digest(repo, parent, close_commit)
+                    if trailer is not None and digest.lower() != trailer.group(1).lower(): errors.append("epic close full change digest does not match trailer")
+                    if changed != set(root.get("durable_artifact_paths", [])): errors.append("epic close committed paths do not equal durable manifest")
+                    sprint_path = "docs/bmad/implementation-artifacts/sprint-status.yaml"
+                    try:
+                        before = _git(repo, "show", f"{parent}:{sprint_path}")
+                        after = _git(repo, "show", f"{close_commit}:{sprint_path}")
+                        status_pattern = re.compile(rf"(?m)^\s*epic-{re.escape(str(root.get('epic_key')))}\s*:\s*(backlog|in-progress|done)\s*(?:#.*)?$")
+                        before_matches, after_matches = status_pattern.findall(before), status_pattern.findall(after)
+                        if before_matches != ["in-progress"] or after_matches != ["done"]:
+                            errors.append("canonical epic status entry does not transition in-progress to done")
+                    except (OSError, subprocess.CalledProcessError):
+                        errors.append("canonical sprint status transition cannot be read")
+        except (OSError, subprocess.CalledProcessError):
+            errors.append("epic pending checkpoint cannot be resolved")
+        if boundary is not None and source_tree:
+            for name in ("build", "audit"):
+                worktree = boundary.get(name)
+                if isinstance(worktree, dict) and (worktree.get("tree_id") != source_tree or worktree.get("index_id") != source_tree):
+                    errors.append(f"epic gate {name} tree/index IDs do not match source tree")
+                if isinstance(worktree, dict) and worktree.get("disposed") is True and Path(str(worktree.get("path"))).exists():
+                    errors.append(f"epic gate {name} worktree is recorded disposed but still exists")
+            try:
+                registered = _git(repo, "worktree", "list", "--porcelain")
+            except (OSError, subprocess.CalledProcessError):
+                errors.append("Git worktree registry cannot be inspected")
+                registered = ""
+            for name in ("build", "audit"):
+                worktree = boundary.get(name)
+                if isinstance(worktree, dict) and str(worktree.get("path")) in registered:
+                    errors.append(f"epic gate {name} checkout remains registered")
+        durable = root.get("durable_artifact_paths")
+        if isinstance(durable, list):
+            for path in durable:
+                candidate = repo / path
+                if not candidate.is_file(): errors.append(f"durable epic artifact is missing: {path}")
+                else:
+                    try:
+                        index_entry = _index_entry(repo, path)
+                        worktree_oid = _git(repo, "hash-object", "--", path)
+                        if index_entry is None or index_entry[2] != worktree_oid:
+                            errors.append(f"durable epic artifact differs from staged index: {path}")
+                    except (OSError, subprocess.CalledProcessError, ValueError):
+                        errors.append(f"durable epic artifact is not a single staged entry: {path}")
+        if audit is not None and isinstance(audit.get("raw_response_path"), str):
+            raw = repo / audit["raw_response_path"]
+            if raw.is_file() and hashlib.sha256(raw.read_bytes()).hexdigest().lower() != str(audit.get("raw_response_sha256", "")).lower():
+                errors.append("architecture raw response hash does not match")
+            if raw.is_file():
+                try:
+                    envelope = json.loads(raw.read_text(encoding="utf-8"))
+                    structured = envelope["structured_result"]
+                    block_index = envelope["structured_result_source_block_index"]
+                    blocks = envelope["tool_envelope"]["content"]
+                    block_value = json.loads(blocks[block_index]["text"])
+                    if block_value != structured:
+                        errors.append("architecture structured result does not equal its raw source block")
+                    if structured.get("verdict") != audit.get("verdict") or structured.get("candidates") != root.get("complete_findings"):
+                        errors.append("architecture raw verdict/candidates do not equal durable findings")
+                    proof = structured.get("audit_root_proof")
+                    audit_boundary = boundary.get("audit") if isinstance(boundary, dict) else None
+                    preflight_common = root.get("repository_preflight", {}).get("git_common_dir") if isinstance(root.get("repository_preflight"), dict) else None
+                    if (not isinstance(proof, dict) or proof.get("source_commit") != root.get("source_commit")
+                            or not isinstance(audit_boundary, dict) or proof.get("git_identity") != audit_boundary.get("git_identity")
+                            or proof.get("audit_root") != audit_boundary.get("path")
+                            or proof.get("git_common_dir") != preflight_common
+                            or proof.get("tree_id") != audit_boundary.get("tree_id")
+                            or proof.get("index_id") != audit_boundary.get("index_id")
+                            or proof.get("authoritative_input_hashes") != audit.get("authoritative_input_hashes")):
+                        errors.append("architecture raw audit-root proof does not match boundary")
+                except (KeyError, IndexError, TypeError, json.JSONDecodeError):
+                    errors.append("architecture raw response envelope is invalid")
+        if audit is not None and isinstance(audit.get("authoritative_input_hashes"), dict):
+            for authority_path, recorded_hash in audit["authoritative_input_hashes"].items():
+                try:
+                    entry = _tree_entry(repo, str(root.get("source_commit")), authority_path)
+                    if entry is None: raise ValueError("missing authority")
+                    blob = subprocess.check_output(["git", "-C", str(repo), "cat-file", "blob", entry[2]])
+                    if hashlib.sha256(blob).hexdigest().lower() != str(recorded_hash).lower():
+                        errors.append(f"authoritative input hash does not match pinned blob: {authority_path}")
+                except (OSError, subprocess.CalledProcessError, ValueError):
+                    errors.append(f"authoritative input cannot be resolved at source: {authority_path}")
+        payload_bytes = json.dumps(root.get("complete_findings"), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        if audit is not None and hashlib.sha256(payload_bytes).hexdigest().lower() != str(audit.get("normalized_payload_sha256", "")).lower():
+            errors.append("normalized architecture payload hash does not match findings")
+        if findings is not None:
+            for finding in findings:
+                if not isinstance(finding, dict): continue
+                for citation in finding.get("citations", []):
+                    if not isinstance(citation, dict): continue
+                    try:
+                        entry = _tree_entry(repo, str(root.get("source_commit")), str(citation.get("path")))
+                        if entry is None or entry[2] != citation.get("blob_oid"):
+                            errors.append(f"citation blob does not match source tree: {citation.get('path')}")
+                            continue
+                        match = re.fullmatch(r"bytes:(\d+)-(\d+)", str(citation.get("range")))
+                        if match is None:
+                            errors.append("citation range must be zero-based half-open bytes:start-end")
+                            continue
+                        start, end = int(match.group(1)), int(match.group(2))
+                        blob = subprocess.check_output(["git", "-C", str(repo), "cat-file", "blob", entry[2]])
+                        if start < 0 or end <= start or end > len(blob) or hashlib.sha256(blob[start:end]).hexdigest().lower() != str(citation.get("excerpt_sha256", "")).lower():
+                            errors.append(f"citation excerpt hash/range is invalid: {citation.get('path')}")
+                    except (OSError, subprocess.CalledProcessError, ValueError):
+                        errors.append(f"citation cannot be verified: {citation.get('path')}")
+        if isinstance(dispositions, list):
+            for disposition in dispositions:
+                if not isinstance(disposition, dict): continue
+                for citation in disposition.get("source_bound_evidence", []):
+                    if not isinstance(citation, dict): continue
+                    try:
+                        entry = _tree_entry(repo, str(root.get("source_commit")), str(citation.get("path")))
+                        match = re.fullmatch(r"bytes:(\d+)-(\d+)", str(citation.get("range")))
+                        if entry is None or entry[2] != citation.get("blob_oid") or match is None:
+                            errors.append(f"disposition evidence does not bind source: {citation.get('path')}")
+                            continue
+                        start, end = int(match.group(1)), int(match.group(2))
+                        blob = subprocess.check_output(["git", "-C", str(repo), "cat-file", "blob", entry[2]])
+                        if start < 0 or end <= start or end > len(blob) or hashlib.sha256(blob[start:end]).hexdigest().lower() != str(citation.get("excerpt_sha256", "")).lower():
+                            errors.append(f"disposition evidence excerpt is invalid: {citation.get('path')}")
+                    except (OSError, subprocess.CalledProcessError, ValueError):
+                        errors.append(f"disposition evidence cannot be verified: {citation.get('path')}")
+        if isinstance(preflight, dict) and isinstance(preflight.get("target_preimages"), dict):
+            for path, recorded in preflight["target_preimages"].items():
+                try: observed = _tree_entry(repo, str(root.get("source_commit")), path)
+                except (OSError, subprocess.CalledProcessError, ValueError): observed = None
+                observed_oid = observed[2] if observed else None
+                if recorded != observed_oid: errors.append(f"target preimage does not match source: {path}")
+        manifest = root.get("manifest_constraints")
+        if isinstance(manifest, dict):
+            if current_head == root.get("source_commit"):
+                staged_raw = subprocess.check_output([
+                    "git", "-C", str(repo), "diff", "--cached", "--name-only", "-z", "--no-renames"
+                ])
+                staged_paths = {part.decode("utf-8") for part in staged_raw.split(b"\0") if part}
+                if staged_paths != set(root.get("durable_artifact_paths", [])):
+                    errors.append("complete staged path set does not equal durable manifest")
+            for item in manifest.get("non_gate_tuples", []):
+                if not isinstance(item, dict): continue
+                path = item.get("path")
+                try:
+                    old = _tree_entry(repo, str(root.get("source_commit")), path)
+                    new = _index_entry(repo, path)
+                except (OSError, subprocess.CalledProcessError, ValueError):
+                    errors.append(f"manifest tuple cannot be derived from Git: {path}")
+                    continue
+                recorded_old = (item.get("old_mode"), item.get("old_type"), item.get("old_oid")) if item.get("old_oid") is not None else None
+                recorded_new = (item.get("new_mode"), item.get("new_type"), item.get("new_oid")) if item.get("new_oid") is not None else None
+                if old != recorded_old or new != recorded_new: errors.append(f"manifest tuple does not match source/index: {path}")
+                derived_status = "A" if old is None else "D" if new is None else "T" if old[1] != new[1] else "M"
+                if item.get("status") != derived_status: errors.append(f"manifest status does not match source/index: {path}")
+            gate_descriptor = manifest.get("gate_descriptor")
+            if isinstance(gate_descriptor, dict):
+                try:
+                    gate_old = _tree_entry(repo, str(root.get("source_commit")), gate_descriptor.get("path"))
+                    gate_index = _index_entry(repo, gate_descriptor.get("path"))
+                except (OSError, subprocess.CalledProcessError, ValueError): gate_index = None
+                if gate_index is None or gate_index[0] != gate_descriptor.get("mode") or gate_index[1] != gate_descriptor.get("object_type"):
+                    errors.append("canonical gate descriptor does not match staged index")
+                elif gate_index is not None:
+                    try:
+                        staged_gate = json.loads(subprocess.check_output(
+                            ["git", "-C", str(repo), "cat-file", "blob", gate_index[2]], text=True
+                        ))
+                        if staged_gate != root: errors.append("staged canonical gate content differs from validated gate")
+                    except (OSError, subprocess.CalledProcessError, json.JSONDecodeError):
+                        errors.append("staged canonical gate content cannot be validated")
+                expected_gate_status = "A" if gate_old is None else "M"
+                if gate_descriptor.get("status") != expected_gate_status: errors.append("canonical gate status does not match source/index")
+        seen_evidence: set[str] = set()
+        evidence_required_paths: set[str] = set()
+        for field, expected_stage in (("build_evidence_paths", "verify-build"), ("test_evidence_paths", "verify-test")):
+            value = root.get(field)
+            if isinstance(value, list):
+                for path in value:
+                    if path in seen_evidence: errors.append("build and test evidence paths must be distinct")
+                    seen_evidence.add(path)
+                    candidate = repo / path
+                    try:
+                        evidence_data = json.loads(candidate.read_text(encoding="utf-8"))
+                    except (OSError, json.JSONDecodeError):
+                        errors.append(f"invalid epic command evidence: {path}")
+                        continue
+                    errors.extend(f"{path}: {error}" for error in validate_epic_command_evidence(
+                        evidence_data, repo, str(root.get("epic_key")), expected_stage
+                    ))
+                    build_boundary = boundary.get("build") if isinstance(boundary, dict) else None
+                    if not isinstance(build_boundary, dict) or evidence_data.get("execution_worktree") != build_boundary.get("path") or evidence_data.get("execution_worktree_git_identity") != build_boundary.get("git_identity"):
+                        errors.append(f"{path}: command evidence checkout identity does not match build boundary")
+                    if isinstance(evidence_data.get("artifact_paths"), list): evidence_required_paths.update(evidence_data["artifact_paths"])
+                    if isinstance(evidence_data.get("raw_output_path"), str): evidence_required_paths.add(evidence_data["raw_output_path"])
+        durable_set = set(root.get("durable_artifact_paths", [])) if isinstance(root.get("durable_artifact_paths"), list) else set()
+        if not evidence_required_paths <= durable_set:
+            errors.append("durable manifest omits command evidence raw/artifact paths")
+    return errors
+
+
+def _commit_change_digest(repo: Path, parent: str, commit: str) -> tuple[str, set[str]]:
+    raw_paths = subprocess.check_output([
+        "git", "-C", str(repo), "diff", "--name-only", "-z", "--no-renames", parent, commit
+    ])
+    paths = [part.decode("utf-8") for part in raw_paths.split(b"\0") if part]
+    changes: list[dict[str, Any]] = []
+    for path in paths:
+        old, new = _tree_entry(repo, parent, path), _tree_entry(repo, commit, path)
+        status = "A" if old is None else "D" if new is None else "T" if old[1] != new[1] else "M"
+        changes.append({
+            "path": unicodedata.normalize("NFC", path), "status": status,
+            "old_mode": old[0] if old else None, "old_type": old[1] if old else None, "old_oid": old[2] if old else None,
+            "new_mode": new[0] if new else None, "new_type": new[1] if new else None, "new_oid": new[2] if new else None,
+        })
+    changes.sort(key=lambda item: (item["path"].encode("utf-8"), item["status"]))
+    payload = json.dumps(changes, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest(), set(paths)
+
+
+def validate_retrospective_state(data: Any, repo: Path | None = None) -> list[str]:
+    errors: list[str] = []
+    root = _mapping(data, "retrospective state", errors)
+    if root is None:
+        return errors
+    _required(root, RETRO_REQUIRED, "missing ", errors)
+    _unknown(root, RETRO_REQUIRED, "retrospective_state.", errors)
+    if root.get("schema_version") != "1.0": errors.append("retrospective_state.schema_version must equal 1.0")
+    if root.get("status") not in {"active", "failed", "pending-binding"}: errors.append("retrospective_state.status is invalid")
+    source_checkpoint = _mapping(root.get("source_epic_checkpoint"), "retrospective_state.source_epic_checkpoint", errors)
+    if source_checkpoint is not None:
+        _nonempty_string(source_checkpoint.get("id"), "retrospective_state.source_epic_checkpoint.id", errors)
+        _sha(source_checkpoint.get("commit_sha"), "retrospective_state.source_epic_checkpoint.commit_sha", errors)
+        _hash(source_checkpoint.get("manifest_sha256"), "retrospective_state.source_epic_checkpoint.manifest_sha256", errors)
+    hooks = root.get("hooks")
+    if not isinstance(hooks, list): errors.append("retrospective_state.hooks must be an array")
+    else:
+        for index, hook in enumerate(hooks):
+            if not isinstance(hook, dict) or set(hook) != {"name", "decision"} or not isinstance(hook.get("name"), str) or not hook.get("name").strip() or hook.get("decision") not in {"allow", "deny", "user-approved"}:
+                errors.append(f"retrospective hook {index} is invalid")
+    writes = root.get("write_manifest")
+    if not isinstance(writes, list) or not writes: errors.append("retrospective_state.write_manifest must be nonempty")
+    else:
+        for index, path in enumerate(writes): _repo_path(path, f"retrospective_state.write_manifest[{index}]", errors)
+        normalized = [unicodedata.normalize("NFC", path) for path in writes if isinstance(path, str)]
+        if len(normalized) != len(writes) or len(set(normalized)) != len(normalized) or len({path.casefold() for path in normalized}) != len(normalized):
+            errors.append("retrospective write manifest contains invalid or colliding paths")
+        manifest_bytes = json.dumps(sorted(normalized, key=lambda value: value.encode("utf-8")), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        if hashlib.sha256(manifest_bytes).hexdigest().lower() != str(root.get("approved_manifest_sha256", "")).lower():
+            errors.append("retrospective approved manifest hash does not match")
+        expected_state_path = f"docs/bmad/implementation-artifacts/epic-gates/{root.get('epic_key')}/retrospective-state.json"
+        if expected_state_path not in writes: errors.append("retrospective write manifest must include canonical state")
+    _hash(root.get("approved_manifest_sha256"), "retrospective_state.approved_manifest_sha256", errors)
+    if root.get("status") == "pending-binding" and (root.get("failure") is not None or not isinstance(root.get("checkpoint"), dict)):
+        errors.append("pending-binding retrospective requires checkpoint and no failure")
+    if root.get("status") == "pending-binding" and repo is None:
+        errors.append("pending-binding retrospective validation requires repository context")
+    checkpoint = root.get("checkpoint")
+    if isinstance(checkpoint, dict):
+        if set(checkpoint) != {"id", "expected_parent"}: errors.append("retrospective pending checkpoint fields are incomplete")
+        _nonempty_string(checkpoint.get("id"), "retrospective_state.checkpoint.id", errors)
+        _sha(checkpoint.get("expected_parent"), "retrospective_state.checkpoint.expected_parent", errors)
+        if isinstance(source_checkpoint, dict) and checkpoint.get("expected_parent") != source_checkpoint.get("commit_sha"):
+            errors.append("retrospective expected parent must equal bound epic commit")
+    if repo is not None and root.get("status") == "pending-binding" and isinstance(source_checkpoint, dict) and isinstance(checkpoint, dict):
+        repo = Path(repo)
+        try:
+            source_body = _git(repo, "show", "-s", "--format=%B", source_checkpoint.get("commit_sha"))
+            source_parent = _git(repo, "rev-parse", f"{source_checkpoint.get('commit_sha')}^")
+            source_digest, _ = _commit_change_digest(repo, source_parent, source_checkpoint.get("commit_sha"))
+            if (not _has_trailer(source_body, "Workflow-Checkpoint", str(source_checkpoint.get("id")))
+                    or not _has_trailer(source_body, "Workflow-Manifest-SHA256", str(source_checkpoint.get("manifest_sha256")))
+                    or not _has_trailer(source_body, "BMad-Epic", str(root.get("epic_key")))
+                    or not _has_trailer(source_body, "Workflow-Scope", f"epic/{root.get('epic_key')}")
+                    or not _has_trailer(source_body, "Workflow-Stage", "complete")
+                    or source_digest.lower() != str(source_checkpoint.get("manifest_sha256")).lower()):
+                errors.append("source epic checkpoint trailers do not bind")
+            candidates = _git(repo, "log", "--all", "--format=%H", "--fixed-strings", f"--grep=Workflow-Checkpoint: {checkpoint.get('id')}").splitlines()
+            matches = [commit for commit in candidates if _has_trailer(_git(repo, "show", "-s", "--format=%B", commit), "Workflow-Checkpoint", str(checkpoint.get("id")))]
+            if len(matches) != 1:
+                errors.append("retrospective checkpoint trailer must resolve exactly once")
+            else:
+                retro_commit = matches[0]
+                retro_body = _git(repo, "show", "-s", "--format=%B", retro_commit)
+                retro_parent = _git(repo, "rev-parse", f"{retro_commit}^")
+                active_head = _git(repo, "rev-parse", "HEAD")
+                try:
+                    subprocess.check_call(["git", "-C", str(repo), "merge-base", "--is-ancestor", retro_commit, active_head], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except subprocess.CalledProcessError:
+                    errors.append("retrospective checkpoint is not ancestral to active HEAD")
+                if retro_parent != source_checkpoint.get("commit_sha"): errors.append("retrospective checkpoint is not a direct child of epic checkpoint")
+                trailer_match = re.search(r"^Workflow-Manifest-SHA256: ([0-9a-fA-F]{64})$", retro_body, re.MULTILINE)
+                if (not _has_trailer(retro_body, "Workflow-Checkpoint", str(checkpoint.get("id")))
+                        or not _has_trailer(retro_body, "BMad-Epic", str(root.get("epic_key")))
+                        or not _has_trailer(retro_body, "Workflow-Scope", f"epic/{root.get('epic_key')}")
+                        or not _has_trailer(retro_body, "Workflow-Stage", "retrospective") or trailer_match is None):
+                    errors.append("retrospective checkpoint trailers do not bind")
+                digest, changed = _commit_change_digest(repo, retro_parent, retro_commit)
+                if trailer_match is not None and digest.lower() != trailer_match.group(1).lower(): errors.append("retrospective full change digest does not match trailer")
+                if changed != set(writes or []): errors.append("retrospective checkpoint changed paths do not equal approved manifest")
+                state_path = f"docs/bmad/implementation-artifacts/epic-gates/{root.get('epic_key')}/retrospective-state.json"
+                try:
+                    committed_state = json.loads(_git(repo, "show", f"{retro_commit}:{state_path}"))
+                    if committed_state != root: errors.append("committed retrospective state differs from validated state")
+                except (subprocess.CalledProcessError, json.JSONDecodeError):
+                    errors.append("retrospective commit does not contain canonical state")
+        except (OSError, subprocess.CalledProcessError):
+            errors.append("retrospective checkpoint commits cannot be resolved")
+    return errors
+
+
 def _load_json(path: Path, errors: list[str]) -> dict[str, Any] | None:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -646,7 +1367,7 @@ def _validate_schema_semantics(filename: str, schema: dict[str, Any], path: Path
             for rule in rules if isinstance(rules, list) and isinstance(rule, dict)
         } if isinstance(rules, list) else set()
         checks.append(({"ACCEPT", "REVISE"} <= rule_verdicts, "verdict conditional rules"))
-    else:
+    elif filename == "workflow-state.schema.json":
         coverage = _schema_at(schema, "$defs", "coverageOverride", "properties")
         coverage_nonempty = isinstance(coverage, dict) and all(
             _schema_at(coverage, field, "minItems") == 1
@@ -686,6 +1407,25 @@ def _validate_schema_semantics(filename: str, schema: dict[str, Any], path: Path
                 "skipped-covered conditional rule",
             ),
         ]
+    elif filename == "epic-command-evidence.schema.json":
+        checks = [
+            (_schema_at(schema, "properties", "schema_version", "const") == "1.0", "schema version const"),
+            (_schema_at(schema, "properties", "kind", "const") == "command", "command kind const"),
+            (_schema_at(schema, "properties", "boundary_clean", "const") is True, "clean-boundary const"),
+        ]
+    elif filename == "epic-architecture-gate.schema.json":
+        checks = [
+            (_schema_at(schema, "properties", "schema_version", "const") == "1.0", "schema version const"),
+            (_schema_enum(schema, "properties", "transaction_phase", "enum") == {"idle", "prepared", "pending-binding"}, "transaction phase enum"),
+            (_schema_at(schema, "$defs", "manifest", "properties", "gate_descriptor", "$ref") is None, "non-self-referential manifest"),
+        ]
+    elif filename == "retrospective-state.schema.json":
+        checks = [
+            (_schema_at(schema, "properties", "schema_version", "const") == "1.0", "schema version const"),
+            (_schema_enum(schema, "properties", "status", "enum") == {"active", "failed", "pending-binding"}, "retrospective status enum"),
+        ]
+    else:
+        checks = [(False, "known schema filename")]
     for valid, label in checks:
         if not valid:
             errors.append(f"{path}: {label} is inconsistent with the runtime contract")
@@ -762,6 +1502,9 @@ def validate_repository(repo: Path) -> list[str]:
     schemas = {
         "verdict.schema.json": VERDICT_REQUIRED,
         "workflow-state.schema.json": STATE_REQUIRED,
+        "epic-command-evidence.schema.json": EPIC_EVIDENCE_REQUIRED,
+        "epic-architecture-gate.schema.json": EPIC_GATE_REQUIRED,
+        "retrospective-state.schema.json": RETRO_REQUIRED,
     }
     schema_defs = {
         "verdict.schema.json": {"boundary", "finding"},
@@ -769,6 +1512,9 @@ def validate_repository(repo: Path) -> list[str]:
             "boundary", "gateRecord", "stageRecord", "preflight", "sourceArtifact", "dispatch",
             "reviewIteration", "e2ePredicate", "coverageOverride", "e2eDecision", "evidence", "checkpoint", "failure",
         },
+        "epic-command-evidence.schema.json": {"sha", "hash", "time", "repoPath"},
+        "epic-architecture-gate.schema.json": {"sha", "hash", "repoPath", "preflight", "boundary", "worktreeBoundary", "audit", "finding", "disposition", "checkpoint", "nameStatus", "changeTuple", "manifest"},
+        "retrospective-state.schema.json": {"hook", "checkpoint", "pendingCheckpoint"},
     }
     for filename, required in schemas.items():
         path = refs / filename
@@ -797,8 +1543,21 @@ def validate_repository(repo: Path) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, required=True)
+    parser.add_argument("--epic-gate", type=Path)
+    parser.add_argument("--epic-evidence", type=Path)
+    parser.add_argument("--retrospective-state", type=Path)
     args = parser.parse_args()
     errors = validate_repository(args.repo)
+    for path, validator in (
+        (args.epic_gate, lambda data: validate_epic_gate(data, args.repo)),
+        (args.epic_evidence, lambda data: validate_epic_command_evidence(data, args.repo)),
+        (args.retrospective_state, lambda data: validate_retrospective_state(data, args.repo)),
+    ):
+        if path is None:
+            continue
+        data = _load_json(path, errors)
+        if data is not None:
+            errors.extend(f"{path}: {error}" for error in validator(data))
     if errors:
         print("\n".join(errors))
         return 1
