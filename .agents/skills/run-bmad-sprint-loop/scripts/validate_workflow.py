@@ -1498,6 +1498,31 @@ def validate_repository(repo: Path) -> list[str]:
                     if marker not in lowered:
                         errors.append(f"{path}: developer_instructions missing required role rule: {marker}")
 
+    workflow_skills = {
+        "run-bmad-sprint-loop": ("speckit-specify", "speckit-analyze", "tdd-implementer"),
+        "close-bmad-epic": ("$audit-epic-architecture", "workflow-manifest-sha256", "pending-binding"),
+        "audit-epic-architecture": ("$improve-codebase-architecture", "do not modify that upstream skill", "explore/report"),
+    }
+    skills_root = repo / ".agents" / "skills"
+    for skill_name, markers in workflow_skills.items():
+        skill_dir = skills_root / skill_name
+        skill_path = skill_dir / "SKILL.md"
+        metadata_path = skill_dir / "agents" / "openai.yaml"
+        if not skill_path.is_file():
+            errors.append(f"{skill_path}: missing required workflow skill")
+            continue
+        if not metadata_path.is_file():
+            errors.append(f"{metadata_path}: missing required skill interface")
+        body = skill_path.read_text(encoding="utf-8").lower()
+        for marker in markers:
+            if marker not in body:
+                errors.append(f"{skill_path}: missing required workflow rule: {marker}")
+    upstream_architecture = skills_root / "improve-codebase-architecture" / "SKILL.md"
+    if not upstream_architecture.is_file():
+        errors.append(f"{upstream_architecture}: required installed Matt Pocock skill is missing")
+    elif "read-only epic-close profile" in upstream_architecture.read_text(encoding="utf-8").lower():
+        errors.append(f"{upstream_architecture}: upstream skill must remain unmodified; use audit-epic-architecture adapter")
+
     refs = repo / ".agents" / "skills" / "run-bmad-sprint-loop" / "references"
     schemas = {
         "verdict.schema.json": VERDICT_REQUIRED,

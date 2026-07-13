@@ -435,7 +435,7 @@ The final hardened candidate measures 2,263 words and 105 lines. Its `agents/ope
 >
 > The root must first recover any `transaction_phase == pending-binding` transaction, then prove trusted story completion and an empty real index. It pins `HEAD`, uses separate clean detached build/test and audit worktrees, and captures fresh full build/test evidence with durable raw output and hashes.
 >
-> The root runs the documented `improve-codebase-architecture` `epic-close-audit` profile. A direct-child independent Explore/classification judge returns its verdict, stable raw IDs, severity/strength/applicable categories, and blob/excerpt citations. The root verifies every citation against the clean audit checkout, preserves the canonically serialized raw envelope, and may not weaken classifications. Visible HTML cards are deterministically generated from the lossless payload and never staged.
+> The root runs workflow-owned `$audit-epic-architecture`, which applies installed `$improve-codebase-architecture` Explore/report behavior without modifying it. A direct-child independent judge returns verdict, classifications, and Git citations; the root verifies and losslessly renders them without staging HTML.
 >
 > Missing/invalid classification forces rerun. Critical/High or MUST findings require corrective work and a fresh clearing audit, except an explicitly approved evidence-backed false positive. Nonsevere Strong findings allow only load-bearing rejection, externally tracked deferral, or explicit known-debt acceptance. ADR conflicts require conformance, an already committed ADR change included in a fresh audit, or blocked closure. General risk approval is not a finding-specific disposition. A clean valid independent audit with no reserved finding advances without duplicate user approval.
 >
@@ -465,7 +465,7 @@ The final hardened candidate measures 2,263 words and 105 lines. Its `agents/ope
 
 ### REFACTOR status
 
-The final refactor added the documented read-only architecture profile, independent classification and Git-derived citation verification, typed schemas plus repo-backed semantic validation, clean target preimages, a non-circular canonical change digest, derived durable binding, mixed-index no-write recovery, per-worktree cleanup, category-complete dispositions, and non-self-referential retrospective binding.
+The final refactor added a workflow-owned read-only architecture adapter, independent classification and Git-derived citations, typed repo-backed validation, clean preimages, non-circular change digests, derived binding, mixed-index recovery, cleanup, category-complete dispositions, and non-self-referential retrospective binding. The Matt Pocock skill remains unmodified.
 
 ### Independent final review
 
@@ -475,15 +475,16 @@ After corrections for every demonstrated repo-backed bypass, a fresh adversarial
 
 ### Static artifacts
 
-The repository validator and both skill validators passed:
+The repository validator and all three workflow skill validators passed:
 
 ```text
 Workflow configuration and contracts valid
 Skill is valid!
 Skill is valid!
+Skill is valid!
 ```
 
-The expanded fixture suite passes 25 tests. It now explicitly covers every nonterminal stage, terminal checkpoint binding, `ACCEPT` with a High finding, missing story mapping, invalid E2E skip evidence, checkpoint IDs, and epic-close contracts.
+The expanded fixture suite passes 26 tests. It explicitly covers every nonterminal stage, terminal checkpoint binding, `ACCEPT` with a High finding, missing mapping, E2E skip evidence, checkpoint IDs, epic-close contracts, and the workflow-owned architecture adapter without upstream modification.
 
 ### Story 4-1 fresh-context dry run
 
@@ -519,7 +520,7 @@ Result: **PASS.** A changed `plan.md` invalidates the old plan verdict and every
 
 ## Final Verification and Requirement Coverage
 
-Final workflow verification passed: 25 Python contract tests, repository validation, and both skill structural validators. Vulgata verification also passed: the web project built successfully and all 89 .NET tests passed. The build emitted existing NU1507 multiple-package-source and analyzer/style warnings; no .NET or package configuration changed in this workflow branch, so they remain visible baseline debt rather than being counted as workflow regressions.
+Final workflow verification passed: 26 Python contract tests, repository validation, and all three skill validators. Vulgata verification also passed: the web project built successfully and all 89 .NET tests passed. Existing NU1507 and analyzer/style warnings remain visible baseline debt; no .NET/package configuration changed.
 
 | Success criterion | Direct proof |
 |---|---|
@@ -534,4 +535,13 @@ Final workflow verification passed: 25 Python contract tests, repository validat
 | Economical E2E runs only from recorded predicates | `e2e-runner.toml`, `e2e-decision-matrix.md`, E2E semantic tests |
 | Epic completion waits for architecture dispositions | `$close-bmad-epic`, independent audit schemas/repo-backed validator, final adversarial `ACCEPT`; commit `f0ce10f` |
 | Explicit VCS checkpoints bind accepted artifacts and lifecycle transitions | State machine, checkpoint trailers/ancestry, canonical change-digest validation, resume dry runs |
-| Skills, agents, schemas, documentation, and evidence are reproducible | Repository validator, 25 tests, both skill validators, commits `55702cd` through `15cb634` |
+| Skills, agents, schemas, documentation, and evidence are reproducible | Repository validator, 26 tests, three skill validators, workflow-owned Matt adapter, commits `55702cd` onward |
+
+## Completion-Audit Corrections
+
+Strict independent audits found and closed two final delivery gaps:
+
+1. `audit-epic-architecture` now owns the read-only epic-close adaptation and applies installed `improve-codebase-architecture` Explore/report behavior without editing the upstream skill. The repository validator and a dedicated test enforce that boundary.
+2. `activation-handoff.md` now explains that repository skills are discovered at Codex session startup and gives the exact branch/worktree activation and restart procedure. No implicit integration is performed.
+
+The installed Codex CLI loader was exercised with `codex debug prompt-input` from the feature worktree. Its rendered model input directly listed `run-bmad-sprint-loop`, `close-bmad-epic`, and `audit-epic-architecture` at their repository paths. A full read-only `codex exec` dry run was also attempted but exceeded the 240-second command window without output; it is not counted as passing evidence.

@@ -1,5 +1,7 @@
 # Sprint Loop Operator Runbook
 
+Before using the prompts below, follow [the activation handoff](activation-handoff.md). The current implementation is on `codex/bmad-speckit-sprint-loop`; start/restart Codex from a checkout or worktree containing that branch so repository skill discovery includes the workflow.
+
 ## Start Prompts
 
 Use these prompts exactly for the common entry points:
@@ -89,7 +91,7 @@ These are local commits only. The workflow does not switch branches, push, merge
 
 1. Verify every story is bound `done`, the epic is `in-progress`, and no blocking/provisional workflow state remains.
 2. Pin `HEAD`. Create a clean disposable detached build/test worktree at that SHA and a separate fresh audit worktree. Prove commit/index/tree equality and no untracked audit input. Run full build/tests in the first; store full-schema command evidence plus hashed raw output under the epic gate `evidence/` directory.
-3. Create a separate fresh clean audit checkout at the same SHA. The root runs the documented `epic-close-audit` profile, dispatching `epic-architecture-auditor` as direct-child independent Explore/classification judge; grilling and side effects are deferred to corrective work.
+3. Create a separate fresh clean audit checkout at the same SHA. The root runs workflow-owned `$audit-epic-architecture`, which applies the installed Matt Pocock skill's Explore/report process, and dispatches `epic-architecture-auditor` as direct-child independent judge; grilling and side effects are deferred to corrective work.
 4. Canonically preserve the complete raw response and hash. Verify every candidate's blob/excerpt citations against the checkout and map stable raw IDs one-to-one without weakening classifications. Generate visible HTML cards from the normalized payload and validate every field/hash.
 5. Recheck source equality and resolve all reserved findings. Deferred Strong findings require external tracked work. ADR conflicts may conform, supersede/amend via tracked ADR decision, or block.
 6. Route production/test remediation through BMad correct-course and `$run-bmad-sprint-loop`; keep the epic `in-progress` and restart closure at new `HEAD`. Do not commit code remediation from the close skill.

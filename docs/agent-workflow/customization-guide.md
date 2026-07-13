@@ -5,8 +5,8 @@
 Another coding agent can reproduce this workflow without copying installed skill bodies:
 
 1. Copy the contracts in `docs/agent-workflow/` and adapt repository authority paths and verification commands while preserving the stage/gate semantics.
-2. Create `.agents/skills/run-bmad-sprint-loop/` and `.agents/skills/close-bmad-epic/` with valid `SKILL.md` metadata and `agents/openai.yaml` interfaces.
-3. Have the skills reference installed BMad, SpecKit, Superpowers, and `improve-codebase-architecture` skills by name. Do not vendor or rewrite them.
+2. Create `.agents/skills/run-bmad-sprint-loop/`, `.agents/skills/close-bmad-epic/`, and the workflow-owned `.agents/skills/audit-epic-architecture/` adapter with valid metadata/interfaces.
+3. Have the adapter load and apply the installed `improve-codebase-architecture` Explore/report process under a read-only epic-close boundary. Reference installed BMad, SpecKit, Superpowers, and Matt Pocock skills by name; do not vendor or rewrite them.
 4. Create the 13 project agents from [the agent catalog](agent-catalog.md) as `.codex/agents/*.toml`, with `name`, `description`, `model`, `model_reasoning_effort`, `sandbox_mode`, and `developer_instructions`.
 5. Configure direct-child topology in `.codex/config.toml` with `agents.max_depth = 1` and a bounded thread count.
 6. Recreate the verdict/workflow JSON schemas, seven-slot dispatch contract, and deterministic validator from [artifact contracts](artifact-contracts.md).
@@ -62,7 +62,7 @@ An independent judge/reviewer `ACCEPT` is sufficient approval for its stage. A c
 
 After repository-local story and epic runs pass, a plugin may package the same capabilities:
 
-1. Move both skills, their schemas/scripts/references, and the 13 agent templates into a plugin source directory.
+1. Move all three workflow skills, their schemas/scripts/references, and the 13 agent templates into a plugin source directory.
 2. Add `.codex-plugin/plugin.json` with valid metadata and enumerate packaged skill/agent resources according to the current Codex plugin format.
 3. Parameterize repository-specific authority paths, model aliases, verification commands, and VCS checkpoint adapter.
 4. Keep project-local overrides for Vulgata's BMad paths, Ubiquitous Language, ADR/context map, and .NET commands.

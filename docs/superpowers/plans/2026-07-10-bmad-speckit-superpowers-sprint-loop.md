@@ -23,7 +23,7 @@
 - Use Vulgata's canonical terms from `docs/UBIQUITOUS_LANGUAGE.md` and surface ADR/Constitution conflicts.
 - Source code, generated Documents, credentials, and secrets must remain within configured infrastructure.
 - New skill creation follows RED–GREEN–REFACTOR: baseline pressure tests before skill content, forward tests after content, and loophole closure before moving to the next skill.
-- Every repository commit must pass `git diff --check`; final verification also runs the Python suite, both skill validators, `dotnet build`, and `dotnet test`.
+- Every repository commit must pass `git diff --check`; final verification also runs the Python suite, all workflow skill validators, `dotnet build`, and `dotnet test`.
 
 ## Planned File Structure
 
@@ -176,7 +176,7 @@ Expected: one commit containing only the baseline validation document.
 
 **Interfaces:**
 - Consumes: Approved design and Task 1's observed failures.
-- Produces: Canonical human/agent-readable contracts referenced by the two skills and usable by other coding agents.
+- Produces: Canonical human/agent-readable contracts referenced by the workflow skills and usable by other coding agents.
 
 - [ ] **Step 1: Write architecture and state-machine documents**
 
@@ -248,7 +248,7 @@ Expected: the search returns no unresolved placeholders and the commit contains 
 
 **Interfaces:**
 - Consumes: Agent catalog and artifact contracts from Task 2.
-- Produces: Loadable custom agents plus a standard-library validator used by both skills and final verification.
+- Produces: Loadable custom agents plus a standard-library validator used by the workflow skills and final verification.
 
 - [ ] **Step 1: Initialize the first skill scaffold after RED evidence exists**
 
@@ -564,7 +564,7 @@ description: Use when every story in a BMad epic appears complete and the epic n
 ---
 ```
 
-The body must require, in order: all stories `done`; no blocking workflow state; current-commit build/tests; root execution of the `improve-codebase-architecture` epic-close audit profile with `epic-architecture-auditor` as direct-child independent Explore/classification judge; human disposition of every reserved finding; retrospective offer/choice; a provisional epic VCS checkpoint; trusted `done` only after its full-manifest binding; and any selected retrospective afterward in a separate transaction. Include counters for release pressure, “architecture later,” passing-tests substitution, and temporary-report staging.
+The body must require, in order: all stories `done`; no blocking workflow state; current-commit build/tests; root execution of workflow-owned `audit-epic-architecture` over installed `improve-codebase-architecture`, with an independent direct-child judge; human disposition of reserved findings; retrospective choice; provisional checkpoint; trusted `done` after binding; and any retrospective afterward.
 
 - [ ] **Step 3: Finalize metadata and validate**
 
@@ -613,6 +613,7 @@ python '.agents/skills/run-bmad-sprint-loop/scripts/validate_workflow.py' --repo
 $validator = Join-Path $env:USERPROFILE '.codex\skills\.system\skill-creator\scripts\quick_validate.py'
 python $validator '.agents/skills/run-bmad-sprint-loop'
 python $validator '.agents/skills/close-bmad-epic'
+python $validator '.agents/skills/audit-epic-architecture'
 ```
 
 Expected: all three commands PASS.
@@ -683,6 +684,7 @@ python '.agents/skills/run-bmad-sprint-loop/scripts/validate_workflow.py' --repo
 $validator = Join-Path $env:USERPROFILE '.codex\skills\.system\skill-creator\scripts\quick_validate.py'
 python $validator '.agents/skills/run-bmad-sprint-loop'
 python $validator '.agents/skills/close-bmad-epic'
+python $validator '.agents/skills/audit-epic-architecture'
 ```
 
 Expected: every command PASS; investigate any warning instead of counting it as success.
@@ -703,7 +705,7 @@ Use the approved design's Success Criteria as a checklist. For each criterion, r
 
 - [ ] **Step 4: Link the implementation from the design**
 
-Add an `## Implementation` section to the design with links to both skills, `.codex/agents`, `docs/agent-workflow/operator-runbook.md`, and `docs/agent-workflow/skill-validation.md`. Do not restate their contents.
+Add an `## Implementation` section to the design with links to all workflow skills, `.codex/agents`, activation/operator docs, and validation evidence. Do not restate their contents.
 
 - [ ] **Step 5: Commit the verified handoff**
 

@@ -358,6 +358,16 @@ class WorkflowValidationTests(unittest.TestCase):
             for marker in self.INSTRUCTION_MARKERS[data["name"]]:
                 self.assertIn(marker, instructions)
 
+    def test_workflow_owned_architecture_adapter_preserves_upstream_skill(self):
+        skills = self.REPOSITORY_ROOT / ".agents" / "skills"
+        adapter = (skills / "audit-epic-architecture" / "SKILL.md").read_text(encoding="utf-8").lower()
+        close = (skills / "close-bmad-epic" / "SKILL.md").read_text(encoding="utf-8").lower()
+        upstream = (skills / "improve-codebase-architecture" / "SKILL.md").read_text(encoding="utf-8").lower()
+        self.assertIn("$improve-codebase-architecture", adapter)
+        self.assertIn("do not modify that upstream skill", adapter)
+        self.assertIn("$audit-epic-architecture", close)
+        self.assertNotIn("read-only epic-close profile", upstream)
+
     def test_agent_validation_handles_malformed_toml_and_empty_fields(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "broken.toml"

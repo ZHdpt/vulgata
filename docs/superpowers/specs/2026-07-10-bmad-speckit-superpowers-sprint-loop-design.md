@@ -331,7 +331,7 @@ It does not preload another agent's conclusions unless the receiving agent is ex
 1. Every story belonging to the epic is `done`.
 2. No unresolved blocking workflow state exists for those stories.
 3. Full build and test verification passes at the current commit.
-4. The root runs the documented `improve-codebase-architecture` epic-close audit profile and dispatches `epic-architecture-auditor` as its required direct-child independent Explore/classification judge, preserving `agents.max_depth = 1`; the root emits the temporary report. The raw response and citations are verified before one-to-one normalization; grilling and side effects route through corrective work.
+4. The root runs workflow-owned `audit-epic-architecture`, which applies installed `improve-codebase-architecture` Explore/report behavior without modifying it, and dispatches `epic-architecture-auditor` as direct-child independent judge. Raw response/citations are verified; grilling and side effects route through corrective work.
 5. Every Strong recommendation is rejected with a load-bearing reason, deferred through an explicit tracked decision, or accepted as known debt by the user; claimed correction requires a changed source and fresh clearing audit.
 6. Any ADR conflict is surfaced explicitly.
 
@@ -413,6 +413,7 @@ Implementation will create repository documentation under `docs/agent-workflow/`
 7. `skill-validation.md` — baseline pressure scenarios and forward-test cases.
 8. `customization-guide.md` — how another coding agent or repository can recreate, modify, or package the workflow.
 9. `operator-runbook.md` — commands/prompts for one story, one epic, several epics, resume, and recovery.
+10. `activation-handoff.md` — checkout/session activation required for repository skill discovery.
 
 These are implementation inputs and portability contracts, not duplicated skill instructions.
 
@@ -453,6 +454,7 @@ The first implementation is repository-local:
 ```text
 .agents/skills/run-bmad-sprint-loop/
 .agents/skills/close-bmad-epic/
+.agents/skills/audit-epic-architecture/
 .codex/config.toml
 .codex/agents/*.toml
 docs/agent-workflow/*.md
@@ -464,6 +466,8 @@ This minimizes duplication and integrates directly with Vulgata's existing artif
 
 - [Story sprint-loop skill](../../../.agents/skills/run-bmad-sprint-loop/SKILL.md)
 - [Epic-close skill](../../../.agents/skills/close-bmad-epic/SKILL.md)
+- [Architecture-audit adapter](../../../.agents/skills/audit-epic-architecture/SKILL.md)
 - [Project agents](../../../.codex/agents/)
+- [Activation handoff](../../agent-workflow/activation-handoff.md)
 - [Operator runbook](../../agent-workflow/operator-runbook.md)
 - [Validation evidence](../../agent-workflow/skill-validation.md)
