@@ -1,19 +1,8 @@
 using Microsoft.Data.Sqlite;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Web.Data;
-
-public interface IDatabaseConnectionTestService
-{
-    Task<DatabaseConnectionTestAttemptResult> TestAsync(
-        DatabaseType databaseType,
-        string connectionString,
-        string? username,
-        string? password,
-        CancellationToken cancellationToken = default);
-}
-
-public sealed record DatabaseConnectionTestAttemptResult(bool Success, string Message);
 
 public sealed class DatabaseConnectionTestService(ILogger<DatabaseConnectionTestService> logger) : IDatabaseConnectionTestService
 {

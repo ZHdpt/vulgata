@@ -1,4 +1,4 @@
-namespace Vulgata.Infrastructure.Git;
+namespace Vulgata.Core.DomainServices;
 
 public interface IGitRemoteValidationService
 {

@@ -1,7 +1,6 @@
 using FluentValidation;
 using FluentValidation.Results;
 using Vulgata.Core.DomainServices;
-using Vulgata.Infrastructure.Git;
 using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
 using Vulgata.Web.Data;

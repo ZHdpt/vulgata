@@ -1,18 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Web.Data;
-
-public interface ILlmProviderConnectionTestService
-{
-    Task<LlmProviderConnectionAttemptResult> TestAsync(
-        LlmProvider provider,
-        string apiKey,
-        CancellationToken cancellationToken = default);
-}
-
-public sealed record LlmProviderConnectionAttemptResult(bool Success, string Message);
 
 public sealed class LlmProviderConnectionTestService(
     IHttpClientFactory httpClientFactory,

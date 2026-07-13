@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Git;
 

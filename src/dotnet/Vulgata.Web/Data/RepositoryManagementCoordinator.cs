@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
-using Vulgata.Infrastructure.Git;
 using Vulgata.Shared.Repositories;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
 using SystemEntity = Vulgata.Core.Entities.System;
