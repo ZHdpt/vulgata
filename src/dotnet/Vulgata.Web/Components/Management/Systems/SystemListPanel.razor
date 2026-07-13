@@ -1,0 +1,120 @@
+@using Vulgata.Core.Entities
+@using Vulgata.Shared.Repositories
+@using Vulgata.Web.Data
+@using SystemEntity = Vulgata.Core.Entities.System
+
+@if (Systems.Count == 0)
+{
+    <p>尚未添加任何系统。创建你的第一个系统开始扫描。</p>
+}
+else
+{
+    @foreach (SystemEntity system in Systems)
+    {
+        <h2 style="margin-top:1.5rem">@system.Name</h2>
+        @if (!string.IsNullOrWhiteSpace(system.Description))
+        {
+            <p>@system.Description</p>
+        }
+        @if (IsAdministrator)
+        {
+            <div style="margin-bottom:0.5rem">
+                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" OnClick="@(() => OnEditRequested.InvokeAsync(system))">编辑
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" OnClick="@(() => OnManageOwnersRequested.InvokeAsync(system))">管理所有者
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="@(() => OnDeleteRequested.InvokeAsync(system))">删除
+                </FluentButton>
+            </div>
+        }
+
+        <table class="table" aria-label="@system.Name 仓库列表">
+            <thead>
+                <tr>
+                    <th scope="col">仓库名称</th>
+                    <th scope="col">扫描状态</th>
+                    <th scope="col">最近扫描时间</th>
+                    <th scope="col">文档数量</th>
+                    <th scope="col">查看</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (RepositoriesBySystem.TryGetValue(system.Id, out IReadOnlyList<RepositorySummaryDto> repositories) && repositories.Count > 0)
+                {
+                    @foreach (RepositorySummaryDto repository in repositories)
+                    {
+                        <tr>
+                            <td>@repository.Name</td>
+                            <td>@repository.ScanStatus</td>
+                            <td>@(repository.LastScannedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td>@repository.DocumentCount</td>
+                            <td>
+                                <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                              OnClick="@(() => OnRepositorySelected.InvokeAsync(repository.Id))">查看</FluentButton>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5">暂无仓库</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="@(() => OnCreateRepositoryRequested.InvokeAsync(system))"
+                      Style="margin-bottom:0.5rem">+ 新建仓库</FluentButton>
+
+        <SystemLlmOverridesPanel SystemId="system.Id"
+                                 SystemName="system.Name"
+                                 Overrides="@GetOverrides(system.Id)"
+                                 OnOverrideAdded="@(() => OnLlmOverrideAdded.InvokeAsync(system.Id))"
+                                 OnOverrideRemoved="@(overrideId => OnLlmOverrideRemoved.InvokeAsync((system.Id, overrideId)))" />
+    }
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<SystemEntity> Systems { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyDictionary<Guid, IReadOnlyList<RepositorySummaryDto>> RepositoriesBySystem { get; set; }
+        = new Dictionary<Guid, IReadOnlyList<RepositorySummaryDto>>();
+
+    [Parameter]
+    public IReadOnlyDictionary<Guid, IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> LlmOverridesBySystem { get; set; }
+        = new Dictionary<Guid, IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>();
+
+    [Parameter]
+    public bool IsAdministrator { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnRepositorySelected { get; set; }
+
+    [Parameter]
+    public EventCallback<SystemEntity> OnEditRequested { get; set; }
+
+    [Parameter]
+    public EventCallback<SystemEntity> OnManageOwnersRequested { get; set; }
+
+    [Parameter]
+    public EventCallback<SystemEntity> OnDeleteRequested { get; set; }
+
+    [Parameter]
+    public EventCallback<SystemEntity> OnCreateRepositoryRequested { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnLlmOverrideAdded { get; set; }
+
+    [Parameter]
+    public EventCallback<(Guid SystemId, Guid OverrideId)> OnLlmOverrideRemoved { get; set; }
+
+    private IReadOnlyList<SystemLlmProviderOverrideSummaryDto> GetOverrides(Guid systemId)
+    {
+        return LlmOverridesBySystem.TryGetValue(systemId, out IReadOnlyList<SystemLlmProviderOverrideSummaryDto>? overrides)
+            ? overrides
+            : [];
+    }
+}

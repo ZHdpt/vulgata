@@ -1,0 +1,59 @@
+@using Vulgata.Shared.Repositories
+
+<section style="margin-bottom:1.5rem">
+    <h2 style="margin-top:1.5rem">独立仓库</h2>
+    <p>不归属于任何系统，所有具备管理权限的用户都可见。</p>
+
+    <table class="table" aria-label="独立仓库列表">
+        <thead>
+            <tr>
+                <th scope="col">仓库名称</th>
+                <th scope="col">扫描状态</th>
+                <th scope="col">最近扫描时间</th>
+                <th scope="col">文档数量</th>
+                <th scope="col">查看</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Repositories.Count > 0)
+            {
+                @foreach (RepositorySummaryDto repository in Repositories)
+                {
+                    <tr>
+                        <td>@repository.Name</td>
+                        <td>@repository.ScanStatus</td>
+                        <td>@(repository.LastScannedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                        <td>@repository.DocumentCount</td>
+                        <td>
+                            <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                          OnClick="@(() => OnRepositorySelected.InvokeAsync(repository.Id))">查看</FluentButton>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">暂无独立仓库</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="OnCreateRequested"
+                  Style="margin-bottom:0.5rem">+ 新建独立仓库</FluentButton>
+</section>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<RepositorySummaryDto> Repositories { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<Guid> OnRepositorySelected { get; set; }
+
+    [Parameter]
+    public EventCallback OnCreateRequested { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnAssignRequested { get; set; }
+}

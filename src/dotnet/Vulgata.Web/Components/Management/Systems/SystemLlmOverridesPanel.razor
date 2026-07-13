@@ -1,0 +1,58 @@
+@using Vulgata.Core.Entities
+@using Vulgata.Web.Data
+@using SystemEntity = Vulgata.Core.Entities.System
+
+<section style="margin-bottom:1rem">
+    <h3 style="margin-top:0.75rem">LLM Provider 覆盖</h3>
+    <table class="table" aria-label="@SystemName LLM Provider 覆盖列表">
+        <thead>
+            <tr>
+                <th scope="col">代理角色</th>
+                <th scope="col">当前 Provider</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (AgentType agentType in Enum.GetValues<AgentType>())
+            {
+                SystemLlmProviderOverrideSummaryDto? overrideItem = GetOverride(agentType);
+                <tr>
+                    <td>@GetAgentTypeDisplayName(agentType)</td>
+                    <td>@(overrideItem?.ProviderName ?? "使用全局默认提供商")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
+
+@code {
+    [Parameter]
+    public Guid SystemId { get; set; }
+
+    [Parameter]
+    public string SystemName { get; set; } = string.Empty;
+
+    [Parameter]
+    public IReadOnlyList<SystemLlmProviderOverrideSummaryDto> Overrides { get; set; } = [];
+
+    [Parameter]
+    public EventCallback OnOverrideAdded { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnOverrideRemoved { get; set; }
+
+    private SystemLlmProviderOverrideSummaryDto? GetOverride(AgentType agentType)
+    {
+        return Overrides.FirstOrDefault(item => item.AgentType == (int)agentType);
+    }
+
+    private static string GetAgentTypeDisplayName(AgentType agentType)
+    {
+        return agentType switch
+        {
+            AgentType.Orchestrator => "编排代理",
+            AgentType.Worker => "工作代理",
+            AgentType.Chat => "对话代理",
+            _ => "未知代理",
+        };
+    }
+}

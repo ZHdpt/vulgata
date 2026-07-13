@@ -1,0 +1,220 @@
+@using FluentValidation
+@using FluentValidation.Results
+@using Vulgata.Core.DomainServices
+@using Vulgata.Core.Entities
+@using Vulgata.Shared.Repositories
+@using Vulgata.Web.Data
+@using Vulgata.Web.Validators
+
+<section style="padding:0.5rem 0;border-top:1px solid #d6d6d6">
+    <h3 style="margin:0 0 0.5rem 0">数据库连接</h3>
+    <div><strong>状态：</strong>@(Model?.IsConfigured == true ? "已配置" : "未配置")</div>
+    <div><strong>数据库类型：</strong>@GetDatabaseTypeDisplayName(Model?.DatabaseType)</div>
+    <div><strong>连接字符串：</strong>@(Model?.HasConnectionString == true ? "已配置" : "未配置")</div>
+    <div><strong>用户名：</strong>@(Model?.HasUsername == true ? "已配置" : "未配置")</div>
+    <div><strong>密码：</strong>@(Model?.HasPassword == true ? "已配置" : "未配置")</div>
+    <div>
+        <strong>最后更新时间：</strong>@(Model?.UpdatedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+</section>
+
+@if (_errorMessage is not null)
+{
+    <FluentMessageBar Severity="MessageSeverity.Error">@_errorMessage</FluentMessageBar>
+}
+
+@if (_statusMessage is not null)
+{
+    <FluentMessageBar Severity="MessageSeverity.Success">@_statusMessage</FluentMessageBar>
+}
+
+<div>
+    <label for="database-type" style="display:block;margin-bottom:0.5rem">数据库类型</label>
+    <InputSelect id="database-type" @bind-Value="_form.DatabaseType" class="form-select">
+        <option value="@DatabaseType.PostgreSql">PostgreSQL</option>
+        <option value="@DatabaseType.SqlServer">SqlServer</option>
+        <option value="@DatabaseType.MySql">MySql</option>
+        <option value="@DatabaseType.Sqlite">Sqlite</option>
+        <option value="@DatabaseType.Oracle">Oracle</option>
+        <option value="@DatabaseType.Other">Other</option>
+    </InputSelect>
+</div>
+
+<FluentTextField @bind-Value="_form.ConnectionString" Label="连接字符串" Required="true" />
+<FluentTextField @bind-Value="_form.Username" Label="用户名（留空则保留现有值）" />
+<FluentTextField @bind-Value="_form.Password" Label="密码（留空则保留现有值）" type="password" />
+
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@_isBusy"
+                  OnClick="TestConnectionAsync">测试连接</FluentButton>
+    <FluentButton Appearance="Appearance.Accent" Size="Size.Small" Disabled="@_isBusy"
+                  OnClick="SaveAsync">保存</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@_isBusy"
+                  OnClick="DeleteAsync">删除</FluentButton>
+</div>
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    [Parameter]
+    public RepositoryDatabaseConnectionSummaryDto? Model { get; set; }
+
+    [Parameter]
+    public IUserContext User { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnSaved { get; set; }
+
+    [Parameter]
+    public EventCallback OnTestRequested { get; set; }
+
+    [Inject]
+    private IRepositoryDatabaseConnectionCoordinator Coordinator { get; set; } = null!;
+
+    [Inject]
+    private IValidator<UpsertDatabaseConnectionRequest> Validator { get; set; } = null!;
+
+    private UpsertDatabaseConnectionRequest _form = new();
+    private string? _errorMessage;
+    private string? _statusMessage;
+    private bool _isBusy;
+
+    protected override void OnParametersSet()
+    {
+        if (Model?.DatabaseType.HasValue == true)
+        {
+            _form.DatabaseType = (DatabaseType)Model.DatabaseType.Value;
+        }
+    }
+
+    /// <summary>
+    /// Allows a parent component (e.g. <see cref="RepositoryDetailDialog"/>) to trigger the
+    /// same save path as the panel's own 保存 button — e.g. from a dialog primary action.
+    /// </summary>
+    public Task InvokeSaveAsync() => SaveAsync();
+
+    private async Task SaveAsync()
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+
+        _errorMessage = null;
+        _statusMessage = null;
+
+        ValidationResult validationResult = await Validator.ValidateAsync(_form);
+        if (!validationResult.IsValid)
+        {
+            _errorMessage = validationResult.Errors.Select(error => error.ErrorMessage).FirstOrDefault();
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+                await Coordinator.UpsertAsync(RepositoryId, _form, User, CancellationToken.None);
+
+            if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound || result.Value is null)
+            {
+                _errorMessage = result.Message ?? "仓库不存在。";
+                return;
+            }
+
+            _statusMessage = "数据库连接已保存。";
+            _form.ConnectionString = string.Empty;
+            _form.Username = string.Empty;
+            _form.Password = string.Empty;
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"数据库连接保存失败：{ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+        _statusMessage = null;
+
+        try
+        {
+            RepositoryDatabaseConnectionMutationResult<bool> result =
+                await Coordinator.DeleteAsync(RepositoryId, User, CancellationToken.None);
+
+            if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
+            {
+                _errorMessage = result.Message ?? "仓库不存在。";
+                return;
+            }
+
+            _statusMessage = "数据库连接已删除。";
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"数据库连接删除失败：{ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task TestConnectionAsync()
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+        _statusMessage = null;
+
+        try
+        {
+            RepositoryDatabaseConnectionTestResult result =
+                await Coordinator.TestConnectionAsync(RepositoryId, User, CancellationToken.None);
+
+            if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.Success)
+            {
+                _statusMessage = result.Message;
+                await OnTestRequested.InvokeAsync();
+                return;
+            }
+
+            _errorMessage = result.Message;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"连接测试失败：{ex.Message}";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private static string GetDatabaseTypeDisplayName(int? databaseType)
+    {
+        if (!databaseType.HasValue || !Enum.IsDefined(typeof(DatabaseType), databaseType.Value))
+        {
+            return "-";
+        }
+
+        return ((DatabaseType)databaseType.Value).ToString();
+    }
+}

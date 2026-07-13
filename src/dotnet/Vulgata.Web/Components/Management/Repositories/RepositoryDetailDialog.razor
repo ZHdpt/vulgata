@@ -1,0 +1,163 @@
+@using Vulgata.Core.DomainServices
+@using Vulgata.Shared.Repositories
+@using Vulgata.Web.Components.Management.Databases
+@using Vulgata.Web.Data
+
+@if (Visible && Model is not null)
+{
+    <FluentDialog Visible="Visible" VisibleChanged="OnVisibleChanged" Title="仓库详情" PrimaryActionText="保存" SecondaryActionText="关闭"
+                  PrimaryAction="@(async () => await SaveAsync())" SecondaryAction="CloseAsync">
+        <div style="display:grid;gap:0.75rem">
+            <div><strong>仓库名称：</strong>@Model.Name</div>
+
+            @if (_loadError is not null)
+            {
+                <FluentMessageBar Severity="MessageSeverity.Error">@_loadError</FluentMessageBar>
+            }
+
+            @if (_isLoading)
+            {
+                <FluentProgressRing />
+            }
+            else
+            {
+                <DatabaseConnectionPanel @ref="_databaseConnectionPanel"
+                                         RepositoryId="Model.Id"
+                                         Model="_databaseConnection"
+                                         User="User"
+                                         OnSaved="OnDatabaseConnectionSavedAsync"
+                                         OnTestRequested="OnDatabaseConnectionTestRequestedAsync" />
+            }
+        </div>
+    </FluentDialog>
+}
+
+@code {
+    [Parameter]
+    public RepositorySummaryDto? Model { get; set; }
+
+    [Parameter]
+    public bool Visible { get; set; }
+
+    [Parameter]
+    public IUserContext User { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<RepositorySummaryDto> OnSaved { get; set; }
+
+    [Parameter]
+    public EventCallback OnClosed { get; set; }
+
+    [Inject]
+    private IRepositoryDatabaseConnectionCoordinator DatabaseConnectionCoordinator { get; set; } = null!;
+
+    private DatabaseConnectionPanel? _databaseConnectionPanel;
+    private RepositoryDatabaseConnectionSummaryDto? _databaseConnection;
+    private bool _isLoading;
+    private string? _loadError;
+    private Guid _loadedRepositoryId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Visible || Model is null)
+        {
+            return;
+        }
+
+        if (_loadedRepositoryId != Model.Id)
+        {
+            _loadedRepositoryId = Model.Id;
+            await LoadDatabaseConnectionAsync();
+        }
+    }
+
+    private async Task LoadDatabaseConnectionAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        _isLoading = true;
+        _loadError = null;
+
+        try
+        {
+            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+                await DatabaseConnectionCoordinator.GetAsync(Model.Id, User, CancellationToken.None);
+
+            if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.Success && result.Value is not null)
+            {
+                _databaseConnection = result.Value;
+            }
+            else
+            {
+                _databaseConnection = new RepositoryDatabaseConnectionSummaryDto
+                {
+                    RepositoryId = Model.Id,
+                    IsConfigured = false,
+                    HasConnectionString = false,
+                    HasUsername = false,
+                    HasPassword = false,
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _loadError = $"加载数据库连接失败：{ex.Message}";
+            _databaseConnection = new RepositoryDatabaseConnectionSummaryDto
+            {
+                RepositoryId = Model.Id,
+                IsConfigured = false,
+                HasConnectionString = false,
+                HasUsername = false,
+                HasPassword = false,
+            };
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        // The dialog's primary "保存" action delegates to the embedded panel so the
+        // single save path (validation -> coordinator -> refresh) stays in one place.
+        if (_databaseConnectionPanel is not null)
+        {
+            await _databaseConnectionPanel.InvokeSaveAsync();
+            return;
+        }
+
+        await OnSaved.InvokeAsync(Model);
+    }
+
+    private async Task OnDatabaseConnectionSavedAsync()
+    {
+        await LoadDatabaseConnectionAsync();
+        await OnSaved.InvokeAsync(Model);
+    }
+
+    private Task OnDatabaseConnectionTestRequestedAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    private async Task CloseAsync()
+    {
+        await OnVisibleChanged(false);
+    }
+
+    private async Task OnVisibleChanged(bool visible)
+    {
+        Visible = visible;
+        if (!visible)
+        {
+            _loadedRepositoryId = Guid.Empty;
+            _databaseConnection = null;
+            _loadError = null;
+            await OnClosed.InvokeAsync();
+        }
+    }
+}
