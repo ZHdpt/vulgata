@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Shared;
@@ -112,6 +113,7 @@ builder.Services.AddScoped<ISystemLlmProviderOverrideCoordinator, SystemLlmProvi
 builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
 builder.Services.AddScoped<IScanStateService, NoOpScanStateService>();
 builder.Services.AddScoped<IContextCompositionService, ContextCompositionService>();
+builder.Services.AddScoped<IContextManagementCoordinator, ContextManagementCoordinator>();
 builder.Services.AddSingleton<IApiKeyEncryptionService, ApiKeyEncryptionService>();
 builder.Services.AddSingleton<IDatabaseConnectionEncryptionService, DatabaseConnectionEncryptionService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSystemRequestValidator>();
