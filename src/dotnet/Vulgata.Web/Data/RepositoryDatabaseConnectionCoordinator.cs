@@ -10,27 +10,23 @@ public interface IRepositoryDatabaseConnectionCoordinator
 {
     Task<RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>> GetAsync(
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>> UpsertAsync(
         Guid repositoryId,
         UpsertDatabaseConnectionRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<RepositoryDatabaseConnectionMutationResult<bool>> DeleteAsync(
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<RepositoryDatabaseConnectionTestResult> TestConnectionAsync(
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 }
 
@@ -87,11 +83,10 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
 {
     public async Task<RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>> GetAsync(
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, userId, isAdministrator, cancellationToken);
+        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>.RepositoryNotFound;
@@ -119,11 +114,10 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
     public async Task<RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>> UpsertAsync(
         Guid repositoryId,
         UpsertDatabaseConnectionRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, userId, isAdministrator, cancellationToken);
+        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>.RepositoryNotFound;
@@ -179,11 +173,10 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
 
     public async Task<RepositoryDatabaseConnectionMutationResult<bool>> DeleteAsync(
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, userId, isAdministrator, cancellationToken);
+        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionMutationResult<bool>.RepositoryNotFound;
@@ -203,11 +196,10 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
 
     public async Task<RepositoryDatabaseConnectionTestResult> TestConnectionAsync(
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, userId, isAdministrator, cancellationToken);
+        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionTestResult.RepositoryNotFound;
@@ -247,8 +239,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
 
     private async Task<RepositoryEntity?> GetVisibleRepositoryAsync(
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken)
     {
         RepositoryEntity? repository = await repositoryRepository.GetByIdAsync(repositoryId, cancellationToken);
@@ -264,8 +255,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
 
         Vulgata.Core.Entities.System? visibleSystem = await systemRepository.GetVisibleByIdAsync(
             repository.SystemId.Value,
-            userId,
-            isAdministrator,
+            user.ToSystemOwnerFilter(),
             cancellationToken);
 
         return visibleSystem is null ? null : repository;

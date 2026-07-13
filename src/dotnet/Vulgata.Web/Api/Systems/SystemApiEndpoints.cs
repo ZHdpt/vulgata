@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
@@ -21,15 +20,10 @@ internal static class SystemApiEndpoints
 
         systemsApi.MapGet("/", async (
             ISystemRepository repository,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-
-            IReadOnlyList<SystemEntity> systems = await repository.ListVisibleAsync(userId, isAdministrator, cancellationToken);
+            IReadOnlyList<SystemEntity> systems = await repository.ListVisibleAsync(user.ToSystemOwnerFilter(), cancellationToken);
 
             return Results.Ok(systems.Select(s => new
             {
@@ -46,12 +40,10 @@ internal static class SystemApiEndpoints
             CreateSystemRequest request,
             IValidator<CreateSystemRequest> validator,
             ISystemRepository repository,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以修改系统。",
@@ -98,12 +90,10 @@ internal static class SystemApiEndpoints
             UpdateSystemRequest request,
             IValidator<UpdateSystemRequest> validator,
             ISystemRepository repository,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以修改系统。",
@@ -150,12 +140,10 @@ internal static class SystemApiEndpoints
         systemsApi.MapDelete("/{id:guid}", async (
             Guid id,
             ISystemRepository repository,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以修改系统。",
@@ -186,12 +174,10 @@ internal static class SystemApiEndpoints
             Guid systemId,
             ISystemRepository repository,
             ISystemOwnershipCoordinator ownershipCoordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理系统所有者。",
@@ -214,12 +200,10 @@ internal static class SystemApiEndpoints
             string? keyword,
             ISystemRepository repository,
             ISystemOwnershipCoordinator ownershipCoordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理系统所有者。",
@@ -244,12 +228,10 @@ internal static class SystemApiEndpoints
             AssignSystemOwnerRequest request,
             IValidator<AssignSystemOwnerRequest> validator,
             ISystemOwnershipCoordinator ownershipCoordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理系统所有者。",
@@ -310,12 +292,10 @@ internal static class SystemApiEndpoints
             Guid systemId,
             string userId,
             ISystemOwnershipCoordinator ownershipCoordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理系统所有者。",

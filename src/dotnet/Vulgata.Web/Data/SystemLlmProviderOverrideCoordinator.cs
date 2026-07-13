@@ -11,36 +11,31 @@ public interface ISystemLlmProviderOverrideCoordinator
 {
     Task<SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>> ListAsync(
         Guid systemId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<SystemLlmProviderOverrideMutationResult<IReadOnlyList<LlmProviderSummaryDto>>> ListProvidersAsync(
         Guid systemId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto>> UpsertAsync(
         Guid systemId,
         Guid? overrideId,
         UpsertSystemLlmProviderOverrideRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<SystemLlmProviderOverrideMutationResult<bool>> DeleteAsync(
         Guid systemId,
         Guid overrideId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<SystemLlmProviderEffectiveProviderResult> GetEffectiveProviderAsync(
         Guid systemId,
         AgentType agentType,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 }
 
@@ -108,11 +103,10 @@ public sealed class SystemLlmProviderOverrideCoordinator(
 {
     public async Task<SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>> ListAsync(
         Guid systemId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        if (await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+        if (await GetVisibleSystemAsync(systemId, user, cancellationToken) is null)
         {
             return SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>.SystemNotFound;
         }
@@ -127,11 +121,10 @@ public sealed class SystemLlmProviderOverrideCoordinator(
 
     public async Task<SystemLlmProviderOverrideMutationResult<IReadOnlyList<LlmProviderSummaryDto>>> ListProvidersAsync(
         Guid systemId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        if (await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+        if (await GetVisibleSystemAsync(systemId, user, cancellationToken) is null)
         {
             return SystemLlmProviderOverrideMutationResult<IReadOnlyList<LlmProviderSummaryDto>>.SystemNotFound;
         }
@@ -148,11 +141,10 @@ public sealed class SystemLlmProviderOverrideCoordinator(
         Guid systemId,
         Guid? overrideId,
         UpsertSystemLlmProviderOverrideRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        if (await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+        if (await GetVisibleSystemAsync(systemId, user, cancellationToken) is null)
         {
             return SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto>.SystemNotFound;
         }
@@ -247,11 +239,10 @@ public sealed class SystemLlmProviderOverrideCoordinator(
     public async Task<SystemLlmProviderOverrideMutationResult<bool>> DeleteAsync(
         Guid systemId,
         Guid overrideId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        if (await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+        if (await GetVisibleSystemAsync(systemId, user, cancellationToken) is null)
         {
             return SystemLlmProviderOverrideMutationResult<bool>.SystemNotFound;
         }
@@ -269,11 +260,10 @@ public sealed class SystemLlmProviderOverrideCoordinator(
     public async Task<SystemLlmProviderEffectiveProviderResult> GetEffectiveProviderAsync(
         Guid systemId,
         AgentType agentType,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        if (await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+        if (await GetVisibleSystemAsync(systemId, user, cancellationToken) is null)
         {
             return new SystemLlmProviderEffectiveProviderResult(Guid.Empty, false);
         }
@@ -298,11 +288,10 @@ public sealed class SystemLlmProviderOverrideCoordinator(
 
     private async Task<SystemEntity?> GetVisibleSystemAsync(
         Guid systemId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken)
     {
-        return await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken);
+        return await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken);
     }
 
     private static SystemLlmProviderOverrideSummaryDto MapToSummary(SystemLlmProviderOverride overrideEntry, string? providerName = null)

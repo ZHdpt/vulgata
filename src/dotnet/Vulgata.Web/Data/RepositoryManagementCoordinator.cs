@@ -9,28 +9,25 @@ namespace Vulgata.Web.Data;
 
 public interface IRepositoryManagementCoordinator
 {
-    Task<IReadOnlyList<RepositorySummaryDto>> ListVisibleAsync(Guid systemId, string userId, bool isAdministrator, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RepositorySummaryDto>> ListVisibleAsync(Guid systemId, IUserContext user, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<RepositorySummaryDto>> ListStandaloneVisibleAsync(string userId, bool isAdministrator, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RepositorySummaryDto>> ListStandaloneVisibleAsync(IUserContext user, CancellationToken cancellationToken = default);
 
     Task<RepositoryMutationResult<RepositoryDetailDto>> CreateAsync(
         Guid systemId,
         CreateRepositoryRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<RepositoryMutationResult<RepositoryDetailDto>> CreateStandaloneAsync(
         CreateRepositoryRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 
     Task<RepositoryMutationResult<bool>> DeleteAsync(
         Guid systemId,
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default);
 }
 
@@ -69,11 +66,10 @@ public sealed class RepositoryManagementCoordinator(
 {
     public async Task<IReadOnlyList<RepositorySummaryDto>> ListVisibleAsync(
         Guid systemId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        if (await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+        if (await GetVisibleSystemAsync(systemId, user, cancellationToken) is null)
         {
             return [];
         }
@@ -84,8 +80,7 @@ public sealed class RepositoryManagementCoordinator(
     }
 
     public async Task<IReadOnlyList<RepositorySummaryDto>> ListStandaloneVisibleAsync(
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
         IReadOnlyList<RepositoryEntity> repositories = await repositoryRepository.ListStandaloneAsync(cancellationToken);
@@ -95,11 +90,10 @@ public sealed class RepositoryManagementCoordinator(
     public async Task<RepositoryMutationResult<RepositoryDetailDto>> CreateAsync(
         Guid systemId,
         CreateRepositoryRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        SystemEntity? system = await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken);
+        SystemEntity? system = await GetVisibleSystemAsync(systemId, user, cancellationToken);
         if (system is null)
         {
             return RepositoryMutationResult<RepositoryDetailDto>.SystemNotFound;
@@ -137,8 +131,7 @@ public sealed class RepositoryManagementCoordinator(
 
     public async Task<RepositoryMutationResult<RepositoryDetailDto>> CreateStandaloneAsync(
         CreateRepositoryRequest request,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
         bool exists = await repositoryRepository.StandaloneNameExistsAsync(
@@ -184,11 +177,10 @@ public sealed class RepositoryManagementCoordinator(
     public async Task<RepositoryMutationResult<bool>> DeleteAsync(
         Guid systemId,
         Guid repositoryId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        if (await GetVisibleSystemAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+        if (await GetVisibleSystemAsync(systemId, user, cancellationToken) is null)
         {
             return RepositoryMutationResult<bool>.SystemNotFound;
         }
@@ -207,11 +199,10 @@ public sealed class RepositoryManagementCoordinator(
 
     private async Task<SystemEntity?> GetVisibleSystemAsync(
         Guid systemId,
-        string userId,
-        bool isAdministrator,
+        IUserContext user,
         CancellationToken cancellationToken)
     {
-        return await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken);
+        return await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken);
     }
 
     private static RepositorySummaryDto MapToSummary(RepositoryEntity repository)

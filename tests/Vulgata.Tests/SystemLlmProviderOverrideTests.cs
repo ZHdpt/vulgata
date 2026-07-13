@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,11 +9,13 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
 using Vulgata.Shared.Systems;
 using Vulgata.Web.Data;
+using Vulgata.Web.RequestPipeline;
 
 namespace Vulgata.Tests;
 
@@ -477,7 +480,8 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         MethodInfo? method = coordinatorType!.GetMethod("GetEffectiveProviderAsync");
         Assert.NotNull(method);
 
-        object? taskObject = method!.Invoke(coordinator, [systemId, agentType, userId, isAdministrator, CancellationToken.None]);
+        IUserContext userContext = CreateUserContext(userId, isAdministrator);
+        object? taskObject = method!.Invoke(coordinator, [systemId, agentType, userContext, CancellationToken.None]);
         Assert.NotNull(taskObject);
 
         Task task = (Task)taskObject!;
@@ -494,6 +498,13 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         return new EffectiveProviderResult(
             (Guid)(providerIdProperty!.GetValue(result) ?? Guid.Empty),
             (bool)(isOverrideProperty!.GetValue(result) ?? false));
+    }
+
+    private static IUserContext CreateUserContext(string userId, bool isAdministrator)
+    {
+        Claim[] claims = [new Claim(ClaimTypes.NameIdentifier, userId)];
+        ClaimsPrincipal principal = new(new ClaimsIdentity(claims, "Test"));
+        return new UserContext(principal, isAdministrator);
     }
 
     private static async Task<T> ReadRequiredAsync<T>(HttpResponseMessage response)

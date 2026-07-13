@@ -1,7 +1,5 @@
-using System.Security.Claims;
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.AspNetCore.Authorization;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Shared;
@@ -23,15 +21,10 @@ internal static class RepositoryApiEndpoints
             Guid systemId,
             ISystemRepository systemRepository,
             IRepositoryRepository repositoryRepository,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
-            if (await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+            if (await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken) is null)
             {
                 return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
             }
@@ -59,15 +52,10 @@ internal static class RepositoryApiEndpoints
             ISystemRepository systemRepository,
             IRepositoryRepository repositoryRepository,
             IGitRemoteValidationService gitValidation,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
-            if (await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+            if (await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken) is null)
             {
                 return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
             }
@@ -127,15 +115,10 @@ internal static class RepositoryApiEndpoints
             Guid repositoryId,
             ISystemRepository systemRepository,
             IRepositoryRepository repositoryRepository,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
-            if (await systemRepository.GetVisibleByIdAsync(systemId, userId, isAdministrator, cancellationToken) is null)
+            if (await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken) is null)
             {
                 return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
             }
@@ -157,19 +140,10 @@ internal static class RepositoryApiEndpoints
 
         standaloneRepoApi.MapGet("/", async (
             IRepositoryManagementCoordinator repositoryCoordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
-            IReadOnlyList<RepositorySummaryDto> repositories = await repositoryCoordinator.ListStandaloneVisibleAsync(
-                userId,
-                isAdministrator,
-                cancellationToken);
-
+            IReadOnlyList<RepositorySummaryDto> repositories = await repositoryCoordinator.ListStandaloneVisibleAsync(user, cancellationToken);
             return Results.Ok(repositories);
         });
 
@@ -177,25 +151,16 @@ internal static class RepositoryApiEndpoints
             CreateRepositoryRequest request,
             IValidator<CreateRepositoryRequest> validator,
             IRepositoryManagementCoordinator repositoryCoordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
             ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            RepositoryMutationResult<RepositoryDetailDto> result = await repositoryCoordinator.CreateStandaloneAsync(
-                request,
-                userId,
-                isAdministrator,
-                cancellationToken);
+            RepositoryMutationResult<RepositoryDetailDto> result = await repositoryCoordinator.CreateStandaloneAsync(request, user, cancellationToken);
 
             if (result.Outcome == RepositoryMutationOutcome.Success && result.Value is not null)
             {
@@ -229,19 +194,11 @@ internal static class RepositoryApiEndpoints
         repositoryDatabaseConnectionApi.MapGet("/", async (
             Guid repositoryId,
             IRepositoryDatabaseConnectionCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
-            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result = await coordinator.GetAsync(
-                repositoryId,
-                userId,
-                isAdministrator,
-                cancellationToken);
+            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+                await coordinator.GetAsync(repositoryId, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
             {
@@ -256,26 +213,17 @@ internal static class RepositoryApiEndpoints
             UpsertDatabaseConnectionRequest request,
             IValidator<UpsertDatabaseConnectionRequest> validator,
             IRepositoryDatabaseConnectionCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
             ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result = await coordinator.UpsertAsync(
-                repositoryId,
-                request,
-                userId,
-                isAdministrator,
-                cancellationToken);
+            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+                await coordinator.UpsertAsync(repositoryId, request, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
             {
@@ -288,19 +236,11 @@ internal static class RepositoryApiEndpoints
         repositoryDatabaseConnectionApi.MapDelete("/", async (
             Guid repositoryId,
             IRepositoryDatabaseConnectionCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
-            RepositoryDatabaseConnectionMutationResult<bool> result = await coordinator.DeleteAsync(
-                repositoryId,
-                userId,
-                isAdministrator,
-                cancellationToken);
+            RepositoryDatabaseConnectionMutationResult<bool> result =
+                await coordinator.DeleteAsync(repositoryId, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
             {
@@ -313,19 +253,10 @@ internal static class RepositoryApiEndpoints
         repositoryDatabaseConnectionApi.MapPost("/test", async (
             Guid repositoryId,
             IRepositoryDatabaseConnectionCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
-            RepositoryDatabaseConnectionTestResult result = await coordinator.TestConnectionAsync(
-                repositoryId,
-                userId,
-                isAdministrator,
-                cancellationToken);
+            RepositoryDatabaseConnectionTestResult result = await coordinator.TestConnectionAsync(repositoryId, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.RepositoryNotFound)
             {

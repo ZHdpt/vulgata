@@ -4,9 +4,9 @@ namespace Vulgata.Core.DomainServices;
 
 public interface ISystemRepository
 {
-    Task<IReadOnlyList<SystemEntity>> ListVisibleAsync(string userId, bool isAdministrator, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SystemEntity>> ListVisibleAsync(SystemOwnerFilter filter, CancellationToken cancellationToken = default);
 
-    Task<SystemEntity?> GetVisibleByIdAsync(Guid id, string userId, bool isAdministrator, CancellationToken cancellationToken = default);
+    Task<SystemEntity?> GetVisibleByIdAsync(Guid id, SystemOwnerFilter filter, CancellationToken cancellationToken = default);
 
     Task<SystemEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

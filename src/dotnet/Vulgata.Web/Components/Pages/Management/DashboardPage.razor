@@ -10,6 +10,7 @@
 @using Vulgata.Core.Entities
 @using Vulgata.Shared.Repositories
 @using Vulgata.Web.Data
+@using Vulgata.Web.RequestPipeline
 @using Vulgata.Web.Validators
 @using SystemEntity = Vulgata.Core.Entities.System
 
@@ -351,7 +352,7 @@ else
     private bool _showRepositoryDetail;
     private SystemEntity? _editingSystem;
 
-    private string _userId = string.Empty;
+    private IUserContext _userContext = new UserContext(new ClaimsPrincipal(), isAdministrator: false);
 
     private CreateSystemRequest _formModel = new();
     private CreateRepositoryRequest _repoFormModel = new();
@@ -369,9 +370,9 @@ else
     protected override async Task OnInitializedAsync()
     {
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        ClaimsPrincipal user = authState.User;
-        _userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-        _isAdministrator = user.IsInRole(RoleNames.Administrator);
+        ClaimsPrincipal principal = authState.User;
+        _isAdministrator = principal.IsInRole(RoleNames.Administrator);
+        _userContext = new UserContext(principal, _isAdministrator);
 
         await LoadSystemsAsync();
     }
@@ -392,9 +393,9 @@ else
         try
         {
             _loadError = null;
-            _systems = (await systemRepo.ListVisibleAsync(_userId, _isAdministrator)).ToList();
+            _systems = (await systemRepo.ListVisibleAsync(_userContext.ToSystemOwnerFilter())).ToList();
             _standaloneRepositories = (await repoCoord
-                .ListStandaloneVisibleAsync(_userId, _isAdministrator))
+                .ListStandaloneVisibleAsync(_userContext))
                 .ToList();
             _repositories = [];
             _systemLlmOverrides = [];
@@ -403,12 +404,11 @@ else
             {
                 IReadOnlyList<RepositorySummaryDto> repositories = await repoCoord.ListVisibleAsync(
                     system.Id,
-                    _userId,
-                    _isAdministrator);
+                    _userContext);
                 _repositories[system.Id] = repositories.ToList();
 
                 SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> overridesResult =
-                    await overrideCoord.ListAsync(system.Id, _userId, _isAdministrator);
+                    await overrideCoord.ListAsync(system.Id, _userContext);
 
                 _systemLlmOverrides[system.Id] =
                     overridesResult.Outcome == SystemLlmProviderOverrideMutationOutcome.Success && overridesResult.Value is not null
@@ -430,16 +430,14 @@ else
     {
         IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListVisibleAsync(
             systemId,
-            _userId,
-            _isAdministrator);
+            _userContext);
         _repositories[systemId] = repositories.ToList();
     }
 
     private async Task ReloadStandaloneRepositoriesAsync()
     {
         IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListStandaloneVisibleAsync(
-            _userId,
-            _isAdministrator);
+            _userContext);
         _standaloneRepositories = repositories.ToList();
     }
 
@@ -553,8 +551,7 @@ else
                 await RepositoryDatabaseConnectionCoordinator.UpsertAsync(
                     _selectedRepository.Id,
                     _databaseConnectionForm,
-                    _userId,
-                    _isAdministrator);
+                    _userContext);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound || result.Value is null)
             {
@@ -594,8 +591,7 @@ else
             RepositoryDatabaseConnectionMutationResult<bool> result =
                 await RepositoryDatabaseConnectionCoordinator.DeleteAsync(
                     _selectedRepository.Id,
-                    _userId,
-                    _isAdministrator);
+                    _userContext);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
             {
@@ -638,8 +634,7 @@ else
         {
             RepositoryDatabaseConnectionTestResult result = await RepositoryDatabaseConnectionCoordinator.TestConnectionAsync(
                 _selectedRepository.Id,
-                _userId,
-                _isAdministrator);
+                _userContext);
 
             if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.Success)
             {
@@ -670,8 +665,7 @@ else
         RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
             await RepositoryDatabaseConnectionCoordinator.GetAsync(
                 _selectedRepository.Id,
-                _userId,
-                _isAdministrator);
+                _userContext);
 
         if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.Success && result.Value is not null)
         {
@@ -713,8 +707,7 @@ else
             RepositoryMutationResult<RepositoryDetailDto> result = await RepositoryManagementCoordinator.CreateAsync(
                 systemId,
                 _repoFormModel,
-                _userId,
-                _isAdministrator);
+                _userContext);
 
             if (result.Outcome != RepositoryMutationOutcome.Success || result.Value is null)
             {
@@ -745,8 +738,7 @@ else
         {
             RepositoryMutationResult<RepositoryDetailDto> result = await RepositoryManagementCoordinator.CreateStandaloneAsync(
                 _standaloneRepoFormModel,
-                _userId,
-                _isAdministrator);
+                _userContext);
 
             if (result.Outcome != RepositoryMutationOutcome.Success || result.Value is null)
             {

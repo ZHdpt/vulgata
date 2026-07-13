@@ -9,13 +9,13 @@ namespace Vulgata.Infrastructure.Data;
 public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemRepository
 {
     public async Task<IReadOnlyList<SystemEntity>> ListVisibleAsync(
-        string userId, bool isAdministrator, CancellationToken cancellationToken = default)
+        SystemOwnerFilter filter, CancellationToken cancellationToken = default)
     {
         IQueryable<SystemEntity> query = dbContext.Systems.AsNoTracking();
 
-        if (!isAdministrator)
+        if (!filter.AllowAll)
         {
-            query = query.Where(s => s.OwnerAssignments.Any(a => a.UserId == userId));
+            query = query.Where(s => s.OwnerAssignments.Any(a => a.UserId == filter.OwnerId));
         }
 
         return await query
@@ -24,13 +24,13 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     }
 
     public async Task<SystemEntity?> GetVisibleByIdAsync(
-        Guid id, string userId, bool isAdministrator, CancellationToken cancellationToken = default)
+        Guid id, SystemOwnerFilter filter, CancellationToken cancellationToken = default)
     {
         IQueryable<SystemEntity> query = dbContext.Systems.AsNoTracking();
 
-        if (!isAdministrator)
+        if (!filter.AllowAll)
         {
-            query = query.Where(s => s.OwnerAssignments.Any(a => a.UserId == userId));
+            query = query.Where(s => s.OwnerAssignments.Any(a => a.UserId == filter.OwnerId));
         }
 
         return await query.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);

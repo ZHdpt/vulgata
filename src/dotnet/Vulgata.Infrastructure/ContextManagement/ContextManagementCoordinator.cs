@@ -86,7 +86,7 @@ public sealed class ContextManagementCoordinator(
     private async Task<Result> SaveSystemAsync(Guid systemId, string value, IUserContext user, CancellationToken cancellationToken)
     {
         SystemEntity? system = await systemRepository.GetVisibleByIdAsync(
-            systemId, user.UserId, user.IsAdministrator, cancellationToken);
+            systemId, user.ToSystemOwnerFilter(), cancellationToken);
 
         if (system is null)
         {
@@ -133,7 +133,7 @@ public sealed class ContextManagementCoordinator(
         if (repo.SystemId.HasValue && !user.IsAdministrator)
         {
             SystemEntity? visibleSystem = await systemRepository.GetVisibleByIdAsync(
-                repo.SystemId.Value, user.UserId, user.IsAdministrator, cancellationToken);
+                repo.SystemId.Value, user.ToSystemOwnerFilter(), cancellationToken);
 
             if (visibleSystem is null)
             {
@@ -179,7 +179,7 @@ public sealed class ContextManagementCoordinator(
     private async Task<ContextState> GetSystemStateAsync(Guid systemId, IUserContext user, CancellationToken cancellationToken)
     {
         SystemEntity? system = await systemRepository.GetVisibleByIdAsync(
-            systemId, user.UserId, user.IsAdministrator, cancellationToken);
+            systemId, user.ToSystemOwnerFilter(), cancellationToken);
 
         if (system is null)
         {
@@ -206,7 +206,7 @@ public sealed class ContextManagementCoordinator(
         if (repo.SystemId.HasValue && !user.IsAdministrator)
         {
             SystemEntity? visibleSystem = await systemRepository.GetVisibleByIdAsync(
-                repo.SystemId.Value, user.UserId, user.IsAdministrator, cancellationToken);
+                repo.SystemId.Value, user.ToSystemOwnerFilter(), cancellationToken);
 
             if (visibleSystem is null)
             {

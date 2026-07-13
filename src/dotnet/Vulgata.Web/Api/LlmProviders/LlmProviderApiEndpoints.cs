@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
+using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Shared.LlmProviders;
 using Vulgata.Web.Data;
@@ -18,12 +18,10 @@ internal static class LlmProviderApiEndpoints
 
         llmProvidersApi.MapGet("/", async (
             ILlmProviderManagementCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理 LLM 提供商配置。",
@@ -38,12 +36,10 @@ internal static class LlmProviderApiEndpoints
             CreateLlmProviderRequest request,
             IValidator<CreateLlmProviderRequest> validator,
             ILlmProviderManagementCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理 LLM 提供商配置。",
@@ -73,12 +69,10 @@ internal static class LlmProviderApiEndpoints
             UpdateLlmProviderRequest request,
             IValidator<UpdateLlmProviderRequest> validator,
             ILlmProviderManagementCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理 LLM 提供商配置。",
@@ -113,12 +107,10 @@ internal static class LlmProviderApiEndpoints
         llmProvidersApi.MapDelete("/{id:guid}", async (
             Guid id,
             ILlmProviderManagementCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理 LLM 提供商配置。",
@@ -139,12 +131,10 @@ internal static class LlmProviderApiEndpoints
         llmProvidersApi.MapPost("/{id:guid}/test", async (
             Guid id,
             ILlmProviderManagementCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            if (!authResult.Succeeded)
+            if (!user.IsAdministrator)
             {
                 return Results.Problem(
                     detail: "只有管理员可以管理 LLM 提供商配置。",

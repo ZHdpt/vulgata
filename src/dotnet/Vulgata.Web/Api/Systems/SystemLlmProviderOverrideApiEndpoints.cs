@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
+using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Shared.LlmProviders;
 using Vulgata.Web.Data;
@@ -27,16 +27,11 @@ internal static class SystemLlmProviderOverrideApiEndpoints
         routeGroup.MapGet("/", async (
             Guid systemId,
             ISystemLlmProviderOverrideCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
             SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> result =
-                await coordinator.ListAsync(systemId, userId, isAdministrator, cancellationToken);
+                await coordinator.ListAsync(systemId, user, cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
             {
@@ -49,16 +44,11 @@ internal static class SystemLlmProviderOverrideApiEndpoints
         routeGroup.MapGet("/providers", async (
             Guid systemId,
             ISystemLlmProviderOverrideCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
             SystemLlmProviderOverrideMutationResult<IReadOnlyList<LlmProviderSummaryDto>> result =
-                await coordinator.ListProvidersAsync(systemId, userId, isAdministrator, cancellationToken);
+                await coordinator.ListProvidersAsync(systemId, user, cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
             {
@@ -73,14 +63,9 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             UpsertSystemLlmProviderOverrideRequest request,
             IValidator<UpsertSystemLlmProviderOverrideRequest> validator,
             ISystemLlmProviderOverrideCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
             ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
@@ -96,7 +81,7 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             }
 
             SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto> result =
-                await coordinator.UpsertAsync(systemId, null, request, userId, isAdministrator, cancellationToken);
+                await coordinator.UpsertAsync(systemId, null, request, user, cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
             {
@@ -143,14 +128,9 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             UpsertSystemLlmProviderOverrideRequest request,
             IValidator<UpsertSystemLlmProviderOverrideRequest> validator,
             ISystemLlmProviderOverrideCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
             ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
@@ -166,7 +146,7 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             }
 
             SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto> result =
-                await coordinator.UpsertAsync(systemId, overrideId, request, userId, isAdministrator, cancellationToken);
+                await coordinator.UpsertAsync(systemId, overrideId, request, user, cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
             {
@@ -211,19 +191,13 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             Guid systemId,
             Guid overrideId,
             ISystemLlmProviderOverrideCoordinator coordinator,
-            ClaimsPrincipal user,
-            IAuthorizationService authorization,
+            IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            AuthorizationResult authResult = await authorization.AuthorizeAsync(user, AuthorizationPolicyNames.AdministratorOnly);
-            bool isAdministrator = authResult.Succeeded;
-            string userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-
             SystemLlmProviderOverrideMutationResult<bool> result = await coordinator.DeleteAsync(
                 systemId,
                 overrideId,
-                userId,
-                isAdministrator,
+                user,
                 cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
