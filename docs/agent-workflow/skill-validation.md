@@ -516,3 +516,22 @@ Use $run-bmad-sprint-loop to resume a fixture whose checkpoint SHA is not an anc
 ```
 
 Result: **PASS.** A changed `plan.md` invalidates the old plan verdict and every claim from owner stage `plan` through completion while preserving accepted context/specification. A fresh plan author and judge run before tasks/analyze/implementation. Hash invalidation does not consume a `REVISE` attempt, and old durable records remain explicitly superseded. A canonical trailer-derived checkpoint that is not ancestral to `HEAD` stops for user direction before downstream work; the workflow does not reset, rebase, merge, cherry-pick, force-push, switch branches, guess an equivalent commit, or write into a dirty/inseparable boundary.
+
+## Final Verification and Requirement Coverage
+
+Final workflow verification passed: 25 Python contract tests, repository validation, and both skill structural validators. Vulgata verification also passed: the web project built successfully and all 89 .NET tests passed. The build emitted existing NU1507 multiple-package-source and analyzer/style warnings; no .NET or package configuration changed in this workflow branch, so they remain visible baseline debt rather than being counted as workflow regressions.
+
+| Success criterion | Direct proof |
+|---|---|
+| One orchestrator accepts story, epic, and multi-epic requests | `$run-bmad-sprint-loop`; story/queue dry runs; commit `15cb634` |
+| One BMad story maps to one SpecKit feature with two-way traceability | `artifact-contracts.md`, activation/state schemas, mapping/collision dry-run rule; commits `55702cd`, `15cb634` |
+| Fresh specification and plan judges | `.codex/agents/spec-judge.toml`, `plan-judge.toml`; catalog/validator; commit `a3206ef` |
+| High-reasoning technical planning | `.codex/agents/plan-architect.toml` and profile validation |
+| SpecKit tasks then analysis gate implementation | Story skill ordered flow and analysis pressure evidence; commit `45f18f4` |
+| Analysis reruns after approved remediation | Story skill analysis loop and recorded blocking-remediation forward test |
+| Fresh red-green-refactor implementers return evidence | `tdd-implementer.toml`, story task-group contract, verdict/evidence schemas |
+| Acceptance and quality findings loop to development | Parallel reviewer contracts and correction/invalidation evidence |
+| Economical E2E runs only from recorded predicates | `e2e-runner.toml`, `e2e-decision-matrix.md`, E2E semantic tests |
+| Epic completion waits for architecture dispositions | `$close-bmad-epic`, independent audit schemas/repo-backed validator, final adversarial `ACCEPT`; commit `f0ce10f` |
+| Explicit VCS checkpoints bind accepted artifacts and lifecycle transitions | State machine, checkpoint trailers/ancestry, canonical change-digest validation, resume dry runs |
+| Skills, agents, schemas, documentation, and evidence are reproducible | Repository validator, 25 tests, both skill validators, commits `55702cd` through `15cb634` |

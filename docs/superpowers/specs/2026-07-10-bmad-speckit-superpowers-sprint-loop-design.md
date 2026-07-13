@@ -459,3 +459,11 @@ docs/agent-workflow/*.md
 ```
 
 This minimizes duplication and integrates directly with Vulgata's existing artifacts. A later plugin can package the same skills and agents after the repository workflow has passed real story and epic runs.
+
+## Implementation
+
+- [Story sprint-loop skill](../../../.agents/skills/run-bmad-sprint-loop/SKILL.md)
+- [Epic-close skill](../../../.agents/skills/close-bmad-epic/SKILL.md)
+- [Project agents](../../../.codex/agents/)
+- [Operator runbook](../../agent-workflow/operator-runbook.md)
+- [Validation evidence](../../agent-workflow/skill-validation.md)
