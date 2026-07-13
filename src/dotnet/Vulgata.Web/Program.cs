@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -14,6 +15,7 @@ using Vulgata.Web.Api;
 using Vulgata.Web.Components;
 using Vulgata.Web.Components.Account;
 using Vulgata.Web.Data;
+using Vulgata.Web.RequestPipeline;
 using Vulgata.Web.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +26,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddFluentUIComponents();
 builder.Services.AddProblemDetails();
 builder.Services.AddDataProtection();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext>(sp =>
+{
+    IHttpContextAccessor httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+    IAuthorizationService authorization = sp.GetRequiredService<IAuthorizationService>();
+    ClaimsPrincipal principal = httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
+    return new UserContext(principal, authorization);
+});
 builder.Services.AddHttpClient("LlmProviderConnectionTest", client => { client.Timeout = TimeSpan.FromSeconds(10); });
 
 builder.Services.AddCascadingAuthenticationState();
