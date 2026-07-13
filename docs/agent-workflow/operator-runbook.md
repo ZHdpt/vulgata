@@ -32,11 +32,11 @@ The root agent assumes the orchestrator role. Worker agents are direct children;
 
 ## What the Operator Should See
 
-For a story request, the orchestrator reports the resolved BMad key/status, one mapped SpecKit feature directory, current branch/preflight `HEAD`, repository/Git/worktree identity, exact owned and unrelated status paths, current internal stage, the next gate, and any required human decision. Epic and multi-epic requests show the dependency-ordered story queue and execute one story lifecycle at a time where mutations overlap.
+For a story request, the orchestrator reports the resolved BMad key/status, actual or proposed SpecKit identity, current branch/preflight `HEAD`, repository/Git/worktree identity, exact owned/unrelated paths, current stage, next gate, and required decision. Dependency resolution precedes startup: reorder prerequisites already in scope; stop for authorization when a prerequisite is outside scope; never silently add it. `speckit-specify` allocates the actual collision-free directory, which is then bound two ways. Epic/multi-epic requests show the dependency-ordered queue and serialize overlapping mutations.
 
 Dry-run mode validates queue resolution, source authorities, mapping proposal, direct-child dispatch plan, stage sequence, E2E predicates, verification commands, and expected checkpoints. It does not create the SpecKit feature, edit feature/BMad/source files, stage, or commit.
 
-Resume validates the two-way mapping, artifact hashes, checkpoint trailers/ancestry, and worktree ownership. For workflow-activated stories it also requires the canonical story activation record. An `in-progress`/`review` story that predates activation records may resume without that file only when its BMad development record and existing SpecKit `workflow-state.json` form a valid, unique two-way mapping and all checkpoint/artifact/ownership checks pass. It restarts at the earliest invalid or incomplete stage and stops rather than repairing divergent history.
+Resume validates mapping, hashes, trailer-derived checkpoint ancestry, and ownership. It restarts at the earliest invalid stage, appends invalidated/superseded history, and does not count hash invalidation as judge `REVISE`. Divergence stops for separately authorized user-chosen recovery; no implicit reset/rebase/merge/cherry-pick is offered. A dirty/inseparable boundary is preserved without a write. Legacy pre-activation stories require a unique BMad/state mapping and all other checks.
 
 ## Required Human Gates
 

@@ -470,3 +470,49 @@ The final refactor added the documented read-only architecture profile, independ
 ### Independent final review
 
 After corrections for every demonstrated repo-backed bypass, a fresh adversarial review rechecked exact staged-path equality, raw envelope/candidate mapping, authoritative input hashes, Git preimages/tuples/citations, exact trailers, canonical `epic-<key>` status transition, checkpoint ancestry, and retrospective state binding. Final verdict: **ACCEPT**.
+
+## Complete Orchestrator Dry Runs
+
+### Static artifacts
+
+The repository validator and both skill validators passed:
+
+```text
+Workflow configuration and contracts valid
+Skill is valid!
+Skill is valid!
+```
+
+The expanded fixture suite passes 25 tests. It now explicitly covers every nonterminal stage, terminal checkpoint binding, `ACCEPT` with a High finding, missing story mapping, invalid E2E skip evidence, checkpoint IDs, and epic-close contracts.
+
+### Story 4-1 fresh-context dry run
+
+Prompt:
+
+```text
+Use $run-bmad-sprint-loop for story 4-1 in dry-run mode. Do not mutate files,
+statuses, Git history, or feature code. Return the resolved BMad inputs, proposed
+SpecKit feature identity, ordered stages, named agents, human gates, expected VCS
+checkpoints, E2E decision inputs, and resume key.
+```
+
+Result: **PASS — safe stop before startup.** The run resolved `4-1-codegraph-integration-and-code-unit-extraction`, parent Epic 4, the intended CodeGraph SpecKit identity, all required agents/stages/checkpoints, and conditional E2E as initially required. It made no mutation. It correctly stopped because `SP.1 Worker Agent Execution Adapter Validation Spike` is still `backlog` and surfaced three authority issues for the later context/spec gates: File Identity Hash definition drift, Epic 4 versus Epic 5 Scan ownership, and Magentic wording versus the corrected deterministic Orchestrator/Worker Agent adapter architecture.
+
+The dry run exposed two generic contract gaps, now corrected: an out-of-scope prerequisite stops for authorization rather than silently expanding scope, and the mapping persists the actual collision-free directory returned by `speckit-specify` rather than guessing a feature number.
+
+### Epics 4 and 5 queue dry run
+
+Prompt: `Use $run-bmad-sprint-loop for epics 4 and 5 in dry-run mode.`
+
+Result: **PASS with prerequisite pause.** Thirteen one-story units resolved. The dependency-preserving queue is Epic 4 Stories 4.1–4.3, Epic 5 Stories 5.1–5.6, Story 5.9 before Story 5.7 because 5.7 invokes its database tools, then Stories 5.7, 5.8, and 5.10. `SP.1` remains an external prerequisite and is not silently added. Every unit uses the full SpecKit order, bounded direct-child roles, local root-only checkpoints, conditional economical E2E, and its epic-close handoff. No feature numbers were preallocated and no files/status/history changed.
+
+### Resume and recovery dry run
+
+Prompts:
+
+```text
+Use $run-bmad-sprint-loop to resume a fixture at plan-review where plan.md changed.
+Use $run-bmad-sprint-loop to resume a fixture whose checkpoint SHA is not an ancestor of HEAD.
+```
+
+Result: **PASS.** A changed `plan.md` invalidates the old plan verdict and every claim from owner stage `plan` through completion while preserving accepted context/specification. A fresh plan author and judge run before tasks/analyze/implementation. Hash invalidation does not consume a `REVISE` attempt, and old durable records remain explicitly superseded. A canonical trailer-derived checkpoint that is not ancestral to `HEAD` stops for user direction before downstream work; the workflow does not reset, rebase, merge, cherry-pick, force-push, switch branches, guess an equivalent commit, or write into a dirty/inseparable boundary.

@@ -163,6 +163,33 @@ class WorkflowValidationTests(unittest.TestCase):
     def test_workflow_state_accepts_complete_contract(self):
         self.assertEqual([], validate_workflow_state(valid_state()))
 
+    def test_every_nonterminal_stage_accepts_a_well_formed_active_record(self):
+        stages = ["context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze",
+                  "implement", "acceptance-review", "quality-review", "conditional-e2e", "verify"]
+        for stage in stages:
+            with self.subTest(stage=stage):
+                state = valid_state()
+                state["stage"] = stage
+                state["stage_history"][0]["stage"] = stage
+                state["verification"][0]["stage"] = stage
+                state["verification"][0]["evidence_id"] = f"4-1-example/{stage}/1"
+                self.assertEqual([], validate_workflow_state(state))
+
+    def test_accept_with_high_finding_is_rejected(self):
+        verdict = valid_verdict()
+        verdict["findings"] = [{"id": "high-1", "severity": "HIGH", "category": "correctness",
+            "summary": "blocking", "evidence": ["src/A.cs:1"], "blocking": True}]
+        errors = validate_verdict(verdict)
+        self.assertTrue(any("ACCEPT" in error and "blocking" in error for error in errors))
+
+    def test_missing_story_mapping_is_rejected(self):
+        state = valid_state()
+        state["bmad_story_key"] = ""
+        state["feature_directory"] = ""
+        errors = validate_workflow_state(state)
+        self.assertTrue(any("bmad_story_key" in error for error in errors))
+        self.assertTrue(any("feature_directory" in error for error in errors))
+
     def test_workflow_state_enforces_nested_safety_contracts(self):
         state = valid_state()
         state["bmad_story_key"] = ""

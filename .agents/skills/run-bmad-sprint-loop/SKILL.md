@@ -36,6 +36,8 @@ Resolve exactly one mode:
 
 Reject ambiguous keys and new-work requests for `done` stories. Resume `in-progress` or `review` stories. The only story statuses are `backlog`, `ready-for-dev`, `in-progress`, `review`, and `done`.
 
+Resolve the dependency graph before startup. Reorder prerequisites already inside the requested set. If an unmet prerequisite lies outside it, report the exact blocker and stop for user authorization; never silently expand scope. An explicit story request that is not dependency-ready remains selected but does not activate. Surface contradictory prerequisite authorities as an authority conflict.
+
 ## Preflight and Ownership
 
 Before any mutation:
@@ -50,7 +52,7 @@ Never switch branches, reset, rebase, force-push, merge, push, or open a pull re
 
 ## Story Queue Rules
 
-Prepare `backlog` stories with the applicable BMad create-story workflow, validate their context, checkpoint `backlog -> ready-for-dev`, then queue them. Execute each story as an isolated SpecKit feature. Independent reads or disjoint preparation may overlap; serialize shared-file edits, lifecycle/state writes, index operations, and commits.
+Prepare `backlog` stories with the applicable BMad create-story workflow, validate their context, checkpoint `backlog -> ready-for-dev`, then queue them. Execute each story as an isolated SpecKit feature. Do not guess or preallocate the SpecKit number: persist the exact directory returned by `speckit-specify`, fail on collision, and bind that actual path in both mapping records. Independent reads or disjoint preparation may overlap; serialize shared-file edits, lifecycle/state writes, index operations, and commits.
 
 After successful context/preflight, the root writes the canonical story activation record and checkpoints `ready-for-dev -> in-progress` before specification; lift a `backlog` parent epic to `in-progress` in the same commit. Never combine unrelated stories in a checkpoint. When requested epic queues finish, hand each eligible epic to `$close-bmad-epic`; this skill never bypasses its architecture gate.
 
@@ -161,9 +163,9 @@ Adjacent artifact-only checkpoints may combine only when no useful recovery boun
 
 On resume, validate BMad state, canonical activation, unique two-way mapping, branch/Git/worktree identity, ownership, artifact hashes, exact review boundary, checkpoint trailer uniqueness, and ancestor relationship to `HEAD`. Permit the documented legacy fallback only for pre-workflow `in-progress`/`review` stories with an explicit, valid, unique mapping.
 
-Unchanged completed stages are no-ops. Restart at the earliest invalid owner: source/context change at `context`; spec at `specify`; plan at `plan`; tasks at `tasks`; analysis at `analyze`; implementation/test at `implement`; tracked E2E test at both reviews; verification boundary at `verify`. Clear only dependent later claims.
+Unchanged completed stages are no-ops. Restart at the earliest invalid owner: source/context change at `context`; spec at `specify`; plan at `plan`; tasks at `tasks`; analysis at `analyze`; implementation/test at `implement`; tracked E2E test at both reviews; verification boundary at `verify`. Preserve prior durable records as invalidated/superseded history and clear only dependent later claims. Hash/boundary invalidation is not a judge `REVISE` and does not increment the three-revision counter.
 
-Record recoverable agent/tool failures without advancing and retry the same stage with a fresh child when safe. Stop for divergent history, destructive recovery, inseparable ownership, authority conflict, unavailable infrastructure, unsafe external action, or reserved human decisions. Never repair resume state with reset, rebase, force-push, silent branch switching, or guessed mappings.
+Record recoverable agent/tool failures without advancing and retry the same stage with a fresh child when safe. Stop for divergent history, destructive recovery, inseparable ownership, authority conflict, unavailable infrastructure, unsafe external action, or reserved human decisions. Report the canonical checkpoint ID/SHA, active `HEAD`, and identities; resume only after separately authorized user-chosen recovery and a full new preflight. If divergence coexists with a dirty/inseparable boundary, preserve every byte and stop without writing there. Never repair resume state with reset, rebase, force-push, silent branch switching, implicit merge/cherry-pick, or guessed mappings.
 
 ## Completion Criteria
 
