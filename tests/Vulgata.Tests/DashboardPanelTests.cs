@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Bunit;
+using FluentValidation;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FluentUI.AspNetCore.Components;
@@ -13,7 +14,6 @@ using Vulgata.Web.Data;
 using Vulgata.Web.RequestPipeline;
 using Vulgata.Web.Validators;
 using SystemEntity = Vulgata.Core.Entities.System;
-using FluentValidation;
 
 namespace Vulgata.Tests;
 
@@ -45,7 +45,7 @@ public sealed class DashboardPanelTests : TestContext
             new() { Id = Guid.NewGuid(), SystemId = systemId, AgentType = (int)AgentType.Orchestrator, ProviderName = "DeepSeek V4" },
         ];
 
-        IRenderedComponent<SystemLlmOverridesPanel> cut = RenderComponent<SystemLlmOverridesPanel>(parameters => parameters
+        IRenderedComponent<SystemLlmOverridesPanel> cut = Render<SystemLlmOverridesPanel>(parameters => parameters
             .Add(p => p.SystemId, systemId)
             .Add(p => p.SystemName, "测试系统")
             .Add(p => p.Overrides, overrides));
@@ -67,7 +67,7 @@ public sealed class DashboardPanelTests : TestContext
             new() { Id = Guid.NewGuid(), Name = "团队工具库", ScanStatus = "已扫描", DocumentCount = 5 },
         ];
 
-        IRenderedComponent<StandaloneReposPanel> cut = RenderComponent<StandaloneReposPanel>(parameters => parameters
+        IRenderedComponent<StandaloneReposPanel> cut = Render<StandaloneReposPanel>(parameters => parameters
             .Add(p => p.Repositories, repositories));
 
         Assert.Contains("独立仓库", cut.Markup, StringComparison.Ordinal);
@@ -76,7 +76,7 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("团队工具库", cut.Markup, StringComparison.Ordinal);
 
         // Empty state path
-        IRenderedComponent<StandaloneReposPanel> empty = RenderComponent<StandaloneReposPanel>(parameters => parameters
+        IRenderedComponent<StandaloneReposPanel> empty = Render<StandaloneReposPanel>(parameters => parameters
             .Add(p => p.Repositories, []));
 
         Assert.Contains("暂无独立仓库", empty.Markup, StringComparison.Ordinal);
@@ -86,12 +86,12 @@ public sealed class DashboardPanelTests : TestContext
     public void StandaloneReposPanel_OnCreateRequested_FiresEventCallback()
     {
         bool fired = false;
-        IRenderedComponent<StandaloneReposPanel> cut = RenderComponent<StandaloneReposPanel>(parameters => parameters
+        IRenderedComponent<StandaloneReposPanel> cut = Render<StandaloneReposPanel>(parameters => parameters
             .Add(p => p.Repositories, [])
             .Add(p => p.OnCreateRequested, EventCallback.Factory.Create(this, () => fired = true)));
 
         // FluentButton renders as a <fluent-button> web component; find by visible text instead of tag name.
-        IRefreshableElementCollection<AngleSharp.Dom.IElement> buttons = cut.FindAll("button, fluent-button");
+        var buttons = cut.FindAll("button, fluent-button");
         buttons.Single(button => button.TextContent.Contains("+ 新建独立仓库", StringComparison.Ordinal)).Click();
 
         Assert.True(fired);
@@ -107,11 +107,11 @@ public sealed class DashboardPanelTests : TestContext
             new() { Id = repositoryId, Name = "可点击仓库", ScanStatus = "未扫描" },
         ];
 
-        IRenderedComponent<StandaloneReposPanel> cut = RenderComponent<StandaloneReposPanel>(parameters => parameters
+        IRenderedComponent<StandaloneReposPanel> cut = Render<StandaloneReposPanel>(parameters => parameters
             .Add(p => p.Repositories, repositories)
             .Add(p => p.OnRepositorySelected, EventCallback.Factory.Create<Guid>(this, id => capturedId = id)));
 
-        IRefreshableElementCollection<AngleSharp.Dom.IElement> buttons = cut.FindAll("button, fluent-button");
+        var buttons = cut.FindAll("button, fluent-button");
         buttons.Single(button => button.TextContent.Contains("查看", StringComparison.Ordinal)).Click();
 
         Assert.Equal(repositoryId, capturedId);
@@ -141,7 +141,7 @@ public sealed class DashboardPanelTests : TestContext
             [betaId] = [],
         };
 
-        IRenderedComponent<SystemListPanel> cut = RenderComponent<SystemListPanel>(parameters => parameters
+        IRenderedComponent<SystemListPanel> cut = Render<SystemListPanel>(parameters => parameters
             .Add(p => p.Systems, (IReadOnlyList<SystemEntity>)[alpha, beta])
             .Add(p => p.RepositoriesBySystem, repositoriesBySystem)
             .Add(p => p.LlmOverridesBySystem, overridesBySystem)
@@ -159,7 +159,7 @@ public sealed class DashboardPanelTests : TestContext
     [Fact]
     public void SystemListPanel_EmptySystems_RendersEmptyState()
     {
-        IRenderedComponent<SystemListPanel> cut = RenderComponent<SystemListPanel>(parameters => parameters
+        IRenderedComponent<SystemListPanel> cut = Render<SystemListPanel>(parameters => parameters
             .Add(p => p.Systems, [])
             .Add(p => p.IsAdministrator, false));
 
@@ -171,7 +171,7 @@ public sealed class DashboardPanelTests : TestContext
     {
         SystemEntity system = new("管理平台", "描述", "上下文", DateTimeOffset.UtcNow);
 
-        IRenderedComponent<SystemListPanel> cut = RenderComponent<SystemListPanel>(parameters => parameters
+        var cut = Render<SystemListPanel>(parameters => parameters
             .Add(p => p.Systems, (IReadOnlyList<SystemEntity>)[system])
             .Add(p => p.RepositoriesBySystem, new Dictionary<Guid, IReadOnlyList<RepositorySummaryDto>>())
             .Add(p => p.LlmOverridesBySystem, new Dictionary<Guid, IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>())
@@ -189,7 +189,7 @@ public sealed class DashboardPanelTests : TestContext
 
         RepositorySummaryDto model = new() { Id = Guid.NewGuid(), Name = "订单仓库" };
 
-        IRenderedComponent<RepositoryDetailDialog> cut = RenderComponent<RepositoryDetailDialog>(parameters => parameters
+        IRenderedComponent<RepositoryDetailDialog> cut = Render<RepositoryDetailDialog>(parameters => parameters
             .Add(p => p.Model, model)
             .Add(p => p.Visible, true)
             .Add(p => p.User, CreateUserContext(isAdministrator: true)));
@@ -212,7 +212,7 @@ public sealed class DashboardPanelTests : TestContext
 
         RepositorySummaryDto model = new() { Id = Guid.NewGuid(), Name = "隐藏仓库" };
 
-        IRenderedComponent<RepositoryDetailDialog> cut = RenderComponent<RepositoryDetailDialog>(parameters => parameters
+        IRenderedComponent<RepositoryDetailDialog> cut = Render<RepositoryDetailDialog>(parameters => parameters
             .Add(p => p.Model, model)
             .Add(p => p.Visible, false)
             .Add(p => p.User, CreateUserContext(isAdministrator: true)));
@@ -236,7 +236,7 @@ public sealed class DashboardPanelTests : TestContext
             UpdatedAt = DateTimeOffset.UtcNow,
         };
 
-        IRenderedComponent<DatabaseConnectionPanel> cut = RenderComponent<DatabaseConnectionPanel>(parameters => parameters
+        IRenderedComponent<DatabaseConnectionPanel> cut = Render<DatabaseConnectionPanel>(parameters => parameters
             .Add(p => p.RepositoryId, model.RepositoryId)
             .Add(p => p.Model, model)
             .Add(p => p.User, CreateUserContext(isAdministrator: true)));
