@@ -76,6 +76,24 @@ Migrations are applied automatically at startup; the app fails fast if migration
 - **Agent prompts:** externalized as embedded resources in `Vulgata.Agents/Prompts/`, never hardcoded. The Communication Pattern Catalog is a documented format, not code.
 - **Documents (domain):** immutable — the only mutation path is code change → re-scan → regenerate. Previous versions preserved via `superseded_by_id` (Version Chain). Old versions are never deleted.
 
+## Planned-change authorization
+
+After an independent `plan-review` accepts a story plan and before task generation,
+the orchestrator MUST pause for explicit user approval when the plan does any of the
+following:
+
+- adds, exposes, or materially changes a **Worker Agent** tool or other agent tool;
+- adds or materially changes a **Scan** strategy, including parsing, filtering,
+  scheduling, grouping, retry, or dispatch behavior; or
+- changes, weakens, or conflicts with a requirement in the current PRD.
+
+The approval request MUST identify the trigger, explain the proposed approach and
+its effects, state the orchestrator's implementation intent, and cite the affected
+plan and PRD material. It is approval to proceed from the accepted plan to task
+generation; it does not waive any later analysis, TDD, review, E2E, security, or
+verification gate. If none of these triggers applies, the ordinary workflow
+advances without this additional approval.
+
 ## UI conventions
 
 - **Language:** Chinese-only UI (Simplified) for V1 — no i18n. Identity error messages use `ChineseIdentityErrorDescriber`; DataAnnotations that must render Chinese need explicit `ErrorMessage` text (see repo memory `vulgata-identity-localization`).
