@@ -1,0 +1,333 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
+  "bmad_epic_key": "4",
+  "feature_directory": "specs/001-codegraph-extraction",
+  "stage": "plan",
+  "active_gates": {
+    "acceptance-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "quality-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-07-14T13:23:46Z",
+      "completed_at": "2026-07-14T13:23:46Z",
+      "input_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "input_hashes": {
+        "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md": "53e483186edf31596826d982a48e447f02a35efef4a83f06f27c139f099f72a4"
+      },
+      "agent_role": "story-context-synthesizer",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-07-14T13:23:46Z",
+      "completed_at": "2026-07-14T13:30:14Z",
+      "input_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/spec.md": "4a924eb220aeb42780f7fa87c6c34b41ef4d8be593f1375cb702f2145568926b",
+        "specs/001-codegraph-extraction/checklists/requirements.md": "8308228be681224b9d8df29c079e664517ceb6a846ee5aee5c8eb64020d00890"
+      },
+      "agent_role": "spec-author",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/spec.md",
+        "specs/001-codegraph-extraction/checklists/requirements.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "spec-review",
+      "status": "revised",
+      "started_at": "2026-07-14T13:30:14Z",
+      "completed_at": "2026-07-14T13:35:20Z",
+      "input_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/spec.md": "4a924eb220aeb42780f7fa87c6c34b41ef4d8be593f1375cb702f2145568926b",
+        "specs/001-codegraph-extraction/checklists/requirements.md": "8308228be681224b9d8df29c079e664517ceb6a846ee5aee5c8eb64020d00890"
+      },
+      "agent_role": "spec-judge",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/spec-review-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-07-14T13:35:20Z",
+      "completed_at": "2026-07-14T13:49:02Z",
+      "input_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/spec-review-1.json": "d71fa45193ea2bc21f7c5df66d5e9acc4c1f6fd34779f9b8a8b0cb0abf0b61b9"
+      },
+      "agent_role": "spec-author",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/spec.md",
+        "specs/001-codegraph-extraction/checklists/requirements.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "spec-review",
+      "status": "accepted",
+      "started_at": "2026-07-14T13:49:02Z",
+      "completed_at": "2026-07-14T13:58:15Z",
+      "input_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/spec.md": "4fd6919b2b4ee76af437d699ae9678fb05ad533109dce449d0250a6c6a174227",
+        "specs/001-codegraph-extraction/checklists/requirements.md": "81179ee6c34474af29a8d1b301f5c4ff29efd70c04d187ce78e77c8d8262bb99"
+      },
+      "agent_role": "spec-judge",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/spec-review-2.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "active",
+      "started_at": "2026-07-14T13:58:15Z",
+      "completed_at": null,
+      "input_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/spec.md": "4fd6919b2b4ee76af437d699ae9678fb05ad533109dce449d0250a6c6a174227",
+        "specs/001-codegraph-extraction/checklists/requirements.md": "81179ee6c34474af29a8d1b301f5c4ff29efd70c04d187ce78e77c8d8262bb99"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [],
+      "failure": null
+    }
+  ],
+  "repository_preflight": {
+    "branch": "dev",
+    "preflight_head": "28d28407f027f137bd38cec87256be2e0a5318a6",
+    "repository_root": ".",
+    "git_common_directory": ".git",
+    "worktree_path": ".",
+    "worktree_status": " M docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md\n M docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json\n?? specs/",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json",
+      "specs/001-codegraph-extraction/spec.md",
+      "specs/001-codegraph-extraction/checklists/requirements.md",
+      "specs/001-codegraph-extraction/reviews/spec-review-1.json",
+      "specs/001-codegraph-extraction/workflow-state.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-14T13:30:14Z"
+  },
+  "source_artifacts": [
+    {
+      "authority": "BMad Story 4.1",
+      "path": "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "sha256": "53e483186edf31596826d982a48e447f02a35efef4a83f06f27c139f099f72a4"
+    }
+  ],
+  "dispatches": [
+    {
+      "role": "spec-author",
+      "objective": "Create a testable, bounded SpecKit specification for Story 4.1 without selecting a scan strategy.",
+      "source_boundary": {
+        "base_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+        "candidate_commit": null,
+        "diff_sha256": "4a8151ddd7b2f5b71db19dfcdfa48b4f49ae8aeadbe5c97dd9b40ffcfc556b70",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/spec.md": "4a924eb220aeb42780f7fa87c6c34b41ef4d8be593f1375cb702f2145568926b",
+          "specs/001-codegraph-extraction/checklists/requirements.md": "8308228be681224b9d8df29c079e664517ceb6a846ee5aee5c8eb64020d00890"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/spec.md",
+          "specs/001-codegraph-extraction/checklists/requirements.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction"
+      ],
+      "output_path": "specs/001-codegraph-extraction/spec.md",
+      "returned_evidence": [
+        "spec.md sha256 4a924eb220aeb42780f7fa87c6c34b41ef4d8be593f1375cb702f2145568926b",
+        "requirements.md sha256 8308228be681224b9d8df29c079e664517ceb6a846ee5aee5c8eb64020d00890"
+      ]
+    },
+    {
+      "role": "spec-author",
+      "objective": "Correct SPEC-4-1-001 by defining a testable unresolved structural-relationship audit contract without introducing Cross-Repository Resolution.",
+      "source_boundary": {
+        "base_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+        "candidate_commit": null,
+        "diff_sha256": "6be2b98990f1e1c337d2247c366312b6601ad1c122f08d1eede25b9e94eeb9c9",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/spec.md": "4fd6919b2b4ee76af437d699ae9678fb05ad533109dce449d0250a6c6a174227",
+          "specs/001-codegraph-extraction/checklists/requirements.md": "81179ee6c34474af29a8d1b301f5c4ff29efd70c04d187ce78e77c8d8262bb99"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/spec.md",
+          "specs/001-codegraph-extraction/checklists/requirements.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/spec.md",
+        "specs/001-codegraph-extraction/checklists/requirements.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/spec.md",
+      "returned_evidence": [
+        "SPEC-4-1-001 corrected",
+        "spec.md sha256 4fd6919b2b4ee76af437d699ae9678fb05ad533109dce449d0250a6c6a174227",
+        "requirements.md sha256 81179ee6c34474af29a8d1b301f5c4ff29efd70c04d187ce78e77c8d8262bb99"
+      ]
+    }
+  ],
+  "review_iterations": {
+    "spec-review": {
+      "count": 2,
+      "verdict_paths": [
+        "specs/001-codegraph-extraction/reviews/spec-review-1.json",
+        "specs/001-codegraph-extraction/reviews/spec-review-2.json"
+      ]
+    },
+    "plan-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "analyze": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "acceptance-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 0,
+      "verdict_paths": []
+    }
+  },
+  "e2e_decision": {
+    "required": false,
+    "predicates": [],
+    "coverage_override": null,
+    "rationale": "Not evaluated before implementation planning.",
+    "covering_tests": [],
+    "owner": "orchestrator",
+    "source_boundary": {
+      "base_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "candidate_commit": null,
+      "diff_sha256": "6be2b98990f1e1c337d2247c366312b6601ad1c122f08d1eede25b9e94eeb9c9",
+      "artifact_hashes": {
+        "specs/001-codegraph-extraction/spec.md": "4fd6919b2b4ee76af437d699ae9678fb05ad533109dce449d0250a6c6a174227",
+        "specs/001-codegraph-extraction/checklists/requirements.md": "81179ee6c34474af29a8d1b301f5c4ff29efd70c04d187ce78e77c8d8262bb99"
+      },
+      "owned_paths": [
+        "specs/001-codegraph-extraction/spec.md",
+        "specs/001-codegraph-extraction/checklists/requirements.md"
+      ]
+    },
+    "result": "pending",
+    "evidence_ids": []
+  },
+  "verification": [
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/specify/1",
+      "kind": "artifact-hash",
+      "stage": "specify",
+      "source_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/spec.md",
+        "specs/001-codegraph-extraction/checklists/requirements.md"
+      ],
+      "command": "Get-FileHash -Algorithm SHA256 specs/001-codegraph-extraction/spec.md specs/001-codegraph-extraction/checklists/requirements.md",
+      "exit_code": 0,
+      "observed_at": "2026-07-14T13:30:14Z",
+      "summary": "Spec author returned both required artifacts with matching SHA-256 hashes.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/spec-review/1",
+      "kind": "review",
+      "stage": "spec-review",
+      "source_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/spec-review-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-14T13:35:20Z",
+      "summary": "Independent spec judge returned REVISE finding SPEC-4-1-001; correction returns to specify.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/specify/2",
+      "kind": "artifact-hash",
+      "stage": "specify",
+      "source_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/spec.md",
+        "specs/001-codegraph-extraction/checklists/requirements.md"
+      ],
+      "command": "Get-FileHash -Algorithm SHA256 specs/001-codegraph-extraction/spec.md specs/001-codegraph-extraction/checklists/requirements.md",
+      "exit_code": 0,
+      "observed_at": "2026-07-14T13:49:02Z",
+      "summary": "Spec-author corrected the unresolved structural-relationship persistence contract in response to SPEC-4-1-001.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/spec-review/2",
+      "kind": "review",
+      "stage": "spec-review",
+      "source_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/spec-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-14T13:58:15Z",
+      "summary": "Independent spec judge accepted the corrected specification with no Critical/High finding or Constitution MUST violation.",
+      "raw_output_path": null
+    }
+  ],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-4-1-spec-review-20260714T135815Z-35c23f",
+    "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
+    "stage": "spec-review",
+    "committed_paths": [
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json",
+      "specs/001-codegraph-extraction/spec.md",
+      "specs/001-codegraph-extraction/checklists/requirements.md",
+      "specs/001-codegraph-extraction/reviews/spec-review-1.json",
+      "specs/001-codegraph-extraction/reviews/spec-review-2.json",
+      "specs/001-codegraph-extraction/workflow-state.json"
+    ],
+    "verification_evidence_ids": [
+      "4-1-codegraph-integration-and-code-unit-extraction/specify/1",
+      "4-1-codegraph-integration-and-code-unit-extraction/specify/2",
+      "4-1-codegraph-integration-and-code-unit-extraction/spec-review/1",
+      "4-1-codegraph-integration-and-code-unit-extraction/spec-review/2"
+    ],
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-07-14T13:58:15Z"
+}

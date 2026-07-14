@@ -21,6 +21,6 @@
     "observed_at": "2026-07-14T13:23:46Z"
   },
   "activation_checkpoint_id": "bmad-4-1-context-20260714T132346Z-a030b7",
-  "feature_directory": null,
-  "superseded_by_state": null
+  "feature_directory": "specs/001-codegraph-extraction",
+  "superseded_by_state": "specs/001-codegraph-extraction/workflow-state.json"
 }

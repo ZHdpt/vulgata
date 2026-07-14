@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "gate": "spec-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+  "reviewed_boundary": {
+    "base_commit": "28d28407f027f137bd38cec87256be2e0a5318a6",
+    "candidate_commit": null,
+    "diff_sha256": "4a8151ddd7b2f5b71db19dfcdfa48b4f49ae8aeadbe5c97dd9b40ffcfc556b70",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/spec.md": "4a924eb220aeb42780f7fa87c6c34b41ef4d8be593f1375cb702f2145568926b",
+      "specs/001-codegraph-extraction/checklists/requirements.md": "8308228be681224b9d8df29c079e664517ceb6a846ee5aee5c8eb64020d00890"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/spec.md",
+      "specs/001-codegraph-extraction/checklists/requirements.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/checklists/requirements.md"
+  ],
+  "findings": [
+    {
+      "id": "SPEC-4-1-001",
+      "severity": "HIGH",
+      "category": "data-model-testability",
+      "artifact": "specs/001-codegraph-extraction/spec.md",
+      "location": "User Story 2 scenario 3; Edge Cases; FR-010",
+      "affected_requirement": "FR-010",
+      "evidence": "FR-010 requires every Code Unit Edge to persist both source and target Code Unit identities, but also requires a relationship whose target is not found in the Repository to remain a future Cross-Repository Resolution candidate. User Story 2 scenario 3 repeats that requirement. No record with nullable target or external endpoint identity is specified, so the missing-target case cannot satisfy the required Code Unit Edge fields or be tested/audited. This also conflicts with the glossary's definition of Cross-Repository Resolution as post-scan matching of unresolved uncertainties to Documents, while FR-017 excludes running it in this story.",
+      "correction_outcome": "At the specification stage, define the auditable persistence contract for an unresolved structural relationship: either a distinct unresolved-result record outside Code Unit Edges, or an explicitly nullable edge target with the stable provider endpoint metadata and invariants required for later mapping. Align User Story 2 scenario 3, the edge cases, FR-010, and a measurable success criterion with that contract, and state that this story records the candidate only and does not run Cross-Repository Resolution. Do not add an LLM, MCP tool, Worker Agent, or Scan Coordinator."
+    }
+  ],
+  "summary": "REVISE. The specification correctly preserves the approved local CodeGraphContext boundary, excludes Worker Agent/LLM/MCP/Scan Coordinator scope, uses the authorised File Identity Hash and Range Confidence decisions, and makes the post-plan Scan-strategy approval gate explicit. However, the missing-target structural-relationship requirement has no implementable, testable persistence contract; a fresh spec-author must correct that before planning."
+}
