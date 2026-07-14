@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/spikes/" />
+  <Folder Name="/spikes/SP.1-WorkerAgentExecutionAdapter/">
+    <Project Path="spikes/SP.1-WorkerAgentExecutionAdapter/SP.1.WorkerAgentExecutionAdapter.csproj" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/dotnet/">
     <Project Path="src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj" />
