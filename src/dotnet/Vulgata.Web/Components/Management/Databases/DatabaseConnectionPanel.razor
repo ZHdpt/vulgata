@@ -1,11 +1,9 @@
 @using FluentValidation
-@using FluentValidation.Results
 @using Vulgata.Core.DomainServices
 @using Vulgata.Core.Entities
 @using Vulgata.Shared.Repositories
 @using Vulgata.Web.Data
 @using Vulgata.Web.Validators
-
 <section style="padding:0.5rem 0;border-top:1px solid #d6d6d6">
     <h3 style="margin:0 0 0.5rem 0">数据库连接</h3>
     <div><strong>状态：</strong>@(Model?.IsConfigured == true ? "已配置" : "未配置")</div>
@@ -103,7 +101,7 @@
         _errorMessage = null;
         _statusMessage = null;
 
-        ValidationResult validationResult = await Validator.ValidateAsync(_form);
+        var validationResult = await Validator.ValidateAsync(_form);
         if (!validationResult.IsValid)
         {
             _errorMessage = validationResult.Errors.Select(error => error.ErrorMessage).FirstOrDefault();
@@ -113,7 +111,7 @@
         _isBusy = true;
         try
         {
-            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+            var result =
                 await Coordinator.UpsertAsync(RepositoryId, _form, User, CancellationToken.None);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound || result.Value is null)
@@ -151,7 +149,7 @@
 
         try
         {
-            RepositoryDatabaseConnectionMutationResult<bool> result =
+            var result =
                 await Coordinator.DeleteAsync(RepositoryId, User, CancellationToken.None);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
@@ -186,7 +184,7 @@
 
         try
         {
-            RepositoryDatabaseConnectionTestResult result =
+            var result =
                 await Coordinator.TestConnectionAsync(RepositoryId, User, CancellationToken.None);
 
             if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.Success)

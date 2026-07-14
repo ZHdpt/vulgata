@@ -53,11 +53,11 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
 		if (!authState.User.IsInRole(RoleNames.Administrator)) return;
 
-		await using VulgataDbContext db = await DbContextFactory.CreateDbContextAsync();
-		GlobalContext? existing = await db.GlobalContexts.AsNoTracking().FirstOrDefaultAsync();
+        await using var db = await DbContextFactory.CreateDbContextAsync();
+        var existing = await db.GlobalContexts.AsNoTracking().FirstOrDefaultAsync();
 		_globalContext = existing?.Context ?? string.Empty;
 	}
 
@@ -68,9 +68,9 @@
 
 		try
 		{
-			DateTimeOffset now = DateTimeOffset.UtcNow;
-			await using VulgataDbContext db = await DbContextFactory.CreateDbContextAsync();
-			GlobalContext? existing = await db.GlobalContexts.FirstOrDefaultAsync();
+            var now = DateTimeOffset.UtcNow;
+            await using var db = await DbContextFactory.CreateDbContextAsync();
+            var existing = await db.GlobalContexts.FirstOrDefaultAsync();
 
 			if (existing is null)
 			{

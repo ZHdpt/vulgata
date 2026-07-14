@@ -56,7 +56,7 @@ public sealed class System
         string? context,
         DateTimeOffset now)
     {
-        Repository repository = Repository.Create(Id, name, gitUrl, description, context, now);
+        var repository = Repository.Create(Id, name, gitUrl, description, context, now);
         _repositories.Add(repository);
         UpdatedAt = now;
         return repository;
@@ -64,7 +64,7 @@ public sealed class System
 
     public bool RemoveRepository(Guid repositoryId, DateTimeOffset now)
     {
-        Repository? repository = _repositories.FirstOrDefault(r => r.Id == repositoryId);
+        var repository = _repositories.FirstOrDefault(r => r.Id == repositoryId);
         if (repository is null)
         {
             return false;

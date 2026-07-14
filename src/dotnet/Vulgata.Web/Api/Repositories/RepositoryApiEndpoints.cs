@@ -1,11 +1,9 @@
 using FluentValidation;
-using FluentValidation.Results;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
 using Vulgata.Web.Data;
 using Vulgata.Web.Validators;
-using RepositoryEntity = Vulgata.Core.Entities.Repository;
 
 namespace Vulgata.Web.Api.Repositories;
 
@@ -13,7 +11,7 @@ internal static class RepositoryApiEndpoints
 {
     public static void MapRepositoryApiEndpoints(this WebApplication app)
     {
-        RouteGroupBuilder repoApi = app.MapGroup("/api/systems/{systemId:guid}/repositories")
+        var repoApi = app.MapGroup("/api/systems/{systemId:guid}/repositories")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         repoApi.MapGet("/", async (
@@ -28,7 +26,7 @@ internal static class RepositoryApiEndpoints
                 return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
             }
 
-            IReadOnlyList<RepositoryEntity> repos = await repositoryRepository.ListBySystemAsync(systemId, cancellationToken);
+            var repos = await repositoryRepository.ListBySystemAsync(systemId, cancellationToken);
 
             return Results.Ok(repos.Select(r => new
             {
@@ -52,13 +50,13 @@ internal static class RepositoryApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            RepositoryMutationResult<RepositoryDetailDto> result =
+            var result =
                 await coordinator.CreateAsync(systemId, request, user, cancellationToken);
 
             return result.Outcome switch
@@ -73,8 +71,8 @@ internal static class RepositoryApiEndpoints
                     new Dictionary<string, string[]> { ["Name"] = [result.Message ?? "仓库名称已存在。"] }),
 
                 RepositoryMutationOutcome.GitAuthenticationRequired or
-                RepositoryMutationOutcome.GitUnreachable => Results.Problem(
-                    detail: $"Git URL 不可达：{result.Message}", statusCode: StatusCodes.Status400BadRequest),
+                    RepositoryMutationOutcome.GitUnreachable => Results.Problem(
+                        detail: $"Git URL 不可达：{result.Message}", statusCode: StatusCodes.Status400BadRequest),
 
                 _ => Results.Problem(detail: "仓库创建失败。", statusCode: StatusCodes.Status500InternalServerError)
             };
@@ -93,7 +91,7 @@ internal static class RepositoryApiEndpoints
                 return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
             }
 
-            RepositoryEntity? repo = await repositoryRepository.GetBySystemAndIdAsync(systemId, repositoryId, cancellationToken);
+            var repo = await repositoryRepository.GetBySystemAndIdAsync(systemId, repositoryId, cancellationToken);
             if (repo is null)
             {
                 return Results.Problem(detail: "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
@@ -105,7 +103,7 @@ internal static class RepositoryApiEndpoints
             return Results.NoContent();
         });
 
-        RouteGroupBuilder standaloneRepoApi = app.MapGroup("/api/repositories/standalone")
+        var standaloneRepoApi = app.MapGroup("/api/repositories/standalone")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         standaloneRepoApi.MapGet("/", async (
@@ -113,7 +111,7 @@ internal static class RepositoryApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            IReadOnlyList<RepositorySummaryDto> repositories = await repositoryCoordinator.ListStandaloneVisibleAsync(user, cancellationToken);
+            var repositories = await repositoryCoordinator.ListStandaloneVisibleAsync(user, cancellationToken);
             return Results.Ok(repositories);
         });
 
@@ -124,13 +122,13 @@ internal static class RepositoryApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            RepositoryMutationResult<RepositoryDetailDto> result = await repositoryCoordinator.CreateStandaloneAsync(request, user, cancellationToken);
+            var result = await repositoryCoordinator.CreateStandaloneAsync(request, user, cancellationToken);
 
             if (result.Outcome == RepositoryMutationOutcome.Success && result.Value is not null)
             {
@@ -158,7 +156,7 @@ internal static class RepositoryApiEndpoints
                 statusCode: StatusCodes.Status500InternalServerError);
         });
 
-        RouteGroupBuilder repositoryDatabaseConnectionApi = app.MapGroup("/api/repositories/{repositoryId:guid}/database-connection")
+        var repositoryDatabaseConnectionApi = app.MapGroup("/api/repositories/{repositoryId:guid}/database-connection")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         repositoryDatabaseConnectionApi.MapGet("/", async (
@@ -167,7 +165,7 @@ internal static class RepositoryApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+            var result =
                 await coordinator.GetAsync(repositoryId, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
@@ -186,13 +184,13 @@ internal static class RepositoryApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+            var result =
                 await coordinator.UpsertAsync(repositoryId, request, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
@@ -209,7 +207,7 @@ internal static class RepositoryApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            RepositoryDatabaseConnectionMutationResult<bool> result =
+            var result =
                 await coordinator.DeleteAsync(repositoryId, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.RepositoryNotFound)
@@ -226,7 +224,7 @@ internal static class RepositoryApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            RepositoryDatabaseConnectionTestResult result = await coordinator.TestConnectionAsync(repositoryId, user, cancellationToken);
+            var result = await coordinator.TestConnectionAsync(repositoryId, user, cancellationToken);
 
             if (result.Outcome == RepositoryDatabaseConnectionTestOutcome.RepositoryNotFound)
             {

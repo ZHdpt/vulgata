@@ -67,7 +67,7 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
     {
         string normalizedName = RepositoryEntity.NormalizeName(name);
 
-        IQueryable<RepositoryEntity> query = dbContext.Repositories
+        var query = dbContext.Repositories
             .AsNoTracking()
             .Where(repository => repository.SystemId == systemId && repository.NormalizedName == normalizedName);
 
@@ -86,7 +86,7 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
     {
         string normalizedName = RepositoryEntity.NormalizeName(name);
 
-        IQueryable<RepositoryEntity> query = dbContext.Repositories
+        var query = dbContext.Repositories
             .AsNoTracking()
             .Where(repository => repository.SystemId == null && repository.NormalizedName == normalizedName);
 
@@ -102,7 +102,7 @@ public sealed class RepositoryRepository(VulgataDbContext dbContext) : IReposito
         RepositoryEntity repository,
         CancellationToken cancellationToken = default)
     {
-        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<RepositoryEntity> entry =
+        var entry =
             await dbContext.Repositories.AddAsync(repository, cancellationToken);
 
         return entry.Entity;

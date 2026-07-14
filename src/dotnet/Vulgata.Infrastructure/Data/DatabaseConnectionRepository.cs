@@ -14,7 +14,7 @@ public sealed class DatabaseConnectionRepository(VulgataDbContext dbContext) : I
 
     public async Task<DatabaseConnection> AddAsync(DatabaseConnection databaseConnection, CancellationToken cancellationToken = default)
     {
-        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<DatabaseConnection> entry =
+        var entry =
             await dbContext.DatabaseConnections.AddAsync(databaseConnection, cancellationToken);
 
         return entry.Entity;

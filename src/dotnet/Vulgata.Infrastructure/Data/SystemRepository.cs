@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using SystemEntity = Vulgata.Core.Entities.System;
@@ -11,7 +10,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     public async Task<IReadOnlyList<SystemEntity>> ListVisibleAsync(
         SystemOwnerFilter filter, CancellationToken cancellationToken = default)
     {
-        IQueryable<SystemEntity> query = dbContext.Systems.AsNoTracking();
+        var query = dbContext.Systems.AsNoTracking();
 
         if (!filter.AllowAll)
         {
@@ -26,7 +25,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     public async Task<SystemEntity?> GetVisibleByIdAsync(
         Guid id, SystemOwnerFilter filter, CancellationToken cancellationToken = default)
     {
-        IQueryable<SystemEntity> query = dbContext.Systems.AsNoTracking();
+        var query = dbContext.Systems.AsNoTracking();
 
         if (!filter.AllowAll)
         {
@@ -47,7 +46,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     {
         string normalizedName = SystemEntity.NormalizeName(name);
 
-        IQueryable<SystemEntity> query = dbContext.Systems
+        var query = dbContext.Systems
             .AsNoTracking()
             .Where(s => s.NormalizedName == normalizedName);
 
@@ -61,7 +60,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
 
     public async Task<SystemEntity> AddAsync(SystemEntity system, CancellationToken cancellationToken = default)
     {
-        EntityEntry<SystemEntity> entry =
+        var entry =
             await dbContext.Systems.AddAsync(system, cancellationToken);
         return entry.Entity;
     }
@@ -74,7 +73,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     public async Task<SystemDeleteResult> DeleteIfNoDependenciesAsync(
         Guid id, CancellationToken cancellationToken = default)
     {
-        SystemEntity? system = await dbContext.Systems
+        var system = await dbContext.Systems
             .Include(s => s.Repositories)
             .Include(s => s.OwnerAssignments)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
@@ -84,7 +83,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
             return SystemDeleteResult.NotFound;
         }
 
-        SystemDependencyCounts dependencies = await GetDependencyCountsAsync(id, cancellationToken);
+        var dependencies = await GetDependencyCountsAsync(id, cancellationToken);
 
         if (dependencies.TotalCount > 0)
         {
@@ -135,7 +134,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
             return SystemOwnerAssignmentWriteResult.AlreadyAssigned;
         }
 
-        SystemOwnerAssignment assignment =
+        var assignment =
             SystemOwnerAssignment.Create(systemId, normalizedUserId, now);
 
         await dbContext.SystemOwnerAssignments.AddAsync(assignment, cancellationToken);
@@ -149,7 +148,7 @@ public sealed class SystemRepository(VulgataDbContext dbContext) : ISystemReposi
     {
         string normalizedUserId = (userId ?? string.Empty).Trim();
 
-        SystemOwnerAssignment? assignment = await dbContext.SystemOwnerAssignments
+        var assignment = await dbContext.SystemOwnerAssignments
             .FirstOrDefaultAsync(a => a.SystemId == systemId && a.UserId == normalizedUserId, cancellationToken);
 
         if (assignment is null)

@@ -1,7 +1,6 @@
 @using Microsoft.AspNetCore.Identity
 @using Vulgata.Shared.Systems
 @using Vulgata.Web.Data
-
 @inject ISystemOwnershipCoordinator OwnershipCoordinator
 
 @if (Visible)
@@ -43,7 +42,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (SystemOwnerAssignmentDto owner in _owners)
+                        @foreach (var owner in _owners)
                             {
                                 <tr>
                                     <td>@owner.DisplayName</td>
@@ -84,7 +83,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (SystemOwnerCandidateDto candidate in _candidates)
+                        @foreach (var candidate in _candidates)
                             {
                                 <tr>
                                     <td>@candidate.DisplayName</td>
@@ -160,8 +159,8 @@
 
         try
         {
-            IReadOnlyList<SystemOwnerAssignmentDto> owners = await OwnershipCoordinator.ListOwnersAsync(SystemId);
-            IReadOnlyList<SystemOwnerCandidateDto> candidates =
+            var owners = await OwnershipCoordinator.ListOwnersAsync(SystemId);
+            var candidates =
                 await OwnershipCoordinator.ListOwnerCandidatesAsync(SystemId, _keyword);
 
             _owners.Clear();
@@ -194,7 +193,7 @@
 
         try
         {
-            SystemOwnershipAssignmentResult result = await OwnershipCoordinator.AssignOwnerAsync(SystemId, candidate.UserId);
+            var result = await OwnershipCoordinator.AssignOwnerAsync(SystemId, candidate.UserId);
             switch (result.Outcome)
             {
                 case SystemOwnershipAssignmentOutcome.Assigned:
@@ -232,7 +231,7 @@
 
         try
         {
-            SystemOwnershipRemovalResult result = await OwnershipCoordinator.RemoveOwnerAsync(SystemId, owner.UserId);
+            var result = await OwnershipCoordinator.RemoveOwnerAsync(SystemId, owner.UserId);
             switch (result.Outcome)
             {
                 case SystemOwnershipRemovalOutcome.Removed:

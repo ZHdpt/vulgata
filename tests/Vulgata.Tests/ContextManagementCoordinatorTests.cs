@@ -26,7 +26,7 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
-        DbContextOptions<VulgataDbContext> options = new DbContextOptionsBuilder<VulgataDbContext>()
+        var options = new DbContextOptionsBuilder<VulgataDbContext>()
             .UseSqlite(_connection)
             .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))
             .Options;
@@ -34,20 +34,20 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         _dbFactory = new InMemoryDbContextFactory(options);
         _systemRepository = new SystemRepository(_dbFactory.CreateDbContext());
 
-        using VulgataDbContext seedDb = _dbFactory.CreateDbContext();
+        using var seedDb = _dbFactory.CreateDbContext();
         seedDb.Database.EnsureCreated();
     }
 
     [Fact]
     public async Task SaveAsync_GlobalScope_NoScanRunning_AppliesImmediatelyAndClearsPending()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
+        var coordinator = BuildCoordinator();
 
-        Result result = await coordinator.SaveAsync(ContextScope.Global, "全局术语", AdminUser(), default);
+        var result = await coordinator.SaveAsync(ContextScope.Global, "全局术语", AdminUser(), default);
 
         Assert.True(result.IsSuccess);
-        await using VulgataDbContext db = _dbFactory.CreateDbContext();
-        GlobalContext? saved = await db.GlobalContexts.FirstOrDefaultAsync();
+        await using var db = _dbFactory.CreateDbContext();
+        var saved = await db.GlobalContexts.FirstOrDefaultAsync();
         Assert.NotNull(saved);
         Assert.Equal("全局术语", saved!.Context);
         Assert.Empty(await db.PendingContextChanges.ToListAsync());
@@ -56,14 +56,14 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task SaveAsync_GlobalScope_ScanRunning_QueuesPendingAndKeepsCurrent()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
+        var coordinator = BuildCoordinator();
         _scanState.AnyScanRunning = true;
 
-        Result result = await coordinator.SaveAsync(ContextScope.Global, "待生效上下文", AdminUser(), default);
+        var result = await coordinator.SaveAsync(ContextScope.Global, "待生效上下文", AdminUser(), default);
 
         Assert.True(result.IsSuccess);
-        await using VulgataDbContext db = _dbFactory.CreateDbContext();
-        PendingContextChange? pending = await db.PendingContextChanges
+        await using var db = _dbFactory.CreateDbContext();
+        var pending = await db.PendingContextChanges
             .Where(p => p.ScopeType == ContextScopeType.Global && p.ScopeKey == "global")
             .FirstOrDefaultAsync();
         Assert.NotNull(pending);
@@ -74,10 +74,10 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task SaveAsync_SystemScope_NonOwnerUser_ReturnsNotFound()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
-        Guid systemId = await SeedSystemAsync("测试系统", ownerId: "owner-1");
+        var coordinator = BuildCoordinator();
+        var systemId = await SeedSystemAsync("测试系统", ownerId: "owner-1");
 
-        Result result = await coordinator.SaveAsync(
+        var result = await coordinator.SaveAsync(
             ContextScope.ForSystem(systemId),
             "越权上下文",
             NonAdminUser("outsider-1"),
@@ -90,10 +90,10 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task SaveAsync_SystemScope_OwnerUser_Succeeds()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
-        Guid systemId = await SeedSystemAsync("测试系统", ownerId: "owner-1");
+        var coordinator = BuildCoordinator();
+        var systemId = await SeedSystemAsync("测试系统", ownerId: "owner-1");
 
-        Result result = await coordinator.SaveAsync(
+        var result = await coordinator.SaveAsync(
             ContextScope.ForSystem(systemId),
             "系统上下文",
             NonAdminUser("owner-1"),
@@ -105,10 +105,10 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task SaveAsync_SystemScope_AdminUser_SucceedsEvenWithoutOwnership()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
-        Guid systemId = await SeedSystemAsync("测试系统", ownerId: "owner-1");
+        var coordinator = BuildCoordinator();
+        var systemId = await SeedSystemAsync("测试系统", ownerId: "owner-1");
 
-        Result result = await coordinator.SaveAsync(
+        var result = await coordinator.SaveAsync(
             ContextScope.ForSystem(systemId),
             "管理员覆盖上下文",
             AdminUser(),
@@ -120,10 +120,10 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task SaveAsync_RepositoryScope_StandaloneRepo_NonAdminSucceeds()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
-        Guid repoId = await SeedStandaloneRepositoryAsync("独立仓库");
+        var coordinator = BuildCoordinator();
+        var repoId = await SeedStandaloneRepositoryAsync("独立仓库");
 
-        Result result = await coordinator.SaveAsync(
+        var result = await coordinator.SaveAsync(
             ContextScope.ForRepository(repoId),
             "独立仓库上下文",
             NonAdminUser("any-owner"),
@@ -135,9 +135,9 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task SaveAsync_GlobalScope_NonAdminUser_ReturnsForbidden()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
+        var coordinator = BuildCoordinator();
 
-        Result result = await coordinator.SaveAsync(
+        var result = await coordinator.SaveAsync(
             ContextScope.Global,
             "越权全局上下文",
             NonAdminUser("owner-1"),
@@ -150,19 +150,19 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task SaveAsync_RepositoryScope_ScanRunning_QueuesPending()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
-        Guid repoId = await SeedStandaloneRepositoryAsync("扫描中仓库");
+        var coordinator = BuildCoordinator();
+        var repoId = await SeedStandaloneRepositoryAsync("扫描中仓库");
         _scanState.RepositoryScansRunning.Add(repoId);
 
-        Result result = await coordinator.SaveAsync(
+        var result = await coordinator.SaveAsync(
             ContextScope.ForRepository(repoId),
             "待生效仓库上下文",
             AdminUser(),
             default);
 
         Assert.True(result.IsSuccess);
-        await using VulgataDbContext db = _dbFactory.CreateDbContext();
-        PendingContextChange? pending = await db.PendingContextChanges
+        await using var db = _dbFactory.CreateDbContext();
+        var pending = await db.PendingContextChanges
             .Where(p => p.ScopeType == ContextScopeType.Repository && p.ScopeKey == repoId.ToString())
             .FirstOrDefaultAsync();
         Assert.NotNull(pending);
@@ -171,12 +171,12 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
     [Fact]
     public async Task GetStateAsync_GlobalScope_ReturnsCurrentAndPendingValues()
     {
-        ContextManagementCoordinator coordinator = BuildCoordinator();
+        var coordinator = BuildCoordinator();
         await coordinator.SaveAsync(ContextScope.Global, "当前值", AdminUser(), default);
         _scanState.AnyScanRunning = true;
         await coordinator.SaveAsync(ContextScope.Global, "待生效值", AdminUser(), default);
 
-        ContextState state = await coordinator.GetStateAsync(ContextScope.Global, AdminUser(), default);
+        var state = await coordinator.GetStateAsync(ContextScope.Global, AdminUser(), default);
 
         Assert.Equal("当前值", state.CurrentValue);
         Assert.Equal("待生效值", state.PendingValue);
@@ -188,7 +188,7 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
 
     private async Task<Guid> SeedSystemAsync(string name, string ownerId)
     {
-        await using VulgataDbContext db = _dbFactory.CreateDbContext();
+        await using var db = _dbFactory.CreateDbContext();
         SystemEntity system = new(name, null, null, DateTimeOffset.UtcNow);
         db.Systems.Add(system);
         db.SystemOwnerAssignments.Add(SystemOwnerAssignment.Create(system.Id, ownerId, DateTimeOffset.UtcNow));
@@ -198,8 +198,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
 
     private async Task<Guid> SeedStandaloneRepositoryAsync(string name)
     {
-        await using VulgataDbContext db = _dbFactory.CreateDbContext();
-        Repository repo = Repository.CreateStandalone(name, "https://example.com/repo.git", null, null, DateTimeOffset.UtcNow);
+        await using var db = _dbFactory.CreateDbContext();
+        var repo = Repository.CreateStandalone(name, "https://example.com/repo.git", null, null, DateTimeOffset.UtcNow);
         db.Repositories.Add(repo);
         await db.SaveChangesAsync();
         return repo.Id;

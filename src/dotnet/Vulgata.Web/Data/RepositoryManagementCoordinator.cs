@@ -73,7 +73,7 @@ public sealed class RepositoryManagementCoordinator(
             return [];
         }
 
-        IReadOnlyList<RepositoryEntity> repositories = await repositoryRepository.ListBySystemAsync(systemId, cancellationToken);
+        var repositories = await repositoryRepository.ListBySystemAsync(systemId, cancellationToken);
 
         return repositories.Select(MapToSummary).ToList();
     }
@@ -82,7 +82,7 @@ public sealed class RepositoryManagementCoordinator(
         IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<RepositoryEntity> repositories = await repositoryRepository.ListStandaloneAsync(cancellationToken);
+        var repositories = await repositoryRepository.ListStandaloneAsync(cancellationToken);
         return repositories.Select(MapToSummary).ToList();
     }
 
@@ -92,7 +92,7 @@ public sealed class RepositoryManagementCoordinator(
         IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        SystemEntity? system = await GetVisibleSystemAsync(systemId, user, cancellationToken);
+        var system = await GetVisibleSystemAsync(systemId, user, cancellationToken);
         if (system is null)
         {
             return RepositoryMutationResult<RepositoryDetailDto>.SystemNotFound;
@@ -104,7 +104,7 @@ public sealed class RepositoryManagementCoordinator(
             return RepositoryMutationResult<RepositoryDetailDto>.DuplicateName("该系统下的仓库名称已存在。");
         }
 
-        GitRemoteValidationResult validationResult = await gitRemoteValidationService.ValidateAsync(request.GitUrl, cancellationToken);
+        var validationResult = await gitRemoteValidationService.ValidateAsync(request.GitUrl, cancellationToken);
         if (validationResult.Status == GitRemoteValidationStatus.AuthenticationRequired)
         {
             return RepositoryMutationResult<RepositoryDetailDto>.GitAuthenticationRequired(validationResult.Message);
@@ -115,7 +115,7 @@ public sealed class RepositoryManagementCoordinator(
             return RepositoryMutationResult<RepositoryDetailDto>.GitUnreachable(validationResult.Message);
         }
 
-        RepositoryEntity repository = system.AddRepository(
+        var repository = system.AddRepository(
             request.Name,
             request.GitUrl,
             request.Description,
@@ -141,7 +141,7 @@ public sealed class RepositoryManagementCoordinator(
             return RepositoryMutationResult<RepositoryDetailDto>.DuplicateName("独立仓库名称已存在。");
         }
 
-        GitRemoteValidationResult validationResult = await gitRemoteValidationService.ValidateAsync(request.GitUrl, cancellationToken);
+        var validationResult = await gitRemoteValidationService.ValidateAsync(request.GitUrl, cancellationToken);
         if (validationResult.Status == GitRemoteValidationStatus.AuthenticationRequired)
         {
             return RepositoryMutationResult<RepositoryDetailDto>.GitAuthenticationRequired(validationResult.Message);
@@ -152,7 +152,7 @@ public sealed class RepositoryManagementCoordinator(
             return RepositoryMutationResult<RepositoryDetailDto>.GitUnreachable(validationResult.Message);
         }
 
-        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+        var repository = RepositoryEntity.CreateStandalone(
             request.Name,
             request.GitUrl,
             request.Description,
@@ -184,7 +184,7 @@ public sealed class RepositoryManagementCoordinator(
             return RepositoryMutationResult<bool>.SystemNotFound;
         }
 
-        RepositoryEntity? repository = await repositoryRepository.GetBySystemAndIdAsync(systemId, repositoryId, cancellationToken);
+        var repository = await repositoryRepository.GetBySystemAndIdAsync(systemId, repositoryId, cancellationToken);
         if (repository is null)
         {
             return RepositoryMutationResult<bool>.RepositoryNotFound;
@@ -219,7 +219,7 @@ public sealed class RepositoryManagementCoordinator(
 
     private static RepositoryDetailDto MapToDetail(RepositoryEntity repository)
     {
-        RepositoryDatabaseConnectionSummaryDto? databaseConnectionSummary = repository.DatabaseConnection is null
+        var databaseConnectionSummary = repository.DatabaseConnection is null
             ? null
             : new RepositoryDatabaseConnectionSummaryDto
             {

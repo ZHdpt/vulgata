@@ -31,10 +31,10 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         await ResetDomainStateAsync();
         await CreateUserWithRolesAsync("story31.admin.crud@example.com", "Valid1!Pass", RoleNames.Administrator);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, "story31.admin.crud@example.com", "Valid1!Pass");
 
-        HttpResponseMessage createResponse = await client.PostAsJsonAsync("/api/llm-providers", new
+        var createResponse = await client.PostAsJsonAsync("/api/llm-providers", new
         {
             name = "DeepSeek 主提供商",
             baseEndpointUrl = "https://api.deepseek.com/v1",
@@ -43,7 +43,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             defaultAgentType = 0,
         });
 
-        LlmProviderResponse created = await ReadRequiredAsync<LlmProviderResponse>(createResponse);
+        var created = await ReadRequiredAsync<LlmProviderResponse>(createResponse);
 
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
         Assert.Equal("DeepSeek 主提供商", created.Name);
@@ -56,15 +56,15 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         Assert.NotEmpty(encryptedApiKey);
         Assert.NotEqual("super-secret-key", encryptedApiKey);
 
-        HttpResponseMessage listResponse = await client.GetAsync("/api/llm-providers");
-        List<LlmProviderResponse> providers = await ReadRequiredAsync<List<LlmProviderResponse>>(listResponse);
+        var listResponse = await client.GetAsync("/api/llm-providers");
+        var providers = await ReadRequiredAsync<List<LlmProviderResponse>>(listResponse);
 
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
         Assert.Single(providers);
         Assert.Equal(created.Id, providers[0].Id);
         Assert.Equal("DeepSeek 主提供商", providers[0].Name);
 
-        HttpResponseMessage pageResponse = await client.GetAsync("/management/settings/llm-providers");
+        var pageResponse = await client.GetAsync("/management/settings/llm-providers");
         string pageHtml = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
@@ -73,7 +73,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         Assert.Contains("DeepSeek 主提供商", pageHtml, StringComparison.Ordinal);
         Assert.Contains("测试连接", pageHtml, StringComparison.Ordinal);
 
-        HttpResponseMessage updateResponse = await client.PutAsJsonAsync($"/api/llm-providers/{created.Id}", new
+        var updateResponse = await client.PutAsJsonAsync($"/api/llm-providers/{created.Id}", new
         {
             name = "DeepSeek 生产",
             baseEndpointUrl = "https://api.deepseek.com/v1/",
@@ -82,7 +82,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             defaultAgentType = 1,
         });
 
-        LlmProviderResponse updated = await ReadRequiredAsync<LlmProviderResponse>(updateResponse);
+        var updated = await ReadRequiredAsync<LlmProviderResponse>(updateResponse);
 
         Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
         Assert.Equal("DeepSeek 生产", updated.Name);
@@ -92,11 +92,11 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         Assert.True(updated.HasApiKey);
         Assert.Equal(encryptedApiKey, await GetEncryptedApiKeyAsync(created.Id));
 
-        HttpResponseMessage deleteResponse = await client.DeleteAsync($"/api/llm-providers/{created.Id}");
+        var deleteResponse = await client.DeleteAsync($"/api/llm-providers/{created.Id}");
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-        HttpResponseMessage afterDeleteResponse = await client.GetAsync("/api/llm-providers");
-        List<LlmProviderResponse> afterDeleteProviders = await ReadRequiredAsync<List<LlmProviderResponse>>(afterDeleteResponse);
+        var afterDeleteResponse = await client.GetAsync("/api/llm-providers");
+        var afterDeleteProviders = await ReadRequiredAsync<List<LlmProviderResponse>>(afterDeleteResponse);
 
         Assert.Empty(afterDeleteProviders);
     }
@@ -108,13 +108,13 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         await ResetDomainStateAsync();
         await CreateUserWithRolesAsync("story31.admin.duplicate@example.com", "Valid1!Pass", RoleNames.Administrator);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, "story31.admin.duplicate@example.com", "Valid1!Pass");
 
-        LlmProviderResponse existing = await CreateProviderAsync(client, "OpenAI 兼容", "https://provider.example.com/v1", "key-1", 1, 0);
-        LlmProviderResponse another = await CreateProviderAsync(client, "Anthropic 兼容", "https://provider-two.example.com/v1", "key-2", 2, 2);
+        var existing = await CreateProviderAsync(client, "OpenAI 兼容", "https://provider.example.com/v1", "key-1", 1, 0);
+        var another = await CreateProviderAsync(client, "Anthropic 兼容", "https://provider-two.example.com/v1", "key-2", 2, 2);
 
-        HttpResponseMessage createDuplicateResponse = await client.PostAsJsonAsync("/api/llm-providers", new
+        var createDuplicateResponse = await client.PostAsJsonAsync("/api/llm-providers", new
         {
             name = "  OpenAI 兼容  ",
             baseEndpointUrl = "https://duplicate.example.com/v1",
@@ -123,14 +123,14 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             defaultAgentType = 0,
         });
 
-        ValidationProblemDetails createProblem = await ReadRequiredAsync<ValidationProblemDetails>(createDuplicateResponse);
+        var createProblem = await ReadRequiredAsync<ValidationProblemDetails>(createDuplicateResponse);
 
         Assert.Equal(HttpStatusCode.BadRequest, createDuplicateResponse.StatusCode);
         Assert.True(createProblem.Errors.TryGetValue("Name", out string[]? createErrors));
         Assert.NotNull(createErrors);
         Assert.Contains(createErrors!, error => error.Contains("提供商名称已存在", StringComparison.Ordinal));
 
-        HttpResponseMessage updateDuplicateResponse = await client.PutAsJsonAsync($"/api/llm-providers/{another.Id}", new
+        var updateDuplicateResponse = await client.PutAsJsonAsync($"/api/llm-providers/{another.Id}", new
         {
             name = "OpenAI 兼容",
             baseEndpointUrl = "https://provider-two.example.com/v1",
@@ -139,7 +139,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             defaultAgentType = 2,
         });
 
-        ValidationProblemDetails updateProblem = await ReadRequiredAsync<ValidationProblemDetails>(updateDuplicateResponse);
+        var updateProblem = await ReadRequiredAsync<ValidationProblemDetails>(updateDuplicateResponse);
 
         Assert.Equal(HttpStatusCode.BadRequest, updateDuplicateResponse.StatusCode);
         Assert.True(updateProblem.Errors.TryGetValue("Name", out string[]? updateErrors));
@@ -155,12 +155,12 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         await ResetDomainStateAsync();
         await CreateUserWithRolesAsync("story31.admin.connection@example.com", "Valid1!Pass", RoleNames.Administrator);
 
-        await using MockLlmProviderServer server = await MockLlmProviderServer.StartAsync("good-key");
+        await using var server = await MockLlmProviderServer.StartAsync("good-key");
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, "story31.admin.connection@example.com", "Valid1!Pass");
 
-        LlmProviderResponse healthyProvider = await CreateProviderAsync(
+        var healthyProvider = await CreateProviderAsync(
             client,
             "本地测试提供商",
             $"http://127.0.0.1:{server.Port}/v1",
@@ -168,14 +168,14 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             1,
             0);
 
-        HttpResponseMessage successResponse = await client.PostAsync($"/api/llm-providers/{healthyProvider.Id}/test", content: null);
-        ConnectionTestResponse success = await ReadRequiredAsync<ConnectionTestResponse>(successResponse);
+        var successResponse = await client.PostAsync($"/api/llm-providers/{healthyProvider.Id}/test", content: null);
+        var success = await ReadRequiredAsync<ConnectionTestResponse>(successResponse);
 
         Assert.Equal(HttpStatusCode.OK, successResponse.StatusCode);
         Assert.True(success.Success);
         Assert.Contains("连接测试成功", success.Message, StringComparison.Ordinal);
 
-        LlmProviderResponse brokenProvider = await CreateProviderAsync(
+        var brokenProvider = await CreateProviderAsync(
             client,
             "错误密钥提供商",
             $"http://127.0.0.1:{server.Port}/v1",
@@ -183,8 +183,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             1,
             0);
 
-        HttpResponseMessage failureResponse = await client.PostAsync($"/api/llm-providers/{brokenProvider.Id}/test", content: null);
-        ProblemDetails failure = await ReadRequiredAsync<ProblemDetails>(failureResponse);
+        var failureResponse = await client.PostAsync($"/api/llm-providers/{brokenProvider.Id}/test", content: null);
+        var failure = await ReadRequiredAsync<ProblemDetails>(failureResponse);
 
         Assert.Equal(HttpStatusCode.BadRequest, failureResponse.StatusCode);
         Assert.Contains("连接测试失败", failure.Detail ?? string.Empty, StringComparison.Ordinal);
@@ -199,23 +199,23 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         await ResetDomainStateAsync();
         await CreateUserWithRolesAsync("story31.owner.forbidden@example.com", "Valid1!Pass", RoleNames.SystemOwner);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, "story31.owner.forbidden@example.com", "Valid1!Pass");
 
-        HttpResponseMessage settingsResponse = await client.GetAsync("/management/settings");
+        var settingsResponse = await client.GetAsync("/management/settings");
         string settingsHtml = WebUtility.HtmlDecode(await settingsResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, settingsResponse.StatusCode);
         Assert.DoesNotContain("/management/settings/llm-providers", settingsHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("LLM 提供商配置", settingsHtml, StringComparison.Ordinal);
 
-        HttpResponseMessage listResponse = await client.GetAsync("/api/llm-providers");
-        ProblemDetails listProblem = await ReadRequiredAsync<ProblemDetails>(listResponse);
+        var listResponse = await client.GetAsync("/api/llm-providers");
+        var listProblem = await ReadRequiredAsync<ProblemDetails>(listResponse);
 
         Assert.Equal(HttpStatusCode.Forbidden, listResponse.StatusCode);
         Assert.Contains("只有管理员可以管理 LLM 提供商配置", listProblem.Detail ?? string.Empty, StringComparison.Ordinal);
 
-        HttpResponseMessage createResponse = await client.PostAsJsonAsync("/api/llm-providers", new
+        var createResponse = await client.PostAsJsonAsync("/api/llm-providers", new
         {
             name = "越权提供商",
             baseEndpointUrl = "https://forbidden.example.com/v1",
@@ -224,7 +224,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             defaultAgentType = 0,
         });
 
-        ProblemDetails createProblem = await ReadRequiredAsync<ProblemDetails>(createResponse);
+        var createProblem = await ReadRequiredAsync<ProblemDetails>(createResponse);
 
         Assert.Equal(HttpStatusCode.Forbidden, createResponse.StatusCode);
         Assert.Contains("只有管理员可以管理 LLM 提供商配置", createProblem.Detail ?? string.Empty, StringComparison.Ordinal);
@@ -239,8 +239,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
 
     private async Task EnsureApplicationStartedAsync()
     {
-        using HttpClient client = CreateClient();
-        HttpResponseMessage response = await client.GetAsync("/Account/Login");
+        using var client = CreateClient();
+        var response = await client.GetAsync("/Account/Login");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -254,7 +254,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
 
     private static async Task ExecuteNonQueryAsync(SqliteConnection connection, string sql)
     {
-        await using SqliteCommand command = connection.CreateCommand();
+        await using var command = connection.CreateCommand();
         command.CommandText = sql;
         await command.ExecuteNonQueryAsync();
     }
@@ -262,29 +262,29 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
     private static async Task EnsureLlmProviderTableAsync(SqliteConnection connection)
     {
         await ExecuteNonQueryAsync(connection, """
-            CREATE TABLE IF NOT EXISTS LlmProviders (
-                Id TEXT NOT NULL PRIMARY KEY,
-                Name TEXT NOT NULL,
-                NormalizedName TEXT NOT NULL,
-                BaseEndpointUrl TEXT NOT NULL,
-                EncryptedApiKey TEXT NOT NULL,
-                SupportedApiTypes INTEGER NOT NULL,
-                DefaultAgentType INTEGER NOT NULL,
-                CreatedAt TEXT NOT NULL,
-                UpdatedAt TEXT NOT NULL
-            );
-            """);
+                                               CREATE TABLE IF NOT EXISTS LlmProviders (
+                                                   Id TEXT NOT NULL PRIMARY KEY,
+                                                   Name TEXT NOT NULL,
+                                                   NormalizedName TEXT NOT NULL,
+                                                   BaseEndpointUrl TEXT NOT NULL,
+                                                   EncryptedApiKey TEXT NOT NULL,
+                                                   SupportedApiTypes INTEGER NOT NULL,
+                                                   DefaultAgentType INTEGER NOT NULL,
+                                                   CreatedAt TEXT NOT NULL,
+                                                   UpdatedAt TEXT NOT NULL
+                                               );
+                                               """);
 
         await ExecuteNonQueryAsync(connection, """
-            CREATE UNIQUE INDEX IF NOT EXISTS IX_LlmProviders_NormalizedName
-            ON LlmProviders (NormalizedName);
-            """);
+                                               CREATE UNIQUE INDEX IF NOT EXISTS IX_LlmProviders_NormalizedName
+                                               ON LlmProviders (NormalizedName);
+                                               """);
     }
 
     private async Task<string> CreateUserWithRolesAsync(string email, string password, params string[] roles)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         ApplicationUser user = new()
         {
@@ -293,32 +293,32 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             EmailConfirmed = true,
         };
 
-        IdentityResult createResult = await userManager.CreateAsync(user, password);
+        var createResult = await userManager.CreateAsync(user, password);
         Assert.True(createResult.Succeeded, string.Join(", ", createResult.Errors.Select(error => error.Description)));
 
         foreach (string role in roles.Distinct(StringComparer.Ordinal))
         {
-            IdentityResult roleResult = await userManager.AddToRoleAsync(user, role);
+            var roleResult = await userManager.AddToRoleAsync(user, role);
             Assert.True(roleResult.Succeeded, string.Join(", ", roleResult.Errors.Select(error => error.Description)));
         }
 
         return user.Id;
     }
 
-    private async Task LoginAsync(HttpClient client, string email, string password)
+    private static async Task LoginAsync(HttpClient client, string email, string password)
     {
-        Dictionary<string, string> fields = await GetFormFieldsAsync(client, "/Account/Login");
+        var fields = await GetFormFieldsAsync(client, "/Account/Login");
         fields["Input.Email"] = email;
         fields["Input.Password"] = password;
         fields["Input.RememberMe"] = "false";
 
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(fields));
+        var response = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(fields));
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/", GetLocationPath(response));
     }
 
-    private async Task<LlmProviderResponse> CreateProviderAsync(
+    private static async Task<LlmProviderResponse> CreateProviderAsync(
         HttpClient client,
         string name,
         string baseEndpointUrl,
@@ -326,7 +326,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         int supportedApiTypes,
         int defaultAgentType)
     {
-        HttpResponseMessage response = await client.PostAsJsonAsync("/api/llm-providers", new
+        var response = await client.PostAsJsonAsync("/api/llm-providers", new
         {
             name,
             baseEndpointUrl,
@@ -335,15 +335,15 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
             defaultAgentType,
         });
 
-        LlmProviderResponse created = await ReadRequiredAsync<LlmProviderResponse>(response);
+        var created = await ReadRequiredAsync<LlmProviderResponse>(response);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return created;
     }
 
     private async Task<string> GetEncryptedApiKeyAsync(Guid providerId)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        VulgataDbContext dbContext = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
 
         string? encryptedApiKey = await dbContext.LlmProviders
             .AsNoTracking()
@@ -357,14 +357,14 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
 
     private static async Task<T> ReadRequiredAsync<T>(HttpResponseMessage response)
     {
-        T? value = await response.Content.ReadFromJsonAsync<T>();
+        var value = await response.Content.ReadFromJsonAsync<T>();
         Assert.NotNull(value);
         return value;
     }
 
     private static async Task<Dictionary<string, string>> GetFormFieldsAsync(HttpClient client, string path)
     {
-        HttpResponseMessage response = await client.GetAsync(path);
+        var response = await client.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         string html = await response.Content.ReadAsStringAsync();
@@ -373,7 +373,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
 
     private static Dictionary<string, string> ExtractFormFields(string html)
     {
-        Match formMatch = Regex.Match(
+        var formMatch = Regex.Match(
             html,
             "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -384,7 +384,7 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         }
 
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
-        MatchCollection inputMatches = Regex.Matches(
+        var inputMatches = Regex.Matches(
             formMatch.Groups["content"].Value,
             "<input[^>]*name=\"(?<name>[^\"]+)\"[^>]*value=\"(?<value>[^\"]*)\"[^>]*>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -399,8 +399,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
 
     private static string GetLocationPath(HttpResponseMessage response)
     {
-        Uri location = response.Headers.Location
-            ?? throw new InvalidOperationException("Expected a redirect location header.");
+        var location = response.Headers.Location
+                       ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri
             ? location.PathAndQuery
@@ -495,8 +495,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
 
         private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
         {
-            using TcpClient ownedClient = client;
-            using NetworkStream stream = ownedClient.GetStream();
+            using var ownedClient = client;
+            using var stream = ownedClient.GetStream();
             using StreamReader reader = new(stream, Encoding.ASCII, leaveOpen: true);
 
             string requestLine = await reader.ReadLineAsync(cancellationToken) ?? string.Empty;

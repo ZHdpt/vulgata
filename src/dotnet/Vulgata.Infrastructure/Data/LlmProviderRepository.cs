@@ -27,7 +27,7 @@ public sealed class LlmProviderRepository(VulgataDbContext dbContext) : ILlmProv
     {
         string normalizedName = LlmProvider.NormalizeName(name);
 
-        IQueryable<LlmProvider> query = dbContext.LlmProviders
+        var query = dbContext.LlmProviders
             .AsNoTracking()
             .Where(provider => provider.NormalizedName == normalizedName);
 
@@ -41,7 +41,7 @@ public sealed class LlmProviderRepository(VulgataDbContext dbContext) : ILlmProv
 
     public async Task<LlmProvider> AddAsync(LlmProvider provider, CancellationToken cancellationToken = default)
     {
-        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<LlmProvider> entry =
+        var entry =
             await dbContext.LlmProviders.AddAsync(provider, cancellationToken);
         return entry.Entity;
     }

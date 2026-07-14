@@ -15,8 +15,8 @@ public sealed class LlmProviderConnectionTestService(
         string apiKey,
         CancellationToken cancellationToken = default)
     {
-        HttpClient client = httpClientFactory.CreateClient("LlmProviderConnectionTest");
-        Uri requestUri = BuildModelsUri(provider.BaseEndpointUrl);
+        var client = httpClientFactory.CreateClient("LlmProviderConnectionTest");
+        var requestUri = BuildModelsUri(provider.BaseEndpointUrl);
 
         using HttpRequestMessage request = new(HttpMethod.Get, requestUri);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
@@ -24,7 +24,7 @@ public sealed class LlmProviderConnectionTestService(
 
         try
         {
-            using HttpResponseMessage response = await client.SendAsync(request, cancellationToken);
+            using var response = await client.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
                 logger.LogInformation("LLM provider connection test succeeded for provider {ProviderId}.", provider.Id);

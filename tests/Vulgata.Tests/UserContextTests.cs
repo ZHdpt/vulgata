@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Web.RequestPipeline;
@@ -14,12 +13,12 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class UserContextTests
 {
-    private const string TestUserId = "user-123";
+    private const string _testUserId = "user-123";
 
     [Fact]
     public void SystemOwnerFilter_AllSystems_AllowsAllAndHasNoOwnerId()
     {
-        SystemOwnerFilter filter = SystemOwnerFilter.AllSystems();
+        var filter = SystemOwnerFilter.AllSystems();
 
         Assert.True(filter.AllowAll);
         Assert.Null(filter.OwnerId);
@@ -28,24 +27,24 @@ public sealed class UserContextTests
     [Fact]
     public void SystemOwnerFilter_OwnedBy_HasUserIdAndDoesNotAllowAll()
     {
-        SystemOwnerFilter filter = SystemOwnerFilter.OwnedBy(TestUserId);
+        var filter = SystemOwnerFilter.OwnedBy(_testUserId);
 
         Assert.False(filter.AllowAll);
-        Assert.Equal(TestUserId, filter.OwnerId);
+        Assert.Equal(_testUserId, filter.OwnerId);
     }
 
     [Fact]
     public async Task UserContext_AdministratorPrincipal_YieldsIsAdministratorTrueAndAllSystemsFilter()
     {
-        ClaimsPrincipal principal = BuildPrincipal(TestUserId, authenticated: true);
+        var principal = BuildPrincipal(_testUserId, authenticated: true);
         IUserContext userContext = new UserContext(principal, new AlwaysSucceedAuthorizationService());
 
         bool isAdministrator = userContext.IsAdministrator;
 
         Assert.True(isAdministrator);
-        Assert.Equal(TestUserId, userContext.UserId);
+        Assert.Equal(_testUserId, userContext.UserId);
 
-        SystemOwnerFilter filter = userContext.ToSystemOwnerFilter();
+        var filter = userContext.ToSystemOwnerFilter();
         Assert.True(filter.AllowAll);
         Assert.Null(filter.OwnerId);
 
@@ -55,17 +54,17 @@ public sealed class UserContextTests
     [Fact]
     public async Task UserContext_NonAdministratorPrincipal_YieldsIsAdministratorFalseAndOwnedByFilter()
     {
-        ClaimsPrincipal principal = BuildPrincipal(TestUserId, authenticated: true);
+        var principal = BuildPrincipal(_testUserId, authenticated: true);
         IUserContext userContext = new UserContext(principal, new AlwaysFailAuthorizationService());
 
         bool isAdministrator = userContext.IsAdministrator;
 
         Assert.False(isAdministrator);
-        Assert.Equal(TestUserId, userContext.UserId);
+        Assert.Equal(_testUserId, userContext.UserId);
 
-        SystemOwnerFilter filter = userContext.ToSystemOwnerFilter();
+        var filter = userContext.ToSystemOwnerFilter();
         Assert.False(filter.AllowAll);
-        Assert.Equal(TestUserId, filter.OwnerId);
+        Assert.Equal(_testUserId, filter.OwnerId);
 
         await Task.CompletedTask;
     }
@@ -73,7 +72,7 @@ public sealed class UserContextTests
     [Fact]
     public async Task UserContext_MissingNameIdentifierClaim_YieldsEmptyUserId()
     {
-        ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
             [new Claim(ClaimTypes.Role, RoleNames.User)],
             authenticationType: "Test"));
 

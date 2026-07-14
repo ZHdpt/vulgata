@@ -11,15 +11,15 @@ public sealed class CreateLlmProviderRequest
 
     public string ApiKey { get; set; } = string.Empty;
 
-    public ApiTypeFlags SupportedApiTypes { get; set; }
+    public ApiType SupportedApiTypes { get; set; }
 
     public AgentType DefaultAgentType { get; set; }
 }
 
 public sealed class CreateLlmProviderRequestValidator : AbstractValidator<CreateLlmProviderRequest>
 {
-    private const ApiTypeFlags _supportedApiTypeMask =
-        ApiTypeFlags.ChatCompletions | ApiTypeFlags.Responses | ApiTypeFlags.Messages;
+    private const ApiType _supportedApiTypeMask =
+        ApiType.ChatCompletions | ApiType.Responses | ApiType.Messages;
 
     public CreateLlmProviderRequestValidator()
     {
@@ -37,7 +37,7 @@ public sealed class CreateLlmProviderRequestValidator : AbstractValidator<Create
             .MaximumLength(500).WithMessage("API 密钥最长 500 个字符。");
 
         RuleFor(request => request.SupportedApiTypes)
-            .Must(value => value != ApiTypeFlags.None).WithMessage("至少选择一种 API 类型。")
+            .Must(value => value != ApiType.None).WithMessage("至少选择一种 API 类型。")
             .Must(value => (value & ~_supportedApiTypeMask) == 0).WithMessage("支持的 API 类型无效。");
 
         RuleFor(request => request.DefaultAgentType)
@@ -46,7 +46,7 @@ public sealed class CreateLlmProviderRequestValidator : AbstractValidator<Create
 
     private static bool BeValidAbsoluteHttpUrl(string? value)
     {
-        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out Uri? uri))
+        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri))
         {
             return false;
         }

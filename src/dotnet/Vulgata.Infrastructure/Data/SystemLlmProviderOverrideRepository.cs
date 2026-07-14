@@ -46,14 +46,14 @@ public sealed class SystemLlmProviderOverrideRepository(VulgataDbContext dbConte
         SystemLlmProviderOverride overrideEntry,
         CancellationToken cancellationToken = default)
     {
-        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<SystemLlmProviderOverride> entry =
+        var entry =
             await dbContext.SystemLlmProviderOverrides.AddAsync(overrideEntry, cancellationToken);
         return entry.Entity;
     }
 
     public async Task<bool> RemoveAsync(Guid systemId, Guid overrideId, CancellationToken cancellationToken = default)
     {
-        SystemLlmProviderOverride? overrideEntry = await dbContext.SystemLlmProviderOverrides
+        var overrideEntry = await dbContext.SystemLlmProviderOverrides
             .FirstOrDefaultAsync(
                 item => item.SystemId == systemId && item.Id == overrideId,
                 cancellationToken);

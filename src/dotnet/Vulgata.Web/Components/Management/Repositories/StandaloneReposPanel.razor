@@ -1,5 +1,4 @@
 @using Vulgata.Shared.Repositories
-
 <section style="margin-bottom:1.5rem">
     <h2 style="margin-top:1.5rem">独立仓库</h2>
     <p>不归属于任何系统，所有具备管理权限的用户都可见。</p>
@@ -17,7 +16,7 @@
         <tbody>
             @if (Repositories.Count > 0)
             {
-                @foreach (RepositorySummaryDto repository in Repositories)
+                @foreach (var repository in Repositories)
                 {
                     <tr>
                         <td>@repository.Name</td>

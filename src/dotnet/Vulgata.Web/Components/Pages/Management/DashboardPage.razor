@@ -1,18 +1,14 @@
 @page "/management"
-@layout ManagementLayout
-@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
-@rendermode InteractiveServer
-@using System.Security.Claims
 @using FluentValidation
-@using Microsoft.Extensions.DependencyInjection
 @using Vulgata.Core.DomainServices
 @using Vulgata.Shared.Repositories
-@using Vulgata.Web.Components.Management.Databases
 @using Vulgata.Web.Components.Management.Repositories
 @using Vulgata.Web.Components.Management.Systems
 @using Vulgata.Web.Data
-@using Vulgata.Web.RequestPipeline
 @using Vulgata.Web.Validators
+@layout ManagementLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
+@rendermode InteractiveServer
 
 @inject ISystemRepository SystemRepository
 @inject IRepositoryManagementCoordinator RepositoryManagementCoordinator

@@ -4,7 +4,7 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        AuthenticationState authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         bool isAuthenticated = authenticationState.User.Identity?.IsAuthenticated ?? false;
 
         if (isAuthenticated)

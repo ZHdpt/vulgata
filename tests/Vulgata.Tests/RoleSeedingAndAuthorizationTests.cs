@@ -31,12 +31,12 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
     [Fact]
     public async Task Startup_SeedsExpectedRoles()
     {
-        using HttpClient client = CreateClient(_factory);
-        HttpResponseMessage startupResponse = await client.GetAsync("/Account/Login");
+        using var client = CreateClient(_factory);
+        var startupResponse = await client.GetAsync("/Account/Login");
         Assert.Equal(HttpStatusCode.OK, startupResponse.StatusCode);
 
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        RoleManager<IdentityRole> roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         foreach (string roleName in _seededRoles)
         {
@@ -89,21 +89,21 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
 
         await CreateUserWithRoleAsync(email, password, RoleNames.User);
 
-        using HttpClient client = CreateClient(_factory);
+        using var client = CreateClient(_factory);
         await LoginAsync(client, email, password);
 
-        HttpResponseMessage homeResponse = await client.GetAsync("/");
+        var homeResponse = await client.GetAsync("/");
         string homeHtml = WebUtility.HtmlDecode(await homeResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, homeResponse.StatusCode);
         Assert.Contains("对话", homeHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("管理后台", homeHtml, StringComparison.Ordinal);
 
-        HttpResponseMessage managementResponse = await client.GetAsync("/management");
+        var managementResponse = await client.GetAsync("/management");
         Assert.Equal(HttpStatusCode.Redirect, managementResponse.StatusCode);
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(managementResponse), StringComparison.Ordinal);
 
-        HttpResponseMessage deniedResponse = await client.GetAsync("/Account/AccessDenied");
+        var deniedResponse = await client.GetAsync("/Account/AccessDenied");
         string deniedHtml = WebUtility.HtmlDecode(await deniedResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, deniedResponse.StatusCode);
@@ -120,10 +120,10 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
 
         await CreateUserWithRoleAsync(email, password, roleName);
 
-        using HttpClient client = CreateClient(_factory);
+        using var client = CreateClient(_factory);
         await LoginAsync(client, email, password);
 
-        HttpResponseMessage response = await client.GetAsync("/management");
+        var response = await client.GetAsync("/management");
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -140,21 +140,21 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
     private static async Task<int> StartHostAndCountSeededRolesAsync(string connectionString)
     {
         await using RestartableWebApplicationFactory factory = new(connectionString);
-        using HttpClient client = CreateClient(factory);
+        using var client = CreateClient(factory);
 
-        HttpResponseMessage startupResponse = await client.GetAsync("/Account/Login");
+        var startupResponse = await client.GetAsync("/Account/Login");
         Assert.Equal(HttpStatusCode.OK, startupResponse.StatusCode);
 
-        await using AsyncServiceScope scope = factory.Services.CreateAsyncScope();
-        ApplicationDbContext identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         return await identityDb.Roles.CountAsync(role => role.Name != null && _seededRoles.Contains(role.Name));
     }
 
     private async Task CreateUserWithRoleAsync(string email, string password, string roleName)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         ApplicationUser user = new()
         {
@@ -163,22 +163,22 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
             EmailConfirmed = true,
         };
 
-        IdentityResult createResult = await userManager.CreateAsync(user, password);
+        var createResult = await userManager.CreateAsync(user, password);
         Assert.True(createResult.Succeeded, string.Join(", ", createResult.Errors.Select(error => error.Description)));
 
-        IdentityResult roleResult = await userManager.AddToRoleAsync(user, roleName);
+        var roleResult = await userManager.AddToRoleAsync(user, roleName);
         Assert.True(roleResult.Succeeded, string.Join(", ", roleResult.Errors.Select(error => error.Description)));
     }
 
     private static async Task LoginAsync(HttpClient client, string email, string password)
     {
-        Dictionary<string, string> loginFields = await GetFormFieldsAsync(client, "/Account/Login", "/Account/Login");
+        var loginFields = await GetFormFieldsAsync(client, "/Account/Login", "/Account/Login");
         loginFields["Input.Email"] = email;
         loginFields["Input.Password"] = password;
         loginFields["Input.RememberMe"] = "false";
 
         using FormUrlEncodedContent postData = new(loginFields);
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", postData);
+        var response = await client.PostAsync("/Account/Login", postData);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/", GetLocationPath(response));
@@ -186,7 +186,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
 
     private static async Task<Dictionary<string, string>> GetFormFieldsAsync(HttpClient client, string path, string? actionContains = null)
     {
-        HttpResponseMessage response = await client.GetAsync(path);
+        var response = await client.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         string html = await response.Content.ReadAsStringAsync();
@@ -195,7 +195,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
 
     private static Dictionary<string, string> ExtractFormFields(string html, string? actionContains = null)
     {
-        Match formMatch = string.IsNullOrWhiteSpace(actionContains)
+        var formMatch = string.IsNullOrWhiteSpace(actionContains)
             ? Regex.Match(
                 html,
                 "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
@@ -221,7 +221,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
         }
 
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
-        MatchCollection inputMatches = Regex.Matches(
+        var inputMatches = Regex.Matches(
             formMatch.Groups["content"].Value,
             "<input[^>]*name=\"(?<name>[^\"]+)\"[^>]*value=\"(?<value>[^\"]*)\"[^>]*>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -236,7 +236,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
 
     private static string GetLocationPath(HttpResponseMessage response)
     {
-        Uri location = response.Headers.Location
+        var location = response.Headers.Location
                        ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri

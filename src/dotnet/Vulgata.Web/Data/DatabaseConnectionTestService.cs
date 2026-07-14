@@ -38,7 +38,7 @@ public sealed class DatabaseConnectionTestService(ILogger<DatabaseConnectionTest
             await using SqliteConnection connection = new(connectionString);
             await connection.OpenAsync(cancellationToken);
 
-            await using SqliteCommand command = connection.CreateCommand();
+            await using var command = connection.CreateCommand();
             command.CommandText = "SELECT 1;";
             _ = await command.ExecuteScalarAsync(cancellationToken);
 

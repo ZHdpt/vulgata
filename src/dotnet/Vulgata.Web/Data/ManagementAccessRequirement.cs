@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Shared;
 
 namespace Vulgata.Web.Data;
@@ -14,10 +13,10 @@ public sealed class AdministratorOnlyHandler(IServiceScopeFactory scopeFactory)
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AdministratorOnlyRequirement requirement)
     {
-        await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
+        await using var scope = scopeFactory.CreateAsyncScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        ApplicationUser? user = await GetCurrentUserAsync(context, userManager);
+        var user = await GetCurrentUserAsync(context, userManager);
         if (user is null)
         {
             return;
@@ -55,10 +54,10 @@ public sealed class ManagementAccessHandler(IServiceScopeFactory scopeFactory)
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, ManagementAccessRequirement requirement)
     {
-        await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
+        await using var scope = scopeFactory.CreateAsyncScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        ApplicationUser? user = await GetCurrentUserAsync(context, userManager);
+        var user = await GetCurrentUserAsync(context, userManager);
         if (user is null)
         {
             return;

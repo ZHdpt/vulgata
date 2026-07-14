@@ -33,7 +33,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
     {
         string content = ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Account", "Pages", "Login.razor");
 
-        Match emailInputMatch = Regex.Match(
+        var emailInputMatch = Regex.Match(
             content,
             "<InputText\\b(?=[^>]*@bind-Value=\"Input\\.Email\")[^>]*>",
             RegexOptions.Singleline);
@@ -88,7 +88,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
     [Fact]
     public async Task LoginLink_OnPublicPage_PreservesReturnUrl()
     {
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
 
         string html = await client.GetStringAsync("/not-found");
         string href = ExtractAnchorHref(html, "登录");
@@ -107,20 +107,20 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
         await CreateUserAsync(email, password);
 
-        using HttpClient client = CreateClient();
-        Dictionary<string, string> loginFields = await GetFormFieldsAsync(client, "/Account/Login");
+        using var client = CreateClient();
+        var loginFields = await GetFormFieldsAsync(client, "/Account/Login");
         loginFields["Input.Email"] = email;
         loginFields["Input.Password"] = password;
         loginFields["Input.RememberMe"] = "false";
 
         using FormUrlEncodedContent postData = new(loginFields);
 
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", postData);
+        var response = await client.PostAsync("/Account/Login", postData);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/", GetLocationPath(response));
 
-        IEnumerable<string> cookies = response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? values)
+        var cookies = response.Headers.TryGetValues("Set-Cookie", out var values)
             ? values
             : [];
         Assert.Contains(cookies, cookie => cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
@@ -134,21 +134,21 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
         await CreateUserAsync(email, password);
 
-        using HttpClient client = CreateClient();
-        Dictionary<string, string> loginFields = await GetFormFieldsAsync(client, "/Account/Login");
+        using var client = CreateClient();
+        var loginFields = await GetFormFieldsAsync(client, "/Account/Login");
         loginFields["Input.Email"] = email;
         loginFields["Input.Password"] = "Wrong1!Pass";
         loginFields["Input.RememberMe"] = "false";
 
         using FormUrlEncodedContent postData = new(loginFields);
 
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", postData);
+        var response = await client.PostAsync("/Account/Login", postData);
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("邮箱或密码错误", html, StringComparison.Ordinal);
 
-        IEnumerable<string> cookies = response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? values)
+        var cookies = response.Headers.TryGetValues("Set-Cookie", out var values)
             ? values
             : [];
         Assert.DoesNotContain(cookies, cookie => cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
@@ -157,21 +157,21 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
     [Fact]
     public async Task Login_WithNonexistentEmail_ShowsSameGenericError()
     {
-        using HttpClient client = CreateClient();
-        Dictionary<string, string> loginFields = await GetFormFieldsAsync(client, "/Account/Login");
+        using var client = CreateClient();
+        var loginFields = await GetFormFieldsAsync(client, "/Account/Login");
         loginFields["Input.Email"] = "missing.user@example.com";
         loginFields["Input.Password"] = "Wrong1!Pass";
         loginFields["Input.RememberMe"] = "false";
 
         using FormUrlEncodedContent postData = new(loginFields);
 
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", postData);
+        var response = await client.PostAsync("/Account/Login", postData);
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("邮箱或密码错误", html, StringComparison.Ordinal);
 
-        IEnumerable<string> cookies = response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? values)
+        var cookies = response.Headers.TryGetValues("Set-Cookie", out var values)
             ? values
             : [];
         Assert.DoesNotContain(cookies, cookie => cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
@@ -185,24 +185,24 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
         await CreateUserAsync(email, password);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, email, password);
 
         string homeHtml = await client.GetStringAsync("/");
-        Dictionary<string, string> logoutFields = ExtractFormFields(homeHtml, "Account/Logout");
+        var logoutFields = ExtractFormFields(homeHtml, "Account/Logout");
 
         using FormUrlEncodedContent logoutPost = new(logoutFields);
-        HttpResponseMessage logoutResponse = await client.PostAsync("/Account/Logout", logoutPost);
+        var logoutResponse = await client.PostAsync("/Account/Logout", logoutPost);
 
         Assert.Equal(HttpStatusCode.Redirect, logoutResponse.StatusCode);
         Assert.Equal("/Account/Login", GetLocationPath(logoutResponse));
 
-        IEnumerable<string> logoutCookies = logoutResponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? values)
+        var logoutCookies = logoutResponse.Headers.TryGetValues("Set-Cookie", out var values)
             ? values
             : [];
         Assert.Contains(logoutCookies, cookie => cookie.Contains(".AspNetCore.Identity.Application=;", StringComparison.Ordinal));
 
-        HttpResponseMessage protectedResponse = await client.GetAsync("/");
+        var protectedResponse = await client.GetAsync("/");
         Assert.Equal(HttpStatusCode.Redirect, protectedResponse.StatusCode);
         Assert.Contains("Account/Login", protectedResponse.Headers.Location?.OriginalString, StringComparison.OrdinalIgnoreCase);
     }
@@ -210,9 +210,9 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
     [Fact]
     public async Task ProtectedRoute_Unauthenticated_RedirectsToLogin()
     {
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
 
-        HttpResponseMessage response = await client.GetAsync("/");
+        var response = await client.GetAsync("/");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
 
@@ -234,16 +234,16 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
         await CreateUserAsync(email, password);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         string loginPath = $"/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}";
-        Dictionary<string, string> loginFields = await GetFormFieldsAsync(client, loginPath);
+        var loginFields = await GetFormFieldsAsync(client, loginPath);
         loginFields["Input.Email"] = email;
         loginFields["Input.Password"] = password;
         loginFields["Input.RememberMe"] = "false";
 
         using FormUrlEncodedContent postData = new(loginFields);
 
-        HttpResponseMessage response = await client.PostAsync(loginPath, postData);
+        var response = await client.PostAsync(loginPath, postData);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal(returnUrl, GetLocationPath(response));
@@ -258,8 +258,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
     private async Task CreateUserAsync(string email, string password)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         ApplicationUser user = new()
         {
@@ -268,26 +268,26 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
             EmailConfirmed = true,
         };
 
-        IdentityResult result = await userManager.CreateAsync(user, password);
+        var result = await userManager.CreateAsync(user, password);
         Assert.True(result.Succeeded, string.Join(", ", result.Errors.Select(error => error.Description)));
     }
 
-    private async Task LoginAsync(HttpClient client, string email, string password)
+    private static async Task LoginAsync(HttpClient client, string email, string password)
     {
-        Dictionary<string, string> loginFields = await GetFormFieldsAsync(client, "/Account/Login");
+        var loginFields = await GetFormFieldsAsync(client, "/Account/Login");
         loginFields["Input.Email"] = email;
         loginFields["Input.Password"] = password;
         loginFields["Input.RememberMe"] = "false";
 
         using FormUrlEncodedContent postData = new(loginFields);
 
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", postData);
+        var response = await client.PostAsync("/Account/Login", postData);
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
     }
 
     private static async Task<Dictionary<string, string>> GetFormFieldsAsync(HttpClient client, string path, string? actionContains = null)
     {
-        HttpResponseMessage response = await client.GetAsync(path);
+        var response = await client.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         string html = await response.Content.ReadAsStringAsync();
@@ -296,7 +296,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
     private static Dictionary<string, string> ExtractFormFields(string html, string? actionContains = null)
     {
-        Match formMatch = string.IsNullOrWhiteSpace(actionContains)
+        var formMatch = string.IsNullOrWhiteSpace(actionContains)
             ? Regex.Match(
                 html,
                 "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
@@ -322,7 +322,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         }
 
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
-        MatchCollection inputMatches = Regex.Matches(
+        var inputMatches = Regex.Matches(
             formMatch.Groups["content"].Value,
             "<input[^>]*name=\"(?<name>[^\"]+)\"[^>]*value=\"(?<value>[^\"]*)\"[^>]*>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -337,7 +337,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
     private static string ExtractAnchorHref(string html, string innerText)
     {
-        Match match = Regex.Match(
+        var match = Regex.Match(
             html,
             $"<a[^>]*href=\"(?<href>[^\"]+)\"[^>]*>\\s*{Regex.Escape(innerText)}\\s*</a>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -349,7 +349,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
     private static string? GetQueryParameterValue(string uriOrPath, string key)
     {
-        Uri uri = Uri.TryCreate(uriOrPath, UriKind.Absolute, out Uri? absoluteUri)
+        var uri = Uri.TryCreate(uriOrPath, UriKind.Absolute, out var absoluteUri)
             ? absoluteUri
             : new Uri(new Uri("http://localhost"), uriOrPath);
 
@@ -360,7 +360,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
     private static string GetLocationPath(HttpResponseMessage response)
     {
-        Uri location = response.Headers.Location
+        var location = response.Headers.Location
                        ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri
@@ -451,10 +451,10 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
         protected override IHost CreateHost(IHostBuilder builder)
         {
-            IHost host = base.CreateHost(builder);
+            var host = base.CreateHost(builder);
 
-            using IServiceScope scope = host.Services.CreateScope();
-            VulgataDbContext domainDb = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            using var scope = host.Services.CreateScope();
+            var domainDb = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
             domainDb.Database.EnsureCreated();
 
             return host;

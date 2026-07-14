@@ -1,13 +1,12 @@
 @page "/management/settings/llm-providers"
-@layout ManagementLayout
-@attribute [Authorize(Policy = AuthorizationPolicyNames.AdministratorOnly)]
-@rendermode InteractiveServer
-
 @using FluentValidation
 @using Vulgata.Core.Entities
 @using Vulgata.Shared.LlmProviders
 @using Vulgata.Web.Data
 @using Vulgata.Web.Validators
+@layout ManagementLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.AdministratorOnly)]
+@rendermode InteractiveServer
 
 @inject ILlmProviderManagementCoordinator Coordinator
 @inject IValidator<CreateLlmProviderRequest> CreateValidator
@@ -134,7 +133,7 @@ else
 
         try
         {
-            IReadOnlyList<LlmProviderSummaryDto> providers = await Coordinator.ListAsync();
+            var providers = await Coordinator.ListAsync();
             _providers.Clear();
             _providers.AddRange(providers);
         }
@@ -158,15 +157,15 @@ else
 
     private void OpenEditDialog(LlmProviderSummaryDto provider)
     {
-        ApiTypeFlags supportedApiTypes = (ApiTypeFlags)provider.SupportedApiTypes;
+        var supportedApiTypes = (ApiType)provider.SupportedApiTypes;
         _editingProvider = provider;
         _form = new ProviderFormModel
         {
             Name = provider.Name,
             BaseEndpointUrl = provider.BaseEndpointUrl,
-            ChatCompletions = supportedApiTypes.HasFlag(ApiTypeFlags.ChatCompletions),
-            Responses = supportedApiTypes.HasFlag(ApiTypeFlags.Responses),
-            Messages = supportedApiTypes.HasFlag(ApiTypeFlags.Messages),
+            ChatCompletions = supportedApiTypes.HasFlag(ApiType.ChatCompletions),
+            Responses = supportedApiTypes.HasFlag(ApiType.Responses),
+            Messages = supportedApiTypes.HasFlag(ApiType.Messages),
             DefaultAgentType = (AgentType)provider.DefaultAgentType,
         };
         _formErrorMessage = null;
@@ -191,15 +190,15 @@ else
         {
             if (_editingProvider is null)
             {
-                CreateLlmProviderRequest request = BuildCreateRequest();
-                FluentValidation.Results.ValidationResult validationResult = await CreateValidator.ValidateAsync(request);
+                var request = BuildCreateRequest();
+                var validationResult = await CreateValidator.ValidateAsync(request);
                 if (!validationResult.IsValid)
                 {
                     _formErrorMessage = string.Join("；", validationResult.Errors.Select(error => error.ErrorMessage));
                     return;
                 }
 
-                LlmProviderMutationResult<LlmProviderSummaryDto> result = await Coordinator.CreateAsync(request);
+                var result = await Coordinator.CreateAsync(request);
                 if (result.Outcome == LlmProviderMutationOutcome.DuplicateName)
                 {
                     _formErrorMessage = result.Message;
@@ -215,15 +214,15 @@ else
             }
             else
             {
-                UpdateLlmProviderRequest request = BuildUpdateRequest();
-                FluentValidation.Results.ValidationResult validationResult = await UpdateValidator.ValidateAsync(request);
+                var request = BuildUpdateRequest();
+                var validationResult = await UpdateValidator.ValidateAsync(request);
                 if (!validationResult.IsValid)
                 {
                     _formErrorMessage = string.Join("；", validationResult.Errors.Select(error => error.ErrorMessage));
                     return;
                 }
 
-                LlmProviderMutationResult<LlmProviderSummaryDto> result = await Coordinator.UpdateAsync(_editingProvider.Id, request);
+                var result = await Coordinator.UpdateAsync(_editingProvider.Id, request);
                 if (result.Outcome == LlmProviderMutationOutcome.NotFound)
                 {
                     _formErrorMessage = "LLM 提供商不存在。";
@@ -262,7 +261,7 @@ else
 
         try
         {
-            LlmProviderMutationResult<bool> result = await Coordinator.DeleteAsync(provider.Id);
+            var result = await Coordinator.DeleteAsync(provider.Id);
             if (result.Outcome == LlmProviderMutationOutcome.NotFound)
             {
                 _errorMessage = "LLM 提供商不存在。";
@@ -290,7 +289,7 @@ else
 
         try
         {
-            LlmProviderConnectionTestResult result = await Coordinator.TestConnectionAsync(provider.Id);
+            var result = await Coordinator.TestConnectionAsync(provider.Id);
             if (result.Outcome == LlmProviderConnectionTestOutcome.Success)
             {
                 _statusMessage = result.Message;
@@ -333,23 +332,23 @@ else
         };
     }
 
-    private ApiTypeFlags BuildSupportedApiTypes()
+    private ApiType BuildSupportedApiTypes()
     {
-        ApiTypeFlags supportedApiTypes = ApiTypeFlags.None;
+        var supportedApiTypes = ApiType.None;
 
         if (_form.ChatCompletions)
         {
-            supportedApiTypes |= ApiTypeFlags.ChatCompletions;
+            supportedApiTypes |= ApiType.ChatCompletions;
         }
 
         if (_form.Responses)
         {
-            supportedApiTypes |= ApiTypeFlags.Responses;
+            supportedApiTypes |= ApiType.Responses;
         }
 
         if (_form.Messages)
         {
-            supportedApiTypes |= ApiTypeFlags.Messages;
+            supportedApiTypes |= ApiType.Messages;
         }
 
         return supportedApiTypes;
@@ -357,20 +356,20 @@ else
 
     private static string FormatApiTypes(int supportedApiTypes)
     {
-        ApiTypeFlags flags = (ApiTypeFlags)supportedApiTypes;
+        var flags = (ApiType)supportedApiTypes;
         List<string> labels = [];
 
-        if (flags.HasFlag(ApiTypeFlags.ChatCompletions))
+        if (flags.HasFlag(ApiType.ChatCompletions))
         {
             labels.Add("Chat Completions");
         }
 
-        if (flags.HasFlag(ApiTypeFlags.Responses))
+        if (flags.HasFlag(ApiType.Responses))
         {
             labels.Add("Responses");
         }
 
-        if (flags.HasFlag(ApiTypeFlags.Messages))
+        if (flags.HasFlag(ApiType.Messages))
         {
             labels.Add("Messages");
         }

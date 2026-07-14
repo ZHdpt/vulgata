@@ -24,10 +24,10 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
         await CreateUserAsync(email, password);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, email, password);
 
-        HttpResponseMessage response = await client.GetAsync("/Account/Manage");
+        var response = await client.GetAsync("/Account/Manage");
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -46,20 +46,20 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
         string userId = await CreateUserAsync(email, password);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, email, password);
 
-        Dictionary<string, string> formFields = await GetFormFieldsAsync(client, "/Account/Manage", "/Account/Manage");
+        var formFields = await GetFormFieldsAsync(client, "/Account/Manage", "/Account/Manage");
         formFields["Input.DisplayName"] = newDisplayName;
 
         using FormUrlEncodedContent postData = new(formFields);
-        HttpResponseMessage response = await client.PostAsync("/Account/Manage", postData);
+        var response = await client.PostAsync("/Account/Manage", postData);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/Account/Manage", GetLocationPath(response));
 
         string html = WebUtility.HtmlDecode(await client.GetStringAsync("/Account/Manage"));
-        ApplicationUser user = await FindUserByIdAsync(userId);
+        var user = await FindUserByIdAsync(userId);
 
         Assert.Equal(newDisplayName, user.DisplayName);
         Assert.Contains("个人资料已更新", html, StringComparison.Ordinal);
@@ -74,24 +74,24 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
         string userId = await CreateUserAsync(originalEmail, password, displayName: "测试用户");
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, originalEmail, password);
 
-        Dictionary<string, string> formFields = await GetFormFieldsAsync(client, "/Account/Manage/Email", "/Account/Manage/Email");
+        var formFields = await GetFormFieldsAsync(client, "/Account/Manage/Email", "/Account/Manage/Email");
         formFields["Input.NewEmail"] = newEmail;
 
         using FormUrlEncodedContent postData = new(formFields);
-        HttpResponseMessage response = await client.PostAsync("/Account/Manage/Email", postData);
+        var response = await client.PostAsync("/Account/Manage/Email", postData);
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
-        ApplicationUser user = await FindUserByIdAsync(userId);
+        var user = await FindUserByIdAsync(userId);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(newEmail, user.Email);
         Assert.Equal(newEmail, user.UserName);
         Assert.Contains("邮箱已更新", html, StringComparison.Ordinal);
 
-        using HttpClient reloginClient = CreateClient();
+        using var reloginClient = CreateClient();
         await LoginAsync(reloginClient, newEmail, password);
     }
 
@@ -105,17 +105,17 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         string userId = await CreateUserAsync(originalEmail, password);
         await CreateUserAsync(existingEmail, password, displayName: "已存在用户");
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, originalEmail, password);
 
-        Dictionary<string, string> formFields = await GetFormFieldsAsync(client, "/Account/Manage/Email", "/Account/Manage/Email");
+        var formFields = await GetFormFieldsAsync(client, "/Account/Manage/Email", "/Account/Manage/Email");
         formFields["Input.NewEmail"] = existingEmail;
 
         using FormUrlEncodedContent postData = new(formFields);
-        HttpResponseMessage response = await client.PostAsync("/Account/Manage/Email", postData);
+        var response = await client.PostAsync("/Account/Manage/Email", postData);
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
-        ApplicationUser user = await FindUserByIdAsync(userId);
+        var user = await FindUserByIdAsync(userId);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("该邮箱已被注册", html, StringComparison.Ordinal);
@@ -132,16 +132,16 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
         string userId = await CreateUserAsync(email, password);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, email, password);
 
-        Dictionary<string, string> formFields = await GetFormFieldsAsync(client, "/Account/Manage/ChangePassword", "/Account/Manage/ChangePassword");
+        var formFields = await GetFormFieldsAsync(client, "/Account/Manage/ChangePassword", "/Account/Manage/ChangePassword");
         formFields["Input.OldPassword"] = "Wrong1!Pass";
         formFields["Input.NewPassword"] = attemptedNewPassword;
         formFields["Input.ConfirmPassword"] = attemptedNewPassword;
 
         using FormUrlEncodedContent postData = new(formFields);
-        HttpResponseMessage response = await client.PostAsync("/Account/Manage/ChangePassword", postData);
+        var response = await client.PostAsync("/Account/Manage/ChangePassword", postData);
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -159,16 +159,16 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
         string userId = await CreateUserAsync(email, oldPassword);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, email, oldPassword);
 
-        Dictionary<string, string> formFields = await GetFormFieldsAsync(client, "/Account/Manage/ChangePassword", "/Account/Manage/ChangePassword");
+        var formFields = await GetFormFieldsAsync(client, "/Account/Manage/ChangePassword", "/Account/Manage/ChangePassword");
         formFields["Input.OldPassword"] = oldPassword;
         formFields["Input.NewPassword"] = weakNewPassword;
         formFields["Input.ConfirmPassword"] = weakNewPassword;
 
         using FormUrlEncodedContent postData = new(formFields);
-        HttpResponseMessage response = await client.PostAsync("/Account/Manage/ChangePassword", postData);
+        var response = await client.PostAsync("/Account/Manage/ChangePassword", postData);
         string rawHtml = await response.Content.ReadAsStringAsync();
         string html = WebUtility.HtmlDecode(rawHtml);
 
@@ -189,16 +189,16 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
         string userId = await CreateUserAsync(email, oldPassword, displayName: "修改密码用户");
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, email, oldPassword);
 
-        Dictionary<string, string> formFields = await GetFormFieldsAsync(client, "/Account/Manage/ChangePassword", "/Account/Manage/ChangePassword");
+        var formFields = await GetFormFieldsAsync(client, "/Account/Manage/ChangePassword", "/Account/Manage/ChangePassword");
         formFields["Input.OldPassword"] = oldPassword;
         formFields["Input.NewPassword"] = newPassword;
         formFields["Input.ConfirmPassword"] = newPassword;
 
         using FormUrlEncodedContent postData = new(formFields);
-        HttpResponseMessage response = await client.PostAsync("/Account/Manage/ChangePassword", postData);
+        var response = await client.PostAsync("/Account/Manage/ChangePassword", postData);
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/Account/Manage/ChangePassword", GetLocationPath(response));
@@ -206,16 +206,16 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         string html = WebUtility.HtmlDecode(await client.GetStringAsync("/Account/Manage/ChangePassword"));
         Assert.Contains("您的密码已修改", html, StringComparison.Ordinal);
 
-        HttpResponseMessage protectedResponse = await client.GetAsync("/Account/Manage");
+        var protectedResponse = await client.GetAsync("/Account/Manage");
         Assert.Equal(HttpStatusCode.OK, protectedResponse.StatusCode);
         Assert.True(await CheckPasswordAsync(userId, newPassword));
         Assert.False(await CheckPasswordAsync(userId, oldPassword));
 
-        using HttpClient reloginClient = CreateClient();
+        using var reloginClient = CreateClient();
         await LoginAsync(reloginClient, email, newPassword);
 
-        using HttpClient oldPasswordClient = CreateClient();
-        HttpResponseMessage oldPasswordResponse = await PostLoginAsync(oldPasswordClient, email, oldPassword);
+        using var oldPasswordClient = CreateClient();
+        var oldPasswordResponse = await PostLoginAsync(oldPasswordClient, email, oldPassword);
         string oldPasswordHtml = WebUtility.HtmlDecode(await oldPasswordResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, oldPasswordResponse.StatusCode);
@@ -231,8 +231,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
     private async Task<string> CreateUserAsync(string email, string password, string? displayName = null)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         ApplicationUser user = new()
         {
@@ -242,41 +242,41 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
             DisplayName = displayName,
         };
 
-        IdentityResult result = await userManager.CreateAsync(user, password);
+        var result = await userManager.CreateAsync(user, password);
         Assert.True(result.Succeeded, string.Join(", ", result.Errors.Select(error => error.Description)));
         return user.Id;
     }
 
     private async Task<ApplicationUser> FindUserByIdAsync(string userId)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        ApplicationUser? user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(userId);
         Assert.NotNull(user);
         return user;
     }
 
     private async Task<bool> CheckPasswordAsync(string userId, string password)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        ApplicationUser? user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(userId);
         Assert.NotNull(user);
         return await userManager.CheckPasswordAsync(user, password);
     }
 
     private async Task LoginAsync(HttpClient client, string email, string password)
     {
-        HttpResponseMessage response = await PostLoginAsync(client, email, password);
+        var response = await PostLoginAsync(client, email, password);
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/", GetLocationPath(response));
     }
 
-    private async Task<HttpResponseMessage> PostLoginAsync(HttpClient client, string email, string password)
+    private static async Task<HttpResponseMessage> PostLoginAsync(HttpClient client, string email, string password)
     {
-        Dictionary<string, string> loginFields = await GetFormFieldsAsync(client, "/Account/Login", "/Account/Login");
+        var loginFields = await GetFormFieldsAsync(client, "/Account/Login", "/Account/Login");
         loginFields["Input.Email"] = email;
         loginFields["Input.Password"] = password;
         loginFields["Input.RememberMe"] = "false";
@@ -287,7 +287,7 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
     private static async Task<Dictionary<string, string>> GetFormFieldsAsync(HttpClient client, string path, string? actionContains = null)
     {
-        HttpResponseMessage response = await client.GetAsync(path);
+        var response = await client.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         string html = await response.Content.ReadAsStringAsync();
@@ -296,7 +296,7 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
     private static Dictionary<string, string> ExtractFormFields(string html, string? actionContains = null)
     {
-        Match formMatch = string.IsNullOrWhiteSpace(actionContains)
+        var formMatch = string.IsNullOrWhiteSpace(actionContains)
             ? Regex.Match(
                 html,
                 "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
@@ -320,7 +320,7 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         }
 
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
-        MatchCollection inputMatches = Regex.Matches(
+        var inputMatches = Regex.Matches(
             formMatch.Groups["content"].Value,
             "<input[^>]*name=\"(?<name>[^\"]+)\"[^>]*value=\"(?<value>[^\"]*)\"[^>]*>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -335,8 +335,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
 
     private static string GetLocationPath(HttpResponseMessage response)
     {
-        Uri location = response.Headers.Location
-            ?? throw new InvalidOperationException("Expected a redirect location header.");
+        var location = response.Headers.Location
+                       ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri
             ? location.PathAndQuery

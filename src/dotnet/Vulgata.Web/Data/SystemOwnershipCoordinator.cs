@@ -74,26 +74,26 @@ public sealed class SystemOwnershipCoordinator(
         Guid systemId,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SystemOwnerAssignmentSummary> assignments = await systemRepository.ListOwnersAsync(systemId, cancellationToken);
+        var assignments = await systemRepository.ListOwnersAsync(systemId, cancellationToken);
         if (assignments.Count == 0)
         {
             return [];
         }
 
-        HashSet<string> userIds = assignments
+        var userIds = assignments
             .Select(assignment => assignment.UserId)
             .ToHashSet(StringComparer.Ordinal);
 
-        List<ApplicationUser> users = await userManager.Users
+        var users = await userManager.Users
             .Where(user => userIds.Contains(user.Id))
             .ToListAsync(cancellationToken);
 
-        Dictionary<string, ApplicationUser> userLookup = users.ToDictionary(user => user.Id, StringComparer.Ordinal);
+        var userLookup = users.ToDictionary(user => user.Id, StringComparer.Ordinal);
 
         return assignments
             .Select(assignment =>
             {
-                if (userLookup.TryGetValue(assignment.UserId, out ApplicationUser? user))
+                if (userLookup.TryGetValue(assignment.UserId, out var user))
                 {
                     return new SystemOwnerAssignmentDto
                     {
@@ -120,18 +120,18 @@ public sealed class SystemOwnershipCoordinator(
         string? keyword,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<SystemOwnerAssignmentSummary> assignments = await systemRepository.ListOwnersAsync(systemId, cancellationToken);
+        var assignments = await systemRepository.ListOwnersAsync(systemId, cancellationToken);
 
-        HashSet<string> assignedUserIds = assignments
+        var assignedUserIds = assignments
             .Select(assignment => assignment.UserId)
             .ToHashSet(StringComparer.Ordinal);
 
-        IList<ApplicationUser> administrators = await userManager.GetUsersInRoleAsync(RoleNames.Administrator);
-        HashSet<string> administratorUserIds = administrators
+        var administrators = await userManager.GetUsersInRoleAsync(RoleNames.Administrator);
+        var administratorUserIds = administrators
             .Select(user => user.Id)
             .ToHashSet(StringComparer.Ordinal);
 
-        IQueryable<ApplicationUser> query = userManager.Users
+        var query = userManager.Users
             .Where(user => !assignedUserIds.Contains(user.Id) && !administratorUserIds.Contains(user.Id));
 
         string normalizedKeyword = (keyword ?? string.Empty).Trim().ToUpperInvariant();
@@ -143,7 +143,7 @@ public sealed class SystemOwnershipCoordinator(
                 || (user.DisplayName ?? string.Empty).ToUpper().Contains(normalizedKeyword));
         }
 
-        List<ApplicationUser> users = await query
+        var users = await query
             .OrderBy(user => user.Email)
             .ThenBy(user => user.UserName)
             .Take(50)
@@ -173,7 +173,7 @@ public sealed class SystemOwnershipCoordinator(
         await _ownershipMutationLock.WaitAsync(cancellationToken);
         try
         {
-            ApplicationUser? user = await userManager.FindByIdAsync(normalizedUserId);
+            var user = await userManager.FindByIdAsync(normalizedUserId);
             if (user is null)
             {
                 return SystemOwnershipAssignmentResult.UserNotFound;
@@ -184,7 +184,7 @@ public sealed class SystemOwnershipCoordinator(
                 return SystemOwnershipAssignmentResult.UserIsAdministrator;
             }
 
-            SystemOwnerAssignmentWriteResult assignmentResult = await systemRepository.AssignOwnerAsync(
+            var assignmentResult = await systemRepository.AssignOwnerAsync(
                 systemId,
                 normalizedUserId,
                 DateTimeOffset.UtcNow,
@@ -204,7 +204,7 @@ public sealed class SystemOwnershipCoordinator(
 
             if (!await userManager.IsInRoleAsync(user, RoleNames.SystemOwner))
             {
-                IdentityResult addRoleResult = await userManager.AddToRoleAsync(user, RoleNames.SystemOwner);
+                var addRoleResult = await userManager.AddToRoleAsync(user, RoleNames.SystemOwner);
                 if (!addRoleResult.Succeeded)
                 {
                     await systemRepository.RemoveOwnerAsync(systemId, normalizedUserId, cancellationToken);
@@ -248,7 +248,7 @@ public sealed class SystemOwnershipCoordinator(
 
             await systemRepository.SaveChangesAsync(cancellationToken);
 
-            ApplicationUser? user = await userManager.FindByIdAsync(normalizedUserId);
+            var user = await userManager.FindByIdAsync(normalizedUserId);
             if (user is null)
             {
                 return SystemOwnershipRemovalResult.Removed;
@@ -262,7 +262,7 @@ public sealed class SystemOwnershipCoordinator(
                 bool hasSystemOwnerRole = await userManager.IsInRoleAsync(user, RoleNames.SystemOwner);
                 if (hasSystemOwnerRole)
                 {
-                    IdentityResult removeRoleResult = await userManager.RemoveFromRoleAsync(user, RoleNames.SystemOwner);
+                    var removeRoleResult = await userManager.RemoveFromRoleAsync(user, RoleNames.SystemOwner);
                     if (!removeRoleResult.Succeeded)
                     {
                         return SystemOwnershipRemovalResult.Failed(removeRoleResult);
@@ -272,7 +272,7 @@ public sealed class SystemOwnershipCoordinator(
                 bool hasUserRole = await userManager.IsInRoleAsync(user, RoleNames.User);
                 if (!hasUserRole)
                 {
-                    IdentityResult addUserRoleResult = await userManager.AddToRoleAsync(user, RoleNames.User);
+                    var addUserRoleResult = await userManager.AddToRoleAsync(user, RoleNames.User);
                     if (!addUserRoleResult.Succeeded)
                     {
                         return SystemOwnershipRemovalResult.Failed(addUserRoleResult);

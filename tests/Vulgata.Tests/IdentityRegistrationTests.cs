@@ -42,8 +42,8 @@ public class IdentityRegistrationTests
 
     private static object CreateRegisterInput(string email, string password, string confirmPassword)
     {
-        Type inputModelType = GetRegisterComponentType().GetNestedType("InputModel", BindingFlags.NonPublic)
-                              ?? throw new InvalidOperationException("Register input model type could not be found.");
+        var inputModelType = GetRegisterComponentType().GetNestedType("InputModel", BindingFlags.NonPublic)
+                             ?? throw new InvalidOperationException("Register input model type could not be found.");
         object input = Activator.CreateInstance(inputModelType, nonPublic: true)
                        ?? throw new InvalidOperationException("Register input model could not be created.");
 
@@ -60,7 +60,7 @@ public class IdentityRegistrationTests
         IdentityResult? createResult = null,
         string? returnUrl = null)
     {
-        Type registerType = GetRegisterComponentType();
+        var registerType = GetRegisterComponentType();
         object component = Activator.CreateInstance(registerType, nonPublic: true)
                            ?? throw new InvalidOperationException("Register component could not be created.");
         object input = CreateRegisterInput(email, password, confirmPassword);
@@ -96,13 +96,13 @@ public class IdentityRegistrationTests
         IEnumerable<ApplicationUser>? existingUsers = null,
         string? returnUrl = null)
     {
-        Type registerType = GetRegisterComponentType();
+        var registerType = GetRegisterComponentType();
         object component = Activator.CreateInstance(registerType, nonPublic: true)
                            ?? throw new InvalidOperationException("Register component could not be created.");
         object input = CreateRegisterInput(email, password, confirmPassword);
 
         TestUserStore userStore = new(existingUsers);
-        UserManager<ApplicationUser> userManager = CreateExecutableUserManager(userStore);
+        var userManager = CreateExecutableUserManager(userStore);
         AdministratorRoleCoordinator administratorRoleCoordinator = new(userManager, NullLogger<AdministratorRoleCoordinator>.Instance);
         TestSignInManager signInManager = new(userManager);
         TestEmailSender emailSender = new();
@@ -150,8 +150,8 @@ public class IdentityRegistrationTests
 
     private static object CreateIdentityRedirectManager(NavigationManager navigationManager)
     {
-        Type redirectManagerType = typeof(ApplicationUser).Assembly.GetType("Vulgata.Web.Components.Account.IdentityRedirectManager")
-                                   ?? throw new InvalidOperationException("Identity redirect manager type could not be found.");
+        var redirectManagerType = typeof(ApplicationUser).Assembly.GetType("Vulgata.Web.Components.Account.IdentityRedirectManager")
+                                  ?? throw new InvalidOperationException("Identity redirect manager type could not be found.");
 
         return Activator.CreateInstance(
                    redirectManagerType,
@@ -174,15 +174,15 @@ public class IdentityRegistrationTests
 
     private static void SetProperty(object instance, string name, object? value)
     {
-        PropertyInfo property = instance.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                                ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
+        var property = instance.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                       ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
         property.SetValue(instance, value);
     }
 
     private static object? GetPropertyValue(object instance, string name)
     {
-        PropertyInfo property = instance.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                                ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
+        var property = instance.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                       ?? throw new InvalidOperationException($"Property '{name}' could not be found on '{instance.GetType().FullName}'.");
         return property.GetValue(instance);
     }
 
@@ -206,7 +206,7 @@ public class IdentityRegistrationTests
         BcryptPasswordHasher<ApplicationUser> hasher = new();
         string hash = hasher.HashPassword(user, "Aa1!Aa1!");
 
-        PasswordVerificationResult result = hasher.VerifyHashedPassword(user, hash, "Aa1!Aa1!");
+        var result = hasher.VerifyHashedPassword(user, hash, "Aa1!Aa1!");
 
         Assert.Equal(PasswordVerificationResult.Success, result);
     }
@@ -218,7 +218,7 @@ public class IdentityRegistrationTests
         BcryptPasswordHasher<ApplicationUser> hasher = new();
         string hash = hasher.HashPassword(user, "Aa1!Aa1!");
 
-        PasswordVerificationResult result = hasher.VerifyHashedPassword(user, hash, "Different1!");
+        var result = hasher.VerifyHashedPassword(user, hash, "Different1!");
 
         Assert.Equal(PasswordVerificationResult.Failed, result);
     }
@@ -230,7 +230,7 @@ public class IdentityRegistrationTests
         string legacyHash = new PasswordHasher<ApplicationUser>().HashPassword(user, "Aa1!Aa1!");
         BcryptPasswordHasher<ApplicationUser> hasher = new();
 
-        PasswordVerificationResult result = hasher.VerifyHashedPassword(user, legacyHash, "Aa1!Aa1!");
+        var result = hasher.VerifyHashedPassword(user, legacyHash, "Aa1!Aa1!");
 
         Assert.Equal(PasswordVerificationResult.Failed, result);
     }
@@ -285,7 +285,7 @@ public class IdentityRegistrationTests
     [Fact]
     public async Task RegisterUserSignsInAndRedirectsToChatPageAfterSuccessfulRegistrationAsync()
     {
-        RegistrationHarness harness = CreateRegistrationHarness(
+        var harness = CreateRegistrationHarness(
             email: "user@example.com",
             password: "Aa1!Aa1!",
             confirmPassword: "Aa1!Aa1!");
@@ -305,7 +305,7 @@ public class IdentityRegistrationTests
     [Fact]
     public async Task RegisterUserStoresBcryptPasswordHashThroughIdentityPipelineAsync()
     {
-        RegistrationHarness harness = CreateExecutableRegistrationHarness(
+        var harness = CreateExecutableRegistrationHarness(
             email: "new.user@example.com",
             password: "Aa1!Aa1!",
             confirmPassword: "Aa1!Aa1!");
@@ -325,8 +325,8 @@ public class IdentityRegistrationTests
     public async Task AdministratorRoleCoordinator_AssignInitialRoleAsync_ConcurrentCallsPromoteExactlyOneAdministrator()
     {
         TestUserStore store = new();
-        ApplicationUser firstUser = CreateSeededUser("first-user-id", "first.user@example.com");
-        ApplicationUser secondUser = CreateSeededUser("second-user-id", "second.user@example.com");
+        var firstUser = CreateSeededUser("first-user-id", "first.user@example.com");
+        var secondUser = CreateSeededUser("second-user-id", "second.user@example.com");
 
         await store.CreateAsync(firstUser, CancellationToken.None);
         await store.CreateAsync(secondUser, CancellationToken.None);
@@ -335,13 +335,13 @@ public class IdentityRegistrationTests
         AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store), NullLogger<AdministratorRoleCoordinator>.Instance);
         TaskCompletionSource start = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        Task<IdentityResult> firstAssignment = Task.Run(async () =>
+        var firstAssignment = Task.Run(async () =>
         {
             await start.Task;
             return await firstCoordinator.AssignInitialRoleAsync(firstUser);
         });
 
-        Task<IdentityResult> secondAssignment = Task.Run(async () =>
+        var secondAssignment = Task.Run(async () =>
         {
             await start.Task;
             return await secondCoordinator.AssignInitialRoleAsync(secondUser);
@@ -349,12 +349,12 @@ public class IdentityRegistrationTests
 
         start.SetResult();
 
-        IdentityResult[] results = await Task.WhenAll(firstAssignment, secondAssignment);
+        var results = await Task.WhenAll(firstAssignment, secondAssignment);
 
         Assert.All(results, result => Assert.True(result.Succeeded));
 
-        IList<string> firstRoles = await store.GetRolesAsync(firstUser, CancellationToken.None);
-        IList<string> secondRoles = await store.GetRolesAsync(secondUser, CancellationToken.None);
+        var firstRoles = await store.GetRolesAsync(firstUser, CancellationToken.None);
+        var secondRoles = await store.GetRolesAsync(secondUser, CancellationToken.None);
         string[][] roleSets = [firstRoles.ToArray(), secondRoles.ToArray()];
 
         Assert.Equal(1, roleSets.Count(roles => roles.Contains(RoleNames.Administrator, StringComparer.Ordinal)));
@@ -365,8 +365,8 @@ public class IdentityRegistrationTests
     public async Task AdministratorRoleCoordinator_RemoveAdministratorAsync_ConcurrentCallsPreserveLastAdministrator()
     {
         TestUserStore store = new();
-        ApplicationUser firstAdministrator = CreateSeededUser("first-admin-id", "first.admin@example.com");
-        ApplicationUser secondAdministrator = CreateSeededUser("second-admin-id", "second.admin@example.com");
+        var firstAdministrator = CreateSeededUser("first-admin-id", "first.admin@example.com");
+        var secondAdministrator = CreateSeededUser("second-admin-id", "second.admin@example.com");
 
         await store.CreateAsync(firstAdministrator, CancellationToken.None);
         await store.CreateAsync(secondAdministrator, CancellationToken.None);
@@ -377,13 +377,13 @@ public class IdentityRegistrationTests
         AdministratorRoleCoordinator secondCoordinator = new(new TestUserManager(store), NullLogger<AdministratorRoleCoordinator>.Instance);
         TaskCompletionSource start = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        Task<AdministratorRoleRemovalResult> firstRemoval = Task.Run(async () =>
+        var firstRemoval = Task.Run(async () =>
         {
             await start.Task;
             return await firstCoordinator.RemoveAdministratorAsync(firstAdministrator);
         });
 
-        Task<AdministratorRoleRemovalResult> secondRemoval = Task.Run(async () =>
+        var secondRemoval = Task.Run(async () =>
         {
             await start.Task;
             return await secondCoordinator.RemoveAdministratorAsync(secondAdministrator);
@@ -391,19 +391,19 @@ public class IdentityRegistrationTests
 
         start.SetResult();
 
-        AdministratorRoleRemovalResult[] results = await Task.WhenAll(firstRemoval, secondRemoval);
+        var results = await Task.WhenAll(firstRemoval, secondRemoval);
 
         Assert.Equal(1, results.Count(result => result.Outcome == AdministratorRoleRemovalOutcome.Success));
         Assert.Equal(1, results.Count(result => result.Outcome == AdministratorRoleRemovalOutcome.LastAdministratorBlocked));
 
-        IList<ApplicationUser> administrators = await store.GetUsersInRoleAsync(RoleNames.Administrator, CancellationToken.None);
+        var administrators = await store.GetUsersInRoleAsync(RoleNames.Administrator, CancellationToken.None);
         Assert.Single(administrators);
 
-        ApplicationUser demotedUser = administrators[0].Id == firstAdministrator.Id
+        var demotedUser = administrators[0].Id == firstAdministrator.Id
             ? secondAdministrator
             : firstAdministrator;
 
-        IList<string> demotedRoles = await store.GetRolesAsync(demotedUser, CancellationToken.None);
+        var demotedRoles = await store.GetRolesAsync(demotedUser, CancellationToken.None);
         Assert.DoesNotContain(RoleNames.Administrator, demotedRoles);
         Assert.Contains(RoleNames.User, demotedRoles);
     }
@@ -420,7 +420,7 @@ public class IdentityRegistrationTests
             NormalizedEmail = "DUPLICATE@EXAMPLE.COM",
         };
 
-        RegistrationHarness harness = CreateExecutableRegistrationHarness(
+        var harness = CreateExecutableRegistrationHarness(
             email: "duplicate@example.com",
             password: "Aa1!Aa1!",
             confirmPassword: "Aa1!Aa1!",
@@ -437,13 +437,13 @@ public class IdentityRegistrationTests
     [Fact]
     public async Task RegisterUserReturnsChineseDuplicateEmailMessageWhenCreationFailsAsync()
     {
-        IdentityResult duplicateEmailFailure = IdentityResult.Failed(
+        var duplicateEmailFailure = IdentityResult.Failed(
             new IdentityError
             {
                 Code = nameof(IdentityErrorDescriber.DuplicateEmail),
                 Description = "该邮箱已被注册",
             });
-        RegistrationHarness harness = CreateRegistrationHarness(
+        var harness = CreateRegistrationHarness(
             email: "duplicate@example.com",
             password: "Aa1!Aa1!",
             confirmPassword: "Aa1!Aa1!",
@@ -462,7 +462,7 @@ public class IdentityRegistrationTests
         string repoRoot = GetRepoRoot();
         string programFile = Path.Combine(repoRoot, "src", "dotnet", "Vulgata.Web", "Program.cs");
         string content = File.ReadAllText(programFile);
-        IdentityOptions options = CreateProductionIdentityOptions();
+        var options = CreateProductionIdentityOptions();
 
         Assert.Contains("AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.Configure)", content, StringComparison.Ordinal);
         Assert.Contains(".AddErrorDescriber<ChineseIdentityErrorDescriber>()", content, StringComparison.Ordinal);
@@ -483,10 +483,10 @@ public class IdentityRegistrationTests
     [Fact]
     public void RegisterInputModelReturnsChineseValidationMessages()
     {
-        IReadOnlyList<ValidationResult> emptyEmailResults = ValidateRegisterInput("", "Aa1!Aa1!", "Aa1!Aa1!");
-        IReadOnlyList<ValidationResult> invalidEmailResults = ValidateRegisterInput("invalid-email", "Aa1!Aa1!", "Aa1!Aa1!");
-        IReadOnlyList<ValidationResult> shortPasswordResults = ValidateRegisterInput("user@example.com", "abc", "abc");
-        IReadOnlyList<ValidationResult> mismatchResults = ValidateRegisterInput("user@example.com", "Aa1!Aa1!", "Mismatch1!");
+        var emptyEmailResults = ValidateRegisterInput("", "Aa1!Aa1!", "Aa1!Aa1!");
+        var invalidEmailResults = ValidateRegisterInput("invalid-email", "Aa1!Aa1!", "Aa1!Aa1!");
+        var shortPasswordResults = ValidateRegisterInput("user@example.com", "abc", "abc");
+        var mismatchResults = ValidateRegisterInput("user@example.com", "Aa1!Aa1!", "Mismatch1!");
 
         Assert.Contains(emptyEmailResults, result => result.ErrorMessage == "邮箱字段是必需的。");
         Assert.Contains(invalidEmailResults, result => result.ErrorMessage == "邮箱字段不是有效的电子邮件地址。");
@@ -508,10 +508,10 @@ public class IdentityRegistrationTests
         legacyUser.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(legacyUser, "Aa1!Aa1!");
 
         TestUserStore userStore = new([legacyUser]);
-        UserManager<ApplicationUser> userManager = CreateExecutableUserManager(userStore);
+        var userManager = CreateExecutableUserManager(userStore);
         TestSignInManager signInManager = new(userManager);
 
-        SignInResult result = await signInManager.PasswordSignInAsync(
+        var result = await signInManager.PasswordSignInAsync(
             "legacy@example.com",
             "Aa1!Aa1!",
             isPersistent: false,
@@ -547,11 +547,11 @@ public class IdentityRegistrationTests
 
         public async Task RegisterAsync()
         {
-            MethodInfo registerUser = component.GetType().GetMethod("RegisterUser", BindingFlags.Instance | BindingFlags.Public)
-                                      ?? throw new InvalidOperationException("RegisterUser method could not be found.");
+            var registerUser = component.GetType().GetMethod("RegisterUser", BindingFlags.Instance | BindingFlags.Public)
+                               ?? throw new InvalidOperationException("RegisterUser method could not be found.");
 
-            Task execution = (Task)(registerUser.Invoke(component, [new EditContext(input)])
-                                    ?? throw new InvalidOperationException("RegisterUser invocation returned null."));
+            var execution = (Task)(registerUser.Invoke(component, [new EditContext(input)])
+                                   ?? throw new InvalidOperationException("RegisterUser invocation returned null."));
             await execution;
         }
     }
@@ -570,7 +570,7 @@ public class IdentityRegistrationTests
                 return;
             }
 
-            foreach (ApplicationUser user in seededUsers)
+            foreach (var user in seededUsers)
             {
                 TrackUser(user);
             }
@@ -608,19 +608,19 @@ public class IdentityRegistrationTests
 
         public Task<ApplicationUser?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
         {
-            _usersByNormalizedEmail.TryGetValue(normalizedEmail, out ApplicationUser? user);
+            _usersByNormalizedEmail.TryGetValue(normalizedEmail, out var user);
             return Task.FromResult(user);
         }
 
         public Task<ApplicationUser?> FindByIdAsync(string userId, CancellationToken cancellationToken)
         {
-            _usersById.TryGetValue(userId, out ApplicationUser? user);
+            _usersById.TryGetValue(userId, out var user);
             return Task.FromResult(user);
         }
 
         public Task<ApplicationUser?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
         {
-            _usersByNormalizedUserName.TryGetValue(normalizedUserName, out ApplicationUser? user);
+            _usersByNormalizedUserName.TryGetValue(normalizedUserName, out var user);
             return Task.FromResult(user);
         }
 
@@ -642,7 +642,7 @@ public class IdentityRegistrationTests
         public Task<IList<string>> GetRolesAsync(ApplicationUser user, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(user.Id)
-                || !_rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+                || !_rolesByUserId.TryGetValue(user.Id, out var roles))
             {
                 return Task.FromResult<IList<string>>([]);
             }
@@ -662,7 +662,7 @@ public class IdentityRegistrationTests
         public Task<bool> IsInRoleAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(user.Id)
-                || !_rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+                || !_rolesByUserId.TryGetValue(user.Id, out var roles))
             {
                 return Task.FromResult(false);
             }
@@ -677,7 +677,7 @@ public class IdentityRegistrationTests
                 throw new InvalidOperationException("Users must have an identifier before roles can be assigned.");
             }
 
-            if (!_rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+            if (!_rolesByUserId.TryGetValue(user.Id, out var roles))
             {
                 roles = new HashSet<string>(StringComparer.Ordinal);
                 _rolesByUserId[user.Id] = roles;
@@ -691,7 +691,7 @@ public class IdentityRegistrationTests
         public Task RemoveFromRoleAsync(ApplicationUser user, string roleName, CancellationToken cancellationToken)
         {
             if (!string.IsNullOrEmpty(user.Id)
-                && _rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles))
+                && _rolesByUserId.TryGetValue(user.Id, out var roles))
             {
                 roles.Remove(CanonicalizeRoleName(roleName));
                 if (roles.Count == 0)
@@ -706,9 +706,9 @@ public class IdentityRegistrationTests
         public Task<IList<ApplicationUser>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
         {
             string canonicalRole = CanonicalizeRoleName(roleName);
-            ApplicationUser[] users = _usersById.Values
+            var users = _usersById.Values
                 .Where(user => !string.IsNullOrEmpty(user.Id)
-                               && _rolesByUserId.TryGetValue(user.Id, out HashSet<string>? roles)
+                               && _rolesByUserId.TryGetValue(user.Id, out var roles)
                                && roles.Contains(canonicalRole))
                 .DistinctBy(user => user.Id, StringComparer.Ordinal)
                 .ToArray();

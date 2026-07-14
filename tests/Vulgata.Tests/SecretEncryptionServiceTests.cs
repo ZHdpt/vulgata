@@ -22,7 +22,7 @@ public sealed class SecretEncryptionServiceTests
     [InlineData(SecretPurposes.DatabaseConnection, "   ")]
     public async Task EncryptThenDecrypt_RoundTripsPlainText(string purpose, string plain)
     {
-        ISecretEncryptionService service = BuildService();
+        var service = BuildService();
 
         string cipher = await service.EncryptAsync(purpose, plain);
         string decrypted = await service.DecryptAsync(purpose, cipher);
@@ -33,7 +33,7 @@ public sealed class SecretEncryptionServiceTests
     [Fact]
     public async Task Decrypt_WithWrongPurpose_ThrowsCryptographicException()
     {
-        ISecretEncryptionService service = BuildService();
+        var service = BuildService();
 
         string cipher = await service.EncryptAsync(SecretPurposes.LlmApiKey, "sk-secret");
         _ = await Assert.ThrowsAsync<CryptographicException>(() =>
@@ -43,7 +43,7 @@ public sealed class SecretEncryptionServiceTests
     [Fact]
     public async Task Decrypt_WithEmptyCipher_ReturnsEmptyString()
     {
-        ISecretEncryptionService service = BuildService();
+        var service = BuildService();
 
         Assert.Equal(string.Empty, await service.DecryptAsync(SecretPurposes.LlmApiKey, string.Empty));
         Assert.Equal(string.Empty, await service.DecryptAsync(SecretPurposes.LlmApiKey, "   "));
@@ -53,7 +53,7 @@ public sealed class SecretEncryptionServiceTests
     [Fact]
     public async Task Encrypt_TrimWhitespaceBeforeEncryption()
     {
-        ISecretEncryptionService service = BuildService();
+        var service = BuildService();
 
         string cipher = await service.EncryptAsync(SecretPurposes.LlmApiKey, "  sk-secret  ");
         string decrypted = await service.DecryptAsync(SecretPurposes.LlmApiKey, cipher);
@@ -64,7 +64,7 @@ public sealed class SecretEncryptionServiceTests
     [Fact]
     public async Task Encrypt_DifferentInvocationsProduceDifferentCiphertext()
     {
-        ISecretEncryptionService service = BuildService();
+        var service = BuildService();
 
         string first = await service.EncryptAsync(SecretPurposes.DatabaseConnection, "same-plain");
         string second = await service.EncryptAsync(SecretPurposes.DatabaseConnection, "same-plain");
@@ -75,7 +75,7 @@ public sealed class SecretEncryptionServiceTests
     [Fact]
     public async Task Decrypt_TamperedCiphertext_ThrowsCryptographicException()
     {
-        ISecretEncryptionService service = BuildService();
+        var service = BuildService();
 
         string cipher = await service.EncryptAsync(SecretPurposes.LlmApiKey, "sk-secret");
         // Flip a character near the end to tamper.
@@ -91,7 +91,7 @@ public sealed class SecretEncryptionServiceTests
     {
         ServiceCollection services = new();
         services.AddDataProtection();
-        ServiceProvider provider = services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
         return new SecretEncryptionService(provider.GetRequiredService<IDataProtectionProvider>());
     }
 }

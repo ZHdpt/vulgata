@@ -30,9 +30,9 @@ builder.Services.AddDataProtection();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext>(sp =>
 {
-    IHttpContextAccessor httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-    IAuthorizationService authorization = sp.GetRequiredService<IAuthorizationService>();
-    ClaimsPrincipal principal = httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
+    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+    var authorization = sp.GetRequiredService<IAuthorizationService>();
+    var principal = httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
     return new UserContext(principal, authorization);
 });
 builder.Services.AddHttpClient("LlmProviderConnectionTest", client => { client.Timeout = TimeSpan.FromSeconds(10); });

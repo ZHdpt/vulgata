@@ -1,4 +1,3 @@
-@using Vulgata.Core.Entities
 @using Vulgata.Shared.Repositories
 @using Vulgata.Web.Data
 @using SystemEntity = Vulgata.Core.Entities.System
@@ -9,7 +8,7 @@
 }
 else
 {
-    @foreach (SystemEntity system in Systems)
+    @foreach (var system in Systems)
     {
         <h2 style="margin-top:1.5rem">@system.Name</h2>
         @if (!string.IsNullOrWhiteSpace(system.Description))
@@ -39,9 +38,9 @@ else
                 </tr>
             </thead>
             <tbody>
-                @if (RepositoriesBySystem.TryGetValue(system.Id, out IReadOnlyList<RepositorySummaryDto> repositories) && repositories.Count > 0)
+            @if (RepositoriesBySystem.TryGetValue(system.Id, out var repositories) && repositories.Count > 0)
                 {
-                    @foreach (RepositorySummaryDto repository in repositories)
+                    @foreach (var repository in repositories)
                     {
                         <tr>
                             <td>@repository.Name</td>
@@ -113,7 +112,7 @@ else
 
     private IReadOnlyList<SystemLlmProviderOverrideSummaryDto> GetOverrides(Guid systemId)
     {
-        return LlmOverridesBySystem.TryGetValue(systemId, out IReadOnlyList<SystemLlmProviderOverrideSummaryDto>? overrides)
+        return LlmOverridesBySystem.TryGetValue(systemId, out var overrides)
             ? overrides
             : [];
     }

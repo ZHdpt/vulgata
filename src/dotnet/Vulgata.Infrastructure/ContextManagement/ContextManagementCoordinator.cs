@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
-using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Infrastructure.ContextManagement;
 
@@ -66,9 +65,9 @@ public sealed class ContextManagementCoordinator(
         }
 
         string normalized = Normalize(value);
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
-        await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         if (await scanState.IsAnyScanRunningAsync(cancellationToken))
         {
@@ -85,7 +84,7 @@ public sealed class ContextManagementCoordinator(
 
     private async Task<Result> SaveSystemAsync(Guid systemId, string value, IUserContext user, CancellationToken cancellationToken)
     {
-        SystemEntity? system = await systemRepository.GetVisibleByIdAsync(
+        var system = await systemRepository.GetVisibleByIdAsync(
             systemId, user.ToSystemOwnerFilter(), cancellationToken);
 
         if (system is null)
@@ -94,17 +93,17 @@ public sealed class ContextManagementCoordinator(
         }
 
         string normalized = Normalize(value);
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
         if (await scanState.IsSystemScanRunningAsync(systemId, cancellationToken))
         {
-            await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
+            await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
             await UpsertPendingAsync(db, ContextScopeType.System, systemId.ToString(), normalized, now, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
             return Result.Ok();
         }
 
-        SystemEntity? tracked = await systemRepository.GetByIdAsync(systemId, cancellationToken);
+        var tracked = await systemRepository.GetByIdAsync(systemId, cancellationToken);
         if (tracked is null)
         {
             return Result.SystemNotFound();
@@ -113,7 +112,7 @@ public sealed class ContextManagementCoordinator(
         tracked.UpdateDetails(tracked.Name, tracked.Description, string.IsNullOrEmpty(normalized) ? null : normalized, now);
         await systemRepository.SaveChangesAsync(cancellationToken);
 
-        await using VulgataDbContext clearDb = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await using var clearDb = await dbFactory.CreateDbContextAsync(cancellationToken);
         await ClearPendingAsync(clearDb, ContextScopeType.System, systemId.ToString(), cancellationToken);
         await clearDb.SaveChangesAsync(cancellationToken);
 
@@ -122,9 +121,9 @@ public sealed class ContextManagementCoordinator(
 
     private async Task<Result> SaveRepositoryAsync(Guid repositoryId, string value, IUserContext user, CancellationToken cancellationToken)
     {
-        await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
-        Repository? repo = await db.Repositories.FirstOrDefaultAsync(r => r.Id == repositoryId, cancellationToken);
+        var repo = await db.Repositories.FirstOrDefaultAsync(r => r.Id == repositoryId, cancellationToken);
         if (repo is null)
         {
             return Result.RepositoryNotFound();
@@ -132,7 +131,7 @@ public sealed class ContextManagementCoordinator(
 
         if (repo.SystemId.HasValue && !user.IsAdministrator)
         {
-            SystemEntity? visibleSystem = await systemRepository.GetVisibleByIdAsync(
+            var visibleSystem = await systemRepository.GetVisibleByIdAsync(
                 repo.SystemId.Value, user.ToSystemOwnerFilter(), cancellationToken);
 
             if (visibleSystem is null)
@@ -142,7 +141,7 @@ public sealed class ContextManagementCoordinator(
         }
 
         string normalized = Normalize(value);
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
         if (await scanState.IsRepositoryScanRunningAsync(repositoryId, cancellationToken))
         {
@@ -167,10 +166,10 @@ public sealed class ContextManagementCoordinator(
             return new ContextState(CurrentValue: null, PendingValue: null, IsScanRunning: false);
         }
 
-        await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
-        GlobalContext? global = await db.GlobalContexts.FirstOrDefaultAsync(cancellationToken);
-        PendingContextChange? pending = await GetPendingAsync(db, ContextScopeType.Global, "global", cancellationToken);
+        var global = await db.GlobalContexts.FirstOrDefaultAsync(cancellationToken);
+        var pending = await GetPendingAsync(db, ContextScopeType.Global, "global", cancellationToken);
         bool scanRunning = await scanState.IsAnyScanRunningAsync(cancellationToken);
 
         return new ContextState(global?.Context, pending?.Context, scanRunning);
@@ -178,7 +177,7 @@ public sealed class ContextManagementCoordinator(
 
     private async Task<ContextState> GetSystemStateAsync(Guid systemId, IUserContext user, CancellationToken cancellationToken)
     {
-        SystemEntity? system = await systemRepository.GetVisibleByIdAsync(
+        var system = await systemRepository.GetVisibleByIdAsync(
             systemId, user.ToSystemOwnerFilter(), cancellationToken);
 
         if (system is null)
@@ -186,8 +185,8 @@ public sealed class ContextManagementCoordinator(
             return new ContextState(CurrentValue: null, PendingValue: null, IsScanRunning: false);
         }
 
-        await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        PendingContextChange? pending = await GetPendingAsync(db, ContextScopeType.System, systemId.ToString(), cancellationToken);
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var pending = await GetPendingAsync(db, ContextScopeType.System, systemId.ToString(), cancellationToken);
         bool scanRunning = await scanState.IsSystemScanRunningAsync(systemId, cancellationToken);
 
         return new ContextState(system.Context, pending?.Context, scanRunning);
@@ -195,8 +194,8 @@ public sealed class ContextManagementCoordinator(
 
     private async Task<ContextState> GetRepositoryStateAsync(Guid repositoryId, IUserContext user, CancellationToken cancellationToken)
     {
-        await using VulgataDbContext db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        Repository? repo = await db.Repositories.FirstOrDefaultAsync(r => r.Id == repositoryId, cancellationToken);
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var repo = await db.Repositories.FirstOrDefaultAsync(r => r.Id == repositoryId, cancellationToken);
 
         if (repo is null)
         {
@@ -205,7 +204,7 @@ public sealed class ContextManagementCoordinator(
 
         if (repo.SystemId.HasValue && !user.IsAdministrator)
         {
-            SystemEntity? visibleSystem = await systemRepository.GetVisibleByIdAsync(
+            var visibleSystem = await systemRepository.GetVisibleByIdAsync(
                 repo.SystemId.Value, user.ToSystemOwnerFilter(), cancellationToken);
 
             if (visibleSystem is null)
@@ -214,7 +213,7 @@ public sealed class ContextManagementCoordinator(
             }
         }
 
-        PendingContextChange? pending = await GetPendingAsync(db, ContextScopeType.Repository, repositoryId.ToString(), cancellationToken);
+        var pending = await GetPendingAsync(db, ContextScopeType.Repository, repositoryId.ToString(), cancellationToken);
         bool scanRunning = await scanState.IsRepositoryScanRunningAsync(repositoryId, cancellationToken);
 
         return new ContextState(repo.Context, pending?.Context, scanRunning);
@@ -226,7 +225,7 @@ public sealed class ContextManagementCoordinator(
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        GlobalContext? existing = await db.GlobalContexts.FirstOrDefaultAsync(cancellationToken);
+        var existing = await db.GlobalContexts.FirstOrDefaultAsync(cancellationToken);
         if (existing is null)
         {
             db.GlobalContexts.Add(new GlobalContext(string.IsNullOrEmpty(normalized) ? string.Empty : normalized, now));
@@ -245,7 +244,7 @@ public sealed class ContextManagementCoordinator(
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        PendingContextChange? pending = await db.PendingContextChanges
+        var pending = await db.PendingContextChanges
             .Where(p => p.ScopeType == scopeType && p.ScopeKey == scopeKey)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -267,7 +266,7 @@ public sealed class ContextManagementCoordinator(
         string scopeKey,
         CancellationToken cancellationToken)
     {
-        PendingContextChange? existingPending = await db.PendingContextChanges
+        var existingPending = await db.PendingContextChanges
             .Where(p => p.ScopeType == scopeType && p.ScopeKey == scopeKey)
             .FirstOrDefaultAsync(cancellationToken);
 

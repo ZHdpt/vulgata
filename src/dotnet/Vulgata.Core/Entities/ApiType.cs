@@ -1,7 +1,7 @@
 namespace Vulgata.Core.Entities;
 
 [Flags]
-public enum ApiTypeFlags
+public enum ApiType
 {
     None = 0,
     ChatCompletions = 1 << 0,

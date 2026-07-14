@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 
@@ -8,7 +7,7 @@ internal static class ContextApiEndpoints
 {
     public static void MapContextApiEndpoints(this WebApplication app)
     {
-        RouteGroupBuilder settingsApi = app.MapGroup("/api/settings")
+        var settingsApi = app.MapGroup("/api/settings")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         settingsApi.MapGet("/global-context", async (
@@ -16,7 +15,7 @@ internal static class ContextApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ContextState state = await coordinator.GetStateAsync(ContextScope.Global, user, cancellationToken);
+            var state = await coordinator.GetStateAsync(ContextScope.Global, user, cancellationToken);
 
             return Results.Ok(new ContextStateResponse
             {
@@ -38,23 +37,23 @@ internal static class ContextApiEndpoints
                 return Results.Forbid();
             }
 
-            ContextSaveRequest? body = await request.ReadFromJsonAsync<ContextSaveRequest>(cancellationToken);
+            var body = await request.ReadFromJsonAsync<ContextSaveRequest>(cancellationToken);
             if (body is null)
             {
                 return Results.Problem(detail: "请求格式无效。", statusCode: StatusCodes.Status400BadRequest);
             }
 
-            Result result = await coordinator.SaveAsync(ContextScope.Global, body.Context, user, cancellationToken);
+            var result = await coordinator.SaveAsync(ContextScope.Global, body.Context, user, cancellationToken);
             if (!result.IsSuccess)
             {
                 return MapSaveFailure(result);
             }
 
-            ContextState state = await coordinator.GetStateAsync(ContextScope.Global, user, cancellationToken);
+            var state = await coordinator.GetStateAsync(ContextScope.Global, user, cancellationToken);
             return Results.Ok(ToResponse(state));
         }).RequireAuthorization(AuthorizationPolicyNames.AdministratorOnly);
 
-        RouteGroupBuilder systemContextApi = app.MapGroup("/api/systems/{systemId:guid}/context")
+        var systemContextApi = app.MapGroup("/api/systems/{systemId:guid}/context")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         systemContextApi.MapGet("/", async (
@@ -63,7 +62,7 @@ internal static class ContextApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ContextState state = await coordinator.GetStateAsync(ContextScope.ForSystem(systemId), user, cancellationToken);
+            var state = await coordinator.GetStateAsync(ContextScope.ForSystem(systemId), user, cancellationToken);
             return Results.Ok(ToResponse(state));
         });
 
@@ -74,23 +73,23 @@ internal static class ContextApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ContextSaveRequest? body = await request.ReadFromJsonAsync<ContextSaveRequest>(cancellationToken);
+            var body = await request.ReadFromJsonAsync<ContextSaveRequest>(cancellationToken);
             if (body is null)
             {
                 return Results.Problem(detail: "请求格式无效。", statusCode: StatusCodes.Status400BadRequest);
             }
 
-            Result result = await coordinator.SaveAsync(ContextScope.ForSystem(systemId), body.Context, user, cancellationToken);
+            var result = await coordinator.SaveAsync(ContextScope.ForSystem(systemId), body.Context, user, cancellationToken);
             if (!result.IsSuccess)
             {
                 return MapSaveFailure(result);
             }
 
-            ContextState state = await coordinator.GetStateAsync(ContextScope.ForSystem(systemId), user, cancellationToken);
+            var state = await coordinator.GetStateAsync(ContextScope.ForSystem(systemId), user, cancellationToken);
             return Results.Ok(ToResponse(state));
         });
 
-        RouteGroupBuilder repoContextApi = app.MapGroup("/api/repositories/{repositoryId:guid}/context")
+        var repoContextApi = app.MapGroup("/api/repositories/{repositoryId:guid}/context")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         repoContextApi.MapGet("/", async (
@@ -99,7 +98,7 @@ internal static class ContextApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ContextState state = await coordinator.GetStateAsync(ContextScope.ForRepository(repositoryId), user, cancellationToken);
+            var state = await coordinator.GetStateAsync(ContextScope.ForRepository(repositoryId), user, cancellationToken);
             return Results.Ok(ToResponse(state));
         });
 
@@ -110,19 +109,19 @@ internal static class ContextApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ContextSaveRequest? body = await request.ReadFromJsonAsync<ContextSaveRequest>(cancellationToken);
+            var body = await request.ReadFromJsonAsync<ContextSaveRequest>(cancellationToken);
             if (body is null)
             {
                 return Results.Problem(detail: "请求格式无效。", statusCode: StatusCodes.Status400BadRequest);
             }
 
-            Result result = await coordinator.SaveAsync(ContextScope.ForRepository(repositoryId), body.Context, user, cancellationToken);
+            var result = await coordinator.SaveAsync(ContextScope.ForRepository(repositoryId), body.Context, user, cancellationToken);
             if (!result.IsSuccess)
             {
                 return MapSaveFailure(result);
             }
 
-            ContextState state = await coordinator.GetStateAsync(ContextScope.ForRepository(repositoryId), user, cancellationToken);
+            var state = await coordinator.GetStateAsync(ContextScope.ForRepository(repositoryId), user, cancellationToken);
             return Results.Ok(ToResponse(state));
         });
     }

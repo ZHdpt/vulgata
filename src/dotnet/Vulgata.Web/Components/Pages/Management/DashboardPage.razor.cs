@@ -1,14 +1,7 @@
 using System.Security.Claims;
-using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
-using Vulgata.Core.Entities;
 using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
-using Vulgata.Web.Components.Management.Repositories;
 using Vulgata.Web.Data;
 using Vulgata.Web.RequestPipeline;
 using Vulgata.Web.Validators;
@@ -54,8 +47,8 @@ public sealed partial class DashboardPage
 
     protected async override Task OnInitializedAsync()
     {
-        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        ClaimsPrincipal principal = authState.User;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
         _isAdministrator = principal.IsInRole(RoleNames.Administrator);
         _userContext = new UserContext(principal, _isAdministrator);
 
@@ -67,12 +60,12 @@ public sealed partial class DashboardPage
         // Resolve services from an isolated scope to prevent DbContext concurrency
         // when the InteractiveServer double-render (pre-render + interactive) or
         // Npgsql retry-on-failure overlaps queries on the same VulgataDbContext.
-        await using AsyncServiceScope scope = ScopeFactory.CreateAsyncScope();
-        ISystemRepository systemRepo =
+        await using var scope = ScopeFactory.CreateAsyncScope();
+        var systemRepo =
             scope.ServiceProvider.GetRequiredService<ISystemRepository>();
-        IRepositoryManagementCoordinator repoCoord =
+        var repoCoord =
             scope.ServiceProvider.GetRequiredService<IRepositoryManagementCoordinator>();
-        ISystemLlmProviderOverrideCoordinator overrideCoord =
+        var overrideCoord =
             scope.ServiceProvider.GetRequiredService<ISystemLlmProviderOverrideCoordinator>();
 
         try
@@ -80,19 +73,19 @@ public sealed partial class DashboardPage
             _loadError = null;
             _systems = (await systemRepo.ListVisibleAsync(_userContext.ToSystemOwnerFilter())).ToList();
             _standaloneRepositories = (await repoCoord
-                .ListStandaloneVisibleAsync(_userContext))
+                    .ListStandaloneVisibleAsync(_userContext))
                 .ToList();
             _repositories = [];
             _systemLlmOverrides = [];
 
-            foreach (SystemEntity system in _systems)
+            foreach (var system in _systems)
             {
-                IReadOnlyList<RepositorySummaryDto> repositories = await repoCoord.ListVisibleAsync(
+                var repositories = await repoCoord.ListVisibleAsync(
                     system.Id,
                     _userContext);
                 _repositories[system.Id] = repositories.ToList();
 
-                SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> overridesResult =
+                var overridesResult =
                     await overrideCoord.ListAsync(system.Id, _userContext);
 
                 _systemLlmOverrides[system.Id] =
@@ -113,7 +106,7 @@ public sealed partial class DashboardPage
 
     private async Task ReloadRepositoriesAsync(Guid systemId)
     {
-        IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListVisibleAsync(
+        var repositories = await RepositoryManagementCoordinator.ListVisibleAsync(
             systemId,
             _userContext);
         _repositories[systemId] = repositories.ToList();
@@ -121,14 +114,14 @@ public sealed partial class DashboardPage
 
     private async Task ReloadStandaloneRepositoriesAsync()
     {
-        IReadOnlyList<RepositorySummaryDto> repositories = await RepositoryManagementCoordinator.ListStandaloneVisibleAsync(
+        var repositories = await RepositoryManagementCoordinator.ListStandaloneVisibleAsync(
             _userContext);
         _standaloneRepositories = repositories.ToList();
     }
 
     private async Task ReloadSystemLlmOverridesAsync(Guid systemId)
     {
-        SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> result =
+        var result =
             await SystemLlmProviderOverrideCoordinator.ListAsync(systemId, _userContext);
 
         _systemLlmOverrides[systemId] =
@@ -197,7 +190,7 @@ public sealed partial class DashboardPage
 
     private Task OnRepositorySelectedAsync(Guid repositoryId)
     {
-        RepositorySummaryDto? match = FindRepositoryById(repositoryId);
+        var match = FindRepositoryById(repositoryId);
         if (match is null)
         {
             return Task.CompletedTask;
@@ -210,15 +203,15 @@ public sealed partial class DashboardPage
 
     private RepositorySummaryDto? FindRepositoryById(Guid repositoryId)
     {
-        RepositorySummaryDto? standalone = _standaloneRepositories.FirstOrDefault(r => r.Id == repositoryId);
+        var standalone = _standaloneRepositories.FirstOrDefault(r => r.Id == repositoryId);
         if (standalone is not null)
         {
             return standalone;
         }
 
-        foreach ((_, IReadOnlyList<RepositorySummaryDto> repositories) in _repositories)
+        foreach ((_, var repositories) in _repositories)
         {
-            RepositorySummaryDto? match = repositories.FirstOrDefault(r => r.Id == repositoryId);
+            var match = repositories.FirstOrDefault(r => r.Id == repositoryId);
             if (match is not null)
             {
                 return match;
@@ -272,11 +265,11 @@ public sealed partial class DashboardPage
             return;
         }
 
-        Guid systemId = _repoTargetSystem.Id;
+        var systemId = _repoTargetSystem.Id;
 
         try
         {
-            RepositoryMutationResult<RepositoryDetailDto> result = await RepositoryManagementCoordinator.CreateAsync(
+            var result = await RepositoryManagementCoordinator.CreateAsync(
                 systemId,
                 _repoFormModel,
                 _userContext);
@@ -308,7 +301,7 @@ public sealed partial class DashboardPage
 
         try
         {
-            RepositoryMutationResult<RepositoryDetailDto> result = await RepositoryManagementCoordinator.CreateStandaloneAsync(
+            var result = await RepositoryManagementCoordinator.CreateStandaloneAsync(
                 _standaloneRepoFormModel,
                 _userContext);
 
@@ -343,7 +336,7 @@ public sealed partial class DashboardPage
 
     private async Task<string?> ValidateRepositoryRequestAsync(CreateRepositoryRequest request)
     {
-        ValidationResult validationResult = await RepositoryRequestValidator.ValidateAsync(request);
+        var validationResult = await RepositoryRequestValidator.ValidateAsync(request);
         if (validationResult.IsValid)
         {
             return null;
@@ -408,7 +401,7 @@ public sealed partial class DashboardPage
                     return;
                 }
 
-                SystemEntity? existing = await SystemRepository.GetByIdAsync(_editingSystem.Id);
+                var existing = await SystemRepository.GetByIdAsync(_editingSystem.Id);
                 if (existing is null)
                 {
                     _saveError = "系统不存在或已被删除。";
@@ -457,13 +450,13 @@ public sealed partial class DashboardPage
     {
         if (_pendingDeleteSystem is null) return;
 
-        SystemEntity system = _pendingDeleteSystem;
+        var system = _pendingDeleteSystem;
         _pendingDeleteSystem = null;
         _showDeleteConfirmation = false;
 
         try
         {
-            SystemDeleteResult result = await SystemRepository.DeleteIfNoDependenciesAsync(system.Id);
+            var result = await SystemRepository.DeleteIfNoDependenciesAsync(system.Id);
 
             if (result.Outcome == SystemDeleteOutcome.Deleted)
             {

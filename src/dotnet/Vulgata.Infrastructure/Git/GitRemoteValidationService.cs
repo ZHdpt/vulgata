@@ -25,7 +25,7 @@ public sealed partial class GitRemoteValidationService : IGitRemoteValidationSer
         startInfo.ArgumentList.Add("ls-remote");
         startInfo.ArgumentList.Add(normalizedUrl);
 
-        using Process? process = Process.Start(startInfo);
+        using var process = Process.Start(startInfo);
         if (process is null)
         {
             return GitRemoteValidationResult.Unreachable("Git 校验进程启动失败。");
@@ -57,14 +57,14 @@ public sealed partial class GitRemoteValidationService : IGitRemoteValidationSer
         string normalized = (message ?? string.Empty).ToLowerInvariant();
 
         return normalized.Contains("authentication")
-            || normalized.Contains("unauthorized")
-            || normalized.Contains("forbidden")
-            || normalized.Contains("could not read username")
-            || normalized.Contains("terminal prompts disabled")
-            || normalized.Contains("permission denied")
-            || normalized.Contains("access denied")
-            || normalized.Contains("requires authentication")
-            || normalized.Contains("http basic");
+               || normalized.Contains("unauthorized")
+               || normalized.Contains("forbidden")
+               || normalized.Contains("could not read username")
+               || normalized.Contains("terminal prompts disabled")
+               || normalized.Contains("permission denied")
+               || normalized.Contains("access denied")
+               || normalized.Contains("requires authentication")
+               || normalized.Contains("http basic");
     }
 
     private static string FirstLineOrFallback(string raw, string fallback)
@@ -89,7 +89,7 @@ public sealed partial class GitRemoteValidationService : IGitRemoteValidationSer
 
     private static string SanitizeUrl(string url)
     {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
             return url;
         }

@@ -32,29 +32,29 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         const string adminEmail = "story25.admin.global@example.com";
         await CreateUserWithRolesAsync(adminEmail, "Valid1!Pass", RoleNames.Administrator);
 
-        using HttpClient adminClient = CreateClient();
+        using var adminClient = CreateClient();
         await LoginAsync(adminClient, adminEmail, "Valid1!Pass");
 
-        HttpResponseMessage saveResponse = await adminClient.PutAsJsonAsync("/api/settings/global-context", new
+        var saveResponse = await adminClient.PutAsJsonAsync("/api/settings/global-context", new
         {
             context = "全局业务术语：订单、履约、结算。",
         });
 
-        ContextStateResponse saved = await ReadRequiredAsync<ContextStateResponse>(saveResponse);
+        var saved = await ReadRequiredAsync<ContextStateResponse>(saveResponse);
 
         Assert.Equal(HttpStatusCode.OK, saveResponse.StatusCode);
         Assert.Equal("全局业务术语：订单、履约、结算。", saved.CurrentContext);
         Assert.Null(saved.PendingContext);
         Assert.False(saved.Queued);
 
-        HttpResponseMessage readResponse = await adminClient.GetAsync("/api/settings/global-context");
-        ContextStateResponse readBack = await ReadRequiredAsync<ContextStateResponse>(readResponse);
+        var readResponse = await adminClient.GetAsync("/api/settings/global-context");
+        var readBack = await ReadRequiredAsync<ContextStateResponse>(readResponse);
 
         Assert.Equal(HttpStatusCode.OK, readResponse.StatusCode);
         Assert.Equal("全局业务术语：订单、履约、结算。", readBack.CurrentContext);
         Assert.Null(readBack.PendingContext);
 
-        HttpResponseMessage pageResponse = await adminClient.GetAsync("/management/settings");
+        var pageResponse = await adminClient.GetAsync("/management/settings");
         string html = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
@@ -76,68 +76,68 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         string ownerUserId = await CreateUserWithRolesAsync(ownerEmail, "Valid1!Pass", RoleNames.User);
         await CreateUserWithRolesAsync(outsiderEmail, "Valid1!Pass", RoleNames.SystemOwner);
 
-        using HttpClient adminClient = CreateClient();
+        using var adminClient = CreateClient();
         await LoginAsync(adminClient, adminEmail, "Valid1!Pass");
 
-        Guid systemId = await CreateSystemAsync(adminClient, "供应链平台", "供应链系统", "初始系统上下文");
+        var systemId = await CreateSystemAsync(adminClient, "供应链平台", "供应链系统", "初始系统上下文");
         await AssignOwnerAsync(adminClient, systemId, ownerUserId);
-        Guid repositoryId = await CreateRepositoryAsync(adminClient, systemId, "履约仓库", "初始仓库上下文");
+        var repositoryId = await CreateRepositoryAsync(adminClient, systemId, "履约仓库", "初始仓库上下文");
 
-        using HttpClient ownerClient = CreateClient();
+        using var ownerClient = CreateClient();
         await LoginAsync(ownerClient, ownerEmail, "Valid1!Pass");
 
-        HttpResponseMessage saveSystemResponse = await ownerClient.PutAsJsonAsync($"/api/systems/{systemId}/context", new
+        var saveSystemResponse = await ownerClient.PutAsJsonAsync($"/api/systems/{systemId}/context", new
         {
             context = "系统上下文：履约链路优先。",
         });
-        ContextStateResponse savedSystem = await ReadRequiredAsync<ContextStateResponse>(saveSystemResponse);
+        var savedSystem = await ReadRequiredAsync<ContextStateResponse>(saveSystemResponse);
 
         Assert.Equal(HttpStatusCode.OK, saveSystemResponse.StatusCode);
         Assert.Equal("系统上下文：履约链路优先。", savedSystem.CurrentContext);
         Assert.Null(savedSystem.PendingContext);
 
-        HttpResponseMessage saveRepositoryResponse = await ownerClient.PutAsJsonAsync($"/api/repositories/{repositoryId}/context", new
+        var saveRepositoryResponse = await ownerClient.PutAsJsonAsync($"/api/repositories/{repositoryId}/context", new
         {
             context = "仓库上下文：处理履约聚合根与状态机。",
         });
-        ContextStateResponse savedRepository = await ReadRequiredAsync<ContextStateResponse>(saveRepositoryResponse);
+        var savedRepository = await ReadRequiredAsync<ContextStateResponse>(saveRepositoryResponse);
 
         Assert.Equal(HttpStatusCode.OK, saveRepositoryResponse.StatusCode);
         Assert.Equal("仓库上下文：处理履约聚合根与状态机。", savedRepository.CurrentContext);
         Assert.Null(savedRepository.PendingContext);
 
-        HttpResponseMessage readSystemResponse = await ownerClient.GetAsync($"/api/systems/{systemId}/context");
-        ContextStateResponse readSystem = await ReadRequiredAsync<ContextStateResponse>(readSystemResponse);
+        var readSystemResponse = await ownerClient.GetAsync($"/api/systems/{systemId}/context");
+        var readSystem = await ReadRequiredAsync<ContextStateResponse>(readSystemResponse);
         Assert.Equal(HttpStatusCode.OK, readSystemResponse.StatusCode);
         Assert.Equal("系统上下文：履约链路优先。", readSystem.CurrentContext);
 
-        HttpResponseMessage readRepositoryResponse = await ownerClient.GetAsync($"/api/repositories/{repositoryId}/context");
-        ContextStateResponse readRepository = await ReadRequiredAsync<ContextStateResponse>(readRepositoryResponse);
+        var readRepositoryResponse = await ownerClient.GetAsync($"/api/repositories/{repositoryId}/context");
+        var readRepository = await ReadRequiredAsync<ContextStateResponse>(readRepositoryResponse);
         Assert.Equal(HttpStatusCode.OK, readRepositoryResponse.StatusCode);
         Assert.Equal("仓库上下文：处理履约聚合根与状态机。", readRepository.CurrentContext);
 
-        using HttpClient outsiderClient = CreateClient();
+        using var outsiderClient = CreateClient();
         await LoginAsync(outsiderClient, outsiderEmail, "Valid1!Pass");
 
-        HttpResponseMessage forbiddenSystemResponse = await outsiderClient.PutAsJsonAsync($"/api/systems/{systemId}/context", new
+        var forbiddenSystemResponse = await outsiderClient.PutAsJsonAsync($"/api/systems/{systemId}/context", new
         {
             context = "越权系统上下文",
         });
-        ProblemDetails forbiddenSystemProblem = await ReadRequiredAsync<ProblemDetails>(forbiddenSystemResponse);
+        var forbiddenSystemProblem = await ReadRequiredAsync<ProblemDetails>(forbiddenSystemResponse);
 
         Assert.Equal(HttpStatusCode.NotFound, forbiddenSystemResponse.StatusCode);
         Assert.Contains("系统不存在", forbiddenSystemProblem.Detail ?? string.Empty, StringComparison.Ordinal);
 
-        HttpResponseMessage forbiddenRepositoryResponse = await outsiderClient.PutAsJsonAsync($"/api/repositories/{repositoryId}/context", new
+        var forbiddenRepositoryResponse = await outsiderClient.PutAsJsonAsync($"/api/repositories/{repositoryId}/context", new
         {
             context = "越权仓库上下文",
         });
-        ProblemDetails forbiddenRepositoryProblem = await ReadRequiredAsync<ProblemDetails>(forbiddenRepositoryResponse);
+        var forbiddenRepositoryProblem = await ReadRequiredAsync<ProblemDetails>(forbiddenRepositoryResponse);
 
         Assert.Equal(HttpStatusCode.NotFound, forbiddenRepositoryResponse.StatusCode);
         Assert.Contains("仓库不存在", forbiddenRepositoryProblem.Detail ?? string.Empty, StringComparison.Ordinal);
 
-        HttpResponseMessage pageResponse = await ownerClient.GetAsync("/management");
+        var pageResponse = await ownerClient.GetAsync("/management");
         string html = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
@@ -155,24 +155,24 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         const string ownerEmail = "story25.owner.standalone@example.com";
         await CreateUserWithRolesAsync(ownerEmail, "Valid1!Pass", RoleNames.SystemOwner);
 
-        using HttpClient ownerClient = CreateClient();
+        using var ownerClient = CreateClient();
         await LoginAsync(ownerClient, ownerEmail, "Valid1!Pass");
 
-        Guid repositoryId = await CreateStandaloneRepositoryAsync(ownerClient, "共享知识库", "初始独立仓库上下文");
+        var repositoryId = await CreateStandaloneRepositoryAsync(ownerClient, "共享知识库", "初始独立仓库上下文");
 
-        HttpResponseMessage saveResponse = await ownerClient.PutAsJsonAsync($"/api/repositories/{repositoryId}/context", new
+        var saveResponse = await ownerClient.PutAsJsonAsync($"/api/repositories/{repositoryId}/context", new
         {
             context = "独立仓库上下文：所有管理用户共享。",
         });
 
-        ContextStateResponse saved = await ReadRequiredAsync<ContextStateResponse>(saveResponse);
+        var saved = await ReadRequiredAsync<ContextStateResponse>(saveResponse);
 
         Assert.Equal(HttpStatusCode.OK, saveResponse.StatusCode);
         Assert.Equal("独立仓库上下文：所有管理用户共享。", saved.CurrentContext);
         Assert.Null(saved.PendingContext);
 
-        HttpResponseMessage readResponse = await ownerClient.GetAsync($"/api/repositories/{repositoryId}/context");
-        ContextStateResponse readBack = await ReadRequiredAsync<ContextStateResponse>(readResponse);
+        var readResponse = await ownerClient.GetAsync($"/api/repositories/{repositoryId}/context");
+        var readBack = await ReadRequiredAsync<ContextStateResponse>(readResponse);
 
         Assert.Equal(HttpStatusCode.OK, readResponse.StatusCode);
         Assert.Equal("独立仓库上下文：所有管理用户共享。", readBack.CurrentContext);
@@ -190,13 +190,13 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         await CreateUserWithRolesAsync(adminEmail, "Valid1!Pass", RoleNames.Administrator);
         await CreateUserWithRolesAsync(userEmail, "Valid1!Pass", RoleNames.User);
 
-        using HttpClient adminClient = CreateClient();
+        using var adminClient = CreateClient();
         await LoginAsync(adminClient, adminEmail, "Valid1!Pass");
 
-        Guid systemId = await CreateSystemAsync(adminClient, "客服平台", "客服系统", "客服上下文");
-        Guid repositoryId = await CreateRepositoryAsync(adminClient, systemId, "客服仓库", "客服仓库上下文");
+        var systemId = await CreateSystemAsync(adminClient, "客服平台", "客服系统", "客服上下文");
+        var repositoryId = await CreateRepositoryAsync(adminClient, systemId, "客服仓库", "客服仓库上下文");
 
-        using HttpClient userClient = CreateClient();
+        using var userClient = CreateClient();
         await LoginAsync(userClient, userEmail, "Valid1!Pass");
 
         Assert.Equal(HttpStatusCode.Forbidden, (await userClient.PutAsJsonAsync("/api/settings/global-context", new { context = "用户不应写入全局" })).StatusCode);
@@ -213,8 +213,8 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
 
     private async Task EnsureApplicationStartedAsync()
     {
-        using HttpClient client = CreateClient();
-        HttpResponseMessage response = await client.GetAsync("/Account/Login");
+        using var client = CreateClient();
+        var response = await client.GetAsync("/Account/Login");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -234,7 +234,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
 
     private static async Task ExecuteNonQueryAsync(SqliteConnection connection, string sql)
     {
-        await using SqliteCommand command = connection.CreateCommand();
+        await using var command = connection.CreateCommand();
         command.CommandText = sql;
         await command.ExecuteNonQueryAsync();
     }
@@ -326,8 +326,8 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
 
     private async Task<string> CreateUserWithRolesAsync(string email, string password, params string[] roles)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         ApplicationUser user = new()
         {
@@ -336,60 +336,60 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
             EmailConfirmed = true,
         };
 
-        IdentityResult createResult = await userManager.CreateAsync(user, password);
+        var createResult = await userManager.CreateAsync(user, password);
         Assert.True(createResult.Succeeded, string.Join(", ", createResult.Errors.Select(error => error.Description)));
 
         foreach (string role in roles.Distinct(StringComparer.Ordinal))
         {
-            IdentityResult roleResult = await userManager.AddToRoleAsync(user, role);
+            var roleResult = await userManager.AddToRoleAsync(user, role);
             Assert.True(roleResult.Succeeded, string.Join(", ", roleResult.Errors.Select(error => error.Description)));
         }
 
         return user.Id;
     }
 
-    private async Task LoginAsync(HttpClient client, string email, string password)
+    private static async Task LoginAsync(HttpClient client, string email, string password)
     {
-        Dictionary<string, string> fields = await GetFormFieldsAsync(client, "/Account/Login");
+        var fields = await GetFormFieldsAsync(client, "/Account/Login");
         fields["Input.Email"] = email;
         fields["Input.Password"] = password;
         fields["Input.RememberMe"] = "false";
 
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(fields));
+        var response = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(fields));
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/", GetLocationPath(response));
     }
 
-    private async Task<Guid> CreateSystemAsync(HttpClient client, string name, string description, string context)
+    private static async Task<Guid> CreateSystemAsync(HttpClient client, string name, string description, string context)
     {
-        HttpResponseMessage response = await client.PostAsJsonAsync("/api/systems", new
+        var response = await client.PostAsJsonAsync("/api/systems", new
         {
             name,
             description,
             context,
         });
 
-        SystemListItem created = await ReadRequiredAsync<SystemListItem>(response);
+        var created = await ReadRequiredAsync<SystemListItem>(response);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return created.Id;
     }
 
-    private async Task AssignOwnerAsync(HttpClient client, Guid systemId, string userId)
+    private static async Task AssignOwnerAsync(HttpClient client, Guid systemId, string userId)
     {
-        HttpResponseMessage response = await client.PostAsJsonAsync(
+        var response = await client.PostAsJsonAsync(
             $"/api/systems/{systemId}/owners",
             new AssignSystemOwnerRequest { UserId = userId });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
-    private async Task<Guid> CreateRepositoryAsync(HttpClient client, Guid systemId, string name, string context)
+    private static async Task<Guid> CreateRepositoryAsync(HttpClient client, Guid systemId, string name, string context)
     {
         string bareRepositoryPath = await CreateBareRepositoryAsync();
 
-        HttpResponseMessage response = await client.PostAsJsonAsync($"/api/systems/{systemId}/repositories", new
+        var response = await client.PostAsJsonAsync($"/api/systems/{systemId}/repositories", new
         {
             name,
             gitUrl = bareRepositoryPath,
@@ -397,16 +397,16 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
             context,
         });
 
-        RepositoryListItem created = await ReadRequiredAsync<RepositoryListItem>(response);
+        var created = await ReadRequiredAsync<RepositoryListItem>(response);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return created.Id;
     }
 
-    private async Task<Guid> CreateStandaloneRepositoryAsync(HttpClient client, string name, string context)
+    private static async Task<Guid> CreateStandaloneRepositoryAsync(HttpClient client, string name, string context)
     {
         string bareRepositoryPath = await CreateBareRepositoryAsync();
 
-        HttpResponseMessage response = await client.PostAsJsonAsync("/api/repositories/standalone", new
+        var response = await client.PostAsJsonAsync("/api/repositories/standalone", new
         {
             name,
             gitUrl = bareRepositoryPath,
@@ -414,7 +414,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
             context,
         });
 
-        RepositoryListItem created = await ReadRequiredAsync<RepositoryListItem>(response);
+        var created = await ReadRequiredAsync<RepositoryListItem>(response);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return created.Id;
     }
@@ -434,8 +434,8 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         startInfo.ArgumentList.Add("--bare");
         startInfo.ArgumentList.Add(directory);
 
-        using Process process = Process.Start(startInfo)
-                                ?? throw new InvalidOperationException("Unable to start git to create a bare repository.");
+        using var process = Process.Start(startInfo)
+                            ?? throw new InvalidOperationException("Unable to start git to create a bare repository.");
 
         string stdout = await process.StandardOutput.ReadToEndAsync();
         string stderr = await process.StandardError.ReadToEndAsync();
@@ -447,14 +447,14 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
 
     private static async Task<T> ReadRequiredAsync<T>(HttpResponseMessage response)
     {
-        T? value = await response.Content.ReadFromJsonAsync<T>(new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var value = await response.Content.ReadFromJsonAsync<T>(new JsonSerializerOptions(JsonSerializerDefaults.Web));
         Assert.NotNull(value);
         return value;
     }
 
     private static async Task<Dictionary<string, string>> GetFormFieldsAsync(HttpClient client, string path)
     {
-        HttpResponseMessage response = await client.GetAsync(path);
+        var response = await client.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         string html = await response.Content.ReadAsStringAsync();
@@ -463,7 +463,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
 
     private static Dictionary<string, string> ExtractFormFields(string html)
     {
-        Match formMatch = Regex.Match(
+        var formMatch = Regex.Match(
             html,
             "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -474,7 +474,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         }
 
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
-        MatchCollection inputMatches = Regex.Matches(
+        var inputMatches = Regex.Matches(
             formMatch.Groups["content"].Value,
             "<input[^>]*name=\"(?<name>[^\"]+)\"[^>]*value=\"(?<value>[^\"]*)\"[^>]*>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -489,7 +489,7 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
 
     private static string GetLocationPath(HttpResponseMessage response)
     {
-        Uri location = response.Headers.Location
+        var location = response.Headers.Location
                        ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri

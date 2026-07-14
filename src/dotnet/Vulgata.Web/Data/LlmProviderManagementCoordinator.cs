@@ -75,7 +75,7 @@ public sealed class LlmProviderManagementCoordinator(
 {
     public async Task<IReadOnlyList<LlmProviderSummaryDto>> ListAsync(CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<LlmProvider> providers = await repository.ListAllAsync(cancellationToken);
+        var providers = await repository.ListAllAsync(cancellationToken);
         return providers.Select(MapToSummary).ToList();
     }
 
@@ -83,8 +83,8 @@ public sealed class LlmProviderManagementCoordinator(
         AgentType agentType,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<LlmProvider> providers = await repository.ListAllAsync(cancellationToken);
-        LlmProvider? provider = providers.FirstOrDefault(candidate => candidate.DefaultAgentType == agentType);
+        var providers = await repository.ListAllAsync(cancellationToken);
+        var provider = providers.FirstOrDefault(candidate => candidate.DefaultAgentType == agentType);
         return provider is null ? null : MapToSummary(provider);
     }
 
@@ -125,7 +125,7 @@ public sealed class LlmProviderManagementCoordinator(
         UpdateLlmProviderRequest request,
         CancellationToken cancellationToken = default)
     {
-        LlmProvider? provider = await repository.GetByIdAsync(providerId, cancellationToken);
+        var provider = await repository.GetByIdAsync(providerId, cancellationToken);
         if (provider is null)
         {
             return LlmProviderMutationResult<LlmProviderSummaryDto>.NotFound;
@@ -164,7 +164,7 @@ public sealed class LlmProviderManagementCoordinator(
 
     public async Task<LlmProviderMutationResult<bool>> DeleteAsync(Guid providerId, CancellationToken cancellationToken = default)
     {
-        LlmProvider? provider = await repository.GetByIdAsync(providerId, cancellationToken);
+        var provider = await repository.GetByIdAsync(providerId, cancellationToken);
         if (provider is null)
         {
             return LlmProviderMutationResult<bool>.NotFound;
@@ -179,7 +179,7 @@ public sealed class LlmProviderManagementCoordinator(
         Guid providerId,
         CancellationToken cancellationToken = default)
     {
-        LlmProvider? provider = await repository.GetByIdAsync(providerId, cancellationToken);
+        var provider = await repository.GetByIdAsync(providerId, cancellationToken);
         if (provider is null)
         {
             return LlmProviderConnectionTestResult.NotFound;
@@ -196,7 +196,7 @@ public sealed class LlmProviderManagementCoordinator(
             return LlmProviderConnectionTestResult.MissingApiKey;
         }
 
-        LlmProviderConnectionAttemptResult result = await connectionTestService.TestAsync(provider, apiKey, cancellationToken);
+        var result = await connectionTestService.TestAsync(provider, apiKey, cancellationToken);
         return result.Success
             ? LlmProviderConnectionTestResult.Success(result.Message)
             : LlmProviderConnectionTestResult.Failed($"连接测试失败：{result.Message}");

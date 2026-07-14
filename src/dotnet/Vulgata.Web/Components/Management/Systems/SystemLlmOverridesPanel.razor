@@ -1,7 +1,5 @@
 @using Vulgata.Core.Entities
 @using Vulgata.Web.Data
-@using SystemEntity = Vulgata.Core.Entities.System
-
 <section style="margin-bottom:1rem">
     <h3 style="margin-top:0.75rem">LLM Provider 覆盖</h3>
     <table class="table" aria-label="@SystemName LLM Provider 覆盖列表">
@@ -12,9 +10,9 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (AgentType agentType in Enum.GetValues<AgentType>())
+        @foreach (var agentType in Enum.GetValues<AgentType>())
             {
-                SystemLlmProviderOverrideSummaryDto? overrideItem = GetOverride(agentType);
+                var overrideItem = GetOverride(agentType);
                 <tr>
                     <td>@GetAgentTypeDisplayName(agentType)</td>
                     <td>@(overrideItem?.ProviderName ?? "使用全局默认提供商")</td>

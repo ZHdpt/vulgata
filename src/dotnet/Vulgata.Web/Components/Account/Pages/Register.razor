@@ -89,7 +89,7 @@ error.Description))}";
             return;
         }
 
-        IdentityResult roleAssignmentResult = await AssignInitialRoleAsync(user);
+        var roleAssignmentResult = await AssignInitialRoleAsync(user);
         if (!roleAssignmentResult.Succeeded)
         {
             identityErrors = roleAssignmentResult.Errors;
@@ -148,10 +148,10 @@ error.Description))}";
 
     private static IEnumerable<IdentityError> GetRegistrationErrors(IEnumerable<IdentityError> errors)
     {
-        IdentityError[] materializedErrors = errors.ToArray();
+        var materializedErrors = errors.ToArray();
 
         // Registration uses email as the username, so a duplicate email can also trigger DuplicateUserName.
-        if (!materializedErrors.Any(error => error.Code == nameof(IdentityErrorDescriber.DuplicateEmail)))
+        if (materializedErrors.All(error => error.Code != nameof(IdentityErrorDescriber.DuplicateEmail)))
         {
             return materializedErrors;
         }

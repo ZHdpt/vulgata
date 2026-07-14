@@ -53,7 +53,7 @@ public sealed class UserContext : IUserContext
 
     private async Task<bool> IsAdministratorCoreAsync()
     {
-        AuthorizationResult result = await _authorization.AuthorizeAsync(_principal, AuthorizationPolicyNames.AdministratorOnly);
+        var result = await _authorization.AuthorizeAsync(_principal, AuthorizationPolicyNames.AdministratorOnly);
         return result.Succeeded;
     }
 }

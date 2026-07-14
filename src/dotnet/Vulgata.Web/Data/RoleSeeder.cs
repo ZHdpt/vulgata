@@ -15,7 +15,7 @@ public sealed class RoleSeeder(RoleManager<IdentityRole> roleManager, ILogger<Ro
                 continue;
             }
 
-            IdentityResult result = await roleManager.CreateAsync(new IdentityRole(roleName));
+            var result = await roleManager.CreateAsync(new IdentityRole(roleName));
             if (!result.Succeeded)
             {
                 string errorCodes = string.Join(", ", result.Errors.Select(error => error.Code));

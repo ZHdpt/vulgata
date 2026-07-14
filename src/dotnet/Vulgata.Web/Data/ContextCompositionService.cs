@@ -1,20 +1,21 @@
 using Microsoft.EntityFrameworkCore;
+using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
 
 namespace Vulgata.Web.Data;
 
 public sealed class ContextCompositionService(IDbContextFactory<VulgataDbContext> dbContextFactory)
-    : Core.DomainServices.IContextCompositionService
+    : IContextCompositionService
 {
     public async Task<string?> ComposeEffectiveContextAsync(
         Guid? systemId,
         Guid repositoryId,
         CancellationToken cancellationToken = default)
     {
-        await using VulgataDbContext db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
         // 1. Global context
-        Core.Entities.GlobalContext? global = await db.GlobalContexts
+        var global = await db.GlobalContexts
             .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
 

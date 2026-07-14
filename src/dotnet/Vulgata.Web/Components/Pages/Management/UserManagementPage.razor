@@ -1,14 +1,12 @@
 @page "/management/settings/users"
-@layout ManagementLayout
-@attribute [Authorize(Policy = AuthorizationPolicyNames.AdministratorOnly)]
-@attribute [ExcludeFromInteractiveRouting]
-
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.Extensions.DependencyInjection
 @using Vulgata.Web.Components.Account
 @using Vulgata.Web.Components.Account.Shared
 @using Vulgata.Web.Data
+@layout ManagementLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.AdministratorOnly)]
+@attribute [ExcludeFromInteractiveRouting]
 
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
@@ -45,7 +43,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (UserRoleRow row in _rows)
+        @foreach (var row in _rows)
             {
                 <tr>
                     <td>@row.Email</td>
@@ -110,7 +108,7 @@ else
             return;
         }
 
-        ApplicationUser? user = await UserManager.FindByIdAsync(UserId);
+        var user = await UserManager.FindByIdAsync(UserId);
         if (user is null)
         {
             RedirectWithStatus("错误：未找到指定用户。", isError: true);
@@ -140,7 +138,7 @@ else
             return;
         }
 
-        IdentityResult result = await UserManager.AddToRoleAsync(user, RoleNames.Administrator);
+        var result = await UserManager.AddToRoleAsync(user, RoleNames.Administrator);
         if (!result.Succeeded)
         {
             RedirectWithStatus(BuildErrorMessage(result.Errors), isError: true);
@@ -152,7 +150,7 @@ else
 
     private async Task RemoveAdministratorAsync(ApplicationUser user)
     {
-        AdministratorRoleRemovalResult result = await AdministratorRoleCoordinator.RemoveAdministratorAsync(user);
+        var result = await AdministratorRoleCoordinator.RemoveAdministratorAsync(user);
         switch (result.Outcome)
         {
             case AdministratorRoleRemovalOutcome.NotAdministrator:
@@ -187,23 +185,23 @@ else
         // Resolve a fresh UserManager from an isolated scope to prevent DbContext
         // concurrency when Npgsql's EnableRetryOnFailure retries overlap with
         // the next query on the same ApplicationDbContext instance.
-        await using AsyncServiceScope scope = ScopeFactory.CreateAsyncScope();
-        UserManager<ApplicationUser> scopedUserManager =
+        await using var scope = ScopeFactory.CreateAsyncScope();
+        var scopedUserManager =
             scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        List<ApplicationUser> users = await scopedUserManager.Users
+        var users = await scopedUserManager.Users
             .OrderBy(user => user.Email)
             .ThenBy(user => user.UserName)
             .ToListAsync();
 
-        IList<ApplicationUser> administrators =
+        var administrators =
             await scopedUserManager.GetUsersInRoleAsync(RoleNames.Administrator);
         bool canRemoveAdministrator = administrators.Count > 1;
 
         List<UserRoleRow> rows = [];
-        foreach (ApplicationUser user in users)
+        foreach (var user in users)
         {
-            IList<string> roles = await scopedUserManager.GetRolesAsync(user);
+            var roles = await scopedUserManager.GetRolesAsync(user);
             string[] orderedRoles = roles
                 .OrderBy(GetRolePriority)
                 .ThenBy(role => role, StringComparer.Ordinal)

@@ -21,14 +21,14 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
     public async Task Register_FirstRegisteredUser_BecomesAdministrator()
     {
         await ResetUsersAsync();
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
 
-        HttpResponseMessage response = await RegisterAsync(client, "story16.first@example.com", "Valid1!Pass");
+        var response = await RegisterAsync(client, "story16.first@example.com", "Valid1!Pass");
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/", GetLocationPath(response));
 
-        IList<string> roles = await GetUserRolesAsync("story16.first@example.com");
+        var roles = await GetUserRolesAsync("story16.first@example.com");
 
         Assert.Contains(RoleNames.Administrator, roles);
     }
@@ -37,16 +37,16 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
     public async Task Register_SubsequentUser_DefaultsToUserWhenAdministratorExists()
     {
         await ResetUsersAsync();
-        using HttpClient firstClient = CreateClient();
-        using HttpClient secondClient = CreateClient();
+        using var firstClient = CreateClient();
+        using var secondClient = CreateClient();
 
         await RegisterAsync(firstClient, "story16.bootstrap@example.com", "Valid1!Pass");
-        HttpResponseMessage secondResponse = await RegisterAsync(secondClient, "story16.second@example.com", "Valid1!Pass");
+        var secondResponse = await RegisterAsync(secondClient, "story16.second@example.com", "Valid1!Pass");
 
         Assert.Equal(HttpStatusCode.Redirect, secondResponse.StatusCode);
         Assert.Equal("/", GetLocationPath(secondResponse));
 
-        IList<string> roles = await GetUserRolesAsync("story16.second@example.com");
+        var roles = await GetUserRolesAsync("story16.second@example.com");
 
         Assert.Contains(RoleNames.User, roles);
         Assert.DoesNotContain(RoleNames.Administrator, roles);
@@ -58,17 +58,17 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         await EnsureApplicationStartedAsync();
         await CreateUserWithRolesAsync("story16.owner@example.com", "Valid1!Pass", RoleNames.SystemOwner);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, "story16.owner@example.com", "Valid1!Pass");
 
-        HttpResponseMessage settingsResponse = await client.GetAsync("/management/settings");
+        var settingsResponse = await client.GetAsync("/management/settings");
         string settingsHtml = WebUtility.HtmlDecode(await settingsResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, settingsResponse.StatusCode);
         Assert.DoesNotContain("/management/settings/users", settingsHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("用户管理", settingsHtml, StringComparison.Ordinal);
 
-        HttpResponseMessage userManagementResponse = await client.GetAsync("/management/settings/users");
+        var userManagementResponse = await client.GetAsync("/management/settings/users");
 
         Assert.Equal(HttpStatusCode.Redirect, userManagementResponse.StatusCode);
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(userManagementResponse), StringComparison.Ordinal);
@@ -81,17 +81,17 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         string targetUserId = await CreateUserWithRolesAsync("story16.member@example.com", "Valid1!Pass", RoleNames.User);
         await CreateUserWithRolesAsync("story16.admin@example.com", "Valid1!Pass", RoleNames.Administrator);
 
-        using HttpClient adminClient = CreateClient();
-        using HttpClient targetClient = CreateClient();
+        using var adminClient = CreateClient();
+        using var targetClient = CreateClient();
 
         await LoginAsync(adminClient, "story16.admin@example.com", "Valid1!Pass");
         await LoginAsync(targetClient, "story16.member@example.com", "Valid1!Pass");
 
-        HttpResponseMessage beforeGrantResponse = await targetClient.GetAsync("/management/settings/users");
+        var beforeGrantResponse = await targetClient.GetAsync("/management/settings/users");
         Assert.Equal(HttpStatusCode.Redirect, beforeGrantResponse.StatusCode);
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(beforeGrantResponse), StringComparison.Ordinal);
 
-        HttpResponseMessage adminPageResponse = await adminClient.GetAsync("/management/settings/users");
+        var adminPageResponse = await adminClient.GetAsync("/management/settings/users");
         string adminPageHtml = WebUtility.HtmlDecode(await adminPageResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, adminPageResponse.StatusCode);
@@ -99,25 +99,25 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         Assert.Contains("story16.member@example.com", adminPageHtml, StringComparison.Ordinal);
         Assert.Contains("story16.admin@example.com", adminPageHtml, StringComparison.Ordinal);
 
-        Dictionary<string, string> grantFields = await GetFormFieldsByFormNameAsync(
+        var grantFields = await GetFormFieldsByFormNameAsync(
             adminClient,
             "/management/settings/users",
             $"grant-admin-{targetUserId}");
-        HttpResponseMessage grantResponse = await adminClient.PostAsync("/management/settings/users", new FormUrlEncodedContent(grantFields));
+        var grantResponse = await adminClient.PostAsync("/management/settings/users", new FormUrlEncodedContent(grantFields));
 
         Assert.Equal(HttpStatusCode.Redirect, grantResponse.StatusCode);
         Assert.Equal("/management/settings/users", GetLocationPath(grantResponse));
 
-        HttpResponseMessage refreshedPageResponse = await adminClient.GetAsync("/management/settings/users");
+        var refreshedPageResponse = await adminClient.GetAsync("/management/settings/users");
         string refreshedPageHtml = WebUtility.HtmlDecode(await refreshedPageResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, refreshedPageResponse.StatusCode);
         Assert.Contains("已授予管理员权限。", refreshedPageHtml, StringComparison.Ordinal);
 
-        IList<string> roles = await GetUserRolesAsync("story16.member@example.com");
+        var roles = await GetUserRolesAsync("story16.member@example.com");
         Assert.Contains(RoleNames.Administrator, roles);
 
-        HttpResponseMessage afterGrantResponse = await targetClient.GetAsync("/management/settings/users");
+        var afterGrantResponse = await targetClient.GetAsync("/management/settings/users");
         string targetHtml = WebUtility.HtmlDecode(await afterGrantResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, afterGrantResponse.StatusCode);
@@ -131,30 +131,30 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         await CreateUserWithRolesAsync("story16.primary-admin@example.com", "Valid1!Pass", RoleNames.Administrator);
         string targetAdminId = await CreateUserWithRolesAsync("story16.secondary-admin@example.com", "Valid1!Pass", RoleNames.Administrator);
 
-        using HttpClient actorClient = CreateClient();
-        using HttpClient targetClient = CreateClient();
+        using var actorClient = CreateClient();
+        using var targetClient = CreateClient();
 
         await LoginAsync(actorClient, "story16.primary-admin@example.com", "Valid1!Pass");
         await LoginAsync(targetClient, "story16.secondary-admin@example.com", "Valid1!Pass");
 
-        HttpResponseMessage beforeRemovalResponse = await targetClient.GetAsync("/management/settings/users");
+        var beforeRemovalResponse = await targetClient.GetAsync("/management/settings/users");
         Assert.Equal(HttpStatusCode.OK, beforeRemovalResponse.StatusCode);
 
-        Dictionary<string, string> removeFields = await GetFormFieldsByFormNameAsync(
+        var removeFields = await GetFormFieldsByFormNameAsync(
             actorClient,
             "/management/settings/users",
             $"remove-admin-{targetAdminId}");
 
-        HttpResponseMessage removeResponse = await actorClient.PostAsync("/management/settings/users", new FormUrlEncodedContent(removeFields));
+        var removeResponse = await actorClient.PostAsync("/management/settings/users", new FormUrlEncodedContent(removeFields));
 
         Assert.Equal(HttpStatusCode.Redirect, removeResponse.StatusCode);
         Assert.Equal("/management/settings/users", GetLocationPath(removeResponse));
 
-        IList<string> roles = await GetUserRolesAsync("story16.secondary-admin@example.com");
+        var roles = await GetUserRolesAsync("story16.secondary-admin@example.com");
         Assert.DoesNotContain(RoleNames.Administrator, roles);
         Assert.Contains(RoleNames.User, roles);
 
-        HttpResponseMessage afterRemovalResponse = await targetClient.GetAsync("/management/settings/users");
+        var afterRemovalResponse = await targetClient.GetAsync("/management/settings/users");
         Assert.Equal(HttpStatusCode.Redirect, afterRemovalResponse.StatusCode);
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(afterRemovalResponse), StringComparison.Ordinal);
     }
@@ -170,29 +170,29 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
             RoleNames.Administrator,
             RoleNames.SystemOwner);
 
-        using HttpClient actorClient = CreateClient();
-        using HttpClient targetClient = CreateClient();
+        using var actorClient = CreateClient();
+        using var targetClient = CreateClient();
 
         await LoginAsync(actorClient, "story16.remover@example.com", "Valid1!Pass");
         await LoginAsync(targetClient, "story16.admin-owner@example.com", "Valid1!Pass");
 
-        Dictionary<string, string> removeFields = await GetFormFieldsByFormNameAsync(
+        var removeFields = await GetFormFieldsByFormNameAsync(
             actorClient,
             "/management/settings/users",
             $"remove-admin-{targetId}");
 
-        HttpResponseMessage removeResponse = await actorClient.PostAsync("/management/settings/users", new FormUrlEncodedContent(removeFields));
+        var removeResponse = await actorClient.PostAsync("/management/settings/users", new FormUrlEncodedContent(removeFields));
 
         Assert.Equal(HttpStatusCode.Redirect, removeResponse.StatusCode);
 
-        IList<string> roles = await GetUserRolesAsync("story16.admin-owner@example.com");
+        var roles = await GetUserRolesAsync("story16.admin-owner@example.com");
         Assert.DoesNotContain(RoleNames.Administrator, roles);
         Assert.Contains(RoleNames.SystemOwner, roles);
 
-        HttpResponseMessage settingsResponse = await targetClient.GetAsync("/management/settings");
+        var settingsResponse = await targetClient.GetAsync("/management/settings");
         Assert.Equal(HttpStatusCode.OK, settingsResponse.StatusCode);
 
-        HttpResponseMessage userManagementResponse = await targetClient.GetAsync("/management/settings/users");
+        var userManagementResponse = await targetClient.GetAsync("/management/settings/users");
         Assert.Equal(HttpStatusCode.Redirect, userManagementResponse.StatusCode);
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(userManagementResponse), StringComparison.Ordinal);
     }
@@ -203,34 +203,34 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         await EnsureApplicationStartedAsync();
         string onlyAdminId = await CreateUserWithRolesAsync("story16.last-admin@example.com", "Valid1!Pass", RoleNames.Administrator);
 
-        using HttpClient client = CreateClient();
+        using var client = CreateClient();
         await LoginAsync(client, "story16.last-admin@example.com", "Valid1!Pass");
 
-        HttpResponseMessage pageResponse = await client.GetAsync("/management/settings/users");
+        var pageResponse = await client.GetAsync("/management/settings/users");
         string pageHtml = WebUtility.HtmlDecode(await pageResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
         Assert.DoesNotContain($"name=\"UserId\" value=\"{onlyAdminId}\"", pageHtml, StringComparison.Ordinal);
 
-        Dictionary<string, string> postFields = await GetFormFieldsByFormNameAsync(
+        var postFields = await GetFormFieldsByFormNameAsync(
             client,
             "/management/settings/users",
             "user-management-action");
         postFields["Action"] = "remove";
         postFields["UserId"] = onlyAdminId;
 
-        HttpResponseMessage postResponse = await client.PostAsync("/management/settings/users", new FormUrlEncodedContent(postFields));
+        var postResponse = await client.PostAsync("/management/settings/users", new FormUrlEncodedContent(postFields));
 
         Assert.Equal(HttpStatusCode.Redirect, postResponse.StatusCode);
         Assert.Equal("/management/settings/users", GetLocationPath(postResponse));
 
-        HttpResponseMessage refreshedResponse = await client.GetAsync("/management/settings/users");
+        var refreshedResponse = await client.GetAsync("/management/settings/users");
         string refreshedHtml = WebUtility.HtmlDecode(await refreshedResponse.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, refreshedResponse.StatusCode);
         Assert.Contains("至少需要保留一名管理员。", refreshedHtml, StringComparison.Ordinal);
 
-        IList<string> roles = await GetUserRolesAsync("story16.last-admin@example.com");
+        var roles = await GetUserRolesAsync("story16.last-admin@example.com");
         Assert.Contains(RoleNames.Administrator, roles);
     }
 
@@ -243,14 +243,14 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private async Task EnsureApplicationStartedAsync()
     {
-        using HttpClient client = CreateClient();
-        HttpResponseMessage response = await client.GetAsync("/Account/Login");
+        using var client = CreateClient();
+        var response = await client.GetAsync("/Account/Login");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    private async Task<HttpResponseMessage> RegisterAsync(HttpClient client, string email, string password)
+    private static async Task<HttpResponseMessage> RegisterAsync(HttpClient client, string email, string password)
     {
-        Dictionary<string, string> fields = await GetFormFieldsAsync(client, "/Account/Register");
+        var fields = await GetFormFieldsAsync(client, "/Account/Register");
         fields["Input.Email"] = email;
         fields["Input.Password"] = password;
         fields["Input.ConfirmPassword"] = password;
@@ -258,22 +258,22 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         return await client.PostAsync("/Account/Register", new FormUrlEncodedContent(fields));
     }
 
-    private async Task LoginAsync(HttpClient client, string email, string password)
+    private static async Task LoginAsync(HttpClient client, string email, string password)
     {
-        Dictionary<string, string> fields = await GetFormFieldsAsync(client, "/Account/Login");
+        var fields = await GetFormFieldsAsync(client, "/Account/Login");
         fields["Input.Email"] = email;
         fields["Input.Password"] = password;
         fields["Input.RememberMe"] = "false";
 
-        HttpResponseMessage response = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(fields));
+        var response = await client.PostAsync("/Account/Login", new FormUrlEncodedContent(fields));
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
     }
 
     private async Task<string> CreateUserWithRolesAsync(string email, string password, params string[] roles)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         ApplicationUser user = new()
         {
@@ -282,12 +282,12 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
             EmailConfirmed = true,
         };
 
-        IdentityResult createResult = await userManager.CreateAsync(user, password);
+        var createResult = await userManager.CreateAsync(user, password);
         Assert.True(createResult.Succeeded, string.Join(", ", createResult.Errors.Select(error => error.Description)));
 
         foreach (string role in roles.Distinct(StringComparer.Ordinal))
         {
-            IdentityResult roleResult = await userManager.AddToRoleAsync(user, role);
+            var roleResult = await userManager.AddToRoleAsync(user, role);
             Assert.True(roleResult.Succeeded, string.Join(", ", roleResult.Errors.Select(error => error.Description)));
         }
 
@@ -296,10 +296,10 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private async Task<IList<string>> GetUserRolesAsync(string email)
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        ApplicationUser? user = await userManager.FindByEmailAsync(email);
+        var user = await userManager.FindByEmailAsync(email);
         Assert.NotNull(user);
 
         return await userManager.GetRolesAsync(user);
@@ -307,8 +307,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private async Task ResetUsersAsync()
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        ApplicationDbContext db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         db.UserTokens.RemoveRange(db.UserTokens);
         db.UserClaims.RemoveRange(db.UserClaims);
@@ -321,7 +321,7 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private static async Task<Dictionary<string, string>> GetFormFieldsAsync(HttpClient client, string path, string? actionContains = null)
     {
-        HttpResponseMessage response = await client.GetAsync(path);
+        var response = await client.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         string html = await response.Content.ReadAsStringAsync();
@@ -330,11 +330,11 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private static async Task<Dictionary<string, string>> GetFormFieldsByFormNameAsync(HttpClient client, string path, string formName)
     {
-        HttpResponseMessage response = await client.GetAsync(path);
+        var response = await client.GetAsync(path);
         response.EnsureSuccessStatusCode();
 
         string html = await response.Content.ReadAsStringAsync();
-        MatchCollection formMatches = Regex.Matches(
+        var formMatches = Regex.Matches(
             html,
             "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -355,7 +355,7 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private static Dictionary<string, string> ExtractFormFields(string html, string? actionContains = null)
     {
-        Match formMatch = string.IsNullOrWhiteSpace(actionContains)
+        var formMatch = string.IsNullOrWhiteSpace(actionContains)
             ? Regex.Match(
                 html,
                 "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
@@ -376,8 +376,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         if (!formMatch.Success)
         {
             throw new InvalidOperationException(actionContains is not null
-                    ? $"Form containing action '{actionContains}' was not found."
-                    : "No POST form was found in the supplied HTML.");
+                ? $"Form containing action '{actionContains}' was not found."
+                : "No POST form was found in the supplied HTML.");
         }
 
         return ExtractInputs(formMatch.Groups["content"].Value);
@@ -386,7 +386,7 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
     private static Dictionary<string, string> ExtractInputs(string formHtml)
     {
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
-        MatchCollection inputMatches = Regex.Matches(
+        var inputMatches = Regex.Matches(
             formHtml,
             "<input[^>]*>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -411,7 +411,7 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private static bool FormHasGeneratedHandler(string formHtml, string formName)
     {
-        Dictionary<string, string> fields = ExtractInputs(formHtml);
+        var fields = ExtractInputs(formHtml);
         foreach ((string name, string value) in fields)
         {
             if (name.Contains("handler", StringComparison.OrdinalIgnoreCase)
@@ -432,7 +432,7 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private static string? GetAttributeValue(string html, string attributeName)
     {
-        Match match = Regex.Match(
+        var match = Regex.Match(
             html,
             $"(?:^|\\s){Regex.Escape(attributeName)}=\"(?<value>[^\"]*)\"",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -444,8 +444,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
 
     private static string GetLocationPath(HttpResponseMessage response)
     {
-        Uri location = response.Headers.Location
-            ?? throw new InvalidOperationException("Expected a redirect location header.");
+        var location = response.Headers.Location
+                       ?? throw new InvalidOperationException("Expected a redirect location header.");
 
         return location.IsAbsoluteUri
             ? location.PathAndQuery

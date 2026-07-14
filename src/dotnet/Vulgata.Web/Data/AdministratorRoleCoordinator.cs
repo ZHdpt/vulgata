@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
 using Vulgata.Shared;
 
 namespace Vulgata.Web.Data;
@@ -39,7 +38,7 @@ public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> us
         await _roleMutationLock.WaitAsync(cancellationToken);
         try
         {
-            IList<ApplicationUser> administrators = await userManager.GetUsersInRoleAsync(RoleNames.Administrator);
+            var administrators = await userManager.GetUsersInRoleAsync(RoleNames.Administrator);
             string targetRole = administrators.Count == 0
                 ? RoleNames.Administrator
                 : RoleNames.User;
@@ -54,7 +53,7 @@ public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> us
                 return IdentityResult.Success;
             }
 
-            IdentityResult addResult = await userManager.AddToRoleAsync(user, targetRole);
+            var addResult = await userManager.AddToRoleAsync(user, targetRole);
             if (addResult.Succeeded)
             {
                 logger.LogInformation("Successfully assigned role {TargetRole} to user {UserId}", targetRole, user.Id);
@@ -83,13 +82,13 @@ public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> us
                 return AdministratorRoleRemovalResult.NotAdministrator;
             }
 
-            IList<ApplicationUser> administrators = await userManager.GetUsersInRoleAsync(RoleNames.Administrator);
+            var administrators = await userManager.GetUsersInRoleAsync(RoleNames.Administrator);
             if (administrators.Count <= 1)
             {
                 return AdministratorRoleRemovalResult.LastAdministratorBlocked;
             }
 
-            IdentityResult removeResult = await userManager.RemoveFromRoleAsync(user, RoleNames.Administrator);
+            var removeResult = await userManager.RemoveFromRoleAsync(user, RoleNames.Administrator);
             if (!removeResult.Succeeded)
             {
                 return AdministratorRoleRemovalResult.Failed(removeResult);
@@ -99,7 +98,7 @@ public sealed class AdministratorRoleCoordinator(UserManager<ApplicationUser> us
             bool hasUserRole = await userManager.IsInRoleAsync(user, RoleNames.User);
             if (!hasSystemOwner && !hasUserRole)
             {
-                IdentityResult addUserRoleResult = await userManager.AddToRoleAsync(user, RoleNames.User);
+                var addUserRoleResult = await userManager.AddToRoleAsync(user, RoleNames.User);
                 if (!addUserRoleResult.Succeeded)
                 {
                     return AdministratorRoleRemovalResult.Failed(addUserRoleResult);

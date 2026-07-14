@@ -2,7 +2,6 @@
 @using Vulgata.Shared.Repositories
 @using Vulgata.Web.Components.Management.Databases
 @using Vulgata.Web.Data
-
 @if (Visible && Model is not null)
 {
     <FluentDialog Visible="Visible" VisibleChanged="OnVisibleChanged" Title="仓库详情" PrimaryActionText="保存" SecondaryActionText="关闭"
@@ -83,7 +82,7 @@
 
         try
         {
-            RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto> result =
+            var result =
                 await DatabaseConnectionCoordinator.GetAsync(Model.Id, User, CancellationToken.None);
 
             if (result.Outcome == RepositoryDatabaseConnectionMutationOutcome.Success && result.Value is not null)

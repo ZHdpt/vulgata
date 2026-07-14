@@ -87,13 +87,13 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
         IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
+        var repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>.RepositoryNotFound;
         }
 
-        DatabaseConnection? databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
+        var databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
         if (databaseConnection is null)
         {
             return RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>.Success(
@@ -118,13 +118,13 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
         IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
+        var repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>.RepositoryNotFound;
         }
 
-        DatabaseConnection? databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
+        var databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
 
         string encryptedConnectionString = await encryptionService.EncryptAsync(SecretPurposes.DatabaseConnection, request.ConnectionString, cancellationToken);
 
@@ -133,7 +133,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
             string? encryptedUsername = await EncryptOptionalAsync(request.Username, cancellationToken);
             string? encryptedPassword = await EncryptOptionalAsync(request.Password, cancellationToken);
 
-            DatabaseConnection created = DatabaseConnection.Create(
+            var created = DatabaseConnection.Create(
                 repository.Id,
                 encryptedConnectionString,
                 request.DatabaseType,
@@ -177,13 +177,13 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
         IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
+        var repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionMutationResult<bool>.RepositoryNotFound;
         }
 
-        DatabaseConnection? databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
+        var databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
         if (databaseConnection is null)
         {
             return RepositoryDatabaseConnectionMutationResult<bool>.Success(true);
@@ -200,13 +200,13 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
         IUserContext user,
         CancellationToken cancellationToken = default)
     {
-        RepositoryEntity? repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
+        var repository = await GetVisibleRepositoryAsync(repositoryId, user, cancellationToken);
         if (repository is null)
         {
             return RepositoryDatabaseConnectionTestResult.RepositoryNotFound;
         }
 
-        DatabaseConnection? databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
+        var databaseConnection = await databaseConnectionRepository.GetByRepositoryAsync(repository.Id, cancellationToken);
         if (databaseConnection is null)
         {
             return RepositoryDatabaseConnectionTestResult.NotConfigured;
@@ -216,7 +216,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
         string plainUsername = await encryptionService.DecryptAsync(SecretPurposes.DatabaseConnection, databaseConnection.EncryptedUsername ?? string.Empty, cancellationToken);
         string plainPassword = await encryptionService.DecryptAsync(SecretPurposes.DatabaseConnection, databaseConnection.EncryptedPassword ?? string.Empty, cancellationToken);
 
-        DatabaseConnectionTestAttemptResult result = await connectionTestService.TestAsync(
+        var result = await connectionTestService.TestAsync(
             databaseConnection.DatabaseType,
             plainConnectionString,
             string.IsNullOrWhiteSpace(plainUsername) ? null : plainUsername,
@@ -243,7 +243,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
         IUserContext user,
         CancellationToken cancellationToken)
     {
-        RepositoryEntity? repository = await repositoryRepository.GetByIdAsync(repositoryId, cancellationToken);
+        var repository = await repositoryRepository.GetByIdAsync(repositoryId, cancellationToken);
         if (repository is null)
         {
             return null;
@@ -254,7 +254,7 @@ public sealed class RepositoryDatabaseConnectionCoordinator(
             return repository;
         }
 
-        Vulgata.Core.Entities.System? visibleSystem = await systemRepository.GetVisibleByIdAsync(
+        var visibleSystem = await systemRepository.GetVisibleByIdAsync(
             repository.SystemId.Value,
             user.ToSystemOwnerFilter(),
             cancellationToken);

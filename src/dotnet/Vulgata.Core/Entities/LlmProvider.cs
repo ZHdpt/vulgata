@@ -12,7 +12,7 @@ public sealed class LlmProvider
         string name,
         string baseEndpointUrl,
         string encryptedApiKey,
-        ApiTypeFlags supportedApiTypes,
+        ApiType supportedApiTypes,
         AgentType defaultAgentType,
         DateTimeOffset now)
     {
@@ -32,7 +32,7 @@ public sealed class LlmProvider
 
     public string EncryptedApiKey { get; private set; } = string.Empty;
 
-    public ApiTypeFlags SupportedApiTypes { get; private set; }
+    public ApiType SupportedApiTypes { get; private set; }
 
     public AgentType DefaultAgentType { get; private set; }
 
@@ -46,7 +46,7 @@ public sealed class LlmProvider
         string name,
         string baseEndpointUrl,
         string encryptedApiKey,
-        ApiTypeFlags supportedApiTypes,
+        ApiType supportedApiTypes,
         AgentType defaultAgentType,
         DateTimeOffset now)
     {
@@ -67,7 +67,7 @@ public sealed class LlmProvider
     {
         string trimmedValue = (baseEndpointUrl ?? string.Empty).Trim();
 
-        if (!Uri.TryCreate(trimmedValue, UriKind.Absolute, out Uri? uri))
+        if (!Uri.TryCreate(trimmedValue, UriKind.Absolute, out var uri))
         {
             return trimmedValue;
         }

@@ -1,9 +1,6 @@
 using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.AspNetCore.Authorization;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
-using Vulgata.Shared.LlmProviders;
 using Vulgata.Web.Data;
 using Vulgata.Web.Validators;
 
@@ -13,11 +10,11 @@ internal static class SystemLlmProviderOverrideApiEndpoints
 {
     public static void MapSystemLlmProviderOverrideApiEndpoints(this WebApplication app)
     {
-        RouteGroupBuilder systemLlmProviderOverridesApi = app.MapGroup("/api/systems/{systemId:guid}/llm-provider-overrides")
+        var systemLlmProviderOverridesApi = app.MapGroup("/api/systems/{systemId:guid}/llm-provider-overrides")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
         MapSystemLlmProviderOverrideEndpoints(systemLlmProviderOverridesApi);
 
-        RouteGroupBuilder systemLlmOverridesApi = app.MapGroup("/api/systems/{systemId:guid}/llm-overrides")
+        var systemLlmOverridesApi = app.MapGroup("/api/systems/{systemId:guid}/llm-overrides")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
         MapSystemLlmProviderOverrideEndpoints(systemLlmOverridesApi);
     }
@@ -30,15 +27,10 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> result =
-                await coordinator.ListAsync(systemId, user, cancellationToken);
+            var result = await coordinator.ListAsync(systemId, user, cancellationToken);
 
-            if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
-            {
-                return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
-            }
-
-            return Results.Ok(result.Value ?? []);
+            return result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound ? Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound)
+                : Results.Ok(result.Value ?? []);
         });
 
         routeGroup.MapGet("/providers", async (
@@ -47,7 +39,7 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            SystemLlmProviderOverrideMutationResult<IReadOnlyList<LlmProviderSummaryDto>> result =
+            var result =
                 await coordinator.ListProvidersAsync(systemId, user, cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
@@ -66,7 +58,7 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
@@ -80,7 +72,7 @@ internal static class SystemLlmProviderOverrideApiEndpoints
                 });
             }
 
-            SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto> result =
+            var result =
                 await coordinator.UpsertAsync(systemId, null, request, user, cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
@@ -131,7 +123,7 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
@@ -145,7 +137,7 @@ internal static class SystemLlmProviderOverrideApiEndpoints
                 });
             }
 
-            SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto> result =
+            var result =
                 await coordinator.UpsertAsync(systemId, overrideId, request, user, cancellationToken);
 
             if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
@@ -194,23 +186,18 @@ internal static class SystemLlmProviderOverrideApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            SystemLlmProviderOverrideMutationResult<bool> result = await coordinator.DeleteAsync(
+            var result = await coordinator.DeleteAsync(
                 systemId,
                 overrideId,
                 user,
                 cancellationToken);
 
-            if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.SystemNotFound)
+            return result.Outcome switch
             {
-                return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
-            }
-
-            if (result.Outcome == SystemLlmProviderOverrideMutationOutcome.OverrideNotFound)
-            {
-                return Results.Problem(detail: "系统级 LLM 覆盖不存在。", statusCode: StatusCodes.Status404NotFound);
-            }
-
-            return Results.NoContent();
+                SystemLlmProviderOverrideMutationOutcome.SystemNotFound => Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound),
+                SystemLlmProviderOverrideMutationOutcome.OverrideNotFound => Results.Problem(detail: "系统级 LLM 覆盖不存在。", statusCode: StatusCodes.Status404NotFound),
+                _ => Results.NoContent()
+            };
         });
     }
 }

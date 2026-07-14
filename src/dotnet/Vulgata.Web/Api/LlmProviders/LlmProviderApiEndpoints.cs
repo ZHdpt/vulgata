@@ -1,6 +1,4 @@
 using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.AspNetCore.Authorization;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Shared.LlmProviders;
@@ -13,7 +11,7 @@ internal static class LlmProviderApiEndpoints
 {
     public static void MapLlmProviderApiEndpoints(this WebApplication app)
     {
-        RouteGroupBuilder llmProvidersApi = app.MapGroup("/api/llm-providers")
+        var llmProvidersApi = app.MapGroup("/api/llm-providers")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         llmProvidersApi.MapGet("/", async (
@@ -28,7 +26,7 @@ internal static class LlmProviderApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            IReadOnlyList<LlmProviderSummaryDto> providers = await coordinator.ListAsync(cancellationToken);
+            var providers = await coordinator.ListAsync(cancellationToken);
             return Results.Ok(providers);
         });
 
@@ -46,13 +44,13 @@ internal static class LlmProviderApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            LlmProviderMutationResult<LlmProviderSummaryDto> result = await coordinator.CreateAsync(request, cancellationToken);
+            var result = await coordinator.CreateAsync(request, cancellationToken);
             if (result.Outcome == LlmProviderMutationOutcome.DuplicateName)
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]>
@@ -79,13 +77,13 @@ internal static class LlmProviderApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            LlmProviderMutationResult<LlmProviderSummaryDto> result = await coordinator.UpdateAsync(id, request, cancellationToken);
+            var result = await coordinator.UpdateAsync(id, request, cancellationToken);
             if (result.Outcome == LlmProviderMutationOutcome.NotFound)
             {
                 return Results.Problem(
@@ -117,7 +115,7 @@ internal static class LlmProviderApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            LlmProviderMutationResult<bool> result = await coordinator.DeleteAsync(id, cancellationToken);
+            var result = await coordinator.DeleteAsync(id, cancellationToken);
             if (result.Outcome == LlmProviderMutationOutcome.NotFound)
             {
                 return Results.Problem(
@@ -141,7 +139,7 @@ internal static class LlmProviderApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            LlmProviderConnectionTestResult result = await coordinator.TestConnectionAsync(id, cancellationToken);
+            var result = await coordinator.TestConnectionAsync(id, cancellationToken);
             if (result.Outcome == LlmProviderConnectionTestOutcome.NotFound)
             {
                 return Results.Problem(

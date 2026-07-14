@@ -14,7 +14,7 @@ public sealed class SecretEncryptionService(IDataProtectionProvider dataProtecti
     public Task<string> EncryptAsync(string purpose, string plain, CancellationToken cancellationToken = default)
     {
         string normalizedValue = (plain ?? string.Empty).Trim();
-        IDataProtector protector = dataProtectionProvider.CreateProtector(purpose);
+        var protector = dataProtectionProvider.CreateProtector(purpose);
         return Task.FromResult(protector.Protect(normalizedValue));
     }
 
@@ -25,7 +25,7 @@ public sealed class SecretEncryptionService(IDataProtectionProvider dataProtecti
             return Task.FromResult(string.Empty);
         }
 
-        IDataProtector protector = dataProtectionProvider.CreateProtector(purpose);
+        var protector = dataProtectionProvider.CreateProtector(purpose);
         return Task.FromResult(protector.Unprotect(cipher));
     }
 }

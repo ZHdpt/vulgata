@@ -1,6 +1,4 @@
 using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
@@ -15,7 +13,7 @@ internal static class SystemApiEndpoints
 {
     public static void MapSystemApiEndpoints(this WebApplication app)
     {
-        RouteGroupBuilder systemsApi = app.MapGroup("/api/systems")
+        var systemsApi = app.MapGroup("/api/systems")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
         systemsApi.MapGet("/", async (
@@ -23,7 +21,7 @@ internal static class SystemApiEndpoints
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            IReadOnlyList<SystemEntity> systems = await repository.ListVisibleAsync(user.ToSystemOwnerFilter(), cancellationToken);
+            var systems = await repository.ListVisibleAsync(user.ToSystemOwnerFilter(), cancellationToken);
 
             return Results.Ok(systems.Select(s => new
             {
@@ -50,7 +48,7 @@ internal static class SystemApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
@@ -100,7 +98,7 @@ internal static class SystemApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
@@ -115,7 +113,7 @@ internal static class SystemApiEndpoints
                 });
             }
 
-            SystemEntity? existing = await repository.GetByIdAsync(id, cancellationToken);
+            var existing = await repository.GetByIdAsync(id, cancellationToken);
             if (existing is null)
             {
                 return Results.Problem(
@@ -150,7 +148,7 @@ internal static class SystemApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            SystemDeleteResult result = await repository.DeleteIfNoDependenciesAsync(id, cancellationToken);
+            var result = await repository.DeleteIfNoDependenciesAsync(id, cancellationToken);
 
             if (result.Outcome == SystemDeleteOutcome.Deleted)
             {
@@ -191,7 +189,7 @@ internal static class SystemApiEndpoints
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            IReadOnlyList<SystemOwnerAssignmentDto> owners = await ownershipCoordinator.ListOwnersAsync(systemId, cancellationToken);
+            var owners = await ownershipCoordinator.ListOwnersAsync(systemId, cancellationToken);
             return Results.Ok(owners);
         });
 
@@ -217,7 +215,7 @@ internal static class SystemApiEndpoints
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            IReadOnlyList<SystemOwnerCandidateDto> candidates =
+            var candidates =
                 await ownershipCoordinator.ListOwnerCandidatesAsync(systemId, keyword, cancellationToken);
 
             return Results.Ok(candidates);
@@ -238,13 +236,13 @@ internal static class SystemApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            SystemOwnershipAssignmentResult result = await ownershipCoordinator.AssignOwnerAsync(
+            var result = await ownershipCoordinator.AssignOwnerAsync(
                 systemId,
                 request.UserId,
                 cancellationToken);
@@ -302,7 +300,7 @@ internal static class SystemApiEndpoints
                     statusCode: StatusCodes.Status403Forbidden);
             }
 
-            SystemOwnershipRemovalResult result = await ownershipCoordinator.RemoveOwnerAsync(systemId, userId, cancellationToken);
+            var result = await ownershipCoordinator.RemoveOwnerAsync(systemId, userId, cancellationToken);
 
             if (result.Outcome == SystemOwnershipRemovalOutcome.Removed)
             {

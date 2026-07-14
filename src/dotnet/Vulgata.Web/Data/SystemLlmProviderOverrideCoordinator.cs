@@ -111,7 +111,7 @@ public sealed class SystemLlmProviderOverrideCoordinator(
             return SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>.SystemNotFound;
         }
 
-        IReadOnlyList<SystemLlmProviderOverride> overrides = await overrideRepository.ListBySystemAsync(systemId, cancellationToken);
+        var overrides = await overrideRepository.ListBySystemAsync(systemId, cancellationToken);
         IReadOnlyList<SystemLlmProviderOverrideSummaryDto> mapped = overrides
             .Select(o => MapToSummary(o))
             .ToList();
@@ -129,7 +129,7 @@ public sealed class SystemLlmProviderOverrideCoordinator(
             return SystemLlmProviderOverrideMutationResult<IReadOnlyList<LlmProviderSummaryDto>>.SystemNotFound;
         }
 
-        IReadOnlyList<LlmProvider> providers = await llmProviderRepository.ListAllAsync(cancellationToken);
+        var providers = await llmProviderRepository.ListAllAsync(cancellationToken);
         IReadOnlyList<LlmProviderSummaryDto> mapped = providers
             .Select(MapToProviderSummary)
             .ToList();
@@ -149,7 +149,7 @@ public sealed class SystemLlmProviderOverrideCoordinator(
             return SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto>.SystemNotFound;
         }
 
-        LlmProvider? provider = await llmProviderRepository.GetByIdAsync(request.LlmProviderId, cancellationToken);
+        var provider = await llmProviderRepository.GetByIdAsync(request.LlmProviderId, cancellationToken);
         if (provider is null)
         {
             return SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto>.ProviderNotFound;
@@ -161,11 +161,11 @@ public sealed class SystemLlmProviderOverrideCoordinator(
                 "所选 LLM 提供商的默认代理角色与目标代理角色不匹配。");
         }
 
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
 
         if (overrideId.HasValue)
         {
-            SystemLlmProviderOverride? existingById = await overrideRepository.GetBySystemAndIdAsync(
+            var existingById = await overrideRepository.GetBySystemAndIdAsync(
                 systemId,
                 overrideId.Value,
                 cancellationToken);
@@ -176,7 +176,7 @@ public sealed class SystemLlmProviderOverrideCoordinator(
 
             if (existingById.AgentType != request.AgentType)
             {
-                SystemLlmProviderOverride? duplicate = await overrideRepository.GetBySystemAndAgentTypeAsync(
+                var duplicate = await overrideRepository.GetBySystemAndAgentTypeAsync(
                     systemId,
                     request.AgentType,
                     cancellationToken);
@@ -204,7 +204,7 @@ public sealed class SystemLlmProviderOverrideCoordinator(
                 MapToSummary(existingById, provider.Name));
         }
 
-        SystemLlmProviderOverride? existing = await overrideRepository.GetBySystemAndAgentTypeAsync(
+        var existing = await overrideRepository.GetBySystemAndAgentTypeAsync(
             systemId,
             request.AgentType,
             cancellationToken);
@@ -268,7 +268,7 @@ public sealed class SystemLlmProviderOverrideCoordinator(
             return new SystemLlmProviderEffectiveProviderResult(Guid.Empty, false);
         }
 
-        SystemLlmProviderOverride? overrideEntry = await overrideRepository.GetBySystemAndAgentTypeAsync(
+        var overrideEntry = await overrideRepository.GetBySystemAndAgentTypeAsync(
             systemId,
             agentType,
             cancellationToken);
@@ -278,7 +278,7 @@ public sealed class SystemLlmProviderOverrideCoordinator(
             return new SystemLlmProviderEffectiveProviderResult(overrideEntry.LlmProviderId, true);
         }
 
-        LlmProvider? globalDefault = (await llmProviderRepository.ListAllAsync(cancellationToken))
+        var globalDefault = (await llmProviderRepository.ListAllAsync(cancellationToken))
             .FirstOrDefault(provider => provider.DefaultAgentType == agentType);
 
         return globalDefault is null
