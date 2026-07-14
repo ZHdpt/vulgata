@@ -1,7 +1,7 @@
 # Specification Quality Checklist: CodeGraph Code Unit Extraction
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning  
-**Created**: 2026-07-14  
+**Purpose**: Validate specification completeness and quality before proceeding to planning
+**Created**: 2026-07-14
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality

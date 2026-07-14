@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "gate": "spec-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "ce8d98c7cce0dfc684f828f0aa3149e7fab9dadb",
+  "reviewed_boundary": {
+    "base_commit": "ce8d98c7cce0dfc684f828f0aa3149e7fab9dadb",
+    "candidate_commit": null,
+    "diff_sha256": "8ebf8f7546e743bbcc3c29cc85b856379d192e639ce3b3332eae72718dc580ea",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/spec.md": "b89124bef8a0a0b88549eac3d5044bd6409701d29671bdfedf9a6ac0362ddd2d",
+      "specs/001-codegraph-extraction/checklists/requirements.md": "6a6e122faeedf14740d98d338eeb6355bc08b16467b834547a70ce70684ff0df"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/spec.md",
+      "specs/001-codegraph-extraction/checklists/requirements.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/checklists/requirements.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Raw SHA-256 values match the pinned boundary. Relative to ce8d98c7cce0dfc684f828f0aa3149e7fab9dadb, the two reviewed Markdown files differ only by removal of trailing whitespace: the ignore-space-at-eol diff is empty and git diff --check passes. The previously accepted semantic specification remains intact: it preserves the user-authorized content-prefix File Identity Hash, Exact|Approximate|Heuristic Range Confidence, ScanRun/ScanRuns, and local CodeGraphContext cgc constraints; an auditable target-absent relationship remains an Unresolved Structural Relationship Candidate without a Code Unit Edge target or Cross-Repository Resolution; authorization, source/diagnostic safety, and Simplified-Chinese UI remain explicit; LLM/MCP/Worker/Coordinator scope remains excluded; and the mandatory independent-plan-review followed by explicit user approval for the Scan strategy remains explicit. No Constitution MUST violation or Critical/High finding is present."
+}

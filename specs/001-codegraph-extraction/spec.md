@@ -1,8 +1,8 @@
 # Feature Specification: CodeGraph Code Unit Extraction
 
-**Feature Branch**: `001-codegraph-extraction`  
-**Created**: 2026-07-14  
-**Status**: Draft  
+**Feature Branch**: `001-codegraph-extraction`
+**Created**: 2026-07-14
+**Status**: Draft
 **Input**: BMad Story `4-1-codegraph-integration-and-code-unit-extraction`: enable an authorised SystemOwner to start local pre-scan profiling for a Repository, persist traceable Code Units and same-Repository structural relationships, and show a minimal outcome without introducing Worker Agent orchestration.
 
 ## User Scenarios & Testing *(mandatory)*
