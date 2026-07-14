@@ -35,15 +35,15 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-07-10
-last_updated: 2026-07-10
+last_updated: 2026-07-14
 project: vulgata
 project_key: NOKEY
 tracking_system: file-system
 story_location: docs/bmad/implementation-artifacts
 
 development_status:
-  pre-epic-gate: backlog
-  sp-1-worker-agent-execution-adapter-validation-spike: backlog
+  pre-epic-gate: done
+  sp-1-worker-agent-execution-adapter-validation-spike: done
   pre-epic-gate-retrospective: optional
   epic-1: done
   1-1-solution-scaffolding-and-docker-deployment: done
