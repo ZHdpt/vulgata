@@ -48,65 +48,36 @@ internal static class RepositoryApiEndpoints
             Guid systemId,
             CreateRepositoryRequest request,
             IValidator<CreateRepositoryRequest> validator,
-            ISystemRepository systemRepository,
-            IRepositoryRepository repositoryRepository,
-            IGitRemoteValidationService gitValidation,
+            IRepositoryManagementCoordinator coordinator,
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            if (await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken) is null)
-            {
-                return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
-            }
-
             ValidationResult validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
                 return Results.ValidationProblem(validationResult.ToDictionary());
             }
 
-            bool nameExists = await repositoryRepository.NameExistsAsync(systemId, request.Name, cancellationToken: cancellationToken);
-            if (nameExists)
+            RepositoryMutationResult<RepositoryDetailDto> result =
+                await coordinator.CreateAsync(systemId, request, user, cancellationToken);
+
+            return result.Outcome switch
             {
-                return Results.ValidationProblem(new Dictionary<string, string[]>
-                {
-                    ["Name"] = ["仓库名称已存在。"],
-                });
-            }
+                RepositoryMutationOutcome.Success => Results.Created(
+                    $"/api/systems/{systemId}/repositories/{result.Value!.Id}", result.Value),
 
-            GitRemoteValidationResult gitResult = await gitValidation.ValidateAsync(request.GitUrl, cancellationToken);
-            if (gitResult.Status == GitRemoteValidationStatus.AuthenticationRequired)
-            {
-                return Results.Problem(
-                    detail: $"Git URL 不可达：{gitResult.Message}",
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
+                RepositoryMutationOutcome.SystemNotFound => Results.Problem(
+                    detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound),
 
-            if (gitResult.Status == GitRemoteValidationStatus.Unreachable)
-            {
-                return Results.Problem(
-                    detail: $"Git URL 不可达：{gitResult.Message}",
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
+                RepositoryMutationOutcome.DuplicateName => Results.ValidationProblem(
+                    new Dictionary<string, string[]> { ["Name"] = [result.Message ?? "仓库名称已存在。"] }),
 
-            DateTimeOffset now = DateTimeOffset.UtcNow;
-            RepositoryEntity newRepo = RepositoryEntity.Create(systemId, request.Name, request.GitUrl, request.Description, request.Context, now);
+                RepositoryMutationOutcome.GitAuthenticationRequired or
+                RepositoryMutationOutcome.GitUnreachable => Results.Problem(
+                    detail: $"Git URL 不可达：{result.Message}", statusCode: StatusCodes.Status400BadRequest),
 
-            await repositoryRepository.AddAsync(newRepo, cancellationToken);
-            await repositoryRepository.SaveChangesAsync(cancellationToken);
-
-            return Results.Created($"/api/systems/{systemId}/repositories/{newRepo.Id}", new
-            {
-                id = newRepo.Id,
-                systemId = newRepo.SystemId,
-                name = newRepo.Name,
-                gitUrl = newRepo.GitUrl,
-                description = newRepo.Description,
-                context = newRepo.Context,
-                scanStatus = "未扫描",
-                lastScannedAt = (DateTimeOffset?)null,
-                documentCount = 0,
-            });
+                _ => Results.Problem(detail: "仓库创建失败。", statusCode: StatusCodes.Status500InternalServerError)
+            };
         });
 
         repoApi.MapDelete("/{repositoryId:guid}", async (
