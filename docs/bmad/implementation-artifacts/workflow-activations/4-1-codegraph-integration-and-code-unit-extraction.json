@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
+  "bmad_epic_key": "4",
+  "story_path": "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+  "proposed_feature_short_name": "codegraph-code-unit-extraction",
+  "stage": "context",
+  "repository_preflight": {
+    "branch": "dev",
+    "preflight_head": "9b7f3ec56cd343de012620345f4297e003fdef75",
+    "repository_root": ".",
+    "git_common_directory": ".git",
+    "worktree_path": ".",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-14T13:23:46Z"
+  },
+  "activation_checkpoint_id": "bmad-4-1-context-20260714T132346Z-a030b7",
+  "feature_directory": null,
+  "superseded_by_state": null
+}

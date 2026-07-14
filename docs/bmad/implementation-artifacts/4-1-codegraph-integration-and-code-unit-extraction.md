@@ -208,7 +208,10 @@ user and obtain explicit approval before task generation or implementation.
 
 ### Context reference
 
-- Story prepared and awaiting workflow activation and SpecKit specification.
+- Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
+- SpecKit feature directory: pending `spec-author` creation.
+- Current workflow stage: `context`.
+- Latest workflow checkpoint: `bmad-4-1-context-20260714T132346Z-a030b7`.
 
 ### Completion notes
 
