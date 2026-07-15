@@ -3,7 +3,7 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "plan-review",
+  "stage": "analyze",
   "active_gates": {
     "acceptance-review": {
       "status": "pending",
@@ -291,29 +291,56 @@
         "specs/001-codegraph-extraction/reviews/plan-review-3.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-07-15T02:35:09Z",
+      "completed_at": "2026-07-15T02:43:10Z",
+      "input_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/plan.md": "96b530f9cd77c1644bc20f1c78bf8d071cf5a9a572de36cedcb946a8deb7bdc8",
+        "specs/001-codegraph-extraction/reviews/plan-review-3.json": "f4d289b758bc93fddd548690d50eea3eba22ed988b4409b851d7f0c8819241b5"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-15T02:43:10Z",
+      "completed_at": "2026-07-15T02:51:26Z",
+      "input_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "d70316a369299aa29905119f642b864cdbdef884ad4d0b9e5d673f3d83b32c1c",
+        "specs/001-codegraph-extraction/plan.md": "96b530f9cd77c1644bc20f1c78bf8d071cf5a9a572de36cedcb946a8deb7bdc8"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/analyze-2.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "b44ca0ce5d0ebe93f1241171928439fc6c755fd1",
+    "preflight_head": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": " M specs/001-codegraph-extraction/contracts/repository-profiling-api.md\n M specs/001-codegraph-extraction/data-model.md\n M specs/001-codegraph-extraction/plan.md\n M specs/001-codegraph-extraction/quickstart.md\n M specs/001-codegraph-extraction/research.md\n M specs/001-codegraph-extraction/tasks.md\n M specs/001-codegraph-extraction/workflow-state.json\n?? specs/001-codegraph-extraction/qualification/\n?? specs/001-codegraph-extraction/reviews/plan-review-3.json\n?? tests/Vulgata.Tests/CodeGraphQualification/",
+    "worktree_status": " M specs/001-codegraph-extraction/tasks.md\n M specs/001-codegraph-extraction/workflow-state.json\n?? specs/001-codegraph-extraction/qualification/\n?? specs/001-codegraph-extraction/reviews/analyze-2.json\n?? tests/Vulgata.Tests/CodeGraphQualification/",
     "owned_paths": [
-      "specs/001-codegraph-extraction/plan.md",
-      "specs/001-codegraph-extraction/research.md",
-      "specs/001-codegraph-extraction/data-model.md",
-      "specs/001-codegraph-extraction/quickstart.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
       "specs/001-codegraph-extraction/tasks.md",
       "specs/001-codegraph-extraction/qualification",
-      "specs/001-codegraph-extraction/reviews/plan-review-3.json",
+      "specs/001-codegraph-extraction/reviews/analyze-2.json",
       "tests/Vulgata.Tests/CodeGraphQualification",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-15T02:32:13Z"
+    "observed_at": "2026-07-15T02:51:26Z"
   },
   "source_artifacts": [
     {
@@ -665,6 +692,58 @@
         "ACCEPT: exact 0.5.1 pin keeps the approved scan strategy and qualification hard stop",
         "no new planned-change authorization trigger"
       ]
+    },
+    {
+      "role": "task-author",
+      "objective": "Regenerate the qualification-only task graph for exact codegraphcontext==0.5.1 and reset version-dependent completion markers.",
+      "source_boundary": {
+        "base_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+        "candidate_commit": null,
+        "diff_sha256": "f3ab1a76dc5cb749d179e13c46aaabffe3e00dc17a51cf5ef0491a025793d2dc",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/tasks.md": "d70316a369299aa29905119f642b864cdbdef884ad4d0b9e5d673f3d83b32c1c"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/tasks.md",
+      "returned_evidence": [
+        "12 qualification-only tasks regenerated for exact 0.5.1",
+        "only provider-neutral T001 preserved; version-bound completion markers reset"
+      ]
+    },
+    {
+      "role": "artifact-analyst",
+      "objective": "Independently analyze the regenerated exact-0.5.1 qualification task graph for scope, traceability, test-first ordering, and deterministic hard-stop compliance.",
+      "source_boundary": {
+        "base_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+        "candidate_commit": null,
+        "diff_sha256": "f3ab1a76dc5cb749d179e13c46aaabffe3e00dc17a51cf5ef0491a025793d2dc",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/spec.md": "b89124bef8a0a0b88549eac3d5044bd6409701d29671bdfedf9a6ac0362ddd2d",
+          "specs/001-codegraph-extraction/plan.md": "96b530f9cd77c1644bc20f1c78bf8d071cf5a9a572de36cedcb946a8deb7bdc8",
+          "specs/001-codegraph-extraction/research.md": "143862567e3c67eb3d7356dec683e99ca605d673db7f9cd7f37119f98df33bed",
+          "specs/001-codegraph-extraction/data-model.md": "5471fa1416f8799dc206c602743dfd758bf027e67971ece13efdefde80fcc951",
+          "specs/001-codegraph-extraction/quickstart.md": "27a5ca59943e090f7c1d3f32dfb97a446a5b456ff404a669a007ba7f3d34de3f",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "e77274ef92ac261ea7bbeaa2e7e9e8e46d97376fa1cd6f6fc6ceb3a00aba8a",
+          "specs/001-codegraph-extraction/tasks.md": "d70316a369299aa29905119f642b864cdbdef884ad4d0b9e5d673f3d83b32c1c"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/reviews/analyze-2.json"
+      ],
+      "output_path": "specs/001-codegraph-extraction/reviews/analyze-2.json",
+      "returned_evidence": [
+        "ACCEPT: 12 of 12 tasks map to current qualification-only scope",
+        "LOW traceability note: reconcile accepted correction with Story/PRD/spec after qualification before production task generation"
+      ]
     }
   ],
   "review_iterations": {
@@ -685,9 +764,10 @@
       ]
     },
     "analyze": {
-      "count": 1,
+      "count": 2,
       "verdict_paths": [
-        "specs/001-codegraph-extraction/reviews/analyze-1.json"
+        "specs/001-codegraph-extraction/reviews/analyze-1.json",
+        "specs/001-codegraph-extraction/reviews/analyze-2.json"
       ]
     },
     "acceptance-review": {
@@ -942,28 +1022,52 @@
       "observed_at": "2026-07-15T02:32:13Z",
       "summary": "Fresh independent plan judge accepted the exact 0.5.1 correction and found no new planned-change authorization trigger because neither the approved Scan strategy nor the PRD correction changed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/tasks/2",
+      "kind": "artifact-hash",
+      "stage": "tasks",
+      "source_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "python -m pip index versions codegraphcontext; Get-FileHash -Algorithm SHA256 specs/001-codegraph-extraction/tasks.md; git diff --check -- specs/001-codegraph-extraction/tasks.md",
+      "exit_code": 0,
+      "observed_at": "2026-07-15T02:51:26Z",
+      "summary": "Qualification-only task graph was regenerated for exact CodeGraphContext 0.5.1; only provider-neutral T001 remains complete and all unavailable-pin dependent tasks were reset.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/analyze/2",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/analyze-2.json"
+      ],
+      "command": "python -m pip index versions codegraphcontext",
+      "exit_code": 0,
+      "observed_at": "2026-07-15T02:51:26Z",
+      "summary": "Independent analysis accepted the regenerated task graph with no Critical/High finding or Constitution MUST violation; the report's LOW traceability finding is deferred to the mandatory post-qualification re-plan.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-plan-20260715T023213Z-1f8a2c",
+    "checkpoint_id": "bmad-4-1-analyze-20260715T025126Z-8c31de",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "plan",
+    "stage": "analyze",
     "committed_paths": [
-      "specs/001-codegraph-extraction/plan.md",
-      "specs/001-codegraph-extraction/research.md",
-      "specs/001-codegraph-extraction/data-model.md",
-      "specs/001-codegraph-extraction/quickstart.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/001-codegraph-extraction/reviews/plan-review-3.json",
+      "specs/001-codegraph-extraction/tasks.md",
+      "specs/001-codegraph-extraction/reviews/analyze-2.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/plan/2",
-      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/4"
+      "4-1-codegraph-integration-and-code-unit-extraction/tasks/2",
+      "4-1-codegraph-integration-and-code-unit-extraction/analyze/2"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-15T02:32:13Z"
+  "updated_at": "2026-07-15T02:51:26Z"
 }

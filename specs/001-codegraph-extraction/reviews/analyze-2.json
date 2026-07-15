@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+  "reviewed_boundary": {
+    "base_commit": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+    "candidate_commit": null,
+    "diff_sha256": "f3ab1a76dc5cb749d179e13c46aaabffe3e00dc17a51cf5ef0491a025793d2dc",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/spec.md": "b89124bef8a0a0b88549eac3d5044bd6409701d29671bdfedf9a6ac0362ddd2d",
+      "specs/001-codegraph-extraction/plan.md": "96b530f9cd77c1644bc20f1c78bf8d071cf5a9a572de36cedcb946a8deb7bdc8",
+      "specs/001-codegraph-extraction/research.md": "143862567e3c67eb3d7356dec683e99ca605d673db7f9cd7f37119f98df33bed",
+      "specs/001-codegraph-extraction/data-model.md": "5471fa1416f8799dc206c602743dfd758bf027e67971ece13efdefde80fcc951",
+      "specs/001-codegraph-extraction/quickstart.md": "27a5ca59943e090f7c1d3f32dfb97a446a5b456ff404a669a007ba7f3d34de3f",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "e77274ef92ac261ea7bbeaa2e7e9e8e46d97376fa1cd6f6fc6c6ceb3a00aba8a",
+      "specs/001-codegraph-extraction/tasks.md": "d70316a369299aa29905119f642b864cdbdef884ad4d0b9e5d673f3d83b32c1c"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/checklists/requirements.md",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/research.md",
+    "specs/001-codegraph-extraction/data-model.md",
+    "specs/001-codegraph-extraction/quickstart.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "specs/001-codegraph-extraction/tasks.md",
+    "specs/001-codegraph-extraction/qualification/qualification-result.json",
+    "specs/001-codegraph-extraction/qualification/evidence/red.md",
+    "specs/001-codegraph-extraction/qualification/evidence/verification.md",
+    "specs/001-codegraph-extraction/reviews/plan-review-3.json",
+    "specs/001-codegraph-extraction/reviews/analyze-1.json"
+  ],
+  "findings": [
+    {
+      "id": "ANL-002",
+      "severity": "LOW",
+      "category": "traceability",
+      "artifact": "specs/001-codegraph-extraction/spec.md; specs/001-codegraph-extraction/plan.md",
+      "location": "FR-018 and Mandatory Planning Approval Gate; Proposed Scan Strategy and PRD Correction",
+      "affected_requirement": "Story 4.1 per-file grouping, 30-second timeout, and continuation language; PRD 5.4 FR-4.1",
+      "evidence": "The BMad Story, PRD, and specification retain the superseded per-file promises. The accepted plan records the approved whole-Repository correction, and the regenerated tasks only qualify the provider under that correction; no task changes the Scan strategy or starts production profiling.",
+      "correction_outcome": "No change to this qualification-only task graph. If qualification passes, the required fresh plan/review must reconcile the approved correction with the authoritative Story/PRD/specification before mapping, persistence, or UI/API tasks are generated."
+    }
+  ],
+  "coverage_metrics": {
+    "feature_functional_requirements_total": 18,
+    "current_authorized_qualification_obligations_total": 6,
+    "current_authorized_qualification_obligations_with_tasks": 6,
+    "current_authorized_qualification_coverage_percent": 100,
+    "feature_requirements_deferred_by_authorized_hard_stop": 14,
+    "tasks_total": 12,
+    "tasks_mapped_to_current_authorized_qualification_scope": 12,
+    "unmapped_tasks": 0,
+    "test_first_tasks": [
+      "T003",
+      "T004",
+      "T005"
+    ],
+    "version_evidence": {
+      "command": "python -m pip index versions codegraphcontext",
+      "observed_latest_version": "0.5.1",
+      "result": "configured package index reported 0.5.1 first; all executable task criteria use only the exact 0.5.1 pin"
+    },
+    "deferred_scope": [
+      "provider-result mapping",
+      "Core entities/contracts",
+      "EF configuration or migration",
+      "Git working-copy service",
+      "API/UI/authorization integration",
+      "production E2E",
+      "LLM/MCP/Worker Agent/Scan Coordinator/Cross-Repository Resolution"
+    ]
+  },
+  "summary": "ACCEPT. The regenerated task graph matches the pinned spec, complete accepted plan set, and tasks boundary. It uses only codegraphcontext==0.5.1, which the configured package index independently reported as the latest available release. T002-T005 define the exact qualification contract and observed red tests before T006-T009 can alter the qualification image/runner; T010-T012 deterministically return to plan/review or corrective planning. No task permits provider mapping, persistence, migrations, Git/API/UI work, E2E, LLM/MCP, Worker Agent tools, Scan Coordinator behavior, or Cross-Repository Resolution. There is no Critical/High finding or Constitution MUST violation."
+}
