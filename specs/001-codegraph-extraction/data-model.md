@@ -6,6 +6,18 @@ projection grammar. All identifiers are UUIDs. PostgreSQL is authoritative;
 CodeGraphContext's transient Kuzu directory is not Vulgata persistence truth.
 Tables use the repository's PascalCase EF naming convention.
 
+## Provider qualification precondition
+
+This target model has no dependency on a provider graph-store schema. Its only
+current provider version assumption is the user-authorised, exact executable
+qualification pin `codegraphcontext==0.5.1`. The prior 0.5.0 pin was unavailable
+from the configured package index and remains historical failure evidence only.
+All model mappings remain contingent on the 0.5.1 non-root qualification
+capturing an exact, stable projection grammar. The observed public documentation
+is labelled 0.5.0, so it cannot be treated as proof of 0.5.1 mapping behavior;
+a version change does not itself permit mapping, persistence, or API/UI
+implementation.
+
 ## `ScanRun` aggregate (`ScanRuns`)
 
 | Field | Rule |

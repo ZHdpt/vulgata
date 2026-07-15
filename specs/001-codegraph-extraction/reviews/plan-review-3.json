@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "b44ca0ce5d0ebe93f1241171928439fc6c755fd1",
+  "reviewed_boundary": {
+    "base_commit": "b44ca0ce5d0ebe93f1241171928439fc6c755fd1",
+    "candidate_commit": null,
+    "diff_sha256": "1c227a40462c1c0f9ebf9fa19d9076834a9a1ea1a0cc2fd15f673cec387afd75",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/plan.md": "96b530f9cd77c1644bc20f1c78bf8d071cf5a9a572de36cedcb946a8deb7bdc8",
+      "specs/001-codegraph-extraction/research.md": "143862567e3c67eb3d7356dec683e99ca605d673db7f9cd7f37119f98df33bed",
+      "specs/001-codegraph-extraction/data-model.md": "5471fa1416f8799dc206c602743dfd758bf027e67971ece13efdefde80fcc951",
+      "specs/001-codegraph-extraction/quickstart.md": "27a5ca59943e090f7c1d3f32dfb97a446a5b456ff404a669a007ba7f3d34de3f",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "e77274ef92ac261ea7bbeaa2e7e9e8e46d97376fa1cd6f6fc6c6ceb3a00aba8a"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/research.md",
+    "specs/001-codegraph-extraction/data-model.md",
+    "specs/001-codegraph-extraction/quickstart.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "specs/001-codegraph-extraction/tasks.md",
+    "specs/001-codegraph-extraction/qualification/qualification-result.json",
+    "specs/001-codegraph-extraction/qualification/evidence/red.md",
+    "specs/001-codegraph-extraction/reviews/plan-review-2.json"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. All five pinned plan artifacts match the supplied boundary hashes and retain the user-approved whole-Repository Scan model: one private local cgc graph per ScanRun, audit/filter-only groups of at most 1,000 files, no per-file continuation or timer, and a default 1,800-second whole-process cap. The corrected exact pin codegraphcontext==0.5.1 is reproducible in intent and remains behind the same non-root qualification hard stop; the plan expressly treats public 0.5.0 documentation as candidate command-surface evidence rather than proof of 0.5.1 behavior, so no provider mapping, persistence, API/UI, agent/LLM, or Scan-strategy implementation may proceed until qualification passes and a fresh plan is accepted. The configured package index independently reported 0.5.1 as the latest available CodeGraphContext version; the retained qualification evidence establishes 0.5.0 as unavailable. Replacing that unavailable pin with the user-directed latest exact pin neither adds or materially changes a Worker Agent/tool nor changes the already approved Scan strategy or PRD correction. Therefore it creates no new AGENTS.md planned-change authorization trigger; the prior approval plus the explicit latest-version direction authorizes task regeneration only, followed by a fresh analyze gate before implementation resumes."
+}

@@ -4,11 +4,20 @@
 
 ## Summary
 
-This revision corrects `PLN-001` through `PLN-004`. CodeGraphContext documents
+This revision corrects `PLN-001` through `PLN-004` and the unavailable provider
+pin. `codegraphcontext==0.5.0` was not available from the configured package
+index during qualification on 2026-07-15. The user then authorised the latest
+available version; `python -m pip index versions codegraphcontext` observed
+`0.5.1` as latest on the same date. CodeGraphContext documents
 repository-path indexing, local context/database selection, and read-only
 queries. It does not document file-list input, per-file time limits,
 machine-readable query output, or endpoint identity after partitioning a
 Repository.
+
+The public documentation observed on that date still labels its examples as
+0.5.0. It is authority for the candidate command surfaces only, not proof that
+the unavailable 0.5.0 documentation grammar is unchanged in 0.5.1. The
+unchanged qualification hard stop must prove every invoked 0.5.1 behavior.
 
 The plan therefore proposes one local whole-Repository `cgc` graph build per
 `ScanRun`, bounded by one whole-process timeout. Deterministic approximately
@@ -30,7 +39,7 @@ passes and a follow-up plan records an observed parser grammar.
 
 **Primary Dependencies**: ASP.NET Core Blazor Web App, EF Core 10/Npgsql,
 FluentValidation, Fluent UI Blazor, system `git`, and the local
-`codegraphcontext==0.5.0` qualification target.
+`codegraphcontext==0.5.1` qualification target.
 
 **Storage**: PostgreSQL 17 schema `vulgata`, SQLite test override, and a
 transient private Kuzu database per provider run. The provider database is never
@@ -168,7 +177,7 @@ itself.
 - A later Docker change pins its base image by immutable digest. A
   repository-owned version file records CPython 3.12.x, which the final image
   asserts with `python --version`.
-- A `requirements.lock` exact-pins and hashes `codegraphcontext==0.5.0`, `kuzu`,
+- A `requirements.lock` exact-pins and hashes `codegraphcontext==0.5.1`, `kuzu`,
   and every transitive Python package. Installation verifies hashes; scan runtime
   never invokes a resolver/installer.
 - Qualification selects the documented embedded local backend with `context
@@ -183,7 +192,7 @@ itself.
 All criteria must pass in the final non-root image:
 
 1. Lock installation has no drift; `python --version` equals the locked 3.12.x
-   value; `cgc version` equals 0.5.0; `cgc doctor` exits zero as `app`; the
+   value; `cgc version` equals 0.5.1; `cgc doctor` exits zero as `app`; the
    private Kuzu directory is writable.
 2. The exact documented context/create/index/query/delete sequence exits zero
    for the whole fixture, within the whole-process limit, without network/API/
@@ -299,7 +308,8 @@ specs/001-codegraph-extraction/          # plan artifacts
 | Partition can lose same-Repository edges. | Never partition provider input; map one complete graph. |
 | Timeout loses all eligible provider work. | Explicit user-approved trade-off; preserves graph correctness and leaves filters auditable. |
 | Provider sees filtered local files. | Local-only/private execution; Vulgata persists no structural data for filtered paths; explicit user approval. |
-| Docker/Python resolution drift. | Digest/version/hash locks and non-root qualification. |
+| Docker/Python resolution drift or unavailable package pin. | Exact lock/version evidence and non-root qualification; `0.5.0` is recorded only as the failed historical pin, while `0.5.1` is the current executable target. |
+| Public documentation remains labelled 0.5.0 while the configured package index serves 0.5.1. | Treat the docs as a command-surface candidate only; qualification must prove the installed 0.5.1 commands, output grammar, and local Kuzu behavior before mapping work. |
 
 ## Post-plan Authorization Gate
 

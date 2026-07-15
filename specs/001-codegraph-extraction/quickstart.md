@@ -10,7 +10,7 @@ grammar.
 - Docker/Compose and PostgreSQL as documented in `AGENTS.md`.
 - Git for local bare-Repository fixtures.
 - A digest-pinned Docker build with locked CPython 3.12.x,
-  `codegraphcontext==0.5.0`, Kuzu, and all transitive Python distributions.
+  `codegraphcontext==0.5.1`, Kuzu, and all transitive Python distributions.
 - A non-root `app` runtime with private writable provider context/database
   storage. No remote backend, API gateway, MCP server, watcher, bundle, or
   registry process is allowed.
@@ -18,7 +18,9 @@ grammar.
 ## Gate 1: qualify the provider before structural persistence
 
 1. Build the image using the lock. Assert the final image's `python --version`,
-   `cgc version`, and `cgc doctor` as `app` against the committed lock.
+   `cgc version` reporting `0.5.1`, and `cgc doctor` as `app` against the
+   committed lock. The historical 0.5.0 download failure is not a passing or
+   executable requirement.
 2. In a synthetic whole-Repository fixture, create a unique Kuzu context with a
    private `--db-path`; run `cgc index <fixture> --force`; execute static
    read-only structural projections; then delete the context.
@@ -35,6 +37,16 @@ grammar.
    migration, or production endpoint. If all pass, revise plan/data-model/
    contract with observed grammar and obtain fresh plan acceptance before
    structural persistence tasks are generated.
+
+### Provider-pin evidence
+
+`python -m pip index versions codegraphcontext` observed `0.5.1` as the latest
+available configured-index version on 2026-07-15, after exact `0.5.0` could not
+be downloaded. Qualification must record the 0.5.1 lock hash, image digest,
+and observed `cgc version` output before it can pass. The public documentation
+observed on that date is labelled 0.5.0, so the 0.5.1 command behavior and
+output grammar must be proved rather than inferred. This correction changes no
+scan-strategy or PRD decision.
 
 ## Gate 2: validate the approved implementation
 

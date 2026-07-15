@@ -7,7 +7,7 @@ authorities named in Story 4.1 and the feature specification.
 ## Decision: use the local CodeGraphContext CLI only behind qualification
 
 **Decision:** The user-approved provider target remains CodeGraphContext `cgc`,
-with `codegraphcontext==0.5.0` selected for qualification. Vulgata will not
+with `codegraphcontext==0.5.1` selected for qualification. Vulgata will not
 couple to its graph-store schema, API gateway, or MCP server.
 
 **Rationale:** The official introduction describes a local semantic property
@@ -24,7 +24,7 @@ same-Repository structural relationships).
 **Official evidence:**
 
 - [Introduction](https://codegraphcontext.github.io/) — accessed 2026-07-15;
-  describes semantic graph extraction and shows 0.5.0 as the current release.
+  describes semantic graph extraction.
 - [Code graph model](https://codegraphcontext.github.io/concepts/graph-model/)
   — accessed 2026-07-15; documents paths/ranges for structural nodes and the
   relevant relationship kinds.
@@ -73,7 +73,7 @@ or that any unpinned driver version is compatible.
 
 **Lock/qualification mechanism:** A future
 `docker/codegraph/requirements.lock` will exact-pin and hash
-`codegraphcontext==0.5.0`, `kuzu`, and transitive Python dependencies. A
+`codegraphcontext==0.5.1`, `kuzu`, and transitive Python dependencies. A
 digest-pinned container base plus a recorded CPython 3.12.x version make the
 runtime reproducible. Qualification asserts the lock, `python --version`,
 `cgc version`, and `cgc doctor` as the final non-root `app` user.
@@ -106,7 +106,7 @@ a returned relationship exposes stable endpoints suitable for Vulgata's
 Unresolved Structural Relationship Candidate. A generic DTO before proof would
 be an invented provider contract.
 
-**Pass criteria:** `cgc` 0.5.0 and Kuzu context work under `app`; indexing the
+**Pass criteria:** `cgc` 0.5.1 and Kuzu context work under `app`; indexing the
 whole synthetic fixture succeeds within the bounded whole-process limit; a
 deterministic parser can obtain path, kind, symbol, range, source/target
 endpoint metadata, all supported relationship kinds, and the filtered-target
@@ -116,6 +116,36 @@ plan must contain the exact commands and grammar observed.
 **Fail outcome:** stop before provider-result mapping or structural persistence,
 return safe raw evidence and locks for correction, and do not invent JSON,
 timeout, subset, or endpoint behavior.
+
+## Decision: correct the unavailable qualification pin to the authorised latest
+
+**Decision:** The qualification command
+`python -m pip download --no-deps --dest <generated-private-directory>
+codegraphcontext==0.5.0` failed because the configured package index did not
+offer that exact distribution. On 2026-07-15 the user explicitly directed
+Vulgata to use the latest available version. The observed package-index command
+`python -m pip index versions codegraphcontext` returned `0.5.1` as latest, so
+the executable qualification target is exact-pinned to
+`codegraphcontext==0.5.1`.
+
+**Rationale:** This replaces an unavailable exact pin without changing the
+provider family, local-only/private execution, Kuzu context selection,
+whole-Repository strategy, 1,800-second whole-process deadline, audit-only
+groups, or the hard stop before mapping/persistence.
+
+**Alternatives considered:** retain 0.5.0 (rejected: unavailable from the
+configured index); float to an unpinned latest version (rejected: not
+reproducible); select a different provider or remote service (rejected: outside
+the user authorisation and plan scope).
+
+**Evidence:** `python -m pip index versions codegraphcontext` exited 0 on
+2026-07-15 and listed `0.5.1` first. The historical failed 0.5.0 attempt is
+preserved in `qualification/qualification-result.json` and
+`qualification/evidence/red.md`; it is failure evidence, not an executable
+requirement. The official documentation pages observed on the same date remain
+labelled 0.5.0, so they establish only a candidate command surface. They do not
+prove 0.5.1 output compatibility; the existing non-root qualification hard stop
+must prove it before mapping or persistence work.
 
 ## Proposed requirement correction requiring user approval
 

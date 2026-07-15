@@ -62,7 +62,7 @@ cgc context delete <run-context>
 `<static read-only structural projection>` is intentionally not specified in
 this revision. The official CLI docs give `query` and an example Cypher query,
 but no stable machine-readable output schema. Qualification must capture the
-installed 0.5.0 output on a synthetic fixture; a follow-up plan must record:
+installed 0.5.1 output on a synthetic fixture; a follow-up plan must record:
 
 1. exact query text and arguments;
 2. exact bounded output grammar and deterministic parser;
@@ -74,6 +74,15 @@ Before that work, no source code may claim `ICodeGraphCliService` returns
 `CodeGraphParseResult` from the real provider. Tests may use a fake Vulgata
 contract for unrelated domain/UI seams, but not as evidence of provider
 compatibility.
+
+The exact executable provider pin is `codegraphcontext==0.5.1`, selected under
+the user's latest-available-version direction after the configured package
+index did not provide 0.5.0. This correction keeps the public API contingent on
+the same local, whole-Repository qualification and follow-up plan; it neither
+changes a caller-visible API field nor authorises a production adapter. Since
+the observed public CLI documentation is labelled 0.5.0, it is not an
+assurance of 0.5.1 output compatibility; the qualification contract remains
+the required proof.
 
 ## Requirements for the future owned result contract
 
