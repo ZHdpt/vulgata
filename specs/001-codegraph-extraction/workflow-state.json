@@ -3,7 +3,7 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "plan-review",
+  "stage": "tasks",
   "active_gates": {
     "acceptance-review": {
       "status": "pending",
@@ -203,24 +203,31 @@
         "specs/001-codegraph-extraction/reviews/plan-review-2.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "active",
+      "started_at": "2026-07-15T01:43:24Z",
+      "completed_at": null,
+      "input_commit": "777c5b584d23f52493da1101da55f1772f7aef99",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/plan.md": "fccaa46205bf5b59e99aa643e5a107c97d6ae7b241281dbaac590f3a61f75f37",
+        "specs/001-codegraph-extraction/reviews/plan-review-2.json": "fe083a4a0be3513084a872ab85bbc84c10b4037c4bb0d1ed3f5a21117f73aaa5"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+    "preflight_head": "777c5b584d23f52493da1101da55f1772f7aef99",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": " M specs/001-codegraph-extraction/workflow-state.json\n?? specs/001-codegraph-extraction/contracts/\n?? specs/001-codegraph-extraction/data-model.md\n?? specs/001-codegraph-extraction/plan.md\n?? specs/001-codegraph-extraction/quickstart.md\n?? specs/001-codegraph-extraction/research.md\n?? specs/001-codegraph-extraction/reviews/plan-review-1.json\n?? specs/001-codegraph-extraction/reviews/plan-review-2.json",
+    "worktree_status": "",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/001-codegraph-extraction/data-model.md",
-      "specs/001-codegraph-extraction/plan.md",
-      "specs/001-codegraph-extraction/quickstart.md",
-      "specs/001-codegraph-extraction/research.md",
-      "specs/001-codegraph-extraction/reviews/plan-review-1.json",
-      "specs/001-codegraph-extraction/reviews/plan-review-2.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "unrelated_paths": [],
@@ -605,30 +612,37 @@
       "observed_at": "2026-07-15T01:32:05Z",
       "summary": "Independent plan judge accepted the explicit whole-Repository strategy and PRD correction proposal, pending the required user authorization.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/plan-review/3",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "777c5b584d23f52493da1101da55f1772f7aef99",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/plan.md",
+        "specs/001-codegraph-extraction/reviews/plan-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-15T01:43:24Z",
+      "summary": "User explicitly approved the proposed Scan strategy and PRD/Story correction, authorizing task generation only; all later gates remain required.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-plan-review-20260715T013205Z-89a7b0",
+    "checkpoint_id": "bmad-4-1-plan-authorization-20260715T014324Z-67a8fa",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "plan-review",
+    "stage": "tasks",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/plan.md",
-      "specs/001-codegraph-extraction/research.md",
-      "specs/001-codegraph-extraction/data-model.md",
-      "specs/001-codegraph-extraction/quickstart.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/001-codegraph-extraction/reviews/plan-review-1.json",
-      "specs/001-codegraph-extraction/reviews/plan-review-2.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/1",
-      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/2"
+      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/3"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-15T01:32:05Z"
+  "updated_at": "2026-07-15T01:43:24Z"
 }
