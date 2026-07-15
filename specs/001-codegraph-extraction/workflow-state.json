@@ -3,7 +3,7 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "plan",
+  "stage": "plan-review",
   "active_gates": {
     "acceptance-review": {
       "status": "pending",
@@ -152,31 +152,75 @@
     },
     {
       "stage": "plan",
-      "status": "active",
+      "status": "revised",
       "started_at": "2026-07-14T14:35:13Z",
-      "completed_at": null,
+      "completed_at": "2026-07-14T14:54:41Z",
       "input_commit": "ce8d98c7cce0dfc684f828f0aa3149e7fab9dadb",
       "input_hashes": {
         "specs/001-codegraph-extraction/spec.md": "b89124bef8a0a0b88549eac3d5044bd6409701d29671bdfedf9a6ac0362ddd2d",
         "specs/001-codegraph-extraction/checklists/requirements.md": "6a6e122faeedf14740d98d338eeb6355bc08b16467b834547a70ce70684ff0df"
       },
       "agent_role": "plan-architect",
-      "evidence_paths": [],
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-07-14T14:54:41Z",
+      "completed_at": "2026-07-15T01:32:05Z",
+      "input_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/plan-review-1.json": "92832e9eec0f6ef217a184f988a539ae9f11adaefdb1110aa14160469ae2492f"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/plan.md",
+        "specs/001-codegraph-extraction/research.md",
+        "specs/001-codegraph-extraction/data-model.md",
+        "specs/001-codegraph-extraction/quickstart.md",
+        "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-07-15T01:28:24Z",
+      "completed_at": "2026-07-15T01:32:05Z",
+      "input_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/plan.md": "fccaa46205bf5b59e99aa643e5a107c97d6ae7b241281dbaac590f3a61f75f37",
+        "specs/001-codegraph-extraction/research.md": "97be0f5a1789df9794c629d8f4ad8f3992c294c65cbbdfb8adde6d21047344da",
+        "specs/001-codegraph-extraction/data-model.md": "1989d178fc42362057b750fa78bb4405218db00e27929ec3e8e88bcab5424707",
+        "specs/001-codegraph-extraction/quickstart.md": "a089dfe58eff469047365395086698a5242ec276bdb1eebd54a12b4b0903fc9f",
+        "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "6d0eec5e6439f92db463b68d27a4217e0f578227cf4e025f034b9ba420c5881b"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-2.json"
+      ],
       "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "ce8d98c7cce0dfc684f828f0aa3149e7fab9dadb",
+    "preflight_head": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": " M docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md\n M specs/001-codegraph-extraction/checklists/requirements.md\n M specs/001-codegraph-extraction/spec.md\n M specs/001-codegraph-extraction/workflow-state.json\n?? specs/001-codegraph-extraction/reviews/spec-review-3.json",
+    "worktree_status": " M specs/001-codegraph-extraction/workflow-state.json\n?? specs/001-codegraph-extraction/contracts/\n?? specs/001-codegraph-extraction/data-model.md\n?? specs/001-codegraph-extraction/plan.md\n?? specs/001-codegraph-extraction/quickstart.md\n?? specs/001-codegraph-extraction/research.md\n?? specs/001-codegraph-extraction/reviews/plan-review-1.json\n?? specs/001-codegraph-extraction/reviews/plan-review-2.json",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/spec.md",
-      "specs/001-codegraph-extraction/checklists/requirements.md",
-      "specs/001-codegraph-extraction/reviews/spec-review-3.json",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/reviews/plan-review-1.json",
+      "specs/001-codegraph-extraction/reviews/plan-review-2.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "unrelated_paths": [],
@@ -270,6 +314,128 @@
         "spec.md sha256 b89124bef8a0a0b88549eac3d5044bd6409701d29671bdfedf9a6ac0362ddd2d",
         "requirements.md sha256 6a6e122faeedf14740d98d338eeb6355bc08b16467b834547a70ce70684ff0df"
       ]
+    },
+    {
+      "role": "plan-architect",
+      "objective": "Create an implementable Story 4.1 plan, including the proposed CodeGraph scan strategy and its approval gate.",
+      "source_boundary": {
+        "base_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+        "candidate_commit": null,
+        "diff_sha256": "1d42530fad5dbae321d7d3018ae4865ae5c4f9d98a1727bfa5f8f0fa30291256",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/plan.md": "f0018ddb401fbbaf49656b35fdca5f85fe54e6a8a2f4083bc687e2b7cfdcf995",
+          "specs/001-codegraph-extraction/research.md": "da16815517e6f0163a808d51b2275f02fe6e1e6ed5f5de07b5ecdff1d59340b7",
+          "specs/001-codegraph-extraction/data-model.md": "7d9a6a53d2007246a99543421fd4271bf0f638093a72309d31388ce7df176573",
+          "specs/001-codegraph-extraction/quickstart.md": "3be13571bee5bec4ec43317799fe4eb63a5a0782365c5cf71171af0e009171bf",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "c58925159ea5ab733c993333b8250757db46591bbe4b2ad55935a9ca982440d1"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/plan.md",
+          "specs/001-codegraph-extraction/research.md",
+          "specs/001-codegraph-extraction/data-model.md",
+          "specs/001-codegraph-extraction/quickstart.md",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction"
+      ],
+      "output_path": "specs/001-codegraph-extraction/plan.md",
+      "returned_evidence": [
+        "plan artifacts and hashes returned",
+        "post-plan Scan strategy approval gate retained"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently assess plan feasibility, architecture seams, testability, and Scan strategy compliance.",
+      "source_boundary": {
+        "base_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+        "candidate_commit": null,
+        "diff_sha256": "1d42530fad5dbae321d7d3018ae4865ae5c4f9d98a1727bfa5f8f0fa30291256",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/plan.md": "f0018ddb401fbbaf49656b35fdca5f85fe54e6a8a2f4083bc687e2b7cfdcf995",
+          "specs/001-codegraph-extraction/research.md": "da16815517e6f0163a808d51b2275f02fe6e1e6ed5f5de07b5ecdff1d59340b7",
+          "specs/001-codegraph-extraction/data-model.md": "7d9a6a53d2007246a99543421fd4271bf0f638093a72309d31388ce7df176573",
+          "specs/001-codegraph-extraction/quickstart.md": "3be13571bee5bec4ec43317799fe4eb63a5a0782365c5cf71171af0e009171bf",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "c58925159ea5ab733c993333b8250757db46591bbe4b2ad55935a9ca982440d1"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/plan.md",
+          "specs/001-codegraph-extraction/research.md",
+          "specs/001-codegraph-extraction/data-model.md",
+          "specs/001-codegraph-extraction/quickstart.md",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/reviews/plan-review-1.json"
+      ],
+      "output_path": "specs/001-codegraph-extraction/reviews/plan-review-1.json",
+      "returned_evidence": [
+        "REVISE: PLN-001, PLN-002, PLN-003, PLN-004"
+      ]
+    },
+    {
+      "role": "plan-architect",
+      "objective": "Correct PLN-001 through PLN-004 with an explicit whole-Repository PRD correction and qualification hard stop.",
+      "source_boundary": {
+        "base_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+        "candidate_commit": null,
+        "diff_sha256": "df5ae8a066594cf61f0fa943d3d9c7de2dbbc0fd6250c39a4d5132719253e5fa",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/plan.md": "fccaa46205bf5b59e99aa643e5a107c97d6ae7b241281dbaac590f3a61f75f37",
+          "specs/001-codegraph-extraction/research.md": "97be0f5a1789df9794c629d8f4ad8f3992c294c65cbbdfb8adde6d21047344da",
+          "specs/001-codegraph-extraction/data-model.md": "1989d178fc42362057b750fa78bb4405218db00e27929ec3e8e88bcab5424707",
+          "specs/001-codegraph-extraction/quickstart.md": "a089dfe58eff469047365395086698a5242ec276bdb1eebd54a12b4b0903fc9f",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "6d0eec5e6439f92db463b68d27a4217e0f578227cf4e025f034b9ba420c5881b"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/plan.md",
+          "specs/001-codegraph-extraction/research.md",
+          "specs/001-codegraph-extraction/data-model.md",
+          "specs/001-codegraph-extraction/quickstart.md",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction"
+      ],
+      "output_path": "specs/001-codegraph-extraction/plan.md",
+      "returned_evidence": [
+        "PLN-001 through PLN-004 corrected",
+        "explicit PRD/Story correction requires post-plan user approval"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently review the corrected plan and its explicit PRD correction before the user-approval gate.",
+      "source_boundary": {
+        "base_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+        "candidate_commit": null,
+        "diff_sha256": "df5ae8a066594cf61f0fa943d3d9c7de2dbbc0fd6250c39a4d5132719253e5fa",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/plan.md": "fccaa46205bf5b59e99aa643e5a107c97d6ae7b241281dbaac590f3a61f75f37",
+          "specs/001-codegraph-extraction/research.md": "97be0f5a1789df9794c629d8f4ad8f3992c294c65cbbdfb8adde6d21047344da",
+          "specs/001-codegraph-extraction/data-model.md": "1989d178fc42362057b750fa78bb4405218db00e27929ec3e8e88bcab5424707",
+          "specs/001-codegraph-extraction/quickstart.md": "a089dfe58eff469047365395086698a5242ec276bdb1eebd54a12b4b0903fc9f",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "6d0eec5e6439f92db463b68d27a4217e0f578227cf4e025f034b9ba420c5881b"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/plan.md",
+          "specs/001-codegraph-extraction/research.md",
+          "specs/001-codegraph-extraction/data-model.md",
+          "specs/001-codegraph-extraction/quickstart.md",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/reviews/plan-review-2.json"
+      ],
+      "output_path": "specs/001-codegraph-extraction/reviews/plan-review-2.json",
+      "returned_evidence": [
+        "ACCEPT: user approval is required before tasks"
+      ]
     }
   ],
   "review_iterations": {
@@ -282,8 +448,11 @@
       ]
     },
     "plan-review": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 2,
+      "verdict_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-1.json",
+        "specs/001-codegraph-extraction/reviews/plan-review-2.json"
+      ]
     },
     "analyze": {
       "count": 0,
@@ -408,26 +577,58 @@
       "observed_at": "2026-07-14T14:35:13Z",
       "summary": "Fresh independent judge accepted the format-only corrected specification; hashes match and whitespace validation passes.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/plan-review/1",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-14T14:54:41Z",
+      "summary": "Independent plan judge returned REVISE findings PLN-001 through PLN-004; correction returns to plan.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/plan-review/2",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-15T01:32:05Z",
+      "summary": "Independent plan judge accepted the explicit whole-Repository strategy and PRD correction proposal, pending the required user authorization.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-spec-review-20260714T143513Z-06b6f1",
+    "checkpoint_id": "bmad-4-1-plan-review-20260715T013205Z-89a7b0",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "spec-review",
+    "stage": "plan-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/spec.md",
-      "specs/001-codegraph-extraction/checklists/requirements.md",
-      "specs/001-codegraph-extraction/reviews/spec-review-3.json",
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/001-codegraph-extraction/reviews/plan-review-1.json",
+      "specs/001-codegraph-extraction/reviews/plan-review-2.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/specify/3",
-      "4-1-codegraph-integration-and-code-unit-extraction/spec-review/3"
+      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/1",
+      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/2"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-14T14:35:13Z"
+  "updated_at": "2026-07-15T01:32:05Z"
 }

@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+  "reviewed_boundary": {
+    "base_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+    "candidate_commit": null,
+    "diff_sha256": "df5ae8a066594cf61f0fa943d3d9c7de2dbbc0fd6250c39a4d5132719253e5fa",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/plan.md": "fccaa46205bf5b59e99aa643e5a107c97d6ae7b241281dbaac590f3a61f75f37",
+      "specs/001-codegraph-extraction/research.md": "97be0f5a1789df9794c629d8f4ad8f3992c294c65cbbdfb8adde6d21047344da",
+      "specs/001-codegraph-extraction/data-model.md": "1989d178fc42362057b750fa78bb4405218db00e27929ec3e8e88bcab5424707",
+      "specs/001-codegraph-extraction/quickstart.md": "a089dfe58eff469047365395086698a5242ec276bdb1eebd54a12b4b0903fc9f",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "6d0eec5e6439f92db463b68d27a4217e0f578227cf4e025f034b9ba420c5881b"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/reviews/plan-review-1.json",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/research.md",
+    "specs/001-codegraph-extraction/data-model.md",
+    "specs/001-codegraph-extraction/quickstart.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "https://codegraphcontext.github.io/reference/cli/",
+    "https://codegraphcontext.github.io/getting-started/installation/",
+    "https://codegraphcontext.github.io/concepts/graph-model/"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. The revision honestly replaces the unsupported per-file grouping, timeout, isolation, and continuation promises with an explicitly proposed PRD/Story correction, keeps that correction behind the AGENTS.md post-plan approval, and no longer presents it as compliance. It resolves PLN-002 by making reproducible non-root provider qualification a hard stop before any provider adapter, mapping, structural EF model, migration, or profiling UI, followed by a fresh plan/review using the observed grammar. It resolves PLN-003 by using one whole-Repository provider graph and requiring a complete-snapshot endpoint proof, and resolves PLN-004 with an explicitly selected local Kuzu context, private database path, immutable image/Python/package locks, and non-root qualification. The cited official CLI and graph-model documentation supports only the commands and graph concepts claimed; undocumented projection grammar remains qualification evidence rather than an invented contract. The plan is fit to advance only to the required post-plan user approval, not to task generation or implementation absent that approval."
+}

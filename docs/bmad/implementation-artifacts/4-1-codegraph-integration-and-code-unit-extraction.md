@@ -210,8 +210,8 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `plan`.
-- Latest workflow checkpoint: `bmad-4-1-spec-review-20260714T143513Z-06b6f1` (pending Git binding).
+- Current workflow stage: `plan-review` accepted; explicit Scan/PRD authorization pending.
+- Latest workflow checkpoint: `bmad-4-1-plan-review-20260715T013205Z-89a7b0` (pending Git binding).
 
 ### Completion notes
 

@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+  "reviewed_boundary": {
+    "base_commit": "d1eedff3c96f01069fcebbb79c88334b46dabcce",
+    "candidate_commit": null,
+    "diff_sha256": "1d42530fad5dbae321d7d3018ae4865ae5c4f9d98a1727bfa5f8f0fa30291256",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/plan.md": "f0018ddb401fbbaf49656b35fdca5f85fe54e6a8a2f4083bc687e2b7cfdcf995",
+      "specs/001-codegraph-extraction/research.md": "da16815517e6f0163a808d51b2275f02fe6e1e6ed5f5de07b5ecdff1d59340b7",
+      "specs/001-codegraph-extraction/data-model.md": "7d9a6a53d2007246a99543421fd4271bf0f638093a72309d31388ce7df176573",
+      "specs/001-codegraph-extraction/quickstart.md": "3be13571bee5bec4ec43317799fe4eb63a5a0782365c5cf71171af0e009171bf",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "c58925159ea5ab733c993333b8250757db46591bbe4b2ad55935a9ca982440d1"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/epics.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/e2e-decision-matrix.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/checklists/requirements.md",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/research.md",
+    "specs/001-codegraph-extraction/data-model.md",
+    "specs/001-codegraph-extraction/quickstart.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "docker/Dockerfile",
+    "src/dotnet/Vulgata.Core/Entities/Repository.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IRepositoryRepository.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IScanStateService.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/RepositoryRepository.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Configurations/RepositoryConfiguration.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+    "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+    "src/dotnet/Vulgata.Web/Program.cs"
+  ],
+  "findings": [
+    {
+      "id": "PLN-001",
+      "severity": "HIGH",
+      "category": "required-behavior",
+      "artifact": "specs/001-codegraph-extraction/plan.md",
+      "location": "Operational algorithm steps 4-5 and Operator-visible effects, lines 91-103 and 149-152",
+      "affected_requirement": "Story 4.1 AC-1/AC-2; Spec FR-018; PRD FR-4.1",
+      "evidence": "The plan starts one repository-path `cgc index` process for up to 1,000 candidates, then assigns that group a `candidateCount x perFileTimeout` deadline. A single hanging candidate in a 1,000-file group can therefore run for 30,000 seconds before bisection begins; only a later one-file leaf receives a 30-second limit. This is a group deadline, not the required configurable per-file timeout, and it delays isolation and continuation for every sibling in the group.",
+      "correction_outcome": "Replace the multiplier deadline with a provider-evidenced mechanism that bounds each candidate to the configured limit while retaining the approximately-1,000-file grouping outcome and prompt sibling continuation. The plan must define the observable timeout clock, kill/isolation boundary, and audit records. If `cgc` cannot expose an individual-candidate boundary, state that incompatibility plainly and return for an authorised product/provider decision rather than presenting a group deadline as per-file compliance."
+    },
+    {
+      "id": "PLN-002",
+      "severity": "HIGH",
+      "category": "provider-contract-feasibility",
+      "artifact": "specs/001-codegraph-extraction/plan.md",
+      "location": "Known limitation and mandatory provider contract proof, lines 120-142; Implementation sequence, lines 244-256",
+      "affected_requirement": "Spec FR-003, FR-010, FR-011, FR-018 and SC-002; Constitution IV",
+      "evidence": "The plan and research both acknowledge that official documentation exposes `cgc index [PATH]` and a Cypher query command but does not document file-list selection, a stable machine-readable query schema, target-absent endpoint identity, or subset semantics. Nevertheless the plan schedules Core/EF persistence work before the provider-contract fixture and leaves its exact command, output grammar, and pass criteria unknown. The proposed `CodeGraphParseResult` mapping is consequently not yet a feasible, testable contract.",
+      "correction_outcome": "Make the provider proof the first implementation dependency for provider-backed mapping and persistence, with a reproducible pinned install, exact non-MCP commands, fixture-safe captured output, parser grammar, validation rules, and explicit pass/fail criteria for every field in the owned contract. Revise the plan/data model/contract from that evidence before creating structural persistence tasks. A failed proof must stop before any provider-result mapping or structural persistence behavior and return the raw evidence for corrective planning."
+    },
+    {
+      "id": "PLN-003",
+      "severity": "HIGH",
+      "category": "structural-correctness",
+      "artifact": "specs/001-codegraph-extraction/plan.md",
+      "location": "Operational algorithm steps 4 and 6, lines 91-112; Known limitation, lines 122-142; Operator-visible effects, lines 153-155",
+      "affected_requirement": "Story 4.1 AC-5; Spec FR-010 and SC-002; PRD FR-4.9",
+      "evidence": "Each provider invocation receives only a materialized group. The official graph model documents `CALLS`, `IMPORTS`, `INHERITS`, and `CONTAINS`, but does not document that an invocation retains a stable endpoint identity when the target source is omitted. The plan permits absence of provider evidence to become no relationship, even though an omitted target can be a Code Unit in another successful group. That would silently lose a same-Repository structural relationship rather than create the required resolved Code Unit Edge or the narrowly defined target-absent candidate.",
+      "correction_outcome": "Before accepting the strategy, specify and prove a cross-group fixture containing a known same-Repository relationship whose source and target are placed in separate groups, plus a genuinely absent target. The proof must demonstrate deterministic endpoint identity and a post-group join that creates the expected edge/candidate without treating a partition-induced omission as no relation. If the provider cannot preserve this evidence for the chosen partitioning, the plan must select an authorised whole-repository or other provider-compatible strategy; it must not silently degrade relationship correctness."
+    },
+    {
+      "id": "PLN-004",
+      "severity": "MEDIUM",
+      "category": "deployment-reproducibility",
+      "artifact": "specs/001-codegraph-extraction/plan.md",
+      "location": "Technical Context and Provider Integration and Deployment, lines 28-33 and 197-212",
+      "affected_requirement": "Spec FR-003; Constitution V; PRD NFR-4.1",
+      "evidence": "The plan calls the provider an embedded KuzuDB setup, while the official installation documentation describes Kuzu as a fallback and permits multiple backends. The planned `cgc index` invocation does not state the explicit backend/db-path/context arguments or the lockfile contents that make the non-root Linux container deterministic.",
+      "correction_outcome": "Name the exact pinned Python and provider/driver versions, explicitly select the local backend and per-attempt database/context arguments, and include a non-root Docker validation command. The resulting commands must be the same commands used by the contract proof and production adapter."
+    }
+  ],
+  "summary": "REVISE. The plan preserves the required post-plan user-approval gate and correctly requires E2E, local-only execution, and layered boundaries, but it does not yet provide a feasible per-file timeout or a proven provider contract for partitioned structural relationships. These High findings must be corrected and independently re-reviewed before requesting the Scan-strategy approval or generating tasks."
+}
