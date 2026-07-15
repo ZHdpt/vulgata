@@ -210,8 +210,8 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `tasks`; explicit Scan/PRD authorization granted 2026-07-15.
-- Latest workflow checkpoint: `bmad-4-1-plan-authorization-20260715T014324Z-67a8fa` (pending Git binding).
+- Current workflow stage: `implement`; qualification-only task group active.
+- Latest workflow checkpoint: `bmad-4-1-analyze-20260715T015302Z-df32ce` (pending Git binding).
 - Authorization: the user approved the whole-Repository local `cgc` strategy, its 1,800-second whole-process timeout, audit-only grouping, the stated filtered-path handling, and qualification-first stop condition. This approval authorizes task generation only.
 
 ### Completion notes

@@ -3,7 +3,7 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "tasks",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
       "status": "pending",
@@ -206,28 +206,62 @@
     },
     {
       "stage": "tasks",
-      "status": "active",
+      "status": "accepted",
       "started_at": "2026-07-15T01:43:24Z",
-      "completed_at": null,
+      "completed_at": "2026-07-15T01:53:02Z",
       "input_commit": "777c5b584d23f52493da1101da55f1772f7aef99",
       "input_hashes": {
         "specs/001-codegraph-extraction/plan.md": "fccaa46205bf5b59e99aa643e5a107c97d6ae7b241281dbaac590f3a61f75f37",
         "specs/001-codegraph-extraction/reviews/plan-review-2.json": "fe083a4a0be3513084a872ab85bbc84c10b4037c4bb0d1ed3f5a21117f73aaa5"
       },
       "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-15T01:52:00Z",
+      "completed_at": "2026-07-15T01:53:02Z",
+      "input_commit": "f82d25564654f2a6edfa5811bd4e9b1c575ded53",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "fffe9ae6594131d65e0fef95827bff86d95bde0bf9cf4dc467ddeb586f5c4a45",
+        "specs/001-codegraph-extraction/reviews/analyze-1.json": "ed10ccc001bca393dfda020ca43cec44e78e20f03ee18975d73453fe249e4b94"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/analyze-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "active",
+      "started_at": "2026-07-15T01:53:02Z",
+      "completed_at": null,
+      "input_commit": "f82d25564654f2a6edfa5811bd4e9b1c575ded53",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "fffe9ae6594131d65e0fef95827bff86d95bde0bf9cf4dc467ddeb586f5c4a45",
+        "specs/001-codegraph-extraction/reviews/analyze-1.json": "ed10ccc001bca393dfda020ca43cec44e78e20f03ee18975d73453fe249e4b94"
+      },
+      "agent_role": "tdd-implementer",
       "evidence_paths": [],
       "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "777c5b584d23f52493da1101da55f1772f7aef99",
+    "preflight_head": "f82d25564654f2a6edfa5811bd4e9b1c575ded53",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": "",
+    "worktree_status": "?? specs/001-codegraph-extraction/reviews/analyze-1.json\n?? specs/001-codegraph-extraction/tasks.md",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "specs/001-codegraph-extraction/tasks.md",
+      "specs/001-codegraph-extraction/reviews/analyze-1.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "unrelated_paths": [],
@@ -443,6 +477,53 @@
       "returned_evidence": [
         "ACCEPT: user approval is required before tasks"
       ]
+    },
+    {
+      "role": "task-author",
+      "objective": "Generate only the test-first provider qualification tasks and their deterministic plan-return hard stop.",
+      "source_boundary": {
+        "base_commit": "f82d25564654f2a6edfa5811bd4e9b1c575ded53",
+        "candidate_commit": null,
+        "diff_sha256": "fffe9ae6594131d65e0fef95827bff86d95bde0bf9cf4dc467ddeb586f5c4a45",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/tasks.md": "fffe9ae6594131d65e0fef95827bff86d95bde0bf9cf4dc467ddeb586f5c4a45"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/tasks.md",
+      "returned_evidence": [
+        "12 qualification-only tasks",
+        "test-first and hard-stop ordering validated"
+      ]
+    },
+    {
+      "role": "artifact-analyst",
+      "objective": "Read-only cross-artifact consistency analysis of the qualification-only task graph.",
+      "source_boundary": {
+        "base_commit": "f82d25564654f2a6edfa5811bd4e9b1c575ded53",
+        "candidate_commit": null,
+        "diff_sha256": "fffe9ae6594131d65e0fef95827bff86d95bde0bf9cf4dc467ddeb586f5c4a45",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/tasks.md": "fffe9ae6594131d65e0fef95827bff86d95bde0bf9cf4dc467ddeb586f5c4a45",
+          "specs/001-codegraph-extraction/reviews/analyze-1.json": "ed10ccc001bca393dfda020ca43cec44e78e20f03ee18975d73453fe249e4b94"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/reviews/analyze-1.json"
+      ],
+      "output_path": "specs/001-codegraph-extraction/reviews/analyze-1.json",
+      "returned_evidence": [
+        "ACCEPT: 12 of 12 tasks within authorized qualification scope",
+        "LOW traceability note only"
+      ]
     }
   ],
   "review_iterations": {
@@ -462,8 +543,10 @@
       ]
     },
     "analyze": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 1,
+      "verdict_paths": [
+        "specs/001-codegraph-extraction/reviews/analyze-1.json"
+      ]
     },
     "acceptance-review": {
       "count": 0,
@@ -627,22 +710,53 @@
       "observed_at": "2026-07-15T01:43:24Z",
       "summary": "User explicitly approved the proposed Scan strategy and PRD/Story correction, authorizing task generation only; all later gates remain required.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/tasks/1",
+      "kind": "artifact-hash",
+      "stage": "tasks",
+      "source_commit": "f82d25564654f2a6edfa5811bd4e9b1c575ded53",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "Get-FileHash -Algorithm SHA256 specs/001-codegraph-extraction/tasks.md",
+      "exit_code": 0,
+      "observed_at": "2026-07-15T01:53:02Z",
+      "summary": "Task-author returned the qualification-only, test-first task graph with an explicit hard stop after provider qualification.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/analyze/1",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "f82d25564654f2a6edfa5811bd4e9b1c575ded53",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/analyze-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-15T01:53:02Z",
+      "summary": "Artifact analysis accepted the qualification-only task graph with no Critical/High finding; its coverage_metrics extension is required by the analysis contract despite the generic verdict validator rejecting extensions.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-plan-authorization-20260715T014324Z-67a8fa",
+    "checkpoint_id": "bmad-4-1-analyze-20260715T015302Z-df32ce",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "tasks",
+    "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "specs/001-codegraph-extraction/tasks.md",
+      "specs/001-codegraph-extraction/reviews/analyze-1.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/3"
+      "4-1-codegraph-integration-and-code-unit-extraction/tasks/1",
+      "4-1-codegraph-integration-and-code-unit-extraction/analyze/1"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-15T01:43:24Z"
+  "updated_at": "2026-07-15T01:53:02Z"
 }
