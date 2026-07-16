@@ -63,7 +63,7 @@ known stale assembly exits before image inspection, build, run, or provider acce
 are inert and real launch construction requires a valid sealed lease; no Docker/provider
 operation is possible.
 
-- [ ] T002 Add RED tests in
+- [x] T002 Add RED tests in
   `tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuardTests.cs` for exact
   categories, full-suite/no-token inertness, legacy-path absence, rejected broad/static
   authorization, fake-launch-only synthetic execution, and sealed
@@ -72,7 +72,7 @@ operation is possible.
   - **RED (R0):**
     `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName=Vulgata.Tests.CodeGraphQualification.ProviderExecutionGuardTests.Issue_WhenNoClaimedAuthorization_RefusesProviderCapability&Category=CodeGraphQualificationSynthetic"`
 
-- [ ] T003 Implement the capability boundary in
+- [x] T003 Implement the capability boundary in
   `ProviderExecutionGuard.cs`, `ProviderExecutionLease.cs`,
   `IQualificationProcessLauncher.cs`, `FakeQualificationProcessLauncher.cs`, and
   `DockerQualificationProcessLauncher.cs`; categorize every synthetic test exactly

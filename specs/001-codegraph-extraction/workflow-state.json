@@ -28,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "t002-t003-capability-split"
+      "t004-t005-attempt-ledger"
     ]
   },
   "active_gates": {
@@ -1914,24 +1914,43 @@
       "observed_at": "2026-07-16T10:45:00Z",
       "summary": "T001 removed the stale fixture capability before any test execution. The replacement fixture retained all four source hashes; no test, Docker, cgc, HTTP, image, or provider command ran.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/9",
+      "kind": "red-green",
+      "stage": "implement",
+      "source_commit": "40dbc1152e7ff95d8948ba3e5044c37ad56fe77e",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphQualification",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter Category=CodeGraphQualificationSynthetic",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T11:24:05Z",
+      "summary": "T002-T003 completed six authentic RED-GREEN cycles. Root rerun passed all 62 freshly compiled synthetic tests; sealed leases and injected fake launchers keep the suite provider-unreachable. No Docker, cgc, HTTP, image, container, or provider command ran.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-t001-20260716T104500Z-b8d127",
+    "checkpoint_id": "bmad-4-1-t002-t003-20260716T112405Z-c1e548",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
     "stage": "implement",
     "committed_paths": [
       "specs/001-codegraph-extraction/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Eligible/BaseProcessor.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Eligible/OrderRunner.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Eligible/OrderService.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Filtered/GeneratedClient.g.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/Fixtures/qualification-fixture-manifest.json",
-      "tests/Vulgata.Tests/CodeGraphQualification/QualificationTestPaths.cs",
+      "docker/Dockerfile",
+      "docker/codegraph/python-version.txt",
+      "docker/codegraph/requirements.lock",
+      "tests/Vulgata.Tests/CodeGraphQualification",
+      "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "specs/001-codegraph-extraction/qualification/qualification-result.schema.json",
+      "specs/001-codegraph-extraction/qualification/evidence/red.md",
+      "specs/001-codegraph-extraction/qualification/evidence/verification.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/8"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/9"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -1947,5 +1966,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T18:45:00+08:00"
+  "updated_at": "2026-07-16T19:30:00+08:00"
 }

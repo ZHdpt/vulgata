@@ -1,0 +1,1068 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CodeGraphContext qualification result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "category",
+    "nextAction",
+    "image",
+    "python",
+    "packages",
+    "executionIdentity",
+    "fixtureManifestSha256",
+    "commands",
+    "evidence",
+    "elapsedMilliseconds",
+    "cleanup"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "enum": [
+        "1.0",
+        "1.1",
+        "1.2"
+      ]
+    },
+    "status": {
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "category": {
+      "enum": [
+        "qualified",
+        "docker-daemon-unavailable",
+        "image-build-failure",
+        "provider-contract-failure",
+        "timeout",
+        "unsafe-evidence",
+        "cleanup-failure"
+      ]
+    },
+    "nextAction": {
+      "enum": [
+        "return-to-plan",
+        "corrective-planning"
+      ]
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "digest"
+      ],
+      "properties": {
+        "reference": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        }
+      }
+    },
+    "python": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lockPath",
+        "version"
+      ],
+      "properties": {
+        "lockPath": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        }
+      }
+    },
+    "packages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lockPath",
+        "lockSha256",
+        "codegraphcontextVersion"
+      ],
+      "properties": {
+        "lockPath": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "lockSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "codegraphcontextVersion": {
+          "const": "0.5.1"
+        }
+      }
+    },
+    "executionIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "user",
+        "nonRoot"
+      ],
+      "properties": {
+        "user": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "nonRoot": {
+          "type": "boolean"
+        }
+      }
+    },
+    "fixtureManifestSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "commands": {
+      "type": "array",
+      "maxItems": 11,
+      "description": "A schema-1.2 pass must contain each approved qualification lifecycle command name. QualificationResultWriter, not this schema, enforces the exact eleven-entry set, uniqueness, zero exit codes, and rejection of unapproved entries.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "exitCode",
+          "stdoutSha256",
+          "stderrSha256"
+        ],
+        "properties": {
+          "name": {
+            "enum": [
+              "docker-version",
+              "docker-base-image-resolve",
+              "docker-build",
+              "pip-download-codegraphcontext",
+              "cgc-version",
+              "cgc-doctor",
+              "cgc-context-create",
+              "cgc-context-mode",
+              "cgc-context-default",
+              "cgc-index",
+              "cgc-query",
+              "cgc-api-start",
+              "cgc-api-health",
+              "cgc-api-query",
+              "gateway-stop",
+              "cgc-context-delete"
+            ]
+          },
+          "exitCode": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "stdoutSha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "stderrSha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bounded",
+        "redacted",
+        "paths"
+      ],
+      "properties": {
+        "bounded": {
+          "const": true
+        },
+        "redacted": {
+          "const": true
+        },
+        "paths": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^(?![A-Za-z]:[\\\\/])(?!/).+"
+          }
+        }
+      }
+    },
+    "structuralEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rawOutputRetained",
+        "grammarId",
+        "streamingGrammar",
+        "outputCap",
+        "streams",
+        "canonicalSummarySha256",
+        "markers",
+        "recordCounts",
+        "relationshipKinds",
+        "relationshipKindCounts",
+        "predicateFacts"
+      ],
+      "properties": {
+        "rawOutputRetained": {
+          "const": false
+        },
+        "grammarId": {
+          "const": "vulgata-cgc-http-json-v1,vulgata-cgc-streaming-evidence-v2"
+        },
+        "streamingGrammar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "observer",
+            "queryStdoutRegion",
+            "structuralRecord",
+            "strictIncrementalUtf8",
+            "maximumRecordBytes"
+          ],
+          "properties": {
+            "observer": {
+              "const": "vulgata-cgc-streaming-evidence-v2"
+            },
+            "queryStdoutRegion": {
+              "const": "vulgata-cgc-http-json-v1"
+            },
+            "structuralRecord": {
+              "const": "vulgata-cgc-http-json-v1"
+            },
+            "strictIncrementalUtf8": {
+              "const": true
+            },
+            "maximumRecordBytes": {
+              "const": 4096
+            }
+          }
+        },
+        "outputCap": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "limitBytes",
+            "observedTotalBytes",
+            "overflowed",
+            "terminationRequested",
+            "containerCleanupForced"
+          ],
+          "properties": {
+            "limitBytes": {
+              "const": 65536
+            },
+            "observedTotalBytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65537
+            },
+            "overflowed": {
+              "type": "boolean"
+            },
+            "terminationRequested": {
+              "type": "boolean"
+            },
+            "containerCleanupForced": {
+              "type": "boolean"
+            }
+          }
+        },
+        "streams": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "stdout",
+            "stderr"
+          ],
+          "properties": {
+            "stdout": {
+              "$ref": "#/$defs/streamEvidence"
+            },
+            "stderr": {
+              "$ref": "#/$defs/streamEvidence"
+            }
+          }
+        },
+        "canonicalSummarySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "markers": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "stdoutBeginCount",
+            "stdoutEndCount",
+            "stdoutOrderedPair",
+            "stderrExcludedFromStructuralEvidence"
+          ],
+          "properties": {
+            "stdoutBeginCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "stdoutEndCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "stdoutOrderedPair": {
+              "type": "boolean"
+            },
+            "stderrExcludedFromStructuralEvidence": {
+              "const": true
+            }
+          }
+        },
+        "recordCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "valid",
+            "invalidOrOversized"
+          ],
+          "properties": {
+            "valid": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 256
+            },
+            "invalidOrOversized": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 256
+            }
+          }
+        },
+        "relationshipKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 4,
+          "items": {
+            "enum": [
+              "CALLS",
+              "IMPORTS",
+              "INHERITS",
+              "CONTAINS"
+            ]
+          }
+        },
+        "relationshipKindCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "CALLS",
+            "IMPORTS",
+            "INHERITS",
+            "CONTAINS"
+          ],
+          "properties": {
+            "CALLS": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 256
+            },
+            "IMPORTS": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 256
+            },
+            "INHERITS": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 256
+            },
+            "CONTAINS": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 256
+            }
+          }
+        },
+        "predicateFacts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "queryCompleted",
+            "hasValidRecordGrammar",
+            "allRequiredRelationshipKindsObserved",
+            "hasFilteredTargetCandidate",
+            "hasPositiveOrderedRange",
+            "hasNonEmptyEndpointIdentity",
+            "allStructuralFactsCorrelatedWithinValidRecords"
+          ],
+          "properties": {
+            "queryCompleted": {
+              "type": "boolean"
+            },
+            "hasValidRecordGrammar": {
+              "type": "boolean"
+            },
+            "allRequiredRelationshipKindsObserved": {
+              "type": "boolean"
+            },
+            "hasFilteredTargetCandidate": {
+              "type": "boolean"
+            },
+            "hasPositiveOrderedRange": {
+              "type": "boolean"
+            },
+            "hasNonEmptyEndpointIdentity": {
+              "type": "boolean"
+            },
+            "allStructuralFactsCorrelatedWithinValidRecords": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "elapsedMilliseconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1800000
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempted",
+        "succeeded"
+      ],
+      "properties": {
+        "attempted": {
+          "type": "boolean"
+        },
+        "succeeded": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "streamEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bytes",
+        "sha256"
+      ],
+      "properties": {
+        "bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65537
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "const": "1.0"
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "not": {
+          "required": [
+            "structuralEvidence"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "const": "1.1"
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "required": [
+          "structuralEvidence"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "const": "1.2"
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "required": [
+          "structuralEvidence"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "pass"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "category": {
+            "const": "qualified"
+          },
+          "nextAction": {
+            "const": "return-to-plan"
+          },
+          "commands": {
+            "allOf": [
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-version"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-doctor"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-context-create"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-context-mode"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-context-default"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-index"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-api-start"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-api-health"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-api-query"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "gateway-stop"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "const": "cgc-context-delete"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              }
+            ]
+          },
+          "cleanup": {
+            "properties": {
+              "attempted": {
+                "const": true
+              },
+              "succeeded": {
+                "const": true
+              }
+            },
+            "required": [
+              "attempted",
+              "succeeded"
+            ]
+          },
+          "structuralEvidence": {
+            "properties": {
+              "outputCap": {
+                "properties": {
+                  "overflowed": {
+                    "const": false
+                  },
+                  "observedTotalBytes": {
+                    "maximum": 65536
+                  },
+                  "terminationRequested": {
+                    "const": false
+                  },
+                  "containerCleanupForced": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "overflowed",
+                  "observedTotalBytes",
+                  "terminationRequested",
+                  "containerCleanupForced"
+                ]
+              },
+              "markers": {
+                "properties": {
+                  "stdoutBeginCount": {
+                    "const": 1
+                  },
+                  "stdoutEndCount": {
+                    "const": 1
+                  },
+                  "stdoutOrderedPair": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "stdoutBeginCount",
+                  "stdoutEndCount",
+                  "stdoutOrderedPair"
+                ]
+              },
+              "recordCounts": {
+                "properties": {
+                  "valid": {
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "valid"
+                ]
+              },
+              "relationshipKinds": {
+                "minItems": 4
+              },
+              "relationshipKindCounts": {
+                "properties": {
+                  "CALLS": {
+                    "minimum": 1
+                  },
+                  "IMPORTS": {
+                    "minimum": 1
+                  },
+                  "INHERITS": {
+                    "minimum": 1
+                  },
+                  "CONTAINS": {
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "CALLS",
+                  "IMPORTS",
+                  "INHERITS",
+                  "CONTAINS"
+                ]
+              },
+              "predicateFacts": {
+                "properties": {
+                  "queryCompleted": {
+                    "const": true
+                  },
+                  "hasValidRecordGrammar": {
+                    "const": true
+                  },
+                  "allRequiredRelationshipKindsObserved": {
+                    "const": true
+                  },
+                  "hasFilteredTargetCandidate": {
+                    "const": true
+                  },
+                  "hasPositiveOrderedRange": {
+                    "const": true
+                  },
+                  "hasNonEmptyEndpointIdentity": {
+                    "const": true
+                  },
+                  "allStructuralFactsCorrelatedWithinValidRecords": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "queryCompleted",
+                  "hasValidRecordGrammar",
+                  "allRequiredRelationshipKindsObserved",
+                  "hasFilteredTargetCandidate",
+                  "hasPositiveOrderedRange",
+                  "hasNonEmptyEndpointIdentity",
+                  "allStructuralFactsCorrelatedWithinValidRecords"
+                ]
+              }
+            },
+            "required": [
+              "outputCap",
+              "markers",
+              "recordCounts",
+              "relationshipKinds",
+              "relationshipKindCounts",
+              "predicateFacts"
+            ]
+          }
+        },
+        "required": [
+          "category",
+          "nextAction",
+          "commands",
+          "cleanup",
+          "structuralEvidence"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "fail"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "nextAction": {
+            "const": "corrective-planning"
+          }
+        },
+        "required": [
+          "nextAction"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "const": "qualified"
+          }
+        },
+        "required": [
+          "category"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "pass"
+          },
+          "nextAction": {
+            "const": "return-to-plan"
+          }
+        },
+        "required": [
+          "status",
+          "nextAction"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "cleanup": {
+            "properties": {
+              "succeeded": {
+                "const": false
+              }
+            },
+            "required": [
+              "succeeded"
+            ]
+          }
+        },
+        "required": [
+          "cleanup"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "fail"
+          },
+          "category": {
+            "const": "cleanup-failure"
+          },
+          "nextAction": {
+            "const": "corrective-planning"
+          }
+        },
+        "required": [
+          "status",
+          "category",
+          "nextAction"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "structuralEvidence": {
+            "properties": {
+              "outputCap": {
+                "properties": {
+                  "overflowed": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "overflowed"
+                ]
+              }
+            },
+            "required": [
+              "outputCap"
+            ]
+          }
+        },
+        "required": [
+          "structuralEvidence"
+        ]
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "fail"
+          },
+          "nextAction": {
+            "const": "corrective-planning"
+          },
+          "structuralEvidence": {
+            "properties": {
+              "outputCap": {
+                "properties": {
+                  "observedTotalBytes": {
+                    "const": 65537
+                  },
+                  "terminationRequested": {
+                    "const": true
+                  },
+                  "containerCleanupForced": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "observedTotalBytes",
+                  "terminationRequested",
+                  "containerCleanupForced"
+                ]
+              }
+            },
+            "required": [
+              "outputCap"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "nextAction",
+          "structuralEvidence"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "structuralEvidence": {
+            "properties": {
+              "outputCap": {
+                "properties": {
+                  "overflowed": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "overflowed"
+                ]
+              }
+            },
+            "required": [
+              "outputCap"
+            ]
+          }
+        },
+        "required": [
+          "structuralEvidence"
+        ]
+      },
+      "then": {
+        "properties": {
+          "structuralEvidence": {
+            "properties": {
+              "outputCap": {
+                "properties": {
+                  "observedTotalBytes": {
+                    "maximum": 65536
+                  }
+                },
+                "required": [
+                  "observedTotalBytes"
+                ]
+              }
+            },
+            "required": [
+              "outputCap"
+            ]
+          }
+        },
+        "required": [
+          "structuralEvidence"
+        ]
+      }
+    }
+  ]
+}
