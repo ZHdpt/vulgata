@@ -201,7 +201,7 @@ synthetic tests.
 **Independent validation**: one claimed attempt produces one redacted terminal record;
 regardless of pass/fail, no second provider invocation or production work is permitted.
 
-- [ ] T013 Execute exactly once:
+- [x] T013 Execute exactly once:
   `pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1 -AttemptId attempt-0002`.
   - **Depends on:** T012 green and the explicit approval already recorded in
     `workflow-state.json`.
@@ -214,7 +214,7 @@ regardless of pass/fail, no second provider invocation or production work is per
     cleanup, write one redacted `terminal.json` and schema-1.2 result. Existing start or
     terminal state rejects execution. **Never retry T013.**
 
-- [ ] T014 Enforce the terminal hard stop and classify the result without executing any
+- [x] T014 Enforce the terminal hard stop and classify the result without executing any
   command: pass → fresh production parser/integration plan and independent review; fail →
   corrective planning. Mark no Story 4.1 production task complete, and do not implement or
   test production Scan behavior in this graph.

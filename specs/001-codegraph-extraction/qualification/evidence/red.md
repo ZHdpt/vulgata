@@ -187,3 +187,18 @@ bounded seam changes.
 No wrapper, script, Docker, `cgc`, HTTP, image, container, or provider action
 ran. The RED did not create `attempt-0002` or modify the durable qualification
 result.
+
+## T013 authorized replacement execution — terminal failure
+
+- The exact approved wrapper command was invoked once for `attempt-0002` and exited `1` after 8.9 seconds.
+- The execution stopped at the authorization boundary because `workflowApprovalSummarySha256` did not match. Docker and CodeGraphContext remained unreachable.
+- `authorized.json` is present (764 bytes; SHA-256 `65eb6c190414b253ce651b7688a68a6d94663e9909a73c8c0bcd757f2910daaa`).
+- `started.json` and `terminal.json` are absent. Authorization was issued, but the guarded provider attempt never started; this does not make the consumed wrapper invocation reusable.
+- Execution count: 1. Retry count: 0. Retry is forbidden.
+
+## T014 command-free terminal hard stop
+
+- Classification: **FAIL → corrective planning**.
+- `qualification-result.json` remains unchanged at schema 1.0 with `status: fail`, `reason: unsafe-evidence`, and `nextAction: corrective-planning` (1,096 bytes; SHA-256 `358d5706b3b1472701f45fadbf219e1ae693671ff528022e092794698422d125`).
+- No production Story 4.1 Scan implementation or test is authorized or complete from this qualification.
+- T014 executed zero commands, tests, Docker actions, CodeGraphContext actions, HTTP requests, or provider actions.

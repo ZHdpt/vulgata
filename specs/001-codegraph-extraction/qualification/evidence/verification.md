@@ -257,3 +257,15 @@ byte-identical at 1,096 bytes with SHA-256
 `358d5706b3b1472701f45fadbf219e1ae693671ff528022e092794698422d125`.
 T012 performed zero provider, Docker, `cgc`, network HTTP, image, or container
 actions. The irreversible T013 attempt remains unclaimed and unspent.
+
+## T013 execution record
+
+The approved `attempt-0002` wrapper was invoked exactly once and exited `1` after 8.9 seconds. Its authorization record is present at 764 bytes with SHA-256 `65eb6c190414b253ce651b7688a68a6d94663e9909a73c8c0bcd757f2910daaa`. The `workflowApprovalSummarySha256` guard rejected the run before Docker or CodeGraphContext became reachable. Neither `started.json` nor `terminal.json` exists.
+
+Authorization-issued and attempt-started are distinct states: the provider attempt did not start, but the approved wrapper execution was consumed. Execution count is 1; retry count is 0; retry is forbidden.
+
+## T014 terminal classification
+
+Without executing any command, test, Docker action, CodeGraphContext action, HTTP request, or provider action, T014 classifies the qualification as **FAIL → corrective planning**. `qualification-result.json` remains byte-identical at 1,096 bytes with SHA-256 `358d5706b3b1472701f45fadbf219e1ae693671ff528022e092794698422d125`, schema 1.0, `status: fail`, `reason: unsafe-evidence`, and `nextAction: corrective-planning`.
+
+The hard stop remains in force: no production Story 4.1 Scan implementation or test is complete, and no retry or replacement provider execution is permitted.

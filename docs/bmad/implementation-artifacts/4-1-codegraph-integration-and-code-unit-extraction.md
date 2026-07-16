@@ -210,9 +210,10 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `implement`; the authorized corrective tasks and fresh read-only analysis are accepted, with implementation beginning at stale-fixture revocation.
-- Latest workflow checkpoint: `bmad-4-1-corrective-analyze-20260716T103000Z-a5c913` (pending local commit binding).
+- Current workflow stage: `plan`; attempt-0002 is consumed and failed closed before provider reachability, so corrective planning is required without a retry.
+- Latest workflow checkpoint: `bmad-4-1-t013-t014-20260716T140345Z-c9f861` (pending local commit binding).
 - Corrective boundary: `attempt-0001` remains a permanent failed execution-order incident. The user authorized exactly one `attempt-0002`, protected by legacy-fixture revocation, provider-incapable synthetic tests, fresh compilation, a sealed execution lease, a process-scoped token, an accepted-plan binding, and an append-only atomic attempt ledger. Provider reachability remains prohibited until every regenerated prerequisite and the reachability-free preflight are green.
+- Terminal result: the T012 preflight passed, but the single T013 wrapper invocation failed before ledger claim because `workflowApprovalSummarySha256` mismatched the ledger policy. `authorized.json` is durable; `started.json` and `terminal.json` are absent; no Docker/provider action occurred; T014 routes FAIL to corrective planning and forbids retry or production implementation.
 
 ### Completion notes
 

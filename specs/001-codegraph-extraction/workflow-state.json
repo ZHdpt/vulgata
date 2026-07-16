@@ -3,9 +3,9 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "implement",
+  "stage": "plan",
   "plan_revision": {
-    "status": "corrective-tasks-analysis-accepted-ready-for-implementation",
+    "status": "attempt-0002-consumed-failed-corrective-planning-required",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
     "trigger": "The CodeGraphContext 0.5.1 CLI renders a table while the rejected schema-1.1 test observer expected an invented key=value record.",
     "scope": "Replace only qualification transport/evidence with the provider's loopback HTTP JSON gateway; no production integration or provider execution is authorized.",
@@ -28,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "t013-attempt-0002"
+      "fresh-corrective-plan-without-provider-retry"
     ]
   },
   "active_gates": {
@@ -2022,34 +2022,54 @@
       "observed_at": "2026-07-16T13:57:52Z",
       "summary": "T012 exact reachability-free preflight ran once and passed: fresh build had zero errors, all 94 synthetic tests passed, accepted hashes/approval/ledger checks matched, attempt-0002 remained absent, and the durable result remained unchanged. No provider-reachable action occurred.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/15",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "d4d58b5731d43a90b578e82136c74cee7a57f769",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1 -AttemptId attempt-0002",
+      "exit_code": 1,
+      "observed_at": "2026-07-16T14:03:45Z",
+      "summary": "T013 executed exactly once and failed closed before ledger claim or Docker reachability because workflowApprovalSummarySha256 did not match the accepted ledger policy. authorized.json is durable; started.json and terminal.json are absent; the result is unchanged; T014 enforces FAIL to corrective planning with no retry or production work.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-t012-20260716T135752Z-b6e738",
+    "checkpoint_id": "bmad-4-1-t013-t014-20260716T140345Z-c9f861",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
     "stage": "implement",
     "committed_paths": [
       "specs/001-codegraph-extraction/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1",
+      "specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json",
+      "specs/001-codegraph-extraction/qualification/evidence/red.md",
       "specs/001-codegraph-extraction/qualification/evidence/verification.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/14"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/15"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": {
     "stage": "implement",
-    "category": "execution-order-violation",
-    "observed_at": "2026-07-16T17:07:27+08:00",
-    "summary": "A stale --no-build test binary invoked the inherited Docker/CodeGraphContext qualification once before Group A prerequisites were green. Cleanup reported success and no container remains, but the sole provider execution was consumed without qualifying the accepted HTTP JSON candidate.",
+    "category": "authorization-boundary-mismatch",
+    "observed_at": "2026-07-16T22:03:45+08:00",
+    "summary": "The single approved attempt-0002 wrapper execution issued authorized.json but failed closed before started.json or Docker reachability because workflowApprovalSummarySha256 did not match the accepted ledger policy. The execution is consumed, retry is forbidden, and no schema-1.2 evidence was produced.",
     "evidence_paths": [
-      "specs/001-codegraph-extraction/qualification/evidence/accidental-provider-execution-2026-07-16.md"
+      "specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json",
+      "specs/001-codegraph-extraction/qualification/evidence/red.md",
+      "specs/001-codegraph-extraction/qualification/evidence/verification.md"
     ],
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T22:58:00+08:00"
+  "updated_at": "2026-07-16T23:15:00+08:00"
 }
