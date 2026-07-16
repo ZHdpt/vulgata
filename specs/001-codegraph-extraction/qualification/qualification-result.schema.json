@@ -22,7 +22,6 @@
     "schemaVersion": {
       "enum": [
         "1.0",
-        "1.1",
         "1.2"
       ]
     },
@@ -45,7 +44,7 @@
     },
     "nextAction": {
       "enum": [
-        "return-to-plan",
+        "parser-planning",
         "corrective-planning"
       ]
     },
@@ -522,23 +521,6 @@
       "if": {
         "properties": {
           "schemaVersion": {
-            "const": "1.1"
-          }
-        },
-        "required": [
-          "schemaVersion"
-        ]
-      },
-      "then": {
-        "required": [
-          "structuralEvidence"
-        ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "schemaVersion": {
             "const": "1.2"
           }
         },
@@ -569,7 +551,7 @@
             "const": "qualified"
           },
           "nextAction": {
-            "const": "return-to-plan"
+            "const": "parser-planning"
           },
           "commands": {
             "allOf": [
@@ -902,7 +884,7 @@
             "const": "pass"
           },
           "nextAction": {
-            "const": "return-to-plan"
+            "const": "parser-planning"
           }
         },
         "required": [

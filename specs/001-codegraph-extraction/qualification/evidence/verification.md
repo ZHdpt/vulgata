@@ -149,3 +149,42 @@ for the removed raw-response/Python/key-value/CLI-table observer paths, and
 
 This was entirely R0: zero Docker, `cgc`, HTTP network, image, container, or
 provider execution. `attempt-0002` remains unclaimed and unspent.
+
+## T008-T009 fake lifecycle and schema verification (2026-07-16)
+
+The exact T008 fresh-compilation filter passed 1/1 at `20:14:09+08:00`. The
+full exact `CodeGraphQualificationSynthetic` category then passed 86/86 at
+`20:14:37+08:00`. Fake-only assertions prove the exact eleven-entry lifecycle,
+private HOME/Kuzu Context, network-none and loopback/no-port isolation, bounded
+health polling, one query with no MCP/tool route, the single 1,800-second clock,
+process-tree termination, SIGTERM/five-second grace/conditional SIGKILL cleanup,
+cleanup-failure precedence, and atomic failure without partial structural facts.
+
+The closed result schema now accepts current schema 1.2 and historical failure
+schema 1.0 only, rejects retired schema 1.1, routes pass to `parser-planning`,
+and routes failure to `corrective-planning`. The writer retains only bounded,
+redacted structural predicates and their canonical hash summary.
+
+This verification was entirely R0. `attempt-0002` and every attempt-0002 result
+or ledger record remain absent; zero Docker, `cgc`, network HTTP, image,
+container, or provider actions occurred.
+
+### Interrupted-stage recovery verification
+
+Fresh recovery verification produced the following results:
+
+| Command | Finished (Asia/Shanghai) | Exit | Result |
+| --- | --- | ---: | --- |
+| Exact T008 FQN plus exact synthetic category | `2026-07-16T21:02:39+08:00` | 0 | 1/1 passed after correcting only the quoted shell-fragment assertion. |
+| Exact `QualificationGateTests` class plus exact synthetic category | `2026-07-16T21:03:25+08:00` | 0 | 43/43 writer and schema cases passed. |
+| Exact `CodeGraphQualificationSynthetic` category | `2026-07-16T21:03:59+08:00` | 0 | 86/86 passed. |
+| `Test-Json` current durable result against the closed schema | `2026-07-16T21:04:26+08:00` | 0 | `True`; historical schema-1.0 failure readability remains valid. |
+| Exact `CgcCommandQualificationTests` class plus exact synthetic category | `2026-07-16T21:05:05+08:00` | 0 | 3/3 lifecycle, cleanup-precedence, and atomic-failure cases passed. |
+| Exact T008 after preserving the SIGKILL failure status | `2026-07-16T21:06:37+08:00` | 0 | 1/1 passed. |
+| Final exact `CodeGraphQualificationSynthetic` category | `2026-07-16T21:07:14+08:00` | 0 | 86/86 passed after the cleanup-status correction. |
+
+The durable `qualification-result.json` Git object hash remained
+`d14922c3e5554bf1fb0339037d141f54e43d761a` in both HEAD and the worktree.
+The `attempt-0002` directory remained absent. `git diff --check` passed. All
+commands compiled fresh where applicable and remained R0: zero Docker, `cgc`,
+network HTTP, image, container, or provider actions.

@@ -59,7 +59,7 @@ internal static class QualificationResultWriter
             SchemaVersion: "1.2",
             Status: "pass",
             Category: "qualified",
-            NextAction: "return-to-plan",
+            NextAction: "parser-planning",
             Image: new ImageIdentity(_qualifiedImageReference, input.ImageDigest),
             Python: new PythonIdentity("docker/codegraph/python-version.txt", input.PythonVersion),
             Packages: new PackageIdentity("docker/codegraph/requirements.lock", input.RequirementsLockSha256, "0.5.1"),

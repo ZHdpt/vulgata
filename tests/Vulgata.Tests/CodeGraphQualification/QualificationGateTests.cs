@@ -44,6 +44,18 @@ public sealed class QualificationGateTests
     }
 
     [Fact]
+    public async Task QualificationSchema_WhenRetiredSchema11ResultIsPresented_RejectsItAsync()
+    {
+        JsonObject retired = CreateSchema11Result();
+        retired["schemaVersion"] = "1.1";
+        retired["nextAction"] = "return-to-plan";
+
+        SchemaValidationResult validation = await ValidateAgainstQualificationSchemaAsync(retired);
+
+        Assert.False(validation.IsValid, validation.Diagnostic);
+    }
+
+    [Fact]
     public async Task QualificationSchema_WhenSchema11OmitsStructuralEvidence_RejectsItAsync()
     {
         JsonObject result = CreateSchema11Result();
@@ -296,7 +308,7 @@ public sealed class QualificationGateTests
             Assert.Equal("pass", root.GetProperty("status").GetString());
             Assert.Equal("1.2", root.GetProperty("schemaVersion").GetString());
             Assert.Equal("qualified", root.GetProperty("category").GetString());
-            Assert.Equal("return-to-plan", root.GetProperty("nextAction").GetString());
+            Assert.Equal("parser-planning", root.GetProperty("nextAction").GetString());
             Assert.Equal("vulgata-codegraph-qualification:0.5.1", root.GetProperty("image").GetProperty("reference").GetString());
             Assert.Equal("sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", root.GetProperty("image").GetProperty("digest").GetString());
             Assert.Equal("3.12.13", root.GetProperty("python").GetProperty("version").GetString());
@@ -609,7 +621,7 @@ public sealed class QualificationGateTests
             ["schemaVersion"] = "1.2",
             ["status"] = "pass",
             ["category"] = "qualified",
-            ["nextAction"] = "return-to-plan",
+            ["nextAction"] = "parser-planning",
             ["image"] = new JsonObject
             {
                 ["reference"] = "vulgata-codegraph-qualification:0.5.1",

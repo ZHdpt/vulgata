@@ -142,3 +142,34 @@ old table observer contract had not yet been fully removed.
 
 All recovery commands were R0 and provider-unreachable. No Docker, `cgc`, HTTP
 network, image, container, or provider operation occurred.
+
+## T008-T009 fake lifecycle and schema RED evidence (2026-07-16)
+
+All commands compiled fresh and were R0/provider-unreachable. The exact T008
+filter first found no matching test at `20:10:44+08:00`; after adding the
+behavior test it failed compilation at `20:11:46+08:00` because the launch plan
+and fake observation seam did not exist. The cleanup-precedence tracer failed
+compilation at `20:12:43+08:00` because the fake lifecycle event record did not
+exist. The retired-schema tracer failed 1/1 at `20:13:49+08:00` because schema
+1.1 was still accepted. Each RED preceded its minimal corresponding change.
+
+No Docker, `cgc`, network HTTP, image, container, or provider operation ran.
+
+### Interrupted-stage recovery RED
+
+Recovery began with the exact T008 filter and fresh compilation at
+`2026-07-16T21:01:40+08:00`. It failed 0/1 because the test searched for an
+unquoted shell fragment while the generated cleanup loop correctly quotes
+`$gateway_grace_attempt`. The assertion was narrowed to the exact valid shell
+predicate; no runtime behavior changed. The exact rerun passed 1/1 at
+`2026-07-16T21:02:32+08:00`.
+
+This recovery remained R0/provider-unreachable. It performed no Docker, `cgc`,
+network HTTP, image, container, or provider action and did not create or claim
+`attempt-0002`.
+
+Final diff review found that the shell form `if ! kill -KILL ...` would read
+the inverted command status and could therefore mask a SIGKILL cleanup
+failure. The exact T008 command established an additional authentic RED at
+`2026-07-16T21:06:08+08:00` (0/1). This preceded the minimal ordinary
+`if`/`else` correction that preserves the real failure status.

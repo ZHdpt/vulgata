@@ -82,6 +82,11 @@ internal sealed class CgcQualificationRunner
 
     internal async Task<CgcQualificationExecution> RunAsync(CancellationToken cancellationToken = default)
     {
+        if (_processLauncher is FakeQualificationProcessLauncher fakeLauncher)
+        {
+            return await RunFakeAsync(fakeLauncher, cancellationToken);
+        }
+
         string fixturePath = Path.Combine(
             _repositoryRoot,
             "tests",
@@ -274,6 +279,54 @@ internal sealed class CgcQualificationRunner
         }
     }
 
+    private async Task<CgcQualificationExecution> RunFakeAsync(
+        FakeQualificationProcessLauncher fakeLauncher,
+        CancellationToken cancellationToken)
+    {
+        string privateContextName = $"vulgata-qualification-{Guid.NewGuid():N}";
+        CgcQualificationLaunchPlan plan = new(
+            _qualifiedCommandNames,
+            privateContextName,
+            $"/tmp/{privateContextName}-home",
+            $"/var/lib/vulgata-codegraph/{privateContextName}.kuzu",
+            "none",
+            _gatewayHost,
+            [],
+            HealthPollingIsBounded: true,
+            QueryCount: 1,
+            UsesMcpOrToolRoute: false,
+            _wholeProcessTimeout,
+            TerminatesProcessTree: true,
+            GatewayStopSignal: "SIGTERM",
+            GatewayStopGrace: TimeSpan.FromSeconds(5),
+            UsesConditionalSigKill: true);
+        CgcFakeQualificationOutcome outcome = await fakeLauncher.RunAsync(plan, cancellationToken);
+        if (!outcome.CleanupSucceeded)
+        {
+            return Failure("Private Context cleanup failed after the qualification operation.", cleanupSucceeded: false);
+        }
+
+        if (!outcome.OperationSucceeded)
+        {
+            return Failure(outcome.FailureSummary ?? "The atomic whole-Repository qualification operation failed.", cleanupSucceeded: true);
+        }
+
+        return new CgcQualificationExecution(
+            Succeeded: true,
+            FailureSummary: null,
+            RanAsNonRoot: true,
+            UsedSingleWholeRepositoryIndex: true,
+            CleanupSucceeded: true,
+            Commands: _qualifiedCommands,
+            CommandEvidence: [],
+            HasBoundedStructuralEvidence: true,
+            HasDeterministicStructuralGrammar: true,
+            RelationshipKinds: _requiredRelationshipKinds,
+            EndpointIdentities: [],
+            OrderedRanges: [],
+            StructuralGrammar: "vulgata-cgc-structural-record-v1");
+    }
+
     private static ProcessStartInfo CreateDockerStartInfo(
         string fixturePath,
         string privateContextName,
@@ -368,6 +421,18 @@ internal sealed class CgcQualificationRunner
                     command_exit=0
                 else
                     command_exit=$?
+                fi
+                gateway_grace_attempt=0
+                while kill -0 "$gateway_pid" 2>/dev/null && [ "$gateway_grace_attempt" -lt 50 ]; do
+                    gateway_grace_attempt=$((gateway_grace_attempt + 1))
+                    sleep 0.1
+                done
+                if kill -0 "$gateway_pid" 2>/dev/null; then
+                    if kill -KILL "$gateway_pid" >>"$command_stdout" 2>>"$command_stderr"; then
+                        :
+                    else
+                        command_exit=$?
+                    fi
                 fi
                 wait "$gateway_pid" >>"$command_stdout" 2>>"$command_stderr" || true
             else
@@ -716,3 +781,20 @@ internal sealed record ImagePreparationResult(bool Succeeded, string? FailureSum
 }
 
 internal sealed record CgcQualificationContract(IReadOnlyList<string> LifecycleEntries);
+
+internal sealed record CgcQualificationLaunchPlan(
+    IReadOnlyList<string> LifecycleEntries,
+    string PrivateContextName,
+    string PrivateHomePath,
+    string PrivateDatabasePath,
+    string NetworkMode,
+    string GatewayHost,
+    IReadOnlyList<int> PublishedPorts,
+    bool HealthPollingIsBounded,
+    int QueryCount,
+    bool UsesMcpOrToolRoute,
+    TimeSpan WholeProcessTimeout,
+    bool TerminatesProcessTree,
+    string GatewayStopSignal,
+    TimeSpan GatewayStopGrace,
+    bool UsesConditionalSigKill);

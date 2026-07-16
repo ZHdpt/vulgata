@@ -141,7 +141,7 @@ provider reachability or retained provider values.
 isolation, one query, cleanup precedence, atomic FR-018 failure, and closed schema-1.2
 writing without Docker/provider access.
 
-- [ ] T008 Add RED tests in `CgcCommandQualificationTests.cs` and
+- [x] T008 Add RED tests in `CgcCommandQualificationTests.cs` and
   `QualificationGateTests.cs` for the exact lifecycle; one private `HOME`/Kuzu Context;
   `--network none`, loopback/no published port; bounded health polling; exactly one query;
   no bundled MCP/tool route; one 1,800-second clock; process-tree termination; gateway
@@ -151,7 +151,7 @@ writing without Docker/provider access.
   - **RED (R0):**
     `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName=Vulgata.Tests.CodeGraphQualification.CgcCommandQualificationTests.Run_WithFakeLauncher_UsesOneAtomicWholeRepositoryLifecycleAsync&Category=CodeGraphQualificationSynthetic"`
 
-- [ ] T009 Implement fake-launchable orchestration in `CodeGraphQualificationRunner.cs`
+- [x] T009 Implement fake-launchable orchestration in `CodeGraphQualificationRunner.cs`
   and the closed writer/validator in `QualificationResultWriter.cs` and
   `qualification/qualification-result.schema.json`. Preserve historical schema-1.0 failure
   readability, but never write a schema-1.1/current result and never pre-create the
