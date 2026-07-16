@@ -19,7 +19,7 @@ An authorised SystemOwner starts pre-scan profiling from a Repository's details.
 
 1. **Given** a visible Repository with a validated Git URL and an authorised SystemOwner, **When** the SystemOwner selects `开始扫描` from its repository details, **Then** profiling starts and the SystemOwner can see a minimal result containing parsed and total file counts.
 2. **Given** a valid local Repository contains extractable symbols and a same-Repository structural relationship, **When** profiling completes, **Then** the resulting Scan Run contains traceable Code Units and Code Unit Edges for those source structures.
-3. **Given** a Repository contains more than approximately 1,000 candidate source files, **When** profiling runs, **Then** candidates are handled in approximately 1,000-file groups with a configurable per-file time limit that defaults to 30 seconds, while the chosen mechanism remains subject to the mandatory planning approval gate.
+3. **Given** a Repository contains more than approximately 1,000 candidate source files, **When** profiling runs, **Then** eligible paths are assigned to deterministic audit/progress groups of at most approximately 1,000 paths, one structural graph is built for the whole Repository, and the complete provider operation is bounded by one configurable whole-process time limit that defaults to 1,800 seconds. Audit/progress groups do not partition provider input or create independent provider operations.
 4. **Given** a Repository contains 10,000 candidate source files, **When** profiling runs, **Then** the result retains parsed and total file counts without starting Worker Agent work, document generation, or a full scan dashboard.
 
 ---
@@ -58,7 +58,7 @@ An authorised SystemOwner receives clear Simplified-Chinese feedback when source
 ### Edge Cases
 
 - A source file shorter than 4,096 bytes still receives a File Identity Hash based on all available source bytes.
-- A provider process hangs or crashes while handling a candidate: the affected candidate is recorded as skipped with its error reason, and eligible remaining candidates continue according to the subsequently approved scanning strategy.
+- A provider process hangs, crashes, is cancelled, exceeds the whole-process time limit, exits unsuccessfully, or returns an unreadable result: the provider-derived result for the whole Scan Run fails atomically. No provider-derived Code Unit, Code Unit Edge, or Unresolved Structural Relationship Candidate is committed; already determined local filtering outcomes remain auditable, and the system makes no per-file continuation, retry, or bisection claim.
 - Every candidate is filtered: the Scan Run completes with auditable filtered outcomes and no non-filtered Code Unit is incorrectly marked `Pending`.
 - A provider record lacks a valid path, range, symbol, or relationship endpoint: it is rejected rather than persisted as structurally valid data. A relationship without a persisted target Code Unit is eligible for an Unresolved Structural Relationship Candidate only when its provider target endpoint identity is non-empty and stable enough to audit; otherwise it is rejected as malformed.
 - A source file produces a valid Code Unit but an unsupported structural relationship kind: the Code Unit remains available and the unsupported relationship is recorded as an auditable error or omission.
@@ -86,7 +86,7 @@ An authorised SystemOwner receives clear Simplified-Chinese feedback when source
 - **FR-015**: If cloning or updating a Repository fails, the system MUST mark the Scan Run as failed, record the failure without secrets, and show `仓库克隆失败：{details}` to the authorised SystemOwner.
 - **FR-016**: The system MUST preserve the existing Repository visibility and management-authorization rules for the profiling action, result access, and all related API boundaries. An unauthorised attempt MUST create no Scan Run and return the established access-constrained response.
 - **FR-017**: This feature MUST not invoke an LLM, expose an MCP tool, add or dispatch a Worker Agent, perform document generation, persist an Uncertainty, infer language or frameworks, perform communication-pattern detection, run Cross-Repository Resolution, or implement a Scan Coordinator.
-- **FR-018**: The system MUST meet the required approximately 1,000-file grouping, configurable per-file time limit with a 30-second default, isolated hang/crash outcome, and continuation behavior for eligible remaining candidates. The specification requires these observable outcomes but deliberately does not choose the scanning mechanism.
+- **FR-018**: The system MUST perform one atomic whole-Repository provider graph build per Scan Run. Eligible paths MAY be assigned to deterministic audit/progress groups of at most approximately 1,000 paths, but those groups MUST NOT partition provider input, create separate provider operations, or imply per-file deadlines. One configurable whole-process time limit, defaulting to 1,800 seconds, MUST bound the provider operation from Repository indexing through structural projection. Cancellation, timeout, hang, crash, unsuccessful exit, or unreadable output MUST fail the provider-derived result atomically: no provider-derived Code Unit, Code Unit Edge, or Unresolved Structural Relationship Candidate is committed, no per-file continuation is claimed, and previously determined local filtering outcomes remain auditable.
 
 ### Key Entities
 
@@ -103,7 +103,7 @@ An authorised SystemOwner receives clear Simplified-Chinese feedback when source
 
 - **SC-001**: In acceptance testing, 100% of authorised start actions against valid local Repository fixtures create one traceable Scan Run and present parsed and total file counts without requiring a user to run a command-line tool.
 - **SC-002**: In a fixture containing known symbols, one resolved same-Repository relationship, one relationship whose target Code Unit is absent, and excluded candidates, 100% of expected valid Code Units and resolved Code Unit Edges are associated with the Scan Run; the target-absent relationship produces exactly one Unresolved Structural Relationship Candidate with every FR-010 identity and endpoint field; zero Code Unit Edges lack a target Code Unit identity; and 100% of excluded candidates have an auditable `Filtered` outcome with a reason. The fixture creates zero Documents, Uncertainties, and Cross-Repository Resolution results.
-- **SC-003**: In injected missing-provider, source-acquisition-failure, malformed-record, and isolated-hang/crash scenarios, 100% of outcomes record the required failure or warning state; valid unaffected candidates remain processable; and test assertions find no source contents, credentials, or tokens in user-visible error details.
+- **SC-003**: In injected missing-provider, source-acquisition-failure, malformed-record, and whole-provider timeout/hang/crash scenarios, 100% of outcomes record the required failure or warning state and test assertions find no source contents, credentials, or tokens in user-visible error details. After a successful whole-Repository projection, malformed individual records do not prevent independently valid records from remaining available; after a whole-provider failure, zero provider-derived structural records are committed while previously determined local filtering outcomes remain auditable.
 - **SC-004**: In a 10,000-candidate-source-file fixture, the recorded and user-visible result includes both parsed and total file counts and creates zero Worker Agent jobs, documents, or full-dashboard work items.
 - **SC-005**: In authorization acceptance tests, 100% of attempts by users lacking Repository management visibility create zero Scan Runs and receive the repository's established access-constrained response.
 
@@ -113,7 +113,7 @@ An authorised SystemOwner receives clear Simplified-Chinese feedback when source
 - CodeGraphContext `cgc` is an approved local dependency; its reproducible installation and execution details will be selected in the implementation plan, not by this specification.
 - A Scan Run is the Story 4.1 aggregate name and `ScanRuns` is the intended persistence name; earlier references to a conceptual `scans` store are superseded for this feature.
 - Language remains nullable in Story 4.1; deterministic language and framework detection belongs to Story 4.2.
-- The specification defines the required outcomes for approximately 1,000-file grouping, a configurable per-file timeout defaulting to 30 seconds, failure isolation, and continuation. It deliberately does not select the Vulgata-side mechanism because the provider exposes no documented per-file batching or timeout contract.
+- CodeGraphContext exposes Repository-level indexing rather than a documented per-file input, timeout, or continuation contract. The approved baseline therefore uses one atomic whole-Repository graph build, deterministic at-most-approximately-1,000-path groups for audit/progress only, and one configurable whole-process time limit defaulting to 1,800 seconds. A provider failure does not produce partial provider-derived structural data.
 - The existing no-op scan-state seam remains in place. This feature does not add a Scan Coordinator, dispatch lifecycle, or worker scheduling behavior.
 
 ## Out of Scope
@@ -124,15 +124,17 @@ An authorised SystemOwner receives clear Simplified-Chinese feedback when source
 - A full live Scan dashboard, real-time notifications, or multi-Repository orchestration.
 - Re-scan change detection and rename application beyond recording the File Identity Hash required for later work.
 
-## Mandatory Planning Approval Gate
+## Recorded Planning Approval Gate
 
-The next plan must propose the Vulgata-side scanning strategy needed to satisfy the approximately 1,000-file grouping, configurable 30-second per-file timeout, process isolation, continuation, and provider-result mapping outcomes. CodeGraphContext `cgc` offers repository-level indexing rather than a documented per-file batching/timeout interface.
+The whole-Repository Scan strategy in FR-018 was independently reviewed in the accepted plan and explicitly approved by the user before task generation. That approval replaces the superseded per-file provider batching, 30-second per-file timeout, isolated per-file failure, and sibling-continuation promises with audit/progress grouping, one configurable 1,800-second whole-process limit, and atomic provider-derived failure. It does not change the canonical PRD, authorize production transport or parser selection, or waive qualification, fresh dependent artifact review, analysis, TDD, security, E2E, or verification gates.
 
-Because this is a Scan strategy under `AGENTS.md`, an independent plan review must accept the plan and the root orchestrator must then obtain explicit user approval before task generation or implementation. That approval request must identify the strategy, explain its effects, state implementation intent, and cite this specification plus the affected PRD and plan material. This feature specification does not choose that strategy and does not authorize bypassing the gate.
+Because this remains a material Scan strategy under `AGENTS.md`, every regenerated plan MUST preserve this exact approved boundary and receive fresh independent plan review before regenerated tasks or implementation may advance. No duplicate user approval is required merely to restore the accepted boundary; any plan that adds or materially changes a Scan strategy, exposes an agent tool, or changes the current PRD MUST trigger the applicable explicit post-review approval again.
 
 ## Source Traceability
 
 - BMad Story 4.1 defines start action, CodeGraph extraction, filtering, Code Unit/edge fields, failures, and progress: `docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md` and `docs/bmad/epics.md`.
+- The user-approved whole-Repository correction and its provider-compatible rationale are recorded in `specs/001-codegraph-extraction/plan.md`, while analysis finding I1 identifies the superseded per-file wording corrected here: `specs/001-codegraph-extraction/reviews/analyze-5.json`.
+- The canonical PRD remains unchanged by this specification correction: `docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md`.
 - User-authorised Story 4.1 decisions establish content-prefix File Identity Hash, `Exact|Approximate|Heuristic`, `ScanRun`/`ScanRuns`, and local CodeGraphContext `cgc`.
 - The canonical glossary defines Code Unit, Scan, File Identity Hash, and Cross-Repository Resolution: `docs/UBIQUITOUS_LANGUAGE.md`.
 - Existing management source establishes Repository validation, visibility, API authorisation, and the repository-details dialog: `src/dotnet/Vulgata.Core/Entities/Repository.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs`, `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs`, and `src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor`.

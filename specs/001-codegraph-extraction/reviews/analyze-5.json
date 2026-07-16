@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "REVISE",
+  "reviewed_commit": "ecd791f16f15402f72f2d3d7a302620949274930",
+  "reviewed_boundary": {
+    "base_commit": "ecd791f16f15402f72f2d3d7a302620949274930",
+    "candidate_commit": null,
+    "diff_sha256": "681056ff6cbeda405af2f6e3e93fc61d3abbbc84e672fed81a3164c588268634",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/spec.md": "b89124bef8a0a0b88549eac3d5044bd6409701d29671bdfedf9a6ac0362ddd2d",
+      "specs/001-codegraph-extraction/plan.md": "9991db380c1792e389052b74dfdeb2292cd29e9bf931ed57d73dab4e5056e139",
+      "specs/001-codegraph-extraction/research.md": "6c1350d2806d5f88efbe5d4229a43d8151f1278d002d5f035066e9c5f4e0af25",
+      "specs/001-codegraph-extraction/data-model.md": "5471fa1416f8799dc206c602743dfd758bf027e67971ece13efdefde80fcc951",
+      "specs/001-codegraph-extraction/quickstart.md": "4f99293a5c92b9f4327b7f48c07da573b267925c01bc943b2616cb88481cb595",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "091bc181eb1a879faceca7c4c396d406b4e31f0940bd7040284ecdae37dc72c5",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md": "af9cab2b3721844159beac0927527189f5bb6053e806151d43ae88d2ab0d790d",
+      "specs/001-codegraph-extraction/tasks.md": "d4ad531f0dc5b500f08674777447c177b07e5e486de2e9fe9fae367d2bf8f0cd"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/spec.md",
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md",
+      "specs/001-codegraph-extraction/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/research.md",
+    "specs/001-codegraph-extraction/data-model.md",
+    "specs/001-codegraph-extraction/quickstart.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md",
+    "specs/001-codegraph-extraction/reviews/plan-review-6.json",
+    "specs/001-codegraph-extraction/tasks.md"
+  ],
+  "coverage_metrics": {
+    "total_spec_requirements": 23,
+    "functional_requirements": 18,
+    "success_criteria": 5,
+    "total_tasks": 10,
+    "mapped_tasks": 10,
+    "unmapped_tasks": 0,
+    "qualification_plan_obligations_covered_percent": 100,
+    "product_requirements_intentionally_deferred_by_hard_stop": 23,
+    "critical_findings": 0,
+    "high_findings": 1,
+    "medium_findings": 0,
+    "low_findings": 0,
+    "ambiguity_findings": 0,
+    "duplication_findings": 0
+  },
+  "findings": [
+    {
+      "id": "I1",
+      "severity": "HIGH",
+      "category": "Inconsistency",
+      "artifact": "specs/001-codegraph-extraction/spec.md",
+      "location": "User Story 1 Acceptance Scenario 3; Edge Cases provider hang/crash; FR-018; Mandatory Planning Approval Gate",
+      "affected_requirement": "FR-018 and the corresponding Story 4.1 AC-1/AC-2 behavior",
+      "evidence": "The specification still mandates approximately 1,000-file provider grouping, a configurable per-file timeout defaulting to 30 seconds, isolated per-candidate hang/crash outcomes, and continuation. The accepted plan instead states that FR-018 is not met, replaces provider batching with audit-only groups, replaces the per-file timeout with one 1,800-second whole-Repository process timeout, and makes provider failure atomic. The change proposal simultaneously claims that no requirement is weakened or changed. User approval is evidence for the intended correction, but the authoritative SpecKit specification was not updated, independently re-reviewed, or used to regenerate downstream artifacts, leaving contradictory executable authorities.",
+      "correction_outcome": "Update spec.md to encode the already approved whole-Repository behavior and explicitly retire the superseded per-file promises; run a fresh spec review; regenerate the complete plan set and tasks.md from the accepted specification; then rerun read-only analysis. Do not change the canonical PRD unless a separate PRD change is actually intended."
+    }
+  ],
+  "summary": "REVISE: the qualification-only task graph is internally ordered, all ten tasks map to the bounded qualification plan, and its T010 hard stop clearly prevents production implementation after either pass or fail. T003-T004 also explicitly require removal of the inherited raw-response-file Python bridge, whole-document parsing, synthetic pipe-separated key=value conversion, and CLI-table observation. No Constitution MUST violation was found. Advancement is blocked by one High cross-artifact contradiction: the accepted plan replaces FR-018's still-mandatory per-file behavior without updating and re-accepting the specification."
+}

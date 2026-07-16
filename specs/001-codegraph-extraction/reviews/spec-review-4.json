@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "gate": "spec-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "ecd791f16f15402f72f2d3d7a302620949274930",
+  "reviewed_boundary": {
+    "base_commit": "ecd791f16f15402f72f2d3d7a302620949274930",
+    "candidate_commit": null,
+    "diff_sha256": "5d045ce77174d627e4be9ee3eceb047de624e921bc8007aa60c128c6ef4932c4",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+      "specs/001-codegraph-extraction/checklists/requirements.md": "6ca3bce60fef0a5f43dade5ba77e2732c79b10b7f85fd37d016412d787b0e1b6"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/spec.md",
+      "specs/001-codegraph-extraction/checklists/requirements.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/001-codegraph-extraction/reviews/analyze-5.json",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/checklists/requirements.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT: the correction resolves every I1 occurrence consistently. Audit/progress groups do not partition provider input; the provider performs one whole-Repository graph operation under a configurable 1,800-second whole-process limit; provider failure is atomic with no provider-derived persistence or per-file continuation, retry, or bisection claim. Unrelated requirements and the canonical PRD remain unchanged."
+}
