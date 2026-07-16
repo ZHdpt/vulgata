@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vulgata.local/schemas/codegraph-qualification-attempt-terminal-1.0.json",
+  "title": "CodeGraph qualification attempt terminal classification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "attemptId", "completedAt", "outcome", "category", "evidenceCitation"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "attemptId": { "type": "string", "pattern": "^attempt-[0-9]{4}$" },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" },
+    "outcome": { "enum": ["passed", "failed"] },
+    "category": { "type": "string", "minLength": 1 },
+    "evidenceCitation": {
+      "type": "string",
+      "pattern": "^specs/001-codegraph-extraction/qualification/evidence/"
+    }
+  }
+}

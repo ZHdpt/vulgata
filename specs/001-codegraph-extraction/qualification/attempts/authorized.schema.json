@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vulgata.local/schemas/codegraph-qualification-attempt-authorized-1.0.json",
+  "title": "CodeGraph qualification attempt authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "attemptId", "tokenSha256", "expiresAt", "exactCommand",
+    "correctivePlanCommit", "planReviewPath", "planReviewSha256",
+    "workflowApprovalObservedAt", "workflowApprovalSummarySha256"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "attemptId": { "type": "string", "pattern": "^attempt-[0-9]{4}$" },
+    "tokenSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "exactCommand": { "type": "string", "minLength": 1 },
+    "correctivePlanCommit": { "const": "84b0909b6713b410258d4db7ec37503cfe0c5980" },
+    "planReviewPath": { "const": "specs/001-codegraph-extraction/reviews/plan-review-8.json" },
+    "planReviewSha256": { "const": "f73f877b3c7d37b3c739ee123867e39e3b71769e4abd1d8bbe5bd2f51806b408" },
+    "workflowApprovalObservedAt": { "type": "string", "format": "date-time" },
+    "workflowApprovalSummarySha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

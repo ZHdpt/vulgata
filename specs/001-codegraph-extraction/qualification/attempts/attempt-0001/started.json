@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "attemptId": "attempt-0001",
+  "startedAt": "2026-07-16T09:07:27.0214186Z",
+  "exactCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification.CgcCommandQualificationTests --no-restore --no-build",
+  "correctivePlanCommit": null,
+  "planReviewPath": null,
+  "planReviewSha256": null,
+  "workflowApprovalObservedAt": null
+}

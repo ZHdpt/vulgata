@@ -108,3 +108,24 @@ context/index/query/delete, cleanup, or output-grammar evidence exists. The
 durable decision remains **FAIL -> corrective planning** with category
 `image-build-failure`; the unresolved dependency is the configured Debian
 mirror/proxy, not the requirements lock.
+
+## T004-T005 append-only ledger verification (2026-07-16)
+
+Fresh exact-FQN GREEN runs passed the atomic start claim and single terminal
+record tracer tests. The boundary-mismatch theory passed eight cases covering
+token SHA-256, expiry, exact command identity, corrective plan commit, accepted
+`plan-review-8` path/hash, and explicit workflow approval timestamp/summary.
+Create-new state rejects reuse; the plaintext token is absent from ledger
+records, and the sealed lease is issued only from the successfully flushed
+claim.
+
+The closed schemas are `qualification/attempts/{authorized,started,terminal}.schema.json`.
+The accidental run is imported without invented authorization as immutable,
+redacted `attempt-0001` records citing
+`qualification/evidence/accidental-provider-execution-2026-07-16.md`:
+
+- `started.json` SHA-256 `6dd9b695926b16add679b0518d2a0879f3c2b839a351ae9aacd539ad101f13fb`;
+- `terminal.json` SHA-256 `d1c78c33610e7011b4c616b6fc70c3483d3794825ab46fa9a48c5e6f3bc2c4cc`.
+
+`attempt-0002/authorized.json`, `started.json`, and `terminal.json` do not
+exist. No Docker, `cgc`, HTTP, image, container, or provider operation ran.

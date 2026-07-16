@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vulgata.local/schemas/codegraph-qualification-attempt-started-1.0.json",
+  "title": "CodeGraph qualification attempt start claim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "attemptId", "startedAt", "exactCommand", "correctivePlanCommit",
+    "planReviewPath", "planReviewSha256", "workflowApprovalObservedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "attemptId": { "type": "string", "pattern": "^attempt-[0-9]{4}$" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "exactCommand": { "type": "string", "minLength": 1 },
+    "correctivePlanCommit": { "type": ["string", "null"], "pattern": "^[a-f0-9]{40}$" },
+    "planReviewPath": { "type": ["string", "null"], "minLength": 1 },
+    "planReviewSha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "workflowApprovalObservedAt": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

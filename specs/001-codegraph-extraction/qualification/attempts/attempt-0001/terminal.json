@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "attemptId": "attempt-0001",
+  "completedAt": null,
+  "outcome": "failed",
+  "category": "execution-order-violation",
+  "evidenceCitation": "specs/001-codegraph-extraction/qualification/evidence/accidental-provider-execution-2026-07-16.md"
+}

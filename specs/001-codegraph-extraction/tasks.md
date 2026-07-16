@@ -90,7 +90,7 @@ operation is possible.
 command, approval, and accepted-plan identity checks; an atomic create-new start claim
 always precedes launcher reachability; attempts cannot be reused or overwritten.
 
-- [ ] T004 Add RED tests in `QualificationAttemptLedgerTests.cs` covering
+- [x] T004 Add RED tests in `QualificationAttemptLedgerTests.cs` covering
   `authorized.json`, token SHA-256, expiry, exact command identity, corrective plan commit
   `84b0909b6713b410258d4db7ec37503cfe0c5980`, accepted
   `reviews/plan-review-8.json` identity, explicit workflow approval, atomic flushed
@@ -100,7 +100,7 @@ always precedes launcher reachability; attempts cannot be reused or overwritten.
   - **RED (R0):**
     `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName=Vulgata.Tests.CodeGraphQualification.QualificationAttemptLedgerTests.Claim_WhenAuthorizationMatches_CreatesAndFlushesStartBeforeReachabilityAsync&Category=CodeGraphQualificationSynthetic"`
 
-- [ ] T005 Implement `QualificationAttemptLedger.cs`, closed ledger schemas, and the
+- [x] T005 Implement `QualificationAttemptLedger.cs`, closed ledger schemas, and the
   append-only `qualification/attempts/attempt-0001/started.json` and `terminal.json`
   incident import. Preserve the incident citation; never fabricate schema-1.2 HTTP
   evidence or rewrite/delete any attempt record.

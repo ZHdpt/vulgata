@@ -28,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "t004-t005-attempt-ledger"
+      "t006-t007-streaming-http-observer"
     ]
   },
   "active_gates": {
@@ -1931,26 +1931,42 @@
       "observed_at": "2026-07-16T11:24:05Z",
       "summary": "T002-T003 completed six authentic RED-GREEN cycles. Root rerun passed all 62 freshly compiled synthetic tests; sealed leases and injected fake launchers keep the suite provider-unreachable. No Docker, cgc, HTTP, image, container, or provider command ran.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/10",
+      "kind": "red-green",
+      "stage": "implement",
+      "source_commit": "45e6da7afbe6d3e3b4bec3404b425b85fcf47e32",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphQualification/QualificationAttemptLedger.cs",
+        "tests/Vulgata.Tests/CodeGraphQualification/QualificationAttemptLedgerTests.cs",
+        "specs/001-codegraph-extraction/qualification/attempts",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter Category=CodeGraphQualificationSynthetic",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T12:15:00Z",
+      "summary": "T004-T005 completed two authentic RED-GREEN cycles. Root rerun passed 73 freshly compiled synthetic tests; attempt-0001 is imported as immutable redacted history and attempt-0002 remains entirely uncreated. No provider-reachable command ran.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-t002-t003-20260716T112405Z-c1e548",
+    "checkpoint_id": "bmad-4-1-t004-t005-20260716T121500Z-d4f269",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
     "stage": "implement",
     "committed_paths": [
       "specs/001-codegraph-extraction/tasks.md",
-      "docker/Dockerfile",
-      "docker/codegraph/python-version.txt",
-      "docker/codegraph/requirements.lock",
-      "tests/Vulgata.Tests/CodeGraphQualification",
-      "specs/001-codegraph-extraction/qualification/qualification-result.json",
-      "specs/001-codegraph-extraction/qualification/qualification-result.schema.json",
+      "tests/Vulgata.Tests/CodeGraphQualification/QualificationAttemptLedger.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/QualificationAttemptLedgerTests.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuard.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionLease.cs",
+      "specs/001-codegraph-extraction/qualification/attempts",
       "specs/001-codegraph-extraction/qualification/evidence/red.md",
       "specs/001-codegraph-extraction/qualification/evidence/verification.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/9"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/10"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -1966,5 +1982,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T19:30:00+08:00"
+  "updated_at": "2026-07-16T20:15:00+08:00"
 }

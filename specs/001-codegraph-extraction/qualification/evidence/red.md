@@ -114,3 +114,17 @@ HTTP, image, container, or provider reachability.
 
 Each RED preceded its minimal implementation. The legacy
 `Fixtures/QualificationRepository` path remained absent throughout.
+
+## Append-only attempt ledger RED evidence (2026-07-16)
+
+Both commands compiled fresh and were provider-unreachable R0 invocations with
+exact fully-qualified-name plus `CodeGraphQualificationSynthetic` filters.
+
+| Missing behavior | Exit code | Failure |
+| --- | ---: | --- |
+| `Claim_WhenAuthorizationMatches_CreatesAndFlushesStartBeforeReachabilityAsync` | 1 | `QualificationAttemptLedger` did not exist (`CS0246`). |
+| `Complete_WhenClaimIsValid_CreatesOneRedactedTerminalRecordAsync` | 1 | `CompleteAsync` did not exist (`CS1061`). |
+
+No Docker, `cgc`, HTTP, image, container, or provider operation ran. The first
+GREEN rerun also exposed and corrected a test-only exclusive-read ordering bug;
+the claim itself had already been atomically created and flushed.
