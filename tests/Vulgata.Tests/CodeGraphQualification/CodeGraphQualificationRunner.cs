@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Buffers;
+using System.Text.Json;
 
 namespace Vulgata.Tests.CodeGraphQualification;
 
@@ -9,17 +10,20 @@ internal sealed class CgcQualificationRunner
     private const string _fixtureContainerPath = "/opt/vulgata-qualification-repository";
     private const string _gatewayHost = "127.0.0.1";
     private const int _gatewayPort = 48123;
-    private const string _staticStructuralQuery =
+    internal const string StaticStructuralQuery =
         "MATCH (source:Function)-[relationship:CALLS]->(target:Function) " +
-        "RETURN 'CALLS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity " +
+        "RETURN 'CALLS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity, false AS filtered_target " +
         "UNION ALL MATCH (source:Class)-[relationship:CONTAINS]->(target:Function) " +
-        "RETURN 'CONTAINS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity " +
+        "RETURN 'CONTAINS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity, false AS filtered_target " +
         "UNION ALL MATCH (source:File)-[relationship:IMPORTS]->(target:Module) " +
-        "RETURN 'IMPORTS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, relationship.line_number AS source_start_line, relationship.line_number AS source_end_line, source.path AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.line_number AS target_end_line, target.full_import_name AS target_identity " +
+        "RETURN 'IMPORTS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, relationship.line_number AS source_start_line, relationship.line_number AS source_end_line, source.path AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.line_number AS target_end_line, target.full_import_name AS target_identity, false AS filtered_target " +
         "UNION ALL MATCH (source:Class)-[relationship:INHERITS]->(target:Class) " +
-        "RETURN 'INHERITS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity";
+        "RETURN 'INHERITS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity, false AS filtered_target " +
+        "UNION ALL MATCH (source:Function)-[relationship:CALLS]->(target:File) " +
+        "RETURN 'CALLS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, NULL AS target_start_line, NULL AS target_end_line, target.path AS target_identity, true AS filtered_target " +
+        "ORDER BY relationship_kind, source_identity, target_identity LIMIT 256";
     private static readonly string _requestBody =
-        """{"query":""" + _staticStructuralQuery + ""","params":{}}""";
+        JsonSerializer.Serialize(new { query = StaticStructuralQuery, @params = new { } });
     private static readonly IReadOnlyList<string> _requiredRelationshipKinds = Array.AsReadOnly(
     [
         "CALLS",
@@ -429,14 +433,10 @@ internal sealed class CgcQualificationRunner
         cgc api start --host "$gateway_host" --port "$gateway_port" >"$command_stdout" 2>"$command_stderr" &
         gateway_pid=$!
         emit_command_evidence cgc-api-start 0 "$command_stdout" "$command_stderr"
-        command_stdout="$evidence_directory/cgc-api-health.stdout"
-        command_stderr="$evidence_directory/cgc-api-health.stderr"
-        : >"$command_stdout"
-        : >"$command_stderr"
         command_exit=7
         health_attempt=0
         while [ "$health_attempt" -lt 100 ]; do
-            if curl --silent --show-error --fail "http://$gateway_host:$gateway_port/health" >>"$command_stdout" 2>>"$command_stderr"; then
+            if curl --silent --show-error --fail "http://$gateway_host:$gateway_port/health"; then
                 command_exit=0
                 break
             fi
@@ -444,51 +444,17 @@ internal sealed class CgcQualificationRunner
             health_attempt=$((health_attempt + 1))
             sleep 0.1
         done
-        emit_command_evidence cgc-api-health "$command_exit" "$command_stdout" "$command_stderr"
-        command_stdout="$evidence_directory/cgc-api-query.stdout"
-        command_stderr="$evidence_directory/cgc-api-query.stderr"
-        if printf '%s' "$request_body" | curl --silent --show-error --fail --header 'Content-Type: application/json' --request POST --data @- "http://$gateway_host:$gateway_port/api/v1/query" >"$command_stdout" 2>"$command_stderr"; then
-            bridge_script="$evidence_directory/bridge.py"
-            cat >"$bridge_script" <<'BRY'
-        import json, sys
-        path = sys.argv[1]
-        with open(path, 'r', encoding='utf-8') as handle:
-            envelope = json.load(handle)
-        if envelope.get('status') != 'ok':
-            raise SystemExit(21)
-        error_value = envelope.get('error')
-        if error_value not in (None, ''):
-            raise SystemExit(22)
-        data = envelope.get('data')
-        if not isinstance(data, dict) or data.get('success') is not True:
-            raise SystemExit(23)
-        results = data.get('results')
-        record_count = data.get('record_count')
-        if not isinstance(results, list) or not isinstance(record_count, int) or record_count < 0 or len(results) != record_count:
-            raise SystemExit(24)
-        required_fields = ['relationship_kind','source_path','source_symbol','source_start_line','source_end_line','source_identity','target_path','target_symbol','target_start_line','target_end_line','target_identity']
-        print('VULGATA_CGC_QUERY_OUTPUT=BEGIN')
-        for row in results:
-            if not isinstance(row, dict):
-                raise SystemExit(25)
-            values = []
-            for field in required_fields:
-                value = row.get(field)
-                if value is None:
-                    raise SystemExit(26)
-                values.append(field + "=" + str(value))
-            print('|'.join(values))
-        print('VULGATA_CGC_QUERY_OUTPUT=END')
-        BRY
-            if python "$bridge_script" "$command_stdout" >>"$command_stdout" 2>>"$command_stderr"; then
-                command_exit=0
-            else
-                command_exit=$?
-            fi
+        if [ "$command_exit" -eq 0 ]; then
+            printf '%s\n' 'VULGATA_CGC_HTTP_HEALTH=SUCCEEDED'
+        fi
+        if printf '%s' "$request_body" | curl --silent --show-error --fail --header 'Content-Type: application/json' --request POST --data @- "http://$gateway_host:$gateway_port/api/v1/query"; then
+            command_exit=0
         else
             command_exit=$?
         fi
-        emit_command_evidence cgc-api-query "$command_exit" "$command_stdout" "$command_stderr"
+        if [ "$command_exit" -eq 0 ]; then
+            printf '%s\n' 'VULGATA_CGC_HTTP_QUERY=SUCCEEDED'
+        fi
         run_gateway_stop
         printf '%s\n' 'VULGATA_CGC_QUALIFICATION_CLEANUP=ATTEMPTED'
         run_context_delete

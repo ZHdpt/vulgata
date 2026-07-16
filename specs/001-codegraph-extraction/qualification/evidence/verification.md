@@ -129,3 +129,23 @@ redacted `attempt-0001` records citing
 
 `attempt-0002/authorized.json`, `started.json`, and `terminal.json` do not
 exist. No Docker, `cgc`, HTTP, image, container, or provider operation ran.
+
+## T006-T007 streaming HTTP JSON verification (2026-07-16)
+
+The schema-1.2 observer now incrementally validates strict UTF-8 and the exact
+HTTP JSON envelope/query echo, twelve scalar aliases, all four approved
+relationship predicates, the filtered-target candidate, the inclusive shared
+65,536-byte budget, byte-65,537 sentinel, logical-channel hashes, and total-byte
+conservation. Synthetic rejection cases cover trailing JSON, malformed UTF-8,
+record-count mismatch, missing/duplicate/unknown/nested/source-bearing fields,
+wrong/null types, relationship-specific ranges, records over 4,096 raw bytes,
+and cross-record joining.
+
+The exact tracer command passed 1/1 with fresh compilation. The observer class
+suite passed 22/22, and the exact `CodeGraphQualificationSynthetic` category
+passed 83/83 at `2026-07-16T20:06:24+08:00`. An `rg` check returned no matches
+for the removed raw-response/Python/key-value/CLI-table observer paths, and
+`git diff --check` passed after the final bounded edit.
+
+This was entirely R0: zero Docker, `cgc`, HTTP network, image, container, or
+provider execution. `attempt-0002` remains unclaimed and unspent.

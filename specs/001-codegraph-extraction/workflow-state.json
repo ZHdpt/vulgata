@@ -28,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "t006-t007-streaming-http-observer"
+      "t008-t009-fake-lifecycle-writer"
     ]
   },
   "active_gates": {
@@ -1948,25 +1948,40 @@
       "observed_at": "2026-07-16T12:15:00Z",
       "summary": "T004-T005 completed two authentic RED-GREEN cycles. Root rerun passed 73 freshly compiled synthetic tests; attempt-0001 is imported as immutable redacted history and attempt-0002 remains entirely uncreated. No provider-reachable command ran.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/11",
+      "kind": "red-green",
+      "stage": "implement",
+      "source_commit": "fbf9c1707cfe4f5fac6c661fcea922bfccdc58e6",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserver.cs",
+        "tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserverTests.cs",
+        "tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter Category=CodeGraphQualificationSynthetic",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T13:15:00Z",
+      "summary": "T006-T007 preserved the authentic missing-HTTP-contract RED, replaced the obsolete CLI-row test, and passed 83 freshly compiled synthetic tests. Root scanning found no rejected raw-response, Python, ReadAsString, key=value, or CLI-table implementation path; attempt-0002 remains unspent.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-t004-t005-20260716T121500Z-d4f269",
+    "checkpoint_id": "bmad-4-1-t006-t007-20260716T131500Z-e7a384",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
     "stage": "implement",
     "committed_paths": [
       "specs/001-codegraph-extraction/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphQualification/QualificationAttemptLedger.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/QualificationAttemptLedgerTests.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuard.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionLease.cs",
-      "specs/001-codegraph-extraction/qualification/attempts",
+      "tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserver.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserverTests.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs",
       "specs/001-codegraph-extraction/qualification/evidence/red.md",
       "specs/001-codegraph-extraction/qualification/evidence/verification.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/10"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/11"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -1982,5 +1997,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T20:15:00+08:00"
+  "updated_at": "2026-07-16T21:15:00+08:00"
 }

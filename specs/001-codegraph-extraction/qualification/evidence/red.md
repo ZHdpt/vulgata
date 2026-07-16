@@ -128,3 +128,17 @@ exact fully-qualified-name plus `CodeGraphQualificationSynthetic` filters.
 No Docker, `cgc`, HTTP, image, container, or provider operation ran. The first
 GREEN rerun also exposed and corrected a test-only exclusive-read ordering bug;
 the claim itself had already been atomically created and flushed.
+
+## T006-T007 streaming HTTP JSON recovery RED evidence (2026-07-16)
+
+The inherited authentic tracer RED remains the stage RED: at
+`2026-07-16T19:44:08+08:00`, the exact fresh-compilation
+`Complete_WithChunkedHttpJson_ProducesOnlySchema12StructuralPredicates` command
+exited 1 because `HttpQueryResponse` and `StaticStructuralQuery` were missing.
+Recovery first reran that exact command against the disconnected implementer's
+partial work; it passed 1/1. The first surrounding synthetic-category run then
+exited 1 with 72 passed and one obsolete CLI-row test failure, proving that the
+old table observer contract had not yet been fully removed.
+
+All recovery commands were R0 and provider-unreachable. No Docker, `cgc`, HTTP
+network, image, container, or provider operation occurred.

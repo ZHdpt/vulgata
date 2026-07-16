@@ -1,6 +1,7 @@
+using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Reflection;
 
 namespace Vulgata.Tests.CodeGraphQualification;
 
@@ -8,62 +9,98 @@ namespace Vulgata.Tests.CodeGraphQualification;
 public sealed class CgcStreamingEvidenceObserverTests
 {
     [Fact]
-    public void Complete_WithUtf8SplitAcrossChunksAndOneOrderedStdoutPair_ProducesSafeStructuralFacts()
+    public void Complete_WithChunkedHttpJson_ProducesOnlySchema12StructuralPredicates()
     {
-        CgcStreamingEvidenceObserver observer = new();
-        byte[] payload = Encoding.UTF8.GetBytes(
-            "VULGATA_CGC_QUERY_OUTPUT=BEGIN\n" +
-            "relationship_kind=CALLS|source_path=src/Caller.cs|source_symbol=Café|source_start_line=1|source_end_line=2|source_identity=Caller|target_path=src/Filtered/GeneratedClient.g.cs|target_symbol=Client|target_start_line=3|target_end_line=4|target_identity=FilteredClient\n" +
-            "VULGATA_CGC_QUERY_OUTPUT=END\n");
+        using CgcStreamingEvidenceObserver observer = new();
+        byte[] health = Encoding.UTF8.GetBytes("{\"status\":\"ok\"}");
+        byte[] payload = Encoding.UTF8.GetBytes(CreateHttpResponse(
+            CreateValidRecord("CALLS"),
+            CreateValidRecord("CONTAINS"),
+            CreateValidRecord("IMPORTS", sourceStart: 5, sourceEnd: 5, targetStart: 7, targetEnd: 7),
+            CreateValidRecord("INHERITS"),
+            CreateValidRecord(
+                "CALLS",
+                targetPath: "src/Filtered/GeneratedClient.g.cs",
+                targetStart: null,
+                targetEnd: null,
+                filteredTarget: true)));
 
-        int markerSplit = 10;
-        int utf8Split = Array.IndexOf(payload, (byte)0xC3) + 1;
-        observer.Observe(CgcOutputStream.StandardOutput, payload.AsSpan(0, markerSplit));
-        observer.Observe(CgcOutputStream.StandardOutput, payload.AsSpan(markerSplit, utf8Split - markerSplit));
-        observer.Observe(CgcOutputStream.StandardOutput, payload.AsSpan(utf8Split));
+        observer.Observe(CgcOutputStream.HttpHealthResponse, health.AsSpan(0, 3));
+        observer.Observe(CgcOutputStream.HttpHealthResponse, health.AsSpan(3));
+        for (int offset = 0; offset < payload.Length; offset += 17)
+        {
+            observer.Observe(CgcOutputStream.HttpQueryResponse, payload.AsSpan(offset, Math.Min(17, payload.Length - offset)));
+        }
+
         CgcStreamingEvidence evidence = observer.Complete();
 
         Assert.True(evidence.IsValidUtf8);
-        Assert.True(evidence.HasExactlyOneOrderedStdoutMarkerPair);
+        Assert.True(evidence.HasExactlyOneOrderedStdoutMarkerPair, observer.HttpDiagnostic);
         Assert.True(evidence.HasValidStructuralRecord);
         Assert.True(evidence.HasFilteredTargetCandidate);
         Assert.True(evidence.HasPositiveOrderedRange);
         Assert.True(evidence.HasNonEmptyEndpointIdentity);
-        Assert.Equal(1, evidence.RelationshipKindCounts["CALLS"]);
-        Assert.Equal(payload.Length, evidence.ObservedTotalBytes);
+        Assert.True(evidence.HasAllRequiredRelationshipKinds);
+        Assert.Equal(2, evidence.RelationshipKindCounts["CALLS"]);
+        Assert.Equal(1, evidence.RelationshipKindCounts["CONTAINS"]);
+        Assert.Equal(1, evidence.RelationshipKindCounts["IMPORTS"]);
+        Assert.Equal(1, evidence.RelationshipKindCounts["INHERITS"]);
+        Assert.Equal(payload.Length, evidence.HttpResponse.Bytes);
+        Assert.Equal(health.Length, evidence.HealthResponse.Bytes);
+        Assert.Equal(payload.Length + health.Length, evidence.ObservedTotalBytes);
+        Assert.Equal(Sha256(payload), evidence.HttpResponse.Sha256);
+        Assert.Equal(Sha256(health), evidence.HealthResponse.Sha256);
         Assert.False(evidence.Overflowed);
+
+        string projection = JsonSerializer.Serialize(evidence);
+        Assert.DoesNotContain("src/Caller.cs", projection, StringComparison.Ordinal);
+        Assert.DoesNotContain("Caller", projection, StringComparison.Ordinal);
+        Assert.DoesNotContain(CgcQualificationRunner.StaticStructuralQuery, projection, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Complete_AtInclusiveSharedByteCap_AccountsEveryByteWithoutOverflow()
+    public void Complete_AtInclusiveSharedByteCap_AccountsEveryLogicalChannelByteAndHash()
     {
-        CgcStreamingEvidenceObserver observer = new();
-        byte[] output = Enumerable.Repeat((byte)'x', CgcStreamingEvidenceObserver.MaximumObservedBytes).ToArray();
+        using CgcStreamingEvidenceObserver observer = new();
+        byte[] stdout = Enumerable.Repeat((byte)'a', 1_000).ToArray();
+        byte[] stderr = Enumerable.Repeat((byte)'b', 2_000).ToArray();
+        byte[] health = Enumerable.Repeat((byte)'c', 3_000).ToArray();
+        byte[] query = Enumerable.Repeat(
+            (byte)' ',
+            CgcStreamingEvidenceObserver.MaximumObservedBytes - stdout.Length - stderr.Length - health.Length).ToArray();
 
-        CgcObservationOutcome outcome = observer.Observe(CgcOutputStream.StandardOutput, output);
+        observer.Observe(CgcOutputStream.StandardOutput, stdout);
+        observer.Observe(CgcOutputStream.StandardError, stderr);
+        observer.Observe(CgcOutputStream.HttpHealthResponse, health);
+        CgcObservationOutcome outcome = observer.Observe(CgcOutputStream.HttpQueryResponse, query);
         CgcStreamingEvidence evidence = observer.Complete();
 
         Assert.False(outcome.TerminationRequired);
         Assert.False(evidence.Overflowed);
         Assert.Equal(CgcStreamingEvidenceObserver.MaximumObservedBytes, evidence.ObservedTotalBytes);
-        Assert.Equal(CgcStreamingEvidenceObserver.MaximumObservedBytes, evidence.StandardOutput.Bytes);
-        Assert.Equal(0, evidence.StandardError.Bytes);
+        Assert.Equal(evidence.ObservedTotalBytes,
+            evidence.StandardOutput.Bytes + evidence.StandardError.Bytes +
+            evidence.HealthResponse.Bytes + evidence.HttpResponse.Bytes);
+        Assert.Equal(Sha256(stdout), evidence.StandardOutput.Sha256);
+        Assert.Equal(Sha256(stderr), evidence.StandardError.Sha256);
+        Assert.Equal(Sha256(health), evidence.HealthResponse.Sha256);
+        Assert.Equal(Sha256(query), evidence.HttpResponse.Sha256);
     }
 
     [Fact]
-    public void Observe_On65537thSharedByte_AccountsTriggeringStreamThenSignalsImmediateTermination()
+    public void Observe_On65537thSharedByte_AccountsSentinelInTriggeringChannelThenTerminates()
     {
         int terminationRequests = 0;
         int forcedCleanupRequests = 0;
         CgcOverflowTerminationSignal overflowSignal = new(
             () => terminationRequests++,
             () => forcedCleanupRequests++);
-        CgcStreamingEvidenceObserver observer = new(overflowSignal.Signal);
+        using CgcStreamingEvidenceObserver observer = new(overflowSignal.Signal);
         observer.Observe(
             CgcOutputStream.StandardOutput,
             Enumerable.Repeat((byte)'a', CgcStreamingEvidenceObserver.MaximumObservedBytes).ToArray());
 
-        CgcObservationOutcome outcome = observer.Observe(CgcOutputStream.StandardError, [(byte)'b', (byte)'c']);
+        CgcObservationOutcome outcome = observer.Observe(CgcOutputStream.HttpQueryResponse, [(byte)'b', (byte)'c']);
         CgcStreamingEvidence evidence = observer.Complete();
 
         Assert.True(outcome.TerminationRequired);
@@ -72,79 +109,69 @@ public sealed class CgcStreamingEvidenceObserverTests
         Assert.True(evidence.Overflowed);
         Assert.True(evidence.TerminationRequested);
         Assert.Equal(CgcStreamingEvidenceObserver.OverflowSentinelBytes, evidence.ObservedTotalBytes);
-        Assert.Equal(CgcStreamingEvidenceObserver.MaximumObservedBytes, evidence.StandardOutput.Bytes);
-        Assert.Equal(1, evidence.StandardError.Bytes);
-        Assert.Equal(evidence.ObservedTotalBytes, evidence.StandardOutput.Bytes + evidence.StandardError.Bytes);
+        Assert.Equal(1, evidence.HttpResponse.Bytes);
+        Assert.Equal(Sha256([(byte)'b']), evidence.HttpResponse.Sha256);
     }
 
     [Fact]
-    public void Complete_WhenEndMarkerArrivesAfterSharedCap_RefusesStructuralProof()
+    public void Complete_WithInvalidUtf8OrTrailingJson_RejectsStructuralEvidence()
     {
-        CgcStreamingEvidenceObserver observer = new();
-        byte[] begin = Encoding.UTF8.GetBytes("VULGATA_CGC_QUERY_OUTPUT=BEGIN\n");
-        byte[] filler = Enumerable.Repeat(
-            (byte)'x',
-            CgcStreamingEvidenceObserver.MaximumObservedBytes - begin.Length).ToArray();
-        byte[] end = Encoding.UTF8.GetBytes("VULGATA_CGC_QUERY_OUTPUT=END\n");
+        using CgcStreamingEvidenceObserver invalidUtf8 = new();
+        invalidUtf8.Observe(CgcOutputStream.HttpQueryResponse, [0xC3]);
 
-        observer.Observe(CgcOutputStream.StandardOutput, begin);
-        observer.Observe(CgcOutputStream.StandardOutput, filler);
-        observer.Observe(CgcOutputStream.StandardOutput, end);
-        CgcStreamingEvidence evidence = observer.Complete();
+        using CgcStreamingEvidenceObserver trailing = new();
+        trailing.Observe(
+            CgcOutputStream.HttpQueryResponse,
+            Encoding.UTF8.GetBytes(CreateHttpResponse(CreateValidRecord("CALLS")) + "{}"));
 
-        Assert.True(evidence.Overflowed);
-        Assert.Equal(0, evidence.StdoutEndCount);
-        Assert.False(evidence.HasExactlyOneOrderedStdoutMarkerPair);
-        Assert.False(evidence.HasValidStructuralRecord);
-    }
-
-    [Fact]
-    public void Complete_WithInvalidOrSplitUtf8_FailsSafely()
-    {
-        CgcStreamingEvidenceObserver observer = new();
-        observer.Observe(CgcOutputStream.StandardError, [0xC3]);
-
-        CgcStreamingEvidence evidence = observer.Complete();
-
-        Assert.False(evidence.IsValidUtf8);
-        Assert.False(evidence.HasExactlyOneOrderedStdoutMarkerPair);
-    }
-
-    [Fact]
-    public void Complete_WithStderrOnlyMarkerAndStructuralRow_ExcludesItFromProof()
-    {
-        CgcStreamingEvidenceObserver observer = new();
-        observer.Observe(CgcOutputStream.StandardError, Encoding.UTF8.GetBytes(CreateFramedOutput(CreateValidRow())));
-
-        CgcStreamingEvidence evidence = observer.Complete();
-
-        Assert.Equal(0, evidence.StdoutBeginCount);
-        Assert.Equal(0, evidence.StdoutEndCount);
-        Assert.False(evidence.HasExactlyOneOrderedStdoutMarkerPair);
-        Assert.False(evidence.HasValidStructuralRecord);
+        Assert.False(invalidUtf8.Complete().IsValidUtf8);
+        Assert.False(invalidUtf8.Complete().HasValidStructuralRecord);
+        Assert.False(trailing.Complete().HasValidStructuralRecord);
     }
 
     [Theory]
-    [InlineData("VULGATA_CGC_QUERY_OUTPUT=END\nVULGATA_CGC_QUERY_OUTPUT=BEGIN\n")]
-    [InlineData("VULGATA_CGC_QUERY_OUTPUT=BEGIN\nVULGATA_CGC_QUERY_OUTPUT=BEGIN\nVULGATA_CGC_QUERY_OUTPUT=END\n")]
-    [InlineData("VULGATA_CGC_QUERY_OUTPUT=BEGIN\nrelationship_kind=CALLS\n")]
-    public void Complete_WithReversedDuplicateOrMissingMarkers_FailsFraming(string output)
+    [MemberData(nameof(InvalidHttpResponses))]
+    public void Complete_WithRejectedEnvelopeOrRecordShape_FailsClosed(string response)
     {
-        CgcStreamingEvidenceObserver observer = new();
-        observer.Observe(CgcOutputStream.StandardOutput, Encoding.UTF8.GetBytes(output));
+        using CgcStreamingEvidenceObserver observer = new();
+        observer.Observe(CgcOutputStream.HttpQueryResponse, Encoding.UTF8.GetBytes(response));
 
         CgcStreamingEvidence evidence = observer.Complete();
 
-        Assert.False(evidence.HasExactlyOneOrderedStdoutMarkerPair);
-        Assert.False(evidence.HasValidStructuralRecord);
+        Assert.False(evidence.HasValidStructuralRecord, observer.HttpDiagnostic);
+        Assert.False(evidence.HasExactlyOneOrderedStdoutMarkerPair, observer.HttpDiagnostic);
+    }
+
+    public static TheoryData<string> InvalidHttpResponses()
+    {
+        string validRecord = JsonSerializer.Serialize(CreateValidRecord("CALLS"));
+        string valid = CreateHttpResponse(CreateValidRecord("CALLS"));
+        TheoryData<string> data = new();
+        data.Add(valid.Replace("\"status\":\"ok\"", "\"status\":\"failed\"", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"error\":null", "\"error\":\"unsafe\"", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"query\":", "\"query\":\"different\",\"ignored_query\":", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"record_count\":1", "\"record_count\":2", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"relationship_kind\":\"CALLS\"", "\"relationship_kind\":null", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"source_path\":\"src/Caller.cs\"", "\"source_path\":{\"source\":\"secret\"}", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"source_symbol\":\"Caller\"", "\"source\":\"secret\",\"source_symbol\":\"Caller\"", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"source_symbol\":\"Caller\"", "\"source_symbol\":\"Caller\",\"source_symbol\":\"Duplicate\"", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"source_symbol\":\"Caller\",", string.Empty, StringComparison.Ordinal));
+        data.Add(valid.Replace("\"source_start_line\":1", "\"source_start_line\":\"1\"", StringComparison.Ordinal));
+        data.Add(valid.Replace("\"filtered_target\":false", "\"filtered_target\":null", StringComparison.Ordinal));
+        data.Add("{\"status\":\"ok\",\"error\":null,\"data\":{\"success\":true,\"query\":" +
+            JsonSerializer.Serialize(CgcQualificationRunner.StaticStructuralQuery) +
+            ",\"record_count\":1,\"results\":[{" +
+            validRecord[..(validRecord.IndexOf("\"target_path\"", StringComparison.Ordinal) - 1)].TrimStart('{') +
+            "},{" + validRecord[(validRecord.IndexOf("\"target_path\"", StringComparison.Ordinal))..].TrimEnd('}') + "}]}}" );
+        return data;
     }
 
     [Fact]
-    public void Complete_With4097ByteStructuralRow_FailsWithoutRetainingIt()
+    public void Complete_WithRecordOver4096RawBytes_RejectsAndCountsIt()
     {
-        CgcStreamingEvidenceObserver observer = new();
-        string oversizedRow = new('x', CgcStreamingEvidenceObserver.MaximumStructuralRecordBytes + 1);
-        observer.Observe(CgcOutputStream.StandardOutput, Encoding.UTF8.GetBytes(CreateFramedOutput(oversizedRow)));
+        using CgcStreamingEvidenceObserver observer = new();
+        object oversized = CreateValidRecord("CALLS", sourceSymbol: new string('x', 4_096));
+        observer.Observe(CgcOutputStream.HttpQueryResponse, Encoding.UTF8.GetBytes(CreateHttpResponse(oversized)));
 
         CgcStreamingEvidence evidence = observer.Complete();
 
@@ -152,47 +179,86 @@ public sealed class CgcStreamingEvidenceObserverTests
         Assert.Equal(1, evidence.InvalidOrOversizedRecordCount);
     }
 
-    [Fact]
-    public void Complete_WithRelationshipAndTupleFragmentsInDifferentRows_RefusesCrossRowCorrelation()
+    [Theory]
+    [InlineData("IMPORTS", 3, 4, 5, 5)]
+    [InlineData("IMPORTS", 3, 3, 5, 6)]
+    [InlineData("CONTAINS", 3, 3, null, null)]
+    [InlineData("INHERITS", 3, 3, null, null)]
+    public void Complete_WithRelationshipSpecificPredicateViolation_RejectsRecord(
+        string kind,
+        int sourceStart,
+        int sourceEnd,
+        int? targetStart,
+        int? targetEnd)
     {
-        CgcStreamingEvidenceObserver observer = new();
-        string firstRow = "relationship_kind=CALLS|source_path=src/Caller.cs|source_symbol=Caller|source_start_line=1|source_end_line=2|source_identity=Caller";
-        string secondRow = "target_path=src/Filtered/GeneratedClient.g.cs|target_symbol=Client|target_start_line=3|target_end_line=4|target_identity=FilteredClient";
-        observer.Observe(CgcOutputStream.StandardOutput, Encoding.UTF8.GetBytes(CreateFramedOutput(firstRow, secondRow)));
+        using CgcStreamingEvidenceObserver observer = new();
+        observer.Observe(
+            CgcOutputStream.HttpQueryResponse,
+            Encoding.UTF8.GetBytes(CreateHttpResponse(CreateValidRecord(
+                kind,
+                sourceStart: sourceStart,
+                sourceEnd: sourceEnd,
+                targetStart: targetStart,
+                targetEnd: targetEnd))));
 
-        CgcStreamingEvidence evidence = observer.Complete();
-
-        Assert.False(evidence.HasValidStructuralRecord);
-        Assert.False(evidence.AllStructuralFactsCorrelatedWithinValidRecords);
-        Assert.False(evidence.HasFilteredTargetCandidate);
+        Assert.False(observer.Complete().HasValidStructuralRecord);
     }
 
     [Fact]
-    public void Complete_ProjectsHashesAndFactsWithoutRawProviderOutput()
+    public void RunnerContract_ContainsNoRejectedWholeDocumentOrCliTableBridge()
     {
-        const string secret = "synthetic-provider-secret-keep-out";
-        CgcStreamingEvidenceObserver observer = new();
-        observer.Observe(CgcOutputStream.StandardOutput, Encoding.UTF8.GetBytes(CreateFramedOutput($"relationship_kind=CALLS|source_path=src/{secret}.cs")));
+        MethodInfo createScript = typeof(CgcQualificationRunner).GetMethod(
+            "CreateQualificationScript",
+            BindingFlags.Static | BindingFlags.NonPublic)!;
+        string script = (string)createScript.Invoke(null, ["context", "/db", "/home"])!;
 
-        CgcStreamingEvidence evidence = observer.Complete();
-        string projection = JsonSerializer.Serialize(evidence);
-
-        Assert.DoesNotContain(secret, projection, StringComparison.Ordinal);
-        Assert.DoesNotContain("rawOutput", projection, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("merged", projection, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain(
-            typeof(CgcStreamingEvidenceObserver).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
-            field => field.FieldType == typeof(StringBuilder));
-        Assert.DoesNotContain(
-            typeof(CgcQualificationRunner).GetFields(BindingFlags.Instance | BindingFlags.NonPublic),
-            field => field.FieldType == typeof(StringBuilder));
-        Assert.Matches("^[a-f0-9]{64}$", evidence.StandardOutput.Sha256);
-        Assert.Matches("^[a-f0-9]{64}$", evidence.StandardError.Sha256);
+        Assert.DoesNotContain("bridge.py", script, StringComparison.Ordinal);
+        Assert.DoesNotContain("python", script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("VULGATA_CGC_QUERY_OUTPUT", script, StringComparison.Ordinal);
+        Assert.DoesNotContain("key=value", script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cgc query", script, StringComparison.OrdinalIgnoreCase);
+        string runnerSource = File.ReadAllText(QualificationTestPaths.FromRepositoryRoot(
+            "tests", "Vulgata.Tests", "CodeGraphQualification", "CodeGraphQualificationRunner.cs"));
+        Assert.DoesNotContain("ReadAsString", runnerSource, StringComparison.Ordinal);
     }
 
-    private static string CreateFramedOutput(params string[] rows) =>
-        $"VULGATA_CGC_QUERY_OUTPUT=BEGIN\n{string.Join("\n", rows)}\nVULGATA_CGC_QUERY_OUTPUT=END\n";
+    private static string CreateHttpResponse(params object[] records) => JsonSerializer.Serialize(new
+    {
+        status = "ok",
+        error = (string?)null,
+        data = new
+        {
+            success = true,
+            query = CgcQualificationRunner.StaticStructuralQuery,
+            record_count = records.Length,
+            results = records,
+        },
+    });
 
-    private static string CreateValidRow() =>
-        "relationship_kind=CALLS|source_path=src/Caller.cs|source_symbol=Caller|source_start_line=1|source_end_line=2|source_identity=Caller|target_path=src/Filtered/GeneratedClient.g.cs|target_symbol=Client|target_start_line=3|target_end_line=4|target_identity=FilteredClient";
+    private static object CreateValidRecord(
+        string relationshipKind,
+        string sourceSymbol = "Caller",
+        int sourceStart = 1,
+        int sourceEnd = 2,
+        string targetPath = "src/Target.cs",
+        int? targetStart = 3,
+        int? targetEnd = 4,
+        bool filteredTarget = false) => new
+        {
+            relationship_kind = relationshipKind,
+            source_path = "src/Caller.cs",
+            source_symbol = sourceSymbol,
+            source_start_line = sourceStart,
+            source_end_line = sourceEnd,
+            source_identity = "Caller",
+            target_path = targetPath,
+            target_symbol = "Target",
+            target_start_line = targetStart,
+            target_end_line = targetEnd,
+            target_identity = "Target",
+            filtered_target = filteredTarget,
+        };
+
+    private static string Sha256(ReadOnlySpan<byte> value) =>
+        Convert.ToHexString(SHA256.HashData(value)).ToLowerInvariant();
 }

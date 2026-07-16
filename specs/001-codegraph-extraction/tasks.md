@@ -116,7 +116,7 @@ always precedes launcher reachability; attempts cannot be reused or overwritten.
 bounded/redacted logical-channel evidence, and fail-closed structural predicates without
 provider reachability or retained provider values.
 
-- [ ] T006 Replace obsolete tests with RED schema-1.2 HTTP cases in
+- [x] T006 Replace obsolete tests with RED schema-1.2 HTTP cases in
   `CgcStreamingEvidenceObserverTests.cs`: aggregate health plus one query channel; inclusive
   65,536-byte cap and byte-65,537 sentinel; byte conservation and channel hashes; exact
   envelope/query echo; twelve scalar aliases; complete per-record `CALLS`, `CONTAINS`,
@@ -129,7 +129,7 @@ provider reachability or retained provider values.
   - **RED (R0):**
     `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName=Vulgata.Tests.CodeGraphQualification.CgcStreamingEvidenceObserverTests.Complete_WithChunkedHttpJson_ProducesOnlySchema12StructuralPredicates&Category=CodeGraphQualificationSynthetic"`
 
-- [ ] T007 Implement bounded streaming in `CgcStreamingEvidenceObserver.cs` and the
+- [x] T007 Implement bounded streaming in `CgcStreamingEvidenceObserver.cs` and the
   stream-facing seams of `CodeGraphQualificationRunner.cs`; hash/frame/discard transient
   bytes and remove, rather than adapt, every rejected bridge/table path.
   - **Depends on:** T006.

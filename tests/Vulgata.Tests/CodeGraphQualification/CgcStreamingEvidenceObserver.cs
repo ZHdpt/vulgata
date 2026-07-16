@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace Vulgata.Tests.CodeGraphQualification;
 
@@ -16,8 +17,6 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
     internal const int MaximumStructuralRecordBytes = 4_096;
     private const int _maximumQualifiedCommandEvidenceCount = 11;
 
-    private const string _beginMarker = "VULGATA_CGC_QUERY_OUTPUT=BEGIN";
-    private const string _endMarker = "VULGATA_CGC_QUERY_OUTPUT=END";
     private const string _nonRootMarker = "VULGATA_CGC_QUALIFICATION_NON_ROOT=SUCCEEDED";
     private const string _indexMarker = "VULGATA_CGC_QUALIFICATION_INDEX=SUCCEEDED";
     private const string _cleanupAttemptedMarker = "VULGATA_CGC_QUALIFICATION_CLEANUP=ATTEMPTED";
@@ -26,19 +25,21 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
     private readonly Action? _overflowSignal;
     private readonly Decoder _standardOutputDecoder = new UTF8Encoding(false, true).GetDecoder();
     private readonly Decoder _standardErrorDecoder = new UTF8Encoding(false, true).GetDecoder();
+    private readonly Decoder _healthDecoder = new UTF8Encoding(false, true).GetDecoder();
+    private readonly Decoder _queryDecoder = new UTF8Encoding(false, true).GetDecoder();
     private readonly IncrementalHash _standardOutputHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
     private readonly IncrementalHash _standardErrorHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-    private readonly StreamingLineMatcher _standardOutputLineMatcher = new(_beginMarker, _endMarker);
+    private readonly IncrementalHash _healthHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+    private readonly IncrementalHash _queryHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
     private readonly ExactSafeLineMatcher _lifecycleLineMatcher = new(_nonRootMarker, _indexMarker, _cleanupAttemptedMarker, _cleanupMarker);
     private readonly CgcCommandEvidenceRecognizer _commandEvidenceRecognizer = new();
     private readonly List<QualificationCommandEvidence> _commandEvidence = [];
-    private readonly CgcStructuralRecordRecognizer _structuralRecordRecognizer = new();
+    private readonly CgcHttpJsonRecognizer _httpJsonRecognizer = new(CgcQualificationRunner.StaticStructuralQuery);
     private long _standardOutputBytes;
     private long _standardErrorBytes;
+    private long _healthBytes;
+    private long _queryBytes;
     private int _standardOutputLineBytes;
-    private int _stdoutBeginCount;
-    private int _stdoutEndCount;
-    private bool _markerOrderInvalid;
     private bool _ranAsNonRoot;
     private bool _indexedWholeRepository;
     private bool _cleanupAttempted;
@@ -47,7 +48,6 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
     private bool _invalidUtf8;
     private bool _overflowed;
     private bool _completed;
-    private CgcQueryRegion _queryRegion;
     private CgcStreamingEvidence? _evidence;
 
     internal CgcStreamingEvidenceObserver(Action? overflowSignal = null)
@@ -57,7 +57,8 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
 
     internal CgcObservationOutcome Observe(CgcOutputStream stream, ReadOnlySpan<byte> bytes)
     {
-        if (stream is not (CgcOutputStream.StandardOutput or CgcOutputStream.StandardError))
+        if (stream is not (CgcOutputStream.StandardOutput or CgcOutputStream.StandardError or
+            CgcOutputStream.HttpHealthResponse or CgcOutputStream.HttpQueryResponse))
         {
             throw new ArgumentOutOfRangeException(nameof(stream));
         }
@@ -72,7 +73,7 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
 
             foreach (byte value in bytes)
             {
-                long observedBefore = _standardOutputBytes + _standardErrorBytes;
+                long observedBefore = ObservedTotalBytes;
                 if (observedBefore == OverflowSentinelBytes)
                 {
                     return CgcObservationOutcome.OverflowAlreadyObserved;
@@ -102,29 +103,25 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
 
             FlushDecoder(CgcOutputStream.StandardOutput);
             FlushDecoder(CgcOutputStream.StandardError);
-            if (_queryRegion == CgcQueryRegion.Inside)
-            {
-                _markerOrderInvalid = true;
-            }
+            FlushDecoder(CgcOutputStream.HttpHealthResponse);
+            FlushDecoder(CgcOutputStream.HttpQueryResponse);
+            _httpJsonRecognizer.Complete();
 
             _completed = true;
-            IReadOnlyDictionary<string, int> relationshipKindCounts = _structuralRecordRecognizer.GetRelationshipKindCounts();
-            bool markerPair = !_overflowed &&
-                !_invalidUtf8 &&
-                !_markerOrderInvalid &&
-                _stdoutBeginCount == 1 &&
-                _stdoutEndCount == 1 &&
-                _queryRegion == CgcQueryRegion.Ended;
-            bool hasValidRecordGrammar = _structuralRecordRecognizer.ValidRecordCount > 0 &&
-                _structuralRecordRecognizer.InvalidOrOversizedRecordCount == 0;
+            IReadOnlyDictionary<string, int> relationshipKindCounts = _httpJsonRecognizer.GetRelationshipKindCounts();
+            bool queryCompleted = !_overflowed && !_invalidUtf8 && _httpJsonRecognizer.IsComplete;
+            bool hasValidRecordGrammar = _httpJsonRecognizer.ValidRecordCount > 0 &&
+                _httpJsonRecognizer.InvalidOrOversizedRecordCount == 0 && queryCompleted;
             string stdoutSha256 = Convert.ToHexString(_standardOutputHash.GetHashAndReset()).ToLowerInvariant();
             string stderrSha256 = Convert.ToHexString(_standardErrorHash.GetHashAndReset()).ToLowerInvariant();
+            string healthSha256 = Convert.ToHexString(_healthHash.GetHashAndReset()).ToLowerInvariant();
+            string querySha256 = Convert.ToHexString(_queryHash.GetHashAndReset()).ToLowerInvariant();
             bool containerCleanupForced = _overflowed;
             string canonicalSummarySha256 = CreateCanonicalSummarySha256(
                 stdoutSha256,
                 stderrSha256,
                 relationshipKindCounts,
-                markerPair,
+                queryCompleted,
                 hasValidRecordGrammar,
                 _cleanupAttempted,
                 containerCleanupForced);
@@ -132,33 +129,37 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
                 IsValidUtf8: !_invalidUtf8,
                 Overflowed: _overflowed,
                 TerminationRequested: _overflowed,
-                ObservedTotalBytes: _standardOutputBytes + _standardErrorBytes,
+                ObservedTotalBytes: ObservedTotalBytes,
                 StandardOutput: new CgcStreamEvidence(_standardOutputBytes, stdoutSha256),
                 StandardError: new CgcStreamEvidence(_standardErrorBytes, stderrSha256),
                 CanonicalSummarySha256: canonicalSummarySha256,
-                StdoutBeginCount: _stdoutBeginCount,
-                StdoutEndCount: _stdoutEndCount,
-                HasExactlyOneOrderedStdoutMarkerPair: markerPair,
+                StdoutBeginCount: 0,
+                StdoutEndCount: 0,
+                HasExactlyOneOrderedStdoutMarkerPair: queryCompleted,
                 RanAsNonRoot: _ranAsNonRoot,
                 IndexedWholeRepository: _indexedWholeRepository,
                 CleanupSucceeded: _cleanupSucceeded,
                 CleanupAttempted: _cleanupAttempted,
                 ContainerCleanupForced: containerCleanupForced,
                 HasValidRecordGrammar: hasValidRecordGrammar,
-                HasValidStructuralRecord: markerPair && hasValidRecordGrammar,
-                ValidRecordCount: _structuralRecordRecognizer.ValidRecordCount,
-                InvalidOrOversizedRecordCount: _structuralRecordRecognizer.InvalidOrOversizedRecordCount,
+                HasValidStructuralRecord: hasValidRecordGrammar,
+                ValidRecordCount: _httpJsonRecognizer.ValidRecordCount,
+                InvalidOrOversizedRecordCount: _httpJsonRecognizer.InvalidOrOversizedRecordCount,
                 RelationshipKindCounts: relationshipKindCounts,
                 HasAllRequiredRelationshipKinds: relationshipKindCounts.Values.All(count => count > 0),
-                HasFilteredTargetCandidate: _structuralRecordRecognizer.HasFilteredTargetCandidate,
-                HasPositiveOrderedRange: _structuralRecordRecognizer.HasPositiveOrderedRange,
-                HasNonEmptyEndpointIdentity: _structuralRecordRecognizer.HasNonEmptyEndpointIdentity,
-                AllStructuralFactsCorrelatedWithinValidRecords: _structuralRecordRecognizer.AllFactsCorrelatedWithinValidRecords,
+                HasFilteredTargetCandidate: _httpJsonRecognizer.HasFilteredTargetCandidate,
+                HasPositiveOrderedRange: _httpJsonRecognizer.HasPositiveOrderedRange,
+                HasNonEmptyEndpointIdentity: _httpJsonRecognizer.HasNonEmptyEndpointIdentity,
+                AllStructuralFactsCorrelatedWithinValidRecords: _httpJsonRecognizer.AllFactsCorrelatedWithinValidRecords,
                 Commands: _commandEvidence.ToArray(),
-                CommandEvidenceOverflowed: _commandEvidenceOverflowed);
+                CommandEvidenceOverflowed: _commandEvidenceOverflowed,
+                HealthResponse: new CgcStreamEvidence(_healthBytes, healthSha256),
+                HttpResponse: new CgcStreamEvidence(_queryBytes, querySha256));
             return _evidence;
         }
     }
+
+    internal string HttpDiagnostic => _httpJsonRecognizer.Diagnostic;
 
     private string CreateCanonicalSummarySha256(
         string stdoutSha256,
@@ -174,22 +175,22 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
             relationshipKindCounts.Where(pair => pair.Value > 0).Select(pair => pair.Key).OrderBy(kind => kind, StringComparer.Ordinal));
         string predicateCounts = string.Join(
             ',',
-            $"valid={_structuralRecordRecognizer.ValidRecordCount}",
-            $"invalidOrOversized={_structuralRecordRecognizer.InvalidOrOversizedRecordCount}",
+            $"valid={_httpJsonRecognizer.ValidRecordCount}",
+            $"invalidOrOversized={_httpJsonRecognizer.InvalidOrOversizedRecordCount}",
             $"CALLS={relationshipKindCounts["CALLS"]}",
             $"CONTAINS={relationshipKindCounts["CONTAINS"]}",
             $"IMPORTS={relationshipKindCounts["IMPORTS"]}",
             $"INHERITS={relationshipKindCounts["INHERITS"]}",
             $"allRequiredRelationshipKindsObserved={ToLowerBoolean(relationshipKindCounts.Values.All(count => count > 0))}",
-            $"allStructuralFactsCorrelatedWithinValidRecords={ToLowerBoolean(_structuralRecordRecognizer.AllFactsCorrelatedWithinValidRecords)}",
-            $"hasFilteredTargetCandidate={ToLowerBoolean(_structuralRecordRecognizer.HasFilteredTargetCandidate)}",
-            $"hasNonEmptyEndpointIdentity={ToLowerBoolean(_structuralRecordRecognizer.HasNonEmptyEndpointIdentity)}",
-            $"hasPositiveOrderedRange={ToLowerBoolean(_structuralRecordRecognizer.HasPositiveOrderedRange)}",
+            $"allStructuralFactsCorrelatedWithinValidRecords={ToLowerBoolean(_httpJsonRecognizer.AllFactsCorrelatedWithinValidRecords)}",
+            $"hasFilteredTargetCandidate={ToLowerBoolean(_httpJsonRecognizer.HasFilteredTargetCandidate)}",
+            $"hasNonEmptyEndpointIdentity={ToLowerBoolean(_httpJsonRecognizer.HasNonEmptyEndpointIdentity)}",
+            $"hasPositiveOrderedRange={ToLowerBoolean(_httpJsonRecognizer.HasPositiveOrderedRange)}",
             $"hasValidRecordGrammar={ToLowerBoolean(hasValidRecordGrammar)}",
             $"queryCompleted={ToLowerBoolean(queryCompleted)}");
         string summary = string.Join(
             '|',
-            "1.1",
+            "1.2",
             _standardOutputBytes.ToString(System.Globalization.CultureInfo.InvariantCulture),
             _standardErrorBytes.ToString(System.Globalization.CultureInfo.InvariantCulture),
             (_standardOutputBytes + _standardErrorBytes).ToString(System.Globalization.CultureInfo.InvariantCulture),
@@ -198,7 +199,7 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
             ToLowerBoolean(containerCleanupForced),
             stdoutSha256,
             stderrSha256,
-            "vulgata-cgc-query-stdout-v1,vulgata-cgc-streaming-evidence-v1,vulgata-cgc-structural-record-v1",
+            "vulgata-cgc-http-json-v1,vulgata-cgc-streaming-evidence-v2",
             relationshipKinds,
             predicateCounts,
             ToLowerBoolean(cleanupAttempted),
@@ -212,7 +213,11 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
     {
         _standardOutputHash.Dispose();
         _standardErrorHash.Dispose();
+        _healthHash.Dispose();
+        _queryHash.Dispose();
     }
+
+    private long ObservedTotalBytes => _standardOutputBytes + _standardErrorBytes + _healthBytes + _queryBytes;
 
     private void AddByte(CgcOutputStream stream, byte value)
     {
@@ -222,10 +227,23 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
             _standardOutputHash.AppendData([value]);
             _standardOutputLineBytes++;
         }
-        else
+        else if (stream == CgcOutputStream.StandardError)
         {
             _standardErrorBytes++;
             _standardErrorHash.AppendData([value]);
+        }
+        else if (stream == CgcOutputStream.HttpHealthResponse)
+        {
+            _healthBytes++;
+            _healthHash.AppendData([value]);
+        }
+        else
+        {
+            _queryBytes++;
+            _queryHash.AppendData([value]);
+            DecodeByte(stream, value);
+            _httpJsonRecognizer.Observe(value);
+            return;
         }
 
         DecodeByte(stream, value);
@@ -240,9 +258,14 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
 
         try
         {
-            Decoder decoder = stream == CgcOutputStream.StandardOutput
-                ? _standardOutputDecoder
-                : _standardErrorDecoder;
+            Decoder decoder = stream switch
+            {
+                CgcOutputStream.StandardOutput => _standardOutputDecoder,
+                CgcOutputStream.StandardError => _standardErrorDecoder,
+                CgcOutputStream.HttpHealthResponse => _healthDecoder,
+                CgcOutputStream.HttpQueryResponse => _queryDecoder,
+                _ => throw new ArgumentOutOfRangeException(nameof(stream)),
+            };
             Span<byte> source = stackalloc byte[1];
             source[0] = value;
             Span<char> characters = stackalloc char[2];
@@ -276,9 +299,14 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
 
         try
         {
-            Decoder decoder = stream == CgcOutputStream.StandardOutput
-                ? _standardOutputDecoder
-                : _standardErrorDecoder;
+            Decoder decoder = stream switch
+            {
+                CgcOutputStream.StandardOutput => _standardOutputDecoder,
+                CgcOutputStream.StandardError => _standardErrorDecoder,
+                CgcOutputStream.HttpHealthResponse => _healthDecoder,
+                CgcOutputStream.HttpQueryResponse => _queryDecoder,
+                _ => throw new ArgumentOutOfRangeException(nameof(stream)),
+            };
             Span<char> characters = stackalloc char[2];
             decoder.Convert(ReadOnlySpan<byte>.Empty, characters, flush: true, out _, out int charsUsed, out _);
             if (stream == CgcOutputStream.StandardOutput)
@@ -306,22 +334,15 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
         {
             ProcessCompletedStandardOutputLine(_standardOutputLineBytes - 1);
             _standardOutputLineBytes = 0;
-            _standardOutputLineMatcher.Reset();
             return;
         }
 
-        _standardOutputLineMatcher.Observe(value);
         _lifecycleLineMatcher.Observe(value);
-        _commandEvidenceRecognizer.Observe(value, _queryRegion != CgcQueryRegion.Inside);
-        if (_queryRegion == CgcQueryRegion.Inside)
-        {
-            _structuralRecordRecognizer.Observe(value);
-        }
+        _commandEvidenceRecognizer.Observe(value, enabled: true);
     }
 
     private void ProcessCompletedStandardOutputLine(int byteCount)
     {
-        CgcLineKind lineKind = _standardOutputLineMatcher.Complete();
         int lifecycleFact = _lifecycleLineMatcher.Complete();
         QualificationCommandEvidence? commandEvidence = _commandEvidenceRecognizer.Complete();
         if (commandEvidence is not null)
@@ -355,39 +376,6 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
         }
 
         _lifecycleLineMatcher.Reset();
-        if (lineKind == CgcLineKind.Begin)
-        {
-            _stdoutBeginCount++;
-            if (_queryRegion != CgcQueryRegion.None || _stdoutBeginCount != 1)
-            {
-                _markerOrderInvalid = true;
-            }
-
-            _queryRegion = CgcQueryRegion.Inside;
-            _structuralRecordRecognizer.Reset();
-            return;
-        }
-
-        if (lineKind == CgcLineKind.End)
-        {
-            _stdoutEndCount++;
-            if (_queryRegion != CgcQueryRegion.Inside || _stdoutEndCount != 1)
-            {
-                _markerOrderInvalid = true;
-            }
-            else
-            {
-                _queryRegion = CgcQueryRegion.Ended;
-            }
-
-            _structuralRecordRecognizer.Reset();
-            return;
-        }
-
-        if (_queryRegion == CgcQueryRegion.Inside)
-        {
-            _structuralRecordRecognizer.Complete(byteCount > MaximumStructuralRecordBytes);
-        }
     }
 
     private void ThrowIfCompleted()
@@ -398,60 +386,6 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
         }
     }
 
-    private enum CgcQueryRegion
-    {
-        None,
-        Inside,
-        Ended,
-    }
-
-    private enum CgcLineKind
-    {
-        Other,
-        Begin,
-        End,
-    }
-
-    private sealed class StreamingLineMatcher(string beginMarker, string endMarker)
-    {
-        private int _beginIndex;
-        private int _endIndex;
-        private bool _beginMatches = true;
-        private bool _endMatches = true;
-
-        internal void Observe(char value)
-        {
-            if (_beginMatches)
-            {
-                _beginMatches = _beginIndex < beginMarker.Length && beginMarker[_beginIndex++] == value;
-            }
-
-            if (_endMatches)
-            {
-                _endMatches = _endIndex < endMarker.Length && endMarker[_endIndex++] == value;
-            }
-        }
-
-        internal CgcLineKind Complete()
-        {
-            if (_beginMatches && _beginIndex == beginMarker.Length)
-            {
-                return CgcLineKind.Begin;
-            }
-
-            return _endMatches && _endIndex == endMarker.Length
-                ? CgcLineKind.End
-                : CgcLineKind.Other;
-        }
-
-        internal void Reset()
-        {
-            _beginIndex = 0;
-            _endIndex = 0;
-            _beginMatches = true;
-            _endMatches = true;
-        }
-    }
 
     private sealed class ExactSafeLineMatcher(params string[] expectedLines)
     {
@@ -617,11 +551,12 @@ internal sealed class CgcStreamingEvidenceObserver : IDisposable
         }
     }
 }
-
 internal enum CgcOutputStream
 {
     StandardOutput = 0,
     StandardError = 1,
+    HttpHealthResponse = 2,
+    HttpQueryResponse = 3,
 }
 
 internal readonly record struct CgcObservationOutcome(bool TerminationRequired)
@@ -680,55 +615,50 @@ internal sealed record CgcStreamingEvidence(
     bool HasNonEmptyEndpointIdentity,
     bool AllStructuralFactsCorrelatedWithinValidRecords,
     IReadOnlyList<QualificationCommandEvidence> Commands,
-    bool CommandEvidenceOverflowed);
+    bool CommandEvidenceOverflowed,
+    CgcStreamEvidence? HealthResponse = null,
+    CgcStreamEvidence? HttpResponse = null);
 
-internal sealed class CgcStructuralRecordRecognizer
+/// <summary>
+/// Incremental, qualification-only parser for the pinned HTTP response candidate.
+/// It retains only an incomplete JSON token, never a response document or result set.
+/// </summary>
+internal sealed class CgcHttpJsonRecognizer(string expectedQuery)
 {
-    private static readonly string[] _fieldNames =
+    private static readonly string[] _aliases =
     [
-        "relationship_kind",
-        "source_path",
-        "source_symbol",
-        "source_start_line",
-        "source_end_line",
-        "source_identity",
-        "target_path",
-        "target_symbol",
-        "target_start_line",
-        "target_end_line",
-        "target_identity",
+        "relationship_kind", "source_path", "source_symbol", "source_start_line",
+        "source_end_line", "source_identity", "target_path", "target_symbol",
+        "target_start_line", "target_end_line", "target_identity", "filtered_target",
     ];
     private static readonly string[] _relationshipKinds = ["CALLS", "CONTAINS", "IMPORTS", "INHERITS"];
     private const string _filteredTargetPath = "src/Filtered/GeneratedClient.g.cs";
-    private readonly int[] _relationshipKindCounts = new int[_relationshipKinds.Length];
-    private int _fieldIndex;
-    private int _keyCandidateMask;
-    private int _keyLength;
-    private CgcValueState _valueState;
-    private bool _rowInvalid;
-    private bool _rowHasValue;
-    private bool _pathValueNonEmpty;
-    private bool _pathValueRelative;
-    private bool _pathPreviousWasPeriod;
-    private int _pathValueLength;
-    private bool _textValueNonEmpty;
-    private bool _filteredTargetMatches;
-    private int _filteredTargetPosition;
-    private int _relationshipCandidateMask;
-    private int _relationshipLength;
-    private bool _relationshipKindObserved;
-    private int _rangeValue;
-    private bool _rangeValueHasDigits;
+    private readonly byte[] _incompleteToken = new byte[8_192];
+    private readonly int[] _relationshipKindCounts = new int[4];
+    private JsonReaderState _readerState;
+    private int _incompleteCount;
+    private long _fedBytes;
+    private long _recordStart;
+    private int _phase;
+    private int _declaredRecordCount = -1;
+    private int _relationshipKind = -1;
     private int _sourceStart;
     private int _sourceEnd;
     private int _targetStart;
     private int _targetEnd;
+    private bool _targetStartNull;
+    private bool _targetEndNull;
     private bool _sourcePathValid;
     private bool _sourceSymbolValid;
     private bool _sourceIdentityValid;
     private bool _targetPathValid;
     private bool _targetSymbolValid;
     private bool _targetIdentityValid;
+    private bool _targetIsFilteredPath;
+    private bool _filteredTarget;
+    private bool _recordOversized;
+    private bool _invalid;
+    private bool _finalized;
 
     internal int ValidRecordCount { get; private set; }
 
@@ -742,101 +672,47 @@ internal sealed class CgcStructuralRecordRecognizer
 
     internal bool AllFactsCorrelatedWithinValidRecords { get; private set; }
 
-    internal void Observe(char value)
+    internal bool IsComplete => _finalized && !_invalid && _phase == 18 &&
+        _declaredRecordCount == ValidRecordCount;
+
+    internal string Diagnostic => $"phase={_phase};invalid={_invalid};carry={_incompleteCount};declared={_declaredRecordCount};valid={ValidRecordCount}";
+
+    internal void Observe(byte value)
     {
-        if (_rowInvalid)
+        if (_finalized || _invalid)
         {
             return;
         }
 
-        if (_valueState == CgcValueState.Key)
+        _fedBytes++;
+        if (_phase is >= 100 and <= 124 && _fedBytes - _recordStart > CgcStreamingEvidenceObserver.MaximumStructuralRecordBytes)
         {
-            ObserveKey(value);
+            _recordOversized = true;
+        }
+
+        if (_incompleteCount == _incompleteToken.Length)
+        {
+            _invalid = true;
             return;
         }
 
-        if (value == '|')
-        {
-            CompleteValue();
-            return;
-        }
-
-        ObserveValue(value);
+        _incompleteToken[_incompleteCount++] = value;
+        Consume(isFinalBlock: false);
     }
 
-    internal void Complete(bool oversized)
+    internal void Complete()
     {
-        if (!_rowHasValue)
+        if (_finalized)
         {
-            InvalidOrOversizedRecordCount++;
-            Reset();
             return;
         }
 
-        if (_valueState != CgcValueState.Key)
+        Consume(isFinalBlock: true);
+        _finalized = true;
+        if (_phase != 18 || _incompleteCount != 0 || _declaredRecordCount != ValidRecordCount)
         {
-            CompleteValue();
+            _invalid = true;
         }
-
-        bool valid = !oversized &&
-            !_rowInvalid &&
-            _fieldIndex == _fieldNames.Length &&
-            _sourcePathValid &&
-            _sourceSymbolValid &&
-            _sourceIdentityValid &&
-            _targetPathValid &&
-            _targetSymbolValid &&
-            _targetIdentityValid &&
-            _sourceStart > 0 && _sourceEnd >= _sourceStart &&
-            _targetStart > 0 && _targetEnd >= _targetStart &&
-            _relationshipKindObserved;
-
-        if (valid)
-        {
-            ValidRecordCount++;
-            HasFilteredTargetCandidate |= _filteredTargetMatches;
-            HasPositiveOrderedRange = true;
-            HasNonEmptyEndpointIdentity = true;
-            AllFactsCorrelatedWithinValidRecords = true;
-        }
-        else
-        {
-            InvalidOrOversizedRecordCount++;
-        }
-
-        Reset();
-    }
-
-    internal void Reset()
-    {
-        _fieldIndex = 0;
-        _keyCandidateMask = (1 << _fieldNames.Length) - 1;
-        _keyLength = 0;
-        _valueState = CgcValueState.Key;
-        _rowInvalid = false;
-        _rowHasValue = false;
-        _pathValueNonEmpty = false;
-        _pathValueRelative = true;
-        _pathPreviousWasPeriod = false;
-        _pathValueLength = 0;
-        _textValueNonEmpty = false;
-        _filteredTargetMatches = false;
-        _filteredTargetPosition = 0;
-        _relationshipCandidateMask = (1 << _relationshipKinds.Length) - 1;
-        _relationshipLength = 0;
-        _relationshipKindObserved = false;
-        _rangeValue = 0;
-        _rangeValueHasDigits = false;
-        _sourceStart = 0;
-        _sourceEnd = 0;
-        _targetStart = 0;
-        _targetEnd = 0;
-        _sourcePathValid = false;
-        _sourceSymbolValid = false;
-        _sourceIdentityValid = false;
-        _targetPathValid = false;
-        _targetSymbolValid = false;
-        _targetIdentityValid = false;
     }
 
     internal IReadOnlyDictionary<string, int> GetRelationshipKindCounts()
@@ -850,228 +726,320 @@ internal sealed class CgcStructuralRecordRecognizer
         return new ReadOnlyDictionary<string, int>(counts);
     }
 
-    private void ObserveKey(char value)
+    private void Consume(bool isFinalBlock)
     {
-        if (value == '=')
+        if (_invalid)
         {
-            int selectedField = FindSelectedCandidate(_fieldNames, _keyCandidateMask, _keyLength);
-            if (selectedField != _fieldIndex)
-            {
-                _rowInvalid = true;
-                return;
-            }
-
-            _valueState = CgcValueState.Value;
-            _rowHasValue = true;
-            ResetValueState();
             return;
         }
 
-        if (value is '|' or '\n' or '\r')
+        try
         {
-            _rowInvalid = true;
-            return;
-        }
-
-        _keyCandidateMask = AdvanceCandidates(_fieldNames, _keyCandidateMask, _keyLength, value);
-        _keyLength++;
-    }
-
-    private void ObserveValue(char value)
-    {
-        if (_fieldIndex == 0)
-        {
-            _relationshipCandidateMask = AdvanceCandidates(
-                _relationshipKinds,
-                _relationshipCandidateMask,
-                _relationshipLength,
-                value);
-            _relationshipLength++;
-            return;
-        }
-
-        if (IsPathField(_fieldIndex))
-        {
-            _pathValueNonEmpty = true;
-            if (_pathValueLength == 0 && value is ('/' or '\\'))
+            Utf8JsonReader reader = new(
+                _incompleteToken.AsSpan(0, _incompleteCount),
+                isFinalBlock,
+                _readerState);
+            while (reader.Read())
             {
-                _pathValueRelative = false;
-            }
-
-            if (value is ('\\' or ':'))
-            {
-                _pathValueRelative = false;
-            }
-
-            if (_pathPreviousWasPeriod && value == '.')
-            {
-                _pathValueRelative = false;
-            }
-
-            _pathPreviousWasPeriod = value == '.';
-            _pathValueLength++;
-            if (_fieldIndex == 6)
-            {
-                if (_filteredTargetPosition >= _filteredTargetPath.Length || _filteredTargetPath[_filteredTargetPosition] != value)
+                ProcessToken(ref reader, _fedBytes - _incompleteCount + reader.TokenStartIndex);
+                if (_invalid)
                 {
-                    _filteredTargetMatches = false;
-                }
-
-                _filteredTargetPosition++;
-            }
-
-            return;
-        }
-
-        if (IsTextField(_fieldIndex))
-        {
-            _textValueNonEmpty |= !char.IsWhiteSpace(value);
-            return;
-        }
-
-        if (value is >= '0' and <= '9')
-        {
-            int digit = value - '0';
-            if (_rangeValue > (int.MaxValue - digit) / 10)
-            {
-                _rowInvalid = true;
-                return;
-            }
-
-            _rangeValue = (_rangeValue * 10) + digit;
-            _rangeValueHasDigits = true;
-            return;
-        }
-
-        _rowInvalid = true;
-    }
-
-    private void CompleteValue()
-    {
-        if (_rowInvalid || _fieldIndex >= _fieldNames.Length)
-        {
-            _rowInvalid = true;
-            return;
-        }
-
-        switch (_fieldIndex)
-        {
-            case 0:
-                {
-                    int relationshipKind = FindSelectedCandidate(_relationshipKinds, _relationshipCandidateMask, _relationshipLength);
-                    if (relationshipKind < 0)
-                    {
-                        _rowInvalid = true;
-                        return;
-                    }
-
-                    _relationshipKindCounts[relationshipKind]++;
-                    _relationshipKindObserved = true;
                     break;
                 }
+            }
+
+            int consumed = checked((int)reader.BytesConsumed);
+            _readerState = reader.CurrentState;
+            if (consumed > 0)
+            {
+                _incompleteToken.AsSpan(consumed, _incompleteCount - consumed).CopyTo(_incompleteToken);
+                _incompleteToken.AsSpan(_incompleteCount - consumed, consumed).Clear();
+                _incompleteCount -= consumed;
+            }
+        }
+        catch (JsonException)
+        {
+            _invalid = true;
+        }
+    }
+
+    private void ProcessToken(ref Utf8JsonReader reader, long absoluteTokenStart)
+    {
+        if (_phase == 18)
+        {
+            _invalid = true;
+            return;
+        }
+
+        if (_phase is >= 100 and <= 124)
+        {
+            ProcessRecordToken(ref reader);
+            return;
+        }
+
+        switch (_phase)
+        {
+            case 0:
+                Require(reader.TokenType == JsonTokenType.StartObject);
+                _phase = 1;
+                break;
             case 1:
-                _sourcePathValid = _pathValueNonEmpty && _pathValueRelative;
+                RequireProperty(ref reader, "status", 2);
                 break;
             case 2:
-                _sourceSymbolValid = _textValueNonEmpty;
+                Require(reader.TokenType == JsonTokenType.String && reader.ValueTextEquals("ok"));
+                _phase = 3;
                 break;
             case 3:
-                _sourceStart = _rangeValueHasDigits ? _rangeValue : 0;
+                RequireProperty(ref reader, "error", 4);
                 break;
             case 4:
-                _sourceEnd = _rangeValueHasDigits ? _rangeValue : 0;
+                Require(reader.TokenType == JsonTokenType.Null);
+                _phase = 5;
                 break;
             case 5:
-                _sourceIdentityValid = _textValueNonEmpty;
+                RequireProperty(ref reader, "data", 6);
                 break;
             case 6:
-                _targetPathValid = _pathValueNonEmpty && _pathValueRelative;
-                _filteredTargetMatches &= _filteredTargetPosition == _filteredTargetPath.Length;
+                Require(reader.TokenType == JsonTokenType.StartObject);
+                _phase = 7;
                 break;
             case 7:
-                _targetSymbolValid = _textValueNonEmpty;
+                RequireProperty(ref reader, "success", 8);
                 break;
             case 8:
-                _targetStart = _rangeValueHasDigits ? _rangeValue : 0;
+                Require(reader.TokenType == JsonTokenType.True);
+                _phase = 9;
                 break;
             case 9:
-                _targetEnd = _rangeValueHasDigits ? _rangeValue : 0;
+                RequireProperty(ref reader, "query", 10);
                 break;
             case 10:
-                _targetIdentityValid = _textValueNonEmpty;
+                Require(reader.TokenType == JsonTokenType.String && reader.ValueTextEquals(expectedQuery));
+                _phase = 11;
                 break;
-            default:
-                _rowInvalid = true;
-                return;
-        }
-
-        _fieldIndex++;
-        _valueState = CgcValueState.Key;
-        _keyCandidateMask = (1 << _fieldNames.Length) - 1;
-        _keyLength = 0;
-    }
-
-    private void ResetValueState()
-    {
-        _pathValueNonEmpty = false;
-        _pathValueRelative = true;
-        _pathPreviousWasPeriod = false;
-        _pathValueLength = 0;
-        _textValueNonEmpty = false;
-        _rangeValue = 0;
-        _rangeValueHasDigits = false;
-        if (_fieldIndex == 6)
-        {
-            _filteredTargetMatches = true;
-            _filteredTargetPosition = 0;
-        }
-        else if (_fieldIndex == 0)
-        {
-            _relationshipCandidateMask = (1 << _relationshipKinds.Length) - 1;
-            _relationshipLength = 0;
-        }
-    }
-
-    private static int AdvanceCandidates(IReadOnlyList<string> candidates, int candidateMask, int position, char value)
-    {
-        for (int index = 0; index < candidates.Count; index++)
-        {
-            if ((candidateMask & (1 << index)) != 0 &&
-                (position >= candidates[index].Length || candidates[index][position] != value))
-            {
-                candidateMask &= ~(1 << index);
-            }
-        }
-
-        return candidateMask;
-    }
-
-    private static int FindSelectedCandidate(IReadOnlyList<string> candidates, int candidateMask, int length)
-    {
-        int selected = -1;
-        for (int index = 0; index < candidates.Count; index++)
-        {
-            if ((candidateMask & (1 << index)) != 0 && candidates[index].Length == length)
-            {
-                if (selected >= 0)
+            case 11:
+                RequireProperty(ref reader, "record_count", 12);
+                break;
+            case 12:
+                Require(reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out _declaredRecordCount) && _declaredRecordCount >= 0);
+                _phase = 13;
+                break;
+            case 13:
+                RequireProperty(ref reader, "results", 14);
+                break;
+            case 14:
+                Require(reader.TokenType == JsonTokenType.StartArray);
+                _phase = 15;
+                break;
+            case 15:
+                if (reader.TokenType == JsonTokenType.EndArray)
                 {
-                    return -1;
+                    _phase = 16;
+                }
+                else
+                {
+                    Require(reader.TokenType == JsonTokenType.StartObject);
+                    _recordStart = absoluteTokenStart;
+                    ResetRecord();
+                    _phase = 100;
                 }
 
-                selected = index;
+                break;
+            case 16:
+                Require(reader.TokenType == JsonTokenType.EndObject);
+                _phase = 17;
+                break;
+            case 17:
+                Require(reader.TokenType == JsonTokenType.EndObject);
+                _phase = 18;
+                break;
+            default:
+                _invalid = true;
+                break;
+        }
+    }
+
+    private void ProcessRecordToken(ref Utf8JsonReader reader)
+    {
+        if (_phase == 124)
+        {
+            Require(reader.TokenType == JsonTokenType.EndObject);
+            CompleteRecord();
+            _phase = 15;
+            return;
+        }
+
+        int relativePhase = _phase - 100;
+        int aliasIndex = relativePhase / 2;
+        if ((relativePhase & 1) == 0)
+        {
+            RequireProperty(ref reader, _aliases[aliasIndex], _phase + 1);
+            return;
+        }
+
+        ValidateRecordValue(aliasIndex, ref reader);
+        _phase++;
+    }
+
+    private void ValidateRecordValue(int aliasIndex, ref Utf8JsonReader reader)
+    {
+        switch (aliasIndex)
+        {
+            case 0:
+                _relationshipKind = MatchRelationshipKind(ref reader);
+                Require(_relationshipKind >= 0);
+                break;
+            case 1:
+                _sourcePathValid = IsNormalizedRelativePath(ref reader);
+                Require(_sourcePathValid);
+                break;
+            case 2:
+                _sourceSymbolValid = IsNonEmptyString(ref reader);
+                Require(_sourceSymbolValid);
+                break;
+            case 3:
+                Require(TryGetPositiveInt(ref reader, out _sourceStart));
+                break;
+            case 4:
+                Require(TryGetPositiveInt(ref reader, out _sourceEnd));
+                break;
+            case 5:
+                _sourceIdentityValid = IsNonEmptyString(ref reader);
+                Require(_sourceIdentityValid);
+                break;
+            case 6:
+                _targetPathValid = IsNormalizedRelativePath(ref reader);
+                _targetIsFilteredPath = reader.TokenType == JsonTokenType.String && reader.ValueTextEquals(_filteredTargetPath);
+                Require(_targetPathValid);
+                break;
+            case 7:
+                _targetSymbolValid = IsNonEmptyString(ref reader);
+                Require(_targetSymbolValid);
+                break;
+            case 8:
+                _targetStartNull = reader.TokenType == JsonTokenType.Null;
+                Require(_targetStartNull || TryGetPositiveInt(ref reader, out _targetStart));
+                break;
+            case 9:
+                _targetEndNull = reader.TokenType == JsonTokenType.Null;
+                Require(_targetEndNull || TryGetPositiveInt(ref reader, out _targetEnd));
+                break;
+            case 10:
+                _targetIdentityValid = IsNonEmptyString(ref reader);
+                Require(_targetIdentityValid);
+                break;
+            case 11:
+                Require(reader.TokenType is JsonTokenType.True or JsonTokenType.False);
+                _filteredTarget = reader.TokenType == JsonTokenType.True;
+                break;
+            default:
+                _invalid = true;
+                break;
+        }
+    }
+
+    private void CompleteRecord()
+    {
+        bool ordinaryRanges = !_targetStartNull && !_targetEndNull && _targetEnd >= _targetStart;
+        bool filteredRanges = _targetStartNull && _targetEndNull;
+        bool relationshipSpecificRanges = _relationshipKind != 2 ||
+            (_sourceStart == _sourceEnd && _targetStart == _targetEnd);
+        bool valid = !_recordOversized &&
+            _relationshipKind >= 0 &&
+            _sourcePathValid && _sourceSymbolValid && _sourceIdentityValid &&
+            _targetPathValid && _targetSymbolValid && _targetIdentityValid &&
+            _sourceEnd >= _sourceStart &&
+            ((!_filteredTarget && ordinaryRanges && relationshipSpecificRanges) ||
+             (_filteredTarget && _relationshipKind == 0 && _targetIsFilteredPath && filteredRanges));
+        if (!valid)
+        {
+            InvalidOrOversizedRecordCount++;
+            _invalid = true;
+            return;
+        }
+
+        ValidRecordCount++;
+        _relationshipKindCounts[_relationshipKind]++;
+        HasFilteredTargetCandidate |= _filteredTarget;
+        HasPositiveOrderedRange = true;
+        HasNonEmptyEndpointIdentity = true;
+        AllFactsCorrelatedWithinValidRecords = true;
+    }
+
+    private void ResetRecord()
+    {
+        _relationshipKind = -1;
+        _sourceStart = _sourceEnd = _targetStart = _targetEnd = 0;
+        _targetStartNull = _targetEndNull = false;
+        _sourcePathValid = _sourceSymbolValid = _sourceIdentityValid = false;
+        _targetPathValid = _targetSymbolValid = _targetIdentityValid = false;
+        _targetIsFilteredPath = _filteredTarget = _recordOversized = false;
+    }
+
+    private int MatchRelationshipKind(ref Utf8JsonReader reader)
+    {
+        if (reader.TokenType != JsonTokenType.String || reader.ValueIsEscaped)
+        {
+            return -1;
+        }
+
+        for (int index = 0; index < _relationshipKinds.Length; index++)
+        {
+            if (reader.ValueTextEquals(_relationshipKinds[index]))
+            {
+                return index;
             }
         }
 
-        return selected;
+        return -1;
     }
 
-    private static bool IsPathField(int fieldIndex) => fieldIndex is 1 or 6;
+    private static bool IsNonEmptyString(ref Utf8JsonReader reader) =>
+        reader.TokenType == JsonTokenType.String && !reader.ValueIsEscaped && reader.ValueSpan.Length > 0;
 
-    private static bool IsTextField(int fieldIndex) => fieldIndex is 2 or 5 or 7 or 10;
-
-    private enum CgcValueState
+    private static bool IsNormalizedRelativePath(ref Utf8JsonReader reader)
     {
-        Key,
-        Value,
+        if (reader.TokenType != JsonTokenType.String || reader.ValueIsEscaped || reader.ValueSpan.IsEmpty)
+        {
+            return false;
+        }
+
+        ReadOnlySpan<byte> value = reader.ValueSpan;
+        if (value[0] is (byte)'/' or (byte)'\\')
+        {
+            return false;
+        }
+
+        for (int index = 0; index < value.Length; index++)
+        {
+            if (value[index] is (byte)'\\' or (byte)':' ||
+                (value[index] == (byte)'.' && index + 1 < value.Length && value[index + 1] == (byte)'.'))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryGetPositiveInt(ref Utf8JsonReader reader, out int value)
+    {
+        value = 0;
+        return reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out value) && value > 0;
+    }
+
+    private void RequireProperty(ref Utf8JsonReader reader, string name, int nextPhase)
+    {
+        Require(reader.TokenType == JsonTokenType.PropertyName && !reader.ValueIsEscaped && reader.ValueTextEquals(name));
+        _phase = nextPhase;
+    }
+
+    private void Require(bool condition)
+    {
+        if (!condition)
+        {
+            _invalid = true;
+        }
     }
 }
