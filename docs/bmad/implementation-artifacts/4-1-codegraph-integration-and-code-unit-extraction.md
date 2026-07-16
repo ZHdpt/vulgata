@@ -210,9 +210,9 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `tasks`; the complete plan regenerated from corrected FR-018 has fresh independent acceptance, and task regeneration is next.
-- Latest workflow checkpoint: `bmad-4-1-plan-review-20260716T090000Z-c3d912` (pending local commit binding).
-- Authorization: analysis finding I1 remediation is accepted through specification and plan review. The canonical PRD remains unchanged; implementation stays blocked until fresh task generation and read-only analysis accept the regenerated boundary.
+- Current workflow stage: `implement`; regenerated tasks and fresh read-only analysis accepted the corrected whole-Repository FR-018 boundary with no findings.
+- Latest workflow checkpoint: `bmad-4-1-analyze-20260716T091800Z-d6f204` (pending local commit binding).
+- Authorization: analysis finding I1 remediation is complete. The canonical PRD remains unchanged, and qualification-only TDD implementation may proceed. Provider execution remains reserved exclusively for T009, followed by the T010 hard stop.
 
 ### Completion notes
 

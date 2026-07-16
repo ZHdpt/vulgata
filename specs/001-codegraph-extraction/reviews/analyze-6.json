@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "e2a27baa6b9153279fc86e3d18ec1f6f9636bb1c",
+  "reviewed_boundary": {
+    "base_commit": "e2a27baa6b9153279fc86e3d18ec1f6f9636bb1c",
+    "candidate_commit": null,
+    "diff_sha256": "e21d4c4642fc41050b00b84e00b8cde3e520d9799946b72c9d959a2a31e1e4bb",
+    "artifact_hashes": {
+      "spec": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+      "plan": "3e1b1c4bd817e0608370a9629e262b763adf6520996b0d894bb68289402c6c37",
+      "research": "d53837b8d159d215614766c8c41966516f901ea3c65431eaa9e77f9b40c1daca",
+      "data-model": "dc2a7fb00abc18054f072d57ad0a7ab89bc3353e00023d8dd13310501a39bbb4",
+      "quickstart": "4f99293a5c92b9f4327b7f48c07da573b267925c01bc943b2616cb88481cb595",
+      "contract": "c78dd3e788b7fac76ffb424cdf530583335590c05d24ef38332cce0565718f80",
+      "proposal": "af9cab2b3721844159beac0927527189f5bb6053e806151d43ae88d2ab0d790d",
+      "tasks": "9ded764c98d87d6499a1f379d7021be8c18df3632afd53cc4a09191017a89e99"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/spec.md",
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md",
+      "specs/001-codegraph-extraction/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/checklists/requirements.md",
+    "specs/001-codegraph-extraction/reviews/spec-review-4.json",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/research.md",
+    "specs/001-codegraph-extraction/data-model.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "specs/001-codegraph-extraction/quickstart.md",
+    "specs/001-codegraph-extraction/reviews/plan-review-7.json",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md",
+    "specs/001-codegraph-extraction/tasks.md"
+  ],
+  "findings": [],
+  "confirmations": {
+    "prior_I1_cleared": {
+      "confirmed": true,
+      "evidence": "Specification FR-018 consistently replaces per-file batching, timing, and continuation with one atomic whole-Repository operation. The plan and tasks preserve and trace that behavior."
+    },
+    "fr018_consistent_end_to_end": {
+      "confirmed": true,
+      "evidence": "Specification, research, plan, data model, contract, quickstart, and tasks consistently require one whole-Repository index/projection, audit-only approximately-1,000-path groups, one configurable 1,800-second index-through-projection limit, and atomic provider-derived failure while retaining prior local filtering outcomes."
+    },
+    "rejected_bridge_and_cli_assumptions_removed": {
+      "confirmed": true,
+      "evidence": "Tasks T003-T004 explicitly require regression RED and removal of the raw-response-file Python bridge, whole-document parsing, synthetic pipe-separated key=value conversion, and rendered CLI-table input. The accepted plan instead requires strict incremental UTF-8 and streaming JSON."
+    },
+    "single_execution_and_hard_stop": {
+      "confirmed": true,
+      "evidence": "T009 is the sole provider-executing task, permits exactly one replacement command after T002/T004/T006/T008 are green, and prohibits retry. T010 depends on T009 and explicitly stops before all production implementation regardless of pass or fail."
+    },
+    "no_production_runtime_scope": {
+      "confirmed": true,
+      "evidence": "The task write boundary is limited to Docker qualification inputs, test-only qualification harnesses, and redacted qualification evidence. It excludes provider adapters, Core/EF persistence, migrations, Git/API/UI/E2E, Worker Agent/MCP tools, Scan Coordinator, Documents, Uncertainty, and Cross-Repository Resolution."
+    }
+  },
+  "coverage_metrics": {
+    "spec_functional_requirements_total": 18,
+    "spec_requirements_with_plan_disposition": 18,
+    "spec_requirement_plan_disposition_percent": 100,
+    "corrected_fr018_behavior_clauses_total": 5,
+    "corrected_fr018_behavior_clauses_with_task_trace": 5,
+    "corrected_fr018_task_trace_percent": 100,
+    "tasks_total": 10,
+    "tasks_with_explicit_dependencies": 10,
+    "tasks_with_verification_or_terminal_evidence": 10,
+    "test_first_red_tasks": 4,
+    "paired_minimal_implementation_tasks": 4,
+    "real_provider_execution_tasks": 1,
+    "hard_stop_tasks": 1,
+    "production_runtime_tasks": 0,
+    "critical_findings": 0,
+    "high_findings": 0,
+    "medium_findings": 0,
+    "low_findings": 0
+  },
+  "residual_risks": [
+    "The CodeGraphContext 0.5.1 HTTP envelope and projection aliases remain qualification candidates rather than a published production contract; the fail-closed T009 result and mandatory follow-up plan/review correctly contain this risk.",
+    "The original Story 4.1 acceptance prose still records the superseded per-file assumption, but the user-approved reconciliation, accepted specification, regenerated plan, and task graph explicitly establish the executable whole-Repository authority.",
+    "A passing qualification does not demonstrate full Story 4.1 feature completion; T010 intentionally prevents production work until a new parser/integration plan is reviewed."
+  ],
+  "summary": "ACCEPT. No Critical or High inconsistency remains. The approved whole-Repository remediation is consistently represented across the corrected specification, complete plan set, and regenerated tasks; the rejected synthetic bridge is scheduled for test-first removal; exactly one provider execution is isolated to T009; and T010 preserves the qualification hard stop with zero production runtime scope."
+}

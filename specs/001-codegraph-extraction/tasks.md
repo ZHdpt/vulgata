@@ -1,185 +1,275 @@
 ---
-description: "Qualification-only task list for CodeGraph Code Unit Extraction"
+description: "Qualification-only task graph for CodeGraphContext 0.5.1 HTTP JSON evidence"
 ---
 
-# Tasks: CodeGraph Code Unit Extraction — Provider Qualification Gate
+# Tasks: CodeGraphContext 0.5.1 HTTP JSON Qualification
 
-**Input**: `spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md`,
-and `contracts/repository-profiling-api.md` in
-`specs/001-codegraph-extraction/`.
+**Input**: The corrected specification accepted in
+`specs/001-codegraph-extraction/reviews/spec-review-4.json`, the complete plan
+set accepted in `specs/001-codegraph-extraction/reviews/plan-review-7.json`,
+and the approved qualification correction in
+`docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md`.
 
-**Plan authority**: The accepted plan keeps one private local whole-Repository
-`cgc` graph per `ScanRun`; at-most-1,000-file groups are Vulgata audit/filter
-metadata only. There is no provider batch, per-file timer, continuation, retry,
-or dispatch behavior. The only provider deadline is the configured 1,800-second
-whole-process limit. This list does not alter that user-approved Scan strategy or
-the corresponding PRD correction.
+## Workflow boundary
 
-**Provider-pin correction**: The configured package index reports `0.5.1` as
-the latest available CodeGraphContext release. The only executable provider
-criterion in this task graph is `codegraphcontext==0.5.1`, with `cgc version`
-reporting `0.5.1`. The unavailable earlier pin remains solely in historical
-qualification evidence; no task may execute, assert, lock, or accept it.
+This executable graph covers only the qualification gate that must precede
+Story 4.1 production work. It preserves the approved whole-Repository
+`ScanRun` baseline and qualifies only CodeGraphContext `0.5.1` through its
+loopback HTTP JSON candidate. Because no product User Story is implemented
+before the qualification hard stop, every task is foundational and therefore
+has no `[US#]` label.
 
-**Authorization**: The user approved the whole-Repository `cgc` correction and
-the exact latest-available provider correction for task generation. That
-authorization permits only the qualification gate below. It does not authorize
-structural mapping, persistence, migrations, Git working-copy implementation,
-API, UI, E2E, LLM, MCP, Worker Agent, Scan Coordinator, or Cross-Repository
-Resolution work.
+This graph authorizes writes only under:
 
-**Hard boundary**: Every task stops at a deterministic provider qualification
-result. A `pass` requires observed grammar evidence and a fresh `plan` amendment
-plus independent plan review before any later implementation tasks may be
-generated. A `fail` requires corrective planning. Neither result permits a
-later implementer to continue into production profiling from this file.
+- `docker/Dockerfile` and `docker/codegraph/`;
+- `tests/Vulgata.Tests/CodeGraphQualification/`; and
+- `specs/001-codegraph-extraction/qualification/`.
 
-**Tests**: Required. The Constitution's test-first integration rule and the
-accepted plan make qualification tests the first executable increment. Update
-the red tests for `0.5.1`, observe their expected failure against the current
-shim/no-lock image, and capture only bounded synthetic evidence before Docker or
-provider changes.
+It does not authorize a production provider adapter or transport, direct Kuzu
+integration, Code Unit mapping or persistence, migrations, Git/API/UI/E2E
+work, a Vulgata MCP or Worker Agent tool, Scan Coordinator work, Documents,
+Uncertainty, or Cross-Repository Resolution.
 
-## Phase 1: Setup — deterministic, non-secret qualification fixture
+Corrected FR-018 is binding throughout this graph: audit/progress groups are
+metadata only and never provider input; qualification performs one
+whole-Repository `cgc index` plus one projection under one 1,800-second
+index-through-projection limit; and any cancellation, timeout, hang, crash,
+unsuccessful exit, or unreadable response fails the provider-derived outcome
+atomically. Because this graph stops before production Scan implementation, it
+does not implement audit-group persistence or claim per-file progress,
+deadlines, retry, bisection, failure isolation, or continuation.
 
-**Purpose**: Preserve the valid synthetic fixture and correct the version-bound
-schema before the red tests are regenerated. The fixture models a whole
-Repository but contains no proprietary source, credentials, tokens, absolute
-working-copy paths, or remote endpoint.
+## Execution rules
 
-- [x] T001 Preserve the completed synthetic non-secret whole-Repository fixture and manifest in `tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/` and `tests/Vulgata.Tests/CodeGraphQualification/Fixtures/qualification-fixture-manifest.json`; it contains symbols and fixture relationships for `CALLS`, `IMPORTS`, `INHERITS`, and `CONTAINS`, plus one relationship to a path marked filtered. Its contents are independent of the provider pin and require no rewrite.
-- [ ] T002 Update the qualification result contract in `specs/001-codegraph-extraction/qualification/qualification-result.schema.json` while preserving `specs/001-codegraph-extraction/qualification/evidence/.gitignore`; require image digest, CPython/package-lock identities, hash-verified exact `codegraphcontext==0.5.1`, non-root identity, redacted command/output hashes, elapsed duration, pass/fail category, and `nextAction` restricted to `return-to-plan` or `corrective-planning`.
+- Run the read-only `speckit-analyze` gate after this file is accepted and
+  before T001 begins.
+- Within each bounded group, observe the new test failing for the expected
+  missing behavior before changing its implementation, then run the targeted
+  and surrounding tests green.
+- Use the exact 11-entry lifecycle: `cgc-version`, `cgc-doctor`,
+  `cgc-context-create`, `cgc-context-mode`, `cgc-context-default`, `cgc-index`,
+  `cgc-api-start`, `cgc-api-health`, `cgc-api-query`, `gateway-stop`, and
+  `cgc-context-delete`.
+- Use one aggregate `cgc-api-health` channel and one `cgc-api-query` channel.
+  Apply one inclusive 65,536-byte raw budget to every provider stdout/stderr
+  channel and both HTTP channels; byte 65,537 is counted and hashed once as the
+  overflow sentinel before observation terminates.
+- Parse the query response with strict incremental UTF-8 and streaming JSON.
+  The inherited raw-response-file Python bridge, any whole-document bridge,
+  and any conversion to synthetic pipe-separated `key=value` rows are
+  explicitly rejected and must be removed. Do not use `ReadAsString`, retain
+  raw response chunks, or parse CodeGraphContext's terminal table.
+- Cleanup failure has precedence over every other result. A forced gateway
+  kill makes the gate fail.
+- T009 is the only task that may execute the replacement provider gate. It may
+  run exactly once, only after Groups A-C and T007-T008 are green. There is no
+  retry in this graph.
 
-**Checkpoint**: The fixture remains inspectable without business source, and the
-result contract cannot express a production adapter, persistence result, or an
-obsolete executable provider pin.
+## Group A: Reproducible image, Context isolation, and exact lifecycle
 
----
+**Independent validation**: Static image tests and synthetic lifecycle tests
+prove the pinned non-root runtime, private named Context, no-network loopback
+gateway, exact lifecycle, and cleanup behavior without executing the
+replacement provider gate.
 
-## Phase 2: Foundational — red qualification tests (blocking)
+- [ ] T001 Add and run failing runtime/isolation/lifecycle contract tests in `tests/Vulgata.Tests/CodeGraphQualification/CodeGraphImageQualificationTests.cs` and `tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs`
+  - **Depends on:** none
+  - Require a digest-pinned CPython 3.12.x image, repository-owned Python lock,
+    hash-verified dependency lock, exact `codegraphcontext==0.5.1` and Kuzu
+    installation, and execution as non-root `app`.
+  - Require one generated mode-0700 provider home and Kuzu directory, named
+    mode/default Context selection, local config-to-Context isolation proof,
+    `--network none`, `127.0.0.1` binding, no published port, and no call to
+    bundled MCP/tool routes.
+  - Require one whole-Repository provider operation, one 1,800-second
+    index-through-projection limit, and fail-closed termination; reject any
+    provider-input batching, per-file timer, retry, bisection, partial result,
+    or sibling-continuation behavior.
+  - Require exactly one occurrence of each approved lifecycle entry and reject
+    duplicates, unapproved entries, the old CLI-table assumption, and the old
+    prohibition against the qualification-only `cgc api start` surface.
+  - Observe RED with:
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification.CodeGraphImageQualificationTests`
+    and
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification.CgcCommandQualificationTests`.
 
-**Purpose**: Define the deterministic `0.5.1` pass/fail contract before
-installing the provider. These tests must be observed red against the current
-`codegraph` shim/no-lock image and recorded only as bounded synthetic evidence.
+- [ ] T002 Implement the pinned runtime, structural fixture, private Context lifecycle, and cleanup in `docker/Dockerfile`, `docker/codegraph/python-version.txt`, `docker/codegraph/requirements.lock`, `tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs`, `tests/Vulgata.Tests/CodeGraphQualification/QualificationTestPaths.cs`, and `tests/Vulgata.Tests/CodeGraphQualification/Fixtures/`
+  - **Depends on:** T001
+  - Keep one whole-Repository index and provide fixture facts for `CALLS`,
+    `CONTAINS`, `IMPORTS`, `INHERITS`, and one filtered-target candidate.
+  - Apply one configurable qualification clock defaulting to 1,800 seconds
+    from the start of `cgc-index` through completion of `cgc-api-query`; any
+    cancellation, timeout, hang, crash, unsuccessful exit, or unreadable
+    response must terminate the provider tree and yield one atomic failed gate.
+  - Implement the exact 11-entry lifecycle, private Context proof, bounded
+    gateway stop (`SIGTERM`, five-second grace, conditional `SIGKILL`), and
+    cleanup of the Context, Kuzu directory, provider home, and named container.
+  - Do not add a production adapter or Vulgata endpoint.
+  - Reach GREEN by rerunning both T001 commands and the surrounding
+    `CodeGraphQualification` tests that do not execute the replacement gate.
 
-- [ ] T003 [P] Update and observe the failing container-lock/non-root test in `tests/Vulgata.Tests/CodeGraphQualification/CodeGraphImageQualificationTests.cs`; require a digest-pinned Docker base, committed CPython 3.12.x lock, `--require-hashes`, hash-verified exact `codegraphcontext==0.5.1` and Kuzu distributions, no runtime resolver, final `app` user, writable private Kuzu directory, `cgc version == 0.5.1`, and `cgc doctor` exit code zero.
-- [ ] T004 [P] Replace the Docker-daemon sentinel with an observed-red whole-Repository command/cleanup contract in `tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs`; require one generated-private context create, one `index <fixture> --force`, static read-only query, and context delete using the candidate command surface under the 1,800-second whole-process limit. Require timeout, cancellation, non-zero exit, and unreadable output to terminate the process tree and remove the private context/database directory; forbid any per-file timeout, audit-group process, retry, remote backend, API, MCP, watcher, bundle, registry, datasource, or Neo4j command.
-- [ ] T005 Update and observe the failing redaction/hard-stop test in `tests/Vulgata.Tests/CodeGraphQualification/QualificationGateTests.cs`; require a `0.5.1` schema-valid result to retain only bounded synthetic command/output hashes, reject source text, credentials, tokens, and absolute checkout paths, and assert that both `pass` and `fail` next actions prevent provider mapping, persistence, migration, Git/API/UI, E2E, or agent work until the required plan return.
+## Group B: Streaming HTTP observer and strict JSON candidate grammar
 
-**Checkpoint**: T003–T005 are red and demonstrate that the current image/shim
-cannot be mistaken for the selected `cgc` provider. Do not alter `src/`, EF,
-migrations, Git services, contracts, APIs, components, or the feature plan at
-this checkpoint.
+**Independent validation**: Synthetic byte streams prove deterministic
+logical-channel accounting and fail-closed parsing without a provider run or
+retaining provider values.
 
----
+- [ ] T003 Add and run failing streaming-observer tests in `tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserverTests.cs`
+  - **Depends on:** T002
+  - Require the aggregate health and query logical channels, the shared
+    inclusive byte budget, per-channel byte counts/hashes, byte conservation,
+    the overflow sentinel, and the exact schema-1.2 canonical-summary field
+    order.
+  - Require strict incremental UTF-8 and one streaming JSON object with no
+    trailing token; fail on replacement decoding, invalid JSON, unexpected
+    envelope shape, duplicate/missing/unknown/nested/source-bearing aliases,
+    wrong types, records over 4,096 raw bytes, or cross-record correlation.
+  - Add regression assertions that fail while
+    `CodeGraphQualificationRunner.cs` still writes an HTTP response to a raw
+    file, invokes a Python/whole-document bridge, emits synthetic `key=value`
+    rows, or feeds the observer a rendered CLI table.
+  - Observe RED with
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification.CgcStreamingEvidenceObserverTests`.
 
-## Phase 3: User Story 1 — qualify the exact local provider (Priority: P1) 🎯 MVP
+- [ ] T004 Replace the inherited bridge with bounded streaming HTTP observation in `tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserver.cs` and `tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs`
+  - **Depends on:** T003
+  - Stream, frame, hash, and discard every provider stdout/stderr stream plus
+    all readiness bodies in attempt order and the single query-response body.
+  - Validate the exact HTTP envelope from `plan.md`: HTTP success,
+    `status: "ok"`, null/absent `error`, `data.success: true`, exact query echo,
+    non-negative `record_count`, and an equally sized `results` array.
+  - Validate only the twelve approved scalar aliases and the
+    relationship-specific rules for `CALLS`, `CONTAINS`, `IMPORTS`,
+    `INHERITS`, positive ordered ranges, non-empty endpoint identities, and the
+    one allowed filtered-target candidate. Discard all transient values as soon
+    as their predicates are updated.
+  - Remove the raw-response-file Python bridge, whole-document parsing, and
+    synthetic `key=value` conversion rather than adapting them.
+  - Reach GREEN with the T003 command and the non-provider-executing
+    `CgcCommandQualificationTests` suite.
 
-**Goal**: Prove, in a reproducible non-root container, whether the exact local
-provider can index one synthetic whole Repository and expose enough bounded,
-safe structural evidence to justify returning to planning.
+## Group C: Closed schema-1.2 evidence and terminal precedence
 
-**Independent Test**: The qualification tests run a Docker-built image against
-only the synthetic fixture. A passing provider result emits a schema-valid,
-redacted `qualification-result.json` with `nextAction: return-to-plan`; a valid
-provider failure emits `nextAction: corrective-planning`. In either case the
-gate creates no Vulgata domain record or public route.
+**Independent validation**: Writer/schema tests prove that only approved
+redacted evidence can be persisted and that cleanup failure always wins,
+without changing the historical qualification record or running the provider.
 
-### Implementation for User Story 1
+- [ ] T005 Add and run failing schema-1.2 and classification tests in `tests/Vulgata.Tests/CodeGraphQualification/QualificationGateTests.cs`
+  - **Depends on:** T004
+  - Require version `1.2`, grammar ID
+    `vulgata-cgc-http-json-v1,vulgata-cgc-streaming-evidence-v2`, a closed
+    `structuralEvidence` object, the exact canonical summary, and only approved
+    counts, hashes, lifecycle/relationship/record facts, predicates, and
+    cleanup facts.
+  - Reject paths, symbols, source, endpoints, ports, raw JSON, raw query,
+    arbitrary provider properties, raw-output retention, and the rejected
+    schema-1.1 current-write shape. Preserve schema-1.0 historical-failure
+    readability only.
+  - Require `cleanup-failure / corrective-planning` to override every other
+    classification; otherwise route pass to later parser/integration planning
+    and fail to corrective planning.
+  - Observe RED with
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification.QualificationGateTests`.
 
-- [ ] T006 [US1] Replace only the existing provider shim with a reproducible, digest-pinned non-root qualification image in `docker/Dockerfile`, `docker/codegraph/python-version.txt`, and `docker/codegraph/requirements.lock`; hash-lock exact `codegraphcontext==0.5.1`, Kuzu, and every transitive Python distribution, install with `--require-hashes`, prohibit runtime installation/resolution, and prohibit `cgc api`, `cgc mcp`, watcher, bundle, registry, datasource, Neo4j, or remote-database paths.
-- [ ] T007 [US1] Implement the test-only qualification runner in `tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs`; use `ProcessStartInfo.ArgumentList`, generated private paths, bounded stdout/stderr capture and redaction, one whole-process timeout defaulting to 1,800 seconds, process-tree termination, and `finally` cleanup. It may execute only `cgc version`, `cgc doctor`, `cgc context create`, `cgc index`, static read-only `cgc query`, and `cgc context delete`; it must neither partition provider input nor parse an undocumented provider result into a Vulgata contract.
-- [ ] T008 [US1] Update deterministic result writing in `tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs`; emit only the `0.5.1` schema-valid pass/fail categories, exact lock/image/command/evidence hashes, duration, cleanup status, and restricted next action. On provider error, timeout, crash, non-zero exit, malformed/unbounded evidence, a missing relationship kind, or absent filtered-target endpoint evidence, emit `corrective-planning` and no partial success.
-- [ ] T009 [US1] Run the qualification gate through `tests/Vulgata.Tests/CodeGraphQualification/CodeGraphImageQualificationTests.cs`, `tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs`, and `tests/Vulgata.Tests/CodeGraphQualification/QualificationGateTests.cs`; store only redacted synthetic evidence in `specs/001-codegraph-extraction/qualification/evidence/` and the schema-valid decision in `specs/001-codegraph-extraction/qualification/qualification-result.json`. A provider `pass` must prove the exact `cgc` version, image and lock hashes, non-root `doctor`, one context/index/query/delete sequence, cleanup, all four relationship kinds, a filtered-target endpoint, and a deterministic bounded output grammar for normalized path, kind, symbol, positive ordered range, relationship kind, and endpoint identity. Capturing that grammar is evidence only, never a production parser or `CodeGraphParseResult` implementation.
-- [ ] T010 [US1] Execute the deterministic stop decision from `specs/001-codegraph-extraction/qualification/qualification-result.json`: on `pass`, return control to `specs/001-codegraph-extraction/plan.md` for the observed static queries, normalized safe grammar/snapshot, endpoint proof, image digest, and lock hashes followed by fresh independent plan review; on `fail`, return only the safe result/evidence identities for corrective planning. Do not create any further task or implementation artifact in either branch.
+- [ ] T006 Implement the closed schema-1.2 writer and validator in `tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs` and `specs/001-codegraph-extraction/qualification/qualification-result.schema.json`
+  - **Depends on:** T005
+  - Derive `canonicalSummarySha256` from the exact serialization in `plan.md`,
+    enforce the redacted allow-list, verify total-byte conservation, and encode
+    cleanup precedence plus the two terminal next-action values.
+  - Retain schema-1.0 input compatibility only for historical failure
+    evidence; do not fabricate or overwrite the durable provider result before
+    T009.
+  - Reach GREEN with the T005 command and the T003 command.
 
-**Checkpoint**: This is the only deliverable authorized by the current task
-list. A successful provider result is evidence to re-plan, not permission to
-implement `ICodeGraphCliService`, `CodeGraphParseResult`, `ScanRun`, Code Unit,
-Code Unit Edge, Unresolved Structural Relationship Candidate, EF
-configuration/migration, working-copy service, API, or UI.
+## Group D: One replacement provider gate and qualification hard stop
 
----
+**Independent validation**: Synthetic gate tests first prove one-shot and
+fail-closed orchestration. Only then one real replacement execution records a
+schema-1.2 redacted result and terminates at the qualification boundary.
 
-## Phase 4: Qualification closure — verify and stop
+- [ ] T007 Add and run failing one-shot replacement-gate tests in `tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs` and `tests/Vulgata.Tests/CodeGraphQualification/QualificationGateTests.cs`
+  - **Depends on:** T006
+  - Require the exact static request body from `plan.md`, readiness calls only
+    to `GET /health`, one aggregate health channel, exactly one subsequent
+    `POST /api/v1/query`, and no query retry or bundled MCP/tool-route call.
+  - Require exactly one of every approved lifecycle entry and fail on cleanup,
+    forced kill, overflow, byte mismatch, Context-isolation failure, missing
+    structural predicate, duplicate/unapproved lifecycle activity, or attempt
+    to execute before all prerequisite harness groups are green.
+  - Require provider failure to produce no partial structural success and no
+    retry, bisection, per-file continuation, or second index/query operation.
+  - Observe RED by rerunning the T001, T003, and T005 targeted commands; the
+    tests themselves must use controlled synthetic processes/streams and must
+    not execute CodeGraphContext.
 
-**Purpose**: Verify the gate itself, then stop in the correct workflow stage.
+- [ ] T008 Implement the one-shot runner safeguards and final gate classification in `tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs`, `tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs`, and `tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs`
+  - **Depends on:** T007
+  - Implement exact request/lifecycle accounting, aggregate readiness,
+    one-query enforcement, cleanup precedence, byte conservation, and a guard
+    that leaves provider execution disabled outside T009.
+  - Enforce the single 1,800-second index-through-projection deadline and one
+    terminal qualification classification without partial structural output.
+  - Reach GREEN with the T001, T003, and T005 targeted commands plus
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification.CgcCommandQualificationTests`.
 
-- [ ] T011 Verify the qualification-only boundary with `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphQualification --no-restore`, `docker build --file docker/Dockerfile .`, schema validation of `specs/001-codegraph-extraction/qualification/qualification-result.json` against `specs/001-codegraph-extraction/qualification/qualification-result.schema.json`, and `cgc version`/`cgc doctor` as the final non-root image user; record exact exit codes and redacted synthetic evidence hashes in `specs/001-codegraph-extraction/qualification/evidence/verification.md`.
-- [ ] T012 Verify no unapproved production scope was changed by reviewing only `src/dotnet/`, `tests/Vulgata.Tests/CodeGraphQualification/`, `docker/`, and `specs/001-codegraph-extraction/qualification/`; append the explicit `PASS -> re-plan/review` or `FAIL -> corrective planning` stop decision to `specs/001-codegraph-extraction/qualification/evidence/verification.md`, without generating mapping/persistence/API/UI/E2E tasks.
+- [ ] T009 Execute exactly one replacement provider qualification and write only redacted evidence to `specs/001-codegraph-extraction/qualification/qualification-result.json`, `specs/001-codegraph-extraction/qualification/evidence/red.md`, and `specs/001-codegraph-extraction/qualification/evidence/verification.md`
+  - **Depends on:** T002, T004, T006, T008
+  - Before execution, confirm all targeted prerequisite commands from T002,
+    T004, T006, and T008 are green without a provider run and confirm the
+    durable evidence has no previously recorded replacement attempt.
+  - Execute the approved full qualification command exactly once:
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification`.
+  - Persist only schema-1.2 redacted evidence. Do not retain stdout/stderr,
+    response bodies/chunks, JSON, query text, paths, symbols, endpoint values,
+    source, credentials, tokens, or private Context/container values.
+  - Whether the result passes or fails, do not rerun the command in this graph.
 
----
+- [ ] T010 Verify the durable classification and stop at `specs/001-codegraph-extraction/qualification/qualification-result.json`, `specs/001-codegraph-extraction/qualification/evidence/red.md`, and `specs/001-codegraph-extraction/qualification/evidence/verification.md`
+  - **Depends on:** T009
+  - If the result passes, verify its next action is later reviewed
+    parser/integration planning; do not enter production implementation.
+  - If the result fails, verify its next action is corrective planning and that
+    only bounded redacted evidence remains; do not retry.
+  - Verify cleanup was attempted and succeeded, the terminal classification
+    follows cleanup precedence, and exactly one replacement execution is
+    recorded.
 
-## Dependencies & Execution Order
+## Dependency graph
 
 ```text
-T001 preserved fixture ─┬─> T003 image/non-root red test ─┐
-                        └─> T004 command/cleanup red test ├─> T006 image + exact lock ─> T007 runner ─> T008 writer ─> T009 evidence decision ─> T010 hard stop ─> T011 verification ─> T012 return
-T002 schema correction ─┬─> T003 image/non-root red test ─┤
-                        └─> T005 redaction/hard-stop red ─┘
+T001 -> T002 -> T003 -> T004 -> T005 -> T006 -> T007 -> T008
+          \--------------------+--------------------+-------> T009 -> T010
 ```
 
-- T001 is preserved evidence; it is not rerun unless its fixture manifest
-  changes.
-- T002 must finish before T003 and T005 because their expected result contract
-  has the corrected exact pin.
-- T003, T004, and T005 may run in parallel after their dependencies and must
-  all be red before T006.
-- T006 → T007 → T008 → T009 is sequential. The locked image must exist before
-  the runner; the runner before result writing; and result writing before a
-  durable decision.
-- T010–T012 are sequential stop controls. They never unlock structural work.
+Exact dependencies:
 
-## Validation Commands and Decision Criteria
+- T001: none
+- T002: T001
+- T003: T002
+- T004: T003
+- T005: T004
+- T006: T005
+- T007: T006
+- T008: T007
+- T009: T002, T004, T006, T008
+- T010: T009
 
-| Stage | Command or evidence | Required criterion |
-| --- | --- | --- |
-| Red baseline | `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphQualification --no-restore` | T003–T005 fail for the missing real locked provider contract, without invoking production work. |
-| Locked image | `docker build --file docker/Dockerfile .` | Image builds from digest-pinned input; requirements install uses hash verification and contains exact `codegraphcontext==0.5.1`. |
-| Provider gate | qualification test filter against the image and synthetic fixture | The only candidate commands are version, doctor, context create/delete, whole-Repository index, and static read-only query. The result is either fully proved `pass` or safe `fail`; neither is silently treated as a production success. |
-| Result contract | `Test-Json -Path specs/001-codegraph-extraction/qualification/qualification-result.json -SchemaFile specs/001-codegraph-extraction/qualification/qualification-result.schema.json` | Schema-valid, redacted, bounded evidence with lock/image identities and the correct restricted next action. |
-| Scope/format | `git diff --check -- specs/001-codegraph-extraction/tasks.md` and the T012 path review | No whitespace error and no source integration, persistence, Git/API/UI, E2E, agent, or Cross-Repository Resolution work. |
+No task is marked `[P]`: the bounded groups intentionally serialize writes to
+the shared runner and evidence contract, and the provider gate is one-shot.
 
-## Red/Green Evidence Plan
+## Corrected FR-018 traceability
 
-| Stage | Required evidence | Prohibited inference |
-| --- | --- | --- |
-| Red (T003–T005) | The current shim/no-lock image fails the exact `0.5.1` image, command/cleanup, and redaction/hard-stop contracts. | Treating a fake executable, an old failed pin, or public documentation as provider compatibility. |
-| Green safety work (T006–T008) | A pinned non-root image and runner can deterministically write a bounded result for the qualified decision contract. | Assuming JSON format, graph-store schema, file batching, per-file timeout, or endpoint grammar that was not observed. |
-| Qualification decision (T009) | Whole-fixture context/index/query/delete evidence, cleanup, output grammar observation, and a schema-valid pass/fail result. | Treating a valid `fail` result as provider qualification or treating `pass` as authorization for mapping/persistence. |
-| Gate (T010–T012) | `pass` returns to fresh plan/review; `fail` returns to corrective planning. | Generating/running production mapping, persistence, migration, Git/API/UI, E2E, or agent work. |
-
-## Coverage Map to the Accepted Plan
-
-| Accepted-plan requirement | Tasks that prove it |
+| Corrected behavior | Executable task evidence |
 | --- | --- |
-| Exact lock, digest-pinned image, CPython/distribution hashes, non-root `version`/`doctor` | T002, T003, T006, T009, T011 |
-| Synthetic non-secret whole-Repository fixture and all structural kinds | T001, T004, T009 |
-| Local Kuzu context/create/index/query/delete only | T004, T007, T009 |
-| One whole-process timeout, cancellation/crash cleanup, atomic provider failure | T004, T007, T008, T009 |
-| Bounded/redacted evidence and no remote/API/MCP activity | T005, T006, T007, T008, T011 |
-| Deterministic output-grammar observation and fresh plan/review before mapping | T004, T008, T009, T010, T012 |
+| Audit/progress groups never partition provider input or create provider operations. | T001 rejects batching/per-file behavior; T002 performs exactly one whole-Repository index; this qualification-only graph creates no production audit-group implementation. |
+| One whole-Repository provider graph operation per Scan Run boundary. | T001-T002 prove one `cgc-index`; T007-T009 enforce one projection and exactly one real replacement execution. |
+| One configurable whole-process limit defaults to 1,800 seconds from indexing through projection. | T001 observes RED for the missing limit; T002 implements it in the qualification runner; T007-T008 prove fail-closed enforcement before T009. |
+| Cancellation, timeout, hang, crash, unsuccessful exit, or unreadable response fails provider-derived results atomically. | T001-T002 cover process termination/cleanup; T003-T008 cover unreadable/unsafe evidence and terminal precedence; T009-T010 persist one redacted terminal classification without retry. |
+| Previously determined local filtering outcomes remain auditable. | Preserved as an accepted production requirement but deliberately not implemented here; the synthetic filtered-target fact only qualifies later mapping input, and the hard stop prevents an unreviewed persistence implementation. |
 
-## Explicitly Not Generated
+## Hard stop
 
-The following remain forbidden until a provider `pass` has been recorded, the
-observed grammar has been added to a new plan, and that plan has passed fresh
-independent review: provider-result mapping; structural Core entities/contracts;
-EF configuration or migration; Git working-copy service; Repository details
-action; API endpoints/DTOs/validators; production tests or E2E; Scan
-Coordinator; Agent tools; LLM/MCP/Worker Agent work; Document, Uncertainty,
-language/framework detection, or Cross-Repository Resolution.
-
-## Implementation Strategy
-
-1. Preserve T001, correct T002, then complete T003–T005 with observed red
-   evidence for the exact available provider contract.
-2. Complete T006–T009 to determine provider feasibility using only the
-   synthetic fixture and local private context/database.
-3. Execute T010. A pass returns to `plan`; a fail returns to corrective
-   planning. This task file is not a backlog for the future feature.
-4. Complete T011–T012, record the stop decision, and end implementation.
-
-**Format validation**: Every executable item uses the required checkbox,
-sequential task ID, optional parallel marker, user-story label where applicable,
-and exact repository path format.
+This graph completes only at T010. A qualification pass is evidence for a new
+reviewed production parser/integration plan; a qualification fail returns to
+corrective planning. Neither outcome authorizes a second provider execution or
+any Story 4.1 production implementation.

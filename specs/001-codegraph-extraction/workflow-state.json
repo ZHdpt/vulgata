@@ -3,9 +3,9 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "tasks",
+  "stage": "implement",
   "plan_revision": {
-    "status": "plan-regenerated-accepted-ready-for-tasks",
+    "status": "tasks-regenerated-analysis-accepted-ready-for-implementation",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
     "trigger": "The CodeGraphContext 0.5.1 CLI renders a table while the rejected schema-1.1 test observer expected an invented key=value record.",
     "scope": "Replace only qualification transport/evidence with the provider's loopback HTTP JSON gateway; no production integration or provider execution is authorized.",
@@ -13,7 +13,7 @@
     "latest_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-7.json",
     "approval_observed_at": "2026-07-16T09:48:03.3732926+08:00",
     "approval_summary": "User explicitly approved the planned-change gate for the qualification-only HTTP JSON transport/parser candidate. This preserves the previously approved whole-Repository ScanRun baseline and authorizes only fresh task generation plus read-only analysis.",
-    "latest_analyze_artifact": "specs/001-codegraph-extraction/reviews/analyze-5.json",
+    "latest_analyze_artifact": "specs/001-codegraph-extraction/reviews/analyze-6.json",
     "analysis_remediation_approval_observed_at": "2026-07-16T09:56:24.4233364+08:00",
     "analysis_remediation_approval_summary": "User explicitly approved the narrow analyze remediation for Story 4.1: revise the stale supporting plan artifact(s) so the full plan set matches the accepted HTTP JSON qualification lifecycle, then rerun plan review, regenerate tasks, and rerun analyze before implementation resumes.",
     "spec_remediation_approval_observed_at": "2026-07-16T16:20:00+08:00",
@@ -26,8 +26,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "fresh-task-generation",
-      "speckit-analyze"
+      "tdd-task-group-a"
     ]
   },
   "active_gates": {
@@ -530,6 +529,37 @@
       "agent_role": "plan-judge",
       "evidence_paths": [
         "specs/001-codegraph-extraction/reviews/plan-review-5.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-07-16T09:00:00Z",
+      "completed_at": "2026-07-16T09:08:00Z",
+      "input_commit": "e2a27baa6b9153279fc86e3d18ec1f6f9636bb1c",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "9ded764c98d87d6499a1f379d7021be8c18df3632afd53cc4a09191017a89e99"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-16T09:08:00Z",
+      "completed_at": "2026-07-16T09:18:00Z",
+      "input_commit": "e2a27baa6b9153279fc86e3d18ec1f6f9636bb1c",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "9ded764c98d87d6499a1f379d7021be8c18df3632afd53cc4a09191017a89e99",
+        "boundary_diff_sha256": "e21d4c4642fc41050b00b84e00b8cde3e520d9799946b72c9d959a2a31e1e4bb"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/analyze-6.json"
       ],
       "failure": null
     }
@@ -1331,11 +1361,12 @@
       ]
     },
     "analyze": {
-      "count": 3,
+      "count": 4,
       "verdict_paths": [
         "specs/001-codegraph-extraction/reviews/analyze-1.json",
         "specs/001-codegraph-extraction/reviews/analyze-2.json",
-        "specs/001-codegraph-extraction/reviews/analyze-5.json"
+        "specs/001-codegraph-extraction/reviews/analyze-5.json",
+        "specs/001-codegraph-extraction/reviews/analyze-6.json"
       ]
     },
     "acceptance-review": {
@@ -1804,27 +1835,39 @@
       "observed_at": "2026-07-16T09:00:00Z",
       "summary": "Fresh independent plan review accepted the complete plan regenerated from corrected FR-018 with no findings.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/analyze/5",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "e2a27baa6b9153279fc86e3d18ec1f6f9636bb1c",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/tasks.md",
+        "specs/001-codegraph-extraction/reviews/analyze-6.json"
+      ],
+      "command": "git diff --check -- specs/001-codegraph-extraction/tasks.md specs/001-codegraph-extraction/reviews/analyze-6.json",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T09:18:00Z",
+      "summary": "Fresh independent analysis accepted the corrected whole-Repository task graph with full FR-018 traceability, no findings, one isolated provider execution, a hard stop, and no production runtime scope.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-plan-review-20260716T090000Z-c3d912",
+    "checkpoint_id": "bmad-4-1-analyze-20260716T091800Z-d6f204",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "plan-review",
+    "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/plan.md",
-      "specs/001-codegraph-extraction/research.md",
-      "specs/001-codegraph-extraction/data-model.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/001-codegraph-extraction/reviews/plan-review-7.json",
+      "specs/001-codegraph-extraction/tasks.md",
+      "specs/001-codegraph-extraction/reviews/analyze-6.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/8"
+      "4-1-codegraph-integration-and-code-unit-extraction/analyze/5"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-16T16:46:51+08:00"
+  "updated_at": "2026-07-16T17:18:00+08:00"
 }
