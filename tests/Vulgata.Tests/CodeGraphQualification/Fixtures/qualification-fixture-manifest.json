@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "fixtureId": "codegraph-qualification-synthetic-repository",
+  "sourceClassification": "synthetic-non-secret",
+  "repositoryPath": "../ProviderFixtures/Attempt0002Repository",
+  "eligiblePaths": [
+    "src/Eligible/BaseProcessor.cs",
+    "src/Eligible/OrderRunner.cs",
+    "src/Eligible/OrderService.cs"
+  ],
+  "filteredPaths": [
+    {
+      "path": "src/Filtered/GeneratedClient.g.cs",
+      "reason": "generated-source-fixture"
+    }
+  ],
+  "expectedRelationships": [
+    {
+      "kind": "CONTAINS",
+      "source": "QualificationRepository.Eligible.OrderRunner",
+      "target": "QualificationRepository.Eligible.OrderRunner.Run"
+    },
+    {
+      "kind": "CALLS",
+      "source": "QualificationRepository.Eligible.OrderRunner.Run",
+      "target": "QualificationRepository.Eligible.OrderService.Process"
+    },
+    {
+      "kind": "IMPORTS",
+      "source": "src/Eligible/OrderService.cs",
+      "target": "src/Filtered/GeneratedClient.g.cs"
+    },
+    {
+      "kind": "INHERITS",
+      "source": "QualificationRepository.Eligible.OrderService",
+      "target": "QualificationRepository.Eligible.BaseProcessor"
+    }
+  ]
+}

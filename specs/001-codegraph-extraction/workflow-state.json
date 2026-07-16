@@ -28,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "t001-legacy-fixture-revocation"
+      "t002-t003-capability-split"
     ]
   },
   "active_gates": {
@@ -1897,20 +1897,41 @@
       "observed_at": "2026-07-16T10:30:00Z",
       "summary": "Fresh analysis accepted the authorized corrective graph with full task coverage, no findings, thirteen provider-unreachable tasks, sole guarded attempt-0002 in T013, and the T014 production hard stop.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/8",
+      "kind": "verification",
+      "stage": "implement",
+      "source_commit": "5937850638aab35fcae8ff85f2e359ee9bd6bdc8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository",
+        "tests/Vulgata.Tests/CodeGraphQualification/Fixtures/qualification-fixture-manifest.json",
+        "tests/Vulgata.Tests/CodeGraphQualification/QualificationTestPaths.cs",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "if (Test-Path 'tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository') { throw 'legacy provider fixture path still exists' }",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T10:45:00Z",
+      "summary": "T001 removed the stale fixture capability before any test execution. The replacement fixture retained all four source hashes; no test, Docker, cgc, HTTP, image, or provider command ran.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-corrective-analyze-20260716T103000Z-a5c913",
+    "checkpoint_id": "bmad-4-1-t001-20260716T104500Z-b8d127",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "analyze",
+    "stage": "implement",
     "committed_paths": [
-      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
       "specs/001-codegraph-extraction/tasks.md",
-      "specs/001-codegraph-extraction/reviews/analyze-7.json",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Eligible/BaseProcessor.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Eligible/OrderRunner.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Eligible/OrderService.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/src/Filtered/GeneratedClient.g.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/Fixtures/qualification-fixture-manifest.json",
+      "tests/Vulgata.Tests/CodeGraphQualification/QualificationTestPaths.cs",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/analyze/6"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/8"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -1926,5 +1947,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T18:30:00+08:00"
+  "updated_at": "2026-07-16T18:45:00+08:00"
 }

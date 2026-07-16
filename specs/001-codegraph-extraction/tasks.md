@@ -46,7 +46,7 @@ and/or `FullyQualifiedName=` identity, and never uses a namespace/class substrin
 **Independent validation**: the old absolute/relative fixture location is absent, so the
 known stale assembly exits before image inspection, build, run, or provider access.
 
-- [ ] T001 Move
+- [x] T001 Move
   `tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/` to
   `tests/Vulgata.Tests/CodeGraphQualification/ProviderFixtures/Attempt0002Repository/`,
   update fixture manifest/path constants without running tests, and keep the legacy path
