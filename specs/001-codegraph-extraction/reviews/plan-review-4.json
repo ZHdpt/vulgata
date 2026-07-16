@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+  "reviewed_boundary": {
+    "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+    "candidate_commit": null,
+    "diff_sha256": "a6b3a72afb93be513ae6c4340c539b7560731a89e685076b182e49bc1a3f5e6a",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/plan.md": "9991db380c1792e389052b74dfdeb2292cd29e9bf931ed57d73dab4e5056e139",
+      "specs/001-codegraph-extraction/research.md": "ca4b6de8618cba057dde2c63bbf636ef992475f9047823f444ae1db8d0e22d40",
+      "specs/001-codegraph-extraction/data-model.md": "5471fa1416f8799dc206c602743dfd758bf027e67971ece13efdefde80fcc951",
+      "specs/001-codegraph-extraction/quickstart.md": "618bac702d251c5595c6d54c32af1b113dccebaeb5a1dd7e008a12a246ac8ba7",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "091bc181eb1a879faceca7c4c396d406b4e31f0940bd7040284ecdae37dc72c5",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md": "1a0ec0be1823c53252e4cfdf9bf41b08c85001ac613954fd71963a1b43a0f42d"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/research.md",
+    "specs/001-codegraph-extraction/data-model.md",
+    "specs/001-codegraph-extraction/quickstart.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md"
+  ],
+  "findings": [
+    {
+      "id": "PLAN-HTTP-001",
+      "severity": "HIGH",
+      "category": "cross-artifact architecture conflict",
+      "artifact": "specs/001-codegraph-extraction/research.md",
+      "location": "lines 7-21",
+      "affected_requirement": "The complete plan set must make one feasible, internally consistent qualification transport decision and must not leave contradictory architecture authority for task generation.",
+      "evidence": "research.md:7-11 says qualification uses the local CLI and that Vulgata will not couple to the API gateway; lines 19-21 explicitly reject the API server. The current candidate in plan.md:197-215 and 238-330 instead qualifies CodeGraphContext through `cgc api start` and `/api/v1/query`, while the proposal at lines 54-69 and contract at lines 48-116 make that HTTP gateway lifecycle the sole qualification boundary. A task author cannot determine which decision is authoritative.",
+      "correction_outcome": "Revise research.md to supersede the rejected CLI-table strategy, explicitly approve the qualification-only loopback HTTP JSON gateway while preserving the prohibition on production gateway/MCP coupling, and align its rationale and evidence with the current plan and proposal."
+    },
+    {
+      "id": "PLAN-HTTP-002",
+      "severity": "HIGH",
+      "category": "non-executable validation contract",
+      "artifact": "specs/001-codegraph-extraction/quickstart.md",
+      "location": "lines 13-40",
+      "affected_requirement": "Plan review requires a feasible, testable validation strategy consistent with the selected qualification lifecycle and failure/evidence contracts.",
+      "evidence": "quickstart.md:16-17 prohibits any API gateway process, then lines 25-27 direct `cgc index` followed by unspecified static projections and deletion; lines 32-35 validate generic captured output. This contradicts its own HTTP boundary declaration at lines 3-7 and the concrete plan protocol at plan.md:238-330: private HOME/default Context, loopback gateway health polling, one `/api/v1/query`, bounded aggregate health/query channels, strict JSON grammar, and gateway termination. Following the quickstart cannot execute or verify the reviewed plan.",
+      "correction_outcome": "Rewrite Gate 1 and prerequisites to describe the exact qualification-only HTTP lifecycle from plan.md and repository-profiling-api.md, including unpublished loopback binding, aggregate readiness channel, one bounded JSON query, strict incremental parsing and evidence cap, gateway stop, Context cleanup, and explicit non-invocation of bundled MCP/tool routes."
+    }
+  ],
+  "summary": "REVISE: the main plan and proposal resolve health aggregation and PRD scope, but two owned plan companions still encode the superseded CLI-only/no-gateway qualification. The research decision and executable quickstart must be aligned before tasks can be generated safely."
+}

@@ -4,21 +4,33 @@
 **Scope:** official CodeGraphContext documentation cited below, plus the
 authorities named in Story 4.1 and the feature specification.
 
-## Decision: use the local CodeGraphContext CLI only behind qualification
+## Decision: qualify CodeGraphContext through its local HTTP JSON gateway
 
 **Decision:** The user-approved provider target remains CodeGraphContext `cgc`,
-with `codegraphcontext==0.5.1` selected for qualification. Vulgata will not
-couple to its graph-store schema, API gateway, or MCP server.
+with `codegraphcontext==0.5.1` selected for qualification. The qualification
+uses `cgc api start` as a loopback-only JSON transport inside one disposable,
+non-root `--network none` container. This selects no production Scan transport:
+Vulgata will not expose the gateway, couple to its internal graph-store schema,
+or invoke its bundled MCP/tool routes. A passing qualification returns to a
+separate production parser/integration plan and review.
 
 **Rationale:** The official introduction describes a local semantic property
 graph built from Tree-sitter and optional SCIP. The graph model documents File,
 Class, Function, Module, and structural `CONTAINS`, `IMPORTS`, `CALLS`, and
-`INHERITS` relationships. That can support a Vulgata-owned structural snapshot
-only if the pinned CLI demonstrably exposes the required stable projection.
+`INHERITS` relationships. The pinned 0.5.1 package exposes `/api/v1/query` as a
+JSON envelope over a read-only query handler, whereas `cgc query` emits a
+terminal presentation table and no documented machine-readable grammar. The
+qualification-only gateway therefore provides a feasible fail-closed candidate
+for validating correlated structural facts without treating CLI rendering or
+the provider's Kuzu schema as Vulgata's owned contract.
 
-**Alternatives considered:** direct graph-store coupling (rejected: makes
-provider internals Vulgata persistence); API/MCP server (rejected: out of scope
-and exposes a tool/service); extension-only filtering (rejected: cannot prove
+**Alternatives considered:** CLI-table parsing (rejected: presentation output
+exceeded the original capture and does not emit the later test-invented
+`key=value` grammar); direct graph-store coupling (rejected: makes provider
+internals Vulgata persistence); production HTTP-gateway coupling (deferred:
+qualification cannot select production Scan behavior); provider bundled
+MCP/tool routes (rejected and not invoked: Story 4.1 adds no Vulgata MCP or
+Worker Agent tool); extension-only filtering (rejected: cannot prove
 same-Repository structural relationships).
 
 **Official evidence:**
@@ -28,6 +40,11 @@ same-Repository structural relationships).
 - [Code graph model](https://codegraphcontext.github.io/concepts/graph-model/)
   — accessed 2026-07-15; documents paths/ranges for structural nodes and the
   relevant relationship kinds.
+
+The exact 0.5.1 request/envelope and relationship projections are
+qualification candidates derived from the pinned installed package sources
+identified in [plan.md](plan.md), not guarantees inferred from the public 0.5.0
+documentation.
 
 ## Decision: whole-Repository graph build; audit groups are not provider batches
 
@@ -95,27 +112,35 @@ local-only single-container scope).
 ## Decision: qualification is a hard stop before mapping/persistence
 
 **Decision:** The first executable increment is a non-root container proof on a
-synthetic whole-Repository fixture. It must capture the exact static read-only
-queries and the pinned CLI's output grammar before a provider adapter, Code Unit
-mapping, structural EF entity, migration, or production profiling flow is
-implemented.
+synthetic whole-Repository fixture. It creates one private named Kuzu Context,
+indexes once, starts the provider gateway on unpublished container loopback,
+aggregates bounded `/health` readiness responses, submits exactly one static
+read-only `/api/v1/query` request, stops the gateway, deletes the Context, and
+cleans all private state before a provider adapter, Code Unit mapping,
+structural EF entity, migration, or production profiling flow is implemented.
 
-**Rationale:** The official `query` example establishes a read-only Cypher
-command but no machine-readable output schema. The docs also do not prove that
-a returned relationship exposes stable endpoints suitable for Vulgata's
-Unresolved Structural Relationship Candidate. A generic DTO before proof would
-be an invented provider contract.
+**Rationale:** The public CLI material establishes a read-only Cypher surface
+but no machine-readable CLI output schema. The pinned 0.5.1 gateway supplies a
+JSON candidate, but neither its envelope nor its nested query result is a
+published versioned production contract. The qualification must therefore use
+strict incremental UTF-8/JSON validation and prove all required facts inside
+complete individual result objects. A generic DTO before proof would still be
+an invented provider contract.
 
-**Pass criteria:** `cgc` 0.5.1 and Kuzu context work under `app`; indexing the
-whole synthetic fixture succeeds within the bounded whole-process limit; a
-deterministic parser can obtain path, kind, symbol, range, source/target
-endpoint metadata, all supported relationship kinds, and the filtered-target
-candidate; and bounded evidence is free of sensitive material. The follow-up
-plan must contain the exact commands and grammar observed.
+**Pass criteria:** `cgc` 0.5.1 and the isolated Kuzu Context work under `app`;
+one whole-fixture index and one HTTP query finish within the bounded
+whole-process limit; all provider stdout/stderr plus the aggregate readiness
+and query-response channels are incrementally hashed and discarded under one
+inclusive 65,536-byte cap; the strict candidate grammar proves correlated
+path, kind, symbol, range and endpoint metadata for `CALLS`, `CONTAINS`,
+`IMPORTS`, and `INHERITS`, including the filtered-target candidate; no bundled
+MCP/tool route is invoked; and cleanup succeeds. The follow-up plan must record
+the observed production parser grammar before mapping or persistence work.
 
 **Fail outcome:** stop before provider-result mapping or structural persistence,
-return safe raw evidence and locks for correction, and do not invent JSON,
-timeout, subset, or endpoint behavior.
+return only redacted counts, hashes, predicates, lifecycle/image/lock
+identities, and a failure category for correction, and do not infer a JSON
+field, production transport, timeout, subset, or endpoint behavior.
 
 ## Decision: correct the unavailable qualification pin to the authorised latest
 
@@ -147,16 +172,17 @@ labelled 0.5.0, so they establish only a candidate command surface. They do not
 prove 0.5.1 output compatibility; the existing non-root qualification hard stop
 must prove it before mapping or persistence work.
 
-## Proposed requirement correction requiring user approval
+## Approved baseline correction and remaining qualification gate
 
 The documented provider cannot meet the Story/Spec's per-file batch/timeout/
-continuation guarantees. The plan therefore asks the user to approve a
-whole-process timeout (proposed default 1,800 seconds), atomic provider-derived
-failure, and audit-only 1,000-file groups. It also asks for explicit PRD FR-4.1
-clarification that the provider may locally inspect filtered paths while Vulgata
-excludes them from persisted Code Units/Edges, and that Story 4.2 owns
-language/framework detection. No requirement text is changed in this research
-artifact.
+continuation guarantees. That baseline has already been approved as one
+whole-process timeout (default 1,800 seconds), atomic provider-derived
+failure, and audit-only 1,000-file groups, together with the FR-4.1
+clarification that the provider may locally inspect filtered paths while
+Vulgata excludes them from persisted Code Units/Edges, and that Story 4.2 owns
+language/framework detection. The remaining active approval boundary was only
+the qualification-only local HTTP JSON transport/parser candidate. No
+requirement text is changed in this research artifact.
 
 ## Binding Story 4.1 data decisions
 

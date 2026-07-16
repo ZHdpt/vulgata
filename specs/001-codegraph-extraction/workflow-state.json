@@ -3,7 +3,30 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "analyze",
+  "stage": "tasks",
+  "plan_revision": {
+    "status": "plan-accepted-ready-for-tasks",
+    "trigger": "The CodeGraphContext 0.5.1 CLI renders a table while the rejected schema-1.1 test observer expected an invented key=value record.",
+    "scope": "Replace only qualification transport/evidence with the provider's loopback HTTP JSON gateway; no production integration or provider execution is authorized.",
+    "accepted_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-6.json",
+    "latest_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-6.json",
+    "approval_observed_at": "2026-07-16T09:48:03.3732926+08:00",
+    "approval_summary": "User explicitly approved the planned-change gate for the qualification-only HTTP JSON transport/parser candidate. This preserves the previously approved whole-Repository ScanRun baseline and authorizes only fresh task generation plus read-only analysis.",
+    "latest_analyze_artifact": null,
+    "analysis_remediation_approval_observed_at": "2026-07-16T09:56:24.4233364+08:00",
+    "analysis_remediation_approval_summary": "User explicitly approved the narrow analyze remediation for Story 4.1: revise the stale supporting plan artifact(s) so the full plan set matches the accepted HTTP JSON qualification lifecycle, then rerun plan review, regenerate tasks, and rerun analyze before implementation resumes.",
+    "invalidated_artifacts": [
+      "specs/001-codegraph-extraction/tasks.md",
+      "specs/001-codegraph-extraction/reviews/analyze-2.json",
+      "tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserver.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs",
+      "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
+    ],
+    "next_required_steps": [
+      "fresh-task-generation",
+      "speckit-analyze"
+    ]
+  },
   "active_gates": {
     "acceptance-review": {
       "status": "pending",
@@ -323,24 +346,222 @@
         "specs/001-codegraph-extraction/reviews/analyze-2.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "failed",
+      "started_at": "2026-07-15T02:54:38Z",
+      "completed_at": "2026-07-15T03:14:15Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "d70316a369299aa29905119f642b864cdbdef884ad4d0b9e5d673f3d83b32c1c",
+        "specs/001-codegraph-extraction/reviews/analyze-2.json": "4335658b7b37de1c265d477f3dadb6647b6a168b04e086b82289e51f852ace53"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "failure": {
+        "category": "image-build-failure",
+        "next_action": "corrective-planning",
+        "summary": "The exact 0.5.1 provider wheel is available, but the required CPython 3.12 Docker base could not resolve from Docker Hub after bounded retries."
+      }
+    },
+    {
+      "stage": "implement",
+      "status": "failed",
+      "started_at": "2026-07-15T03:26:18Z",
+      "completed_at": "2026-07-15T03:31:18Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "62179b371e4327f5acdd4e1ce27d33d77fe2229bbab31e8c1d302b42b7503f4c",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json": "be6374aa6ce101091b9d83ca9247d4c5a1a32257d1ed43703c7af53a0bc641aa"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "failure": {
+        "category": "image-build-failure",
+        "next_action": "corrective-planning",
+        "summary": "The one user-authorized retry of the exact Docker Hub CPython image failed at the authorization-token request; no alternate infrastructure was used."
+      }
+    },
+    {
+      "stage": "implement",
+      "status": "failed",
+      "started_at": "2026-07-15T06:30:00Z",
+      "completed_at": "2026-07-15T06:51:52Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "62179b371e4327f5acdd4e1ce27d33d77fe2229bbab31e8c1d302b42b7503f4c",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json": "79a1bf5c29aef010fdbb8aca737f427485e9c68496a765b2df4aaad3965b2366"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md",
+        "docker/codegraph/requirements.lock"
+      ],
+      "failure": {
+        "category": "timeout",
+        "next_action": "corrective-planning",
+        "summary": "The local digest-pinned image build did not pull Docker Hub but exceeded the first 364,498ms cap during hash-verified pip installation."
+      }
+    },
+    {
+      "stage": "implement",
+      "status": "failed",
+      "started_at": "2026-07-15T06:51:52Z",
+      "completed_at": "2026-07-15T07:17:04Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/tasks.md": "7c964cb28ba7843f1e3865de42797b66ddd07017f3d151a77ef749bdf59933f5",
+        "docker/codegraph/requirements.lock": "30b0bdae099a4a71e6c07fb606da7b1759329b16b659c5d580ae3365fd1a273b",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json": "986ba41486ed0c3fc89dd6a8dee00c9f4e78d9a32244bb6010babd82321f68a8"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md",
+        "docker/Dockerfile",
+        "docker/codegraph/requirements.lock"
+      ],
+      "failure": {
+        "category": "timeout",
+        "next_action": "corrective-planning",
+        "summary": "The single extended local build with --pull=false reached its 900-second cap during hash-verified pip installation; no candidate image was produced."
+      }
+    },
+    {
+      "stage": "implement",
+      "status": "failed",
+      "started_at": "2026-07-15T07:41:37Z",
+      "completed_at": "2026-07-15T07:49:00Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "docker/Dockerfile": "b64e91f8031ff8176aedd89266228684e731741c26665a533710ea58452c4658",
+        "docker/codegraph/requirements.lock": "30b0bdae099a4a71e6c07fb606da7b1759329b16b659c5d580ae3365fd1a273b",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json": "d517e5340e585fd413e192e6d66ebe145bcc4b31b7386c75b5d5c2135c7001e3"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "failure": {
+        "category": "image-build-failure",
+        "next_action": "corrective-planning",
+        "summary": "The user-provided slim-bookworm base resolved locally, but the independent --pull=false rebuild failed during hash-verified pinned-package download."
+      }
+    },
+    {
+      "stage": "implement",
+      "status": "failed",
+      "started_at": "2026-07-15T10:16:48Z",
+      "completed_at": "2026-07-15T10:45:26Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "docker/Dockerfile": "1196afbc1a58e07c57389fbb8b2a787e609a9978bc8df82a1e1475fe523fe78d",
+        "docker/codegraph/requirements.lock": "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95",
+        "tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs": "4451c714ebdaaf1639272f0d340a4aeb55083d13240d33cc448d89472dfb1571",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json": "358d5706b3b1472701f45fadbf219e1ae693671ff528022e092794698422d125"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/final-gate.md"
+      ],
+      "failure": {
+        "category": "unsafe-evidence",
+        "next_action": "corrective-planning",
+        "summary": "The user-restored Bookworm final image ran the one approved non-root local-Kuzu qualification sequence, but its static structural-query output exceeded the 8,192-character bounded capture before the required completion marker. No second index or query was issued."
+      }
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "started_at": "2026-07-16T07:10:00Z",
+      "completed_at": "2026-07-16T07:20:00Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "plan_diff_sha256": "a6b3a72afb93be513ae6c4340c539b7560731a89e685076b182e49bc1a3f5e6a"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-4.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-07-16T07:20:00Z",
+      "completed_at": "2026-07-16T07:30:00Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/plan-review-4.json": "663b93b3abb7b171de0f274166bdf6f63d46ddadf884572b99b4a17b714c92cd"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/research.md",
+        "specs/001-codegraph-extraction/quickstart.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-07-16T07:30:00Z",
+      "completed_at": "2026-07-16T07:35:12Z",
+      "input_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "input_hashes": {
+        "plan_diff_sha256": "52e0825bdaa9b0dfb40e02b88835fe7daca726c1b9ab336e3f3221ea7094aef2"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-5.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "794947b5f2f33d21f500259ce42c73ec34a1dc61",
+    "preflight_head": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": " M specs/001-codegraph-extraction/tasks.md\n M specs/001-codegraph-extraction/workflow-state.json\n?? specs/001-codegraph-extraction/qualification/\n?? specs/001-codegraph-extraction/reviews/analyze-2.json\n?? tests/Vulgata.Tests/CodeGraphQualification/",
+    "worktree_status": " M .codegraph/.gitignore\n M docker/Dockerfile\n M docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md\n M specs/001-codegraph-extraction/contracts/repository-profiling-api.md\n M specs/001-codegraph-extraction/plan.md\n M specs/001-codegraph-extraction/quickstart.md\n M specs/001-codegraph-extraction/research.md\n M specs/001-codegraph-extraction/tasks.md\n M specs/001-codegraph-extraction/workflow-state.json\n?? docker/codegraph/python-version.txt\n?? docker/codegraph/requirements.lock\n?? docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md\n?? docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15.md\n?? specs/001-codegraph-extraction/qualification/evidence/.gitignore\n?? specs/001-codegraph-extraction/qualification/evidence/red.md\n?? specs/001-codegraph-extraction/qualification/evidence/verification.md\n?? specs/001-codegraph-extraction/qualification/qualification-result.json\n?? specs/001-codegraph-extraction/qualification/qualification-result.schema.json\n?? specs/001-codegraph-extraction/reviews/analyze-3.json\n?? specs/001-codegraph-extraction/reviews/analyze-4.json\n?? specs/001-codegraph-extraction/reviews/plan-review-4.json\n?? specs/001-codegraph-extraction/reviews/plan-review-5.json\n?? tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserver.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserverTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CodeGraphImageQualificationTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Eligible/BaseProcessor.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Eligible/OrderRunner.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Eligible/OrderService.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Filtered/GeneratedClient.g.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/historical-qualification-result.schema1.0.json\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/qualification-fixture-manifest.json\n?? tests/Vulgata.Tests/CodeGraphQualification/QualificationGateTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/QualificationTestPaths.cs",
     "owned_paths": [
-      "specs/001-codegraph-extraction/tasks.md",
       "specs/001-codegraph-extraction/qualification",
-      "specs/001-codegraph-extraction/reviews/analyze-2.json",
       "tests/Vulgata.Tests/CodeGraphQualification",
+      "docker/Dockerfile",
+      "docker/codegraph",
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md",
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/001-codegraph-extraction/reviews/plan-review-4.json",
+      "specs/001-codegraph-extraction/reviews/plan-review-5.json",
+      "specs/001-codegraph-extraction/reviews/analyze-3.json",
+      "specs/001-codegraph-extraction/reviews/analyze-4.json",
+      "specs/001-codegraph-extraction/tasks.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
-    "unrelated_paths": [],
-    "observed_at": "2026-07-15T02:51:26Z"
+    "unrelated_paths": [
+      ".codegraph/.gitignore",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15.md"
+    ],
+    "observed_at": "2026-07-16T07:35:12Z"
   },
   "source_artifacts": [
     {
@@ -744,6 +965,338 @@
         "ACCEPT: 12 of 12 tasks map to current qualification-only scope",
         "LOW traceability note: reconcile accepted correction with Story/PRD/spec after qualification before production task generation"
       ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Execute qualification-only tasks T002-T012 against exact codegraphcontext==0.5.1 using vertical red-green-refactor cycles and return a safe decision without production integration.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/tasks.md": "d70316a369299aa29905119f642b864cdbdef884ad4d0b9e5d673f3d83b32c1c",
+          "specs/001-codegraph-extraction/reviews/analyze-2.json": "4335658b7b37de1c265d477f3dadb6647b6a168b04e086b82289e51f852ace53"
+        },
+        "owned_paths": [
+          "docker/Dockerfile",
+          "docker/codegraph",
+          "tests/Vulgata.Tests/CodeGraphQualification",
+          "specs/001-codegraph-extraction/qualification",
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "docker/Dockerfile",
+        "docker/codegraph",
+        "tests/Vulgata.Tests/CodeGraphQualification",
+        "specs/001-codegraph-extraction/qualification",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "exact 0.5.1 wheel downloaded with SHA-256 3cd79efe6c9525d69ae250c063404b500ef7595b6c63284d841c78a1ecf48658",
+        "schema-valid fail/image-build-failure/corrective-planning after bounded Docker Hub CPython base resolution failures",
+        "no Docker image, lock, runner, product code, mapping, persistence, API/UI, agent, or scan-strategy change"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Perform the one user-authorized retry of the exact Docker Hub CPython base image and resume only the existing exact-0.5.1 qualification if it resolves.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/tasks.md": "62179b371e4327f5acdd4e1ce27d33d77fe2229bbab31e8c1d302b42b7503f4c",
+          "specs/001-codegraph-extraction/qualification/qualification-result.json": "be6374aa6ce101091b9d83ca9247d4c5a1a32257d1ed43703c7af53a0bc641aa"
+        },
+        "owned_paths": [
+          "docker/Dockerfile",
+          "docker/codegraph",
+          "tests/Vulgata.Tests/CodeGraphQualification",
+          "specs/001-codegraph-extraction/qualification",
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "docker/Dockerfile",
+        "docker/codegraph",
+        "tests/Vulgata.Tests/CodeGraphQualification",
+        "specs/001-codegraph-extraction/qualification",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "single retry of exact Docker Hub CPython 3.12 base failed at authorization-token request",
+        "schema-valid fail/image-build-failure/corrective-planning updated without any substitute or scope expansion"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Resume exact-0.5.1 qualification from the user-provided cached digest-pinned CPython base without a Docker Hub pull.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/tasks.md": "62179b371e4327f5acdd4e1ce27d33d77fe2229bbab31e8c1d302b42b7503f4c",
+          "specs/001-codegraph-extraction/qualification/qualification-result.json": "79a1bf5c29aef010fdbb8aca737f427485e9c68496a765b2df4aaad3965b2366"
+        },
+        "owned_paths": [
+          "docker/Dockerfile",
+          "docker/codegraph",
+          "tests/Vulgata.Tests/CodeGraphQualification",
+          "specs/001-codegraph-extraction/qualification",
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "docker/Dockerfile",
+        "docker/codegraph",
+        "tests/Vulgata.Tests/CodeGraphQualification",
+        "specs/001-codegraph-extraction/qualification",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "local linux/amd64 CPython 3.12 base digest verified",
+        "exact CodeGraphContext 0.5.1 transitive hash lock generated",
+        "first --pull=false image build timed out during hash-verified installation; no image or provider execution claim"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Make one longer but bounded local --pull=false build attempt from the cached digest and continue real qualification only if it completes.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "docker/Dockerfile": "3740c6cd456713dddbff7687f220dc11b010327f66d9ad0fed2f12af75bacc37",
+          "docker/codegraph/requirements.lock": "30b0bdae099a4a71e6c07fb606da7b1759329b16b659c5d580ae3365fd1a273b",
+          "specs/001-codegraph-extraction/tasks.md": "7c964cb28ba7843f1e3865de42797b66ddd07017f3d151a77ef749bdf59933f5",
+          "specs/001-codegraph-extraction/qualification/qualification-result.json": "986ba41486ed0c3fc89dd6a8dee00c9f4e78d9a32244bb6010babd82321f68a8"
+        },
+        "owned_paths": [
+          "docker/Dockerfile",
+          "docker/codegraph",
+          "tests/Vulgata.Tests/CodeGraphQualification",
+          "specs/001-codegraph-extraction/qualification",
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "docker/Dockerfile",
+        "docker/codegraph",
+        "tests/Vulgata.Tests/CodeGraphQualification",
+        "specs/001-codegraph-extraction/qualification",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "single 900-second --pull=false local build timed out during hash-verified install",
+        "shared Buildx backend left untouched because an older unrelated running record was present",
+        "schema-valid fail/timeout/corrective-planning with no candidate image or provider execution claim"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Preserve the user's slim-bookworm base change, independently rebuild it locally, and continue only a fully observed non-root provider qualification.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "docker/Dockerfile": "b64e91f8031ff8176aedd89266228684e731741c26665a533710ea58452c4658",
+          "docker/codegraph/requirements.lock": "30b0bdae099a4a71e6c07fb606da7b1759329b16b659c5d580ae3365fd1a273b",
+          "specs/001-codegraph-extraction/qualification/qualification-result.json": "d517e5340e585fd413e192e6d66ebe145bcc4b31b7386c75b5d5c2135c7001e3"
+        },
+        "owned_paths": [
+          "docker/Dockerfile",
+          "docker/codegraph",
+          "tests/Vulgata.Tests/CodeGraphQualification",
+          "specs/001-codegraph-extraction/qualification",
+          "specs/001-codegraph-extraction/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "docker/Dockerfile",
+        "docker/codegraph",
+        "tests/Vulgata.Tests/CodeGraphQualification",
+        "specs/001-codegraph-extraction/qualification",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "cached slim-bookworm digest resolved locally",
+        "independent reproducible rebuild failed during hash-verified pinned-package download",
+        "existing image tag rejected as unbound to the failed Dockerfile/lock rebuild"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Correct the independently verified falkordblite 0.9.0 source-distribution hash in the exact CodeGraph qualification lock, then rerun the Docker codegraph target without changing provider, scan, or production scope.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "docker/Dockerfile": "b64e91f8031ff8176aedd89266228684e731741c26665a533710ea58452c4658",
+          "docker/codegraph/requirements.lock": "30b0bdae099a4a71e6c07fb606da7b1759329b16b659c5d580ae3365fd1a273b",
+          "specs/001-codegraph-extraction/qualification/qualification-result.json": "bbae3c26e5bd0154072f17e7c4234294fde5976127eb4696f16b9d977592b174"
+        },
+        "owned_paths": [
+          "docker/codegraph/requirements.lock",
+          "specs/001-codegraph-extraction/qualification"
+        ]
+      },
+      "permitted_writes": [
+        "docker/codegraph/requirements.lock",
+        "specs/001-codegraph-extraction/qualification"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "focused red direct-archive comparison confirmed the old lock hash disagreed with the source distribution",
+        "focused green comparison confirmed the corrected 14eb34f617a847927e1c55d54c02b01115ad3db87f16adae4ec54e2f540dac64 hash",
+        "the complete 88-entry lock was checked against PyPI release metadata with every entry valid",
+        "the rebuilt codegraph target passed the falkordblite hash gate and then failed because the slim build stage lacks gcc"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Install only the build-stage compiler toolchain required by the validated falkordblite source distribution, then independently rebuild the exact CodeGraph qualification target.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "docker/Dockerfile": "b64e91f8031ff8176aedd89266228684e731741c26665a533710ea58452c4658",
+          "docker/codegraph/requirements.lock": "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95",
+          "specs/001-codegraph-extraction/qualification/qualification-result.json": "bbae3c26e5bd0154072f17e7c4234294fde5976127eb4696f16b9d977592b174"
+        },
+        "owned_paths": [
+          "docker/Dockerfile",
+          "specs/001-codegraph-extraction/qualification"
+        ]
+      },
+      "permitted_writes": [
+        "docker/Dockerfile",
+        "specs/001-codegraph-extraction/qualification"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "falkordblite setup.py explicitly sets CC=gcc and invokes make to build Redis",
+        "the corrected target build reached that source-build step and failed with command 'gcc' not found",
+        "the Dockerfile correction installed build-essential only in the private codegraph stage",
+        "the green retry stopped before pip because three Debian compiler packages received HTTP 502 from the mirror/proxy"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Perform one clean, bounded retry of the unchanged CodeGraph target after a transient Debian mirror/proxy 502 while preserving the exact provider and minimal build-stage correction.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "0e1516703ae7bb2e11611fa9fa8e53dd5f21b52d6a11d31675a03996d2ebe583",
+        "artifact_hashes": {
+          "docker/Dockerfile": "7e100e2842a39beb6c19f637f7c5bf7f7491f2a02a997761272000a41d857905",
+          "docker/codegraph/requirements.lock": "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95",
+          "specs/001-codegraph-extraction/qualification/qualification-result.json": "bbae3c26e5bd0154072f17e7c4234294fde5976127eb4696f16b9d977592b174"
+        },
+        "owned_paths": [
+          "docker/Dockerfile",
+          "docker/codegraph",
+          "specs/001-codegraph-extraction/qualification"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/qualification"
+      ],
+      "output_path": "specs/001-codegraph-extraction/qualification/qualification-result.json",
+      "returned_evidence": [
+        "previous retry passed the corrected falkordblite hash gate and toolchain setup but received HTTP 502 for libgomp1, libtsan2, and libgcc-12-dev",
+        "the Dockerfile, provider pin, lock, and proxy configuration must remain unchanged during this one retry",
+        "the pre-existing target tag remains invalid as proof unless this rebuild itself succeeds"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently review the complete qualification-only HTTP JSON plan set on an exact live-worktree boundary.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "a6b3a72afb93be513ae6c4340c539b7560731a89e685076b182e49bc1a3f5e6a",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/plan.md": "9991db380c1792e389052b74dfdeb2292cd29e9bf931ed57d73dab4e5056e139",
+          "specs/001-codegraph-extraction/research.md": "ca4b6de8618cba057dde2c63bbf636ef992475f9047823f444ae1db8d0e22d40",
+          "specs/001-codegraph-extraction/quickstart.md": "618bac702d251c5595c6d54c32af1b113dccebaeb5a1dd7e008a12a246ac8ba7"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/plan.md",
+          "specs/001-codegraph-extraction/research.md",
+          "specs/001-codegraph-extraction/data-model.md",
+          "specs/001-codegraph-extraction/quickstart.md",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+          "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "specs/001-codegraph-extraction/reviews/plan-review-4.json",
+      "returned_evidence": [
+        "REVISE with PLAN-HTTP-001 and PLAN-HTTP-002"
+      ]
+    },
+    {
+      "role": "plan-architect",
+      "objective": "Correct PLAN-HTTP-001 and PLAN-HTTP-002 without changing the approved qualification scope.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "a6b3a72afb93be513ae6c4340c539b7560731a89e685076b182e49bc1a3f5e6a",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/reviews/plan-review-4.json": "663b93b3abb7b171de0f274166bdf6f63d46ddadf884572b99b4a17b714c92cd"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/research.md",
+          "specs/001-codegraph-extraction/quickstart.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/001-codegraph-extraction/research.md",
+        "specs/001-codegraph-extraction/quickstart.md"
+      ],
+      "output_path": "specs/001-codegraph-extraction/research.md",
+      "returned_evidence": [
+        "both raw findings corrected within the two-file boundary",
+        "focused git diff --check passed"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently review the corrected complete qualification-only plan set.",
+      "source_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "52e0825bdaa9b0dfb40e02b88835fe7daca726c1b9ab336e3f3221ea7094aef2",
+        "artifact_hashes": {
+          "specs/001-codegraph-extraction/plan.md": "9991db380c1792e389052b74dfdeb2292cd29e9bf931ed57d73dab4e5056e139",
+          "specs/001-codegraph-extraction/research.md": "6c1350d2806d5f88efbe5d4229a43d8151f1278d002d5f035066e9c5f4e0af25",
+          "specs/001-codegraph-extraction/quickstart.md": "4f99293a5c92b9f4327b7f48c07da573b267925c01bc943b2616cb88481cb595"
+        },
+        "owned_paths": [
+          "specs/001-codegraph-extraction/plan.md",
+          "specs/001-codegraph-extraction/research.md",
+          "specs/001-codegraph-extraction/data-model.md",
+          "specs/001-codegraph-extraction/quickstart.md",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+          "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "specs/001-codegraph-extraction/reviews/plan-review-5.json",
+      "returned_evidence": [
+        "ACCEPT with no findings"
+      ]
     }
   ],
   "review_iterations": {
@@ -756,11 +1309,14 @@
       ]
     },
     "plan-review": {
-      "count": 3,
+      "count": 6,
       "verdict_paths": [
         "specs/001-codegraph-extraction/reviews/plan-review-1.json",
         "specs/001-codegraph-extraction/reviews/plan-review-2.json",
-        "specs/001-codegraph-extraction/reviews/plan-review-3.json"
+        "specs/001-codegraph-extraction/reviews/plan-review-3.json",
+        "specs/001-codegraph-extraction/reviews/plan-review-4.json",
+        "specs/001-codegraph-extraction/reviews/plan-review-5.json",
+        "specs/001-codegraph-extraction/reviews/plan-review-6.json"
       ]
     },
     "analyze": {
@@ -1050,24 +1606,161 @@
       "observed_at": "2026-07-15T02:51:26Z",
       "summary": "Independent analysis accepted the regenerated task graph with no Critical/High finding or Constitution MUST violation; the report's LOW traceability finding is deferred to the mandatory post-qualification re-plan.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/2",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/qualification-result.schema.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "command": "docker pull --platform linux/amd64 python:3.12-slim-bookworm",
+      "exit_code": 1,
+      "observed_at": "2026-07-15T03:14:15Z",
+      "summary": "Docker daemon was available and exact CodeGraphContext 0.5.1 downloaded, but two bounded Docker Hub CPython 3.12 image-resolution attempts failed with TLS/manifest EOF. Qualification recorded fail/image-build-failure/corrective-planning without substituting an image or fabricating installed-provider evidence.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/3",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "command": "docker pull --platform linux/amd64 python:3.12-slim-bookworm",
+      "exit_code": 1,
+      "observed_at": "2026-07-15T03:31:18Z",
+      "summary": "The one user-authorized retry failed when Docker Hub's authorization-token request ended without a response. No alternate image, provider, workaround, scope change, or task-marker change was made.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/4",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "docker/Dockerfile",
+        "docker/codegraph/python-version.txt",
+        "docker/codegraph/requirements.lock",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "command": "docker build --pull=false --file docker/Dockerfile .",
+      "exit_code": 124,
+      "observed_at": "2026-07-15T06:51:52Z",
+      "summary": "User-provided local CPython 3.12 digest was verified and an exact 0.5.1 transitive hash lock was generated, but the first local --pull=false build exceeded its 364,498ms cap during hash-verified package installation; no candidate image was produced.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/5",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "docker/Dockerfile",
+        "docker/codegraph/requirements.lock",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/red.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "command": "docker build --pull=false --file docker/Dockerfile .",
+      "exit_code": 124,
+      "observed_at": "2026-07-15T07:17:04Z",
+      "summary": "The one extended 900-second local --pull=false build from the cached digest timed out during hash-verified installation. The docker client was stopped while the shared Buildx backend was left untouched due to an older unrelated running record; no candidate image or provider claim exists.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/6",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "docker/Dockerfile",
+        "docker/codegraph/requirements.lock",
+        "specs/001-codegraph-extraction/qualification/qualification-result.json",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "command": "docker build --pull=false --file docker/Dockerfile --tag vulgata-codegraph-qualification:0.5.1 .",
+      "exit_code": 1,
+      "observed_at": "2026-07-15T07:49:00Z",
+      "summary": "The cached slim-bookworm base digest resolved locally, but independent reproducible rebuild failed during hash-verified pinned-package download. The existing qualification image tag was not used because it cannot be bound to the current failed Dockerfile/lock rebuild.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/plan-review/5",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-4.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-16T07:20:00Z",
+      "summary": "Fresh independent plan review returned two High cross-artifact findings because research and quickstart still encoded the superseded CLI-only qualification.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/plan-review/6",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-5.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-16T07:35:12Z",
+      "summary": "Fresh independent plan review accepted the corrected complete qualification-only HTTP JSON plan set with no findings.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/plan-review/7",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-6.json"
+      ],
+      "command": "git diff --check -- <complete-plan-set>",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T08:05:00Z",
+      "summary": "Fresh independent plan review accepted the formatting-corrected complete plan boundary; the whitespace-only change introduced no semantic or architectural change.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-analyze-20260715T025126Z-8c31de",
+    "checkpoint_id": "bmad-4-1-plan-review-20260716T073512Z-a4c9d2",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "analyze",
+    "stage": "plan-review",
     "committed_paths": [
-      "specs/001-codegraph-extraction/tasks.md",
-      "specs/001-codegraph-extraction/reviews/analyze-2.json",
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md",
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/001-codegraph-extraction/reviews/plan-review-4.json",
+      "specs/001-codegraph-extraction/reviews/plan-review-5.json",
+      "specs/001-codegraph-extraction/reviews/plan-review-6.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/tasks/2",
-      "4-1-codegraph-integration-and-code-unit-extraction/analyze/2"
+      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/5",
+      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/7"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-15T02:51:26Z"
+  "updated_at": "2026-07-16T15:35:12+08:00"
 }

@@ -1,7 +1,7 @@
 ---
 story_key: 4-1-codegraph-integration-and-code-unit-extraction
 title: Story 4.1: CodeGraph Integration and Code Unit Extraction
-Status: ready-for-dev
+Status: in-progress
 Epic: 4
 Story: 1
 created: 2026-07-14
@@ -210,9 +210,9 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `implement`; qualification-only task group active.
-- Latest workflow checkpoint: `bmad-4-1-analyze-20260715T015302Z-df32ce` (pending Git binding).
-- Authorization: the user approved the whole-Repository local `cgc` strategy, its 1,800-second whole-process timeout, audit-only grouping, the stated filtered-path handling, and qualification-first stop condition. This approval authorizes task generation only.
+- Current workflow stage: `tasks`; the corrected complete qualification-only HTTP JSON plan set is accepted and fresh task generation is next.
+- Latest workflow checkpoint: `bmad-4-1-plan-review-20260716T073512Z-a4c9d2` (pending local commit binding).
+- Authorization: the whole-Repository local `cgc` baseline, the qualification-only local HTTP JSON transport/parser candidate, and the narrow analyze remediation are approved. The current boundary authorizes fresh task generation and read-only analysis before any implementation resume.
 
 ### Completion notes
 

@@ -1,7 +1,8 @@
 # Quickstart Validation: CodeGraph Code Unit Extraction
 
-This guide has two gates. Gate 1 qualifies the local provider after the user
-approves the proposed Story/PRD correction. Gate 2 is available only after Gate
+This guide has two gates. Gate 1 qualifies the local provider against the
+already approved Story/PRD baseline and the approved qualification-only HTTP
+JSON transport boundary. Gate 2 is available only after Gate
 1 passes and a follow-up plan review records the exact provider projection
 grammar.
 
@@ -11,32 +12,80 @@ grammar.
 - Git for local bare-Repository fixtures.
 - A digest-pinned Docker build with locked CPython 3.12.x,
   `codegraphcontext==0.5.1`, Kuzu, and all transitive Python distributions.
-- A non-root `app` runtime with private writable provider context/database
-  storage. No remote backend, API gateway, MCP server, watcher, bundle, or
-  registry process is allowed.
+- A non-root `app` runtime with generated app-owned private `HOME` and Kuzu
+  storage (mode `0700`), plus a credential-free synthetic fixture mounted
+  read-only.
+- Docker must run the named qualification container with `--network none`, no
+  published port, and only its internal loopback available. The
+  CodeGraphContext gateway is permitted solely for this qualification; it is
+  not a production Scan transport or Vulgata endpoint. No remote backend,
+  watcher, bundle, registry, provider MCP/tool invocation, Vulgata MCP tool, or
+  Worker Agent tool is allowed.
 
 ## Gate 1: qualify the provider before structural persistence
 
-1. Build the image using the lock. Assert the final image's `python --version`,
-   `cgc version` reporting `0.5.1`, and `cgc doctor` as `app` against the
-   committed lock. The historical 0.5.0 download failure is not a passing or
-   executable requirement.
-2. In a synthetic whole-Repository fixture, create a unique Kuzu context with a
-   private `--db-path`; run `cgc index <fixture> --force`; execute static
-   read-only structural projections; then delete the context.
-3. Apply the configured whole-process timeout (proposed default: 1,800 seconds)
-   to the complete index/projection. Verify cancellation, timeout, and non-zero
-   exit terminate the process tree and leave no provider-derived structural
-   records.
-4. Verify captured bounded output deterministically supplies path/kind/symbol/
-   range/endpoint fields, every supported relationship kind, and a
-   filtered-target relationship candidate. Verify evidence contains no source
-   secrets, credentials, tokens, or absolute working-copy paths.
-5. If any assertion fails, stop and return lock/image/command/evidence identities
-   for corrective planning. Do not add a provider adapter, Code Unit EF model,
-   migration, or production endpoint. If all pass, revise plan/data-model/
-   contract with observed grammar and obtain fresh plan acceptance before
-   structural persistence tasks are generated.
+1. Build the image using the committed lock. Assert the final image's
+   `python --version`, `cgc version` reporting `0.5.1`, and `cgc doctor` as
+   `app`. The historical 0.5.0 download failure is not a passing or executable
+   requirement.
+2. Start one named qualification container with `--network none`, no published
+   port, and the synthetic Repository mounted read-only. Create one generated
+   private `HOME`, Context name, and Kuzu path; pass the same `HOME` to every
+   provider and cleanup process. Execute this lifecycle exactly once:
+
+   ```text
+   cgc context create <run-context> --database kuzudb --db-path <private-db-dir>
+   cgc context mode named
+   cgc context default <run-context>
+   cgc --context <run-context> index <fixture> --force
+   cgc api start --host 127.0.0.1 --port <private-port>
+   GET http://127.0.0.1:<private-port>/health
+   POST http://127.0.0.1:<private-port>/api/v1/query
+   gateway-stop
+   cgc context delete <run-context>
+   ```
+
+   `gateway-stop` is the test runner's lifecycle action: send `SIGTERM` to the
+   recorded gateway process group, wait at most five seconds, and use
+   `SIGKILL` only if necessary. A forced kill fails the gate. Delete the named
+   Context, private Kuzu database, provider home, and named container in
+   cleanup; any cleanup failure takes precedence over an otherwise valid
+   response.
+3. Poll only `/health` for at most ten seconds at 100-millisecond intervals.
+   Stream, discard, and append every readiness body in attempt order to the
+   single logical `cgc-api-health` channel. Readiness is not structural
+   evidence and is not a query retry. After readiness, send exactly one static
+   read-only request using the query and `{ "params": {} }` body fixed in
+   [plan.md](plan.md); its response is the single `cgc-api-query` channel.
+   Never call the provider's `/api/v1/mcp/*` or `/api/v1/tools/*` routes.
+4. Apply the approved 1,800-second whole-process limit from index through
+   projection. Incrementally frame, hash, and discard every provider-process
+   stdout/stderr stream and both HTTP logical channels under one shared
+   inclusive **65,536-byte** raw-byte cap. Byte 65,537 is the overflow
+   sentinel: count/hash it once, stop observation, terminate the process tree,
+   force private cleanup, and make no recovery command or request. Verify byte
+   conservation and separate deterministic channel hashes; never retain raw
+   output, JSON, chunks, paths, symbols, endpoints, source, credentials, or
+   tokens.
+5. Parse the query response with strict incremental UTF-8 and a streaming JSON
+   reader. Require the exact envelope and twelve-scalar result-object grammar
+   defined in [plan.md](plan.md) and
+   [repository-profiling-api.md](contracts/repository-profiling-api.md); do not
+   use `ReadAsString`, replacement decoding, cross-record joins, or fallback
+   provider fields. Prove complete correlated records for `CALLS`, `CONTAINS`,
+   `IMPORTS`, and `INHERITS`, positive ordered relationship-specific ranges,
+   non-empty endpoint identities, and the fixture-filtered target candidate.
+   Reject an unknown, missing, duplicate, nested, wrong-typed, null-disallowed,
+   source-bearing, or greater-than-4,096-byte result object.
+6. A pass requires the exact one-entry lifecycle, zero exits, Context-isolation
+   proof, no overflow/termination/forced cleanup, all structural predicates,
+   and successful cleanup. Persist only schema-1.2 redacted channel counts and
+   hashes, lifecycle/relationship/record counts, booleans, cleanup facts, and
+   the canonical summary hash. If any assertion fails, stop and return only
+   those safe identities and a failure category for corrective planning. Do
+   not add a production provider adapter, Code Unit EF model, migration, API,
+   or UI. If all assertions pass, revise the parser/integration plan and obtain
+   fresh acceptance before structural persistence tasks are generated.
 
 ### Provider-pin evidence
 
