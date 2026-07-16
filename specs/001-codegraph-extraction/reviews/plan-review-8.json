@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "fcf9298096acc95cdada52a427a5a4db3cb7e6a3",
+  "reviewed_boundary": {
+    "base_commit": "fcf9298096acc95cdada52a427a5a4db3cb7e6a3",
+    "candidate_commit": null,
+    "diff_sha256": "fc29dd03f9b0d64021fffd88ad7722d895a8ed3fe0ebd86721804cae8e5f8ca2",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/plan.md": "ce4501db2696477889e77c3e45d707bef1a92f751f24de64d20d6d870b75fa70",
+      "specs/001-codegraph-extraction/research.md": "d8322d99cb6595969c64ef7231db6fa01450d0bd3fae790a042265af6a159fd6",
+      "specs/001-codegraph-extraction/data-model.md": "217c534090d6ff2c29e80e333cbbf987ca9acf61f08b4aa6ccda03effec073bd",
+      "specs/001-codegraph-extraction/quickstart.md": "9b34deb59ff09a8dd53292a75b6a08a77ac9cf41f8cded243c0dcb5f88d9dc54",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "9618ab2f6d84466620f7efd9023d1a24487d7e667777a59aecd180a61dac847e"
+    }
+  },
+  "findings": [],
+  "safety_confirmations": {
+    "synthetic_commands_are_provider_unreachable": true,
+    "known_stale_binary_is_revoked": true,
+    "new_or_stale_current_assemblies_fail_closed": true,
+    "attempt_is_claimed_before_reachability": true,
+    "preauthorization_preflight_has_no_provider_reachability": true,
+    "single_replacement_attempt_only": true,
+    "qualification_failure_is_safe": true
+  },
+  "planned_change_assessment": {
+    "worker_agent_or_agent_tool_change": false,
+    "production_scan_strategy_change": false,
+    "canonical_prd_change": false,
+    "production_adapter_or_transport_selection": false
+  },
+  "authorization_assessment": {
+    "plan_acceptance_authorizes_attempt_0002": false,
+    "task_generation_may_advance_without_human_approval": false,
+    "provider_execution_preconditions": [
+      "Explicit human approval for the corrective boundary.",
+      "Accepted corrective plan-review identity recorded in authorization.",
+      "Fresh compilation-enabled synthetic preflight is green.",
+      "Legacy fixture path remains absent.",
+      "Exact command identity, unexpired attempt ID, and process token match.",
+      "started.json is durably claimed before Docker/provider reachability."
+    ]
+  },
+  "residual_risks": [
+    "The CodeGraphContext 0.5.1 HTTP envelope, projection aliases, and graceful gateway termination remain qualification candidates rather than a published production contract.",
+    "The original BMad Story retains superseded per-file prose; the accepted specification and recorded reconciliation remain executable authority.",
+    "Because attempt-0002 cannot be retried, an environmental or provider failure returns to corrective planning without qualification."
+  ],
+  "summary": "ACCEPT. The corrective plan is internally consistent, implementable, testable, and fail closed. Layered fixture revocation, fresh compilation, a sealed lease, process token, accepted-plan binding, and an append-only atomic ledger prevent synthetic or stale assemblies from reaching the provider without authority. Acceptance does not authorize attempt-0002; task generation must wait for explicit human approval."
+}

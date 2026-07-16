@@ -210,9 +210,9 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `plan`; corrective planning is required after a stale `--no-build` test binary accidentally consumed the sole provider execution before Group A prerequisites were green.
-- Latest accepted workflow checkpoint: `bmad-4-1-analyze-20260716T091800Z-d6f204` at `cf0a90a1326881e39c34aee4b943a605cda6715e`.
-- Failure disposition: cleanup reported success and no disposable container remains, but the run used the superseded CLI-marker observer and cannot qualify the accepted HTTP JSON candidate. No retry is authorized by the current task graph. Unfinished Group A edits remain unaccepted and uncommitted pending a fresh corrective plan and review.
+- Current workflow stage: `plan`; the fresh corrective plan is independently accepted and awaits explicit human authorization before task regeneration.
+- Latest workflow checkpoint: `bmad-4-1-corrective-plan-review-20260716T100000Z-f2b846` (pending local commit binding).
+- Corrective boundary: `attempt-0001` remains a permanent failed execution-order incident. The accepted plan proposes exactly one `attempt-0002`, protected by legacy-fixture revocation, provider-incapable synthetic tests, fresh compilation, a sealed execution lease, a process-scoped token, an accepted-plan binding, and an append-only atomic attempt ledger. Plan acceptance does not authorize the attempt.
 
 ### Completion notes
 

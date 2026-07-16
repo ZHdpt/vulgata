@@ -1,5 +1,27 @@
 # Data Model: CodeGraph Code Unit Extraction
 
+## Qualification attempt ledger (test-only evidence)
+
+The corrective harness uses append-only directories at
+`qualification/attempts/<attempt-id>/`; this is workflow evidence, not a Vulgata
+domain entity or production database model.
+
+- `authorized.json`: written only after explicit human approval; contains the
+  attempt ID, accepted corrective plan-review identity, exact command identity,
+  token SHA-256, expiry, and authorization evidence reference. It contains no
+  plaintext token.
+- `started.json`: atomically created with create-new semantics and flushed
+  before Docker/provider reachability. Its existence permanently consumes that
+  attempt.
+- `terminal.json`: one redacted pass/fail classification written after cleanup;
+  it references schema-1.2 evidence and never replaces `started.json`.
+
+`attempt-0001` permanently represents the accidental
+`execution-order-violation`. Only separately approved `attempt-0002` may be
+created next. Existing, expired, mismatched, started, or terminal state rejects
+execution. Attempt directories and records are never deleted, overwritten, or
+reused.
+
 This target model implements the accepted whole-Repository specification only
 after provider qualification and a follow-up plan accept an exact projection
 grammar. All identifiers are UUIDs. PostgreSQL is authoritative;

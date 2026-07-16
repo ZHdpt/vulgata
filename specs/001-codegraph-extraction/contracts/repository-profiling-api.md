@@ -1,5 +1,28 @@
 # Repository Profiling API and Provider Qualification Contract
 
+## Qualification execution capability contract
+
+Provider execution is not implied by test discovery or plan acceptance.
+Synthetic tests are identified only by `CodeGraphQualificationSynthetic` and
+use fake launchers/in-memory streams. The sole real gate is identified by
+`CodeGraphQualificationProvider` plus one exact fully-qualified test name and
+requires a sealed `ProviderExecutionLease`; no broad filter may invoke it.
+
+The lease issuer must, before Docker or provider reachability, validate a
+process-scoped attempt ID and random token against an unexpired append-only
+authorization record, its accepted corrective plan-review identity, token
+SHA-256, and exact command identity. It then atomically creates and flushes a
+create-new `started.json`. Existing start/terminal state fails closed. The
+plaintext token is never committed or retained. Full-suite execution without
+the wrapper remains inert.
+
+All documented harness commands compile and omit `--no-build`. The provider
+fixture path embedded in the pre-incident assembly is revoked before synthetic
+work, so that known stale binary exits before image inspection/build/run.
+Pre-authorization preflight has no Docker/provider reachability. Exactly one
+newly human-authorised `attempt-0002` is required because `attempt-0001` used
+the superseded CLI observer and is permanently failed.
+
 The public boundary is contingent on the already approved Story/PRD baseline,
 provider qualification, and a follow-up reviewed parser plan. Until then, this document
 defines intended HTTP shape and the *qualification* boundary; it does not

@@ -199,6 +199,58 @@ the production coordinator. Passing permits a new plan revision/review that
 records the actual parser grammar; it does not authorize structural work by
 itself.
 
+### 2026-07-16 execution-order incident and corrective disposition
+
+The [accidental provider execution](qualification/evidence/accidental-provider-execution-2026-07-16.md)
+used a stale `--no-build` test assembly and the superseded CLI-marker observer
+before synthetic prerequisites were green. It cannot qualify the approved HTTP
+JSON candidate, but it did run CodeGraphContext and therefore consumed the sole
+attempt authorised by the previous task graph. Its immutable disposition is
+`failed / execution-order-violation`; it must not be erased, reclassified, or
+counted as schema-1.2 HTTP evidence.
+
+Qualification cannot finish with zero further provider executions because no
+valid schema-1.2 HTTP JSON observation exists. The only reviewable route is
+**exactly one newly authorised replacement execution**. Plan acceptance and
+task regeneration do not authorize it. After reachability-free prerequisites
+are green, the root must obtain explicit human approval for `attempt-0002`,
+citing this plan, its accepted review identity, the exact command, and the
+incident. Withheld approval is a safe stop; a claimed attempt is never retried.
+
+### Corrective execution guard
+
+Regenerated tasks must enforce every control below before `attempt-0002`:
+
+1. Synthetic RED/GREEN tests use category `CodeGraphQualificationSynthetic`,
+   in-memory streams, and fake launchers only. They cannot construct the real
+   launcher because it requires a sealed `ProviderExecutionLease`. The sole
+   provider entry point has category `CodeGraphQualificationProvider` and one
+   exact fully-qualified identity. Broad namespace/class filters are prohibited.
+2. Before any RED/GREEN command, relocate the provider fixture away from the
+   path embedded in the pre-incident assembly and keep the legacy path absent.
+   The known stale binary then exits before image inspection/build/run. All
+   documented commands compile and omit `--no-build`.
+3. The provider test is inert in the full suite and without authorization. A
+   dedicated wrapper passes an attempt ID and uncommitted random token only to
+   its child process. Before Docker reachability, the guard verifies both,
+   matches the token SHA-256 and accepted plan-review identity in an unexpired,
+   unclaimed authorization, and returns a sealed lease.
+4. The append-only durable ledger uses
+   `qualification/attempts/<attempt-id>/`. `attempt-0001` records this incident.
+   Human authorization may create `attempt-0002/authorized.json`. The guard
+   atomically creates and flushes `started.json` with create-new semantics
+   before any Docker/provider operation, then writes one redacted terminal
+   record after cleanup. Existing start/terminal state rejects execution; no
+   record may be overwritten, deleted, or reused.
+5. Pre-authorization preflight checks only source/fixture hashes, lock and
+   Dockerfile text, ledger/schema validity, absence of the legacy fixture path,
+   an explicit build, and synthetic tests. It must not call Docker, inspect,
+   build, or pull an image, start a container, probe `/health`, or invoke `cgc`.
+
+The approved whole-Repository operation, one 1,800-second
+index-through-projection deadline, one query, schema-1.2 redacted evidence,
+cleanup precedence, and production hard stop remain unchanged.
+
 ### Superseding correction — CodeGraphContext local HTTP JSON qualification
 
 The historical Bookworm qualification completed one non-root private Context,
@@ -495,18 +547,22 @@ specs/001-codegraph-extraction/          # plan artifacts
 
 ## Implementation Sequence (for later task generation)
 
-0. Complete independent review of this regenerated plan set. The recorded
-   whole-Repository and qualification-only approval gates are already satisfied.
-1. Implement only reproducible provider qualification: Docker/base/Python locks,
-   cgc installation, synthetic fixture, non-root command proof, whole-process
-   timeout test, and safe evidence. Do not add mapping, structural EF entities,
-   migrations, or profiling UI.
-2. On qualification failure, stop for corrective planning. On pass, amend this
+0. Complete independent review of this corrective plan set. Existing Scan and
+   HTTP JSON approvals remain satisfied; a replacement execution does not.
+1. Regenerate tasks so all RED/GREEN work is provider-incapable. Revoke the
+   legacy fixture path first, then implement synthetic contracts, lease/ledger,
+   wrapper, streaming observer, writer, and one-shot classification. Every
+   documented invocation compiles and omits `--no-build`.
+2. Run the reachability-free preflight. When green, pause for explicit human
+   authorization of exactly `attempt-0002`. If approved, claim it durably before
+   any Docker/provider operation and run the exact provider gate once. If not
+   approved, stop without provider reachability.
+3. On qualification failure, stop for corrective planning. On pass, amend this
    plan/data model/contract with exact parser grammar and obtain fresh plan
    review before structural persistence tasks are generated.
-3. Only then write red tests and implement Core, EF, Git, qualified adapter,
+4. Only then write red tests and implement Core, EF, Git, qualified adapter,
    migration, authorized endpoints/UI, and the required E2E.
-4. Run focused/full tests, Web build, Docker qualification, and approved E2E.
+5. Run focused/full tests, Web build, and approved E2E.
    Do not add agent tools, dispatch, Coordinator, language/framework detection,
    Documents, Uncertainty, or Cross-Repository Resolution.
 
@@ -535,6 +591,8 @@ specs/001-codegraph-extraction/          # plan artifacts
 | Docker/Python resolution drift or unavailable package pin. | Exact lock/version evidence and non-root qualification; `0.5.0` is recorded only as the failed historical pin, while `0.5.1` is the current executable target. |
 | HTTP gateway resolves its Context from configuration rather than `--context`. | Use a generated private `HOME`, named mode, and generated default Context; qualification must prove the API observes the indexed synthetic graph and cleanup removes all private state. |
 | Public documentation remains labelled 0.5.0 while the configured package index serves 0.5.1. | Treat the docs as a command-surface candidate only; qualification must prove the installed 0.5.1 commands, HTTP JSON projection, Context isolation, and local Kuzu behavior before mapping work. |
+| A stale or broad-filtered test assembly executes the provider. | Revoke the legacy fixture path, split synthetic/provider identities, require a sealed lease, compile every documented invocation, and keep the provider lane inert without a process-scoped token matching an unclaimed durable authorization. |
+| Attempt state is lost or reused after interruption. | Append-only create-new attempt records preserve `attempt-0001` as failed and allow only separately authorised `attempt-0002` to be claimed once. |
 
 ## Recorded Authorization Boundary
 
@@ -573,6 +631,15 @@ The request cites this [plan](plan.md), [specification](spec.md), BMad Story
 4.1, and PRD §5.4 FR-4.1/FR-4.9. Approval advances only to task generation; it
 does not waive qualification, follow-up plan review, testing, E2E, security, or
 verification gates.
+
+That approval did not authorize another execution after the accidental run.
+Following fresh acceptance of this corrective plan and green reachability-free
+preflight, the orchestrator must request explicit approval for exactly one
+`attempt-0002` execution under the lease/token/ledger guard. The request must
+cite this plan, the accepted corrective plan review, and the incident evidence.
+It authorizes only that local qualification attempt; it changes no PRD
+requirement, Scan strategy, provider transport, agent tool, or production hard
+stop.
 
 ## Complexity Tracking
 

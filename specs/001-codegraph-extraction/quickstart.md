@@ -1,5 +1,24 @@
 # Quickstart Validation: CodeGraph Code Unit Extraction
 
+## Mandatory safe preflight and authorization
+
+Before any qualification command, move the real provider fixture away from the
+legacy path embedded in the pre-incident assembly and prove that path is absent.
+Build the test project explicitly, then run only the
+`CodeGraphQualificationSynthetic` category with compilation enabled. Do not use
+`--no-build` or a broad namespace/class filter. This preflight validates source
+hashes, locks, schemas, ledger state, and synthetic streams only; it must not
+call Docker, inspect/build/pull an image, start a container, probe `/health`, or
+invoke `cgc`.
+
+The accidental execution is durable `attempt-0001` and cannot qualify HTTP
+JSON. Exactly one replacement, `attempt-0002`, is required to finish Gate 1.
+After the safe preflight is green, stop for explicit human authorization. The
+provider gate is run only through its dedicated wrapper, exact provider test
+identity, and process-scoped attempt ID/token. The wrapper validates and
+atomically claims the authorised ledger record before provider reachability.
+Without authorization it is inert; after a claim it never retries.
+
 This guide has two gates. Gate 1 qualifies the local provider against the
 already approved Story/PRD baseline and the approved qualification-only HTTP
 JSON transport boundary. Gate 2 is available only after Gate

@@ -1,5 +1,31 @@
 # Research: CodeGraph Code Unit Extraction
 
+## Corrective decision: capability-gated one-shot execution
+
+**Decision**: Treat the 2026-07-16 stale-assembly execution as consumed and
+ineligible HTTP JSON evidence. Qualification still requires exactly one new
+provider observation, but it may occur only after fresh plan acceptance,
+reachability-free synthetic preflight, and explicit human authorization of a
+single durable attempt.
+
+**Rationale**: Zero further executions cannot establish the candidate envelope
+or projection. A test filter alone cannot protect against stale assemblies.
+Safety therefore combines revocation of the legacy fixture path, disjoint
+synthetic/provider identities, compilation-enabled commands, a sealed execution
+lease, a process-scoped token, and append-only create-new attempt records. The
+known stale binary cannot reach Docker after fixture revocation; current code
+cannot reach it without claiming an authorised attempt.
+
+**Rejected alternatives**: Treating the accidental CLI-marker run as HTTP
+evidence; authorising a retry implicitly through plan acceptance; relying on
+`--no-build`, a broad test filter, a static environment flag, or an in-memory
+counter; probing Docker/provider availability during preflight. Each either
+fails qualification or permits unaccounted external execution.
+
+**Unchanged boundary**: CodeGraphContext 0.5.1, the approved atomic
+whole-Repository operation, the test-only loopback HTTP JSON candidate,
+schema-1.2 redacted evidence, and the production hard stop are unchanged.
+
 **Date accessed:** 2026-07-15
 **Scope:** official CodeGraphContext documentation cited below, plus the
 authorities named in Story 4.1 and the feature specification.

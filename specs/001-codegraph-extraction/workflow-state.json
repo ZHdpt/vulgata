@@ -5,12 +5,12 @@
   "feature_directory": "specs/001-codegraph-extraction",
   "stage": "plan",
   "plan_revision": {
-    "status": "corrective-planning-required-after-execution-order-violation",
+    "status": "corrective-plan-accepted-awaiting-human-authorization",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
     "trigger": "The CodeGraphContext 0.5.1 CLI renders a table while the rejected schema-1.1 test observer expected an invented key=value record.",
     "scope": "Replace only qualification transport/evidence with the provider's loopback HTTP JSON gateway; no production integration or provider execution is authorized.",
-    "accepted_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-7.json",
-    "latest_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-7.json",
+    "accepted_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-8.json",
+    "latest_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-8.json",
     "approval_observed_at": "2026-07-16T09:48:03.3732926+08:00",
     "approval_summary": "User explicitly approved the planned-change gate for the qualification-only HTTP JSON transport/parser candidate. This preserves the previously approved whole-Repository ScanRun baseline and authorizes only fresh task generation plus read-only analysis.",
     "latest_analyze_artifact": "specs/001-codegraph-extraction/reviews/analyze-6.json",
@@ -26,9 +26,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "fresh-corrective-plan",
-      "fresh-plan-review",
-      "human-authorization-if-another-provider-execution-is-proposed"
+      "human-authorization-for-attempt-0002"
     ]
   },
   "active_gates": {
@@ -1351,7 +1349,7 @@
       ]
     },
     "plan-review": {
-      "count": 7,
+      "count": 8,
       "verdict_paths": [
         "specs/001-codegraph-extraction/reviews/plan-review-1.json",
         "specs/001-codegraph-extraction/reviews/plan-review-2.json",
@@ -1359,7 +1357,8 @@
         "specs/001-codegraph-extraction/reviews/plan-review-4.json",
         "specs/001-codegraph-extraction/reviews/plan-review-5.json",
         "specs/001-codegraph-extraction/reviews/plan-review-6.json",
-        "specs/001-codegraph-extraction/reviews/plan-review-7.json"
+        "specs/001-codegraph-extraction/reviews/plan-review-7.json",
+        "specs/001-codegraph-extraction/reviews/plan-review-8.json"
       ]
     },
     "analyze": {
@@ -1866,19 +1865,38 @@
       "observed_at": "2026-07-16T09:07:27Z",
       "summary": "A stale test assembly accidentally invoked the inherited provider qualification once before prerequisites were green. Cleanup reported success and no container remains; the run failed the superseded CLI-marker gate and cannot qualify the accepted HTTP JSON candidate.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/plan-review/9",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "fcf9298096acc95cdada52a427a5a4db3cb7e6a3",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/plan-review-8.json"
+      ],
+      "command": "git diff --check -- <complete-corrective-plan-set>",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T10:00:00Z",
+      "summary": "Fresh independent review accepted the fail-closed corrective plan with no findings. The verdict does not authorize attempt-0002; task generation remains paused for explicit human approval.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-implement-failure-20260716T093200Z-e9a731",
+    "checkpoint_id": "bmad-4-1-corrective-plan-review-20260716T100000Z-f2b846",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "implement",
+    "stage": "plan-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/qualification/evidence/accidental-provider-execution-2026-07-16.md",
+      "specs/001-codegraph-extraction/plan.md",
+      "specs/001-codegraph-extraction/research.md",
+      "specs/001-codegraph-extraction/data-model.md",
+      "specs/001-codegraph-extraction/quickstart.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/001-codegraph-extraction/reviews/plan-review-8.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/7"
+      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/9"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -1894,5 +1912,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T17:32:00+08:00"
+  "updated_at": "2026-07-16T18:00:00+08:00"
 }
