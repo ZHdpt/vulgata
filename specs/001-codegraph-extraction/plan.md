@@ -1,6 +1,6 @@
 # Implementation Plan: CodeGraph Code Unit Extraction
 
-**Branch**: `dev` | **Date**: 2026-07-15 | **Spec**: [spec.md](spec.md)
+**Branch**: `dev` | **Date**: 2026-07-16 | **Spec**: [spec.md](spec.md)
 
 ## Summary
 
@@ -24,14 +24,16 @@ The public documentation observed on that date still labels its examples as
 the unavailable 0.5.0 documentation grammar is unchanged in 0.5.1. The
 unchanged qualification hard stop must prove every invoked 0.5.1 behavior.
 
-The plan therefore proposes one local whole-Repository `cgc` graph build per
+The plan therefore uses one local whole-Repository `cgc` graph build per
 `ScanRun`, bounded by one whole-process timeout. Deterministic approximately
 1,000-file groups remain only for Vulgata filter/audit records; they never
 partition provider input or create provider processes. This preserves
 same-Repository structural relationships in a single graph.
 
-That whole-Repository strategy and its limited Story/Spec reconciliation were
-already approved on 2026-07-14 and are the baseline for this feature. This
+That whole-Repository strategy was approved by the user and is now encoded in
+the independently accepted specification (FR-018, acceptance scenario 1.3,
+and the provider-failure edge case). It is the executable baseline for this
+feature. This
 revision does **not** reopen PRD behavior, production Scan behavior, or the
 earlier approval. The only new approval boundary after an accepted independent
 plan review is the test-only HTTP JSON qualification transport and parser
@@ -86,8 +88,10 @@ or partial provider-result continuation.
 | V. Security & Data Stewardship | Private local Kuzu context/database and private provider home; loopback-only HTTP gateway with no published Docker port; no Vulgata MCP/Worker Agent tool or remote backend. The provider's bundled MCP/tool routes remain inside the unpublished no-network container and are never invoked; safe process arguments and diagnostics. | Pass, gated |
 | Docker reproducibility | Digest-pinned base, locked Python/distributions, and non-root `version`/`doctor` are qualification criteria, not assumptions. | Pass, gated |
 
-No Constitution exception is proposed. Without user approval of the correction,
-this plan cannot advance to tasks.
+No Constitution exception is proposed. The whole-Repository specification and
+the qualification-only HTTP JSON boundary already have their required user
+approvals; this regenerated plan still requires independent plan review before
+tasks may be regenerated.
 
 ## Approved Scan Strategy Baseline and Qualification-Only Approval Boundary
 
@@ -153,15 +157,16 @@ qualification transport described later in this document.
    becomes one Unresolved Structural Relationship Candidate. No Document,
    Uncertainty, Cross-Repository Resolution, or partial edge is created.
 
-### Previously approved behavior changes that remain baseline
+### Accepted specification behavior and provider realization
 
-| Current Story/Spec promise | Proposed corrected behavior | Reason and structural effect |
+| Accepted specification requirement | Planned realization | Reason and structural effect |
 | --- | --- | --- |
-| Approximately 1,000-file provider batches. | At-most-1,000-file audit/filter groups only; one provider build for the whole Repository. | `cgc index [PATH]` is the documented input. One graph keeps both endpoints visible. |
-| Configurable 30-second per-file timeout. | Remove per-file timer/request; use deployment whole-process timeout, proposed default 1,800 seconds. | A group deadline is not per-file compliance and no candidate boundary is documented. |
-| Crash/hang is isolated to one file and eligible siblings continue. | Provider crash/timeout terminates the `ScanRun` with no partial provider-derived data. Filter outcomes already recorded remain auditable. | Full graph correctness is preferred to unsupported partial continuation. |
-| Filtered paths are excluded from parse input. | Vulgata excludes them from Code Unit/Edge persistence, but the local provider may inspect the whole private checkout. | The provider has no documented file-subset input. |
-| Generic provider fixture permits result mapping. | Qualification may probe a local HTTP JSON envelope and private-Context isolation, but it cannot select a production adapter, result grammar, or structural persistence. | CLI tables are presentation output; the HTTP gateway's nested payload is untyped and has no published versioned result schema. |
+| FR-018: exactly one atomic whole-Repository provider graph build per `ScanRun`. | Invoke one `cgc index <working-copy>` and one structural projection for the complete Repository. | `cgc index [PATH]` is the documented input and one graph keeps both endpoints visible. |
+| FR-018: optional deterministic groups of at most approximately 1,000 eligible paths are audit/progress metadata only. | Assign `AuditGroupOrdinal` after ordinal path enumeration; never use a group as provider input, process, request, retry, or deadline. | This preserves deterministic audit/progress without inventing provider partition semantics. |
+| FR-018: one configurable whole-process limit, default 1,800 seconds, from indexing through projection. | `CodeGraphProcessSupervisor` owns the complete process tree and applies `CodeGraph:WholeRepositoryProcessTimeoutSeconds` once across index and projection. | The provider documents no per-file input or timer. |
+| FR-018: provider cancellation, timeout, hang, crash, unsuccessful exit, or unreadable output fails provider-derived results atomically. | Terminate the process tree, persist bounded terminal `ScanRun` state, retain previously determined local filtering outcomes, and commit no provider-derived Code Units, Edges, or unresolved candidates. | Atomic failure avoids unsupported partial-graph claims and preserves graph correctness. |
+| FR-005 and FR-018: filtered outcomes remain auditable while provider input is the whole Repository. | Vulgata excludes filtered paths from Code Unit/Edge persistence, while the local provider may inspect the private checkout. | The provider has no documented file-subset input; source remains organisation-controlled. |
+| FR-003/FR-011: consume validated structural results through a Vulgata-owned contract. | Qualification probes a loopback HTTP JSON envelope and private-Context isolation, but does not select a production adapter, result grammar, or structural persistence. | CLI tables are presentation output; the gateway's nested payload is not a published versioned schema. |
 
 Preserved guarantees are local-only source handling; one Repository per ScanRun;
 deterministic filter audit; authorization; safe clone/missing-CLI behavior;
@@ -169,17 +174,17 @@ whole-graph same-Repository edges; `FileIdentityHash`; exact
 `Exact|Approximate|Heuristic`; `ScanRun`/`ScanRuns`; Chinese UI; and absence of
 LLM/Vulgata MCP/Worker Agent/Coordinator/Cross-Repository Resolution.
 
-### Previously approved Story/Spec reconciliation
+### Accepted Story/specification reconciliation
 
-The following reconciliations were already approved as Story 4.1 baseline and
-remain in force:
+The accepted specification is the executable authority for these provider-
+dependent details. It records the already approved Story 4.1 reconciliation:
 
 1. FR-4.1 is implemented through one whole-Repository local graph per profile
    when the provider exposes repository-level indexing. Its filter remains an
    auditable Vulgata result filter, not a promise of provider file-subset input.
-2. The Story/Spec approximately-1,000-file provider grouping, 30-second
-   per-file timeout, and per-file continuation are superseded by audit groups,
-   a configured whole-process timeout, and atomic provider-derived failure.
+2. FR-018 requires audit-only at-most-approximately-1,000-path groups, one
+   configured 1,800-second whole-process timeout, and atomic provider-derived
+   failure. It makes no per-file batching, timing, retry, or continuation claim.
 3. Story 4.1 stores structural Code Units with `Language` nullable; Story 4.2
    owns deterministic language/framework detection.
 
@@ -490,7 +495,8 @@ specs/001-codegraph-extraction/          # plan artifacts
 
 ## Implementation Sequence (for later task generation)
 
-0. Obtain the post-plan user approval below. Without it, do not generate tasks.
+0. Complete independent review of this regenerated plan set. The recorded
+   whole-Repository and qualification-only approval gates are already satisfied.
 1. Implement only reproducible provider qualification: Docker/base/Python locks,
    cgc installation, synthetic fixture, non-root command proof, whole-process
    timeout test, and safe evidence. Do not add mapping, structural EF entities,
@@ -514,7 +520,7 @@ specs/001-codegraph-extraction/          # plan artifacts
 | Spec FR-004–FR-009, FR-012 | Target model stays; persistence follows only the qualified contract. |
 | Spec FR-005 | Filtered audit persists; provider input filtering is an explicit PRD clarification. |
 | Spec FR-017 | No LLM/Vulgata MCP/Worker Agent/Coordinator/Documents/Uncertainty/Cross-Repository work; bundled provider MCP/tool routes are not invoked. |
-| Spec FR-018 and Story AC-1/AC-2 | Not met by documented provider; explicit user correction replaces these promises. |
+| Spec FR-018; acceptance scenario 1.3; provider-failure edge case | Satisfied directly: one whole-Repository index/projection, audit-only at-most-approximately-1,000-path groups, one configurable 1,800-second whole-process limit, and atomic provider-derived failure with local filtering outcomes retained. The older Story prose is a superseded provider assumption, not an executable per-file contract. |
 | PRD §5.4 FR-4.1 | Structural pre-scan remains; the whole-Repository input/timeout/continuation/filter baseline and Story 4.2 allocation are already approved; only the qualification-only HTTP JSON transport/parser candidate required the later approval gate. |
 | Constitution IV/E2E matrix | Qualification is test-first; after mapping/UI/auth/API/persistence/migration work, E2E is mandatory. |
 

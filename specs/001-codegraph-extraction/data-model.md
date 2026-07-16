@@ -1,8 +1,8 @@
 # Data Model: CodeGraph Code Unit Extraction
 
-This target model applies only after the proposed whole-Repository strategy is
-user-approved and the provider qualification/follow-up plan accepts an exact
-projection grammar. All identifiers are UUIDs. PostgreSQL is authoritative;
+This target model implements the accepted whole-Repository specification only
+after provider qualification and a follow-up plan accept an exact projection
+grammar. All identifiers are UUIDs. PostgreSQL is authoritative;
 CodeGraphContext's transient Kuzu directory is not Vulgata persistence truth.
 Tables use the repository's PascalCase EF naming convention.
 

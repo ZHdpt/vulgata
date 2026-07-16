@@ -210,9 +210,9 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `plan`; the user-approved whole-Repository specification correction has independent specification acceptance, and the complete dependent plan set must now be regenerated and re-reviewed.
-- Latest workflow checkpoint: `bmad-4-1-spec-review-20260716T083000Z-b7e421` (pending local commit binding).
-- Authorization: analysis finding I1 remediation is approved and accepted in the specification. The canonical PRD remains unchanged; implementation stays blocked until fresh plan review, task generation, and read-only analysis accept the regenerated boundary.
+- Current workflow stage: `tasks`; the complete plan regenerated from corrected FR-018 has fresh independent acceptance, and task regeneration is next.
+- Latest workflow checkpoint: `bmad-4-1-plan-review-20260716T090000Z-c3d912` (pending local commit binding).
+- Authorization: analysis finding I1 remediation is accepted through specification and plan review. The canonical PRD remains unchanged; implementation stays blocked until fresh task generation and read-only analysis accept the regenerated boundary.
 
 ### Completion notes
 

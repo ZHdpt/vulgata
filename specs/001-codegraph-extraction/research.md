@@ -48,7 +48,7 @@ documentation.
 
 ## Decision: whole-Repository graph build; audit groups are not provider batches
 
-**Decision:** Propose one private local `cgc index <working-copy>` graph build
+**Decision:** Use one private local `cgc index <working-copy>` graph build
 per `ScanRun`. Deterministic at-most-1,000-file groups remain only for Vulgata
 filter/audit records; they do not select provider input, receive provider
 timeouts, or create separate provider processes.
@@ -172,17 +172,17 @@ labelled 0.5.0, so they establish only a candidate command surface. They do not
 prove 0.5.1 output compatibility; the existing non-root qualification hard stop
 must prove it before mapping or persistence work.
 
-## Approved baseline correction and remaining qualification gate
+## Accepted specification baseline and qualification gate
 
-The documented provider cannot meet the Story/Spec's per-file batch/timeout/
-continuation guarantees. That baseline has already been approved as one
-whole-process timeout (default 1,800 seconds), atomic provider-derived
-failure, and audit-only 1,000-file groups, together with the FR-4.1
-clarification that the provider may locally inspect filtered paths while
+The accepted specification no longer makes the older Story's unsupported
+per-file batch, timeout, or continuation promises. FR-018 now requires one
+whole-process timeout (default 1,800 seconds), atomic provider-derived failure,
+and audit-only at-most-approximately-1,000-path groups, together with the
+FR-4.1 clarification that the provider may locally inspect filtered paths while
 Vulgata excludes them from persisted Code Units/Edges, and that Story 4.2 owns
 language/framework detection. The remaining active approval boundary was only
 the qualification-only local HTTP JSON transport/parser candidate. No
-requirement text is changed in this research artifact.
+requirement text is changed in this regenerated research artifact.
 
 ## Binding Story 4.1 data decisions
 

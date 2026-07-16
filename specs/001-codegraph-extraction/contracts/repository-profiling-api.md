@@ -22,9 +22,9 @@ GET  /api/repositories/standalone/{repositoryId}/scan-runs/{scanRunId}
 - Authorization is `ManagementAccess` plus the existing visible-System/
   Repository SystemOwner rule in the coordinator. Denied/hidden access follows
   the established 404/403 behavior and creates no `ScanRun`.
-- The start body is empty. `perFileTimeoutSeconds` is deliberately removed by
-  the accepted baseline correction; deployment-owned whole-process timeout is not a
-  caller-controlled API setting.
+- The start body is empty. FR-018 defines a deployment-owned whole-process
+  timeout, defaulting to 1,800 seconds; it is not a caller-controlled API
+  setting and there is no per-file timeout field.
 - A synchronous successful start returns `201 Created` and a terminal minimal
   `ScanRunSummaryDto`. Missing CLI and clone failure persist terminal state and
   return safe Chinese `ProblemDetails`, never stdout/stderr.
