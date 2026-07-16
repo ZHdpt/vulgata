@@ -3,9 +3,9 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "implement",
+  "stage": "plan",
   "plan_revision": {
-    "status": "tasks-regenerated-analysis-accepted-ready-for-implementation",
+    "status": "corrective-planning-required-after-execution-order-violation",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
     "trigger": "The CodeGraphContext 0.5.1 CLI renders a table while the rejected schema-1.1 test observer expected an invented key=value record.",
     "scope": "Replace only qualification transport/evidence with the provider's loopback HTTP JSON gateway; no production integration or provider execution is authorized.",
@@ -26,7 +26,9 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "tdd-task-group-a"
+      "fresh-corrective-plan",
+      "fresh-plan-review",
+      "human-authorization-if-another-provider-execution-is-proposed"
     ]
   },
   "active_gates": {
@@ -1850,24 +1852,47 @@
       "observed_at": "2026-07-16T09:18:00Z",
       "summary": "Fresh independent analysis accepted the corrected whole-Repository task graph with full FR-018 traceability, no findings, one isolated provider execution, a hard stop, and no production runtime scope.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/7",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "cf0a90a1326881e39c34aee4b943a605cda6715e",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/qualification/evidence/accidental-provider-execution-2026-07-16.md"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphQualification.CgcCommandQualificationTests --no-restore --no-build",
+      "exit_code": 1,
+      "observed_at": "2026-07-16T09:07:27Z",
+      "summary": "A stale test assembly accidentally invoked the inherited provider qualification once before prerequisites were green. Cleanup reported success and no container remains; the run failed the superseded CLI-marker gate and cannot qualify the accepted HTTP JSON candidate.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-analyze-20260716T091800Z-d6f204",
+    "checkpoint_id": "bmad-4-1-implement-failure-20260716T093200Z-e9a731",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "analyze",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/tasks.md",
-      "specs/001-codegraph-extraction/reviews/analyze-6.json",
+      "specs/001-codegraph-extraction/qualification/evidence/accidental-provider-execution-2026-07-16.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/analyze/5"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/7"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-  "updated_at": "2026-07-16T17:18:00+08:00"
+  "recoverable_failure": {
+    "stage": "implement",
+    "category": "execution-order-violation",
+    "observed_at": "2026-07-16T17:07:27+08:00",
+    "summary": "A stale --no-build test binary invoked the inherited Docker/CodeGraphContext qualification once before Group A prerequisites were green. Cleanup reported success and no container remains, but the sole provider execution was consumed without qualifying the accepted HTTP JSON candidate.",
+    "evidence_paths": [
+      "specs/001-codegraph-extraction/qualification/evidence/accidental-provider-execution-2026-07-16.md"
+    ],
+    "next_action": "corrective-planning",
+    "retry_authorized": false
+  },
+  "updated_at": "2026-07-16T17:32:00+08:00"
 }

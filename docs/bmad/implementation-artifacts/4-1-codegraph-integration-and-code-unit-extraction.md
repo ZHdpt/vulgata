@@ -210,9 +210,9 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `implement`; regenerated tasks and fresh read-only analysis accepted the corrected whole-Repository FR-018 boundary with no findings.
-- Latest workflow checkpoint: `bmad-4-1-analyze-20260716T091800Z-d6f204` (pending local commit binding).
-- Authorization: analysis finding I1 remediation is complete. The canonical PRD remains unchanged, and qualification-only TDD implementation may proceed. Provider execution remains reserved exclusively for T009, followed by the T010 hard stop.
+- Current workflow stage: `plan`; corrective planning is required after a stale `--no-build` test binary accidentally consumed the sole provider execution before Group A prerequisites were green.
+- Latest accepted workflow checkpoint: `bmad-4-1-analyze-20260716T091800Z-d6f204` at `cf0a90a1326881e39c34aee4b943a605cda6715e`.
+- Failure disposition: cleanup reported success and no disposable container remains, but the run used the superseded CLI-marker observer and cannot qualify the accepted HTTP JSON candidate. No retry is authorized by the current task graph. Unfinished Group A edits remain unaccepted and uncommitted pending a fresh corrective plan and review.
 
 ### Completion notes
 
