@@ -212,3 +212,48 @@ The durable result remained Git object
 `d14922c3e5554bf1fb0339037d141f54e43d761a`, and the `attempt-0002`
 directory remained absent. No wrapper, script, Docker, `cgc`, HTTP network,
 image, container, or provider action occurred.
+
+## T012 reachability-free preflight verification (2026-07-16)
+
+The PowerShell AST parsed without errors. Its only external process construction
+is `ProcessStartInfo('dotnet')`; the closed execution plan contains only a fresh
+test-project build and the exact `CodeGraphQualificationSynthetic` category.
+There is no Docker, `cgc`, HTTP, image, container, provider-wrapper, or provider
+test command in the preflight allow-list.
+
+The exact approved R0 command ran once from
+`d03ae626ce1c56fd6c5e9b884de891ecea4eafd1` and completed at approximately
+`2026-07-16T21:57:52+08:00`:
+
+| Command | Exit | Result |
+| --- | ---: | --- |
+| `pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1` | 0 | Fresh build completed with 0 errors (666 analyzer/package warnings); the exact synthetic category passed 94/94 in 16 seconds. |
+
+The preflight verified the revoked legacy fixture path was absent, every declared
+source/fixture and contract input existed and produced a SHA-256 hash, the
+accepted plan-review hash was exact, and the recorded approval timestamp/summary
+matched. The bounded input hashes were:
+
+| Input | SHA-256 |
+| --- | --- |
+| `docker/Dockerfile` | `3d827ad6874de8298527e1242077638a62c5d18217fecd3a51b22869cd57c00c` |
+| `docker/codegraph/python-version.txt` | `aa0d6581054e6e4ff3f91839deca7a854ad37221b8784d060b42d0f847ff1a3b` |
+| `docker/codegraph/requirements.lock` | `10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95` |
+| `qualification-result.schema.json` | `383e22128c7662cb30d04665ea770afc18c7f9f473d6674b28b1e8813bc3f563` |
+| `attempts/authorized.schema.json` | `d06441f82a23c1c2e7aa48d890ae877885f743038539f8156cdb8086ee4e8749` |
+| `attempts/started.schema.json` | `954b73b0144e89fc540378031ff4aaa0523783654599d071d8549b036df718b7` |
+| `attempts/terminal.schema.json` | `867c34eae80ca81d1c418e423d6ade77427620bf2982b6b7c2cc4fbdc034378d` |
+| `reviews/plan-review-8.json` | `f73f877b3c7d37b3c739ee123867e39e3b71769e4abd1d8bbe5bd2f51806b408` |
+| `workflow-state.json` | `1acc3cecfd62d741bc26be8dee0e1e8a115eb5f3b2e88e4d5af12b6275cc52bb` |
+| `Fixtures/qualification-fixture-manifest.json` | `8c4f240f43d43f7db6008abb619b5f881200ad49449b1d89485261d3e74d3115` |
+| `BaseProcessor.cs` | `c58b5e939cc5b5bd19f09c3ee200313e5724e596a6bdfeddb073f6ce73c6e38c` |
+| `OrderRunner.cs` | `1e60ccc02e0ae35541ebe5a538592d0ddb61c90142de51f68fbfb2651491b914` |
+| `OrderService.cs` | `d3fa19a6248d6deec1984827a24bb77386be41634335aa1a0dd29c3b9afc5966` |
+| `GeneratedClient.g.cs` | `3b48a70c72f1d51fac71b3ee20c213125df51e56e68a786068e14be9c152fafc` |
+
+Before and after the command, `attempt-0002/authorized.json`, `started.json`,
+and `terminal.json` were absent. The durable `qualification-result.json` stayed
+byte-identical at 1,096 bytes with SHA-256
+`358d5706b3b1472701f45fadbf219e1ae693671ff528022e092794698422d125`.
+T012 performed zero provider, Docker, `cgc`, network HTTP, image, or container
+actions. The irreversible T013 attempt remains unclaimed and unspent.

@@ -28,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "t012-reachability-free-preflight"
+      "t013-attempt-0002"
     ]
   },
   "active_gates": {
@@ -2006,27 +2006,36 @@
       "observed_at": "2026-07-16T14:30:00Z",
       "summary": "T010-T011 completed provider-unreachable RED-GREEN recovery. Root rerun passed 94 freshly compiled synthetic tests; preflight and wrapper behavior use fake executors, the exact provider Fact is inert without a claimed authorization, the runner uses Attempt0002RepositoryPath, attempt-0002 is absent, and the durable result is unchanged.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/14",
+      "kind": "verification",
+      "stage": "implement",
+      "source_commit": "d03ae626ce1c56fd6c5e9b884de891ecea4eafd1",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T13:57:52Z",
+      "summary": "T012 exact reachability-free preflight ran once and passed: fresh build had zero errors, all 94 synthetic tests passed, accepted hashes/approval/ledger checks matched, attempt-0002 remained absent, and the durable result remained unchanged. No provider-reachable action occurred.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-t010-t011-20260716T143000Z-a3d615",
+    "checkpoint_id": "bmad-4-1-t012-20260716T135752Z-b6e738",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
     "stage": "implement",
     "committed_paths": [
       "specs/001-codegraph-extraction/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuard.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuardTests.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/QualificationPreflightTests.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/CgcProviderQualificationTests.cs",
       "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1",
-      "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1",
-      "tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs",
-      "specs/001-codegraph-extraction/qualification/evidence/red.md",
       "specs/001-codegraph-extraction/qualification/evidence/verification.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/13"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/14"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -2042,5 +2051,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T22:30:00+08:00"
+  "updated_at": "2026-07-16T22:58:00+08:00"
 }

@@ -187,7 +187,7 @@ synthetic tests.
   - **Depends on:** T010.
   - **GREEN (R0):** rerun T010, then the exact synthetic-category command from T003.
 
-- [ ] T012 Run the complete reachability-free preflight. It must prove legacy-path
+- [x] T012 Run the complete reachability-free preflight. It must prove legacy-path
   absence; source/fixture, Dockerfile, lock, schema, ledger and accepted-plan hashes; fresh
   compilation; the exact synthetic category; no existing `attempt-0002/started.json` or
   terminal; and the recorded user approval. Stop on any failure without creating an
