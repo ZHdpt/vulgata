@@ -165,7 +165,7 @@ writing without Docker/provider access.
 without all capabilities; the preflight checks only repository inputs and fresh compiled
 synthetic tests.
 
-- [ ] T010 Add RED tests in `ProviderExecutionGuardTests.cs` and
+- [x] T010 Add RED tests in `ProviderExecutionGuardTests.cs` and
   `QualificationPreflightTests.cs` for the exact provider identity
   `Vulgata.Tests.CodeGraphQualification.CgcProviderQualificationTests.Attempt0002_WhenAuthorizedAndUnclaimed_RecordsSchema12EvidenceAsync`, exact
   category `CodeGraphQualificationProvider`, recorded human approval, accepted-plan and
@@ -176,7 +176,7 @@ synthetic tests.
   - **RED (R0):**
     `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName=Vulgata.Tests.CodeGraphQualification.QualificationPreflightTests.Run_WithRepositoryInputs_UsesOnlyReachabilityFreeCommandsAsync&Category=CodeGraphQualificationSynthetic"`
 
-- [ ] T011 Implement `CgcProviderQualificationTests.cs`,
+- [x] T011 Implement `CgcProviderQualificationTests.cs`,
   `Invoke-CodeGraphQualificationPreflight.ps1`, and
   `Invoke-CodeGraphQualificationProvider.ps1`. The provider test must be inert in the full
   suite and callable only by the wrapper. The wrapper verifies the workflow approval,

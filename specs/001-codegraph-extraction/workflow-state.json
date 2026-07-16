@@ -28,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "t010-t011-provider-entry-preflight-guards"
+      "t012-reachability-free-preflight"
     ]
   },
   "active_gates": {
@@ -1985,26 +1985,48 @@
       "observed_at": "2026-07-16T13:07:14Z",
       "summary": "Recovered T008-T009 passed 86 freshly compiled synthetic tests and explicit schema validation. A regression RED exposed masked SIGKILL failure status; the corrected branch preserves cleanup-failure precedence. attempt-0002 remains absent and qualification-result.json is byte-identical to HEAD.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/13",
+      "kind": "red-green",
+      "stage": "implement",
+      "source_commit": "b7808ba772e08b74fecea8fcc6f7ce6ea2df80c0",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuard.cs",
+        "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuardTests.cs",
+        "tests/Vulgata.Tests/CodeGraphQualification/QualificationPreflightTests.cs",
+        "tests/Vulgata.Tests/CodeGraphQualification/CgcProviderQualificationTests.cs",
+        "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1",
+        "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1",
+        "tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs",
+        "specs/001-codegraph-extraction/tasks.md"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter Category=CodeGraphQualificationSynthetic",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T14:30:00Z",
+      "summary": "T010-T011 completed provider-unreachable RED-GREEN recovery. Root rerun passed 94 freshly compiled synthetic tests; preflight and wrapper behavior use fake executors, the exact provider Fact is inert without a claimed authorization, the runner uses Attempt0002RepositoryPath, attempt-0002 is absent, and the durable result is unchanged.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-t008-t009-20260716T130714Z-f0c492",
+    "checkpoint_id": "bmad-4-1-t010-t011-20260716T143000Z-a3d615",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
     "stage": "implement",
     "committed_paths": [
       "specs/001-codegraph-extraction/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuard.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/ProviderExecutionGuardTests.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/QualificationPreflightTests.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/CgcProviderQualificationTests.cs",
+      "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1",
+      "tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1",
       "tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/FakeQualificationProcessLauncher.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/QualificationGateTests.cs",
-      "tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs",
-      "specs/001-codegraph-extraction/qualification/qualification-result.schema.json",
       "specs/001-codegraph-extraction/qualification/evidence/red.md",
       "specs/001-codegraph-extraction/qualification/evidence/verification.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/12"
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/13"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -2020,5 +2042,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T21:15:00+08:00"
+  "updated_at": "2026-07-16T22:30:00+08:00"
 }

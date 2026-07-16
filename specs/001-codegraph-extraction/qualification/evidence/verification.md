@@ -188,3 +188,27 @@ The durable `qualification-result.json` Git object hash remained
 The `attempt-0002` directory remained absent. `git diff --check` passed. All
 commands compiled fresh where applicable and remained R0: zero Docker, `cgc`,
 network HTTP, image, container, or provider actions.
+
+## T010-T011 guarded provider entry verification (2026-07-16)
+
+The provider Fact now calls the guarded entry and remains inert until the
+wrapper supplies the exact attempt ID, process token, and command identity. A
+successful durable claim is the only path that constructs the sealed
+`DockerQualificationProcessLauncher`, runs the whole-Repository runner, writes
+schema-1.2 qualified or corrective evidence, and returns a terminal ledger
+classification. The runner now mounts only
+`QualificationTestPaths.Attempt0002RepositoryPath`; the revoked Repository
+fixture path is absent from runner source.
+
+| Command | Exit | Result |
+| --- | ---: | --- |
+| Exact provider-entry static tracer plus exact synthetic category | 0 | 1/1 passed with fresh compilation. |
+| Exact `ProviderExecutionGuardTests` class plus exact synthetic category | 0 | 10/10 passed with fresh compilation. |
+| Exact `CodeGraphQualificationSynthetic` category | 0 | 94/94 passed with fresh compilation. |
+| Exact provider Fact plus provider category, without wrapper environment | 0 | 1/1 passed inert; no attempt record or result mutation. |
+| Source scan and `git diff --check` | 0 | Guarded entry/writer/terminal calls and the new Repository fixture were present; the legacy runner path was absent. |
+
+The durable result remained Git object
+`d14922c3e5554bf1fb0339037d141f54e43d761a`, and the `attempt-0002`
+directory remained absent. No wrapper, script, Docker, `cgc`, HTTP network,
+image, container, or provider action occurred.

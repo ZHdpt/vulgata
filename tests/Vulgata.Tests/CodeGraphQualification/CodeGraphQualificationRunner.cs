@@ -87,13 +87,7 @@ internal sealed class CgcQualificationRunner
             return await RunFakeAsync(fakeLauncher, cancellationToken);
         }
 
-        string fixturePath = Path.Combine(
-            _repositoryRoot,
-            "tests",
-            "Vulgata.Tests",
-            "CodeGraphQualification",
-            "Fixtures",
-            "QualificationRepository");
+        string fixturePath = QualificationTestPaths.Attempt0002RepositoryPath;
 
         if (!Directory.Exists(fixturePath))
         {
@@ -264,7 +258,8 @@ internal sealed class CgcQualificationRunner
                 EndpointIdentities: structuralObservation.EndpointIdentities,
                 OrderedRanges: structuralObservation.OrderedRanges,
                 StructuralGrammar: structuralObservation.Grammar,
-                StructuralEvidence: evidence);
+                StructuralEvidence: evidence,
+                ImageDigest: imagePreparation.ImageDigest);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -595,15 +590,18 @@ internal sealed class CgcQualificationRunner
         };
         inspectStartInfo.ArgumentList.Add("image");
         inspectStartInfo.ArgumentList.Add("inspect");
+        inspectStartInfo.ArgumentList.Add("--format");
+        inspectStartInfo.ArgumentList.Add("{{.Id}}");
         inspectStartInfo.ArgumentList.Add(_imageName);
 
         using Process inspect = _processLauncher.CreateProcess(inspectStartInfo);
         if (inspect.Start())
         {
+            string inspectOutput = await inspect.StandardOutput.ReadToEndAsync(cancellationToken);
             await inspect.WaitForExitAsync(cancellationToken);
-            if (inspect.ExitCode == 0)
+            if (inspect.ExitCode == 0 && TryNormalizeImageDigest(inspectOutput, out string? imageDigest))
             {
-                return ImagePreparationResult.Success();
+                return ImagePreparationResult.Success(imageDigest);
             }
         }
 
@@ -645,7 +643,46 @@ internal sealed class CgcQualificationRunner
             return ImagePreparationResult.Failure($"The qualification image build failed with exit code {build.ExitCode}. {diagnostic}");
         }
 
-        return ImagePreparationResult.Success();
+        return await InspectBuiltImageAsync(cancellationToken);
+    }
+
+    private async Task<ImagePreparationResult> InspectBuiltImageAsync(CancellationToken cancellationToken)
+    {
+        ProcessStartInfo inspectStartInfo = new("docker")
+        {
+            CreateNoWindow = true,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+        };
+        inspectStartInfo.ArgumentList.Add("image");
+        inspectStartInfo.ArgumentList.Add("inspect");
+        inspectStartInfo.ArgumentList.Add("--format");
+        inspectStartInfo.ArgumentList.Add("{{.Id}}");
+        inspectStartInfo.ArgumentList.Add(_imageName);
+
+        using Process inspect = _processLauncher.CreateProcess(inspectStartInfo);
+        if (!inspect.Start())
+        {
+            return ImagePreparationResult.Failure("The qualification image identity process did not start.");
+        }
+
+        string inspectOutput = await inspect.StandardOutput.ReadToEndAsync(cancellationToken);
+        await inspect.WaitForExitAsync(cancellationToken);
+        return inspect.ExitCode == 0 && TryNormalizeImageDigest(inspectOutput, out string? imageDigest)
+            ? ImagePreparationResult.Success(imageDigest)
+            : ImagePreparationResult.Failure("The qualification image identity was unavailable after the build.");
+    }
+
+    private static bool TryNormalizeImageDigest(string value, out string? imageDigest)
+    {
+        string candidate = value.Trim().ToLowerInvariant();
+        bool valid = candidate.StartsWith("sha256:", StringComparison.Ordinal) &&
+            candidate.Length == "sha256:".Length + 64 &&
+            candidate["sha256:".Length..].All(character =>
+                character is >= '0' and <= '9' || character is >= 'a' and <= 'f');
+        imageDigest = valid ? candidate : null;
+        return valid;
     }
 
     private static void TryTerminateProcessTree(Process process)
@@ -769,15 +806,16 @@ internal sealed record CgcQualificationExecution(
     IReadOnlyList<string> EndpointIdentities,
     IReadOnlyList<QualifiedSourceRange> OrderedRanges,
     string StructuralGrammar,
-    CgcStreamingEvidence? StructuralEvidence = null);
+    CgcStreamingEvidence? StructuralEvidence = null,
+    string? ImageDigest = null);
 
 internal sealed record QualifiedSourceRange(int StartLine, int EndLine);
 
-internal sealed record ImagePreparationResult(bool Succeeded, string? FailureSummary)
+internal sealed record ImagePreparationResult(bool Succeeded, string? FailureSummary, string? ImageDigest)
 {
-    internal static ImagePreparationResult Success() => new(true, null);
+    internal static ImagePreparationResult Success(string imageDigest) => new(true, null, imageDigest);
 
-    internal static ImagePreparationResult Failure(string summary) => new(false, summary);
+    internal static ImagePreparationResult Failure(string summary) => new(false, summary, null);
 }
 
 internal sealed record CgcQualificationContract(IReadOnlyList<string> LifecycleEntries);

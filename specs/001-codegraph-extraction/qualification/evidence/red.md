@@ -173,3 +173,17 @@ the inverted command status and could therefore mask a SIGKILL cleanup
 failure. The exact T008 command established an additional authentic RED at
 `2026-07-16T21:06:08+08:00` (0/1). This preceded the minimal ordinary
 `if`/`else` correction that preserves the real failure status.
+
+## T010-T011 provider-entry recovery RED evidence (2026-07-16)
+
+The exact fresh-compilation static tracer
+`ProviderEntry_WhenSourceIsInspected_WiresClaimedLeaseThroughRunnerWriterAndTerminalAsync`
+failed 0/1 because `CgcProviderQualificationTests.cs` did not call
+`ProviderQualificationEntry.ExecuteAsync`. The same source inspection showed
+that `CgcQualificationRunner` still constructed the revoked
+`Fixtures/QualificationRepository` path. This authentic RED preceded both
+bounded seam changes.
+
+No wrapper, script, Docker, `cgc`, HTTP, image, container, or provider action
+ran. The RED did not create `attempt-0002` or modify the durable qualification
+result.
