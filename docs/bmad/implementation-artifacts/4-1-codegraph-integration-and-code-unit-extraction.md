@@ -210,9 +210,9 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `plan`; the fresh corrective plan is independently accepted and awaits explicit human authorization before task regeneration.
-- Latest workflow checkpoint: `bmad-4-1-corrective-plan-review-20260716T100000Z-f2b846` (pending local commit binding).
-- Corrective boundary: `attempt-0001` remains a permanent failed execution-order incident. The accepted plan proposes exactly one `attempt-0002`, protected by legacy-fixture revocation, provider-incapable synthetic tests, fresh compilation, a sealed execution lease, a process-scoped token, an accepted-plan binding, and an append-only atomic attempt ledger. Plan acceptance does not authorize the attempt.
+- Current workflow stage: `implement`; the authorized corrective tasks and fresh read-only analysis are accepted, with implementation beginning at stale-fixture revocation.
+- Latest workflow checkpoint: `bmad-4-1-corrective-analyze-20260716T103000Z-a5c913` (pending local commit binding).
+- Corrective boundary: `attempt-0001` remains a permanent failed execution-order incident. The user authorized exactly one `attempt-0002`, protected by legacy-fixture revocation, provider-incapable synthetic tests, fresh compilation, a sealed execution lease, a process-scoped token, an accepted-plan binding, and an append-only atomic attempt ledger. Provider reachability remains prohibited until every regenerated prerequisite and the reachability-free preflight are green.
 
 ### Completion notes
 

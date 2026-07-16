@@ -3,9 +3,9 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "plan",
+  "stage": "implement",
   "plan_revision": {
-    "status": "corrective-plan-accepted-awaiting-human-authorization",
+    "status": "corrective-tasks-analysis-accepted-ready-for-implementation",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
     "trigger": "The CodeGraphContext 0.5.1 CLI renders a table while the rejected schema-1.1 test observer expected an invented key=value record.",
     "scope": "Replace only qualification transport/evidence with the provider's loopback HTTP JSON gateway; no production integration or provider execution is authorized.",
@@ -13,11 +13,13 @@
     "latest_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-8.json",
     "approval_observed_at": "2026-07-16T09:48:03.3732926+08:00",
     "approval_summary": "User explicitly approved the planned-change gate for the qualification-only HTTP JSON transport/parser candidate. This preserves the previously approved whole-Repository ScanRun baseline and authorizes only fresh task generation plus read-only analysis.",
-    "latest_analyze_artifact": "specs/001-codegraph-extraction/reviews/analyze-6.json",
+    "latest_analyze_artifact": "specs/001-codegraph-extraction/reviews/analyze-7.json",
     "analysis_remediation_approval_observed_at": "2026-07-16T09:56:24.4233364+08:00",
     "analysis_remediation_approval_summary": "User explicitly approved the narrow analyze remediation for Story 4.1: revise the stale supporting plan artifact(s) so the full plan set matches the accepted HTTP JSON qualification lifecycle, then rerun plan review, regenerate tasks, and rerun analyze before implementation resumes.",
     "spec_remediation_approval_observed_at": "2026-07-16T16:20:00+08:00",
     "spec_remediation_approval_summary": "User explicitly approved analysis finding I1 remediation: adopt the already approved simpler whole-Repository CodeGraphContext behavior in spec.md, retire the superseded per-file batching/timeout/continuation promises, leave the canonical PRD unchanged, and rerun every dependent SpecKit gate before implementation.",
+    "attempt_0002_approval_observed_at": "2026-07-16T18:10:00+08:00",
+    "attempt_0002_approval_summary": "User explicitly approved the independently accepted corrective plan and one guarded attempt-0002. The approval permits task regeneration now and provider execution only after fresh compilation, provider-incapable synthetic tests, reachability-free preflight, legacy-fixture revocation, sealed lease issuance, and an atomic durable attempt claim are all satisfied. No retry is authorized.",
     "invalidated_artifacts": [
       "specs/001-codegraph-extraction/tasks.md",
       "specs/001-codegraph-extraction/reviews/analyze-2.json",
@@ -26,7 +28,7 @@
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
     "next_required_steps": [
-      "human-authorization-for-attempt-0002"
+      "t001-legacy-fixture-revocation"
     ]
   },
   "active_gates": {
@@ -1362,12 +1364,13 @@
       ]
     },
     "analyze": {
-      "count": 4,
+      "count": 5,
       "verdict_paths": [
         "specs/001-codegraph-extraction/reviews/analyze-1.json",
         "specs/001-codegraph-extraction/reviews/analyze-2.json",
         "specs/001-codegraph-extraction/reviews/analyze-5.json",
-        "specs/001-codegraph-extraction/reviews/analyze-6.json"
+        "specs/001-codegraph-extraction/reviews/analyze-6.json",
+        "specs/001-codegraph-extraction/reviews/analyze-7.json"
       ]
     },
     "acceptance-review": {
@@ -1879,24 +1882,35 @@
       "observed_at": "2026-07-16T10:00:00Z",
       "summary": "Fresh independent review accepted the fail-closed corrective plan with no findings. The verdict does not authorize attempt-0002; task generation remains paused for explicit human approval.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/analyze/6",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "84b0909b6713b410258d4db7ec37503cfe0c5980",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/tasks.md",
+        "specs/001-codegraph-extraction/reviews/analyze-7.json"
+      ],
+      "command": "git diff --check -- specs/001-codegraph-extraction/tasks.md specs/001-codegraph-extraction/reviews/analyze-7.json",
+      "exit_code": 0,
+      "observed_at": "2026-07-16T10:30:00Z",
+      "summary": "Fresh analysis accepted the authorized corrective graph with full task coverage, no findings, thirteen provider-unreachable tasks, sole guarded attempt-0002 in T013, and the T014 production hard stop.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-corrective-plan-review-20260716T100000Z-f2b846",
+    "checkpoint_id": "bmad-4-1-corrective-analyze-20260716T103000Z-a5c913",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "plan-review",
+    "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "specs/001-codegraph-extraction/plan.md",
-      "specs/001-codegraph-extraction/research.md",
-      "specs/001-codegraph-extraction/data-model.md",
-      "specs/001-codegraph-extraction/quickstart.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/001-codegraph-extraction/reviews/plan-review-8.json",
+      "specs/001-codegraph-extraction/tasks.md",
+      "specs/001-codegraph-extraction/reviews/analyze-7.json",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/plan-review/9"
+      "4-1-codegraph-integration-and-code-unit-extraction/analyze/6"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -1912,5 +1926,5 @@
     "next_action": "corrective-planning",
     "retry_authorized": false
   },
-  "updated_at": "2026-07-16T18:00:00+08:00"
+  "updated_at": "2026-07-16T18:30:00+08:00"
 }

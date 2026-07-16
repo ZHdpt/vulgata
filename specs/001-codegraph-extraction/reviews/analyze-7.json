@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "84b0909b6713b410258d4db7ec37503cfe0c5980",
+  "reviewed_boundary": {
+    "base_commit": "84b0909b6713b410258d4db7ec37503cfe0c5980",
+    "candidate_commit": null,
+    "diff_sha256": "3cb52f1a225ed86e1edfbdb0a66ffd2f7c4bb9cfff5ee1a3e3e8dce738b0bd71",
+    "artifact_hashes": {
+      "spec": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+      "plan": "ce4501db2696477889e77c3e45d707bef1a92f751f24de64d20d6d870b75fa70",
+      "research": "d8322d99cb6595969c64ef7231db6fa01450d0bd3fae790a042265af6a159fd6",
+      "data_model": "217c534090d6ff2c29e80e333cbbf987ca9acf61f08b4aa6ccda03effec073bd",
+      "quickstart": "9b34deb59ff09a8dd53292a75b6a08a77ac9cf41f8cded243c0dcb5f88d9dc54",
+      "contract": "9618ab2f6d84466620f7efd9023d1a24487d7e667777a59aecd180a61dac847e",
+      "tasks": "853e43b8a515c6c7ce4d706fc40d3c4c4cdd2df45029c3c1794ec1350e2686f9"
+    }
+  },
+  "findings": [],
+  "confirmations": {
+    "corrected_fr_018_consistent": true,
+    "canonical_prd_unchanged": true,
+    "legacy_fixture_revoked_before_any_test": true,
+    "fresh_compilation_required_for_all_test_commands": true,
+    "no_no_build_or_broad_filter_present": true,
+    "synthetic_paths_are_provider_unreachable": true,
+    "lease_and_atomic_claim_precede_reachability": true,
+    "preflight_is_provider_unreachable": true,
+    "attempt_0002_user_approval_recorded": true,
+    "t013_is_only_provider_capable_task": true,
+    "t014_is_production_hard_stop": true
+  },
+  "coverage_metrics": {
+    "spec_requirements_total": 18,
+    "corrective_scope_requirements_directly_traced": 4,
+    "corrective_scope_requirement_coverage_percent": 100,
+    "fr_018_clauses_total": 4,
+    "fr_018_clauses_traced": 4,
+    "tasks_total": 14,
+    "tasks_with_explicit_dependencies": 14,
+    "tasks_with_validation_or_terminal_classification": 14,
+    "tasks_covered_percent": 100,
+    "provider_unreachable_tasks": 13,
+    "provider_capable_tasks": 1,
+    "critical_findings": 0,
+    "high_findings": 0,
+    "medium_findings": 0,
+    "low_findings": 0
+  },
+  "dependency_order": "T001->T002->T003->T004->T005->T006->T007->T008->T009->T010->T011->T012->T013->T014",
+  "residual_risks": [
+    "The CodeGraphContext 0.5.1 HTTP envelope and graceful gateway termination remain qualification candidates and may fail during the sole guarded observation.",
+    "Because attempt-0002 is irreversible, an environmental or provider failure must return to corrective planning.",
+    "Production Story 4.1 requirements remain intentionally unimplemented until qualification passes and a fresh production parser/integration plan is reviewed."
+  ],
+  "summary": "ACCEPT. The corrective task graph is complete, acyclic, and fail closed. T001 revokes stale provider capability; T002-T012 are freshly compiled provider-unreachable prerequisites; T013 alone may execute attempt-0002 without retry; and T014 stops before production implementation."
+}
