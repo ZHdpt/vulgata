@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "attemptId": "attempt-0003",
+  "tokenSha256": "104989fb2fe52ff8fcf68770bfd54ecb3b2700cf50f36c26bcdd2fd9a1b24755",
+  "expiresAt": "2026-07-18T12:27:30.9480829+00:00",
+  "executionBoundaryPath": "specs/001-codegraph-extraction/qualification/execution-boundaries/attempt-0003.json",
+  "executionBoundarySha256": "b9b5487b844d1c4ce89e2f03636e8b0c64f99f4dcbf6723a4f1e152ef138853b"
+}

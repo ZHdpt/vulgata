@@ -8,6 +8,22 @@
                   PrimaryAction="@(async () => await SaveAsync())" SecondaryAction="CloseAsync">
         <div style="display:grid;gap:0.75rem">
             <div><strong>仓库名称：</strong>@Model.Name</div>
+            <div>
+                <FluentButton Appearance="Appearance.Accent" Disabled="@_isProfiling" OnClick="StartProfilingAsync">
+                    @(_isProfiling ? "正在扫描…" : "开始扫描")
+                </FluentButton>
+            </div>
+
+            @if (_profilingResult is not null)
+            {
+                <FluentMessageBar Severity="MessageSeverity.Success">
+                    扫描完成：已解析 @_profilingResult.ParsedFileCount / @_profilingResult.TotalCandidateFileCount 个文件。
+                    @if (_profilingResult.NeedsHumanReview)
+                    {
+                        <span>结果需要人工检查。</span>
+                    }
+                </FluentMessageBar>
+            }
 
             @if (_loadError is not null)
             {
@@ -50,10 +66,15 @@
     [Inject]
     private IRepositoryDatabaseConnectionCoordinator DatabaseConnectionCoordinator { get; set; } = null!;
 
+    [Inject]
+    private IRepositoryProfilingCoordinator ProfilingCoordinator { get; set; } = null!;
+
     private DatabaseConnectionPanel? _databaseConnectionPanel;
     private RepositoryDatabaseConnectionSummaryDto? _databaseConnection;
     private bool _isLoading;
+    private bool _isProfiling;
     private string? _loadError;
+    private ScanRunSummaryDto? _profilingResult;
     private Guid _loadedRepositoryId;
 
     protected override async Task OnParametersSetAsync()
@@ -143,6 +164,47 @@
         return Task.CompletedTask;
     }
 
+    private async Task StartProfilingAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        _isProfiling = true;
+        _loadError = null;
+        _profilingResult = null;
+        try
+        {
+            RepositoryProfilingResult result = Model.SystemId.HasValue
+                ? await ProfilingCoordinator.StartSystemRepositoryAsync(
+                    Model.SystemId.Value,
+                    Model.Id,
+                    User,
+                    CancellationToken.None)
+                : await ProfilingCoordinator.StartStandaloneRepositoryAsync(
+                    Model.Id,
+                    User,
+                    CancellationToken.None);
+            if (result.Outcome == RepositoryProfilingOutcome.Success)
+            {
+                _profilingResult = result.Value;
+            }
+            else
+            {
+                _loadError = result.Message ?? "扫描失败，请稍后重试。";
+            }
+        }
+        catch (Exception)
+        {
+            _loadError = "扫描失败，请稍后重试。";
+        }
+        finally
+        {
+            _isProfiling = false;
+        }
+    }
+
     private async Task CloseAsync()
     {
         await OnVisibleChanged(false);
@@ -156,6 +218,7 @@
             _loadedRepositoryId = Guid.Empty;
             _databaseConnection = null;
             _loadError = null;
+            _profilingResult = null;
             await OnClosed.InvokeAsync();
         }
     }

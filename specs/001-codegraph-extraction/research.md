@@ -1,219 +1,298 @@
 # Research: CodeGraph Code Unit Extraction
 
-## Corrective decision: capability-gated one-shot execution
+**Date accessed**: 2026-07-18
+**Provider target**: exact `codegraphcontext==0.5.1`
 
-**Decision**: Treat the 2026-07-16 stale-assembly execution as consumed and
-ineligible HTTP JSON evidence. Qualification still requires exactly one new
-provider observation, but it may occur only after fresh plan acceptance,
-reachability-free synthetic preflight, and explicit human authorization of a
-single durable attempt.
+## Decision: the loopback HTTP JSON gateway is the production provider boundary
 
-**Rationale**: Zero further executions cannot establish the candidate envelope
-or projection. A test filter alone cannot protect against stale assemblies.
-Safety therefore combines revocation of the legacy fixture path, disjoint
-synthetic/provider identities, compilation-enabled commands, a sealed execution
-lease, a process-scoped token, and append-only create-new attempt records. The
-known stale binary cannot reach Docker after fixture revocation; current code
-cannot reach it without claiming an authorised attempt.
+**Decision**: Use `cgc api start` on unpublished `127.0.0.1` and read-only
+`POST /api/v1/query` as the production projection transport after one
+whole-Repository index.
 
-**Rejected alternatives**: Treating the accidental CLI-marker run as HTTP
-evidence; authorising a retry implicitly through plan acceptance; relying on
-`--no-build`, a broad test filter, a static environment flag, or an in-memory
-counter; probing Docker/provider availability during preflight. Each either
-fails qualification or permits unaccounted external execution.
+**Rationale**: The official HTTP reference documents the gateway, loopback
+host/port selection, health endpoint, and read-only query endpoint. It does not
+publish the response envelope, is labelled 0.5.0, and does not establish the
+exact 0.5.1 coordinate properties. The accepted Story 4.1 implementation
+direction uses this local boundary, but a final-image real-provider contract
+E2E must observe the exact envelope and properties before they become parser
+authority. Vulgata still owns the projection and parser rather than treating
+the provider's internal graph-store schema as a domain contract.
 
-**Unchanged boundary**: CodeGraphContext 0.5.1, the approved atomic
-whole-Repository operation, the test-only loopback HTTP JSON candidate,
-schema-1.2 redacted evidence, and the production hard stop are unchanged.
+**Alternatives considered**:
 
-**Date accessed:** 2026-07-15
-**Scope:** official CodeGraphContext documentation cited below, plus the
-authorities named in Story 4.1 and the feature specification.
+- CLI-table parsing: rejected because it is presentation output without a
+  machine-readable grammar.
+- direct Kuzu access: rejected because it couples Vulgata to provider storage
+  internals.
+- provider MCP/tool routes: rejected because Story 4.1 adds no MCP or Worker
+  Agent tool.
+- renewed production blocking on qualification: rejected because the accepted
+  production direction explicitly continues despite the immutable harness
+  defect.
+- controlled fake JSON as provider-contract proof: rejected because it proves
+  only Vulgata's parser behavior, not the installed 0.5.1 provider contract.
 
-## Decision: qualify CodeGraphContext through its local HTTP JSON gateway
+**Official evidence**:
 
-**Decision:** The user-approved provider target remains CodeGraphContext `cgc`,
-with `codegraphcontext==0.5.1` selected for qualification. The qualification
-uses `cgc api start` as a loopback-only JSON transport inside one disposable,
-non-root `--network none` container. This selects no production Scan transport:
-Vulgata will not expose the gateway, couple to its internal graph-store schema,
-or invoke its bundled MCP/tool routes. A passing qualification returns to a
-separate production parser/integration plan and review.
+- [HTTP API reference](https://codegraphcontext.github.io/reference/api/) —
+  documents `cgc api start`, `GET /health`, and read-only
+  `POST /api/v1/query`.
+- [How ingestion works](https://codegraphcontext.github.io/concepts/how-it-works/)
+  — documents graph commit followed by Cypher query serving.
 
-**Rationale:** The official introduction describes a local semantic property
-graph built from Tree-sitter and optional SCIP. The graph model documents File,
-Class, Function, Module, and structural `CONTAINS`, `IMPORTS`, `CALLS`, and
-`INHERITS` relationships. The pinned 0.5.1 package exposes `/api/v1/query` as a
-JSON envelope over a read-only query handler, whereas `cgc query` emits a
-terminal presentation table and no documented machine-readable grammar. The
-qualification-only gateway therefore provides a feasible fail-closed candidate
-for validating correlated structural facts without treating CLI rendering or
-the provider's Kuzu schema as Vulgata's owned contract.
+## Decision: enumerate Code Units independently from relationships
 
-**Alternatives considered:** CLI-table parsing (rejected: presentation output
-exceeded the original capture and does not emit the later test-invented
-`key=value` grammar); direct graph-store coupling (rejected: makes provider
-internals Vulgata persistence); production HTTP-gateway coupling (deferred:
-qualification cannot select production Scan behavior); provider bundled
-MCP/tool routes (rejected and not invoked: Story 4.1 adds no Vulgata MCP or
-Worker Agent tool); extension-only filtering (rejected: cannot prove
-same-Repository structural relationships).
+**Decision**: Use two queries. Projection A returns all `File`, `Module`,
+`Class`, and `Function` nodes without matching an edge. Projection B returns
+only `CONTAINS`, `IMPORTS`, `CALLS`, and `INHERITS` endpoint tuples.
 
-**Official evidence:**
+**Rationale**: A relationship-only match can return only nodes incident to at
+least one selected edge. It necessarily omits isolated Functions, Classes,
+Files, or Modules, contradicting the requirement to extract structural Code
+Units. Separate projections make Code Unit completeness independent of edge
+presence and allow relationships to be mapped after the complete node set is
+known.
 
-- [Introduction](https://codegraphcontext.github.io/) — accessed 2026-07-15;
-  describes semantic graph extraction.
+**Alternatives considered**:
+
+- relationship rows that also create endpoint Code Units: rejected because
+  isolated nodes remain invisible and node validation becomes relationship
+  dependent.
+- one tagged-union query: feasible, but rejected because independent responses
+  make node coverage, relationship mapping, bounds, and tests clearer while
+  retaining one immutable graph snapshot.
+- one query per node/edge type: rejected because it expands request count and
+  failure surface without adding contract value.
+
+**Official evidence**:
+
 - [Code graph model](https://codegraphcontext.github.io/concepts/graph-model/)
-  — accessed 2026-07-15; documents paths/ranges for structural nodes and the
-  relevant relationship kinds.
+  — documents distinct File, Module, Class, and Function nodes and directed
+  structural edges.
+- [How ingestion works](https://codegraphcontext.github.io/concepts/how-it-works/)
+  — documents declaration extraction before containment/import/call/inheritance
+  linking, which supports treating node enumeration and edge enumeration as
+  separate projections of the same graph.
 
-The exact 0.5.1 request/envelope and relationship projections are
-qualification candidates derived from the pinned installed package sources
-identified in [plan.md](plan.md), not guarantees inferred from the public 0.5.0
-documentation.
+## Decision: own the projection grammar and endpoint identity
 
-## Decision: whole-Repository graph build; audit groups are not provider batches
+**Decision**: Normalize every endpoint as
+`(provider kind, relative path, name, start line, end line)`. Derive
+`cgc-v1:<sha256>` over the NUL-delimited UTF-8 tuple and use that identity in
+both projections and unresolved candidates.
 
-**Decision:** Use one private local `cgc index <working-copy>` graph build
-per `ScanRun`. Deterministic at-most-1,000-file groups remain only for Vulgata
-filter/audit records; they do not select provider input, receive provider
-timeouts, or create separate provider processes.
+**Rationale**: The official model supplies structural path/name/range
+properties but does not establish a portable provider database ID. A
+Vulgata-owned key built from provider-supplied structural metadata is stable
+within and reproducible across the two projections, contains no source or
+secret, and avoids Kuzu coupling. It also satisfies FR-010's requirement for a
+non-empty provider target endpoint identity derived from provider structural
+metadata.
 
-**Rationale:** The CLI reference documents `cgc index [PATH] [--force]`, not a
-file-list or batch input. It also does not document a per-file timer, a process
-boundary for one file, or an endpoint-identity guarantee after a materialized
-subset is indexed. A one-graph strategy is the smallest provider-compatible
-choice that does not silently lose a relationship whose endpoints would have
-fallen into different groups.
+**Alternatives considered**:
 
-**Alternatives considered:** group deadline multiplied by file count (rejected:
-it is not a per-file time limit); bisection/materialized subsets (rejected:
-undocumented subset and cross-group identity semantics); unlimited whole process
-(rejected: no bounded failure behavior); undocumented CLI flags (rejected:
-unsupported provider claim).
+- provider `uid`: rejected because it is not part of the official graph-model
+  contract and creates graph-store coupling.
+- path plus symbol only: rejected because overloads/nested declarations can
+  collide.
+- persistence UUID: rejected because relationships need an identity before
+  domain entities are created.
 
-**Official evidence:**
+## Decision: File and Module normalization is explicit
 
-- [CLI reference](https://codegraphcontext.github.io/reference/cli/) — accessed
-  2026-07-15; documents repository-path `index`, `--force`, `query`, context
-  workspaces, and global `--database`, `--db-path`, and `--context` options;
-  it publishes no file-list, per-file timeout, or structured query-output
-  contract.
+**Decision**: A File requires a provider path; Vulgata derives absent display
+name and exact full-file range from local source bytes. Class and Function
+require path/name/range. A Module always contributes an endpoint tuple when it
+has a name, but becomes a persisted Code Unit only when it also has a local
+eligible path and valid range.
 
-## Decision: explicit Kuzu context with locked Python/Docker inputs
+**Rationale**: The official graph model documents File path and Module name,
+while declaration nodes have source coordinates. Domain Code Units require a
+repository-relative file range. This rule preserves provider endpoints without
+inventing a local Code Unit for an external or pathless module.
 
-**Decision:** Qualification will choose the documented local `kuzudb` backend
-through a per-run context and private `--db-path`. A later Docker change must
-pin image, CPython, and Python distributions with immutable locks rather than
-assume a default backend or a floating package resolver.
+**Alternatives considered**:
 
-**Rationale:** The installation document says CodeGraphContext installs through
-`pipx` or `pip`, lists `kuzu` as an embedded driver, and directs users to
-select a default backend. The CLI separately documents `context create <name>
---database kuzudb --db-path <path>` and `cgc doctor`. That is enough evidence
-for an explicit local context; it is not evidence that Kuzu is the Unix default
-or that any unpinned driver version is compatible.
+- reject every pathless Module row: rejected because IMPORTS targets would lose
+  a stable unresolved endpoint.
+- invent a synthetic file/range for Module: rejected because it would violate
+  Code Unit traceability.
+- use import-line range as the Module's declaration range: rejected because an
+  import site is not the target Module declaration.
 
-**Lock/qualification mechanism:** A future
-`docker/codegraph/requirements.lock` will exact-pin and hash
-`codegraphcontext==0.5.1`, `kuzu`, and transitive Python dependencies. A
-digest-pinned container base plus a recorded CPython 3.12.x version make the
-runtime reproducible. Qualification asserts the lock, `python --version`,
-`cgc version`, and `cgc doctor` as the final non-root `app` user.
+## Decision: malformed rows are isolated; top-level failures are atomic
 
-**Alternatives considered:** existing `codegraph` shim (rejected: no
-extraction); runtime installation (rejected: resolver drift); FalkorDB default
-assumption (rejected: docs make it conditional); remote backends (rejected: not
-local-only single-container scope).
+**Decision**: Invalid independent rows produce bounded warnings and are
+skipped. Invalid UTF-8/JSON/envelope/query echo/counts, response or row-limit
+overflow, endpoint-identity collision, process failure, timeout, or cleanup
+failure rejects both projections atomically.
 
-**Official evidence:**
+**Rationale**: Story AC-2 requires valid independent records to survive
+malformed entries, but provider/process/top-level failure must persist no
+provider-derived structure. A shared 64 MiB body cap, 250,000-row cap,
+4,096-byte row cap, and 100-warning-detail sample bound memory and diagnostics
+without silently truncating the graph.
 
-- [Installation](https://codegraphcontext.github.io/getting-started/installation/)
-  — accessed 2026-07-15; documents pip/pipx, driver packages, Kuzu embedding,
-  backend choice, `cgc version`, and `cgc doctor`.
-- [CLI reference](https://codegraphcontext.github.io/reference/cli/) — accessed
-  2026-07-15; documents context create/delete and explicit local backend/path
-  options.
+**Alternatives considered**:
 
-## Decision: qualification is a hard stop before mapping/persistence
+- persist Projection A before Projection B: rejected because a failed second
+  query would create a partial provider result.
+- silently truncate: rejected because missing nodes/relationships would look
+  complete.
+- fail the entire result for one malformed row: rejected because it conflicts
+  with AC-2's independent-row behavior.
 
-**Decision:** The first executable increment is a non-root container proof on a
-synthetic whole-Repository fixture. It creates one private named Kuzu Context,
-indexes once, starts the provider gateway on unpublished container loopback,
-aggregates bounded `/health` readiness responses, submits exactly one static
-read-only `/api/v1/query` request, stops the gateway, deletes the Context, and
-cleans all private state before a provider adapter, Code Unit mapping,
-structural EF entity, migration, or production profiling flow is implemented.
+## Decision: attempt-0003 is immutable harness history, not a production gate
 
-**Rationale:** The public CLI material establishes a read-only Cypher surface
-but no machine-readable CLI output schema. The pinned 0.5.1 gateway supplies a
-JSON candidate, but neither its envelope nor its nested query result is a
-published versioned production contract. The qualification must therefore use
-strict incremental UTF-8/JSON validation and prove all required facts inside
-complete individual result objects. A generic DTO before proof would still be
-an invented provider contract.
+**Decision**: Preserve the exact boundary hash
+`b9b5487b844d1c4ce89e2f03636e8b0c64f99f4dcbf6723a4f1e152ef138853b`
+and terminal `failed / provider-contract-failure`. Do not retry, rewrite, or
+use its empty structural evidence as provider incapability evidence.
 
-**Pass criteria:** `cgc` 0.5.1 and the isolated Kuzu Context work under `app`;
-one whole-fixture index and one HTTP query finish within the bounded
-whole-process limit; all provider stdout/stderr plus the aggregate readiness
-and query-response channels are incrementally hashed and discarded under one
-inclusive 65,536-byte cap; the strict candidate grammar proves correlated
-path, kind, symbol, range and endpoint metadata for `CALLS`, `CONTAINS`,
-`IMPORTS`, and `INHERITS`, including the filtered-target candidate; no bundled
-MCP/tool route is invoked; and cleanup succeeds. The follow-up plan must record
-the observed production parser grammar before mapping or persistence work.
+**Rationale**: The recorded attempt successfully reached provider lifecycle
+steps, but the qualification runner misrouted health/query payloads, lacked
+dedicated HTTP command evidence, discarded structural evidence on failure, and
+substituted empty evidence. The Story authority records the user's explicit
+direction to continue production completion because this was a harness defect.
 
-**Fail outcome:** stop before provider-result mapping or structural persistence,
-return only redacted counts, hashes, predicates, lifecycle/image/lock
-identities, and a failure category for correction, and do not infer a JSON
-field, production transport, timeout, subset, or endpoint behavior.
+**Alternatives considered**:
 
-## Decision: correct the unavailable qualification pin to the authorised latest
+- retry attempt-0003: rejected by its no-retry immutable boundary.
+- retain the former production block: rejected because it contradicts the
+  accepted production direction.
+- reclassify it as passing: rejected because immutable failed evidence must
+  remain truthful.
 
-**Decision:** The qualification command
-`python -m pip download --no-deps --dest <generated-private-directory>
-codegraphcontext==0.5.0` failed because the configured package index did not
-offer that exact distribution. On 2026-07-15 the user explicitly directed
-Vulgata to use the latest available version. The observed package-index command
-`python -m pip index versions codegraphcontext` returned `0.5.1` as latest, so
-the executable qualification target is exact-pinned to
-`codegraphcontext==0.5.1`.
+## Decision: exact final-image real-provider observation is mandatory
 
-**Rationale:** This replaces an unavailable exact pin without changing the
-provider family, local-only/private execution, Kuzu context selection,
-whole-Repository strategy, 1,800-second whole-process deadline, audit-only
-groups, or the hard stop before mapping/persistence.
+**Decision**: Add a separate mandatory production provider-contract E2E using
+the exact final application image as its verifier base, the exact installed
+`codegraphcontext==0.5.1` distribution, and a credential-free local Repository
+fixture. The test invokes the two exact production query constants and emits
+only the current closed provider-contract evidence schema.
 
-**Alternatives considered:** retain 0.5.0 (rejected: unavailable from the
-configured index); float to an unpinned latest version (rejected: not
-reproducible); select a different provider or remote service (rejected: outside
-the user authorisation and plan scope).
+**Rationale**: Q41-009/raw P1 correctly identifies that controlled fixtures
+cannot establish a real provider envelope or resolve the
+`start_line`/`end_line` versus `line_number` discrepancy. The smallest feasible
+real-provider correction uses one heterogeneous graph match per projection,
+because the pinned Kuzu multi-column UNION stalled, and the exact HTTP root
+envelope is `status,message,data,error`.
+The authority is direct observation of the exact runtime and exact queries. It
+does not change Scan strategy, expose a tool, change the PRD, or revive the
+qualification ledger.
 
-**Evidence:** `python -m pip index versions codegraphcontext` exited 0 on
-2026-07-15 and listed `0.5.1` first. The historical failed 0.5.0 attempt is
-preserved in `qualification/qualification-result.json` and
-`qualification/evidence/red.md`; it is failure evidence, not an executable
-requirement. The official documentation pages observed on the same date remain
-labelled 0.5.0, so they establish only a candidate command surface. They do not
-prove 0.5.1 output compatibility; the existing non-root qualification hard stop
-must prove it before mapping or persistence work.
+**Required observations**:
 
-## Accepted specification baseline and qualification gate
+- final-image identity and exact 0.5.1 package/lock identity;
+- exact Projection A and Projection B request hashes and, when present in the
+  observed envelope, exact query-echo hash equality;
+- the envelope field names/types/required-null behavior actually returned;
+- the coordinate source properties successfully evaluated for every returned
+  provider kind and relationship endpoint—no speculative alias fallback;
+- isolated node enumeration, all four supported relationship kinds, one
+  locally filtered target mapped only as unresolved, and `cgc-v1` equality
+  for endpoint tuples shared by both projections;
+- no graph mutation between projections and successful bounded cleanup.
 
-The accepted specification no longer makes the older Story's unsupported
-per-file batch, timeout, or continuation promises. FR-018 now requires one
-whole-process timeout (default 1,800 seconds), atomic provider-derived failure,
-and audit-only at-most-approximately-1,000-path groups, together with the
-FR-4.1 clarification that the provider may locally inspect filtered paths while
-Vulgata excludes them from persisted Code Units/Edges, and that Story 4.2 owns
-language/framework detection. The remaining active approval boundary was only
-the qualification-only local HTTP JSON transport/parser candidate. No
-requirement text is changed in this regenerated research artifact.
+**Fail-closed rule**: A skip, absent/invalid/over-bound evidence file, query
+drift, package/image drift, unrecognized envelope/property, identity mismatch,
+missing coverage predicate, source-bearing evidence, or cleanup failure blocks
+Story completion. Correct the owned grammar and implementation under review,
+then rerun this new test. Never modify or retry attempt-0003.
 
-## Binding Story 4.1 data decisions
+**Alternatives considered**:
 
-`FileIdentityHash` is SHA-256 over the first 4,096 source bytes (or all bytes
-when shorter); `SourceHash` is the full source-content hash.
-`RangeConfidence` is `Exact|Approximate|Heuristic`. The aggregate/table pair is
-`ScanRun`/`ScanRuns`. These user-authorised decisions are independent of
- provider qualification and remain binding.
+- official documentation alone: rejected because it does not publish the
+  envelope and is not exact-version evidence;
+- fake HTTP/process fixtures: retained for deterministic parser tests but
+  rejected as provider compatibility evidence;
+- direct Kuzu schema inspection: rejected because it creates the coupling
+  FR-003 forbids;
+- another qualification-ledger attempt: rejected because attempt-0003 is
+  immutable and this is a distinct production contract gate.
+
+## Decision: publish bounded structural evidence on failure
+
+**Decision**: Publish closed `cgc-provider-contract-evidence-v2` for pass and
+fail. Strict parsing still rejects the observed HTTP-200 top-level object.
+A parallel streaming observer retains only status, JSON kinds,
+raw allowlisted names or unknown-name HMAC metadata, counts, hashes, cleanup
+facts, and failure category.
+
+**Rationale**: The first real-provider failure discarded property names/types
+and published nothing, making evidence-led grammar correction impossible.
+Structural names and kinds reveal schema without retaining values, rows,
+source, paths, symbols, raw JSON/query, credentials, or diagnostics.
+
+**Alternatives considered**: raw payload/error retention (rejected as
+source/path/diagnostic risk); category-only evidence (rejected because it
+repeats evidence starvation); accepting any object or automatic alias probing
+(rejected because both weaken fresh review).
+
+## Decision: clean provider state by no-follow entry type
+
+**Decision**: Under the prevalidated private root, accept absence, unlink a
+regular file, recursively remove a directory without following links, and fail
+on symlink/reparse/special entries.
+
+**Rationale**: Exact 0.5.1 created `graph.kuzu` as a regular file; directory
+removal caused `NotADirectoryError` after Context deletion.
+
+**Alternatives considered**: always-directory or always-file deletion
+(rejected because either assumes storage shape); following links (rejected as
+an escape risk); ignoring cleanup failures (rejected because cleanup remains a
+completion gate).
+
+## Decision: one execution per accepted correction
+
+**Decision**: No immediate rerun. Independent acceptance of this
+observer/cleanup correction permits one execution. Failure publishes v2
+evidence and blocks Story completion; a further run requires a fresh
+evidence-led grammar/query correction and fresh acceptance.
+
+**Rationale**: This creates a bounded observation/correction loop without
+automatic probing. Projection hashes remain unchanged unless published
+evidence proves a query change is necessary. Attempt-0003 is never involved.
+
+## Decision: claim immutable history before provider reachability
+
+**Decision**: Use
+`TestResults/codegraph-provider-contract/<AcceptedCorrectionSha256>/` as the
+immutable claim/history namespace. Atomic no-replace directory creation,
+parent-directory sync, and durable create-new `claim.json` publication must
+finish before image/provider reachability.
+
+**Rationale**: A shared `evidence.json` cannot preserve later corrections or
+enforce one execution. Directory creation is the earliest durable claim: every
+crash, race, or partial state after it consumes the correction.
+
+**Alternatives considered**: overwrite shared evidence (loses history); claim
+after provider start (permits duplicates); delete/repair incomplete claims
+(cannot distinguish pre/post-provider crashes); mutable claim status (creates
+resume ambiguity).
+
+## Decision: HMAC unknown names with an ephemeral key
+
+**Decision**: Raw property names are permitted only for fixed safe envelope
+vocabulary and exact production aliases. Represent every other decoded name by
+HMAC-SHA256 under a fresh per-execution 256-bit CSPRNG key, UTF-8 length, JSON
+kind, container ordinal, and first-seen ordinal. Never persist or log the key.
+
+**Rationale**: Arbitrary JSON keys can contain paths, symbols, source, or
+tokens. Unkeyed hashes permit dictionary recovery. Ephemeral keyed HMAC allows
+same-run repetition analysis while preventing offline recovery and cross-run
+linkage.
+
+**Alternatives considered**: raw names (leakage); unkeyed SHA-256 (dictionary
+risk); stored/global HMAC key (cross-run linkage/key-management risk); dropping
+all unknown-name evidence (recreates evidence starvation).
+
+## Resolved research outcome
+
+There is no remaining `NEEDS CLARIFICATION`. The official graph schema supports
+the two projections, while the owned grammar supplies the stable identity,
+bounds, mapping, and malformed-row rules that the provider documentation does
+not define. The exact envelope and coordinate source properties remain
+candidate technical grammar until the mandatory real-provider gate observes
+them; this is a fail-closed completion condition, not an unresolved product
+decision.

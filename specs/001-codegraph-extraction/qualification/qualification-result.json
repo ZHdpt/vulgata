@@ -1,11 +1,11 @@
-{
-  "schemaVersion": "1.0",
+﻿{
+  "schemaVersion": "1.2",
   "status": "fail",
-  "category": "unsafe-evidence",
+  "category": "cleanup-failure",
   "nextAction": "corrective-planning",
   "image": {
     "reference": "vulgata-codegraph-qualification:0.5.1",
-    "digest": "sha256:afbbe955c19a821a7eee46f665cdc32216548d204364c5d9733771e82da8f697"
+    "digest": null
   },
   "python": {
     "lockPath": "docker/codegraph/python-version.txt",
@@ -20,25 +20,128 @@
     "user": "app",
     "nonRoot": true
   },
-  "fixtureManifestSha256": "0c5f5f64ca2f92fca3bde7f77ef5ccbc298600cb264034fe1b2ab578d021332d",
+  "fixtureManifestSha256": "8c4f240f43d43f7db6008abb619b5f881200ad49449b1d89485261d3e74d3115",
   "commands": [
     {
-      "name": "cgc-query",
+      "name": "cgc-version",
       "exitCode": 0,
-      "stdoutSha256": null,
-      "stderrSha256": null
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "602c64f4f9436aaab27a59d8e62ec373f59a9a301cd1362e798dba0d89bfe302"
+    },
+    {
+      "name": "cgc-doctor",
+      "exitCode": 0,
+      "stdoutSha256": "9c60692cd51fa077db7f3c3f047a52a52a33dd31487e204d01078bcf146f29c8",
+      "stderrSha256": "d310b15a77203e757dccd60920003a0f72097f797d0a4f1798433d5277005ba0"
+    },
+    {
+      "name": "cgc-context-create",
+      "exitCode": 0,
+      "stdoutSha256": "b24df28733190fca41c270ac6a76d9a919f6b73f0e0bcc376da922f685da9f78",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cgc-context-mode",
+      "exitCode": 0,
+      "stdoutSha256": "e75c7055acbd14a88c4ce468e8919c5259931a0b5c5c1560dfe8f0639b45b641",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cgc-context-default",
+      "exitCode": 0,
+      "stdoutSha256": "e58508b3d74671a33e678afe496e1e71c5f14f946f53b8fcc1bc35f9854dc25f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cgc-index",
+      "exitCode": 0,
+      "stdoutSha256": "fe38760a8ad72c0308d91ac2751587f38bec5ae5a329c212d40dff9e5a2f45d6",
+      "stderrSha256": "bf9c87da77978f225809ed744fea83d29755df560d3d13bc6eee958d93ed6654"
+    },
+    {
+      "name": "cgc-api-start",
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "gateway-stop",
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cgc-context-delete",
+      "exitCode": 0,
+      "stdoutSha256": "8e1ac2f454f13c0b868779446d4e84a9726c4b8682a4d905ee16490a4b9c2887",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   ],
   "evidence": {
     "bounded": true,
     "redacted": true,
     "paths": [
-      "evidence/final-gate.md"
+      "evidence/verification.md"
     ]
   },
-  "elapsedMilliseconds": 5000,
+  "structuralEvidence": {
+    "rawOutputRetained": false,
+    "grammarId": "vulgata-cgc-http-json-v1,vulgata-cgc-streaming-evidence-v2",
+    "streamingGrammar": {
+      "observer": "vulgata-cgc-streaming-evidence-v2",
+      "queryStdoutRegion": "vulgata-cgc-http-json-v1",
+      "structuralRecord": "vulgata-cgc-http-json-v1",
+      "strictIncrementalUtf8": true,
+      "maximumRecordBytes": 4096
+    },
+    "outputCap": {
+      "limitBytes": 65536,
+      "observedTotalBytes": 0,
+      "overflowed": false,
+      "terminationRequested": false,
+      "containerCleanupForced": false
+    },
+    "streams": {
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "canonicalSummarySha256": "c48f7bc12e0abd0c1e61051a2be36b315b0c8485977e843310672231ef631c67",
+    "markers": {
+      "stdoutBeginCount": 0,
+      "stdoutEndCount": 0,
+      "stdoutOrderedPair": false,
+      "stderrExcludedFromStructuralEvidence": true
+    },
+    "recordCounts": {
+      "valid": 0,
+      "invalidOrOversized": 0
+    },
+    "relationshipKinds": [],
+    "relationshipKindCounts": {
+      "CALLS": 0,
+      "IMPORTS": 0,
+      "INHERITS": 0,
+      "CONTAINS": 0
+    },
+    "predicateFacts": {
+      "queryCompleted": false,
+      "hasValidRecordGrammar": false,
+      "allRequiredRelationshipKindsObserved": false,
+      "hasFilteredTargetCandidate": false,
+      "hasPositiveOrderedRange": false,
+      "hasNonEmptyEndpointIdentity": false,
+      "allStructuralFactsCorrelatedWithinValidRecords": false
+    }
+  },
+  "elapsedMilliseconds": 9168,
   "cleanup": {
-    "attempted": true,
-    "succeeded": true
+    "attempted": false,
+    "succeeded": false
   }
 }

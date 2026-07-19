@@ -15,6 +15,12 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<SystemOwnerAssignment> SystemOwnerAssignments => Set<SystemOwnerAssignment>();
     public DbSet<GlobalContext> GlobalContexts => Set<GlobalContext>();
     public DbSet<PendingContextChange> PendingContextChanges => Set<PendingContextChange>();
+    public DbSet<ScanRun> ScanRuns => Set<ScanRun>();
+    public DbSet<ScanCandidateOutcome> ScanCandidateOutcomes => Set<ScanCandidateOutcome>();
+    public DbSet<CodeUnit> CodeUnits => Set<CodeUnit>();
+    public DbSet<CodeUnitEdge> CodeUnitEdges => Set<CodeUnitEdge>();
+    public DbSet<UnresolvedStructuralRelationshipCandidate> UnresolvedStructuralRelationshipCandidates =>
+        Set<UnresolvedStructuralRelationshipCandidate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

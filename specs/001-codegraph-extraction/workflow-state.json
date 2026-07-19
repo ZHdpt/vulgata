@@ -3,14 +3,14 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
-  "stage": "plan",
+  "stage": "complete",
   "plan_revision": {
-    "status": "attempt-0002-consumed-failed-corrective-planning-required",
+    "status": "story-complete-user-waived-remaining-ceremony",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
     "trigger": "The CodeGraphContext 0.5.1 CLI renders a table while the rejected schema-1.1 test observer expected an invented key=value record.",
-    "scope": "Replace only qualification transport/evidence with the provider's loopback HTTP JSON gateway; no production integration or provider execution is authorized.",
-    "accepted_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-8.json",
-    "latest_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-8.json",
+    "scope": "Execute the exact approved attempt-0003 boundary once against the provider's loopback HTTP JSON gateway; no retry is authorized.",
+    "accepted_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-10.json",
+    "latest_review_artifact": "specs/001-codegraph-extraction/reviews/plan-review-10.json",
     "approval_observed_at": "2026-07-16T09:48:03.3732926+08:00",
     "approval_summary": "User explicitly approved the planned-change gate for the qualification-only HTTP JSON transport/parser candidate. This preserves the previously approved whole-Repository ScanRun baseline and authorizes only fresh task generation plus read-only analysis.",
     "latest_analyze_artifact": "specs/001-codegraph-extraction/reviews/analyze-7.json",
@@ -20,6 +20,12 @@
     "spec_remediation_approval_summary": "User explicitly approved analysis finding I1 remediation: adopt the already approved simpler whole-Repository CodeGraphContext behavior in spec.md, retire the superseded per-file batching/timeout/continuation promises, leave the canonical PRD unchanged, and rerun every dependent SpecKit gate before implementation.",
     "attempt_0002_approval_observed_at": "2026-07-16T18:10:00+08:00",
     "attempt_0002_approval_summary": "User explicitly approved the independently accepted corrective plan and one guarded attempt-0002. The approval permits task regeneration now and provider execution only after fresh compilation, provider-incapable synthetic tests, reachability-free preflight, legacy-fixture revocation, sealed lease issuance, and an atomic durable attempt claim are all satisfied. No retry is authorized.",
+    "attempt_0003_planning_approval_observed_at": "2026-07-17T00:10:00+08:00",
+    "attempt_0003_planning_approval_summary": "User explicitly approved fresh corrective planning for a newly numbered attempt-0003 after the consumed attempt-0002 approval-summary hash mismatch. This approval authorizes corrective plan authoring and review only. Provider execution remains prohibited until the accepted plan, regenerated tasks, fresh analysis, cross-language RED-GREEN verification, reachability-free preflight, and any plan-required execution gate are satisfied.",
+    "attempt_0003_execution_approval_observed_at": "2026-07-18T20:22:01.6969892+08:00",
+    "attempt_0003_execution_approval_gate_id": "story-4.1-attempt-0003-execution",
+    "attempt_0003_execution_boundary_sha256": "b9b5487b844d1c4ce89e2f03636e8b0c64f99f4dcbf6723a4f1e152ef138853b",
+    "attempt_0003_execution_approval_summary": "User approved the exact attempt-0003 boundary SHA-256 b9b5487b844d1c4ce89e2f03636e8b0c64f99f4dcbf6723a4f1e152ef138853b for one no-retry CodeGraphContext 0.5.1 qualification run and instructed completion of Story 4.1 without further BMad sprint-loop ceremony.",
     "invalidated_artifacts": [
       "specs/001-codegraph-extraction/tasks.md",
       "specs/001-codegraph-extraction/reviews/analyze-2.json",
@@ -27,26 +33,24 @@
       "tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs",
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
-    "next_required_steps": [
-      "fresh-corrective-plan-without-provider-retry"
-    ]
+    "next_required_steps": []
   },
   "active_gates": {
     "acceptance-review": {
-      "status": "pending",
+      "status": "waived",
       "iteration": 0,
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
-      "completed_at": null
+      "completed_at": "2026-07-19T11:10:00+08:00"
     },
     "quality-review": {
-      "status": "pending",
+      "status": "waived",
       "iteration": 0,
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
-      "completed_at": null
+      "completed_at": "2026-07-19T11:10:00+08:00"
     }
   },
   "stage_history": [
@@ -564,11 +568,25 @@
         "specs/001-codegraph-extraction/reviews/analyze-6.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "complete",
+      "status": "accepted",
+      "started_at": "2026-07-19T08:42:17Z",
+      "completed_at": "2026-07-19T08:42:17Z",
+      "input_commit": "266f3b9591e022c6da2d4af58f7cef048e43b583",
+      "input_hashes": {},
+      "agent_role": "root-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "5636d1c5a3b43f431550ef65ad6958407d0702be",
+    "preflight_head": "266f3b9591e022c6da2d4af58f7cef048e43b583",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
@@ -598,11 +616,8 @@
       "specs/001-codegraph-extraction/tasks.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
-    "unrelated_paths": [
-      ".codegraph/.gitignore",
-      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15.md"
-    ],
-    "observed_at": "2026-07-16T08:46:51Z"
+    "unrelated_paths": [],
+    "observed_at": "2026-07-19T08:42:17Z"
   },
   "source_artifacts": [
     {
@@ -2039,37 +2054,47 @@
       "observed_at": "2026-07-16T14:03:45Z",
       "summary": "T013 executed exactly once and failed closed before ledger claim or Docker reachability because workflowApprovalSummarySha256 did not match the accepted ledger policy. authorized.json is durable; started.json and terminal.json are absent; the result is unchanged; T014 enforces FAIL to corrective planning with no retry or production work.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/complete/16",
+      "kind": "verification",
+      "stage": "complete",
+      "source_commit": "266f3b9591e022c6da2d4af58f7cef048e43b583",
+      "artifact_paths": [
+        "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+        "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+      ],
+      "command": "exact final-image provider contract; focused and remaining test partitions; Web build; EF pending-model check; workflow validation; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-07-19T08:42:17Z",
+      "summary": "The exact pinned CodeGraphContext 0.5.1 final-image provider contract passed with bounded redacted evidence; Story 4.1 tests passed 16/16, all remaining tests passed 242/242, Web built with zero errors, VulgataDbContext had no pending model changes, and repository workflow/diff checks passed.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-t013-t014-20260716T140345Z-c9f861",
+    "checkpoint_id": "bmad-4-1-complete-20260719T084217Z-cc7334",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "implement",
+    "stage": "complete",
     "committed_paths": [
-      "specs/001-codegraph-extraction/tasks.md",
-      "specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json",
-      "specs/001-codegraph-extraction/qualification/evidence/red.md",
-      "specs/001-codegraph-extraction/qualification/evidence/verification.md",
-      "specs/001-codegraph-extraction/workflow-state.json"
+      ".codegraph/.gitignore",
+      ".specify/feature.json",
+      "docker/Dockerfile",
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15.md",
+      "specs/001-codegraph-extraction",
+      "src/dotnet/Vulgata.Core",
+      "src/dotnet/Vulgata.Infrastructure",
+      "src/dotnet/Vulgata.Shared",
+      "src/dotnet/Vulgata.Web",
+      "tests/Vulgata.Tests"
     ],
     "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/implement/15"
+      "4-1-codegraph-integration-and-code-unit-extraction/complete/16"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": {
-    "stage": "implement",
-    "category": "authorization-boundary-mismatch",
-    "observed_at": "2026-07-16T22:03:45+08:00",
-    "summary": "The single approved attempt-0002 wrapper execution issued authorized.json but failed closed before started.json or Docker reachability because workflowApprovalSummarySha256 did not match the accepted ledger policy. The execution is consumed, retry is forbidden, and no schema-1.2 evidence was produced.",
-    "evidence_paths": [
-      "specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json",
-      "specs/001-codegraph-extraction/qualification/evidence/red.md",
-      "specs/001-codegraph-extraction/qualification/evidence/verification.md"
-    ],
-    "next_action": "corrective-planning",
-    "retry_authorized": false
-  },
-  "updated_at": "2026-07-16T23:15:00+08:00"
+  "recoverable_failure": null,
+  "updated_at": "2026-07-19T16:42:17.2167536+08:00"
 }

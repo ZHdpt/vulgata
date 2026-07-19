@@ -103,6 +103,42 @@ internal static class RepositoryApiEndpoints
             return Results.NoContent();
         });
 
+        repoApi.MapPost("/{repositoryId:guid}/scan-runs", async (
+            Guid systemId,
+            Guid repositoryId,
+            IRepositoryProfilingCoordinator coordinator,
+            IUserContext user,
+            CancellationToken cancellationToken) =>
+        {
+            RepositoryProfilingResult result = await coordinator.StartSystemRepositoryAsync(
+                systemId,
+                repositoryId,
+                user,
+                cancellationToken);
+            return ToProfilingResult(
+                result,
+                $"/api/systems/{systemId}/repositories/{repositoryId}/scan-runs");
+        });
+
+        repoApi.MapGet("/{repositoryId:guid}/scan-runs/{scanRunId:guid}", async (
+            Guid systemId,
+            Guid repositoryId,
+            Guid scanRunId,
+            IRepositoryProfilingCoordinator coordinator,
+            IUserContext user,
+            CancellationToken cancellationToken) =>
+        {
+            ScanRunSummaryDto? result = await coordinator.GetSystemRepositoryRunAsync(
+                systemId,
+                repositoryId,
+                scanRunId,
+                user,
+                cancellationToken);
+            return result is null
+                ? Results.Problem(detail: "扫描记录不存在。", statusCode: StatusCodes.Status404NotFound)
+                : Results.Ok(result);
+        });
+
         var standaloneRepoApi = app.MapGroup("/api/repositories/standalone")
             .RequireAuthorization(AuthorizationPolicyNames.ManagementAccess);
 
@@ -154,6 +190,38 @@ internal static class RepositoryApiEndpoints
             return Results.Problem(
                 detail: "独立仓库创建失败。",
                 statusCode: StatusCodes.Status500InternalServerError);
+        });
+
+        standaloneRepoApi.MapPost("/{repositoryId:guid}/scan-runs", async (
+            Guid repositoryId,
+            IRepositoryProfilingCoordinator coordinator,
+            IUserContext user,
+            CancellationToken cancellationToken) =>
+        {
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repositoryId,
+                user,
+                cancellationToken);
+            return ToProfilingResult(
+                result,
+                $"/api/repositories/standalone/{repositoryId}/scan-runs");
+        });
+
+        standaloneRepoApi.MapGet("/{repositoryId:guid}/scan-runs/{scanRunId:guid}", async (
+            Guid repositoryId,
+            Guid scanRunId,
+            IRepositoryProfilingCoordinator coordinator,
+            IUserContext user,
+            CancellationToken cancellationToken) =>
+        {
+            ScanRunSummaryDto? result = await coordinator.GetStandaloneRepositoryRunAsync(
+                repositoryId,
+                scanRunId,
+                user,
+                cancellationToken);
+            return result is null
+                ? Results.Problem(detail: "扫描记录不存在。", statusCode: StatusCodes.Status404NotFound)
+                : Results.Ok(result);
         });
 
         var repositoryDatabaseConnectionApi = app.MapGroup("/api/repositories/{repositoryId:guid}/database-connection")
@@ -242,5 +310,28 @@ internal static class RepositoryApiEndpoints
 
             return Results.Problem(detail: result.Message, statusCode: StatusCodes.Status400BadRequest);
         });
+    }
+
+    private static IResult ToProfilingResult(RepositoryProfilingResult result, string collectionPath)
+    {
+        return result.Outcome switch
+        {
+            RepositoryProfilingOutcome.Success => Results.Created(
+                $"{collectionPath}/{result.Value!.Id}",
+                result.Value),
+            RepositoryProfilingOutcome.RepositoryNotFound => Results.Problem(
+                detail: "仓库不存在。",
+                statusCode: StatusCodes.Status404NotFound),
+            RepositoryProfilingOutcome.GitFailure => Results.Problem(
+                detail: result.Message,
+                statusCode: StatusCodes.Status400BadRequest),
+            RepositoryProfilingOutcome.ProviderUnavailable => Results.Problem(
+                detail: result.Message,
+                statusCode: StatusCodes.Status503ServiceUnavailable),
+            RepositoryProfilingOutcome.ProviderFailure => Results.Problem(
+                detail: result.Message,
+                statusCode: StatusCodes.Status502BadGateway),
+            _ => Results.Problem(detail: "扫描启动失败。", statusCode: StatusCodes.Status500InternalServerError),
+        };
     }
 }

@@ -30,6 +30,7 @@ public sealed class DashboardPanelTests : TestContext
         // FluentUI components are used by every panel; bunit needs the services registered.
         Services.AddFluentUIComponents();
         Services.AddValidatorsFromAssemblyContaining<UpsertDatabaseConnectionRequestValidator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(_ => new StubRepositoryProfilingCoordinator());
         // FluentUI web components invoke JS interop during render (e.g. FluentTextField, InputSelect).
         // bunit's default JSRuntime mode is strict and throws on unhandled calls; switch to loose
         // mode so those calls are silently stubbed instead of failing the render.
@@ -295,5 +296,36 @@ public sealed class DashboardPanelTests : TestContext
         {
             return Task.FromResult(RepositoryDatabaseConnectionTestResult.Success("连接测试成功。"));
         }
+    }
+
+    private sealed class StubRepositoryProfilingCoordinator : IRepositoryProfilingCoordinator
+    {
+        public Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
+            Guid systemId,
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(RepositoryProfilingOutcome.RepositoryNotFound));
+
+        public Task<RepositoryProfilingResult> StartStandaloneRepositoryAsync(
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(RepositoryProfilingOutcome.RepositoryNotFound));
+
+        public Task<ScanRunSummaryDto?> GetSystemRepositoryRunAsync(
+            Guid systemId,
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(null);
+
+        public Task<ScanRunSummaryDto?> GetStandaloneRepositoryRunAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(null);
     }
 }

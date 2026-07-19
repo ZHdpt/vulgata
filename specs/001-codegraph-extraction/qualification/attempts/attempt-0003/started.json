@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "attemptId": "attempt-0003",
+  "startedAt": "2026-07-18T12:22:35.7282499+00:00",
+  "exactCommand": "pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1 -AttemptId attempt-0003",
+  "executionBoundaryPath": "specs/001-codegraph-extraction/qualification/execution-boundaries/attempt-0003.json",
+  "executionBoundarySha256": "b9b5487b844d1c4ce89e2f03636e8b0c64f99f4dcbf6723a4f1e152ef138853b",
+  "correctivePlanCommit": "266f3b9591e022c6da2d4af58f7cef048e43b583",
+  "planReviewPath": "specs/001-codegraph-extraction/reviews/plan-review-10.json",
+  "planReviewSha256": "753a6e82cb1ca6d1f4ebf580eb36a4101917301447876e88660df694df6bfe90",
+  "executionApprovalGateId": "story-4.1-attempt-0003-execution"
+}

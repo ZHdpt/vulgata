@@ -7,7 +7,7 @@ public sealed class CgcProviderQualificationTests
 {
     [Fact]
     [Trait("Category", "CodeGraphQualificationProvider")]
-    public async Task Attempt0002_WhenAuthorizedAndUnclaimed_RecordsSchema12EvidenceAsync()
+    public async Task Attempt0003_WhenAuthorizedAndUnclaimed_RecordsSchema12EvidenceAsync()
     {
         string repositoryRoot = QualificationTestPaths.RepositoryRoot;
         string attemptsRoot = QualificationTestPaths.FromRepositoryRoot(
@@ -20,19 +20,18 @@ public sealed class CgcProviderQualificationTests
                 Environment.GetEnvironmentVariable(ProviderQualificationEntry.TokenEnvironmentVariable),
             [ProviderQualificationEntry.ExactCommandEnvironmentVariable] =
                 Environment.GetEnvironmentVariable(ProviderQualificationEntry.ExactCommandEnvironmentVariable),
+            [ProviderQualificationEntry.BoundaryPathEnvironmentVariable] =
+                Environment.GetEnvironmentVariable(ProviderQualificationEntry.BoundaryPathEnvironmentVariable),
+            [ProviderQualificationEntry.BoundarySha256EnvironmentVariable] =
+                Environment.GetEnvironmentVariable(ProviderQualificationEntry.BoundarySha256EnvironmentVariable),
+            [ProviderQualificationEntry.RepositoryRootEnvironmentVariable] =
+                Environment.GetEnvironmentVariable(ProviderQualificationEntry.RepositoryRootEnvironmentVariable),
         };
-        QualificationAttemptLedgerPolicy policy = new(
-            "84b0909b6713b410258d4db7ec37503cfe0c5980",
-            "specs/001-codegraph-extraction/reviews/plan-review-8.json",
-            "f73f877b3c7d37b3c739ee123867e39e3b71769e4abd1d8bbe5bd2f51806b408",
-            "2026-07-16T18:10:00+08:00",
-            "9633e66e1cbe5e31dd9b83fbf962539a42e269bac30e5d28d6bf6d068890b4fd",
-            () => DateTimeOffset.UtcNow);
 
         await ProviderQualificationEntry.ExecuteAsync(
             attemptsRoot,
             environment,
-            policy,
+            () => DateTimeOffset.UtcNow,
             async (lease, cancellationToken) =>
             {
                 Stopwatch stopwatch = Stopwatch.StartNew();

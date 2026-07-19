@@ -269,3 +269,34 @@ Authorization-issued and attempt-started are distinct states: the provider attem
 Without executing any command, test, Docker action, CodeGraphContext action, HTTP request, or provider action, T014 classifies the qualification as **FAIL → corrective planning**. `qualification-result.json` remains byte-identical at 1,096 bytes with SHA-256 `358d5706b3b1472701f45fadbf219e1ae693671ff528022e092794698422d125`, schema 1.0, `status: fail`, `reason: unsafe-evidence`, and `nextAction: corrective-planning`.
 
 The hard stop remains in force: no production Story 4.1 Scan implementation or test is complete, and no retry or replacement provider execution is permitted.
+
+## Final production provider-contract verification (2026-07-19)
+
+The immutable `attempt-0003` failure above remains historical qualification
+harness evidence and was not modified or retried. After correcting the
+production adapter independently, the mandatory exact final-image contract gate
+passed once against pinned CodeGraphContext 0.5.1.
+
+| Evidence | Value |
+| --- | --- |
+| Verdict | `pass` |
+| Accepted correction SHA-256 | `de68574201b2aef4cacf48cdedd9ce448d12d8939dd94bec886accbc0ab48b05` |
+| Final image SHA-256 | `sha256:25d8bedc266c9c8d50b5c07081c46210091ed26dd370b53a32102423313d5bc7` |
+| Provider distribution SHA-256 | `3cd79efe6c9525d69ae250c063404b500ef7595b6c63284d841c78a1ecf48658` |
+| Provider lock SHA-256 | `10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95` |
+| Fixture tree SHA-256 | `a01c02279afa6fc4ca6e94b0252858c6cddbc97455fff8bc070dd58069044991` |
+| Node projection response | 2,973 bytes; SHA-256 `441ef35b6add600105026e9f8a731979dd6d63c2e530ba1e09d6416e4c2f3ef1` |
+| Relationship projection response | 7,473 bytes; SHA-256 `17b0ed335a9da2706abc54227717a169747ebece0a4cc8e93fa9f782a4c551b5` |
+
+The bounded evidence proved File, Module, Class, and Function Code Units;
+CALLS, IMPORTS, INHERITS, and CONTAINS structural relationships; filtered-target
+reconciliation; equal endpoint identity across both projections; a single
+immutable index snapshot; and complete gateway, Context, database, and provider
+HOME cleanup. Its forbidden-retention checks were all false for source,
+paths, symbols, rows, raw JSON, query text, diagnostics, credentials, tokens,
+and HMAC material.
+
+Final repository verification then passed the focused Story 4.1 suite (16/16),
+all remaining tests (242/242), the Web build with zero errors, the EF pending
+model-change check, the canonical fixture-manifest unit, workflow validation,
+and `git diff --check` with line-ending warnings only.

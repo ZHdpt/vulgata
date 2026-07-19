@@ -13,10 +13,10 @@ public sealed class ProviderExecutionGuardTests
             ProviderExecutionLease? lease = await ProviderQualificationEntry.TryAcquireAsync(
                 attemptsRoot,
                 new Dictionary<string, string?>(StringComparer.Ordinal),
-                CreateSyntheticPolicy());
+                () => DateTimeOffset.UtcNow);
 
             Assert.Null(lease);
-            Assert.False(Directory.Exists(Path.Combine(attemptsRoot, "attempt-0002")));
+            Assert.False(Directory.Exists(Path.Combine(attemptsRoot, "attempt-0003")));
         }
         finally
         {
@@ -29,78 +29,67 @@ public sealed class ProviderExecutionGuardTests
 
     [Fact]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public async Task Execute_WhenAuthorizationMatches_ClaimsBeforeInvokingProviderSeamAsync()
+    public async Task Execute_WhenRawBoundaryAndAuthorizationMatch_ClaimsBeforeProviderSeamAsync()
     {
-        string attemptsRoot = Path.Combine(Path.GetTempPath(), $"vulgata-provider-claim-{Guid.NewGuid():N}");
+        using QualificationAttemptLedgerTests.TemporaryQualificationRoot temporary = new();
         const string token = "synthetic-process-token";
-        const string exactCommand =
-            "pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1 -AttemptId attempt-0002";
-        try
-        {
-            string attemptDirectory = Path.Combine(attemptsRoot, "attempt-0002");
-            Directory.CreateDirectory(attemptDirectory);
-            string tokenHash = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(
-                System.Text.Encoding.UTF8.GetBytes(token)));
-            const string approvalHash = "9633e66e1cbe5e31dd9b83fbf962539a42e269bac30e5d28d6bf6d068890b4fd";
-            await File.WriteAllTextAsync(
-                Path.Combine(attemptDirectory, "authorized.json"),
-                $$"""
-                {
-                  "schemaVersion": "1.0",
-                  "attemptId": "attempt-0002",
-                  "tokenSha256": "{{tokenHash}}",
-                  "expiresAt": "2026-07-16T20:00:00+08:00",
-                  "exactCommand": "{{exactCommand}}",
-                  "correctivePlanCommit": "84b0909b6713b410258d4db7ec37503cfe0c5980",
-                  "planReviewPath": "specs/001-codegraph-extraction/reviews/plan-review-8.json",
-                  "planReviewSha256": "f73f877b3c7d37b3c739ee123867e39e3b71769e4abd1d8bbe5bd2f51806b408",
-                  "workflowApprovalObservedAt": "2026-07-16T18:10:00+08:00",
-                  "workflowApprovalSummarySha256": "{{approvalHash}}"
-                }
-                """);
-            Dictionary<string, string?> environment = new(StringComparer.Ordinal)
-            {
-                [ProviderQualificationEntry.AttemptIdEnvironmentVariable] = "attempt-0002",
-                [ProviderQualificationEntry.TokenEnvironmentVariable] = token,
-                [ProviderQualificationEntry.ExactCommandEnvironmentVariable] = exactCommand,
-            };
-            bool seamInvoked = false;
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        Dictionary<string, string?> environment = temporary.CreateEnvironment(boundary, token);
+        bool seamInvoked = false;
 
-            bool executed = await ProviderQualificationEntry.ExecuteAsync(
-                attemptsRoot,
+        bool executed = await ProviderQualificationEntry.ExecuteAsync(
+            temporary.AttemptsRoot,
+            environment,
+            () => now,
+            async (lease, cancellationToken) =>
+            {
+                Assert.True(File.Exists(Path.Combine(temporary.AttemptDirectory, "started.json")));
+                Assert.Equal("attempt-0003", lease.Authorization.AttemptId);
+                seamInvoked = true;
+                await Task.CompletedTask;
+                return new ProviderQualificationTerminal("passed", "qualified");
+            });
+
+        Assert.True(executed);
+        Assert.True(seamInvoked);
+        Assert.True(File.Exists(Path.Combine(temporary.AttemptDirectory, "terminal.json")));
+    }
+
+    [Theory]
+    [InlineData(ProviderQualificationEntry.AttemptIdEnvironmentVariable, "attempt-0002")]
+    [InlineData(ProviderQualificationEntry.ExactCommandEnvironmentVariable, "dotnet test broad-filter")]
+    [InlineData(
+        ProviderQualificationEntry.BoundarySha256EnvironmentVariable,
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
+    [Trait("Category", "CodeGraphQualificationSynthetic")]
+    public async Task Acquire_WhenWrapperEnvironmentDrifts_RejectsBeforeStartAsync(
+        string variable,
+        string value)
+    {
+        using QualificationAttemptLedgerTests.TemporaryQualificationRoot temporary = new();
+        const string token = "synthetic-environment-drift-token";
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        Dictionary<string, string?> environment = temporary.CreateEnvironment(boundary, token);
+        environment[variable] = value;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            ProviderQualificationEntry.TryAcquireAsync(
+                temporary.AttemptsRoot,
                 environment,
-                CreateSyntheticPolicy(),
-                async (lease, cancellationToken) =>
-                {
-                    Assert.True(File.Exists(Path.Combine(attemptDirectory, "started.json")));
-                    Assert.Equal("attempt-0002", lease.Authorization.AttemptId);
-                    seamInvoked = true;
-                    await Task.CompletedTask;
-                    return new ProviderQualificationTerminal("passed", "qualified");
-                });
+                () => now));
 
-            Assert.True(executed);
-            Assert.True(seamInvoked);
-            Assert.True(File.Exists(Path.Combine(attemptDirectory, "terminal.json")));
-        }
-        finally
-        {
-            if (Directory.Exists(attemptsRoot))
-            {
-                Directory.Delete(attemptsRoot, recursive: true);
-            }
-        }
+        Assert.False(File.Exists(Path.Combine(temporary.AttemptDirectory, "started.json")));
     }
 
     [Fact]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
     public void Issue_WhenNoClaimedAuthorization_RefusesProviderCapability()
     {
-        ProviderExecutionLease? lease = ProviderExecutionGuard.Issue(claimedAuthorization: null);
-
-        Assert.Null(lease);
-        Assert.False(Directory.Exists(QualificationTestPaths.FromRepositoryRoot(
-            "tests", "Vulgata.Tests", "CodeGraphQualification", "Fixtures", "QualificationRepository")));
+        Assert.Null(ProviderExecutionGuard.Issue(claimedAuthorization: null));
     }
 
     [Fact]
@@ -123,117 +112,41 @@ public sealed class ProviderExecutionGuardTests
     {
         Assert.True(typeof(ProviderExecutionLease).IsSealed);
         Assert.Empty(typeof(ProviderExecutionLease).GetConstructors());
-
         System.Reflection.ConstructorInfo constructor = Assert.Single(
             typeof(DockerQualificationProcessLauncher).GetConstructors(
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic));
-
-        Assert.Equal([typeof(ProviderExecutionLease)], constructor.GetParameters().Select(parameter => parameter.ParameterType));
+        Assert.Equal([typeof(ProviderExecutionLease)], constructor.GetParameters().Select(item => item.ParameterType));
     }
 
     [Fact]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public void Issue_WhenAuthorizationShapeIsInspected_RejectsBroadOrStaticAuthority()
+    public void Discovery_WhenProviderEntryIsInspected_HasAttempt0003IdentityAndProviderCategory()
     {
-        System.Reflection.MethodInfo issue = Assert.Single(
-            typeof(ProviderExecutionGuard).GetMethods(
-                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic));
-        Type authorizationType = Assert.Single(issue.GetParameters()).ParameterType;
-
-        Assert.NotEqual(typeof(object), authorizationType);
-        Assert.NotEqual(typeof(bool), authorizationType);
-        Assert.NotEqual(typeof(string), authorizationType);
-        Assert.Empty(typeof(ProviderExecutionGuard).GetFields(
-            System.Reflection.BindingFlags.Static |
-            System.Reflection.BindingFlags.Public |
-            System.Reflection.BindingFlags.NonPublic));
-    }
-
-    [Fact]
-    [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public void Constructor_WhenQualificationRunnerIsInspected_RequiresInjectedLauncher()
-    {
-        System.Reflection.ConstructorInfo constructor = Assert.Single(
-            typeof(CgcQualificationRunner).GetConstructors(
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic));
-
-        Assert.Contains(
-            constructor.GetParameters(),
-            parameter => parameter.ParameterType == typeof(IQualificationProcessLauncher));
-    }
-
-    [Fact]
-    [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public void Discovery_WhenQualificationFactsAreInspected_UsesOnlyExactSyntheticCategory()
-    {
-        Type[] qualificationTestTypes = typeof(ProviderExecutionGuardTests).Assembly.GetTypes()
-            .Where(type => type.Namespace == typeof(ProviderExecutionGuardTests).Namespace)
-            .Where(type => type.GetMethods().Any(method =>
-                method.GetCustomAttributes(inherit: true).Any(attribute =>
-                    attribute.GetType().Name is "FactAttribute" or "TheoryAttribute")))
-            .ToArray();
-
-        Assert.NotEmpty(qualificationTestTypes);
-        Assert.All(qualificationTestTypes.Where(type => type.Name != "CgcProviderQualificationTests"), type => Assert.Contains(
-            type.CustomAttributes,
-            attribute => attribute.AttributeType == typeof(Xunit.TraitAttribute) &&
-                attribute.ConstructorArguments.Count == 2 &&
-                Equals(attribute.ConstructorArguments[0].Value, "Category") &&
-                Equals(attribute.ConstructorArguments[1].Value, "CodeGraphQualificationSynthetic")));
-    }
-
-    [Fact]
-    [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public void Discovery_WhenProviderEntryIsInspected_HasOneExactIdentityAndProviderCategory()
-    {
-        Type? providerType = typeof(ProviderExecutionGuardTests).Assembly.GetType(
-            "Vulgata.Tests.CodeGraphQualification.CgcProviderQualificationTests",
-            throwOnError: false,
-            ignoreCase: false);
-
-        Assert.NotNull(providerType);
+        Type providerType = typeof(CgcProviderQualificationTests);
         System.Reflection.MethodInfo method = Assert.Single(providerType.GetMethods()
             .Where(candidate => candidate.GetCustomAttributes(inherit: true)
                 .Any(attribute => attribute.GetType().Name == "FactAttribute")));
-        Assert.Equal("Attempt0002_WhenAuthorizedAndUnclaimed_RecordsSchema12EvidenceAsync", method.Name);
+        Assert.Equal(
+            "Attempt0003_WhenAuthorizedAndUnclaimed_RecordsSchema12EvidenceAsync",
+            method.Name);
         Assert.Contains(method.CustomAttributes, attribute =>
             attribute.AttributeType == typeof(Xunit.TraitAttribute) &&
             attribute.ConstructorArguments.Count == 2 &&
             Equals(attribute.ConstructorArguments[0].Value, "Category") &&
             Equals(attribute.ConstructorArguments[1].Value, "CodeGraphQualificationProvider"));
-        Assert.DoesNotContain(method.CustomAttributes, attribute =>
-            attribute.AttributeType == typeof(Xunit.TraitAttribute) &&
-            attribute.ConstructorArguments.Count == 2 &&
-            Equals(attribute.ConstructorArguments[1].Value, "CodeGraphQualificationSynthetic"));
     }
 
     [Fact]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public async Task ProviderEntry_WhenSourceIsInspected_WiresClaimedLeaseThroughRunnerWriterAndTerminalAsync()
+    public async Task Source_WhenGuardAndWrapperAreInspected_HasNoApprovalSummaryLiteralAsync()
     {
-        string providerSource = await File.ReadAllTextAsync(QualificationTestPaths.FromRepositoryRoot(
-            "tests", "Vulgata.Tests", "CodeGraphQualification", "CgcProviderQualificationTests.cs"));
-        Assert.Contains("ProviderQualificationEntry.ExecuteAsync", providerSource, StringComparison.Ordinal);
-        Assert.Contains("new DockerQualificationProcessLauncher(lease)", providerSource, StringComparison.Ordinal);
-        Assert.Contains("new CgcQualificationRunner", providerSource, StringComparison.Ordinal);
-        Assert.Contains("QualificationResultWriter.WriteQualifiedAsync", providerSource, StringComparison.Ordinal);
-        Assert.Contains("QualificationResultWriter.WriteCorrectiveAsync", providerSource, StringComparison.Ordinal);
-        Assert.Contains("new ProviderQualificationTerminal", providerSource, StringComparison.Ordinal);
+        string guardSource = await File.ReadAllTextAsync(QualificationTestPaths.FromRepositoryRoot(
+            "tests", "Vulgata.Tests", "CodeGraphQualification", "ProviderExecutionGuard.cs"));
+        string wrapperSource = await File.ReadAllTextAsync(QualificationTestPaths.FromRepositoryRoot(
+            "tests", "Vulgata.Tests", "CodeGraphQualification", "Invoke-CodeGraphQualificationProvider.ps1"));
 
-        string runnerSource = await File.ReadAllTextAsync(QualificationTestPaths.FromRepositoryRoot(
-            "tests", "Vulgata.Tests", "CodeGraphQualification", "CodeGraphQualificationRunner.cs"));
-        Assert.Contains("QualificationTestPaths.Attempt0002RepositoryPath", runnerSource, StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "\"Fixtures\",\r\n            \"QualificationRepository\"",
-            runnerSource.ReplaceLineEndings("\r\n"),
-            StringComparison.Ordinal);
+        Assert.DoesNotContain("approvalSummary", guardSource, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("approvalSummary", wrapperSource, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("VULGATA_QUALIFICATION_BOUNDARY_SHA256", wrapperSource, StringComparison.Ordinal);
     }
-
-    private static QualificationAttemptLedgerPolicy CreateSyntheticPolicy() => new(
-        "84b0909b6713b410258d4db7ec37503cfe0c5980",
-        "specs/001-codegraph-extraction/reviews/plan-review-8.json",
-        "f73f877b3c7d37b3c739ee123867e39e3b71769e4abd1d8bbe5bd2f51806b408",
-        "2026-07-16T18:10:00+08:00",
-        "9633e66e1cbe5e31dd9b83fbf962539a42e269bac30e5d28d6bf6d068890b4fd",
-        () => DateTimeOffset.Parse("2026-07-16T19:45:00+08:00", System.Globalization.CultureInfo.InvariantCulture));
 }

@@ -28,6 +28,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=codegraph /usr/local /usr/local
+COPY --from=codegraph /opt/codegraph/requirements.lock /opt/codegraph/requirements.lock
 RUN mkdir --parents /var/lib/vulgata-codegraph \
     && chown --recursive app:app /var/lib/vulgata-codegraph
 

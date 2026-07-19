@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "attemptId": "attempt-0003",
+  "completedAt": "2026-07-18T12:22:44.9332941+00:00",
+  "outcome": "failed",
+  "category": "provider-contract-failure",
+  "evidenceCitation": "specs/001-codegraph-extraction/qualification/evidence/verification.md"
+}

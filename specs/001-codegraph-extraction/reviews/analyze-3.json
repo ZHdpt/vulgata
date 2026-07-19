@@ -1,0 +1,95 @@
+{
+    "schema_version": "1.0",
+    "gate": "analyze",
+    "verdict": "REVISE",
+    "reviewed_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+    "reviewed_boundary": {
+        "base_commit": "541eaa9acc1fe048e2b5ff07da74531ea2ce68e4",
+        "candidate_commit": null,
+        "diff_sha256": "not-computed-live-readonly-boundary",
+        "artifact_hashes": {},
+        "owned_paths": [
+            "specs/001-codegraph-extraction/plan.md",
+            "specs/001-codegraph-extraction/research.md",
+            "specs/001-codegraph-extraction/data-model.md",
+            "specs/001-codegraph-extraction/quickstart.md",
+            "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+            "specs/001-codegraph-extraction/tasks.md"
+        ]
+    },
+    "reviewed_artifacts": [
+        "AGENTS.md",
+        "docs/UBIQUITOUS_LANGUAGE.md",
+        "docs/agent-workflow/architecture.md",
+        "docs/agent-workflow/state-machine.md",
+        "docs/agent-workflow/artifact-contracts.md",
+        "docs/agent-workflow/review-and-correction.md",
+        "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+        "specs/001-codegraph-extraction/spec.md",
+        "specs/001-codegraph-extraction/plan.md",
+        "specs/001-codegraph-extraction/research.md",
+        "specs/001-codegraph-extraction/data-model.md",
+        "specs/001-codegraph-extraction/quickstart.md",
+        "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+        "specs/001-codegraph-extraction/tasks.md",
+        "specs/001-codegraph-extraction/workflow-state.json",
+        "specs/001-codegraph-extraction/reviews/plan-review-4.json",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md"
+    ],
+    "findings": [
+        {
+            "id": "ANALYZE-4.1-001",
+            "severity": "HIGH",
+            "category": "plan-consistency",
+            "artifact": "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+            "location": "Qualification command contract and Security contract",
+            "affected_requirement": "The analyze gate must confirm consistency across spec.md, the complete plan set, and tasks.md; a plan-accepted checkpoint requires the complete planning artifact set to align with the accepted plan before tasks advance.",
+            "evidence": "The current supporting contract still defines qualification through `cgc --context <run-context> query` at specs/001-codegraph-extraction/contracts/repository-profiling-api.md:58 and explicitly says no `cgc api` command is allowed at specs/001-codegraph-extraction/contracts/repository-profiling-api.md:122. The accepted revised plan and regenerated tasks instead require `cgc api start`, `GET /health`, and `POST /api/v1/query` in specs/001-codegraph-extraction/plan.md:124, specs/001-codegraph-extraction/plan.md:126, and specs/001-codegraph-extraction/tasks.md:48. specs/001-codegraph-extraction/reviews/plan-review-4.json accepted only plan.md plus the change proposal in its owned boundary, so this contradictory supporting artifact was not independently re-accepted with the HTTP JSON revision.",
+            "correction_outcome": "Regenerate and independently review the full revised plan set so every planning artifact that defines the qualification contract reflects the approved HTTP JSON lifecycle before implementation resumes."
+        },
+        {
+            "id": "ANALYZE-4.1-002",
+            "severity": "MEDIUM",
+            "category": "workflow-state-sync",
+            "artifact": "specs/001-codegraph-extraction/workflow-state.json",
+            "location": "Top-level stage and current-step metadata",
+            "affected_requirement": "workflow-state.json is the canonical resumable workflow state; after task generation the current stage and next required steps must accurately represent the artifact boundary being analyzed.",
+            "evidence": "The state still declares top-level stage `plan` and lists `fresh-task-generation` plus `speckit-analyze` as next steps, while the current workspace already contains a regenerated qualification-only tasks.md and this fresh analyze boundary. The same file's persisted checkpoint and timestamp remain tied to the prior analyze cycle.",
+            "correction_outcome": "When this analyze result is persisted, synchronize workflow-state.json to the regenerated tasks/analyze boundary so resume and later gating use the current artifact set."
+        }
+    ],
+    "summary": "The regenerated task graph is still correctly bounded to qualification-only work: it preserves the single replacement provider gate, forbids retry, and routes pass/fail back to later planning or corrective planning rather than production implementation. The gate cannot return ACCEPT because the current plan set is not internally consistent: repository-profiling-api.md still encodes the superseded CLI-query qualification contract and forbids `cgc api`, while plan.md and tasks.md now depend on the approved local HTTP JSON lifecycle. workflow-state.json also required synchronization to the regenerated tasks/analyze boundary.",
+    "coverage_metrics": {
+        "authoritative_inputs_requested": 17,
+        "authoritative_inputs_reviewed": 17,
+        "owned_paths_reviewed_count": 6,
+        "task_group_count": 4,
+        "task_count": 10,
+        "blocking_findings": 1,
+        "nonblocking_findings": 1,
+        "consistency_coverage": {
+            "spec_to_plan": "partial-pass",
+            "plan_to_tasks": "partial-fail",
+            "supporting_plan_artifacts": "fail",
+            "workflow_state_alignment": "partial-fail"
+        },
+        "scope_boundary_coverage": {
+            "qualification_only": true,
+            "production_work_detected_in_tasks": false,
+            "single_replacement_provider_gate_present": true,
+            "hard_stop_present": true,
+            "pass_route_is_later_planning": true,
+            "fail_route_is_corrective_planning": true,
+            "retry_prohibited_after_replacement_gate": true
+        },
+        "coverage_observations": {
+            "spec_phase_boundary": "The broader Story 4.1 specification remains intentionally larger than the current execution slice, and the plan explicitly phases execution behind provider qualification first.",
+            "qualification_stop_condition": "Tasks T009-T010 correctly stop after one replacement provider execution and do not authorize production adapter, persistence, migration, Git/API/UI/E2E, Worker Agent, Scan Coordinator, Uncertainty, or Cross-Repository Resolution work.",
+            "review_coverage_gap": "The accepted revision review did not independently cover the full revised plan set, which allowed a stale supporting contract artifact to remain in contradiction with the approved HTTP JSON transport."
+        },
+        "artifact_hash_coverage": {
+            "live_hashes_computed": false,
+            "note": "No live hash-computation tool was available in this read-only session. Historical hashes exist inside workflow-state.json, but they were not treated as current-boundary artifact hashes for this verdict."
+        }
+    }
+}

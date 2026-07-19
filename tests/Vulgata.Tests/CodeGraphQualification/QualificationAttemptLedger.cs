@@ -7,11 +7,8 @@ using System.Text.RegularExpressions;
 namespace Vulgata.Tests.CodeGraphQualification;
 
 internal sealed record QualificationAttemptLedgerPolicy(
-    string CorrectivePlanCommit,
-    string PlanReviewPath,
-    string PlanReviewSha256,
-    string WorkflowApprovalObservedAt,
-    string WorkflowApprovalSummarySha256,
+    QualificationExecutionBoundary Boundary,
+    string BoundaryRelativePath,
     Func<DateTimeOffset> UtcNow);
 
 internal sealed partial class QualificationAttemptLedger
@@ -25,6 +22,7 @@ internal sealed partial class QualificationAttemptLedger
 
     private readonly string _attemptsRoot;
     private readonly QualificationAttemptLedgerPolicy _policy;
+    private readonly QualificationTerminalPublisher _terminalPublisher = new();
 
     internal QualificationAttemptLedger(string attemptsRoot, QualificationAttemptLedgerPolicy policy)
     {
@@ -39,7 +37,10 @@ internal sealed partial class QualificationAttemptLedger
         string exactCommand,
         CancellationToken cancellationToken = default)
     {
-        if (!AttemptIdPattern().IsMatch(attemptId))
+        QualificationExecutionBoundary boundary = _policy.Boundary;
+        if (!AttemptIdPattern().IsMatch(attemptId) ||
+            attemptId != boundary.AttemptId ||
+            exactCommand != boundary.ExactCommand)
         {
             throw new InvalidOperationException("The qualification attempt identity is invalid.");
         }
@@ -53,38 +54,70 @@ internal sealed partial class QualificationAttemptLedger
             throw new InvalidOperationException("The qualification attempt has already been claimed or completed.");
         }
 
-        QualificationAttemptAuthorization authorization;
-        await using (FileStream stream = new(authorizationPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+        FileStream authorizationLock;
+        try
         {
-            authorization = await JsonSerializer.DeserializeAsync<QualificationAttemptAuthorization>(stream, JsonOptions, cancellationToken)
+            authorizationLock = new FileStream(
+                authorizationPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.None);
+        }
+        catch (IOException exception)
+        {
+            throw new InvalidOperationException(
+                "The qualification attempt authorization is already active.",
+                exception);
+        }
+
+        try
+        {
+            if (File.Exists(startedPath) || File.Exists(terminalPath))
+            {
+                throw new InvalidOperationException(
+                    "The qualification attempt has already been claimed or completed.");
+            }
+
+            QualificationAttemptAuthorization authorization =
+                await JsonSerializer.DeserializeAsync<QualificationAttemptAuthorization>(
+                authorizationLock,
+                JsonOptions,
+                cancellationToken)
                 ?? throw new InvalidOperationException("The qualification authorization is empty.");
+
+            ValidateAuthorization(authorization, attemptId, token);
+            QualificationAttemptStarted started = new(
+                "1.0",
+                attemptId,
+                _policy.UtcNow(),
+                boundary.ExactCommand,
+                _policy.BoundaryRelativePath,
+                boundary.RawSha256,
+                boundary.CorrectivePlanCommit,
+                boundary.PlanReviewPath,
+                boundary.PlanReviewSha256,
+                boundary.ExecutionApprovalGateId);
+
+            await using (FileStream stream = new(
+                startedPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 4096,
+                FileOptions.WriteThrough))
+            {
+                await JsonSerializer.SerializeAsync(stream, started, JsonOptions, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+                stream.Flush(flushToDisk: true);
+            }
+
+            return ClaimedProviderAuthorization.Create(attemptId, startedPath, authorizationLock);
         }
-
-        ValidateAuthorization(authorization, attemptId, token, exactCommand);
-        QualificationAttemptStarted started = new(
-            "1.0",
-            attemptId,
-            _policy.UtcNow(),
-            exactCommand,
-            _policy.CorrectivePlanCommit,
-            _policy.PlanReviewPath,
-            _policy.PlanReviewSha256,
-            _policy.WorkflowApprovalObservedAt);
-
-        await using (FileStream stream = new(
-            startedPath,
-            FileMode.CreateNew,
-            FileAccess.Write,
-            FileShare.None,
-            bufferSize: 4096,
-            FileOptions.WriteThrough))
+        catch
         {
-            await JsonSerializer.SerializeAsync(stream, started, JsonOptions, cancellationToken);
-            await stream.FlushAsync(cancellationToken);
-            stream.Flush(flushToDisk: true);
+            await authorizationLock.DisposeAsync();
+            throw;
         }
-
-        return ClaimedProviderAuthorization.Create(attemptId, startedPath);
     }
 
     internal async Task CompleteAsync(
@@ -95,15 +128,7 @@ internal sealed partial class QualificationAttemptLedger
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(claim);
-        if (outcome is not ("passed" or "failed") ||
-            string.IsNullOrWhiteSpace(category) ||
-            !evidenceCitation.StartsWith(
-                "specs/001-codegraph-extraction/qualification/evidence/",
-                StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("The qualification terminal classification is invalid.");
-        }
-
+        ValidateTerminalValues(outcome, category, evidenceCitation);
         string expectedStartedPath = Path.Combine(_attemptsRoot, claim.AttemptId, "started.json");
         if (!File.Exists(expectedStartedPath) ||
             !string.Equals(Path.GetFullPath(claim.StartedPath), expectedStartedPath, StringComparison.OrdinalIgnoreCase))
@@ -111,8 +136,8 @@ internal sealed partial class QualificationAttemptLedger
             throw new InvalidOperationException("The qualification claim is not bound to this attempt ledger.");
         }
 
-        string terminalPath = Path.Combine(_attemptsRoot, claim.AttemptId, "terminal.json");
-        QualificationAttemptTerminal terminal = new(
+        string attemptDirectory = Path.Combine(_attemptsRoot, claim.AttemptId);
+        QualificationAttemptTerminalRecord terminal = new(
             "1.0",
             claim.AttemptId,
             _policy.UtcNow(),
@@ -121,45 +146,140 @@ internal sealed partial class QualificationAttemptLedger
             evidenceCitation);
         try
         {
-            await using FileStream stream = new(
-                terminalPath,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None,
-                bufferSize: 4096,
-                FileOptions.WriteThrough);
-            await JsonSerializer.SerializeAsync(stream, terminal, JsonOptions, cancellationToken);
-            await stream.FlushAsync(cancellationToken);
-            stream.Flush(flushToDisk: true);
+            await _terminalPublisher.PublishAsync(attemptDirectory, terminal, cancellationToken);
         }
-        catch (IOException exception) when (File.Exists(terminalPath))
+        finally
         {
-            throw new InvalidOperationException("The qualification attempt already has a terminal record.", exception);
+            claim.Dispose();
+        }
+    }
+
+    internal async Task<bool> ReconcileAsync(
+        string attemptId,
+        CancellationToken cancellationToken = default)
+    {
+        if (attemptId != _policy.Boundary.AttemptId)
+        {
+            throw new InvalidOperationException("The qualification attempt identity is invalid.");
+        }
+
+        string attemptDirectory = Path.Combine(_attemptsRoot, attemptId);
+        string authorizationPath = Path.Combine(attemptDirectory, "authorized.json");
+        string startedPath = Path.Combine(attemptDirectory, "started.json");
+        string terminalPath = Path.Combine(attemptDirectory, "terminal.json");
+        if (!File.Exists(authorizationPath))
+        {
+            if (File.Exists(terminalPath))
+            {
+                throw new InvalidOperationException(
+                    "The qualification attempt terminal is ledger corruption.");
+            }
+
+            return false;
+        }
+
+        FileStream authorizationLock;
+        try
+        {
+            authorizationLock = new FileStream(
+                authorizationPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.None);
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+
+        await using (authorizationLock)
+        {
+            await ValidateAuthorizationForReconciliationAsync(
+                authorizationLock,
+                attemptId,
+                cancellationToken);
+            if (File.Exists(terminalPath))
+            {
+                await _terminalPublisher.ValidateExistingAsync(attemptDirectory, cancellationToken);
+                return false;
+            }
+
+            string category = File.Exists(startedPath)
+                ? "interrupted-after-claim"
+                : "interrupted-before-claim";
+            QualificationAttemptTerminalRecord terminal = new(
+                "1.0",
+                attemptId,
+                _policy.UtcNow(),
+                "failed",
+                category,
+                "specs/001-codegraph-extraction/qualification/evidence/verification.md");
+            await _terminalPublisher.PublishAsync(attemptDirectory, terminal, cancellationToken);
+            return true;
         }
     }
 
     private void ValidateAuthorization(
         QualificationAttemptAuthorization authorization,
         string attemptId,
-        string token,
-        string exactCommand)
+        string token)
     {
-        DateTimeOffset now = _policy.UtcNow();
         bool tokenMatches = CryptographicOperations.FixedTimeEquals(
             Encoding.ASCII.GetBytes(authorization.TokenSha256),
             Encoding.ASCII.GetBytes(Sha256(token)));
         if (authorization.SchemaVersion != "1.0" ||
             authorization.AttemptId != attemptId ||
             !tokenMatches ||
-            authorization.ExpiresAt <= now ||
-            authorization.ExactCommand != exactCommand ||
-            authorization.CorrectivePlanCommit != _policy.CorrectivePlanCommit ||
-            authorization.PlanReviewPath != _policy.PlanReviewPath ||
-            authorization.PlanReviewSha256 != _policy.PlanReviewSha256 ||
-            authorization.WorkflowApprovalObservedAt != _policy.WorkflowApprovalObservedAt ||
-            authorization.WorkflowApprovalSummarySha256 != _policy.WorkflowApprovalSummarySha256)
+            authorization.ExpiresAt <= _policy.UtcNow() ||
+            authorization.ExecutionBoundaryPath != _policy.BoundaryRelativePath ||
+            authorization.ExecutionBoundarySha256 != _policy.Boundary.RawSha256)
         {
-            throw new InvalidOperationException("The qualification authorization does not match the accepted execution boundary.");
+            throw new InvalidOperationException(
+                "The qualification authorization does not match the accepted execution boundary.");
+        }
+    }
+
+    private async Task ValidateAuthorizationForReconciliationAsync(
+        Stream authorizationStream,
+        string attemptId,
+        CancellationToken cancellationToken)
+    {
+        QualificationAttemptAuthorization authorization;
+        try
+        {
+            authorization = await JsonSerializer.DeserializeAsync<QualificationAttemptAuthorization>(
+                authorizationStream,
+                JsonOptions,
+                cancellationToken)
+                ?? throw new JsonException("The authorization is empty.");
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidOperationException(
+                "The qualification attempt authorization is ledger corruption.",
+                exception);
+        }
+
+        if (authorization.SchemaVersion != "1.0" ||
+            authorization.AttemptId != attemptId ||
+            !Sha256Pattern().IsMatch(authorization.TokenSha256) ||
+            authorization.ExecutionBoundaryPath != _policy.BoundaryRelativePath ||
+            authorization.ExecutionBoundarySha256 != _policy.Boundary.RawSha256)
+        {
+            throw new InvalidOperationException(
+                "The qualification attempt authorization is ledger corruption.");
+        }
+    }
+
+    private static void ValidateTerminalValues(string outcome, string category, string evidenceCitation)
+    {
+        if (outcome is not ("passed" or "failed") ||
+            string.IsNullOrWhiteSpace(category) ||
+            !evidenceCitation.StartsWith(
+                "specs/001-codegraph-extraction/qualification/evidence/",
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("The qualification terminal classification is invalid.");
         }
     }
 
@@ -169,33 +289,26 @@ internal sealed partial class QualificationAttemptLedger
     [GeneratedRegex("^attempt-[0-9]{4}$", RegexOptions.CultureInvariant)]
     private static partial Regex AttemptIdPattern();
 
+    [GeneratedRegex("^[a-f0-9]{64}$", RegexOptions.CultureInvariant)]
+    private static partial Regex Sha256Pattern();
+
     private sealed record QualificationAttemptAuthorization(
         string SchemaVersion,
         string AttemptId,
         string TokenSha256,
         DateTimeOffset ExpiresAt,
-        string ExactCommand,
-        string CorrectivePlanCommit,
-        string PlanReviewPath,
-        string PlanReviewSha256,
-        string WorkflowApprovalObservedAt,
-        string WorkflowApprovalSummarySha256);
+        string ExecutionBoundaryPath,
+        string ExecutionBoundarySha256);
 
     private sealed record QualificationAttemptStarted(
         string SchemaVersion,
         string AttemptId,
         DateTimeOffset StartedAt,
         string ExactCommand,
+        string ExecutionBoundaryPath,
+        string ExecutionBoundarySha256,
         string CorrectivePlanCommit,
         string PlanReviewPath,
         string PlanReviewSha256,
-        string WorkflowApprovalObservedAt);
-
-    private sealed record QualificationAttemptTerminal(
-        string SchemaVersion,
-        string AttemptId,
-        DateTimeOffset CompletedAt,
-        string Outcome,
-        string Category,
-        string EvidenceCitation);
+        string ExecutionApprovalGateId);
 }

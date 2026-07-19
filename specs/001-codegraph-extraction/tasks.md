@@ -1,13 +1,23 @@
 ---
-description: "Corrective one-shot qualification graph for CodeGraphContext 0.5.1 HTTP JSON evidence"
+description: "Historical attempt-0002 graph and corrective attempt-0003 qualification continuation"
 ---
 
-# Tasks: Guarded CodeGraphContext attempt-0002
+# Tasks: Guarded CodeGraphContext qualification
 
-**Input**: Accepted `spec.md`/`spec-review-4.json`; the complete corrective plan set and
-`reviews/plan-review-8.json`; the permanent incident record at
+**Input**: Accepted `spec.md`/`spec-review-4.json`; the accepted corrective plan set and
+`reviews/plan-review-10.json`; the permanent incident record at
 `qualification/evidence/accidental-provider-execution-2026-07-16.md`; and the explicit
-`attempt-0002` approval recorded in `workflow-state.json`.
+requirement for a separate exact-boundary approval before `attempt-0003`.
+
+## Historical attempt-0002 disposition
+
+T001-T014 below are retained unchanged as the completed historical
+`attempt-0002` graph. That attempt is terminal and consumed: its wrapper was
+invoked once, wrote immutable `attempt-0002/authorized.json`, and failed closed
+on the PowerShell/C# approval-boundary hash mismatch before `started.json`,
+Docker, or CodeGraphContext reachability. No missing `started.json` or
+`terminal.json` may be backfilled into that immutable attempt, and T013 must
+never be retried.
 
 ## Boundary and non-negotiable rules
 
@@ -236,3 +246,67 @@ irreversible attempt form one ordered chain.
 | Corrected FR-018 | T008-T013 enforce one whole-Repository operation, one 1,800-second deadline, atomic failure, and no batch/retry/bisection/continuation. |
 | Incident and corrective plan | T001 revokes the stale capability; T004-T005 preserve attempt-0001; T010-T013 bind the approved attempt-0002 to a sealed lease and irreversible claim. |
 | Production hard stop | T014 routes pass to fresh reviewed planning and fail to correction; neither route permits production implementation here. |
+
+## Attempt-0003 corrective continuation
+
+`attempt-0002` is consumed by its authorization-boundary mismatch and is never
+retried. The following tasks implement only the independently accepted
+attempt-0003 correction from `plan-review-10.json`. Q001-Q004 are R0 and must
+remain incapable of Docker, `cgc`, HTTP, or provider reachability.
+
+- [x] Q001 Add RED tests for one closed
+  `qualification/execution-boundaries/attempt-0003.json` contract. Prove
+  PowerShell and C# hash the same raw UTF-8 bytes and reject byte, path/hash,
+  attempt, command, plan-review, provider-Fact/category, no-retry, token,
+  expiry, schema, and workflow approval-binding drift before `started.json`.
+  - **RED (R0):**
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~QualificationExecutionBoundaryTests|FullyQualifiedName~ProviderExecutionGuardTests|FullyQualifiedName~QualificationAttemptLedgerTests"`
+
+- [x] Q002 Implement the shared boundary loader and consume it from the real
+  PowerShell wrapper and C# ledger/guard without approval-summary literals or
+  independently assembled policy values. Keep the provider Fact inert without
+  the exact wrapper environment and sealed lease.
+  - **Depends on:** Q001.
+  - **GREEN (R0):** rerun Q001, then
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter Category=CodeGraphQualificationSynthetic`
+
+- [x] Q003 Add RED tests for the shared terminal publisher and reconciliation:
+  crash before publication, interruption while writing a unique same-directory
+  temporary file, child crash/termination after claim, wrapper interruption
+  before/after claim, child/wrapper/reconciler races, invalid existing terminal,
+  and an existing detailed terminal.
+  - Every test proves no provider reachability, no second start, no retry, and
+    no overwrite or repair of ledger corruption.
+  - **RED (R0):**
+    `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~QualificationAttemptLedgerTests|FullyQualifiedName~QualificationPreflightTests|FullyQualifiedName~ProviderExecutionGuardTests"`
+
+- [x] Q004 Implement the shared terminal publisher: serialize and
+  closed-schema validate the complete redacted record in a unique
+  same-directory temporary file, call `FileStream.Flush(true)`, and atomically
+  publish with `File.Move(temp, terminal, overwrite: false)`. A losing writer
+  deletes its temporary file and validates the winner. Invalid published
+  terminal state is blocking ledger corruption. Add wrapper fallback and the
+  provider-unreachable resume reconciler.
+  - **Depends on:** Q003.
+  - **GREEN (R0):** rerun Q003, then the complete synthetic-category command
+    from Q002.
+
+- [x] Q005 Run the reachability-free preflight. It must compile, run all
+  synthetic tests, validate locked inputs/schemas and consumed attempt history,
+  reconcile incomplete prior attempts without provider access, and prove the
+  legacy fixture path remains absent. It must not create attempt-0003
+  authorization/start/terminal records.
+  - **Depends on:** Q004.
+  - **Command (R0):**
+    `pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationPreflight.ps1`
+
+- [x] Q006 Generate the exact immutable
+  `qualification/execution-boundaries/attempt-0003.json`, report its raw-byte
+  SHA-256, and stop for explicit user execution approval. Only after that exact
+  approval is bound in workflow state may the dedicated attempt-0003 wrapper
+  execute once. The R1 command is not authorized by task or plan acceptance and
+  has no retry.
+  - **Depends on:** Q005 green.
+
+Corrective dependency graph:
+`Q001 → Q002 → Q003 → Q004 → Q005 → Q006 → explicit exact-hash approval → one R1 wrapper execution`.

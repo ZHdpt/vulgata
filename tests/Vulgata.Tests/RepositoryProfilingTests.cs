@@ -1,0 +1,817 @@
+using System.Text.Json;
+using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CodeGraph;
+using Vulgata.Infrastructure.Data;
+using Vulgata.Shared.Repositories;
+using Vulgata.Web.Data;
+using RepositoryEntity = Vulgata.Core.Entities.Repository;
+
+namespace Vulgata.Tests;
+
+public sealed class RepositoryProfilingTests
+{
+    [Fact]
+    public void ScanRun_CompleteWithFiveHundredCandidatesAndNoUnits_RequiresHumanReview()
+    {
+        DateTimeOffset started = DateTimeOffset.UtcNow;
+        ScanRun run = ScanRun.Start(Guid.NewGuid(), 1_800, started);
+
+        run.SetCandidateCount(500);
+        run.Complete(0, 0, started.AddSeconds(3));
+
+        Assert.Equal(ScanRunStatus.Completed, run.Status);
+        Assert.True(run.NeedsHumanReview);
+        Assert.Equal(3_000, run.DurationMilliseconds);
+    }
+
+    [Fact]
+    public void CodeUnit_WithContentHashes_StartsPendingAndUsesApprovedVocabulary()
+    {
+        string hash = new('a', 64);
+        var unit = new CodeUnit(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "src/OrderService.cs",
+            hash,
+            hash,
+            2,
+            8,
+            "PlaceOrder",
+            CodeUnitType.Method,
+            RangeConfidence.Exact,
+            null);
+
+        Assert.Equal(CodeUnitStatus.Pending, unit.Status);
+        Assert.Equal(RangeConfidence.Exact, unit.RangeConfidence);
+        Assert.DoesNotContain("High", Enum.GetNames<RangeConfidence>());
+    }
+
+    [Fact]
+    public void Model_CodeGraphRecords_EnforcesRepositoryAndScanRunIdentity()
+    {
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        using var db = new VulgataDbContext(dbOptions);
+
+        var codeUnit = db.Model.FindEntityType(typeof(CodeUnit));
+        Assert.NotNull(codeUnit);
+        Assert.Contains(
+            codeUnit!.GetForeignKeys(),
+            foreignKey =>
+                foreignKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["ScanRunId", "RepositoryId"]) &&
+                foreignKey.PrincipalKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["Id", "RepositoryId"]));
+
+        var edge = db.Model.FindEntityType(typeof(CodeUnitEdge));
+        Assert.NotNull(edge);
+        Assert.Contains(
+            edge!.GetForeignKeys(),
+            foreignKey =>
+                foreignKey.DependentToPrincipal?.Name == nameof(CodeUnitEdge.SourceCodeUnit) &&
+                foreignKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["SourceCodeUnitId", "ScanRunId", "RepositoryId"]));
+        Assert.Contains(
+            edge.GetForeignKeys(),
+            foreignKey =>
+                foreignKey.DependentToPrincipal?.Name == nameof(CodeUnitEdge.TargetCodeUnit) &&
+                foreignKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["TargetCodeUnitId", "ScanRunId", "RepositoryId"]));
+
+        var unresolved = db.Model.FindEntityType(typeof(UnresolvedStructuralRelationshipCandidate));
+        Assert.NotNull(unresolved);
+        Assert.Contains(
+            unresolved!.GetForeignKeys(),
+            foreignKey =>
+                foreignKey.DependentToPrincipal?.Name ==
+                    nameof(UnresolvedStructuralRelationshipCandidate.SourceCodeUnit) &&
+                foreignKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["SourceCodeUnitId", "ScanRunId", "RepositoryId"]));
+    }
+
+    [Fact]
+    public void ProjectionQueries_ExactCanonicalText_HaveAcceptedHashes()
+    {
+        Assert.Equal(
+            "07b13dcb0b95a2ab26da930e9fcbafef7cde27488df99b0634d860ef0767d9a8",
+            Convert.ToHexStringLower(SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(CodeGraphContextProviderQueries.CodeUnits))));
+        Assert.Equal(
+            "40d2da3b9b520b3c4eca3fd7c3bad4f4fb10643736e3a9e9b4ddf62c92adc096",
+            Convert.ToHexStringLower(SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(CodeGraphContextProviderQueries.Relationships))));
+    }
+
+    [Fact]
+    public async Task Parse_WithIndependentProjections_PreservesIsolatedUnitsAndMapsRelationshipsAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-projection-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "A.cs"), "class A { }\n// isolated");
+        try
+        {
+            object[] codeUnitRows =
+            [
+                new
+                {
+                    record_kind = "code_unit",
+                    provider_kind = "File",
+                    path = "src/A.cs",
+                    name = (string?)null,
+                    start_line = (int?)null,
+                    end_line = (int?)null,
+                },
+                new
+                {
+                    record_kind = "code_unit",
+                    provider_kind = "Module",
+                    path = (string?)null,
+                    name = "external.module",
+                    start_line = (int?)1,
+                    end_line = (int?)1,
+                },
+                new
+                {
+                    record_kind = "code_unit",
+                    provider_kind = "Class",
+                    path = "src/A.cs",
+                    name = "IsolatedClass",
+                    start_line = (int?)1,
+                    end_line = (int?)1,
+                },
+                new
+                {
+                    record_kind = "code_unit",
+                    provider_kind = "Function",
+                    path = "src/A.cs",
+                    name = "IsolatedFunction",
+                    start_line = (int?)2,
+                    end_line = (int?)2,
+                },
+            ];
+            object[] relationshipRows =
+            [
+                new
+                {
+                    record_kind = "relationship",
+                    relationship_kind = "CONTAINS",
+                    source_provider_kind = "File",
+                    source_path = "src/A.cs",
+                    source_name = (string?)null,
+                    source_start_line = (int?)null,
+                    source_end_line = (int?)null,
+                    target_provider_kind = "Class",
+                    target_path = "src/A.cs",
+                    target_name = "IsolatedClass",
+                    target_start_line = (int?)1,
+                    target_end_line = (int?)1,
+                },
+                new
+                {
+                    record_kind = "relationship",
+                    relationship_kind = "IMPORTS",
+                    source_provider_kind = "File",
+                    source_path = "src/A.cs",
+                    source_name = (string?)null,
+                    source_start_line = (int?)null,
+                    source_end_line = (int?)null,
+                    target_provider_kind = "Module",
+                    target_path = (string?)null,
+                    target_name = "external.module",
+                    target_start_line = (int?)1,
+                    target_end_line = (int?)1,
+                },
+            ];
+            byte[] codeUnitsJson = CreateEnvelope(
+                CodeGraphContextProviderQueries.CodeUnits,
+                codeUnitRows);
+            byte[] relationshipsJson = CreateEnvelope(
+                CodeGraphContextProviderQueries.Relationships,
+                relationshipRows);
+
+            CodeGraphProviderResult result = CodeGraphHttpProjectionParser.Parse(
+                codeUnitsJson,
+                relationshipsJson,
+                root,
+                TimeSpan.FromSeconds(1));
+
+            Assert.True(result.Succeeded);
+            Assert.Equal(3, result.CodeUnits.Count);
+            Assert.Equal(2, result.Relationships.Count);
+            Assert.Contains(result.CodeUnits, unit => unit.SymbolName == "IsolatedClass");
+            Assert.Contains(result.CodeUnits, unit => unit.SymbolName == "IsolatedFunction");
+            ProviderCodeUnit file = Assert.Single(
+                result.CodeUnits,
+                unit => unit.UnitType == CodeUnitType.File);
+            Assert.Equal((1, 2), (file.LineStart, file.LineEnd));
+            Assert.All(result.CodeUnits, unit =>
+                Assert.Matches("^cgc-v1:[0-9a-f]{64}$", unit.EndpointIdentity));
+            ProviderStructuralRelationship contains = Assert.Single(
+                result.Relationships,
+                relationship => relationship.RelationshipKind == StructuralRelationshipKind.Contains);
+            ProviderCodeUnit containedClass = Assert.Single(
+                result.CodeUnits,
+                unit => unit.SymbolName == "IsolatedClass");
+            Assert.Equal(file.EndpointIdentity, contains.SourceEndpointIdentity);
+            Assert.Equal(containedClass.EndpointIdentity, contains.TargetEndpointIdentity);
+            ProviderStructuralRelationship imports = Assert.Single(
+                result.Relationships,
+                relationship => relationship.RelationshipKind == StructuralRelationshipKind.Imports);
+            Assert.DoesNotContain(
+                result.CodeUnits,
+                unit => unit.EndpointIdentity == imports.TargetEndpointIdentity);
+            Assert.Equal(1, result.ParsedFileCount);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static byte[] CreateEnvelope(string query, object[] results) =>
+        JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            status = "ok",
+            message = (string?)null,
+            error = (string?)null,
+            data = new
+            {
+                success = true,
+                query,
+                record_count = results.Length,
+                results,
+            },
+        });
+
+    [Fact]
+    public async Task StartStandaloneRepository_WithControlledProvider_PersistsTraceableResultAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "A.cs"), new string('a', 5_000));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "B.cs"), "class B { void Call() {} }");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "fixture",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+
+            var coordinator = new RepositoryProfilingCoordinator(
+                new SystemRepository(db),
+                new RepositoryRepository(db),
+                new ScanRunRepository(db),
+                new SuccessfulWorkingCopy(root),
+                new ControlledCandidates(),
+                new ControlledProvider(),
+                new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
+                NullLogger<RepositoryProfilingCoordinator>.Instance);
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Completed, run.Status);
+            Assert.Equal(2, await db.CodeUnits.CountAsync());
+            Assert.Equal(1, await db.CodeUnitEdges.CountAsync());
+            Assert.Equal(0, await db.UnresolvedStructuralRelationshipCandidates.CountAsync());
+            ScanCandidateOutcome[] candidateOutcomes =
+                await db.ScanCandidateOutcomes.OrderBy(outcome => outcome.FilePath).ToArrayAsync();
+            Assert.Equal(3, candidateOutcomes.Length);
+            Assert.Contains(
+                candidateOutcomes,
+                outcome => outcome.FilePath == "src/A.cs" &&
+                    outcome.Outcome == ScanCandidateOutcomeKind.Parsed &&
+                    outcome.ReasonOrCategory == "CodeUnitExtracted");
+            Assert.Contains(
+                candidateOutcomes,
+                outcome => outcome.FilePath == "src/B.cs" &&
+                    outcome.Outcome == ScanCandidateOutcomeKind.Parsed &&
+                    outcome.ReasonOrCategory == "CodeUnitExtracted");
+            Assert.All(candidateOutcomes, outcome => Assert.InRange(outcome.ReasonOrCategory.Length, 1, 512));
+            CodeUnit first = await db.CodeUnits.SingleAsync(unit => unit.FilePath == "src/A.cs");
+            byte[] source = await File.ReadAllBytesAsync(Path.Combine(root, "src", "A.cs"));
+            Assert.Equal(
+                Convert.ToHexStringLower(SHA256.HashData(source.AsSpan(0, 4_096))),
+                first.FileIdentityHash);
+            Assert.NotEqual(first.FileIdentityHash, first.SourceHash);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WithDuplicateResolvedEdge_DoesNotPersistUnresolvedCandidateAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "A.cs"), "class A { }");
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "B.cs"), "class B { }");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "duplicate-edge",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var coordinator = CreateCoordinator(db, root, new DuplicateEdgeProvider());
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            Assert.Single(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WithMalformedAuditPath_IsolatesAuditRecordAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "malformed-audit",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var coordinator = CreateCoordinator(db, root, new MalformedAuditProvider());
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            ScanCandidateOutcome audit = await db.ScanCandidateOutcomes.SingleAsync(
+                outcome => outcome.ReasonOrCategory == "MalformedProviderRow");
+            Assert.Equal("(unknown)", audit.FilePath);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WhenEligiblePathBecomesSymbolicLink_DoesNotReadOutsideRootAsync()
+    {
+        string parent = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        string root = Path.Combine(parent, "repository");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(parent, "outside.cs"), "outside secret");
+        File.CreateSymbolicLink(
+            Path.Combine(root, "src", "A.cs"),
+            Path.Combine(parent, "outside.cs"));
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "link-race",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var coordinator = CreateCoordinator(db, root, new SingleUnitProvider());
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Contains(
+                await db.ScanCandidateOutcomes.ToListAsync(),
+                outcome => outcome.ReasonOrCategory == "InvalidProviderUnit");
+        }
+        finally
+        {
+            Directory.Delete(parent, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WhenProviderIsCancelled_TerminalizesScanRunAsAbortedAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "cancelled-provider",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var coordinator = CreateCoordinator(db, root, new CancelledProvider());
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() =>
+                coordinator.StartStandaloneRepositoryAsync(repository.Id, null!, CancellationToken.None));
+
+            db.ChangeTracker.Clear();
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Aborted, run.Status);
+            Assert.Equal("代码结构分析已取消。", run.TerminalMessage);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WhenProviderIsMissing_RetainsFilteredAuditAndNoStructuralRecordsAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "missing-provider",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var coordinator = new RepositoryProfilingCoordinator(
+                new SystemRepository(db),
+                new RepositoryRepository(db),
+                new ScanRunRepository(db),
+                new SuccessfulWorkingCopy(root),
+                new ControlledCandidates(),
+                new MissingProvider(),
+                new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
+                NullLogger<RepositoryProfilingCoordinator>.Instance);
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.ProviderUnavailable, result.Outcome);
+            Assert.Equal("本地 CodeGraph 服务不可用，请联系管理员。", result.Message);
+            ScanRunSummaryDto value = Assert.IsType<ScanRunSummaryDto>(result.Value);
+            Assert.Equal("失败", value.Status);
+            Assert.Equal("本地 CodeGraph 服务不可用，请联系管理员。", value.Message);
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Failed, run.Status);
+            Assert.Equal("本地 CodeGraph 服务不可用，请联系管理员。", run.TerminalMessage);
+            Assert.Equal(1, await db.ScanCandidateOutcomes.CountAsync());
+            Assert.Equal(0, await db.CodeUnits.CountAsync());
+            Assert.Equal(0, await db.CodeUnitEdges.CountAsync());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task StartSystemRepository_WhenVisibilityIsRevokedDuringProfiling_ReturnsNotFoundAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            var system = new Vulgata.Core.Entities.System(
+                "visibility",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            RepositoryEntity repository = system.AddRepository(
+                "fixture",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Systems.Add(system);
+            await db.SaveChangesAsync();
+            var visibility = new VisibleThenRevokedSystemRepository(system);
+            var coordinator = new RepositoryProfilingCoordinator(
+                visibility,
+                new RepositoryRepository(db),
+                new ScanRunRepository(db),
+                new SuccessfulWorkingCopy(root),
+                new ControlledCandidates(),
+                new MalformedAuditProvider(),
+                new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
+                NullLogger<RepositoryProfilingCoordinator>.Instance);
+
+            RepositoryProfilingResult result = await coordinator.StartSystemRepositoryAsync(
+                system.Id,
+                repository.Id,
+                new TestUserContext(),
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.RepositoryNotFound, result.Outcome);
+            Assert.Equal(2, visibility.VisibilityChecks);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static object CreateRow(
+        string kind,
+        string sourcePath,
+        string sourceSymbol,
+        int sourceStart,
+        int sourceEnd,
+        string sourceIdentity,
+        string targetPath,
+        string targetSymbol,
+        int targetStart,
+        int targetEnd,
+        string targetIdentity) => new
+        {
+            relationship_kind = kind,
+            source_path = sourcePath,
+            source_symbol = sourceSymbol,
+            source_start_line = sourceStart,
+            source_end_line = sourceEnd,
+            source_identity = sourceIdentity,
+            target_path = targetPath,
+            target_symbol = targetSymbol,
+            target_start_line = targetStart,
+            target_end_line = targetEnd,
+            target_identity = targetIdentity,
+            filtered_target = false,
+        };
+
+    private sealed class SuccessfulWorkingCopy(string path) : IGitWorkingCopyService
+    {
+        public Task<GitWorkingCopyResult> AcquireAsync(
+            RepositoryEntity repository,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(GitWorkingCopyResult.Success(path));
+    }
+
+    private sealed class ControlledCandidates : IScanCandidateEnumerator
+    {
+        public Task<IReadOnlyList<ScanSourceCandidate>> EnumerateAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ScanSourceCandidate>>(
+            [
+                new("src/A.cs", false, "Eligible", 0),
+                new("src/B.cs", false, "Eligible", 0),
+                new("src/Generated.g.cs", true, "Generated", 0),
+            ]);
+    }
+
+    private sealed class ControlledProvider : ICodeGraphProvider
+    {
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [
+                    new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact),
+                    new("src/B.cs", "B", CodeUnitType.Class, 1, 1, "b", RangeConfidence.Exact),
+                ],
+                [new("a", "b", StructuralRelationshipKind.Calls)],
+                [],
+                2,
+                TimeSpan.FromMilliseconds(10),
+                null));
+    }
+
+    private sealed class DuplicateEdgeProvider : ICodeGraphProvider
+    {
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [
+                    new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact),
+                    new("src/B.cs", "B", CodeUnitType.Class, 1, 1, "b", RangeConfidence.Exact),
+                ],
+                [
+                    new("a", "b", StructuralRelationshipKind.Calls),
+                    new("a", "b", StructuralRelationshipKind.Calls),
+                ],
+                [],
+                2,
+                TimeSpan.FromMilliseconds(10),
+                null));
+    }
+
+    private sealed class MalformedAuditProvider : ICodeGraphProvider
+    {
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [],
+                [],
+                [new("../secret.cs", ScanCandidateOutcomeKind.Errored, "MalformedProviderRow")],
+                0,
+                TimeSpan.FromMilliseconds(10),
+                null));
+    }
+
+    private sealed class SingleUnitProvider : ICodeGraphProvider
+    {
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact)],
+                [],
+                [],
+                1,
+                TimeSpan.FromMilliseconds(10),
+                null));
+    }
+
+    private sealed class CancelledProvider : ICodeGraphProvider
+    {
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            throw new OperationCanceledException(cancellationToken);
+    }
+
+    private sealed class MissingProvider : ICodeGraphProvider
+    {
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(CodeGraphProviderResult.Failure(
+                "CodeGraph CLI not found",
+                TimeSpan.FromMilliseconds(1)));
+    }
+
+    private sealed class TestUserContext : IUserContext
+    {
+        public string UserId => "user";
+
+        public bool IsAdministrator => false;
+
+        public SystemOwnerFilter ToSystemOwnerFilter() => SystemOwnerFilter.OwnedBy(UserId);
+    }
+
+    private sealed class VisibleThenRevokedSystemRepository(
+        Vulgata.Core.Entities.System visibleSystem) : ISystemRepository
+    {
+        public int VisibilityChecks { get; private set; }
+
+        public Task<Vulgata.Core.Entities.System?> GetVisibleByIdAsync(
+            Guid id,
+            SystemOwnerFilter filter,
+            CancellationToken cancellationToken = default)
+        {
+            VisibilityChecks++;
+            return Task.FromResult<Vulgata.Core.Entities.System?>(
+                VisibilityChecks == 1 ? visibleSystem : null);
+        }
+
+        public Task<IReadOnlyList<Vulgata.Core.Entities.System>> ListVisibleAsync(
+            SystemOwnerFilter filter,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<Vulgata.Core.Entities.System?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<bool> NameExistsAsync(
+            string name,
+            Guid? excludeSystemId = null,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<Vulgata.Core.Entities.System> AddAsync(
+            Vulgata.Core.Entities.System system,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<SystemDeleteResult> DeleteIfNoDependenciesAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<SystemDependencyCounts> GetDependencyCountsAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<SystemOwnerAssignmentWriteResult> AssignOwnerAsync(
+            Guid systemId,
+            string userId,
+            DateTimeOffset now,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<bool> RemoveOwnerAsync(
+            Guid systemId,
+            string userId,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<IReadOnlyList<SystemOwnerAssignmentSummary>> ListOwnersAsync(
+            Guid systemId,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<int> CountOwnerAssignmentsByUserAsync(
+            string userId,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    }
+
+    private static RepositoryProfilingCoordinator CreateCoordinator(
+        VulgataDbContext db,
+        string root,
+        ICodeGraphProvider provider) =>
+        new(
+            new SystemRepository(db),
+            new RepositoryRepository(db),
+            new ScanRunRepository(db),
+            new SuccessfulWorkingCopy(root),
+            new ControlledCandidates(),
+            provider,
+            new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
+            NullLogger<RepositoryProfilingCoordinator>.Instance);
+}

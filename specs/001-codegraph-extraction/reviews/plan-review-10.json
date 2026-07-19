@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "266f3b9591e022c6da2d4af58f7cef048e43b583",
+  "reviewed_boundary": {
+    "scope": "Only plan-review-9 P1 terminal publication remediation.",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/plan.md": "7bc5b6ccc4cebafb761dd5d88ed3b94fafb2afd14ee852caf58d522bc4e532d9",
+      "specs/001-codegraph-extraction/research.md": "203be0b8d2364d152a74764a9666dd335d294a4d69312d10752d0e76ac8348b6",
+      "specs/001-codegraph-extraction/data-model.md": "a7c59456b9814d5bc358db404ed3d5053e45713a5db34b900c552dec97042aba",
+      "specs/001-codegraph-extraction/quickstart.md": "8a6972282e9a6401368b3cbca1efd39f1d4408aaacb515590df068c1b4aa2c44",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "fe72d7fd6eee29b4d7bae2c99175cf11967df7e5226cee182cb4f0207aa788b6"
+    }
+  },
+  "findings": [],
+  "evidence": [
+    "All terminal writers serialize and closed-schema validate a complete record in a unique same-directory temporary file.",
+    "Publication requires FileStream.Flush(true) followed by File.Move with overwrite false.",
+    "A losing publisher deletes its temporary file and validates the winning terminal.",
+    "An invalid published terminal is immutable ledger corruption that blocks execution and reconciliation.",
+    "Tests cover pre-publication crashes, interruption during temporary writing, atomic no-replace races, invalid terminals, and provider-unreachable resume."
+  ],
+  "authorization": {
+    "duplicate_planned_change_approval_required": false,
+    "separate_exact_attempt_0003_boundary_approval_required": true
+  },
+  "summary": "ACCEPT. Plan-review-9 P1 is fully closed. The exact attempt-0003 boundary path and SHA-256 still require explicit approval before provider execution."
+}

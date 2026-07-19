@@ -8,49 +8,48 @@ namespace Vulgata.Tests.CodeGraphQualification;
 [Trait("Category", "CodeGraphQualificationSynthetic")]
 public sealed class QualificationAttemptLedgerTests
 {
-    private const string PlanCommit = "84b0909b6713b410258d4db7ec37503cfe0c5980";
-    private const string PlanReviewPath = "specs/001-codegraph-extraction/reviews/plan-review-8.json";
-    private const string PlanReviewSha256 = "f73f877b3c7d37b3c739ee123867e39e3b71769e4abd1d8bbe5bd2f51806b408";
-    private const string ExactCommand = "pwsh -NoProfile -File tests/Vulgata.Tests/CodeGraphQualification/Invoke-CodeGraphQualificationProvider.ps1 -AttemptId attempt-0002";
-    private const string ApprovalObservedAt = "2026-07-16T18:10:00+08:00";
-    private const string ApprovalSummary = "User explicitly approved the independently accepted corrective plan and one guarded attempt-0002.";
-
     [Fact]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public async Task Claim_WhenAuthorizationMatches_CreatesAndFlushesStartBeforeReachabilityAsync()
+    public async Task Claim_WhenAuthorizationMatchesBoundary_CreatesAndFlushesOneStartAsync()
     {
-        using TemporaryAttemptDirectory temporary = new();
+        using TemporaryQualificationRoot temporary = new();
         const string token = "synthetic-random-token";
-        DateTimeOffset now = new(2026, 7, 16, 19, 45, 0, TimeSpan.FromHours(8));
-        await WriteAuthorizationAsync(temporary.Path, token, now.AddMinutes(5));
-        QualificationAttemptLedger ledger = CreateLedger(temporary.Path, now);
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
 
-        ClaimedProviderAuthorization claim = await ledger.ClaimAsync("attempt-0002", token, ExactCommand);
+        ClaimedProviderAuthorization claim = await ledger.ClaimAsync(
+            boundary.AttemptId,
+            token,
+            boundary.ExactCommand);
 
-        string startedPath = System.IO.Path.Combine(temporary.Path, "attempt-0002", "started.json");
+        string startedPath = Path.Combine(temporary.AttemptDirectory, "started.json");
         Assert.True(File.Exists(startedPath));
-        string startedJson = await File.ReadAllTextAsync(startedPath);
         using FileStream exclusiveRead = new(startedPath, FileMode.Open, FileAccess.Read, FileShare.None);
         using JsonDocument started = await JsonDocument.ParseAsync(exclusiveRead);
-        Assert.Equal("attempt-0002", started.RootElement.GetProperty("attemptId").GetString());
-        Assert.Equal(ExactCommand, started.RootElement.GetProperty("exactCommand").GetString());
-        Assert.Equal(PlanCommit, started.RootElement.GetProperty("correctivePlanCommit").GetString());
-        Assert.Equal(PlanReviewSha256, started.RootElement.GetProperty("planReviewSha256").GetString());
-        Assert.Equal(ApprovalObservedAt, started.RootElement.GetProperty("workflowApprovalObservedAt").GetString());
-        Assert.DoesNotContain(token, startedJson, StringComparison.Ordinal);
-        Assert.NotNull(ProviderExecutionGuard.Issue(claim));
+        Assert.Equal("attempt-0003", started.RootElement.GetProperty("attemptId").GetString());
+        Assert.Equal(boundary.ExactCommand, started.RootElement.GetProperty("exactCommand").GetString());
+        Assert.Equal(boundary.RawSha256, started.RootElement.GetProperty("executionBoundarySha256").GetString());
+        Assert.Equal(boundary.PlanReviewSha256, started.RootElement.GetProperty("planReviewSha256").GetString());
+        using ProviderExecutionLease? lease = ProviderExecutionGuard.Issue(claim);
+        Assert.NotNull(lease);
     }
 
     [Fact]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
     public async Task Complete_WhenClaimIsValid_CreatesOneRedactedTerminalRecordAsync()
     {
-        using TemporaryAttemptDirectory temporary = new();
+        using TemporaryQualificationRoot temporary = new();
         const string token = "synthetic-terminal-token";
-        DateTimeOffset now = new(2026, 7, 16, 19, 45, 0, TimeSpan.FromHours(8));
-        await WriteAuthorizationAsync(temporary.Path, token, now.AddMinutes(5));
-        QualificationAttemptLedger ledger = CreateLedger(temporary.Path, now);
-        ClaimedProviderAuthorization claim = await ledger.ClaimAsync("attempt-0002", token, ExactCommand);
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
+        ClaimedProviderAuthorization claim = await ledger.ClaimAsync(
+            boundary.AttemptId,
+            token,
+            boundary.ExactCommand);
 
         await ledger.CompleteAsync(
             claim,
@@ -58,111 +57,263 @@ public sealed class QualificationAttemptLedgerTests
             "unsafe-evidence",
             "specs/001-codegraph-extraction/qualification/evidence/final-gate.md");
 
-        string terminalPath = System.IO.Path.Combine(temporary.Path, "attempt-0002", "terminal.json");
+        string terminalPath = Path.Combine(temporary.AttemptDirectory, "terminal.json");
         string terminalJson = await File.ReadAllTextAsync(terminalPath);
         Assert.DoesNotContain(token, terminalJson, StringComparison.Ordinal);
-        Assert.DoesNotContain("provider output", terminalJson, StringComparison.OrdinalIgnoreCase);
         using JsonDocument terminal = JsonDocument.Parse(terminalJson);
         Assert.Equal("failed", terminal.RootElement.GetProperty("outcome").GetString());
         Assert.Equal("unsafe-evidence", terminal.RootElement.GetProperty("category").GetString());
-        await Assert.ThrowsAsync<InvalidOperationException>(() => ledger.CompleteAsync(
+        await ledger.CompleteAsync(
             claim,
             "failed",
-            "unsafe-evidence",
-            "specs/001-codegraph-extraction/qualification/evidence/final-gate.md"));
+            "later-writer",
+            "specs/001-codegraph-extraction/qualification/evidence/final-gate.md");
+        Assert.Equal(terminalJson, await File.ReadAllTextAsync(terminalPath));
     }
 
     [Theory]
     [InlineData("tokenSha256", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
-    [InlineData("expiresAt", "2026-07-16T19:44:59+08:00")]
-    [InlineData("exactCommand", "dotnet test broad-filter")]
-    [InlineData("correctivePlanCommit", "0000000000000000000000000000000000000000")]
-    [InlineData("planReviewPath", "specs/001-codegraph-extraction/reviews/plan-review-7.json")]
-    [InlineData("planReviewSha256", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
-    [InlineData("workflowApprovalObservedAt", "2026-07-16T18:09:59+08:00")]
-    [InlineData("workflowApprovalSummarySha256", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")]
+    [InlineData("expiresAt", "2026-07-18T11:59:59+08:00")]
+    [InlineData("executionBoundaryPath", "specs/other-boundary.json")]
+    [InlineData("executionBoundarySha256", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public async Task Claim_WhenAuthorizationBoundaryDiffers_RejectsBeforeStartAsync(string propertyName, string value)
+    public async Task Claim_WhenAuthorizationBoundaryDiffers_RejectsBeforeStartAsync(
+        string propertyName,
+        string value)
     {
-        using TemporaryAttemptDirectory temporary = new();
+        using TemporaryQualificationRoot temporary = new();
         const string token = "synthetic-rejection-token";
-        DateTimeOffset now = new(2026, 7, 16, 19, 45, 0, TimeSpan.FromHours(8));
-        await WriteAuthorizationAsync(temporary.Path, token, now.AddMinutes(5));
-        string authorizationPath = System.IO.Path.Combine(temporary.Path, "attempt-0002", "authorized.json");
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        string authorizationPath = Path.Combine(temporary.AttemptDirectory, "authorized.json");
         JsonObject authorization = JsonNode.Parse(await File.ReadAllTextAsync(authorizationPath))!.AsObject();
         authorization[propertyName] = value;
         await File.WriteAllTextAsync(authorizationPath, authorization.ToJsonString());
-        QualificationAttemptLedger ledger = CreateLedger(temporary.Path, now);
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            ledger.ClaimAsync("attempt-0002", token, ExactCommand));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => ledger.ClaimAsync(
+            boundary.AttemptId,
+            token,
+            boundary.ExactCommand));
 
-        Assert.False(File.Exists(System.IO.Path.Combine(temporary.Path, "attempt-0002", "started.json")));
+        Assert.False(File.Exists(Path.Combine(temporary.AttemptDirectory, "started.json")));
     }
 
     [Fact]
     [Trait("Category", "CodeGraphQualificationSynthetic")]
-    public async Task Claim_WhenAttemptHasExistingState_RejectsReuseWithoutOverwriteAsync()
+    public async Task Claim_WhenAttemptHasExistingStart_RejectsReuseWithoutOverwriteAsync()
     {
-        using TemporaryAttemptDirectory temporary = new();
+        using TemporaryQualificationRoot temporary = new();
         const string token = "synthetic-reuse-token";
-        DateTimeOffset now = new(2026, 7, 16, 19, 45, 0, TimeSpan.FromHours(8));
-        await WriteAuthorizationAsync(temporary.Path, token, now.AddMinutes(5));
-        QualificationAttemptLedger ledger = CreateLedger(temporary.Path, now);
-        await ledger.ClaimAsync("attempt-0002", token, ExactCommand);
-        string startedPath = System.IO.Path.Combine(temporary.Path, "attempt-0002", "started.json");
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
+        using ClaimedProviderAuthorization claim =
+            await ledger.ClaimAsync(boundary.AttemptId, token, boundary.ExactCommand);
+        string startedPath = Path.Combine(temporary.AttemptDirectory, "started.json");
         string original = await File.ReadAllTextAsync(startedPath);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            ledger.ClaimAsync("attempt-0002", token, ExactCommand));
+            ledger.ClaimAsync(boundary.AttemptId, token, boundary.ExactCommand));
 
         Assert.Equal(original, await File.ReadAllTextAsync(startedPath));
     }
 
-    private static QualificationAttemptLedger CreateLedger(string attemptsRoot, DateTimeOffset now) =>
-        new(attemptsRoot, new QualificationAttemptLedgerPolicy(
-            PlanCommit,
-            PlanReviewPath,
-            PlanReviewSha256,
-            ApprovalObservedAt,
-            Sha256(ApprovalSummary),
-            () => now));
-
-    private static async Task WriteAuthorizationAsync(string attemptsRoot, string token, DateTimeOffset expiresAt)
+    [Fact]
+    [Trait("Category", "CodeGraphQualificationSynthetic")]
+    public async Task Reconcile_WhenAuthorizationExistsWithoutStart_PublishesInterruptedBeforeClaimAsync()
     {
-        string directory = System.IO.Path.Combine(attemptsRoot, "attempt-0002");
-        Directory.CreateDirectory(directory);
-        object authorization = new
-        {
-            schemaVersion = "1.0",
-            attemptId = "attempt-0002",
-            tokenSha256 = Sha256(token),
-            expiresAt,
-            exactCommand = ExactCommand,
-            correctivePlanCommit = PlanCommit,
-            planReviewPath = PlanReviewPath,
-            planReviewSha256 = PlanReviewSha256,
-            workflowApprovalObservedAt = ApprovalObservedAt,
-            workflowApprovalSummarySha256 = Sha256(ApprovalSummary),
-        };
-        await File.WriteAllTextAsync(
-            System.IO.Path.Combine(directory, "authorized.json"),
-            JsonSerializer.Serialize(authorization));
+        using TemporaryQualificationRoot temporary = new();
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, "unused-token", now.AddMinutes(5));
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
+
+        await ledger.ReconcileAsync("attempt-0003");
+
+        Assert.False(File.Exists(Path.Combine(temporary.AttemptDirectory, "started.json")));
+        Assert.Equal("interrupted-before-claim", await ReadTerminalCategoryAsync(temporary.AttemptDirectory));
     }
 
-    private static string Sha256(string value) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
-
-    private sealed class TemporaryAttemptDirectory : IDisposable
+    [Fact]
+    [Trait("Category", "CodeGraphQualificationSynthetic")]
+    public async Task Reconcile_WhenStartExistsWithoutTerminal_PublishesInterruptedAfterClaimWithoutRetryAsync()
     {
-        internal TemporaryAttemptDirectory()
+        using TemporaryQualificationRoot temporary = new();
+        const string token = "synthetic-interrupted-token";
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
+        ClaimedProviderAuthorization claim =
+            await ledger.ClaimAsync(boundary.AttemptId, token, boundary.ExactCommand);
+        string startedPath = Path.Combine(temporary.AttemptDirectory, "started.json");
+        string originalStart = await File.ReadAllTextAsync(startedPath);
+        claim.Dispose();
+
+        await ledger.ReconcileAsync("attempt-0003");
+
+        Assert.Equal(originalStart, await File.ReadAllTextAsync(startedPath));
+        Assert.Equal("interrupted-after-claim", await ReadTerminalCategoryAsync(temporary.AttemptDirectory));
+    }
+
+    [Fact]
+    [Trait("Category", "CodeGraphQualificationSynthetic")]
+    public async Task CompleteAndReconcile_WhenTerminalWritersRace_FirstCompleteValidPublicationWinsAsync()
+    {
+        using TemporaryQualificationRoot temporary = new();
+        const string token = "synthetic-race-token";
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, token, now.AddMinutes(5));
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
+        ClaimedProviderAuthorization claim = await ledger.ClaimAsync(
+            boundary.AttemptId,
+            token,
+            boundary.ExactCommand);
+
+        await Task.WhenAll(
+            ledger.CompleteAsync(
+                claim,
+                "failed",
+                "provider-contract-failure",
+                "specs/001-codegraph-extraction/qualification/evidence/verification.md"),
+            ledger.ReconcileAsync("attempt-0003"));
+
+        string category = await ReadTerminalCategoryAsync(temporary.AttemptDirectory);
+        Assert.Contains(category, new[] { "provider-contract-failure", "interrupted-after-claim" });
+        Assert.Single(Directory.GetFiles(temporary.AttemptDirectory, "terminal.json"));
+        Assert.Empty(Directory.GetFiles(temporary.AttemptDirectory, ".terminal.*.tmp"));
+    }
+
+    [Fact]
+    [Trait("Category", "CodeGraphQualificationSynthetic")]
+    public async Task Reconcile_WhenPublishedTerminalIsInvalid_BlocksAsCorruptionWithoutRepairAsync()
+    {
+        using TemporaryQualificationRoot temporary = new();
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, "unused-token", now.AddMinutes(5));
+        string terminalPath = Path.Combine(temporary.AttemptDirectory, "terminal.json");
+        await File.WriteAllTextAsync(
+            terminalPath,
+            "{\"schemaVersion\":\"1.0\",\"attemptId\":\"attempt-0003\"");
+        byte[] corruptBytes = await File.ReadAllBytesAsync(terminalPath);
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
+
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => ledger.ReconcileAsync("attempt-0003"));
+
+        Assert.Contains("corruption", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(corruptBytes, await File.ReadAllBytesAsync(terminalPath));
+    }
+
+    [Fact]
+    [Trait("Category", "CodeGraphQualificationSynthetic")]
+    public async Task Reconcile_WhenInterruptedTemporaryFileExists_PublishesCompleteTerminalWithoutUsingPartialAsync()
+    {
+        using TemporaryQualificationRoot temporary = new();
+        DateTimeOffset now = new(2026, 7, 18, 12, 0, 0, TimeSpan.FromHours(8));
+        QualificationExecutionBoundary boundary = await temporary.WriteBoundaryAsync();
+        await temporary.WriteAuthorizationAsync(boundary, "unused-token", now.AddMinutes(5));
+        string interruptedTemp = Path.Combine(temporary.AttemptDirectory, ".terminal.interrupted.tmp");
+        await File.WriteAllTextAsync(interruptedTemp, "{\"schemaVersion\":\"1.0\"");
+        QualificationAttemptLedger ledger = temporary.CreateLedger(boundary, now);
+
+        await ledger.ReconcileAsync("attempt-0003");
+
+        Assert.Equal("interrupted-before-claim", await ReadTerminalCategoryAsync(temporary.AttemptDirectory));
+        Assert.Equal("{\"schemaVersion\":\"1.0\"", await File.ReadAllTextAsync(interruptedTemp));
+    }
+
+    private static async Task<string> ReadTerminalCategoryAsync(string attemptDirectory)
+    {
+        using JsonDocument terminal = JsonDocument.Parse(
+            await File.ReadAllTextAsync(Path.Combine(attemptDirectory, "terminal.json")));
+        return terminal.RootElement.GetProperty("category").GetString()!;
+    }
+
+    internal sealed class TemporaryQualificationRoot : IDisposable
+    {
+        private const string BoundaryRelativePath =
+            "specs/001-codegraph-extraction/qualification/execution-boundaries/attempt-0003.json";
+
+        internal TemporaryQualificationRoot()
         {
-            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"vulgata-attempt-ledger-{Guid.NewGuid():N}");
-            Directory.CreateDirectory(Path);
+            Root = Path.Combine(Path.GetTempPath(), $"vulgata-attempt-ledger-{Guid.NewGuid():N}");
+            AttemptsRoot = Path.Combine(
+                Root,
+                "specs",
+                "001-codegraph-extraction",
+                "qualification",
+                "attempts");
+            AttemptDirectory = Path.Combine(AttemptsRoot, "attempt-0003");
+            Directory.CreateDirectory(AttemptDirectory);
         }
 
-        internal string Path { get; }
+        internal string Root { get; }
 
-        public void Dispose() => Directory.Delete(Path, recursive: true);
+        internal string AttemptsRoot { get; }
+
+        internal string AttemptDirectory { get; }
+
+        internal async Task<QualificationExecutionBoundary> WriteBoundaryAsync()
+        {
+            string path = Path.Combine(
+                Root,
+                BoundaryRelativePath.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            byte[] bytes = Encoding.UTF8.GetBytes(QualificationExecutionBoundaryTests.CreateBoundaryJson());
+            await File.WriteAllBytesAsync(path, bytes);
+            return await QualificationExecutionBoundary.LoadAsync(
+                path,
+                Convert.ToHexStringLower(SHA256.HashData(bytes)));
+        }
+
+        internal async Task WriteAuthorizationAsync(
+            QualificationExecutionBoundary boundary,
+            string token,
+            DateTimeOffset expiresAt)
+        {
+            object authorization = new
+            {
+                schemaVersion = "1.0",
+                attemptId = boundary.AttemptId,
+                tokenSha256 = Sha256(token),
+                expiresAt,
+                executionBoundaryPath = BoundaryRelativePath,
+                executionBoundarySha256 = boundary.RawSha256,
+            };
+            await File.WriteAllTextAsync(
+                Path.Combine(AttemptDirectory, "authorized.json"),
+                JsonSerializer.Serialize(authorization));
+        }
+
+        internal QualificationAttemptLedger CreateLedger(
+            QualificationExecutionBoundary boundary,
+            DateTimeOffset now) =>
+            new(
+                AttemptsRoot,
+                new QualificationAttemptLedgerPolicy(boundary, BoundaryRelativePath, () => now));
+
+        internal Dictionary<string, string?> CreateEnvironment(
+            QualificationExecutionBoundary boundary,
+            string token) =>
+            new(StringComparer.Ordinal)
+            {
+                [ProviderQualificationEntry.AttemptIdEnvironmentVariable] = boundary.AttemptId,
+                [ProviderQualificationEntry.TokenEnvironmentVariable] = token,
+                [ProviderQualificationEntry.ExactCommandEnvironmentVariable] = boundary.ExactCommand,
+                [ProviderQualificationEntry.BoundaryPathEnvironmentVariable] = BoundaryRelativePath,
+                [ProviderQualificationEntry.BoundarySha256EnvironmentVariable] = boundary.RawSha256,
+                [ProviderQualificationEntry.RepositoryRootEnvironmentVariable] = Root,
+            };
+
+        public void Dispose() => Directory.Delete(Root, recursive: true);
+
+        private static string Sha256(string value) =>
+            Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
     }
 }

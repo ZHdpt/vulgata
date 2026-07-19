@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_boundary": {
+    "scope": "Corrected attempt-0003 raw execution boundary plus child-preferred, wrapper-fallback, provider-unreachable reconciliation terminal ownership.",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+      "specs/001-codegraph-extraction/plan.md": "71223c0970810c4d6a4e514f96be3451983455335e3b98d751e39c31b507dff6",
+      "specs/001-codegraph-extraction/research.md": "203be0b8d2364d152a74764a9666dd335d294a4d69312d10752d0e76ac8348b6",
+      "specs/001-codegraph-extraction/data-model.md": "e00902d7f3f7019b22626280beb07e13c55705bcaeeaf7b1d7c7451c4560a7fe",
+      "specs/001-codegraph-extraction/quickstart.md": "25d009a68c857d18239b2f5cbd25baaff78806c9d8fd126f0c92dad9ad3dff81",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "ef08c4be24a7d43c0910c009e4b24155c324c8f25165eb5ee41bbeb26ceb4a86"
+    },
+    "superseded_context": {
+      "path": "specs/001-codegraph-extraction/reviews/plan-review-8.json",
+      "sha256": "f73f877b3c7d37b3c739ee123867e39e3b71769e4abd1d8bbe5bd2f51806b408"
+    }
+  },
+  "findings": [
+    {
+      "id": "P1",
+      "severity": "HIGH",
+      "title": "A terminal writer can expose an immutable partial terminal.json",
+      "impact": "A crash after creating terminal.json but before completing and flushing its JSON can leave an invalid file that existing-terminal-wins semantics preserve forever.",
+      "required_revision": "Serialize and validate the complete closed record in a same-directory temporary file, flush it, atomically publish it to terminal.json with no-replace semantics, and require losing publishers to validate the winner. Treat an invalid published terminal as blocking ledger corruption and never overwrite it. Add provider-unreachable interruption and publication-race tests."
+    }
+  ],
+  "assessments": {
+    "raw_boundary_contract": "The single raw UTF-8 execution-boundary design correctly removes the PowerShell/C# approval-summary duplication.",
+    "terminal_ownership_order": "Child-preferred, wrapper-fallback, and resume-reconciler ownership is otherwise coherent.",
+    "security": "Fail-closed provider-unreachable reconciliation remains sound.",
+    "external_blocker": false
+  },
+  "authorization_assessment": {
+    "duplicate_planned_change_approval_required": false,
+    "exact_attempt_0003_boundary_hash_must_still_be_presented": true,
+    "separate_provider_execution_approval_required": true
+  },
+  "summary": "REVISE. Close the atomic complete-record terminal publication gap, rerun plan review, then present the exact attempt-0003 boundary SHA-256 for separate provider execution approval."
+}

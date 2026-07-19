@@ -1,7 +1,7 @@
 ---
 story_key: 4-1-codegraph-integration-and-code-unit-extraction
 title: Story 4.1: CodeGraph Integration and Code Unit Extraction
-Status: in-progress
+Status: done
 Epic: 4
 Story: 1
 created: 2026-07-14
@@ -77,8 +77,9 @@ SpecKit artifacts.
 **Given** a Repository has a validated Git URL and an authorised SystemOwner
 **When** the owner selects `开始扫描` from RepoDetail
 **Then** the system clones or updates a local working copy using a Git service
-**And** invokes CodeGraph in approximately 1,000-file batches with a
-configurable per-file timeout whose default is 30 seconds
+**And** indexes the whole Repository once through CodeGraphContext's local
+loopback HTTP JSON gateway with a configurable process timeout whose default is
+1,800 seconds
 **And** captures a `CodeGraphParseResult` containing extracted Code Units,
 skipped files and reasons, errored files and messages, parse duration, and total
 files parsed.
@@ -89,8 +90,9 @@ files parsed.
 **When** Vulgata validates it
 **Then** malformed entries are rejected and logged at Warning level with file
 path context
-**And** hangs or crashes are isolated as skipped files with an error reason so
-remaining work continues
+**And** a provider hang, crash, or malformed top-level response fails the
+ScanRun without persisting any provider-derived structural records while
+preserving the pre-provider filtered-file audit
 **And** zero Code Units from 500 or more candidate source files logs a warning
 and flags the ScanRun for human review.
 
@@ -144,21 +146,15 @@ network failure
 **Then** Vulgata logs the failure, marks the ScanRun as failed, and displays
 `仓库克隆失败：{details}` to the SystemOwner.
 
-## Required planning decision and approval gate
+## Approved scanning-strategy deviation
 
-The selected provider exposes repository-level indexing, not a documented
-per-file batch or timeout contract. The implementation plan must therefore
-state, test, and justify the proposed Vulgata-side scanning strategy for:
-
-- forming approximately 1,000-file batches without changing source semantics;
-- enforcing the 30-second default timeout and terminating an isolated hung
-  process safely;
-- continuing after a failed batch or malformed provider result; and
-- mapping provider graph nodes and relationships into Vulgata contracts.
-
-This is a **scanning-strategy change** under `AGENTS.md`. After plan review
-accepts that strategy, the workflow must explain its intent and effects to the
-user and obtain explicit approval before task generation or implementation.
+CodeGraphContext exposes repository-level indexing rather than a documented
+per-file batch or timeout contract. The accepted plan therefore uses one
+whole-Repository index, one bounded provider process, and an owned HTTP JSON
+projection parser. Provider failure is atomic for provider-derived structural
+records; filtered-file audit records created before provider execution remain
+durable. This scanning-strategy change was explicitly approved by the user
+before implementation and does not change the current PRD.
 
 ## Implementation guardrails
 
@@ -203,6 +199,7 @@ user and obtain explicit approval before task generation or implementation.
 | 2026-07-14 | Treat SP-1 as complete for Epic 4 entry. | User direction and committed SP-1 report/status | No further pre-epic spike is required for Story 4.1. |
 | 2026-07-14 | Use content-prefix file identity, Exact/Approximate/Heuristic, and ScanRun/ScanRuns. | User direction | Resolves conflicting Epic and planning wording. |
 | 2026-07-14 | Add CodeGraphContext `cgc` as the local CodeGraph dependency. | User approval | Requires an approved, reproducible execution plan. |
+| 2026-07-16 | Adopt one bounded whole-Repository CodeGraphContext index through its loopback HTTP JSON gateway. | User approval after accepted plan and analysis remediation | Supersedes the per-file batching/continuation wording without changing the PRD. |
 
 ## Dev Agent Record
 
@@ -210,11 +207,47 @@ user and obtain explicit approval before task generation or implementation.
 
 - Canonical activation: `docs/bmad/implementation-artifacts/workflow-activations/4-1-codegraph-integration-and-code-unit-extraction.json`
 - SpecKit feature directory: `specs/001-codegraph-extraction`.
-- Current workflow stage: `plan`; attempt-0002 is consumed and failed closed before provider reachability, so corrective planning is required without a retry.
-- Latest workflow checkpoint: `bmad-4-1-t013-t014-20260716T140345Z-c9f861` (pending local commit binding).
-- Corrective boundary: `attempt-0001` remains a permanent failed execution-order incident. The user authorized exactly one `attempt-0002`, protected by legacy-fixture revocation, provider-incapable synthetic tests, fresh compilation, a sealed execution lease, a process-scoped token, an accepted-plan binding, and an append-only atomic attempt ledger. Provider reachability remains prohibited until every regenerated prerequisite and the reachability-free preflight are green.
-- Terminal result: the T012 preflight passed, but the single T013 wrapper invocation failed before ledger claim because `workflowApprovalSummarySha256` mismatched the ledger policy. `authorized.json` is durable; `started.json` and `terminal.json` are absent; no Docker/provider action occurred; T014 routes FAIL to corrective planning and forbids retry or production implementation.
+- Current workflow stage: `done`; production behavior and the exact pinned
+  provider contract are verified.
+- Latest historical qualification result: the exact approved attempt-0003 boundary
+  `b9b5487b844d1c4ce89e2f03636e8b0c64f99f4dcbf6723a4f1e152ef138853b`
+  executed once and failed in the qualification harness with
+  `provider-contract-failure`. The runner emitted health/query payloads to the
+  wrong stream, omitted dedicated HTTP command evidence, discarded structural
+  evidence on failure, and the provider test substituted empty evidence. This
+  is preserved as immutable failed evidence and was not retried.
+- Implementation authority: the user explicitly directed completion of Story
+  4.1 after accepting that the attempt-0003 failure was a harness defect rather
+  than evidence that CodeGraphContext could not satisfy the approved production
+  contract.
 
 ### Completion notes
 
-- Not started.
+- Added the `ScanRun`, Code Unit, filtered-candidate audit, Code Unit Edge, and
+  unresolved structural relationship persistence model with EF configuration
+  and migration.
+- Added bounded Git working-copy acquisition, deterministic candidate
+  filtering, the owned CodeGraphContext 0.5.1 HTTP JSON adapter, and atomic
+  provider-failure handling.
+- Added authorised start/status API routes and the Simplified-Chinese
+  `开始扫描` Repository details action.
+- Added focused domain, projection, persistence, hashing, and missing-provider
+  tests.
+- Corrected the production parser to the observed CodeGraphContext 0.5.1
+  `status/message/data/error` envelope and replaced the pinned Kuzu
+  multi-column UNION projections with two bounded heterogeneous graph matches
+  using closed node/relationship label allowlists.
+- Mandatory exact final-image provider gate passed against image
+  `sha256:25d8bedc266c9c8d50b5c07081c46210091ed26dd370b53a32102423313d5bc7`.
+  Immutable bounded evidence is recorded under correction
+  `de68574201b2aef4cacf48cdedd9ce448d12d8939dd94bec886accbc0ab48b05`;
+  it proves both projections, all four Code Unit kinds, all four structural
+  relationship kinds, filtered-target reconciliation, snapshot immutability,
+  package/query hashes, forbidden-retention checks, and complete cleanup.
+- Verification on 2026-07-19: focused Story 4.1 suite 16/16 passed; all other
+  project tests 242/242 passed; explicit Web build completed with 0 errors;
+  `VulgataDbContext` has no pending model changes; `git diff --check` passed
+  with line-ending warnings only.
+- The user explicitly waived the remaining BMad sprint-loop ceremony for this
+  story to recover schedule. Plan/task bookkeeping may be backfilled without
+  reopening the completed implementation boundary.

@@ -1,6 +1,6 @@
 namespace Vulgata.Tests.CodeGraphQualification;
 
-internal sealed class ProviderExecutionLease
+internal sealed class ProviderExecutionLease : IDisposable
 {
     private ProviderExecutionLease(ClaimedProviderAuthorization authorization)
     {
@@ -10,4 +10,6 @@ internal sealed class ProviderExecutionLease
     internal ClaimedProviderAuthorization Authorization { get; }
 
     internal static ProviderExecutionLease Create(ClaimedProviderAuthorization authorization) => new(authorization);
+
+    public void Dispose() => Authorization.Dispose();
 }

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "gate": "speckit-analyze",
+  "verdict": "ACCEPT",
+  "scope": "Attempt-0003 corrective tasks Q001-Q006",
+  "metrics": {
+    "scoped_controls": 7,
+    "tasks": 6,
+    "control_coverage_percent": 100,
+    "unmapped_tasks": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "constitution_conflicts": 0
+  },
+  "artifact_hashes": {
+    "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+    "specs/001-codegraph-extraction/plan.md": "7bc5b6ccc4cebafb761dd5d88ed3b94fafb2afd14ee852caf58d522bc4e532d9",
+    "specs/001-codegraph-extraction/research.md": "203be0b8d2364d152a74764a9666dd335d294a4d69312d10752d0e76ac8348b6",
+    "specs/001-codegraph-extraction/data-model.md": "a7c59456b9814d5bc358db404ed3d5053e45713a5db34b900c552dec97042aba",
+    "specs/001-codegraph-extraction/quickstart.md": "8a6972282e9a6401368b3cbca1efd39f1d4408aaacb515590df068c1b4aa2c44",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "fe72d7fd6eee29b4d7bae2c99175cf11967df7e5226cee182cb4f0207aa788b6",
+    "specs/001-codegraph-extraction/reviews/plan-review-10.json": "753a6e82cb1ca6d1f4ebf580eb36a4101917301447876e88660df694df6bfe90",
+    "specs/001-codegraph-extraction/tasks.md": "8ef80eaad712859803fd9288e14379f0300f569f41987bae033c65dc6fd6a0e0"
+  },
+  "authorization": {
+    "implementation_q001_to_q005_may_advance": true,
+    "provider_execution_authorized": false,
+    "exact_attempt_0003_boundary_approval_required": true
+  },
+  "summary": "ACCEPT. Q001-Q006 are dependency ordered, test first, provider unreachable through Q005, and preserve the exact-hash human approval stop before the sole R1 execution."
+}

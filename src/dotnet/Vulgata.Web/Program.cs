@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.ContextManagement;
+using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Shared;
@@ -36,6 +37,10 @@ builder.Services.AddScoped<IUserContext>(sp =>
     return new UserContext(principal, authorization);
 });
 builder.Services.AddHttpClient("LlmProviderConnectionTest", client => { client.Timeout = TimeSpan.FromSeconds(10); });
+builder.Services.AddHttpClient<ICodeGraphProvider, CodeGraphContextProvider>(client =>
+{
+    client.Timeout = Timeout.InfiniteTimeSpan;
+});
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -101,16 +106,29 @@ builder.Services.AddScoped<ISystemOwnershipCoordinator, SystemOwnershipCoordinat
 
 builder.Services.AddScoped<ISystemRepository, SystemRepository>();
 builder.Services.AddScoped<IRepositoryRepository, RepositoryRepository>();
+builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
 builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
 builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
 builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
+builder.Services.AddScoped<IRepositoryProfilingCoordinator, RepositoryProfilingCoordinator>();
 builder.Services.AddScoped<IRepositoryDatabaseConnectionCoordinator, RepositoryDatabaseConnectionCoordinator>();
 builder.Services.AddScoped<ILlmProviderConnectionTestService, LlmProviderConnectionTestService>();
 builder.Services.AddScoped<IDatabaseConnectionTestService, DatabaseConnectionTestService>();
 builder.Services.AddScoped<ILlmProviderManagementCoordinator, LlmProviderManagementCoordinator>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideCoordinator, SystemLlmProviderOverrideCoordinator>();
 builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
+string profilingDataRoot = builder.Configuration["CodeGraph:DataRootPath"]
+    ?? (OperatingSystem.IsLinux()
+        ? "/var/lib/vulgata-codegraph"
+        : Path.Combine(builder.Environment.ContentRootPath, "data", "profiling"));
+var codeGraphOptions = new CodeGraphOptions(
+    Path.Combine(profilingDataRoot, "codegraph"),
+    builder.Configuration.GetValue("CodeGraph:WholeRepositoryProcessTimeoutSeconds", 1_800));
+builder.Services.AddSingleton(codeGraphOptions);
+builder.Services.AddSingleton(new GitWorkingCopyOptions(Path.Combine(profilingDataRoot, "repositories")));
+builder.Services.AddScoped<IGitWorkingCopyService, GitWorkingCopyService>();
+builder.Services.AddScoped<IScanCandidateEnumerator, ScanCandidateEnumerator>();
 builder.Services.AddScoped<IScanStateService, NoOpScanStateService>();
 builder.Services.AddScoped<IContextCompositionService, ContextCompositionService>();
 builder.Services.AddScoped<IContextManagementCoordinator, ContextManagementCoordinator>();

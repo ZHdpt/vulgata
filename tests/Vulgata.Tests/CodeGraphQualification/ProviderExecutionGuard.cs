@@ -15,31 +15,54 @@ internal static class ProviderQualificationEntry
     internal const string AttemptIdEnvironmentVariable = "VULGATA_QUALIFICATION_ATTEMPT_ID";
     internal const string TokenEnvironmentVariable = "VULGATA_QUALIFICATION_TOKEN";
     internal const string ExactCommandEnvironmentVariable = "VULGATA_QUALIFICATION_EXACT_COMMAND";
+    internal const string BoundaryPathEnvironmentVariable = "VULGATA_QUALIFICATION_BOUNDARY_PATH";
+    internal const string BoundarySha256EnvironmentVariable = "VULGATA_QUALIFICATION_BOUNDARY_SHA256";
+    internal const string RepositoryRootEnvironmentVariable = "VULGATA_QUALIFICATION_REPOSITORY_ROOT";
 
     internal static async Task<ProviderExecutionLease?> TryAcquireAsync(
         string attemptsRoot,
         IReadOnlyDictionary<string, string?> environment,
-        QualificationAttemptLedgerPolicy policy,
+        Func<DateTimeOffset> utcNow,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(environment);
-        ArgumentNullException.ThrowIfNull(policy);
+        ArgumentNullException.ThrowIfNull(utcNow);
 
         if (!environment.TryGetValue(AttemptIdEnvironmentVariable, out string? attemptId) ||
             !environment.TryGetValue(TokenEnvironmentVariable, out string? token) ||
             !environment.TryGetValue(ExactCommandEnvironmentVariable, out string? exactCommand) ||
+            !environment.TryGetValue(BoundaryPathEnvironmentVariable, out string? boundaryPath) ||
+            !environment.TryGetValue(BoundarySha256EnvironmentVariable, out string? boundarySha256) ||
+            !environment.TryGetValue(RepositoryRootEnvironmentVariable, out string? repositoryRoot) ||
             string.IsNullOrWhiteSpace(attemptId) ||
             string.IsNullOrWhiteSpace(token) ||
-            string.IsNullOrWhiteSpace(exactCommand))
+            string.IsNullOrWhiteSpace(exactCommand) ||
+            string.IsNullOrWhiteSpace(boundaryPath) ||
+            string.IsNullOrWhiteSpace(boundarySha256) ||
+            string.IsNullOrWhiteSpace(repositoryRoot))
         {
             return null;
         }
 
-        if (!string.Equals(attemptId, "attempt-0002", StringComparison.Ordinal))
+        string root = Path.GetFullPath(repositoryRoot);
+        string absoluteBoundaryPath = Path.GetFullPath(
+            Path.Combine(root, boundaryPath.Replace('/', Path.DirectorySeparatorChar)));
+        if (!absoluteBoundaryPath.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Only the approved attempt-0002 identity may acquire provider capability.");
+            throw new InvalidOperationException("The qualification execution boundary path escapes the repository root.");
         }
 
+        QualificationExecutionBoundary boundary = await QualificationExecutionBoundary.LoadAsync(
+            absoluteBoundaryPath,
+            boundarySha256,
+            cancellationToken);
+        if (attemptId != boundary.AttemptId || exactCommand != boundary.ExactCommand)
+        {
+            throw new InvalidOperationException(
+                "The wrapper environment does not match the qualification execution boundary.");
+        }
+
+        QualificationAttemptLedgerPolicy policy = new(boundary, boundaryPath, utcNow);
         QualificationAttemptLedger ledger = new(attemptsRoot, policy);
         ClaimedProviderAuthorization claim = await ledger.ClaimAsync(
             attemptId,
@@ -53,7 +76,7 @@ internal static class ProviderQualificationEntry
     internal static async Task<bool> ExecuteAsync(
         string attemptsRoot,
         IReadOnlyDictionary<string, string?> environment,
-        QualificationAttemptLedgerPolicy policy,
+        Func<DateTimeOffset> utcNow,
         Func<ProviderExecutionLease, CancellationToken, Task<ProviderQualificationTerminal>> providerOperation,
         CancellationToken cancellationToken = default)
     {
@@ -61,33 +84,45 @@ internal static class ProviderQualificationEntry
         ProviderExecutionLease? lease = await TryAcquireAsync(
             attemptsRoot,
             environment,
-            policy,
+            utcNow,
             cancellationToken);
         if (lease is null)
         {
             return false;
         }
 
-        QualificationAttemptLedger ledger = new(attemptsRoot, policy);
-        try
+        using (lease)
         {
-            ProviderQualificationTerminal terminal = await providerOperation(lease, cancellationToken);
-            await ledger.CompleteAsync(
-                lease.Authorization,
-                terminal.Outcome,
-                terminal.Category,
-                EvidenceCitation,
+            string repositoryRoot = environment[RepositoryRootEnvironmentVariable]!;
+            string boundaryPath = environment[BoundaryPathEnvironmentVariable]!;
+            string boundarySha256 = environment[BoundarySha256EnvironmentVariable]!;
+            QualificationExecutionBoundary boundary = await QualificationExecutionBoundary.LoadAsync(
+                Path.Combine(repositoryRoot, boundaryPath.Replace('/', Path.DirectorySeparatorChar)),
+                boundarySha256,
                 cancellationToken);
-        }
-        catch
-        {
-            await ledger.CompleteAsync(
-                lease.Authorization,
-                "failed",
-                "provider-entry-failure",
-                EvidenceCitation,
-                CancellationToken.None);
-            throw;
+            QualificationAttemptLedger ledger = new(
+                attemptsRoot,
+                new QualificationAttemptLedgerPolicy(boundary, boundaryPath, utcNow));
+            try
+            {
+                ProviderQualificationTerminal terminal = await providerOperation(lease, cancellationToken);
+                await ledger.CompleteAsync(
+                    lease.Authorization,
+                    terminal.Outcome,
+                    terminal.Category,
+                    EvidenceCitation,
+                    cancellationToken);
+            }
+            catch
+            {
+                await ledger.CompleteAsync(
+                    lease.Authorization,
+                    "failed",
+                    "provider-entry-failure",
+                    EvidenceCitation,
+                    CancellationToken.None);
+                throw;
+            }
         }
 
         return true;
@@ -96,17 +131,39 @@ internal static class ProviderQualificationEntry
 
 internal sealed record ProviderQualificationTerminal(string Outcome, string Category);
 
-internal sealed class ClaimedProviderAuthorization
+internal sealed class ClaimedProviderAuthorization : IDisposable
 {
-    private ClaimedProviderAuthorization(string attemptId, string startedPath)
+    private readonly Stream _authorizationLock;
+    private bool _disposed;
+
+    private ClaimedProviderAuthorization(
+        string attemptId,
+        string startedPath,
+        Stream authorizationLock)
     {
         AttemptId = attemptId;
         StartedPath = startedPath;
+        _authorizationLock = authorizationLock;
     }
 
     internal string AttemptId { get; }
 
     internal string StartedPath { get; }
 
-    internal static ClaimedProviderAuthorization Create(string attemptId, string startedPath) => new(attemptId, startedPath);
+    internal static ClaimedProviderAuthorization Create(
+        string attemptId,
+        string startedPath,
+        Stream authorizationLock) =>
+        new(attemptId, startedPath, authorizationLock);
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _authorizationLock.Dispose();
+        _disposed = true;
+    }
 }

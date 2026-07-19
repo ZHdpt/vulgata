@@ -1,646 +1,573 @@
 # Implementation Plan: CodeGraph Code Unit Extraction
 
-**Branch**: `dev` | **Date**: 2026-07-16 | **Spec**: [spec.md](spec.md)
+**Branch**: `dev` | **Date**: 2026-07-18 | **Spec**: [spec.md](spec.md)
+**Story**: `4-1-codegraph-integration-and-code-unit-extraction`
+**Provider boundary**: CodeGraphContext `0.5.1`, whole-Repository loopback HTTP JSON
 
 ## Summary
 
-This revision preserves the previously approved whole-Repository `ScanRun`
-strategy and corrects only the qualification transport/evidence path plus the
-unavailable provider pin. `codegraphcontext==0.5.0` was not available from the
-configured package index during qualification on 2026-07-15. The user then
-authorised the latest available version; `python -m pip index versions
-codegraphcontext` observed `0.5.1` as latest on the same date.
-CodeGraphContext documents repository-path indexing, local context/database
-selection, and read-only queries. Its installed 0.5.1 package also exposes a
-local HTTP gateway, but that gateway has no `--context` option and declares its
-query payload as untyped JSON data. The HTTP gateway is a
-**qualification-only local transport** candidate, not the selected Vulgata
-production Scan transport or integration contract. It does not document
-file-list input, per-file time limits, a versioned structural-result schema, or
-endpoint identity after partitioning a Repository.
+Story 4.1 uses one bounded CodeGraphContext `0.5.1` whole-Repository index and
+the local `cgc api` loopback gateway as its production provider transport. This
+is a technical backfill of the Scan strategy already approved on 2026-07-16;
+it does not reopen per-file batching, change the PRD, or add an LLM, MCP tool,
+Worker Agent tool, dispatch behavior, or Scan Coordinator.
 
-The public documentation observed on that date still labels its examples as
-0.5.0. It is authority for the candidate command surfaces only, not proof that
-the unavailable 0.5.0 documentation grammar is unchanged in 0.5.1. The
-unchanged qualification hard stop must prove every invoked 0.5.1 behavior.
+The production parser uses **two independent read-only `/api/v1/query`
+projections**:
 
-The plan therefore uses one local whole-Repository `cgc` graph build per
-`ScanRun`, bounded by one whole-process timeout. Deterministic approximately
-1,000-file groups remain only for Vulgata filter/audit records; they never
-partition provider input or create provider processes. This preserves
-same-Repository structural relationships in a single graph.
+1. a Code Unit projection enumerates every provider-observed `File`, `Module`,
+   `Class`, and `Function` node, including nodes with no relationships; and
+2. a relationship projection enumerates `CONTAINS`, `IMPORTS`, `CALLS`, and
+   `INHERITS` separately and joins endpoints by a Vulgata-owned stable endpoint
+   identity.
 
-That whole-Repository strategy was approved by the user and is now encoded in
-the independently accepted specification (FR-018, acceptance scenario 1.3,
-and the provider-failure edge case). It is the executable baseline for this
-feature. This
-revision does **not** reopen PRD behavior, production Scan behavior, or the
-earlier approval. The only new approval boundary after an accepted independent
-plan review is the test-only HTTP JSON qualification transport and parser
-candidate. After that approval, provider qualification is the first executable
-dependency; provider mapping or structural persistence cannot begin until it
-passes and a follow-up plan records an observed parser grammar.
+This replaces the current relationship-only discovery assumption, which cannot
+return isolated Code Units. Both responses are validated into one owned
+`CodeGraphProviderResult`; provider/process/top-level failures remain atomic,
+while malformed independent rows are rejected with bounded warnings and do not
+discard other valid rows.
+
+The envelope and provider coordinate properties below are **candidate
+0.5.1 grammar**, not authority inferred from controlled JSON fixtures or the
+public 0.5.0-labelled documentation. Story completion has a mandatory,
+separate production provider-contract E2E that runs the exact Projection A and
+Projection B texts through the exact-pinned provider installed in an image
+derived from the final application image. Only aliases and envelope behavior
+observed in that real run may be accepted into the owned grammar. A mismatch,
+skip, absent evidence artifact, or non-pass result fails closed before Story
+4.1 completion.
+
+The first gate execution failed closed as designed: exact 0.5.1 returned HTTP
+200 and one top-level JSON object, but not the candidate
+`success:true,error:null,data` envelope. It retained no property names/types
+and published no evidence, so it authorizes no grammar guess. After successful
+Context deletion, cleanup also found `graph.kuzu` was a regular file and the
+directory-only remover raised `NotADirectoryError`. Container and temporary
+image tags were removed. No provider rerun has occurred.
+
+The historical `attempt-0003` qualification boundary
+`b9b5487b844d1c4ce89e2f03636e8b0c64f99f4dcbf6723a4f1e152ef138853b`
+was executed once and is immutable `failed / provider-contract-failure`. Its
+runner routed health/query payloads through the wrong evidence channel, omitted
+dedicated HTTP lifecycle evidence, discarded structural evidence on failure,
+and substituted empty evidence. The user explicitly accepted that as a harness
+defect and directed Story 4.1 production completion. It is retained as history,
+not as production-blocking authority and not as authority to retry.
 
 ## Technical Context
 
-**Language/Version**: C# / .NET 10 (`net10.0`), with a digest-pinned CPython
-3.12.x runtime whose exact patch is recorded in a repository-owned lock.
+**Language/Version**: C# / .NET 10 (`net10.0`); exact-pinned
+`codegraphcontext==0.5.1` in the Linux application image. The current
+`docker/codegraph/requirements.lock` SHA-256 is
+`10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95`;
+its CodeGraphContext distribution SHA-256 is
+`3cd79efe6c9525d69ae250c063404b500ef7595b6c63284d841c78a1ecf48658`.
 
-**Primary Dependencies**: ASP.NET Core Blazor Web App, EF Core 10/Npgsql,
-FluentValidation, Fluent UI Blazor, system `git`, and the local
-`codegraphcontext==0.5.1` qualification target.
+**Primary Dependencies**: ASP.NET Core, EF Core 10/Npgsql,
+FluentValidation, Fluent UI Blazor, system `git`, CodeGraphContext `cgc`, and
+its private local Kuzu context.
 
-**Storage**: PostgreSQL 17 schema `vulgata`, SQLite test override, and a
-transient private Kuzu database per provider run. The provider database is never
-Vulgata persistence truth.
+**Storage**: PostgreSQL 17 schema `vulgata`; SQLite integration-test override.
+CodeGraphContext's private graph is transient provider state, never Vulgata
+persistence truth.
 
-**Testing**: xUnit, `WebApplicationFactory<Program>`, local bare-Git fixtures,
-and a non-root Linux container qualification with synthetic credential-free
-source. Full UI/auth/API/persistence/migration E2E is required only after a
-qualified provider contract is re-planned.
+**Production provider transport**: unpublished `127.0.0.1` HTTP gateway in the
+application container. Vulgata invokes only `GET /health` and read-only
+`POST /api/v1/query`; it does not invoke provider MCP/tool routes, publish the
+gateway port, or integrate directly with Kuzu.
 
-**Target Platform**: Linux application container, non-root `app` user; Windows
-development does not constitute provider qualification.
+**Provider-contract authority**: exact final application image plus
+`codegraphcontext==0.5.1`, a credential-free local Repository fixture, the two
+exact immutable production projection texts/hashes, and a bounded redacted
+`cgc-provider-contract-evidence-v2` pass/fail artifact. Fake HTTP/process
+fixtures remain unit/integration-test inputs only.
 
-**Project Type**: Layered Blazor web application.
+**Performance/limits**: one configurable 1,800-second operation deadline from
+whole-Repository index through both projections; 64 MiB combined raw HTTP body
+cap, 4,096-byte maximum row, 250,000 combined row cap, bounded diagnostics, and
+no retry/bisection/per-file continuation.
 
-**Performance Goals**: deterministic filtering/audit grouping for 10,000 source
-candidates; one provider graph build for one Repository; finite deployment
-whole-process deadline. No per-file service-level timing guarantee is claimed.
-
-**Constraints**: no LLM, Vulgata MCP endpoint/tool, Worker Agent/tool, Scan Coordinator, dispatch,
-language/framework detection, Document/Uncertainty persistence, or
-Cross-Repository Resolution. Source and provider data stay local; diagnostics
-are bounded/redacted; all UI copy is Simplified Chinese.
-
-**Scale/Scope**: one synchronous Repository attempt, private working copy and
-provider context/database; no queue, dashboard, SignalR, restart/resume engine,
-or partial provider-result continuation.
+**Scope**: one Repository and one `ScanRun`; audit/progress groups of at most
+approximately 1,000 paths never partition provider input.
 
 ## Constitution Check
 
 | Gate | Plan response | Status |
 | --- | --- | --- |
-| I. Layered Project Boundaries | Core owns entities/contracts; Infrastructure owns EF, Git, process, qualification and future adapter; Shared owns DTOs/validators; Web owns authorization/UI. | Pass, provider-gated |
-| II. Domain Purity & Ubiquitous Language | Use `ScanRun`/`ScanRuns`, Code Unit, Code Unit Edge, and File Identity Hash. No EF in Core, annotations, generic repository, or query leakage. | Pass |
-| III. Validation & API Contract Discipline | Preserve FluentValidation, `ProblemDetails`, `ManagementAccess`, existing visibility semantics, and Chinese-only UI. | Pass |
-| IV. Test-First Integration Harness | A synthetic provider qualification test is the first executable increment. Production mapping/persistence waits for its pass and re-plan. | Pass, gated |
-| V. Security & Data Stewardship | Private local Kuzu context/database and private provider home; loopback-only HTTP gateway with no published Docker port; no Vulgata MCP/Worker Agent tool or remote backend. The provider's bundled MCP/tool routes remain inside the unpublished no-network container and are never invoked; safe process arguments and diagnostics. | Pass, gated |
-| Docker reproducibility | Digest-pinned base, locked Python/distributions, and non-root `version`/`doctor` are qualification criteria, not assumptions. | Pass, gated |
+| I. Layered Project Boundaries | Core owns the provider result contract and domain entities; Infrastructure owns Git, `cgc`, HTTP parsing, EF, and persistence; Shared owns DTO validation; Web owns the authorised facade/UI. | Pass |
+| II. Domain Purity & Ubiquitous Language | Uses `ScanRun`, Repository, Code Unit, Code Unit Edge, and Cross-Repository Resolution exactly; no EF/data annotations/generic repository/query leakage in Core. | Pass |
+| III. Validation & API Contract Discipline | FluentValidation, plural minimal-API routes, `ProblemDetails`, existing Repository visibility, and Simplified-Chinese UI remain binding. | Pass |
+| IV. Test-First Integration Harness | Controlled tests cover parser behavior; a mandatory exact-pinned final-image real-provider contract E2E separately proves the envelope, coordinate aliases, both exact projections, isolated nodes, four relationship kinds, endpoint identity, and filtered-target mapping before completion. | Pass |
+| V. Security & Data Stewardship | Source and provider state remain local; loopback is unpublished; output and warnings are bounded; credentials/source are never logged; no provider MCP/tool route is called. | Pass |
 
-No Constitution exception is proposed. The whole-Repository specification and
-the qualification-only HTTP JSON boundary already have their required user
-approvals; this regenerated plan still requires independent plan review before
-tasks may be regenerated.
+No Constitution exception or ADR conflict is identified. Post-design
+re-evaluation remains green because the two-projection grammar changes only the
+owned provider adapter and its tests; project boundaries and the accepted
+whole-Repository strategy are unchanged.
 
-## Approved Scan Strategy Baseline and Qualification-Only Approval Boundary
+## Official Provider Evidence
 
-### Provider-compatible algorithm
+- [Code graph model](https://codegraphcontext.github.io/concepts/graph-model/)
+  (accessed 2026-07-18) documents the directed property graph, the structural
+  `File`, `Module`, `Class`, and `Function` node types, relative paths/names/
+  ranges, and `CONTAINS`, `IMPORTS`, `CALLS`, and `INHERITS`.
+- [HTTP API reference](https://codegraphcontext.github.io/reference/api/)
+  (accessed 2026-07-18) documents `cgc api start`, loopback host/port options,
+  `GET /health`, and read-only `POST /api/v1/query`.
+- [How ingestion works](https://codegraphcontext.github.io/concepts/how-it-works/)
+  (accessed 2026-07-18) documents file discovery, Tree-sitter declaration
+  extraction, cross-file resolution, graph node/edge commit, and Cypher query
+  serving.
 
-The following production-adjacent scan strategy is the already approved
-baseline for Story 4.1. This revision keeps it unchanged. The only new
-post-review approval requested by this plan is the test-only HTTP JSON
-qualification transport described later in this document.
+The public site is labelled `0.5.0`; it does not publish a versioned response
+envelope, and its coordinate examples do not establish the exact 0.5.1
+property names. The envelope and coordinate references below therefore remain
+candidate grammar until the mandatory real-provider contract gate observes
+them against the exact final image/package pin. Vulgata owns the accepted
+aliases, validation, bounds, endpoint identity, and mapping rather than
+treating Kuzu tables or an undocumented provider DTO as its domain contract.
 
-1. An authorised SystemOwner selects `开始扫描`. The application uses existing
-   Repository visibility before creating/exposing a `ScanRun`.
-2. `GitWorkingCopyService` clones or fast-forwards one private working copy with
-   `ProcessStartInfo.ArgumentList`, no interactive credentials, and bounded
-   sanitized errors. A failure is terminal and preserves
-   `仓库克隆失败：{details}`.
-3. `ScanCandidateEnumerator` walks the entire checkout by ordinal
-   repository-relative path. Generated, vendored, binary, minified JavaScript,
-   protobuf/Thrift, and `.gitignore` paths persist as `Filtered`. Eligible paths
-   receive a deterministic `AuditGroupOrdinal`, at most 1,000 paths per group.
-   An audit group is never provider input, a provider deadline, or a dispatch.
-4. The supervisor creates one private context/database and invokes only a
-   separately qualified production provider integration. This plan preserves
-   the whole-Repository graph requirement but deliberately does **not** select
-   the HTTP gateway, its request shape, or a result parser as production Scan
-   behavior. A later post-qualification plan/review must make that choice. The
-   current qualification-only lifecycle is:
+## Approved Whole-Repository Production Flow
 
-   ```
-   cgc context create <run-context> --database kuzudb --db-path <private-db-dir>
-   cgc context mode named
-   cgc context default <run-context>
-   cgc --context <run-context> index <working-copy-dir> --force
-   cgc api start --host 127.0.0.1 --port <private-port>
-   GET http://127.0.0.1:<private-port>/health
-   POST http://127.0.0.1:<private-port>/api/v1/query
-   SIGTERM <gateway-pid>; then SIGKILL only after its bounded grace period
-   cgc context delete <run-context>
-   ```
+1. Reuse existing Repository management visibility before creating or exposing
+   a `ScanRun`.
+2. Clone or update one private working copy. A safe acquisition failure marks
+   the run failed and returns `仓库克隆失败：{details}`.
+3. Enumerate candidates, compute deterministic audit groups, and persist
+   filtered outcomes before provider execution.
+4. Create one private provider home, Kuzu database, and named/default Context.
+   Run one `cgc index <working-copy> --force`, then start one unpublished
+   loopback gateway.
+5. After bounded health readiness, send the Code Unit projection and then the
+   relationship projection under the same operation deadline and Context.
+6. Strictly validate both envelopes and rows in memory. Derive stable endpoint
+   identities and map valid Code Units independently of relationships.
+7. Resolve relationship endpoints against the complete valid Code Unit map.
+   Persist resolved same-Repository Code Unit Edges; persist a target-absent
+   relationship as an Unresolved Structural Relationship Candidate only when
+   the source Code Unit exists and the target identity is valid.
+8. Stop the gateway, delete the Context, then inspect each prevalidated private
+   state entry without following links: absence is success, a regular file
+   such as `graph.kuzu` is unlinked, a directory is recursively removed without
+   link traversal, and a link/reparse/special entry fails cleanup. Atomically
+   persist only after successful projection and cleanup.
+9. Complete the `ScanRun`, counts, duration, bounded warnings, and human-review
+   flag. No Worker Agent dispatch occurs.
+10. Before Story completion, execute the separate final-image real-provider
+    contract gate defined below. This is not qualification attempt-0003 and
+    creates no qualification-ledger record.
 
-   The gateway process inherits one generated private `HOME`, uses named-mode
-   default Context selection, binds only to container loopback, and receives
-   no Docker-published port. The HTTP request is exactly one static read-only
-   JSON query; health readiness polling is not a query retry. The provider's
-   bundled MCP and tool routes are not invoked. Qualification
-   must prove this composition on the pinned version. Values in angle brackets
-   are generated individual arguments, not interpolated shell text.
-5. One `CodeGraphProcessSupervisor` owns the whole process tree. Its proposed
-   deployment setting is `CodeGraph:WholeRepositoryProcessTimeoutSeconds`,
-   default **1,800 seconds**. Its clock starts with `index` and ends after the
-   projection. Cancellation, timeout, crash, non-zero exit, or unreadable output
-   kills the process tree, cleans the private provider directory, marks the
-   `ScanRun` Failed/Aborted with a bounded message and `ParsedFileCount = 0`, and
-   writes no provider-derived Code Units, Edges, or unresolved candidates. It
-   does not retry, bisect, or claim a file-specific result.
-6. Only a successful whole graph and qualified projection may enter Vulgata
-   validation. Valid records commit atomically. A malformed individual record
-   from a completed projection is rejected with a safe file-path warning while
-   independently valid records may persist.
-7. Endpoint joins happen against the entire graph snapshot. An edge persists
-   only when both Code Units are in the same Repository/ScanRun. A validated
-   source with non-empty provider structural metadata for a non-persisted target
-   becomes one Unresolved Structural Relationship Candidate. No Document,
-   Uncertainty, Cross-Repository Resolution, or partial edge is created.
+Cancellation, timeout, hang, crash, unsuccessful exit, invalid top-level JSON,
+limit overflow, query-echo mismatch, or cleanup failure fails provider-derived
+results atomically. There is no per-file provider retry, continuation, or
+bisection.
 
-### Accepted specification behavior and provider realization
+## Candidate Owned Projection Grammar
 
-| Accepted specification requirement | Planned realization | Reason and structural effect |
-| --- | --- | --- |
-| FR-018: exactly one atomic whole-Repository provider graph build per `ScanRun`. | Invoke one `cgc index <working-copy>` and one structural projection for the complete Repository. | `cgc index [PATH]` is the documented input and one graph keeps both endpoints visible. |
-| FR-018: optional deterministic groups of at most approximately 1,000 eligible paths are audit/progress metadata only. | Assign `AuditGroupOrdinal` after ordinal path enumeration; never use a group as provider input, process, request, retry, or deadline. | This preserves deterministic audit/progress without inventing provider partition semantics. |
-| FR-018: one configurable whole-process limit, default 1,800 seconds, from indexing through projection. | `CodeGraphProcessSupervisor` owns the complete process tree and applies `CodeGraph:WholeRepositoryProcessTimeoutSeconds` once across index and projection. | The provider documents no per-file input or timer. |
-| FR-018: provider cancellation, timeout, hang, crash, unsuccessful exit, or unreadable output fails provider-derived results atomically. | Terminate the process tree, persist bounded terminal `ScanRun` state, retain previously determined local filtering outcomes, and commit no provider-derived Code Units, Edges, or unresolved candidates. | Atomic failure avoids unsupported partial-graph claims and preserves graph correctness. |
-| FR-005 and FR-018: filtered outcomes remain auditable while provider input is the whole Repository. | Vulgata excludes filtered paths from Code Unit/Edge persistence, while the local provider may inspect the private checkout. | The provider has no documented file-subset input; source remains organisation-controlled. |
-| FR-003/FR-011: consume validated structural results through a Vulgata-owned contract. | Qualification probes a loopback HTTP JSON envelope and private-Context isolation, but does not select a production adapter, result grammar, or structural persistence. | CLI tables are presentation output; the gateway's nested payload is not a published versioned schema. |
+The exact query texts are the production contract candidates and are hashed
+over their UTF-8 code-fence content with LF line endings and no trailing LF.
+Implementation and the real-provider contract E2E must consume the same
+constants; copying or reconstructing a semantically similar query is not
+acceptable. Projection A is
+`07b13dcb0b95a2ab26da930e9fcbafef7cde27488df99b0634d860ef0767d9a8`;
+Projection B is
+`40d2da3b9b520b3c4eca3fd7c3bad4f4fb10643736e3a9e9b4ddf62c92adc096`.
 
-Preserved guarantees are local-only source handling; one Repository per ScanRun;
-deterministic filter audit; authorization; safe clone/missing-CLI behavior;
-whole-graph same-Repository edges; `FileIdentityHash`; exact
-`Exact|Approximate|Heuristic`; `ScanRun`/`ScanRuns`; Chinese UI; and absence of
-LLM/Vulgata MCP/Worker Agent/Coordinator/Cross-Repository Resolution.
+Exact 0.5.1 execution showed that the multi-column UNION candidate can stall
+inside Kuzu. Both owned projections therefore use one heterogeneous graph
+match with closed node/relationship label allowlists.
+Completeness is proven by all four node kinds in independent Projection A;
+0.5.1's module-level Function nodes make an all-relationship “isolated node”
+fixture assertion invalid because `CONTAINS` connects every declaration.
+The gate records both hashes, verifies the provider's exact
+`data.query` echo where that envelope is observed, and accepts no coordinate
+source property merely because a fake response used it.
 
-### Accepted Story/specification reconciliation
+### Common HTTP envelope
 
-The accepted specification is the executable authority for these provider-
-dependent details. It records the already approved Story 4.1 reconciliation:
+Each request body is `{ "query": <exact projection>, "params": {} }`. A valid
+response is one UTF-8 JSON object:
 
-1. FR-4.1 is implemented through one whole-Repository local graph per profile
-   when the provider exposes repository-level indexing. Its filter remains an
-   auditable Vulgata result filter, not a promise of provider file-subset input.
-2. FR-018 requires audit-only at-most-approximately-1,000-path groups, one
-   configured 1,800-second whole-process timeout, and atomic provider-derived
-   failure. It makes no per-file batching, timing, retry, or continuation claim.
-3. Story 4.1 stores structural Code Units with `Language` nullable; Story 4.2
-   owns deterministic language/framework detection.
+```text
+success: true
+error: null
+data:
+  success: true
+  query: exact request query
+  record_count: non-negative integer
+  results: array with exactly record_count rows
+```
 
-This HTTP JSON qualification revision does not request any further PRD change.
-If the user later elects to reopen PRD language, that is a separate
-change-control action outside this plan revision.
+Missing, duplicate, wrong-typed, or contradictory required envelope fields,
+trailing JSON, invalid UTF-8, a non-success status, query mismatch, response
+cap overflow, or record-count mismatch is a top-level provider failure. Unknown
+envelope fields are ignored only after the required grammar validates, so
+additive provider metadata cannot enter Vulgata's contract.
 
-## Provider Qualification Gate — first implementation dependency
+### Projection A: Code Units
 
-Qualification precedes provider-result mapping, Code Unit/Edge persistence, and
-the production coordinator. Passing permits a new plan revision/review that
-records the actual parser grammar; it does not authorize structural work by
-itself.
+One read-only Cypher query is a `UNION ALL` of label-specific matches over
+`File`, `Module`, `Class`, and `Function`. It does not match an edge. Every row
+has exactly these aliases:
 
-### 2026-07-16 execution-order incident and corrective disposition
+```text
+record_kind        "code_unit"
+provider_kind      "File" | "Module" | "Class" | "Function"
+path               string | null
+name               string | null
+start_line         integer | null
+end_line           integer | null
+```
 
-The [accidental provider execution](qualification/evidence/accidental-provider-execution-2026-07-16.md)
-used a stale `--no-build` test assembly and the superseded CLI-marker observer
-before synthetic prerequisites were green. It cannot qualify the approved HTTP
-JSON candidate, but it did run CodeGraphContext and therefore consumed the sole
-attempt authorised by the previous task graph. Its immutable disposition is
-`failed / execution-order-violation`; it must not be erased, reclassified, or
-counted as schema-1.2 HTTP evidence.
+The current candidate query aliases `line_number` to `start_line`. The real
+provider gate must observe successful evaluation of each referenced source
+property and the six exact returned aliases. If exact 0.5.1 instead exposes
+`start_line`, a different end property, or a different envelope, this grammar
+and the production parser/query must be corrected together and the gate rerun;
+the implementation must not accept both spellings speculatively. Rows are
+ordered by provider kind, path, name, start, and end.
 
-Qualification cannot finish with zero further provider executions because no
-valid schema-1.2 HTTP JSON observation exists. The only reviewable route is
-**exactly one newly authorised replacement execution**. Plan acceptance and
-task regeneration do not authorize it. After reachability-free prerequisites
-are green, the root must obtain explicit human approval for `attempt-0002`,
-citing this plan, its accepted review identity, the exact command, and the
-incident. Withheld approval is a safe stop; a claimed attempt is never retried.
+Mapping rules:
 
-### Corrective execution guard
+- `Class` and `Function` require an eligible normalized relative path,
+  non-empty name, and positive inclusive ordered range; a directly observed
+  provider range maps to `Exact`.
+- `File` requires an eligible relative path. Vulgata derives its display name
+  from the path when absent and its exact `1..line-count` range from the same
+  local bytes used for content hashes, so its range maps to `Exact`.
+- `Module` requires a non-empty name. It becomes a persisted Code Unit only
+  when it also has an eligible path and a valid range. A pathless or rangeless
+  Module remains a valid endpoint tuple for relationship mapping but is not a
+  persisted Code Unit. A provider single-line Module coordinate maps to
+  `Approximate`; no heuristic range is invented.
+- Provider `Method` declarations remain `Function` nodes and map to the
+  existing Code Unit type policy without inventing a fifth provider label.
+- Nodes from locally filtered paths are not persisted as Code Units.
 
-Regenerated tasks must enforce every control below before `attempt-0002`:
+Because this projection is edge-free, an isolated valid Class or Function is
+still enumerated and persisted.
 
-1. Synthetic RED/GREEN tests use category `CodeGraphQualificationSynthetic`,
-   in-memory streams, and fake launchers only. They cannot construct the real
-   launcher because it requires a sealed `ProviderExecutionLease`. The sole
-   provider entry point has category `CodeGraphQualificationProvider` and one
-   exact fully-qualified identity. Broad namespace/class filters are prohibited.
-2. Before any RED/GREEN command, relocate the provider fixture away from the
-   path embedded in the pre-incident assembly and keep the legacy path absent.
-   The known stale binary then exits before image inspection/build/run. All
-   documented commands compile and omit `--no-build`.
-3. The provider test is inert in the full suite and without authorization. A
-   dedicated wrapper passes an attempt ID and uncommitted random token only to
-   its child process. Before Docker reachability, the guard verifies both,
-   matches the token SHA-256 and accepted plan-review identity in an unexpired,
-   unclaimed authorization, and returns a sealed lease.
-4. The append-only durable ledger uses
-   `qualification/attempts/<attempt-id>/`. `attempt-0001` records this incident.
-   Human authorization may create `attempt-0002/authorized.json`. The guard
-   atomically creates and flushes `started.json` with create-new semantics
-   before any Docker/provider operation, then writes one redacted terminal
-   record after cleanup. Existing start/terminal state rejects execution; no
-   record may be overwritten, deleted, or reused.
-5. Pre-authorization preflight checks only source/fixture hashes, lock and
-   Dockerfile text, ledger/schema validity, absence of the legacy fixture path,
-   an explicit build, and synthetic tests. It must not call Docker, inspect,
-   build, or pull an image, start a container, probe `/health`, or invoke `cgc`.
+### Projection B: relationships
 
-The approved whole-Repository operation, one 1,800-second
-index-through-projection deadline, one query, schema-1.2 redacted evidence,
-cleanup precedence, and production hard stop remain unchanged.
+One independent read-only Cypher query is a `UNION ALL` over the documented
+relationship shapes: File-to-Class and File-to-Function containment,
+Class-to-Function containment, File-to-Module/File imports,
+Function-to-Function calls, and Class-to-Class inheritance. Each row has:
 
-### Superseding correction — CodeGraphContext local HTTP JSON qualification
+```text
+record_kind              "relationship"
+relationship_kind        "CONTAINS" | "IMPORTS" | "CALLS" | "INHERITS"
+source_provider_kind     provider node kind
+source_path              string | null
+source_name              string | null
+source_start_line        integer | null
+source_end_line          integer | null
+target_provider_kind     provider node kind
+target_path              string | null
+target_name              string | null
+target_start_line        integer | null
+target_end_line          integer | null
+```
 
-The historical Bookworm qualification completed one non-root private Context,
-whole-Repository index, static CLI query, and cleanup sequence. Its rendered
-table exceeded the old 8,192-character capture before the completion marker was
-observed, so it correctly stopped as `unsafe-evidence`. The approved streaming
-correction solved that size defect, but its later
-`vulgata-cgc-structural-record-v1` implementation incorrectly expected an
-invented pipe-separated `key=value` record. CodeGraphContext 0.5.1 does not
-emit that record from `cgc query`; its CLI renders presentation output.
+Rows are ordered by relationship kind and the two endpoint tuples. No
+relationship row creates a Code Unit. Both endpoint identities are derived by
+the same function used for Projection A and are mapped only after all Code Unit
+rows have been validated. Projection B is immutable between build, test, and
+execution: its canonical hash must match before request dispatch, the observed
+query echo, and the evidence artifact.
 
-This revision keeps **CodeGraphContext 0.5.1** as the provider and `cgc` as its
-executable. It replaces only the qualification transport with the provider's
-local HTTP gateway, `cgc api start`, whose `/api/v1/query` endpoint returns a
-JSON envelope. It does not select a second provider, directly query Kuzu,
-expose a Vulgata HTTP endpoint, add a Vulgata MCP or Worker Agent tool, or
-implement a production adapter. The provider package's bundled MCP SSE/message
-and tool routes remain confined to unpublished container loopback and are never
-called. The gateway is a local CodeGraphContext process used only by the
-synthetic qualification container.
+### Stable endpoint identity
 
-The change is more than the approved evidence-size fix: it changes the provider
-interaction and parser candidate from a CLI table to local HTTP JSON. It
-invalidates the accepted streaming-record plan and its dependent task/analysis
-claims. A fresh independent plan review and explicit post-review user approval
-are required before a replacement provider execution. The historical run does
-not consume the one new execution. There is no retry: a `pass` returns to a
-separate parser/integration plan and a `fail` returns only redacted evidence for
-corrective planning.
+Normalize kind to its canonical provider value, path to forward-slash
+repository-relative form (or empty), name to trimmed provider text (or empty),
+and lines to invariant decimal (or empty). The canonical UTF-8 tuple is:
 
-### Streaming HTTP evidence protocol — test-only and fixed
+```text
+kind "\0" path "\0" name "\0" start_line "\0" end_line
+```
 
-The replacement run uses `vulgata-cgc-http-json-v1` together with
-`vulgata-cgc-streaming-evidence-v2`. These are qualification-observer
-contracts, not a CodeGraphContext result schema or a production parser. They
-have the following non-negotiable rules:
+The owned identity is `cgc-v1:` followed by lowercase SHA-256 hex of that
+tuple. It is deterministic for both projections, contains no source or secret,
+and does not depend on a Kuzu internal ID.
 
-1. The test starts the named container with `--network none`, which still permits
-   its internal loopback interface but forbids external network traffic. It
-   mounts only the read-only synthetic fixture, creates a generated app-owned
-   private `HOME` and Kuzu directory with mode `0700`, and passes that exact
-   `HOME` to every `cgc`, gateway, and cleanup process. It creates one named
-   Context, sets named mode/default Context, then verifies locally that the
-   generated config identifies that Context and its generated Kuzu path without
-   emitting either value as evidence. The fixture query itself must return only
-   fixture-derived structural facts; otherwise Context isolation is unproved.
-2. The gateway starts as one child process with
-   `cgc api start --host 127.0.0.1 --port <private-port>`. Readiness is exactly
-   `GET http://127.0.0.1:<private-port>/health`, whose pinned 0.5.1
-   `api/app.py` source returns `{ "status": "ok" }`. The runner polls that URI
-   for at most 10 seconds, at 100-millisecond intervals, without sending a
-   query. All readiness responses are streamed, discarded, and appended in
-   attempt order to one logical `cgc-api-health` channel; they are not
-   structural evidence. `healthResponseBytes` and `healthResponseSha256` are
-   the aggregate byte count and SHA-256 of that single logical channel, so
-   every readiness byte remains inside the same 65,536-byte budget. It sends
-   exactly one query after readiness. Cleanup sends `SIGTERM` to
-   the recorded gateway process group, waits at most 5 seconds for zero exit,
-   then sends `SIGKILL` only if necessary. `gateway-stop` is a runner lifecycle
-   action, not a nonexistent `cgc` subcommand; forced kill makes the result fail.
-3. Every provider-process stdout/stderr stream—`cgc version`, `doctor`, Context
-   create/mode/default/delete, index, and gateway—plus bounded HTTP health- and
-   query-response bodies—is framed by runner-generated stream boundaries,
-   consumed incrementally, hashed, and discarded. No command output is written to a temporary evidence
-   file or buffered as text. All logical channels share one atomic raw-byte
-   budget of **65,536 bytes**. Exactly 65,536 bytes is in budget; the 65,537th
-   byte is the overflow sentinel. On overflow, the observer includes that byte
-   in exactly one logical-channel count/hash, stops observation, terminates the
-   gateway/container process tree, and forces private cleanup. It must not issue
-   another provider command or HTTP request as recovery.
-4. Each logical channel has a raw-byte count and SHA-256; no
-   scheduling-dependent merged-stream hash is allowed. `canonicalSummarySha256`
-   is the SHA-256 of the UTF-8 bytes of this exact pipe-delimited field order:
+Exact duplicate rows are deduplicated. The same identity paired with different
+normalized fields is a contract collision and fails the provider result
+atomically. A valid relationship with a persisted source but absent target
+creates one Unresolved Structural Relationship Candidate carrying the target
+`cgc-v1:` identity. If the source is absent or either endpoint tuple cannot
+produce a stable identity, the row is malformed and no Edge/candidate is
+created.
 
-   ```text
-   version|providerChannelCounts|providerChannelHashes|healthResponseBytes|httpResponseBytes|observedTotalBytes|overflowed|terminationRequested|containerCleanupForced|healthResponseSha256|httpResponseSha256|grammarId|relationshipKinds|predicateCounts|cleanupAttempted|cleanupSucceeded
-   ```
+## Bounded and Malformed-Row Behavior
 
-   `version` is literal `1.2`; counters use unpadded decimal; booleans use
-   lowercase `true` or `false`; provider channel names are lexical and fixed;
-   the logical channel set includes exactly one aggregate `cgc-api-health`
-   channel and one `cgc-api-query` channel, so readiness polling never creates
-   ad hoc per-attempt channel names; `healthResponseBytes` and
-   `healthResponseSha256` are aliases for the aggregate health channel;
-   `grammarId` is literally
-   `vulgata-cgc-http-json-v1,vulgata-cgc-streaming-evidence-v2`; and
-   `relationshipKinds` is the comma-joined lexical order of the observed enum
-   values.
-   `predicateCounts` is the
-   comma-joined fixed sequence `valid=<decimal>,invalidOrOversized=<decimal>,`
-   `CALLS=<decimal>,CONTAINS=<decimal>,IMPORTS=<decimal>,INHERITS=<decimal>,`
-   `allRequiredRelationshipKindsObserved=<boolean>,`
-   `allStructuralFactsCorrelatedWithinValidRecords=<boolean>,`
-   `hasFilteredTargetCandidate=<boolean>,hasNonEmptyEndpointIdentity=<boolean>,`
-   `hasPositiveOrderedRange=<boolean>,hasValidRecordGrammar=<boolean>,`
-   `queryCompleted=<boolean>`. The enum names and predicate names are therefore
-   lexical, and no field may contain a source, path, symbol, query row, or other
-   provider value. This hash is the only combined identity.
-5. Health responses are non-structural but are streamed, discarded, and
-   aggregated into the single `cgc-api-health` logical channel under the same
-   cap. The HTTP query-response body alone is structural evidence. It uses strict
-   incremental UTF-8 and a streaming JSON reader; it never calls
-   `ReadAsString`, retains a raw response/chunk, or accepts replacement
-   decoding. The request shape is source-derived from pinned
-   `codegraphcontext/api/schemas.py` (`QueryRequest.query`, `QueryRequest.params`)
-   and `api/router.py` (`/api/v1/query` delegates to
-   `execute_cypher_query`). The one request body is exactly:
-
-   ```json
-   {
-     "query": "MATCH (source:Function)-[relationship:CALLS]->(target:Function) RETURN 'CALLS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity, false AS filtered_target UNION ALL MATCH (source:Class)-[relationship:CONTAINS]->(target:Function) RETURN 'CONTAINS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity, false AS filtered_target UNION ALL MATCH (source:File)-[relationship:IMPORTS]->(target:Module) RETURN 'IMPORTS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, relationship.line_number AS source_start_line, relationship.line_number AS source_end_line, source.path AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.line_number AS target_end_line, target.full_import_name AS target_identity, false AS filtered_target UNION ALL MATCH (source:Class)-[relationship:INHERITS]->(target:Class) RETURN 'INHERITS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, target.line_number AS target_start_line, target.end_line AS target_end_line, target.uid AS target_identity, false AS filtered_target UNION ALL MATCH (source:Function)-[relationship:CALLS]->(target:File) RETURN 'CALLS' AS relationship_kind, source.path AS source_path, source.name AS source_symbol, source.line_number AS source_start_line, source.end_line AS source_end_line, source.uid AS source_identity, target.path AS target_path, target.name AS target_symbol, NULL AS target_start_line, NULL AS target_end_line, target.path AS target_identity, true AS filtered_target ORDER BY relationship_kind, source_identity, target_identity LIMIT 256",
-     "params": {}
-   }
-   ```
-
-   The field names are a **fail-closed qualification candidate** based on the
-   pinned 0.5.1 `core/database_kuzu.py` schema: `CALLS` includes
-   `Function -> Function` and `Function -> File`; `CONTAINS` includes
-   `Class -> Function`; `INHERITS` includes `Class -> Class`; and `IMPORTS` is
-   `File -> Module`. `Function`/`Class` expose `uid`, `name`, `path`,
-   `line_number`, and `end_line`; `IMPORTS.line_number` supplies the File import
-   site range; `Module.line_number` supplies a one-line Module anchor; and
-   `File.path`/`Module.full_import_name` are their endpoint identities. These
-   are not a claimed production schema. Any unavailable property, syntax
-   difference, null identity, or missing fixture relation makes this gate fail
-   rather than allowing a new property name or fallback expression.
-6. Pinned `api/router.py` wraps the query-handler result in `ApiResponse.data`,
-   and `tools/handlers/query_handlers.py` constructs `success`, `query`,
-   `record_count`, and `results`. The observer therefore accepts only one JSON
-   object with no trailing token, HTTP success status, `status: "ok"`, no
-   non-null `error`, and a `data` object containing `success: true`, the exact
-   static query string, non-negative integer `record_count`, and a `results`
-   array of that length. Optional envelope fields may be absent or null. This
-   source-derived response shape is also a candidate: any serialization or
-   provider-version difference is `unsafe-evidence`, not a reason to infer a
-   new contract.
-7. Each `results` object must contain only the twelve scalar aliases above. The
-   observer validates one correlated record by relationship type. `CALLS`,
-   `CONTAINS`, and `INHERITS` with `filtered_target: false` require two complete
-   Code Unit-like endpoint tuples: normalized relative path, non-empty symbol
-   and identity, and positive ordered range. `IMPORTS` requires a File import
-   site (File path/name identity and the positive relation line as its one-line
-   range) plus a Module anchor (path/name/full-import identity and positive
-   one-line range). A `filtered_target: true` `CALLS` row may have null target
-   ranges only when its target path is the fixture-filtered path; it proves an
-   Unresolved Structural Relationship Candidate input, not a resolved Code Unit
-   Edge. The observer rejects every other null, unknown/missing/duplicate alias,
-   nested or source-bearing field, wrong JSON type, record over 4,096 raw bytes,
-   and cross-record fact joining. It immediately discards transient values. The
-   test must prove all four kinds and the filtered-target candidate from complete
-   individual JSON records.
-8. The durable result uses schema version `1.2` and a closed
-   `structuralEvidence` object. It may retain only the two grammar IDs, channel
-   byte counts/hashes, total/overflow/termination/cleanup facts, lifecycle
-   counts, relationship-kind counts, record counts, boolean predicates, and the
-   canonical summary hash. It cannot retain a path, symbol, source, endpoint,
-   port, raw JSON, raw query, or other provider value. Schema 1.0 and the
-   rejected 1.1 attempt remain historical evidence only.
-9. Cleanup failure has precedence over every classification. Normal or forced
-   cleanup must stop the gateway, delete the named Context, private Kuzu
-   database, private provider home, and named container. Any cleanup failure is
-   `fail / cleanup-failure / corrective-planning`, even with an otherwise valid
-   JSON response.
-10. A `pass` requires exactly one, zero-exit lifecycle entry for `cgc-version`,
-   `cgc-doctor`, `cgc-context-create`, `cgc-context-mode`,
-   `cgc-context-default`, `cgc-index`, `cgc-api-start`, `cgc-api-health`,
-   `cgc-api-query`, `gateway-stop`, and `cgc-context-delete`; no duplicate or
-   unapproved entry is allowed. It also requires successful cleanup, no
-   overflow/termination/forced cleanup, byte conservation across every logical
-   provider channel, and every structural predicate. These rules validate only the
-   qualification evidence; they are not a production `CodeGraphParseResult`
-   parser or Scan behavior.
-
-### Reproducible inputs
-
-- A later Docker change pins its base image by immutable digest. A
-  repository-owned version file records CPython 3.12.x, which the final image
-  asserts with `python --version`.
-- A `requirements.lock` exact-pins and hashes `codegraphcontext==0.5.1`, `kuzu`,
-  and every transitive Python package. Installation verifies hashes; scan runtime
-  never invokes a resolver/installer.
-- Qualification selects the documented embedded local backend with `context
-  create <name> --database kuzudb --db-path <path>`, then explicitly sets named
-  mode/default Context selection because the local HTTP gateway has no
-  `--context` option. The generated provider home and database are unique,
-  private, app-owned, and non-remote.
-- The synthetic fixture has eligible symbols with `CALLS`, `IMPORTS`,
-  `INHERITS`, and `CONTAINS`, and a relation to a filtered path. It contains no
-  proprietary source, credential, or token.
-
-### Exact pass criteria
-
-All criteria must pass in the final non-root image:
-
-1. Lock installation has no drift; `python --version` equals the locked 3.12.x
-   value; `cgc version` equals 0.5.1; `cgc doctor` exits zero as `app`; the
-   private Kuzu directory is writable.
-2. The exact Context/create/mode/default/index/api-start/health/query/stop/delete
-   lifecycle exits zero for the whole fixture, within the whole-process limit,
-   using only container loopback. It performs no external network, call to a
-   bundled MCP/tool route, watcher, bundle, registry, datasource, or
-   remote-database activity. A pass records
-   exactly one approved lifecycle entry and successful cleanup.
-3. The observer satisfies the complete HTTP streaming protocol above: strict
-   incremental UTF-8/JSON, one inclusive 65,536-byte cap across every provider
-   process stream plus the single aggregate `cgc-api-health` channel and the
-   bounded `cgc-api-query` response body, separate logical-channel identities,
-   no raw retention, and total-byte conservation. A pass has no overflow,
-   requested termination, or forced cleanup. Its canonical summary is the fixed
-   serialization above, not a merged-pipe hash.
-4. The observer proves deterministic JSON projection facts only when they are
-   correlated within one complete result object: normalized relative paths,
-   relationship kind, non-empty symbols, positive ordered ranges, and provider
-   endpoint identities. The record counts include `CALLS`, `IMPORTS`,
-   `INHERITS`, and `CONTAINS`, prove all fixture endpoints coexist in the one
-   graph, and yield a non-empty endpoint identity for the filtered-target
-   candidate. Vulgata computes content hashes itself from local files.
-5. The observer fails atomically as `unsafe-evidence` on invalid UTF-8/JSON,
-   an unsafe/non-scalar projection, unexpected envelope, response overflow,
-   invalid/oversized object, missing Context isolation proof, or an unproved
-   structural predicate. Cleanup failure takes precedence. A future plan, not
-   this observer, records the observed production parser grammar and integration
-   contract before mapping/persistence tasks exist.
-
-### Fail outcome
-
-Any failed criterion, timeout, unstable projection, unavailable field, missing
-filtered-target candidate, unsafe JSON/output, missing private-Context proof, or
-unproved structural predicate stops before provider-result mapping or structural
-persistence. Return only bounded synthetic evidence identities, lifecycle names,
-image/lock identities, and a failure category for corrective planning. Never
-infer an undocumented API field, store schema, delimiter, subset semantic,
-endpoint identity, or production parser contract.
+- The two bodies share a 64 MiB raw-byte cap, a 250,000-row cap, and a
+  4,096-byte per-row cap. Crossing any cap is a top-level atomic provider
+  failure.
+- Required row fields are closed and scalar. Unknown, duplicate, nested,
+  source-bearing, wrong-typed, or overlong fields invalidate that row.
+- A malformed independent row is skipped and produces a bounded Warning with a
+  normalized path when safely available; otherwise it uses `(unknown)`.
+- At most 100 warning details are retained/logged. Aggregate rejected counts
+  remain accurate after detail sampling stops. No source, raw JSON, absolute
+  checkout path, credential, token, or unbounded provider diagnostic is kept.
+- A successful pair of envelopes may contain malformed rows; valid independent
+  rows still map. A failed/absent second response commits none of the first
+  response's provider-derived rows.
+- `ParsedFileCount` is the distinct eligible-path count represented by at least
+  one valid persisted Code Unit. At 500 or more candidates with zero Code Units,
+  `NeedsHumanReview` is true and a warning is recorded.
 
 ## Data and Boundary Design
 
 See [data-model.md](data-model.md) and
 [contracts/repository-profiling-api.md](contracts/repository-profiling-api.md).
 
-### Core seams after qualification
-
-- `ScanRun`, `CodeUnit`, `CodeUnitEdge`,
-  `UnresolvedStructuralRelationshipCandidate`, and `ScanCandidateOutcome` are
-  Core entities/enums. `ScanRun` belongs to exactly one Repository.
-- `IScanRunRepository` is aggregate-specific. A narrow structural store writes
-  dependents transactionally and exposes no EF types or `IQueryable`.
-- `IGitWorkingCopyService` is Core. A future CodeGraphContext integration
-  contract is not finalized until qualification/re-plan evaluates the HTTP JSON
-  candidate and selects a production transport. Infrastructure owns process, qualification, adapter,
-  EF/repositories/migration; Web owns only an authorization facade, not a
-  hosted Scan Coordinator.
-- `IScanStateService` remains the Epic 5 no-op seam; no Worker Agent, job,
-  dispatch, or scheduling state is added.
-
-### Binding data decisions
-
-Use `ScanRun`/`ScanRuns` (not conceptual `scans`), File Identity Hash
-SHA-256(first `min(4096, file length)` bytes), full-file Source Hash, and
-`Exact|Approximate|Heuristic` Range Confidence. These user-authorized decisions
-remain binding regardless of provider qualification.
-
-## Provider Integration and Deployment
-
-- The current `codegraph` shim is not a provider. Later qualification work
-  replaces it with locked `cgc` installation, immutable base/Python locks,
-  non-root `version`/`doctor`, and no runtime dependency resolution.
-- Kuzu is explicitly selected because the official docs document it as an
-  embedded Python driver and document `kuzudb`/`--db-path`; the plan does not
-  claim Kuzu is a universal/default backend.
-- Qualification scope is only `version`, `doctor`, `context
-  create/mode/default/delete`, `index`, one loopback `api start`, one health
-  readiness check, one loopback HTTP query, and runner-controlled gateway stop.
-  calls to the provider's bundled MCP/tool routes, watchers, bundles, registry,
-  datasources, Neo4j setup, remote backends, external networking, and a
-  published API port are prohibited. No Vulgata MCP endpoint or Worker Agent
-  tool is added.
-- This plan does not select a production query transport. A later approved
-  CodeGraphContext integration must consume a qualified projection rather than
-  Kuzu tables or a provider graph-store schema. Failed qualification means
-  corrective planning, not a fallback parser.
+- `ICodeGraphProvider` returns only the owned normalized
+  `CodeGraphProviderResult`; Core never sees HTTP, JSON, Cypher, process, or Kuzu
+  types.
+- Infrastructure owns provider startup, both queries, strict parsing,
+  endpoint-key construction, bounded warnings, cleanup, and result mapping.
+- The aggregate-specific structural store commits Code Units, Code Unit Edges,
+  Unresolved Structural Relationship Candidates, provider outcomes, and
+  terminal `ScanRun` state transactionally.
+- `IScanStateService` remains the existing Epic 5 seam. No queue, Worker Agent,
+  dispatch lifecycle, Document, Uncertainty, or Cross-Repository Resolution is
+  introduced.
 
 ## Source Layout
 
+```text
+src/dotnet/Vulgata.Core/DomainServices/        # owned provider result seam
+src/dotnet/Vulgata.Core/Entities/              # ScanRun and structural domain
+src/dotnet/Vulgata.Infrastructure/CodeGraph/   # cgc lifecycle, projections, parser
+src/dotnet/Vulgata.Infrastructure/Data/        # aggregate persistence
+src/dotnet/Vulgata.Shared/                     # API DTOs/validators
+src/dotnet/Vulgata.Web/                        # authorised profiling facade/UI
+tests/Vulgata.Tests/                           # parser, mapping, persistence, E2E
+docker/                                        # exact CodeGraphContext runtime
 ```
-src/dotnet/Vulgata.Core/                 # structural entities/contracts
-src/dotnet/Vulgata.Infrastructure/       # EF, Git, CodeGraph process/adapter
-src/dotnet/Vulgata.Shared/               # profiling DTOs/validators
-src/dotnet/Vulgata.Web/                  # API, coordinator, Repository details UI
-tests/Vulgata.Tests/                     # qualification and integration/E2E
-docker/Dockerfile                        # future locked cgc installation
-docker/codegraph/                        # future Python/package locks
-specs/001-codegraph-extraction/          # plan artifacts
+
+This plan creates no implementation tasks and authorizes no source change by
+itself.
+
+## Production Test Design
+
+Tests must be written against the owned grammar and current production seam:
+
+1. A parser RED proves the relationship-only query omits an isolated Function;
+   GREEN proves Projection A returns it and Projection B remains independent.
+2. Projection coverage includes isolated File, Module, Class, and Function
+   rows; File/local Module mapping; pathless Module endpoint-only behavior; all
+   four relationship kinds; exact duplicate deduplication; and stable identity
+   equality across projections.
+3. Mapping tests prove resolved same-Repository Edges, target-absent unresolved
+   candidates, source-absent rejection, filtered-target exclusion, unsupported
+   kinds, collisions, and no target-null Edge.
+4. Parser boundary tests cover invalid UTF-8/JSON, trailing JSON, query mismatch,
+   wrong record count, missing/duplicate/unknown/nested fields, row/body/count
+   limits, warning sampling, and no raw/source/secret retention.
+5. Provider orchestration tests prove exactly one whole-Repository index, one
+   gateway, exactly two read-only query projections, one 1,800-second deadline,
+   cleanup, and atomic failure when either projection/process/cleanup fails.
+6. Persistence/integration tests prove filtered audit durability, transactional
+   structural writes, count/human-review rules, migration/SQLite behavior,
+   authorization, Chinese errors, and the public API/UI result.
+7. The deterministic local-Git E2E proves an authorised start persists an
+   isolated Code Unit plus resolved/unresolved relationships without network,
+   LLM, MCP, Worker Agent, dispatch, Document, Uncertainty, or
+   Cross-Repository Resolution.
+8. The mandatory real-provider contract E2E
+   `Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract`
+   runs separately against a credential-free local Repository fixture in a
+   verifier image whose base is the exact final application image. It adds no
+   provider package and first proves the final-image identity plus installed
+   `codegraphcontext==0.5.1`. It invokes the exact Projection A and B constants,
+   verifies the observed envelope and only the coordinate properties actually
+   evaluated by 0.5.1, isolated provider nodes, all four relationship kinds,
+   one locally filtered target mapped only to an Unresolved Structural
+   Relationship Candidate, `cgc-v1` equality for shared endpoint tuples, and
+   Projection B request/echo/hash immutability. It emits only the bounded
+   redacted evidence schema in the provider contract and fails on skip,
+   mismatch, missing evidence, raw/source leakage, or cleanup failure.
+
+Validation commands are listed in [quickstart.md](quickstart.md).
+
+## Requirements Trace
+
+| Authority | Plan disposition |
+| --- | --- |
+| Story AC-1/FR-003/FR-018 | Production `cgc` 0.5.1, one whole-Repository index, loopback HTTP JSON, two owned read-only projections, one 1,800-second limit. |
+| Story AC-2/FR-011 | Top-level/process failure is atomic; malformed independent rows warn and valid rows continue; zero-unit review rule retained. |
+| FR-005 | Filtered outcomes persist before provider execution and filtered provider nodes never become Code Units. |
+| FR-006–FR-010 | Independent Code Unit enumeration, deterministic endpoint identity, resolved Edge constraints, and unresolved target representation are explicit. |
+| FR-013–FR-016 | Existing management visibility, minimal counts, and safe Simplified-Chinese errors are unchanged. |
+| FR-017 | No LLM, MCP/Worker Agent tool, dispatch, Document, Uncertainty, language/framework inference, Cross-Repository Resolution, or Scan Coordinator. |
+| Approved 2026-07-16 deviation | No per-file provider batch, timeout, retry, bisection, or continuation is reintroduced. |
+| Q41-009 / raw P1 | Controlled fixtures are not provider authority. Story completion requires the separate exact-pinned 0.5.1 final-image contract E2E and bounded redacted evidence for both exact production projections. |
+
+## Historical Qualification Disposition
+
+`attempt-0001`, `attempt-0002`, and `attempt-0003` remain immutable historical
+harness records. In particular, `attempt-0003`'s terminal category and evidence
+must not be edited, reclassified, retried, or cited as successful structural
+evidence. Its failure explains why the qualification observer is not used as
+the production parser authority. The new provider-contract E2E has its own
+test identity and evidence schema, makes no attempt-ledger write, and neither
+retries nor repairs attempt-0003.
+
+## Mandatory Real-Provider Contract Gate
+
+The exact command and evidence contract are in [quickstart.md](quickstart.md)
+and [repository-profiling-api.md](contracts/repository-profiling-api.md).
+Completion requires all of the following:
+
+- the verifier base-image identity equals the just-built final application
+  image identity and the installed distribution is exactly
+  `codegraphcontext==0.5.1`, with the exact lock/distribution hashes above;
+- the credential-free local fixture is indexed once with no network/provider
+  credential and both canonical production query hashes match before dispatch;
+- the real provider accepts both exact queries and supplies one observed
+  envelope/coordinate grammar that the production parser accepts exactly;
+- isolated nodes, `CONTAINS|IMPORTS|CALLS|INHERITS`, filtered-target unresolved
+  mapping, and Projection A/B `cgc-v1` endpoint equality pass;
+- Projection B request hash, provider query-echo hash, and evidence hash are
+  identical, and no graph mutation/index/watcher occurs between projections;
+- a closed-schema evidence file no larger than 16 KiB contains only hashes,
+  versions, counts, booleans, enum/property names, cleanup facts, and the pass
+  verdict—never source, rows, raw JSON/query text, paths, symbols, credentials,
+  tokens, or diagnostics.
+
+Any non-pass result, missing or over-bound evidence, unrecognized alias or
+envelope, exact-query/hash drift, source-bearing evidence, provider/package
+drift, or cleanup failure blocks Story completion. The correction path is to
+update the owned grammar and production code/tests under fresh review, then
+rerun this separate gate. It is never to weaken parsing or retry
+attempt-0003.
+
+### Correction iteration 3: safe observation, cleanup, and rerun
+
+Strict parsing remains unchanged and fail-closed. In parallel, a bounded
+streaming observer must publish `cgc-provider-contract-evidence-v2` on pass or
+fail. It may retain only HTTP status, response byte count/hash, JSON root and
+nested value kinds, raw allowlisted names or unknown-name HMAC metadata,
+structural counts, immutable query/image/package hashes, cleanup facts, and a
+bounded failure category. It
+must never retain scalar response values, source, rows, raw JSON/query, paths,
+symbols, credentials, tokens, endpoint values, error text, stdout/stderr, or
+diagnostics.
+
+The closed evidence bounds are 16 KiB, JSON depth 4, 32 structural containers,
+128 unique property observations, 32 array summaries, 64 sorted unique alias
+names of at most 64 UTF-8 bytes, and 32 coordinate-binding name pairs. Overflow
+sets `shapeComplete=false`, publishes
+`primaryFailureCategory=observation-bound-exceeded`, and remains failed.
+
+After cleanup, the runner validates one record, writes a unique same-directory
+temporary file, durably flushes, and performs an atomic create-new/no-replace
+rename to
+`provider-contract/<AcceptedCorrectionSha256>/evidence.json`. Missing,
+corrupt, partial, duplicate, over-bound, or forbidden-content evidence fails
+the gate. Cleanup facts never replace the primary failure; cleanup failure
+turns any otherwise passing result into fail.
+
+Do not rerun under the failed boundary. After this observer/cleanup correction
+is independently accepted and implemented, permit exactly one provider
+execution. A fail publishes v2 evidence and keeps Story 4.1 blocked; no retry
+is permitted until that evidence drives a fresh grammar/query correction and
+fresh independent acceptance, after which exactly one further execution is
+allowed. The current Projection A/B hashes remain unchanged unless published
+evidence proves a query change is required. Attempt-0003 remains untouched.
+
+### Correction iteration 4: immutable claim and secret-safe names
+
+P3-001 is closed by making the accepted correction hash the immutable
+execution namespace:
+
+```text
+TestResults/codegraph-provider-contract/
+  <AcceptedCorrectionSha256>/
+    claim.json
+    evidence.json
+    claim.tmp-* / evidence.tmp-*   # preserved after a crash
 ```
 
-## Implementation Sequence (for later task generation)
+The correction hash is exactly 64 lowercase hexadecimal characters and
+identifies the fresh accepted review boundary for these five artifacts. Before
+any image/provider reachability, the runner atomically creates that directory
+with no replacement and restrictive permissions and durably syncs its parent.
+Directory creation itself consumes the correction. It then create-new writes,
+flushes, atomically renames, directory-syncs, rereads, and closed-schema
+validates `claim.json`. An existing, empty, partial, invalid, or raced
+directory is consumed and blocks before provider reachability; it is never
+repaired, reused, deleted, or overwritten.
 
-0. Complete independent review of this corrective plan set. Existing Scan and
-   HTTP JSON approvals remain satisfied; a replacement execution does not.
-1. Regenerate tasks so all RED/GREEN work is provider-incapable. Revoke the
-   legacy fixture path first, then implement synthetic contracts, lease/ledger,
-   wrapper, streaming observer, writer, and one-shot classification. Every
-   documented invocation compiles and omits `--no-build`.
-2. Run the reachability-free preflight. When green, pause for explicit human
-   authorization of exactly `attempt-0002`. If approved, claim it durably before
-   any Docker/provider operation and run the exact provider gate once. If not
-   approved, stop without provider reachability.
-3. On qualification failure, stop for corrective planning. On pass, amend this
-   plan/data model/contract with exact parser grammar and obtain fresh plan
-   review before structural persistence tasks are generated.
-4. Only then write red tests and implement Core, EF, Git, qualified adapter,
-   migration, authorized endpoints/UI, and the required E2E.
-5. Run focused/full tests, Web build, and approved E2E.
-   Do not add agent tools, dispatch, Coordinator, language/framework detection,
-   Documents, Uncertainty, or Cross-Repository Resolution.
+The immutable claim binds schema version, accepted-correction hash,
+`executionOrdinal=1`, both unchanged projection hashes, expected final-image
+hash, provider version/lock/distribution hashes, and evidence schema version.
+Evidence binds `claimSha256` and is create-new published in the same directory.
+A crash after directory creation, claim publication, provider work, cleanup,
+or evidence temporary write leaves the correction consumed. Missing final
+evidence is a failed execution, not permission to resume. A later accepted
+correction uses a different hash/directory and preserves all prior history.
 
-## Requirements and seam trace
+P3-002 is closed by retaining raw property names only when they exactly equal
+this case-sensitive ASCII allowlist:
 
-| Requirement/source | Plan disposition and proof |
+```text
+status message error data success query record_count results
+record_kind provider_kind path name start_line end_line relationship_kind
+source_provider_kind source_path source_name source_start_line source_end_line
+target_provider_kind target_path target_name target_start_line target_end_line
+```
+
+Before provider reachability, the claimed runner generates a fresh 256-bit
+CSPRNG key held only in process memory. Every non-allowlisted decoded property
+name is streamed into:
+
+```text
+HMAC-SHA256(
+  ephemeralKey,
+  "vulgata-cgc-unknown-property-v1" || NUL ||
+  uint64-big-endian(utf8Length) || NUL || decodedUtf8Name)
+```
+
+Evidence retains only lowercase digest, UTF-8 length, JSON value kind,
+container ordinal, and first-seen property ordinal. The same unknown name is
+correlatable only within one execution. The key/raw name are destroyed after
+publication and never persisted, evidenced, logged, included in exceptions, or
+sent to test output. Unkeyed name hashes are forbidden. Any unknown name fails
+the contract even when safely represented.
+
+Logs use only allowlisted names or
+`unknown-property(<digest>,<utf8Length>,<valueKind>,<ordinal>)`; values and raw
+unknown names are forbidden. Oversize names are streamed through HMAC without
+materialization/logging, retain only full length/digest metadata, and fail.
+Tests cover concurrent claim races; crashes before/after each durability
+boundary; partial/corrupt claim/evidence; duplicate execution; preserved
+history; adversarial path/symbol/source/token property-name canaries; safe
+allowlist controls; repeated-name same-run correlation; different-run digest
+unlinkability; log/exception canaries; and oversize names.
+
+This correction authorizes no provider run. Only a fresh independent ACCEPT
+for iteration 4 may supply `AcceptedCorrectionSha256` and permit one claimed
+execution.
+
+## Risks and Remaining Uncertainty
+
+| Risk | Mitigation / disposition |
 | --- | --- |
-| Spec FR-001, FR-013, FR-016 | Reuse Repository detail/coordinator visibility; endpoint/UI tests wait for qualified contract. |
-| Spec FR-002, FR-015 | Git service/local bare fixture/safe Chinese failure are preserved. |
-| Spec FR-003, FR-010, FR-011; PRD FR-4.9 | Whole-graph qualification first; no adapter/mapping/persistence before proof/re-plan. |
-| Spec FR-004–FR-009, FR-012 | Target model stays; persistence follows only the qualified contract. |
-| Spec FR-005 | Filtered audit persists; provider input filtering is an explicit PRD clarification. |
-| Spec FR-017 | No LLM/Vulgata MCP/Worker Agent/Coordinator/Documents/Uncertainty/Cross-Repository work; bundled provider MCP/tool routes are not invoked. |
-| Spec FR-018; acceptance scenario 1.3; provider-failure edge case | Satisfied directly: one whole-Repository index/projection, audit-only at-most-approximately-1,000-path groups, one configurable 1,800-second whole-process limit, and atomic provider-derived failure with local filtering outcomes retained. The older Story prose is a superseded provider assumption, not an executable per-file contract. |
-| PRD §5.4 FR-4.1 | Structural pre-scan remains; the whole-Repository input/timeout/continuation/filter baseline and Story 4.2 allocation are already approved; only the qualification-only HTTP JSON transport/parser candidate required the later approval gate. |
-| Constitution IV/E2E matrix | Qualification is test-first; after mapping/UI/auth/API/persistence/migration work, E2E is mandatory. |
+| Public docs are labelled 0.5.0, do not publish the envelope, and differ on coordinate naming. | Treat current envelope/properties as candidates; mandatory exact-pinned final-image real-provider observation ratifies only evidenced aliases and fails closed on drift. |
+| A provider release changes labels/properties/envelope. | Exact 0.5.1 pin; any version change requires contract review and updated parser tests. |
+| Very large graphs exceed bounded projection limits. | Fail provider-derived results atomically with a safe operator message; do not silently truncate or page with invented snapshot semantics. |
+| Module nodes may lack a local path/range. | Preserve their stable endpoint tuple for relationships; persist a Module Code Unit only when path/range meet Code Unit invariants. |
+| Two projections could observe different graph state. | The private Context is immutable between completed index and both queries; no watcher/index mutation runs; any process/query failure is atomic. |
 
-## Risks and assumptions
-
-| Risk/assumption | Mitigation/disposition |
-| --- | --- |
-| The HTTP gateway envelope is structured but its nested query payload is not a published versioned schema. | Qualification proves a fixed, version-pinned JSON projection and Context isolation; a pass still requires a follow-up parser plan before production mapping. |
-| Partition can lose same-Repository edges. | Never partition provider input; map one complete graph. |
-| Timeout loses all eligible provider work. | Explicit user-approved trade-off; preserves graph correctness and leaves filters auditable. |
-| Provider sees filtered local files. | Local-only/private execution; Vulgata persists no structural data for filtered paths; explicit user approval. |
-| Docker/Python resolution drift or unavailable package pin. | Exact lock/version evidence and non-root qualification; `0.5.0` is recorded only as the failed historical pin, while `0.5.1` is the current executable target. |
-| HTTP gateway resolves its Context from configuration rather than `--context`. | Use a generated private `HOME`, named mode, and generated default Context; qualification must prove the API observes the indexed synthetic graph and cleanup removes all private state. |
-| Public documentation remains labelled 0.5.0 while the configured package index serves 0.5.1. | Treat the docs as a command-surface candidate only; qualification must prove the installed 0.5.1 commands, HTTP JSON projection, Context isolation, and local Kuzu behavior before mapping work. |
-| A stale or broad-filtered test assembly executes the provider. | Revoke the legacy fixture path, split synthetic/provider identities, require a sealed lease, compile every documented invocation, and keep the provider lane inert without a process-scoped token matching an unclaimed durable authorization. |
-| Attempt state is lost or reused after interruption. | Append-only create-new attempt records preserve `attempt-0001` as failed and allow only separately authorised `attempt-0002` to be claimed once. |
-
-## Recorded Authorization Boundary
-
-The previously separate authorization gate for this revision has already been
-satisfied. The whole-Repository `ScanRun` baseline was approved first, and the
-qualification-only HTTP JSON transport/parser candidate was later approved as
-the only new post-review change-control boundary. The following question is
-retained as the exact decision record that framed that later approval:
-
-> Do you approve the revised CodeGraphContext qualification correction for Story
-> 4.1? CodeGraphContext documents repository-level indexing
-> only, so Vulgata will
-> build one private local graph for the complete Repository with a configurable
-> whole-process timeout (already approved at 1,800 seconds). Approximately
-> 1,000-file groups are audit/filter groups only under the already approved
-> baseline; the 30-second per-file timeout, per-file crash isolation, and sibling continuation were removed by that earlier approval.
-> A provider timeout/crash will fail the whole `ScanRun` with no partial
-> provider-derived Code Units/Edges, preserving same-Repository structural
-> relationships in one graph. Filtered paths will not persist as Code Units or
-> Edges, though the local provider may inspect them because it has no documented
-> file-subset option. Story 4.1 keeps `Language` nullable and Story 4.2 performs
-> language/framework detection. The CLI's rendered table cannot meet the
-> redacted structural-evidence gate, so my intent is to qualify the same pinned
-> CodeGraphContext provider through its local loopback HTTP JSON gateway. The
-> container will create one generated private `HOME` and named Kuzu Context,
-> index the whole synthetic Repository once, start `cgc api` on `127.0.0.1`
-> without a published Docker port, send one read-only JSON query, and delete all
-> private state. The test will retain only capped counts, hashes, and predicates;
-> it will not add a Vulgata endpoint, MCP/Worker Agent tool, production parser,
-> direct Kuzu integration, mapping, persistence, or a second provider execution.
-> A pass still requires a fresh reviewed parser plan before structural work. This
-> materially changes only the provider qualification transport and parser candidate;
-> do you approve proceeding to regenerated qualification tasks on those terms?
-
-The request cites this [plan](plan.md), [specification](spec.md), BMad Story
-4.1, and PRD §5.4 FR-4.1/FR-4.9. Approval advances only to task generation; it
-does not waive qualification, follow-up plan review, testing, E2E, security, or
-verification gates.
-
-That approval did not authorize another execution after the accidental run.
-Following fresh acceptance of this corrective plan and green reachability-free
-preflight, the orchestrator must request explicit approval for exactly one
-`attempt-0002` execution under the lease/token/ledger guard. The request must
-cite this plan, the accepted corrective plan review, and the incident evidence.
-It authorizes only that local qualification attempt; it changes no PRD
-requirement, Scan strategy, provider transport, agent tool, or production hard
-stop.
+No unresolved product clarification, Constitution exception, ADR conflict, or
+new product decision remains. The provider grammar is an intentionally
+unratified technical contract until the mandatory real-provider gate passes;
+that pending execution evidence is a completion gate, not a planning
+clarification.
 
 ## Complexity Tracking
 
-No Constitution exception is required.
+No Constitution violation requires justification.
