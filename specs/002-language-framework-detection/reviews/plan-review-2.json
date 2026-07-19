@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "iteration": 2,
+  "verdict": "ACCEPT",
+  "reviewed_commit": "492008ebd787ff71d45054db89b5e0303997c61f",
+  "reviewed_boundary": {
+    "base_commit": "492008ebd787ff71d45054db89b5e0303997c61f",
+    "candidate_commit": null,
+    "diff_sha256": "69d695c3bc851e1931254e9d21913edb4b4a3c40ae251731a004e93592dd6e8c",
+    "artifact_hashes": {
+      "AGENTS.md": "9351559ee881ec74b20ccf9de3fadb469099eaa116569ed59d68b01d1bfb6e71",
+      "specs/002-language-framework-detection/plan.md": "b53b2ee92dc36e5b76aaf721a0beb07fa4d75bbcc3710f08f40937b0ddefaf97",
+      "specs/002-language-framework-detection/research.md": "ad1b3df91fe99080640ce9214648af96cf02310f81b6541637b34dd650e2b248",
+      "specs/002-language-framework-detection/data-model.md": "da105d4ad14e552852aa79578b691e497a820c7d761528cc7a232af48704bd40",
+      "specs/002-language-framework-detection/quickstart.md": "9ca3934993fad9edac1609d87c9ca4380bba7432ff53e399c180931dda0c9a84",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md": "6a02910221bee904842a74de6915480be5843fc4fe77e96231f1c6cfd00d3bdf",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "d4328b817a7fd5f767ab73753651481416d9f5021419738fa7f7067ed119d01e",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "702634f7d045a59d3a79e0c0ffeeeb477d8ff3e4120aa088224a5bf0cd2a33f3"
+    },
+    "owned_paths": [
+      "AGENTS.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+      "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md"
+    ]
+  },
+  "prior_findings": [
+    {
+      "id": "PR-001",
+      "disposition": "RESOLVED",
+      "summary": "Any present wrong-typed or invalid parser_language now rejects the complete provider result atomically; UnknownLanguage is reserved for true absence in a valid complete response."
+    },
+    {
+      "id": "PR-002",
+      "disposition": "RESOLVED",
+      "summary": "The evidence-locator maximum is consistently 4096 characters."
+    }
+  ],
+  "new_findings": [],
+  "constitution_outcome": "PASS",
+  "traceability_outcome": "PASS: 7/7 acceptance groups remain mapped.",
+  "planned_change_outcome": {
+    "triggered": true,
+    "status": "PENDING_EXPLICIT_AUTHORIZATION",
+    "reason": "The accepted plan materially changes Scan parsing and filtering through parser-language reconciliation and UnknownLanguage exclusion."
+  },
+  "summary": "ACCEPT: both prior findings are fully corrected across the exact staged boundary, no new contradiction was introduced, and the plan is ready for the mandatory post-plan Scan-strategy authorization.",
+  "confidence": "high"
+}

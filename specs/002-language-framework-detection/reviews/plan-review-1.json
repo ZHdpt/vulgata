@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "492008ebd787ff71d45054db89b5e0303997c61f",
+  "reviewed_boundary": {
+    "base_commit": "492008ebd787ff71d45054db89b5e0303997c61f",
+    "candidate_commit": null,
+    "diff_sha256": "875604b3972209847f6aef0b169893c1529da817d9e2f6f8c4078f10ba7aa58b",
+    "artifact_hashes": {
+      "AGENTS.md": "9351559ee881ec74b20ccf9de3fadb469099eaa116569ed59d68b01d1bfb6e71",
+      "specs/002-language-framework-detection/plan.md": "f88698fda030ac604484a618d70f3e702191684cc7ae35a559a07d343ceee529",
+      "specs/002-language-framework-detection/research.md": "ad1b3df91fe99080640ce9214648af96cf02310f81b6541637b34dd650e2b248",
+      "specs/002-language-framework-detection/data-model.md": "da105d4ad14e552852aa79578b691e497a820c7d761528cc7a232af48704bd40",
+      "specs/002-language-framework-detection/quickstart.md": "9ca3934993fad9edac1609d87c9ca4380bba7432ff53e399c180931dda0c9a84",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md": "9d97089c9edf235f3ee82512e3206a6c0c6b3c4676b7aec33efb247b229f278f",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "d4328b817a7fd5f767ab73753651481416d9f5021419738fa7f7067ed119d01e",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "702634f7d045a59d3a79e0c0ffeeeb477d8ff3e4120aa088224a5bf0cd2a33f3"
+    },
+    "owned_paths": [
+      "AGENTS.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+      "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md"
+    ]
+  },
+  "findings": [
+    {
+      "id": "PR-001",
+      "severity": "HIGH",
+      "artifact": "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+      "problem": "Invalid present parser_language can be downgraded to UnknownLanguage instead of causing the atomic provider failure required by AC-7 and FR-017.",
+      "required_correction": "Any present parser_language with the wrong JSON type or invalid normalized value rejects the complete projection/provider result atomically. UnknownLanguage is reserved for no parser_language observation in an otherwise valid complete response."
+    },
+    {
+      "id": "PR-002",
+      "severity": "MEDIUM",
+      "artifact": "specs/002-language-framework-detection/plan.md",
+      "problem": "The plan states a 1024-character evidence-locator bound while research, data model, and framework contract consistently state 4096.",
+      "required_correction": "Use the authoritative 4096-character locator bound consistently."
+    }
+  ],
+  "accepted_dispositions": [
+    "Mixed-label Kuzu parser-language projection is feasible and remains final-image qualified.",
+    "The 250001 provider ceiling and 250000 Vulgata cap fail closed on partial data.",
+    "Zero-structure UnknownLanguage behavior matches the approved remediation.",
+    "Framework strategy, persistence recovery, migration, Story 4.1 correction, LLM boundary, and PRD scope are defensible."
+  ],
+  "summary": "REVISE: the plan is feasible and authority-aligned, but malformed parser-language atomicity and the evidence-locator bound must be made internally consistent before acceptance.",
+  "confidence": "high"
+}

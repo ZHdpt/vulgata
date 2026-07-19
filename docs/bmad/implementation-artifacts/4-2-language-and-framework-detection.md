@@ -244,9 +244,9 @@ unchanged.
   `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
 - SpecKit feature directory:
   `specs/002-language-framework-detection`.
-- Current workflow stage: `plan`; the independent specification review
-  accepted all seven acceptance-criteria groups with no unresolved authority
-  conflict.
+- Current workflow stage: `plan-review`; the corrected technical plan was
+  accepted on independent review iteration 2. The required post-plan
+  Scan-strategy authorization is pending before task generation.
 - Planning is recoverably blocked at Phase 0 by pinned-provider evidence:
   CodeGraphContext 0.5.1 does not persist parser identity on `File` nodes, so a
   parser-supported file with no structural declarations cannot be distinguished
@@ -277,6 +277,13 @@ unchanged.
   `specs/002-language-framework-detection/reviews/spec-review-1.json`.
 - Planning blocker and exact remediation boundary recorded at
   `specs/002-language-framework-detection/evidence/plan-blocker-1.json`.
+- Complete technical plan and Phase 0/1 design artifacts produced under
+  `specs/002-language-framework-detection/`.
+- Plan review iteration 1 required atomic malformed-language handling and a
+  consistent evidence-locator bound; both were corrected.
+- Independent plan review iteration 2 accepted the corrected plan with no new
+  findings. Scan-strategy authorization remains pending and is not implied by
+  the earlier provider-remediation approval.
 - Story preparation checkpoint:
   `bmad-4-2-prepared-20260719T111713Z-e5ad70` (pending Git binding).
 
@@ -289,4 +296,13 @@ unchanged.
 - `specs/002-language-framework-detection/checklists/requirements.md`
 - `specs/002-language-framework-detection/reviews/spec-review-1.json`
 - `specs/002-language-framework-detection/evidence/plan-blocker-1.json`
+- `specs/002-language-framework-detection/reviews/plan-review-1.json`
+- `specs/002-language-framework-detection/reviews/plan-review-2.json`
+- `specs/002-language-framework-detection/plan.md`
+- `specs/002-language-framework-detection/research.md`
+- `specs/002-language-framework-detection/data-model.md`
+- `specs/002-language-framework-detection/quickstart.md`
+- `specs/002-language-framework-detection/contracts/provider-language-projection.md`
+- `specs/002-language-framework-detection/contracts/framework-detection.md`
+- `specs/002-language-framework-detection/contracts/repository-scan-overview.md`
 - `specs/002-language-framework-detection/workflow-state.json`

@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "story_path": "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
   "proposed_feature_short_name": "language-framework-detection",
-  "stage": "plan",
+  "stage": "plan-review",
   "repository_preflight": {
     "branch": "dev",
     "preflight_head": "eeff81a25b6df179b3146d8bc18fa00b370ed7d9",
