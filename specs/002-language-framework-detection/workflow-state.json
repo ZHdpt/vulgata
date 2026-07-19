@@ -83,7 +83,10 @@
       },
       "agent_role": "plan-architect",
       "evidence_paths": [],
-      "failure": null
+      "failure": {
+        "summary": "Pinned CodeGraphContext 0.5.1 cannot identify parser-supported zero-structure files and truncates HTTP query results at 100 rows by default.",
+        "evidence_path": "specs/002-language-framework-detection/evidence/plan-blocker-1.json"
+      }
     }
   ],
   "repository_preflight": {
@@ -182,6 +185,42 @@
         "Seven of seven acceptance-criteria groups covered",
         "No unresolved authority conflict"
       ]
+    },
+    {
+      "role": "plan-architect",
+      "objective": "Produce a feasible Story 4.2 technical plan and Phase 0/1 artifacts",
+      "source_boundary": {
+        "base_commit": "94e1b5d1d29fb18065ad065583245795bfc13dc3",
+        "candidate_commit": null,
+        "diff_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/spec.md": "cb484113c956e62bd5cc56345b5b81dd6a3e930e6414bcfca37a56a91f1f46fb",
+          "specs/002-language-framework-detection/checklists/requirements.md": "9494531bcd320317c2e74a7cae5cfef7a687e2664b09b11e442c3dae53276bf0"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/plan.md",
+          "specs/002-language-framework-detection/research.md",
+          "specs/002-language-framework-detection/data-model.md",
+          "specs/002-language-framework-detection/quickstart.md",
+          "specs/002-language-framework-detection/contracts",
+          "AGENTS.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/data-model.md",
+        "specs/002-language-framework-detection/quickstart.md",
+        "specs/002-language-framework-detection/contracts",
+        "AGENTS.md"
+      ],
+      "output_path": "specs/002-language-framework-detection/plan.md",
+      "returned_evidence": [
+        "BLOCKED during Phase 0",
+        "Pinned provider omits File parser identity",
+        "Pinned HTTP query path truncates at 100 rows",
+        "No planning artifact retained"
+      ]
     }
   ],
   "review_iterations": {
@@ -268,28 +307,73 @@
       "observed_at": "2026-07-19T11:41:32.8452074Z",
       "summary": "Independent spec-judge accepted all seven acceptance-criteria groups with no unresolved authority conflict",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/plan/1",
+      "kind": "failure",
+      "stage": "plan",
+      "source_commit": "94e1b5d1d29fb18065ad065583245795bfc13dc3",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/plan-blocker-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-19T11:59:09.1745028Z",
+      "summary": "Planning stopped because the pinned provider cannot satisfy file-language attribution for zero-structure files and silently truncates query results at 100 rows.",
+      "raw_output_path": "specs/002-language-framework-detection/evidence/plan-blocker-1.json"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-specification-accepted-20260719T114132Z-554010",
+    "checkpoint_id": "bmad-4-2-plan-blocked-20260719T115909Z-cgc051",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "spec-review",
+    "stage": "plan",
     "committed_paths": [
-      ".specify/feature.json",
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json",
-      "specs/002-language-framework-detection/spec.md",
-      "specs/002-language-framework-detection/checklists/requirements.md",
-      "specs/002-language-framework-detection/reviews/spec-review-1.json",
+      "specs/002-language-framework-detection/evidence/plan-blocker-1.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/specify/1",
-      "4-2-language-and-framework-detection/spec-review/1"
+      "4-2-language-and-framework-detection/plan/1"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-  "updated_at": "2026-07-19T11:41:32.8452074Z"
+  "recoverable_failure": {
+    "stage": "plan",
+    "agent_role": "plan-architect",
+    "source_boundary": {
+      "base_commit": "94e1b5d1d29fb18065ad065583245795bfc13dc3",
+      "candidate_commit": null,
+      "diff_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "artifact_hashes": {
+        "specs/002-language-framework-detection/spec.md": "cb484113c956e62bd5cc56345b5b81dd6a3e930e6414bcfca37a56a91f1f46fb",
+        "specs/002-language-framework-detection/checklists/requirements.md": "9494531bcd320317c2e74a7cae5cfef7a687e2664b09b11e442c3dae53276bf0"
+      },
+      "owned_paths": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/data-model.md",
+        "specs/002-language-framework-detection/quickstart.md",
+        "specs/002-language-framework-detection/contracts",
+        "AGENTS.md"
+      ]
+    },
+    "evidence": {
+      "evidence_id": "4-2-language-and-framework-detection/plan/1",
+      "kind": "failure",
+      "stage": "plan",
+      "source_commit": "94e1b5d1d29fb18065ad065583245795bfc13dc3",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/plan-blocker-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-19T11:59:09.1745028Z",
+      "summary": "Planning stopped because the pinned provider cannot satisfy file-language attribution for zero-structure files and silently truncates query results at 100 rows.",
+      "raw_output_path": "specs/002-language-framework-detection/evidence/plan-blocker-1.json"
+    },
+    "retryable": true,
+    "earliest_resume_stage": "plan"
+  },
+  "updated_at": "2026-07-19T11:59:09.1745028Z"
 }

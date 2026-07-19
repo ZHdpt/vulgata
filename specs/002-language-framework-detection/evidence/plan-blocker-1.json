@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "stage": "plan",
+  "status": "BLOCKED",
+  "source_commit": "94e1b5d1d29fb18065ad065583245795bfc13dc3",
+  "provider": {
+    "package": "codegraphcontext",
+    "version": "0.5.1",
+    "lock_path": "docker/codegraph/requirements.lock",
+    "locked_sha256": "3cd79efe6c9525d69ae250c063404b500ef7595b6c63284d841c78a1ecf48658"
+  },
+  "findings": [
+    {
+      "id": "P1",
+      "summary": "The pinned provider does not persist parser identity on File nodes.",
+      "wheel_evidence": [
+        "codegraphcontext/core/database_kuzu.py:134-141",
+        "codegraphcontext/core/database_kuzu.py:716-723",
+        "codegraphcontext/tools/graph_builder.py:187-221"
+      ],
+      "effect": "A parser-supported file with no Module, Class, or Function cannot be distinguished from a generic File without guessing or extension inference, so FR-001, FR-002, and FR-004 cannot all be satisfied."
+    },
+    {
+      "id": "P2",
+      "summary": "The pinned HTTP execute_cypher_query path truncates output at 100 rows by default.",
+      "wheel_evidence": [
+        "codegraphcontext/tools/handlers/query_handlers.py:43-61",
+        "codegraphcontext/utils/tool_limits.py:21-30"
+      ],
+      "repository_evidence": [
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs:61-74",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs:389-421",
+        "specs/001-codegraph-extraction/contracts/repository-profiling-api.md:47-66",
+        "specs/001-codegraph-extraction/contracts/repository-profiling-api.md:270-281"
+      ],
+      "effect": "Story 4.1's two-query, unpaginated completeness assumption is false for ordinary repositories over 100 returned rows."
+    }
+  ],
+  "required_decisions": [
+    "Approve treating parser-supported zero-structure candidates as Filtered/UnknownLanguage, or change the provider pin/fork so file parser identity is persisted.",
+    "Correct provider result completeness before implementation; the recommended minimum is an execute_cypher_query result limit of 250001 plus fail-closed handling of truncated/result_limit, followed by final-image qualification."
+  ],
+  "recommendation": "Preserve the provider pin if desired, explicitly accept zero-structure files as Filtered/UnknownLanguage, configure the private gateway limit to 250001, fail closed on truncation, and add a mandatory final-image qualification covering an empty supported file and more than 100 rows. Then restart planning from Phase 0.",
+  "reproduction": [
+    "Download the exact codegraphcontext 0.5.1 wheel without dependencies.",
+    "Verify its SHA-256 against docker/codegraph/requirements.lock.",
+    "Expand the wheel and inspect the cited package-relative paths."
+  ],
+  "observed_at": "2026-07-19T11:59:09.1745028Z"
+}

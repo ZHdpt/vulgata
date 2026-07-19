@@ -247,6 +247,11 @@ unchanged.
 - Current workflow stage: `plan`; the independent specification review
   accepted all seven acceptance-criteria groups with no unresolved authority
   conflict.
+- Planning is recoverably blocked at Phase 0 by pinned-provider evidence:
+  CodeGraphContext 0.5.1 does not persist parser identity on `File` nodes, so a
+  parser-supported file with no structural declarations cannot be distinguished
+  without guessing; its HTTP query handler also truncates at 100 rows by
+  default while Story 4.1 assumes a complete unpaginated projection.
 - Activation checkpoint:
   `bmad-4-2-context-20260719T112236Z-6a56bc` (pending Git binding).
 - Required post-plan human gate: Scan strategy change authorization.
@@ -263,6 +268,8 @@ unchanged.
   activation boundary with all seven acceptance-criteria groups mapped.
 - Independent specification review accepted at
   `specs/002-language-framework-detection/reviews/spec-review-1.json`.
+- Planning blocker and exact remediation boundary recorded at
+  `specs/002-language-framework-detection/evidence/plan-blocker-1.json`.
 - Story preparation checkpoint:
   `bmad-4-2-prepared-20260719T111713Z-e5ad70` (pending Git binding).
 
@@ -274,4 +281,5 @@ unchanged.
 - `specs/002-language-framework-detection/spec.md`
 - `specs/002-language-framework-detection/checklists/requirements.md`
 - `specs/002-language-framework-detection/reviews/spec-review-1.json`
+- `specs/002-language-framework-detection/evidence/plan-blocker-1.json`
 - `specs/002-language-framework-detection/workflow-state.json`
