@@ -33,4 +33,4 @@ The record contains:
 
 When the failure is in product behavior, the root sends raw evidence to a fresh `tdd-implementer`; the affected review axes and E2E gate rerun. When the test itself is defective, only `e2e-runner` corrects it and reruns the gate. Ambiguous failures block rather than invite speculative production edits.
 
-Any added or modified tracked E2E/API/integration test changes the candidate diff identity. Both acceptance and quality review verdicts are invalidated and rerun against the complete new boundary before the E2E result may advance. Test-only edits receive no bypass.
+Any added or modified tracked E2E/API/integration test changes the candidate diff identity. Full invalidates and reruns both acceptance and quality verdicts; Standard invalidates and reruns its combined quality verdict against the complete new boundary before the E2E result may advance. Test-only edits receive no bypass.

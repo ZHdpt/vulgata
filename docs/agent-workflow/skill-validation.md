@@ -545,3 +545,17 @@ Strict independent audits found and closed two final delivery gaps:
 2. `activation-handoff.md` now explains that repository skills are discovered at Codex session startup and gives the exact branch/worktree activation and restart procedure. No implicit integration is performed.
 
 The installed Codex CLI loader was exercised with `codex debug prompt-input` from the feature worktree. Its rendered model input directly listed `run-bmad-sprint-loop`, `close-bmad-epic`, and `audit-epic-architecture` at their repository paths. A full read-only `codex exec` dry run was also attempted but exceeded the 240-second command window without output; it is not counted as passing evidence.
+
+## Standard Execution Level Extension Validation
+
+Date: 2026-07-19
+
+The extension was pressure-tested before and after the skill change with three representative story classes:
+
+| Scenario | Baseline result | Updated result |
+|---|---|---|
+| Bounded deterministic Scan extension under deadline pressure | Standard was unsupported, so the workflow forced Full without a level contract | Standard is eligible only when no scheduling, grouping, retry, dispatch, or external-tool behavior changes; independent plan review and planned-change authorization remain mandatory |
+| Bounded additive persistence behavior | Standard was unsupported, so the workflow forced every Full judge and analysis gate | Standard uses concise SpecKit artifacts, observed TDD, one combined acceptance-and-quality review, conditional E2E, verification, and reduced checkpoints |
+| New Worker Agent database tool under deadline pressure | Standard was unsupported, but the workflow had no explicit no-silent-upgrade contract | Standard is rejected before activation; the exact agent-tool/security trigger is reported and explicit `Standard -> Full` authorization is required |
+
+The contract tests were written first and failed because `execution_level` and Standard gate semantics did not exist. After implementation, the three focused tests passed, the full workflow fixture suite passed 29 tests, and repository validation returned `Workflow configuration and contracts valid`. The state schema now requires `execution_level`; Standard keeps the unused acceptance gate explicitly `invalidated` and assigns combined acceptance-and-quality judgment to a fresh `quality-reviewer`.

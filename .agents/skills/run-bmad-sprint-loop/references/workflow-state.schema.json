@@ -3,12 +3,13 @@
   "$id": "https://vulgata.local/schemas/workflow-state.schema.json",
   "title": "BMad SpecKit Sprint Loop State",
   "type": "object",
-  "required": ["schema_version", "bmad_story_key", "bmad_epic_key", "feature_directory", "stage", "active_gates", "stage_history", "repository_preflight", "source_artifacts", "dispatches", "review_iterations", "e2e_decision", "verification", "last_checkpoint", "recoverable_failure", "updated_at"],
+  "required": ["schema_version", "bmad_story_key", "bmad_epic_key", "feature_directory", "execution_level", "stage", "active_gates", "stage_history", "repository_preflight", "source_artifacts", "dispatches", "review_iterations", "e2e_decision", "verification", "last_checkpoint", "recoverable_failure", "updated_at"],
   "properties": {
     "schema_version": {"const": "1.0"},
     "bmad_story_key": {"type": "string", "minLength": 1},
     "bmad_epic_key": {"type": "string", "minLength": 1},
     "feature_directory": {"allOf": [{"$ref": "#/$defs/path"}, {"pattern": "^specs/[^/]+$"}]},
+    "execution_level": {"enum": ["full", "standard"]},
     "stage": {"$ref": "#/$defs/stage"},
     "active_gates": {
       "type": "object",
@@ -235,6 +236,27 @@
     }
   },
   "allOf": [
+    {
+      "if": {"properties": {"execution_level": {"const": "standard"}}, "required": ["execution_level"]},
+      "then": {
+        "properties": {
+          "active_gates": {
+            "properties": {
+              "acceptance-review": {
+                "properties": {
+                  "status": {"const": "invalidated"},
+                  "iteration": {"const": 0},
+                  "dispatch_id": {"type": "null"},
+                  "verdict_path": {"type": "null"},
+                  "input_boundary": {"type": "null"},
+                  "completed_at": {"type": "null"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {"properties": {"stage": {"const": "complete"}}, "required": ["stage"]},
       "then": {

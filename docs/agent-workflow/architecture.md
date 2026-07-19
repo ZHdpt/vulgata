@@ -25,6 +25,8 @@ The workflow does not fork installed skills. The project skills dispatch them by
 
 When authorities conflict, the orchestrator stops and reports the conflict. It does not weaken a Constitution requirement, silently override an ADR, or substitute noncanonical terms such as “Cross-System” for **Cross-Repository**.
 
+Each story records one execution level. Full is the default and uses every independent judgment and analysis gate. Explicitly requested Standard is limited to bounded deterministic work under accepted authorities; it keeps concise SpecKit artifacts, TDD, one combined independent acceptance-and-quality review, conditional E2E, final verification, planned-change authorization, and Git/checkpoint safety.
+
 ## Atomic Identity
 
 One BMad story maps to exactly one SpecKit feature directory. For example:
@@ -69,22 +71,24 @@ Two thin skills control the topology:
 
 1. The root resolves a BMad story and records branch, preflight `HEAD`, repository/Git/worktree identities, porcelain status, exact owned paths, and unrelated paths. After context succeeds it writes the canonical story-keyed activation record and checkpoints `ready-for-dev → in-progress` before specification begins, atomically lifting a `backlog` parent epic to `in-progress` when applicable.
 2. `story-context-synthesizer` emits a cited brief, separating sourced facts from inference.
-3. `spec-author` runs `speckit-specify` and returns the created feature path/artifacts without writing workflow state or BMad mappings. The root initializes workflow state and both mapping sides atomically; `spec-judge` independently accepts or returns raw findings.
-4. `plan-architect` runs `speckit-plan`; `plan-judge` independently tests feasibility, architecture, Constitution compliance, and testability.
+3. `spec-author` runs `speckit-specify` and returns the created feature path/artifacts without writing workflow state or BMad mappings. The root initializes workflow state and both mapping sides atomically. Full dispatches `spec-judge`; Standard performs root contract validation.
+4. `plan-architect` runs `speckit-plan`. Full always dispatches `plan-judge`; Standard dispatches it when planned-change authorization or material architecture/testability uncertainty applies.
 5. `task-author` runs `speckit-tasks` with tests before implementation tasks.
-6. `artifact-analyst` immediately runs read-only `speckit-analyze` across `spec.md`, `plan.md`, and `tasks.md`. Blocking remediation requires explicit user approval; approved upstream edits regenerate all dependent downstream artifacts before analysis reruns.
+6. In Full, `artifact-analyst` immediately runs read-only `speckit-analyze` across `spec.md`, `plan.md`, and `tasks.md`. Blocking remediation requires explicit user approval; approved upstream edits regenerate all dependent downstream artifacts before analysis reruns. Standard instead requires recorded eligibility and root acceptance/task coverage validation.
 7. Fresh `tdd-implementer` children deliver bounded task groups with observed red and green evidence.
-8. When all implementation groups pass, the root checkpoints `in-progress → review`, then fresh `acceptance-reviewer` and `quality-reviewer` children review the same pinned commit/diff identity. Blocking findings return raw to a fresh implementer and both axes rerun after any changed boundary.
-9. The root applies the E2E decision matrix. `e2e-runner` may edit test code but never production code. Any tracked test edit changes the reviewed boundary and reruns both review axes before E2E can advance.
+8. When all implementation groups pass, the root checkpoints `in-progress → review`. Full dispatches fresh acceptance and quality reviewers over the same boundary. Standard dispatches one fresh quality reviewer under the combined acceptance-and-quality contract.
+9. The root applies the E2E decision matrix. `e2e-runner` may edit test code but never production code. Any tracked test edit changes the reviewed boundary and reruns the applicable Full axes or Standard combined review before E2E can advance.
 10. The root runs story verification, records evidence, transitions `review → done`, and continues the queue.
 
-The required SpecKit order is always:
+Full uses:
 
 ```text
 speckit-specify -> speckit-plan -> speckit-tasks -> speckit-analyze -> speckit-implement
 ```
 
 Independent specification and plan judges surround this flow; they never replace or relocate `speckit-analyze`.
+
+Standard uses `speckit-specify -> speckit-plan -> conditional plan-review -> speckit-tasks -> speckit-implement`. Its omitted stages are an eligibility-controlled reduction, not permission to improvise a third flow.
 
 ## Gate Decision Policy
 

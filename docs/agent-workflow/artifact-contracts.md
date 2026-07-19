@@ -12,6 +12,7 @@ Each feature owns `specs/<feature>/workflow-state.json`.
 | `bmad_story_key` | string | yes | Exact BMad story key; immutable after mapping |
 | `bmad_epic_key` | string | yes | Owning BMad epic key |
 | `feature_directory` | string | yes | Unique SpecKit directory for this story |
+| `execution_level` | string | yes | `full` or `standard`; immutable on resume unless an explicit level-change stop is approved |
 | `stage` | string | yes | One exact stage from [the state machine](state-machine.md) |
 | `active_gates` | object | yes | Per-gate records for concurrent work; keys are `acceptance-review` and `quality-review`, each with `status`, `iteration`, `dispatch_id`, `verdict_path`, `input_boundary`, and `completed_at` |
 | `stage_history` | array | yes | Ordered stage records with `stage`, `status`, `started_at`, `completed_at`, `input_commit`, `input_hashes`, `agent_role`, `evidence_paths`, and `failure` |
@@ -25,7 +26,7 @@ Each feature owns `specs/<feature>/workflow-state.json`.
 | `recoverable_failure` | object or null | yes | Failure evidence and earliest safe resume stage |
 | `updated_at` | string | yes | UTC timestamp of the atomic state write |
 
-Stage and active-gate `status` is `pending`, `active`, `accepted`, `revised`, `blocked`, `failed`, or `invalidated`. The scalar `stage` remains canonical. During parallel implementation review it is `acceptance-review`; `active_gates` records both returns independently and deterministically. When both accept, the orchestrator closes `acceptance-review`, records `quality-review` accepted from the stored quality verdict, and advances to `conditional-e2e` atomically. A state file cannot claim a stage accepted without evidence paths and validated inputs. It may contain provisional `stage: "complete"` with a pending final binding, but that claim is untrusted until the BMad story is `done` and the final checkpoint ID resolves uniquely from Git trailers.
+Stage and active-gate `status` is `pending`, `active`, `accepted`, `revised`, `blocked`, `failed`, or `invalidated`. The scalar `stage` remains canonical. Full parallel implementation review uses `acceptance-review` plus `quality-review`. Standard sets the unused acceptance gate to `invalidated` at iteration zero and enters `quality-review` directly for its combined acceptance-and-quality verdict. A state file cannot claim a stage accepted without evidence paths and validated inputs. It may contain provisional `stage: "complete"` with a pending final binding, but that claim is untrusted until the BMad story is `done` and the final checkpoint ID resolves uniquely from Git trailers.
 
 `repository_preflight` is refreshed before every mutation and checkpoint. Resume compares its branch, Git/worktree identities, preflight `HEAD`, exact porcelain status snapshot, owned paths, and unrelated paths with current state. A missing ownership field prevents mutation; changed ownership or inseparable edits require user direction rather than inference.
 
@@ -194,7 +195,9 @@ For the final checkpoint, the committed state may name stage `complete` with a p
 | Task group verified | Red-green-refactor evidence exists; targeted tests pass | One cohesive implementation increment and its tests |
 | Review correction verified | Affected fresh review passes | Regression test, correction, and updated review evidence |
 | Story ready for review | All implementation task groups are verified | Story record and sprint-status `in-progress → review` at the pinned implementation candidate |
-| Story completed | Both reviews accepted, required E2E passes or has a valid coverage override, and full verification passes | Story record, completed task/state metadata, and BMad `review → done` transition |
+| Story completed | Full: both reviews accepted. Standard: combined quality review accepted. Required E2E passes or has a valid coverage override, and full verification passes | Story record, completed task/state metadata, and BMad `review → done` transition |
 | Epic gate completed | Exact-clean-source build/tests and complete audit pass; reserved findings dispositioned; retrospective is `run-after-close` or `declined` | Gate record, all referenced command evidence files, accepted disposition/ADR artifacts, status artifacts, and provisional BMad epic `in-progress → done` transition; trusted only after binding |
 
 Adjacent artifact-only checkpoints may be combined only when they provide no useful recovery point. Unaccepted artifacts cannot share a commit with implementation, and unrelated stories never share a commit. The temporary HTML architecture report, rejected work, failing tests, secrets, and unrelated user edits are never committed.
+
+For Standard, the specification, plan, any required plan-review/planned-change evidence, tasks, mapping, and state form one pre-implementation checkpoint. Standard does not create separate specification, plan, or analyzed-task checkpoints. Its completion precondition substitutes the accepted combined `quality-review` for Full's two accepted review axes.

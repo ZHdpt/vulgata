@@ -56,6 +56,7 @@ def valid_state():
         "bmad_story_key": "4-1-example",
         "bmad_epic_key": "4",
         "feature_directory": "specs/001-example",
+        "execution_level": "full",
         "stage": "context",
         "active_gates": {
             "acceptance-review": copy.deepcopy(gate),
@@ -162,6 +163,45 @@ class WorkflowValidationTests(unittest.TestCase):
 
     def test_workflow_state_accepts_complete_contract(self):
         self.assertEqual([], validate_workflow_state(valid_state()))
+
+    def test_workflow_state_requires_a_closed_execution_level(self):
+        state = valid_state()
+        del state["execution_level"]
+        self.assertTrue(any("execution_level" in error for error in validate_workflow_state(state)))
+
+        state["execution_level"] = "expedited"
+        self.assertTrue(any("execution_level" in error for error in validate_workflow_state(state)))
+
+    def test_standard_execution_level_uses_one_combined_quality_gate(self):
+        state = valid_state()
+        state["execution_level"] = "standard"
+        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
+        self.assertEqual([], validate_workflow_state(state))
+
+        state["active_gates"]["acceptance-review"]["status"] = "pending"
+        errors = validate_workflow_state(state)
+        self.assertTrue(any("standard execution_level" in error for error in errors))
+
+    def test_sprint_loop_skill_defines_standard_level_without_unsafe_shortcuts(self):
+        skill = (
+            self.REPOSITORY_ROOT / ".agents/skills/run-bmad-sprint-loop/SKILL.md"
+        ).read_text(encoding="utf-8").lower()
+        quality_agent = (
+            self.REPOSITORY_ROOT / ".codex/agents/quality-reviewer.toml"
+        ).read_text(encoding="utf-8").lower()
+
+        for marker in [
+            "## execution levels",
+            "full is the default",
+            "standard eligibility",
+            "deterministic extension of an already accepted scan strategy",
+            "standard never permits",
+            "combined acceptance-and-quality",
+            "planned-change authorization",
+            "standard -> full",
+        ]:
+            self.assertIn(marker, skill)
+        self.assertIn("standard-level combined acceptance-and-quality review", quality_agent)
 
     def test_every_nonterminal_stage_accepts_a_well_formed_active_record(self):
         stages = ["context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze",

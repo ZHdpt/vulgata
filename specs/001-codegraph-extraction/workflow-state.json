@@ -3,6 +3,7 @@
   "bmad_story_key": "4-1-codegraph-integration-and-code-unit-extraction",
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
+  "execution_level": "full",
   "stage": "complete",
   "plan_revision": {
     "status": "story-complete-user-waived-remaining-ceremony",

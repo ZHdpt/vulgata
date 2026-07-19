@@ -48,7 +48,7 @@ Customization may rename roles or adapt artifact paths but must preserve:
 3. Fresh independent spec and plan judgments.
 4. Explicit user approval before any remediation from blocking read-only analysis findings, followed by dependent regeneration and analysis rerun.
 5. Observed red-green-refactor evidence for every implementation group.
-6. Independent acceptance and quality review, with Critical/High findings returned to fresh implementation.
+6. Full uses independent acceptance and quality review. Eligible Standard uses one independent combined acceptance-and-quality review. Critical/High findings return to fresh implementation.
 7. Recorded conditional E2E decision and a test-only economical runner.
 8. Full verification and valid BMad lifecycle transitions.
 9. Epic architecture audit with disposition of Strong recommendations and ADR conflicts.

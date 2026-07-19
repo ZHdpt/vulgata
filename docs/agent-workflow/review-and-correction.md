@@ -10,7 +10,7 @@ Every independent gate returns exactly one verdict:
 | `REVISE` | The responsible author or implementer can correct one or more findings inside the approved scope | Return raw findings to a fresh responsible agent, verify correction, and rerun affected gates |
 | `BLOCKED` | Missing external authority/information, unsafe action, unavailable required infrastructure, or irreconcilable source conflict prevents safe correction | Persist evidence, do not advance, and ask the user for direction |
 
-Passing tests cannot convert a review into `ACCEPT`. A judge cannot replace `speckit-analyze`, and one review axis cannot replace another.
+Passing tests cannot convert a review into `ACCEPT`. In Full, a judge cannot replace `speckit-analyze`, and one review axis cannot replace another. Standard intentionally omits analysis and the separate acceptance axis only after recorded eligibility; its one quality verdict uses the documented combined acceptance-and-quality contract.
 
 `ACCEPT` is also the stage's approval: after validating and persisting it, the orchestrator does not ask the user to approve that same specification, plan, acceptance review, or quality review again. This removes duplicate confirmation, not independent judgment. Human direction is still required for blocking analysis remediation; unresolved intent/scope or three failed revision outcomes; Strong architecture recommendations or ADR conflicts; divergent/destructive VCS recovery; inseparable ownership; unavailable required infrastructure; unsafe external actions; and ambiguous E2E failures.
 
@@ -32,6 +32,7 @@ Severity is evidence-based and never downgraded to escape a loop. Every finding 
 - `analyze`: read-only consistency and coverage across `spec.md`, `plan.md`, and `tasks.md` immediately after task generation.
 - `acceptance-review`: missing, partial, incorrect, and out-of-scope behavior against BMad and SpecKit.
 - `quality-review`: standards, correctness, security, edge cases, test quality, architecture seams, and regression risk.
+- Standard combined `quality-review`: all ordinary quality concerns plus missing, partial, incorrect, and out-of-scope behavior against the BMad story and concise SpecKit artifacts.
 - Epic architecture review: Strong recommendations and ADR conflicts at the current commit.
 
 ## Raw-Finding Handoff
@@ -46,7 +47,7 @@ Authors never receive a judge's private reasoning transcript. Judges receive raw
 2. Route specification findings to a fresh `spec-author`, planning findings to a fresh `plan-architect`, task findings to a fresh `task-author`, and implementation findings to a fresh `tdd-implementer`. If correction would choose or expand product intent/scope rather than restore the approved contract, stop for explicit user direction first.
 3. When behavior changes, require a failing regression test before production correction, then targeted green and surrounding verification.
 4. Regenerate every dependent downstream artifact invalidated by an upstream correction.
-5. Rerun the same gate with a fresh judge/reviewer. For implementation, rerun both review axes when the diff boundary changed; at minimum rerun every affected axis.
+5. Rerun the same gate with a fresh judge/reviewer. Full reruns both implementation review axes when the diff boundary changes. Standard reruns its combined `quality-review`.
 6. Do not stage or commit rejected/failing work. After a blocking implementation finding passes fresh review, create a focused follow-up checkpoint rather than silently squashing it.
 
 After three `REVISE` outcomes at the same gate, the issue is unresolved and the workflow stops for user direction. The count is per gate and includes repeated findings or new blocking findings caused by correction. `analyze` uses the same rule: its third `REVISE` outcome escalates. `BLOCKED` stops immediately, records its cause, and does not count as a revision attempt. The orchestrator does not attempt a fourth correction, lower severity, or mark the stage complete.
@@ -70,7 +71,7 @@ Approval is scoped to the presented remediation. It does not authorize product-s
 - A defective E2E test returns to `e2e-runner`, which may edit tests only; the E2E gate reruns.
 - An ambiguous failure is `BLOCKED` until classified without changing production code speculatively.
 
-Every tracked test edit changes the reviewed diff identity. Whether the runner adds coverage or repairs a defective test, both acceptance and quality reviews rerun against the new complete boundary before the E2E result can be accepted. “Test-only” is not a review bypass.
+Every tracked test edit changes the reviewed diff identity. Whether the runner adds coverage or repairs a defective test, Full reruns both acceptance and quality reviews; Standard reruns its combined quality review before the E2E result can be accepted. “Test-only” is not a review bypass.
 
 ## Epic Disposition
 

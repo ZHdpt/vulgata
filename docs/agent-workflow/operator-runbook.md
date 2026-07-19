@@ -10,6 +10,16 @@ Use these prompts exactly for the common entry points:
 Use $run-bmad-sprint-loop for story 4-1.
 ```
 
+Full is the default when no execution level is stated.
+
+```text
+Use $run-bmad-sprint-loop for story 5-1 in Standard mode.
+```
+
+```text
+Use $run-bmad-sprint-loop for story 5-9 in Full mode.
+```
+
 ```text
 Use $run-bmad-sprint-loop for epic 4.
 ```
@@ -30,13 +40,15 @@ Use $run-bmad-sprint-loop for story 4-1 in dry-run mode.
 Use $close-bmad-epic for epic 4.
 ```
 
-The root agent assumes the orchestrator role. Worker agents are direct children; no intermediate orchestrator is spawned.
+The root agent assumes the orchestrator role. Worker agents are direct children; no intermediate orchestrator is spawned. A Standard request is assessed before activation; an ineligible story stops with its exact Full trigger instead of silently changing levels.
 
 ## What the Operator Should See
 
 For a story request, the orchestrator reports the resolved BMad key/status, actual or proposed SpecKit identity, current branch/preflight `HEAD`, repository/Git/worktree identity, exact owned/unrelated paths, current stage, next gate, and required decision. Dependency resolution precedes startup: reorder prerequisites already in scope; stop for authorization when a prerequisite is outside scope; never silently add it. `speckit-specify` allocates the actual collision-free directory, which is then bound two ways. Epic/multi-epic requests show the dependency-ordered queue and serialize overlapping mutations.
 
 Dry-run mode validates queue resolution, source authorities, mapping proposal, direct-child dispatch plan, stage sequence, E2E predicates, verification commands, and expected checkpoints. It does not create the SpecKit feature, edit feature/BMad/source files, stage, or commit.
+
+The report includes `execution_level`. Full shows the complete stage sequence. Standard shows the reduced sequence, eligibility evidence, any conditional plan review, and every planned-change authorization that will still pause before task generation.
 
 Resume validates mapping, hashes, trailer-derived checkpoint ancestry, and ownership. It restarts at the earliest invalid stage, appends invalidated/superseded history, and does not count hash invalidation as judge `REVISE`. Divergence stops for separately authorized user-chosen recovery; no implicit reset/rebase/merge/cherry-pick is offered. A dirty/inseparable boundary is preserved without a write. Legacy pre-activation stories require a unique BMad/state mapping and all other checks.
 
@@ -75,6 +87,8 @@ The orchestrator is the sole committer and creates recoverable local checkpoints
 
 Adjacent artifact-only checkpoints may combine only when no useful recovery boundary is lost. Unaccepted artifacts never combine with implementation, and unrelated stories never combine. Each commit uses explicit owned paths, passes `git diff --cached --check`, and records the checkpoint ID in its durable record. Story commits carry `BMad-Story` and `Workflow-Scope: story/<key>`; epic commits carry `BMad-Epic` and `Workflow-Scope: epic/<key>`. Both carry `Workflow-Stage` and `Workflow-Checkpoint`.
 
+Standard replaces the separate specification, plan, and analyzed-task checkpoints with one pre-implementation checkpoint containing concise spec/plan/tasks, mapping/state, and any required accepted plan verdict plus planned-change approval. It retains prepared, activated, implementation recovery, ready-for-review, correction when needed, and completion checkpoints.
+
 These are local commits only. The workflow does not switch branches, push, merge, rebase, rewrite history, open a pull request, or otherwise mutate a remote unless the user separately requests that distinct action.
 
 ## Recovery
@@ -83,8 +97,8 @@ These are local commits only. The workflow does not switch branches, push, merge
 - `BLOCKED`: the workflow records evidence and waits without advancing lifecycle state.
 - Failed tool/agent: retry the same stage with a fresh direct child when the recorded boundary is still valid.
 - Missing/malformed artifact: resume from its earliest owning stage.
-- Product E2E failure: return to fresh TDD implementation, rerun both reviews, then rerun E2E.
-- Defective E2E test: `e2e-runner` corrects test code only; because a tracked test changed, rerun both reviews and then E2E.
+- Product E2E failure: return to fresh TDD implementation, rerun the applicable Full axes or Standard combined review, then rerun E2E.
+- Defective E2E test: `e2e-runner` corrects test code only; because a tracked test changed, rerun the applicable Full axes or Standard combined review and then E2E.
 - Dirty worktree: preserve and exclude unrelated edits; stop if ownership cannot be separated.
 
 ## Epic Close Sequence
