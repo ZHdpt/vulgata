@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "plan-review",
+  "stage": "tasks",
   "active_gates": {
     "acceptance-review": {
       "status": "pending",
@@ -153,6 +153,20 @@
       "evidence_paths": [
         "specs/002-language-framework-detection/reviews/plan-review-2.json"
       ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "active",
+      "started_at": "2026-07-19T13:29:40.9418361Z",
+      "completed_at": null,
+      "input_commit": "6ba4a5c0c805580cf3838b71b587b74e5122a21c",
+      "input_hashes": {
+        "specs/002-language-framework-detection/plan.md": "b53b2ee92dc36e5b76aaf721a0beb07fa4d75bbcc3710f08f40937b0ddefaf97",
+        "specs/002-language-framework-detection/reviews/plan-review-2.json": "6ef11d48420ffaf3d34f64c303709e98349f417c246e964f14e6269bd5a937ce"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [],
       "failure": null
     }
   ],
@@ -571,35 +585,40 @@
       "observed_at": "2026-07-19T13:20:22.4892993Z",
       "summary": "Independent plan review accepted the corrected plan with both prior findings resolved and no new findings",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/plan-review/3",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "6ba4a5c0c805580cf3838b71b587b74e5122a21c",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/reviews/plan-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-19T13:29:40.9418361Z",
+      "summary": "User explicitly authorized the accepted material Scan parsing/filtering plan to advance to task generation; later workflow gates remain required.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-plan-accepted-20260719T132022Z-69d695",
+    "checkpoint_id": "bmad-4-2-scan-strategy-approved-20260719T132940Z-69d695",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "plan",
+    "stage": "plan-review",
     "committed_paths": [
-      "AGENTS.md",
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json",
       "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/research.md",
-      "specs/002-language-framework-detection/data-model.md",
-      "specs/002-language-framework-detection/quickstart.md",
-      "specs/002-language-framework-detection/contracts/provider-language-projection.md",
-      "specs/002-language-framework-detection/contracts/framework-detection.md",
-      "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
-      "specs/002-language-framework-detection/reviews/plan-review-1.json",
       "specs/002-language-framework-detection/reviews/plan-review-2.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/plan/3",
-      "4-2-language-and-framework-detection/plan-review/1",
-      "4-2-language-and-framework-detection/plan-review/2"
+      "4-2-language-and-framework-detection/plan-review/3"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-19T13:20:22.4892993Z"
+  "updated_at": "2026-07-19T13:29:40.9418361Z"
 }

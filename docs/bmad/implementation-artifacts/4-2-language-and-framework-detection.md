@@ -244,9 +244,9 @@ unchanged.
   `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
 - SpecKit feature directory:
   `specs/002-language-framework-detection`.
-- Current workflow stage: `plan-review`; the corrected technical plan was
-  accepted on independent review iteration 2. The required post-plan
-  Scan-strategy authorization is pending before task generation.
+- Current workflow stage: `tasks`; the corrected technical plan was accepted
+  on independent review iteration 2 and the user explicitly authorized its
+  material Scan parsing/filtering changes to advance to task generation.
 - Planning is recoverably blocked at Phase 0 by pinned-provider evidence:
   CodeGraphContext 0.5.1 does not persist parser identity on `File` nodes, so a
   parser-supported file with no structural declarations cannot be distinguished
@@ -282,8 +282,10 @@ unchanged.
 - Plan review iteration 1 required atomic malformed-language handling and a
   consistent evidence-locator bound; both were corrected.
 - Independent plan review iteration 2 accepted the corrected plan with no new
-  findings. Scan-strategy authorization remains pending and is not implied by
-  the earlier provider-remediation approval.
+  findings.
+- The user separately granted the required post-plan Scan-strategy
+  authorization. This advances task generation only and does not waive
+  analysis, TDD, review, E2E, security, or verification gates.
 - Story preparation checkpoint:
   `bmad-4-2-prepared-20260719T111713Z-e5ad70` (pending Git binding).
 
