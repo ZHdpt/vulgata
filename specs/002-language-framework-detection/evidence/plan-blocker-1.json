@@ -41,6 +41,17 @@
     "Correct provider result completeness before implementation; the recommended minimum is an execute_cypher_query result limit of 250001 plus fail-closed handling of truncated/result_limit, followed by final-image qualification."
   ],
   "recommendation": "Preserve the provider pin if desired, explicitly accept zero-structure files as Filtered/UnknownLanguage, configure the private gateway limit to 250001, fail closed on truncation, and add a mandatory final-image qualification covering an empty supported file and more than 100 rows. Then restart planning from Phase 0.",
+  "resolution": {
+    "status": "APPROVED",
+    "approved_at": "2026-07-19T12:06:08.9923952Z",
+    "approved_intent": [
+      "Retain the pinned stock CodeGraphContext provider.",
+      "Treat zero-structure candidates with no observable parser identity as Filtered/UnknownLanguage without extension or LLM inference.",
+      "Configure the private gateway result ceiling to 250001 and fail the provider result atomically whenever truncation is reported.",
+      "Require final-image qualification for empty supported-language input and more than 100 returned rows."
+    ],
+    "llm_boundary": "An LLM may produce a separate later hypothesis or human-review aid, but it does not create or replace the deterministic Story 4.2 language fact and does not make an UnknownLanguage candidate dispatchable."
+  },
   "reproduction": [
     "Download the exact codegraphcontext 0.5.1 wheel without dependencies.",
     "Verify its SHA-256 against docker/codegraph/requirements.lock.",

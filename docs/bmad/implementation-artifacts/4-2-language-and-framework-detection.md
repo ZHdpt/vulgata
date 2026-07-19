@@ -252,6 +252,13 @@ unchanged.
   parser-supported file with no structural declarations cannot be distinguished
   without guessing; its HTTP query handler also truncates at 100 rows by
   default while Story 4.1 assumes a complete unpaginated projection.
+- The user approved the recommended remediation: retain the stock pinned
+  provider; classify zero-structure candidates without observable parser
+  identity as `Filtered/UnknownLanguage`; raise the private gateway result
+  ceiling to `250001`; fail atomically on reported truncation; and qualify the
+  final image with empty-file and greater-than-100-row cases. Any LLM language
+  output remains a separate non-authoritative hypothesis and cannot make an
+  unknown candidate dispatchable.
 - Activation checkpoint:
   `bmad-4-2-context-20260719T112236Z-6a56bc` (pending Git binding).
 - Required post-plan human gate: Scan strategy change authorization.
