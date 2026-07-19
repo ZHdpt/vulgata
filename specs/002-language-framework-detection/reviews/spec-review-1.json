@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "gate": "spec-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "cfd1b2d45a1bb03d4c8f0f2b1271a06f42ce5531",
+  "reviewed_boundary": {
+    "base_commit": "cfd1b2d45a1bb03d4c8f0f2b1271a06f42ce5531",
+    "candidate_commit": null,
+    "diff_sha256": "554010f4ea0a27003aaa2bed691d68cf41b8d8a356f01e77f690609d492a8a10",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "cb484113c956e62bd5cc56345b5b81dd6a3e930e6414bcfca37a56a91f1f46fb",
+      "specs/002-language-framework-detection/checklists/requirements.md": "9494531bcd320317c2e74a7cae5cfef7a687e2664b09b11e442c3dae53276bf0"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/spec.md",
+      "specs/002-language-framework-detection/checklists/requirements.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "specs/001-codegraph-extraction/spec.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/checklists/requirements.md"
+  ],
+  "acceptance_criteria_coverage": "7/7",
+  "authority_disposition": {
+    "deterministic_facts_vs_llm_hypotheses": "No conflict; later hypotheses cannot overwrite Story 4.2 deterministic facts.",
+    "codegraph_parser_identity": "Feasible planning choice; the plan must select and verify the bounded provider projection.",
+    "prd_language_scope": "No conflict; profiling may retain provider identifiers without promising downstream Worker Agent support.",
+    "unknown_language": "Uses the existing Filtered Candidate Outcome and does not fabricate a Code Unit.",
+    "authorization_security_ui": "Existing Repository visibility and ManagementAccess remain; diagnostics are bounded and new UI text is Simplified Chinese.",
+    "planned_change_authorization": "Required after plan-review acceptance and not granted by this verdict."
+  },
+  "findings": [],
+  "summary": "ACCEPT: Story 4.2 is feasible, internally consistent, testable, complete enough for planning, and aligned with BMad and product authorities. All seven acceptance-criteria groups are covered. Catalog contents, deterministic evidence tie-breaking, provider projection details, and bounded limits remain legitimate planning choices.",
+  "confidence": "high"
+}

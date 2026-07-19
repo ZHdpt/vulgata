@@ -242,8 +242,11 @@ unchanged.
 - Execution level: Full (default because the user did not request Standard).
 - Canonical activation:
   `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
-- SpecKit feature directory: not allocated until `speckit-specify`.
-- Current workflow stage: `context`; next stage is `speckit-specify`.
+- SpecKit feature directory:
+  `specs/002-language-framework-detection`.
+- Current workflow stage: `plan`; the independent specification review
+  accepted all seven acceptance-criteria groups with no unresolved authority
+  conflict.
 - Activation checkpoint:
   `bmad-4-2-context-20260719T112236Z-6a56bc` (pending Git binding).
 - Required post-plan human gate: Scan strategy change authorization.
@@ -256,9 +259,19 @@ unchanged.
 
 - Ultimate context engine analysis completed; comprehensive developer guide
   created.
+- SpecKit specification and requirements checklist created at the pinned
+  activation boundary with all seven acceptance-criteria groups mapped.
+- Independent specification review accepted at
+  `specs/002-language-framework-detection/reviews/spec-review-1.json`.
 - Story preparation checkpoint:
   `bmad-4-2-prepared-20260719T111713Z-e5ad70` (pending Git binding).
 
 ### File list
 
 - `docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md`
+- `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`
+- `.specify/feature.json`
+- `specs/002-language-framework-detection/spec.md`
+- `specs/002-language-framework-detection/checklists/requirements.md`
+- `specs/002-language-framework-detection/reviews/spec-review-1.json`
+- `specs/002-language-framework-detection/workflow-state.json`
