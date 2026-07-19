@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "bmad_epic_key": "4",
+  "story_path": "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+  "proposed_feature_short_name": "language-framework-detection",
+  "stage": "context",
+  "repository_preflight": {
+    "branch": "dev",
+    "preflight_head": "eeff81a25b6df179b3146d8bc18fa00b370ed7d9",
+    "repository_root": ".",
+    "git_common_directory": ".git",
+    "worktree_path": ".",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-19T11:22:36.9879084Z"
+  },
+  "activation_checkpoint_id": "bmad-4-2-context-20260719T112236Z-6a56bc",
+  "feature_directory": null,
+  "superseded_by_state": null
+}

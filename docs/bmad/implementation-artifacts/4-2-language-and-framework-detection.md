@@ -1,7 +1,7 @@
 ---
 story_key: 4-2-language-and-framework-detection
 title: "Story 4.2: Language and Framework Detection"
-Status: ready-for-dev
+Status: in-progress
 Epic: 4
 Story: 2
 created: 2026-07-19
@@ -240,8 +240,12 @@ unchanged.
 - Preparation source commit:
   `b796e8623a456d9b2abe1797d1e40ee1d74bb264`.
 - Execution level: Full (default because the user did not request Standard).
-- Canonical activation: not created until the story activation checkpoint.
+- Canonical activation:
+  `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
 - SpecKit feature directory: not allocated until `speckit-specify`.
+- Current workflow stage: `context`; next stage is `speckit-specify`.
+- Activation checkpoint:
+  `bmad-4-2-context-20260719T112236Z-6a56bc` (pending Git binding).
 - Required post-plan human gate: Scan strategy change authorization.
 - Preparation limitation: the connected CodeGraphContext code-intelligence
   transport returned `Transport closed` twice, so repository source/tests and
