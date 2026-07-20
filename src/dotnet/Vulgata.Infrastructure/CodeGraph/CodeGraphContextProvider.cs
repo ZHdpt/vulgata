@@ -134,19 +134,26 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
 
     private static GatewayProcess StartGateway(string homePath, int port)
     {
-        ProcessStartInfo startInfo = CreateStartInfo(homePath);
-        startInfo.ArgumentList.Add("api");
-        startInfo.ArgumentList.Add("start");
-        startInfo.ArgumentList.Add("--host");
-        startInfo.ArgumentList.Add("127.0.0.1");
-        startInfo.ArgumentList.Add("--port");
-        startInfo.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        ProcessStartInfo startInfo = CreateGatewayStartInfo(homePath, port);
         var process = new Process { StartInfo = startInfo };
         process.Start();
         return new GatewayProcess(
             process,
             DrainAsync(process.StandardOutput),
             DrainAsync(process.StandardError));
+    }
+
+    private static ProcessStartInfo CreateGatewayStartInfo(string homePath, int port)
+    {
+        ProcessStartInfo startInfo = CreateStartInfo(homePath);
+        startInfo.Environment["TOOL_RESULT_LIMITS"] = """{"execute_cypher_query":250001}""";
+        startInfo.ArgumentList.Add("api");
+        startInfo.ArgumentList.Add("start");
+        startInfo.ArgumentList.Add("--host");
+        startInfo.ArgumentList.Add("127.0.0.1");
+        startInfo.ArgumentList.Add("--port");
+        startInfo.ArgumentList.Add(port.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        return startInfo;
     }
 
     private async Task WaitUntilHealthyAsync(Uri baseUri, Process gateway, CancellationToken cancellationToken)
@@ -527,6 +534,7 @@ internal static class CodeGraphHttpProjectionParser
 
             JsonElement data = root.GetProperty("data");
             EnsureRequiredPropertiesOnce(data, ["success", "query", "record_count", "results"]);
+            RejectReservedCompletenessMetadata(data);
             if (data.ValueKind is not JsonValueKind.Object ||
                 data.GetProperty("success").ValueKind is not JsonValueKind.True ||
                 data.GetProperty("query").ValueKind is not JsonValueKind.String ||
@@ -552,6 +560,44 @@ internal static class CodeGraphHttpProjectionParser
             document.Dispose();
             throw;
         }
+    }
+
+    private static void RejectReservedCompletenessMetadata(JsonElement data)
+    {
+        int truncatedCount = 0;
+        int resultLimitCount = 0;
+        JsonElement truncated = default;
+        JsonElement resultLimit = default;
+        foreach (JsonProperty property in data.EnumerateObject())
+        {
+            if (property.NameEquals("truncated"))
+            {
+                truncatedCount++;
+                truncated = property.Value;
+            }
+            else if (property.NameEquals("result_limit"))
+            {
+                resultLimitCount++;
+                resultLimit = property.Value;
+            }
+        }
+
+        if (truncatedCount == 0 && resultLimitCount == 0)
+        {
+            return;
+        }
+
+        if (truncatedCount != 1 ||
+            resultLimitCount != 1 ||
+            truncated.ValueKind is not (JsonValueKind.True or JsonValueKind.False) ||
+            resultLimit.ValueKind is not JsonValueKind.Number ||
+            !resultLimit.TryGetInt32(out int limit) ||
+            limit <= 0)
+        {
+            throw new InvalidDataException("CodeGraph 完整性元数据无效。");
+        }
+
+        throw new InvalidDataException("CodeGraph 返回了不完整结果。");
     }
 
     private static void EnsureRequiredPropertiesOnce(JsonElement element, IReadOnlyList<string> required)

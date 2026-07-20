@@ -132,6 +132,57 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("CodeUnitEdges", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.CodeUnitFramework", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CodeUnitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Confidence")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DetectionSource")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<string>("FrameworkName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodeUnitId", "FrameworkName")
+                        .IsUnique();
+
+                    b.HasIndex("ScanRunId", "FrameworkName");
+
+                    b.HasIndex("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("CodeUnitId", "ScanRunId", "RepositoryId");
+
+                    b.ToTable("CodeUnitFrameworks", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_CodeUnitFrameworks_Confidence", "\"Confidence\" IN ('High', 'Medium')");
+
+                            t.HasCheckConstraint("CK_CodeUnitFrameworks_FrameworkName", "length(\"FrameworkName\") BETWEEN 1 AND 64");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
                 {
                     b.Property<Guid>("Id")
@@ -396,6 +447,33 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("ScanRuns", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanRunLanguageSummary", b =>
+                {
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Language")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("DistinctFileCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ScanRunId", "Language");
+
+                    b.HasIndex("ScanRunId", "RepositoryId");
+
+                    b.ToTable("ScanRunLanguageSummaries", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_ScanRunLanguageSummaries_DistinctFileCount", "\"DistinctFileCount\" > 0");
+
+                            t.HasCheckConstraint("CK_ScanRunLanguageSummaries_Language", "length(\"Language\") BETWEEN 1 AND 64");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.System", b =>
                 {
                     b.Property<Guid>("Id")
@@ -577,6 +655,27 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("TargetCodeUnit");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.CodeUnitFramework", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", "ScanRun")
+                        .WithMany("CodeUnitFrameworks")
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.CodeUnit", "CodeUnit")
+                        .WithMany("Frameworks")
+                        .HasForeignKey("CodeUnitId", "ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "ScanRunId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CodeUnit");
+
+                    b.Navigation("ScanRun");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
@@ -618,6 +717,18 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Repository");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanRunLanguageSummary", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", "ScanRun")
+                        .WithMany("LanguageSummaries")
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScanRun");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.SystemLlmProviderOverride", b =>
@@ -671,6 +782,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("SourceCodeUnit");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.CodeUnit", b =>
+                {
+                    b.Navigation("Frameworks");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.LlmProvider", b =>
                 {
                     b.Navigation("SystemLlmProviderOverrides");
@@ -687,7 +803,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.Navigation("CodeUnitEdges");
 
+                    b.Navigation("CodeUnitFrameworks");
+
                     b.Navigation("CodeUnits");
+
+                    b.Navigation("LanguageSummaries");
 
                     b.Navigation("UnresolvedRelationships");
                 });

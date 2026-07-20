@@ -295,6 +295,16 @@ unchanged.
   duplicate final-commit recovery RED/GREEN ownership. Both were corrected.
 - Independent analysis iteration 3 accepted T001-T050 with 21/21 functional
   requirements, 8/8 success criteria, and 7/7 acceptance groups covered.
+- Implementation foundation T001-T008 is GREEN: the accepted boundary passed
+  24/24 baseline tests; atomic complete-draft persistence and recovery passed
+  16/16 profiling tests; the private CodeGraphContext completeness envelope
+  passed the combined 25/25 provider/profiling tests.
+- EF migration `20260720030657_AddLanguageFrameworkDetection` adds only
+  `CodeUnitFrameworks` and `ScanRunLanguageSummaries`, preserves historical
+  nullable Code Unit language rows, and leaves no pending model changes.
+- The accepted T005 command required the repository-specific mechanical
+  correction `--context VulgataDbContext` because the startup project owns two
+  DbContexts; this changes no schema intent or protected Scan behavior.
 - Implementation checkpoint:
   `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
   (pending Git binding).

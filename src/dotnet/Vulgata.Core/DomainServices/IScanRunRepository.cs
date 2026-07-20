@@ -11,5 +11,14 @@ public interface IScanRunRepository
         IEnumerable<CodeUnit> codeUnits,
         IEnumerable<CodeUnitEdge> edges,
         IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships);
+    Task PersistCompletedProfileAsync(
+        RepositoryProfileDraft draft,
+        CancellationToken cancellationToken = default);
+    Task RecoverFailedFinalCommitAsync(
+        Guid repositoryId,
+        Guid scanRunId,
+        string sanitizedMessage,
+        DateTimeOffset failedAt,
+        CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

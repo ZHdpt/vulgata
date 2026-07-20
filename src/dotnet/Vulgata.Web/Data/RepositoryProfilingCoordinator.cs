@@ -246,7 +246,7 @@ public sealed class RepositoryProfilingCoordinator(
                     providerUnit.SymbolName,
                     providerUnit.UnitType,
                     providerUnit.RangeConfidence,
-                    language: null);
+                    providerUnit.Language);
                 if (endpointUnits.TryAdd(providerUnit.EndpointIdentity, unit))
                 {
                     structuralUnits.Add(structuralKey, unit);
@@ -364,16 +364,34 @@ public sealed class RepositoryProfilingCoordinator(
 
         try
         {
-            scanRunRepository.AddCandidateOutcomes(providerAuditOutcomes);
-            scanRunRepository.AddStructuralRecords(
+            ScanRunLanguageSummary[] languageSummaries = scanRun.CodeUnits
+                .Where(unit => unit.Language is not null)
+                .GroupBy(unit => unit.Language!, StringComparer.Ordinal)
+                .Select(group => new ScanRunLanguageSummary(
+                    scanRun.Id,
+                    repository.Id,
+                    group.Key,
+                    group.Select(unit => unit.FilePath).Distinct(StringComparer.Ordinal).Count()))
+                .ToArray();
+            RepositoryProfileDraft draft = RepositoryProfileDraft.Create(
+                scanRun,
                 scanRun.CodeUnits,
                 scanRun.CodeUnitEdges,
-                scanRun.UnresolvedRelationships);
-            await scanRunRepository.SaveChangesAsync(cancellationToken);
+                scanRun.UnresolvedRelationships,
+                Array.Empty<CodeUnitFramework>(),
+                languageSummaries,
+                providerAuditOutcomes);
+            await scanRunRepository.PersistCompletedProfileAsync(draft, cancellationToken);
         }
-        catch (DbUpdateException exception)
+        catch (Exception exception) when (exception is DbUpdateException or InvalidOperationException)
         {
             logger.LogError(exception, "Failed to atomically persist CodeGraph result for ScanRun {ScanRunId}.", scanRun.Id);
+            await scanRunRepository.RecoverFailedFinalCommitAsync(
+                repository.Id,
+                scanRun.Id,
+                "代码结构分析失败，请稍后重试。",
+                DateTimeOffset.UtcNow,
+                CancellationToken.None);
             throw;
         }
 

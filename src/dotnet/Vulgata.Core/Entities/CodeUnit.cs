@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Vulgata.Core.Entities;
 
 public enum CodeUnitType
@@ -65,7 +67,7 @@ public sealed class CodeUnit
         LineEnd = lineEnd;
         UnitType = unitType;
         RangeConfidence = rangeConfidence;
-        Language = string.IsNullOrWhiteSpace(language) ? null : language.Trim();
+        Language = string.IsNullOrWhiteSpace(language) ? null : NormalizeLanguage(language);
         Status = CodeUnitStatus.Pending;
     }
 
@@ -84,6 +86,7 @@ public sealed class CodeUnit
     public CodeUnitStatus Status { get; private set; }
     public ScanRun? ScanRun { get; private set; }
     public Repository? Repository { get; private set; }
+    public ICollection<CodeUnitFramework> Frameworks { get; } = [];
 
     internal static string NormalizePath(string path)
     {
@@ -91,6 +94,25 @@ public sealed class CodeUnit
         if (Path.IsPathRooted(value) || value.Split('/').Any(segment => segment == ".."))
         {
             throw new ArgumentException("文件路径必须是仓库相对路径。", nameof(path));
+        }
+
+        return value;
+    }
+
+    internal static string NormalizeLanguage(string language)
+    {
+        string value = RequireText(language, 64)
+            .Normalize(NormalizationForm.FormKC)
+            .Trim()
+            .ToLowerInvariant();
+        if (value.Length == 0 ||
+            value[0] is < 'a' or > 'z' ||
+            value.Any(character =>
+                character is not (>= 'a' and <= 'z') &&
+                character is not (>= '0' and <= '9') &&
+                character is not '_' and not '+' and not '#' and not '.' and not '-'))
+        {
+            throw new ArgumentException("语言标识格式无效。", nameof(language));
         }
 
         return value;

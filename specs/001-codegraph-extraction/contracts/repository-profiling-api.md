@@ -61,6 +61,17 @@ The gateway is production-local and unpublished. Vulgata invokes no
 `/api/v1/mcp/*`, `/api/v1/tools*`, index HTTP route, watcher, bundle, registry,
 datasource, remote backend, or direct Kuzu API.
 
+Only the private `cgc api start` process receives:
+
+```text
+TOOL_RESULT_LIMITS={"execute_cypher_query":250001}
+```
+
+Vulgata does not set this variable globally and does not configure another
+tool limit. The gateway limit is one row above Vulgata's unchanged 250,000
+combined-row ceiling so provider truncation cannot silently satisfy that
+ceiling. It does not authorize pagination, retry, or a third query.
+
 One configurable deadline, default 1,800 seconds, covers index through both
 query responses. A separate bounded cleanup grace always runs. No per-file
 provider process, retry, bisection, or continuation is permitted.
@@ -103,7 +114,12 @@ values. `data.query` must exactly echo the request.
 `data.record_count == data.results.length`. Invalid UTF-8/JSON, trailing JSON,
 HTTP failure, a status other than `ok`, non-null message/error, query mismatch, count
 mismatch, or a response bound violation fails the whole provider result.
-Unknown envelope properties may be ignored only after required fields validate
+Within `data`, `truncated` and `result_limit` are reserved completeness fields.
+A complete response omits both. Presence of either field—including one field
+alone, duplicates, wrong types, an inconsistent pair, `truncated: false`, or
+any `result_limit` value—fails the whole provider result atomically. These
+fields are never ignored as additive metadata. Other unknown envelope
+properties may be ignored only after required and reserved fields validate
 and never enter the owned result.
 
 This envelope is the closed grammar observed from exact

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Vulgata.Core.DomainServices;
@@ -92,6 +93,147 @@ public sealed class RepositoryProfilingTests
                     nameof(UnresolvedStructuralRelationshipCandidate.SourceCodeUnit) &&
                 foreignKey.Properties.Select(property => property.Name)
                     .SequenceEqual(["SourceCodeUnitId", "ScanRunId", "RepositoryId"]));
+    }
+
+    [Fact]
+    public void Model_LanguageFrameworkDetection_EnforcesAggregateConstraints()
+    {
+        Type? frameworkType = typeof(CodeUnit).Assembly.GetType(
+            "Vulgata.Core.Entities.CodeUnitFramework");
+        Type? summaryType = typeof(CodeUnit).Assembly.GetType(
+            "Vulgata.Core.Entities.ScanRunLanguageSummary");
+
+        Assert.NotNull(frameworkType);
+        Assert.NotNull(summaryType);
+
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        using var db = new VulgataDbContext(dbOptions);
+
+        var framework = db.Model.FindEntityType(frameworkType!);
+        Assert.NotNull(framework);
+        Assert.Contains(
+            framework!.GetForeignKeys(),
+            foreignKey =>
+                foreignKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["CodeUnitId", "ScanRunId", "RepositoryId"]) &&
+                foreignKey.PrincipalKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["Id", "ScanRunId", "RepositoryId"]));
+        Assert.Contains(
+            framework.GetIndexes(),
+            index =>
+                index.IsUnique &&
+                index.Properties.Select(property => property.Name)
+                    .SequenceEqual(["CodeUnitId", "FrameworkName"]));
+
+        var summary = db.Model.FindEntityType(summaryType!);
+        Assert.NotNull(summary);
+        Assert.Equal(
+            ["ScanRunId", "Language"],
+            summary!.FindPrimaryKey()!.Properties.Select(property => property.Name));
+        Assert.Contains(
+            summary.GetForeignKeys(),
+            foreignKey =>
+                foreignKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["ScanRunId", "RepositoryId"]) &&
+                foreignKey.PrincipalKey.Properties.Select(property => property.Name)
+                    .SequenceEqual(["Id", "RepositoryId"]));
+
+        Assert.True(db.Model.FindEntityType(typeof(CodeUnit))!
+            .FindProperty(nameof(CodeUnit.Language))!.IsNullable);
+    }
+
+    [Fact]
+    public void RepositoryProfileDraft_WithMissingLanguageSummary_RejectsBeforePersistence()
+    {
+        Type? draftType = typeof(ICodeGraphProvider).Assembly.GetType(
+            "Vulgata.Core.DomainServices.RepositoryProfileDraft");
+        Assert.NotNull(draftType);
+
+        Guid repositoryId = Guid.NewGuid();
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.SetCandidateCount(1);
+        string hash = new('a', 64);
+        var unit = new CodeUnit(
+            run.Id,
+            repositoryId,
+            "src/A.cs",
+            hash,
+            hash,
+            1,
+            1,
+            "A",
+            CodeUnitType.Class,
+            RangeConfidence.Exact,
+            "c_sharp");
+        run.Complete(1, 1, DateTimeOffset.UtcNow);
+
+        MethodInfo? create = draftType!.GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
+        Assert.NotNull(create);
+        ParameterInfo[] parameters = create!.GetParameters();
+        Assert.Equal(7, parameters.Length);
+        object frameworks = Array.CreateInstance(
+            typeof(CodeUnit).Assembly.GetType("Vulgata.Core.Entities.CodeUnitFramework")!,
+            0);
+        object summaries = Array.CreateInstance(
+            typeof(CodeUnit).Assembly.GetType("Vulgata.Core.Entities.ScanRunLanguageSummary")!,
+            0);
+
+        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(() =>
+            create.Invoke(
+                null,
+                [
+                    run,
+                    new[] { unit },
+                    Array.Empty<CodeUnitEdge>(),
+                    Array.Empty<UnresolvedStructuralRelationshipCandidate>(),
+                    frameworks,
+                    summaries,
+                    Array.Empty<ScanCandidateOutcome>(),
+                ]));
+        Assert.IsType<InvalidOperationException>(exception.InnerException);
+        Assert.Contains("language summary", exception.InnerException!.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Model_HistoricalCodeUnitWithNullLanguage_RemainsReadableAsync()
+    {
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        await using var db = new VulgataDbContext(dbOptions);
+        await db.Database.OpenConnectionAsync();
+        await db.Database.EnsureCreatedAsync();
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            "historical",
+            "https://example.invalid/historical.git",
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        ScanRun run = ScanRun.Start(repository.Id, 1_800, DateTimeOffset.UtcNow);
+        string hash = new('a', 64);
+        var historical = new CodeUnit(
+            run.Id,
+            repository.Id,
+            "src/Legacy.cs",
+            hash,
+            hash,
+            1,
+            1,
+            "Legacy",
+            CodeUnitType.Class,
+            RangeConfidence.Exact,
+            null);
+        db.Repositories.Add(repository);
+        db.ScanRuns.Add(run);
+        db.CodeUnits.Add(historical);
+        await db.SaveChangesAsync();
+        db.ChangeTracker.Clear();
+
+        CodeUnit reloaded = await db.CodeUnits.SingleAsync();
+
+        Assert.Null(reloaded.Language);
     }
 
     [Fact]
@@ -313,6 +455,64 @@ public sealed class RepositoryProfilingTests
                 Convert.ToHexStringLower(SHA256.HashData(source.AsSpan(0, 4_096))),
                 first.FileIdentityHash);
             Assert.NotEqual(first.FileIdentityHash, first.SourceHash);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WhenFinalCommitFails_RecoversDurableRunAndKeepsOnlyLocalAuditAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "A.cs"), "class A { }");
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "B.cs"), "class B { }");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "final-commit-failure",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var failingRepository = new FailingFinalCommitScanRunRepository(new ScanRunRepository(db));
+            var coordinator = new RepositoryProfilingCoordinator(
+                new SystemRepository(db),
+                new RepositoryRepository(db),
+                failingRepository,
+                new SuccessfulWorkingCopy(root),
+                new ControlledCandidates(),
+                new ControlledProvider(),
+                new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
+                NullLogger<RepositoryProfilingCoordinator>.Instance);
+
+            await Assert.ThrowsAsync<DbUpdateException>(() =>
+                coordinator.StartStandaloneRepositoryAsync(repository.Id, null!, CancellationToken.None));
+
+            db.ChangeTracker.Clear();
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Failed, run.Status);
+            Assert.Equal("代码结构分析失败，请稍后重试。", run.TerminalMessage);
+            ScanCandidateOutcome localAudit = await db.ScanCandidateOutcomes.SingleAsync();
+            Assert.Equal("src/Generated.g.cs", localAudit.FilePath);
+            Assert.Equal(ScanCandidateOutcomeKind.Filtered, localAudit.Outcome);
+            Assert.Equal("Generated", localAudit.ReasonOrCategory);
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+            Assert.Empty(await db.CodeUnitFrameworks.ToListAsync());
+            Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+            Assert.Equal(1, failingRepository.RecoveryCount);
         }
         finally
         {
@@ -645,8 +845,8 @@ public sealed class RepositoryProfilingTests
             Task.FromResult(new CodeGraphProviderResult(
                 true,
                 [
-                    new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact),
-                    new("src/B.cs", "B", CodeUnitType.Class, 1, 1, "b", RangeConfidence.Exact),
+                    new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact, "c_sharp"),
+                    new("src/B.cs", "B", CodeUnitType.Class, 1, 1, "b", RangeConfidence.Exact, "c_sharp"),
                 ],
                 [new("a", "b", StructuralRelationshipKind.Calls)],
                 [],
@@ -664,8 +864,8 @@ public sealed class RepositoryProfilingTests
             Task.FromResult(new CodeGraphProviderResult(
                 true,
                 [
-                    new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact),
-                    new("src/B.cs", "B", CodeUnitType.Class, 1, 1, "b", RangeConfidence.Exact),
+                    new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact, "c_sharp"),
+                    new("src/B.cs", "B", CodeUnitType.Class, 1, 1, "b", RangeConfidence.Exact, "c_sharp"),
                 ],
                 [
                     new("a", "b", StructuralRelationshipKind.Calls),
@@ -701,7 +901,7 @@ public sealed class RepositoryProfilingTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult(new CodeGraphProviderResult(
                 true,
-                [new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact)],
+                [new("src/A.cs", "A", CodeUnitType.Class, 1, 1, "a", RangeConfidence.Exact, "c_sharp")],
                 [],
                 [],
                 1,
@@ -727,6 +927,53 @@ public sealed class RepositoryProfilingTests
             Task.FromResult(CodeGraphProviderResult.Failure(
                 "CodeGraph CLI not found",
                 TimeSpan.FromMilliseconds(1)));
+    }
+
+    private sealed class FailingFinalCommitScanRunRepository(IScanRunRepository inner) : IScanRunRepository
+    {
+        public int RecoveryCount { get; private set; }
+
+        public Task<ScanRun?> GetAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            inner.GetAsync(repositoryId, scanRunId, cancellationToken);
+
+        public Task AddAsync(ScanRun scanRun, CancellationToken cancellationToken = default) =>
+            inner.AddAsync(scanRun, cancellationToken);
+
+        public void AddCandidateOutcomes(IEnumerable<ScanCandidateOutcome> outcomes) =>
+            inner.AddCandidateOutcomes(outcomes);
+
+        public void AddStructuralRecords(
+            IEnumerable<CodeUnit> codeUnits,
+            IEnumerable<CodeUnitEdge> edges,
+            IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
+            inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
+
+        public Task PersistCompletedProfileAsync(
+            RepositoryProfileDraft draft,
+            CancellationToken cancellationToken = default) =>
+            throw new DbUpdateException("Injected final commit failure.");
+
+        public async Task RecoverFailedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset failedAt,
+            CancellationToken cancellationToken = default)
+        {
+            RecoveryCount++;
+            await inner.RecoverFailedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                failedAt,
+                cancellationToken);
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            inner.SaveChangesAsync(cancellationToken);
     }
 
     private sealed class TestUserContext : IUserContext

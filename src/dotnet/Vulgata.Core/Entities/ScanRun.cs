@@ -45,6 +45,8 @@ public sealed class ScanRun
     public ICollection<CodeUnit> CodeUnits { get; } = [];
     public ICollection<CodeUnitEdge> CodeUnitEdges { get; } = [];
     public ICollection<UnresolvedStructuralRelationshipCandidate> UnresolvedRelationships { get; } = [];
+    public ICollection<CodeUnitFramework> CodeUnitFrameworks { get; } = [];
+    public ICollection<ScanRunLanguageSummary> LanguageSummaries { get; } = [];
 
     public static ScanRun Start(Guid repositoryId, int providerProcessTimeoutSeconds, DateTimeOffset now) =>
         new(repositoryId, providerProcessTimeoutSeconds, now);

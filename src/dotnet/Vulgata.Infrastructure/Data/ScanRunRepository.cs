@@ -32,6 +32,50 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         dbContext.UnresolvedStructuralRelationshipCandidates.AddRange(unresolvedRelationships);
     }
 
+    public async Task PersistCompletedProfileAsync(
+        RepositoryProfileDraft draft,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            dbContext.CodeUnits.AddRange(draft.CodeUnits);
+            dbContext.CodeUnitEdges.AddRange(draft.CodeUnitEdges);
+            dbContext.UnresolvedStructuralRelationshipCandidates.AddRange(draft.UnresolvedRelationships);
+            dbContext.CodeUnitFrameworks.AddRange(draft.CodeUnitFrameworks);
+            dbContext.ScanRunLanguageSummaries.AddRange(draft.LanguageSummaries);
+            dbContext.ScanCandidateOutcomes.AddRange(draft.CandidateOutcomes);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            throw;
+        }
+    }
+
+    public async Task RecoverFailedFinalCommitAsync(
+        Guid repositoryId,
+        Guid scanRunId,
+        string sanitizedMessage,
+        DateTimeOffset failedAt,
+        CancellationToken cancellationToken = default)
+    {
+        dbContext.ChangeTracker.Clear();
+        ScanRun durableRun = await dbContext.ScanRuns.SingleAsync(
+            scanRun => scanRun.RepositoryId == repositoryId && scanRun.Id == scanRunId,
+            cancellationToken);
+        if (durableRun.Status != ScanRunStatus.Profiling)
+        {
+            throw new InvalidOperationException("Only a durable Profiling ScanRun can be recovered.");
+        }
+
+        durableRun.Fail(sanitizedMessage, failedAt);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         dbContext.SaveChangesAsync(cancellationToken);
 }
