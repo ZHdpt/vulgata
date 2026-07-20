@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Reflection;
 using Bunit;
 using FluentValidation;
 using Microsoft.AspNetCore.Components;
@@ -256,6 +257,37 @@ public sealed class DashboardPanelTests : TestContext
     }
 
     [Fact]
+    public void RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseFrameworkEvidenceOverview()
+    {
+        Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
+        Services.RemoveAll<IRepositoryProfilingCoordinator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(_ => new LanguageSummaryProfilingCoordinator());
+        RepositorySummaryDto model = new() { Id = Guid.NewGuid(), Name = "框架仓库" };
+        var cut = Render<RepositoryDetailDialog>(parameters => parameters
+            .Add(parameter => parameter.Model, model)
+            .Add(parameter => parameter.Visible, true)
+            .Add(parameter => parameter.User, CreateUserContext(isAdministrator: true)));
+        cut.WaitForState(() => cut.Markup.Contains("数据库连接", StringComparison.Ordinal));
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("开始扫描", StringComparison.Ordinal))
+            .Click();
+        cut.WaitForState(() => cut.Markup.Contains("扫描完成", StringComparison.Ordinal));
+
+        Assert.Contains("框架", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("置信度", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("检测依据", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("框架证据警告", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("react", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("High", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("package.json#json:/dependencies/react", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("101", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("audit/000/package.json", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("RAW-SECRET", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", cut.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void DatabaseConnectionPanel_RendersStatusAndFormFields()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -423,6 +455,7 @@ public sealed class DashboardPanelTests : TestContext
             values.SetValue(CreateLanguageValue(elementType, "typescript", 3), 1);
             values.SetValue(CreateLanguageValue(elementType, "zig_0+#.-", 1), 2);
             property.SetValue(summary, values);
+            AddFrameworkOverview(summary);
             return summary;
         }
 
@@ -432,6 +465,55 @@ public sealed class DashboardPanelTests : TestContext
             type.GetProperty("Language")!.SetValue(value, language);
             type.GetProperty("DistinctFileCount")!.SetValue(value, distinctFileCount);
             return value;
+        }
+
+        private static void AddFrameworkOverview(ScanRunSummaryDto summary)
+        {
+            var frameworksProperty = typeof(ScanRunSummaryDto).GetProperty("Frameworks");
+            var auditProperty = typeof(ScanRunSummaryDto).GetProperty("FrameworkEvidenceAudit");
+            if (frameworksProperty is null || auditProperty is null)
+            {
+                return;
+            }
+
+            Type frameworkType = frameworksProperty.PropertyType.GetGenericArguments().Single();
+            object framework = Activator.CreateInstance(frameworkType)!;
+            frameworkType.GetProperty("FrameworkName")!.SetValue(framework, "react");
+            frameworkType.GetProperty("CodeUnitCount")!.SetValue(framework, 1);
+            frameworkType.GetProperty("StrongestConfidence")!.SetValue(framework, "High");
+            frameworkType.GetProperty("TotalFactCount")!.SetValue(framework, 1);
+            PropertyInfo samplesProperty = frameworkType.GetProperty("EvidenceSamples")!;
+            Type sampleType = samplesProperty.PropertyType.GetGenericArguments().Single();
+            object sample = Activator.CreateInstance(sampleType)!;
+            sampleType.GetProperty("CodeUnitId")!.SetValue(sample, Guid.NewGuid());
+            sampleType.GetProperty("Confidence")!.SetValue(sample, "High");
+            sampleType.GetProperty("DetectionSource")!.SetValue(
+                sample,
+                "package.json#json:/dependencies/react");
+            Array samples = Array.CreateInstance(sampleType, 1);
+            samples.SetValue(sample, 0);
+            samplesProperty.SetValue(framework, samples);
+            Array frameworks = Array.CreateInstance(frameworkType, 1);
+            frameworks.SetValue(framework, 0);
+            frameworksProperty.SetValue(summary, frameworks);
+
+            Type auditType = auditProperty.PropertyType;
+            object audit = Activator.CreateInstance(auditType)!;
+            auditType.GetProperty("SampledOutcomeCount")!.SetValue(audit, 1);
+            auditType.GetProperty("TotalOutcomeCount")!.SetValue(audit, 101);
+            auditType.GetProperty("SamplingApplied")!.SetValue(audit, true);
+            PropertyInfo detailsProperty = auditType.GetProperty("Details")!;
+            Type detailType = detailsProperty.PropertyType.GetGenericArguments().Single();
+            object detail = Activator.CreateInstance(detailType)!;
+            detailType.GetProperty("Path")!.SetValue(detail, "audit/000/package.json");
+            detailType.GetProperty("Outcome")!.SetValue(detail, "Skipped");
+            detailType.GetProperty("Reason")!.SetValue(
+                detail,
+                ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported);
+            Array details = Array.CreateInstance(detailType, 1);
+            details.SetValue(detail, 0);
+            detailsProperty.SetValue(audit, details);
+            auditProperty.SetValue(summary, audit);
         }
     }
 }

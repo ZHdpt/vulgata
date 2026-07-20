@@ -121,6 +121,7 @@ builder.Services.AddScoped<ISystemLlmProviderOverrideCoordinator, SystemLlmProvi
 builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
 var frameworkCatalog = FrameworkCatalog.LoadEmbedded();
 builder.Services.AddSingleton(frameworkCatalog);
+builder.Services.AddScoped<IFrameworkEvidenceDetector, FrameworkEvidenceDetector>();
 string profilingDataRoot = builder.Configuration["CodeGraph:DataRootPath"]
     ?? (OperatingSystem.IsLinux()
         ? "/var/lib/vulgata-codegraph"

@@ -36,6 +36,52 @@
                         </ul>
                     </div>
                 }
+
+                @if (_profilingResult.Frameworks.Count > 0)
+                {
+                    <div>
+                        <strong>框架</strong>
+                        <ul>
+                            @foreach (ScanRunFrameworkSummaryDto framework in _profilingResult.Frameworks)
+                            {
+                                <li>
+                                    <code>@framework.FrameworkName</code>：
+                                    置信度 @framework.StrongestConfidence，
+                                    @framework.CodeUnitCount 个代码单元，
+                                    @framework.TotalFactCount 条事实
+                                    @if (framework.EvidenceSamples.Count > 0)
+                                    {
+                                        <ul>
+                                            @foreach (FrameworkEvidenceSampleDto evidence in framework.EvidenceSamples)
+                                            {
+                                                <li>检测依据：<code>@evidence.DetectionSource</code></li>
+                                            }
+                                        </ul>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                @if (_profilingResult.FrameworkEvidenceAudit.TotalOutcomeCount > 0)
+                {
+                    <div>
+                        <strong>框架证据警告</strong>：
+                        @_profilingResult.FrameworkEvidenceAudit.SampledOutcomeCount /
+                        @_profilingResult.FrameworkEvidenceAudit.TotalOutcomeCount
+                        @if (_profilingResult.FrameworkEvidenceAudit.Details.Count > 0)
+                        {
+                            <ul>
+                                @foreach (FrameworkEvidenceAuditDetailDto detail in
+                                    _profilingResult.FrameworkEvidenceAudit.Details)
+                                {
+                                    <li><code>@detail.Path</code>：@detail.Outcome / @detail.Reason</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                }
             }
 
             @if (_loadError is not null)

@@ -13,6 +13,8 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         dbContext.ScanRuns
             .AsNoTracking()
             .Include(scanRun => scanRun.LanguageSummaries)
+            .Include(scanRun => scanRun.CodeUnitFrameworks)
+            .Include(scanRun => scanRun.CandidateOutcomes)
             .SingleOrDefaultAsync(
                 scanRun => scanRun.RepositoryId == repositoryId && scanRun.Id == scanRunId,
                 cancellationToken);

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Shared.Repositories;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
 
@@ -56,7 +57,9 @@ public sealed class RepositoryProfilingCoordinator(
     IScanCandidateEnumerator candidateEnumerator,
     ICodeGraphProvider codeGraphProvider,
     Vulgata.Infrastructure.CodeGraph.CodeGraphOptions options,
-    ILogger<RepositoryProfilingCoordinator> logger)
+    ILogger<RepositoryProfilingCoordinator> logger,
+    IFrameworkEvidenceDetector frameworkEvidenceDetector,
+    FrameworkCatalog frameworkCatalog)
     : IRepositoryProfilingCoordinator
 {
     public async Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
@@ -203,13 +206,76 @@ public sealed class RepositoryProfilingCoordinator(
             return new(outcome, Map(scanRun), display);
         }
 
+        FrameworkEvidenceDetectionResult frameworkDetection =
+            await frameworkEvidenceDetector.DetectDetailedAsync(
+                workingCopy.WorkingCopyPath!,
+                cancellationToken);
+        if (!frameworkDetection.Succeeded)
+        {
+            const string display = "框架证据检测失败。";
+            logger.LogError(
+                "Framework evidence detection failed for {RepositoryId}: {Reason}",
+                repository.Id,
+                frameworkDetection.Error);
+            scanRun.Fail(display, DateTimeOffset.UtcNow);
+            await scanRunRepository.SaveChangesAsync(cancellationToken);
+            return new(RepositoryProfilingOutcome.ProviderFailure, Map(scanRun), display);
+        }
+
+        scanRun.SetFrameworkEvidenceAuditTotalOutcomeCount(
+            frameworkDetection.TotalAuditOutcomeCount);
         IReadOnlyDictionary<string, string> languagesByPath =
             ReconcileProviderLanguages(provider.CodeUnits, eligiblePaths);
+        var applicableFrameworksByPath =
+            new Dictionary<string, FrameworkEvidenceDetectionResult>(StringComparer.Ordinal);
+        foreach ((string path, string language) in languagesByPath.OrderBy(
+                     pair => pair.Key,
+                     StringComparer.Ordinal))
+        {
+            FrameworkEvidenceDetectionResult applicable =
+                frameworkEvidenceDetector.SelectApplicable(
+                    frameworkDetection,
+                    path,
+                    language);
+            if (!applicable.Succeeded)
+            {
+                const string display = "框架证据检测失败。";
+                logger.LogError(
+                    "Framework evidence selection failed for {RepositoryId}: {Reason}",
+                    repository.Id,
+                    applicable.Error);
+                scanRun.Fail(display, DateTimeOffset.UtcNow);
+                await scanRunRepository.SaveChangesAsync(cancellationToken);
+                return new(RepositoryProfilingOutcome.ProviderFailure, Map(scanRun), display);
+            }
+
+            applicableFrameworksByPath.Add(path, applicable);
+        }
+
         var endpointUnits = new Dictionary<string, CodeUnit>(StringComparer.Ordinal);
         var structuralUnits = new Dictionary<(string Path, int Start, int End, string Symbol, CodeUnitType Type), CodeUnit>();
         var hashes = new Dictionary<string, (string Prefix, string Full)>(StringComparer.Ordinal);
         var providerAuditOutcomes = new List<ScanCandidateOutcome>();
         var auditKeys = new HashSet<(string Path, ScanCandidateOutcomeKind Outcome, string Reason)>();
+        foreach (FrameworkEvidenceAuditOutcome audit in frameworkDetection.AuditOutcomes)
+        {
+            string auditPath = NormalizeAuditPath(audit.ArtifactPath);
+            if (!auditKeys.Add((auditPath, audit.Outcome, audit.Reason)))
+            {
+                continue;
+            }
+
+            var candidateOutcome = new ScanCandidateOutcome(
+                scanRun.Id,
+                auditPath,
+                audit.Outcome,
+                audit.Reason,
+                0,
+                DateTimeOffset.UtcNow);
+            providerAuditOutcomes.Add(candidateOutcome);
+            scanRun.CandidateOutcomes.Add(candidateOutcome);
+        }
+
         foreach (ProviderCodeUnit providerUnit in provider.CodeUnits)
         {
             if (!eligiblePaths.Contains(providerUnit.RelativePath) ||
@@ -253,6 +319,26 @@ public sealed class RepositoryProfilingCoordinator(
                 {
                     structuralUnits.Add(structuralKey, unit);
                     scanRun.CodeUnits.Add(unit);
+                    foreach (PackageEvidence evidence in
+                             applicableFrameworksByPath[providerUnit.RelativePath].Evidence)
+                    {
+                        FrameworkCatalogEntry catalogEntry =
+                            frameworkCatalog.FindExact(evidence.PackageCoordinate)
+                            ?? throw new InvalidOperationException(
+                                "Framework evidence referenced an unknown catalog coordinate.");
+                        var framework = new CodeUnitFramework(
+                            unit.Id,
+                            scanRun.Id,
+                            repository.Id,
+                            catalogEntry.FrameworkName,
+                            evidence.Relationship == PackageEvidenceRelationship.Direct
+                                ? FrameworkConfidence.High
+                                : FrameworkConfidence.Medium,
+                            evidence.DetectionSource,
+                            DateTimeOffset.UtcNow);
+                        unit.Frameworks.Add(framework);
+                        scanRun.CodeUnitFrameworks.Add(framework);
+                    }
                 }
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException)
@@ -385,7 +471,7 @@ public sealed class RepositoryProfilingCoordinator(
                 scanRun.CodeUnits,
                 scanRun.CodeUnitEdges,
                 scanRun.UnresolvedRelationships,
-                Array.Empty<CodeUnitFramework>(),
+                scanRun.CodeUnitFrameworks,
                 languageSummaries,
                 providerAuditOutcomes);
             await scanRunRepository.PersistCompletedProfileAsync(draft, cancellationToken);
@@ -518,31 +604,101 @@ public sealed class RepositoryProfilingCoordinator(
         }
     }
 
-    private static ScanRunSummaryDto Map(ScanRun run) => new()
+    private static ScanRunSummaryDto Map(ScanRun run)
     {
-        Id = run.Id,
-        RepositoryId = run.RepositoryId,
-        Status = run.Status switch
+        const int sharedEvidenceDetailLimit = 100;
+        CodeUnitFramework[] sortedFacts =
+        [
+            .. run.CodeUnitFrameworks
+                .OrderBy(fact => fact.FrameworkName, StringComparer.Ordinal)
+                .ThenBy(fact => fact.CodeUnitId)
+                .ThenBy(fact => fact.Confidence == FrameworkConfidence.High ? 0 : 1)
+                .ThenBy(fact => fact.DetectionSource, StringComparer.Ordinal),
+        ];
+        var remainingDetails = sharedEvidenceDetailLimit;
+        var frameworks = new List<ScanRunFrameworkSummaryDto>();
+        foreach (IGrouping<string, CodeUnitFramework> group in sortedFacts.GroupBy(
+                     fact => fact.FrameworkName,
+                     StringComparer.Ordinal))
         {
-            ScanRunStatus.Profiling => "分析中",
-            ScanRunStatus.Completed => "已完成",
-            ScanRunStatus.Failed => "失败",
-            ScanRunStatus.Aborted => "已中止",
-            _ => "未知",
-        },
-        ParsedFileCount = run.ParsedFileCount,
-        TotalCandidateFileCount = run.TotalCandidateFileCount,
-        NeedsHumanReview = run.NeedsHumanReview,
-        StartedAt = run.StartedAt,
-        CompletedAt = run.CompletedAt,
-        Message = run.TerminalMessage,
-        Languages = run.LanguageSummaries
-            .OrderBy(summary => summary.Language, StringComparer.Ordinal)
-            .Select(summary => new ScanRunLanguageSummaryDto
+            CodeUnitFramework[] facts = [.. group];
+            FrameworkEvidenceSampleDto[] samples =
+            [
+                .. facts.Take(remainingDetails)
+                    .Select(fact => new FrameworkEvidenceSampleDto
+                    {
+                        CodeUnitId = fact.CodeUnitId,
+                        Confidence = fact.Confidence.ToString(),
+                        DetectionSource = fact.DetectionSource,
+                    }),
+            ];
+            remainingDetails -= samples.Length;
+            frameworks.Add(new ScanRunFrameworkSummaryDto
             {
-                Language = summary.Language,
-                DistinctFileCount = summary.DistinctFileCount,
-            })
-            .ToArray(),
-    };
+                FrameworkName = group.Key,
+                CodeUnitCount = facts.Select(fact => fact.CodeUnitId).Distinct().Count(),
+                StrongestConfidence = facts.Any(
+                    fact => fact.Confidence == FrameworkConfidence.High)
+                    ? FrameworkConfidence.High.ToString()
+                    : FrameworkConfidence.Medium.ToString(),
+                TotalFactCount = facts.Length,
+                EvidenceSamples = samples,
+            });
+        }
+
+        FrameworkEvidenceAuditDetailDto[] auditDetails =
+        [
+            .. run.CandidateOutcomes
+                .Where(outcome => outcome.ReasonOrCategory.StartsWith(
+                    "FrameworkEvidence",
+                    StringComparison.Ordinal))
+                .OrderBy(outcome => outcome.FilePath, StringComparer.Ordinal)
+                .ThenBy(outcome => outcome.Outcome)
+                .ThenBy(outcome => outcome.ReasonOrCategory, StringComparer.Ordinal)
+                .Take(remainingDetails)
+                .Select(outcome => new FrameworkEvidenceAuditDetailDto
+                {
+                    Path = outcome.FilePath,
+                    Outcome = outcome.Outcome.ToString(),
+                    Reason = outcome.ReasonOrCategory,
+                }),
+        ];
+
+        return new ScanRunSummaryDto
+        {
+            Id = run.Id,
+            RepositoryId = run.RepositoryId,
+            Status = run.Status switch
+            {
+                ScanRunStatus.Profiling => "分析中",
+                ScanRunStatus.Completed => "已完成",
+                ScanRunStatus.Failed => "失败",
+                ScanRunStatus.Aborted => "已中止",
+                _ => "未知",
+            },
+            ParsedFileCount = run.ParsedFileCount,
+            TotalCandidateFileCount = run.TotalCandidateFileCount,
+            NeedsHumanReview = run.NeedsHumanReview,
+            StartedAt = run.StartedAt,
+            CompletedAt = run.CompletedAt,
+            Message = run.TerminalMessage,
+            Languages = run.LanguageSummaries
+                .OrderBy(summary => summary.Language, StringComparer.Ordinal)
+                .Select(summary => new ScanRunLanguageSummaryDto
+                {
+                    Language = summary.Language,
+                    DistinctFileCount = summary.DistinctFileCount,
+                })
+                .ToArray(),
+            Frameworks = frameworks,
+            FrameworkEvidenceAudit = new FrameworkEvidenceAuditSummaryDto
+            {
+                SampledOutcomeCount = auditDetails.Length,
+                TotalOutcomeCount = run.FrameworkEvidenceAuditTotalOutcomeCount,
+                SamplingApplied =
+                    run.FrameworkEvidenceAuditTotalOutcomeCount > auditDetails.Length,
+                Details = auditDetails,
+            },
+        };
+    }
 }

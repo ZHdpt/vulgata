@@ -34,6 +34,7 @@ public sealed class ScanRun
     public ScanRunStatus Status { get; private set; }
     public int TotalCandidateFileCount { get; private set; }
     public int ParsedFileCount { get; private set; }
+    public int FrameworkEvidenceAuditTotalOutcomeCount { get; private set; }
     public int ProviderProcessTimeoutSeconds { get; private set; }
     public DateTimeOffset StartedAt { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
@@ -56,6 +57,13 @@ public sealed class ScanRun
         ArgumentOutOfRangeException.ThrowIfNegative(count);
         EnsureProfiling();
         TotalCandidateFileCount = count;
+    }
+
+    public void SetFrameworkEvidenceAuditTotalOutcomeCount(int count)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        EnsureProfiling();
+        FrameworkEvidenceAuditTotalOutcomeCount = count;
     }
 
     public void Complete(int parsedFileCount, int codeUnitCount, DateTimeOffset now, string? message = null)

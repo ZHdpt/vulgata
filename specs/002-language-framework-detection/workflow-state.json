@@ -782,7 +782,7 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T05:10:00.0000000Z",
+      "observed_at": "2026-07-20T04:10:00.0000000Z",
       "summary": "T016-T019 reached 17 of 17 GREEN for the closed catalog, exact committed-manifest evidence parsers, paired lock handling, and git-only non-executing inventory.",
       "raw_output_path": null
     },
@@ -797,7 +797,7 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T05:35:00.0000000Z",
+      "observed_at": "2026-07-20T04:45:00.0000000Z",
       "summary": "T020-T023 reached 25 of 25 GREEN for parser-language-compatible deepest scope, ambiguity suppression, direct-over-lock ranking, duplicate collapse, and bounded closed evidence locators.",
       "raw_output_path": null
     },
@@ -812,7 +812,7 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T06:00:00.0000000Z",
+      "observed_at": "2026-07-20T05:20:00.0000000Z",
       "summary": "T024-T025 reached 29 of 29 GREEN for 8 MiB and depth-64 per-artifact bounds, Repository-relative and reparse safety, fixed Chinese audits, and isolated continuation.",
       "raw_output_path": null
     },
@@ -828,35 +828,60 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests; dotnet build Vulgata.Core; dotnet build Vulgata.Infrastructure",
       "exit_code": 0,
-      "observed_at": "2026-07-20T06:25:00.0000000Z",
+      "observed_at": "2026-07-20T05:50:00.0000000Z",
       "summary": "T026-T027 reached 37 of 37 GREEN with exact Repository-global production limits and typed fail-closed zero-fact results for global overflow or unexpected detector failure.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/11",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+        "tests/Vulgata.Tests/RepositoryApiTests.cs",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+        "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+        "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor"
+      ],
+      "command": "dotnet test --filter RepositoryProfilingTests|RepositoryApiTests|DashboardPanelTests|FrameworkDetectionTests; dotnet ef migrations has-pending-model-changes --context VulgataDbContext; dotnet build Vulgata.Web",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T06:11:58.6590077Z",
+      "summary": "T028-T029 reached 80 of 80 combined GREEN with one Repository detector pass, pure Code Unit fan-out, atomic framework persistence, durable complete audit counts, deterministic shared samples, exact Chinese labels, no pending model changes, and a zero-error Web build.",
       "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-detector-green-20260720T062500Z-t027",
+    "checkpoint_id": "bmad-4-2-us2-green-20260720T061158Z-t029",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "specs/002-language-framework-detection/tasks.md",
       "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+      "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
       "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+      "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+      "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
       "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+      "tests/Vulgata.Tests/DashboardPanelTests.cs",
+      "tests/Vulgata.Tests/RepositoryApiTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/7",
-      "4-2-language-and-framework-detection/implement/8",
-      "4-2-language-and-framework-detection/implement/9",
-      "4-2-language-and-framework-detection/implement/10"
+      "4-2-language-and-framework-detection/implement/11"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-20T06:25:00.0000000Z"
+  "updated_at": "2026-07-20T06:11:58.6590077Z"
 }

@@ -198,20 +198,32 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         string parserLanguage,
         CancellationToken cancellationToken = default)
     {
+        FrameworkEvidenceDetectionResult detection = await DetectDetailedAsync(
+            workingCopyPath,
+            cancellationToken);
+        return SelectApplicable(detection, codeUnitPath, parserLanguage);
+    }
+
+    public FrameworkEvidenceDetectionResult SelectApplicable(
+        FrameworkEvidenceDetectionResult detection,
+        string codeUnitPath,
+        string parserLanguage)
+    {
+        ArgumentNullException.ThrowIfNull(detection);
+        if (!detection.Succeeded)
+        {
+            return detection;
+        }
+
         ArgumentException.ThrowIfNullOrWhiteSpace(codeUnitPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(parserLanguage);
         string normalizedCodeUnitPath = NormalizeRelativePath(codeUnitPath);
         if (normalizedCodeUnitPath.Length > _maximumRepositoryRelativePathLength)
         {
-            return FrameworkEvidenceDetectionResult.Success([], [], 0);
-        }
-
-        FrameworkEvidenceDetectionResult detection = await DetectDetailedAsync(
-            workingCopyPath,
-            cancellationToken);
-        if (!detection.Succeeded)
-        {
-            return detection;
+            return FrameworkEvidenceDetectionResult.Success(
+                [],
+                detection.AuditOutcomes,
+                detection.TotalAuditOutcomeCount);
         }
 
         IReadOnlyList<PackageEvidence> detected = detection.Evidence;

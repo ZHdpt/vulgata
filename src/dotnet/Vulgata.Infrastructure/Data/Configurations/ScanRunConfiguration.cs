@@ -14,6 +14,9 @@ internal sealed class ScanRunConfiguration : IEntityTypeConfiguration<ScanRun>
         builder.Property(scanRun => scanRun.Id).ValueGeneratedNever();
         builder.Property(scanRun => scanRun.Status).HasConversion<string>().HasMaxLength(32);
         builder.Property(scanRun => scanRun.TerminalMessage).HasMaxLength(512);
+        builder.ToTable(table => table.HasCheckConstraint(
+            "CK_ScanRuns_FrameworkEvidenceAuditTotalOutcomeCount_NonNegative",
+            "\"FrameworkEvidenceAuditTotalOutcomeCount\" >= 0"));
         builder.HasIndex(scanRun => new { scanRun.RepositoryId, scanRun.StartedAt });
         builder.HasOne(scanRun => scanRun.Repository)
             .WithMany()

@@ -34,6 +34,11 @@ public interface IFrameworkEvidenceDetector
     Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
         string workingCopyPath,
         CancellationToken cancellationToken = default);
+
+    FrameworkEvidenceDetectionResult SelectApplicable(
+        FrameworkEvidenceDetectionResult detection,
+        string codeUnitPath,
+        string parserLanguage);
 }
 
 public enum PackageEvidenceRelationship

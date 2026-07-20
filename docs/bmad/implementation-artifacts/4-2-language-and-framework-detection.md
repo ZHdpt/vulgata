@@ -326,6 +326,19 @@ unchanged.
 - Production limits are fixed at 8 MiB per artifact, 64 MiB aggregate, 1,000
   supported artifacts, 100,000 parsed entries, 250,000 candidate facts, 64
   final framework facts per Code Unit, and 100 retained audit details.
+- User Story 2 T028-T029 is GREEN: one bounded Repository detector pass feeds
+  pure parser-language/scope-compatible Code Unit fan-out; framework facts and
+  the complete framework-audit count persist in the same atomic draft and
+  project through the authorized Repository overview.
+- The accepted response contract exposed a storage omission: sampled framework
+  audit details could not reconstruct a complete count after reload. The
+  minimal remediation adds only
+  `ScanRun.FrameworkEvidenceAuditTotalOutcomeCount`, its nonnegative constraint,
+  and migration `20260720060442_FrameworkEvidenceAuditCount`. This changes no
+  approved parsing/filtering behavior or PRD requirement.
+- Combined framework, profiling, API, and component verification passes 80/80;
+  the overview uses the shared 100-detail budget and renders `框架`, `置信度`,
+  `检测依据`, and `框架证据警告`. EF reports no pending model changes.
 - Implementation checkpoint:
   `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
   (pending Git binding).
@@ -363,5 +376,17 @@ unchanged.
 - `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs`
 - `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`
 - `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj`
+- `src/dotnet/Vulgata.Core/Entities/ScanRun.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`
+- `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`
+- `src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor`
+- `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`
 - `src/dotnet/Vulgata.Web/Program.cs`
+- `tests/Vulgata.Tests/DashboardPanelTests.cs`
+- `tests/Vulgata.Tests/RepositoryApiTests.cs`
+- `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
 - `tests/Vulgata.Tests/FrameworkDetectionTests.cs`

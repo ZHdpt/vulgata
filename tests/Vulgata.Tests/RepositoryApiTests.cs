@@ -92,6 +92,55 @@ public sealed class RepositoryApiTests
     }
 
     [Fact]
+    public async Task ManagementScanRunRoutes_AuthorizedResponse_ContainsSortedFrameworksAndSharedAuditSamplesAsync()
+    {
+        ScanRunSummaryDto summary = CreateSummaryWithFrameworkOverview();
+        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        const string email = "story42.frameworks.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+        string route =
+            $"/api/repositories/standalone/{summary.RepositoryId}/scan-runs/{summary.Id}";
+
+        using HttpResponseMessage response = await client.GetAsync(route);
+        using JsonDocument document = JsonDocument.Parse(
+            await response.Content.ReadAsByteArrayAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement frameworks = document.RootElement.GetProperty("frameworks");
+        Assert.Equal(
+            ["express", "react"],
+            frameworks.EnumerateArray()
+                .Select(item => item.GetProperty("frameworkName").GetString()!)
+                .ToArray());
+        JsonElement react = frameworks[1];
+        Assert.Equal("High", react.GetProperty("strongestConfidence").GetString());
+        Assert.Equal(2, react.GetProperty("codeUnitCount").GetInt32());
+        Assert.Equal(3, react.GetProperty("totalFactCount").GetInt32());
+        Assert.Equal(
+            [
+                "package.json#json:/dependencies/react",
+                "package-lock.json#json:/packages/node_modules~1react",
+            ],
+            react.GetProperty("evidenceSamples")
+                .EnumerateArray()
+                .Select(item => item.GetProperty("detectionSource").GetString()!)
+                .ToArray());
+        JsonElement audit = document.RootElement.GetProperty("frameworkEvidenceAudit");
+        Assert.Equal(40, audit.GetProperty("sampledOutcomeCount").GetInt32());
+        Assert.Equal(101, audit.GetProperty("totalOutcomeCount").GetInt32());
+        Assert.True(audit.GetProperty("samplingApplied").GetBoolean());
+        int sharedDetails = frameworks.EnumerateArray()
+            .Sum(item => item.GetProperty("evidenceSamples").GetArrayLength()) +
+            audit.GetProperty("details").GetArrayLength();
+        Assert.InRange(sharedDetails, 1, 100);
+        string body = document.RootElement.GetRawText();
+        Assert.DoesNotContain("C:\\", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("RAW-SECRET", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ManagementScanRunRoutes_WhenVisibilityIsRedacted_ReturnNotFoundWithoutLanguageDisclosureAsync()
     {
         using WebApplicationFactory<Program> factory = CreateFactory(null);
@@ -117,6 +166,8 @@ public sealed class RepositoryApiTests
             Assert.Contains("扫描记录不存在", body, StringComparison.Ordinal);
             Assert.DoesNotContain("c_sharp", body, StringComparison.Ordinal);
             Assert.DoesNotContain("typescript", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("react", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("检测依据", body, StringComparison.Ordinal);
         }
     }
 
@@ -145,6 +196,8 @@ public sealed class RepositoryApiTests
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             Assert.DoesNotContain("c_sharp", body, StringComparison.Ordinal);
             Assert.DoesNotContain("typescript", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("react", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("检测依据", body, StringComparison.Ordinal);
         }
     }
 
@@ -236,6 +289,88 @@ public sealed class RepositoryApiTests
         values.SetValue(CreateLanguageValue(elementType, "zig_0+#.-", 1), 2);
         property.SetValue(summary, values);
         return summary;
+    }
+
+    private static ScanRunSummaryDto CreateSummaryWithFrameworkOverview()
+    {
+        ScanRunSummaryDto summary = CreateSummaryWithLanguages();
+        PropertyInfo? frameworksProperty = typeof(ScanRunSummaryDto).GetProperty("Frameworks");
+        PropertyInfo? auditProperty = typeof(ScanRunSummaryDto).GetProperty("FrameworkEvidenceAudit");
+        Assert.NotNull(frameworksProperty);
+        Assert.NotNull(auditProperty);
+
+        Type frameworkType = frameworksProperty!.PropertyType.GetGenericArguments().Single();
+        Array frameworks = Array.CreateInstance(frameworkType, 2);
+        frameworks.SetValue(CreateFrameworkSummary(
+            frameworkType,
+            "react",
+            2,
+            "High",
+            3,
+            [
+                (Guid.Parse("00000000-0000-0000-0000-000000000001"), "High", "package.json#json:/dependencies/react"),
+                (Guid.Parse("00000000-0000-0000-0000-000000000002"), "Medium", "package-lock.json#json:/packages/node_modules~1react"),
+            ]), 0);
+        frameworks.SetValue(CreateFrameworkSummary(
+            frameworkType,
+            "express",
+            1,
+            "High",
+            1,
+            []), 1);
+        frameworksProperty.SetValue(summary, frameworks);
+
+        Type auditType = auditProperty!.PropertyType;
+        object audit = Activator.CreateInstance(auditType)!;
+        auditType.GetProperty("SampledOutcomeCount")!.SetValue(audit, 40);
+        auditType.GetProperty("TotalOutcomeCount")!.SetValue(audit, 101);
+        auditType.GetProperty("SamplingApplied")!.SetValue(audit, true);
+        PropertyInfo detailsProperty = auditType.GetProperty("Details")!;
+        Type detailType = detailsProperty.PropertyType.GetGenericArguments().Single();
+        Array details = Array.CreateInstance(detailType, 40);
+        for (var index = 0; index < details.Length; index++)
+        {
+            object detail = Activator.CreateInstance(detailType)!;
+            detailType.GetProperty("Path")!.SetValue(detail, $"audit/{index:D3}/package.json");
+            detailType.GetProperty("Outcome")!.SetValue(detail, "Skipped");
+            detailType.GetProperty("Reason")!.SetValue(
+                detail,
+                ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported);
+            details.SetValue(detail, index);
+        }
+
+        detailsProperty.SetValue(audit, details);
+        auditProperty.SetValue(summary, audit);
+        return summary;
+    }
+
+    private static object CreateFrameworkSummary(
+        Type frameworkType,
+        string name,
+        int codeUnitCount,
+        string strongestConfidence,
+        int totalFactCount,
+        IReadOnlyList<(Guid CodeUnitId, string Confidence, string DetectionSource)> samples)
+    {
+        object framework = Activator.CreateInstance(frameworkType)!;
+        frameworkType.GetProperty("FrameworkName")!.SetValue(framework, name);
+        frameworkType.GetProperty("CodeUnitCount")!.SetValue(framework, codeUnitCount);
+        frameworkType.GetProperty("StrongestConfidence")!.SetValue(framework, strongestConfidence);
+        frameworkType.GetProperty("TotalFactCount")!.SetValue(framework, totalFactCount);
+        PropertyInfo samplesProperty = frameworkType.GetProperty("EvidenceSamples")!;
+        Type sampleType = samplesProperty.PropertyType.GetGenericArguments().Single();
+        Array values = Array.CreateInstance(sampleType, samples.Count);
+        for (var index = 0; index < samples.Count; index++)
+        {
+            object sample = Activator.CreateInstance(sampleType)!;
+            sampleType.GetProperty("CodeUnitId")!.SetValue(sample, samples[index].CodeUnitId);
+            sampleType.GetProperty("Confidence")!.SetValue(sample, samples[index].Confidence);
+            sampleType.GetProperty("DetectionSource")!.SetValue(sample, samples[index].DetectionSource);
+            values.SetValue(sample, index);
+        }
+
+        samplesProperty.SetValue(framework, values);
+        return framework;
     }
 
     private static object CreateLanguageValue(Type type, string language, int distinctFileCount)

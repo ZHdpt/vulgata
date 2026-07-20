@@ -413,6 +413,9 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<long?>("DurationMilliseconds")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("FrameworkEvidenceAuditTotalOutcomeCount")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("NeedsHumanReview")
                         .HasColumnType("boolean");
 
@@ -444,7 +447,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.HasIndex("RepositoryId", "StartedAt");
 
-                    b.ToTable("ScanRuns", "vulgata");
+                    b.ToTable("ScanRuns", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_ScanRuns_FrameworkEvidenceAuditTotalOutcomeCount_NonNegative", "\"FrameworkEvidenceAuditTotalOutcomeCount\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.ScanRunLanguageSummary", b =>
