@@ -911,32 +911,66 @@
       "observed_at": "2026-07-20T08:19:22.5689479Z",
       "summary": "T035-T044 reached 77 of 77 affected GREEN, 69 of 69 accepted US4 quickstart GREEN, and 2 of 2 focused final-commit recovery GREEN. Provider/global failures are atomic, individual evidence is isolated and bounded, durable and user-visible diagnostics are closed Chinese, revoked visibility is rechecked before disclosure, every recorded framework retains a strongest-confidence safe source within the shared 100-detail cap, and the forbidden-scope audit is empty.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/15",
+      "kind": "human-approval",
+      "stage": "implement",
+      "source_commit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-20T09:22:24.2511172Z",
+      "summary": "User approved the fixture-only remediation after pinned CodeGraphContext 0.5.1 was proven to synthesize a Python Function for a zero-byte .py file while ten other named zero-byte language fixtures exposed only File(null). The accepted intent moved to empty_file.cs without changing production query, parsing, filtering, or Scan behavior.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/16",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
+      ],
+      "command": "docker build --iidfile from docker/Dockerfile; dotnet test --filter FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract; dotnet ef migrations script upgrade and rollback; dotnet ef migrations has-pending-model-changes; dotnet build Vulgata.Web; dotnet test Vulgata.Tests",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T09:22:24.2511172Z",
+      "summary": "T045-T049 reached GREEN on exact image sha256:7968d5b45ab2f420c593610dfd2ae09bb84db40c1a80599f63582379f6a6e54c. Root evidence AC4F8C4CCD5AC8C6EA056834DE35B82CFD3DA4C2C8B15382801B98ADA14D36BC proves 139/138 complete rows, exact hashes, parser-language reconciliation, one empty C# UnknownLanguage with zero retained units, atomic drift rejection, immutable snapshot, complete cleanup, and zero forbidden retention. Migration compatibility passed 3 of 3, the full suite passed 370 of 370, and the Web build had zero errors.",
+      "raw_output_path": "TestResults/codegraph-provider-contract/8e8d3333adb3b5845f19740b3d330718ac685bacfb253caffd5b0f5951915b92/evidence.json"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-us4-green-20260720T081922Z-t044",
+    "checkpoint_id": "bmad-4-2-final-image-green-20260720T092224Z-t049",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "specs/002-language-framework-detection/tasks.md",
-      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
-      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-      "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
-      "tests/Vulgata.Tests/DashboardPanelTests.cs",
-      "tests/Vulgata.Tests/RepositoryApiTests.cs",
-      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+      "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.py",
+      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs",
+      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py",
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/14"
+      "4-2-language-and-framework-detection/implement/15",
+      "4-2-language-and-framework-detection/implement/16"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-20T08:19:22.5689479Z"
+  "updated_at": "2026-07-20T09:22:24.2511172Z"
 }

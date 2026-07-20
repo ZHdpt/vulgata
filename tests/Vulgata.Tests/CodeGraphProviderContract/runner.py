@@ -3,32 +3,41 @@ import hmac
 import importlib.metadata
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.request
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 
-EXPECTED_A = "07b13dcb0b95a2ab26da930e9fcbafef7cde27488df99b0634d860ef0767d9a8"
+EXPECTED_A = "dbba4ff5ac4834ae2857307dad36c177d9655ac951744c646f9c6e54d3923f33"
 EXPECTED_B = "40d2da3b9b520b3c4eca3fd7c3bad4f4fb10643736e3a9e9b4ddf62c92adc096"
 EXPECTED_LOCK = "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95"
 EXPECTED_DISTRIBUTION = "3cd79efe6c9525d69ae250c063404b500ef7595b6c63284d841c78a1ecf48658"
 EVIDENCE_SCHEMA = "cgc-provider-contract-evidence-v2"
 MAX_EVIDENCE_BYTES = 16 * 1024
 MAX_RESPONSE_BYTES = 64 * 1024 * 1024
+MAX_VULGATA_ROWS = 250000
+PRIVATE_TOOL_LIMITS = '{"execute_cypher_query":250001}'
+LANGUAGE_PATTERN = re.compile(r"^[a-z][a-z0-9_+#.-]{0,63}$")
 SAFE_NAMES = {
     "status", "success", "error", "message", "data", "query", "record_count", "results",
     "record_kind", "provider_kind", "path", "name", "start_line", "end_line",
+    "parser_language", "truncated", "result_limit",
     "relationship_kind", "source_provider_kind", "source_path", "source_name",
     "source_start_line", "source_end_line", "target_provider_kind", "target_path",
     "target_name", "target_start_line", "target_end_line",
 }
-NODE_FIELDS = {"record_kind", "provider_kind", "path", "name", "start_line", "end_line"}
+NODE_FIELDS = {
+    "record_kind", "provider_kind", "path", "name", "start_line", "end_line",
+    "parser_language",
+}
 RELATIONSHIP_FIELDS = {
     "record_kind", "relationship_kind", "source_provider_kind", "source_path",
     "source_name", "source_start_line", "source_end_line", "target_provider_kind",
@@ -182,8 +191,20 @@ def observe_json(raw, http_status, memory_key):
     return observation
 
 
+def decode_json_strict(raw):
+    def reject_duplicates(pairs):
+        result = {}
+        for name, value in pairs:
+            if name in result:
+                raise RuntimeError("duplicate-json-property")
+            result[name] = value
+        return result
+
+    return json.loads(raw.decode("utf-8"), object_pairs_hook=reject_duplicates)
+
+
 def parse_envelope(raw, expected_query, expected_fields):
-    payload = json.loads(raw.decode("utf-8"))
+    payload = decode_json_strict(raw)
     if not isinstance(payload, dict):
         raise RuntimeError("envelope-root")
     if set(payload) != {"status", "message", "data", "error"}:
@@ -197,6 +218,8 @@ def parse_envelope(raw, expected_query, expected_fields):
     data = payload.get("data")
     if not isinstance(data, dict):
         raise RuntimeError("envelope-data")
+    if set(data) != {"success", "query", "record_count", "results"}:
+        raise RuntimeError("envelope-data-properties")
     if (
         data.get("success") is not True
         or data.get("query") != expected_query
@@ -213,6 +236,15 @@ def parse_envelope(raw, expected_query, expected_fields):
     return data["results"], data["query"]
 
 
+def normalize_language(value):
+    if not isinstance(value, str):
+        raise RuntimeError("parser-language-type")
+    normalized = unicodedata.normalize("NFKC", value).strip().lower()
+    if not LANGUAGE_PATTERN.fullmatch(normalized):
+        raise RuntimeError("parser-language-value")
+    return normalized
+
+
 def normalize_path(value):
     if value is None:
         return ""
@@ -220,6 +252,102 @@ def normalize_path(value):
     if not normalized or any(part in ("", ".", "..") for part in normalized.split("/")):
         raise RuntimeError("endpoint-path")
     return normalized
+
+
+def select_file_language(values):
+    normalized = {normalize_language(value) for value in values}
+    if len(normalized) > 1:
+        raise RuntimeError("parser-language-conflict")
+    return next(iter(normalized)) if normalized else None
+
+
+def validate_combined_bound(first_count, second_count):
+    if first_count + second_count > MAX_VULGATA_ROWS:
+        raise RuntimeError("combined-row-bound")
+
+
+def match_fixture_path(value, candidate_paths, required):
+    normalized = normalize_path(value)
+    matches = {
+        candidate
+        for candidate in candidate_paths
+        if normalized == candidate or normalized.endswith("/" + candidate)
+    }
+    if len(matches) == 1:
+        return next(iter(matches))
+    if required:
+        raise RuntimeError("structural-path-outside-fixture")
+    return None
+
+
+def reconcile_languages(rows, fixture):
+    candidate_paths = {
+        path.relative_to(fixture).as_posix()
+        for path in fixture.rglob("*")
+        if path.is_file()
+        and not path.is_symlink()
+        and path.suffix in {".cs", ".py"}
+    }
+    structural_tokens = defaultdict(set)
+    structural_observations = 0
+    file_null_observations = 0
+    for row in rows:
+        value = row["parser_language"]
+        if row["provider_kind"] == "File":
+            if value is not None:
+                raise RuntimeError("file-language-authority")
+            file_null_observations += 1
+            continue
+        if value is not None:
+            if not normalize_path(row["path"]):
+                continue
+            path = match_fixture_path(row["path"], candidate_paths, required=True)
+            structural_tokens[path].add(normalize_language(value))
+            structural_observations += 1
+
+    file_languages = {
+        path: select_file_language(values)
+        for path, values in structural_tokens.items()
+        if values
+    }
+    unknown_paths = candidate_paths.difference(file_languages)
+    empty_relative = "empty_file.cs"
+    if unknown_paths != {empty_relative}:
+        raise RuntimeError("unknown-language-reconciliation")
+    if (fixture / empty_relative).read_bytes() != b"":
+        raise RuntimeError("empty-file-fixture-drift")
+
+    retained_rows = [
+        row for row in rows
+        if match_fixture_path(row["path"], candidate_paths, required=False) in file_languages
+    ]
+    if any(
+        match_fixture_path(row["path"], candidate_paths, required=False) not in file_languages
+        for row in retained_rows
+    ):
+        raise RuntimeError("unassigned-code-unit")
+    return {
+        "aliasObserved": all("parser_language" in row for row in rows),
+        "structuralBindingsObserved": structural_observations > 0,
+        "fileNullObserved": file_null_observations > 0,
+        "oneIdentityPerPath": all(len(values) == 1 for values in structural_tokens.values()),
+        "allCodeUnitsAssigned": len(retained_rows) == sum(
+            1 for row in rows
+            if match_fixture_path(row["path"], candidate_paths, required=False) in file_languages),
+        "emptyFileUnknownLanguage": len(unknown_paths) == 1,
+        "emptyFileRetainedCodeUnitCount": sum(
+            1 for row in retained_rows
+            if match_fixture_path(row["path"], candidate_paths, required=False) in unknown_paths),
+        "unknownLanguageCount": len(unknown_paths),
+    }, unknown_paths, candidate_paths
+
+
+def rejected(action):
+    try:
+        action()
+    except (RuntimeError, ValueError, TypeError, json.JSONDecodeError):
+        return True
+    return False
 
 
 def endpoint(kind, path, name, start, end):
@@ -343,7 +471,18 @@ def main():
         "relationshipKinds": {},
         "filteredTargetUnresolvedOnly": False,
         "projectionEndpointIdentityEqual": False,
+        "parserLanguage": {},
     }
+    completeness = {
+        "privateLimitExact": False,
+        "projectionATruncationMetadataAbsent": False,
+        "projectionBTruncationMetadataAbsent": False,
+        "injectedTruncationRejected": False,
+        "queryDriftRejected": False,
+        "languageConflictRejected": False,
+        "combinedBoundRejected": False,
+    }
+    row_counts = {"projectionA": 0, "projectionB": 0, "combined": 0}
     try:
         if sha256(projection_a) != EXPECTED_A or sha256(projection_b) != EXPECTED_B:
             raise RuntimeError("query-hash-drift")
@@ -362,6 +501,11 @@ def main():
         port = reserve_port()
         environment = os.environ.copy()
         environment["HOME"] = str(home)
+        environment["TOOL_RESULT_LIMITS"] = PRIVATE_TOOL_LIMITS
+        completeness["privateLimitExact"] = (
+            environment["TOOL_RESULT_LIMITS"] == PRIVATE_TOOL_LIMITS
+            and os.environ.get("TOOL_RESULT_LIMITS") is None
+        )
         gateway = subprocess.Popen(
             ["cgc", "api", "start", "--host", "127.0.0.1", "--port", str(port)],
             stdout=subprocess.DEVNULL,
@@ -381,11 +525,42 @@ def main():
             raise RuntimeError("projection-b-http")
         rows_b, echo_b = parse_envelope(response_b, projection_b.decode("utf-8"), RELATIONSHIP_FIELDS)
         snapshot_b = tree_hash(database)
+        validate_combined_bound(len(rows_a), len(rows_b))
+        row_counts = {
+            "projectionA": len(rows_a),
+            "projectionB": len(rows_b),
+            "combined": len(rows_a) + len(rows_b),
+        }
+        payload_a = decode_json_strict(response_a)
+        payload_b = decode_json_strict(response_b)
+        completeness["projectionATruncationMetadataAbsent"] = not {
+            "truncated", "result_limit",
+        }.intersection(payload_a["data"])
+        completeness["projectionBTruncationMetadataAbsent"] = not {
+            "truncated", "result_limit",
+        }.intersection(payload_b["data"])
+        injected = decode_json_strict(response_a)
+        injected["data"]["truncated"] = False
+        injected["data"]["result_limit"] = 250001
+        injected_raw = json.dumps(injected, separators=(",", ":")).encode("utf-8")
+        completeness["injectedTruncationRejected"] = rejected(
+            lambda: parse_envelope(
+                injected_raw, projection_a.decode("utf-8"), NODE_FIELDS))
+        completeness["queryDriftRejected"] = rejected(
+            lambda: parse_envelope(
+                response_a, projection_a.decode("utf-8") + " ", NODE_FIELDS))
+        completeness["languageConflictRejected"] = rejected(
+            lambda: select_file_language(["python", "ruby"])
+        )
+        completeness["combinedBoundRejected"] = rejected(
+            lambda: validate_combined_bound(MAX_VULGATA_ROWS, 1)
+        )
 
         node_identities = {}
         incident = set()
         node_kinds = {"File": 0, "Module": 0, "Class": 0, "Function": 0}
         relationship_kinds = {"CONTAINS": 0, "IMPORTS": 0, "CALLS": 0, "INHERITS": 0}
+        parser_language, unknown_paths, candidate_paths = reconcile_languages(rows_a, fixture)
         for row in rows_a:
             identity = endpoint(row["provider_kind"], row["path"], row["name"], row["start_line"], row["end_line"])
             node_identities[identity] = row
@@ -407,6 +582,11 @@ def main():
                 and target_path.replace("\\", "/").endswith("filtered_target.py")
             ):
                 filtered_target_relationships += 1
+            if (
+                match_fixture_path(row["source_path"], candidate_paths, required=False) in unknown_paths
+                or match_fixture_path(row["target_path"], candidate_paths, required=False) in unknown_paths
+            ):
+                raise RuntimeError("unknown-language-relationship-retained")
         shared_endpoints = incident.intersection(node_identities)
         coverage = {
             "nodeKinds": node_kinds,
@@ -415,6 +595,7 @@ def main():
             "filteredTargetUnresolvedOnly": filtered_target_relationships == 1,
             "projectionEndpointIdentityEqual": bool(shared_endpoints)
                 and all(identity.startswith("cgc-v1:") for identity in shared_endpoints),
+            "parserLanguage": parser_language,
         }
         if (
             any(count < 1 for count in node_kinds.values())
@@ -423,6 +604,19 @@ def main():
             or not coverage["projectionEndpointIdentityEqual"]
             or snapshot_a != snapshot_b
             or sha256(echo_b.encode("utf-8")) != EXPECTED_B
+            or row_counts["projectionA"] <= 100
+            or row_counts["projectionB"] <= 100
+            or not all(completeness.values())
+            or not all((
+                parser_language["aliasObserved"],
+                parser_language["structuralBindingsObserved"],
+                parser_language["fileNullObserved"],
+                parser_language["oneIdentityPerPath"],
+                parser_language["allCodeUnitsAssigned"],
+                parser_language["emptyFileUnknownLanguage"],
+            ))
+            or parser_language["emptyFileRetainedCodeUnitCount"] != 0
+            or parser_language["unknownLanguageCount"] != 1
         ):
             raise RuntimeError("coverage-mismatch")
     except Exception as error:
@@ -485,6 +679,8 @@ def main():
         "projectionBRequestSha256": EXPECTED_B,
         "observations": observations,
         "coverage": coverage,
+        "rowCounts": row_counts,
+        "completeness": completeness,
         "immutableSnapshot": {
             "indexCount": 1 if context_created else 0,
             "watcherStarted": False,

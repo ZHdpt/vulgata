@@ -373,6 +373,29 @@ unchanged.
   Worker Agent/tool, dispatch, scheduling, retry, LLM language authority,
   Communication Pattern Catalog, Story 4.3, document-generation, or downstream
   language-support change.
+- Completion-lane T045-T047 is GREEN on exact image
+  `sha256:7968d5b45ab2f420c593610dfd2ae09bb84db40c1a80599f63582379f6a6e54c`.
+  Projection A/B return 139/138 complete rows with the private exact 250001
+  tool limit, no truncation metadata, immutable two-query snapshot, atomic
+  completeness rejection, complete cleanup, and zero forbidden retention.
+- The pinned CodeGraphContext 0.5.1 runtime deterministically synthesizes a
+  line-1 Python Function for a zero-byte `.py` file, while zero-byte `.cs`,
+  `.java`, `.js`, `.ts`, `.go`, `.kt`, `.swift`, `.rs`, `.c`, and `.cpp`
+  files expose only `File(null)`. The user approved replacing only the owned
+  completion fixture `empty_file.py` with zero-byte `empty_file.cs`; Python
+  remains the 101+ row/parser-language fixture. No production query, parsing,
+  filtering, or Scan behavior changed.
+- Root-independent final-image evidence namespace
+  `8e8d3333adb3b5845f19740b3d330718ac685bacfb253caffd5b0f5951915b92`
+  passed with evidence SHA-256
+  `AC4F8C4CCD5AC8C6EA056834DE35B82CFD3DA4C2C8B15382801B98ADA14D36BC`.
+  The complete test suite passes 370/370 and the final Web build has zero
+  errors.
+- Migration rehearsal found exactly one
+  `AddLanguageFrameworkDetection` migration/Designer pair, no pending model
+  changes, additive-only upgrade SQL, and rollback SQL limited to the two
+  Story 4.2 tables. Historical nullable Code Unit language and fresh
+  language/framework relational invariants pass 3/3.
 - Implementation checkpoint:
   `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
   (pending Git binding).
