@@ -1,7 +1,7 @@
 ---
 story_key: 4-2-language-and-framework-detection
 title: "Story 4.2: Language and Framework Detection"
-Status: in-progress
+Status: review
 Epic: 4
 Story: 2
 created: 2026-07-19
@@ -244,7 +244,7 @@ unchanged.
   `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
 - SpecKit feature directory:
   `specs/002-language-framework-detection`.
-- Current workflow stage: `implement`; the corrected specification, plan, and
+- Current workflow stage: `acceptance-review`; the corrected specification, plan, and
   50 dependency-ordered tasks passed independent analysis iteration 3 with
   zero Critical or High findings and complete FR/SC/AC coverage.
 - Planning is recoverably blocked at Phase 0 by pinned-provider evidence:
@@ -410,6 +410,14 @@ unchanged.
   unit of work, and persists `Aborted` or sanitized `Failed` with no
   provider-derived rows; ambiguous same-root lock evidence creates one bounded
   outcome and no framework fact.
+- Ready-for-review candidate `71a2db8664ed53f4ee592635c920605909b4e218`
+  is immutable and bound by checkpoint
+  `bmad-4-2-implement-20260720T104752Z-c7a3e1`. Post-commit verification passes
+  87/87 affected tests and a zero-error Web build. The exact pinned final-image
+  gate also passes against the corrected artifact manifest
+  `ca106f80f53442b067d925f516595b29172671ebbb11d78c8d1503bf02462486`
+  with evidence SHA-256
+  `7d0c4ab90d891d25a38aa9802f57ca518403130500de82798d8be3f7bf0d2332`.
 - Implementation checkpoint:
   `bmad-4-2-implement-20260720T104752Z-c7a3e1`
   (pending Git binding).

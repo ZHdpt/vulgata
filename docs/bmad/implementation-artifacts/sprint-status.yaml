@@ -67,7 +67,7 @@ development_status:
   epic-3-retrospective: done
   epic-4: in-progress
   4-1-codegraph-integration-and-code-unit-extraction: done
-  4-2-language-and-framework-detection: in-progress
+  4-2-language-and-framework-detection: review
   4-3-pre-scan-agent-question-gate-and-communication-type-detection: backlog
   epic-4-retrospective: optional
   epic-5: backlog
