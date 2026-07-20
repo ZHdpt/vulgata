@@ -127,14 +127,14 @@ An authorised SystemOwner receives bounded, safe profiling results when individu
 
 ### Measurable Outcomes
 
-- **SC-001**: Across acceptance fixtures containing all twelve named languages plus at least one additional valid provider language identifier, 100% of retained Code Units carry the expected normalised parser-derived language, and zero language values are justified solely by file extension.
+- **SC-001**: Across acceptance fixtures containing all eleven named languages plus at least one additional valid provider language identifier, 100% of retained Code Units carry the expected normalised parser-derived language, and zero language values are justified solely by file extension.
 - **SC-002**: For a mixed-language fixture with multiple Code Units per file, 100% of displayed language counts equal the independently verified distinct source-file counts, with no Code Unit counted as an additional file.
 - **SC-003**: Across direct, lock-backed transitive, overlapping-scope, duplicate, unsupported, missing, and ambiguous package-evidence fixtures, 100% of expected framework facts have the correct normalised name, scope, confidence, and exact Repository-relative source; zero unsupported, ambiguous, or out-of-scope facts are created; and zero duplicate Code Unit/framework pairs exist.
 - **SC-004**: Across unknown-language fixtures, 100% of candidates without parser identity are represented by one `Filtered`/`UnknownLanguage` audit outcome, the summary's distinct count and paths match the fixture exactly, and zero such candidates are retained as dispatchable Code Units.
 - **SC-005**: Across profiling acceptance tests, the number of LLM classification calls, external package lookups, package install or restore executions, build-target evaluations, and package-script executions is zero.
 - **SC-006**: Across malformed-provider, unsafe-path, invalid-manifest, and provider-level-failure tests, 100% of outcomes preserve the required bounded or atomic behavior, zero invented framework facts are created, and inspection of user-visible and recorded diagnostics finds zero source-content disclosures or absolute host paths.
 - **SC-007**: In authorization acceptance tests, 100% of users without existing Repository management visibility receive the established access-constrained outcome and see zero language, framework, or unknown-file audit details.
-- **SC-008**: In representative acceptance review, at least 90% of SystemOwner reviewers can correctly identify the languages present, their source-file counts, the evidence and confidence for a detected framework, and any unknown-language audit paths from the Repository scan overview without developer assistance.
+- **SC-008**: Across representative acceptance fixtures for the authorised Repository scan-overview response and rendered overview, 100% expose every recorded language with its distinct source-file count, every detected framework with its strongest retained confidence and safe evidence source, and every retained bounded `UnknownLanguage` audit path under the required Simplified-Chinese labels; zero accepted data items are omitted or require developer interpretation to identify.
 
 ## Assumptions
 

@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "tasks",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
       "status": "pending",
@@ -157,16 +157,38 @@
     },
     {
       "stage": "tasks",
-      "status": "active",
+      "status": "accepted",
       "started_at": "2026-07-19T13:29:40.9418361Z",
-      "completed_at": null,
+      "completed_at": "2026-07-20T02:45:08.9688990Z",
       "input_commit": "6ba4a5c0c805580cf3838b71b587b74e5122a21c",
       "input_hashes": {
         "specs/002-language-framework-detection/plan.md": "b53b2ee92dc36e5b76aaf721a0beb07fa4d75bbcc3710f08f40937b0ddefaf97",
         "specs/002-language-framework-detection/reviews/plan-review-2.json": "6ef11d48420ffaf3d34f64c303709e98349f417c246e964f14e6269bd5a937ce"
       },
       "agent_role": "task-author",
-      "evidence_paths": [],
+      "evidence_paths": [
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-20T01:58:40.5829577Z",
+      "completed_at": "2026-07-20T02:45:08.9688990Z",
+      "input_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+      "input_hashes": {
+        "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+        "specs/002-language-framework-detection/plan.md": "e5d9cb5593d0ed60cee59c76503c5ae222af6dd3b9d8afbc4cebd18850b2d306",
+        "specs/002-language-framework-detection/quickstart.md": "d5e099233187b19484cc5f883f7dae528c7790157623517f17341f0cd5eeef9f",
+        "specs/002-language-framework-detection/tasks.md": "0732dd258a746114392eb383aa9b9bee72759903f2034be043d093417ff2ae7e"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-1.json",
+        "specs/002-language-framework-detection/reviews/analyze-2.json",
+        "specs/002-language-framework-detection/reviews/analyze-3.json"
+      ],
       "failure": null
     }
   ],
@@ -423,21 +445,28 @@
   ],
   "review_iterations": {
     "spec-review": {
-      "count": 1,
+      "count": 3,
       "verdict_paths": [
-        "specs/002-language-framework-detection/reviews/spec-review-1.json"
+        "specs/002-language-framework-detection/reviews/spec-review-1.json",
+        "specs/002-language-framework-detection/reviews/spec-review-2.json",
+        "specs/002-language-framework-detection/reviews/spec-review-3.json"
       ]
     },
     "plan-review": {
-      "count": 2,
+      "count": 3,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/plan-review-1.json",
-        "specs/002-language-framework-detection/reviews/plan-review-2.json"
+        "specs/002-language-framework-detection/reviews/plan-review-2.json",
+        "specs/002-language-framework-detection/reviews/plan-review-3.json"
       ]
     },
     "analyze": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 3,
+      "verdict_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-1.json",
+        "specs/002-language-framework-detection/reviews/analyze-2.json",
+        "specs/002-language-framework-detection/reviews/analyze-3.json"
+      ]
     },
     "acceptance-review": {
       "count": 0,
@@ -600,25 +629,81 @@
       "observed_at": "2026-07-19T13:29:40.9418361Z",
       "summary": "User explicitly authorized the accepted material Scan parsing/filtering plan to advance to task generation; later workflow gates remain required.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/1",
+      "kind": "human-approval",
+      "stage": "analyze",
+      "source_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-20T01:58:40.5829577Z",
+      "summary": "User approved remediation of all seven analysis iteration-1 findings, including replacement of subjective SC-008 with objective build-verifiable evidence.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/2",
+      "kind": "review",
+      "stage": "analyze",
+      "source_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-20T02:30:00.0000000Z",
+      "summary": "Independent analysis confirmed the original seven findings resolved and required correction of one stale activation hash and duplicate final-commit recovery ownership.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/3",
+      "kind": "review",
+      "stage": "analyze",
+      "source_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/spec.md",
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/quickstart.md",
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/reviews/analyze-3.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-20T02:45:08.9688990Z",
+      "summary": "Independent analysis accepted T001-T050 with zero Critical or High findings and complete 21/21 FR, 8/8 SC, and 7/7 AC coverage.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-scan-strategy-approved-20260719T132940Z-69d695",
+    "checkpoint_id": "bmad-4-2-tasks-accepted-20260720T024508Z-6603fe",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "plan-review",
+    "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json",
+      "specs/002-language-framework-detection/spec.md",
       "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/reviews/plan-review-2.json",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/reviews/spec-review-2.json",
+      "specs/002-language-framework-detection/reviews/spec-review-3.json",
+      "specs/002-language-framework-detection/reviews/plan-review-3.json",
+      "specs/002-language-framework-detection/reviews/analyze-1.json",
+      "specs/002-language-framework-detection/reviews/analyze-2.json",
+      "specs/002-language-framework-detection/reviews/analyze-3.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/plan-review/3"
+      "4-2-language-and-framework-detection/analyze/1",
+      "4-2-language-and-framework-detection/analyze/2",
+      "4-2-language-and-framework-detection/analyze/3"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-19T13:29:40.9418361Z"
+  "updated_at": "2026-07-20T02:45:08.9688990Z"
 }

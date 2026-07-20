@@ -1,7 +1,7 @@
 # Quickstart: Validate Language and Framework Detection
 
 This is a validation guide, not implementation code. Run from the Repository
-root at the pinned accepted boundary.
+root when activating implementation from the accepted task boundary.
 
 ## Prerequisites
 
@@ -16,21 +16,38 @@ root at the pinned accepted boundary.
 ## 1. Verify the planning boundary
 
 ```pwsh
-git rev-parse HEAD
+$AcceptedTaskSourceCommit = '366f25824b38627d3e840ebe5de4533ec44e84cf'
+
+git merge-base --is-ancestor $AcceptedTaskSourceCommit HEAD
+if ($LASTEXITCODE -ne 0) {
+  throw "Accepted task source commit is not an ancestor of implementation HEAD."
+}
+
+$WorktreeStatus = @(git status --porcelain)
+if ($WorktreeStatus.Count -ne 0) {
+  throw "Implementation activation requires a clean worktree."
+}
+
 Get-FileHash `
   specs/002-language-framework-detection/spec.md,`
+  specs/002-language-framework-detection/plan.md,`
   specs/002-language-framework-detection/checklists/requirements.md,`
   specs/002-language-framework-detection/evidence/plan-blocker-1.json `
   -Algorithm SHA256
 ```
 
-Expected HEAD:
-`492008ebd787ff71d45054db89b5e0303997c61f`.
+Expected boundary: the immutable accepted task source commit
+`366f25824b38627d3e840ebe5de4533ec44e84cf` is an ancestor of the
+implementation `HEAD`, and the worktree is clean when implementation
+activation begins. Later workflow and task checkpoint commits may advance
+`HEAD`; they do not invalidate the boundary when ancestry and the explicit
+accepted artifact hashes below still match.
 
 Expected hashes:
 
 ```text
-spec.md            cb484113c956e62bd5cc56345b5b81dd6a3e930e6414bcfca37a56a91f1f46fb
+spec.md            924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956
+plan.md            e5d9cb5593d0ed60cee59c76503c5ae222af6dd3b9d8afbc4cebd18850b2d306
 requirements.md    9494531bcd320317c2e74a7cae5cfef7a687e2664b09b11e442c3dae53276bf0
 plan-blocker-1.json 828402b90c6ca3deff20a123bd15cdfc3fa4d481864f0deede5cf78c1eed4bbd
 ```
@@ -104,8 +121,11 @@ Expected GREEN:
   durable still-Profiling ScanRun in a fresh unit of work, and persists Failed;
 - a provider/detector/global-bound failure retains local filter audit but no
   provider-derived structural/framework/summary rows;
-- authorized overview renders Chinese labels, all language counts, framework
-  confidence/source, and sorted unknown paths;
+- representative authorised API/component fixtures expose 100% of recorded
+  languages and distinct-file counts, every framework with its strongest
+  retained confidence and safe evidence source, every retained bounded
+  `UnknownLanguage` path, and all required Simplified-Chinese labels, with zero
+  omitted accepted items or developer interpretation needed to identify one;
 - unauthorized/hidden/revoked access returns established redacted behavior.
 
 ## 6. Migration and rollback rehearsal

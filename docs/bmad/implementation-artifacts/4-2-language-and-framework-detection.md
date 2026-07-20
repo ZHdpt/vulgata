@@ -244,9 +244,9 @@ unchanged.
   `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
 - SpecKit feature directory:
   `specs/002-language-framework-detection`.
-- Current workflow stage: `tasks`; the corrected technical plan was accepted
-  on independent review iteration 2 and the user explicitly authorized its
-  material Scan parsing/filtering changes to advance to task generation.
+- Current workflow stage: `implement`; the corrected specification, plan, and
+  50 dependency-ordered tasks passed independent analysis iteration 3 with
+  zero Critical or High findings and complete FR/SC/AC coverage.
 - Planning is recoverably blocked at Phase 0 by pinned-provider evidence:
   CodeGraphContext 0.5.1 does not persist parser identity on `File` nodes, so a
   parser-supported file with no structural declarations cannot be distinguished
@@ -286,6 +286,18 @@ unchanged.
 - The user separately granted the required post-plan Scan-strategy
   authorization. This advances task generation only and does not waive
   analysis, TDD, review, E2E, security, or verification gates.
+- Analysis iteration 1 identified seven High findings; the user approved the
+  complete remediation. Focused specification and plan reviews accepted the
+  corrected language matrix, objective UI criterion, immutable source
+  boundary, and activation hash rule.
+- Analysis iteration 2 confirmed the seven original findings were resolved and
+  found two remaining task-boundary defects: a stale specification hash and
+  duplicate final-commit recovery RED/GREEN ownership. Both were corrected.
+- Independent analysis iteration 3 accepted T001-T050 with 21/21 functional
+  requirements, 8/8 success criteria, and 7/7 acceptance groups covered.
+- Implementation checkpoint:
+  `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
+  (pending Git binding).
 - Story preparation checkpoint:
   `bmad-4-2-prepared-20260719T111713Z-e5ad70` (pending Git binding).
 
@@ -300,6 +312,13 @@ unchanged.
 - `specs/002-language-framework-detection/evidence/plan-blocker-1.json`
 - `specs/002-language-framework-detection/reviews/plan-review-1.json`
 - `specs/002-language-framework-detection/reviews/plan-review-2.json`
+- `specs/002-language-framework-detection/reviews/spec-review-2.json`
+- `specs/002-language-framework-detection/reviews/spec-review-3.json`
+- `specs/002-language-framework-detection/reviews/plan-review-3.json`
+- `specs/002-language-framework-detection/tasks.md`
+- `specs/002-language-framework-detection/reviews/analyze-1.json`
+- `specs/002-language-framework-detection/reviews/analyze-2.json`
+- `specs/002-language-framework-detection/reviews/analyze-3.json`
 - `specs/002-language-framework-detection/plan.md`
 - `specs/002-language-framework-detection/research.md`
 - `specs/002-language-framework-detection/data-model.md`

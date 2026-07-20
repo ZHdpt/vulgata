@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "REVISE",
+  "reviewed_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+  "reviewed_boundary": {
+    "base_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+    "candidate_commit": null,
+    "diff_sha256": "ac6267b3e0d5ea75013780f587526261ac3ae2e675b114a0d809e53a959b3a26",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "cb484113c956e62bd5cc56345b5b81dd6a3e930e6414bcfca37a56a91f1f46fb",
+      "specs/002-language-framework-detection/plan.md": "b53b2ee92dc36e5b76aaf721a0beb07fa4d75bbcc3710f08f40937b0ddefaf97",
+      "specs/002-language-framework-detection/tasks.md": "6ff6b30b27ad0276f9e23d91e83811bafd9f081b6db889d1244efef174fbb802"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/spec.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/tasks.md"
+  ],
+  "findings": [
+    {
+      "id": "I-001",
+      "severity": "HIGH",
+      "category": "boundary-consistency",
+      "artifact": "specs/002-language-framework-detection/quickstart.md",
+      "location": "activation source boundary",
+      "affected_requirement": "immutable implementation activation",
+      "evidence": "T001 and quickstart pinned current HEAD values that necessarily become stale after workflow checkpoints.",
+      "correction_outcome": "Use an immutable ancestor, artifact hashes, and one coherent clean-worktree activation check."
+    },
+    {
+      "id": "I-002",
+      "severity": "HIGH",
+      "category": "baseline-correctness",
+      "artifact": "specs/002-language-framework-detection/tasks.md",
+      "location": "unknown-language RED premise",
+      "affected_requirement": "FR-004 and FR-007",
+      "evidence": "The task stated a false absent-provider-output baseline.",
+      "correction_outcome": "Separate the zero-structure synthetic File-unit baseline from the absent-output Skipped/NoCodeUnitExtracted baseline; both assert Filtered/UnknownLanguage."
+    },
+    {
+      "id": "I-003",
+      "severity": "HIGH",
+      "category": "migration-ownership",
+      "artifact": "specs/002-language-framework-detection/tasks.md",
+      "location": "migration generation tasks",
+      "affected_requirement": "additive EF migration and rollback",
+      "evidence": "Tasks hand-authored a future timestamped EF migration path.",
+      "correction_outcome": "Run dotnet ef migrations add and bind later validation to the unique generated AddLanguageFrameworkDetection migration."
+    },
+    {
+      "id": "T-001",
+      "severity": "HIGH",
+      "category": "tdd-granularity",
+      "artifact": "specs/002-language-framework-detection/tasks.md",
+      "location": "framework RED-GREEN group",
+      "affected_requirement": "FR-008 through FR-014 and FR-021",
+      "evidence": "Framework scope, ranking, individual safety, and global limits were bundled into one oversized pair.",
+      "correction_outcome": "Split the behavior into four bounded test-first groups."
+    },
+    {
+      "id": "T-002",
+      "severity": "HIGH",
+      "category": "tdd-granularity",
+      "artifact": "specs/002-language-framework-detection/tasks.md",
+      "location": "safety RED-GREEN group",
+      "affected_requirement": "FR-015 through FR-019",
+      "evidence": "Provider atomicity, evidence isolation, final-commit recovery, and disclosure were bundled into one oversized pair.",
+      "correction_outcome": "Split the behavior into bounded provider/global, individual-evidence, recovery, and disclosure groups."
+    },
+    {
+      "id": "C-001",
+      "severity": "HIGH",
+      "category": "coverage-specificity",
+      "artifact": "specs/002-language-framework-detection/spec.md",
+      "location": "SC-001",
+      "affected_requirement": "SC-001 and AC-1",
+      "evidence": "SC-001 did not explicitly test every Epic-named language plus another valid provider identifier.",
+      "correction_outcome": "Require the exact eleven-language Epic matrix plus at least one additional valid provider identifier and execute it in US1 evidence."
+    },
+    {
+      "id": "C-002",
+      "severity": "HIGH",
+      "category": "testability",
+      "artifact": "specs/002-language-framework-detection/spec.md",
+      "location": "SC-008",
+      "affected_requirement": "SC-008 and AC-7",
+      "evidence": "SC-008 required an unavailable representative SystemOwner study that automated implementation evidence could not establish.",
+      "correction_outcome": "Replace it with an objective build-verifiable authorized response and UI fixture criterion."
+    }
+  ],
+  "summary": "REVISE: seven High findings required immutable activation, accurate baselines, generated migration ownership, bounded TDD groups, explicit language-matrix coverage, and objective SC-008 evidence. The user approved all seven corrections."
+}

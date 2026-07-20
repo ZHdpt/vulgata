@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "gate": "spec-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+  "reviewed_boundary": {
+    "base_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+    "candidate_commit": null,
+    "diff_sha256": "a40d87c821d0d6dcaced2080dc60ba4b12b5562bd9efc7ad1fdc6163409199c8",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/spec.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/002-language-framework-detection/spec.md",
+    "docs/bmad/epics.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT: SC-001 now matches the eleven languages named by Epic 4 plus at least one additional valid provider identifier; C-001 is resolved without changing Scan strategy, PRD scope, or authority."
+}

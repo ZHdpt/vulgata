@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "REVISE",
+  "reviewed_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+  "reviewed_boundary": {
+    "base_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+    "candidate_commit": null,
+    "diff_sha256": "5c06ca3ca1310919f90bf495e79fc920f8226d82d67e82155d4144c3d856163d",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+      "specs/002-language-framework-detection/plan.md": "e5d9cb5593d0ed60cee59c76503c5ae222af6dd3b9d8afbc4cebd18850b2d306",
+      "specs/002-language-framework-detection/quickstart.md": "9ba429b528826e17eac7bdf4773b0a42a80483ff9b652cf7f397f58cb4cdfa8b",
+      "specs/002-language-framework-detection/tasks.md": "5c06ca3ca1310919f90bf495e79fc920f8226d82d67e82155d4144c3d856163d"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/spec.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/tasks.md"
+  ],
+  "findings": [
+    {
+      "id": "I-001",
+      "severity": "HIGH",
+      "category": "boundary-consistency",
+      "artifact": "specs/002-language-framework-detection/quickstart.md",
+      "location": "activation artifact hash table",
+      "affected_requirement": "immutable implementation activation boundary",
+      "evidence": "The quickstart retained the pre-correction specification hash after SC-001 was corrected.",
+      "correction_outcome": "Replace the stale hash with the accepted specification hash and propagate it to T001."
+    },
+    {
+      "id": "D-001",
+      "severity": "HIGH",
+      "category": "tdd-dependency",
+      "artifact": "specs/002-language-framework-detection/tasks.md",
+      "location": "final-commit recovery task groups",
+      "affected_requirement": "single observable RED-GREEN ownership",
+      "evidence": "T002-T004 already established final-commit recovery, while a later task pair attempted a second artificial RED-GREEN cycle for the same behavior.",
+      "correction_outcome": "Keep T002-T004 as the sole implementation cycle and make the later US4 task rerun the established GREEN evidence."
+    }
+  ],
+  "summary": "REVISE: all seven iteration-1 findings were resolved, but the activation hash and duplicate final-commit recovery ownership required two focused corrections."
+}

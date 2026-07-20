@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+  "reviewed_boundary": {
+    "base_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+    "candidate_commit": null,
+    "diff_sha256": "6603fe15f106ff9de9f4401592d1f8e957fbdb598cadf2a021c5313bddcecdae",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+      "specs/002-language-framework-detection/plan.md": "e5d9cb5593d0ed60cee59c76503c5ae222af6dd3b9d8afbc4cebd18850b2d306",
+      "specs/002-language-framework-detection/quickstart.md": "d5e099233187b19484cc5f883f7dae528c7790157623517f17341f0cd5eeef9f",
+      "specs/002-language-framework-detection/tasks.md": "0732dd258a746114392eb383aa9b9bee72759903f2034be043d093417ff2ae7e"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/spec.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT: all seven iteration-1 remediations and both iteration-2 corrections are resolved. T001-T050 are exact and sequential; coverage is 21/21 functional requirements, 8/8 success criteria, and 7/7 acceptance groups, with no critical or high findings."
+}

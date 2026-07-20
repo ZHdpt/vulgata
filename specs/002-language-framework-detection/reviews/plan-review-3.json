@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+  "reviewed_boundary": {
+    "base_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+    "candidate_commit": null,
+    "diff_sha256": "6affe7bc8be01507b87f452482f20ac1ccc018dd63cc18b1bfdd8534ee451bb5",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/plan.md": "e5d9cb5593d0ed60cee59c76503c5ae222af6dd3b9d8afbc4cebd18850b2d306",
+      "specs/002-language-framework-detection/quickstart.md": "d5e099233187b19484cc5f883f7dae528c7790157623517f17341f0cd5eeef9f"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/quickstart.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT: the immutable accepted-source boundary, artifact-hash activation rule, and objective SC-008 proof are feasible and internally consistent. The correction introduces no new protected change, so the prior Scan-strategy authorization remains valid."
+}

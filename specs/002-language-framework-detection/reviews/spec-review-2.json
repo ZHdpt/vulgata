@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "gate": "spec-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+  "reviewed_boundary": {
+    "base_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
+    "candidate_commit": null,
+    "diff_sha256": "299838ad94cafbb7aca0b9cd100418a2ecd2623663187b4ba71deea417c6bec7",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "096f9673445c0ad1d789b724fc278d29877324f48644b3fc80b0da342fe8cc06"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/spec.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/002-language-framework-detection/spec.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT: SC-008 is now objective, measurable, build-verifiable, product-aligned, and consistent with the accepted bounded overview contract; C-002 is resolved."
+}

@@ -1,6 +1,6 @@
 # Implementation Plan: Language and Framework Detection
 
-**Branch**: detached at `492008ebd787ff71d45054db89b5e0303997c61f` | **Date**: 2026-07-19 | **Spec**: [spec.md](spec.md)
+**Source boundary**: immutable accepted task source commit `366f25824b38627d3e840ebe5de4533ec44e84cf` | **Date**: 2026-07-19 | **Spec**: [spec.md](spec.md)
 **Story**: `4-2-language-and-framework-detection`
 **Provider boundary**: stock exact-pinned `codegraphcontext==0.5.1`
 
@@ -343,8 +343,14 @@ must wait for independent plan acceptance and planned-change approval.
    one atomic aggregate write, rollback/detach/reload, and a separate durable
    safe failure transition.
 5. **API/UI/authorization RED**: prove the existing overview lacks language,
-   framework evidence, and unknown paths. GREEN adds authorized DTO/UI output,
-   Chinese labels, unchanged 404 redaction, and visibility-revocation checks.
+   framework evidence, and unknown paths. GREEN uses representative authorised
+   API and component fixtures to assert exact equivalence with the accepted
+   profile: every recorded language and distinct-file count, every framework
+   with its strongest retained confidence and safe evidence source, every
+   retained bounded `UnknownLanguage` path, and every required Simplified-
+   Chinese label is present, with zero omission or developer interpretation
+   needed to identify an accepted item. It also preserves unchanged 404
+   redaction and verifies visibility revocation.
 6. **Final-image RED**: the gate must fail, not return early, when its required
    environment is absent in the completion lane; it must fail with the old
    100-row limit and old empty-file expectation. GREEN proves exact final image,
@@ -360,10 +366,11 @@ Required commands and expected observations are in [quickstart.md](quickstart.md
 | --- | --- | --- |
 | FR-001..003, SC-001 | Provider projection + language normalizer + CodeUnit invariant | exact token/open-identifier/mismatch fixtures |
 | FR-004, FR-007, SC-004 | coordinator candidate reconciliation + existing outcome audit | zero-structure/missing identity/exactly-one/no-Code-Unit tests |
-| FR-005..006, SC-002/008 | `ScanRunLanguageSummary`, DTO, existing dialog | multi-unit-per-file/API/component tests |
+| FR-005..006, SC-002 | `ScanRunLanguageSummary`, DTO, existing dialog | multi-unit-per-file/API/component tests |
 | FR-008..014, FR-021, SC-003/005 | closed catalog, scoped detector, confidence/tie-break | direct/transitive/scope/duplicate/ambiguity/no-LLM tests |
 | FR-015..017, SC-006 | evidence bounds + repository draft transaction | escape/reparse/cap/provider failure/rollback tests |
-| FR-018..019, SC-007/008 | existing API groups/coordinator visibility/Chinese UI | role, hidden Repository, revocation, Chinese rendering tests |
+| FR-018..019, SC-007 | existing API groups/coordinator visibility/Chinese UI | role, hidden Repository, revocation, Chinese rendering tests |
+| FR-006..007, FR-012..013, FR-019, SC-008 | authorised summary DTO + existing dialog | representative authorised API/component fixtures assert 100% of languages/counts, strongest framework confidence/safe evidence, all bounded unknown paths, and required Chinese labels, with zero omissions or developer interpretation |
 | FR-020 | explicit ownership exclusion | architectural source-diff test/review: zero orchestration/tool/dispatch changes |
 | Story 4.1 completeness correction | gateway env + envelope parser + final-image verifier | 101+ rows, truncation metadata, exact two-query and cleanup tests |
 
