@@ -393,11 +393,25 @@ unchanged.
   errors.
 - Migration rehearsal found exactly one
   `AddLanguageFrameworkDetection` migration/Designer pair, no pending model
-  changes, additive-only upgrade SQL, and rollback SQL limited to the two
-  Story 4.2 tables. Historical nullable Code Unit language and fresh
-  language/framework relational invariants pass 3/3.
+  changes, additive-only upgrade SQL, and rollback SQL limited to the
+  Story 4.2 audit-count check/column plus the two Story 4.2 tables. Historical
+  nullable Code Unit language and fresh language/framework relational
+  invariants pass 3/3.
+- Final review iteration 1 returned `REVISE`. The accepted remediation aligned
+  the canonical Story 4.1 Projection A contract with `parser_language`,
+  documented the additive audit-count migration, and added RED/GREEN coverage
+  for cancellation after provider-derived attachment, cancellation during
+  final persistence, non-EF final persistence failure, and ambiguous
+  same-root NuGet lock ownership.
+- The correction is GREEN: the four new regressions pass 4/4, existing
+  final-commit recovery passes 2/2, affected profiling/framework suites pass
+  87/87, and the Web build succeeds with zero errors. Durable recovery now
+  clears tracked draft state, reloads the still-`Profiling` Scan in a fresh
+  unit of work, and persists `Aborted` or sanitized `Failed` with no
+  provider-derived rows; ambiguous same-root lock evidence creates one bounded
+  outcome and no framework fact.
 - Implementation checkpoint:
-  `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
+  `bmad-4-2-implement-20260720T104752Z-c7a3e1`
   (pending Git binding).
 - Story preparation checkpoint:
   `bmad-4-2-prepared-20260719T111713Z-e5ad70` (pending Git binding).

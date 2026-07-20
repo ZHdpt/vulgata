@@ -146,12 +146,13 @@ MATCH (node)
 WHERE label(node) IN ['File', 'Module', 'Class', 'Function']
 RETURN 'code_unit' AS record_kind, label(node) AS provider_kind,
        node.path AS path, node.name AS name,
-       node.line_number AS start_line, node.end_line AS end_line
+       node.line_number AS start_line, node.end_line AS end_line,
+       node.lang AS parser_language
 ORDER BY provider_kind, path, name, start_line, end_line
 ```
 
 Canonical SHA-256:
-`07b13dcb0b95a2ab26da930e9fcbafef7cde27488df99b0634d860ef0767d9a8`.
+`dbba4ff5ac4834ae2857307dad36c177d9655ac951744c646f9c6e54d3923f33`.
 
 The candidate query aliases `line_number` to the owned `start_line` field.
 File coordinates are deliberately null and are derived from local source as
@@ -162,7 +163,7 @@ exactly those below; it must not accept `line_number` and `start_line` as
 interchangeable fallbacks. This query never matches a relationship, so
 isolated nodes are included.
 
-Every row has exactly six scalar properties:
+Every row has exactly seven scalar properties:
 
 ```text
 record_kind: "code_unit"
@@ -171,7 +172,17 @@ path: string | null
 name: string | null
 start_line: integer | null
 end_line: integer | null
+parser_language: string | null
 ```
+
+`parser_language` is the pinned provider's structural parser identity and is
+the only language-authority field in this projection. A File row may carry
+null transport, but every field must still be present exactly once. A present
+wrong-typed or invalid normalized value, or two distinct normalized values for
+one Repository-relative path, fails the complete provider result atomically.
+Absence of a structural parser identity in an otherwise valid complete
+response is reconciled as one terminal `Filtered/UnknownLanguage` outcome and
+retains no Code Unit, Edge, or unresolved relationship for that path.
 
 ## Projection B: relationship rows
 

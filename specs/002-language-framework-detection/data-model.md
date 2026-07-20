@@ -192,13 +192,13 @@ fail before structural transaction
 retain only pre-provider local filter audit
 ```
 
-Final persistence failure:
+Final persistence failure or cancellation:
 
 ```text
 rollback final transaction
 clear/detach the failed RepositoryProfileDraft and tracked Completed ScanRun
 reload the durable still-Profiling ScanRun in a fresh unit of work
-persist one sanitized Failed terminal transition
+persist one sanitized Failed transition, or Aborted for cancellation
 prove zero provider-derived rows and retained local pre-provider audit
 ```
 
@@ -212,8 +212,16 @@ Additive migration:
 
 1. create `CodeUnitFrameworks`;
 2. create `ScanRunLanguageSummaries`;
-3. add composite FKs, uniqueness, checks, and indexes;
-4. leave existing `CodeUnits.Language` nulls unchanged.
+3. add non-negative `ScanRun.FrameworkEvidenceAuditTotalOutcomeCount` with a
+   default of zero so complete audit totals survive the bounded 100-detail
+   sample and reload;
+4. add composite FKs, uniqueness, checks, and indexes;
+5. leave existing `CodeUnits.Language` nulls unchanged.
+
+The audit-total column is an accepted implementation-time storage correction:
+the response contract requires a complete count even when only 100 safe detail
+rows are retained. It changes no evidence parsing, filtering, or Scan
+strategy.
 
 Deployment:
 
@@ -224,7 +232,7 @@ Deployment:
 5. deploy the same image/migration to production.
 
 Rollback deploys the previous application image and reverses the additive
-migration, dropping only the two new tables/indexes. It never backfills,
-rewrites, or deletes historical Code Units or candidate outcomes. If new Story
-4.2 facts must be retained for audit, roll forward instead of applying the
-destructive down migration.
+migrations, first dropping only the audit-total check/column and then the two
+new tables/indexes. It never backfills, rewrites, or deletes historical Code
+Units or candidate outcomes. If new Story 4.2 facts must be retained for
+audit, roll forward instead of applying the destructive down migration.

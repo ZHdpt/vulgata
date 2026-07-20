@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.FrameworkDetection;
@@ -585,64 +584,54 @@ public sealed class RepositoryProfilingCoordinator(
                 scanRun.TotalCandidateFileCount);
         }
 
-        try
+        ScanRunLanguageSummary[] languageSummaries = scanRun.CodeUnits
+            .Where(unit => unit.Language is not null)
+            .GroupBy(unit => unit.Language!, StringComparer.Ordinal)
+            .Select(group => new ScanRunLanguageSummary(
+                scanRun.Id,
+                repository.Id,
+                group.Key,
+                group.Select(unit => unit.FilePath).Distinct(StringComparer.Ordinal).Count()))
+            .ToArray();
+        foreach (ScanRunLanguageSummary languageSummary in languageSummaries)
         {
-            ScanRunLanguageSummary[] languageSummaries = scanRun.CodeUnits
-                .Where(unit => unit.Language is not null)
-                .GroupBy(unit => unit.Language!, StringComparer.Ordinal)
-                .Select(group => new ScanRunLanguageSummary(
-                    scanRun.Id,
-                    repository.Id,
-                    group.Key,
-                    group.Select(unit => unit.FilePath).Distinct(StringComparer.Ordinal).Count()))
-                .ToArray();
-            foreach (ScanRunLanguageSummary languageSummary in languageSummaries)
-            {
-                scanRun.LanguageSummaries.Add(languageSummary);
-            }
-
-            RepositoryProfileDraft draft = RepositoryProfileDraft.Create(
-                scanRun,
-                scanRun.CodeUnits,
-                scanRun.CodeUnitEdges,
-                scanRun.UnresolvedRelationships,
-                scanRun.CodeUnitFrameworks,
-                languageSummaries,
-                providerAuditOutcomes);
-            await scanRunRepository.PersistCompletedProfileAsync(draft, cancellationToken);
+            scanRun.LanguageSummaries.Add(languageSummary);
         }
-        catch (Exception exception) when (exception is DbUpdateException or InvalidOperationException)
+
+        RepositoryProfileDraft draft = RepositoryProfileDraft.Create(
+            scanRun,
+            scanRun.CodeUnits,
+            scanRun.CodeUnitEdges,
+            scanRun.UnresolvedRelationships,
+            scanRun.CodeUnitFrameworks,
+            languageSummaries,
+            providerAuditOutcomes);
+        await scanRunRepository.PersistCompletedProfileAsync(draft, cancellationToken);
+
+            return new(RepositoryProfilingOutcome.Success, Map(scanRun));
+        }
+        catch (OperationCanceledException)
         {
-            logger.LogError(exception, "Failed to atomically persist CodeGraph result for ScanRun {ScanRunId}.", scanRun.Id);
+            await scanRunRepository.RecoverAbortedFinalCommitAsync(
+                repository.Id,
+                scanRun.Id,
+                "代码结构分析已取消。",
+                DateTimeOffset.UtcNow,
+                CancellationToken.None);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Failed to complete Repository profiling for ScanRun {ScanRunId}.",
+                scanRun.Id);
             await scanRunRepository.RecoverFailedFinalCommitAsync(
                 repository.Id,
                 scanRun.Id,
                 "代码结构分析失败，请稍后重试。",
                 DateTimeOffset.UtcNow,
                 CancellationToken.None);
-            throw;
-        }
-
-            return new(RepositoryProfilingOutcome.Success, Map(scanRun));
-        }
-        catch (OperationCanceledException)
-        {
-            if (scanRun.Status == ScanRunStatus.Profiling)
-            {
-                scanRun.Abort("代码结构分析已取消。", DateTimeOffset.UtcNow);
-                await scanRunRepository.SaveChangesAsync(CancellationToken.None);
-            }
-
-            throw;
-        }
-        catch (Exception)
-        {
-            if (scanRun.Status == ScanRunStatus.Profiling)
-            {
-                scanRun.Fail("代码结构分析失败，请稍后重试。", DateTimeOffset.UtcNow);
-                await scanRunRepository.SaveChangesAsync(CancellationToken.None);
-            }
-
             throw;
         }
     }

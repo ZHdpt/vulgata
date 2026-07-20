@@ -1,0 +1,479 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "phase": "final/T050",
+  "iteration": 4,
+  "story_id": "4-2-language-and-framework-detection",
+  "verdict": "REVISE",
+  "reviewed_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+  "reviewed_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+    "binary_diff_identity": "2c447dc1ba257e030186e21a8640be565c69e1be",
+    "diff_status": "MATCHED",
+    "changed_file_count": 40,
+    "insertions": 12038,
+    "deletions": 177,
+    "scope": [
+      "AGENTS.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/epics.md#Story-4.2",
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      ".specify/memory/constitution.md",
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/002-language-framework-detection/spec.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/contracts/framework-catalog-schema.md",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+      "specs/002-language-framework-detection/contracts/repository-profile-response.md",
+      "specs/002-language-framework-detection/reviews/analyze-1.json",
+      "specs/002-language-framework-detection/reviews/analyze-2.json",
+      "specs/002-language-framework-detection/reviews/analyze-3.json",
+      "specs/002-language-framework-detection/reviews/plan-review-1.json",
+      "specs/002-language-framework-detection/reviews/plan-review-2.json",
+      "specs/002-language-framework-detection/reviews/plan-review-3.json",
+      "specs/002-language-framework-detection/reviews/spec-review-1.json",
+      "specs/002-language-framework-detection/reviews/spec-review-2.json",
+      "specs/002-language-framework-detection/reviews/spec-review-3.json",
+      "specs/002-language-framework-detection/workflow-state.md",
+      "complete git diff e9824df7300634c19d815bdd7ad591b9fb5366d5..ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "all changed production source, migrations, catalog resources, API/UI code, tests, fixtures, and final-image runner in the pinned diff"
+    ],
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+      "specs/002-language-framework-detection/plan.md": "e5d9cb5593d0ed60cee59c76503c5ae222af6dd3b9d8afbc4cebd18850b2d306",
+      "specs/002-language-framework-detection/research.md": "ad1b3df91fe99080640ce9214648af96cf02310f81b6541637b34dd650e2b248",
+      "specs/002-language-framework-detection/data-model.md": "da105d4ad14e552852aa79578b691e497a820c7d761528cc7a232af48704bd40",
+      "specs/002-language-framework-detection/tasks.md": "9dc3b45e97c7eb9998b717a7b4a76075bc174551de64fa53562077dcfcb61403",
+      "specs/002-language-framework-detection/quickstart.md": "d5e099233187b19484cc5f883f7dae528c7790157623517f17341f0cd5eeef9f",
+      "specs/002-language-framework-detection/workflow-state.md": "b59ac5b3aae6cfb55c785985fdedadaf56c47af6c0495c3b709dbf36aa2f5c97"
+    }
+  },
+  "authority_result": {
+    "status": "PASS",
+    "unresolved_authority": [],
+    "bmad_alignment": "The implementation remains within Story 4.2 language and deterministic framework-detection intent, preserves the CodeGraph fact authority, uses canonical Vulgata terms, and does not weaken Constitution or ADR requirements.",
+    "what_why_discipline": "The specification remains outcome-oriented. Implementation mechanisms are confined to plan, contracts, tasks, and code.",
+    "approved_decisions_honored": [
+      "The accepted eleven-language matrix plus the explicit extra TypeScript token is represented.",
+      "The accepted structural-node parser identity remediation is implemented without changing CodeGraph extraction.",
+      "The user-approved empty C# fixture substitution is contained to final-image qualification."
+    ]
+  },
+  "findings": [
+    {
+      "id": "CF-001",
+      "severity": "HIGH",
+      "category": "cross-artifact-consistency",
+      "artifact": "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "location": "Projection A, lines 136-164",
+      "affected_requirements": [
+        "FR-001",
+        "FR-002",
+        "FR-003",
+        "AC-001",
+        "SC-001"
+      ],
+      "evidence": [
+        "The canonical Story 4.1 provider contract still defines Projection A as a six-field row and records request SHA-256 07b13dcb37b126091047aac4213156433a7818153e2958ae7b988234d4174f73.",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs:996-1004 emits a seven-field Projection A and aliases node.lang as parser_language.",
+        "specs/002-language-framework-detection/contracts/provider-language-projection.md:19-48 explicitly requires the seven-field projection and parser_language.",
+        "The pinned final-image evidence records Projection A request SHA dbba4ff5ac26eef328a4f3cf8ca96c466bb9e57b5d881f37fad32420a954204b, which cannot be reconciled with the still-canonical Story 4.1 hash.",
+        "The candidate changed the Story 4.1 contract for result-limit metadata but did not update its exact Projection A query, row shape, safe-name schema, or request hash."
+      ],
+      "impact": "A downstream implementer following the canonical provider contract would reproduce the wrong query and schema, while the final evidence claims conformance to a different request. This is a material contradiction at the Story 4.1/4.2 integration boundary.",
+      "correction_outcome": "Update the Story 4.1 provider contract's Projection A query, seven-field row schema, safe-name schema, and exact request hash to the accepted Story 4.2 projection; then recheck both contracts against production and final-image evidence.",
+      "blocking": true
+    },
+    {
+      "id": "EV-001",
+      "severity": "HIGH",
+      "category": "verification-traceability",
+      "artifact": "specs/002-language-framework-detection/workflow-state.md",
+      "location": "implement/16 evidence and last_checkpoint, lines 933-972",
+      "affected_requirements": [
+        "T045",
+        "T046",
+        "T047",
+        "T048",
+        "T049",
+        "AC-001",
+        "AC-002",
+        "AC-003",
+        "AC-004",
+        "AC-005",
+        "AC-006",
+        "AC-007",
+        "SC-001",
+        "SC-002",
+        "SC-003",
+        "SC-004",
+        "SC-005",
+        "SC-006",
+        "SC-007",
+        "SC-008"
+      ],
+      "evidence": [
+        "The final GREEN evidence record names source_commit 2f56d2352e7844e1c505f62bc7ae94e73de03c9b, but the reviewed candidate is ba50c8c213929a44a66931fb6d0b420aea55b528.",
+        "The diff 2f56d2352e7844e1c505f62bc7ae94e73de03c9b..ba50c8c213929a44a66931fb6d0b420aea55b528 contains the final-image fixture substitution, many-row fixture, runner, tests, story/task records, and workflow evidence being asserted.",
+        "workflow-state.md records last_checkpoint commit as null and binding_status as pending for bmad-4-2-final-image-green-2026-07-20-t049.",
+        "Candidate commit ba50c8c213929a44a66931fb6d0b420aea55b528 has no Workflow-Checkpoint trailer; the intervening implementation commits for framework integration, unknown-language/auth, and final-image work also lack the required checkpoint binding.",
+        "docs/agent-workflow/artifact-contracts.md:127 requires evidence source_commit to be the full SHA bounding the evidence, and lines 171-182 require durable checkpoint trailers. The task-group checkpoint contract at line 195 requires RED/GREEN and targeted-test evidence."
+      ],
+      "impact": "The raw final-image result demonstrates plausible behavior, but the recorded GREEN and checkpoint chain do not prove that the exact pinned candidate produced that result. T045-T049 therefore lack candidate-bound verification under the governing workflow contract.",
+      "correction_outcome": "Produce current-candidate-bound build, test, migration, and final-image evidence; record the exact source commit and artifact digest; and create the required durable Workflow-Checkpoint binding before rerunning final analysis.",
+      "blocking": true
+    },
+    {
+      "id": "MD-001",
+      "severity": "MEDIUM",
+      "category": "design-migration-consistency",
+      "artifact": "specs/002-language-framework-detection/plan.md; specs/002-language-framework-detection/data-model.md; specs/002-language-framework-detection/tasks.md",
+      "location": "plan migration strategy; data-model migration impact; T048-T049",
+      "affected_requirements": [
+        "FR-017",
+        "SC-006",
+        "T048",
+        "T049"
+      ],
+      "evidence": [
+        "The accepted plan and data model describe one additive migration that creates the two Story 4.2 tables and a rollback that drops only those tables and indexes.",
+        "T048 requires confirming that Down drops only Story 4.2 tables and indexes.",
+        "The candidate adds a second migration, 20260720060442_FrameworkEvidenceAuditCount.cs, which adds FrameworkEvidenceAuditTotalOutcomeCount and a check constraint to the pre-existing ScanRuns table; its Down removes that constraint and column.",
+        "The implementation change is additive and its Down is internally appropriate, but it is absent from the accepted data model and contradicts the recorded rollback boundary."
+      ],
+      "impact": "The implementation's persistence model and rollback surface are broader than the final design and task evidence claim, so migration rehearsal cannot be audited against a single consistent design.",
+      "correction_outcome": "Align plan, data model, T048/T049 evidence, and story completion notes with the audit-count column and second migration, then prove forward and rollback behavior for both migrations.",
+      "blocking": false
+    }
+  ],
+  "requirement_coverage_matrix": [
+    {
+      "requirement": "FR-001",
+      "status": "IMPLEMENTED_WITH_BLOCKING_CONTRACT_CONFLICT",
+      "evidence": ["T009-T015", "CodeGraphContextProvider projection tests", "CF-001"]
+    },
+    {
+      "requirement": "FR-002",
+      "status": "IMPLEMENTED_WITH_BLOCKING_CONTRACT_CONFLICT",
+      "evidence": ["T009-T015", "parser_language seven-field projection", "CF-001"]
+    },
+    {
+      "requirement": "FR-003",
+      "status": "IMPLEMENTED_WITH_BLOCKING_CONTRACT_CONFLICT",
+      "evidence": ["T009-T015", "language-token normalization and matrix tests", "CF-001"]
+    },
+    {
+      "requirement": "FR-004",
+      "status": "PASS",
+      "evidence": ["T030-T034", "missing parser identity and unknown-language tests"]
+    },
+    {
+      "requirement": "FR-005",
+      "status": "PASS",
+      "evidence": ["T011-T015", "distinct language summary tests"]
+    },
+    {
+      "requirement": "FR-006",
+      "status": "PASS",
+      "evidence": ["T013-T015", "T041-T044", "API and dashboard language summaries"]
+    },
+    {
+      "requirement": "FR-007",
+      "status": "PASS",
+      "evidence": ["T030-T034", "unknown count, truncation, and result-limit tests"]
+    },
+    {
+      "requirement": "FR-008",
+      "status": "PASS",
+      "evidence": ["T016-T019", "framework catalog schema and exact tracked-manifest tests"]
+    },
+    {
+      "requirement": "FR-009",
+      "status": "PASS",
+      "evidence": ["T018-T019", "T043", "forbidden execution and source-fetch checks"]
+    },
+    {
+      "requirement": "FR-010",
+      "status": "PASS",
+      "evidence": ["T020-T023", "direct High-confidence detection tests"]
+    },
+    {
+      "requirement": "FR-011",
+      "status": "PASS",
+      "evidence": ["T020-T023", "transitive Medium-confidence detection tests"]
+    },
+    {
+      "requirement": "FR-012",
+      "status": "PASS",
+      "evidence": ["T002-T006", "T022-T029", "entity, constraint, and persistence tests"]
+    },
+    {
+      "requirement": "FR-013",
+      "status": "PASS",
+      "evidence": ["T022-T029", "deterministic ordering and bounded evidence tests"]
+    },
+    {
+      "requirement": "FR-014",
+      "status": "PASS",
+      "evidence": ["T018-T023", "T037-T038", "ambiguity and absence behavior tests"]
+    },
+    {
+      "requirement": "FR-015",
+      "status": "PASS",
+      "evidence": ["T024-T027", "T037-T040", "path, bound, reparsing, and redaction tests"]
+    },
+    {
+      "requirement": "FR-016",
+      "status": "PASS",
+      "evidence": ["T024-T025", "T037-T038", "repository-isolation tests"]
+    },
+    {
+      "requirement": "FR-017",
+      "status": "IMPLEMENTED_WITH_DOCUMENTATION_GAP",
+      "evidence": ["T002-T008", "T035-T036", "T044", "MD-001"]
+    },
+    {
+      "requirement": "FR-018",
+      "status": "PASS",
+      "evidence": ["T013-T014", "T039-T044", "endpoint and component authorization tests"]
+    },
+    {
+      "requirement": "FR-019",
+      "status": "PASS",
+      "evidence": ["T028-T029", "T032-T033", "T039-T044", "Chinese UI and error tests"]
+    },
+    {
+      "requirement": "FR-020",
+      "status": "PASS",
+      "evidence": ["T043", "complete pinned diff forbidden-scope audit"]
+    },
+    {
+      "requirement": "FR-021",
+      "status": "PASS",
+      "evidence": ["T016-T029", "T043", "deterministic no-LLM catalog detector"]
+    }
+  ],
+  "acceptance_coverage_matrix": [
+    {
+      "criterion": "AC-001",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["language matrix provider tests", "final-image Projection A observations", "CF-001", "EV-001"]
+    },
+    {
+      "criterion": "AC-002",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["language summary tests", "dashboard/API summary tests", "EV-001"]
+    },
+    {
+      "criterion": "AC-003",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["framework catalog and direct/transitive detection tests", "EV-001"]
+    },
+    {
+      "criterion": "AC-004",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["unknown-language and missing-parser-identity tests", "final-image unknown count", "EV-001"]
+    },
+    {
+      "criterion": "AC-005",
+      "status": "PASS",
+      "evidence": ["no external access, process execution, arbitrary source read, or LLM inference in the detector path"]
+    },
+    {
+      "criterion": "AC-006",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["path containment, output bounds, atomicity, and failure-recovery tests", "MD-001", "EV-001"]
+    },
+    {
+      "criterion": "AC-007",
+      "status": "PASS",
+      "evidence": ["unauthenticated 401, unauthorized 403, hidden-resource 404, and revocation tests"]
+    }
+  ],
+  "success_criterion_coverage_matrix": [
+    {
+      "criterion": "SC-001",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["eleven-language matrix plus explicit extra token tests", "final-image language observations", "CF-001", "EV-001"]
+    },
+    {
+      "criterion": "SC-002",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["distinct language summary tests", "EV-001"]
+    },
+    {
+      "criterion": "SC-003",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["direct and transitive framework detection tests", "EV-001"]
+    },
+    {
+      "criterion": "SC-004",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["unknown count tests and final-image observation", "EV-001"]
+    },
+    {
+      "criterion": "SC-005",
+      "status": "PASS",
+      "evidence": ["deterministic catalog implementation and forbidden-operation tests"]
+    },
+    {
+      "criterion": "SC-006",
+      "status": "IMPLEMENTED_WITH_EVIDENCE_AND_DESIGN_GAPS",
+      "evidence": ["bounds, path safety, atomicity, migration tests", "EV-001", "MD-001"]
+    },
+    {
+      "criterion": "SC-007",
+      "status": "PASS",
+      "evidence": ["authorization and ownership tests across endpoint and component surfaces"]
+    },
+    {
+      "criterion": "SC-008",
+      "status": "BEHAVIOR_COVERED_EVIDENCE_UNBOUND",
+      "evidence": ["repository overview response and UI tests", "EV-001"]
+    }
+  ],
+  "red_green_evidence_result": {
+    "status": "REVISE",
+    "historical_groups": [
+      {
+        "tasks": "T002-T008",
+        "result": "RED/GREEN recorded"
+      },
+      {
+        "tasks": "T009-T015",
+        "result": "RED/GREEN recorded; canonical provider-contract contradiction remains"
+      },
+      {
+        "tasks": "T016-T029",
+        "result": "RED/GREEN recorded"
+      },
+      {
+        "tasks": "T030-T036",
+        "result": "RED/GREEN recorded"
+      },
+      {
+        "tasks": "T037-T044",
+        "result": "RED/GREEN recorded, but late-group checkpoint binding is incomplete"
+      },
+      {
+        "tasks": "T045-T049",
+        "result": "raw GREEN artifacts exist, but source_commit and checkpoint do not bind them to the reviewed candidate"
+      }
+    ],
+    "candidate_bound_verification": false,
+    "blocking_finding": "EV-001"
+  },
+  "migration_result": {
+    "status": "IMPLEMENTATION_PRESENT_ARTIFACTS_REVISE",
+    "forward_shape": "Two new Story 4.2 tables plus an audit-count column and constraint on ScanRuns.",
+    "rollback_shape": "Drops the audit-count constraint and column and drops the two new tables.",
+    "safety": "Additive forward behavior and internally symmetrical Down methods were observed.",
+    "gap": "The second migration and pre-existing-table rollback surface are absent from the accepted plan/data model and contradict T048 wording.",
+    "finding": "MD-001"
+  },
+  "path_safety_result": {
+    "status": "PASS",
+    "evidence": [
+      "Tracked-file discovery uses git ls-files with NUL-delimited output.",
+      "Tests cover traversal, symlink/reparse-point escape, root containment, repository isolation, result bounds, and redaction.",
+      "No arbitrary repository source read was added to framework detection."
+    ]
+  },
+  "authorization_result": {
+    "status": "PASS",
+    "evidence": [
+      "Unauthenticated access returns 401.",
+      "Authenticated callers without ManagementAccess receive 403.",
+      "Hidden or non-owned repository resources return 404.",
+      "Authorization revocation is tested during start and read paths.",
+      "Chinese-only UI and error behavior are covered."
+    ]
+  },
+  "final_image_gate": {
+    "status": "BEHAVIOR_PASS_EVIDENCE_UNBOUND",
+    "raw_evidence": "TestResults/codegraph-provider-contract/8e8d02bf5cb7477496bb25cf2cab4a1e/evidence.json",
+    "raw_evidence_sha256": "ac4f8e07dbcddf6cae67ea919f8943e512823f60bfef74a6f93ba619401b1a7c",
+    "image_digest": "sha256:7968b1cfe3e12ba7f061cfc15dd18cad7b23af4030b0b46ee978873351705387",
+    "observations": {
+      "projection_a_rows": 139,
+      "projection_b_rows": 138,
+      "parser_language_present_for_non_empty_rows": true,
+      "unknown_language_count": 1,
+      "empty_csharp_fixture_retained_rows": 0,
+      "completeness_metadata": true,
+      "forbidden_retention": false,
+      "cleanup": true
+    },
+    "blocking_gap": "The evidence's workflow source_commit predates the candidate changes that define the fixture, runner, tests, and evidence record; no candidate checkpoint binding exists."
+  },
+  "forbidden_scope_result": {
+    "status": "PASS",
+    "checked": [
+      "Scan Coordinator strategy",
+      "Orchestrator strategy",
+      "Worker Agent tools",
+      "agent dispatch, scheduling, grouping, and retry behavior",
+      "CodeGraph extraction behavior",
+      "LLM fact authority",
+      "Communication Pattern Catalog",
+      "Story 4.3 document generation",
+      "downstream communication-support work"
+    ],
+    "violations": []
+  },
+  "deviation_disposition": {
+    "id": "DEV-EMPTY-CS-FIXTURE",
+    "status": "APPROVED_AND_CONTAINED",
+    "authority": "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md:381-387",
+    "change": "Replace empty_file.py with empty_file.cs only in the final-image qualification fixture.",
+    "evidence": [
+      "workflow-state.md implement/15 records the same human approval.",
+      "The fixture test asserts empty_file.cs is empty and empty_file.py is absent.",
+      "The final-image runner targets empty_file.cs.",
+      "No production language or framework behavior was changed by the substitution."
+    ],
+    "broader_deviation": false
+  },
+  "unresolved_markers": {
+    "status": "PASS",
+    "todo": 0,
+    "needs_clarification": 0,
+    "unresolved_authority": 0,
+    "notes": "Matches for NotSupportedException were test doubles or pre-existing account behavior, not unresolved Story 4.2 work."
+  },
+  "tooling": {
+    "codegraph_first": true,
+    "codegraph_result": "Transport closed on the targeted repository query after an initial irrelevant index response.",
+    "fallback": "Narrow raw reads of the pinned artifacts, complete diff, source, tests, migrations, commit messages, and raw final-image evidence.",
+    "fallback_status": "RECORDED"
+  },
+  "coverage_metrics": {
+    "functional_requirements_total": 21,
+    "functional_requirements_with_implementation_and_test_mapping": 21,
+    "functional_requirements_clear_pass": 17,
+    "functional_requirements_with_blocking_contract_conflict": 3,
+    "functional_requirements_with_documentation_gap": 1,
+    "acceptance_criteria_total": 7,
+    "acceptance_criteria_with_behavior_coverage": 7,
+    "acceptance_criteria_candidate_bound": 2,
+    "success_criteria_total": 8,
+    "success_criteria_with_behavior_coverage": 8,
+    "success_criteria_candidate_bound": 2,
+    "tasks_total": 50,
+    "tasks_marked_complete_before_this_gate": 49,
+    "final_analysis_task": "T050",
+    "critical_findings": 0,
+    "high_findings": 2,
+    "medium_findings": 1,
+    "low_findings": 0,
+    "total_findings": 3,
+    "blocking_findings": 2
+  },
+  "blocking": true,
+  "summary": "All 21 functional requirements, seven acceptance criteria, and eight success criteria have identifiable implementation and test coverage, and no forbidden scope or unapproved deviation was found. The gate remains REVISE because the canonical Story 4.1 provider contract contradicts the implemented seven-field language projection and because the final GREEN/checkpoint evidence is not bound to the pinned candidate. The migration implementation is additive but must also be reconciled with the accepted design and rollback record."
+}

@@ -700,6 +700,66 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectApplicableDetailedAsync_TwoSameRootProjectsWithLockOnlyMatch_ReturnsOneAmbiguityAndNoFactAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "Api.csproj",
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="Unmatched.Api.Package" Version="1.0.0" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write(
+            "Client.csproj",
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="Unmatched.Client.Package" Version="1.0.0" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write(
+            "packages.lock.json",
+            """
+            {
+              "version": 1,
+              "dependencies": {
+                "net10.0": {
+                  "Microsoft.AspNetCore.Mvc": {
+                    "type": "Transitive",
+                    "resolved": "2.3.0"
+                  }
+                }
+              }
+            }
+            """);
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult result =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "src/SharedController.cs",
+                "c_sharp",
+                GetProductionLimits());
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(result.Evidence);
+        DetectedAuditOutcome ambiguity = Assert.Single(
+            result.AuditOutcomes,
+            audit => audit.Reason == "FrameworkEvidenceAmbiguousScope");
+        Assert.Equal("packages.lock.json", ambiguity.ArtifactPath);
+        Assert.Equal("Skipped", ambiguity.Outcome);
+        Assert.Equal("框架证据作用域不明确。", ambiguity.Message);
+        Assert.Equal(
+            1,
+            result.AuditOutcomes.Count(
+                audit => audit.Reason == "FrameworkEvidenceAmbiguousScope"));
+    }
+
+    [Fact]
     public async Task DetectApplicableAsync_UnpairedOrOutOfScopeEvidence_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();

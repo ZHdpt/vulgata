@@ -20,5 +20,17 @@ public interface IScanRunRepository
         string sanitizedMessage,
         DateTimeOffset failedAt,
         CancellationToken cancellationToken = default);
+    Task RecoverAbortedFinalCommitAsync(
+        Guid repositoryId,
+        Guid scanRunId,
+        string sanitizedMessage,
+        DateTimeOffset abortedAt,
+        CancellationToken cancellationToken = default) =>
+        RecoverFailedFinalCommitAsync(
+            repositoryId,
+            scanRunId,
+            sanitizedMessage,
+            abortedAt,
+            cancellationToken);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

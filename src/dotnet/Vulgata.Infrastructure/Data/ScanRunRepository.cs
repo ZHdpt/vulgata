@@ -67,7 +67,36 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         DateTimeOffset failedAt,
         CancellationToken cancellationToken = default)
     {
-        _ = sanitizedMessage;
+        await RecoverFinalCommitAsync(
+            repositoryId,
+            scanRunId,
+            failedAt,
+            abort: false,
+            cancellationToken);
+    }
+
+    public async Task RecoverAbortedFinalCommitAsync(
+        Guid repositoryId,
+        Guid scanRunId,
+        string sanitizedMessage,
+        DateTimeOffset abortedAt,
+        CancellationToken cancellationToken = default)
+    {
+        await RecoverFinalCommitAsync(
+            repositoryId,
+            scanRunId,
+            abortedAt,
+            abort: true,
+            cancellationToken);
+    }
+
+    private async Task RecoverFinalCommitAsync(
+        Guid repositoryId,
+        Guid scanRunId,
+        DateTimeOffset terminalAt,
+        bool abort,
+        CancellationToken cancellationToken)
+    {
         dbContext.ChangeTracker.Clear();
         ScanRun durableRun = await dbContext.ScanRuns.SingleAsync(
             scanRun => scanRun.RepositoryId == repositoryId && scanRun.Id == scanRunId,
@@ -77,7 +106,15 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
             throw new InvalidOperationException("Only a durable Profiling ScanRun can be recovered.");
         }
 
-        durableRun.Fail("代码结构分析失败，请稍后重试。", failedAt);
+        if (abort)
+        {
+            durableRun.Abort("代码结构分析已取消。", terminalAt);
+        }
+        else
+        {
+            durableRun.Fail("代码结构分析失败，请稍后重试。", terminalAt);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

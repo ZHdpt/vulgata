@@ -7,20 +7,28 @@
   "stage": "implement",
   "active_gates": {
     "acceptance-review": {
-      "status": "pending",
-      "iteration": 0,
+      "status": "invalidated",
+      "iteration": 1,
       "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
+      "input_boundary": {
+        "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+        "candidate_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+        "diff_sha256": "2029e63cd19537a7d2bc78dea81d7badb211c006cea309e1a4716b72d38c4290"
+      },
+      "completed_at": "2026-07-20T10:47:52.5668230Z"
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 0,
+      "status": "invalidated",
+      "iteration": 1,
       "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-1.json",
+      "input_boundary": {
+        "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+        "candidate_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+        "diff_sha256": "2029e63cd19537a7d2bc78dea81d7badb211c006cea309e1a4716b72d38c4290"
+      },
+      "completed_at": "2026-07-20T10:47:52.5668230Z"
     }
   },
   "stage_history": [
@@ -190,24 +198,79 @@
         "specs/002-language-framework-detection/reviews/analyze-3.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "revised",
+      "started_at": "2026-07-20T09:22:24.2511172Z",
+      "completed_at": "2026-07-20T10:47:52.5668230Z",
+      "input_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/acceptance-review-1.json": "0c65df8145f80fb9d876bb1dcd58e5d5abf747f6e4480a5217338779911ec42c"
+      },
+      "agent_role": "acceptance-reviewer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "revised",
+      "started_at": "2026-07-20T09:22:24.2511172Z",
+      "completed_at": "2026-07-20T10:47:52.5668230Z",
+      "input_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/quality-review-1.json": "34eaecc6f10ca3f9804c1c40c3c2fabde37777d638107cd29c9b92f3ca746612"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-1.json",
+        "specs/002-language-framework-detection/reviews/analyze-final-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-20T10:47:52.5668230Z",
+      "completed_at": "2026-07-20T10:47:52.5668230Z",
+      "input_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/acceptance-review-1.json": "0c65df8145f80fb9d876bb1dcd58e5d5abf747f6e4480a5217338779911ec42c",
+        "specs/002-language-framework-detection/reviews/quality-review-1.json": "34eaecc6f10ca3f9804c1c40c3c2fabde37777d638107cd29c9b92f3ca746612"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "cfd1b2d45a1bb03d4c8f0f2b1271a06f42ce5531",
+    "preflight_head": "ba50c8c213929a44a66931fb6d0b420aea55b528",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": "",
+    "worktree_status": "Story 4.2 owned correction paths only; no unrelated paths.",
     "owned_paths": [
       ".specify/feature.json",
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json",
-      "specs/002-language-framework-detection"
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/002-language-framework-detection",
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-19T11:31:18.0054153Z"
+    "observed_at": "2026-07-20T10:47:52.5668230Z"
   },
   "source_artifacts": [
     {
@@ -469,12 +532,16 @@
       ]
     },
     "acceptance-review": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 1,
+      "verdict_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-1.json"
+      ]
     },
     "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 1,
+      "verdict_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-1.json"
+      ]
     }
   },
   "e2e_decision": {
@@ -948,29 +1015,70 @@
       "observed_at": "2026-07-20T09:22:24.2511172Z",
       "summary": "T045-T049 reached GREEN on exact image sha256:7968d5b45ab2f420c593610dfd2ae09bb84db40c1a80599f63582379f6a6e54c. Root evidence AC4F8C4CCD5AC8C6EA056834DE35B82CFD3DA4C2C8B15382801B98ADA14D36BC proves 139/138 complete rows, exact hashes, parser-language reconciliation, one empty C# UnknownLanguage with zero retained units, atomic drift rejection, immutable snapshot, complete cleanup, and zero forbidden retention. Migration compatibility passed 3 of 3, the full suite passed 370 of 370, and the Web build had zero errors.",
       "raw_output_path": "TestResults/codegraph-provider-contract/8e8d3333adb3b5845f19740b3d330718ac685bacfb253caffd5b0f5951915b92/evidence.json"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/17",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "command": "dotnet test --filter late-final-boundary regressions; dotnet test --filter same-root lock-only ambiguity regression",
+      "exit_code": 1,
+      "observed_at": "2026-07-20T10:47:52.5668230Z",
+      "summary": "Observed three meaningful atomicity failures: cancellation after draft attachment, cancellation during final persistence, and non-EF final persistence failure all left the durable ScanRun Profiling after provider-derived rows were attached. The lock-only same-root fixture also emitted a framework fact despite two possible NuGet project owners.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/18",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "command": "dotnet test --filter four focused correction regressions; dotnet test --filter RepositoryProfilingTests|FrameworkDetectionTests; dotnet build Vulgata.Web; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T10:47:52.5668230Z",
+      "summary": "The four new regressions pass 4 of 4, existing recovery regressions pass 2 of 2, affected profiling/framework suites pass 87 of 87, and the Web build succeeds with zero errors. Cancellation and non-EF finalization failures now persist Aborted or sanitized Failed from a fresh durable unit of work with zero provider-derived rows; an ambiguous same-root NuGet lock yields one bounded outcome and no framework fact.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-green-20260720T092224Z-t049",
+    "checkpoint_id": "bmad-4-2-implement-20260720T104752Z-c7a3e1",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
-      "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
-      "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
-      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.py",
-      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs",
-      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py",
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/workflow-state.json",
+      "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
+      "specs/002-language-framework-detection/reviews/analyze-final-1.json",
+      "specs/002-language-framework-detection/reviews/quality-review-1.json",
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/15",
-      "4-2-language-and-framework-detection/implement/16"
+      "4-2-language-and-framework-detection/implement/17",
+      "4-2-language-and-framework-detection/implement/18"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-20T09:22:24.2511172Z"
+  "updated_at": "2026-07-20T10:47:52.5668230Z"
 }

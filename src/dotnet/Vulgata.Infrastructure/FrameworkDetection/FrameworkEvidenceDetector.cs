@@ -138,13 +138,24 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 parseStatus = ArtifactParseStatus.Valid;
                 ParsePythonRequirements(artifactPath, readResult.Content!, evidence, budget);
             }
-            else if (artifactKind == ArtifactKind.NuGetLock &&
-                HasTrackedNuGetProject(trackedSet, ScopeRoot(artifactPath)))
+            else if (artifactKind == ArtifactKind.NuGetLock)
             {
-                parseStatus = ValidateJson(readResult.Content!);
-                if (parseStatus == ArtifactParseStatus.Valid)
+                int projectCount = CountTrackedNuGetProjects(
+                    trackedSet,
+                    ScopeRoot(artifactPath));
+                if (projectCount == 1)
                 {
-                    ParseNuGetLock(artifactPath, readResult.Content!, evidence, budget);
+                    parseStatus = ValidateJson(readResult.Content!);
+                    if (parseStatus == ArtifactParseStatus.Valid)
+                    {
+                        ParseNuGetLock(artifactPath, readResult.Content!, evidence, budget);
+                    }
+                }
+                else
+                {
+                    parseStatus = projectCount > 1
+                        ? ArtifactParseStatus.AmbiguousScope
+                        : ArtifactParseStatus.Unsupported;
                 }
             }
             else if (artifactKind == ArtifactKind.NpmLock &&
@@ -1086,10 +1097,10 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         return false;
     }
 
-    private static bool HasTrackedNuGetProject(
+    private static int CountTrackedNuGetProjects(
         IReadOnlySet<string> trackedPaths,
         string scopeRoot) =>
-        trackedPaths.Any(path =>
+        trackedPaths.Count(path =>
             StringComparer.Ordinal.Equals(ScopeRoot(path), scopeRoot) &&
             path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase));
 

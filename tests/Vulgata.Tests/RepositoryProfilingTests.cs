@@ -1656,6 +1656,107 @@ public sealed class RepositoryProfilingTests
     }
 
     [Fact]
+    public Task StartStandaloneRepository_WhenCancelledAfterDraftAttachmentBeforeFinalPersistence_DurablyAbortsWithoutProviderRowsAsync() =>
+        AssertLateFinalBoundaryFailureAsync(
+            LateFinalBoundaryFailureMode.CancelBeforePersistence,
+            ScanRunStatus.Aborted,
+            "代码结构分析已取消。");
+
+    [Fact]
+    public Task StartStandaloneRepository_WhenCancelledDuringFinalPersistenceAfterComplete_DurablyAbortsWithoutProviderRowsAsync() =>
+        AssertLateFinalBoundaryFailureAsync(
+            LateFinalBoundaryFailureMode.CancelDuringPersistence,
+            ScanRunStatus.Aborted,
+            "代码结构分析已取消。");
+
+    [Fact]
+    public Task StartStandaloneRepository_WhenFinalPersistenceThrowsIOException_DurablyFailsWithoutProviderRowsAsync() =>
+        AssertLateFinalBoundaryFailureAsync(
+            LateFinalBoundaryFailureMode.NonDbUpdateFailure,
+            ScanRunStatus.Failed,
+            "代码结构分析失败，请稍后重试。");
+
+    private static async Task AssertLateFinalBoundaryFailureAsync(
+        LateFinalBoundaryFailureMode failureMode,
+        ScanRunStatus expectedStatus,
+        string expectedMessage)
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "A.cs"), "class A { }");
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "B.cs"), "class B { }");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                $"late-final-boundary-{failureMode}",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var boundaryRepository = new LateFinalBoundaryScanRunRepository(
+                new ScanRunRepository(db),
+                db,
+                failureMode);
+            var coordinator = new RepositoryProfilingCoordinator(
+                new SystemRepository(db),
+                new RepositoryRepository(db),
+                boundaryRepository,
+                new SuccessfulWorkingCopy(root),
+                new ControlledCandidates(),
+                new ControlledProvider(),
+                new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
+                NullLogger<RepositoryProfilingCoordinator>.Instance,
+                new AspNetFrameworkDetector(),
+                FrameworkCatalog.LoadEmbedded());
+
+            if (failureMode == LateFinalBoundaryFailureMode.NonDbUpdateFailure)
+            {
+                await Assert.ThrowsAsync<IOException>(() =>
+                    coordinator.StartStandaloneRepositoryAsync(
+                        repository.Id,
+                        null!,
+                        CancellationToken.None));
+            }
+            else
+            {
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                    coordinator.StartStandaloneRepositoryAsync(
+                        repository.Id,
+                        null!,
+                        CancellationToken.None));
+            }
+
+            Assert.True(boundaryRepository.ObservedCodeUnitCount > 0);
+            Assert.True(boundaryRepository.ObservedFrameworkCount > 0);
+            db.ChangeTracker.Clear();
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(expectedStatus, run.Status);
+            Assert.Equal(expectedMessage, run.TerminalMessage);
+            ScanCandidateOutcome localAudit = await db.ScanCandidateOutcomes.SingleAsync();
+            Assert.Equal("src/Generated.g.cs", localAudit.FilePath);
+            Assert.Equal(ScanCandidateOutcomeKind.Filtered, localAudit.Outcome);
+            Assert.Equal("Generated", localAudit.ReasonOrCategory);
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+            Assert.Empty(await db.CodeUnitFrameworks.ToListAsync());
+            Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task StartStandaloneRepository_WithDuplicateResolvedEdge_DoesNotPersistUnresolvedCandidateAsync()
     {
         string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
@@ -2523,6 +2624,131 @@ public sealed class RepositoryProfilingTests
             throw new InvalidOperationException("Applicability must not run after detector failure.");
     }
 
+    private sealed class AspNetFrameworkDetector : IFrameworkEvidenceDetector
+    {
+        private static readonly PackageEvidence _evidence = new(
+            "App.csproj",
+            string.Empty,
+            "nuget",
+            "nuget:Microsoft.AspNetCore.Mvc",
+            PackageEvidenceRelationship.Direct,
+            "App.csproj#xml:PackageReference[Microsoft.AspNetCore.Mvc]",
+            0);
+
+        public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<PackageEvidence>>([_evidence]);
+
+        public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(FrameworkEvidenceDetectionResult.Success([_evidence], [], 0));
+
+        public FrameworkEvidenceDetectionResult SelectApplicable(
+            FrameworkEvidenceDetectionResult detection,
+            string codeUnitPath,
+            string parserLanguage) =>
+            FrameworkEvidenceDetectionResult.Success(
+                [_evidence],
+                detection.AuditOutcomes,
+                detection.TotalAuditOutcomeCount);
+    }
+
+    private enum LateFinalBoundaryFailureMode
+    {
+        CancelBeforePersistence,
+        CancelDuringPersistence,
+        NonDbUpdateFailure,
+    }
+
+    private sealed class LateFinalBoundaryScanRunRepository(
+        IScanRunRepository inner,
+        VulgataDbContext dbContext,
+        LateFinalBoundaryFailureMode failureMode) : IScanRunRepository
+    {
+        public int ObservedCodeUnitCount { get; private set; }
+        public int ObservedFrameworkCount { get; private set; }
+
+        public Task<ScanRun?> GetAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            inner.GetAsync(repositoryId, scanRunId, cancellationToken);
+
+        public Task AddAsync(ScanRun scanRun, CancellationToken cancellationToken = default) =>
+            inner.AddAsync(scanRun, cancellationToken);
+
+        public void AddCandidateOutcomes(IEnumerable<ScanCandidateOutcome> outcomes) =>
+            inner.AddCandidateOutcomes(outcomes);
+
+        public void AddStructuralRecords(
+            IEnumerable<CodeUnit> codeUnits,
+            IEnumerable<CodeUnitEdge> edges,
+            IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
+            inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
+
+        public async Task PersistCompletedProfileAsync(
+            RepositoryProfileDraft draft,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedCodeUnitCount = draft.CodeUnits.Count;
+            ObservedFrameworkCount = draft.CodeUnitFrameworks.Count;
+            if (failureMode == LateFinalBoundaryFailureMode.CancelBeforePersistence)
+            {
+                throw new OperationCanceledException(
+                    new CancellationToken(canceled: true));
+            }
+
+            if (failureMode == LateFinalBoundaryFailureMode.NonDbUpdateFailure)
+            {
+                throw new IOException("Injected non-DbUpdate final persistence failure.");
+            }
+
+            using var cancellation = new CancellationTokenSource();
+            EventHandler<SavingChangesEventArgs> cancelDuringSave =
+                (_, _) => cancellation.Cancel();
+            dbContext.SavingChanges += cancelDuringSave;
+            try
+            {
+                await inner.PersistCompletedProfileAsync(draft, cancellation.Token);
+            }
+            finally
+            {
+                dbContext.SavingChanges -= cancelDuringSave;
+            }
+        }
+
+        public Task RecoverFailedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset failedAt,
+            CancellationToken cancellationToken = default) =>
+            inner.RecoverFailedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                failedAt,
+                cancellationToken);
+
+        public Task RecoverAbortedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset abortedAt,
+            CancellationToken cancellationToken = default) =>
+            inner.RecoverAbortedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                abortedAt,
+                cancellationToken);
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            inner.SaveChangesAsync(cancellationToken);
+    }
+
     private sealed class FailingFinalCommitScanRunRepository(IScanRunRepository inner) : IScanRunRepository
     {
         public int RecoveryCount { get; private set; }
@@ -2565,6 +2791,19 @@ public sealed class RepositoryProfilingTests
                 failedAt,
                 cancellationToken);
         }
+
+        public Task RecoverAbortedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset abortedAt,
+            CancellationToken cancellationToken = default) =>
+            inner.RecoverAbortedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                abortedAt,
+                cancellationToken);
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
             inner.SaveChangesAsync(cancellationToken);

@@ -255,20 +255,27 @@ succeed. Local pre-provider filter outcomes remain the only prior durable
 records. If the final transaction fails after the tracked ScanRun was marked
 Completed, the repository must roll back, clear/detach the failed draft, reload
 the still-`Profiling` ScanRun in a fresh unit of work, and persist one safe
-terminal failure separately. The current tracked-state check cannot be used,
-because its in-memory status may be Completed even though the transaction
-never committed. Tests inject final-commit failure and prove no provider-derived
-row survives, local filter audit remains, and the durable ScanRun is Failed.
+terminal failure separately, or one `Aborted` transition when cancellation
+caused the rollback. The current tracked-state check cannot be used, because
+its in-memory status may be Completed even though the transaction never
+committed. Tests inject non-EF failure and cancellation both after mapping and
+during final persistence, and prove no provider-derived row survives, local
+filter audit remains, and the durable ScanRun reaches the correct terminal
+state.
 
 The additive migration creates `CodeUnitFrameworks` and
 `ScanRunLanguageSummaries`, their composite foreign keys, unique constraints,
-checks, and indexes. Existing nullable `CodeUnit.Language` rows from Story 4.1
-are not guessed or backfilled. New completed Story 4.2 runs enforce non-null
-language in Core, draft validation, and persistence tests. Rollback drops only
-the two new tables/indexes; it does not mutate historical Code Units or
-filtered audit records. Deployment validation must back up the database,
-apply the migration in staging, run compatibility reads for historical runs,
-then run a fresh Story 4.2 profile before production rollout.
+checks, and indexes. An additive implementation-time correction also adds the
+non-negative `ScanRun.FrameworkEvidenceAuditTotalOutcomeCount` column so the
+complete count required by the response contract survives reload when details
+are capped at 100; this changes no parsing or filtering behavior. Existing
+nullable `CodeUnit.Language` rows from Story 4.1 are not guessed or backfilled.
+New completed Story 4.2 runs enforce non-null language in Core, draft
+validation, and persistence tests. Rollback drops only that added
+check/column and the two new tables/indexes; it does not mutate historical Code
+Units or filtered audit records. Deployment validation must back up the
+database, apply the migrations in staging, run compatibility reads for
+historical runs, then run a fresh Story 4.2 profile before production rollout.
 
 ## Implementation Ownership
 
