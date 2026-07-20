@@ -31,7 +31,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     table.CheckConstraint("CK_CodeUnitFrameworks_Confidence", "\"Confidence\" IN ('High', 'Medium')");
                     table.CheckConstraint(
                         "CK_CodeUnitFrameworks_FrameworkName",
-                        "\"FrameworkName\" ~ '^[a-z][a-z0-9-]{0,63}$'");
+                        "length(\"FrameworkName\") BETWEEN 1 AND 64");
                     table.ForeignKey(
                         name: "FK_CodeUnitFrameworks_CodeUnits_CodeUnitId_ScanRunId_Repositor~",
                         columns: x => new { x.CodeUnitId, x.ScanRunId, x.RepositoryId },
@@ -64,7 +64,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     table.CheckConstraint("CK_ScanRunLanguageSummaries_DistinctFileCount", "\"DistinctFileCount\" > 0");
                     table.CheckConstraint(
                         "CK_ScanRunLanguageSummaries_Language",
-                        "\"Language\" ~ '^[a-z][a-z0-9_+#.-]{0,63}$'");
+                        "length(\"Language\") BETWEEN 1 AND 64");
                     table.ForeignKey(
                         name: "FK_ScanRunLanguageSummaries_ScanRuns_ScanRunId_RepositoryId",
                         columns: x => new { x.ScanRunId, x.RepositoryId },

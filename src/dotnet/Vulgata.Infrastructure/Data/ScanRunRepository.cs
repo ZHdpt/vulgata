@@ -12,6 +12,7 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         CancellationToken cancellationToken = default) =>
         dbContext.ScanRuns
             .AsNoTracking()
+            .Include(scanRun => scanRun.LanguageSummaries)
             .SingleOrDefaultAsync(
                 scanRun => scanRun.RepositoryId == repositoryId && scanRun.Id == scanRunId,
                 cancellationToken);
@@ -37,6 +38,7 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(draft);
+        EnsureCompleteLanguageProfile(draft);
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
@@ -78,4 +80,20 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         dbContext.SaveChangesAsync(cancellationToken);
+
+    private static void EnsureCompleteLanguageProfile(RepositoryProfileDraft draft)
+    {
+        if (draft.CodeUnits.Any(unit => !CodeUnit.IsNormalizedLanguage(unit.Language)) ||
+            draft.CodeUnits
+                .GroupBy(unit => unit.FilePath, StringComparer.Ordinal)
+                .Any(group => group
+                    .Select(unit => unit.Language)
+                    .Distinct(StringComparer.Ordinal)
+                    .Skip(1)
+                    .Any()))
+        {
+            throw new InvalidOperationException(
+                "A completed Repository Profile Draft requires one normalized language per retained Code Unit path.");
+        }
+    }
 }

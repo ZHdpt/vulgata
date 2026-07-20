@@ -99,7 +99,7 @@ public sealed class CodeUnit
         return value;
     }
 
-    internal static string NormalizeLanguage(string language)
+    public static string NormalizeLanguage(string language)
     {
         string value = RequireText(language, 64)
             .Normalize(NormalizationForm.FormKC)
@@ -116,6 +116,23 @@ public sealed class CodeUnit
         }
 
         return value;
+    }
+
+    public static bool IsNormalizedLanguage(string? language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return false;
+        }
+
+        try
+        {
+            return StringComparer.Ordinal.Equals(language, NormalizeLanguage(language));
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     private static string RequireSha256(string value)

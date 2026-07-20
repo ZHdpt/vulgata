@@ -305,6 +305,13 @@ unchanged.
 - The accepted T005 command required the repository-specific mechanical
   correction `--context VulgataDbContext` because the startup project owns two
   DbContexts; this changes no schema intent or protected Scan behavior.
+- User Story 1 T009-T015 is GREEN: Projection A carries normalized structural
+  `parser_language`, complete drafts enforce one language per path, language
+  summaries count distinct retained paths, and the existing authorized
+  Repository overview renders sorted language counts under `语言分布`.
+- The exact twelve-identifier matrix passes 12/12 and the combined provider,
+  profiling, API, and component evidence passes 71/71 while hidden Repository
+  redaction remains 404 and non-management access remains 403.
 - Implementation checkpoint:
   `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
   (pending Git binding).

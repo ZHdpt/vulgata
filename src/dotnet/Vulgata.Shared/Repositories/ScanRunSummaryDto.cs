@@ -11,4 +11,11 @@ public sealed class ScanRunSummaryDto
     public DateTimeOffset StartedAt { get; init; }
     public DateTimeOffset? CompletedAt { get; init; }
     public string? Message { get; init; }
+    public IReadOnlyList<ScanRunLanguageSummaryDto> Languages { get; init; } = [];
+}
+
+public sealed class ScanRunLanguageSummaryDto
+{
+    public string Language { get; init; } = string.Empty;
+    public int DistinctFileCount { get; init; }
 }

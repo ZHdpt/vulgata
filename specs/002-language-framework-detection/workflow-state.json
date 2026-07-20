@@ -722,42 +722,82 @@
       "observed_at": "2026-07-20T03:19:47.5628314Z",
       "summary": "T007 observed seven behavior failures and two invariant passes; T008 reached 25 of 25 GREEN with exactly two provider query invocations and no retry or pagination.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/4",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      ],
+      "command": "dotnet test --filter CodeGraphContextProviderTests|RepositoryProfilingTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T03:37:00.0000000Z",
+      "summary": "T009 observed 24 parser-language behavior failures while 9 foundational cases passed; T010 reached 49 of 49 provider/profiling GREEN after updating the canonical Projection A fixture.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/5",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      ],
+      "command": "dotnet test --filter RepositoryProfilingTests; dotnet test --filter CodeGraphContextProviderTests|RepositoryProfilingTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T03:44:00.0000000Z",
+      "summary": "T011 observed five complete-draft and path-conflict failures; T012 reached 23 of 23 focused and 56 of 56 combined GREEN while retaining the 1800-second lifecycle.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/6",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/RepositoryApiTests.cs",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs",
+        "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+        "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor"
+      ],
+      "command": "dotnet test --filter CodeGraphContextProviderTests|RepositoryProfilingTests|RepositoryApiTests|DashboardPanelTests; dotnet ef migrations has-pending-model-changes --context VulgataDbContext",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T03:54:02.9910280Z",
+      "summary": "T013 observed three missing-overview failures while 404 and 403 disclosure checks passed; T014-T015 reached 71 of 71 GREEN, 12 of 12 language identifiers, portable migration startup, and no pending model changes.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-foundation-green-20260720T031947Z-t008",
+    "checkpoint_id": "bmad-4-2-us1-green-20260720T035402Z-t015",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
       "specs/002-language-framework-detection/tasks.md",
-      "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
       "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs",
-      "src/dotnet/Vulgata.Core/Entities/CodeUnitFramework.cs",
       "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
-      "src/dotnet/Vulgata.Core/Entities/ScanRunLanguageSummary.cs",
       "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitFrameworkConfiguration.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunLanguageSummaryConfiguration.cs",
       "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
       "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+      "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
       "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
       "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+      "tests/Vulgata.Tests/DashboardPanelTests.cs",
+      "tests/Vulgata.Tests/RepositoryApiTests.cs",
       "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/1",
-      "4-2-language-and-framework-detection/implement/2",
-      "4-2-language-and-framework-detection/implement/3"
+      "4-2-language-and-framework-detection/implement/4",
+      "4-2-language-and-framework-detection/implement/5",
+      "4-2-language-and-framework-detection/implement/6"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-20T03:19:47.5628314Z"
+  "updated_at": "2026-07-20T03:54:02.9910280Z"
 }

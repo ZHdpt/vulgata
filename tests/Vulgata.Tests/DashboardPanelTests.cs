@@ -3,6 +3,7 @@ using Bunit;
 using FluentValidation;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -222,6 +223,39 @@ public sealed class DashboardPanelTests : TestContext
     }
 
     [Fact]
+    public void RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseSortedLanguageDistribution()
+    {
+        Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
+        Services.RemoveAll<IRepositoryProfilingCoordinator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(_ => new LanguageSummaryProfilingCoordinator());
+        RepositorySummaryDto model = new() { Id = Guid.NewGuid(), Name = "多语言仓库" };
+        var cut = Render<RepositoryDetailDialog>(parameters => parameters
+            .Add(parameter => parameter.Model, model)
+            .Add(parameter => parameter.Visible, true)
+            .Add(parameter => parameter.User, CreateUserContext(isAdministrator: true)));
+        cut.WaitForState(() => cut.Markup.Contains("数据库连接", StringComparison.Ordinal));
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("开始扫描", StringComparison.Ordinal))
+            .Click();
+        cut.WaitForState(() => cut.Markup.Contains("扫描完成", StringComparison.Ordinal));
+
+        Assert.Contains("语言分布", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("c_sharp", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("2 个文件", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("typescript", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("3 个文件", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("zig_0+#.-", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("1 个文件", cut.Markup, StringComparison.Ordinal);
+        Assert.True(
+            cut.Markup.IndexOf("c_sharp", StringComparison.Ordinal) <
+            cut.Markup.IndexOf("typescript", StringComparison.Ordinal));
+        Assert.True(
+            cut.Markup.IndexOf("typescript", StringComparison.Ordinal) <
+            cut.Markup.IndexOf("zig_0+#.-", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void DatabaseConnectionPanel_RendersStatusAndFormFields()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -327,5 +361,77 @@ public sealed class DashboardPanelTests : TestContext
             IUserContext user,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<ScanRunSummaryDto?>(null);
+    }
+
+    private sealed class LanguageSummaryProfilingCoordinator : IRepositoryProfilingCoordinator
+    {
+        private readonly ScanRunSummaryDto _summary = CreateSummaryWithLanguages();
+
+        public Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
+            Guid systemId,
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(
+                RepositoryProfilingOutcome.Success,
+                _summary));
+
+        public Task<RepositoryProfilingResult> StartStandaloneRepositoryAsync(
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(
+                RepositoryProfilingOutcome.Success,
+                _summary));
+
+        public Task<ScanRunSummaryDto?> GetSystemRepositoryRunAsync(
+            Guid systemId,
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(_summary);
+
+        public Task<ScanRunSummaryDto?> GetStandaloneRepositoryRunAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(_summary);
+
+        private static ScanRunSummaryDto CreateSummaryWithLanguages()
+        {
+            var summary = new ScanRunSummaryDto
+            {
+                Id = Guid.NewGuid(),
+                RepositoryId = Guid.NewGuid(),
+                Status = "已完成",
+                ParsedFileCount = 6,
+                TotalCandidateFileCount = 6,
+                StartedAt = DateTimeOffset.UtcNow,
+                CompletedAt = DateTimeOffset.UtcNow,
+            };
+            var property = typeof(ScanRunSummaryDto).GetProperty("Languages");
+            if (property is null)
+            {
+                return summary;
+            }
+
+            Type elementType = property.PropertyType.GetGenericArguments().Single();
+            Array values = Array.CreateInstance(elementType, 3);
+            values.SetValue(CreateLanguageValue(elementType, "c_sharp", 2), 0);
+            values.SetValue(CreateLanguageValue(elementType, "typescript", 3), 1);
+            values.SetValue(CreateLanguageValue(elementType, "zig_0+#.-", 1), 2);
+            property.SetValue(summary, values);
+            return summary;
+        }
+
+        private static object CreateLanguageValue(Type type, string language, int distinctFileCount)
+        {
+            object value = Activator.CreateInstance(type)!;
+            type.GetProperty("Language")!.SetValue(value, language);
+            type.GetProperty("DistinctFileCount")!.SetValue(value, distinctFileCount);
+            return value;
+        }
     }
 }

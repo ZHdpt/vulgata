@@ -240,7 +240,7 @@ public sealed class RepositoryProfilingTests
     public void ProjectionQueries_ExactCanonicalText_HaveAcceptedHashes()
     {
         Assert.Equal(
-            "07b13dcb0b95a2ab26da930e9fcbafef7cde27488df99b0634d860ef0767d9a8",
+            "dbba4ff5ac4834ae2857307dad36c177d9655ac951744c646f9c6e54d3923f33",
             Convert.ToHexStringLower(SHA256.HashData(
                 System.Text.Encoding.UTF8.GetBytes(CodeGraphContextProviderQueries.CodeUnits))));
         Assert.Equal(
@@ -267,6 +267,7 @@ public sealed class RepositoryProfilingTests
                     name = (string?)null,
                     start_line = (int?)null,
                     end_line = (int?)null,
+                    parser_language = (string?)null,
                 },
                 new
                 {
@@ -276,6 +277,7 @@ public sealed class RepositoryProfilingTests
                     name = "external.module",
                     start_line = (int?)1,
                     end_line = (int?)1,
+                    parser_language = (string?)null,
                 },
                 new
                 {
@@ -285,6 +287,7 @@ public sealed class RepositoryProfilingTests
                     name = "IsolatedClass",
                     start_line = (int?)1,
                     end_line = (int?)1,
+                    parser_language = "c_sharp",
                 },
                 new
                 {
@@ -294,6 +297,7 @@ public sealed class RepositoryProfilingTests
                     name = "IsolatedFunction",
                     start_line = (int?)2,
                     end_line = (int?)2,
+                    parser_language = "C_SHARP",
                 },
             ];
             object[] relationshipRows =
@@ -347,6 +351,7 @@ public sealed class RepositoryProfilingTests
             Assert.Equal(2, result.Relationships.Count);
             Assert.Contains(result.CodeUnits, unit => unit.SymbolName == "IsolatedClass");
             Assert.Contains(result.CodeUnits, unit => unit.SymbolName == "IsolatedFunction");
+            Assert.All(result.CodeUnits, unit => Assert.Equal("c_sharp", unit.Language));
             ProviderCodeUnit file = Assert.Single(
                 result.CodeUnits,
                 unit => unit.UnitType == CodeUnitType.File);
@@ -373,6 +378,232 @@ public sealed class RepositoryProfilingTests
         {
             Directory.Delete(root, recursive: true);
         }
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WithParserLanguageProfile_PersistsPerPathLanguagesAndDistinctPathSummariesAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-language-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "Mismatch.cs"), "class Mismatch { void Run() { } }");
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "Novel.cs"), "class Novel { }");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "language-profile",
+                "https://example.invalid/language-profile.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var provider = new FixedLanguageProvider(
+            [
+                new(
+                    "src/Mismatch.cs",
+                    "Mismatch",
+                    CodeUnitType.Class,
+                    1,
+                    1,
+                    "mismatch-class",
+                    RangeConfidence.Exact,
+                    " KOTLIN "),
+                new(
+                    "src/Mismatch.cs",
+                    "Run",
+                    CodeUnitType.Function,
+                    1,
+                    1,
+                    "mismatch-function",
+                    RangeConfidence.Exact,
+                    "kotlin"),
+                new(
+                    "src/Novel.cs",
+                    "Novel",
+                    CodeUnitType.Class,
+                    1,
+                    1,
+                    "novel-class",
+                    RangeConfidence.Exact,
+                    "zig_0+#.-"),
+            ]);
+            var candidates = new FixedCandidates(
+            [
+                new("src/Mismatch.cs", false, "Eligible", 0),
+                new("src/Novel.cs", false, "Eligible", 0),
+            ]);
+            RepositoryProfilingCoordinator coordinator =
+                CreateCoordinator(db, root, provider, candidates);
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            CodeUnit[] units = await db.CodeUnits.ToArrayAsync();
+            Assert.Equal(3, units.Length);
+            Assert.All(
+                units.Where(unit => unit.FilePath == "src/Mismatch.cs"),
+                unit => Assert.Equal("kotlin", unit.Language));
+            Assert.Equal(
+                "zig_0+#.-",
+                Assert.Single(units, unit => unit.FilePath == "src/Novel.cs").Language);
+            ScanRunLanguageSummary[] summaries = await db.ScanRunLanguageSummaries.ToArrayAsync();
+            Assert.Equal(2, summaries.Length);
+            Assert.Contains(
+                summaries,
+                summary => summary.Language == "kotlin" && summary.DistinctFileCount == 1);
+            Assert.Contains(
+                summaries,
+                summary => summary.Language == "zig_0+#.-" && summary.DistinctFileCount == 1);
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(1_800, run.ProviderProcessTimeoutSeconds);
+            Assert.Equal(TimeSpan.FromSeconds(1_800), provider.ObservedTimeout);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task StartStandaloneRepository_WithIncompleteOrConflictingProviderLanguage_PersistsNoProviderAggregateAsync(
+        bool conflicting)
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-invalid-language-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "A.cs"), "class A { void Run() { } }");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "invalid-language",
+                "https://example.invalid/invalid-language.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var provider = new FixedLanguageProvider(
+            [
+                new(
+                    "src/A.cs",
+                    "A",
+                    CodeUnitType.Class,
+                    1,
+                    1,
+                    "a",
+                    RangeConfidence.Exact,
+                    conflicting ? "java" : null),
+                new(
+                    "src/A.cs",
+                    "Run",
+                    CodeUnitType.Function,
+                    1,
+                    1,
+                    "run",
+                    RangeConfidence.Exact,
+                    conflicting ? "kotlin" : "java"),
+            ],
+            [new("a", "run", StructuralRelationshipKind.Contains)]);
+            var candidates = new FixedCandidates(
+            [
+                new("src/A.cs", false, "Eligible", 0),
+                new("src/Generated.g.cs", true, "Generated", 1),
+            ]);
+            RepositoryProfilingCoordinator coordinator =
+                CreateCoordinator(db, root, provider, candidates);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                coordinator.StartStandaloneRepositoryAsync(
+                    repository.Id,
+                    null!,
+                    CancellationToken.None));
+
+            db.ChangeTracker.Clear();
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+            Assert.Empty(await db.CodeUnitFrameworks.ToListAsync());
+            Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+            ScanCandidateOutcome localAudit = await db.ScanCandidateOutcomes.SingleAsync();
+            Assert.Equal("src/Generated.g.cs", localAudit.FilePath);
+            Assert.Equal("Generated", localAudit.ReasonOrCategory);
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Failed, run.Status);
+            Assert.Equal(1_800, run.ProviderProcessTimeoutSeconds);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("java!")]
+    public void ScanRun_Complete_WithNullEmptyOrInvalidCodeUnitLanguage_RejectsDraft(
+        string? invalidLanguage)
+    {
+        Guid repositoryId = Guid.NewGuid();
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.SetCandidateCount(1);
+        CodeUnit unit = CreateLanguageValidationUnit(run, repositoryId, "src/A.cs", "A", "java");
+        typeof(CodeUnit).GetProperty(nameof(CodeUnit.Language))!.SetValue(unit, invalidLanguage);
+        run.CodeUnits.Add(unit);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            run.Complete(1, 1, DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public void ScanRun_Complete_WithConflictingLanguagesForOnePath_RejectsDraft()
+    {
+        Guid repositoryId = Guid.NewGuid();
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.SetCandidateCount(1);
+        run.CodeUnits.Add(CreateLanguageValidationUnit(run, repositoryId, "src/A.cs", "A", "java"));
+        run.CodeUnits.Add(CreateLanguageValidationUnit(run, repositoryId, "src/A.cs", "Run", "kotlin"));
+
+        Assert.Throws<InvalidOperationException>(() =>
+            run.Complete(1, 2, DateTimeOffset.UtcNow));
+    }
+
+    private static CodeUnit CreateLanguageValidationUnit(
+        ScanRun run,
+        Guid repositoryId,
+        string path,
+        string symbol,
+        string language)
+    {
+        string hash = new('a', 64);
+        return new CodeUnit(
+            run.Id,
+            repositoryId,
+            path,
+            hash,
+            hash,
+            1,
+            1,
+            symbol,
+            CodeUnitType.Class,
+            RangeConfidence.Exact,
+            language);
     }
 
     private static byte[] CreateEnvelope(string query, object[] results) =>
@@ -836,6 +1067,39 @@ public sealed class RepositoryProfilingTests
             ]);
     }
 
+    private sealed class FixedCandidates(IReadOnlyList<ScanSourceCandidate> candidates)
+        : IScanCandidateEnumerator
+    {
+        public Task<IReadOnlyList<ScanSourceCandidate>> EnumerateAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(candidates);
+    }
+
+    private sealed class FixedLanguageProvider(
+        IReadOnlyList<ProviderCodeUnit> units,
+        IReadOnlyList<ProviderStructuralRelationship>? relationships = null)
+        : ICodeGraphProvider
+    {
+        public TimeSpan? ObservedTimeout { get; private set; }
+
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedTimeout = timeout;
+            return Task.FromResult(new CodeGraphProviderResult(
+                true,
+                units,
+                relationships ?? [],
+                [],
+                units.Select(unit => unit.RelativePath).Distinct(StringComparer.Ordinal).Count(),
+                TimeSpan.FromMilliseconds(10),
+                null));
+        }
+    }
+
     private sealed class ControlledProvider : ICodeGraphProvider
     {
         public Task<CodeGraphProviderResult> ProfileAsync(
@@ -1051,13 +1315,14 @@ public sealed class RepositoryProfilingTests
     private static RepositoryProfilingCoordinator CreateCoordinator(
         VulgataDbContext db,
         string root,
-        ICodeGraphProvider provider) =>
+        ICodeGraphProvider provider,
+        IScanCandidateEnumerator? candidates = null) =>
         new(
             new SystemRepository(db),
             new RepositoryRepository(db),
             new ScanRunRepository(db),
             new SuccessfulWorkingCopy(root),
-            new ControlledCandidates(),
+            candidates ?? new ControlledCandidates(),
             provider,
             new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
             NullLogger<RepositoryProfilingCoordinator>.Instance);

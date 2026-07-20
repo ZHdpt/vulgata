@@ -67,6 +67,7 @@ public sealed class ScanRun
         }
 
         EnsureProfiling();
+        EnsureCompleteLanguageProfile();
         ParsedFileCount = parsedFileCount;
         NeedsHumanReview = TotalCandidateFileCount >= 500 && codeUnitCount == 0;
         Finish(ScanRunStatus.Completed, now, message);
@@ -97,6 +98,25 @@ public sealed class ScanRun
         if (Status != ScanRunStatus.Profiling)
         {
             throw new InvalidOperationException("扫描运行已结束。");
+        }
+    }
+
+    private void EnsureCompleteLanguageProfile()
+    {
+        if (CodeUnits.Any(unit =>
+                unit.ScanRunId != Id ||
+                unit.RepositoryId != RepositoryId ||
+                !CodeUnit.IsNormalizedLanguage(unit.Language)) ||
+            CodeUnits
+                .GroupBy(unit => unit.FilePath, StringComparer.Ordinal)
+                .Any(group => group
+                    .Select(unit => unit.Language)
+                    .Distinct(StringComparer.Ordinal)
+                    .Skip(1)
+                    .Any()))
+        {
+            throw new InvalidOperationException(
+                "A completed ScanRun requires one normalized language per retained Code Unit path.");
         }
     }
 

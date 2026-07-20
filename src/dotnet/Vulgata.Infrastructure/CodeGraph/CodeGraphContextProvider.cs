@@ -400,7 +400,7 @@ internal static class CodeGraphHttpProjectionParser
     private const int _maximumWarningDetails = 100;
     private static readonly string[] _codeUnitFields =
     [
-        "record_kind", "provider_kind", "path", "name", "start_line", "end_line",
+        "record_kind", "provider_kind", "path", "name", "start_line", "end_line", "parser_language",
     ];
     private static readonly string[] _relationshipFields =
     [
@@ -430,11 +430,14 @@ internal static class CodeGraphHttpProjectionParser
 
         var units = new Dictionary<string, ProviderCodeUnit>(StringComparer.Ordinal);
         var endpointTuples = new Dictionary<string, EndpointTuple>(StringComparer.Ordinal);
+        var languagesByPath = new Dictionary<string, string>(StringComparer.Ordinal);
         var relationships = new HashSet<ProviderStructuralRelationship>();
         var outcomes = new List<ProviderCandidateOutcome>();
         var parsedPaths = new HashSet<string>(StringComparer.Ordinal);
         foreach (JsonElement row in codeUnitRows.EnumerateArray())
         {
+            string? parserLanguage = ReadParserLanguageAtomically(row);
+            EndpointTuple? acceptedEndpoint = null;
             try
             {
                 EnsureBoundedClosedRow(row, _codeUnitFields);
@@ -455,10 +458,25 @@ internal static class CodeGraphHttpProjectionParser
                 {
                     parsedPaths.Add(unit.RelativePath);
                 }
+
+                acceptedEndpoint = endpoint;
             }
             catch (Exception exception) when (IsMalformedRowException(exception))
             {
                 AddWarning(outcomes, TryReadPath(row, "path"));
+            }
+
+            if (acceptedEndpoint is not null)
+            {
+                ReconcileParserLanguage(languagesByPath, acceptedEndpoint.Path, parserLanguage);
+            }
+        }
+
+        foreach ((string identity, ProviderCodeUnit unit) in units.ToArray())
+        {
+            if (languagesByPath.TryGetValue(unit.RelativePath, out string? language))
+            {
+                units[identity] = unit with { Language = language };
             }
         }
 
@@ -805,6 +823,84 @@ internal static class CodeGraphHttpProjectionParser
         return number;
     }
 
+    private static string? ReadParserLanguageAtomically(JsonElement row)
+    {
+        if (row.ValueKind is not JsonValueKind.Object)
+        {
+            throw new InvalidDataException("CodeGraph 语言记录无效。");
+        }
+
+        int count = 0;
+        JsonElement value = default;
+        foreach (JsonProperty property in row.EnumerateObject())
+        {
+            if (property.NameEquals("parser_language"))
+            {
+                count++;
+                value = property.Value;
+            }
+        }
+
+        if (count != 1)
+        {
+            throw new InvalidDataException("CodeGraph 语言字段缺失或重复。");
+        }
+
+        if (value.ValueKind is JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        if (value.ValueKind is not JsonValueKind.String)
+        {
+            throw new InvalidDataException("CodeGraph 语言字段类型无效。");
+        }
+
+        string normalized;
+        try
+        {
+            normalized = (value.GetString() ?? string.Empty)
+                .Normalize(NormalizationForm.FormKC)
+                .Trim()
+                .ToLowerInvariant();
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidDataException("CodeGraph 语言字段无效。", exception);
+        }
+
+        if (normalized.Length is < 1 or > 64 ||
+            normalized[0] is < 'a' or > 'z' ||
+            normalized.Any(character =>
+                character is not (>= 'a' and <= 'z') and
+                    not (>= '0' and <= '9') and
+                    not ('_' or '+' or '#' or '.' or '-')))
+        {
+            throw new InvalidDataException("CodeGraph 语言字段无效。");
+        }
+
+        return normalized;
+    }
+
+    private static void ReconcileParserLanguage(
+        IDictionary<string, string> languagesByPath,
+        string path,
+        string? parserLanguage)
+    {
+        if (path.Length == 0 || parserLanguage is null)
+        {
+            return;
+        }
+
+        if (languagesByPath.TryGetValue(path, out string? existing) &&
+            !StringComparer.Ordinal.Equals(existing, parserLanguage))
+        {
+            throw new InvalidDataException("CodeGraph 同一路径存在冲突的语言标识。");
+        }
+
+        languagesByPath[path] = parserLanguage;
+    }
+
     private static string NormalizePath(string path)
     {
         string normalized = path.Replace('\\', '/').TrimStart('/');
@@ -864,7 +960,8 @@ internal static class CodeGraphContextProviderQueries
         WHERE label(node) IN ['File', 'Module', 'Class', 'Function']
         RETURN 'code_unit' AS record_kind, label(node) AS provider_kind,
                node.path AS path, node.name AS name,
-               node.line_number AS start_line, node.end_line AS end_line
+               node.line_number AS start_line, node.end_line AS end_line,
+               node.lang AS parser_language
         ORDER BY provider_kind, path, name, start_line, end_line
         """;
 

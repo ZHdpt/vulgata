@@ -203,6 +203,8 @@ public sealed class RepositoryProfilingCoordinator(
             return new(outcome, Map(scanRun), display);
         }
 
+        IReadOnlyDictionary<string, string> languagesByPath =
+            ReconcileProviderLanguages(provider.CodeUnits, eligiblePaths);
         var endpointUnits = new Dictionary<string, CodeUnit>(StringComparer.Ordinal);
         var structuralUnits = new Dictionary<(string Path, int Start, int End, string Symbol, CodeUnitType Type), CodeUnit>();
         var hashes = new Dictionary<string, (string Prefix, string Full)>(StringComparer.Ordinal);
@@ -246,7 +248,7 @@ public sealed class RepositoryProfilingCoordinator(
                     providerUnit.SymbolName,
                     providerUnit.UnitType,
                     providerUnit.RangeConfidence,
-                    providerUnit.Language);
+                    languagesByPath[providerUnit.RelativePath]);
                 if (endpointUnits.TryAdd(providerUnit.EndpointIdentity, unit))
                 {
                     structuralUnits.Add(structuralKey, unit);
@@ -373,6 +375,11 @@ public sealed class RepositoryProfilingCoordinator(
                     group.Key,
                     group.Select(unit => unit.FilePath).Distinct(StringComparer.Ordinal).Count()))
                 .ToArray();
+            foreach (ScanRunLanguageSummary languageSummary in languageSummaries)
+            {
+                scanRun.LanguageSummaries.Add(languageSummary);
+            }
+
             RepositoryProfileDraft draft = RepositoryProfileDraft.Create(
                 scanRun,
                 scanRun.CodeUnits,
@@ -437,6 +444,39 @@ public sealed class RepositoryProfilingCoordinator(
         return normalized.TrimStart('/');
     }
 
+    private static IReadOnlyDictionary<string, string> ReconcileProviderLanguages(
+        IEnumerable<ProviderCodeUnit> providerUnits,
+        IReadOnlySet<string> eligiblePaths)
+    {
+        var languagesByPath = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (ProviderCodeUnit unit in providerUnits.Where(
+                     unit => eligiblePaths.Contains(unit.RelativePath)))
+        {
+            string language;
+            try
+            {
+                language = CodeUnit.NormalizeLanguage(unit.Language!);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new InvalidOperationException(
+                    "CodeGraph returned an incomplete or invalid language profile.",
+                    exception);
+            }
+
+            if (languagesByPath.TryGetValue(unit.RelativePath, out string? existing) &&
+                !StringComparer.Ordinal.Equals(existing, language))
+            {
+                throw new InvalidOperationException(
+                    "CodeGraph returned conflicting languages for one Repository path.");
+            }
+
+            languagesByPath[unit.RelativePath] = language;
+        }
+
+        return languagesByPath;
+    }
+
     private static async Task<(string Prefix, string Full)> GetHashesAsync(
         string workingCopyPath,
         string relativePath,
@@ -496,5 +536,13 @@ public sealed class RepositoryProfilingCoordinator(
         StartedAt = run.StartedAt,
         CompletedAt = run.CompletedAt,
         Message = run.TerminalMessage,
+        Languages = run.LanguageSummaries
+            .OrderBy(summary => summary.Language, StringComparer.Ordinal)
+            .Select(summary => new ScanRunLanguageSummaryDto
+            {
+                Language = summary.Language,
+                DistinctFileCount = summary.DistinctFileCount,
+            })
+            .ToArray(),
     };
 }

@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.CodeGraph;
 
 namespace Vulgata.Tests;
@@ -102,6 +104,160 @@ public sealed class CodeGraphContextProviderTests
             queryFields.Select(field => field.Name).Order(StringComparer.Ordinal));
     }
 
+    [Fact]
+    public void ProjectionA_UsesExactNullableParserLanguageAlias_AndProjectionBRemainsUnchanged()
+    {
+        Assert.Equal(
+            1,
+            CountOccurrences(
+                CodeGraphContextProviderQueries.CodeUnits,
+                "node.lang AS parser_language"));
+        Assert.DoesNotContain(
+            "parser_language",
+            CodeGraphContextProviderQueries.Relationships,
+            StringComparison.Ordinal);
+        Assert.Equal(
+            "40d2da3b9b520b3c4eca3fd7c3bad4f4fb10643736e3a9e9b4ddf62c92adc096",
+            Convert.ToHexStringLower(SHA256.HashData(
+                Encoding.UTF8.GetBytes(CodeGraphContextProviderQueries.Relationships))));
+    }
+
+    [Theory]
+    [InlineData("C#", " C_SHARP ", "c_sharp")]
+    [InlineData("Java", "JAVA", "java")]
+    [InlineData("Python", "python", "python")]
+    [InlineData("JavaScript", "JAVASCRIPT", "javascript")]
+    [InlineData("TypeScript", "typescript", "typescript")]
+    [InlineData("Go", "GO", "go")]
+    [InlineData("Kotlin", "kotlin", "kotlin")]
+    [InlineData("Swift", "SWIFT", "swift")]
+    [InlineData("Rust", "rust", "rust")]
+    [InlineData("C", "C", "c")]
+    [InlineData("C++", "CPP", "cpp")]
+    [InlineData("Additional", "TSX", "tsx")]
+    public void ParseProjectionA_EpicLanguageMatrix_NormalizesProviderIdentity(
+        string fixtureLanguage,
+        string providerLanguage,
+        string expectedToken)
+    {
+        Assert.False(string.IsNullOrWhiteSpace(fixtureLanguage));
+        CodeGraphProviderResult result = ParseCodeUnits(
+        [
+            CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, providerLanguage),
+        ]);
+
+        ProviderCodeUnit unit = Assert.Single(result.CodeUnits);
+        Assert.Equal(expectedToken, unit.Language);
+    }
+
+    [Theory]
+    [InlineData(" \uFF34\uFF33\uFF38 ", "tsx")]
+    [InlineData("zig_0+#.-", "zig_0+#.-")]
+    public void ParseProjectionA_FormKcAndOpenGrammar_NormalizesValidIdentity(
+        string providerLanguage,
+        string expectedToken)
+    {
+        CodeGraphProviderResult result = ParseCodeUnits(
+        [
+            CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, providerLanguage),
+        ]);
+
+        Assert.Equal(expectedToken, Assert.Single(result.CodeUnits).Language);
+    }
+
+    [Fact]
+    public void ParseProjectionA_FileNullAndDuplicateStructuralObservation_AssignsIdentityToEveryUnit()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-language-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        File.WriteAllText(Path.Combine(root, "src", "A.cs"), "class A { }");
+        try
+        {
+            CodeGraphProviderResult result = ParseCodeUnits(
+            [
+                CreateCodeUnitRow("File", "src/A.cs", null, null, null, null),
+                CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, "c_sharp"),
+                CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, "C_SHARP"),
+            ],
+            root);
+
+            Assert.Equal(2, result.CodeUnits.Count);
+            Assert.All(result.CodeUnits, unit => Assert.Equal("c_sharp", unit.Language));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("1java")]
+    [InlineData("java!")]
+    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
+    public void ParseProjectionA_InvalidParserLanguage_RejectsAtomically(string invalidLanguage)
+    {
+        Assert.Throws<InvalidDataException>(() => ParseCodeUnits(
+        [
+            CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, invalidLanguage),
+        ]));
+    }
+
+    [Fact]
+    public void ParseProjectionA_WrongTypedParserLanguage_RejectsAtomically()
+    {
+        Assert.Throws<InvalidDataException>(() => ParseCodeUnits(
+        [
+            CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, 42),
+        ]));
+    }
+
+    [Fact]
+    public void ParseProjectionA_DuplicateParserLanguageProperty_RejectsAtomically()
+    {
+        const string row =
+            """{"record_kind":"code_unit","provider_kind":"Class","path":"src/A.cs","name":"A","start_line":1,"end_line":1,"parser_language":"java","parser_language":"java"}""";
+        byte[] codeUnits = CreateEnvelopeFromRawResults(
+            CodeGraphContextProviderQueries.CodeUnits,
+            row,
+            recordCount: 1);
+        byte[] relationships = CreateEnvelopeWithRawDataSuffix(
+            CodeGraphContextProviderQueries.Relationships,
+            [],
+            string.Empty);
+
+        Assert.Throws<InvalidDataException>(() =>
+            CodeGraphHttpProjectionParser.Parse(
+                codeUnits,
+                relationships,
+                Path.GetTempPath(),
+                TimeSpan.Zero));
+    }
+
+    [Fact]
+    public void ParseProjectionA_SamePathConflictingStructuralLanguages_RejectsAtomically()
+    {
+        Assert.Throws<InvalidDataException>(() => ParseCodeUnits(
+        [
+            CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, "java"),
+            CreateCodeUnitRow("Function", "src/A.cs", "run", 2, 2, "kotlin"),
+        ]));
+    }
+
+    [Fact]
+    public void ParseProjectionA_ParserLanguage_DoesNotChangeCgcV1EndpointIdentity()
+    {
+        CodeGraphProviderResult result = ParseCodeUnits(
+        [
+            CreateCodeUnitRow("Class", "src/A.cs", "A", 1, 1, "c_sharp"),
+        ]);
+        string canonical = string.Join('\0', "Class", "src/A.cs", "A", "1", "1");
+        string expected = "cgc-v1:" +
+            Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
+
+        Assert.Equal(expected, Assert.Single(result.CodeUnits).EndpointIdentity);
+    }
+
     private static byte[] CreateEnvelopeWithRawDataSuffix(
         string query,
         object?[] results,
@@ -117,5 +273,65 @@ public sealed class CodeGraphContextProviderTests
             dataSuffix +
             "}}";
         return Encoding.UTF8.GetBytes(json);
+    }
+
+    private static CodeGraphProviderResult ParseCodeUnits(object?[] rows, string? workingCopyPath = null)
+    {
+        byte[] codeUnits = CreateEnvelopeWithRawDataSuffix(
+            CodeGraphContextProviderQueries.CodeUnits,
+            rows,
+            string.Empty);
+        byte[] relationships = CreateEnvelopeWithRawDataSuffix(
+            CodeGraphContextProviderQueries.Relationships,
+            [],
+            string.Empty);
+        return CodeGraphHttpProjectionParser.Parse(
+            codeUnits,
+            relationships,
+            workingCopyPath ?? Path.GetTempPath(),
+            TimeSpan.Zero);
+    }
+
+    private static Dictionary<string, object?> CreateCodeUnitRow(
+        string providerKind,
+        string? path,
+        string? name,
+        int? startLine,
+        int? endLine,
+        object? parserLanguage) =>
+        new(StringComparer.Ordinal)
+        {
+            ["record_kind"] = "code_unit",
+            ["provider_kind"] = providerKind,
+            ["path"] = path,
+            ["name"] = name,
+            ["start_line"] = startLine,
+            ["end_line"] = endLine,
+            ["parser_language"] = parserLanguage,
+        };
+
+    private static byte[] CreateEnvelopeFromRawResults(string query, string rawRows, int recordCount)
+    {
+        string json = "{\"status\":\"ok\",\"message\":null,\"error\":null,\"data\":{\"success\":true,\"query\":" +
+            JsonSerializer.Serialize(query) +
+            ",\"record_count\":" +
+            recordCount.ToString(System.Globalization.CultureInfo.InvariantCulture) +
+            ",\"results\":[" +
+            rawRows +
+            "]}}";
+        return Encoding.UTF8.GetBytes(json);
+    }
+
+    private static int CountOccurrences(string value, string fragment)
+    {
+        int count = 0;
+        int start = 0;
+        while ((start = value.IndexOf(fragment, start, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            start += fragment.Length;
+        }
+
+        return count;
     }
 }
