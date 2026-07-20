@@ -768,36 +768,95 @@
       "observed_at": "2026-07-20T03:54:02.9910280Z",
       "summary": "T013 observed three missing-overview failures while 404 and 403 disclosure checks passed; T014-T015 reached 71 of 71 GREEN, 12 of 12 language identifiers, portable migration startup, and no pending model changes.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/7",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs"
+      ],
+      "command": "dotnet test --filter FrameworkDetectionTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T05:10:00.0000000Z",
+      "summary": "T016-T019 reached 17 of 17 GREEN for the closed catalog, exact committed-manifest evidence parsers, paired lock handling, and git-only non-executing inventory.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/8",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs"
+      ],
+      "command": "dotnet test --filter FrameworkDetectionTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T05:35:00.0000000Z",
+      "summary": "T020-T023 reached 25 of 25 GREEN for parser-language-compatible deepest scope, ambiguity suppression, direct-over-lock ranking, duplicate collapse, and bounded closed evidence locators.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/9",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs"
+      ],
+      "command": "dotnet test --filter FrameworkDetectionTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T06:00:00.0000000Z",
+      "summary": "T024-T025 reached 29 of 29 GREEN for 8 MiB and depth-64 per-artifact bounds, Repository-relative and reparse safety, fixed Chinese audits, and isolated continuation.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/10",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs"
+      ],
+      "command": "dotnet test --filter FrameworkDetectionTests; dotnet build Vulgata.Core; dotnet build Vulgata.Infrastructure",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T06:25:00.0000000Z",
+      "summary": "T026-T027 reached 37 of 37 GREEN with exact Repository-global production limits and typed fail-closed zero-fact results for global overflow or unexpected detector failure.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-us1-green-20260720T035402Z-t015",
+    "checkpoint_id": "bmad-4-2-detector-green-20260720T062500Z-t027",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "specs/002-language-framework-detection/tasks.md",
-      "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs",
-      "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
-      "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-      "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
-      "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
-      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
-      "tests/Vulgata.Tests/DashboardPanelTests.cs",
-      "tests/Vulgata.Tests/RepositoryApiTests.cs",
-      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/4",
-      "4-2-language-and-framework-detection/implement/5",
-      "4-2-language-and-framework-detection/implement/6"
+      "4-2-language-and-framework-detection/implement/7",
+      "4-2-language-and-framework-detection/implement/8",
+      "4-2-language-and-framework-detection/implement/9",
+      "4-2-language-and-framework-detection/implement/10"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-20T03:54:02.9910280Z"
+  "updated_at": "2026-07-20T06:25:00.0000000Z"
 }

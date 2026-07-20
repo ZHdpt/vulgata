@@ -9,6 +9,11 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="FrameworkDetection\Catalog\framework-catalog.v1.json"
+                      LogicalName="Vulgata.Infrastructure.FrameworkDetection.Catalog.framework-catalog.v1.json" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

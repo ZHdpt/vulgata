@@ -86,33 +86,33 @@ description: "Dependency-ordered RED-first tasks for Story 4.2 language and fram
 
 ### TDD Group 2A - Closed catalog
 
-- [ ] T016 [P] [US2] Add runnable RED catalog cases in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for closed-schema startup validation, unknown fields, duplicate/ambiguous coordinates, invalid framework/language/evidence kinds, exact matching only, and all fixed initial coordinates for `aspnet-core`, `blazor`, `spring-boot`, `react`, `express`, and `django`
-- [ ] T017 [US2] Implement the embedded versioned catalog and startup validation in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs`, `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json`, `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj`, and `src/dotnet/Vulgata.Web/Program.cs`; log only catalog version/SHA-256 safe metadata and rerun T016 to GREEN
+- [X] T016 [P] [US2] Add runnable RED catalog cases in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for closed-schema startup validation, unknown fields, duplicate/ambiguous coordinates, invalid framework/language/evidence kinds, exact matching only, and all fixed initial coordinates for `aspnet-core`, `blazor`, `spring-boot`, `react`, `express`, and `django`
+- [X] T017 [US2] Implement the embedded versioned catalog and startup validation in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs`, `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json`, `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj`, and `src/dotnet/Vulgata.Web/Program.cs`; log only catalog version/SHA-256 safe metadata and rerun T016 to GREEN
 
 ### TDD Group 2B - Bounded deterministic evidence parsers
 
-- [ ] T018 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED fixtures proving inventory uses only `git ls-files --cached`; NuGet literal unconditional `.csproj` plus paired `packages.lock.json`, npm literal dependency maps plus paired lock v2/v3, direct project-level Maven, and literal Python requirements map exactly; untracked/ignored evidence, unpaired locks, dynamic/conditional constructs, Maven inheritance/profiles/properties/dependencyManagement, includes/URLs/editables/markers, Gradle/MSBuild/build/restore/install/scripts/imports/symbols/files/external services/LLMs create no fact
-- [ ] T019 [US2] Implement the smallest closed non-executing evidence inventory/parsers and exact catalog matching in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`; retain arbitrary package text only after exact catalog match and rerun T018 to GREEN
+- [X] T018 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED fixtures proving inventory uses only `git ls-files --cached`; NuGet literal unconditional `.csproj` plus paired `packages.lock.json`, npm literal dependency maps plus paired lock v2/v3, direct project-level Maven, and literal Python requirements map exactly; untracked/ignored evidence, unpaired locks, dynamic/conditional constructs, Maven inheritance/profiles/properties/dependencyManagement, includes/URLs/editables/markers, Gradle/MSBuild/build/restore/install/scripts/imports/symbols/files/external services/LLMs create no fact
+- [X] T019 [US2] Implement the smallest closed non-executing evidence inventory/parsers and exact catalog matching in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`; retain arbitrary package text only after exact catalog match and rerun T018 to GREEN
 
 ### TDD Group 2C - Scope, language, and ambiguity
 
-- [ ] T020 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for deepest ancestor scope per ecosystem, parser-language compatibility, same-ecosystem same-root ambiguity, independent co-located ecosystems, and unprovable or out-of-scope evidence producing no fact
-- [ ] T021 [US2] Implement only scope-root selection, parser-language compatibility, and ambiguity handling in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`, then rerun T020 to GREEN
+- [X] T020 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for deepest ancestor scope per ecosystem, parser-language compatibility, same-ecosystem same-root ambiguity, independent co-located ecosystems, and unprovable or out-of-scope evidence producing no fact
+- [X] T021 [US2] Implement only scope-root selection, parser-language compatibility, and ambiguity handling in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`, then rerun T020 to GREEN
 
 ### TDD Group 2D - Ranking, deduplication, and safe locators
 
-- [ ] T022 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for direct `High` over paired-lock `Medium`, deeper scope then ordinal evidence-locator tie-breaking, exact duplicate collapse, the three closed locator forms, 4,096-character locator and 2,048-character path bounds, and persistence of no arbitrary package or source text
-- [ ] T023 [US2] Implement only deterministic ranking/deduplication and safe bounded locator construction in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`, then rerun T022 to GREEN
+- [X] T022 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for direct `High` over paired-lock `Medium`, deeper scope then ordinal evidence-locator tie-breaking, exact duplicate collapse, the three closed locator forms, 4,096-character locator and 2,048-character path bounds, and persistence of no arbitrary package or source text
+- [X] T023 [US2] Implement only deterministic ranking/deduplication and safe bounded locator construction in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`, then rerun T022 to GREEN
 
 ### TDD Group 2E - Per-artifact safety and isolation
 
-- [ ] T024 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for the 8 MiB per-artifact and depth-64 bounds, malformed/unsupported evidence, Repository-relative escape, reparse-point traversal, bounded Chinese diagnostics, and isolation that lets independent valid artifacts continue without raw line/value/content/absolute-path disclosure
-- [ ] T025 [US2] Implement only per-artifact bounds, path/reparse safety, closed audit outcomes, and isolated continuation in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`, then rerun T024 to GREEN
+- [X] T024 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for the 8 MiB per-artifact and depth-64 bounds, malformed/unsupported evidence, Repository-relative escape, reparse-point traversal, bounded Chinese diagnostics, and isolation that lets independent valid artifacts continue without raw line/value/content/absolute-path disclosure
+- [X] T025 [US2] Implement only per-artifact bounds, path/reparse safety, closed audit outcomes, and isolated continuation in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`, then rerun T024 to GREEN
 
 ### TDD Group 2F - Repository-global fail-closed limits
 
-- [ ] T026 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for the 64 MiB aggregate, 1,000 supported artifacts, 100,000 parsed entries, 250,000 candidate facts, 64 final facts per Code Unit, 100 retained details, and unexpected detector failure; assert every global overflow/fault stops before structural persistence instead of silently producing partial facts
-- [ ] T027 [US2] Implement only Repository-global accounting and fail-closed behavior in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`, then rerun T026 to GREEN
+- [X] T026 [US2] Extend `tests/Vulgata.Tests/FrameworkDetectionTests.cs` with runnable RED cases for the 64 MiB aggregate, 1,000 supported artifacts, 100,000 parsed entries, 250,000 candidate facts, 64 final facts per Code Unit, 100 retained details, and unexpected detector failure; assert every global overflow/fault stops before structural persistence instead of silently producing partial facts
+- [X] T027 [US2] Implement only Repository-global accounting and fail-closed behavior in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`, then rerun T026 to GREEN
 
 ### TDD Group 2G - Framework persistence and authorized overview
 

@@ -25,6 +25,115 @@ public interface ICodeGraphProvider
         CancellationToken cancellationToken = default);
 }
 
+public interface IFrameworkEvidenceDetector
+{
+    Task<IReadOnlyList<PackageEvidence>> DetectAsync(
+        string workingCopyPath,
+        CancellationToken cancellationToken = default);
+
+    Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
+        string workingCopyPath,
+        CancellationToken cancellationToken = default);
+}
+
+public enum PackageEvidenceRelationship
+{
+    Direct,
+    Transitive,
+}
+
+public sealed record PackageEvidence(
+    string ArtifactPath,
+    string ScopeRoot,
+    string Ecosystem,
+    string PackageCoordinate,
+    PackageEvidenceRelationship Relationship,
+    string DetectionSource,
+    int ScopeDepth);
+
+public enum FrameworkEvidenceDetectionFailure
+{
+    None,
+    RepositoryBoundExceeded,
+    DetectorFailed,
+}
+
+public sealed record FrameworkEvidenceAuditOutcome(
+    string ArtifactPath,
+    ScanCandidateOutcomeKind Outcome,
+    string Reason,
+    string Message);
+
+public sealed class FrameworkEvidenceDetectionResult
+{
+    private FrameworkEvidenceDetectionResult(
+        bool succeeded,
+        IReadOnlyList<PackageEvidence> evidence,
+        IReadOnlyList<FrameworkEvidenceAuditOutcome> auditOutcomes,
+        int totalAuditOutcomeCount,
+        FrameworkEvidenceDetectionFailure failure,
+        string? error)
+    {
+        Succeeded = succeeded;
+        Evidence = evidence;
+        AuditOutcomes = auditOutcomes;
+        TotalAuditOutcomeCount = totalAuditOutcomeCount;
+        Failure = failure;
+        Error = error;
+    }
+
+    public bool Succeeded { get; }
+    public IReadOnlyList<PackageEvidence> Evidence { get; }
+    public IReadOnlyList<FrameworkEvidenceAuditOutcome> AuditOutcomes { get; }
+    public int TotalAuditOutcomeCount { get; }
+    public FrameworkEvidenceDetectionFailure Failure { get; }
+    public string? Error { get; }
+
+    public static FrameworkEvidenceDetectionResult Success(
+        IEnumerable<PackageEvidence> evidence,
+        IEnumerable<FrameworkEvidenceAuditOutcome> auditOutcomes,
+        int totalAuditOutcomeCount)
+    {
+        PackageEvidence[] retainedEvidence = [.. evidence];
+        FrameworkEvidenceAuditOutcome[] retainedOutcomes = [.. auditOutcomes];
+        if (totalAuditOutcomeCount < retainedOutcomes.Length)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(totalAuditOutcomeCount),
+                "The complete audit count cannot be smaller than the retained sample.");
+        }
+
+        return new(
+            succeeded: true,
+            Array.AsReadOnly(retainedEvidence),
+            Array.AsReadOnly(retainedOutcomes),
+            totalAuditOutcomeCount,
+            FrameworkEvidenceDetectionFailure.None,
+            error: null);
+    }
+
+    public static FrameworkEvidenceDetectionResult Failed(
+        FrameworkEvidenceDetectionFailure failure,
+        string error)
+    {
+        if (failure == FrameworkEvidenceDetectionFailure.None)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(failure),
+                "A failed framework detection result requires a closed failure reason.");
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        return new(
+            succeeded: false,
+            [],
+            [],
+            totalAuditOutcomeCount: 0,
+            failure,
+            error);
+    }
+}
+
 public sealed record GitWorkingCopyResult(bool Succeeded, string? WorkingCopyPath, string? Error)
 {
     public static GitWorkingCopyResult Success(string path) => new(true, path, null);

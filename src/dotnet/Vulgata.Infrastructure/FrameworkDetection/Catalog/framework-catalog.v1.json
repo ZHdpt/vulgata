@@ -1,0 +1,82 @@
+{
+  "version": "1",
+  "entries": [
+    {
+      "ecosystem": "nuget",
+      "packageCoordinate": "nuget-framework:Microsoft.AspNetCore.App",
+      "frameworkName": "aspnet-core",
+      "allowedLanguages": ["c_sharp"],
+      "evidenceKinds": ["direct"]
+    },
+    {
+      "ecosystem": "nuget",
+      "packageCoordinate": "nuget-sdk:Microsoft.NET.Sdk.Web",
+      "frameworkName": "aspnet-core",
+      "allowedLanguages": ["c_sharp"],
+      "evidenceKinds": ["direct"]
+    },
+    {
+      "ecosystem": "nuget",
+      "packageCoordinate": "nuget:Microsoft.AspNetCore.Mvc",
+      "frameworkName": "aspnet-core",
+      "allowedLanguages": ["c_sharp"],
+      "evidenceKinds": ["direct", "paired-lock"]
+    },
+    {
+      "ecosystem": "nuget",
+      "packageCoordinate": "nuget:Microsoft.AspNetCore.Components.WebAssembly",
+      "frameworkName": "blazor",
+      "allowedLanguages": ["c_sharp"],
+      "evidenceKinds": ["direct", "paired-lock"]
+    },
+    {
+      "ecosystem": "nuget",
+      "packageCoordinate": "nuget-sdk:Microsoft.NET.Sdk.BlazorWebAssembly",
+      "frameworkName": "blazor",
+      "allowedLanguages": ["c_sharp"],
+      "evidenceKinds": ["direct"]
+    },
+    {
+      "ecosystem": "npm",
+      "packageCoordinate": "npm:react",
+      "frameworkName": "react",
+      "allowedLanguages": ["javascript", "typescript", "tsx"],
+      "evidenceKinds": ["direct", "paired-lock"]
+    },
+    {
+      "ecosystem": "npm",
+      "packageCoordinate": "npm:express",
+      "frameworkName": "express",
+      "allowedLanguages": ["javascript", "typescript"],
+      "evidenceKinds": ["direct", "paired-lock"]
+    },
+    {
+      "ecosystem": "maven",
+      "packageCoordinate": "maven:org.springframework.boot:spring-boot",
+      "frameworkName": "spring-boot",
+      "allowedLanguages": ["java", "kotlin"],
+      "evidenceKinds": ["direct"]
+    },
+    {
+      "ecosystem": "maven",
+      "packageCoordinate": "maven:org.springframework.boot:spring-boot-starter",
+      "frameworkName": "spring-boot",
+      "allowedLanguages": ["java", "kotlin"],
+      "evidenceKinds": ["direct"]
+    },
+    {
+      "ecosystem": "maven",
+      "packageCoordinate": "maven:org.springframework.boot:spring-boot-starter-web",
+      "frameworkName": "spring-boot",
+      "allowedLanguages": ["java", "kotlin"],
+      "evidenceKinds": ["direct"]
+    },
+    {
+      "ecosystem": "python-requirements",
+      "packageCoordinate": "python:django",
+      "frameworkName": "django",
+      "allowedLanguages": ["python"],
+      "evidenceKinds": ["direct"]
+    }
+  ]
+}

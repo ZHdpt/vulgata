@@ -312,6 +312,20 @@ unchanged.
 - The exact twelve-identifier matrix passes 12/12 and the combined provider,
   profiling, API, and component evidence passes 71/71 while hidden Repository
   redaction remains 404 and non-management access remains 403.
+- User Story 2 detector foundation T016-T027 is GREEN: the versioned closed
+  catalog, exact committed-manifest parsers, parser-language-compatible scope
+  selection, ambiguity suppression, deterministic ranking, and bounded safe
+  locators pass 37/37 focused framework tests.
+- Framework detection remains non-executing and uses only
+  `git ls-files --cached -z --` for Repository inventory. It performs no
+  build, restore, install, script, network, LLM, import, or symbol scan.
+- Per-artifact failures are isolated with fixed bounded Chinese diagnostics;
+  Repository-global limit exhaustion or unexpected detector faults return a
+  typed fail-closed result with zero framework evidence. Transaction-order and
+  zero-persistence verification remain owned by T028 and T035-T036.
+- Production limits are fixed at 8 MiB per artifact, 64 MiB aggregate, 1,000
+  supported artifacts, 100,000 parsed entries, 250,000 candidate facts, 64
+  final framework facts per Code Unit, and 100 retained audit details.
 - Implementation checkpoint:
   `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
   (pending Git binding).
@@ -344,3 +358,10 @@ unchanged.
 - `specs/002-language-framework-detection/contracts/framework-detection.md`
 - `specs/002-language-framework-detection/contracts/repository-scan-overview.md`
 - `specs/002-language-framework-detection/workflow-state.json`
+- `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`
+- `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json`
+- `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs`
+- `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`
+- `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj`
+- `src/dotnet/Vulgata.Web/Program.cs`
+- `tests/Vulgata.Tests/FrameworkDetectionTests.cs`

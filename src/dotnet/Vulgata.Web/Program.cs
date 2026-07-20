@@ -9,6 +9,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Shared;
 using Vulgata.Shared.Validators.Repositories;
@@ -118,6 +119,8 @@ builder.Services.AddScoped<IDatabaseConnectionTestService, DatabaseConnectionTes
 builder.Services.AddScoped<ILlmProviderManagementCoordinator, LlmProviderManagementCoordinator>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideCoordinator, SystemLlmProviderOverrideCoordinator>();
 builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
+var frameworkCatalog = FrameworkCatalog.LoadEmbedded();
+builder.Services.AddSingleton(frameworkCatalog);
 string profilingDataRoot = builder.Configuration["CodeGraph:DataRootPath"]
     ?? (OperatingSystem.IsLinux()
         ? "/var/lib/vulgata-codegraph"
@@ -177,6 +180,10 @@ var app = builder.Build();
 
 var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
 var startupLogger = loggerFactory.CreateLogger("Startup");
+startupLogger.LogInformation(
+    "Framework catalog version {CatalogVersion} loaded with SHA-256 {CatalogSha256}.",
+    frameworkCatalog.Version,
+    frameworkCatalog.Sha256);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
