@@ -165,6 +165,15 @@ public sealed class RepositoryApiTests
         Assert.Equal(40, audit.GetProperty("sampledOutcomeCount").GetInt32());
         Assert.Equal(101, audit.GetProperty("totalOutcomeCount").GetInt32());
         Assert.True(audit.GetProperty("samplingApplied").GetBoolean());
+        Assert.All(
+            audit.GetProperty("details").EnumerateArray(),
+            detail =>
+            {
+                Assert.Equal("已跳过", detail.GetProperty("outcome").GetString());
+                Assert.Equal(
+                    "框架证据格式不受支持。",
+                    detail.GetProperty("reason").GetString());
+            });
         int sharedDetails = frameworks.EnumerateArray()
             .Sum(item => item.GetProperty("evidenceSamples").GetArrayLength()) +
             audit.GetProperty("details").GetArrayLength();
@@ -172,6 +181,52 @@ public sealed class RepositoryApiTests
         string body = document.RootElement.GetRawText();
         Assert.DoesNotContain("C:\\", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("RAW-SECRET", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ManagementScanRunRoute_WithDurableFrameworkAudit_ReturnsClosedChineseDetailAsync()
+    {
+        Guid repositoryId = Guid.NewGuid();
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.SetCandidateCount(0);
+        run.SetFrameworkEvidenceAuditTotalOutcomeCount(1);
+        run.CandidateOutcomes.Add(new ScanCandidateOutcome(
+            run.Id,
+            "audit/package.json",
+            ScanCandidateOutcomeKind.Skipped,
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
+            0,
+            DateTimeOffset.UtcNow));
+        run.Complete(0, 0, DateTimeOffset.UtcNow);
+        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
+            "Map",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(map);
+        var summary = Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
+        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        const string email = "story42.audit-disclosure.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+
+        using HttpResponseMessage response = await client.GetAsync(
+            $"/api/repositories/standalone/{repositoryId}/scan-runs/{run.Id}");
+        string body = await response.Content.ReadAsStringAsync();
+        using JsonDocument document = JsonDocument.Parse(body);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement detail = document.RootElement
+            .GetProperty("frameworkEvidenceAudit")
+            .GetProperty("details")[0];
+        Assert.Equal("audit/package.json", detail.GetProperty("path").GetString());
+        Assert.Equal("已跳过", detail.GetProperty("outcome").GetString());
+        Assert.Equal("框架证据格式不受支持。", detail.GetProperty("reason").GetString());
+        Assert.InRange(detail.GetRawText().Length, 1, 256);
+        Assert.DoesNotContain("Skipped", body, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
+            body,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -263,9 +318,81 @@ public sealed class RepositoryApiTests
     }
 
     [Fact]
+    public async Task ManagementScanRunStartRoute_WithAdversarialProviderFailure_ReturnsClosedChineseProblemAsync()
+    {
+        const string rawDiagnostic =
+            "MATCH (n) RETURN n; source=class Secret {}; C:\\host\\repo\\Secret.cs; " +
+            "package=attacker-value; password=hunter2; token=sk-live-secret; elapsed=9876ms";
+        const string safeMessage = "代码结构分析失败，请稍后重试。";
+        using WebApplicationFactory<Program> factory = CreateFactory(
+            null,
+            new RepositoryProfilingResult(
+                RepositoryProfilingOutcome.ProviderFailure,
+                null,
+                rawDiagnostic));
+        const string email = "story42.provider-disclosure.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+
+        using HttpResponseMessage response = await client.PostAsync(
+            $"/api/repositories/standalone/{Guid.NewGuid()}/scan-runs",
+            content: null);
+        string body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+        Assert.Contains(safeMessage, body, StringComparison.Ordinal);
+        Assert.InRange(body.Length, 1, 1_024);
+        Assert.DoesNotContain("MATCH", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Secret", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("attacker-value", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("hunter2", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-live-secret", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("9876ms", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ManagementScanRunRoute_WithAdversarialDurableTerminalMessage_ReturnsClosedChineseSummaryAsync()
+    {
+        const string rawDiagnostic =
+            "MATCH (n) RETURN n; source=class Secret {}; C:\\host\\repo\\Secret.cs; " +
+            "package=attacker-value; password=hunter2; token=sk-live-secret; elapsed=9876ms";
+        const string safeMessage = "代码结构分析失败，请稍后重试。";
+        Guid repositoryId = Guid.NewGuid();
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.Fail(rawDiagnostic, DateTimeOffset.UtcNow);
+        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
+            "Map",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(map);
+        var summary = Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
+        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        const string email = "story42.terminal-disclosure.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+
+        using HttpResponseMessage response = await client.GetAsync(
+            $"/api/repositories/standalone/{repositoryId}/scan-runs/{run.Id}");
+        string body = await response.Content.ReadAsStringAsync();
+        using JsonDocument document = JsonDocument.Parse(body);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(safeMessage, document.RootElement.GetProperty("message").GetString());
+        Assert.DoesNotContain("MATCH", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Secret", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("attacker-value", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("hunter2", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-live-secret", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("9876ms", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ManagementScanRunRoutes_WhenVisibilityIsRedacted_ReturnNotFoundWithoutLanguageDisclosureAsync()
     {
-        using WebApplicationFactory<Program> factory = CreateFactory(null);
+        using WebApplicationFactory<Program> factory = CreateFactory((ScanRunSummaryDto?)null);
         const string email = "story42.languages.hidden@example.com";
         await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
         using HttpClient client = CreateClient(factory);
@@ -273,19 +400,22 @@ public sealed class RepositoryApiTests
         Guid systemId = Guid.NewGuid();
         Guid repositoryId = Guid.NewGuid();
         Guid scanRunId = Guid.NewGuid();
-        string[] routes =
+        (HttpMethod Method, string Route)[] routes =
         [
-            $"/api/systems/{systemId}/repositories/{repositoryId}/scan-runs/{scanRunId}",
-            $"/api/repositories/standalone/{repositoryId}/scan-runs/{scanRunId}",
+            (HttpMethod.Get, $"/api/systems/{systemId}/repositories/{repositoryId}/scan-runs/{scanRunId}"),
+            (HttpMethod.Post, $"/api/systems/{systemId}/repositories/{repositoryId}/scan-runs"),
+            (HttpMethod.Get, $"/api/repositories/standalone/{repositoryId}/scan-runs/{scanRunId}"),
+            (HttpMethod.Post, $"/api/repositories/standalone/{repositoryId}/scan-runs"),
         ];
 
-        foreach (string route in routes)
+        foreach ((HttpMethod method, string route) in routes)
         {
-            using HttpResponseMessage response = await client.GetAsync(route);
+            using var request = new HttpRequestMessage(method, route);
+            using HttpResponseMessage response = await client.SendAsync(request);
             string body = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-            Assert.Contains("扫描记录不存在", body, StringComparison.Ordinal);
+            Assert.Contains("不存在", body, StringComparison.Ordinal);
             Assert.DoesNotContain("c_sharp", body, StringComparison.Ordinal);
             Assert.DoesNotContain("typescript", body, StringComparison.Ordinal);
             Assert.DoesNotContain("react", body, StringComparison.Ordinal);
@@ -296,10 +426,36 @@ public sealed class RepositoryApiTests
     }
 
     [Fact]
+    public async Task ManagementScanRunRoutes_Unauthenticated_ReturnUnauthorizedWithoutProfilingDisclosureAsync()
+    {
+        ScanRunSummaryDto summary = CreateSensitiveSummary();
+        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        using HttpClient client = CreateClient(factory);
+        Guid systemId = Guid.NewGuid();
+        (HttpMethod Method, string Route)[] routes =
+        [
+            (HttpMethod.Get, $"/api/systems/{systemId}/repositories/{summary.RepositoryId}/scan-runs/{summary.Id}"),
+            (HttpMethod.Post, $"/api/systems/{systemId}/repositories/{summary.RepositoryId}/scan-runs"),
+            (HttpMethod.Get, $"/api/repositories/standalone/{summary.RepositoryId}/scan-runs/{summary.Id}"),
+            (HttpMethod.Post, $"/api/repositories/standalone/{summary.RepositoryId}/scan-runs"),
+        ];
+
+        foreach ((HttpMethod method, string route) in routes)
+        {
+            using var request = new HttpRequestMessage(method, route);
+            using HttpResponseMessage response = await client.SendAsync(request);
+            string body = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+            AssertNoProfilingDisclosure(body);
+        }
+    }
+
+    [Fact]
     public async Task ManagementScanRunRoutes_UserWithoutManagementAccess_ReturnForbiddenAsync()
     {
         using WebApplicationFactory<Program> factory = CreateFactory(
-            CreateSummaryWithUnknownLanguage(["src/unknown/Secret.txt"]));
+            CreateSensitiveSummary());
         const string email = "story42.languages.user@example.com";
         await CreateUserWithRoleAsync(factory.Services, email, RoleNames.User);
         using HttpClient client = CreateClient(factory);
@@ -307,36 +463,102 @@ public sealed class RepositoryApiTests
         Guid systemId = Guid.NewGuid();
         Guid repositoryId = Guid.NewGuid();
         Guid scanRunId = Guid.NewGuid();
-        string[] routes =
+        (HttpMethod Method, string Route)[] routes =
         [
-            $"/api/systems/{systemId}/repositories/{repositoryId}/scan-runs/{scanRunId}",
-            $"/api/repositories/standalone/{repositoryId}/scan-runs/{scanRunId}",
+            (HttpMethod.Get, $"/api/systems/{systemId}/repositories/{repositoryId}/scan-runs/{scanRunId}"),
+            (HttpMethod.Post, $"/api/systems/{systemId}/repositories/{repositoryId}/scan-runs"),
+            (HttpMethod.Get, $"/api/repositories/standalone/{repositoryId}/scan-runs/{scanRunId}"),
+            (HttpMethod.Post, $"/api/repositories/standalone/{repositoryId}/scan-runs"),
         ];
 
-        foreach (string route in routes)
+        foreach ((HttpMethod method, string route) in routes)
         {
-            using HttpResponseMessage response = await client.GetAsync(route);
+            using var request = new HttpRequestMessage(method, route);
+            using HttpResponseMessage response = await client.SendAsync(request);
             string body = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-            Assert.DoesNotContain("c_sharp", body, StringComparison.Ordinal);
-            Assert.DoesNotContain("typescript", body, StringComparison.Ordinal);
-            Assert.DoesNotContain("react", body, StringComparison.Ordinal);
-            Assert.DoesNotContain("检测依据", body, StringComparison.Ordinal);
-            Assert.DoesNotContain("未知语言文件", body, StringComparison.Ordinal);
-            Assert.DoesNotContain("src/unknown", body, StringComparison.Ordinal);
+            AssertNoProfilingDisclosure(body);
         }
+    }
+
+    [Fact]
+    public async Task ManagementSystemScanRunStart_WhenVisibilityWasRevoked_ReturnsNotFoundWithoutProfilingDisclosureAsync()
+    {
+        ScanRunSummaryDto summary = CreateSensitiveSummary();
+        using WebApplicationFactory<Program> factory = CreateFactory(
+            summary,
+            new RepositoryProfilingResult(RepositoryProfilingOutcome.RepositoryNotFound));
+        const string email = "story42.visibility-revoked-start.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+
+        using HttpResponseMessage response = await client.PostAsync(
+            $"/api/systems/{Guid.NewGuid()}/repositories/{summary.RepositoryId}/scan-runs",
+            content: null);
+        string body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("仓库不存在", body, StringComparison.Ordinal);
+        AssertNoProfilingDisclosure(body);
+    }
+
+    [Fact]
+    public async Task ManagementSystemScanRunRead_WhenVisibilityIsRevokedDuringRead_ReturnsNotFoundWithoutProfilingDisclosureAsync()
+    {
+        var system = new Vulgata.Core.Entities.System(
+            "权限撤销系统",
+            description: null,
+            context: null,
+            DateTimeOffset.UtcNow);
+        Vulgata.Core.Entities.Repository repository = system.AddRepository(
+            "权限撤销仓库",
+            "https://example.invalid/revoked.git",
+            description: null,
+            context: null,
+            DateTimeOffset.UtcNow);
+        ScanRun run = CreateSensitiveRun(repository.Id);
+        var visibility = new VisibleThenRevokedSystemRepository(system);
+        var coordinator = new RepositoryProfilingCoordinator(
+            visibility,
+            new FixedRepositoryRepository(repository),
+            new FixedScanRunRepository(run),
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            null!);
+        using WebApplicationFactory<Program> factory = CreateFactoryWithCoordinator(coordinator);
+        const string email = "story42.visibility-revoked-read.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+
+        using HttpResponseMessage response = await client.GetAsync(
+            $"/api/systems/{system.Id}/repositories/{repository.Id}/scan-runs/{run.Id}");
+        string body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(2, visibility.VisibilityChecks);
+        Assert.Contains("扫描记录不存在", body, StringComparison.Ordinal);
+        AssertNoProfilingDisclosure(body);
     }
 
     private WebApplicationFactory<Program> CreateFactory(
         ScanRunSummaryDto? summary,
         RepositoryProfilingResult? startResult = null) =>
+        CreateFactoryWithCoordinator(new StubRepositoryProfilingCoordinator(summary, startResult));
+
+    private WebApplicationFactory<Program> CreateFactoryWithCoordinator(
+        IRepositoryProfilingCoordinator coordinator) =>
         _factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IRepositoryProfilingCoordinator>();
-                services.AddSingleton<IRepositoryProfilingCoordinator>(
-                    new StubRepositoryProfilingCoordinator(summary, startResult));
+                services.AddSingleton(coordinator);
             }));
 
     private static HttpClient CreateClient(WebApplicationFactory<Program> factory) =>
@@ -461,10 +683,10 @@ public sealed class RepositoryApiTests
         {
             object detail = Activator.CreateInstance(detailType)!;
             detailType.GetProperty("Path")!.SetValue(detail, $"audit/{index:D3}/package.json");
-            detailType.GetProperty("Outcome")!.SetValue(detail, "Skipped");
+            detailType.GetProperty("Outcome")!.SetValue(detail, "已跳过");
             detailType.GetProperty("Reason")!.SetValue(
                 detail,
-                ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported);
+                "框架证据格式不受支持。");
             details.SetValue(detail, index);
         }
 
@@ -477,10 +699,25 @@ public sealed class RepositoryApiTests
         IReadOnlyList<string> paths)
     {
         ScanRunSummaryDto summary = CreateSummaryWithLanguages();
+        AddUnknownLanguageOverview(summary, paths);
+        return summary;
+    }
+
+    private static ScanRunSummaryDto CreateSensitiveSummary()
+    {
+        ScanRunSummaryDto summary = CreateSummaryWithFrameworkOverview();
+        AddUnknownLanguageOverview(summary, ["src/unknown/Secret.txt"]);
+        return summary;
+    }
+
+    private static void AddUnknownLanguageOverview(
+        ScanRunSummaryDto summary,
+        IReadOnlyList<string> paths)
+    {
         PropertyInfo? property = typeof(ScanRunSummaryDto).GetProperty("UnknownLanguage");
         if (property is null)
         {
-            return summary;
+            return;
         }
 
         object value = Activator.CreateInstance(property.PropertyType)!;
@@ -491,7 +728,31 @@ public sealed class RepositoryApiTests
                 .OrderBy(path => path, StringComparer.Ordinal)
                 .ToArray());
         property.SetValue(summary, value);
-        return summary;
+    }
+
+    private static ScanRun CreateSensitiveRun(Guid repositoryId)
+    {
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.SetCandidateCount(2);
+        run.LanguageSummaries.Add(
+            new ScanRunLanguageSummary(run.Id, repositoryId, "c_sharp", 1));
+        run.CodeUnitFrameworks.Add(new CodeUnitFramework(
+            Guid.NewGuid(),
+            run.Id,
+            repositoryId,
+            "react",
+            FrameworkConfidence.High,
+            "package.json#json:/dependencies/react",
+            DateTimeOffset.UtcNow));
+        run.CandidateOutcomes.Add(new ScanCandidateOutcome(
+            run.Id,
+            "src/unknown/Secret.txt",
+            ScanCandidateOutcomeKind.Filtered,
+            ScanCandidateOutcomeReasons.UnknownLanguage,
+            0,
+            DateTimeOffset.UtcNow));
+        run.Complete(1, 1, DateTimeOffset.UtcNow);
+        return run;
     }
 
     private static string[] CreateExactUnknownAuditByteBoundPaths()
@@ -578,6 +839,187 @@ public sealed class RepositoryApiTests
     private sealed record UnknownLanguageValue(
         int DistinctFileCount,
         IReadOnlyList<string> Paths);
+
+    private static void AssertNoProfilingDisclosure(string body)
+    {
+        Assert.DoesNotContain("c_sharp", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("typescript", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("react", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("package.json", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("检测依据", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("未知语言文件", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("src/unknown", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Secret.txt", body, StringComparison.Ordinal);
+    }
+
+    private sealed class VisibleThenRevokedSystemRepository(
+        Vulgata.Core.Entities.System visibleSystem) : ISystemRepository
+    {
+        public int VisibilityChecks { get; private set; }
+
+        public Task<Vulgata.Core.Entities.System?> GetVisibleByIdAsync(
+            Guid id,
+            SystemOwnerFilter filter,
+            CancellationToken cancellationToken = default)
+        {
+            VisibilityChecks++;
+            return Task.FromResult<Vulgata.Core.Entities.System?>(
+                VisibilityChecks == 1 ? visibleSystem : null);
+        }
+
+        public Task<IReadOnlyList<Vulgata.Core.Entities.System>> ListVisibleAsync(
+            SystemOwnerFilter filter,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Vulgata.Core.Entities.System?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> NameExistsAsync(
+            string name,
+            Guid? excludeSystemId = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Vulgata.Core.Entities.System> AddAsync(
+            Vulgata.Core.Entities.System system,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<SystemDeleteResult> DeleteIfNoDependenciesAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<SystemDependencyCounts> GetDependencyCountsAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<SystemOwnerAssignmentWriteResult> AssignOwnerAsync(
+            Guid systemId,
+            string userId,
+            DateTimeOffset now,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> RemoveOwnerAsync(
+            Guid systemId,
+            string userId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<SystemOwnerAssignmentSummary>> ListOwnersAsync(
+            Guid systemId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<int> CountOwnerAssignmentsByUserAsync(
+            string userId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class FixedRepositoryRepository(
+        Vulgata.Core.Entities.Repository repository) : IRepositoryRepository
+    {
+        public Task<Vulgata.Core.Entities.Repository?> GetBySystemAndIdAsync(
+            Guid systemId,
+            Guid repositoryId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<Vulgata.Core.Entities.Repository?>(
+                repository.SystemId == systemId && repository.Id == repositoryId
+                    ? repository
+                    : null);
+
+        public Task<IReadOnlyList<Vulgata.Core.Entities.Repository>> ListBySystemAsync(
+            Guid systemId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<Vulgata.Core.Entities.Repository>> ListStandaloneAsync(
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Vulgata.Core.Entities.Repository?> GetByIdAsync(
+            Guid repositoryId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Vulgata.Core.Entities.Repository?> GetStandaloneByIdAsync(
+            Guid repositoryId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> NameExistsAsync(
+            Guid systemId,
+            string name,
+            Guid? excludeRepositoryId = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> StandaloneNameExistsAsync(
+            string name,
+            Guid? excludeRepositoryId = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<Vulgata.Core.Entities.Repository> AddAsync(
+            Vulgata.Core.Entities.Repository repository,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public void Remove(Vulgata.Core.Entities.Repository repository) =>
+            throw new NotSupportedException();
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class FixedScanRunRepository(ScanRun run) : IScanRunRepository
+    {
+        public Task<ScanRun?> GetAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRun?>(
+                run.RepositoryId == repositoryId && run.Id == scanRunId ? run : null);
+
+        public Task AddAsync(
+            ScanRun scanRun,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public void AddCandidateOutcomes(IEnumerable<ScanCandidateOutcome> outcomes) =>
+            throw new NotSupportedException();
+
+        public void AddStructuralRecords(
+            IEnumerable<CodeUnit> codeUnits,
+            IEnumerable<CodeUnitEdge> edges,
+            IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
+            throw new NotSupportedException();
+
+        public Task PersistCompletedProfileAsync(
+            RepositoryProfileDraft draft,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task RecoverFailedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset failedAt,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
 
     private sealed class StubRepositoryProfilingCoordinator(
         ScanRunSummaryDto? summary,

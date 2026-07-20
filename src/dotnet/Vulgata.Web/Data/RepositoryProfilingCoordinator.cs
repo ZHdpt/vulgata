@@ -66,6 +66,7 @@ public sealed class RepositoryProfilingCoordinator(
 {
     private const int UnknownLanguagePathLimit = 10_000;
     private const int UnknownLanguagePathUtf8ByteLimit = 16 * 1024 * 1024;
+    private const int FrameworkEvidenceAuditDetailLimit = 100;
 
     public async Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
         Guid systemId,
@@ -126,7 +127,17 @@ public sealed class RepositoryProfilingCoordinator(
         }
 
         ScanRun? run = await scanRunRepository.GetAsync(repositoryId, scanRunId, cancellationToken);
-        return run is null ? null : Map(run);
+        if (run is null)
+        {
+            return null;
+        }
+
+        return await systemRepository.GetVisibleByIdAsync(
+            systemId,
+            user.ToSystemOwnerFilter(),
+            cancellationToken) is null
+            ? null
+            : Map(run);
     }
 
     public async Task<ScanRunSummaryDto?> GetStandaloneRepositoryRunAsync(
@@ -161,8 +172,8 @@ public sealed class RepositoryProfilingCoordinator(
             await workingCopyService.AcquireAsync(repository, scanRun.Id, cancellationToken);
         if (!workingCopy.Succeeded)
         {
-            string message = $"仓库克隆失败：{workingCopy.Error}";
-            logger.LogError("Repository clone failed for {RepositoryId}: {Reason}", repository.Id, workingCopy.Error);
+            const string message = "仓库克隆失败，请检查仓库地址和访问权限。";
+            logger.LogError("Repository clone failed for {RepositoryId}.", repository.Id);
             scanRun.Fail(message, DateTimeOffset.UtcNow);
             await scanRunRepository.SaveChangesAsync(cancellationToken);
             return new(RepositoryProfilingOutcome.GitFailure, Map(scanRun), message);
@@ -206,10 +217,25 @@ public sealed class RepositoryProfilingCoordinator(
         scanRunRepository.AddCandidateOutcomes(filteredOutcomes);
         await scanRunRepository.SaveChangesAsync(cancellationToken);
 
-        CodeGraphProviderResult provider = await codeGraphProvider.ProfileAsync(
-            workingCopy.WorkingCopyPath!,
-            TimeSpan.FromSeconds(options.WholeRepositoryProcessTimeoutSeconds),
-            cancellationToken);
+        CodeGraphProviderResult provider;
+        try
+        {
+            provider = await codeGraphProvider.ProfileAsync(
+                workingCopy.WorkingCopyPath!,
+                TimeSpan.FromSeconds(options.WholeRepositoryProcessTimeoutSeconds),
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            const string display = "代码结构分析失败，请稍后重试。";
+            logger.LogError(
+                "CodeGraph profiling failed unexpectedly for {RepositoryId}.",
+                repository.Id);
+            scanRun.Fail(display, DateTimeOffset.UtcNow);
+            await scanRunRepository.SaveChangesAsync(cancellationToken);
+            return new(RepositoryProfilingOutcome.ProviderFailure, Map(scanRun), display);
+        }
+
         if (!provider.Succeeded)
         {
             string error = provider.Error ?? "CodeGraph 执行失败。";
@@ -250,26 +276,64 @@ public sealed class RepositoryProfilingCoordinator(
                 !unknownEndpointIdentities.Contains(relationship.TargetEndpointIdentity)),
         ];
 
-        FrameworkEvidenceDetectionResult frameworkDetection =
-            await frameworkEvidenceDetector.DetectDetailedAsync(
+        IReadOnlyDictionary<string, string> languagesByPath;
+        try
+        {
+            languagesByPath =
+                ReconcileProviderLanguages(retainedProviderUnits, eligiblePaths);
+        }
+        catch (InvalidOperationException)
+        {
+            const string display = "代码结构分析失败，请稍后重试。";
+            logger.LogError(
+                "CodeGraph returned an invalid language profile for {RepositoryId}.",
+                repository.Id);
+            scanRun.Fail(display, DateTimeOffset.UtcNow);
+            await scanRunRepository.SaveChangesAsync(cancellationToken);
+            return new(RepositoryProfilingOutcome.ProviderFailure, Map(scanRun), display);
+        }
+
+        FrameworkEvidenceDetectionResult frameworkDetection;
+        try
+        {
+            frameworkDetection = await frameworkEvidenceDetector.DetectDetailedAsync(
                 workingCopy.WorkingCopyPath!,
                 cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            const string display = "框架证据检测失败。";
+            logger.LogError(
+                "Framework evidence detection failed unexpectedly for {RepositoryId}.",
+                repository.Id);
+            scanRun.Fail(display, DateTimeOffset.UtcNow);
+            await scanRunRepository.SaveChangesAsync(cancellationToken);
+            return new(RepositoryProfilingOutcome.ProviderFailure, Map(scanRun), display);
+        }
+
         if (!frameworkDetection.Succeeded)
         {
             const string display = "框架证据检测失败。";
             logger.LogError(
                 "Framework evidence detection failed for {RepositoryId}: {Reason}",
                 repository.Id,
-                frameworkDetection.Error);
+                frameworkDetection.Failure);
             scanRun.Fail(display, DateTimeOffset.UtcNow);
             await scanRunRepository.SaveChangesAsync(cancellationToken);
             return new(RepositoryProfilingOutcome.ProviderFailure, Map(scanRun), display);
         }
 
-        scanRun.SetFrameworkEvidenceAuditTotalOutcomeCount(
-            frameworkDetection.TotalAuditOutcomeCount);
-        IReadOnlyDictionary<string, string> languagesByPath =
-            ReconcileProviderLanguages(retainedProviderUnits, eligiblePaths);
+        var frameworkAuditOutcomes = frameworkDetection.AuditOutcomes.ToList();
+        var frameworkAuditIdentities =
+            frameworkDetection.AuditOutcomeIdentities.ToHashSet();
+        var retainedFrameworkAuditIdentities = frameworkDetection.AuditOutcomes
+            .Select(audit => new FrameworkEvidenceAuditIdentity(
+                audit.ArtifactPath,
+                audit.Outcome,
+                audit.Reason))
+            .ToHashSet();
+        int frameworkAuditTotalOutcomeCount =
+            frameworkDetection.TotalAuditOutcomeCount;
         var applicableFrameworksByPath =
             new Dictionary<string, FrameworkEvidenceDetectionResult>(StringComparer.Ordinal);
         foreach ((string path, string language) in languagesByPath.OrderBy(
@@ -287,21 +351,48 @@ public sealed class RepositoryProfilingCoordinator(
                 logger.LogError(
                     "Framework evidence selection failed for {RepositoryId}: {Reason}",
                     repository.Id,
-                    applicable.Error);
+                    applicable.Failure);
                 scanRun.Fail(display, DateTimeOffset.UtcNow);
                 await scanRunRepository.SaveChangesAsync(cancellationToken);
                 return new(RepositoryProfilingOutcome.ProviderFailure, Map(scanRun), display);
             }
 
             applicableFrameworksByPath.Add(path, applicable);
+            foreach (FrameworkEvidenceAuditIdentity identity in
+                     applicable.AuditOutcomeIdentities)
+            {
+                if (frameworkAuditIdentities.Add(identity))
+                {
+                    frameworkAuditTotalOutcomeCount++;
+                }
+            }
+
+            foreach (FrameworkEvidenceAuditOutcome audit in applicable.AuditOutcomes)
+            {
+                var identity = new FrameworkEvidenceAuditIdentity(
+                    audit.ArtifactPath,
+                    audit.Outcome,
+                    audit.Reason);
+                if (!retainedFrameworkAuditIdentities.Add(identity))
+                {
+                    continue;
+                }
+
+                if (frameworkAuditOutcomes.Count < FrameworkEvidenceAuditDetailLimit)
+                {
+                    frameworkAuditOutcomes.Add(audit);
+                }
+            }
         }
 
+        scanRun.SetFrameworkEvidenceAuditTotalOutcomeCount(
+            frameworkAuditTotalOutcomeCount);
         var endpointUnits = new Dictionary<string, CodeUnit>(StringComparer.Ordinal);
         var structuralUnits = new Dictionary<(string Path, int Start, int End, string Symbol, CodeUnitType Type), CodeUnit>();
         var hashes = new Dictionary<string, (string Prefix, string Full)>(StringComparer.Ordinal);
         var providerAuditOutcomes = new List<ScanCandidateOutcome>();
         var auditKeys = new HashSet<(string Path, ScanCandidateOutcomeKind Outcome, string Reason)>();
-        foreach (FrameworkEvidenceAuditOutcome audit in frameworkDetection.AuditOutcomes)
+        foreach (FrameworkEvidenceAuditOutcome audit in frameworkAuditOutcomes)
         {
             string auditPath = NormalizeAuditPath(audit.ArtifactPath);
             if (!auditKeys.Add((auditPath, audit.Outcome, audit.Reason)))
@@ -692,35 +783,26 @@ public sealed class RepositoryProfilingCoordinator(
                 .ThenBy(fact => fact.Confidence == FrameworkConfidence.High ? 0 : 1)
                 .ThenBy(fact => fact.DetectionSource, StringComparer.Ordinal),
         ];
+        CodeUnitFramework[][] frameworkFactGroups =
+        [
+            .. sortedFacts
+                .GroupBy(fact => fact.FrameworkName, StringComparer.Ordinal)
+                .Select(group => group.ToArray()),
+        ];
         var remainingDetails = sharedEvidenceDetailLimit;
-        var frameworks = new List<ScanRunFrameworkSummaryDto>();
-        foreach (IGrouping<string, CodeUnitFramework> group in sortedFacts.GroupBy(
-                     fact => fact.FrameworkName,
-                     StringComparer.Ordinal))
+        var sampledFactIds = new HashSet<Guid>();
+        var sampledFactsByFramework =
+            new Dictionary<string, List<CodeUnitFramework>>(StringComparer.Ordinal);
+        foreach (CodeUnitFramework[] facts in frameworkFactGroups)
         {
-            CodeUnitFramework[] facts = [.. group];
-            FrameworkEvidenceSampleDto[] samples =
-            [
-                .. facts.Take(remainingDetails)
-                    .Select(fact => new FrameworkEvidenceSampleDto
-                    {
-                        CodeUnitId = fact.CodeUnitId,
-                        Confidence = fact.Confidence.ToString(),
-                        DetectionSource = fact.DetectionSource,
-                    }),
-            ];
-            remainingDetails -= samples.Length;
-            frameworks.Add(new ScanRunFrameworkSummaryDto
-            {
-                FrameworkName = group.Key,
-                CodeUnitCount = facts.Select(fact => fact.CodeUnitId).Distinct().Count(),
-                StrongestConfidence = facts.Any(
-                    fact => fact.Confidence == FrameworkConfidence.High)
-                    ? FrameworkConfidence.High.ToString()
-                    : FrameworkConfidence.Medium.ToString(),
-                TotalFactCount = facts.Length,
-                EvidenceSamples = samples,
-            });
+            CodeUnitFramework anchor = facts
+                .OrderBy(fact => fact.Confidence == FrameworkConfidence.High ? 0 : 1)
+                .ThenBy(fact => fact.CodeUnitId)
+                .ThenBy(fact => fact.DetectionSource, StringComparer.Ordinal)
+                .First();
+            sampledFactsByFramework.Add(anchor.FrameworkName, [anchor]);
+            sampledFactIds.Add(anchor.Id);
+            remainingDetails--;
         }
 
         FrameworkEvidenceAuditDetailDto[] auditDetails =
@@ -736,9 +818,60 @@ public sealed class RepositoryProfilingCoordinator(
                 .Select(outcome => new FrameworkEvidenceAuditDetailDto
                 {
                     Path = outcome.FilePath,
-                    Outcome = outcome.Outcome.ToString(),
-                    Reason = outcome.ReasonOrCategory,
+                    Outcome = MapFrameworkAuditOutcome(outcome.Outcome),
+                    Reason = MapFrameworkAuditReason(outcome.ReasonOrCategory),
                 }),
+        ];
+        remainingDetails -= auditDetails.Length;
+
+        foreach (CodeUnitFramework[] facts in frameworkFactGroups)
+        {
+            List<CodeUnitFramework> sampledFacts =
+                sampledFactsByFramework[facts[0].FrameworkName];
+            foreach (CodeUnitFramework fact in facts)
+            {
+                if (remainingDetails == 0)
+                {
+                    break;
+                }
+
+                if (sampledFactIds.Add(fact.Id))
+                {
+                    sampledFacts.Add(fact);
+                    remainingDetails--;
+                }
+            }
+        }
+
+        ScanRunFrameworkSummaryDto[] frameworks =
+        [
+            .. frameworkFactGroups.Select(facts =>
+            {
+                FrameworkEvidenceSampleDto[] samples =
+                [
+                    .. sampledFactsByFramework[facts[0].FrameworkName]
+                        .OrderBy(fact => fact.CodeUnitId)
+                        .ThenBy(fact => fact.Confidence == FrameworkConfidence.High ? 0 : 1)
+                        .ThenBy(fact => fact.DetectionSource, StringComparer.Ordinal)
+                        .Select(fact => new FrameworkEvidenceSampleDto
+                        {
+                            CodeUnitId = fact.CodeUnitId,
+                            Confidence = fact.Confidence.ToString(),
+                            DetectionSource = fact.DetectionSource,
+                        }),
+                ];
+                return new ScanRunFrameworkSummaryDto
+                {
+                    FrameworkName = facts[0].FrameworkName,
+                    CodeUnitCount = facts.Select(fact => fact.CodeUnitId).Distinct().Count(),
+                    StrongestConfidence = facts.Any(
+                        fact => fact.Confidence == FrameworkConfidence.High)
+                        ? FrameworkConfidence.High.ToString()
+                        : FrameworkConfidence.Medium.ToString(),
+                    TotalFactCount = facts.Length,
+                    EvidenceSamples = samples,
+                };
+            }),
         ];
 
         return new ScanRunSummaryDto
@@ -758,7 +891,7 @@ public sealed class RepositoryProfilingCoordinator(
             NeedsHumanReview = run.NeedsHumanReview,
             StartedAt = run.StartedAt,
             CompletedAt = run.CompletedAt,
-            Message = run.TerminalMessage,
+            Message = MapTerminalMessage(run),
             Languages = run.LanguageSummaries
                 .OrderBy(summary => summary.Language, StringComparer.Ordinal)
                 .Select(summary => new ScanRunLanguageSummaryDto
@@ -782,4 +915,47 @@ public sealed class RepositoryProfilingCoordinator(
             },
         };
     }
+
+    private static string? MapTerminalMessage(ScanRun run)
+    {
+        if (run.Status == ScanRunStatus.Aborted)
+        {
+            return "代码结构分析已取消。";
+        }
+
+        if (run.Status != ScanRunStatus.Failed)
+        {
+            return null;
+        }
+
+        return run.TerminalMessage switch
+        {
+            "仓库克隆失败，请检查仓库地址和访问权限。" => run.TerminalMessage,
+            "候选源文件审计范围超出限制。" => run.TerminalMessage,
+            "本地 CodeGraph 服务不可用，请联系管理员。" => run.TerminalMessage,
+            "框架证据检测失败。" => run.TerminalMessage,
+            "代码结构分析失败，请稍后重试。" => run.TerminalMessage,
+            _ => "代码结构分析失败，请稍后重试。",
+        };
+    }
+
+    private static string MapFrameworkAuditOutcome(ScanCandidateOutcomeKind outcome) =>
+        outcome switch
+        {
+            ScanCandidateOutcomeKind.Skipped => "已跳过",
+            ScanCandidateOutcomeKind.Errored => "处理失败",
+            _ => "未处理",
+        };
+
+    private static string MapFrameworkAuditReason(string reason) =>
+        reason switch
+        {
+            ScanCandidateOutcomeReasons.FrameworkEvidenceMalformed => "框架证据格式无效。",
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsafePath => "框架证据路径不安全。",
+            ScanCandidateOutcomeReasons.FrameworkEvidenceReparsePoint => "框架证据包含重解析点。",
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported => "框架证据格式不受支持。",
+            ScanCandidateOutcomeReasons.FrameworkEvidenceAmbiguousScope => "框架证据作用域不明确。",
+            ScanCandidateOutcomeReasons.FrameworkEvidenceBoundExceeded => "框架证据超出安全限制。",
+            _ => "框架证据处理失败。",
+        };
 }

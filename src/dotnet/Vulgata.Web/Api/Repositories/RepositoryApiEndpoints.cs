@@ -323,16 +323,16 @@ internal static class RepositoryApiEndpoints
                 detail: "仓库不存在。",
                 statusCode: StatusCodes.Status404NotFound),
             RepositoryProfilingOutcome.GitFailure => Results.Problem(
-                detail: result.Message,
+                detail: "仓库克隆失败，请检查仓库地址和访问权限。",
                 statusCode: StatusCodes.Status400BadRequest),
             RepositoryProfilingOutcome.ProviderUnavailable => Results.Problem(
-                detail: result.Message,
+                detail: "本地 CodeGraph 服务不可用，请联系管理员。",
                 statusCode: StatusCodes.Status503ServiceUnavailable),
             RepositoryProfilingOutcome.ProviderFailure => Results.Problem(
-                detail: result.Message,
+                detail: "代码结构分析失败，请稍后重试。",
                 statusCode: StatusCodes.Status502BadGateway),
             RepositoryProfilingOutcome.CandidateAuditBoundExceeded => Results.Problem(
-                detail: result.Message,
+                detail: "候选源文件审计范围超出限制。",
                 statusCode: StatusCodes.Status400BadRequest),
             _ => Results.Problem(detail: "扫描启动失败。", statusCode: StatusCodes.Status500InternalServerError),
         };

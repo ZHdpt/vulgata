@@ -195,9 +195,9 @@
                 };
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _loadError = $"加载数据库连接失败：{ex.Message}";
+            _loadError = "加载数据库连接失败，请稍后重试。";
             _databaseConnection = new RepositoryDatabaseConnectionSummaryDto
             {
                 RepositoryId = Model.Id,
@@ -265,7 +265,15 @@
             }
             else
             {
-                _loadError = result.Message ?? "扫描失败，请稍后重试。";
+                _loadError = result.Outcome switch
+                {
+                    RepositoryProfilingOutcome.RepositoryNotFound => "仓库不存在。",
+                    RepositoryProfilingOutcome.GitFailure => "仓库克隆失败，请检查仓库地址和访问权限。",
+                    RepositoryProfilingOutcome.ProviderUnavailable => "本地 CodeGraph 服务不可用，请联系管理员。",
+                    RepositoryProfilingOutcome.ProviderFailure => "代码结构分析失败，请稍后重试。",
+                    RepositoryProfilingOutcome.CandidateAuditBoundExceeded => "候选源文件审计范围超出限制。",
+                    _ => "扫描失败，请稍后重试。",
+                };
             }
         }
         catch (Exception)

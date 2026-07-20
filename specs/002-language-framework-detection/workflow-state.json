@@ -889,32 +889,54 @@
       "observed_at": "2026-07-20T06:48:08.9398823Z",
       "summary": "T032-T034 reached 85 of 85 GREEN with complete sorted unknown paths through 10000 paths and 16 MiB UTF-8, pre-provider overflow rejection, exact Chinese rendering, and unchanged 403/404 redaction.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/14",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+        "tests/Vulgata.Tests/RepositoryApiTests.cs",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+        "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor"
+      ],
+      "command": "dotnet test --filter RepositoryProfilingTests|RepositoryApiTests|DashboardPanelTests; dotnet test --filter RepositoryProfiling|RepositoryApi|RepositoryDetailDialog; dotnet test --filter RecoverFailedFinalCommitAsync_WithAdversarialDiagnostic|StartStandaloneRepository_WhenFinalCommitFails; dotnet build Vulgata.Web; git diff --check; forbidden-scope diff audit",
+      "exit_code": 0,
+      "observed_at": "2026-07-20T08:19:22.5689479Z",
+      "summary": "T035-T044 reached 77 of 77 affected GREEN, 69 of 69 accepted US4 quickstart GREEN, and 2 of 2 focused final-commit recovery GREEN. Provider/global failures are atomic, individual evidence is isolated and bounded, durable and user-visible diagnostics are closed Chinese, revoked visibility is rechecked before disclosure, every recorded framework retains a strongest-confidence safe source within the shared 100-detail cap, and the forbidden-scope audit is empty.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-us3-green-20260720T064808Z-t034",
+    "checkpoint_id": "bmad-4-2-us4-green-20260720T081922Z-t044",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "specs/002-language-framework-detection/tasks.md",
-      "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-      "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
       "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
       "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
       "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
-      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
       "tests/Vulgata.Tests/DashboardPanelTests.cs",
       "tests/Vulgata.Tests/RepositoryApiTests.cs",
       "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/12",
-      "4-2-language-and-framework-detection/implement/13"
+      "4-2-language-and-framework-detection/implement/14"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-20T06:48:08.9398823Z"
+  "updated_at": "2026-07-20T08:19:22.5689479Z"
 }

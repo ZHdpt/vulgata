@@ -349,6 +349,30 @@ unchanged.
   overflow rejects before provider or framework-detector invocation.
 - Independent provider, profiling, API, and component verification passes
   85/85 with the established 403/404 redaction behavior unchanged.
+- User Story 4 T035-T044 is GREEN: provider and Repository-global failures
+  retain only local pre-provider audit and commit no provider-derived
+  structure, framework facts, or language summaries; malformed individual
+  evidence remains isolated behind bounded closed outcomes.
+- Durable Scan failure messages, API `ProblemDetails`, framework-audit labels,
+  and dialog errors now use closed Simplified-Chinese mappings. Raw provider
+  rows, queries, host paths, package values, credentials, tokens, diagnostics,
+  and timing details are not disclosed.
+- System Repository visibility is rechecked after loading a ScanRun and before
+  mapping its overview, so visibility revoked during a read returns the
+  established redacted 404. Existing unauthenticated, non-management, hidden
+  System Repository, hidden standalone Repository, and completion-time
+  revocation behavior remains unchanged.
+- The shared 100-detail overview budget now reserves one deterministic
+  strongest-confidence safe evidence source for every recorded framework,
+  then includes bounded framework-audit details and deterministic additional
+  facts. The representative objective overview no longer lets one framework
+  hide all evidence for a later framework.
+- Independent US4 verification passes 77/77 affected tests, the accepted
+  quickstart filter passes 69/69, and focused final-commit recovery passes
+  2/2. The forbidden-scope audit found no Scan Coordinator, Orchestrator,
+  Worker Agent/tool, dispatch, scheduling, retry, LLM language authority,
+  Communication Pattern Catalog, Story 4.3, document-generation, or downstream
+  language-support change.
 - Implementation checkpoint:
   `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
   (pending Git binding).

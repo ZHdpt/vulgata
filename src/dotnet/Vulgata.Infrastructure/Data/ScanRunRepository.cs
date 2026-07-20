@@ -67,6 +67,7 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         DateTimeOffset failedAt,
         CancellationToken cancellationToken = default)
     {
+        _ = sanitizedMessage;
         dbContext.ChangeTracker.Clear();
         ScanRun durableRun = await dbContext.ScanRuns.SingleAsync(
             scanRun => scanRun.RepositoryId == repositoryId && scanRun.Id == scanRunId,
@@ -76,7 +77,7 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
             throw new InvalidOperationException("Only a durable Profiling ScanRun can be recovered.");
         }
 
-        durableRun.Fail(sanitizedMessage, failedAt);
+        durableRun.Fail("代码结构分析失败，请稍后重试。", failedAt);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

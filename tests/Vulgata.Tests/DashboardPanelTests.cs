@@ -283,6 +283,13 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("package.json#json:/dependencies/react", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("101", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("audit/000/package.json", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("已跳过", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("框架证据格式不受支持。", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Skipped", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
+            cut.Markup,
+            StringComparison.Ordinal);
         Assert.DoesNotContain("RAW-SECRET", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("C:\\", cut.Markup, StringComparison.OrdinalIgnoreCase);
     }
@@ -319,6 +326,146 @@ public sealed class DashboardPanelTests : TestContext
     }
 
     [Fact]
+    public void RepositoryDetailDialog_AfterRepresentativeProfiling_RendersEveryObjectiveFactAndChineseLabel()
+    {
+        ScanRunSummaryDto summary = CreateRepresentativeOverviewSummary();
+        Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(
+            _ => new StubDatabaseConnectionCoordinator());
+        Services.RemoveAll<IRepositoryProfilingCoordinator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(
+            _ => new FixedSummaryProfilingCoordinator(summary));
+        RepositorySummaryDto model = new()
+        {
+            Id = summary.RepositoryId,
+            Name = "完整画像仓库",
+        };
+        var cut = Render<RepositoryDetailDialog>(parameters => parameters
+            .Add(parameter => parameter.Model, model)
+            .Add(parameter => parameter.Visible, true)
+            .Add(parameter => parameter.User, CreateUserContext(isAdministrator: true)));
+        cut.WaitForState(() => cut.Markup.Contains("数据库连接", StringComparison.Ordinal));
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("开始扫描", StringComparison.Ordinal))
+            .Click();
+        cut.WaitForState(() => cut.Markup.Contains("扫描完成", StringComparison.Ordinal));
+
+        string markup = cut.Markup;
+        Assert.Contains("语言分布", markup, StringComparison.Ordinal);
+        Assert.Contains("框架", markup, StringComparison.Ordinal);
+        Assert.Contains("置信度", markup, StringComparison.Ordinal);
+        Assert.Contains("检测依据", markup, StringComparison.Ordinal);
+        Assert.Contains("未知语言文件", markup, StringComparison.Ordinal);
+        Assert.Contains("框架证据警告", markup, StringComparison.Ordinal);
+        Assert.Contains("c_sharp", markup, StringComparison.Ordinal);
+        Assert.Contains("2 个文件", markup, StringComparison.Ordinal);
+        Assert.Contains("java", markup, StringComparison.Ordinal);
+        Assert.Contains("1 个文件", markup, StringComparison.Ordinal);
+        Assert.Contains("typescript", markup, StringComparison.Ordinal);
+        Assert.Contains("3 个文件", markup, StringComparison.Ordinal);
+        Assert.Contains("react", markup, StringComparison.Ordinal);
+        Assert.Contains("spring-boot", markup, StringComparison.Ordinal);
+        Assert.Contains("High", markup, StringComparison.Ordinal);
+        Assert.Contains(
+            "web/package.json#json:/dependencies/react",
+            markup,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "service/pom.xml#xml:dependencies/org.springframework.boot:spring-boot-starter-web",
+            markup,
+            StringComparison.Ordinal);
+        Assert.Contains("src/unknown/Alpha.txt", markup, StringComparison.Ordinal);
+        Assert.Contains("src/unknown/Middle.txt", markup, StringComparison.Ordinal);
+        Assert.Contains("src/unknown/Zeta.txt", markup, StringComparison.Ordinal);
+        Assert.Contains("audit/one/package.json", markup, StringComparison.Ordinal);
+        Assert.Contains("已跳过", markup, StringComparison.Ordinal);
+        Assert.Contains("框架证据格式不受支持。", markup, StringComparison.Ordinal);
+        Assert.True(
+            markup.IndexOf("c_sharp", StringComparison.Ordinal) <
+            markup.IndexOf("java", StringComparison.Ordinal));
+        Assert.True(
+            markup.IndexOf("java", StringComparison.Ordinal) <
+            markup.IndexOf("typescript", StringComparison.Ordinal));
+        Assert.True(
+            markup.IndexOf("react", StringComparison.Ordinal) <
+            markup.IndexOf("spring-boot", StringComparison.Ordinal));
+        Assert.True(
+            markup.IndexOf("src/unknown/Alpha.txt", StringComparison.Ordinal) <
+            markup.IndexOf("src/unknown/Middle.txt", StringComparison.Ordinal));
+        Assert.True(
+            markup.IndexOf("src/unknown/Middle.txt", StringComparison.Ordinal) <
+            markup.IndexOf("src/unknown/Zeta.txt", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void RepositoryDetailDialog_WithAdversarialProviderFailure_RendersClosedChineseError()
+    {
+        const string rawDiagnostic =
+            "MATCH (n) RETURN n; source=class Secret {}; C:\\host\\repo\\Secret.cs; " +
+            "package=attacker-value; password=hunter2; token=sk-live-secret; elapsed=9876ms";
+        const string safeMessage = "代码结构分析失败，请稍后重试。";
+        Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(
+            _ => new StubDatabaseConnectionCoordinator());
+        Services.RemoveAll<IRepositoryProfilingCoordinator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(
+            _ => new AdversarialFailureProfilingCoordinator(rawDiagnostic));
+        RepositorySummaryDto model = new() { Id = Guid.NewGuid(), Name = "失败仓库" };
+        var cut = Render<RepositoryDetailDialog>(parameters => parameters
+            .Add(parameter => parameter.Model, model)
+            .Add(parameter => parameter.Visible, true)
+            .Add(parameter => parameter.User, CreateUserContext(isAdministrator: true)));
+        cut.WaitForState(() => cut.Markup.Contains("数据库连接", StringComparison.Ordinal));
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("开始扫描", StringComparison.Ordinal))
+            .Click();
+        cut.WaitForState(() =>
+            cut.Markup.Contains(rawDiagnostic, StringComparison.Ordinal) ||
+            cut.Markup.Contains(safeMessage, StringComparison.Ordinal));
+
+        Assert.Contains(safeMessage, cut.Markup, StringComparison.Ordinal);
+        Assert.InRange(cut.Markup.Length, 1, 32_768);
+        Assert.DoesNotContain("MATCH", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Secret", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("attacker-value", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("hunter2", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-live-secret", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("9876ms", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RepositoryDetailDialog_WithAdversarialLoadException_RendersClosedChineseError()
+    {
+        const string rawDiagnostic =
+            "SELECT secret FROM credentials; C:\\host\\appsettings.json; " +
+            "password=hunter2; token=sk-live-secret; elapsed=9876ms";
+        const string safeMessage = "加载数据库连接失败，请稍后重试。";
+        Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(
+            _ => new ThrowingDatabaseConnectionCoordinator(rawDiagnostic));
+        Services.RemoveAll<IRepositoryProfilingCoordinator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(
+            _ => new StubRepositoryProfilingCoordinator());
+        RepositorySummaryDto model = new() { Id = Guid.NewGuid(), Name = "加载失败仓库" };
+
+        var cut = Render<RepositoryDetailDialog>(parameters => parameters
+            .Add(parameter => parameter.Model, model)
+            .Add(parameter => parameter.Visible, true)
+            .Add(parameter => parameter.User, CreateUserContext(isAdministrator: true)));
+        cut.WaitForState(() =>
+            cut.Markup.Contains(rawDiagnostic, StringComparison.Ordinal) ||
+            cut.Markup.Contains(safeMessage, StringComparison.Ordinal));
+
+        Assert.Contains(safeMessage, cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("SELECT", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("credentials", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("hunter2", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-live-secret", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("9876ms", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DatabaseConnectionPanel_RendersStatusAndFormFields()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -352,6 +499,80 @@ public sealed class DashboardPanelTests : TestContext
             [new Claim(ClaimTypes.NameIdentifier, "test-user-id")],
             "Test"));
         return new UserContext(principal, isAdministrator);
+    }
+
+    private static ScanRunSummaryDto CreateRepresentativeOverviewSummary()
+    {
+        Guid repositoryId = Guid.NewGuid();
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.SetCandidateCount(9);
+        run.LanguageSummaries.Add(
+            new ScanRunLanguageSummary(run.Id, repositoryId, "typescript", 3));
+        run.LanguageSummaries.Add(
+            new ScanRunLanguageSummary(run.Id, repositoryId, "c_sharp", 2));
+        run.LanguageSummaries.Add(
+            new ScanRunLanguageSummary(run.Id, repositoryId, "java", 1));
+        for (var index = 0; index < 100; index++)
+        {
+            bool isStrongest = index == 99;
+            run.CodeUnitFrameworks.Add(new CodeUnitFramework(
+                Guid.NewGuid(),
+                run.Id,
+                repositoryId,
+                "react",
+                isStrongest ? FrameworkConfidence.High : FrameworkConfidence.Medium,
+                isStrongest
+                    ? "web/package.json#json:/dependencies/react"
+                    : $"web/package-lock.json#json:/packages/node_modules~1react/{index:D3}",
+                DateTimeOffset.UtcNow));
+        }
+
+        run.CodeUnitFrameworks.Add(new CodeUnitFramework(
+            Guid.NewGuid(),
+            run.Id,
+            repositoryId,
+            "spring-boot",
+            FrameworkConfidence.High,
+            "service/pom.xml#xml:dependencies/org.springframework.boot:spring-boot-starter-web",
+            DateTimeOffset.UtcNow));
+        foreach (string path in
+                 new[]
+                 {
+                     "src/unknown/Zeta.txt",
+                     "src/unknown/Alpha.txt",
+                     "src/unknown/Middle.txt",
+                 })
+        {
+            run.CandidateOutcomes.Add(new ScanCandidateOutcome(
+                run.Id,
+                path,
+                ScanCandidateOutcomeKind.Filtered,
+                ScanCandidateOutcomeReasons.UnknownLanguage,
+                0,
+                DateTimeOffset.UtcNow));
+        }
+
+        run.SetFrameworkEvidenceAuditTotalOutcomeCount(2);
+        run.CandidateOutcomes.Add(new ScanCandidateOutcome(
+            run.Id,
+            "audit/two/package.json",
+            ScanCandidateOutcomeKind.Skipped,
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
+            0,
+            DateTimeOffset.UtcNow));
+        run.CandidateOutcomes.Add(new ScanCandidateOutcome(
+            run.Id,
+            "audit/one/package.json",
+            ScanCandidateOutcomeKind.Skipped,
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
+            0,
+            DateTimeOffset.UtcNow));
+        run.Complete(6, 6, DateTimeOffset.UtcNow);
+        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
+            "Map",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(map);
+        return Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
     }
 
     /// <summary>
@@ -395,6 +616,35 @@ public sealed class DashboardPanelTests : TestContext
         }
     }
 
+    private sealed class ThrowingDatabaseConnectionCoordinator(string diagnostic)
+        : IRepositoryDatabaseConnectionCoordinator
+    {
+        public Task<RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>> GetAsync(
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException(diagnostic);
+
+        public Task<RepositoryDatabaseConnectionMutationResult<RepositoryDatabaseConnectionSummaryDto>> UpsertAsync(
+            Guid repositoryId,
+            UpsertDatabaseConnectionRequest request,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<RepositoryDatabaseConnectionMutationResult<bool>> DeleteAsync(
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<RepositoryDatabaseConnectionTestResult> TestConnectionAsync(
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
     private sealed class StubRepositoryProfilingCoordinator : IRepositoryProfilingCoordinator
     {
         public Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
@@ -409,6 +659,80 @@ public sealed class DashboardPanelTests : TestContext
             IUserContext user,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(new RepositoryProfilingResult(RepositoryProfilingOutcome.RepositoryNotFound));
+
+        public Task<ScanRunSummaryDto?> GetSystemRepositoryRunAsync(
+            Guid systemId,
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(null);
+
+        public Task<ScanRunSummaryDto?> GetStandaloneRepositoryRunAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(null);
+    }
+
+    private sealed class FixedSummaryProfilingCoordinator(ScanRunSummaryDto summary)
+        : IRepositoryProfilingCoordinator
+    {
+        public Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
+            Guid systemId,
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(
+                RepositoryProfilingOutcome.Success,
+                summary));
+
+        public Task<RepositoryProfilingResult> StartStandaloneRepositoryAsync(
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(
+                RepositoryProfilingOutcome.Success,
+                summary));
+
+        public Task<ScanRunSummaryDto?> GetSystemRepositoryRunAsync(
+            Guid systemId,
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(summary);
+
+        public Task<ScanRunSummaryDto?> GetStandaloneRepositoryRunAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanRunSummaryDto?>(summary);
+    }
+
+    private sealed class AdversarialFailureProfilingCoordinator(string diagnostic)
+        : IRepositoryProfilingCoordinator
+    {
+        public Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
+            Guid systemId,
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(
+                RepositoryProfilingOutcome.ProviderFailure,
+                null,
+                diagnostic));
+
+        public Task<RepositoryProfilingResult> StartStandaloneRepositoryAsync(
+            Guid repositoryId,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new RepositoryProfilingResult(
+                RepositoryProfilingOutcome.ProviderFailure,
+                null,
+                diagnostic));
 
         public Task<ScanRunSummaryDto?> GetSystemRepositoryRunAsync(
             Guid systemId,
@@ -538,10 +862,10 @@ public sealed class DashboardPanelTests : TestContext
             Type detailType = detailsProperty.PropertyType.GetGenericArguments().Single();
             object detail = Activator.CreateInstance(detailType)!;
             detailType.GetProperty("Path")!.SetValue(detail, "audit/000/package.json");
-            detailType.GetProperty("Outcome")!.SetValue(detail, "Skipped");
+            detailType.GetProperty("Outcome")!.SetValue(detail, "已跳过");
             detailType.GetProperty("Reason")!.SetValue(
                 detail,
-                ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported);
+                "框架证据格式不受支持。");
             Array details = Array.CreateInstance(detailType, 1);
             details.SetValue(detail, 0);
             detailsProperty.SetValue(audit, details);

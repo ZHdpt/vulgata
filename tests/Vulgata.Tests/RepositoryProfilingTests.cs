@@ -185,6 +185,114 @@ public sealed class RepositoryProfilingTests
     }
 
     [Fact]
+    public async Task RecoverFailedFinalCommitAsync_WithAdversarialDiagnostic_PersistsClosedChineseFailureAsync()
+    {
+        const string rawDiagnostic =
+            "MATCH (n) RETURN n; source=class Secret {}; C:\\host\\repo\\Secret.cs; " +
+            "package=attacker-value; password=hunter2; token=sk-live-secret; elapsed=9876ms";
+        const string safeMessage = "代码结构分析失败，请稍后重试。";
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        await using var db = new VulgataDbContext(dbOptions);
+        await db.Database.OpenConnectionAsync();
+        await db.Database.EnsureCreatedAsync();
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            "recovery-disclosure",
+            "https://example.invalid/recovery-disclosure.git",
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        ScanRun run = ScanRun.Start(repository.Id, 1_800, DateTimeOffset.UtcNow);
+        db.Repositories.Add(repository);
+        db.ScanRuns.Add(run);
+        await db.SaveChangesAsync();
+        var scanRunRepository = new ScanRunRepository(db);
+
+        await scanRunRepository.RecoverFailedFinalCommitAsync(
+            repository.Id,
+            run.Id,
+            rawDiagnostic,
+            DateTimeOffset.UtcNow,
+            CancellationToken.None);
+
+        db.ChangeTracker.Clear();
+        ScanRun persisted = await db.ScanRuns.SingleAsync();
+        Assert.Equal(ScanRunStatus.Failed, persisted.Status);
+        Assert.Equal(safeMessage, persisted.TerminalMessage);
+        Assert.InRange(persisted.TerminalMessage!.Length, 1, 64);
+        Assert.DoesNotContain("MATCH", persisted.TerminalMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain("Secret", persisted.TerminalMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", persisted.TerminalMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("attacker-value", persisted.TerminalMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain("hunter2", persisted.TerminalMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-live-secret", persisted.TerminalMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain("9876ms", persisted.TerminalMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WithAdversarialGitFailure_ReturnsAndPersistsClosedChineseFailureAsync()
+    {
+        const string rawDiagnostic =
+            "fatal: query=MATCH (n) RETURN n; source=class Secret {}; " +
+            "C:\\host\\repo\\Secret.cs; package=attacker-value; password=hunter2; " +
+            "token=sk-live-secret; elapsed=9876ms";
+        const string safeMessage = "仓库克隆失败，请检查仓库地址和访问权限。";
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        await using var db = new VulgataDbContext(dbOptions);
+        await db.Database.OpenConnectionAsync();
+        await db.Database.EnsureCreatedAsync();
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            "git-disclosure",
+            "https://example.invalid/git-disclosure.git",
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        db.Repositories.Add(repository);
+        await db.SaveChangesAsync();
+        var coordinator = new RepositoryProfilingCoordinator(
+            new SystemRepository(db),
+            new RepositoryRepository(db),
+            new ScanRunRepository(db),
+            new FailingWorkingCopy(rawDiagnostic),
+            new FixedCandidates([]),
+            new CountingFailureProvider(),
+            new CodeGraphOptions(Path.Combine(Path.GetTempPath(), "unused-state"), 1_800),
+            NullLogger<RepositoryProfilingCoordinator>.Instance,
+            new EmptyFrameworkEvidenceDetector(),
+            FrameworkCatalog.LoadEmbedded());
+
+        RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+            repository.Id,
+            null!,
+            CancellationToken.None);
+
+        Assert.Equal(RepositoryProfilingOutcome.GitFailure, result.Outcome);
+        Assert.Equal(safeMessage, result.Message);
+        ScanRunSummaryDto summary = Assert.IsType<ScanRunSummaryDto>(result.Value);
+        Assert.Equal(safeMessage, summary.Message);
+        db.ChangeTracker.Clear();
+        ScanRun persisted = await db.ScanRuns.SingleAsync();
+        Assert.Equal(ScanRunStatus.Failed, persisted.Status);
+        Assert.Equal(safeMessage, persisted.TerminalMessage);
+        string inspected = string.Join(
+            '\n',
+            result.Message,
+            summary.Message,
+            persisted.TerminalMessage);
+        Assert.InRange(inspected.Length, 1, 192);
+        Assert.DoesNotContain("MATCH", inspected, StringComparison.Ordinal);
+        Assert.DoesNotContain("Secret", inspected, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", inspected, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("attacker-value", inspected, StringComparison.Ordinal);
+        Assert.DoesNotContain("hunter2", inspected, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-live-secret", inspected, StringComparison.Ordinal);
+        Assert.DoesNotContain("9876ms", inspected, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task StartStandaloneRepository_WithFrameworkEvidence_PersistsScopedRankedLanguageFactsInOnePassAsync()
     {
         string root = Path.Combine(Path.GetTempPath(), $"vulgata-framework-profile-{Guid.NewGuid():N}");
@@ -314,6 +422,505 @@ public sealed class RepositoryProfilingTests
         {
             Directory.Delete(root, recursive: true);
         }
+    }
+
+    [Theory]
+    [InlineData(AdversarialGlobalFailure.MalformedProviderLanguage)]
+    [InlineData(AdversarialGlobalFailure.WrongTypedProviderLanguage)]
+    [InlineData(AdversarialGlobalFailure.TruncatedProviderResponse)]
+    [InlineData(AdversarialGlobalFailure.ProviderProcessFailure)]
+    [InlineData(AdversarialGlobalFailure.ProviderQueryFailure)]
+    [InlineData(AdversarialGlobalFailure.ProviderCleanupFailure)]
+    [InlineData(AdversarialGlobalFailure.DetectorRepositoryBoundExceeded)]
+    [InlineData(AdversarialGlobalFailure.DetectorFault)]
+    public async Task StartStandaloneRepository_WithAdversarialGlobalFailure_RetainsOnlyLocalAuditAndTerminalizesSafelyAsync(
+        AdversarialGlobalFailure failure)
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-global-failure-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(
+            Path.Combine(root, "src", "A.cs"),
+            "class A { void Run() { } }");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "adversarial-global-failure",
+                "https://example.invalid/adversarial-global-failure.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var detector = new AdversarialGlobalFailureDetector(failure);
+            RepositoryProfilingCoordinator coordinator = CreateCoordinatorWithDetector(
+                db,
+                root,
+                new AdversarialGlobalFailureProvider(failure),
+                new FixedCandidates(
+                [
+                    new("src/A.cs", false, "Eligible", 0),
+                    new("src/Generated.g.cs", true, "Generated", 1),
+                ]),
+                detector);
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            string expectedMessage = failure is
+                AdversarialGlobalFailure.DetectorRepositoryBoundExceeded or
+                AdversarialGlobalFailure.DetectorFault
+                    ? "框架证据检测失败。"
+                    : "代码结构分析失败，请稍后重试。";
+            Assert.Equal(RepositoryProfilingOutcome.ProviderFailure, result.Outcome);
+            Assert.Equal(expectedMessage, result.Message);
+            ScanRunSummaryDto value = Assert.IsType<ScanRunSummaryDto>(result.Value);
+            Assert.Equal("失败", value.Status);
+            Assert.Equal(expectedMessage, value.Message);
+            Assert.Equal(
+                failure is
+                    AdversarialGlobalFailure.DetectorRepositoryBoundExceeded or
+                    AdversarialGlobalFailure.DetectorFault
+                        ? 1
+                        : 0,
+                detector.DetectionCount);
+            Assert.Equal(0, detector.ApplicabilityCount);
+
+            db.ChangeTracker.Clear();
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+            Assert.Empty(await db.CodeUnitFrameworks.ToListAsync());
+            Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+            ScanCandidateOutcome localAudit = await db.ScanCandidateOutcomes.SingleAsync();
+            Assert.Equal("src/Generated.g.cs", localAudit.FilePath);
+            Assert.Equal(ScanCandidateOutcomeKind.Filtered, localAudit.Outcome);
+            Assert.Equal("Generated", localAudit.ReasonOrCategory);
+            Assert.NotEqual(
+                ScanCandidateOutcomeReasons.UnknownLanguage,
+                localAudit.ReasonOrCategory);
+            Assert.DoesNotContain(
+                "FrameworkEvidence",
+                localAudit.ReasonOrCategory,
+                StringComparison.Ordinal);
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Failed, run.Status);
+            Assert.Equal(expectedMessage, run.TerminalMessage);
+            Assert.Equal(1, run.TotalCandidateFileCount);
+            Assert.Equal(
+                0,
+                typeof(ScanRun).GetProperty("FrameworkEvidenceAuditTotalOutcomeCount")!
+                    .GetValue(run));
+            string durableAndResultText = string.Join(
+                '\n',
+                result.Message,
+                value.Message,
+                run.TerminalMessage,
+                $"{localAudit.FilePath}|{localAudit.Outcome}|{localAudit.ReasonOrCategory}");
+            Assert.InRange(durableAndResultText.Length, 1, 256);
+            foreach (string forbidden in new[]
+                     {
+                         "MATCH",
+                         "class Secret",
+                         "C:\\secrets\\source.cs",
+                         "attacker-value",
+                         "hunter2",
+                         "do-not-persist",
+                         "9876ms",
+                         "RAW-DIAGNOSTIC",
+                     })
+            {
+                Assert.DoesNotContain(forbidden, durableAndResultText, StringComparison.Ordinal);
+            }
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(InvalidFrameworkEvidence.Malformed)]
+    [InlineData(InvalidFrameworkEvidence.Unsupported)]
+    [InlineData(InvalidFrameworkEvidence.Ambiguous)]
+    [InlineData(InvalidFrameworkEvidence.Escape)]
+    [InlineData(InvalidFrameworkEvidence.Reparse)]
+    [InlineData(InvalidFrameworkEvidence.Oversize)]
+    public async Task StartStandaloneRepository_WithInvalidIndividualFrameworkEvidence_IsolatesClosedAuditAndRetainsValidFactAsync(
+        InvalidFrameworkEvidence invalidEvidence)
+    {
+        using var fixture = new ProfilingEvidenceGitFixture();
+        const string forbiddenSource =
+            "RAW-SOURCE-CONTENT ABSOLUTE-HOST-SECRET ARBITRARY-PACKAGE-VALUE " +
+            "RAW-PARSER-DIAGNOSTIC credential=USER:PASSWORD TOKEN-DO-NOT-PERSIST";
+        fixture.Write(
+            "package.json",
+            $$"""{ "dependencies": { "react": "{{forbiddenSource}}" } }""");
+        fixture.Write("src/App.ts", "export class App { }");
+        fixture.Write("ambiguous/App.cs", "class App { }");
+
+        string[] expectedAuditPaths;
+        ScanCandidateOutcomeKind expectedAuditKind;
+        string expectedAuditReason;
+        if (invalidEvidence == InvalidFrameworkEvidence.Malformed)
+        {
+            fixture.Write(
+                "invalid-malformed/package.json",
+                $$"""{ "dependencies": { "express": "{{forbiddenSource}}" """);
+            expectedAuditPaths = ["invalid-malformed/package.json"];
+            expectedAuditKind = ScanCandidateOutcomeKind.Errored;
+            expectedAuditReason = ScanCandidateOutcomeReasons.FrameworkEvidenceMalformed;
+        }
+        else if (invalidEvidence == InvalidFrameworkEvidence.Unsupported)
+        {
+            fixture.Write(
+                "invalid-unsupported/requirements.txt",
+                $"django @ https://user:TOKEN-DO-NOT-PERSIST@example.invalid/{forbiddenSource}.whl");
+            expectedAuditPaths = ["invalid-unsupported/requirements.txt"];
+            expectedAuditKind = ScanCandidateOutcomeKind.Skipped;
+            expectedAuditReason = ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported;
+        }
+        else if (invalidEvidence == InvalidFrameworkEvidence.Ambiguous)
+        {
+            fixture.Write(
+                "Api.csproj",
+                """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <ItemGroup>
+                    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="SECRET-VERSION" />
+                  </ItemGroup>
+                </Project>
+                """);
+            fixture.Write(
+                "Client.csproj",
+                """
+                <Project Sdk="Microsoft.NET.Sdk">
+                  <ItemGroup>
+                    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"
+                                      Version="TOKEN-DO-NOT-PERSIST" />
+                  </ItemGroup>
+                </Project>
+                """);
+            expectedAuditPaths = ["Api.csproj", "Client.csproj"];
+            expectedAuditKind = ScanCandidateOutcomeKind.Skipped;
+            expectedAuditReason = ScanCandidateOutcomeReasons.FrameworkEvidenceAmbiguousScope;
+        }
+        else if (invalidEvidence == InvalidFrameworkEvidence.Escape)
+        {
+            fixture.CreateFileSymbolicLink(
+                "invalid-escape/package.json",
+                "outside/package.json",
+                $$"""{ "dependencies": { "express": "{{forbiddenSource}}" } }""",
+                targetOutsideRepository: true);
+            expectedAuditPaths = ["invalid-escape/package.json"];
+            expectedAuditKind = ScanCandidateOutcomeKind.Errored;
+            expectedAuditReason = ScanCandidateOutcomeReasons.FrameworkEvidenceUnsafePath;
+        }
+        else if (invalidEvidence == InvalidFrameworkEvidence.Reparse)
+        {
+            fixture.CreateFileSymbolicLink(
+                "invalid-reparse/package.json",
+                "inside/package.json",
+                $$"""{ "dependencies": { "express": "{{forbiddenSource}}" } }""",
+                targetOutsideRepository: false);
+            expectedAuditPaths = ["invalid-reparse/package.json"];
+            expectedAuditKind = ScanCandidateOutcomeKind.Errored;
+            expectedAuditReason = ScanCandidateOutcomeReasons.FrameworkEvidenceReparsePoint;
+        }
+        else
+        {
+            fixture.Write(
+                "invalid-oversize/package.json",
+                $$"""{ "dependencies": { "express": "{{forbiddenSource}}" } }""" +
+                new string(' ', (8 * 1024 * 1024) + 1));
+            expectedAuditPaths = ["invalid-oversize/package.json"];
+            expectedAuditKind = ScanCandidateOutcomeKind.Errored;
+            expectedAuditReason = ScanCandidateOutcomeReasons.FrameworkEvidenceBoundExceeded;
+        }
+
+        if (invalidEvidence == InvalidFrameworkEvidence.Reparse)
+        {
+            fixture.Track(
+                "package.json",
+                "src/App.ts",
+                "ambiguous/App.cs",
+                "invalid-reparse/package.json");
+        }
+        else
+        {
+            fixture.TrackAll();
+        }
+
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        await using var db = new VulgataDbContext(dbOptions);
+        await db.Database.OpenConnectionAsync();
+        await db.Database.EnsureCreatedAsync();
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            "individual-framework-evidence",
+            "https://example.invalid/individual-framework-evidence.git",
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        db.Repositories.Add(repository);
+        await db.SaveChangesAsync();
+        var provider = new FixedLanguageProvider(
+        [
+            new(
+                "src/App.ts",
+                "App",
+                CodeUnitType.Class,
+                1,
+                1,
+                "app",
+                RangeConfidence.Exact,
+                "typescript"),
+            new(
+                "ambiguous/App.cs",
+                "App",
+                CodeUnitType.Class,
+                1,
+                1,
+                "ambiguous-app",
+                RangeConfidence.Exact,
+                "c_sharp"),
+        ]);
+        RepositoryProfilingCoordinator coordinator = CreateCoordinatorWithDetector(
+            db,
+            fixture.Path,
+            provider,
+            new FixedCandidates(
+            [
+                new("src/App.ts", false, "Eligible", 0),
+                new("ambiguous/App.cs", false, "Eligible", 1),
+                new("src/Generated.g.cs", true, "Generated", 2),
+            ]),
+            new FrameworkEvidenceDetector(FrameworkCatalog.LoadEmbedded()));
+
+        RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+            repository.Id,
+            null!,
+            CancellationToken.None);
+
+        Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+        db.ChangeTracker.Clear();
+        Assert.Equal(2, await db.CodeUnits.CountAsync());
+        Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+        Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+        CodeUnitFramework validFact = await db.CodeUnitFrameworks.SingleAsync();
+        Assert.Equal("react", validFact.FrameworkName);
+        Assert.Equal(FrameworkConfidence.High, validFact.Confidence);
+        Assert.Equal(
+            "package.json#json:/dependencies/react",
+            validFact.DetectionSource);
+        CodeUnit validUnit = await db.CodeUnits.SingleAsync(
+            unit => unit.Id == validFact.CodeUnitId);
+        Assert.Equal("src/App.ts", validUnit.FilePath);
+        Assert.DoesNotContain(
+            await db.CodeUnitFrameworks.ToListAsync(),
+            fact => fact.FrameworkName == "aspnet-core");
+        Assert.Equal(2, await db.ScanRunLanguageSummaries.CountAsync());
+
+        ScanCandidateOutcome[] frameworkAudits =
+        [
+            .. await db.ScanCandidateOutcomes
+                .Where(outcome => outcome.ReasonOrCategory.StartsWith(
+                    "FrameworkEvidence"))
+                .OrderBy(outcome => outcome.FilePath)
+                .ToListAsync(),
+        ];
+        Assert.Equal(expectedAuditPaths.Length, frameworkAudits.Length);
+        Assert.Equal(
+            expectedAuditPaths,
+            frameworkAudits.Select(outcome => outcome.FilePath));
+        Assert.All(
+            frameworkAudits,
+            outcome =>
+            {
+                Assert.Equal(expectedAuditKind, outcome.Outcome);
+                Assert.Equal(expectedAuditReason, outcome.ReasonOrCategory);
+                Assert.True(outcome.FilePath is not "(unknown)");
+                Assert.False(Path.IsPathFullyQualified(outcome.FilePath));
+            });
+        ScanCandidateOutcome localAudit = await db.ScanCandidateOutcomes.SingleAsync(
+            outcome => outcome.ReasonOrCategory == "Generated");
+        Assert.Equal("src/Generated.g.cs", localAudit.FilePath);
+        ScanRun run = await db.ScanRuns.SingleAsync();
+        Assert.Equal(ScanRunStatus.Completed, run.Status);
+        Assert.Equal(
+            expectedAuditPaths.Length,
+            typeof(ScanRun).GetProperty("FrameworkEvidenceAuditTotalOutcomeCount")!
+                .GetValue(run));
+
+        string durableAndResultText = string.Join(
+            '\n',
+            frameworkAudits.Select(outcome =>
+                    $"{outcome.FilePath}|{outcome.Outcome}|{outcome.ReasonOrCategory}")
+                .Concat(
+                    await db.CodeUnitFrameworks
+                        .Select(fact =>
+                            $"{fact.FrameworkName}|{fact.Confidence}|{fact.DetectionSource}")
+                        .ToListAsync())
+                .Append(run.TerminalMessage ?? string.Empty)
+                .Append(JsonSerializer.Serialize(result)));
+        Assert.DoesNotContain(
+            fixture.Path,
+            durableAndResultText,
+            StringComparison.OrdinalIgnoreCase);
+        foreach (string forbidden in forbiddenSource.Split(' '))
+        {
+            Assert.DoesNotContain(forbidden, durableAndResultText, StringComparison.Ordinal);
+        }
+        Assert.DoesNotContain("SECRET-VERSION", durableAndResultText, StringComparison.Ordinal);
+        Assert.DoesNotContain("JsonException", durableAndResultText, StringComparison.Ordinal);
+        Assert.DoesNotContain("InvalidDataException", durableAndResultText, StringComparison.Ordinal);
+        Assert.DoesNotContain("https://", durableAndResultText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_WithSaturatedAuditAndRepeatedAmbiguity_CountsUniqueCompleteOutcomesOnceAsync()
+    {
+        using var fixture = new ProfilingEvidenceGitFixture();
+        fixture.Write(
+            "package.json",
+            """
+            { "dependencies": { "react": "VALID-VALUE" } }
+            """);
+        fixture.Write(
+            "Api.csproj",
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="SECRET-VERSION" />
+              </ItemGroup>
+            </Project>
+            """);
+        fixture.Write(
+            "Client.csproj",
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly"
+                                  Version="TOKEN-DO-NOT-PERSIST" />
+              </ItemGroup>
+            </Project>
+            """);
+        fixture.Write("src/A.cs", "class A { }");
+        fixture.Write("src/B.cs", "class B { }");
+        fixture.Write("src/App.ts", "export class App { }");
+        for (var index = 0; index < 100; index++)
+        {
+            fixture.Write(
+                $"audit/{index:D3}/requirements.txt",
+                $"django @ https://example.invalid/UNSUPPORTED-{index:D3}");
+        }
+
+        fixture.TrackAll();
+
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        await using var db = new VulgataDbContext(dbOptions);
+        await db.Database.OpenConnectionAsync();
+        await db.Database.EnsureCreatedAsync();
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            "saturated-framework-audit",
+            "https://example.invalid/saturated-framework-audit.git",
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        db.Repositories.Add(repository);
+        await db.SaveChangesAsync();
+        var provider = new FixedLanguageProvider(
+        [
+            new(
+                "src/A.cs",
+                "A",
+                CodeUnitType.Class,
+                1,
+                1,
+                "a",
+                RangeConfidence.Exact,
+                "c_sharp"),
+            new(
+                "src/B.cs",
+                "B",
+                CodeUnitType.Class,
+                1,
+                1,
+                "b",
+                RangeConfidence.Exact,
+                "c_sharp"),
+            new(
+                "src/App.ts",
+                "App",
+                CodeUnitType.Class,
+                1,
+                1,
+                "app",
+                RangeConfidence.Exact,
+                "typescript"),
+        ]);
+        var detector = new CountingDelegatingFrameworkDetector(
+            new FrameworkEvidenceDetector(FrameworkCatalog.LoadEmbedded()));
+        RepositoryProfilingCoordinator coordinator = CreateCoordinatorWithDetector(
+            db,
+            fixture.Path,
+            provider,
+            new FixedCandidates(
+            [
+                new("src/A.cs", false, "Eligible", 0),
+                new("src/B.cs", false, "Eligible", 1),
+                new("src/App.ts", false, "Eligible", 2),
+            ]),
+            detector);
+
+        RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+            repository.Id,
+            null!,
+            CancellationToken.None);
+
+        Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+        Assert.Equal(1, detector.DetectionCount);
+        db.ChangeTracker.Clear();
+        ScanRun run = await db.ScanRuns.SingleAsync();
+        Assert.Equal(
+            102,
+            typeof(ScanRun).GetProperty("FrameworkEvidenceAuditTotalOutcomeCount")!
+                .GetValue(run));
+        ScanCandidateOutcome[] retainedFrameworkAudits =
+        [
+            .. await db.ScanCandidateOutcomes
+                .Where(outcome => outcome.ReasonOrCategory.StartsWith(
+                    "FrameworkEvidence"))
+                .ToListAsync(),
+        ];
+        Assert.Equal(100, retainedFrameworkAudits.Length);
+        Assert.All(
+            retainedFrameworkAudits,
+            outcome => Assert.Equal(
+                ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
+                outcome.ReasonOrCategory));
+        Assert.DoesNotContain(
+            retainedFrameworkAudits,
+            outcome =>
+                outcome.ReasonOrCategory ==
+                ScanCandidateOutcomeReasons.FrameworkEvidenceAmbiguousScope);
+        CodeUnitFramework fact = await db.CodeUnitFrameworks.SingleAsync();
+        Assert.Equal("react", fact.FrameworkName);
+        Assert.DoesNotContain(
+            await db.CodeUnitFrameworks.ToListAsync(),
+            candidate => candidate.FrameworkName == "aspnet-core");
     }
 
     [Fact]
@@ -816,12 +1423,16 @@ public sealed class RepositoryProfilingTests
             RepositoryProfilingCoordinator coordinator =
                 CreateCoordinator(db, root, provider, candidates);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                coordinator.StartStandaloneRepositoryAsync(
-                    repository.Id,
-                    null!,
-                    CancellationToken.None));
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
 
+            Assert.Equal(RepositoryProfilingOutcome.ProviderFailure, result.Outcome);
+            Assert.Equal("代码结构分析失败，请稍后重试。", result.Message);
+            ScanRunSummaryDto value = Assert.IsType<ScanRunSummaryDto>(result.Value);
+            Assert.Equal("失败", value.Status);
+            Assert.Equal("代码结构分析失败，请稍后重试。", value.Message);
             db.ChangeTracker.Clear();
             Assert.Empty(await db.CodeUnits.ToListAsync());
             Assert.Empty(await db.CodeUnitEdges.ToListAsync());
@@ -833,6 +1444,7 @@ public sealed class RepositoryProfilingTests
             Assert.Equal("Generated", localAudit.ReasonOrCategory);
             ScanRun run = await db.ScanRuns.SingleAsync();
             Assert.Equal(ScanRunStatus.Failed, run.Status);
+            Assert.Equal("代码结构分析失败，请稍后重试。", run.TerminalMessage);
             Assert.Equal(1_800, run.ProviderProcessTimeoutSeconds);
         }
         finally
@@ -1350,6 +1962,15 @@ public sealed class RepositoryProfilingTests
             Task.FromResult(GitWorkingCopyResult.Success(path));
     }
 
+    private sealed class FailingWorkingCopy(string diagnostic) : IGitWorkingCopyService
+    {
+        public Task<GitWorkingCopyResult> AcquireAsync(
+            RepositoryEntity repository,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(GitWorkingCopyResult.Failure(diagnostic));
+    }
+
     private sealed class ControlledCandidates : IScanCandidateEnumerator
     {
         public Task<IReadOnlyList<ScanSourceCandidate>> EnumerateAsync(
@@ -1503,6 +2124,277 @@ public sealed class RepositoryProfilingTests
             Task.FromResult(CodeGraphProviderResult.Failure(
                 "CodeGraph CLI not found",
                 TimeSpan.FromMilliseconds(1)));
+    }
+
+    public enum AdversarialGlobalFailure
+    {
+        MalformedProviderLanguage,
+        WrongTypedProviderLanguage,
+        TruncatedProviderResponse,
+        ProviderProcessFailure,
+        ProviderQueryFailure,
+        ProviderCleanupFailure,
+        DetectorRepositoryBoundExceeded,
+        DetectorFault,
+    }
+
+    public enum InvalidFrameworkEvidence
+    {
+        Malformed,
+        Unsupported,
+        Ambiguous,
+        Escape,
+        Reparse,
+        Oversize,
+    }
+
+    private sealed class AdversarialGlobalFailureProvider(
+        AdversarialGlobalFailure failure) : ICodeGraphProvider
+    {
+        private const string RawDiagnostic =
+            "query=MATCH (n) RETURN n; source=class Secret {}; " +
+            "path=C:\\secrets\\source.cs; package=attacker-value; " +
+            "password=hunter2; token=do-not-persist; elapsed=9876ms; RAW-DIAGNOSTIC";
+
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            failure switch
+            {
+                AdversarialGlobalFailure.MalformedProviderLanguage =>
+                    throw new InvalidDataException(
+                        $"Malformed provider language. {RawDiagnostic}"),
+                AdversarialGlobalFailure.WrongTypedProviderLanguage =>
+                    throw new InvalidDataException(
+                        $"Provider language was not a string. {RawDiagnostic}"),
+                AdversarialGlobalFailure.TruncatedProviderResponse =>
+                    throw new InvalidDataException(
+                        $"Provider response was truncated. {RawDiagnostic}"),
+                AdversarialGlobalFailure.ProviderProcessFailure =>
+                    Task.FromResult(CodeGraphProviderResult.Failure(
+                        $"Provider process failed. {RawDiagnostic}",
+                        TimeSpan.FromMilliseconds(1))),
+                AdversarialGlobalFailure.ProviderQueryFailure =>
+                    Task.FromResult(CodeGraphProviderResult.Failure(
+                        $"Provider query failed. {RawDiagnostic}",
+                        TimeSpan.FromMilliseconds(1))),
+                AdversarialGlobalFailure.ProviderCleanupFailure =>
+                    Task.FromResult(CodeGraphProviderResult.Failure(
+                        $"Provider cleanup failed. {RawDiagnostic}",
+                        TimeSpan.FromMilliseconds(1))),
+                _ => Task.FromResult(new CodeGraphProviderResult(
+                    true,
+                    [
+                        new(
+                            "src/A.cs",
+                            "A",
+                            CodeUnitType.Class,
+                            1,
+                            1,
+                            "a",
+                            RangeConfidence.Exact,
+                            "c_sharp"),
+                    ],
+                    [],
+                    [],
+                    1,
+                    TimeSpan.FromMilliseconds(10),
+                    null)),
+            };
+    }
+
+    private sealed class AdversarialGlobalFailureDetector(
+        AdversarialGlobalFailure failure) : IFrameworkEvidenceDetector
+    {
+        public int DetectionCount { get; private set; }
+        public int ApplicabilityCount { get; private set; }
+
+        public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Legacy detector wrapper must not be used.");
+
+        public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default)
+        {
+            DetectionCount++;
+            return failure switch
+            {
+                AdversarialGlobalFailure.DetectorRepositoryBoundExceeded =>
+                    Task.FromResult(FrameworkEvidenceDetectionResult.Failed(
+                        FrameworkEvidenceDetectionFailure.RepositoryBoundExceeded,
+                        "query=MATCH (n) RETURN n; source=class Secret {}; " +
+                        "path=C:\\secrets\\source.cs; package=attacker-value; " +
+                        "password=hunter2; token=do-not-persist; elapsed=9876ms; RAW-DIAGNOSTIC")),
+                AdversarialGlobalFailure.DetectorFault =>
+                    throw new InvalidDataException(
+                        "Detector fault; query=MATCH (n) RETURN n; source=class Secret {}; " +
+                        "path=C:\\secrets\\source.cs; package=attacker-value; " +
+                        "password=hunter2; token=do-not-persist; elapsed=9876ms; RAW-DIAGNOSTIC"),
+                _ => Task.FromResult(FrameworkEvidenceDetectionResult.Success([], [], 0)),
+            };
+        }
+
+        public FrameworkEvidenceDetectionResult SelectApplicable(
+            FrameworkEvidenceDetectionResult detection,
+            string codeUnitPath,
+            string parserLanguage)
+        {
+            ApplicabilityCount++;
+            return FrameworkEvidenceDetectionResult.Success(
+                [],
+                detection.AuditOutcomes,
+                detection.TotalAuditOutcomeCount);
+        }
+    }
+
+    private sealed class ProfilingEvidenceGitFixture : IDisposable
+    {
+        private string? _externalDirectory;
+
+        public ProfilingEvidenceGitFixture()
+        {
+            Path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                $"vulgata-profile-evidence-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(Path);
+            RunGit("init", "--quiet");
+            RunGit("config", "core.longpaths", "true");
+            RunGit("config", "core.symlinks", "true");
+        }
+
+        public string Path { get; }
+
+        public void Write(string relativePath, string content)
+        {
+            string fullPath = System.IO.Path.Combine(
+                Path,
+                relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(fullPath)!);
+            File.WriteAllText(
+                fullPath,
+                content,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        public void TrackAll() => RunGit("add", "--all");
+
+        public void Track(params string[] relativePaths)
+        {
+            var arguments = new List<string> { "add", "--" };
+            arguments.AddRange(relativePaths);
+            RunGit([.. arguments]);
+        }
+
+        public void CreateFileSymbolicLink(
+            string linkRelativePath,
+            string targetRelativePath,
+            string targetContent,
+            bool targetOutsideRepository)
+        {
+            string targetRoot;
+            if (targetOutsideRepository)
+            {
+                _externalDirectory ??= System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(),
+                    $"vulgata-profile-evidence-external-{Guid.NewGuid():N}");
+                targetRoot = _externalDirectory;
+            }
+            else
+            {
+                targetRoot = System.IO.Path.Combine(Path, ".fixture-targets");
+            }
+
+            string targetPath = System.IO.Path.Combine(
+                targetRoot,
+                targetRelativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(targetPath)!);
+            File.WriteAllText(
+                targetPath,
+                targetContent,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            string linkPath = System.IO.Path.Combine(
+                Path,
+                linkRelativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(linkPath)!);
+            File.CreateSymbolicLink(linkPath, targetPath);
+        }
+
+        public void Dispose()
+        {
+            DeleteDirectory(Path);
+            if (_externalDirectory is not null)
+            {
+                DeleteDirectory(_externalDirectory);
+            }
+        }
+
+        private static void DeleteDirectory(string path)
+        {
+            try
+            {
+                Directory.Delete(path, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        private void RunGit(params string[] arguments)
+        {
+            using var process = new System.Diagnostics.Process
+            {
+                StartInfo = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "git",
+                    WorkingDirectory = Path,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                },
+            };
+            foreach (string argument in arguments)
+            {
+                process.StartInfo.ArgumentList.Add(argument);
+            }
+
+            Assert.True(process.Start());
+            string standardError = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+            Assert.True(
+                process.ExitCode == 0,
+                $"git {string.Join(' ', arguments)} failed: {standardError}");
+        }
+    }
+
+    private sealed class CountingDelegatingFrameworkDetector(
+        IFrameworkEvidenceDetector inner) : IFrameworkEvidenceDetector
+    {
+        public int DetectionCount { get; private set; }
+
+        public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default) =>
+            inner.DetectAsync(workingCopyPath, cancellationToken);
+
+        public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default)
+        {
+            DetectionCount++;
+            return inner.DetectDetailedAsync(workingCopyPath, cancellationToken);
+        }
+
+        public FrameworkEvidenceDetectionResult SelectApplicable(
+            FrameworkEvidenceDetectionResult detection,
+            string codeUnitPath,
+            string parserLanguage) =>
+            inner.SelectApplicable(detection, codeUnitPath, parserLanguage);
     }
 
     private sealed class EmptyFrameworkEvidenceDetector : IFrameworkEvidenceDetector

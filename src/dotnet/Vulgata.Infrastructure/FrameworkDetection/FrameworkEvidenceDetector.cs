@@ -173,7 +173,8 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         return FrameworkEvidenceDetectionResult.Success(
             evidence,
             auditOutcomes,
-            budget.TotalAuditOutcomeCount);
+            budget.TotalAuditOutcomeCount,
+            budget.AuditOutcomeIdentities);
     }
 
     public async Task<IReadOnlyList<PackageEvidence>> DetectApplicableAsync(
@@ -223,11 +224,16 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             return FrameworkEvidenceDetectionResult.Success(
                 [],
                 detection.AuditOutcomes,
-                detection.TotalAuditOutcomeCount);
+                detection.TotalAuditOutcomeCount,
+                detection.AuditOutcomeIdentities);
         }
 
         IReadOnlyList<PackageEvidence> detected = detection.Evidence;
         var applicable = new List<PackageEvidence>();
+        var auditOutcomes = detection.AuditOutcomes.ToList();
+        var auditOutcomeIdentities = detection.AuditOutcomeIdentities.ToList();
+        var auditKeys = auditOutcomeIdentities.ToHashSet();
+        var additionalAuditOutcomeCount = 0;
 
         foreach (IGrouping<string, PackageEvidence> ecosystem in detected
                      .Where(evidence =>
@@ -247,6 +253,35 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 .Count();
             if (manifestCount > 1)
             {
+                foreach (string artifactPath in winningScope
+                             .Where(evidence =>
+                                 evidence.Relationship ==
+                                 PackageEvidenceRelationship.Direct)
+                             .Select(evidence => evidence.ArtifactPath)
+                             .Distinct(StringComparer.Ordinal)
+                             .OrderBy(path => path, StringComparer.Ordinal))
+                {
+                    FrameworkEvidenceAuditOutcome audit =
+                        CreateAuditOutcome(
+                            artifactPath,
+                            ArtifactParseStatus.AmbiguousScope);
+                    var identity = new FrameworkEvidenceAuditIdentity(
+                        audit.ArtifactPath,
+                        audit.Outcome,
+                        audit.Reason);
+                    if (!auditKeys.Add(identity))
+                    {
+                        continue;
+                    }
+
+                    auditOutcomeIdentities.Add(identity);
+                    additionalAuditOutcomeCount++;
+                    if (auditOutcomes.Count < _limits.MaximumRetainedAuditDetails)
+                    {
+                        auditOutcomes.Add(audit);
+                    }
+                }
+
                 continue;
             }
 
@@ -274,8 +309,9 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 "框架证据超出仓库级限制。")
             : FrameworkEvidenceDetectionResult.Success(
                 winners,
-                detection.AuditOutcomes,
-                detection.TotalAuditOutcomeCount);
+                auditOutcomes,
+                detection.TotalAuditOutcomeCount + additionalAuditOutcomeCount,
+                auditOutcomeIdentities);
     }
 
     private static async Task<string[]> InventoryTrackedPathsAsync(
@@ -1186,6 +1222,11 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 ScanCandidateOutcomeKind.Errored,
                 ScanCandidateOutcomeReasons.FrameworkEvidenceBoundExceeded,
                 "框架证据超出单个文件限制。"),
+            ArtifactParseStatus.AmbiguousScope => new(
+                safePath,
+                ScanCandidateOutcomeKind.Skipped,
+                ScanCandidateOutcomeReasons.FrameworkEvidenceAmbiguousScope,
+                "框架证据作用域不明确。"),
             ArtifactParseStatus.Valid or ArtifactParseStatus.Unsupported => new(
                 safePath,
                 ScanCandidateOutcomeKind.Skipped,
@@ -1230,6 +1271,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         ReparsePoint,
         ArtifactBoundExceeded,
         ParseDepthExceeded,
+        AmbiguousScope,
     }
 
     private sealed record ArtifactReadResult(
@@ -1248,8 +1290,12 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         private int _supportedArtifacts;
         private int _parsedPackageEntries;
         private int _candidateFacts;
+        private readonly HashSet<FrameworkEvidenceAuditIdentity> _auditOutcomeIdentityKeys = [];
+        private readonly List<FrameworkEvidenceAuditIdentity> _auditOutcomeIdentities = [];
 
         public int TotalAuditOutcomeCount { get; private set; }
+        public IReadOnlyList<FrameworkEvidenceAuditIdentity> AuditOutcomeIdentities =>
+            _auditOutcomeIdentities;
 
         public void RecordArtifactBytes(long bytes)
         {
@@ -1286,6 +1332,16 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             List<FrameworkEvidenceAuditOutcome> retainedOutcomes,
             FrameworkEvidenceAuditOutcome outcome)
         {
+            var identity = new FrameworkEvidenceAuditIdentity(
+                outcome.ArtifactPath,
+                outcome.Outcome,
+                outcome.Reason);
+            if (!_auditOutcomeIdentityKeys.Add(identity))
+            {
+                return;
+            }
+
+            _auditOutcomeIdentities.Add(identity);
             TotalAuditOutcomeCount++;
             if (retainedOutcomes.Count < limits.MaximumRetainedAuditDetails)
             {
