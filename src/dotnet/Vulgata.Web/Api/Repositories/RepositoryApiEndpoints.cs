@@ -331,6 +331,9 @@ internal static class RepositoryApiEndpoints
             RepositoryProfilingOutcome.ProviderFailure => Results.Problem(
                 detail: result.Message,
                 statusCode: StatusCodes.Status502BadGateway),
+            RepositoryProfilingOutcome.CandidateAuditBoundExceeded => Results.Problem(
+                detail: result.Message,
+                statusCode: StatusCodes.Status400BadRequest),
             _ => Results.Problem(detail: "扫描启动失败。", statusCode: StatusCodes.Status500InternalServerError),
         };
     }

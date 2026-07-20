@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -15,6 +16,7 @@ public enum RepositoryProfilingOutcome
     GitFailure,
     ProviderUnavailable,
     ProviderFailure,
+    CandidateAuditBoundExceeded,
 }
 
 public sealed record RepositoryProfilingResult(
@@ -62,6 +64,9 @@ public sealed class RepositoryProfilingCoordinator(
     FrameworkCatalog frameworkCatalog)
     : IRepositoryProfilingCoordinator
 {
+    private const int UnknownLanguagePathLimit = 10_000;
+    private const int UnknownLanguagePathUtf8ByteLimit = 16 * 1024 * 1024;
+
     public async Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
         Guid systemId,
         Guid repositoryId,
@@ -169,6 +174,20 @@ public sealed class RepositoryProfilingCoordinator(
             .Where(candidate => !candidate.IsFiltered)
             .Select(candidate => candidate.RelativePath)
             .ToHashSet(StringComparer.Ordinal);
+        if (ExceedsUnknownLanguageAuditBounds(eligiblePaths))
+        {
+            const string message = "候选源文件审计范围超出限制。";
+            logger.LogWarning(
+                "Repository {RepositoryId} exceeded the bounded unknown-language audit scale.",
+                repository.Id);
+            scanRun.Fail(message, DateTimeOffset.UtcNow);
+            await scanRunRepository.SaveChangesAsync(cancellationToken);
+            return new(
+                RepositoryProfilingOutcome.CandidateAuditBoundExceeded,
+                Map(scanRun),
+                message);
+        }
+
         scanRun.SetCandidateCount(eligiblePaths.Count);
         var filteredOutcomes = new List<ScanCandidateOutcome>();
         foreach (ScanSourceCandidate candidate in candidates.Where(candidate => candidate.IsFiltered))
@@ -206,6 +225,31 @@ public sealed class RepositoryProfilingCoordinator(
             return new(outcome, Map(scanRun), display);
         }
 
+        HashSet<string> unknownLanguagePaths = provider.CandidateOutcomes
+            .Where(outcome =>
+                outcome.Outcome == ScanCandidateOutcomeKind.Filtered &&
+                StringComparer.Ordinal.Equals(
+                    outcome.Reason,
+                    ScanCandidateOutcomeReasons.UnknownLanguage) &&
+                eligiblePaths.Contains(outcome.RelativePath))
+            .Select(outcome => outcome.RelativePath)
+            .ToHashSet(StringComparer.Ordinal);
+        HashSet<string> unknownEndpointIdentities = provider.CodeUnits
+            .Where(unit => unknownLanguagePaths.Contains(unit.RelativePath))
+            .Select(unit => unit.EndpointIdentity)
+            .ToHashSet(StringComparer.Ordinal);
+        ProviderCodeUnit[] retainedProviderUnits =
+        [
+            .. provider.CodeUnits.Where(
+                unit => !unknownLanguagePaths.Contains(unit.RelativePath)),
+        ];
+        ProviderStructuralRelationship[] retainedProviderRelationships =
+        [
+            .. provider.Relationships.Where(relationship =>
+                !unknownEndpointIdentities.Contains(relationship.SourceEndpointIdentity) &&
+                !unknownEndpointIdentities.Contains(relationship.TargetEndpointIdentity)),
+        ];
+
         FrameworkEvidenceDetectionResult frameworkDetection =
             await frameworkEvidenceDetector.DetectDetailedAsync(
                 workingCopy.WorkingCopyPath!,
@@ -225,7 +269,7 @@ public sealed class RepositoryProfilingCoordinator(
         scanRun.SetFrameworkEvidenceAuditTotalOutcomeCount(
             frameworkDetection.TotalAuditOutcomeCount);
         IReadOnlyDictionary<string, string> languagesByPath =
-            ReconcileProviderLanguages(provider.CodeUnits, eligiblePaths);
+            ReconcileProviderLanguages(retainedProviderUnits, eligiblePaths);
         var applicableFrameworksByPath =
             new Dictionary<string, FrameworkEvidenceDetectionResult>(StringComparer.Ordinal);
         foreach ((string path, string language) in languagesByPath.OrderBy(
@@ -276,7 +320,7 @@ public sealed class RepositoryProfilingCoordinator(
             scanRun.CandidateOutcomes.Add(candidateOutcome);
         }
 
-        foreach (ProviderCodeUnit providerUnit in provider.CodeUnits)
+        foreach (ProviderCodeUnit providerUnit in retainedProviderUnits)
         {
             if (!eligiblePaths.Contains(providerUnit.RelativePath) ||
                 endpointUnits.ContainsKey(providerUnit.EndpointIdentity))
@@ -398,8 +442,8 @@ public sealed class RepositoryProfilingCoordinator(
             var reconciled = new ScanCandidateOutcome(
                 scanRun.Id,
                 candidate.RelativePath,
-                parsed ? ScanCandidateOutcomeKind.Parsed : ScanCandidateOutcomeKind.Skipped,
-                parsed ? "CodeUnitExtracted" : "NoCodeUnitExtracted",
+                parsed ? ScanCandidateOutcomeKind.Parsed : ScanCandidateOutcomeKind.Filtered,
+                parsed ? "CodeUnitExtracted" : ScanCandidateOutcomeReasons.UnknownLanguage,
                 candidate.AuditGroupOrdinal,
                 DateTimeOffset.UtcNow);
             providerAuditOutcomes.Add(reconciled);
@@ -408,7 +452,7 @@ public sealed class RepositoryProfilingCoordinator(
 
         var resolvedKeys = new HashSet<(Guid Source, Guid Target, StructuralRelationshipKind Kind)>();
         var unresolvedKeys = new HashSet<(Guid Source, StructuralRelationshipKind Kind, string Target)>();
-        foreach (ProviderStructuralRelationship relationship in provider.Relationships)
+        foreach (ProviderStructuralRelationship relationship in retainedProviderRelationships)
         {
             if (!endpointUnits.TryGetValue(relationship.SourceEndpointIdentity, out CodeUnit? source))
             {
@@ -440,7 +484,7 @@ public sealed class RepositoryProfilingCoordinator(
             }
         }
 
-        int parsedCount = Math.Min(provider.ParsedFileCount, eligiblePaths.Count);
+        int parsedCount = parsedEligiblePaths.Count;
         scanRun.Complete(parsedCount, scanRun.CodeUnits.Count, DateTimeOffset.UtcNow);
         if (scanRun.NeedsHumanReview)
         {
@@ -530,6 +574,27 @@ public sealed class RepositoryProfilingCoordinator(
         return normalized.TrimStart('/');
     }
 
+    private static bool ExceedsUnknownLanguageAuditBounds(
+        IReadOnlyCollection<string> eligiblePaths)
+    {
+        if (eligiblePaths.Count > UnknownLanguagePathLimit)
+        {
+            return true;
+        }
+
+        long combinedUtf8ByteCount = 0;
+        foreach (string path in eligiblePaths)
+        {
+            combinedUtf8ByteCount += Encoding.UTF8.GetByteCount(path);
+            if (combinedUtf8ByteCount > UnknownLanguagePathUtf8ByteLimit)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static IReadOnlyDictionary<string, string> ReconcileProviderLanguages(
         IEnumerable<ProviderCodeUnit> providerUnits,
         IReadOnlySet<string> eligiblePaths)
@@ -607,6 +672,18 @@ public sealed class RepositoryProfilingCoordinator(
     private static ScanRunSummaryDto Map(ScanRun run)
     {
         const int sharedEvidenceDetailLimit = 100;
+        string[] unknownLanguagePaths =
+        [
+            .. run.CandidateOutcomes
+                .Where(outcome =>
+                    outcome.Outcome == ScanCandidateOutcomeKind.Filtered &&
+                    StringComparer.Ordinal.Equals(
+                        outcome.ReasonOrCategory,
+                        ScanCandidateOutcomeReasons.UnknownLanguage))
+                .Select(outcome => outcome.FilePath)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(path => path, StringComparer.Ordinal),
+        ];
         CodeUnitFramework[] sortedFacts =
         [
             .. run.CodeUnitFrameworks
@@ -691,6 +768,10 @@ public sealed class RepositoryProfilingCoordinator(
                 })
                 .ToArray(),
             Frameworks = frameworks,
+            UnknownLanguage = new UnknownLanguageSummaryDto
+            {
+                Paths = unknownLanguagePaths,
+            },
             FrameworkEvidenceAudit = new FrameworkEvidenceAuditSummaryDto
             {
                 SampledOutcomeCount = auditDetails.Length,

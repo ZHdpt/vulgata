@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CodeGraph;
 
 namespace Vulgata.Tests;
@@ -190,6 +191,62 @@ public sealed class CodeGraphContextProviderTests
         }
     }
 
+    [Fact]
+    public void ParseProjectionA_SupportedFileWithoutParserIdentity_FiltersOnceAndRemovesAllStructure()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-unknown-language-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        File.WriteAllText(Path.Combine(root, "src", "Unknown.cs"), "not structurally parsed");
+        try
+        {
+            object?[] codeUnitRows =
+            [
+                CreateCodeUnitRow("File", "src/Unknown.cs", null, null, null, null),
+                CreateCodeUnitRow("File", "src/Unknown.cs", null, null, null, null),
+            ];
+            object?[] relationshipRows =
+            [
+                CreateRelationshipRow(
+                    "CONTAINS",
+                    "File",
+                    "src/Unknown.cs",
+                    null,
+                    null,
+                    null,
+                    "Class",
+                    "src/Unknown.cs",
+                    "Synthetic",
+                    1,
+                    1),
+            ];
+
+            CodeGraphProviderResult result = CodeGraphHttpProjectionParser.Parse(
+                CreateEnvelopeWithRawDataSuffix(
+                    CodeGraphContextProviderQueries.CodeUnits,
+                    codeUnitRows,
+                    string.Empty),
+                CreateEnvelopeWithRawDataSuffix(
+                    CodeGraphContextProviderQueries.Relationships,
+                    relationshipRows,
+                    string.Empty),
+                root,
+                TimeSpan.Zero);
+
+            Assert.True(result.Succeeded);
+            ProviderCandidateOutcome outcome = Assert.Single(result.CandidateOutcomes);
+            Assert.Equal("src/Unknown.cs", outcome.RelativePath);
+            Assert.Equal(ScanCandidateOutcomeKind.Filtered, outcome.Outcome);
+            Assert.Equal(ScanCandidateOutcomeReasons.UnknownLanguage, outcome.Reason);
+            Assert.Empty(result.CodeUnits);
+            Assert.Empty(result.Relationships);
+            Assert.Equal(0, result.ParsedFileCount);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("1java")]
@@ -308,6 +365,34 @@ public sealed class CodeGraphContextProviderTests
             ["start_line"] = startLine,
             ["end_line"] = endLine,
             ["parser_language"] = parserLanguage,
+        };
+
+    private static Dictionary<string, object?> CreateRelationshipRow(
+        string relationshipKind,
+        string sourceProviderKind,
+        string? sourcePath,
+        string? sourceName,
+        int? sourceStartLine,
+        int? sourceEndLine,
+        string targetProviderKind,
+        string? targetPath,
+        string? targetName,
+        int? targetStartLine,
+        int? targetEndLine) =>
+        new(StringComparer.Ordinal)
+        {
+            ["record_kind"] = "relationship",
+            ["relationship_kind"] = relationshipKind,
+            ["source_provider_kind"] = sourceProviderKind,
+            ["source_path"] = sourcePath,
+            ["source_name"] = sourceName,
+            ["source_start_line"] = sourceStartLine,
+            ["source_end_line"] = sourceEndLine,
+            ["target_provider_kind"] = targetProviderKind,
+            ["target_path"] = targetPath,
+            ["target_name"] = targetName,
+            ["target_start_line"] = targetStartLine,
+            ["target_end_line"] = targetEndLine,
         };
 
     private static byte[] CreateEnvelopeFromRawResults(string query, string rawRows, int recordCount)

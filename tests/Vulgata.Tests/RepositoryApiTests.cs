@@ -1,5 +1,6 @@
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
@@ -49,6 +50,39 @@ public sealed class RepositoryApiTests
                 new LanguageValue("zig_0+#.-", 1),
             ],
             ReadLanguages(summary));
+    }
+
+    [Fact]
+    public void ScanRunSummaryMapping_WithDuplicateUnsortedUnknownOutcomes_ReturnsExactDistinctOrdinalPaths()
+    {
+        Guid repositoryId = Guid.NewGuid();
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
+        run.SetCandidateCount(3);
+        run.Complete(0, 0, DateTimeOffset.UtcNow);
+        foreach (string path in
+                 new[] { "src/Zeta.txt", "src/Alpha.txt", "src/Zeta.txt", "src/Middle.txt" })
+        {
+            run.CandidateOutcomes.Add(new ScanCandidateOutcome(
+                run.Id,
+                path,
+                ScanCandidateOutcomeKind.Filtered,
+                ScanCandidateOutcomeReasons.UnknownLanguage,
+                0,
+                DateTimeOffset.UtcNow));
+        }
+
+        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
+            "Map",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(map);
+
+        var summary = Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
+
+        UnknownLanguageValue unknownLanguage = ReadUnknownLanguage(summary);
+        Assert.Equal(3, unknownLanguage.DistinctFileCount);
+        Assert.Equal(
+            ["src/Alpha.txt", "src/Middle.txt", "src/Zeta.txt"],
+            unknownLanguage.Paths);
     }
 
     [Fact]
@@ -141,6 +175,94 @@ public sealed class RepositoryApiTests
     }
 
     [Fact]
+    public async Task ManagementScanRunRoute_AuthorizedResponse_ContainsAllTenThousandSortedUnknownPathsAsync()
+    {
+        string[] expectedPaths =
+        [
+            .. Enumerable.Range(0, 10_000)
+                .Select(index => $"src/unknown/{index:D5}.txt"),
+        ];
+        ScanRunSummaryDto summary = CreateSummaryWithUnknownLanguage(
+            [.. expectedPaths.Reverse(), expectedPaths[0]]);
+        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        const string email = "story42.unknown.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+        string route =
+            $"/api/repositories/standalone/{summary.RepositoryId}/scan-runs/{summary.Id}";
+
+        using HttpResponseMessage response = await client.GetAsync(route);
+        using JsonDocument document = JsonDocument.Parse(
+            await response.Content.ReadAsByteArrayAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement unknownLanguage = document.RootElement.GetProperty("unknownLanguage");
+        Assert.Equal(10_000, unknownLanguage.GetProperty("distinctFileCount").GetInt32());
+        Assert.Equal(
+            expectedPaths,
+            unknownLanguage.GetProperty("paths")
+                .EnumerateArray()
+                .Select(path => path.GetString()!)
+                .ToArray());
+    }
+
+    [Fact]
+    public async Task ManagementScanRunRoute_AuthorizedResponse_ContainsAllUnknownPathsAtSixteenMebibyteBoundAsync()
+    {
+        string[] expectedPaths = CreateExactUnknownAuditByteBoundPaths();
+        ScanRunSummaryDto summary = CreateSummaryWithUnknownLanguage(
+            [.. expectedPaths.Reverse()]);
+        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        const string email = "story42.unknown-byte-bound.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+        string route =
+            $"/api/repositories/standalone/{summary.RepositoryId}/scan-runs/{summary.Id}";
+
+        using HttpResponseMessage response = await client.GetAsync(route);
+        using JsonDocument document = JsonDocument.Parse(
+            await response.Content.ReadAsByteArrayAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement unknownLanguage = document.RootElement.GetProperty("unknownLanguage");
+        Assert.Equal(expectedPaths.Length, unknownLanguage.GetProperty("distinctFileCount").GetInt32());
+        Assert.Equal(
+            expectedPaths,
+            unknownLanguage.GetProperty("paths")
+                .EnumerateArray()
+                .Select(path => path.GetString()!)
+                .ToArray());
+    }
+
+    [Fact]
+    public async Task ManagementScanRunStartRoute_WhenCandidateAuditBoundIsExceeded_ReturnsBadRequestAsync()
+    {
+        Assert.True(Enum.TryParse(
+            "CandidateAuditBoundExceeded",
+            out RepositoryProfilingOutcome outcome));
+        const string message = "候选源文件审计范围超出限制。";
+        using WebApplicationFactory<Program> factory = CreateFactory(
+            null,
+            new RepositoryProfilingResult(outcome, null, message));
+        const string email = "story42.unknown-bound.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+
+        using HttpResponseMessage response = await client.PostAsync(
+            $"/api/repositories/standalone/{Guid.NewGuid()}/scan-runs",
+            content: null);
+        string body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains(message, body, StringComparison.Ordinal);
+        Assert.DoesNotContain("CodeGraph", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("提供程序", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ManagementScanRunRoutes_WhenVisibilityIsRedacted_ReturnNotFoundWithoutLanguageDisclosureAsync()
     {
         using WebApplicationFactory<Program> factory = CreateFactory(null);
@@ -168,13 +290,16 @@ public sealed class RepositoryApiTests
             Assert.DoesNotContain("typescript", body, StringComparison.Ordinal);
             Assert.DoesNotContain("react", body, StringComparison.Ordinal);
             Assert.DoesNotContain("检测依据", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("未知语言文件", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("src/unknown", body, StringComparison.Ordinal);
         }
     }
 
     [Fact]
     public async Task ManagementScanRunRoutes_UserWithoutManagementAccess_ReturnForbiddenAsync()
     {
-        using WebApplicationFactory<Program> factory = CreateFactory(CreateSummaryWithLanguages());
+        using WebApplicationFactory<Program> factory = CreateFactory(
+            CreateSummaryWithUnknownLanguage(["src/unknown/Secret.txt"]));
         const string email = "story42.languages.user@example.com";
         await CreateUserWithRoleAsync(factory.Services, email, RoleNames.User);
         using HttpClient client = CreateClient(factory);
@@ -198,16 +323,20 @@ public sealed class RepositoryApiTests
             Assert.DoesNotContain("typescript", body, StringComparison.Ordinal);
             Assert.DoesNotContain("react", body, StringComparison.Ordinal);
             Assert.DoesNotContain("检测依据", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("未知语言文件", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("src/unknown", body, StringComparison.Ordinal);
         }
     }
 
-    private WebApplicationFactory<Program> CreateFactory(ScanRunSummaryDto? summary) =>
+    private WebApplicationFactory<Program> CreateFactory(
+        ScanRunSummaryDto? summary,
+        RepositoryProfilingResult? startResult = null) =>
         _factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IRepositoryProfilingCoordinator>();
                 services.AddSingleton<IRepositoryProfilingCoordinator>(
-                    new StubRepositoryProfilingCoordinator(summary));
+                    new StubRepositoryProfilingCoordinator(summary, startResult));
             }));
 
     private static HttpClient CreateClient(WebApplicationFactory<Program> factory) =>
@@ -344,6 +473,45 @@ public sealed class RepositoryApiTests
         return summary;
     }
 
+    private static ScanRunSummaryDto CreateSummaryWithUnknownLanguage(
+        IReadOnlyList<string> paths)
+    {
+        ScanRunSummaryDto summary = CreateSummaryWithLanguages();
+        PropertyInfo? property = typeof(ScanRunSummaryDto).GetProperty("UnknownLanguage");
+        if (property is null)
+        {
+            return summary;
+        }
+
+        object value = Activator.CreateInstance(property.PropertyType)!;
+        value.GetType().GetProperty("Paths")!.SetValue(
+            value,
+            paths
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(path => path, StringComparer.Ordinal)
+                .ToArray());
+        property.SetValue(summary, value);
+        return summary;
+    }
+
+    private static string[] CreateExactUnknownAuditByteBoundPaths()
+    {
+        const int pathCount = 8_192;
+        const int pathByteCount = 2_048;
+        string[] paths =
+        [
+            .. Enumerable.Range(0, pathCount).Select(index =>
+            {
+                string prefix = $"src/{index:D4}/";
+                return prefix + new string('x', pathByteCount - prefix.Length);
+            }),
+        ];
+        Assert.Equal(
+            16 * 1024 * 1024,
+            paths.Sum(Encoding.UTF8.GetByteCount));
+        return paths;
+    }
+
     private static object CreateFrameworkSummary(
         Type frameworkType,
         string name,
@@ -394,9 +562,26 @@ public sealed class RepositoryApiTests
             .ToArray();
     }
 
-    private sealed record LanguageValue(string Language, int DistinctFileCount);
+    private static UnknownLanguageValue ReadUnknownLanguage(ScanRunSummaryDto summary)
+    {
+        PropertyInfo? property = typeof(ScanRunSummaryDto).GetProperty("UnknownLanguage");
+        Assert.NotNull(property);
+        object value = property!.GetValue(summary)!;
+        int distinctFileCount =
+            (int)value.GetType().GetProperty("DistinctFileCount")!.GetValue(value)!;
+        var paths = Assert.IsAssignableFrom<IEnumerable<string>>(
+            value.GetType().GetProperty("Paths")!.GetValue(value));
+        return new UnknownLanguageValue(distinctFileCount, paths.ToArray());
+    }
 
-    private sealed class StubRepositoryProfilingCoordinator(ScanRunSummaryDto? summary)
+    private sealed record LanguageValue(string Language, int DistinctFileCount);
+    private sealed record UnknownLanguageValue(
+        int DistinctFileCount,
+        IReadOnlyList<string> Paths);
+
+    private sealed class StubRepositoryProfilingCoordinator(
+        ScanRunSummaryDto? summary,
+        RepositoryProfilingResult? startResult = null)
         : IRepositoryProfilingCoordinator
     {
         public Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
@@ -404,17 +589,17 @@ public sealed class RepositoryApiTests
             Guid repositoryId,
             IUserContext user,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(summary is null
+            Task.FromResult(startResult ?? (summary is null
                 ? new RepositoryProfilingResult(RepositoryProfilingOutcome.RepositoryNotFound)
-                : new RepositoryProfilingResult(RepositoryProfilingOutcome.Success, summary));
+                : new RepositoryProfilingResult(RepositoryProfilingOutcome.Success, summary)));
 
         public Task<RepositoryProfilingResult> StartStandaloneRepositoryAsync(
             Guid repositoryId,
             IUserContext user,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(summary is null
+            Task.FromResult(startResult ?? (summary is null
                 ? new RepositoryProfilingResult(RepositoryProfilingOutcome.RepositoryNotFound)
-                : new RepositoryProfilingResult(RepositoryProfilingOutcome.Success, summary));
+                : new RepositoryProfilingResult(RepositoryProfilingOutcome.Success, summary)));
 
         public Task<ScanRunSummaryDto?> GetSystemRepositoryRunAsync(
             Guid systemId,

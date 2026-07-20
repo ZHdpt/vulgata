@@ -433,6 +433,7 @@ internal static class CodeGraphHttpProjectionParser
         var languagesByPath = new Dictionary<string, string>(StringComparer.Ordinal);
         var relationships = new HashSet<ProviderStructuralRelationship>();
         var outcomes = new List<ProviderCandidateOutcome>();
+        var acceptedPaths = new HashSet<string>(StringComparer.Ordinal);
         var parsedPaths = new HashSet<string>(StringComparer.Ordinal);
         foreach (JsonElement row in codeUnitRows.EnumerateArray())
         {
@@ -468,13 +469,38 @@ internal static class CodeGraphHttpProjectionParser
 
             if (acceptedEndpoint is not null)
             {
+                if (acceptedEndpoint.Path.Length > 0)
+                {
+                    acceptedPaths.Add(acceptedEndpoint.Path);
+                }
+
                 ReconcileParserLanguage(languagesByPath, acceptedEndpoint.Path, parserLanguage);
             }
         }
 
+        var unknownLanguagePaths = acceptedPaths
+            .Where(path => !languagesByPath.ContainsKey(path))
+            .ToHashSet(StringComparer.Ordinal);
+        var warnedPaths = outcomes
+            .Select(outcome => outcome.RelativePath)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (string path in unknownLanguagePaths
+                     .Where(path => !warnedPaths.Contains(path))
+                     .Order(StringComparer.Ordinal))
+        {
+            outcomes.Add(new ProviderCandidateOutcome(
+                path,
+                ScanCandidateOutcomeKind.Filtered,
+                ScanCandidateOutcomeReasons.UnknownLanguage));
+        }
+
         foreach ((string identity, ProviderCodeUnit unit) in units.ToArray())
         {
-            if (languagesByPath.TryGetValue(unit.RelativePath, out string? language))
+            if (unknownLanguagePaths.Contains(unit.RelativePath))
+            {
+                units.Remove(identity);
+            }
+            else if (languagesByPath.TryGetValue(unit.RelativePath, out string? language))
             {
                 units[identity] = unit with { Language = language };
             }
@@ -522,6 +548,18 @@ internal static class CodeGraphHttpProjectionParser
                 AddWarning(outcomes, TryReadPath(row, "source_path"));
             }
         }
+
+        relationships.RemoveWhere(relationship =>
+            (endpointTuples.TryGetValue(
+                    relationship.SourceEndpointIdentity,
+                    out EndpointTuple? source) &&
+                unknownLanguagePaths.Contains(source.Path)) ||
+            (endpointTuples.TryGetValue(
+                    relationship.TargetEndpointIdentity,
+                    out EndpointTuple? target) &&
+                unknownLanguagePaths.Contains(target.Path)));
+        parsedPaths.Clear();
+        parsedPaths.UnionWith(units.Values.Select(unit => unit.RelativePath));
 
         return new CodeGraphProviderResult(
             true,

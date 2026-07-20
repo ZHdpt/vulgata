@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Security.Cryptography;
 using System.Reflection;
@@ -644,6 +645,122 @@ public sealed class RepositoryProfilingTests
         }
     }
 
+    [Fact]
+    public async Task StartStandaloneRepository_WhenEligibleCandidateIsAbsentFromCompleteProvider_FiltersUnknownLanguageOnceAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-unknown-candidate-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "Known.cs"), "class Known { }");
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "Unknown.txt"), "no parser identity");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "unknown-candidate",
+                "https://example.invalid/unknown-candidate.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var provider = new FixedLanguageProvider(
+            [
+                new(
+                    "src/Known.cs",
+                    "Known",
+                    CodeUnitType.Class,
+                    1,
+                    1,
+                    "known",
+                    RangeConfidence.Exact,
+                    "c_sharp"),
+            ]);
+            var candidates = new FixedCandidates(
+            [
+                new("src/Known.cs", false, "Eligible", 0),
+                new("src/Unknown.txt", false, "Eligible", 1),
+                new("src/Unknown.txt", false, "EligibleDuplicate", 2),
+            ]);
+            RepositoryProfilingCoordinator coordinator =
+                CreateCoordinator(db, root, provider, candidates);
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            CodeUnit retained = Assert.Single(await db.CodeUnits.ToArrayAsync());
+            Assert.Equal("src/Known.cs", retained.FilePath);
+            Assert.Empty(await db.CodeUnitEdges.ToArrayAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToArrayAsync());
+            Assert.Empty(await db.CodeUnitFrameworks
+                .Where(fact => fact.CodeUnitId != retained.Id)
+                .ToArrayAsync());
+            ScanCandidateOutcome unknown = Assert.Single(
+                await db.ScanCandidateOutcomes
+                    .Where(outcome => outcome.FilePath == "src/Unknown.txt")
+                    .ToArrayAsync());
+            Assert.Equal(ScanCandidateOutcomeKind.Filtered, unknown.Outcome);
+            Assert.Equal(ScanCandidateOutcomeReasons.UnknownLanguage, unknown.ReasonOrCategory);
+            Assert.DoesNotContain(
+                await db.ScanCandidateOutcomes.ToArrayAsync(),
+                outcome => outcome.ReasonOrCategory == "NoCodeUnitExtracted");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task StartStandaloneRepository_AtUnknownAuditBoundProfilesButOverflowRejectsBeforeProviderAsync(
+        bool combinedUtf8ByteBound)
+    {
+        IReadOnlyList<string> acceptedPaths = combinedUtf8ByteBound
+            ? CreateExactUnknownAuditByteBoundPaths()
+            :
+            [
+                .. Enumerable.Range(0, 10_000)
+                    .Select(index => $"src/unknown/{index:D5}.txt"),
+            ];
+        IReadOnlyList<string> overflowPaths = combinedUtf8ByteBound
+            ? [.. acceptedPaths, "z"]
+            :
+            [
+                .. Enumerable.Range(0, 10_001)
+                    .Select(index => $"src/unknown/{index:D5}.txt"),
+            ];
+
+        CandidateBoundObservation accepted =
+            await ProfileCandidateBoundCaseAsync(acceptedPaths);
+        CandidateBoundObservation overflow =
+            await ProfileCandidateBoundCaseAsync(overflowPaths);
+
+        Assert.Equal(1, accepted.ProviderInvocationCount);
+        Assert.Equal(0, accepted.DetectorInvocationCount);
+        Assert.Equal(RepositoryProfilingOutcome.ProviderFailure, accepted.Outcome);
+        Assert.Equal(0, overflow.ProviderInvocationCount);
+        Assert.Equal(0, overflow.DetectorInvocationCount);
+        Assert.NotEqual(RepositoryProfilingOutcome.ProviderFailure, overflow.Outcome);
+        Assert.Equal("候选源文件审计范围超出限制。", overflow.Message);
+        Assert.Equal(ScanRunStatus.Failed, overflow.ScanRunStatus);
+        Assert.Equal(0, overflow.TotalCandidateFileCount);
+        Assert.Equal(0, overflow.CandidateOutcomeCount);
+        Assert.Equal(0, overflow.CodeUnitCount);
+        Assert.Equal(0, overflow.EdgeCount);
+        Assert.Equal(0, overflow.UnresolvedRelationshipCount);
+        Assert.Equal(0, overflow.FrameworkFactCount);
+        Assert.Equal(0, overflow.LanguageSummaryCount);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -1279,6 +1396,22 @@ public sealed class RepositoryProfilingTests
         }
     }
 
+    private sealed class CountingFailureProvider : ICodeGraphProvider
+    {
+        public int InvocationCount { get; private set; }
+
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            InvocationCount++;
+            return Task.FromResult(CodeGraphProviderResult.Failure(
+                "intentional boundary fixture failure",
+                TimeSpan.FromMilliseconds(1)));
+        }
+    }
+
     private sealed class ControlledProvider : ICodeGraphProvider
     {
         public Task<CodeGraphProviderResult> ProfileAsync(
@@ -1634,6 +1767,86 @@ public sealed class RepositoryProfilingTests
             new EmptyFrameworkEvidenceDetector(),
             FrameworkCatalog.LoadEmbedded());
 
+    private static string[] CreateExactUnknownAuditByteBoundPaths()
+    {
+        const int pathCount = 8_192;
+        const int pathByteCount = 2_048;
+        string[] paths =
+        [
+            .. Enumerable.Range(0, pathCount).Select(index =>
+            {
+                string prefix = $"src/{index:D4}/";
+                return prefix + new string('x', pathByteCount - prefix.Length);
+            }),
+        ];
+        Assert.Equal(
+            16 * 1024 * 1024,
+            paths.Sum(Encoding.UTF8.GetByteCount));
+        return paths;
+    }
+
+    private static async Task<CandidateBoundObservation> ProfileCandidateBoundCaseAsync(
+        IReadOnlyList<string> paths)
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-unknown-audit-bound-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "unknown-audit-bound",
+                "https://example.invalid/unknown-audit-bound.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var provider = new CountingFailureProvider();
+            var detector = new CountingFrameworkDetector();
+            var coordinator = CreateCoordinatorWithDetector(
+                db,
+                root,
+                provider,
+                new FixedCandidates(
+                [
+                    .. paths.Select((path, index) =>
+                        new ScanSourceCandidate(path, false, "Eligible", index)),
+                ]),
+                detector);
+
+            RepositoryProfilingResult result =
+                await coordinator.StartStandaloneRepositoryAsync(
+                    repository.Id,
+                    null!,
+                    CancellationToken.None);
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            return new CandidateBoundObservation(
+                result.Outcome,
+                result.Message,
+                provider.InvocationCount,
+                detector.DetectionCount,
+                run.Status,
+                run.TotalCandidateFileCount,
+                await db.ScanCandidateOutcomes.CountAsync(),
+                await db.CodeUnits.CountAsync(),
+                await db.CodeUnitEdges.CountAsync(),
+                await db.UnresolvedStructuralRelationshipCandidates.CountAsync(),
+                await db.CodeUnitFrameworks.CountAsync(),
+                await db.ScanRunLanguageSummaries.CountAsync());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static RepositoryProfilingCoordinator CreateCoordinatorWithDetector(
         VulgataDbContext db,
         string root,
@@ -1667,4 +1880,18 @@ public sealed class RepositoryProfilingTests
         return Assert.IsType<RepositoryProfilingCoordinator>(
             constructor!.Invoke(services));
     }
+
+    private sealed record CandidateBoundObservation(
+        RepositoryProfilingOutcome Outcome,
+        string? Message,
+        int ProviderInvocationCount,
+        int DetectorInvocationCount,
+        ScanRunStatus ScanRunStatus,
+        int TotalCandidateFileCount,
+        int CandidateOutcomeCount,
+        int CodeUnitCount,
+        int EdgeCount,
+        int UnresolvedRelationshipCount,
+        int FrameworkFactCount,
+        int LanguageSummaryCount);
 }

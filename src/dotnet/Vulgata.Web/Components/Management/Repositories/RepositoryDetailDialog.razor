@@ -64,6 +64,20 @@
                     </div>
                 }
 
+                @if (_profilingResult.UnknownLanguage.DistinctFileCount > 0)
+                {
+                    <div>
+                        <strong>未知语言文件</strong>：
+                        @_profilingResult.UnknownLanguage.DistinctFileCount 个文件
+                        <ul>
+                            @foreach (string path in _profilingResult.UnknownLanguage.Paths)
+                            {
+                                <li><code>@path</code></li>
+                            }
+                        </ul>
+                    </div>
+                }
+
                 @if (_profilingResult.FrameworkEvidenceAudit.TotalOutcomeCount > 0)
                 {
                     <div>

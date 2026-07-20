@@ -339,6 +339,16 @@ unchanged.
 - Combined framework, profiling, API, and component verification passes 80/80;
   the overview uses the shared 100-detail budget and renders `框架`, `置信度`,
   `检测依据`, and `框架证据警告`. EF reports no pending model changes.
+- User Story 3 T030-T034 is GREEN: an eligible path without accepted parser
+  identity in an otherwise complete provider response yields exactly one
+  terminal `Filtered/UnknownLanguage` outcome and retains no Code Unit, Edge
+  endpoint, unresolved relationship, or dispatchable structure.
+- The existing overview now renders `未知语言文件` with all distinct ordinally
+  sorted Repository-relative paths. Exact acceptance boundaries of 10,000
+  paths and 16,777,216 combined UTF-8 bytes remain complete and unsampled;
+  overflow rejects before provider or framework-detector invocation.
+- Independent provider, profiling, API, and component verification passes
+  85/85 with the established 403/404 redaction behavior unchanged.
 - Implementation checkpoint:
   `bmad-4-2-tasks-accepted-20260720T024508Z-6603fe`
   (pending Git binding).
@@ -382,11 +392,14 @@ unchanged.
 - `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs`
 - `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`
 - `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`
+- `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`
 - `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`
+- `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs`
 - `src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor`
 - `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`
 - `src/dotnet/Vulgata.Web/Program.cs`
 - `tests/Vulgata.Tests/DashboardPanelTests.cs`
+- `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs`
 - `tests/Vulgata.Tests/RepositoryApiTests.cs`
 - `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
 - `tests/Vulgata.Tests/FrameworkDetectionTests.cs`

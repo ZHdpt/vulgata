@@ -288,6 +288,37 @@ public sealed class DashboardPanelTests : TestContext
     }
 
     [Fact]
+    public void RepositoryDetailDialog_AfterSuccessfulProfiling_RendersEverySortedUnknownLanguagePath()
+    {
+        Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
+        Services.RemoveAll<IRepositoryProfilingCoordinator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(_ => new LanguageSummaryProfilingCoordinator());
+        RepositorySummaryDto model = new() { Id = Guid.NewGuid(), Name = "未知语言仓库" };
+        var cut = Render<RepositoryDetailDialog>(parameters => parameters
+            .Add(parameter => parameter.Model, model)
+            .Add(parameter => parameter.Visible, true)
+            .Add(parameter => parameter.User, CreateUserContext(isAdministrator: true)));
+        cut.WaitForState(() => cut.Markup.Contains("数据库连接", StringComparison.Ordinal));
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("开始扫描", StringComparison.Ordinal))
+            .Click();
+        cut.WaitForState(() => cut.Markup.Contains("扫描完成", StringComparison.Ordinal));
+
+        Assert.Contains("未知语言文件", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("3 个文件", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("src/unknown/Alpha.txt", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("src/unknown/Middle.txt", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("src/unknown/Zeta.txt", cut.Markup, StringComparison.Ordinal);
+        Assert.True(
+            cut.Markup.IndexOf("src/unknown/Alpha.txt", StringComparison.Ordinal) <
+            cut.Markup.IndexOf("src/unknown/Middle.txt", StringComparison.Ordinal));
+        Assert.True(
+            cut.Markup.IndexOf("src/unknown/Middle.txt", StringComparison.Ordinal) <
+            cut.Markup.IndexOf("src/unknown/Zeta.txt", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void DatabaseConnectionPanel_RendersStatusAndFormFields()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -456,6 +487,7 @@ public sealed class DashboardPanelTests : TestContext
             values.SetValue(CreateLanguageValue(elementType, "zig_0+#.-", 1), 2);
             property.SetValue(summary, values);
             AddFrameworkOverview(summary);
+            AddUnknownLanguageOverview(summary);
             return summary;
         }
 
@@ -514,6 +546,26 @@ public sealed class DashboardPanelTests : TestContext
             details.SetValue(detail, 0);
             detailsProperty.SetValue(audit, details);
             auditProperty.SetValue(summary, audit);
+        }
+
+        private static void AddUnknownLanguageOverview(ScanRunSummaryDto summary)
+        {
+            PropertyInfo? property = typeof(ScanRunSummaryDto).GetProperty("UnknownLanguage");
+            if (property is null)
+            {
+                return;
+            }
+
+            object value = Activator.CreateInstance(property.PropertyType)!;
+            value.GetType().GetProperty("Paths")!.SetValue(
+                value,
+                new[]
+                {
+                    "src/unknown/Alpha.txt",
+                    "src/unknown/Middle.txt",
+                    "src/unknown/Zeta.txt",
+                });
+            property.SetValue(summary, value);
         }
     }
 }

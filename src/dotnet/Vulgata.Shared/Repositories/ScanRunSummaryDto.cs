@@ -20,6 +20,7 @@ public sealed class ScanRunSummaryDto
         init => _frameworks =
             value.OrderBy(item => item.FrameworkName, StringComparer.Ordinal).ToArray();
     }
+    public UnknownLanguageSummaryDto UnknownLanguage { get; init; } = new();
     public FrameworkEvidenceAuditSummaryDto FrameworkEvidenceAudit { get; init; } = new();
 }
 
@@ -36,6 +37,12 @@ public sealed class ScanRunFrameworkSummaryDto
     public string StrongestConfidence { get; init; } = string.Empty;
     public int TotalFactCount { get; init; }
     public IReadOnlyList<FrameworkEvidenceSampleDto> EvidenceSamples { get; init; } = [];
+}
+
+public sealed class UnknownLanguageSummaryDto
+{
+    public int DistinctFileCount => Paths.Count;
+    public IReadOnlyList<string> Paths { get; init; } = [];
 }
 
 public sealed class FrameworkEvidenceSampleDto
