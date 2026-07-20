@@ -7,28 +7,28 @@
   "stage": "acceptance-review",
   "active_gates": {
     "acceptance-review": {
-      "status": "active",
+      "status": "revised",
       "iteration": 2,
       "dispatch_id": null,
-      "verdict_path": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "71a2db8664ed53f4ee592635c920605909b4e218",
-        "diff_sha256": "628321cffccc21f9d4db7dd29ce23adaec6a24a6414084891fdb1911b9dafc75"
+        "candidate_commit": "27d553820436910c3a104673011bc69dfaca1148",
+        "diff_sha256": "fe1687ac5f314dd87bacd95e9bd45a56d0539c492022b6589902af5653ef49b8"
       },
-      "completed_at": null
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+      "completed_at": "2026-07-20T11:16:35.4356972Z"
     },
     "quality-review": {
-      "status": "active",
+      "status": "revised",
       "iteration": 2,
       "dispatch_id": null,
-      "verdict_path": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "71a2db8664ed53f4ee592635c920605909b4e218",
-        "diff_sha256": "628321cffccc21f9d4db7dd29ce23adaec6a24a6414084891fdb1911b9dafc75"
+        "candidate_commit": "27d553820436910c3a104673011bc69dfaca1148",
+        "diff_sha256": "fe1687ac5f314dd87bacd95e9bd45a56d0539c492022b6589902af5653ef49b8"
       },
-      "completed_at": null
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-2.json",
+      "completed_at": "2026-07-20T11:16:35.4356972Z"
     }
   },
   "stage_history": [
@@ -537,23 +537,26 @@
       ]
     },
     "analyze": {
-      "count": 3,
+      "count": 4,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/analyze-1.json",
         "specs/002-language-framework-detection/reviews/analyze-2.json",
-        "specs/002-language-framework-detection/reviews/analyze-3.json"
+        "specs/002-language-framework-detection/reviews/analyze-3.json",
+        "specs/002-language-framework-detection/reviews/analyze-final-2.json"
       ]
     },
     "acceptance-review": {
-      "count": 1,
+      "count": 2,
       "verdict_paths": [
-        "specs/002-language-framework-detection/reviews/acceptance-review-1.json"
+        "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-2.json"
       ]
     },
     "quality-review": {
-      "count": 1,
+      "count": 2,
       "verdict_paths": [
-        "specs/002-language-framework-detection/reviews/quality-review-1.json"
+        "specs/002-language-framework-detection/reviews/quality-review-1.json",
+        "specs/002-language-framework-detection/reviews/quality-review-2.json"
       ]
     }
   },
@@ -1082,23 +1085,85 @@
       "observed_at": "2026-07-20T10:56:28.9984836Z",
       "summary": "Post-commit verification at immutable source 71a2db8664ed53f4ee592635c920605909b4e218 passes 87 of 87 affected tests, the Web build with zero errors, and the exact pinned final-image gate. Fresh final-image namespace ca106f80f53442b067d925f516595b29172671ebbb11d78c8d1503bf02462486 has evidence SHA-256 7d0c4ab90d891d25a38aa9802f57ca518403130500de82798d8be3f7bf0d2332.",
       "raw_output_path": "TestResults/codegraph-provider-contract/ca106f80f53442b067d925f516595b29172671ebbb11d78c8d1503bf02462486/evidence.json"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/2",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "27d553820436910c3a104673011bc69dfaca1148",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-20T11:16:35.4356972Z",
+      "summary": "Acceptance review iteration 2 returned REVISE with three High findings: unsafe provider-path logging, final-image contract/schema divergence, and incomplete T050 review readiness.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/2",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "27d553820436910c3a104673011bc69dfaca1148",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-20T11:16:35.4356972Z",
+      "summary": "Quality review iteration 2 returned REVISE with two High findings: lock evidence can pair to an invalid or unsupported direct manifest, and T050 traceability remains incomplete.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/4",
+      "kind": "analysis",
+      "stage": "acceptance-review",
+      "source_commit": "27d553820436910c3a104673011bc69dfaca1148",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-final-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-20T11:16:35.4356972Z",
+      "summary": "Final cross-artifact audit returned REVISE with five High and one Medium finding. Its proposed remediation changes current plan/task artifacts, so the Full workflow is stopped for explicit user approval.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-review-20260720T105628Z-d4b920",
+    "checkpoint_id": "bmad-4-2-review-20260720T111635Z-e8c4a2",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "acceptance-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/workflow-state.json",
+      "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+      "specs/002-language-framework-detection/reviews/analyze-final-2.json",
+      "specs/002-language-framework-detection/reviews/quality-review-2.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/19"
+      "4-2-language-and-framework-detection/acceptance-review/2",
+      "4-2-language-and-framework-detection/quality-review/2",
+      "4-2-language-and-framework-detection/analyze/4"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-  "updated_at": "2026-07-20T10:56:28.9984836Z"
+  "recoverable_failure": {
+    "stage": "acceptance-review",
+    "agent_role": "artifact-analyst",
+    "source_boundary": {
+      "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+      "candidate_commit": "27d553820436910c3a104673011bc69dfaca1148",
+      "diff_sha256": "fe1687ac5f314dd87bacd95e9bd45a56d0539c492022b6589902af5653ef49b8"
+    },
+    "summary": "Iteration 2 returned REVISE with new High implementation and cross-artifact findings. Explicit user approval is required before editing analyzed plan/task artifacts or implementing the presented remediation.",
+    "evidence_paths": [
+      "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+      "specs/002-language-framework-detection/reviews/quality-review-2.json",
+      "specs/002-language-framework-detection/reviews/analyze-final-2.json"
+    ],
+    "retryable": true,
+    "earliest_safe_resume_stage": "plan"
+  },
+  "updated_at": "2026-07-20T11:16:35.4356972Z"
 }

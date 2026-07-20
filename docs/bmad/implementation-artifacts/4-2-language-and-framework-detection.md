@@ -418,6 +418,18 @@ unchanged.
   `ca106f80f53442b067d925f516595b29172671ebbb11d78c8d1503bf02462486`
   with evidence SHA-256
   `7d0c4ab90d891d25a38aa9802f57ca518403130500de82798d8be3f7bf0d2332`.
+- Review iteration 2 returned `REVISE`. New High findings identify an
+  absolute-host-path logging disclosure before audit-path normalization,
+  lock-derived framework evidence paired to a single tracked but
+  invalid/unsupported direct manifest, divergence between the canonical
+  Story 4.1 safe-name/evidence schema and the verifier, a stale pre-correction
+  runtime image/full-suite binding, and premature review entry while T050
+  remains unchecked. The final cross-artifact audit also requires the amended
+  plan set to pass its dependent plan-review/tasks/analyze gates and requires
+  explicit user approval before those analyzed artifacts are edited.
+- Story status remains `review`; both iteration-2 verdicts are `REVISE`.
+  No implementation or analyzed plan/task remediation has started pending the
+  required approval.
 - Implementation checkpoint:
   `bmad-4-2-implement-20260720T104752Z-c7a3e1`
   (pending Git binding).
