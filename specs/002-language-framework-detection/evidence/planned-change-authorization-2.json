@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/plan-review/7",
+  "kind": "human-approval",
+  "stage": "plan-review",
+  "source_commit": "eefa1794a57227428376a6d838593485e491a79b",
+  "artifact_paths": [
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/reviews/plan-review-6.json",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
+  ],
+  "command": null,
+  "exit_code": null,
+  "observed_at": "2026-07-20T12:49:52.5988743Z",
+  "summary": "After independent plan-review ACCEPT, the user explicitly approved progression to task generation for the material Scan-filtering correction. NuGet/npm lock evidence will create Medium-confidence framework facts only when exactly one safely read, successfully parsed, supported, applicable same-root direct-manifest owner exists. The approval changes no Worker Agent tool or PRD requirement and does not waive task analysis, TDD, review, E2E, security, verification, or Git gates.",
+  "raw_output_path": null,
+  "trigger": "Material change to Scan evidence filtering under AGENTS.md planned-change authorization.",
+  "affected_plan": "specs/002-language-framework-detection/plan.md",
+  "affected_prd": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md#fr-4-1",
+  "implementation_intent": "Regenerate tasks.md, rerun read-only cross-artifact analysis, and only then implement the accepted corrections through fresh bounded RED-GREEN task groups."
+}

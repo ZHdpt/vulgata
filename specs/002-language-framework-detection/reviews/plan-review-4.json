@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "eefa1794a57227428376a6d838593485e491a79b",
+  "reviewed_boundary": {
+    "base_commit": "eefa1794a57227428376a6d838593485e491a79b",
+    "candidate_commit": null,
+    "diff_sha256": "70a1e8b5d4bb975c94339d56c70ba138261211fff5007f34620a7e7d9f0f2b26",
+    "artifact_hashes": {
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "f81850b693514d51202e8f2742edaf2f842639539fff2b9afed6ec90df7091bb",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md": "a3767a3aeed4b6d83276a725430a42ae2569c255ff425ba41d19b5f07faac824",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
+      "specs/002-language-framework-detection/data-model.md": "650834263eb87b7f0ad46af92d5ddd7da7cd49a23f9cda5ca88b73c35b2bb825",
+      "specs/002-language-framework-detection/plan.md": "d0a58b4a36b24daa2b7ba2eba70d7a9db7fec793723d4c7158ac71502628c70d",
+      "specs/002-language-framework-detection/quickstart.md": "9383eb5b883d03cca9ce9d002f9e8c3ba77477bb3f57d56f9cff776435cb6ebb",
+      "specs/002-language-framework-detection/research.md": "cb7d7674e4ce258721d434aba0c760a6304edcdb1931e68f862d381c6bbd21e9"
+    },
+    "owned_paths": [
+      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+      "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/research.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    ".specify/extensions.yml",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+    "specs/002-language-framework-detection/reviews/quality-review-2.json",
+    "specs/002-language-framework-detection/reviews/analyze-final-2.json",
+    "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs"
+  ],
+  "findings": [
+    {
+      "id": "PR3-001",
+      "severity": "HIGH",
+      "category": "provider-contract-consistency",
+      "artifact": "specs/002-language-framework-detection/data-model.md",
+      "location": "ProviderContractEvidenceV2, lines 231-239",
+      "affected_requirement": "AR2-002, CF-002, the single closed cgc-provider-contract-evidence-v2 grammar, and exact Python-runner/C#-verifier testability",
+      "evidence": "The remediated Story 4.1 contract declares the only exact v2 root grammar and states every shown root member is required exactly once while unknown fields fail. Its root includes projectionObservations, coverage, immutableSnapshot, cleanup, and forbiddenRetention, but no rowCounts or completeness members. The Story 4.2 data model simultaneously declares rowCounts and completeness as canonical root names. A closed Python emitter and C# verifier cannot implement both authorities: emitting those two fields violates the Story 4.1 contract, while omitting them violates the Story 4.2 canonical-model declaration. This leaves the exact final-image evidence schema ambiguous despite the otherwise corrected names and safe-name allowlist.",
+      "correction_outcome": "Make the Story 4.2 data model reproduce the Story 4.1 exact root field set verbatim (normally remove rowCounts and completeness and keep their facts inside the contract-owned coverage/projection observations), or formally add and fully type those members in the Story 4.1 grammar and align every Story 4.2 reference. Preserve one closed schema with unknown-field rejection and regenerate the reviewed eight-path boundary."
+    }
+  ],
+  "summary": "REVISE. One High internal-consistency/testability defect remains in the exact final-image evidence schema; no Constitution MUST is otherwise violated. The remediated plan is feasible at the current code seams: it requires provider-path normalization before every log/outcome/persistence use; NuGet/npm lock evidence requires exactly one complete, safely read, successfully parsed, supported and applicable same-root direct-manifest owner; source commit/tree/context-manifest/image-label/evidence binding is testable; the Story 4.2-only historical-evidence exception is truthful and bounded; T050 remains explicitly incomplete until the final immutable-candidate audit; and the two current additive migrations, research, and quickstart are aligned. No ADR or CONTEXT authority exists in the repository. Planned-change trigger: YES, because validated lock-owner eligibility materially changes Scan evidence filtering; after a future ACCEPT the root must obtain a new explicit post-review authorization before task regeneration. The prior remediation approval is not that gate. CodeGraph fallback: the required initial broad query returned unrelated source, and the focused named-file retry failed exactly with Transport closed; fallback was direct read-only inspection of the named implementation/tests plus Git diff/object hashing. The optional after_plan agent-context hook was inspected but not executed because this gate is read-only and performs no lifecycle work."
+}

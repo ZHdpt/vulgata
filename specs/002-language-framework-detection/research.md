@@ -108,8 +108,9 @@ validation prevents ambiguous coordinates.
 
 **Decision**: manifest parent is scope root; select the deepest ancestor scope
 per ecosystem, reject same-root ecosystem ambiguity, require catalog language
-compatibility, and pair locks to a manifest at the same root. Direct is
-`High`; paired lock-only evidence is `Medium`. Group by
+compatibility, and pair a lock only after proving exactly one successfully
+parsed, supported, applicable same-root direct-manifest owner. Direct is
+`High`; eligible lock-only evidence is `Medium`. Group by
 CodeUnit/framework, then order confidence descending, scope depth descending,
 and evidence locator ordinal ascending.
 
@@ -121,7 +122,14 @@ evidence.
 
 - apply every root manifest to every Code Unit: rejected as cross-project
   leakage.
-- allow an unpaired lock: rejected because scope cannot be proven.
+- authorize a lock from tracked filenames or owner count alone: rejected
+  because malformed, unsupported, conditional, or unsafe direct manifests do
+  not prove ownership.
+- ignore an invalid same-root owner candidate and use the remaining valid one:
+  rejected because doing so manufactures uniqueness from incomplete evidence.
+- require the owner manifest itself to contain a catalog-matched direct
+  framework: rejected because a valid supported direct manifest may own a
+  committed lock whose transitive entry is the only catalog match.
 - persist all duplicate sources: rejected by the one-fact entity contract.
 - last-write/encounter order: rejected as nondeterministic.
 
@@ -148,10 +156,15 @@ atomic.
 
 ## R8. Persistence and migration
 
-**Decision**: add `CodeUnitFramework` and `ScanRunLanguageSummary` tables with
-composite aggregate FKs and unique constraints. Keep historical nullable
-Story 4.1 `CodeUnit.Language` rows unchanged; enforce non-null language for new
-completed Story 4.2 drafts in Core/coordinator/repository.
+**Decision**: retain the two current additive migrations:
+`20260720030657_AddLanguageFrameworkDetection` adds
+`CodeUnitFramework` and `ScanRunLanguageSummary` tables with composite
+aggregate FKs and unique constraints; and
+`20260720060442_FrameworkEvidenceAuditCount` adds the non-negative
+`ScanRun.FrameworkEvidenceAuditTotalOutcomeCount` column/check. Keep
+historical nullable Story 4.1 `CodeUnit.Language` rows unchanged; enforce
+non-null language for new completed Story 4.2 drafts in
+Core/coordinator/repository. Iteration-2 remediation needs no migration.
 
 **Rationale**: guessing a backfill would violate parser authority. Relational
 summary rows make the recorded distinct-file breakdown auditable and queryable.
@@ -185,21 +198,136 @@ profiling details or drift from Story 4.1.
 qualification ledger, to prove exact pin/image/query aliases, empty
 supported-language behavior, a result above 100 rows, private 250001 limit,
 absence of truncation, atomic rejection of truncation metadata, cleanup, and
-forbidden retention. The completion lane treats missing environment/evidence
-as failure.
+forbidden retention. Use the single closed
+`cgc-provider-contract-evidence-v2` grammar owned by the Story 4.1 contract;
+the Python runner emits it and the C# verifier rejects any alternate root,
+nested field, safe-name set, or cleanup shape. The completion lane treats
+missing environment/evidence as failure.
 
 **Rationale**: controlled JSON tests cannot prove the unpublished pinned
-provider runtime, and the current test's early return is not a completion
-proof.
+provider runtime. The original test's early return was not a completion proof;
+the remediation planning source already requires completion-lane inputs, and
+the iteration-2 correction now closes its schema and source-image binding.
+The three old row counts have one destination under `coverage.rowCounts`.
+Five non-projection completeness booleans have one destination under
+`coverage.completeness`; the two old projection truncation-absence facts are
+subsumed only by the stricter `projectionObservations.A.shapeComplete` and
+`.B.shapeComplete` fields. Keeping both names would create duplicate semantic
+authorities and is rejected by the closed grammar.
 
 **Alternatives considered**:
 
 - rely only on fake responses: rejected.
 - modify/retry historical attempt-0003: rejected; it remains immutable and
   non-authoritative for this correction.
+- retain the runner's current `schema`/`failureCategory`/`observations` shape
+  beside the contract's
+  `schemaVersion`/`primaryFailureCategory`/`projectionObservations`: rejected
+  because two grammars cannot supply exact contract evidence.
+
+## R11. Provider path disclosure boundary
+
+**Decision**: normalize a provider-derived path to a bounded safe
+Repository-relative value, or replace it with `(unknown)`, before constructing
+an owned provider outcome and before the first log call. The coordinator
+normalizes again as defense in depth and uses the same safe value for logging,
+deduplication, durable audit, response, and UI.
+
+**Rationale**: normalizing only immediately before persistence still lets an
+absolute host path escape through structured logging. Making safe-path state an
+owned-model invariant removes ordering-dependent disclosure.
+
+**Alternatives considered**:
+
+- log raw then normalize for persistence: rejected by AC-7, FR-015, and
+  SC-006.
+- rely on logger configuration or `NullLogger` tests: rejected because logging
+  sinks are deployment-specific and the value has already crossed the
+  boundary.
+- sanitize only known Windows drive paths: rejected because UNC, POSIX-rooted,
+  path-escape, control-character, and oversized forms require the same
+  fail-closed rule.
+
+## R12. Lock owner eligibility
+
+**Decision**: before parsing lock entries into facts, enumerate the complete
+committed same-root owner-candidate set. NuGet requires exactly one `*.csproj`;
+npm requires the exact same-root `package.json`. That sole candidate must be
+safely read, successfully parsed, supported by the closed direct-manifest
+parser, unconditional/literal where the ecosystem permits dynamic constructs,
+and applicable to the lock scope. Any zero/multiple, malformed, unsupported,
+conditional/dynamic, unsafe, oversize, or inapplicable owner makes the lock
+ineligible and yields one bounded audit outcome.
+
+**Rationale**: a tracked filename proves only presence. It does not prove that
+the lock has one valid owner or that the owner can establish an applicable
+project/package scope.
+
+**Alternatives considered**:
+
+- count tracked `.csproj` or look for `package.json`: rejected; this is the
+  current defect.
+- accept a valid lock when its sole owner is malformed: rejected because the
+  relationship to an applicable scope is unproven.
+- treat an invalid owner as absent when another owner is valid: rejected
+  because incomplete evidence cannot prove unique ownership.
+
+## R13. Corrected source-to-image binding
+
+**Decision**: build the final image freshly from one clean immutable correction
+candidate. Generate a deterministic manifest of the candidate commit, Git
+tree, Dockerfile, `.dockerignore`, and every tracked Docker-context file not
+excluded by `.dockerignore`, with Repository-relative paths and SHA-256
+content hashes. Label the image with candidate commit, tree, and manifest
+SHA-256; inspect those labels before execution; bind the same values and image
+ID into the accepted-correction claim and closed v2 evidence. The evidence
+retains only the source-manifest SHA-256, not its path list.
+
+**Rationale**: an image ID proves immutable bytes but not which corrected
+source produced them. A clean Git identity plus complete consumed-context
+manifest and inspected image labels closes that provenance gap.
+
+**Alternatives considered**:
+
+- reuse the earlier passing image: rejected because application source changed
+  after that build.
+- bind only a supplied image ID: rejected because it is caller assertion, not
+  source provenance.
+- bind only the Git commit: rejected because an unclean Docker build context
+  can differ from the commit.
+
+## R14. Story 4.2 historical workflow-evidence exception and T050
+
+**Decision**: use the user-approved Story 4.2-only exception to reconstruct
+what immutable Git history, existing workflow records, current source/tests,
+and fresh current-candidate GREEN runs can prove. The reconstruction explicitly
+records missing historical raw RED output and missing contemporaneous
+checkpoint trailers as unavailable. It cannot create, infer, backdate, amend,
+or relabel evidence. Fresh iteration-2 corrections still require ordinary
+runnable RED-GREEN evidence. T050 remains incomplete until the corrected
+immutable-candidate audit and reconstruction both pass.
+
+**Rationale**: unavailable historical process output cannot be recreated
+truthfully. A bounded disclosure preserves audit honesty while requiring full
+current correctness and fresh correction evidence.
+
+**Alternatives considered**:
+
+- fabricate representative RED logs: rejected as false evidence.
+- amend old commits to add trailers: rejected because it rewrites history and
+  still would not prove contemporaneous execution.
+- treat current GREEN as historical RED/GREEN: rejected because it proves only
+  current behavior.
+- block forever on unavailable historical raw output: rejected by the explicit
+  Story 4.2 exception, provided the absence is disclosed and every current gate
+  passes.
 
 ## Gate result
 
 No `NEEDS CLARIFICATION` remains. Constitution pre-design and post-design
-checks pass. No ADR conflict was found. The Scan parsing/filtering
-planned-change approval remains mandatory after independent plan acceptance.
+checks pass. No ADR or context authority exists in the Repository for this
+area, and no conflict was found. The stricter lock-owner eligibility rule is a
+material Scan evidence-filtering change, so fresh planned-change approval
+remains mandatory after independent plan acceptance. The prior approval and
+the iteration-2 remediation approval do not substitute for that post-review
+gate.

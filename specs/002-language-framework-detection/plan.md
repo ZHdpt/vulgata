@@ -1,6 +1,6 @@
 # Implementation Plan: Language and Framework Detection
 
-**Source boundary**: immutable accepted task source commit `366f25824b38627d3e840ebe5de4533ec44e84cf` | **Date**: 2026-07-19 | **Spec**: [spec.md](spec.md)
+**Source boundary**: iteration-2 remediation planning source commit `eefa1794a57227428376a6d838593485e491a79b` | **Date**: 2026-07-20 | **Spec**: [spec.md](spec.md)
 **Story**: `4-2-language-and-framework-detection`
 **Provider boundary**: stock exact-pinned `codegraphcontext==0.5.1`
 
@@ -32,6 +32,22 @@ gateway is started with `TOOL_RESULT_LIMITS` setting
 the mandatory final-image gate proves an empty supported-language file and
 more than 100 returned rows. The two-query lifecycle and 250,000-row Vulgata
 cap remain unchanged.
+
+Iteration-2 remediation closes four proof and safety gaps without expanding
+product scope. Every provider-derived path is normalized to a bounded safe
+Repository-relative value before it can be logged or persisted. NuGet and npm
+lock evidence is eligible only when its complete same-root owner-candidate set
+proves exactly one successfully parsed, supported, applicable direct manifest.
+The Story 4.1 contract, Python observer, and C# verifier implement one closed
+final-image evidence schema and bind a freshly built image to the exact clean
+candidate source. T050 remains incomplete until those corrections and the
+immutable-candidate audit pass.
+
+The user-approved Story 4.2 historical workflow-evidence exception permits a
+truthful reconstruction from Git and current runnable evidence when historical
+raw RED output or missing checkpoint trailers no longer exist. It never
+authorizes fabricated RED output, backdated evidence, amended history, or a
+claim that a current GREEN rerun is a historical RED observation.
 
 ## Technical Context
 
@@ -76,6 +92,17 @@ rescans.
   unbounded diagnostic is retained;
 - existing `ManagementAccess`, Repository visibility, not-found redaction, and
   Simplified-Chinese user-visible text remain exact.
+- every provider-derived path is normalized or replaced with `(unknown)` before
+  any structured log, exception, durable outcome, DTO, or UI path can observe
+  it; a raw rejected path never enters an owned outcome model;
+- lock-derived framework evidence requires one proven direct-manifest owner,
+  not merely a tracked filename, same-root file count, or catalog-matched lock
+  entry;
+- final-image evidence is accepted only from one closed schema and a fresh
+  image whose inspected source labels match the clean immutable candidate and
+  its deterministic production-source manifest;
+- historical reconstruction is Story 4.2-only and cannot weaken fresh
+  RED-GREEN requirements for any iteration-2 correction.
 
 **Scale/Scope**: one Repository with approximately 10,000 candidate files;
 at most 1,000 supported evidence artifacts, 64 MiB combined evidence bytes,
@@ -95,8 +122,8 @@ complete aggregate counts.
 | I. Layered Project Boundaries | Core owns entities and service contracts; Infrastructure owns provider/manifest parsing, EF, catalog loading, and persistence; Shared owns DTOs; Web owns authorization/facade/UI. | Pass | Pass |
 | II. Domain Purity & Ubiquitous Language | Uses Repository, Scan, Code Unit, Worker Agent, and Cross-Repository exactly; no EF/data annotations/generic repository/query leakage in Core. | Pass | Pass |
 | III. Validation & API Contract Discipline | Existing plural minimal APIs, `ProblemDetails`, `ManagementAccess`, Repository visibility, and Simplified-Chinese UI are extended, not replaced. No new public input is added. | Pass | Pass |
-| IV. Test-First Integration Harness | Every behavior begins with a named failing test; integration tests cover persistence/API/UI/authorization and the exact final image proves the provider correction. | Pass | Pass |
-| V. Security & Data Stewardship | All analysis stays local and non-executing; provider gateway remains loopback-only; paths, evidence, diagnostics, and response sizes are bounded and redacted. | Pass | Pass |
+| IV. Test-First Integration Harness | Every iteration-2 behavior begins with a named runnable failing test. Existing integration coverage is rerun at the corrected candidate. The bounded historical exception records unavailable earlier raw RED evidence as unavailable rather than fabricating it. | Pass | Pass |
+| V. Security & Data Stewardship | All analysis stays local and non-executing; provider gateway remains loopback-only; provider paths are fail-closed before logging/persistence; evidence, diagnostics, and response sizes are bounded and redacted. | Pass | Pass |
 
 No Constitution exception or ADR conflict was found. The July architecture's
 sampled LLM language/framework output is a separate later hypothesis or
@@ -105,19 +132,26 @@ human-review aid only; it cannot create or replace a Story 4.2 fact or make an
 
 ## Authority and Planned-Change Disposition
 
-- **Accepted intent**: the remediation recorded in
-  `evidence/plan-blocker-1.json` is authoritative and resolves the pinned
-  provider feasibility issue without changing provider version or fork.
+- **Accepted intent**: the original provider remediation in
+  `evidence/plan-blocker-1.json` remains authoritative. The user has also
+  explicitly approved the iteration-2 remediation findings
+  `AR2-001..003`, `QR2-001..002`, `CF-002`, `EV-002`, `WF-002`, `PL-001`,
+  `TR-001`, and `PA-001`, including the bounded Story 4.2 historical
+  workflow-evidence exception. Neither approval changes specification or PRD
+  scope.
 - **PRD**: no requirement changes. PRD FR-4.1 still requires deterministic
   language/framework profiling before Worker Agent dispatch. Retaining new
   valid provider identifiers does not promise Worker Agent support beyond the
   V1 demo languages and therefore does not weaken PRD out-of-scope language
   coverage.
-- **Planned-change trigger**: **yes**. This plan materially changes Scan parsing
-  and filtering by adding structural-node parser-language reconciliation and
-  filtering candidates with no observable identity. After independent plan
-  acceptance, the orchestrator must pause for the explicit `AGENTS.md`
-  planned-change authorization before `/speckit-tasks`.
+- **Planned-change trigger**: **yes**. In addition to the already accepted
+  structural-node language reconciliation, this corrected plan materially
+  changes Scan evidence filtering by rejecting lock-derived facts unless one
+  successfully parsed, supported, applicable direct-manifest owner is proven.
+  The user's iteration-2 remediation approval authorizes this planning
+  correction; it is not the post-review authorization required by `AGENTS.md`.
+  After fresh independent plan acceptance, the orchestrator must pause for a
+  new explicit planned-change authorization before regenerating tasks.
 - **No other trigger**: no Worker Agent tool is added or changed, and no PRD
   requirement is changed, weakened, or contradicted.
 
@@ -149,12 +183,43 @@ human-review aid only; it cannot create or replace a Story 4.2 fact or make an
    not Code Unit count. Every Code Unit on one path must have the same
    non-empty language before the persistence transaction begins.
 
+### Fail-closed provider path handling
+
+All provider-derived paths have a single safe-state transition:
+
+```text
+raw provider scalar
+  -> strict Repository-relative normalization and containment validation
+  -> bounded SafeProviderPath | literal "(unknown)"
+  -> owned outcome/log/persistence/response
+```
+
+The raw scalar may be used only inside the validating stack frame and is then
+discarded. Absolute paths, rooted drive/UNC forms, path escapes, reparse
+traversal, control characters, invalid separators, and values over 2,048
+characters become `(unknown)`. Provider parsing constructs
+`ProviderCandidateOutcome` only with the safe value. The coordinator
+normalizes again before its first log call and uses that same safe value for
+the audit key and durable `ScanCandidateOutcome`; it never logs first and
+normalizes later. The same ordering applies to rejected provider Code Units,
+relationships, exceptions, and any future provider outcome.
+
+Captured-logger RED/GREEN tests inject absolute Windows, UNC, POSIX-rooted, and
+`..` escape paths into malformed provider rows. They assert that logs,
+exceptions, durable state, API responses, and rendered output contain neither
+the raw value nor any host-path fragment and contain only `(unknown)` plus a
+closed reason.
+
 ### Story 4.1 technical-contract correction
 
-The current private HTTP handler defaults `execute_cypher_query` to 100 rows
-and, when truncating, reports the shortened `record_count` plus additive
-`result_limit` and `truncated` fields. Story 4.1 currently ignores additive
-envelope fields, so a partial response can look complete.
+The pinned provider's private HTTP handler defaults
+`execute_cypher_query` to 100 rows and, when truncating, reports the shortened
+`record_count` plus additive `result_limit` and `truncated` fields. The
+original Story 4.1 adapter ignored those additive envelope fields, so a partial
+response could look complete. The implementation at the remediation planning
+source already contains the accepted limit/completeness correction; this plan
+keeps it as a required invariant while closing the iteration-2 evidence-schema
+and source-image proof gaps.
 
 The correction is:
 
@@ -176,6 +241,58 @@ The correction is:
   rows, the empty supported-language behavior, exact language aliases, and
   unchanged two-query snapshot/cleanup/forbidden-retention evidence.
 
+### One closed final-image evidence and source binding
+
+`specs/001-codegraph-extraction/contracts/repository-profiling-api.md` owns the
+only `cgc-provider-contract-evidence-v2` grammar. The Python runner emits it,
+and the C# verifier validates that exact closed root and every nested field;
+neither component defines an alternate field-name set. The exact root uses
+`schemaVersion`, `primaryFailureCategory`, `projectionObservations`, the
+documented cleanup provider-state fields, and the documented
+`forbiddenRetention` booleans. The raw safe-name allowlist includes
+`parser_language`, `truncated`, and `result_limit`. The last two names are safe
+to observe as property names but their presence in a purportedly complete
+response still forces failure. Unknown root or nested fields, omitted required
+fields, duplicate fields, wrong types, or alternate spellings fail.
+
+The closed nested mapping is not left to runner/verifier interpretation.
+`coverage.rowCounts` has exactly the bounded required integers `projectionA`,
+`projectionB`, and `combined`. `coverage.completeness` has exactly the strict
+required booleans `privateLimitExact`, `injectedTruncationRejected`,
+`queryDriftRejected`, `languageConflictRejected`, and
+`combinedBoundRejected`. The prior projection-specific truncation-absence
+facts map only to `projectionObservations.A.shapeComplete` and
+`projectionObservations.B.shapeComplete`: each `shapeComplete` is the stronger
+conjunction of in-bound complete observation, exact closed envelope/row
+validation, no unknown/duplicate/missing/wrong-typed field, and absence of
+both reserved completeness fields. The old root `rowCounts`/`completeness`,
+the old projection-truncation boolean names, and runner-era duplicate
+`coverage.nodeKinds` are unknown fields. The Story 4.1 contract enumerates
+every other observation/coverage member, alternative, bound, and pass
+invariant; implementation copies that grammar rather than defining another
+schema.
+
+The final-image gate runs only at a clean immutable correction candidate. It
+creates a deterministic production-source manifest containing the candidate
+commit, Git tree, Dockerfile and `.dockerignore`, and every tracked file
+included by the Docker build context after `.dockerignore`, each with a
+Repository-relative path and SHA-256. The manifest itself is retained in the
+claim; bounded provider evidence retains only its SHA-256. The image is built
+fresh from that exact clean context with inspected labels for source commit,
+source tree, and production-source-manifest SHA-256. The accepted-correction
+claim and v2 evidence bind those three values plus the resulting image ID,
+provider pin/lock/distribution, canonical query hashes, and verifier base image.
+Reusing a pre-correction image or supplying an unlabelled/unmatched image
+fails before provider execution.
+
+Each accepted correction consumes a new immutable namespace. After a fresh
+build, the C# verifier copies the canonical production queries and the Python
+runner from the same candidate, runs the verifier image once, validates the
+closed v2 evidence, and then reruns the full test project, Web build,
+migration/model checks, diff check, and status check at that same candidate.
+No stale image, evidence hash, or earlier accepted-boundary claim is completion
+evidence.
+
 ### Framework detection
 
 Infrastructure owns an embedded, version-controlled
@@ -194,9 +311,9 @@ Supported V1 evidence is deliberately closed:
   ignored working-copy files are never evidence;
 - NuGet: literal unconditional `.csproj`
   `PackageReference`/`FrameworkReference`/SDK declarations
-  and paired committed `packages.lock.json`;
+  and eligible committed `packages.lock.json`;
 - npm: literal `package.json` `dependencies`, `devDependencies`, and
-  `optionalDependencies` maps and paired committed
+  `optionalDependencies` maps and eligible committed
   `package-lock.json` v2/v3;
 - Maven: literal project-level `pom.xml` direct dependency coordinates only;
   profiles, parent/property interpolation, and `dependencyManagement` are
@@ -209,12 +326,37 @@ unpaired lock, import, symbol, filename resemblance, or unsupported manifest
 format is interpreted. More formats require a future catalog/parser change and
 tests.
 
-Each manifest establishes a scope at its parent directory. A Code Unit is
-eligible only when its path is under that scope and its language matches the
-catalog entry. The most-specific ancestor scope for an ecosystem wins. Two
-same-ecosystem manifests at the same winning root, an unpaired lock, or an
-unprovable scope is ambiguous and creates no fact. Different ecosystems may
-coexist at one root and apply only to matching languages.
+Each successfully parsed supported direct manifest establishes a scope at its
+parent directory. A Code Unit is eligible only when its path is under that
+scope and its language matches the catalog entry. The most-specific ancestor
+scope for an ecosystem wins. Different ecosystems may coexist at one root and
+apply only to matching languages.
+
+Lock ownership is proven before any lock entry is parsed into
+`PackageEvidence`:
+
+1. enumerate the complete committed same-root owner-candidate set
+   (`*.csproj` for NuGet; the exact `package.json` for npm);
+2. require that candidate set to contain exactly one file;
+3. safely read and successfully parse that file within the normal artifact
+   bounds;
+4. require the direct-manifest shape used to establish ownership to be
+   supported and applicable: NuGet declarations/SDK ownership are literal and
+   unconditional; npm ownership uses the supported literal top-level direct
+   dependency maps and supported package shape;
+5. require the manifest and lock to share ecosystem and scope root, and apply
+   eventual facts only to descendant Code Units with a catalog-compatible
+   parser language.
+
+No catalog match is required in the owner manifest: a valid literal direct
+manifest may own a lock whose supported transitive entry supplies the only
+framework fact. However, zero or multiple owner candidates, malformed JSON/XML,
+an unsupported manifest shape/version, a conditional/dynamic NuGet owner, an
+unsafe/oversize owner, or an owner that is not applicable to the scope makes
+the lock ineligible. It emits one bounded closed audit outcome and no
+lock-derived fact. A tracked filename or count alone never proves ownership,
+and an invalid candidate is never silently discarded to manufacture a unique
+owner.
 
 Candidate facts group by `(CodeUnitId, FrameworkName)`. `High` outranks
 `Medium`; then deeper scope outranks shallower scope; then the ordinal
@@ -263,13 +405,16 @@ during final persistence, and prove no provider-derived row survives, local
 filter audit remains, and the durable ScanRun reaches the correct terminal
 state.
 
-The additive migration creates `CodeUnitFrameworks` and
-`ScanRunLanguageSummaries`, their composite foreign keys, unique constraints,
-checks, and indexes. An additive implementation-time correction also adds the
-non-negative `ScanRun.FrameworkEvidenceAuditTotalOutcomeCount` column so the
-complete count required by the response contract survives reload when details
-are capped at 100; this changes no parsing or filtering behavior. Existing
-nullable `CodeUnit.Language` rows from Story 4.1 are not guessed or backfilled.
+The existing additive migration
+`20260720030657_AddLanguageFrameworkDetection` creates
+`CodeUnitFrameworks` and `ScanRunLanguageSummaries`, their composite foreign
+keys, unique constraints, checks, and indexes. The second existing additive
+migration `20260720060442_FrameworkEvidenceAuditCount` adds the non-negative
+`ScanRun.FrameworkEvidenceAuditTotalOutcomeCount` column so the complete count
+required by the response contract survives reload when details are capped at
+100; this changes no parsing or filtering behavior. Iteration-2 remediation
+requires no schema change. Existing nullable `CodeUnit.Language` rows from
+Story 4.1 are not guessed or backfilled.
 New completed Story 4.2 runs enforce non-null language in Core, draft
 validation, and persistence tests. Rollback drops only that added
 check/column and the two new tables/indexes; it does not mutate historical Code
@@ -305,7 +450,9 @@ src/dotnet/Vulgata.Infrastructure/
 │   ├── Configurations/
 │   │   ├── CodeUnitFrameworkConfiguration.cs                   # NEW
 │   │   └── ScanRunLanguageSummaryConfiguration.cs              # NEW
-│   └── Migrations/<additive Story 4.2 migration>               # NEW
+│   └── Migrations/
+│       ├── 20260720030657_AddLanguageFrameworkDetection.*      # RETAIN
+│       └── 20260720060442_FrameworkEvidenceAuditCount.*        # RETAIN
 └── Vulgata.Infrastructure.csproj                               # UPDATE embedded resource
 
 src/dotnet/Vulgata.Shared/Repositories/
@@ -332,25 +479,32 @@ must wait for independent plan acceptance and planned-change approval.
 
 ## RED-First Verification Strategy
 
-1. **Provider RED**: prove current Projection A has no language and current
-   parser accepts a truncated 100-row response. GREEN adds the exact alias,
-   per-file reconciliation, private `250001` environment, and fail-closed
-   completeness metadata.
-2. **Language RED**: prove a mixed-language provider result currently persists
-   null languages and a zero-structure supported file currently becomes a File
-   Code Unit. GREEN requires per-file parser tokens, distinct-file summaries,
-   conflict atomicity, and exactly one `Filtered/UnknownLanguage`.
-3. **Catalog/detector RED**: direct, paired-lock transitive, nested scope,
+Groups 1-6 are historical execution groups. Their behavior remains required,
+but unavailable raw observations are handled only through the Story 4.2
+reconstruction exception below; they are not rerun and relabelled as
+historical RED.
+
+1. **Historical provider group**: the original baseline lacked Projection A
+   language and could accept a provider-default 100-row truncation. Its GREEN
+   behavior is the exact alias, per-file reconciliation, private `250001`
+   environment, and fail-closed completeness metadata.
+2. **Historical language group**: the original baseline persisted null
+   languages and could retain a supported zero-structure file as a File Code
+   Unit. Its GREEN behavior requires per-file parser tokens, distinct-file
+   summaries, conflict atomicity, and exactly one
+   `Filtered/UnknownLanguage`.
+3. **Historical catalog/detector group**: direct, paired-lock transitive, nested scope,
    duplicate, strongest-confidence, ambiguous, unsupported, unsafe path,
-   reparse, size/entry/fact cap, and non-execution cases fail before detector
-   implementation. GREEN introduces the smallest closed parsers/catalog.
-4. **Persistence RED**: prove absent uniqueness/composite FK/summary storage,
-   incomplete draft acceptance, and the current tracked Completed state after
-   an injected final SaveChanges failure. GREEN adds migration/configurations,
-   one atomic aggregate write, rollback/detach/reload, and a separate durable
-   safe failure transition.
-5. **API/UI/authorization RED**: prove the existing overview lacks language,
-   framework evidence, and unknown paths. GREEN uses representative authorised
+   reparse, size/entry/fact cap, and non-execution cases preceded the closed
+   parser/catalog behavior.
+4. **Historical persistence group**: the original baseline lacked
+   uniqueness/composite FK/summary storage, accepted an incomplete draft, and
+   held a tracked Completed state after an injected final SaveChanges failure.
+   Its GREEN behavior is the two current migrations, one atomic aggregate
+   write, rollback/detach/reload, and a separate durable safe failure
+   transition.
+5. **Historical API/UI/authorization group**: the original overview lacked
+   language, framework evidence, and unknown paths. Its GREEN behavior uses representative authorised
    API and component fixtures to assert exact equivalence with the accepted
    profile: every recorded language and distinct-file count, every framework
    with its strongest retained confidence and safe evidence source, every
@@ -358,12 +512,53 @@ must wait for independent plan acceptance and planned-change approval.
    Chinese label is present, with zero omission or developer interpretation
    needed to identify an accepted item. It also preserves unchanged 404
    redaction and verifies visibility revocation.
-6. **Final-image RED**: the gate must fail, not return early, when its required
-   environment is absent in the completion lane; it must fail with the old
-   100-row limit and old empty-file expectation. GREEN proves exact final image,
-   exact pin/query hashes, more than 100 rows, empty supported file behavior,
+6. **Historical final-image group**: the original gate had to fail, not return
+   early, when completion inputs were absent and had to reject the old 100-row
+   limit/empty-file expectation. Its still-required GREEN behavior proves the
+   exact pin/query hashes, more than 100 rows, empty supported-file behavior,
    parser-language bindings, atomic completeness, cleanup, and forbidden
-   retention.
+   retention. Iteration-2 group 9 adds the corrected schema/source binding.
+7. **Iteration-2 safety RED**: captured logging proves a raw absolute/escape
+   provider path currently appears before normalization. GREEN makes the owned
+   safe path the only value available to logs and persistence.
+8. **Iteration-2 lock-owner RED**: NuGet and npm fixtures with one malformed,
+   unsupported, unsafe, or conditional owner plus a matched lock currently can
+   create `Medium` evidence. GREEN requires the exact validated-owner proof
+   above while preserving a unique valid owner with lock-only catalog evidence.
+9. **Iteration-2 evidence RED**: the current runner/C# names do not validate
+   against the owned v2 schema, and an image lacking corrected source labels is
+   rejected. GREEN uses one closed schema, a fresh consumed namespace, and
+   exact source-manifest/image binding.
+
+### Story 4.2 historical workflow-evidence exception
+
+The exception is a narrow evidence-disclosure rule for the already executed
+Story 4.2 task groups. Task regeneration must define one durable reconstruction
+ledger at
+`specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json`.
+For every historical task group it records the requirement/test mapping,
+earliest Git commit containing the relevant tests, earliest commit containing
+the production behavior, available workflow records and checkpoint trailers,
+current immutable-candidate GREEN command/result, and explicit booleans for
+whether original raw RED output and a valid contemporaneous checkpoint are
+available.
+
+The ledger may state `historicalRawRedAvailable: false` or
+`checkpointTrailerAvailable: false`; it must not infer a RED result from a
+later diff, synthesize output, backdate a file, amend a commit, or relabel a
+current rerun. The exception does not waive fresh runnable RED-GREEN evidence
+for AR2-001, QR2-001, AR2-002/CF-002, or EV-002, and it does not generalize to
+Story 4.1 or any later story.
+
+T050 remains unchecked and incomplete while this plan is in review. After
+fresh plan acceptance, new planned-change authorization, task regeneration,
+correction implementation, fresh final-image/full-suite evidence, and
+creation of the truthful reconstruction ledger, T050 audits the one immutable
+candidate. It may pass with disclosed unavailable historical raw evidence
+under this exception, but it blocks on fabricated claims, missing current
+correction RED/GREEN, schema/source-image mismatch, scope drift, or any other
+failed audit item. Only then may a later workflow authority mark T050 complete
+and create a new ready-for-review boundary.
 
 Required commands and expected observations are in [quickstart.md](quickstart.md).
 
@@ -380,6 +575,13 @@ Required commands and expected observations are in [quickstart.md](quickstart.md
 | FR-006..007, FR-012..013, FR-019, SC-008 | authorised summary DTO + existing dialog | representative authorised API/component fixtures assert 100% of languages/counts, strongest framework confidence/safe evidence, all bounded unknown paths, and required Chinese labels, with zero omissions or developer interpretation |
 | FR-020 | explicit ownership exclusion | architectural source-diff test/review: zero orchestration/tool/dispatch changes |
 | Story 4.1 completeness correction | gateway env + envelope parser + final-image verifier | 101+ rows, truncation metadata, exact two-query and cleanup tests |
+| AR2-001 | safe provider path invariant before logger/outcome construction | captured logger + durable/API absence of raw absolute/escape paths |
+| QR2-001 | validated direct-manifest owner model before lock parsing | malformed/unsupported/conditional/unsafe NuGet and npm owner fixtures |
+| AR2-002, CF-002 | one closed v2 evidence grammar across contract/runner/verifier | schema-name/safe-name/unknown-field and fresh namespace tests |
+| EV-002 | candidate commit/tree/source-manifest labels bound to fresh image/evidence | clean candidate build, inspected labels, fresh exact-image gate, full suite |
+| AR2-003, QR2-002, WF-002 | T050 remains incomplete until immutable-candidate audit | regenerated task plus reconstruction/current-evidence ledger |
+| PL-001, PA-001 | fresh plan-review and regenerated dependent artifacts | current hashes, both migrations, no stale accepted-boundary claims |
+| TR-001 | Story 4.2-only truthful historical reconstruction exception | explicit unavailable flags; no fabricated/backdated/amended evidence |
 
 ## Project Structure
 
@@ -406,4 +608,7 @@ single Tests project mirrors these seams.
 
 ## Complexity Tracking
 
-No Constitution violation requires justification.
+No Constitution violation requires justification. The historical
+workflow-evidence exception changes only what can be truthfully claimed about
+unavailable past workflow evidence; it does not weaken product tests,
+authorization, security, current correction TDD, or any Constitution gate.

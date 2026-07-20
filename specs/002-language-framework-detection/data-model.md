@@ -28,6 +28,32 @@ must match `[a-z][a-z0-9_+#.-]{0,63}`.
 No record exists when no structural node supplies a language. More than one
 distinct identity for a path rejects the provider result atomically.
 
+### `SafeProviderPath`
+
+Value object used by every owned provider outcome, log, and durable audit:
+
+| Field | Rule |
+| --- | --- |
+| `Value` | Normalized forward-slash Repository-relative path, maximum 2,048, or the literal `(unknown)`. |
+| `IsKnown` | `true` only when strict normalization, containment, and segment checks passed. |
+
+The raw provider scalar is never stored on this model. Absolute Windows,
+UNC, POSIX-rooted, escape, reparse, control-character, invalid-separator, or
+oversize inputs produce `(unknown)` before `ProviderCandidateOutcome` is
+constructed. Logging and persistence accept `SafeProviderPath`, not a raw
+string.
+
+### `ProviderCandidateOutcome` (hardened transient contract)
+
+| Field | Rule |
+| --- | --- |
+| `RelativePath` | Required `SafeProviderPath`; never a raw provider scalar. |
+| `Outcome` | Closed provider outcome enum. |
+| `Reason` | Closed bounded reason; no parser text or exception message. |
+
+The coordinator revalidates `RelativePath` before its first log call and uses
+the identical safe value for its audit key and `ScanCandidateOutcome`.
+
 ### `RepositoryProfileDraft`
 
 In-memory atomic persistence unit:
@@ -153,6 +179,101 @@ startup.
 Direct maps to `High`; paired committed lock maps to `Medium`. An unpaired lock
 does not create this model.
 
+### `DirectManifestOwnerCandidate`
+
+Transient precondition record evaluated before any NuGet/npm lock entry may
+create `PackageEvidence`:
+
+| Field | Rule |
+| --- | --- |
+| `ArtifactPath` | Safe committed Repository-relative `.csproj` or exact `package.json`. |
+| `ScopeRoot` | Same normalized parent directory as the candidate lock. |
+| `Ecosystem` | `nuget` or `npm`; must match the lock. |
+| `ReadStatus` | `SafeAndBounded` or a closed failure reason. |
+| `ParseStatus` | `ParsedSupported` or a closed malformed/unsupported/conditional reason. |
+| `Applicable` | True only when the supported direct-manifest shape can own the same-root lock scope. |
+
+### `ValidatedDirectManifestOwner`
+
+Created only when the complete same-root owner-candidate set has exactly one
+entry and that entry is `SafeAndBounded`, `ParsedSupported`, and applicable.
+NuGet conditional/dynamic owners and npm manifests outside the supported
+literal top-level package shape do not create this model. A catalog-matched
+direct framework declaration is not required: ownership and catalog fact
+matching are separate.
+
+`PackageEvidence(Relationship=Transitive)` requires one
+`ValidatedDirectManifestOwner`. If there are zero or multiple candidates, or
+the sole candidate is malformed, unsupported, conditional, unsafe, oversize,
+or inapplicable, the lock produces no `PackageEvidence` and one bounded audit
+outcome.
+
+## Verification-only evidence models
+
+These are workflow artifacts and image metadata, not PostgreSQL entities.
+
+### `ProductionSourceManifest`
+
+| Field | Rule |
+| --- | --- |
+| `SourceCommit` | Exact immutable correction-candidate commit. |
+| `SourceTree` | Git tree for that commit. |
+| `Entries` | Ordinally sorted Dockerfile, `.dockerignore`, and every tracked Docker-context file not excluded by `.dockerignore`; each entry is Repository-relative path plus SHA-256. |
+| `ManifestSha256` | SHA-256 of the canonical manifest bytes. |
+
+The final image carries inspected labels for `SourceCommit`, `SourceTree`, and
+`ManifestSha256`. The accepted-correction claim retains the manifest; the
+bounded provider evidence retains only these identities and never the entry
+paths.
+
+### `ProviderContractEvidenceV2`
+
+One closed JSON model owned by the Story 4.1 contract and shared verbatim by
+the Python runner and C# verifier. Its canonical root names are exactly
+`schemaVersion`, `verdict`, `primaryFailureCategory`,
+`acceptedCorrectionSha256`, `claimSha256`, `sourceCommit`, `sourceTree`,
+`productionSourceManifestSha256`, `finalImageSha256`,
+`verifierBaseImageSha256`, `providerVersion`, `providerLockSha256`,
+`providerDistributionSha256`, `fixtureTreeSha256`,
+`projectionObservations`, `coverage`, `immutableSnapshot`, `cleanup`, and
+`forbiddenRetention`. The contract-owned nested shape is exact:
+
+- `coverage.rowCounts` contains required bounded integers `projectionA`,
+  `projectionB`, and `combined`;
+- `coverage.completeness` contains required strict booleans
+  `privateLimitExact`, `injectedTruncationRejected`, `queryDriftRejected`,
+  `languageConflictRejected`, and `combinedBoundRejected`;
+- `projectionObservations.A.shapeComplete` and
+  `projectionObservations.B.shapeComplete` are the sole, stricter
+  replacements for the old projection-A/projection-B truncation-metadata-
+  absent booleans.
+
+`rowCounts` and `completeness` are not root members. The two old
+projection-truncation fields are not nested under `coverage.completeness`
+because that would create duplicate semantic authorities. All remaining
+`coverage` member names, observation members, requiredness, alternatives, and
+integer bounds are reproduced only by the owning Story 4.1 contract and must
+be consumed verbatim; Story 4.2 defines no parallel model.
+Unknown, duplicate, missing, wrong-typed, or alternate-spelled fields fail.
+The safe property-name set includes `parser_language`, `truncated`, and
+`result_limit`; completeness metadata is observable by name but its presence
+still forces failure.
+
+### `HistoricalTddReconstruction` (Story 4.2 only)
+
+| Field | Rule |
+| --- | --- |
+| `TaskGroup` | Exact Story 4.2 task-group identity. |
+| `RequirementAndTests` | Existing requirement/test mapping. |
+| `EarliestTestCommit`, `EarliestImplementationCommit` | Git-derived identities when provable; otherwise explicit null plus reason. |
+| `WorkflowRecords`, `CheckpointTrailers` | Existing identities only; no amended or invented records. |
+| `CurrentGreenEvidence` | Command, immutable candidate, result, and raw-output path for the current rerun. |
+| `HistoricalRawRedAvailable` | Truthful boolean; false is permitted by the approved exception. |
+| `CheckpointTrailerAvailable` | Truthful boolean; false is permitted by the approved exception. |
+
+This model never represents a current rerun as historical evidence. It is an
+input to T050, not evidence that T050 already passed.
+
 ## State transitions
 
 ```text
@@ -185,6 +306,16 @@ no facts from that artifact
 independent valid artifacts continue
 ```
 
+Lock with unproven owner:
+
+```text
+enumerate complete same-root direct-manifest owner candidates
+  -> candidate count != 1: bounded ambiguous/unsupported outcome
+  -> sole candidate read/parse/support/applicability fails: bounded outcome
+  -> no lock-derived PackageEvidence or framework fact
+  -> independent valid artifacts continue
+```
+
 Global evidence/detector failure:
 
 ```text
@@ -202,17 +333,20 @@ persist one sanitized Failed transition, or Aborted for cancellation
 prove zero provider-derived rows and retained local pre-provider audit
 ```
 
-This explicitly corrects the current failure seam in which the in-memory
-ScanRun is marked Completed before `SaveChangesAsync` and therefore cannot be
-terminalized by a catch branch that checks only the tracked status.
+This preserves the implemented correction to the original failure seam in
+which the in-memory ScanRun was marked Completed before `SaveChangesAsync` and
+therefore could not be terminalized by a catch branch that checked only the
+tracked status.
 
 ## Migration and rollback
 
-Additive migration:
+Current additive migrations:
 
-1. create `CodeUnitFrameworks`;
-2. create `ScanRunLanguageSummaries`;
-3. add non-negative `ScanRun.FrameworkEvidenceAuditTotalOutcomeCount` with a
+1. `20260720030657_AddLanguageFrameworkDetection` creates
+   `CodeUnitFrameworks`;
+2. the same migration creates `ScanRunLanguageSummaries`;
+3. `20260720060442_FrameworkEvidenceAuditCount` adds non-negative
+   `ScanRun.FrameworkEvidenceAuditTotalOutcomeCount` with a
    default of zero so complete audit totals survive the bounded 100-detail
    sample and reload;
 4. add composite FKs, uniqueness, checks, and indexes;
@@ -231,8 +365,11 @@ Deployment:
 4. run a fresh Story 4.2 profile and verify relational invariants;
 5. deploy the same image/migration to production.
 
-Rollback deploys the previous application image and reverses the additive
-migrations, first dropping only the audit-total check/column and then the two
-new tables/indexes. It never backfills, rewrites, or deletes historical Code
-Units or candidate outcomes. If new Story 4.2 facts must be retained for
-audit, roll forward instead of applying the destructive down migration.
+Rollback deploys the previous application image and reverses
+`20260720060442_FrameworkEvidenceAuditCount` first, dropping only the
+audit-total check/column, then reverses
+`20260720030657_AddLanguageFrameworkDetection`, dropping only the two new
+tables/indexes. It never backfills, rewrites, or deletes historical Code Units
+or candidate outcomes. If new Story 4.2 facts must be retained for audit, roll
+forward instead of applying the destructive down migration. Iteration-2
+remediation introduces no third migration.

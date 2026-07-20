@@ -46,6 +46,12 @@ omitting audit paths.
 The response contains no source content, absolute host path, raw manifest
 value, raw provider row/query, or provider diagnostic.
 
+Every provider-derived path reaches this response only through the shared safe
+path invariant: strict bounded Repository-relative normalization occurs before
+the first log or persistence call, and invalid values are stored/rendered only
+as `(unknown)`. Response mapping never attempts to recover or re-render the raw
+provider scalar.
+
 ## Authorization
 
 - Existing route groups continue to require `ManagementAccess`.

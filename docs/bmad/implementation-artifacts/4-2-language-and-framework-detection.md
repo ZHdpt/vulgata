@@ -427,9 +427,31 @@ unchanged.
   remains unchecked. The final cross-artifact audit also requires the amended
   plan set to pass its dependent plan-review/tasks/analyze gates and requires
   explicit user approval before those analyzed artifacts are edited.
-- Story status remains `review`; both iteration-2 verdicts are `REVISE`.
-  No implementation or analyzed plan/task remediation has started pending the
-  required approval.
+- The user approved the bounded iteration-2 remediation and the
+  Story 4.2-specific historical-evidence exception. The plan set now requires
+  provider paths to become `SafeProviderPath` before any outcome or log use;
+  validates exactly one safely read, successfully parsed, supported,
+  applicable same-root direct-manifest owner before NuGet/npm lock evidence can
+  create a framework fact; closes the Story 4.1 final-image evidence grammar;
+  binds corrected source/tree/manifest/image/evidence identities; and keeps
+  T050 open until the final immutable-candidate audit.
+- Fresh plan reviews 4 and 5 returned bounded `REVISE` findings for the
+  provider-evidence schema. The final correction preserves exactly 19 required
+  root members and fully closes and bounds `projectionObservations` and
+  `coverage`, with one semantic authority for every retained row-count and
+  completeness fact. Fresh plan review 6 returned `ACCEPT` with no
+  Constitution, ADR, context, or PRD conflict.
+- After that independent acceptance, the user explicitly authorized the
+  material Scan evidence-filtering change to proceed to task generation.
+  This authorization changes no Worker Agent tool or PRD requirement and
+  waives none of the remaining task analysis, TDD, review, E2E, security,
+  verification, or Git gates.
+- Story status remains `review`; the internal workflow has returned to
+  `tasks`. The prior implementation-review verdicts are invalidated by the
+  corrected plan boundary and will be rerun after fresh task analysis and
+  implementation correction.
+- Accepted plan checkpoint:
+  `bmad-4-2-plan-20260720T124952Z-a4c912` (pending Git binding).
 - Implementation checkpoint:
   `bmad-4-2-implement-20260720T104752Z-c7a3e1`
   (pending Git binding).
@@ -450,6 +472,10 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/spec-review-2.json`
 - `specs/002-language-framework-detection/reviews/spec-review-3.json`
 - `specs/002-language-framework-detection/reviews/plan-review-3.json`
+- `specs/002-language-framework-detection/reviews/plan-review-4.json`
+- `specs/002-language-framework-detection/reviews/plan-review-5.json`
+- `specs/002-language-framework-detection/reviews/plan-review-6.json`
+- `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json`
 - `specs/002-language-framework-detection/tasks.md`
 - `specs/002-language-framework-detection/reviews/analyze-1.json`
 - `specs/002-language-framework-detection/reviews/analyze-2.json`

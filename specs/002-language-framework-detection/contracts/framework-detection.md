@@ -45,8 +45,8 @@ working-copy files are never evidence.
 
 | Ecosystem | Direct (`High`) | Transitive (`Medium`) |
 | --- | --- | --- |
-| NuGet | literal unconditional `.csproj` PackageReference/FrameworkReference/SDK coordinates | paired same-scope committed `packages.lock.json` |
-| npm | literal `package.json` dependencies/devDependencies/optionalDependencies | paired same-scope committed `package-lock.json` v2/v3 |
+| NuGet | literal unconditional `.csproj` PackageReference/FrameworkReference/SDK coordinates | committed `packages.lock.json` with exactly one validated same-root `.csproj` owner |
+| npm | literal `package.json` dependencies/devDependencies/optionalDependencies | committed `package-lock.json` v2/v3 with exactly one validated same-root `package.json` owner |
 | Maven | literal project-level `pom.xml` direct dependency; no parent/profile/property/dependencyManagement evaluation | not supported |
 | Python | literal requirement; no include/URL/editable/environment marker | not supported |
 
@@ -60,10 +60,28 @@ LLM is evaluated.
 2. Code Unit path must be a descendant and its parser language must match the
    catalog entry.
 3. Deepest ancestor scope wins per ecosystem.
-4. A lock must pair to a supported direct manifest at the same root.
-5. Same-ecosystem same-winning-root ambiguity produces no fact and a bounded
+4. Before reading a lock entry as evidence, enumerate the complete committed
+   same-root owner-candidate set: all `*.csproj` files for NuGet, or the exact
+   `package.json` for npm.
+5. The candidate set must contain exactly one file. That sole file must pass
+   Repository containment/reparse/size bounds, parse successfully, use the
+   supported direct-manifest shape, and be applicable to that ecosystem and
+   scope. NuGet ownership declarations must be literal and unconditional; an
+   unsupported or conditional/dynamic owner is not valid.
+6. An invalid candidate is not discarded to manufacture a unique owner.
+   Zero/multiple candidates, a malformed/unsupported/conditional/unsafe/
+   oversize owner, or an inapplicable owner makes the lock ineligible,
+   produces one bounded closed audit outcome, and creates no lock-derived
+   fact.
+7. A validated owner need not itself contain a catalog-matched direct
+   framework. Ownership is separate from exact catalog matching, so one valid
+   direct manifest may justify scope for a supported transitive lock entry.
+8. Same-ecosystem same-winning-root ambiguity produces no fact and a bounded
    audit outcome.
-6. Different ecosystems at one root are independent and language-filtered.
+9. Different ecosystems at one root are independent and language-filtered.
+
+A tracked filename, tracked-file count, same-root coincidence, or valid lock
+file alone never proves ownership.
 
 ## Evidence locator
 
@@ -104,7 +122,23 @@ Code Unit/framework.
 4,096 locator characters
 ```
 
-One invalid/unsafe/unsupported artifact is isolated. A repository-wide cap,
-catalog invariant failure, or unexpected detector failure stops before the
-structural transaction. Diagnostics use only closed Chinese reason text and a
-safe Repository-relative path or `(unknown)`.
+One invalid/unsafe/unsupported artifact is isolated. A lock whose owner proof
+fails is isolated in the same way, and independent valid artifacts continue.
+A repository-wide cap, catalog invariant failure, or unexpected detector
+failure stops before the structural transaction. Diagnostics use only closed
+Chinese reason text and a safe Repository-relative path or `(unknown)`.
+
+## Required owner regressions
+
+Both ecosystems retain valid unique-owner lock cases and add negative fixtures:
+
+- sole malformed direct manifest plus matched lock;
+- sole unsupported direct-manifest shape plus matched lock;
+- sole unsafe/oversize direct manifest plus matched lock;
+- conditional/dynamic NuGet owner plus matched lock;
+- multiple same-root owner candidates where any candidate is invalid;
+- owner outside the lock root or inapplicable to the Code Unit scope.
+
+Each negative case creates no `Medium` fact, emits only one bounded closed audit
+outcome for the lock/owner relationship, and discloses no raw value, source
+content, or absolute host path.
