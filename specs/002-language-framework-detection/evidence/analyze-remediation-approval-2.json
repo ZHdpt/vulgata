@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/analyze/6",
+  "kind": "human-approval",
+  "stage": "analyze",
+  "source_commit": "216985b812613ad20994d300fae072b69093e6b6",
+  "artifact_paths": [
+    "specs/002-language-framework-detection/reviews/analyze-5.json",
+    "specs/002-language-framework-detection/tasks.md"
+  ],
+  "command": null,
+  "exit_code": null,
+  "observed_at": "2026-07-22T01:27:39.6643161Z",
+  "summary": "The user explicitly approved the presented task-only remediation for High finding TO-001: retain early historical discovery, move current-candidate ledger finalization and validation after immutable-candidate GREEN gates through T047, and keep them before evidence reconciliation, candidate freeze, and T050. The approval changes no specification, plan, PRD, source code, or unrelated task behavior.",
+  "raw_output_path": null
+}

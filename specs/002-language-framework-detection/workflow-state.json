@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "tasks",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -305,31 +305,58 @@
         "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "revised",
+      "started_at": "2026-07-20T12:49:52.5988743Z",
+      "completed_at": "2026-07-22T01:27:39.6643161Z",
+      "input_commit": "216985b812613ad20994d300fae072b69093e6b6",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "21d913bd8ddc83f59c9bcadbc9ebe4e8e11b8bff9aa3016905eccca5da4d803d",
+        "specs/002-language-framework-detection/reviews/analyze-5.json": "1178bcdfad3274cc7bce6297d97cc1177545b9569e826e857e3883c5c9869305"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-5.json",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-22T01:27:39.6643161Z",
+      "completed_at": "2026-07-22T01:44:36.1076500Z",
+      "input_commit": "216985b812613ad20994d300fae072b69093e6b6",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "bbf8e99dd3c6e10803bcad3985d811caab714c5f6c2e1d3037a51f79cecf6cd9",
+        "specs/002-language-framework-detection/reviews/analyze-6.json": "6e4f5e8d00d891ecd95a6744880cd51734e54b39a1def758b2edd9a71b242130"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-6.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "eefa1794a57227428376a6d838593485e491a79b",
+    "preflight_head": "216985b812613ad20994d300fae072b69093e6b6",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Accepted Story 4.2 plan set, three fresh plan-review verdicts, planned-change authorization evidence, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Corrected Story 4.2 tasks, analyze iterations 5 and 6, analysis-remediation approval, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/002-language-framework-detection/contracts",
-      "specs/002-language-framework-detection/data-model.md",
-      "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
-      "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/quickstart.md",
-      "specs/002-language-framework-detection/research.md",
-      "specs/002-language-framework-detection/reviews/plan-review-4.json",
-      "specs/002-language-framework-detection/reviews/plan-review-5.json",
-      "specs/002-language-framework-detection/reviews/plan-review-6.json",
+      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json",
+      "specs/002-language-framework-detection/reviews/analyze-5.json",
+      "specs/002-language-framework-detection/reviews/analyze-6.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-20T12:49:52.5988743Z"
+    "observed_at": "2026-07-22T01:44:36.1076500Z"
   },
   "source_artifacts": [
     {
@@ -586,12 +613,14 @@
       ]
     },
     "analyze": {
-      "count": 4,
+      "count": 6,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/analyze-1.json",
         "specs/002-language-framework-detection/reviews/analyze-2.json",
         "specs/002-language-framework-detection/reviews/analyze-3.json",
-        "specs/002-language-framework-detection/reviews/analyze-final-2.json"
+        "specs/002-language-framework-detection/reviews/analyze-final-2.json",
+        "specs/002-language-framework-detection/reviews/analyze-5.json",
+        "specs/002-language-framework-detection/reviews/analyze-6.json"
       ]
     },
     "acceptance-review": {
@@ -1232,37 +1261,70 @@
       "observed_at": "2026-07-20T12:49:52.5988743Z",
       "summary": "User explicitly authorized task generation for the accepted material Scan evidence-filtering correction without waiving downstream gates.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/5",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "216985b812613ad20994d300fae072b69093e6b6",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-5.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-22T01:27:39.6643161Z",
+      "summary": "Analysis returned REVISE because ledger finalization and validation preceded immutable-candidate evidence that they required, creating a task dependency cycle.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/6",
+      "kind": "human-approval",
+      "stage": "analyze",
+      "source_commit": "216985b812613ad20994d300fae072b69093e6b6",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-22T01:27:39.6643161Z",
+      "summary": "User explicitly approved the task-only TO-001 dependency remediation.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/7",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "216985b812613ad20994d300fae072b69093e6b6",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-6.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-22T01:44:36.1076500Z",
+      "summary": "Fresh analysis ACCEPTED the acyclic 50-task graph with complete requirement/finding coverage, RED-before-GREEN ordering, and T050 last.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-plan-20260720T124952Z-a4c912",
+    "checkpoint_id": "bmad-4-2-analyze-20260722T014436Z-c5d8a1",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "plan-review",
+    "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/002-language-framework-detection/contracts/framework-detection.md",
-      "specs/002-language-framework-detection/contracts/provider-language-projection.md",
-      "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
-      "specs/002-language-framework-detection/data-model.md",
-      "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
-      "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/quickstart.md",
-      "specs/002-language-framework-detection/research.md",
-      "specs/002-language-framework-detection/reviews/plan-review-4.json",
-      "specs/002-language-framework-detection/reviews/plan-review-5.json",
-      "specs/002-language-framework-detection/reviews/plan-review-6.json",
+      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json",
+      "specs/002-language-framework-detection/reviews/analyze-5.json",
+      "specs/002-language-framework-detection/reviews/analyze-6.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/plan-review/4",
-      "4-2-language-and-framework-detection/plan-review/5",
-      "4-2-language-and-framework-detection/plan-review/6",
-      "4-2-language-and-framework-detection/plan-review/7"
+      "4-2-language-and-framework-detection/analyze/5",
+      "4-2-language-and-framework-detection/analyze/6",
+      "4-2-language-and-framework-detection/analyze/7"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-20T12:49:52.5988743Z"
+  "updated_at": "2026-07-22T01:44:36.1076500Z"
 }

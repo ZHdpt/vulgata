@@ -450,6 +450,24 @@ unchanged.
   `tasks`. The prior implementation-review verdicts are invalidated by the
   corrected plan boundary and will be rerun after fresh task analysis and
   implementation correction.
+- Regenerated tasks initially passed complete requirements/finding coverage but
+  analysis iteration 5 found one High dependency cycle: current-candidate
+  ledger finalization/validation preceded the GREEN evidence it required. The
+  user approved a task-only correction. T035 now performs early historical
+  discovery; T036-T044 produce the immutable-candidate GREEN evidence; T045
+  finalizes the ledger; T046 validates it; T047 validates evidence; T048
+  reconciles obligations; T049 freezes the candidate; and T050 remains the
+  final audit.
+- Fresh analysis iteration 6 returned `ACCEPT`: all 21 functional
+  requirements, 8 success criteria, 7 acceptance-criteria groups, 14 accepted
+  plan decisions, and 11 iteration-2 findings map to an acyclic 50-task graph.
+  Fourteen historical baseline tasks remain checked, 36 correction/verification
+  tasks remain pending, all changed behavior retains RED-before-GREEN ordering,
+  and the historical-evidence exception cannot relabel current GREEN evidence.
+- The internal workflow is now `implement`; no source or test correction has
+  started from the accepted task graph yet.
+- Analyzed-tasks checkpoint:
+  `bmad-4-2-analyze-20260722T014436Z-c5d8a1` (pending Git binding).
 - Accepted plan checkpoint:
   `bmad-4-2-plan-20260720T124952Z-a4c912` (pending Git binding).
 - Implementation checkpoint:
@@ -476,6 +494,9 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/plan-review-5.json`
 - `specs/002-language-framework-detection/reviews/plan-review-6.json`
 - `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json`
+- `specs/002-language-framework-detection/reviews/analyze-5.json`
+- `specs/002-language-framework-detection/reviews/analyze-6.json`
+- `specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json`
 - `specs/002-language-framework-detection/tasks.md`
 - `specs/002-language-framework-detection/reviews/analyze-1.json`
 - `specs/002-language-framework-detection/reviews/analyze-2.json`
