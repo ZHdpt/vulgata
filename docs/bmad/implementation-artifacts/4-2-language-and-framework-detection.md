@@ -473,8 +473,23 @@ unchanged.
 - Root verification passes 48/48 FrameworkDetection tests and 49/49 surrounding
   RepositoryProfiling tests. `git diff --check` reports only the repository's
   known LF-to-CRLF warnings.
-- The internal workflow remains `implement`; the next bounded slot is T022-T025
-  for provider-path redaction with captured-logger RED evidence.
+- Implementation slot 2 completed T022-T025. Captured-logger and parser RED
+  evidence produced 19 failures across the 21-case unsafe-path matrix: raw
+  Windows, UNC, POSIX-rooted, escape, control-character, and invalid-separator
+  values reached provider outcomes, logs, or durable audit state. A second RED
+  proved that revalidating `(unknown)` incorrectly made it known.
+- `SafeProviderPath` now closes the transition inside the provider parser and
+  is revalidated before the coordinator's first log. Every downstream surface
+  receives the identical bounded Repository-relative value or literal
+  `(unknown)`; raw provider scalars are not retained.
+- Root verification passes 105/105 CodeGraph provider and RepositoryProfiling
+  tests plus 33/33 Repository API and dashboard component tests. Two-query
+  atomicity, local candidate auditing, authorization, and visibility redaction
+  remain intact.
+- The internal workflow remains `implement`; the next bounded slot is T026-T030
+  for the closed Story 4.1 provider-evidence grammar.
+- Provider-path redaction implementation checkpoint:
+  `bmad-4-2-implement-20260722T073424Z-f3a7c2` (pending Git binding).
 - Owner-eligibility implementation checkpoint:
   `bmad-4-2-implement-20260722T061843Z-d9b4e2` (pending Git binding).
 - Analyzed-tasks checkpoint:

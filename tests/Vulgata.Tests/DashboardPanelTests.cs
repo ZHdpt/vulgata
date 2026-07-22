@@ -326,6 +326,50 @@ public sealed class DashboardPanelTests : TestContext
     }
 
     [Fact]
+    public void RepositoryDetailDialog_AfterUnsafeProviderAudit_RendersOnlyUnknownPath()
+    {
+        var summary = new ScanRunSummaryDto
+        {
+            Id = Guid.NewGuid(),
+            RepositoryId = Guid.NewGuid(),
+            Status = "已完成",
+            StartedAt = DateTimeOffset.UtcNow,
+            CompletedAt = DateTimeOffset.UtcNow,
+            UnknownLanguage = new UnknownLanguageSummaryDto
+            {
+                Paths = ["(unknown)"],
+            },
+        };
+        Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(
+            _ => new StubDatabaseConnectionCoordinator());
+        Services.RemoveAll<IRepositoryProfilingCoordinator>();
+        Services.AddScoped<IRepositoryProfilingCoordinator>(
+            _ => new FixedSummaryProfilingCoordinator(summary));
+        RepositorySummaryDto model = new()
+        {
+            Id = summary.RepositoryId,
+            Name = "安全路径仓库",
+        };
+        var cut = Render<RepositoryDetailDialog>(parameters => parameters
+            .Add(parameter => parameter.Model, model)
+            .Add(parameter => parameter.Visible, true)
+            .Add(parameter => parameter.User, CreateUserContext(isAdministrator: true)));
+        cut.WaitForState(() => cut.Markup.Contains("数据库连接", StringComparison.Ordinal));
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("开始扫描", StringComparison.Ordinal))
+            .Click();
+        cut.WaitForState(() => cut.Markup.Contains("扫描完成", StringComparison.Ordinal));
+
+        Assert.Contains("未知语言文件", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("(unknown)", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("C:\\", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("build-server", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("etc/private", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("host-secret", cut.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void RepositoryDetailDialog_AfterRepresentativeProfiling_RendersEveryObjectiveFactAndChineseLabel()
     {
         ScanRunSummaryDto summary = CreateRepresentativeOverviewSummary();

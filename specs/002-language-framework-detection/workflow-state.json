@@ -358,25 +358,57 @@
         "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-22T06:18:43.9419894Z",
+      "completed_at": "2026-07-22T07:34:24.4691557Z",
+      "input_commit": "95fb573320cca4743682a11b30e2f09aabf8b36b",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "b8b4576e786f6c30af734f937b61dce334ca7cc65cfbd8bd0a886b656397e2cf",
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs": "7927b776559e04b5b311eebd9bbd50cbf97681d4678aa49b36c8c87627969e2c",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs": "cea4e3e3c31a04c762c037e085007ee43c2b7a234003796dad858793dfa450af",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "dd1585b287b6a882b4bd30ad11224e47d628e0e29bd3b4c44a58a455a62a818b",
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs": "4f28bb7c5434ba391a2f6e14274ac73e3e85a525ff13723d8b1ca23a8784b847",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "269cd64e90b7482a96772f0e212db86a492720b49972bbcace364c4d79c64cce",
+        "tests/Vulgata.Tests/RepositoryApiTests.cs": "2b5632df55c05a1bdd5c52883d083dfb1ff7245426ccde17dc99eca0132c9719",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs": "27918764828c6f9b78722dd5527cfcb38409f926f43ccffb3968c90a9506a83d"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+        "tests/Vulgata.Tests/RepositoryApiTests.cs",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5",
+    "preflight_head": "95fb573320cca4743682a11b30e2f09aabf8b36b",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T013-T018 owner-eligibility implementation, focused tests, task markers, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 T022-T025 provider-path redaction implementation, focused tests, task markers, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+      "tests/Vulgata.Tests/RepositoryApiTests.cs",
+      "tests/Vulgata.Tests/DashboardPanelTests.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-22T01:44:36.1076500Z"
+    "observed_at": "2026-07-22T07:34:24.4691557Z"
   },
   "source_artifacts": [
     {
@@ -1367,10 +1399,59 @@
       "observed_at": "2026-07-22T06:18:43.9419894Z",
       "summary": "T015-T018 reached GREEN with complete same-root owner evaluation, closed owner states, bounded invalid-owner audits, and independent valid-artifact continuation; root verification passed 48 FrameworkDetection and 49 RepositoryProfiling tests.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/23",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "95fb573320cca4743682a11b30e2f09aabf8b36b",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ParseMalformedProviderRow_WithUnsafePath|FullyQualifiedName~StartStandaloneRepository_WithUnsafeProviderOutcome",
+      "exit_code": 1,
+      "observed_at": "2026-07-22T07:34:24.4691557Z",
+      "summary": "T022 observed 19 meaningful failures out of 21 cases: malformed Projection A and relationship paths retained host fragments, coordinator logs disclosed raw Windows/POSIX/escape paths before normalization, and control-character data reached durable audit state.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/24",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "95fb573320cca4743682a11b30e2f09aabf8b36b",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~SafeProviderPath_RevalidateUnknown_RemainsUnknown",
+      "exit_code": 1,
+      "observed_at": "2026-07-22T07:34:24.4691557Z",
+      "summary": "SafeProviderPath invariant RED proved that revalidating literal (unknown) incorrectly changed IsKnown to true before the minimal correction.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/25",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "95fb573320cca4743682a11b30e2f09aabf8b36b",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+        "tests/Vulgata.Tests/RepositoryApiTests.cs",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling -v:q; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --filter FullyQualifiedName~RepositoryApiTests|FullyQualifiedName~DashboardPanelTests -v:q",
+      "exit_code": 0,
+      "observed_at": "2026-07-22T07:34:24.4691557Z",
+      "summary": "T023-T025 reached GREEN with fail-closed SafeProviderPath construction and first-log revalidation; root verification passed 105 provider/profiling tests and 33 API/component tests with preserved atomicity, authorization, and zero raw-path disclosure.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260722T061843Z-d9b4e2",
+    "checkpoint_id": "bmad-4-2-implement-20260722T073424Z-f3a7c2",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
@@ -1378,17 +1459,21 @@
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+      "tests/Vulgata.Tests/RepositoryApiTests.cs",
+      "tests/Vulgata.Tests/DashboardPanelTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/20",
-      "4-2-language-and-framework-detection/implement/21",
-      "4-2-language-and-framework-detection/implement/22"
+      "4-2-language-and-framework-detection/implement/23",
+      "4-2-language-and-framework-detection/implement/24",
+      "4-2-language-and-framework-detection/implement/25"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-22T06:18:43.9419894Z"
+  "updated_at": "2026-07-22T07:34:24.4691557Z"
 }

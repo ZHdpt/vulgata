@@ -292,6 +292,34 @@ public sealed class RepositoryApiTests
     }
 
     [Fact]
+    public async Task ManagementScanRunRoute_AuthorizedUnsafeProviderAudit_ReturnsOnlyUnknownPathAsync()
+    {
+        ScanRunSummaryDto summary = CreateSummaryWithUnknownLanguage(["(unknown)"]);
+        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        const string email = "story42.safe-provider-path.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+
+        using HttpResponseMessage response = await client.GetAsync(
+            $"/api/repositories/standalone/{summary.RepositoryId}/scan-runs/{summary.Id}");
+        string body = await response.Content.ReadAsStringAsync();
+        using JsonDocument document = JsonDocument.Parse(body);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement paths = document.RootElement
+            .GetProperty("unknownLanguage")
+            .GetProperty("paths");
+        Assert.Equal(
+            ["(unknown)"],
+            paths.EnumerateArray().Select(path => path.GetString()!).ToArray());
+        Assert.DoesNotContain("C:\\", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("build-server", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("etc/private", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("host-secret", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ManagementScanRunStartRoute_WhenCandidateAuditBoundIsExceeded_ReturnsBadRequestAsync()
     {
         Assert.True(Enum.TryParse(

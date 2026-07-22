@@ -234,7 +234,7 @@ public sealed class CodeGraphContextProviderTests
 
             Assert.True(result.Succeeded);
             ProviderCandidateOutcome outcome = Assert.Single(result.CandidateOutcomes);
-            Assert.Equal("src/Unknown.cs", outcome.RelativePath);
+            Assert.Equal("src/Unknown.cs", outcome.RelativePath.Value);
             Assert.Equal(ScanCandidateOutcomeKind.Filtered, outcome.Outcome);
             Assert.Equal(ScanCandidateOutcomeReasons.UnknownLanguage, outcome.Reason);
             Assert.Empty(result.CodeUnits);
@@ -313,6 +313,68 @@ public sealed class CodeGraphContextProviderTests
             Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
 
         Assert.Equal(expected, Assert.Single(result.CodeUnits).EndpointIdentity);
+    }
+
+    [Theory]
+    [MemberData(nameof(UnsafeProviderPathCases))]
+    public void ParseMalformedProviderRow_WithUnsafePath_OwnedOutcomeContainsOnlyUnknown(
+        string rawPath,
+        string hostFragment,
+        bool relationshipRow)
+    {
+        object?[] codeUnitRows = relationshipRow
+            ? []
+            :
+            [
+                CreateCodeUnitRow("Unsupported", rawPath, "Secret", 1, 1, null),
+            ];
+        object?[] relationshipRows = relationshipRow
+            ?
+            [
+                CreateRelationshipRow(
+                    "UNSUPPORTED",
+                    "Class",
+                    rawPath,
+                    "Secret",
+                    1,
+                    1,
+                    "Class",
+                    "src/Safe.cs",
+                    "Safe",
+                    1,
+                    1),
+            ]
+            : [];
+
+        CodeGraphProviderResult result = CodeGraphHttpProjectionParser.Parse(
+            CreateEnvelopeWithRawDataSuffix(
+                CodeGraphContextProviderQueries.CodeUnits,
+                codeUnitRows,
+                string.Empty),
+            CreateEnvelopeWithRawDataSuffix(
+                CodeGraphContextProviderQueries.Relationships,
+                relationshipRows,
+                string.Empty),
+            Path.GetTempPath(),
+            TimeSpan.Zero);
+
+        ProviderCandidateOutcome outcome = Assert.Single(result.CandidateOutcomes);
+        Assert.Equal("(unknown)", outcome.RelativePath.Value);
+        Assert.Equal("MalformedProviderRecord", outcome.Reason);
+        string ownedResult = JsonSerializer.Serialize(result);
+        Assert.DoesNotContain(rawPath, ownedResult, StringComparison.Ordinal);
+        Assert.DoesNotContain(hostFragment, ownedResult, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SafeProviderPath_RevalidateUnknown_RemainsUnknown()
+    {
+        SafeProviderPath unknown = SafeProviderPath.FromProviderScalar(null);
+
+        SafeProviderPath revalidated = SafeProviderPath.Revalidate(unknown);
+
+        Assert.Equal("(unknown)", revalidated.Value);
+        Assert.False(revalidated.IsKnown);
     }
 
     private static byte[] CreateEnvelopeWithRawDataSuffix(
@@ -418,5 +480,42 @@ public sealed class CodeGraphContextProviderTests
         }
 
         return count;
+    }
+
+    public static TheoryData<string, string, bool> UnsafeProviderPathCases
+    {
+        get
+        {
+            var data = new TheoryData<string, string, bool>();
+            string[] unsafePaths =
+            [
+                @"C:\Users\Admin\private\secret.cs",
+                @"\\build-server\private-share\secret.cs",
+                "/etc/private/secret.cs",
+                "../private/secret.cs",
+                "src/\u0001host-secret.cs",
+                "src//private/secret.cs",
+                "src/" + new string('x', 2_049) + "oversize-host-fragment.cs",
+            ];
+            string[] fragments =
+            [
+                "Users",
+                "build-server",
+                "etc/private",
+                "private/secret",
+                "host-secret",
+                "private/secret",
+                "oversize-host-fragment",
+            ];
+            foreach (bool relationshipRow in new[] { false, true })
+            {
+                for (var index = 0; index < unsafePaths.Length; index++)
+                {
+                    data.Add(unsafePaths[index], fragments[index], relationshipRow);
+                }
+            }
+
+            return data;
+        }
     }
 }

@@ -250,14 +250,21 @@ public sealed class RepositoryProfilingCoordinator(
             return new(outcome, Map(scanRun), display);
         }
 
-        HashSet<string> unknownLanguagePaths = provider.CandidateOutcomes
+        ProviderCandidateOutcome[] safeProviderOutcomes =
+        [
+            .. provider.CandidateOutcomes.Select(outcome => outcome with
+            {
+                RelativePath = SafeProviderPath.Revalidate(outcome.RelativePath),
+            }),
+        ];
+        HashSet<string> unknownLanguagePaths = safeProviderOutcomes
             .Where(outcome =>
                 outcome.Outcome == ScanCandidateOutcomeKind.Filtered &&
                 StringComparer.Ordinal.Equals(
                     outcome.Reason,
                     ScanCandidateOutcomeReasons.UnknownLanguage) &&
-                eligiblePaths.Contains(outcome.RelativePath))
-            .Select(outcome => outcome.RelativePath)
+                eligiblePaths.Contains(outcome.RelativePath.Value))
+            .Select(outcome => outcome.RelativePath.Value)
             .ToHashSet(StringComparer.Ordinal);
         HashSet<string> unknownEndpointIdentities = provider.CodeUnits
             .Where(unit => unknownLanguagePaths.Contains(unit.RelativePath))
@@ -496,15 +503,18 @@ public sealed class RepositoryProfilingCoordinator(
             }
         }
 
-        foreach (ProviderCandidateOutcome outcome in provider.CandidateOutcomes)
+        foreach (ProviderCandidateOutcome outcome in safeProviderOutcomes)
         {
-            logger.LogWarning("Rejected CodeGraph record for {FilePath}: {Reason}", outcome.RelativePath, outcome.Reason);
-            string auditPath = NormalizeAuditPath(outcome.RelativePath);
-            if (auditKeys.Add((auditPath, outcome.Outcome, outcome.Reason)))
+            SafeProviderPath auditPath = SafeProviderPath.Revalidate(outcome.RelativePath);
+            logger.LogWarning(
+                "Rejected CodeGraph record for {FilePath}: {Reason}",
+                auditPath.Value,
+                outcome.Reason);
+            if (auditKeys.Add((auditPath.Value, outcome.Outcome, outcome.Reason)))
             {
                 var candidateOutcome = new ScanCandidateOutcome(
                     scanRun.Id,
-                    auditPath,
+                    auditPath.Value,
                     outcome.Outcome,
                     outcome.Reason,
                     0,
@@ -637,22 +647,7 @@ public sealed class RepositoryProfilingCoordinator(
     }
 
     private static string NormalizeAuditPath(string path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return "(unknown)";
-        }
-
-        string normalized = path.Trim().Replace('\\', '/');
-        if (normalized.Length > 2_048 ||
-            Path.IsPathRooted(normalized) ||
-            normalized.Split('/').Any(segment => segment == ".."))
-        {
-            return "(unknown)";
-        }
-
-        return normalized.TrimStart('/');
-    }
+        => SafeProviderPath.FromProviderScalar(path).Value;
 
     private static bool ExceedsUnknownLanguageAuditBounds(
         IReadOnlyCollection<string> eligiblePaths)

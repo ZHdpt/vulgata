@@ -464,7 +464,7 @@ internal static class CodeGraphHttpProjectionParser
             }
             catch (Exception exception) when (IsMalformedRowException(exception))
             {
-                AddWarning(outcomes, TryReadPath(row, "path"));
+                AddWarning(outcomes, ReadSafeProviderPath(row, "path"));
             }
 
             if (acceptedEndpoint is not null)
@@ -482,14 +482,14 @@ internal static class CodeGraphHttpProjectionParser
             .Where(path => !languagesByPath.ContainsKey(path))
             .ToHashSet(StringComparer.Ordinal);
         var warnedPaths = outcomes
-            .Select(outcome => outcome.RelativePath)
+            .Select(outcome => outcome.RelativePath.Value)
             .ToHashSet(StringComparer.Ordinal);
         foreach (string path in unknownLanguagePaths
                      .Where(path => !warnedPaths.Contains(path))
                      .Order(StringComparer.Ordinal))
         {
             outcomes.Add(new ProviderCandidateOutcome(
-                path,
+                SafeProviderPath.FromProviderScalar(path),
                 ScanCandidateOutcomeKind.Filtered,
                 ScanCandidateOutcomeReasons.UnknownLanguage));
         }
@@ -545,7 +545,7 @@ internal static class CodeGraphHttpProjectionParser
             }
             catch (Exception exception) when (IsMalformedRowException(exception))
             {
-                AddWarning(outcomes, TryReadPath(row, "source_path"));
+                AddWarning(outcomes, ReadSafeProviderPath(row, "source_path"));
             }
         }
 
@@ -941,33 +941,30 @@ internal static class CodeGraphHttpProjectionParser
 
     private static string NormalizePath(string path)
     {
-        string normalized = path.Replace('\\', '/').TrimStart('/');
-        if (normalized.Length == 0 ||
-            normalized.Length > 2_048 ||
-            Path.IsPathRooted(normalized) ||
-            normalized.Split('/').Any(segment => segment is "" or "." or ".."))
+        SafeProviderPath safePath = SafeProviderPath.FromProviderScalar(path);
+        if (!safePath.IsKnown)
         {
             throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
         }
 
-        return normalized;
+        return safePath.Value;
     }
 
-    private static string TryReadPath(JsonElement row, string property)
+    private static SafeProviderPath ReadSafeProviderPath(JsonElement row, string property)
     {
         if (row.ValueKind == JsonValueKind.Object &&
             row.TryGetProperty(property, out JsonElement path) &&
-            path.ValueKind == JsonValueKind.String &&
-            !string.IsNullOrWhiteSpace(path.GetString()))
+            path.ValueKind == JsonValueKind.String)
         {
-            string value = path.GetString()!;
-            return value.Length <= 2_048 ? value : "(unknown)";
+            return SafeProviderPath.FromProviderScalar(path.GetString());
         }
 
-        return "(unknown)";
+        return SafeProviderPath.FromProviderScalar(null);
     }
 
-    private static void AddWarning(ICollection<ProviderCandidateOutcome> outcomes, string path)
+    private static void AddWarning(
+        ICollection<ProviderCandidateOutcome> outcomes,
+        SafeProviderPath path)
     {
         if (outcomes.Count < _maximumWarningDetails)
         {

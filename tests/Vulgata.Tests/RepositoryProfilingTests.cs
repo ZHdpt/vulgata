@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Security.Cryptography;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -1835,6 +1836,62 @@ public sealed class RepositoryProfilingTests
         }
     }
 
+    [Theory]
+    [MemberData(nameof(UnsafeProviderPathCases))]
+    public async Task StartStandaloneRepository_WithUnsafeProviderOutcome_UsesUnknownAcrossLogPersistenceAndDtoAsync(
+        string rawPath,
+        string hostFragment)
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "unsafe-provider-outcome",
+                "https://example.invalid/fixture.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var logger = new CapturedLogger<RepositoryProfilingCoordinator>();
+            RepositoryProfilingCoordinator coordinator = CreateCoordinator(
+                db,
+                root,
+                new UnsafeCandidateOutcomeProvider(rawPath),
+                new FixedCandidates([]),
+                logger);
+
+            RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
+                repository.Id,
+                null!,
+                CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            ScanCandidateOutcome audit = await db.ScanCandidateOutcomes.SingleAsync();
+            Assert.Equal("(unknown)", audit.FilePath);
+            Assert.Equal(ScanCandidateOutcomeReasons.UnknownLanguage, audit.ReasonOrCategory);
+            string logText = string.Join('\n', logger.Messages);
+            Assert.Contains("(unknown)", logText, StringComparison.Ordinal);
+            Assert.DoesNotContain(rawPath, logText, StringComparison.Ordinal);
+            Assert.DoesNotContain(hostFragment, logText, StringComparison.OrdinalIgnoreCase);
+            string response = JsonSerializer.Serialize(Assert.IsType<ScanRunSummaryDto>(result.Value));
+            Assert.Contains("(unknown)", response, StringComparison.Ordinal);
+            Assert.DoesNotContain(rawPath, response, StringComparison.Ordinal);
+            Assert.DoesNotContain(hostFragment, response, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task StartStandaloneRepository_WhenEligiblePathBecomesSymbolicLink_DoesNotReadOutsideRootAsync()
     {
@@ -2186,6 +2243,27 @@ public sealed class RepositoryProfilingTests
                 [],
                 [],
                 [new("../secret.cs", ScanCandidateOutcomeKind.Errored, "MalformedProviderRow")],
+                0,
+                TimeSpan.FromMilliseconds(10),
+                null));
+    }
+
+    private sealed class UnsafeCandidateOutcomeProvider(string rawPath) : ICodeGraphProvider
+    {
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [],
+                [],
+                [
+                    new(
+                        rawPath,
+                        ScanCandidateOutcomeKind.Filtered,
+                        ScanCandidateOutcomeReasons.UnknownLanguage),
+                ],
                 0,
                 TimeSpan.FromMilliseconds(10),
                 null));
@@ -2885,7 +2963,8 @@ public sealed class RepositoryProfilingTests
         VulgataDbContext db,
         string root,
         ICodeGraphProvider provider,
-        IScanCandidateEnumerator? candidates = null) =>
+        IScanCandidateEnumerator? candidates = null,
+        ILogger<RepositoryProfilingCoordinator>? logger = null) =>
         new(
             new SystemRepository(db),
             new RepositoryRepository(db),
@@ -2894,9 +2973,44 @@ public sealed class RepositoryProfilingTests
             candidates ?? new ControlledCandidates(),
             provider,
             new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
-            NullLogger<RepositoryProfilingCoordinator>.Instance,
+            logger ?? NullLogger<RepositoryProfilingCoordinator>.Instance,
             new EmptyFrameworkEvidenceDetector(),
             FrameworkCatalog.LoadEmbedded());
+
+    public static TheoryData<string, string> UnsafeProviderPathCases
+    {
+        get
+        {
+            var data = new TheoryData<string, string>
+            {
+                { @"C:\Users\Admin\private\secret.cs", "Users" },
+                { @"\\build-server\private-share\secret.cs", "build-server" },
+                { "/etc/private/secret.cs", "etc/private" },
+                { "../private/secret.cs", "private/secret" },
+                { "src/\u0001host-secret.cs", "host-secret" },
+                { "src//private/secret.cs", "private/secret" },
+                { "src/" + new string('x', 2_049) + "oversize-host-fragment.cs", "oversize-host-fragment" },
+            };
+            return data;
+        }
+    }
+
+    private sealed class CapturedLogger<T> : ILogger<T>
+    {
+        public List<string> Messages { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) =>
+            Messages.Add(formatter(state, exception));
+    }
 
     private static string[] CreateExactUnknownAuditByteBoundPaths()
     {
