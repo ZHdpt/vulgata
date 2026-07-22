@@ -109,86 +109,186 @@ def value_kind(value):
         return "string"
     if isinstance(value, (int, float)):
         return "number"
-    if isinstance(value, dict):
+    if isinstance(value, ObjectPairs):
         return "object"
     if isinstance(value, list):
         return "array"
     return "unknown"
 
 
-def observe_json(raw, http_status, memory_key):
+class ObjectPairs(list):
+    pass
+
+
+def reject_json_constant(_value):
+    raise ValueError("invalid-json-number")
+
+
+def unknown_name(name, memory_key, first_seen_ordinal):
+    encoded_name = name.encode("utf-8", "strict")
+    digest = hmac.new(
+        memory_key,
+        b"vulgata-cgc-unknown-property-v1\0"
+        + len(encoded_name).to_bytes(8, "big") + b"\0" + encoded_name,
+        hashlib.sha256,
+    ).hexdigest()
+    return {
+        "hmacSha256": digest,
+        "utf8Length": len(encoded_name),
+        "firstSeenOrdinal": first_seen_ordinal,
+    }
+
+
+def observe_json(raw, http_status, memory_key, request_sha256):
     observation = {
+        "attempted": True,
         "httpStatus": http_status,
-        "responseBytes": len(raw),
-        "responseSha256": sha256(raw),
-        "rootKind": "invalid",
+        "bodyByteCount": len(raw),
+        "bodySha256": sha256(raw),
+        "requestSha256": request_sha256,
+        "rootValueKind": "invalid-json",
+        "shapeComplete": False,
         "containers": [],
-        "arrayKinds": [],
+        "properties": [],
+        "arrays": [],
+        "aliasNames": [],
+        "coordinateBindings": [],
     }
     try:
-        payload = json.loads(raw.decode("utf-8"))
+        payload = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=ObjectPairs,
+            parse_constant=reject_json_constant,
+        )
     except Exception:
-        return observation
-    observation["rootKind"] = value_kind(payload)
+        return observation, True, True
+    observation["rootValueKind"] = value_kind(payload)
     containers = []
+    properties = []
     arrays = []
-    unknown_ordinal = 0
+    aliases = set()
+    unknown_count = 0
+    unknown_observations = {}
+    bounded = True
 
-    def visit(value, depth, container_ordinal):
-        nonlocal unknown_ordinal
+    def get_unknown(name):
+        nonlocal bounded, unknown_count
+        if name in unknown_observations:
+            return unknown_observations[name]
+        if unknown_count >= 128:
+            bounded = False
+            return None
+        observation_value = unknown_name(name, memory_key, unknown_count)
+        unknown_observations[name] = observation_value
+        unknown_count += 1
+        return observation_value
+
+    def visit(value, depth, parent_ordinal=None, via_name=None):
+        nonlocal bounded, unknown_count
         if depth > 4 or len(containers) >= 32:
-            return
-        if isinstance(value, dict):
-            known = []
-            unknown = []
+            bounded = False
+            return None
+        if isinstance(value, (ObjectPairs, list)):
             current = len(containers)
-            containers.append({
+            container = {
                 "ordinal": current,
-                "parentOrdinal": container_ordinal,
+                "kind": "object" if isinstance(value, ObjectPairs) else "array",
                 "depth": depth,
-                "kind": "object",
-                "knownProperties": known,
-                "unknownProperties": unknown,
-            })
-            for name, child in list(value.items())[:128]:
+            }
+            if parent_ordinal is not None:
+                container["parentOrdinal"] = parent_ordinal
+                if via_name is not None:
+                    if via_name in SAFE_NAMES:
+                        container["safeViaPropertyName"] = via_name
+                    else:
+                        unknown = get_unknown(via_name)
+                        if unknown is None:
+                            return None
+                        container["unknownViaName"] = unknown
+            containers.append(container)
+        else:
+            return None
+
+        if isinstance(value, ObjectPairs):
+            property_indexes = {}
+            for name, child in value:
+                if len(properties) >= 128 and (name, value_kind(child)) not in property_indexes:
+                    bounded = False
+                    break
                 kind = value_kind(child)
-                encoded_name = name.encode("utf-8", "strict")
-                if name in SAFE_NAMES and len(encoded_name) <= 128:
-                    known.append({"name": name, "kind": kind})
+                key = (name, kind)
+                if key in property_indexes:
+                    properties[property_indexes[key]]["occurrenceCount"] += 1
+                    if properties[property_indexes[key]]["occurrenceCount"] > 250001:
+                        bounded = False
+                        break
                 else:
-                    digest = hmac.new(
-                        memory_key,
-                        b"vulgata-cgc-unknown-property-v1\0"
-                        + len(encoded_name).to_bytes(8, "big") + b"\0" + encoded_name,
-                        hashlib.sha256,
-                    ).hexdigest()
-                    unknown.append({
-                        "digest": digest,
-                        "utf8Length": len(encoded_name),
-                        "kind": kind,
-                        "firstSeenOrdinal": unknown_ordinal,
-                    })
-                    unknown_ordinal += 1
-                if isinstance(child, (dict, list)):
-                    visit(child, depth + 1, current)
-        elif isinstance(value, list):
+                    item = {
+                        "containerOrdinal": current,
+                        "valueKind": kind,
+                        "occurrenceCount": 1,
+                    }
+                    if name in SAFE_NAMES:
+                        item["safeName"] = name
+                        aliases.add(name)
+                    else:
+                        unknown = get_unknown(name)
+                        if unknown is None:
+                            break
+                        item["unknownName"] = unknown
+                    property_indexes[key] = len(properties)
+                    properties.append(item)
+                if isinstance(child, (ObjectPairs, list)):
+                    visit(child, depth + 1, current, name)
+        else:
             kinds = Counter(value_kind(item) for item in value)
+            if len(arrays) >= 32 or len(value) > 250001:
+                bounded = False
+                return current
             arrays.append({
-                "containerOrdinal": container_ordinal,
-                "depth": depth,
-                "length": len(value),
-                "itemKinds": dict(sorted(kinds.items())),
+                "containerOrdinal": current,
+                "elementCount": len(value),
+                "nullCount": kinds["null"],
+                "booleanCount": kinds["boolean"],
+                "numberCount": kinds["number"],
+                "stringCount": kinds["string"],
+                "objectCount": kinds["object"],
+                "arrayCount": kinds["array"],
             })
             # One representative container is enough to observe the closed row
             # shape; parse_envelope still validates every row exhaustively.
             for child in value[:1]:
-                if isinstance(child, (dict, list)):
-                    visit(child, depth + 1, container_ordinal)
+                if isinstance(child, (ObjectPairs, list)):
+                    visit(child, depth + 1, current)
+        return current
 
-    visit(payload, 0, None)
+    visit(payload, 0)
     observation["containers"] = containers
-    observation["arrayKinds"] = arrays[:32]
-    return observation
+    observation["properties"] = properties
+    observation["arrays"] = arrays
+    observation["aliasNames"] = [
+        {"safeName": name} for name in sorted(aliases)
+    ][:64]
+    if len(aliases) > 64:
+        bounded = False
+    observed_names = set(aliases)
+    candidate_bindings = [
+        ("path", "name"),
+        ("source_path", "source_name"),
+        ("target_path", "target_name"),
+    ]
+    observation["coordinateBindings"] = [
+        list(binding) for binding in candidate_bindings
+        if set(binding).issubset(observed_names)
+    ]
+    if len(json.dumps(observation, separators=(",", ":")).encode("utf-8")) > 5 * 1024:
+        observation["containers"] = []
+        observation["properties"] = []
+        observation["arrays"] = []
+        observation["aliasNames"] = []
+        observation["coordinateBindings"] = []
+        bounded = False
+    return observation, bounded, unknown_count == 0
 
 
 def decode_json_strict(raw):
@@ -200,7 +300,11 @@ def decode_json_strict(raw):
             result[name] = value
         return result
 
-    return json.loads(raw.decode("utf-8"), object_pairs_hook=reject_duplicates)
+    return json.loads(
+        raw.decode("utf-8"),
+        object_pairs_hook=reject_duplicates,
+        parse_constant=reject_json_constant,
+    )
 
 
 def parse_envelope(raw, expected_query, expected_fields):
@@ -224,6 +328,8 @@ def parse_envelope(raw, expected_query, expected_fields):
         data.get("success") is not True
         or data.get("query") != expected_query
         or not isinstance(data.get("record_count"), int)
+        or isinstance(data.get("record_count"), bool)
+        or not 0 <= data.get("record_count") <= 250001
         or not isinstance(data.get("results"), list)
         or data["record_count"] != len(data["results"])
     ):
@@ -233,7 +339,50 @@ def parse_envelope(raw, expected_query, expected_fields):
             raise RuntimeError("row-contract")
         if any(isinstance(value, (dict, list)) for value in row.values()):
             raise RuntimeError("row-scalar-contract")
+        validate_row(row, expected_fields)
     return data["results"], data["query"]
+
+
+def valid_nullable_string(value):
+    return value is None or isinstance(value, str)
+
+
+def valid_nullable_integer(value):
+    return value is None or (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and 0 <= value <= 2147483647
+    )
+
+
+def validate_row(row, expected_fields):
+    provider_kinds = {"File", "Module", "Class", "Function"}
+    if expected_fields == NODE_FIELDS:
+        if (
+            row["record_kind"] != "code_unit"
+            or row["provider_kind"] not in provider_kinds
+            or not valid_nullable_string(row["path"])
+            or not valid_nullable_string(row["name"])
+            or not valid_nullable_integer(row["start_line"])
+            or not valid_nullable_integer(row["end_line"])
+            or not valid_nullable_string(row["parser_language"])
+        ):
+            raise RuntimeError("row-value-contract")
+        if row["parser_language"] is not None:
+            normalize_language(row["parser_language"])
+        return
+
+    if (
+        row["record_kind"] != "relationship"
+        or row["relationship_kind"] not in {"CONTAINS", "IMPORTS", "CALLS", "INHERITS"}
+        or row["source_provider_kind"] not in provider_kinds
+        or row["target_provider_kind"] not in provider_kinds
+        or any(not valid_nullable_string(row[name]) for name in (
+            "source_path", "source_name", "target_path", "target_name"))
+        or any(not valid_nullable_integer(row[name]) for name in (
+            "source_start_line", "source_end_line", "target_start_line", "target_end_line"))
+    ):
+        raise RuntimeError("row-value-contract")
 
 
 def normalize_language(value):
@@ -426,6 +575,45 @@ def publish_create_new(path, value):
             temporary.unlink()
 
 
+def not_attempted_observation(request_sha256):
+    return {
+        "attempted": False,
+        "bodyByteCount": 0,
+        "requestSha256": request_sha256,
+        "rootValueKind": "not-observed",
+        "shapeComplete": False,
+        "containers": [],
+        "properties": [],
+        "arrays": [],
+        "aliasNames": [],
+        "coordinateBindings": [],
+    }
+
+
+def classify_failure(error):
+    if isinstance(error, (json.JSONDecodeError, UnicodeDecodeError)):
+        return "invalid-json"
+    reason = str(error)
+    if reason in {
+        "claim-mismatch", "claim-boundary-mismatch", "query-hash-drift",
+        "provider-lock-drift", "provider-version-drift",
+    }:
+        return "preflight"
+    if reason in {"projection-a-http", "projection-b-http"}:
+        return "http-status"
+    if reason in {"response-over-bound", "evidence-over-bound"}:
+        return "observation-bound-exceeded"
+    if reason.startswith("provider-") or reason.startswith("gateway-"):
+        return "provider-lifecycle"
+    if reason.startswith("duplicate-json"):
+        return "envelope-mismatch"
+    if reason.startswith("envelope-") or reason.startswith("row-"):
+        return "envelope-mismatch"
+    if reason == "combined-row-bound":
+        return "projection-mismatch"
+    return "projection-mismatch"
+
+
 def main():
     contract = Path("/contract")
     evidence_root = Path("/evidence")
@@ -465,24 +653,40 @@ def main():
     provider_home_deleted = False
     database_entry_type = "absent"
     memory_key = os.urandom(32)
-    observations = []
+    observations = {
+        "A": not_attempted_observation(EXPECTED_A),
+        "B": not_attempted_observation(EXPECTED_B),
+    }
     coverage = {
-        "independentNodeKinds": {},
-        "relationshipKinds": {},
+        "independentNodeKinds": {
+            "File": 0, "Module": 0, "Class": 0, "Function": 0,
+        },
+        "relationshipKinds": {
+            "CONTAINS": 0, "IMPORTS": 0, "CALLS": 0, "INHERITS": 0,
+        },
         "filteredTargetUnresolvedOnly": False,
         "projectionEndpointIdentityEqual": False,
-        "parserLanguage": {},
+        "parserLanguage": {
+            "aliasObserved": False,
+            "structuralBindingsObserved": False,
+            "fileNullObserved": False,
+            "oneIdentityPerPath": False,
+            "allCodeUnitsAssigned": False,
+            "emptyFileUnknownLanguage": False,
+            "emptyFileRetainedCodeUnitCount": 0,
+            "unknownLanguageCount": 0,
+        },
+        "rowCounts": {"projectionA": 0, "projectionB": 0, "combined": 0},
+        "completeness": {
+            "privateLimitExact": False,
+            "injectedTruncationRejected": False,
+            "queryDriftRejected": False,
+            "languageConflictRejected": False,
+            "combinedBoundRejected": False,
+        },
     }
-    completeness = {
-        "privateLimitExact": False,
-        "projectionATruncationMetadataAbsent": False,
-        "projectionBTruncationMetadataAbsent": False,
-        "injectedTruncationRejected": False,
-        "queryDriftRejected": False,
-        "languageConflictRejected": False,
-        "combinedBoundRejected": False,
-    }
-    row_counts = {"projectionA": 0, "projectionB": 0, "combined": 0}
+    completeness = coverage["completeness"]
+    row_counts = coverage["rowCounts"]
     try:
         if sha256(projection_a) != EXPECTED_A or sha256(projection_b) != EXPECTED_B:
             raise RuntimeError("query-hash-drift")
@@ -514,16 +718,33 @@ def main():
         )
         wait_for_health(port, gateway)
         status_a, response_a = query(port, projection_a.decode("utf-8"))
-        observations.append(observe_json(response_a, status_a, memory_key))
+        observation_a, bounded_a, known_a = observe_json(
+            response_a, status_a, memory_key, EXPECTED_A)
+        observations["A"] = observation_a
         if status_a != 200:
             raise RuntimeError("projection-a-http")
-        rows_a, _ = parse_envelope(response_a, projection_a.decode("utf-8"), NODE_FIELDS)
+        rows_a, echo_a = parse_envelope(
+            response_a, projection_a.decode("utf-8"), NODE_FIELDS)
+        observation_a["queryEchoSha256"] = sha256(echo_a.encode("utf-8"))
+        observation_a["shapeComplete"] = bounded_a and known_a
+        if not bounded_a:
+            raise RuntimeError("observation-bound-exceeded")
+        if not known_a:
+            raise RuntimeError("projection-mismatch")
         snapshot_a = tree_hash(database)
         status_b, response_b = query(port, projection_b.decode("utf-8"))
-        observations.append(observe_json(response_b, status_b, memory_key))
+        observation_b, bounded_b, known_b = observe_json(
+            response_b, status_b, memory_key, EXPECTED_B)
+        observations["B"] = observation_b
         if status_b != 200:
             raise RuntimeError("projection-b-http")
         rows_b, echo_b = parse_envelope(response_b, projection_b.decode("utf-8"), RELATIONSHIP_FIELDS)
+        observation_b["queryEchoSha256"] = sha256(echo_b.encode("utf-8"))
+        observation_b["shapeComplete"] = bounded_b and known_b
+        if not bounded_b:
+            raise RuntimeError("observation-bound-exceeded")
+        if not known_b:
+            raise RuntimeError("projection-mismatch")
         snapshot_b = tree_hash(database)
         validate_combined_bound(len(rows_a), len(rows_b))
         row_counts = {
@@ -533,10 +754,10 @@ def main():
         }
         payload_a = decode_json_strict(response_a)
         payload_b = decode_json_strict(response_b)
-        completeness["projectionATruncationMetadataAbsent"] = not {
+        observation_a["shapeComplete"] = observation_a["shapeComplete"] and not {
             "truncated", "result_limit",
         }.intersection(payload_a["data"])
-        completeness["projectionBTruncationMetadataAbsent"] = not {
+        observation_b["shapeComplete"] = observation_b["shapeComplete"] and not {
             "truncated", "result_limit",
         }.intersection(payload_b["data"])
         injected = decode_json_strict(response_a)
@@ -589,7 +810,8 @@ def main():
                 raise RuntimeError("unknown-language-relationship-retained")
         shared_endpoints = incident.intersection(node_identities)
         coverage = {
-            "nodeKinds": node_kinds,
+            "rowCounts": row_counts,
+            "completeness": completeness,
             "independentNodeKinds": node_kinds,
             "relationshipKinds": relationship_kinds,
             "filteredTargetUnresolvedOnly": filtered_target_relationships == 1,
@@ -607,6 +829,8 @@ def main():
             or row_counts["projectionA"] <= 100
             or row_counts["projectionB"] <= 100
             or not all(completeness.values())
+            or not observations["A"]["shapeComplete"]
+            or not observations["B"]["shapeComplete"]
             or not all((
                 parser_language["aliasObserved"],
                 parser_language["structuralBindingsObserved"],
@@ -620,7 +844,7 @@ def main():
         ):
             raise RuntimeError("coverage-mismatch")
     except Exception as error:
-        failure_category = str(error)
+        failure_category = classify_failure(error)
     finally:
         if gateway is not None:
             gateway.terminate()
@@ -653,34 +877,50 @@ def main():
         except Exception:
             provider_home_deleted = False
 
+    provider_state_kind = {
+        "absent": "absent",
+        "file": "regular-file",
+        "directory": "directory",
+        "link": "link-or-reparse",
+        "special": "special",
+        "cleanup-error": "unknown",
+    }.get(database_entry_type, "unknown")
+    cleanup_failures = sum((
+        not gateway_stopped,
+        not context_deleted,
+        not database_deleted,
+        not provider_home_deleted,
+    ))
     cleanup = {
         "gatewayStopped": gateway_stopped,
         "contextDeleted": context_deleted,
-        "databaseDeleted": database_deleted,
-        "providerHomeDeleted": provider_home_deleted,
-        "databaseEntryType": database_entry_type,
+        "providerStateKind": provider_state_kind,
+        "providerStateRemoved": database_deleted,
+        "providerHomeRemoved": provider_home_deleted,
+        "containerRemoved": True,
+        "tempImageTagsRemoved": True,
+        "failureCount": cleanup_failures,
     }
-    if not all((gateway_stopped, context_deleted, database_deleted, provider_home_deleted)):
+    if cleanup_failures:
         failure_category = failure_category or "cleanup-failure"
     verdict = "pass" if failure_category is None else "fail"
     evidence = {
-        "schema": EVIDENCE_SCHEMA,
+        "schemaVersion": EVIDENCE_SCHEMA,
         "verdict": verdict,
-        "failureCategory": failure_category,
+        "primaryFailureCategory": failure_category or "none",
         "acceptedCorrectionSha256": accepted_correction,
         "claimSha256": claim_sha256,
+        "sourceCommit": os.environ["SOURCE_COMMIT"],
+        "sourceTree": os.environ["SOURCE_TREE"],
+        "productionSourceManifestSha256": os.environ["PRODUCTION_SOURCE_MANIFEST_SHA256"],
         "finalImageSha256": os.environ["FINAL_IMAGE_SHA256"],
         "verifierBaseImageSha256": os.environ["VERIFIER_BASE_IMAGE_SHA256"],
         "providerVersion": provider_version,
         "providerLockSha256": EXPECTED_LOCK,
         "providerDistributionSha256": EXPECTED_DISTRIBUTION,
         "fixtureTreeSha256": tree_hash(fixture),
-        "projectionARequestSha256": EXPECTED_A,
-        "projectionBRequestSha256": EXPECTED_B,
-        "observations": observations,
+        "projectionObservations": observations,
         "coverage": coverage,
-        "rowCounts": row_counts,
-        "completeness": completeness,
         "immutableSnapshot": {
             "indexCount": 1 if context_created else 0,
             "watcherStarted": False,
@@ -689,10 +929,17 @@ def main():
         },
         "cleanup": cleanup,
         "forbiddenRetention": {
-            "sourceRetained": False, "rowRetained": False, "rawJsonRetained": False,
-            "queryTextRetained": False, "pathRetained": False, "symbolRetained": False,
-            "credentialRetained": False, "tokenRetained": False, "diagnosticRetained": False,
-            "hmacKeyRetained": False,
+            "scalarValues": False,
+            "source": False,
+            "rows": False,
+            "rawJson": False,
+            "rawQuery": False,
+            "paths": False,
+            "symbols": False,
+            "credentials": False,
+            "tokens": False,
+            "endpointValues": False,
+            "diagnostics": False,
         },
     }
     memory_key = b""

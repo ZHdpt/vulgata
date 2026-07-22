@@ -386,29 +386,42 @@
         "tests/Vulgata.Tests/DashboardPanelTests.cs"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-22T07:34:24.4691557Z",
+      "completed_at": "2026-07-22T08:07:36.0852914Z",
+      "input_commit": "d3e81661c1e852a145781563eacd6dcca802f98e",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "4b6e098eebdf2e28b2f7e8e21405f6eddcf25eaa742938ed2b22f6241a63aec9",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py": "403126006c5e268e9da99a5760b7f6ca69413a75a45a92511c54242f59677e7e",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "85289f9e851c6221d2eb947810d65f9711979c8a326bbf1f8760097a480f8dd4"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "95fb573320cca4743682a11b30e2f09aabf8b36b",
+    "preflight_head": "d3e81661c1e852a145781563eacd6dcca802f98e",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T022-T025 provider-path redaction implementation, focused tests, task markers, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 T026-T030 closed evidence-grammar implementation, non-Docker tests, task markers, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
-      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-      "tests/Vulgata.Tests/RepositoryApiTests.cs",
-      "tests/Vulgata.Tests/DashboardPanelTests.cs"
+      "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-22T07:34:24.4691557Z"
+    "observed_at": "2026-07-22T08:07:36.0852914Z"
   },
   "source_artifacts": [
     {
@@ -1448,32 +1461,70 @@
       "observed_at": "2026-07-22T07:34:24.4691557Z",
       "summary": "T023-T025 reached GREEN with fail-closed SafeProviderPath construction and first-log revalidation; root verification passed 105 provider/profiling tests and 33 API/component tests with preserved atomicity, authorization, and zero raw-path disclosure.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/26",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "d3e81661c1e852a145781563eacd6dcca802f98e",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.EvidenceSchema_LegacyRootNames_AreRejected",
+      "exit_code": 1,
+      "observed_at": "2026-07-22T08:07:36.0852914Z",
+      "summary": "T026 RED proved the loose verifier accepted legacy schema, failureCategory, observations, and root-level count/completeness names instead of the exact 19-root grammar.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/27",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "d3e81661c1e852a145781563eacd6dcca802f98e",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Vulgata.Tests.CodeGraphProviderContractTests.EvidenceSchema_DivergentFields_AreRejected",
+      "exit_code": 1,
+      "observed_at": "2026-07-22T08:07:36.0852914Z",
+      "summary": "T027 observed 13 of 13 expected RED failures for unknown, duplicate, missing, alternate, wrong-typed, and parallel root/nested evidence shapes.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/28",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "d3e81661c1e852a145781563eacd6dcca802f98e",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
+      "command": "python non-writing compile runner.py; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter non-Docker CodeGraphProviderContractTests -v:q",
+      "exit_code": 0,
+      "observed_at": "2026-07-22T08:07:36.0852914Z",
+      "summary": "T028-T030 reached GREEN with one exact closed 19-root emitter/verifier grammar, strict duplicate/type/range/sum/pass invariants, bounded HMAC unknown-name evidence, and canonical Projection A/B plus safe-name parity; root verification passed 33 non-Docker tests and Python syntax.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260722T073424Z-f3a7c2",
+    "checkpoint_id": "bmad-4-2-implement-20260722T080736Z-e6c4b1",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
-      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-      "tests/Vulgata.Tests/RepositoryApiTests.cs",
-      "tests/Vulgata.Tests/DashboardPanelTests.cs"
+      "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/23",
-      "4-2-language-and-framework-detection/implement/24",
-      "4-2-language-and-framework-detection/implement/25"
+      "4-2-language-and-framework-detection/implement/26",
+      "4-2-language-and-framework-detection/implement/27",
+      "4-2-language-and-framework-detection/implement/28"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-22T07:34:24.4691557Z"
+  "updated_at": "2026-07-22T08:07:36.0852914Z"
 }

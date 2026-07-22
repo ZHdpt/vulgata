@@ -486,8 +486,22 @@ unchanged.
   tests plus 33/33 Repository API and dashboard component tests. Two-query
   atomicity, local candidate auditing, authorization, and visibility redaction
   remain intact.
-- The internal workflow remains `implement`; the next bounded slot is T026-T030
-  for the closed Story 4.1 provider-evidence grammar.
+- Implementation slot 3 completed T026-T030. The legacy-root RED failed 1/1
+  because the verifier accepted alternate root names and parallel counts; the
+  divergent-field RED failed 13/13 because unknown, duplicate, missing,
+  alternate, wrong-typed, and legacy nested shapes were not rejected.
+- The Python emitter and C# verifier now share one exact closed 19-root grammar
+  with strict duplicate/type/range/sum/pass invariants, exact A/B alternatives,
+  HMAC-redacted unknown names, exhaustive row validation, representative shape
+  retention, and the 16-KiB evidence bound. The representative two-row evidence
+  is 2,404 bytes.
+- Root verification passes 33/33 non-Docker provider-contract tests and a
+  non-writing Python syntax compile. Production, runner, verifier, and Story 4.1
+  contract retain identical Projection A/B hashes and exact raw safe-name sets.
+- The internal workflow remains `implement`; the next bounded slot is T031-T034
+  for deterministic source-to-image binding.
+- Evidence-grammar implementation checkpoint:
+  `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
   `bmad-4-2-implement-20260722T073424Z-f3a7c2` (pending Git binding).
 - Owner-eligibility implementation checkpoint:
