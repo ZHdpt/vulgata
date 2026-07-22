@@ -498,8 +498,20 @@ unchanged.
 - Root verification passes 33/33 non-Docker provider-contract tests and a
   non-writing Python syntax compile. Production, runner, verifier, and Story 4.1
   contract retain identical Projection A/B hashes and exact raw safe-name sets.
-- The internal workflow remains `implement`; the next bounded slot is T031-T034
-  for deterministic source-to-image binding.
+- Implementation slot 4 completed T031-T034. Thirteen preflight cases first
+  failed because dirty/context/image/namespace mismatches could reach the
+  provider sentinel. They now reject before provider execution.
+- `production-source-manifest-v1` binds the clean Git commit/tree and sorted
+  tracked non-ignored context hashes. Docker labels, the retained claim, Python
+  emitter, and C# verifier bind the same manifest, image, verifier-base,
+  provider, and query identities.
+- Root verification passes 49/49 non-Docker provider-contract tests. No Docker
+  build, image inspection, or provider execution was used in this slot; those
+  remain in the immutable-candidate lane.
+- The internal workflow remains `implement`; the next bounded work begins with
+  T035 historical-evidence discovery before immutable-candidate verification.
+- Source-binding implementation checkpoint:
+  `bmad-4-2-implement-20260722T084438Z-a8d5c3` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

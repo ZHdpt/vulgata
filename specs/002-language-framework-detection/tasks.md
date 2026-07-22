@@ -127,13 +127,13 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 
 ### TDD Group C3 - Source-to-image RED
 
-- [ ] T031 Add and observe runnable RED preflight cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` proving a dirty worktree, symlink, untracked/missing/case-colliding context entry, stale or unlabelled image, mismatched commit/tree/manifest label, reused correction namespace, caller-only image assertion, and source-manifest mismatch all fail before provider execution
+- [x] T031 Add and observe runnable RED preflight cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` proving a dirty worktree, symlink, untracked/missing/case-colliding context entry, stale or unlabelled image, mismatched commit/tree/manifest label, reused correction namespace, caller-only image assertion, and source-manifest mismatch all fail before provider execution
 
 ### TDD Group C4 - Deterministic production-source binding GREEN
 
-- [ ] T032 Implement canonical `production-source-manifest-v1` creation and validation in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` over `docker/Dockerfile`, `.dockerignore`, and every tracked non-ignored Docker-context file, sorted by Repository-relative path with SHA-256; bind source commit, Git tree, manifest SHA-256, exact image ID, provider pin/lock/distribution, canonical query hashes, and verifier base image into the retained claim
-- [ ] T033 Add immutable build arguments/labels for source commit, source tree, and production-source-manifest SHA-256 in `docker/Dockerfile`, then make `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` inspect and compare all labels before constructing or running the verifier image
-- [ ] T034 Emit and validate the same source commit, source tree, production-source-manifest SHA-256, final image ID, and verifier base-image ID in `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py` and `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; rerun T031 GREEN without provider execution
+- [x] T032 Implement canonical `production-source-manifest-v1` creation and validation in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` over `docker/Dockerfile`, `.dockerignore`, and every tracked non-ignored Docker-context file, sorted by Repository-relative path with SHA-256; bind source commit, Git tree, manifest SHA-256, exact image ID, provider pin/lock/distribution, canonical query hashes, and verifier base image into the retained claim
+- [x] T033 Add immutable build arguments/labels for source commit, source tree, and production-source-manifest SHA-256 in `docker/Dockerfile`, then make `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` inspect and compare all labels before constructing or running the verifier image
+- [x] T034 Emit and validate the same source commit, source tree, production-source-manifest SHA-256, final image ID, and verifier base-image ID in `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py` and `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; rerun T031 GREEN without provider execution
 
 **Independent validation**: The runner and verifier accept only the exact 19-root contract and closed nested grammar, and no image can reach provider execution unless it is freshly source-bound to the clean immutable candidate.
 

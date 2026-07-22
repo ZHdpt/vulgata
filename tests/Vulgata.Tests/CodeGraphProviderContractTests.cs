@@ -46,8 +46,26 @@ public sealed class CodeGraphProviderContractTests
     public void AcceptedCorrectionManifest_IsCanonicalAndArtifactBound()
     {
         string repositoryRoot = FindRepositoryRoot();
-        byte[] first = CreateAcceptedCorrectionManifest(repositoryRoot, "sha256:" + new string('a', 64));
-        byte[] second = CreateAcceptedCorrectionManifest(repositoryRoot, "sha256:" + new string('a', 64));
+        string finalImageId = "sha256:" + new string('a', 64);
+        string sourceCommit = new('b', 40);
+        string sourceTree = new('c', 40);
+        byte[] productionSourceManifest = JsonSerializer.SerializeToUtf8Bytes(
+            new SortedDictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["entries"] = Array.Empty<object>(),
+                ["schemaVersion"] = "production-source-manifest-v1",
+                ["sourceCommit"] = sourceCommit,
+                ["sourceTree"] = sourceTree,
+            });
+        var binding = new SourceBindingPreflight(
+            sourceCommit,
+            sourceTree,
+            productionSourceManifest,
+            Hash(productionSourceManifest),
+            finalImageId,
+            finalImageId);
+        byte[] first = CreateAcceptedCorrectionManifest(repositoryRoot, binding);
+        byte[] second = CreateAcceptedCorrectionManifest(repositoryRoot, binding);
 
         Assert.Equal(first, second);
         using JsonDocument manifest = JsonDocument.Parse(first);
@@ -57,6 +75,13 @@ public sealed class CodeGraphProviderContractTests
             manifest.RootElement.GetProperty("artifacts")
                 .EnumerateArray()
                 .Select(item => item.GetProperty("path").GetString()));
+        Assert.Equal(sourceCommit, manifest.RootElement.GetProperty("sourceCommit").GetString());
+        Assert.Equal(sourceTree, manifest.RootElement.GetProperty("sourceTree").GetString());
+        Assert.Equal(
+            Hash(productionSourceManifest),
+            manifest.RootElement.GetProperty("productionSourceManifestSha256").GetString());
+        Assert.Equal(finalImageId, manifest.RootElement.GetProperty("finalImageSha256").GetString());
+        Assert.Equal(finalImageId, manifest.RootElement.GetProperty("verifierBaseImageSha256").GetString());
         Assert.Equal(64, Hash(first).Length);
     }
 
@@ -255,6 +280,180 @@ public sealed class CodeGraphProviderContractTests
         Assert.InRange(int.Parse(result.StandardOutput.Trim(), System.Globalization.CultureInfo.InvariantCulture), 1, 5 * 1_024);
     }
 
+    [Theory]
+    [InlineData("dirty-worktree")]
+    [InlineData("symlink")]
+    [InlineData("untracked-context-entry")]
+    [InlineData("missing-context-entry")]
+    [InlineData("case-colliding-context-entry")]
+    public async Task SourceBindingPreflight_InvalidRepositoryState_DoesNotExecuteProvider(string caseId)
+    {
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateAsync();
+        SourceBindingFixture fixture = await CreateSourceBindingFixtureAsync(repository.Root);
+        await repository.ApplyInvalidStateAsync(caseId);
+
+        InvalidDataException failure = AssertPreflightRejectsBeforeProvider(
+            repository.Root,
+            fixture.ImageInspectionJson,
+            fixture.FinalImageId,
+            fixture.ManifestBytes,
+            Path.Combine(Path.GetTempPath(), "vulgata-source-binding", Guid.NewGuid().ToString("N")));
+        string expected = caseId switch
+        {
+            "dirty-worktree" => "clean tracked worktree",
+            "symlink" => "symlink",
+            "untracked-context-entry" => "untracked entry",
+            "missing-context-entry" => "missing tracked file",
+            "case-colliding-context-entry" => "case-colliding paths",
+            _ => throw new ArgumentOutOfRangeException(nameof(caseId), caseId, null),
+        };
+        Assert.Contains(expected, failure.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("stale-image")]
+    [InlineData("unlabelled-image")]
+    [InlineData("mismatched-source-commit-label")]
+    [InlineData("mismatched-source-tree-label")]
+    [InlineData("mismatched-source-manifest-label")]
+    [InlineData("caller-only-image-assertion")]
+    public async Task SourceBindingPreflight_InvalidImageIdentity_DoesNotExecuteProvider(string caseId)
+    {
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateAsync();
+        SourceBindingFixture fixture = await CreateSourceBindingFixtureAsync(repository.Root, caseId);
+
+        InvalidDataException failure = AssertPreflightRejectsBeforeProvider(
+            repository.Root,
+            fixture.ImageInspectionJson,
+            fixture.FinalImageId,
+            fixture.ManifestBytes,
+            Path.Combine(Path.GetTempPath(), "vulgata-source-binding", Guid.NewGuid().ToString("N")));
+        string expected = caseId switch
+        {
+            "stale-image" => "exact immutable image",
+            "unlabelled-image" or "mismatched-source-commit-label" => "source-commit",
+            "mismatched-source-tree-label" => "source-tree",
+            "mismatched-source-manifest-label" => "production-source-manifest-sha256",
+            "caller-only-image-assertion" => "Caller-only image assertion",
+            _ => throw new ArgumentOutOfRangeException(nameof(caseId), caseId, null),
+        };
+        Assert.Contains(expected, failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SourceBindingPreflight_ReusedCorrectionNamespace_DoesNotExecuteProvider()
+    {
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateAsync();
+        SourceBindingFixture fixture = await CreateSourceBindingFixtureAsync(repository.Root);
+        string correctionRoot = Path.Combine(Path.GetTempPath(), "vulgata-source-binding", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(correctionRoot);
+
+        try
+        {
+            InvalidDataException failure = AssertPreflightRejectsBeforeProvider(
+                repository.Root,
+                fixture.ImageInspectionJson,
+                fixture.FinalImageId,
+                fixture.ManifestBytes,
+                correctionRoot);
+            Assert.Contains("namespace is already consumed", failure.Message, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(correctionRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task SourceBindingPreflight_RetainedSourceManifestMismatch_DoesNotExecuteProvider()
+    {
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateAsync();
+        SourceBindingFixture fixture = await CreateSourceBindingFixtureAsync(repository.Root);
+        byte[] mismatchedManifest = [.. fixture.ManifestBytes, (byte)' '];
+
+        InvalidDataException failure = AssertPreflightRejectsBeforeProvider(
+            repository.Root,
+            fixture.ImageInspectionJson,
+            fixture.FinalImageId,
+            mismatchedManifest,
+            Path.Combine(Path.GetTempPath(), "vulgata-source-binding", Guid.NewGuid().ToString("N")));
+        Assert.Contains("manifest does not match", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SourceBindingPreflight_CleanCandidate_ProducesCanonicalManifestAndExactImageIdentity()
+    {
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateAsync();
+        SourceBindingFixture fixture = await CreateSourceBindingFixtureAsync(repository.Root);
+        string correctionRoot = Path.Combine(Path.GetTempPath(), "vulgata-source-binding", Guid.NewGuid().ToString("N"));
+
+        SourceBindingPreflight binding = CreateSourceBindingPreflight(
+            repository.Root,
+            fixture.ImageInspectionJson,
+            fixture.FinalImageId,
+            new string('c', 64),
+            correctionRoot,
+            fixture.ManifestBytes);
+        JsonElement result = JsonSerializer.SerializeToElement(binding);
+
+        Assert.Equal(fixture.FinalImageId, result.GetProperty("FinalImageId").GetString());
+        Assert.Equal(Hash(fixture.ManifestBytes), result.GetProperty("ProductionSourceManifestSha256").GetString());
+        Assert.Equal(fixture.ManifestBytes, result.GetProperty("ProductionSourceManifestBytes").GetBytesFromBase64());
+    }
+
+    [Fact]
+    public void RuntimeDockerfile_SourceBindingBuildArgumentsAndLabels_AreImmutable()
+    {
+        string dockerfile = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docker", "Dockerfile"));
+
+        Assert.Contains("ARG VULGATA_SOURCE_COMMIT", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("ARG VULGATA_SOURCE_TREE", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("ARG VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("org.vulgata.source-commit=${VULGATA_SOURCE_COMMIT}", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("org.vulgata.source-tree=${VULGATA_SOURCE_TREE}", dockerfile, StringComparison.Ordinal);
+        Assert.Contains(
+            "org.vulgata.production-source-manifest-sha256=${VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256}",
+            dockerfile,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task RunnerSourceBindingPreflight_ClaimMismatch_IsExecutableWithoutProvider()
+    {
+        string runnerPath = Path.Combine(
+            FindRepositoryRoot(),
+            "tests",
+            "Vulgata.Tests",
+            "CodeGraphProviderContract",
+            "runner.py");
+        string script = """
+            import importlib.util,json,sys
+            spec=importlib.util.spec_from_file_location("provider_contract_runner",sys.argv[1])
+            module=importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            h="a"*64
+            image="sha256:"+h
+            manifest={"schemaVersion":"production-source-manifest-v1","sourceCommit":"b"*40,"sourceTree":"c"*40,"entries":[]}
+            claim={"acceptedCorrectionSha256":"d"*64,"acceptedCorrectionManifest":{"sourceCommit":"b"*40,"sourceTree":"c"*40,"productionSourceManifestSha256":h,"finalImageSha256":image,"verifierBaseImageSha256":image,"productionSourceManifest":manifest}}
+            expected={"acceptedCorrectionSha256":"d"*64,"sourceCommit":"b"*40,"sourceTree":"c"*40,"productionSourceManifestSha256":h,"finalImageSha256":image,"verifierBaseImageSha256":image}
+            module.validate_source_binding(claim,expected)
+            for key in expected:
+                broken=dict(expected)
+                broken[key]="e"*64
+                try:
+                    module.validate_source_binding(claim,broken)
+                    raise AssertionError("mismatch accepted: "+key)
+                except RuntimeError as error:
+                    assert str(error)=="claim-boundary-mismatch"
+            print("provider-not-executed")
+            """;
+
+        ProcessResult result = await RunAsync(FindRepositoryRoot(), "python", ["-c", script, runnerPath]);
+
+        EnsureSuccess(result);
+        Assert.Equal("provider-not-executed", result.StandardOutput.Trim());
+    }
+
     [Fact]
     public async Task FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract()
     {
@@ -265,21 +464,25 @@ public sealed class CodeGraphProviderContractTests
         string repositoryRoot = FindRepositoryRoot();
         string resultsRoot = Path.Combine(repositoryRoot, "TestResults", "codegraph-provider-contract");
         Directory.CreateDirectory(resultsRoot);
-        ProcessResult imageInspection = await RunAsync(
-            repositoryRoot,
-            "docker",
-            ["image", "inspect", finalImage, "--format", "{{.Id}}"]);
-        EnsureSuccess(imageInspection);
-        string finalImageId = imageInspection.StandardOutput.Trim();
-        Assert.Matches("^sha256:[0-9a-f]{64}$", finalImageId);
-
-        byte[] manifestBytes = CreateAcceptedCorrectionManifest(repositoryRoot, finalImageId);
         string correctionRoot = Path.Combine(resultsRoot, acceptedCorrectionSha256);
         string claimPath = Path.Combine(correctionRoot, "claim.json");
         string evidencePath = Path.Combine(correctionRoot, "evidence.json");
-        Assert.False(
-            Directory.Exists(correctionRoot),
-            $"Accepted correction {acceptedCorrectionSha256} already has an execution namespace.");
+        Assert.Matches("^sha256:[0-9a-f]{64}$", finalImage);
+        ProductionSourceManifest productionSource = CreateProductionSourceManifest(repositoryRoot);
+        ProcessResult imageInspection = await RunAsync(
+            repositoryRoot,
+            "docker",
+            ["image", "inspect", finalImage, "--format", "{{json .}}"]);
+        EnsureSuccess(imageInspection);
+        SourceBindingPreflight sourceBinding = CreateSourceBindingPreflight(
+            repositoryRoot,
+            imageInspection.StandardOutput,
+            finalImage,
+            acceptedCorrectionSha256,
+            correctionRoot,
+            productionSource.Bytes);
+        string finalImageId = sourceBinding.FinalImageId;
+        byte[] manifestBytes = CreateAcceptedCorrectionManifest(repositoryRoot, sourceBinding);
         Directory.CreateDirectory(correctionRoot);
         byte[] claimBytes = CreateClaim(manifestBytes, acceptedCorrectionSha256);
         WriteCreateNewDurable(claimPath, claimBytes);
@@ -334,13 +537,15 @@ public sealed class CodeGraphProviderContractTests
                     "--tag", verifierTag, contextRoot,
                 ],
                 TimeSpan.FromMinutes(5)));
-            string verifierBase = (await RunAsync(
+            ProcessResult verifierInspection = await RunAsync(
                 repositoryRoot,
                 "docker",
                 [
                     "image", "inspect", verifierTag,
                     "--format", "{{index .Config.Labels \"vulgata.provider-contract.base\"}}",
-                ])).StandardOutput.Trim();
+                ]);
+            EnsureSuccess(verifierInspection);
+            string verifierBase = verifierInspection.StandardOutput.Trim();
             Assert.Equal(finalImageId, verifierBase);
 
             providerRun = await RunAsync(
@@ -350,6 +555,9 @@ public sealed class CodeGraphProviderContractTests
                     "run", "--rm", "--network", "none",
                     "--env", $"FINAL_IMAGE_SHA256={finalImageId}",
                     "--env", $"VERIFIER_BASE_IMAGE_SHA256={verifierBase}",
+                    "--env", $"SOURCE_COMMIT={sourceBinding.SourceCommit}",
+                    "--env", $"SOURCE_TREE={sourceBinding.SourceTree}",
+                    "--env", $"PRODUCTION_SOURCE_MANIFEST_SHA256={sourceBinding.ProductionSourceManifestSha256}",
                     "--env", $"ACCEPTED_CORRECTION_SHA256={acceptedCorrectionSha256}",
                     "--env", $"CLAIM_SHA256={claimSha256}",
                     "--volume", $"{correctionRoot}:/evidence",
@@ -366,6 +574,11 @@ public sealed class CodeGraphProviderContractTests
             Assert.Equal(_evidenceSchema, root.GetProperty("schemaVersion").GetString());
             Assert.Equal(acceptedCorrectionSha256, root.GetProperty("acceptedCorrectionSha256").GetString());
             Assert.Equal(claimSha256, root.GetProperty("claimSha256").GetString());
+            Assert.Equal(sourceBinding.SourceCommit, root.GetProperty("sourceCommit").GetString());
+            Assert.Equal(sourceBinding.SourceTree, root.GetProperty("sourceTree").GetString());
+            Assert.Equal(
+                sourceBinding.ProductionSourceManifestSha256,
+                root.GetProperty("productionSourceManifestSha256").GetString());
             Assert.Equal(finalImageId, root.GetProperty("finalImageSha256").GetString());
             Assert.Equal(finalImageId, root.GetProperty("verifierBaseImageSha256").GetString());
             Assert.Equal("0.5.1", root.GetProperty("providerVersion").GetString());
@@ -425,8 +638,11 @@ public sealed class CodeGraphProviderContractTests
         }
     }
 
-    private static byte[] CreateAcceptedCorrectionManifest(string repositoryRoot, string finalImageId)
+    private static byte[] CreateAcceptedCorrectionManifest(
+        string repositoryRoot,
+        SourceBindingPreflight sourceBinding)
     {
+        using JsonDocument productionManifest = JsonDocument.Parse(sourceBinding.ProductionSourceManifestBytes);
         var artifacts = _planArtifacts.Select(path => new SortedDictionary<string, object?>(StringComparer.Ordinal)
         {
             ["path"] = path,
@@ -436,16 +652,21 @@ public sealed class CodeGraphProviderContractTests
         {
             ["artifacts"] = artifacts,
             ["evidenceSchema"] = _evidenceSchema,
-            ["finalImageSha256"] = finalImageId,
+            ["finalImageSha256"] = sourceBinding.FinalImageId,
             ["gate"] = "provider-contract-e2e",
+            ["productionSourceManifest"] = productionManifest.RootElement.Clone(),
+            ["productionSourceManifestSha256"] = sourceBinding.ProductionSourceManifestSha256,
             ["providerDistributionSha256"] = _providerDistributionHash,
             ["providerLockSha256"] = _providerLockHash,
             ["providerVersion"] = "0.5.1",
             ["projectionASha256"] = Hash(CodeGraphContextProviderQueries.CodeUnits),
             ["projectionBSha256"] = Hash(CodeGraphContextProviderQueries.Relationships),
             ["reviewIdentity"] = _reviewIdentity,
+            ["sourceCommit"] = sourceBinding.SourceCommit,
+            ["sourceTree"] = sourceBinding.SourceTree,
             ["story"] = "4-2-language-and-framework-detection",
             ["testIdentity"] = _testIdentity,
+            ["verifierBaseImageSha256"] = sourceBinding.VerifierBaseImageId,
         };
         return JsonSerializer.SerializeToUtf8Bytes(manifest);
     }
@@ -1344,6 +1565,348 @@ public sealed class CodeGraphProviderContractTests
             .Select(match => match.Groups[1].Value)
             .ToHashSet(StringComparer.Ordinal);
 
+    private static SourceBindingPreflight CreateSourceBindingPreflight(
+        string repositoryRoot,
+        string? imageInspectionJson,
+        string finalImageId,
+        string acceptedCorrectionSha256,
+        string correctionRoot,
+        byte[] retainedManifestBytes)
+    {
+        if (!IsLowerHex(acceptedCorrectionSha256, 64))
+        {
+            throw new InvalidDataException("Accepted correction identity is not a lower-case SHA-256.");
+        }
+
+        if (!finalImageId.StartsWith("sha256:", StringComparison.Ordinal)
+            || !IsLowerHex(finalImageId[7..], 64))
+        {
+            throw new InvalidDataException("Final image assertion is not an immutable image ID.");
+        }
+
+        if (Directory.Exists(correctionRoot) || File.Exists(correctionRoot))
+        {
+            throw new InvalidDataException("Accepted correction namespace is already consumed.");
+        }
+
+        ProductionSourceManifest source = CreateProductionSourceManifest(repositoryRoot);
+        if (!retainedManifestBytes.AsSpan().SequenceEqual(source.Bytes))
+        {
+            throw new InvalidDataException("Retained production-source manifest does not match the candidate.");
+        }
+
+        if (string.IsNullOrWhiteSpace(imageInspectionJson))
+        {
+            throw new InvalidDataException("Caller-only image assertion is not inspection evidence.");
+        }
+
+        JsonElement inspected;
+        try
+        {
+            using JsonDocument inspection = JsonDocument.Parse(imageInspectionJson);
+            inspected = inspection.RootElement.Clone();
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException("Final image inspection is not valid JSON.", exception);
+        }
+
+        if (inspected.ValueKind != JsonValueKind.Object
+            || !inspected.TryGetProperty("Id", out JsonElement inspectedId)
+            || inspectedId.ValueKind != JsonValueKind.String
+            || !string.Equals(inspectedId.GetString(), finalImageId, StringComparison.Ordinal)
+            || !inspected.TryGetProperty("Config", out JsonElement config)
+            || config.ValueKind != JsonValueKind.Object
+            || !config.TryGetProperty("Labels", out JsonElement labels)
+            || labels.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException("Final image inspection does not bind the exact immutable image.");
+        }
+
+        RequireImageLabel(labels, "org.vulgata.source-commit", source.SourceCommit);
+        RequireImageLabel(labels, "org.vulgata.source-tree", source.SourceTree);
+        RequireImageLabel(
+            labels,
+            "org.vulgata.production-source-manifest-sha256",
+            source.ManifestSha256);
+
+        return new SourceBindingPreflight(
+            source.SourceCommit,
+            source.SourceTree,
+            source.Bytes,
+            source.ManifestSha256,
+            finalImageId,
+            finalImageId);
+    }
+
+    private static ProductionSourceManifest CreateProductionSourceManifest(string repositoryRoot)
+    {
+        string sourceCommit = RunGitValue(repositoryRoot, ["rev-parse", "HEAD"], "resolve source commit");
+        string sourceTree = RunGitValue(repositoryRoot, ["rev-parse", "HEAD^{tree}"], "resolve source tree");
+        if ((!IsLowerHex(sourceCommit, 40) && !IsLowerHex(sourceCommit, 64))
+            || (!IsLowerHex(sourceTree, 40) && !IsLowerHex(sourceTree, 64)))
+        {
+            throw new InvalidDataException("Candidate commit or tree is not an immutable Git object ID.");
+        }
+
+        string dockerIgnorePath = Path.Combine(repositoryRoot, ".dockerignore");
+        string dockerfilePath = Path.Combine(repositoryRoot, "docker", "Dockerfile");
+        if (!File.Exists(dockerIgnorePath) || !File.Exists(dockerfilePath))
+        {
+            throw new InvalidDataException("Dockerfile or .dockerignore is absent from the candidate.");
+        }
+
+        string[] dockerIgnorePatterns = File.ReadAllLines(dockerIgnorePath);
+        ProcessResult indexResult = RunGit(repositoryRoot, ["ls-files", "--stage", "-z"]);
+        EnsureGitSuccess(indexResult, "enumerate tracked Docker-context entries");
+        var trackedPaths = new List<string>();
+        foreach (string record in indexResult.StandardOutput.Split('\0', StringSplitOptions.RemoveEmptyEntries))
+        {
+            int separator = record.IndexOf('\t');
+            if (separator < 0)
+            {
+                throw new InvalidDataException("Git index entry is malformed.");
+            }
+
+            string[] metadata = record[..separator].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            string path = NormalizeRepositoryPath(record[(separator + 1)..]);
+            if (metadata.Length != 3 || metadata[2] != "0")
+            {
+                throw new InvalidDataException("Git index contains an unresolved or malformed entry.");
+            }
+
+            if (metadata[0] == "120000")
+            {
+                throw new InvalidDataException("Production source cannot contain a symlink.");
+            }
+
+            trackedPaths.Add(path);
+        }
+
+        if (trackedPaths.GroupBy(path => path, StringComparer.OrdinalIgnoreCase).Any(group => group.Count() != 1))
+        {
+            throw new InvalidDataException("Production source contains case-colliding paths.");
+        }
+
+        var trackedSet = new HashSet<string>(trackedPaths, StringComparer.Ordinal);
+        if (!trackedSet.Contains(".dockerignore") || !trackedSet.Contains("docker/Dockerfile"))
+        {
+            throw new InvalidDataException("Dockerfile and .dockerignore must be tracked.");
+        }
+
+        foreach (string path in trackedPaths)
+        {
+            string fullPath = Path.Combine(repositoryRoot, path.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(fullPath))
+            {
+                throw new InvalidDataException("Production source has a missing tracked file.");
+            }
+
+            if ((File.GetAttributes(fullPath) & FileAttributes.ReparsePoint) != 0)
+            {
+                throw new InvalidDataException("Production source cannot contain a reparse point.");
+            }
+        }
+
+        ProcessResult trackedStatus = RunGit(repositoryRoot, ["status", "--porcelain=v1", "--untracked-files=no"]);
+        EnsureGitSuccess(trackedStatus, "read tracked worktree status");
+        if (trackedStatus.StandardOutput.Length != 0)
+        {
+            throw new InvalidDataException("Production source requires a clean tracked worktree and index.");
+        }
+
+        ProcessResult untrackedResult = RunGit(repositoryRoot, ["ls-files", "--others", "-z"]);
+        EnsureGitSuccess(untrackedResult, "enumerate untracked Docker-context entries");
+        foreach (string rawPath in untrackedResult.StandardOutput.Split('\0', StringSplitOptions.RemoveEmptyEntries))
+        {
+            string path = NormalizeRepositoryPath(rawPath);
+            if (!IsDockerIgnored(path, dockerIgnorePatterns))
+            {
+                throw new InvalidDataException("Production Docker context contains an untracked entry.");
+            }
+        }
+
+        var entries = trackedPaths
+            .Where(path => path is ".dockerignore" or "docker/Dockerfile" || !IsDockerIgnored(path, dockerIgnorePatterns))
+            .Order(StringComparer.Ordinal)
+            .Select(path => new SortedDictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["path"] = path,
+                ["sha256"] = Hash(File.ReadAllBytes(Path.Combine(
+                    repositoryRoot,
+                    path.Replace('/', Path.DirectorySeparatorChar)))),
+            })
+            .ToArray();
+        byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(
+            new SortedDictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["entries"] = entries,
+                ["schemaVersion"] = "production-source-manifest-v1",
+                ["sourceCommit"] = sourceCommit,
+                ["sourceTree"] = sourceTree,
+            });
+        return new ProductionSourceManifest(sourceCommit, sourceTree, bytes, Hash(bytes));
+    }
+
+    private static bool IsDockerIgnored(string path, string[] patterns)
+    {
+        bool ignored = false;
+        foreach (string rawPattern in patterns)
+        {
+            string pattern = rawPattern.Trim();
+            if (pattern.Length == 0 || pattern[0] == '#')
+            {
+                continue;
+            }
+
+            bool negate = pattern[0] == '!';
+            if (negate)
+            {
+                pattern = pattern[1..];
+            }
+
+            pattern = pattern.Replace('\\', '/').Trim('/');
+            if (pattern.Length == 0)
+            {
+                continue;
+            }
+
+            string expression = DockerPatternToRegex(pattern);
+            if (Regex.IsMatch(path, expression, RegexOptions.CultureInvariant))
+            {
+                ignored = !negate;
+            }
+        }
+
+        return ignored;
+    }
+
+    private static string DockerPatternToRegex(string pattern)
+    {
+        var expression = new StringBuilder();
+        for (int index = 0; index < pattern.Length; index++)
+        {
+            char character = pattern[index];
+            if (character == '*' && index + 1 < pattern.Length && pattern[index + 1] == '*')
+            {
+                index++;
+                if (index + 1 < pattern.Length && pattern[index + 1] == '/')
+                {
+                    index++;
+                    expression.Append("(?:.*/)?");
+                }
+                else
+                {
+                    expression.Append(".*");
+                }
+            }
+            else if (character == '*')
+            {
+                expression.Append("[^/]*");
+            }
+            else if (character == '?')
+            {
+                expression.Append("[^/]");
+            }
+            else
+            {
+                expression.Append(Regex.Escape(character.ToString()));
+            }
+        }
+
+        return pattern.Contains('/', StringComparison.Ordinal)
+            ? $"^{expression}(?:/.*)?$"
+            : $"(?:^|/){expression}(?:$|/)";
+    }
+
+    private static string NormalizeRepositoryPath(string path)
+    {
+        string normalized = path.Replace('\\', '/');
+        if (normalized.Length == 0 || normalized[0] == '/' || normalized.Contains("//", StringComparison.Ordinal)
+            || normalized.Split('/').Any(segment => segment is "" or "." or ".."))
+        {
+            throw new InvalidDataException("Git returned a non-canonical Repository-relative path.");
+        }
+
+        return normalized;
+    }
+
+    private static void RequireImageLabel(JsonElement labels, string name, string expected)
+    {
+        if (!labels.TryGetProperty(name, out JsonElement label)
+            || label.ValueKind != JsonValueKind.String
+            || !string.Equals(label.GetString(), expected, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException($"Final image label {name} does not match the candidate.");
+        }
+    }
+
+    private static string RunGitValue(
+        string workingDirectory,
+        IReadOnlyList<string> arguments,
+        string operation)
+    {
+        ProcessResult result = RunGit(workingDirectory, arguments);
+        EnsureGitSuccess(result, operation);
+        return result.StandardOutput.Trim();
+    }
+
+    private static ProcessResult RunGit(string workingDirectory, IReadOnlyList<string> arguments)
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo("git")
+            {
+                WorkingDirectory = workingDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            },
+        };
+        foreach (string argument in arguments)
+        {
+            process.StartInfo.ArgumentList.Add(argument);
+        }
+
+        if (!process.Start())
+        {
+            throw new InvalidDataException("Git preflight process did not start.");
+        }
+
+        string standardOutput = process.StandardOutput.ReadToEnd();
+        string standardError = process.StandardError.ReadToEnd();
+        if (!process.WaitForExit(30_000))
+        {
+            process.Kill(entireProcessTree: true);
+            throw new InvalidDataException("Git preflight process timed out.");
+        }
+
+        return new ProcessResult(process.ExitCode, standardOutput, standardError);
+    }
+
+    private static void EnsureGitSuccess(ProcessResult result, string operation)
+    {
+        if (result.ExitCode != 0)
+        {
+            throw new InvalidDataException($"Could not {operation}: {Bound(result.StandardError)}");
+        }
+    }
+
+    private sealed record ProductionSourceManifest(
+        string SourceCommit,
+        string SourceTree,
+        byte[] Bytes,
+        string ManifestSha256);
+
+    private sealed record SourceBindingPreflight(
+        string SourceCommit,
+        string SourceTree,
+        byte[] ProductionSourceManifestBytes,
+        string ProductionSourceManifestSha256,
+        string FinalImageId,
+        string VerifierBaseImageId);
+
     private static byte[] CreateClaim(byte[] manifestBytes, string acceptedCorrectionSha256)
     {
         using JsonDocument manifest = JsonDocument.Parse(manifestBytes);
@@ -1356,6 +1919,160 @@ public sealed class CodeGraphProviderContractTests
             ["schema"] = "cgc-provider-contract-claim-v1",
         };
         return JsonSerializer.SerializeToUtf8Bytes(claim);
+    }
+
+    private static InvalidDataException AssertPreflightRejectsBeforeProvider(
+        string repositoryRoot,
+        string? imageInspectionJson,
+        string finalImageId,
+        byte[] retainedManifestBytes,
+        string correctionRoot)
+    {
+        bool providerExecuted = false;
+        Exception? failure = Record.Exception(() =>
+        {
+            CreateSourceBindingPreflight(
+                repositoryRoot,
+                imageInspectionJson,
+                finalImageId,
+                new string('c', 64),
+                correctionRoot,
+                retainedManifestBytes);
+            providerExecuted = true;
+        });
+
+        InvalidDataException invalid = Assert.IsType<InvalidDataException>(failure);
+        Assert.False(providerExecuted, "Invalid source binding reached provider execution.");
+        return invalid;
+    }
+
+    private static async Task<SourceBindingFixture> CreateSourceBindingFixtureAsync(
+        string repositoryRoot,
+        string? invalidImageCase = null)
+    {
+        string sourceCommit = (await RunAsync(repositoryRoot, "git", ["rev-parse", "HEAD"])).StandardOutput.Trim();
+        string sourceTree = (await RunAsync(repositoryRoot, "git", ["rev-parse", "HEAD^{tree}"])).StandardOutput.Trim();
+        var entries = new[] { ".dockerignore", "docker/Dockerfile", "included.txt" }
+            .Order(StringComparer.Ordinal)
+            .Select(path => new SortedDictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["path"] = path,
+                ["sha256"] = Hash(File.ReadAllBytes(Path.Combine(repositoryRoot, path.Replace('/', Path.DirectorySeparatorChar)))),
+            })
+            .ToArray();
+        byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(
+            new SortedDictionary<string, object?>(StringComparer.Ordinal)
+            {
+                ["entries"] = entries,
+                ["schemaVersion"] = "production-source-manifest-v1",
+                ["sourceCommit"] = sourceCommit,
+                ["sourceTree"] = sourceTree,
+            });
+        string manifestSha256 = Hash(manifestBytes);
+        string finalImageId = "sha256:" + new string('a', 64);
+        string inspectedImageId = invalidImageCase == "stale-image"
+            ? "sha256:" + new string('b', 64)
+            : finalImageId;
+        var labels = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["org.vulgata.source-commit"] = invalidImageCase == "mismatched-source-commit-label"
+                ? new string('d', 40)
+                : sourceCommit,
+            ["org.vulgata.source-tree"] = invalidImageCase == "mismatched-source-tree-label"
+                ? new string('e', 40)
+                : sourceTree,
+            ["org.vulgata.production-source-manifest-sha256"] = invalidImageCase == "mismatched-source-manifest-label"
+                ? new string('f', 64)
+                : manifestSha256,
+        };
+        if (invalidImageCase == "unlabelled-image")
+        {
+            labels.Clear();
+        }
+
+        string? inspection = invalidImageCase == "caller-only-image-assertion"
+            ? null
+            : JsonSerializer.Serialize(new { Id = inspectedImageId, Config = new { Labels = labels } });
+        return new SourceBindingFixture(finalImageId, manifestBytes, inspection);
+    }
+
+    private sealed record SourceBindingFixture(string FinalImageId, byte[] ManifestBytes, string? ImageInspectionJson);
+
+    private sealed class TemporaryGitRepository : IDisposable
+    {
+        private TemporaryGitRepository(string root)
+        {
+            Root = root;
+        }
+
+        public string Root { get; }
+
+        public static async Task<TemporaryGitRepository> CreateAsync()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "vulgata-source-binding-repository", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(Path.Combine(root, "docker"));
+            await File.WriteAllTextAsync(Path.Combine(root, ".dockerignore"), "ignored.bin\n");
+            await File.WriteAllTextAsync(Path.Combine(root, "docker", "Dockerfile"), "FROM scratch\n");
+            await File.WriteAllTextAsync(Path.Combine(root, "included.txt"), "included\n");
+            await File.WriteAllTextAsync(Path.Combine(root, "ignored.bin"), "ignored\n");
+            EnsureSuccess(await RunAsync(root, "git", ["init", "--initial-branch=main"]));
+            EnsureSuccess(await RunAsync(root, "git", ["config", "user.name", "Vulgata Contract Test"]));
+            EnsureSuccess(await RunAsync(root, "git", ["config", "user.email", "contract-test@vulgata.invalid"]));
+            EnsureSuccess(await RunAsync(root, "git", ["config", "core.ignorecase", "false"]));
+            EnsureSuccess(await RunAsync(root, "git", ["add", ".dockerignore", "docker/Dockerfile", "included.txt"]));
+            EnsureSuccess(await RunAsync(root, "git", ["-c", "commit.gpgsign=false", "commit", "--message", "fixture"]));
+            return new TemporaryGitRepository(root);
+        }
+
+        public async Task ApplyInvalidStateAsync(string caseId)
+        {
+            switch (caseId)
+            {
+                case "dirty-worktree":
+                    await File.AppendAllTextAsync(Path.Combine(Root, "included.txt"), "dirty\n");
+                    break;
+                case "symlink":
+                    await File.WriteAllTextAsync(Path.Combine(Root, "link-entry"), "included.txt");
+                    string linkBlob = (await RunAsync(Root, "git", ["hash-object", "-w", "link-entry"])).StandardOutput.Trim();
+                    EnsureSuccess(await RunAsync(Root, "git", ["update-index", "--add", "--cacheinfo", $"120000,{linkBlob},link-entry"]));
+                    EnsureSuccess(await RunAsync(Root, "git", ["-c", "commit.gpgsign=false", "commit", "--message", "symlink fixture"]));
+                    break;
+                case "untracked-context-entry":
+                    await File.WriteAllTextAsync(Path.Combine(Root, "untracked.txt"), "untracked\n");
+                    break;
+                case "missing-context-entry":
+                    File.Delete(Path.Combine(Root, "included.txt"));
+                    break;
+                case "case-colliding-context-entry":
+                    await File.WriteAllTextAsync(Path.Combine(Root, "Case.txt"), "case collision\n");
+                    string caseBlob = (await RunAsync(Root, "git", ["hash-object", "-w", "Case.txt"])).StandardOutput.Trim();
+                    EnsureSuccess(await RunAsync(Root, "git", ["update-index", "--add", "--cacheinfo", $"100644,{caseBlob},Case.txt"]));
+                    EnsureSuccess(await RunAsync(Root, "git", ["update-index", "--add", "--cacheinfo", $"100644,{caseBlob},case.txt"]));
+                    EnsureSuccess(await RunAsync(Root, "git", ["-c", "commit.gpgsign=false", "commit", "--message", "case collision fixture"]));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(caseId), caseId, null);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(Root))
+            {
+                foreach (string path in Directory.EnumerateFiles(Root, "*", SearchOption.AllDirectories))
+                {
+                    File.SetAttributes(path, FileAttributes.Normal);
+                }
+
+                foreach (string path in Directory.EnumerateDirectories(Root, "*", SearchOption.AllDirectories)
+                    .OrderDescending(StringComparer.Ordinal))
+                {
+                    File.SetAttributes(path, FileAttributes.Normal);
+                }
+
+                Directory.Delete(Root, recursive: true);
+            }
+        }
     }
 
     private static void WriteCreateNewDurable(string path, byte[] bytes)

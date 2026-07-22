@@ -1,3 +1,7 @@
+ARG VULGATA_SOURCE_COMMIT
+ARG VULGATA_SOURCE_TREE
+ARG VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256
+
 # Stage 0: exact CodeGraphContext provider qualification runtime.
 # The user-provided local CPython base is immutable and must never be pulled by
 # qualification. The hash-locked installation happens only at image build time.
@@ -19,7 +23,14 @@ RUN dotnet publish src/dotnet/Vulgata.Web/Vulgata.Web.csproj -c Release -o /app/
 
 # Stage 2: runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+ARG VULGATA_SOURCE_COMMIT
+ARG VULGATA_SOURCE_TREE
+ARG VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256
 WORKDIR /app
+
+LABEL org.vulgata.source-commit=${VULGATA_SOURCE_COMMIT} \
+    org.vulgata.source-tree=${VULGATA_SOURCE_TREE} \
+    org.vulgata.production-source-manifest-sha256=${VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256}
 
 # Install the application runtime dependency. CodeGraphContext is copied from
 # the exact, hash-verified build stage above; no runtime resolver is invoked.

@@ -614,6 +614,26 @@ def classify_failure(error):
     return "projection-mismatch"
 
 
+def validate_source_binding(claim, expected):
+    manifest = claim.get("acceptedCorrectionManifest")
+    production_manifest = manifest.get("productionSourceManifest") if isinstance(manifest, dict) else None
+    if (
+        claim.get("acceptedCorrectionSha256") != expected["acceptedCorrectionSha256"]
+        or not isinstance(manifest, dict)
+        or manifest.get("sourceCommit") != expected["sourceCommit"]
+        or manifest.get("sourceTree") != expected["sourceTree"]
+        or manifest.get("productionSourceManifestSha256")
+            != expected["productionSourceManifestSha256"]
+        or manifest.get("finalImageSha256") != expected["finalImageSha256"]
+        or manifest.get("verifierBaseImageSha256") != expected["verifierBaseImageSha256"]
+        or not isinstance(production_manifest, dict)
+        or production_manifest.get("schemaVersion") != "production-source-manifest-v1"
+        or production_manifest.get("sourceCommit") != expected["sourceCommit"]
+        or production_manifest.get("sourceTree") != expected["sourceTree"]
+    ):
+        raise RuntimeError("claim-boundary-mismatch")
+
+
 def main():
     contract = Path("/contract")
     evidence_root = Path("/evidence")
@@ -623,8 +643,15 @@ def main():
     if not claim_path.is_file() or sha256(claim_path.read_bytes()) != claim_sha256:
         raise RuntimeError("claim-mismatch")
     claim = json.loads(claim_path.read_text("utf-8"))
-    if claim.get("acceptedCorrectionSha256") != accepted_correction:
-        raise RuntimeError("claim-boundary-mismatch")
+    source_binding = {
+        "acceptedCorrectionSha256": accepted_correction,
+        "sourceCommit": os.environ["SOURCE_COMMIT"],
+        "sourceTree": os.environ["SOURCE_TREE"],
+        "productionSourceManifestSha256": os.environ["PRODUCTION_SOURCE_MANIFEST_SHA256"],
+        "finalImageSha256": os.environ["FINAL_IMAGE_SHA256"],
+        "verifierBaseImageSha256": os.environ["VERIFIER_BASE_IMAGE_SHA256"],
+    }
+    validate_source_binding(claim, source_binding)
 
     fixture = contract / "fixture"
     projection_a = (contract / "projection-a.cypher").read_bytes()
@@ -910,11 +937,11 @@ def main():
         "primaryFailureCategory": failure_category or "none",
         "acceptedCorrectionSha256": accepted_correction,
         "claimSha256": claim_sha256,
-        "sourceCommit": os.environ["SOURCE_COMMIT"],
-        "sourceTree": os.environ["SOURCE_TREE"],
-        "productionSourceManifestSha256": os.environ["PRODUCTION_SOURCE_MANIFEST_SHA256"],
-        "finalImageSha256": os.environ["FINAL_IMAGE_SHA256"],
-        "verifierBaseImageSha256": os.environ["VERIFIER_BASE_IMAGE_SHA256"],
+        "sourceCommit": source_binding["sourceCommit"],
+        "sourceTree": source_binding["sourceTree"],
+        "productionSourceManifestSha256": source_binding["productionSourceManifestSha256"],
+        "finalImageSha256": source_binding["finalImageSha256"],
+        "verifierBaseImageSha256": source_binding["verifierBaseImageSha256"],
         "providerVersion": provider_version,
         "providerLockSha256": EXPECTED_LOCK,
         "providerDistributionSha256": EXPECTED_DISTRIBUTION,
