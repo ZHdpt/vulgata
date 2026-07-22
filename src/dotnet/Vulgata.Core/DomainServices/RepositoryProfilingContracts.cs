@@ -56,6 +56,36 @@ public sealed record PackageEvidence(
     string DetectionSource,
     int ScopeDepth);
 
+public enum DirectManifestOwnerReadStatus
+{
+    SafeAndBounded,
+    UnsafePath,
+    ReparsePoint,
+    BoundExceeded,
+    Unreadable,
+}
+
+public enum DirectManifestOwnerParseStatus
+{
+    ParsedSupported,
+    Malformed,
+    Unsupported,
+    ConditionalOrDynamic,
+}
+
+public sealed record DirectManifestOwnerCandidate(
+    string ArtifactPath,
+    string ScopeRoot,
+    string Ecosystem,
+    DirectManifestOwnerReadStatus ReadStatus,
+    DirectManifestOwnerParseStatus ParseStatus,
+    bool Applicable);
+
+public sealed record ValidatedDirectManifestOwner(
+    string ArtifactPath,
+    string ScopeRoot,
+    string Ecosystem);
+
 public enum FrameworkEvidenceDetectionFailure
 {
     None,

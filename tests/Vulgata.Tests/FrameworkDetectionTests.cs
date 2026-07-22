@@ -404,6 +404,374 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public void DirectManifestOwnerContracts_ClosedStates_AreAvailable()
+    {
+        Assembly coreAssembly = typeof(Vulgata.Core.Entities.CodeUnit).Assembly;
+        Type? candidateType = coreAssembly.GetType(
+            "Vulgata.Core.DomainServices.DirectManifestOwnerCandidate");
+        Type? validatedType = coreAssembly.GetType(
+            "Vulgata.Core.DomainServices.ValidatedDirectManifestOwner");
+        Type? readStatusType = coreAssembly.GetType(
+            "Vulgata.Core.DomainServices.DirectManifestOwnerReadStatus");
+        Type? parseStatusType = coreAssembly.GetType(
+            "Vulgata.Core.DomainServices.DirectManifestOwnerParseStatus");
+
+        Assert.NotNull(candidateType);
+        Assert.NotNull(validatedType);
+        Assert.NotNull(readStatusType);
+        Assert.NotNull(parseStatusType);
+        Assert.Equal(
+            ["SafeAndBounded", "UnsafePath", "ReparsePoint", "BoundExceeded", "Unreadable"],
+            Enum.GetNames(readStatusType));
+        Assert.Equal(
+            ["ParsedSupported", "Malformed", "Unsupported", "ConditionalOrDynamic"],
+            Enum.GetNames(parseStatusType));
+        Assert.Equal(
+            ["Applicable", "ArtifactPath", "Ecosystem", "ParseStatus", "ReadStatus", "ScopeRoot"],
+            candidateType.GetProperties()
+                .Select(property => property.Name)
+                .OrderBy(name => name, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetUniqueValidOwners_WithAndWithoutDirectCatalogMatch_AllowEligibleLockAsync()
+    {
+        foreach ((string name, string project) in new[]
+                 {
+                     (
+                         "direct-match",
+                         """
+                         <Project Sdk="Microsoft.NET.Sdk">
+                           <ItemGroup>
+                             <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.3.0" />
+                           </ItemGroup>
+                         </Project>
+                         """),
+                     (
+                         "lock-only-match",
+                         """
+                         <Project Sdk="Microsoft.NET.Sdk">
+                           <ItemGroup>
+                             <PackageReference Include="Example.Unmatched" Version="1.0.0" />
+                           </ItemGroup>
+                         </Project>
+                         """),
+                 })
+        {
+            using var repository = new GitFixture();
+            repository.Write($"{name}/App.csproj", project);
+            repository.Write($"{name}/packages.lock.json", NuGetLockJson());
+            repository.TrackAll();
+
+            DetectedGlobalFrameworkResult result =
+                await DetectApplicableGlobalDetailedAsync(
+                    repository.Path,
+                    $"{name}/src/Controller.cs",
+                    "c_sharp",
+                    GetProductionLimits());
+
+            Assert.True(result.Succeeded);
+            DetectedEvidence winner = Assert.Single(result.Evidence);
+            Assert.Equal("nuget:Microsoft.AspNetCore.Mvc", winner.PackageCoordinate);
+            Assert.Equal(
+                name == "direct-match" ? "Direct" : "Transitive",
+                winner.Relationship);
+        }
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetInvalidOwnerShapes_RejectLockWithOneClosedAuditAsync()
+    {
+        foreach ((string name, string project, string expectedReason) in new[]
+                 {
+                     ("malformed", "<Project>", "FrameworkEvidenceMalformed"),
+                     ("unsupported", "<NotProject />", "FrameworkEvidenceUnsupported"),
+                     (
+                         "conditional",
+                         """
+                         <Project Sdk="Microsoft.NET.Sdk">
+                           <ItemGroup Condition="'$(UseMvc)' == 'true'">
+                             <PackageReference Include="Microsoft.AspNetCore.Mvc" />
+                           </ItemGroup>
+                         </Project>
+                         """,
+                         "FrameworkEvidenceUnsupported"),
+                     (
+                         "dynamic-sdk",
+                         """
+                         <Project Sdk="$(ProjectSdk)">
+                           <ItemGroup>
+                             <PackageReference Include="Example.Unmatched" />
+                           </ItemGroup>
+                         </Project>
+                         """,
+                         "FrameworkEvidenceUnsupported"),
+                 })
+        {
+            using var repository = new GitFixture();
+            repository.Write($"{name}/App.csproj", project);
+            repository.Write($"{name}/packages.lock.json", NuGetLockJson());
+            repository.TrackAll();
+
+            DetectedGlobalFrameworkResult result =
+                await DetectApplicableGlobalDetailedAsync(
+                    repository.Path,
+                    $"{name}/src/Controller.cs",
+                    "c_sharp",
+                    GetProductionLimits());
+
+            AssertInvalidOwnerLockResult(result, expectedReason);
+        }
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetOwnerCandidateSet_RejectsZeroMultipleInvalidBesideValidAndInapplicableAsync()
+    {
+        (string Name, Action<GitFixture> Arrange, string ExpectedReason)[] cases =
+        [
+                     (
+                         "zero",
+                         (GitFixture repository) =>
+                             repository.Write("zero/packages.lock.json", NuGetLockJson()),
+                         "FrameworkEvidenceUnsupported"),
+                     (
+                         "multiple",
+                         (GitFixture repository) =>
+                         {
+                             repository.Write("multiple/App.csproj", ValidUnmatchedNuGetProject());
+                             repository.Write("multiple/Other.csproj", ValidUnmatchedNuGetProject());
+                             repository.Write("multiple/packages.lock.json", NuGetLockJson());
+                         },
+                         "FrameworkEvidenceAmbiguousScope"),
+                     (
+                         "invalid-beside-valid",
+                         (GitFixture repository) =>
+                         {
+                             repository.Write("invalid-beside-valid/App.csproj", ValidUnmatchedNuGetProject());
+                             repository.Write("invalid-beside-valid/Broken.csproj", "<Project>");
+                             repository.Write("invalid-beside-valid/packages.lock.json", NuGetLockJson());
+                         },
+                         "FrameworkEvidenceMalformed"),
+                     (
+                         "inapplicable",
+                         (GitFixture repository) =>
+                         {
+                             repository.Write(
+                                 "owner/App.csproj",
+                                 """
+                                 <Project Sdk="Microsoft.NET.Sdk">
+                                   <ItemGroup>
+                                     <PackageReference Include="Microsoft.AspNetCore.Mvc" />
+                                   </ItemGroup>
+                                 </Project>
+                                 """);
+                             repository.Write("inapplicable/packages.lock.json", NuGetLockJson());
+                         },
+                         "FrameworkEvidenceUnsupported"),
+        ];
+        foreach ((string name, Action<GitFixture> arrange, string expectedReason) in cases)
+        {
+            using var repository = new GitFixture();
+            arrange(repository);
+            repository.TrackAll();
+
+            DetectedGlobalFrameworkResult result =
+                await DetectApplicableGlobalDetailedAsync(
+                    repository.Path,
+                    $"{name}/src/Controller.cs",
+                    "c_sharp",
+                    GetProductionLimits());
+
+            AssertInvalidOwnerLockResult(result, expectedReason);
+        }
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetUnsafeReparseAndOversizeOwners_RejectLockWithOneClosedAuditAsync()
+    {
+        foreach (string ownerKind in new[] { "unsafe", "reparse", "oversize" })
+        {
+            using var repository = new GitFixture();
+            string ownerPath = $"{ownerKind}/App.csproj";
+            if (ownerKind == "oversize")
+            {
+                repository.Write(
+                    ownerPath,
+                    PadAsciiToLength(ValidUnmatchedNuGetProject(), (8 * 1024 * 1024) + 1));
+            }
+            else
+            {
+                repository.CreateFileSymbolicLink(
+                    ownerPath,
+                    $"targets/{ownerKind}.csproj",
+                    ValidUnmatchedNuGetProject(),
+                    targetOutsideRepository: ownerKind == "unsafe");
+            }
+
+            repository.Write($"{ownerKind}/packages.lock.json", NuGetLockJson());
+            repository.Track(ownerPath, $"{ownerKind}/packages.lock.json");
+
+            DetectedGlobalFrameworkResult result =
+                await DetectApplicableGlobalDetailedAsync(
+                    repository.Path,
+                    $"{ownerKind}/src/Controller.cs",
+                    "c_sharp",
+                    GetProductionLimits());
+
+            AssertInvalidOwnerLockResult(
+                result,
+                ownerKind switch
+                {
+                    "unsafe" => "FrameworkEvidenceUnsafePath",
+                    "reparse" => "FrameworkEvidenceReparsePoint",
+                    _ => "FrameworkEvidenceBoundExceeded",
+                });
+        }
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NpmUniqueValidOwners_WithAndWithoutDirectCatalogMatch_AllowEligibleLockAsync()
+    {
+        foreach ((string name, string manifest, string expectedRelationship) in new[]
+                 {
+                     ("direct-match", """{ "dependencies": { "react": "19.0.0" } }""", "Direct"),
+                     ("lock-only-match", """{ "dependencies": { "left-pad": "1.3.0" } }""", "Transitive"),
+                 })
+        {
+            using var repository = new GitFixture();
+            repository.Write($"{name}/package.json", manifest);
+            repository.Write($"{name}/package-lock.json", NpmLockJson());
+            repository.TrackAll();
+
+            DetectedGlobalFrameworkResult result =
+                await DetectApplicableGlobalDetailedAsync(
+                    repository.Path,
+                    $"{name}/src/App.tsx",
+                    "tsx",
+                    GetProductionLimits());
+
+            Assert.True(result.Succeeded);
+            DetectedEvidence winner = Assert.Single(result.Evidence);
+            Assert.Equal("npm:react", winner.PackageCoordinate);
+            Assert.Equal(expectedRelationship, winner.Relationship);
+        }
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NpmInvalidOwnerShapes_RejectLockWithOneClosedAuditAsync()
+    {
+        foreach ((string name, string manifest, string expectedReason) in new[]
+                 {
+                     ("malformed", "{ \"dependencies\": {", "FrameworkEvidenceMalformed"),
+                     ("unsupported", "[]", "FrameworkEvidenceUnsupported"),
+                     ("nonliteral", """{ "dependencies": { "react": { "version": "19.0.0" } } }""", "FrameworkEvidenceUnsupported"),
+                 })
+        {
+            using var repository = new GitFixture();
+            repository.Write($"{name}/package.json", manifest);
+            repository.Write($"{name}/package-lock.json", NpmLockJson());
+            repository.TrackAll();
+
+            DetectedGlobalFrameworkResult result =
+                await DetectApplicableGlobalDetailedAsync(
+                    repository.Path,
+                    $"{name}/src/App.tsx",
+                    "tsx",
+                    GetProductionLimits());
+
+            AssertInvalidOwnerLockResult(result, expectedReason);
+        }
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NpmOwnerCandidate_RejectsZeroOutOfRootUnsafeReparseAndOversizeAsync()
+    {
+        foreach (string ownerKind in new[]
+                 {
+                     "zero",
+                     "out-of-root",
+                     "unsafe",
+                     "reparse",
+                     "oversize",
+                 })
+        {
+            using var repository = new GitFixture();
+            string lockRoot = ownerKind;
+            string ownerPath = $"{lockRoot}/package.json";
+            if (ownerKind == "out-of-root")
+            {
+                repository.Write("owner/package.json", """{ "dependencies": { "react": "19.0.0" } }""");
+            }
+            else if (ownerKind == "oversize")
+            {
+                repository.Write(
+                    ownerPath,
+                    PadAsciiToLength(
+                        """{ "dependencies": { "left-pad": "1.3.0" } }""",
+                        (8 * 1024 * 1024) + 1));
+            }
+            else if (ownerKind is "unsafe" or "reparse")
+            {
+                repository.CreateFileSymbolicLink(
+                    ownerPath,
+                    $"targets/{ownerKind}.json",
+                    """{ "dependencies": { "left-pad": "1.3.0" } }""",
+                    targetOutsideRepository: ownerKind == "unsafe");
+            }
+
+            repository.Write($"{lockRoot}/package-lock.json", NpmLockJson());
+            repository.TrackAll();
+
+            DetectedGlobalFrameworkResult result =
+                await DetectApplicableGlobalDetailedAsync(
+                    repository.Path,
+                    $"{lockRoot}/src/App.tsx",
+                    "tsx",
+                    GetProductionLimits());
+
+            AssertInvalidOwnerLockResult(
+                result,
+                ownerKind switch
+                {
+                    "unsafe" => "FrameworkEvidenceUnsafePath",
+                    "reparse" => "FrameworkEvidenceReparsePoint",
+                    "oversize" => "FrameworkEvidenceBoundExceeded",
+                    _ => "FrameworkEvidenceUnsupported",
+                });
+        }
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_InvalidOwnerLock_IndependentValidArtifactContinuesAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write("broken/App.csproj", "<Project>");
+        repository.Write("broken/packages.lock.json", NuGetLockJson());
+        repository.Write(
+            "valid/package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult invalid =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "broken/src/Controller.cs",
+                "c_sharp",
+                GetProductionLimits());
+        DetectedGlobalFrameworkResult valid =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "valid/src/App.tsx",
+                "tsx",
+                GetProductionLimits());
+
+        AssertInvalidOwnerLockResult(invalid, "FrameworkEvidenceMalformed");
+        DetectedEvidence validFact = Assert.Single(valid.Evidence);
+        Assert.Equal("npm:react", validFact.PackageCoordinate);
+        Assert.Equal("Direct", validFact.Relationship);
+    }
+
+    [Fact]
     public async Task DetectAsync_UntrackedIgnoredAndUnpairedLocks_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -1409,6 +1777,69 @@ public sealed class FrameworkDetectionTests
             Directory.Delete(directory, recursive: true);
         }
     }
+
+    private static void AssertInvalidOwnerLockResult(
+        DetectedGlobalFrameworkResult result,
+        string expectedReason)
+    {
+        Assert.True(result.Succeeded);
+        Assert.DoesNotContain(
+            result.Evidence,
+            evidence => evidence.Relationship == "Transitive");
+        DetectedAuditOutcome audit = Assert.Single(result.AuditOutcomes);
+        Assert.Equal(1, result.TotalAuditOutcomeCount);
+        Assert.True(
+            audit.ArtifactPath.EndsWith("packages.lock.json", StringComparison.Ordinal) ||
+            audit.ArtifactPath.EndsWith("package-lock.json", StringComparison.Ordinal));
+        Assert.Equal(expectedReason, audit.Reason);
+        Assert.Contains(
+            audit.Outcome,
+            new[] { "Errored", "Skipped" },
+            StringComparer.Ordinal);
+        Assert.InRange(audit.ArtifactPath.Length, 1, 2_048);
+        Assert.InRange(audit.Message.Length, 1, 32);
+        Assert.Matches("[\u4e00-\u9fff]", audit.Message);
+        Assert.DoesNotContain("<Project", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("dependencies", audit.Message, StringComparison.Ordinal);
+    }
+
+    private static string ValidUnmatchedNuGetProject() =>
+        """
+        <Project Sdk="Microsoft.NET.Sdk">
+          <ItemGroup>
+            <PackageReference Include="Example.Unmatched" Version="1.0.0" />
+          </ItemGroup>
+        </Project>
+        """;
+
+    private static string NuGetLockJson() =>
+        """
+        {
+          "version": 1,
+          "dependencies": {
+            "net10.0": {
+              "Microsoft.AspNetCore.Mvc": {
+                "type": "Transitive",
+                "resolved": "2.3.0"
+              }
+            }
+          }
+        }
+        """;
+
+    private static string NpmLockJson() =>
+        """
+        {
+          "name": "fixture",
+          "lockfileVersion": 3,
+          "packages": {
+            "": {},
+            "node_modules/react": {
+              "version": "19.0.0"
+            }
+          }
+        }
+        """;
 
     private static string PadAsciiToLength(string content, int length)
     {

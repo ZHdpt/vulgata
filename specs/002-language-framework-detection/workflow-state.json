@@ -338,22 +338,42 @@
         "specs/002-language-framework-detection/reviews/analyze-6.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-22T01:44:36.1076500Z",
+      "completed_at": "2026-07-22T06:18:43.9419894Z",
+      "input_commit": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "bed4d586a1d703695b8324632977e19103520f295f10a5f801a03567934ad6df",
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs": "8afcd58847d8061e55c1bf410eaf0b94c324ae52b4ef651fb45ca13449307acb",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "c739bb7fb6e0e46ad959eb663faa529d3f41304d14ed98ef4953268a0f1d95a4",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "bfe841d4e580054c00fe84a89853b8410771a9e78f77b55e51ecdc2fc0b4a631"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "216985b812613ad20994d300fae072b69093e6b6",
+    "preflight_head": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Corrected Story 4.2 tasks, analyze iterations 5 and 6, analysis-remediation approval, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 T013-T018 owner-eligibility implementation, focused tests, task markers, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json",
-      "specs/002-language-framework-detection/reviews/analyze-5.json",
-      "specs/002-language-framework-detection/reviews/analyze-6.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/workflow-state.json",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
     ],
     "unrelated_paths": [],
     "observed_at": "2026-07-22T01:44:36.1076500Z"
@@ -1303,28 +1323,72 @@
       "observed_at": "2026-07-22T01:44:36.1076500Z",
       "summary": "Fresh analysis ACCEPTED the acyclic 50-task graph with complete requirement/finding coverage, RED-before-GREEN ordering, and T050 last.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/20",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter FullyQualifiedName~DetectApplicableDetailedAsync_NuGetInvalidOwnerShapes",
+      "exit_code": 1,
+      "observed_at": "2026-07-22T06:18:43.9419894Z",
+      "summary": "T013 observed the required RED: a malformed same-root NuGet owner incorrectly allowed packages.lock.json to emit transitive framework evidence.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/21",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter FullyQualifiedName~DetectApplicableDetailedAsync_NpmInvalidOwnerShapes",
+      "exit_code": 1,
+      "observed_at": "2026-07-22T06:18:43.9419894Z",
+      "summary": "T014 observed the required RED: a malformed same-root npm owner incorrectly allowed package-lock.json to emit transitive framework evidence.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/22",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --filter FullyQualifiedName~FrameworkDetection -v:q; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --filter FullyQualifiedName~RepositoryProfiling -v:q",
+      "exit_code": 0,
+      "observed_at": "2026-07-22T06:18:43.9419894Z",
+      "summary": "T015-T018 reached GREEN with complete same-root owner evaluation, closed owner states, bounded invalid-owner audits, and independent valid-artifact continuation; root verification passed 48 FrameworkDetection and 49 RepositoryProfiling tests.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-analyze-20260722T014436Z-c5d8a1",
+    "checkpoint_id": "bmad-4-2-implement-20260722T061843Z-d9b4e2",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "analyze",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json",
-      "specs/002-language-framework-detection/reviews/analyze-5.json",
-      "specs/002-language-framework-detection/reviews/analyze-6.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/workflow-state.json",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/analyze/5",
-      "4-2-language-and-framework-detection/analyze/6",
-      "4-2-language-and-framework-detection/analyze/7"
+      "4-2-language-and-framework-detection/implement/20",
+      "4-2-language-and-framework-detection/implement/21",
+      "4-2-language-and-framework-detection/implement/22"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-22T01:44:36.1076500Z"
+  "updated_at": "2026-07-22T06:18:43.9419894Z"
 }

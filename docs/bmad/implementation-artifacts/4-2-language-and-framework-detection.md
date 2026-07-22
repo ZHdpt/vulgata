@@ -464,8 +464,19 @@ unchanged.
   Fourteen historical baseline tasks remain checked, 36 correction/verification
   tasks remain pending, all changed behavior retains RED-before-GREEN ordering,
   and the historical-evidence exception cannot relabel current GREEN evidence.
-- The internal workflow is now `implement`; no source or test correction has
-  started from the accepted task graph yet.
+- Implementation slot 1 completed T013-T018 with observed RED cases for both
+  NuGet and npm invalid owners. Lock-derived `Medium` evidence now requires one
+  complete, safely read, successfully parsed, supported, applicable same-root
+  direct-manifest owner; invalid candidates cannot be discarded to manufacture
+  uniqueness, one bounded closed audit is emitted, and independent valid
+  artifacts continue.
+- Root verification passes 48/48 FrameworkDetection tests and 49/49 surrounding
+  RepositoryProfiling tests. `git diff --check` reports only the repository's
+  known LF-to-CRLF warnings.
+- The internal workflow remains `implement`; the next bounded slot is T022-T025
+  for provider-path redaction with captured-logger RED evidence.
+- Owner-eligibility implementation checkpoint:
+  `bmad-4-2-implement-20260722T061843Z-d9b4e2` (pending Git binding).
 - Analyzed-tasks checkpoint:
   `bmad-4-2-analyze-20260722T014436Z-c5d8a1` (pending Git binding).
 - Accepted plan checkpoint:

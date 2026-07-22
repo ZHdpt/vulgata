@@ -82,9 +82,38 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         string repositoryRoot = Path.GetFullPath(workingCopyPath);
         string[] trackedPaths = await InventoryTrackedPathsAsync(repositoryRoot, cancellationToken);
         var trackedSet = trackedPaths.ToHashSet(StringComparer.Ordinal);
+        var readResults = new Dictionary<string, ArtifactReadResult>(StringComparer.Ordinal);
         var evidence = new List<PackageEvidence>();
         var auditOutcomes = new List<FrameworkEvidenceAuditOutcome>();
         var budget = new FrameworkDetectionBudget(_limits);
+        HashSet<string> nugetLockRoots =
+        [
+            .. trackedPaths
+                .Where(path => GetArtifactKind(path) == ArtifactKind.NuGetLock)
+                .Select(ScopeRoot),
+        ];
+        HashSet<string> npmLockRoots =
+        [
+            .. trackedPaths
+                .Where(path => GetArtifactKind(path) == ArtifactKind.NpmLock)
+                .Select(ScopeRoot),
+        ];
+
+        async Task<ArtifactReadResult> ReadArtifactAsync(string artifactPath)
+        {
+            if (readResults.TryGetValue(artifactPath, out ArtifactReadResult? cached))
+            {
+                return cached;
+            }
+
+            ArtifactReadResult result = await ReadTrackedTextAsync(
+                repositoryRoot,
+                artifactPath,
+                budget,
+                cancellationToken);
+            readResults.Add(artifactPath, result);
+            return result;
+        }
 
         foreach (string artifactPath in trackedPaths)
         {
@@ -96,14 +125,18 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             }
 
             budget.RecordSupportedArtifact();
-            ArtifactReadResult readResult = await ReadTrackedTextAsync(
-                repositoryRoot,
-                artifactPath,
-                budget,
-                cancellationToken);
+            ArtifactReadResult readResult = await ReadArtifactAsync(artifactPath);
             if (readResult.AuditOutcome is not null)
             {
-                budget.RecordAuditOutcome(auditOutcomes, readResult.AuditOutcome);
+                if (!IsDirectOwnerCoveredByLock(
+                        artifactKind.Value,
+                        ScopeRoot(artifactPath),
+                        nugetLockRoots,
+                        npmLockRoots))
+                {
+                    budget.RecordAuditOutcome(auditOutcomes, readResult.AuditOutcome);
+                }
+
                 continue;
             }
 
@@ -140,10 +173,22 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             }
             else if (artifactKind == ArtifactKind.NuGetLock)
             {
-                int projectCount = CountTrackedNuGetProjects(
-                    trackedSet,
-                    ScopeRoot(artifactPath));
-                if (projectCount == 1)
+                var candidates = new List<DirectManifestOwnerCandidate>();
+                foreach (string ownerPath in trackedPaths
+                             .Where(path =>
+                                 StringComparer.Ordinal.Equals(
+                                     ScopeRoot(path),
+                                     ScopeRoot(artifactPath)) &&
+                                 path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))
+                             .OrderBy(path => path, StringComparer.Ordinal))
+                {
+                    candidates.Add(CreateDirectManifestOwnerCandidate(
+                        ownerPath,
+                        "nuget",
+                        await ReadArtifactAsync(ownerPath)));
+                }
+
+                if (TryValidateDirectManifestOwner(candidates, out _))
                 {
                     parseStatus = ValidateJson(readResult.Content!);
                     if (parseStatus == ArtifactParseStatus.Valid)
@@ -153,18 +198,32 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 }
                 else
                 {
-                    parseStatus = projectCount > 1
-                        ? ArtifactParseStatus.AmbiguousScope
-                        : ArtifactParseStatus.Unsupported;
+                    parseStatus = OwnerFailureStatus(candidates);
                 }
             }
-            else if (artifactKind == ArtifactKind.NpmLock &&
-                trackedSet.Contains(CombineRelative(ScopeRoot(artifactPath), "package.json")))
+            else if (artifactKind == ArtifactKind.NpmLock)
             {
-                parseStatus = ValidateJson(readResult.Content!);
-                if (parseStatus == ArtifactParseStatus.Valid)
+                string ownerPath = CombineRelative(ScopeRoot(artifactPath), "package.json");
+                DirectManifestOwnerCandidate[] candidates = trackedSet.Contains(ownerPath)
+                    ?
+                    [
+                        CreateDirectManifestOwnerCandidate(
+                            ownerPath,
+                            "npm",
+                            await ReadArtifactAsync(ownerPath)),
+                    ]
+                    : [];
+                if (TryValidateDirectManifestOwner(candidates, out _))
                 {
-                    ParseNpmLock(artifactPath, readResult.Content!, evidence, budget);
+                    parseStatus = ValidateJson(readResult.Content!);
+                    if (parseStatus == ArtifactParseStatus.Valid)
+                    {
+                        ParseNpmLock(artifactPath, readResult.Content!, evidence, budget);
+                    }
+                }
+                else
+                {
+                    parseStatus = OwnerFailureStatus(candidates);
                 }
             }
             else
@@ -175,9 +234,16 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             if (parseStatus != ArtifactParseStatus.Valid ||
                 evidence.Count == priorEvidenceCount)
             {
-                budget.RecordAuditOutcome(
-                    auditOutcomes,
-                    CreateAuditOutcome(artifactPath, parseStatus));
+                if (!IsDirectOwnerCoveredByLock(
+                        artifactKind.Value,
+                        ScopeRoot(artifactPath),
+                        nugetLockRoots,
+                        npmLockRoots))
+                {
+                    budget.RecordAuditOutcome(
+                        auditOutcomes,
+                        CreateAuditOutcome(artifactPath, parseStatus));
+                }
             }
         }
 
@@ -495,6 +561,224 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             "package-lock.json" => ArtifactKind.NpmLock,
             _ => null,
         };
+    }
+
+    private static bool IsDirectOwnerCoveredByLock(
+        ArtifactKind artifactKind,
+        string scopeRoot,
+        IReadOnlySet<string> nugetLockRoots,
+        IReadOnlySet<string> npmLockRoots) =>
+        (artifactKind == ArtifactKind.NuGetProject && nugetLockRoots.Contains(scopeRoot)) ||
+        (artifactKind == ArtifactKind.NpmManifest && npmLockRoots.Contains(scopeRoot));
+
+    private static DirectManifestOwnerCandidate CreateDirectManifestOwnerCandidate(
+        string artifactPath,
+        string ecosystem,
+        ArtifactReadResult readResult)
+    {
+        DirectManifestOwnerReadStatus readStatus = readResult.AuditOutcome?.Reason switch
+        {
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsafePath =>
+                DirectManifestOwnerReadStatus.UnsafePath,
+            ScanCandidateOutcomeReasons.FrameworkEvidenceReparsePoint =>
+                DirectManifestOwnerReadStatus.ReparsePoint,
+            ScanCandidateOutcomeReasons.FrameworkEvidenceBoundExceeded =>
+                DirectManifestOwnerReadStatus.BoundExceeded,
+            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported =>
+                DirectManifestOwnerReadStatus.Unreadable,
+            _ => DirectManifestOwnerReadStatus.SafeAndBounded,
+        };
+        DirectManifestOwnerParseStatus parseStatus = readResult.AuditOutcome?.Reason switch
+        {
+            ScanCandidateOutcomeReasons.FrameworkEvidenceMalformed =>
+                DirectManifestOwnerParseStatus.Malformed,
+            null when ecosystem == "nuget" => ValidateNuGetOwnerManifest(readResult.Content!),
+            null when ecosystem == "npm" => ValidateNpmOwnerManifest(readResult.Content!),
+            _ => DirectManifestOwnerParseStatus.Unsupported,
+        };
+        bool applicable = readStatus == DirectManifestOwnerReadStatus.SafeAndBounded &&
+            parseStatus == DirectManifestOwnerParseStatus.ParsedSupported;
+        return new(
+            artifactPath,
+            ScopeRoot(artifactPath),
+            ecosystem,
+            readStatus,
+            parseStatus,
+            applicable);
+    }
+
+    private static bool TryValidateDirectManifestOwner(
+        IReadOnlyList<DirectManifestOwnerCandidate> candidates,
+        out ValidatedDirectManifestOwner? owner)
+    {
+        owner = null;
+        if (candidates.Count != 1)
+        {
+            return false;
+        }
+
+        DirectManifestOwnerCandidate candidate = candidates[0];
+        if (candidate.ReadStatus != DirectManifestOwnerReadStatus.SafeAndBounded ||
+            candidate.ParseStatus != DirectManifestOwnerParseStatus.ParsedSupported ||
+            !candidate.Applicable)
+        {
+            return false;
+        }
+
+        owner = new(
+            candidate.ArtifactPath,
+            candidate.ScopeRoot,
+            candidate.Ecosystem);
+        return true;
+    }
+
+    private static ArtifactParseStatus OwnerFailureStatus(
+        IReadOnlyList<DirectManifestOwnerCandidate> candidates)
+    {
+        DirectManifestOwnerCandidate? invalid = candidates
+            .OrderBy(candidate => candidate.ArtifactPath, StringComparer.Ordinal)
+            .FirstOrDefault(candidate =>
+                candidate.ReadStatus != DirectManifestOwnerReadStatus.SafeAndBounded ||
+                candidate.ParseStatus != DirectManifestOwnerParseStatus.ParsedSupported ||
+                !candidate.Applicable);
+        if (invalid is not null)
+        {
+            return invalid.ReadStatus switch
+            {
+                DirectManifestOwnerReadStatus.UnsafePath => ArtifactParseStatus.UnsafePath,
+                DirectManifestOwnerReadStatus.ReparsePoint => ArtifactParseStatus.ReparsePoint,
+                DirectManifestOwnerReadStatus.BoundExceeded =>
+                    ArtifactParseStatus.ArtifactBoundExceeded,
+                DirectManifestOwnerReadStatus.Unreadable => ArtifactParseStatus.Unsupported,
+                _ => invalid.ParseStatus == DirectManifestOwnerParseStatus.Malformed
+                    ? ArtifactParseStatus.Malformed
+                    : ArtifactParseStatus.Unsupported,
+            };
+        }
+
+        return candidates.Count > 1
+            ? ArtifactParseStatus.AmbiguousScope
+            : ArtifactParseStatus.Unsupported;
+    }
+
+    private static DirectManifestOwnerParseStatus ValidateNuGetOwnerManifest(string content)
+    {
+        ArtifactParseStatus validation = ValidateXml(content);
+        if (validation == ArtifactParseStatus.Malformed)
+        {
+            return DirectManifestOwnerParseStatus.Malformed;
+        }
+
+        if (validation != ArtifactParseStatus.Valid)
+        {
+            return DirectManifestOwnerParseStatus.Unsupported;
+        }
+
+        XDocument? document = ParseXml(content);
+        XElement? project = document?.Root;
+        if (project is null ||
+            !StringComparer.Ordinal.Equals(project.Name.LocalName, "Project"))
+        {
+            return DirectManifestOwnerParseStatus.Unsupported;
+        }
+
+        if (HasCondition(project))
+        {
+            return DirectManifestOwnerParseStatus.ConditionalOrDynamic;
+        }
+
+        var hasLiteralOwnership = false;
+        string? projectSdk = project.Attribute("Sdk")?.Value;
+        if (projectSdk is not null)
+        {
+            if (!IsLiteral(projectSdk))
+            {
+                return DirectManifestOwnerParseStatus.ConditionalOrDynamic;
+            }
+
+            hasLiteralOwnership = true;
+        }
+
+        foreach (XElement sdk in project.Elements()
+                     .Where(element => element.Name.LocalName == "Sdk"))
+        {
+            if (HasCondition(sdk) || !IsLiteral(sdk.Attribute("Name")?.Value))
+            {
+                return DirectManifestOwnerParseStatus.ConditionalOrDynamic;
+            }
+
+            hasLiteralOwnership = true;
+        }
+
+        foreach (XElement declaration in project.Descendants().Where(element =>
+                     element.Name.LocalName is "PackageReference" or "FrameworkReference"))
+        {
+            if (declaration.AncestorsAndSelf().Any(HasCondition) ||
+                !IsLiteral(declaration.Attribute("Include")?.Value))
+            {
+                return DirectManifestOwnerParseStatus.ConditionalOrDynamic;
+            }
+
+            hasLiteralOwnership = true;
+        }
+
+        return hasLiteralOwnership
+            ? DirectManifestOwnerParseStatus.ParsedSupported
+            : DirectManifestOwnerParseStatus.Unsupported;
+    }
+
+    private static DirectManifestOwnerParseStatus ValidateNpmOwnerManifest(string content)
+    {
+        ArtifactParseStatus validation = ValidateJson(content);
+        if (validation == ArtifactParseStatus.Malformed)
+        {
+            return DirectManifestOwnerParseStatus.Malformed;
+        }
+
+        if (validation != ArtifactParseStatus.Valid)
+        {
+            return DirectManifestOwnerParseStatus.Unsupported;
+        }
+
+        using JsonDocument? document = ParseJson(content);
+        if (document is null || document.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            return DirectManifestOwnerParseStatus.Unsupported;
+        }
+
+        var hasLiteralOwnership = false;
+        foreach (string mapName in new[]
+                 {
+                     "dependencies",
+                     "devDependencies",
+                     "optionalDependencies",
+                 })
+        {
+            if (!document.RootElement.TryGetProperty(mapName, out JsonElement dependencies))
+            {
+                continue;
+            }
+
+            if (dependencies.ValueKind != JsonValueKind.Object)
+            {
+                return DirectManifestOwnerParseStatus.Unsupported;
+            }
+
+            foreach (JsonProperty dependency in dependencies.EnumerateObject())
+            {
+                if (dependency.Value.ValueKind != JsonValueKind.String ||
+                    !IsLiteral(dependency.Value.GetString()))
+                {
+                    return DirectManifestOwnerParseStatus.Unsupported;
+                }
+
+                hasLiteralOwnership = true;
+            }
+        }
+
+        return hasLiteralOwnership
+            ? DirectManifestOwnerParseStatus.ParsedSupported
+            : DirectManifestOwnerParseStatus.Unsupported;
     }
 
     private static ArtifactParseStatus ValidateJson(string content)
@@ -1096,13 +1380,6 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         value = default;
         return false;
     }
-
-    private static int CountTrackedNuGetProjects(
-        IReadOnlySet<string> trackedPaths,
-        string scopeRoot) =>
-        trackedPaths.Count(path =>
-            StringComparer.Ordinal.Equals(ScopeRoot(path), scopeRoot) &&
-            path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase));
 
     private static bool HasCondition(XElement element) =>
         element.Attributes().Any(
