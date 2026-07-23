@@ -459,6 +459,21 @@ public sealed class CodeGraphProviderContractTests
     }
 
     [Fact]
+    public void RuntimeDockerfile_AptAcquisition_UsesBoundedRetriesAndTimeouts()
+    {
+        string dockerfile = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docker", "Dockerfile"));
+        const string aptOptions =
+            "-o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30";
+
+        Assert.Contains($"RUN apt-get {aptOptions} update", dockerfile, StringComparison.Ordinal);
+        Assert.Contains(
+            $"&& apt-get {aptOptions} install -y --no-install-recommends git ca-certificates curl",
+            dockerfile,
+            StringComparison.Ordinal);
+        Assert.Equal(2, Regex.Matches(dockerfile, Regex.Escape($"apt-get {aptOptions}")).Count);
+    }
+
+    [Fact]
     public async Task RunnerSourceBindingPreflight_ClaimMismatch_IsExecutableWithoutProvider()
     {
         string runnerPath = Path.Combine(

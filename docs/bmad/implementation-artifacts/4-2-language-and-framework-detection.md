@@ -544,6 +544,19 @@ unchanged.
   and root verification passes 51/51 non-final provider-contract tests.
 - Root-alias Docker-context correction checkpoint:
   `bmad-4-2-implement-20260723T062734Z-f1c8a2` (pending Git binding).
+- The following candidate passed T036 (204/204), T037, and deterministic T038
+  manifest generation, but T039 repeatedly stopped before image creation. The
+  Docker engine was first unavailable; after startup, the active local proxy
+  intermittently returned HTTP 502 for Ubuntu Noble indexes. Command-construction
+  failures and infrastructure failures remain failed attempt evidence; no
+  namespace was consumed and no T039-T044 marker advanced.
+- A focused RED proved the runtime apt layer had no bounded acquisition policy.
+  Both existing apt commands now use five retries and 30-second HTTP/HTTPS
+  timeouts. No proxy, mirror, secret, package, base image, provider pin, or
+  runtime-content change was introduced. Root verification passes 52/52
+  non-final provider-contract tests with zero skips.
+- Docker apt-resilience correction checkpoint:
+  `bmad-4-2-implement-20260723T073700Z-e4d7c1` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

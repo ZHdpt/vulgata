@@ -1689,27 +1689,75 @@
       "observed_at": "2026-07-23T06:27:34.4507877Z",
       "summary": "Root inspection confirmed the two-path bounded correction and independently passed all 51 non-final-image provider-contract tests; only known line-ending warnings remained.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/40",
+      "kind": "failed-infrastructure",
+      "stage": "implement",
+      "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
+      "artifact_paths": ["TestResults/story-4-2-immutable-candidate/13cba2eaffbb48051d8001a2ced8905028548e8e/retry-2-f069abf9ee17/T039-docker-build.txt"],
+      "command": "docker build --no-cache --file docker/Dockerfile with exact source labels and per-build proxy arguments",
+      "exit_code": 1,
+      "observed_at": "2026-07-23T07:37:00.3784013Z",
+      "summary": "T036 passed 204 focused tests, T037 passed all hash and migration checks, and T038 produced the exact 125541-byte source manifest; T039 then stopped because intermittent proxy HTTP 502 responses exhausted the Dockerfile's unconfigured apt acquisition policy. No image or provider evidence was created and T039-T044 remained unchecked.",
+      "raw_output_path": "TestResults/story-4-2-immutable-candidate/13cba2eaffbb48051d8001a2ced8905028548e8e/retry-2-f069abf9ee17/T039-docker-build.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/41",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
+      "artifact_paths": ["tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "dotnet test --filter FullyQualifiedName~RuntimeDockerfile_AptAcquisition_UsesBoundedRetriesAndTimeouts",
+      "exit_code": 1,
+      "observed_at": "2026-07-23T07:37:00.3784013Z",
+      "summary": "Focused RED failed 1 of 1 because neither runtime apt command configured the required bounded acquisition retries and timeouts.",
+      "raw_output_path": "TestResults/story-4-2-corrections/docker-apt-retry/focused-red.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/42",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
+      "artifact_paths": ["docker/Dockerfile", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "focused apt policy test; RuntimeDockerfile tests; non-Docker CodeGraphProviderContractTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-23T07:37:00.3784013Z",
+      "summary": "Correction GREEN passed 1 focused test, 2 RuntimeDockerfile tests, and 52 non-final provider-contract tests with zero skips. Both apt commands now use five retries and 30-second HTTP/HTTPS timeouts without embedding a proxy, mirror, secret, package, or base-image change.",
+      "raw_output_path": "TestResults/story-4-2-corrections/docker-apt-retry/non-final-provider-contract.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/43",
+      "kind": "validation",
+      "stage": "implement",
+      "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
+      "artifact_paths": ["docker/Dockerfile", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "git diff; git diff --check; dotnet test --no-restore --no-build --filter FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_",
+      "exit_code": 0,
+      "observed_at": "2026-07-23T07:37:00.3784013Z",
+      "summary": "Root inspection confirmed the bounded two-path proxy-neutral correction and independently passed all 52 non-final provider-contract tests; only known line-ending warnings remained.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260723T062734Z-f1c8a2",
+    "checkpoint_id": "bmad-4-2-implement-20260723T073700Z-e4d7c1",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      ".dockerignore",
+      "docker/Dockerfile",
       "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/36",
-      "4-2-language-and-framework-detection/implement/37",
-      "4-2-language-and-framework-detection/implement/38",
-      "4-2-language-and-framework-detection/implement/39"
+      "4-2-language-and-framework-detection/implement/40",
+      "4-2-language-and-framework-detection/implement/41",
+      "4-2-language-and-framework-detection/implement/42",
+      "4-2-language-and-framework-detection/implement/43"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-23T06:27:34.4507877Z"
+  "updated_at": "2026-07-23T07:37:00.3784013Z"
 }

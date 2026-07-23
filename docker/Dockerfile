@@ -34,8 +34,8 @@ LABEL org.vulgata.source-commit=${VULGATA_SOURCE_COMMIT} \
 
 # Install the application runtime dependency. CodeGraphContext is copied from
 # the exact, hash-verified build stage above; no runtime resolver is invoked.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends git ca-certificates curl \
+RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update \
+    && apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y --no-install-recommends git ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=codegraph /usr/local /usr/local
