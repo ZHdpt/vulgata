@@ -423,6 +423,26 @@ public sealed class CodeGraphProviderContractTests
     }
 
     [Fact]
+    public async Task CreateProductionSourceManifest_TrackedIgnoredRootClaudeAlias_ProducesCanonicalManifest()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string dockerIgnore = await File.ReadAllTextAsync(Path.Combine(repositoryRoot, ".dockerignore"));
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateWithRootClaudeAliasAsync(dockerIgnore);
+
+        ProductionSourceManifest manifest = CreateProductionSourceManifest(repository.Root);
+
+        string[] patterns = File.ReadAllLines(Path.Combine(repository.Root, ".dockerignore"));
+        Assert.True(IsDockerIgnored("CLAUDE.md", patterns));
+        using JsonDocument document = JsonDocument.Parse(manifest.Bytes);
+        string?[] paths = document.RootElement.GetProperty("entries")
+            .EnumerateArray()
+            .Select(entry => entry.GetProperty("path").GetString())
+            .ToArray();
+        Assert.Contains("AGENTS.md", paths);
+        Assert.DoesNotContain("CLAUDE.md", paths);
+    }
+
+    [Fact]
     public void RuntimeDockerfile_SourceBindingBuildArgumentsAndLabels_AreImmutable()
     {
         string dockerfile = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docker", "Dockerfile"));
@@ -2080,6 +2100,26 @@ public sealed class CodeGraphProviderContractTests
                 repository.Root,
                 "git",
                 ["-c", "commit.gpgsign=false", "commit", "--message", "agent aliases"]));
+            return repository;
+        }
+
+        public static async Task<TemporaryGitRepository> CreateWithRootClaudeAliasAsync(string dockerIgnore)
+        {
+            TemporaryGitRepository repository = await CreateAsync();
+            await File.WriteAllTextAsync(Path.Combine(repository.Root, ".dockerignore"), dockerIgnore);
+            File.Delete(Path.Combine(repository.Root, "ignored.bin"));
+            await File.WriteAllTextAsync(Path.Combine(repository.Root, "AGENTS.md"), "agent instructions\n");
+            await File.WriteAllTextAsync(Path.Combine(repository.Root, "CLAUDE.md"), "AGENTS.md");
+            string blob = (await RunAsync(repository.Root, "git", ["hash-object", "-w", "CLAUDE.md"])).StandardOutput.Trim();
+            EnsureSuccess(await RunAsync(
+                repository.Root,
+                "git",
+                ["update-index", "--add", "--cacheinfo", $"120000,{blob},CLAUDE.md"]));
+            EnsureSuccess(await RunAsync(repository.Root, "git", ["add", ".dockerignore", "AGENTS.md"]));
+            EnsureSuccess(await RunAsync(
+                repository.Root,
+                "git",
+                ["-c", "commit.gpgsign=false", "commit", "--message", "root Claude alias"]));
             return repository;
         }
 

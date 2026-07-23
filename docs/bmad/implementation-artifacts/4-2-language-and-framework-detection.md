@@ -532,6 +532,18 @@ unchanged.
   non-Docker provider-contract tests.
 - Docker-context correction checkpoint:
   `bmad-4-2-implement-20260723T024403Z-c9f1a6` (pending Git binding).
+- On the next immutable candidate, T036 passed 203/203 focused tests with zero
+  skips and T037 matched all nine accepted hashes, generated the two-migration
+  script, and reported no pending model changes. T038 then stopped before the
+  Docker build because tracked root `CLAUDE.md -> AGENTS.md` was another
+  non-ignored mode-120000 alias. The fresh namespace remained unconsumed, the
+  failed preflight remains failed evidence, and T038-T044 stayed unchecked.
+- A focused RED reproduced the root-alias failure. `.dockerignore` now excludes
+  only `CLAUDE.md`; the existing ordered-ignore manifest behavior is unchanged.
+  The focused case passes, all 5 non-ignored-symlink controls remain fail-closed,
+  and root verification passes 51/51 non-final provider-contract tests.
+- Root-alias Docker-context correction checkpoint:
+  `bmad-4-2-implement-20260723T062734Z-f1c8a2` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

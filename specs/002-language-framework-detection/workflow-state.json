@@ -1641,10 +1641,58 @@
       "observed_at": "2026-07-23T02:44:03.9742746Z",
       "summary": "Correction GREEN passed 1 focused alias case, 5 fail-closed repository-state cases, and 50 non-Docker provider-contract tests; ignored agent aliases are excluded while non-ignored tracked symlinks still reject.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/36",
+      "kind": "failed-preflight",
+      "stage": "implement",
+      "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
+      "artifact_paths": ["TestResults/story-4-2-immutable-candidate/df65a770bba8b50270dc71879d01ae909bcb0e92/T038-manifest-preflight-failure-retry3.json"],
+      "command": "CreateProductionSourceManifest at clean immutable candidate after T036 and T037 GREEN",
+      "exit_code": 1,
+      "observed_at": "2026-07-23T06:27:34.4507877Z",
+      "summary": "The second T038 candidate attempt stopped before image/provider execution because tracked root CLAUDE.md was a non-ignored mode-120000 alias to AGENTS.md. T036 passed 203 focused tests and T037 passed all nine hashes, migration script, and pending-model checks; T038-T044 markers remained unchecked.",
+      "raw_output_path": "TestResults/story-4-2-immutable-candidate/df65a770bba8b50270dc71879d01ae909bcb0e92/T038-manifest-preflight-failure-retry3.json"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/37",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
+      "artifact_paths": ["tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "dotnet test --filter FullyQualifiedName~CreateProductionSourceManifest_TrackedIgnoredRootClaudeAlias_ProducesCanonicalManifest",
+      "exit_code": 1,
+      "observed_at": "2026-07-23T06:27:34.4507877Z",
+      "summary": "Focused RED failed 1 of 1 with Production source cannot contain a symlink before CLAUDE.md was excluded from the Docker context.",
+      "raw_output_path": "TestResults/story-4-2-corrections/root-claude-alias/red.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/38",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
+      "artifact_paths": [".dockerignore", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "focused root alias test; invalid repository-state controls; non-Docker CodeGraphProviderContractTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-23T06:27:34.4507877Z",
+      "summary": "Correction GREEN passed 1 focused root-alias case, 5 fail-closed repository-state cases, and 51 non-Docker provider-contract tests with zero skips; ignored CLAUDE.md is excluded while every non-ignored tracked symlink still rejects.",
+      "raw_output_path": "TestResults/story-4-2-corrections/root-claude-alias/green-non-final-provider-contract.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/39",
+      "kind": "validation",
+      "stage": "implement",
+      "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
+      "artifact_paths": [".dockerignore", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "git diff; git diff --check; git status --short; dotnet test --no-restore --no-build --filter FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_",
+      "exit_code": 0,
+      "observed_at": "2026-07-23T06:27:34.4507877Z",
+      "summary": "Root inspection confirmed the two-path bounded correction and independently passed all 51 non-final-image provider-contract tests; only known line-ending warnings remained.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260723T024403Z-c9f1a6",
+    "checkpoint_id": "bmad-4-2-implement-20260723T062734Z-f1c8a2",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
@@ -1654,13 +1702,14 @@
       "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/33",
-      "4-2-language-and-framework-detection/implement/34",
-      "4-2-language-and-framework-detection/implement/35"
+      "4-2-language-and-framework-detection/implement/36",
+      "4-2-language-and-framework-detection/implement/37",
+      "4-2-language-and-framework-detection/implement/38",
+      "4-2-language-and-framework-detection/implement/39"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-23T02:44:03.9742746Z"
+  "updated_at": "2026-07-23T06:27:34.4507877Z"
 }
