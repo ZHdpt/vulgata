@@ -512,6 +512,14 @@ unchanged.
   T035 historical-evidence discovery before immutable-candidate verification.
 - Source-binding implementation checkpoint:
   `bmad-4-2-implement-20260722T084438Z-a8d5c3` (pending Git binding).
+- T035 historical discovery completed against the immutable range
+  `e9824df7300634c19d815bdd7ad591b9fb5366d5..93b99a49a8f8b9974e00d4274fd4c5ba64c467d6`.
+  Six execution groups and all 19 legacy TDD groups are mapped to provable Git
+  objects and durable workflow records. No retained historical raw RED output
+  is claimed; missing trailers and unprovable test-before-production order are
+  explicit. Current T036-T044 evidence remains empty pending T045 finalization.
+- Historical-discovery checkpoint:
+  `bmad-4-2-implement-20260723T013412Z-b7e2d4` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

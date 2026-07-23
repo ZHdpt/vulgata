@@ -143,7 +143,7 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 
 **Purpose**: Use the approved Story 4.2-only exception without converting missing historical process evidence into ordinary TDD satisfaction.
 
-- [ ] T035 Inspect immutable history and existing workflow records for every old TDD group using `git log --reverse --format="%H %P %s%n%b" e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD` and `git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD`; create `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` with exact task-group identities, requirement/test mapping, earliest provable test and implementation commits or explicit null/reason, existing workflow/checkpoint identities only, and truthful `historicalRawRedAvailable`/`checkpointTrailerAvailable` booleans
+- [X] T035 Inspect immutable history and existing workflow records for every old TDD group using `git log --reverse --format="%H %P %s%n%b" e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD` and `git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD`; create `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` with exact task-group identities, requirement/test mapping, earliest provable test and implementation commits or explicit null/reason, existing workflow/checkpoint identities only, and truthful `historicalRawRedAvailable`/`checkpointTrailerAvailable` booleans
 - **Independent validation**: T035 creates only truthful historical discovery/scaffolding. It does not finalize current GREEN evidence; finalization and validation wait for T045-T046 after the immutable-candidate GREEN gates through T044.
 
 ---

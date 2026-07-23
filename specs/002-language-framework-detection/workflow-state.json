@@ -424,6 +424,22 @@
         "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-23T01:21:58.4397292Z",
+      "completed_at": "2026-07-23T01:34:12.0168529Z",
+      "input_commit": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "2f00f424b6ff85f942b5c892ab0c7f5918eb4cce136b79ed0f4be490583f6797",
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "79cd8d6bdc96d9326dfb38626ec51bccc6a04b86fe0289bf2c02206ac088db62"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -432,17 +448,15 @@
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T031-T034 deterministic source-binding implementation, non-Docker tests, task markers, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 T035 historical-evidence discovery ledger, task marker, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "docker/Dockerfile",
-      "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-22T08:44:38.6672307Z"
+    "observed_at": "2026-07-23T01:34:12.0168529Z"
   },
   "source_artifacts": [
     {
@@ -1549,27 +1563,49 @@
       "observed_at": "2026-07-22T08:44:38.6672307Z",
       "summary": "T032-T034 reached GREEN with canonical production-source-manifest-v1, clean Git/context validation, immutable Docker identity labels, and matching runner/verifier source identities; root verification passed 49 non-Docker tests and no provider callback executed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/31",
+      "kind": "historical-tdd-reconstruction",
+      "stage": "implement",
+      "source_commit": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
+      "artifact_paths": ["specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"],
+      "command": "git log --reverse and git diff --name-status over e9824df7300634c19d815bdd7ad591b9fb5366d5..93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
+      "exit_code": 0,
+      "observed_at": "2026-07-23T01:21:58.4397292Z",
+      "summary": "T035 reconstructed six historical execution groups and all 19 legacy TDD groups without claiming retained raw RED output; unavailable trailers and ordering evidence remain explicit.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/32",
+      "kind": "validation",
+      "stage": "implement",
+      "source_commit": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
+      "artifact_paths": ["specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"],
+      "command": "ConvertFrom-Json; git merge-base --is-ancestor; git rev-list --count; git cat-file -e; git rev-parse commit:path; checkpoint trailer validation; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-07-23T01:34:12.0168529Z",
+      "summary": "Root validation passed 16-commit ancestry, 18 workflow records, 32 exact immutable blob OIDs, 11 checkpoint trailers, zero raw historical RED claims, and an empty pending current-candidate evidence section.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260722T084438Z-a8d5c3",
+    "checkpoint_id": "bmad-4-2-implement-20260723T013412Z-b7e2d4",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "docker/Dockerfile",
-      "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/29",
-      "4-2-language-and-framework-detection/implement/30"
+      "4-2-language-and-framework-detection/implement/31",
+      "4-2-language-and-framework-detection/implement/32"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-22T08:44:38.6672307Z"
+  "updated_at": "2026-07-23T01:34:12.0168529Z"
 }

@@ -1,0 +1,548 @@
+{
+  "schemaVersion": "1.0",
+  "evidenceId": "4-2-language-and-framework-detection/implement/31",
+  "kind": "historical-tdd-reconstruction",
+  "stage": "implement",
+  "taskId": "T035",
+  "bmadStoryKey": "4-2-language-and-framework-detection",
+  "featureDirectory": "specs/002-language-framework-detection",
+  "status": "historical-discovery-only",
+  "observedAt": "2026-07-23T01:21:58.4397292Z",
+  "sourceRange": {
+    "baseExclusive": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "head": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
+    "sourceCommit": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
+    "historyCommand": "git log --reverse --format=\"%H %P %s%n%b\" e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD",
+    "pathCommand": "git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD",
+    "historyShape": "linear",
+    "commitCount": 16
+  },
+  "authorityReferences": [
+    {
+      "path": "docs/UBIQUITOUS_LANGUAGE.md",
+      "sha256AtSourceCommit": "2f194eddba4afba8d3569c3390b43812fb39ac91665bf598c77d67323a30bda4"
+    },
+    {
+      "path": "specs/002-language-framework-detection/tasks.md",
+      "sha256AtSourceCommit": "65ce10ccec87b3e0d3d2d81ae19a960e98450ecf80571b0b3fcbe66943fc2f4c"
+    },
+    {
+      "path": "specs/002-language-framework-detection/spec.md",
+      "sha256AtSourceCommit": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956"
+    },
+    {
+      "path": "specs/002-language-framework-detection/plan.md",
+      "sha256AtSourceCommit": "1ff1d9cdcc715826229bcbf2981f18d221f3d067a0d03de19f1e79b50d0f18df"
+    },
+    {
+      "path": "specs/002-language-framework-detection/quickstart.md",
+      "sha256AtSourceCommit": "095b91d28c4c4517c3d8981011c8838fcafdf4b1043b71fc861164b723155664"
+    },
+    {
+      "path": "specs/002-language-framework-detection/workflow-state.json",
+      "sha256AtSourceCommit": "608ef0705043e0978a7f41de3c8f9c7583a9aef9b867d3500d317a21651a6e4f"
+    },
+    {
+      "path": "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "sha256AtSourceCommit": "ebb2d44cce906c3c4189650362dd0b3b28184f9c1e5676a7b8abf55e880d44c4"
+    }
+  ],
+  "historicalEvidencePolicy": {
+    "exceptionScope": "Story 4.2 historical task groups only",
+    "historicalRawRedDefinition": "A retained raw stdout/stderr artifact from the original failing test run, not a later summary, diff, or GREEN rerun.",
+    "checkpointDefinition": "A contemporaneous immutable commit whose message contains a Workflow-Checkpoint trailer that covers the complete legacy TDD group.",
+    "currentGreenSeparation": "T036-T044 current immutable-candidate GREEN evidence is not created or finalized by T035.",
+    "prohibitedInferences": [
+      "A later GREEN result does not prove an earlier RED run.",
+      "A commit containing both tests and implementation does not prove test-before-production order.",
+      "A workflow summary with raw_output_path null is not retained raw RED output.",
+      "A later checkpoint does not retroactively supply a missing contemporaneous group checkpoint."
+    ]
+  },
+  "historicalExecutionGroups": [
+    {
+      "groupId": "historical-provider",
+      "planIdentity": "Historical provider group",
+      "legacyTddGroupIds": ["F2"],
+      "requirementIds": ["FR-015", "FR-017", "SC-006", "AC-7", "story-4.1-provider-completeness-correction"],
+      "milestoneCommits": ["3066e361b6aa43ee3cc735c3c141186fa02a2436"]
+    },
+    {
+      "groupId": "historical-language",
+      "planIdentity": "Historical language group",
+      "legacyTddGroupIds": ["1A", "1B", "1C", "3A"],
+      "requirementIds": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "FR-007", "SC-001", "SC-002", "SC-004", "AC-1", "AC-2", "AC-6"],
+      "milestoneCommits": ["594a8c0cecc76a590764a4ff1a297e816060b789", "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49"]
+    },
+    {
+      "groupId": "historical-catalog-detector",
+      "planIdentity": "Historical catalog/detector group",
+      "legacyTddGroupIds": ["2A", "2B", "2C", "2D", "2E", "2F"],
+      "requirementIds": ["FR-008", "FR-009", "FR-010", "FR-011", "FR-012", "FR-013", "FR-014", "FR-015", "FR-016", "FR-021", "SC-003", "SC-005", "SC-006", "AC-3", "AC-4", "AC-5", "AC-7"],
+      "milestoneCommits": ["b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b"]
+    },
+    {
+      "groupId": "historical-persistence",
+      "planIdentity": "Historical persistence group",
+      "legacyTddGroupIds": ["F1", "2G"],
+      "requirementIds": ["FR-005", "FR-007", "FR-012", "FR-013", "FR-015", "FR-016", "FR-017", "SC-002", "SC-003", "SC-004", "SC-006", "AC-2", "AC-4", "AC-6", "AC-7"],
+      "milestoneCommits": ["3066e361b6aa43ee3cc735c3c141186fa02a2436", "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40", "71a2db8664ed53f4ee592635c920605909b4e218"]
+    },
+    {
+      "groupId": "historical-api-ui-authorization",
+      "planIdentity": "Historical API/UI/authorization group",
+      "legacyTddGroupIds": ["1C", "2G", "3B", "4C", "4D"],
+      "requirementIds": ["FR-006", "FR-007", "FR-012", "FR-013", "FR-015", "FR-018", "FR-019", "FR-020", "SC-002", "SC-003", "SC-004", "SC-006", "SC-007", "SC-008", "AC-2", "AC-4", "AC-6", "AC-7"],
+      "milestoneCommits": ["594a8c0cecc76a590764a4ff1a297e816060b789", "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40", "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49", "2f56d235519774f0d2cc62400a3ad2a2772b67c1"]
+    },
+    {
+      "groupId": "historical-final-image",
+      "planIdentity": "Historical final-image group",
+      "legacyTddGroupIds": ["P1"],
+      "requirementIds": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-015", "FR-017", "SC-001", "SC-004", "SC-006", "AC-1", "AC-6", "AC-7", "story-4.1-provider-completeness-correction"],
+      "milestoneCommits": ["3066e361b6aa43ee3cc735c3c141186fa02a2436", "ba50c8c213929a44a66931fb6d0b420aea55b528"]
+    }
+  ],
+  "legacyTddGroups": [
+    {
+      "groupId": "F1",
+      "identity": "Atomic persistence model and exact recovery",
+      "legacyTaskIds": ["T002", "T003", "T004", "T005", "T006"],
+      "requirementIds": ["FR-005", "FR-007", "FR-012", "FR-013", "FR-015", "FR-017", "SC-002", "SC-003", "SC-004", "SC-006", "AC-2", "AC-4", "AC-6", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "identities": ["Model_LanguageFrameworkDetection_EnforcesAggregateConstraints", "RepositoryProfileDraft_WithMissingLanguageSummary_RejectsBeforePersistence", "Model_HistoricalCodeUnitWithNullLanguage_RemainsReadableAsync", "StartStandaloneRepository_WhenFinalCommitFails_RecoversDurableRunAndKeepsOnlyLocalAuditAsync"]}
+      ],
+      "earliestProvableTestCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "earliestProvableImplementationCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/2"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The workflow record summarizes three behavior failures but raw_output_path is null; the mixed commit cannot prove test-before-production order.",
+      "checkpointTrailerAvailable": true,
+      "checkpoint": {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "checkpointId": "bmad-4-2-foundation-green-20260720T031947Z-t008"}
+    },
+    {
+      "groupId": "F2",
+      "identity": "Story 4.1 provider-completeness correction",
+      "legacyTaskIds": ["T007", "T008"],
+      "requirementIds": ["FR-015", "FR-017", "SC-006", "AC-7", "story-4.1-provider-completeness-correction"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "identities": ["GatewayStartInfo_PrivateProcess_SetsOnlyExecuteCypherQueryLimitAt250001", "ParseEnvelope_WhenReservedCompletenessMetadataIsPresent_RejectsAtomically", "ParseEnvelope_WhenCombinedRowsAre250001_RejectsBeforeRowMapping", "ProductionQueries_ExposeExactlyTwoImmutableProjections"]}
+      ],
+      "earliestProvableTestCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "earliestProvableImplementationCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/3"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The workflow record summarizes seven failures but raw_output_path is null; no original failing stdout/stderr artifact is retained.",
+      "checkpointTrailerAvailable": true,
+      "checkpoint": {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "checkpointId": "bmad-4-2-foundation-green-20260720T031947Z-t008"}
+    },
+    {
+      "groupId": "1A",
+      "identity": "Provider language projection",
+      "legacyTaskIds": ["T009", "T010"],
+      "requirementIds": ["FR-001", "FR-002", "FR-003", "SC-001", "AC-1"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "identities": ["ProjectionA_UsesExactNullableParserLanguageAlias_AndProjectionBRemainsUnchanged", "ParseProjectionA_EpicLanguageMatrix_NormalizesProviderIdentity", "ParseProjectionA_FormKcAndOpenGrammar_NormalizesValidIdentity", "ParseProjectionA_SamePathConflictingStructuralLanguages_RejectsAtomically"]}
+      ],
+      "earliestProvableTestCommit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "earliestProvableImplementationCommit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/4"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The workflow record summarizes parser-language failures but raw_output_path is null; tests and implementation first appear together in the immutable commit.",
+      "checkpointTrailerAvailable": true,
+      "checkpoint": {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "checkpointId": "bmad-4-2-us1-green-20260720T035402Z-t015"}
+    },
+    {
+      "groupId": "1B",
+      "identity": "Language assignment and summaries",
+      "legacyTaskIds": ["T011", "T012"],
+      "requirementIds": ["FR-001", "FR-004", "FR-005", "FR-007", "SC-001", "SC-002", "SC-004", "AC-1", "AC-2", "AC-6"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "identities": ["StartStandaloneRepository_WithParserLanguageProfile_PersistsPerPathLanguagesAndDistinctPathSummariesAsync", "StartStandaloneRepository_WithIncompleteOrConflictingProviderLanguage_PersistsNoProviderAggregateAsync", "ScanRun_Complete_WithNullEmptyOrInvalidCodeUnitLanguage_RejectsDraft", "ScanRun_Complete_WithConflictingLanguagesForOnePath_RejectsDraft"]}
+      ],
+      "earliestProvableTestCommit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "earliestProvableImplementationCommit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/5"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The workflow record summarizes complete-draft failures but raw_output_path is null; tests and implementation first appear together.",
+      "checkpointTrailerAvailable": true,
+      "checkpoint": {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "checkpointId": "bmad-4-2-us1-green-20260720T035402Z-t015"}
+    },
+    {
+      "groupId": "1C",
+      "identity": "Authorized language overview",
+      "legacyTaskIds": ["T013", "T014", "T015"],
+      "requirementIds": ["FR-005", "FR-006", "FR-018", "FR-019", "SC-002", "SC-007", "SC-008", "AC-2", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "identities": ["ManagementScanRunRoutes_AuthorizedResponse_ContainsEverySortedLanguageAndDistinctFileCountAsync", "ManagementScanRunRoutes_WhenVisibilityIsRedacted_ReturnNotFoundWithoutLanguageDisclosureAsync", "ManagementScanRunRoutes_UserWithoutManagementAccess_ReturnForbiddenAsync"]},
+        {"path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "identities": ["RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseSortedLanguageDistribution"]}
+      ],
+      "earliestProvableTestCommit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "earliestProvableImplementationCommit": "594a8c0cecc76a590764a4ff1a297e816060b789",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/6"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The workflow record summarizes three missing-overview failures but raw_output_path is null.",
+      "checkpointTrailerAvailable": true,
+      "checkpoint": {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "checkpointId": "bmad-4-2-us1-green-20260720T035402Z-t015"}
+    },
+    {
+      "groupId": "2A",
+      "identity": "Closed catalog",
+      "legacyTaskIds": ["T016", "T017"],
+      "requirementIds": ["FR-008", "FR-009", "FR-012", "FR-014", "FR-021", "SC-003", "SC-005", "AC-3", "AC-4", "AC-5"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "identities": ["Load_UnknownRootField_ThrowsInvalidDataException", "Load_DuplicateCoordinate_ThrowsInvalidDataException", "Load_AmbiguousCoordinate_ThrowsInvalidDataException", "LoadEmbedded_InitialCoordinates_MatchAcceptedClosedCatalog", "Program_Startup_RegistersValidatedEmbeddedCatalog"]}
+      ],
+      "earliestProvableTestCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "earliestProvableImplementationCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/7"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null; the commit contains tests and implementation together.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "2B",
+      "identity": "Bounded deterministic evidence parsers",
+      "legacyTaskIds": ["T018", "T019"],
+      "requirementIds": ["FR-008", "FR-009", "FR-010", "FR-011", "FR-012", "FR-014", "FR-021", "SC-003", "SC-005", "AC-3", "AC-4", "AC-5"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "identities": ["DetectAsync_TrackedLiteralDirectEvidence_ReturnsExactCatalogMatchesAsync", "DetectAsync_PairedCommittedLocks_ReturnsExactTransitiveMatchesAsync", "DetectAsync_UntrackedIgnoredAndUnpairedLocks_ReturnsNoMatchesAsync", "DetectAsync_DynamicConditionalAndUnsupportedDeclarations_ReturnsNoMatchesAsync", "DetectAsync_ForbiddenExecutionInferenceAndExternalSurfaces_ReturnsNoMatchesAsync"]}
+      ],
+      "earliestProvableTestCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "earliestProvableImplementationCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/7"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null; no raw original RED exists.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "2C",
+      "identity": "Scope, language, and ambiguity",
+      "legacyTaskIds": ["T020", "T021"],
+      "requirementIds": ["FR-010", "FR-011", "FR-013", "FR-014", "FR-021", "SC-003", "AC-3", "AC-5"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "identities": ["DetectApplicableAsync_NestedManifest_SelectsDeepestAncestorScopeAsync", "DetectApplicableAsync_ParserLanguage_SelectsIndependentColocatedEcosystemAsync", "DetectApplicableAsync_SameEcosystemSameRootAmbiguity_ReturnsNoMatchesAsync", "DetectApplicableAsync_UnpairedOrOutOfScopeEvidence_ReturnsNoMatchesAsync"]}
+      ],
+      "earliestProvableTestCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "earliestProvableImplementationCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/8"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "2D",
+      "identity": "Ranking, deduplication, and safe locators",
+      "legacyTaskIds": ["T022", "T023"],
+      "requirementIds": ["FR-012", "FR-013", "FR-014", "FR-015", "SC-003", "SC-006", "AC-4", "AC-5", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "identities": ["DetectApplicableAsync_DirectAndPairedLock_PreservesSingleDirectWinnerAsync", "DetectApplicableAsync_NestedDuplicateFramework_SelectsDeepestThenOrdinalSourceAsync", "DetectApplicableAsync_ExactDuplicates_CollapseToThreeClosedSafeLocatorFormsAsync", "DetectAsync_RepositoryRelativePathAndLocatorBounds_RejectOversizeEvidenceAsync"]}
+      ],
+      "earliestProvableTestCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "earliestProvableImplementationCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/8"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "2E",
+      "identity": "Per-artifact safety and isolation",
+      "legacyTaskIds": ["T024", "T025"],
+      "requirementIds": ["FR-015", "FR-016", "SC-006", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "identities": ["DetectDetailedAsync_PerArtifactEightMiBBound_IsolatesOversizeEvidenceAsync", "DetectDetailedAsync_ParseDepth64Bound_IsolatesDeeperEvidenceAsync", "DetectDetailedAsync_MalformedAndUnsupportedArtifacts_UseClosedSafeChineseAuditsAsync", "DetectDetailedAsync_EscapeAndReparsePoint_AreRejectedWithoutDisclosureAsync"]}
+      ],
+      "earliestProvableTestCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "earliestProvableImplementationCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/9"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "2F",
+      "identity": "Repository-global fail-closed limits",
+      "legacyTaskIds": ["T026", "T027"],
+      "requirementIds": ["FR-015", "FR-016", "FR-017", "SC-003", "SC-005", "SC-006", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "identities": ["FrameworkDetectionLimits_ProductionDefaults_MatchAcceptedRepositoryBounds", "DetectDetailedAsync_AggregateArtifactBytesOverflow_FailsClosedWithoutPartialFactsAsync", "DetectDetailedAsync_ParsedEntryOverflow_FailsClosedWithoutPartialFactsAsync", "DetectDetailedAsync_CandidateFactOverflow_FailsClosedWithoutPartialFactsAsync", "DetectDetailedAsync_UnexpectedDetectorFailure_ReturnsClosedSafeFailureAsync"]}
+      ],
+      "earliestProvableTestCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "earliestProvableImplementationCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/10"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "2G",
+      "identity": "Framework persistence and authorized overview",
+      "legacyTaskIds": ["T028", "T029"],
+      "requirementIds": ["FR-008", "FR-010", "FR-011", "FR-012", "FR-013", "FR-016", "FR-018", "FR-019", "FR-021", "SC-003", "SC-005", "SC-008", "AC-3", "AC-4", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "identities": ["ScanRun_FrameworkEvidenceAuditTotalOutcomeCount_PersistsCompleteCountBeyondRetainedDetailsAsync", "StartStandaloneRepository_WithFrameworkEvidence_PersistsScopedRankedLanguageFactsInOnePassAsync", "StartStandaloneRepository_WhenFrameworkDetectorFails_PersistsNoStructuralDraftAsync"]},
+        {"path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "identities": ["ManagementScanRunRoutes_AuthorizedResponse_ContainsSortedFrameworksAndSharedAuditSamplesAsync"]},
+        {"path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "identities": ["RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseFrameworkEvidenceOverview"]}
+      ],
+      "earliestProvableTestCommit": "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40",
+      "earliestProvableImplementationCommit": "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/11"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null; tests and implementation first appear in one commit.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit 2e2e0dfd2d754b490cc8024eb95dabc35bdafc40 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "3A",
+      "identity": "Unknown-language reconciliation and persistence",
+      "legacyTaskIds": ["T030", "T031"],
+      "requirementIds": ["FR-004", "FR-007", "SC-004", "AC-6"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "identities": ["ParseProjectionA_SupportedFileWithoutParserIdentity_FiltersOnceAndRemovesAllStructure"]},
+        {"path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "identities": ["StartStandaloneRepository_WhenEligibleCandidateIsAbsentFromCompleteProvider_FiltersUnknownLanguageOnceAsync"]}
+      ],
+      "earliestProvableTestCommit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49",
+      "earliestProvableImplementationCommit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/12"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit 511aa7cb5a74e96881737b8cb3d6f4bbfae18e49 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "3B",
+      "identity": "Complete authorized unknown-language audit overview",
+      "legacyTaskIds": ["T032", "T033", "T034"],
+      "requirementIds": ["FR-006", "FR-007", "FR-018", "FR-019", "SC-004", "SC-007", "SC-008", "AC-6", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "identities": ["ManagementScanRunRoute_AuthorizedResponse_ContainsAllTenThousandSortedUnknownPathsAsync", "ManagementScanRunRoute_AuthorizedResponse_ContainsAllUnknownPathsAtSixteenMebibyteBoundAsync", "ManagementScanRunStartRoute_WhenCandidateAuditBoundIsExceeded_ReturnsBadRequestAsync"]},
+        {"path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "identities": ["RepositoryDetailDialog_AfterSuccessfulProfiling_RendersEverySortedUnknownLanguagePath"]}
+      ],
+      "earliestProvableTestCommit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49",
+      "earliestProvableImplementationCommit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/13"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "Only a GREEN summary is retained and raw_output_path is null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit 511aa7cb5a74e96881737b8cb3d6f4bbfae18e49 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "4A",
+      "identity": "Provider and Repository-global atomicity",
+      "legacyTaskIds": ["T035", "T036"],
+      "requirementIds": ["FR-015", "FR-016", "FR-017", "SC-006", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "identities": ["StartStandaloneRepository_WithAdversarialGlobalFailure_RetainsOnlyLocalAuditAndTerminalizesSafelyAsync"]}
+      ],
+      "earliestProvableTestCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "earliestProvableImplementationCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/14"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The group is represented only inside a combined GREEN summary with raw_output_path null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit 2f56d235519774f0d2cc62400a3ad2a2772b67c1 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "4B",
+      "identity": "Individual evidence isolation and redaction",
+      "legacyTaskIds": ["T037", "T038"],
+      "requirementIds": ["FR-015", "FR-016", "SC-006", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "identities": ["StartStandaloneRepository_WithInvalidIndividualFrameworkEvidence_IsolatesClosedAuditAndRetainsValidFactAsync", "StartStandaloneRepository_WithSaturatedAuditAndRepeatedAmbiguity_CountsUniqueCompleteOutcomesOnceAsync"]}
+      ],
+      "earliestProvableTestCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "earliestProvableImplementationCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/14"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The group is represented only inside a combined GREEN summary with raw_output_path null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit 2f56d235519774f0d2cc62400a3ad2a2772b67c1 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "4C",
+      "identity": "Durable and user-visible disclosure",
+      "legacyTaskIds": ["T039", "T040"],
+      "requirementIds": ["FR-015", "FR-017", "FR-018", "FR-019", "SC-006", "SC-007", "SC-008", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "identities": ["RecoverFailedFinalCommitAsync_WithAdversarialDiagnostic_PersistsClosedChineseFailureAsync", "StartStandaloneRepository_WithAdversarialGitFailure_ReturnsAndPersistsClosedChineseFailureAsync"]},
+        {"path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "identities": ["ManagementScanRunRoute_WithDurableFrameworkAudit_ReturnsClosedChineseDetailAsync", "ManagementScanRunStartRoute_WithAdversarialProviderFailure_ReturnsClosedChineseProblemAsync", "ManagementScanRunRoute_WithAdversarialDurableTerminalMessage_ReturnsClosedChineseSummaryAsync"]},
+        {"path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "identities": ["RepositoryDetailDialog_WithAdversarialProviderFailure_RendersClosedChineseError", "RepositoryDetailDialog_WithAdversarialLoadException_RendersClosedChineseError"]}
+      ],
+      "earliestProvableTestCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "earliestProvableImplementationCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/14"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The group is represented only inside a combined GREEN summary with raw_output_path null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit 2f56d235519774f0d2cc62400a3ad2a2772b67c1 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "4D",
+      "identity": "Existing authorization and objective Chinese presentation",
+      "legacyTaskIds": ["T041", "T042", "T043", "T044"],
+      "requirementIds": ["FR-006", "FR-007", "FR-012", "FR-013", "FR-018", "FR-019", "FR-020", "SC-007", "SC-008", "AC-2", "AC-4", "AC-6", "AC-7"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "identities": ["ManagementScanRunRoutes_Unauthenticated_ReturnUnauthorizedWithoutProfilingDisclosureAsync", "ManagementSystemScanRunStart_WhenVisibilityWasRevoked_ReturnsNotFoundWithoutProfilingDisclosureAsync", "ManagementSystemScanRunRead_WhenVisibilityIsRevokedDuringRead_ReturnsNotFoundWithoutProfilingDisclosureAsync"]},
+        {"path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "identities": ["RepositoryDetailDialog_AfterRepresentativeProfiling_RendersEveryObjectiveFactAndChineseLabel"]}
+      ],
+      "earliestProvableTestCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "earliestProvableImplementationCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/14"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The group is represented only inside a combined GREEN summary with raw_output_path null.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit 2f56d235519774f0d2cc62400a3ad2a2772b67c1 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    },
+    {
+      "groupId": "P1",
+      "identity": "Mandatory exact final-image gate",
+      "legacyTaskIds": ["T045", "T046", "T047"],
+      "requirementIds": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-015", "FR-017", "SC-001", "SC-004", "SC-006", "AC-1", "AC-6", "AC-7", "story-4.1-provider-completeness-correction"],
+      "tests": [
+        {"path": "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs", "identities": ["ProviderFixture_EmptyFileAndManyRows_AreExactCompletionInputs", "FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract"]}
+      ],
+      "earliestProvableTestCommit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "earliestProvableImplementationCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436",
+      "implementationCommitReason": "The provider limit and completeness production behavior first appears at 3066e361; the final-image runner, verifier, and fixtures first appear together at ba50c8c.",
+      "testHarnessMilestoneCommit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+      "workflowEvidenceIds": ["4-2-language-and-framework-detection/implement/15", "4-2-language-and-framework-detection/implement/16"],
+      "historicalRawRedAvailable": false,
+      "historicalRawRedUnavailableReason": "The retained raw artifact is GREEN provider-contract evidence. No raw original failing output is retained, and the GREEN file is not RED evidence.",
+      "checkpointTrailerAvailable": false,
+      "checkpointUnavailableReason": "Commit ba50c8c213929a44a66931fb6d0b420aea55b528 has no Workflow-Checkpoint trailer.",
+      "checkpoint": null
+    }
+  ],
+  "workflowHistoricalRecords": [
+    {"evidenceId": "4-2-language-and-framework-detection/implement/2", "kind": "test-green", "sourceCommit": "e9824df7300634c19d815bdd7ad591b9fb5366d5", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/3", "kind": "test-green", "sourceCommit": "e9824df7300634c19d815bdd7ad591b9fb5366d5", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/4", "kind": "test-green", "sourceCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/5", "kind": "test-green", "sourceCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/6", "kind": "test-green", "sourceCommit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/7", "kind": "test-green", "sourceCommit": "594a8c0cecc76a590764a4ff1a297e816060b789", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/8", "kind": "test-green", "sourceCommit": "594a8c0cecc76a590764a4ff1a297e816060b789", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/9", "kind": "test-green", "sourceCommit": "594a8c0cecc76a590764a4ff1a297e816060b789", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/10", "kind": "test-green", "sourceCommit": "594a8c0cecc76a590764a4ff1a297e816060b789", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/11", "kind": "test-green", "sourceCommit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/12", "kind": "test-green", "sourceCommit": "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/13", "kind": "test-green", "sourceCommit": "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/14", "kind": "test-green", "sourceCommit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/15", "kind": "human-approval", "sourceCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/16", "kind": "test-green", "sourceCommit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1", "rawOutputPath": "TestResults/codegraph-provider-contract/8e8d3333adb3b5845f19740b3d330718ac685bacfb253caffd5b0f5951915b92/evidence.json"},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/17", "kind": "test-red", "sourceCommit": "ba50c8c213929a44a66931fb6d0b420aea55b528", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/18", "kind": "test-green", "sourceCommit": "ba50c8c213929a44a66931fb6d0b420aea55b528", "rawOutputPath": null},
+    {"evidenceId": "4-2-language-and-framework-detection/implement/19", "kind": "test-green", "sourceCommit": "71a2db8664ed53f4ee592635c920605909b4e218", "rawOutputPath": "TestResults/codegraph-provider-contract/ca106f80f53442b067d925f516595b29172671ebbb11d78c8d1503bf02462486/evidence.json"}
+  ],
+  "retainedHistoricalGreenArtifacts": [
+    {
+      "path": "TestResults/codegraph-provider-contract/8e8d3333adb3b5845f19740b3d330718ac685bacfb253caffd5b0f5951915b92/evidence.json",
+      "sha256": "ac4f8c4ccd5ac8c6ea056834de35b82cfd3da4c2c8b15382801b98ada14d36bc",
+      "classification": "historical-green-only",
+      "notHistoricalRed": true
+    },
+    {
+      "path": "TestResults/codegraph-provider-contract/ca106f80f53442b067d925f516595b29172671ebbb11d78c8d1503bf02462486/evidence.json",
+      "sha256": "7d0c4ab90d891d25a38aa9802f57ca518403130500de82798d8be3f7bf0d2332",
+      "classification": "historical-green-only",
+      "notHistoricalRed": true
+    }
+  ],
+  "observedCheckpointTrailers": [
+    {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "checkpointId": "bmad-4-2-foundation-green-20260720T031947Z-t008", "stage": "implement"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "checkpointId": "bmad-4-2-us1-green-20260720T035402Z-t015", "stage": "implement"},
+    {"commit": "71a2db8664ed53f4ee592635c920605909b4e218", "checkpointId": "bmad-4-2-implement-20260720T104752Z-c7a3e1", "stage": "implement"},
+    {"commit": "27d553820436910c3a104673011bc69dfaca1148", "checkpointId": "bmad-4-2-review-20260720T105628Z-d4b920", "stage": "acceptance-review"},
+    {"commit": "eefa1794a57227428376a6d838593485e491a79b", "checkpointId": "bmad-4-2-review-20260720T111635Z-e8c4a2", "stage": "acceptance-review"},
+    {"commit": "216985b812613ad20994d300fae072b69093e6b6", "checkpointId": "bmad-4-2-plan-20260720T124952Z-a4c912", "stage": "plan-review"},
+    {"commit": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5", "checkpointId": "bmad-4-2-analyze-20260722T014436Z-c5d8a1", "stage": "analyze"},
+    {"commit": "95fb573320cca4743682a11b30e2f09aabf8b36b", "checkpointId": "bmad-4-2-implement-20260722T061843Z-d9b4e2", "stage": "implement"},
+    {"commit": "d3e81661c1e852a145781563eacd6dcca802f98e", "checkpointId": "bmad-4-2-implement-20260722T073424Z-f3a7c2", "stage": "implement"},
+    {"commit": "017b3f38d14057d2908fb355ed0a3e939501b049", "checkpointId": "bmad-4-2-implement-20260722T080736Z-e6c4b1", "stage": "implement"},
+    {"commit": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6", "checkpointId": "bmad-4-2-implement-20260722T084438Z-a8d5c3", "stage": "implement"}
+  ],
+  "immutableArtifactReferences": [
+    {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "gitBlobOid": "cf67b6cbabdb03d45699a68c11f438903a227206"},
+    {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "f0f151e518f74fe103f3060f549bb3cbbade0e27"},
+    {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs", "gitBlobOid": "589cd382228c9741a073c5a9e1243faad33e5dc3"},
+    {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs", "gitBlobOid": "3fd8c60383258b3a6a86c28355b0df9edbe5ad87"},
+    {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs", "gitBlobOid": "fc6f7c5173c648f20b6f8dde05e466f362a166a7"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "gitBlobOid": "beddebde8223a0413b1702aa55603dc8172a062d"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "fff0d6f97cc93bafda4df0b1d043b79ca439e7a5"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "gitBlobOid": "39f2c789d062a75d40b78fd18688af067dfacf1f"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "gitBlobOid": "4a4ef15be422b8128f6967193246bbca84a89dcc"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs", "gitBlobOid": "26c29f93cc25cb3771626d646bc3c1d977aa6f1e"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs", "gitBlobOid": "7c6752a2f75e896e88102e6489f63fd4108f6a78"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs", "gitBlobOid": "8e31fe45ab964da58fb04f97472c0fc3f18c7461"},
+    {"commit": "594a8c0cecc76a590764a4ff1a297e816060b789", "path": "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor", "gitBlobOid": "81680b9eb6d2baabaae38aaa8909784ac1c89cea"},
+    {"commit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b", "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "gitBlobOid": "b7612134d3897a35fbd1f32c4b7dcc1b914cc3a0"},
+    {"commit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b", "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs", "gitBlobOid": "bbea4d97ee6ec0bf66b982016f10cfcda413fa42"},
+    {"commit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b", "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json", "gitBlobOid": "9d523262f58c629626bf696db291241cb9a2250f"},
+    {"commit": "b4363acc4dacc39ac6f6420b9dcb8f8fb85a315b", "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs", "gitBlobOid": "32788acfc0c0387d613ee41099d195cb8edd0c4e"},
+    {"commit": "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "f7a486a4e9590c88a18950ec8c74df57c2f591f7"},
+    {"commit": "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40", "path": "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs", "gitBlobOid": "903a01cc16fd5a2ae3c1d14fc06c1b879651f910"},
+    {"commit": "2e2e0dfd2d754b490cc8024eb95dabc35bdafc40", "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs", "gitBlobOid": "f0a4a276b3f3b07438cbfb5447df50a9c8c87913"},
+    {"commit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49", "path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "gitBlobOid": "bae1eb77165cd1322634d6a959703a5ed89ef373"},
+    {"commit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49", "path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "gitBlobOid": "7584285cd3f4b3f4ba095d04573e462426535610"},
+    {"commit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "1ae7bfcdbda4c9c9751b05b966980c7572d3a861"},
+    {"commit": "511aa7cb5a74e96881737b8cb3d6f4bbfae18e49", "path": "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs", "gitBlobOid": "69299950bf30a1bbd846e9b8a34f44bbdf8a1197"},
+    {"commit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1", "path": "tests/Vulgata.Tests/RepositoryApiTests.cs", "gitBlobOid": "2fb8df86eb8246da8535ff5b9336daab372d31af"},
+    {"commit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1", "path": "tests/Vulgata.Tests/DashboardPanelTests.cs", "gitBlobOid": "76aca14ce05b4c34c0468a20dc642550b0f33f69"},
+    {"commit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "2f6e7edb68d5b454d1f23c234239001cfc43a2e3"},
+    {"commit": "2f56d235519774f0d2cc62400a3ad2a2772b67c1", "path": "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs", "gitBlobOid": "55ae85f4aa4242bcd1d3a8bc5df4c9ee9118e4f3"},
+    {"commit": "ba50c8c213929a44a66931fb6d0b420aea55b528", "path": "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs", "gitBlobOid": "46e193a8733fff82db0cff59cb5ef2ac15cb55a2"},
+    {"commit": "ba50c8c213929a44a66931fb6d0b420aea55b528", "path": "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py", "gitBlobOid": "72932825caad15b8a419bb42d0059bd5c898261f"},
+    {"commit": "ba50c8c213929a44a66931fb6d0b420aea55b528", "path": "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs", "gitBlobOid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"},
+    {"commit": "ba50c8c213929a44a66931fb6d0b420aea55b528", "path": "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py", "gitBlobOid": "9a0181381275e21e57038e343b197910657dc8cb"}
+  ],
+  "postHistoricalReviewCorrectionRecords": {
+    "evidenceIds": [
+      "4-2-language-and-framework-detection/implement/17",
+      "4-2-language-and-framework-detection/implement/18",
+      "4-2-language-and-framework-detection/implement/19"
+    ],
+    "historicalRawRedAvailable": false,
+    "reason": "Evidence 17 is a durable RED summary with raw_output_path null. Evidence 18 is GREEN without raw output. Evidence 19 references retained GREEN provider-contract evidence."
+  },
+  "currentImmutableCandidateGreenEvidence": {
+    "status": "pending-t045-finalization",
+    "taskIds": ["T036", "T037", "T038", "T039", "T040", "T041", "T042", "T043", "T044"],
+    "sourceCommit": null,
+    "commands": [],
+    "rawOutputPaths": [],
+    "reason": "T035 is discovery/scaffolding only. Current immutable-candidate GREEN evidence must be recorded separately by T045 after T036-T044 complete."
+  },
+  "uncertainties": [
+    {
+      "id": "historical-order-unprovable",
+      "statement": "For every legacy group, the earliest immutable commit containing its tests also contains its implementation or test harness. Immutable Git proves co-presence, not the order in which the files were authored or commands were run."
+    },
+    {
+      "id": "workflow-source-is-prechange-boundary",
+      "statement": "Several workflow records use the pre-change source boundary as source_commit. Earliest content commits in this ledger come from Git object inspection and are not replaced by those pre-change evidence boundaries."
+    },
+    {
+      "id": "green-artifacts-are-not-red",
+      "statement": "The two retained provider-contract evidence paths are historical GREEN artifacts and are never classified as historical RED."
+    }
+  ]
+}
