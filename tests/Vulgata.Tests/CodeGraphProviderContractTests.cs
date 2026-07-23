@@ -402,6 +402,27 @@ public sealed class CodeGraphProviderContractTests
     }
 
     [Fact]
+    public async Task CreateProductionSourceManifest_TrackedIgnoredDevelopmentAgentAliases_ProducesCanonicalManifest()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string dockerIgnore = await File.ReadAllTextAsync(Path.Combine(repositoryRoot, ".dockerignore"));
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateWithAgentAliasesAsync(dockerIgnore);
+
+        ProductionSourceManifest manifest = CreateProductionSourceManifest(repository.Root);
+
+        string[] patterns = File.ReadAllLines(Path.Combine(repository.Root, ".dockerignore"));
+        Assert.True(IsDockerIgnored(".claude/skills", patterns));
+        Assert.True(IsDockerIgnored(".trae/skills", patterns));
+        using JsonDocument document = JsonDocument.Parse(manifest.Bytes);
+        string?[] paths = document.RootElement.GetProperty("entries")
+            .EnumerateArray()
+            .Select(entry => entry.GetProperty("path").GetString())
+            .ToArray();
+        Assert.DoesNotContain(".claude/skills", paths);
+        Assert.DoesNotContain(".trae/skills", paths);
+    }
+
+    [Fact]
     public void RuntimeDockerfile_SourceBindingBuildArgumentsAndLabels_AreImmutable()
     {
         string dockerfile = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docker", "Dockerfile"));
@@ -1660,6 +1681,7 @@ public sealed class CodeGraphProviderContractTests
         ProcessResult indexResult = RunGit(repositoryRoot, ["ls-files", "--stage", "-z"]);
         EnsureGitSuccess(indexResult, "enumerate tracked Docker-context entries");
         var trackedPaths = new List<string>();
+        var ignoredTrackedSymlinks = new HashSet<string>(StringComparer.Ordinal);
         foreach (string record in indexResult.StandardOutput.Split('\0', StringSplitOptions.RemoveEmptyEntries))
         {
             int separator = record.IndexOf('\t');
@@ -1675,9 +1697,15 @@ public sealed class CodeGraphProviderContractTests
                 throw new InvalidDataException("Git index contains an unresolved or malformed entry.");
             }
 
-            if (metadata[0] == "120000")
+            if (metadata[0] == "120000"
+                && (path is ".dockerignore" or "docker/Dockerfile" || !IsDockerIgnored(path, dockerIgnorePatterns)))
             {
                 throw new InvalidDataException("Production source cannot contain a symlink.");
+            }
+
+            if (metadata[0] == "120000")
+            {
+                ignoredTrackedSymlinks.Add(path);
             }
 
             trackedPaths.Add(path);
@@ -1696,6 +1724,11 @@ public sealed class CodeGraphProviderContractTests
 
         foreach (string path in trackedPaths)
         {
+            if (ignoredTrackedSymlinks.Contains(path))
+            {
+                continue;
+            }
+
             string fullPath = Path.Combine(repositoryRoot, path.Replace('/', Path.DirectorySeparatorChar));
             if (!File.Exists(fullPath))
             {
@@ -2019,9 +2052,35 @@ public sealed class CodeGraphProviderContractTests
             EnsureSuccess(await RunAsync(root, "git", ["config", "user.name", "Vulgata Contract Test"]));
             EnsureSuccess(await RunAsync(root, "git", ["config", "user.email", "contract-test@vulgata.invalid"]));
             EnsureSuccess(await RunAsync(root, "git", ["config", "core.ignorecase", "false"]));
+            EnsureSuccess(await RunAsync(root, "git", ["config", "core.symlinks", "false"]));
             EnsureSuccess(await RunAsync(root, "git", ["add", ".dockerignore", "docker/Dockerfile", "included.txt"]));
             EnsureSuccess(await RunAsync(root, "git", ["-c", "commit.gpgsign=false", "commit", "--message", "fixture"]));
             return new TemporaryGitRepository(root);
+        }
+
+        public static async Task<TemporaryGitRepository> CreateWithAgentAliasesAsync(string dockerIgnore)
+        {
+            TemporaryGitRepository repository = await CreateAsync();
+            await File.WriteAllTextAsync(Path.Combine(repository.Root, ".dockerignore"), dockerIgnore);
+            File.Delete(Path.Combine(repository.Root, "ignored.bin"));
+            foreach (string path in new[] { ".claude/skills", ".trae/skills" })
+            {
+                string fullPath = Path.Combine(repository.Root, path.Replace('/', Path.DirectorySeparatorChar));
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+                await File.WriteAllTextAsync(fullPath, "../.agents/skills");
+                string blob = (await RunAsync(repository.Root, "git", ["hash-object", "-w", path])).StandardOutput.Trim();
+                EnsureSuccess(await RunAsync(
+                    repository.Root,
+                    "git",
+                    ["update-index", "--add", "--cacheinfo", $"120000,{blob},{path}"]));
+            }
+
+            EnsureSuccess(await RunAsync(repository.Root, "git", ["add", ".dockerignore"]));
+            EnsureSuccess(await RunAsync(
+                repository.Root,
+                "git",
+                ["-c", "commit.gpgsign=false", "commit", "--message", "agent aliases"]));
+            return repository;
         }
 
         public async Task ApplyInvalidStateAsync(string caseId)

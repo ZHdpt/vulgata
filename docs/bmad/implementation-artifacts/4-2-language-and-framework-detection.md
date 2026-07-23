@@ -520,6 +520,18 @@ unchanged.
   explicit. Current T036-T044 evidence remains empty pending T045 finalization.
 - Historical-discovery checkpoint:
   `bmad-4-2-implement-20260723T013412Z-b7e2d4` (pending Git binding).
+- The first immutable-candidate run passed T036 (202/202 focused tests) and
+  T037 (all accepted hashes, migration script, and no pending model changes)
+  but stopped at T038 before image/provider execution because tracked agent
+  aliases `.claude/skills` and `.trae/skills` were non-ignored symlinks. No
+  T036-T044 marker advanced and the failed preflight remains failed evidence.
+- A focused RED reproduced the alias failure. `.dockerignore` now excludes only
+  `.claude/` and `.trae/`, and manifest evaluation applies ordered ignore rules
+  before physical validation for ignored mode-120000 entries. Non-ignored
+  tracked symlinks remain fail-closed. Root verification passes 50/50
+  non-Docker provider-contract tests.
+- Docker-context correction checkpoint:
+  `bmad-4-2-implement-20260723T024403Z-c9f1a6` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

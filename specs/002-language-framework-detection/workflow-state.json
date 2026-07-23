@@ -440,23 +440,41 @@
         "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-23T01:34:12.0168529Z",
+      "completed_at": "2026-07-23T02:44:03.9742746Z",
+      "input_commit": "692f95aae7f82192b80d6ffaf68e1af674256039",
+      "input_hashes": {
+        ".dockerignore": "996a88388410adbc87c37ddcae6088ed9763fbf918e466a0a32d5309c254c666",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "6616b74ba5918a1ce77aa55674f518ff20d8ac74617c0b9eddc2208764d7ffed"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        ".dockerignore",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "TestResults/story-4-2-immutable-candidate/692f95aae7f82192b80d6ffaf68e1af674256039/T038-manifest-preflight-failure.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "017b3f38d14057d2908fb355ed0a3e939501b049",
+    "preflight_head": "692f95aae7f82192b80d6ffaf68e1af674256039",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T035 historical-evidence discovery ledger, task marker, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 T038 Docker-context symlink correction, regression test, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
+      ".dockerignore",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-23T01:34:12.0168529Z"
+    "observed_at": "2026-07-23T02:44:03.9742746Z"
   },
   "source_artifacts": [
     {
@@ -1587,25 +1605,62 @@
       "observed_at": "2026-07-23T01:34:12.0168529Z",
       "summary": "Root validation passed 16-commit ancestry, 18 workflow records, 32 exact immutable blob OIDs, 11 checkpoint trailers, zero raw historical RED claims, and an empty pending current-candidate evidence section.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/33",
+      "kind": "failed-preflight",
+      "stage": "implement",
+      "source_commit": "692f95aae7f82192b80d6ffaf68e1af674256039",
+      "artifact_paths": ["TestResults/story-4-2-immutable-candidate/692f95aae7f82192b80d6ffaf68e1af674256039/T038-manifest-preflight-failure.json"],
+      "command": "CreateProductionSourceManifest at clean immutable candidate",
+      "exit_code": 1,
+      "observed_at": "2026-07-23T02:44:03.9742746Z",
+      "summary": "The first T038 attempt stopped before image/provider execution because tracked development aliases .claude/skills and .trae/skills were non-ignored mode-120000 entries; T036 and T037 passed but no T036-T044 marker advanced.",
+      "raw_output_path": "TestResults/story-4-2-immutable-candidate/692f95aae7f82192b80d6ffaf68e1af674256039/T038-manifest-preflight-failure.json"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/34",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "692f95aae7f82192b80d6ffaf68e1af674256039",
+      "artifact_paths": ["tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "dotnet test --filter FullyQualifiedName~CreateProductionSourceManifest_TrackedIgnoredDevelopmentAgentAliases_ProducesCanonicalManifest --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-07-23T02:44:03.9742746Z",
+      "summary": "Focused RED failed 1 of 1 with Production source cannot contain a symlink before ignore behavior changed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/35",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "692f95aae7f82192b80d6ffaf68e1af674256039",
+      "artifact_paths": [".dockerignore", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "command": "focused alias test; invalid repository-state control; non-Docker CodeGraphProviderContractTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-23T02:44:03.9742746Z",
+      "summary": "Correction GREEN passed 1 focused alias case, 5 fail-closed repository-state cases, and 50 non-Docker provider-contract tests; ignored agent aliases are excluded while non-ignored tracked symlinks still reject.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260723T013412Z-b7e2d4",
+    "checkpoint_id": "bmad-4-2-implement-20260723T024403Z-c9f1a6",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
+      ".dockerignore",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/31",
-      "4-2-language-and-framework-detection/implement/32"
+      "4-2-language-and-framework-detection/implement/33",
+      "4-2-language-and-framework-detection/implement/34",
+      "4-2-language-and-framework-detection/implement/35"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-23T01:34:12.0168529Z"
+  "updated_at": "2026-07-23T02:44:03.9742746Z"
 }
