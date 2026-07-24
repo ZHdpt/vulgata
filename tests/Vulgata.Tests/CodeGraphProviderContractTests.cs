@@ -27,6 +27,7 @@ public sealed class CodeGraphProviderContractTests
             { "specs/002-language-framework-detection/contracts/provider-language-projection.md", "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b" },
             { "specs/002-language-framework-detection/contracts/repository-scan-overview.md", "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad" },
             { "specs/001-codegraph-extraction/contracts/repository-profiling-api.md", "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124" },
+            { "specs/001-codegraph-extraction/reviews/plan-review-10.json", "753a6e82cb1ca6d1f4ebf580eb36a4101917301447876e88660df694df6bfe90" },
             { "specs/001-codegraph-extraction/qualification/attempts/authorized.schema.json", "d06441f82a23c1c2e7aa48d890ae877885f743038539f8156cdb8086ee4e8749" },
             { "specs/001-codegraph-extraction/qualification/attempts/started.schema.json", "954b73b0144e89fc540378031ff4aaa0523783654599d071d8549b036df718b7" },
             { "specs/001-codegraph-extraction/qualification/attempts/terminal.schema.json", "867c34eae80ca81d1c418e423d6ade77427620bf2982b6b7c2cc4fbdc034378d" },
