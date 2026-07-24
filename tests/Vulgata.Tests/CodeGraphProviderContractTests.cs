@@ -27,6 +27,11 @@ public sealed class CodeGraphProviderContractTests
             { "specs/002-language-framework-detection/contracts/provider-language-projection.md", "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b" },
             { "specs/002-language-framework-detection/contracts/repository-scan-overview.md", "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad" },
             { "specs/001-codegraph-extraction/contracts/repository-profiling-api.md", "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124" },
+            { "specs/001-codegraph-extraction/qualification/attempts/authorized.schema.json", "d06441f82a23c1c2e7aa48d890ae877885f743038539f8156cdb8086ee4e8749" },
+            { "specs/001-codegraph-extraction/qualification/attempts/started.schema.json", "954b73b0144e89fc540378031ff4aaa0523783654599d071d8549b036df718b7" },
+            { "specs/001-codegraph-extraction/qualification/attempts/terminal.schema.json", "867c34eae80ca81d1c418e423d6ade77427620bf2982b6b7c2cc4fbdc034378d" },
+            { "specs/001-codegraph-extraction/qualification/attempts/attempt-0001/started.json", "6dd9b695926b16add679b0518d2a0879f3c2b839a351ae9aacd539ad101f13fb" },
+            { "specs/001-codegraph-extraction/qualification/attempts/attempt-0001/terminal.json", "d1c78c33610e7011b4c616b6fc70c3483d3794825ab46fa9a48c5e6f3bc2c4cc" },
         };
     private static readonly HashSet<string> _safeNames = new(StringComparer.Ordinal)
     {
@@ -239,6 +244,49 @@ public sealed class CodeGraphProviderContractTests
         byte[] fileBytes = await File.ReadAllBytesAsync(
             Path.Combine(repositoryRoot, repositoryRelativePath.Replace('/', Path.DirectorySeparatorChar)));
         Assert.DoesNotContain((byte)'\r', fileBytes);
+        Assert.Equal(expectedSha256, Hash(fileBytes));
+    }
+
+    [Fact]
+    public async Task HashBoundCrLfFile_WindowsCheckout_PreservesHistoricalAuthorizationBytes()
+    {
+        const string repositoryRelativePath =
+            "specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json";
+        const string expectedSha256 = "65eb6c190414b253ce651b7688a68a6d94663e9909a73c8c0bcd757f2910daaa";
+        string repositoryRoot = FindRepositoryRoot();
+        ProcessResult attributes = await RunAsync(
+            repositoryRoot,
+            "git",
+            ["-c", "core.autocrlf=true", "check-attr", "text", "eol", "--", repositoryRelativePath]);
+
+        EnsureSuccess(attributes);
+        string[] resolvedAttributes = attributes.StandardOutput
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        Assert.Contains($"{repositoryRelativePath}: text: set", resolvedAttributes);
+        Assert.Contains($"{repositoryRelativePath}: eol: crlf", resolvedAttributes);
+
+        byte[] fileBytes = await File.ReadAllBytesAsync(
+            Path.Combine(repositoryRoot, repositoryRelativePath.Replace('/', Path.DirectorySeparatorChar)));
+        int crlfPairCount = 0;
+        for (int index = 0; index < fileBytes.Length; index++)
+        {
+            if (fileBytes[index] == (byte)'\r')
+            {
+                Assert.True(
+                    index + 1 < fileBytes.Length && fileBytes[index + 1] == (byte)'\n',
+                    $"Expected CR at byte {index} to be followed by LF.");
+                crlfPairCount++;
+            }
+
+            if (fileBytes[index] == (byte)'\n')
+            {
+                Assert.True(
+                    index > 0 && fileBytes[index - 1] == (byte)'\r',
+                    $"Expected LF at byte {index} to be preceded by CR.");
+            }
+        }
+
+        Assert.Equal(11, crlfPairCount);
         Assert.Equal(expectedSha256, Hash(fileBytes));
     }
 
