@@ -105,6 +105,31 @@ public sealed class CodeGraphContextProviderTests
             queryFields.Select(field => field.Name).Order(StringComparer.Ordinal));
     }
 
+    [Theory]
+    [InlineData(
+        true,
+        6,
+        "dbba4ff5ac4834ae2857307dad36c177d9655ac951744c646f9c6e54d3923f33")]
+    [InlineData(
+        false,
+        13,
+        "40d2da3b9b520b3c4eca3fd7c3bad4f4fb10643736e3a9e9b4ddf62c92adc096")]
+    public void ProductionQueries_SourceCheckoutLineEndings_UseCanonicalLfBytes(
+        bool codeUnits,
+        int expectedLineBreakCount,
+        string expectedHash)
+    {
+        string query = codeUnits
+            ? CodeGraphContextProviderQueries.CodeUnits
+            : CodeGraphContextProviderQueries.Relationships;
+
+        Assert.DoesNotContain("\r", query, StringComparison.Ordinal);
+        Assert.Equal(expectedLineBreakCount, query.Count(character => character == '\n'));
+        Assert.Equal(
+            expectedHash,
+            Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(query))));
+    }
+
     [Fact]
     public void ProjectionA_UsesExactNullableParserLanguageAlias_AndProjectionBRemainsUnchanged()
     {

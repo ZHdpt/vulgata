@@ -990,7 +990,7 @@ internal static class CodeGraphHttpProjectionParser
 
 internal static class CodeGraphContextProviderQueries
 {
-    internal const string CodeUnits = """
+    internal static readonly string CodeUnits = """
         MATCH (node)
         WHERE label(node) IN ['File', 'Module', 'Class', 'Function']
         RETURN 'code_unit' AS record_kind, label(node) AS provider_kind,
@@ -998,9 +998,9 @@ internal static class CodeGraphContextProviderQueries
                node.line_number AS start_line, node.end_line AS end_line,
                node.lang AS parser_language
         ORDER BY provider_kind, path, name, start_line, end_line
-        """;
+        """.ReplaceLineEndings("\n");
 
-    internal const string Relationships = """
+    internal static readonly string Relationships = """
         MATCH (source)-[relationship]->(target)
         WHERE label(relationship) IN ['CONTAINS', 'IMPORTS', 'CALLS', 'INHERITS']
           AND label(source) IN ['File', 'Module', 'Class', 'Function']
@@ -1015,5 +1015,5 @@ internal static class CodeGraphContextProviderQueries
         ORDER BY relationship_kind,
                  source_provider_kind, source_path, source_name, source_start_line, source_end_line,
                  target_provider_kind, target_path, target_name, target_start_line, target_end_line
-        """;
+        """.ReplaceLineEndings("\n");
 }
