@@ -1,1 +1,10 @@
 /docker/codegraph/requirements.lock text eol=lf
+/specs/002-language-framework-detection/spec.md text eol=lf
+/specs/002-language-framework-detection/plan.md text eol=lf
+/specs/002-language-framework-detection/research.md text eol=lf
+/specs/002-language-framework-detection/data-model.md text eol=lf
+/specs/002-language-framework-detection/quickstart.md text eol=lf
+/specs/002-language-framework-detection/contracts/framework-detection.md text eol=lf
+/specs/002-language-framework-detection/contracts/provider-language-projection.md text eol=lf
+/specs/002-language-framework-detection/contracts/repository-scan-overview.md text eol=lf
+/specs/001-codegraph-extraction/contracts/repository-profiling-api.md text eol=lf

@@ -14,6 +14,20 @@ public sealed class CodeGraphProviderContractTests
     private const string _projectionBHash = "40d2da3b9b520b3c4eca3fd7c3bad4f4fb10643736e3a9e9b4ddf62c92adc096";
     private const string _providerLockHash = "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95";
     private const string _providerDistributionHash = "3cd79efe6c9525d69ae250c063404b500ef7595b6c63284d841c78a1ecf48658";
+    public static TheoryData<string, string> CanonicalLfFiles =>
+        new()
+        {
+            { "docker/codegraph/requirements.lock", _providerLockHash },
+            { "specs/002-language-framework-detection/spec.md", "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956" },
+            { "specs/002-language-framework-detection/plan.md", "1ff1d9cdcc715826229bcbf2981f18d221f3d067a0d03de19f1e79b50d0f18df" },
+            { "specs/002-language-framework-detection/research.md", "306d52e498537b4fe9c4ed4478731dbac9569f34df0aebf8f9291337ca41dec9" },
+            { "specs/002-language-framework-detection/data-model.md", "76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c" },
+            { "specs/002-language-framework-detection/quickstart.md", "095b91d28c4c4517c3d8981011c8838fcafdf4b1043b71fc861164b723155664" },
+            { "specs/002-language-framework-detection/contracts/framework-detection.md", "74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181" },
+            { "specs/002-language-framework-detection/contracts/provider-language-projection.md", "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b" },
+            { "specs/002-language-framework-detection/contracts/repository-scan-overview.md", "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad" },
+            { "specs/001-codegraph-extraction/contracts/repository-profiling-api.md", "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124" },
+        };
     private static readonly HashSet<string> _safeNames = new(StringComparer.Ordinal)
     {
         "status", "message", "error", "data", "success", "query", "record_count", "results",
@@ -204,26 +218,28 @@ public sealed class CodeGraphProviderContractTests
         Assert.Equal(_safeNames.Order(StringComparer.Ordinal), contractNames.Order(StringComparer.Ordinal));
     }
 
-    [Fact]
-    public async Task ProviderLock_WindowsCheckout_PreservesCanonicalLfBytes()
+    [Theory]
+    [MemberData(nameof(CanonicalLfFiles))]
+    public async Task HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes(
+        string repositoryRelativePath,
+        string expectedSha256)
     {
         string repositoryRoot = FindRepositoryRoot();
-        const string lockPath = "docker/codegraph/requirements.lock";
         ProcessResult attributes = await RunAsync(
             repositoryRoot,
             "git",
-            ["-c", "core.autocrlf=true", "check-attr", "text", "eol", "--", lockPath]);
+            ["-c", "core.autocrlf=true", "check-attr", "text", "eol", "--", repositoryRelativePath]);
 
         EnsureSuccess(attributes);
         string[] resolvedAttributes = attributes.StandardOutput
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        Assert.Contains($"{lockPath}: text: set", resolvedAttributes);
-        Assert.Contains($"{lockPath}: eol: lf", resolvedAttributes);
+        Assert.Contains($"{repositoryRelativePath}: text: set", resolvedAttributes);
+        Assert.Contains($"{repositoryRelativePath}: eol: lf", resolvedAttributes);
 
-        byte[] lockBytes = await File.ReadAllBytesAsync(
-            Path.Combine(repositoryRoot, "docker", "codegraph", "requirements.lock"));
-        Assert.DoesNotContain((byte)'\r', lockBytes);
-        Assert.Equal(_providerLockHash, Hash(lockBytes));
+        byte[] fileBytes = await File.ReadAllBytesAsync(
+            Path.Combine(repositoryRoot, repositoryRelativePath.Replace('/', Path.DirectorySeparatorChar)));
+        Assert.DoesNotContain((byte)'\r', fileBytes);
+        Assert.Equal(expectedSha256, Hash(fileBytes));
     }
 
     [Theory]
