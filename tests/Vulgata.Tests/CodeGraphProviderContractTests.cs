@@ -204,6 +204,28 @@ public sealed class CodeGraphProviderContractTests
         Assert.Equal(_safeNames.Order(StringComparer.Ordinal), contractNames.Order(StringComparer.Ordinal));
     }
 
+    [Fact]
+    public async Task ProviderLock_WindowsCheckout_PreservesCanonicalLfBytes()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        const string lockPath = "docker/codegraph/requirements.lock";
+        ProcessResult attributes = await RunAsync(
+            repositoryRoot,
+            "git",
+            ["-c", "core.autocrlf=true", "check-attr", "text", "eol", "--", lockPath]);
+
+        EnsureSuccess(attributes);
+        string[] resolvedAttributes = attributes.StandardOutput
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        Assert.Contains($"{lockPath}: text: set", resolvedAttributes);
+        Assert.Contains($"{lockPath}: eol: lf", resolvedAttributes);
+
+        byte[] lockBytes = await File.ReadAllBytesAsync(
+            Path.Combine(repositoryRoot, "docker", "codegraph", "requirements.lock"));
+        Assert.DoesNotContain((byte)'\r', lockBytes);
+        Assert.Equal(_providerLockHash, Hash(lockBytes));
+    }
+
     [Theory]
     [InlineData("duplicate-canonical-root")]
     [InlineData("unknown-canonical-nested")]
