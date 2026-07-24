@@ -481,6 +481,44 @@ public sealed class CodeGraphProviderContractTests
     }
 
     [Fact]
+    public async Task CreateProductionSourceManifest_GeneratedPythonBytecode_IsExcludedButUnrelatedUntrackedEntryFailsClosed()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string dockerIgnore = await File.ReadAllTextAsync(Path.Combine(repositoryRoot, ".dockerignore"));
+        using TemporaryGitRepository repository = await TemporaryGitRepository.CreateWithDockerIgnoreAsync(dockerIgnore);
+        const string cachedBytecode =
+            "tests/Vulgata.Tests/CodeGraphProviderContract/__pycache__/runner.cpython-315.pyc";
+        const string looseBytecode =
+            "tests/Vulgata.Tests/CodeGraphProviderContract/generated.pyc";
+        foreach (string path in new[] { cachedBytecode, looseBytecode })
+        {
+            string fullPath = Path.Combine(repository.Root, path.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+            await File.WriteAllBytesAsync(fullPath, [0x42, 0x0D]);
+        }
+
+        ProductionSourceManifest manifest = CreateProductionSourceManifest(repository.Root);
+
+        string[] patterns = File.ReadAllLines(Path.Combine(repository.Root, ".dockerignore"));
+        Assert.True(IsDockerIgnored(cachedBytecode, patterns));
+        Assert.True(IsDockerIgnored(looseBytecode, patterns));
+        using JsonDocument document = JsonDocument.Parse(manifest.Bytes);
+        string?[] paths = document.RootElement.GetProperty("entries")
+            .EnumerateArray()
+            .Select(entry => entry.GetProperty("path").GetString())
+            .ToArray();
+        Assert.DoesNotContain(cachedBytecode, paths);
+        Assert.DoesNotContain(looseBytecode, paths);
+
+        string unrelatedPath = Path.Combine(repository.Root, "src", "untracked.cs");
+        Directory.CreateDirectory(Path.GetDirectoryName(unrelatedPath)!);
+        await File.WriteAllTextAsync(unrelatedPath, "untracked source\n");
+        InvalidDataException failure = Assert.Throws<InvalidDataException>(
+            () => CreateProductionSourceManifest(repository.Root));
+        Assert.Contains("untracked entry", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RuntimeDockerfile_SourceBindingBuildArgumentsAndLabels_AreImmutable()
     {
         string dockerfile = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docker", "Dockerfile"));
@@ -2129,6 +2167,19 @@ public sealed class CodeGraphProviderContractTests
             EnsureSuccess(await RunAsync(root, "git", ["add", ".dockerignore", "docker/Dockerfile", "included.txt"]));
             EnsureSuccess(await RunAsync(root, "git", ["-c", "commit.gpgsign=false", "commit", "--message", "fixture"]));
             return new TemporaryGitRepository(root);
+        }
+
+        public static async Task<TemporaryGitRepository> CreateWithDockerIgnoreAsync(string dockerIgnore)
+        {
+            TemporaryGitRepository repository = await CreateAsync();
+            await File.WriteAllTextAsync(Path.Combine(repository.Root, ".dockerignore"), dockerIgnore);
+            File.Delete(Path.Combine(repository.Root, "ignored.bin"));
+            EnsureSuccess(await RunAsync(repository.Root, "git", ["add", ".dockerignore"]));
+            EnsureSuccess(await RunAsync(
+                repository.Root,
+                "git",
+                ["-c", "commit.gpgsign=false", "commit", "--message", "Docker ignore fixture"]));
+            return repository;
         }
 
         public static async Task<TemporaryGitRepository> CreateWithAgentAliasesAsync(string dockerIgnore)
