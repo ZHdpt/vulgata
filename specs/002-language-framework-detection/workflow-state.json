@@ -2352,30 +2352,54 @@
       "observed_at": "2026-07-26T07:54:19.2076535Z",
       "summary": "The surrounding corrected provider-contract and dashboard suites passed 104 of 104 tests. Root independently repeated the same 104-of-104 GREEN result before checkpointing.",
       "raw_output_path": "TestResults/story-4-2-review3-correction/T038-surrounding-green-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/61",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "80335ff4c6e405cf5b7e5824b2d080c17b65e3b8",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification-review3-refresh/T001-provider-profiling-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T08:07:14.3067812Z",
+      "summary": "Post-review-3 T001 Current verification passed 107 of 107 provider/profiling tests at clean immutable correction commit 80335ff4c6e405cf5b7e5824b2d080c17b65e3b8.",
+      "raw_output_path": "TestResults/story-4-2-current-verification-review3-refresh/T001-provider-profiling-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/62",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "80335ff4c6e405cf5b7e5824b2d080c17b65e3b8",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification-review3-refresh/T001-framework-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetection\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T08:07:45.0929782Z",
+      "summary": "Post-review-3 T001 Current verification passed 48 of 48 framework-detection tests at the same clean immutable correction commit; no blocked URL, network, Clash, or proxy failure occurred.",
+      "raw_output_path": "TestResults/story-4-2-current-verification-review3-refresh/T001-framework-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-review3-correction-20260726T075812Z-91c3af",
+    "checkpoint_id": "bmad-4-2-t001-refresh-20260726T081132Z-6e7a20",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json",
-      "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
-      "tests/Vulgata.Tests/DashboardPanelTests.cs"
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/56",
-      "4-2-language-and-framework-detection/implement/57",
-      "4-2-language-and-framework-detection/implement/58",
-      "4-2-language-and-framework-detection/implement/59",
-      "4-2-language-and-framework-detection/implement/60"
+      "4-2-language-and-framework-detection/implement/61",
+      "4-2-language-and-framework-detection/implement/62"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T07:58:12.2970660Z"
+  "updated_at": "2026-07-26T08:11:32.8121415Z"
 }

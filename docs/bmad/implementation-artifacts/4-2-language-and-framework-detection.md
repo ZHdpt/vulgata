@@ -656,6 +656,16 @@ unchanged.
 - Review-3 correction checkpoint:
   `bmad-4-2-review3-correction-20260726T075812Z-91c3af`
   (pending Git binding).
+- T001 Current verification was refreshed at clean immutable correction commit
+  `80335ff4c6e405cf5b7e5824b2d080c17b65e3b8`, tree
+  `02f07501de07ac2470b88a291cc0e8c1a0da32df`. Provider/profiling passed
+  107/107 and framework detection passed 48/48. The record now binds the
+  replacement accepted-plan checkpoint and preserves all earlier attempts plus
+  the exact unavailable-baseline disclosure. No network, URL, Clash, or proxy
+  failure occurred.
+- T001 refresh checkpoint:
+  `bmad-4-2-t001-refresh-20260726T081132Z-6e7a20`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
