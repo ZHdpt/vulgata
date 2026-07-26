@@ -538,6 +538,45 @@
         "specs/002-language-framework-detection/reviews/analyze-7.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "failed",
+      "started_at": "2026-07-26T05:06:26.1276843Z",
+      "completed_at": "2026-07-26T05:06:30.6340806Z",
+      "input_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+      "input_hashes": {
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt": "9add2229785ef247d7bb22dbe128fd71881cd426344822e9794c8334775ff11d"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt"
+      ],
+      "failure": {
+        "classification": "recoverable-generated-artifact-failure",
+        "summary": "The first current-verification command failed before discovery because the generated Vulgata.Core reference assembly contained no managed metadata; no source, test, network, or proxy defect was observed."
+      }
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-26T05:16:09.7278395Z",
+      "completed_at": "2026-07-26T05:18:29.9049224Z",
+      "input_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "d261f837970b421e9d5c423602581e3c0987f6eb27c8fcbfd5521142cff078d3",
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "b41ac6b14bdd56f291a6d259bdcf886f4fec8e48140d77833ed43af27dc8c002",
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green-retry-1.txt": "6a5b0ae31400b90719e79ca0292d49243b4b4ad6864ceec347c4393158c693aa",
+        "TestResults/story-4-2-current-verification/T001-framework-green.txt": "836bd4315a7c922884b0316a356b228fdf2c9116d14493ce8d5f92fdf439d63f"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt",
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green-retry-1.txt",
+        "TestResults/story-4-2-current-verification/T001-framework-green.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -546,15 +585,15 @@
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 regenerated tasks, accepted read-only analysis iteration 7, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 T001 current-verification evidence, one task marker, story development record, and workflow state only; raw command outputs are ignored and no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/reviews/analyze-7.json"
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-26T04:52:51.6011464Z"
+    "observed_at": "2026-07-26T05:22:36.3074335Z"
   },
   "source_artifacts": [
     {
@@ -943,6 +982,63 @@
         "ACCEPT",
         "Zero Critical or High findings",
         "Complete requirements, decision, finding, and task coverage"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Execute Story 4.2 T001 current verification at the clean immutable tasks-analyzed commit",
+      "source_boundary": {
+        "base_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+        "candidate_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/tasks.md": "1fc049fd45857bc6d779805c49e9e05f67c8bc8fba9d72ef2701bae6c084dc47"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/tasks.md",
+          "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+        ]
+      },
+      "permitted_writes": [
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt",
+        "TestResults/story-4-2-current-verification/T001-framework-green.txt"
+      ],
+      "output_path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "returned_evidence": [
+        "FAILED before test discovery",
+        "CS0009 on corrupted generated Vulgata.Core reference metadata",
+        "No tracked changes and no network or proxy failure"
+      ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Retry Story 4.2 T001 current verification while preserving the recoverable failed attempt",
+      "source_boundary": {
+        "base_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+        "candidate_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/tasks.md": "1fc049fd45857bc6d779805c49e9e05f67c8bc8fba9d72ef2701bae6c084dc47",
+          "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt": "9add2229785ef247d7bb22dbe128fd71881cd426344822e9794c8334775ff11d"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/tasks.md",
+          "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+        ]
+      },
+      "permitted_writes": [
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green-retry-1.txt",
+        "TestResults/story-4-2-current-verification/T001-framework-green.txt"
+      ],
+      "output_path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "returned_evidence": [
+        "Provider/profiling current verification passed 107/107",
+        "Framework current verification passed 48/48",
+        "T001 checked with the unavailable historical fact preserved and no RED claim"
       ]
     }
   ],
@@ -2008,24 +2104,70 @@
       "observed_at": "2026-07-26T04:55:38.6131418Z",
       "summary": "Workflow configuration and contracts valid after persisting regenerated tasks and accepted read-only analysis iteration 7.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/46",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+      "artifact_paths": [
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-26T05:06:30.6340806Z",
+      "summary": "Recoverable generated-artifact failure before test discovery: the Vulgata.Core reference assembly contained no managed metadata; this was not RED and no source, test, network, or proxy defect was observed.",
+      "raw_output_path": "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/47",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green-retry-1.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T05:16:17.7728872Z",
+      "summary": "Current verification passed 107 of 107 provider/profiling tests with zero failures or skips at the unchanged immutable source.",
+      "raw_output_path": "TestResults/story-4-2-current-verification/T001-provider-profiling-green-retry-1.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/48",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification/T001-framework-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetection\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T05:16:45.0028050Z",
+      "summary": "Current verification passed 48 of 48 framework-detection tests with zero failures or skips at the unchanged immutable source.",
+      "raw_output_path": "TestResults/story-4-2-current-verification/T001-framework-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-analyze-20260726T045251Z-83fcc2",
+    "checkpoint_id": "bmad-4-2-implement-20260726T052236Z-89bc56",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "analyze",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/reviews/analyze-7.json"
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/analyze/45"
+      "4-2-language-and-framework-detection/implement/46",
+      "4-2-language-and-framework-detection/implement/47",
+      "4-2-language-and-framework-detection/implement/48"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T04:55:38.6131418Z"
+  "updated_at": "2026-07-26T05:22:36.3074335Z"
 }

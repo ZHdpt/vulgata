@@ -472,6 +472,14 @@ unchanged.
   corrected T001 precedes stale-binding RED/GREEN, ledger regeneration, a new
   immutable candidate, Full reviews, E2E, verification, manifest/image gates,
   T049, and final T050.
+- Corrected T001 current verification is complete at immutable commit
+  `c04a6b594f4e1bc89baa111d664ff355ffcc57be` (tree
+  `777bd88701f6443cc7195d3a37a09c955544a820`). The first provider/profiling
+  attempt failed before discovery because a generated Core reference assembly
+  was transiently corrupted; that failure is preserved and is not RED. The
+  unchanged retry passed 107/107 and framework detection passed 48/48 with no
+  skipped tests or blocked network/proxy URL. The separate historical statement
+  remains `Pre-correction T001 baseline observation: unavailable`.
 - Regenerated tasks initially passed complete requirements/finding coverage but
   analysis iteration 5 found one High dependency cycle: current-candidate
   ledger finalization/validation preceded the GREEN evidence it required. The
@@ -579,6 +587,8 @@ unchanged.
   non-final provider-contract tests with zero skips.
 - Docker apt-resilience correction checkpoint:
   `bmad-4-2-implement-20260723T073700Z-e4d7c1` (pending Git binding).
+- T001 current-verification implementation checkpoint:
+  `bmad-4-2-implement-20260726T052236Z-89bc56` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
@@ -619,6 +629,7 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/analyze-6.json`
 - `specs/002-language-framework-detection/reviews/analyze-7.json`
 - `specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json`
+- `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json`
 - `specs/002-language-framework-detection/tasks.md`
 - `specs/002-language-framework-detection/reviews/analyze-1.json`
 - `specs/002-language-framework-detection/reviews/analyze-2.json`
