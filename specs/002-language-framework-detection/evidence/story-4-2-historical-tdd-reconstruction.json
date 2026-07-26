@@ -6,7 +6,9 @@
   "taskId": "T035",
   "bmadStoryKey": "4-2-language-and-framework-detection",
   "featureDirectory": "specs/002-language-framework-detection",
-  "status": "historical-discovery-only",
+  "status": "finalized-current-green",
+  "finalizationTaskIds": ["T045", "T046", "T047", "T048"],
+  "finalizedAt": "2026-07-26T02:55:11.9738577Z",
   "observedAt": "2026-07-23T01:21:58.4397292Z",
   "sourceRange": {
     "baseExclusive": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
@@ -524,13 +526,189 @@
     "reason": "Evidence 17 is a durable RED summary with raw_output_path null. Evidence 18 is GREEN without raw output. Evidence 19 references retained GREEN provider-contract evidence."
   },
   "currentImmutableCandidateGreenEvidence": {
-    "status": "pending-t045-finalization",
+    "status": "complete",
     "taskIds": ["T036", "T037", "T038", "T039", "T040", "T041", "T042", "T043", "T044"],
-    "sourceCommit": null,
-    "commands": [],
-    "rawOutputPaths": [],
-    "reason": "T035 is discovery/scaffolding only. Current immutable-candidate GREEN evidence must be recorded separately by T045 after T036-T044 complete."
+    "sourceCommit": "7b9ce590bd161b2cf4ed473a40ab3e9045654975",
+    "sourceTree": "29cf2469d6fd1a24fddd4353a7c4c7af618ce786",
+    "checkpointCommit": "a64d0b8376fe4139cd98d16fcdbee7c45ed25152",
+    "checkpointId": "bmad-4-2-implement-20260726T024255Z-e60280",
+    "productionSourceManifestSha256": "d928b4e1a3dd49a2a482095968bce80903262be041097c32a115f222756a31e7",
+    "finalImageSha256": "sha256:f9983d6bf74f298b2e1d654085df4da73824834b4a73cadb631c535645eecedb",
+    "commands": [
+      {
+        "taskId": "T036",
+        "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetection\"; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_\"; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling\"",
+        "exitCode": 0,
+        "result": "225 passed, 0 failed, 0 skipped across the three focused current-candidate runs",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260724-final-a7c4/T036-framework-detection.txt", "sha256": "79f5068845cfcec29fb65b4e7f3ad748f0ccc8d16290e862378edb55deb7942e", "sizeBytes": 541599},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260724-final-a7c4/T036-non-final-provider-contract.txt", "sha256": "3ffea6b474d4451c463bb3b1e7408b0a3b1324112495fa36d39ffcd6d0a83090", "sizeBytes": 16723},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260724-final-a7c4/T036-provider-profiling.txt", "sha256": "fd7449d24c09e1d9ad31dafb10097aa44e75fa7c9e3d76ee13ec215aab4bdbb2", "sizeBytes": 16722}
+        ]
+      },
+      {
+        "taskId": "T037",
+        "command": "Get-FileHash accepted plan set/contracts -Algorithm SHA256; dotnet ef migrations script --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext; dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext",
+        "exitCode": 0,
+        "result": "all accepted hashes matched, migration script generated, and no pending model changes",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260724-final-a7c4/T037-accepted-hashes.txt", "sha256": "6796fd2ae0a9b885b594609abd300c00015f1ea7f40747c6dd447f6629ed3b55", "sizeBytes": 1335},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260724-final-a7c4/T037-migration-script.txt", "sha256": "8e73b6e5546358fbd245bb19b0de6c7b1abffaecc6abbfac3ac358ecdf99da27", "sizeBytes": 16182},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260724-final-a7c4/T037-pending-model.txt", "sha256": "91e4cf453cf32e1f7c5e1b3e156ee8e2bdbb7e62a1f2dd151bea1c3667bc1aa3", "sizeBytes": 926}
+        ]
+      },
+      {
+        "taskId": "T038",
+        "command": "CreateProductionSourceManifest at clean detached candidate 7b9ce590bd161b2cf4ed473a40ab3e9045654975",
+        "exitCode": 0,
+        "result": "production-source-manifest-v1 contains 864 entries and binds the candidate commit/tree",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260724-final-a7c4/T038-production-source-manifest.json", "sha256": "d928b4e1a3dd49a2a482095968bce80903262be041097c32a115f222756a31e7", "sizeBytes": 125643}
+        ]
+      },
+      {
+        "taskId": "T039",
+        "command": "docker build --no-cache --pull --file docker/Dockerfile --tag vulgata-story42-final:7b9ce590bd16-proxy-6d2f --build-arg VULGATA_SOURCE_COMMIT=7b9ce590bd161b2cf4ed473a40ab3e9045654975 --build-arg VULGATA_SOURCE_TREE=29cf2469d6fd1a24fddd4353a7c4c7af618ce786 --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=d928b4e1a3dd49a2a482095968bce80903262be041097c32a115f222756a31e7 C:/Users/13728/AppData/Local/Temp/v42-7b9-a7c4",
+        "exitCode": 0,
+        "result": "23 of 23 BuildKit steps completed; inspected immutable image and all three source labels matched",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-proxy-retry-6d2f/recovery-gate-summary.json", "sha256": "404bd6792fbb9e4882fe0d1907a503822eba78b1fe3345ee2d0ca932dbf40187", "sizeBytes": 4366},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-proxy-retry-6d2f/T039-docker-build.txt", "sha256": "2da1aa103d2f564d4a5568352d7128aa37039b72c9befdab54123270392ef2fe", "sizeBytes": 245}
+        ]
+      },
+      {
+        "taskId": "T040",
+        "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract\"",
+        "exitCode": 0,
+        "result": "namespace A 40af543064bd78811148920616051d3a9e0cf2d0045e4715e3695c769fb2977b passed 1 of 1; Projection A/B/combined rows 139/138/277; cleanup failure count 0; forbidden retention all false",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T040-namespace-A-claim.json", "sha256": "98767ce696447a71197d8e47ca46d6d95f38f3de61a5e16895e9d5e13c9be27c", "sizeBytes": 128898},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T040-namespace-A-evidence.json", "sha256": "375b7f9683f73be47c6053372eba42b92927e47fbf26b07b408ca4a71f35e62d", "sizeBytes": 8000}
+        ]
+      },
+      {
+        "taskId": "T041",
+        "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj with VULGATA_PROVIDER_CONTRACT_IMAGE=sha256:f9983d6bf74f298b2e1d654085df4da73824834b4a73cadb631c535645eecedb and unused namespace B 991e5e6545b861e68903368537f946baebecb1431f05ffcae44b9068930943d3; dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+        "exitCode": 0,
+        "result": "477 passed, 0 failed, 0 skipped; Web build succeeded with 0 errors",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-full-suite-retry2-stdout.txt", "sha256": "235dbe61623029fa38370e2da3ec66bd8c9e799a5596c7034f4cfb7ab83d3792", "sizeBytes": 20209},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-full-suite-retry2-stderr.txt", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "sizeBytes": 0},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-web-build-retry2-stdout.txt", "sha256": "69aa03941d1a42a2238e66203f222abb91bc7292c3dbd1b84832fc42ba616b5f", "sizeBytes": 36946},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-web-build-retry2-stderr.txt", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "sizeBytes": 0},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-namespace-B-claim.json", "sha256": "a9526f81b18c94c11f1c04e306e7807fda179bcbd45646b56870b20851fb23bc", "sizeBytes": 128898},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-namespace-B-evidence.json", "sha256": "57755cfff1692dcb151297892294bb6e9f98204be3c4a2bc9161ade8463de096", "sizeBytes": 8000}
+        ]
+      },
+      {
+        "taskId": "T042",
+        "command": "dotnet ef migrations script for both additive Story 4.2 migrations and each rollback boundary; dotnet ef migrations has-pending-model-changes; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Model_HistoricalCodeUnitWithNullLanguage_RemainsReadableAsync|FullyQualifiedName~Model_LanguageFrameworkDetection_EnforcesAggregateConstraints|FullyQualifiedName~Model_FrameworkEvidenceAuditCount_EnforcesNonNegativeBound\"",
+        "exitCode": 0,
+        "result": "forward/rollback order validated, no pending model changes, and 3 of 3 persistence compatibility tests passed",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T042-forward-story-4-2.sql", "sha256": "f35e48379ac7f20d1e261e5ff074f5affb9d591024d0cba89fe999f886110b37", "sizeBytes": 3061},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T042-pending-model-stdout.txt", "sha256": "c924da1693ad60eb6a78717ddd333946a8a61a056c2ce2868ae514384f01c866", "sizeBytes": 66},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T042-persistence-tests-stdout.txt", "sha256": "1d89f738ecf8ab3a3be14f893a1c0423b2118d1d75e7190747dd3011bf25627f", "sizeBytes": 322},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T042-rollback-audit-count.sql", "sha256": "5ebc2bd0a7aa18594f28e59dddb86afad8144639d64eae66b30a751bd24985c7", "sizeBytes": 354},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T042-rollback-language-framework.sql", "sha256": "940f70c214415070ae3801b50ed043cd531d0aed796905eaf831563f1f18df83", "sizeBytes": 244}
+        ]
+      },
+      {
+        "taskId": "T043",
+        "command": "git diff --check e9824df7300634c19d815bdd7ad591b9fb5366d5..7b9ce590bd161b2cf4ed473a40ab3e9045654975; git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..7b9ce590bd161b2cf4ed473a40ab3e9045654975; FR-020 forbidden-path audit; git diff --check; git status --short",
+        "exitCode": 0,
+        "result": "diff check clean, forbidden FR-020 path count 0, detached candidate status clean",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T043-final-diff-check.txt", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "sizeBytes": 0},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T043-final-diff-name-status.txt", "sha256": "cc973f63816a8836b62e182a0a107a5830433cdb6fcbbeda2cc5cbfd50fc1813", "sizeBytes": 4440},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T043-fr020-forbidden-paths.txt", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "sizeBytes": 0},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T043-git-status-short.txt", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "sizeBytes": 0}
+        ]
+      },
+      {
+        "taskId": "T044",
+        "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~RepositoryApiTests|FullyQualifiedName~DashboardPanelTests|FullyQualifiedName~RepositoryProfilingTests\"; docker image inspect sha256:f9983d6bf74f298b2e1d654085df4da73824834b4a73cadb631c535645eecedb; docker image history --no-trunc sha256:f9983d6bf74f298b2e1d654085df4da73824834b4a73cadb631c535645eecedb",
+        "exitCode": 0,
+        "result": "89 of 89 authorization/redaction tests passed; image labels and history retained no forbidden proxy/source diagnostic",
+        "rawOutputs": [
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T044-authorization-redaction-stdout.txt", "sha256": "86262ce0cf26585b3f578ebb200ea641a55a08b3c5ac7ef48f435ebb5a7061bd", "sizeBytes": 279358},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T044-final-image-inspect.json", "sha256": "2bbe10f6394744bf4460a7fca048a6f4decb5eaf955dd6bcac248a5feba6b507", "sizeBytes": 3508},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T044-final-image-history.txt", "sha256": "bbe6b78d7dd1084667255b5f7ffed5a2c6fdfee53cafe309e7cf03936ef1670d", "sizeBytes": 18719},
+          {"path": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T044-final-production-source-manifest.json", "sha256": "d928b4e1a3dd49a2a482095968bce80903262be041097c32a115f222756a31e7", "sizeBytes": 125643}
+        ]
+      }
+    ],
+    "historicalSeparation": {
+      "allCurrentRecordsClassifiedAsHistoricalRed": false,
+      "historicalRawRedAvailabilityChanged": false,
+      "checkpointTrailerAvailabilityChanged": false,
+      "statement": "These T036-T044 records are current immutable-candidate GREEN only. They do not replace or relabel any unavailable historical raw RED output or missing contemporaneous checkpoint trailer."
+    }
   },
+  "providerEvidenceValidation": {
+    "schemaVersion": "cgc-provider-contract-evidence-v2",
+    "exactRootCount": 19,
+    "namespaces": [
+      {
+        "acceptedCorrectionSha256": "40af543064bd78811148920616051d3a9e0cf2d0045e4715e3695c769fb2977b",
+        "classification": "T040 namespace A",
+        "claimPath": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T040-namespace-A-claim.json",
+        "claimSha256": "98767ce696447a71197d8e47ca46d6d95f38f3de61a5e16895e9d5e13c9be27c",
+        "evidencePath": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T040-namespace-A-evidence.json",
+        "evidenceSha256": "375b7f9683f73be47c6053372eba42b92927e47fbf26b07b408ca4a71f35e62d",
+        "evidenceSizeBytes": 8000
+      },
+      {
+        "acceptedCorrectionSha256": "991e5e6545b861e68903368537f946baebecb1431f05ffcae44b9068930943d3",
+        "classification": "T041 namespace B",
+        "claimPath": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-namespace-B-claim.json",
+        "claimSha256": "a9526f81b18c94c11f1c04e306e7807fda179bcbd45646b56870b20851fb23bc",
+        "evidencePath": "TestResults/story-4-2-immutable-candidate/7b9ce590bd161b2cf4ed473a40ab3e9045654975/run-20260726-t041-env-retry-991e5e65/T041-namespace-B-evidence.json",
+        "evidenceSha256": "57755cfff1692dcb151297892294bb6e9f98204be3c4a2bc9161ade8463de096",
+        "evidenceSizeBytes": 8000
+      }
+    ],
+    "validatedIdentities": {
+      "sourceCommit": "7b9ce590bd161b2cf4ed473a40ab3e9045654975",
+      "sourceTree": "29cf2469d6fd1a24fddd4353a7c4c7af618ce786",
+      "productionSourceManifestSha256": "d928b4e1a3dd49a2a482095968bce80903262be041097c32a115f222756a31e7",
+      "finalImageSha256": "sha256:f9983d6bf74f298b2e1d654085df4da73824834b4a73cadb631c535645eecedb",
+      "projectionARowCount": 139,
+      "projectionBRowCount": 138,
+      "combinedRowCount": 277,
+      "cleanupFailureCount": 0,
+      "allForbiddenRetentionFalse": true
+    }
+  },
+  "acceptedPlanObligationReconciliation": [
+    {"decision": "R1", "status": "evidenced", "evidenceTaskIds": ["T036", "T040"], "summary": "Projection A parser identity is the language authority."},
+    {"decision": "R2", "status": "evidenced", "evidenceTaskIds": ["T040", "T044"], "summary": "Zero-structure candidates become one Filtered/UnknownLanguage and retain no Code Unit."},
+    {"decision": "R3", "status": "evidenced", "evidenceTaskIds": ["T036", "T044"], "summary": "Open bounded normalized parser tokens and per-path consistency pass."},
+    {"decision": "R4", "status": "evidenced", "evidenceTaskIds": ["T040"], "summary": "Private 250001 limit and completeness rejection pass under the exact final image."},
+    {"decision": "R5", "status": "evidenced", "evidenceTaskIds": ["T036"], "summary": "Closed catalog and committed non-executing evidence parsers pass."},
+    {"decision": "R6", "status": "evidenced", "evidenceTaskIds": ["T036"], "summary": "Scope, confidence, owner proof, and deterministic tie-breaking pass."},
+    {"decision": "R7", "status": "evidenced", "evidenceTaskIds": ["T036", "T040"], "summary": "Individual isolation and repository-global fail-closed bounds pass."},
+    {"decision": "R8", "status": "evidenced", "evidenceTaskIds": ["T037", "T042"], "summary": "Exactly two additive migrations, compatibility, rollback order, and no pending model drift pass."},
+    {"decision": "R9", "status": "evidenced", "evidenceTaskIds": ["T044"], "summary": "ManagementAccess, visibility redaction, and Simplified-Chinese presentation pass 89 focused tests."},
+    {"decision": "R10", "status": "evidenced", "evidenceTaskIds": ["T040", "T041"], "summary": "Exact final-image qualification passed in two fresh namespaces and the full suite passed 477 of 477."},
+    {"decision": "R11", "status": "evidenced", "evidenceTaskIds": ["T036", "T044"], "summary": "Provider paths are safe before logs and every downstream surface."},
+    {"decision": "R12", "status": "evidenced", "evidenceTaskIds": ["T036"], "summary": "NuGet/npm lock facts require exactly one validated direct-manifest owner."},
+    {"decision": "R13", "status": "evidenced", "evidenceTaskIds": ["T038", "T039", "T040", "T044"], "summary": "Commit, tree, manifest, inspected labels, image, claim, and evidence identities agree."},
+    {"decision": "R14", "status": "evidenced-with-explicit-historical-unavailability", "evidenceTaskIds": ["T035", "T045", "T046"], "summary": "Historical raw RED and contemporaneous trailer gaps remain explicit; current GREEN is separate. T050 remains outside this ledger dispatch."}
+  ],
+  "iteration2FindingReconciliation": [
+    {"id": "AR2-001", "status": "evidenced-current-candidate", "evidenceTaskIds": ["T036", "T044"], "summary": "Captured-log and downstream redaction corrections pass; no raw host path is accepted as an owned outcome."},
+    {"id": "AR2-002", "status": "evidenced-current-candidate", "evidenceTaskIds": ["T040", "T047"], "summary": "Both fresh evidence files use the exact closed 19-root grammar and safe-name model."},
+    {"id": "AR2-003", "status": "pending-t049-t050-outside-scope", "evidenceTaskIds": [], "summary": "T050 remains unchecked by contract; this T045-T048 dispatch cannot claim final review readiness."},
+    {"id": "QR2-001", "status": "evidenced-current-candidate", "evidenceTaskIds": ["T036"], "summary": "Malformed, unsupported, conditional, unsafe, oversize, multiple, zero, and inapplicable lock-owner cases pass with no invalid Medium fact."},
+    {"id": "QR2-002", "status": "pending-t050-outside-scope", "evidenceTaskIds": [], "summary": "The sole final audit remains T050 and is not retroactively replaced by this reconstruction validation."},
+    {"id": "CF-002", "status": "evidenced-current-candidate", "evidenceTaskIds": ["T040", "T047"], "summary": "Contract, runner, verifier, and both evidence copies agree on the exact closed schema."},
+    {"id": "EV-002", "status": "evidenced-current-candidate", "evidenceTaskIds": ["T038", "T039", "T040", "T041", "T042", "T043", "T044"], "summary": "One immutable candidate binds the fresh image, namespaces, full suite, build, migrations, scope audit, and focused authorization run."},
+    {"id": "WF-002", "status": "pending-root-lifecycle-and-t050", "evidenceTaskIds": [], "summary": "No lifecycle artifact is changed here; T049/T050 and a later ready-for-review boundary remain root-owned."},
+    {"id": "PL-001", "status": "evidenced-current-plan-set", "evidenceTaskIds": ["T037", "T042"], "summary": "The accepted checkpoint and current hashes cover the complete plan set; current migrations align."},
+    {"id": "TR-001", "status": "historical-unavailable-explicit-current-green-evidenced", "evidenceTaskIds": ["T035", "T036", "T045", "T046"], "summary": "Original raw RED and some contemporaneous trailers remain unavailable exactly as discovered; fresh correction RED/GREEN and current candidate GREEN are not relabelled."},
+    {"id": "PA-001", "status": "evidenced-current-plan-set", "evidenceTaskIds": ["T037", "T042"], "summary": "Quickstart/research/plan hashes and both forward/rollback migrations are aligned and verified."}
+  ],
   "uncertainties": [
     {
       "id": "historical-order-unprovable",
