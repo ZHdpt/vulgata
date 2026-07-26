@@ -7,16 +7,16 @@
   "stage": "implement",
   "active_gates": {
     "acceptance-review": {
-      "status": "invalidated",
-      "iteration": 2,
+      "status": "revised",
+      "iteration": 3,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "27d553820436910c3a104673011bc69dfaca1148",
-        "diff_sha256": "fe1687ac5f314dd87bacd95e9bd45a56d0539c492022b6589902af5653ef49b8"
+        "candidate_commit": "6199c0be5cb607950fa3e8f8d276ff0735ae2f13",
+        "diff_sha256": "ae7a742e724e41ec9199c6e0a04c2d54539f16bbb98904d81fd2cb6ec0f6fbc0"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
-      "completed_at": "2026-07-20T12:49:52.5988743Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+      "completed_at": "2026-07-26T07:31:17.9684124Z"
     },
     "quality-review": {
       "status": "invalidated",
@@ -2249,19 +2249,37 @@
       "observed_at": "2026-07-26T06:56:19.9281520Z",
       "summary": "T041 pinned clean immutable candidate 6199c0be5cb607950fa3e8f8d276ff0735ae2f13 and tree 72f9e28e8e55a99b8d8824697c6f2ea30e118abf with an empty unique checkpoint commit. The 1,303,606-byte binary diff SHA-256 is ae7a742e724e41ec9199c6e0a04c2d54539f16bbb98904d81fd2cb6ec0f6fbc0 over 69 Story-owned paths.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/3",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "6199c0be5cb607950fa3e8f8d276ff0735ae2f13",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-3.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-26T07:31:17.9684124Z",
+      "summary": "Full acceptance review iteration 3 returned REVISE with one High finding, AR3-001: the accepted-plan and immutable-candidate commits bind only Workflow-Checkpoint and omit the mandatory BMad-Story, Workflow-Scope, and Workflow-Stage trailers. FR 21/21, AC 7/7, SC 8/8, R1-R16, and all 12 correction intents otherwise passed acceptance inspection.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-candidate-20260726T065619Z-5f2b90",
+    "checkpoint_id": "bmad-4-2-acceptance-review-20260726T073117Z-a31c84",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "implement",
-    "committed_paths": [],
-    "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/55"
+    "stage": "acceptance-review",
+    "committed_paths": [
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+      "specs/002-language-framework-detection/workflow-state.json"
     ],
-    "commit_sha": "6199c0be5cb607950fa3e8f8d276ff0735ae2f13",
-    "binding_status": "bound"
+    "verification_evidence_ids": [
+      "4-2-language-and-framework-detection/acceptance-review/3"
+    ],
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T06:56:19.9281520Z"
+  "updated_at": "2026-07-26T07:31:17.9684124Z"
 }

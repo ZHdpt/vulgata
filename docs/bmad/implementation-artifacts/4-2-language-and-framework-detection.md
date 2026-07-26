@@ -619,6 +619,15 @@ unchanged.
 - Immutable-candidate checkpoint:
   `bmad-4-2-candidate-20260726T065619Z-5f2b90` (bound to
   `6199c0be5cb607950fa3e8f8d276ff0735ae2f13`).
+- Full acceptance review iteration 3 returned `REVISE` at the exact T041
+  boundary. `AR3-001` found that both the accepted-plan and candidate commits
+  carry only `Workflow-Checkpoint`, omitting mandatory `BMad-Story`,
+  `Workflow-Scope`, and `Workflow-Stage` trailers. All 21 FRs, 7 AC groups,
+  8 SCs, R1-R16, and 12 correction intents otherwise passed acceptance
+  inspection. Forward-only replacement checkpoints are required; history will
+  not be amended.
+- Acceptance-review checkpoint:
+  `bmad-4-2-acceptance-review-20260726T073117Z-a31c84` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
