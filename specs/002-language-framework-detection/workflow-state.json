@@ -2397,24 +2397,38 @@
       "observed_at": "2026-07-26T08:27:52.7476010Z",
       "summary": "T039-T040 regenerated and validated the truthful ledger at d20db9fd: 41 linear commits, 19 legacy groups, 41 immutable Git references, 11 unique checkpoint records, and 20 raw files. Five transcript-only captures are explicitly excluded from RED/GREEN evidence, and the prior candidate/review-3 lane is retained only as invalidated history.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/64",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json"
+      ],
+      "command": "git status --porcelain=v1 --untracked-files=all; git rev-parse candidate and tree; git diff --binary --full-index e9824df7300634c19d815bdd7ad591b9fb5366d5..1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c; canonical Git-blob SHA-256 validation; mandatory checkpoint-trailer validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T08:31:43.7238787Z",
+      "summary": "T041 pinned clean immutable candidate 1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c and tree ac002fa795614a3eaf752922a95a1e7df20a37ef with an empty fully-trailered checkpoint. The 1,382,640-byte binary diff SHA-256 is e953af5793272a0dfdc3de7a29a01b8d6be9d9cfb9ae8af298166517e25a583f over 72 Story-owned paths.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-ledger-refresh-20260726T083030Z-48a1de",
+    "checkpoint_id": "bmad-4-2-candidate-record-20260726T083632Z-f41b8e",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/63"
+      "4-2-language-and-framework-detection/implement/64"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T08:30:30.7138210Z"
+  "updated_at": "2026-07-26T08:36:32.6600689Z"
 }

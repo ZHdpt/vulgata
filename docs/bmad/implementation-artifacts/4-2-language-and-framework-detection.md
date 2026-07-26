@@ -677,6 +677,20 @@ unchanged.
 - Truthful-ledger checkpoint:
   `bmad-4-2-ledger-refresh-20260726T083030Z-48a1de`
   (pending Git binding).
+- T041 pinned clean immutable candidate
+  `1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c`, tree
+  `ac002fa795614a3eaf752922a95a1e7df20a37ef`, as an empty checkpoint
+  carrying all four mandatory trailers. Its exact binary diff from
+  `e9824df7300634c19d815bdd7ad591b9fb5366d5` is 1,382,640 bytes with
+  SHA-256 `e953af5793272a0dfdc3de7a29a01b8d6be9d9cfb9ae8af298166517e25a583f`
+  over 72 Story-owned paths. The candidate record is intentionally persisted
+  outside the nonrecursive candidate boundary.
+- Immutable-candidate checkpoint:
+  `bmad-4-2-candidate-20260726T083143Z-a2d6c9`
+  (Git-bound to `1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c`).
+- Candidate-record checkpoint:
+  `bmad-4-2-candidate-record-20260726T083632Z-f41b8e`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
