@@ -730,6 +730,15 @@ unchanged.
 - Post-quality4 T001 checkpoint:
   `bmad-4-2-t001-quality4-refresh-20260726T092740Z-9ae52c`
   (pending Git binding).
+- The post-quality4 truthful ledger passed full validation at
+  `b57e6088002ea57974d3063cee153852206ded63`: 48 linear commits,
+  12 authorities, 51 immutable references, 18 unique checkpoints, 19 legacy
+  groups, and 31 raw files. Twenty-six are valid results and five are
+  capture-only; the prior candidate/review-4 lane is invalidated and no
+  downstream completion is claimed.
+- Post-quality4 ledger checkpoint:
+  `bmad-4-2-ledger-quality4-refresh-20260726T093944Z-6bc20f`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
