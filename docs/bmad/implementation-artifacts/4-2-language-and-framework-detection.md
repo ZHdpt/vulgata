@@ -748,6 +748,13 @@ unchanged.
 - Replacement candidate-record checkpoint:
   `bmad-4-2-candidate-record-20260726T094834Z-3d6f90`
   (pending Git binding).
+- Final Full acceptance review 5 returned `ACCEPT` with zero findings and
+  complete FR 21/21, AC 7/7, SC 8/8, and R1-R16 coverage. Final Full quality
+  review 5 also returned `ACCEPT` with zero findings; QR4-001 through QR4-003
+  are closed and all reviewed quality axes passed at candidate `14ed1fd2`.
+- Final Full-reviews checkpoint:
+  `bmad-4-2-full-reviews-20260726T095959Z-83a6e1`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
