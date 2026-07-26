@@ -7,82 +7,81 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 
 **Stage**: `tasks`
 
-**BMad Story**: `4-2-language-and-framework-detection` (lifecycle remains `review`; this artifact does not advance or repair lifecycle state)
+**BMad Story**: `4-2-language-and-framework-detection` (Full execution; lifecycle remains `review`; this artifact does not advance or repair lifecycle state)
 
-**Accepted plan checkpoint**: `216985b812613ad20994d300fae072b69093e6b6` (tree `f766a5866170751b74eca8c5e5307c639cbf8ecd`, source parent `eefa1794a57227428376a6d838593485e491a79b`)
+**Source boundary**: commit `fe08df102957276f4376b9ca62b5921d19113003`, tree `6db827214d282961e4ded4e3c94bc0b975faa827`, empty candidate diff SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
 
-**Accepted plan diff identity**: `ad981b3329b7a6ece656e9e5c19ca3601a966a43ab82512406b5246d4f1ea350`
-**Authorization**: `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json` permits task generation for validated NuGet/npm lock-owner filtering; it waives no analysis, TDD, review, E2E, security, verification, or Git gate.
+**Accepted plan checkpoint**: ID `bmad-4-2-plan-20260726T041520Z-3fbfd5`, uniquely trailer-resolved commit `fe08df102957276f4376b9ca62b5921d19113003`
 
-**Accepted artifact hashes**: `spec.md` `924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956`; `plan.md` `1ff1d9cdcc715826229bcbf2981f18d221f3d067a0d03de19f1e79b50d0f18df`; `research.md` `306d52e498537b4fe9c4ed4478731dbac9569f34df0aebf8f9291337ca41dec9`; `data-model.md` `76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c`; `quickstart.md` `095b91d28c4c4517c3d8981011c8838fcafdf4b1043b71fc861164b723155664`; Story 4.2 contracts `74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181`, `b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b`, `b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad`; Story 4.1 owning contract `ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124`.
+**Fresh accepted verdict**: `specs/002-language-framework-detection/reviews/plan-review-8.json`, SHA-256 `fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087`, verdict `ACCEPT`, reviewed diff SHA-256 `b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79`
 
-## Evidence Rules
+**Complete reviewed artifact-hash map**: `specs/002-language-framework-detection/plan.md` `2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600`; `specs/002-language-framework-detection/research.md` `e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4`; `specs/002-language-framework-detection/quickstart.md` `4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115`
 
-- Checked tasks below preserve only behavior and files still proven by current Git/source/tests. They do **not** assert that historical raw RED output or checkpoint trailers exist.
-- Unavailable historical raw RED output and checkpoint trailers must be recorded as unavailable under the approved Story 4.2-only exception. A current GREEN rerun is never historical RED evidence.
-- Every iteration-2 behavior correction begins with an observed runnable assertion failure. Compile failures, broken fixtures, fabricated output, backdating, amended history, and production-before-RED are blockers.
-- Each RED/GREEN task records command, exit code, immutable source commit, observed assertion, and raw-output path in the implementation evidence owned by the sprint loop.
-- No task adds or changes a Scan Coordinator, Orchestrator, Worker Agent/tool, dispatch, scheduling, retry, LLM fact authority, Communication Pattern Catalog, Story 4.3 behavior, document generation, or downstream language-support promise.
+**Unchanged accepted inputs**: `spec.md` `924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956`; `data-model.md` `76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c`; Story 4.2 contracts `b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b`, `74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181`, and `b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad`; Story 4.1 owning provider contract `ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124`
 
-## Phase 1: Activation and Preserved Baseline
+**Authorization**: `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json`, SHA-256 `33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f`, authorizes only the unchanged validated NuGet/npm lock-owner filtering design. It does not cover a new Worker Agent/tool, Scan strategy, or PRD change and waives no analysis, TDD, review, E2E, security, verification, or Git gate.
 
-**Purpose**: Pin the accepted task source and retain only still-valid implementation facts.
+## Evidence and Ordering Rules
 
-- [ ] T001 Verify `216985b812613ad20994d300fae072b69093e6b6` is an ancestor of `HEAD`, verify the accepted hashes above and `plan-review-6.json` ACCEPT plus `planned-change-authorization-2.json`, require no unrelated changes in `git status --short`, and run the pre-correction focused baseline commands in `specs/002-language-framework-detection/quickstart.md`
-- [X] T002 Preserve the implemented atomic `RepositoryProfileDraft`, exact failure/cancellation recovery, historical nullable Story 4.1 language compatibility, and additive mappings in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`, `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`; current behavior remains subject to fresh surrounding verification
-- [X] T003 Preserve the implemented private `TOOL_RESULT_LIMITS={"execute_cypher_query":250001}`, reserved `truncated`/`result_limit` rejection, exact two-query lifecycle, and 250,000 combined-row cap in `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs` and `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs`; this does not preserve the stale final-image evidence schema claim
-- [X] T004 Preserve the two additive migrations `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs` and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs` plus their Designer files and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`; no third remediation migration is planned
+- The exact historical statement is **“Pre-correction T001 baseline observation: unavailable”**. The superseded T001 observation was not captured before T002-T049, is temporally unavailable, and cannot be recreated by running commands now.
+- A result produced now is **Current verification** only. It must retain its actual UTC time, immutable commit/tree, command, exit code, and raw-output path and must not be called historical, pre-correction, RED, or proof of contemporaneous ordering.
+- Checked tasks preserve still-valid implementation and immutable evidence. They do not manufacture unavailable historical raw RED output or missing checkpoint trailers.
+- Every new changed behavior uses observed runnable RED before implementation. Compile failure, broken fixture, inferred failure, fabricated output, backdating, amended history, or implementation-before-RED is a blocker.
+- The only permitted edit before the second accepted-plan-binding RED is the focused assertion added by T036. T035 changes no file. T037 may not start until both T035 and T036 retain actual failing output.
+- Each RED/GREEN record includes the exact command, exit code, immutable source, observed assertion, and create-new raw-output path. Current GREEN is never relabelled as historical RED.
+- No task adds or changes a Scan Coordinator, Orchestrator, Worker Agent/tool, dispatch, scheduling, grouping, retry, LLM fact authority, Communication Pattern Catalog, Story 4.3 behavior, document generation, Cross-Repository Resolution, or downstream language-support promise.
 
-**Independent validation**: Current source contains the accepted aggregate, provider-completeness, and two-migration baseline; T001 must re-establish its runnable state before correction work.
+## Phase 1: Current Verification and Preserved Foundation
+
+**Purpose**: Replace the impossible old T001 prerequisite with truthful present-day verification and retain only still-valid foundation behavior.
+
+- [ ] T001 Create `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json` against a root-supplied clean immutable commit containing the accepted plan set and this regenerated `tasks.md`: preserve the exact unavailable-baseline statement above; record `Current verification`, actual UTC observation time, commit/tree, commands, exit codes, and create-new raw outputs `TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt` and `TestResults/story-4-2-current-verification/T001-framework-green.txt`; prove the checkpoint ID/commit and ancestor relationship above, the exact `plan-review-8.json` path/hash/verdict/diff/artifact map, and the unchanged authorization path/hash/scope; then run the two focused provider/profiling and framework commands from `specs/002-language-framework-detection/quickstart.md` GREEN without any historical/pre-correction/RED/contemporaneous-ordering claim
+- [x] T002 Preserve the implemented atomic `RepositoryProfileDraft`, rollback/detach/reload failure and cancellation recovery, historical nullable Story 4.1 language compatibility, and additive mappings in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`, `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
+- [x] T003 Preserve the private `TOOL_RESULT_LIMITS={"execute_cypher_query":250001}`, reserved `truncated`/`result_limit` rejection, exact two-query lifecycle, and 250,000 combined-row cap in `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs` and `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs`
+- [x] T004 Preserve exactly the two additive migrations `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs` and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs`, their Designer files, and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`; no third remediation migration is permitted
+
+**Independent validation**: T001 proves only the accepted/current immutable boundary and explicitly preserves the missing temporal fact. The focused current commands pass, the exact accepted plan binding is executable, and the foundation remains unchanged.
 
 ---
 
 ## Phase 2: User Story 1 - Trust the Language Profile (Priority: P1)
 
-**Goal**: Preserve parser-derived Code Unit language and distinct-source-file summaries while correction work changes adjacent provider evidence.
+**Goal**: Preserve parser-derived Code Unit language and distinct-source-file summaries.
 
-- [X] T005 [US1] Preserve the exact seven-field Projection A language transport, open normalized parser-token grammar, per-path conflict rejection, and unchanged Projection B endpoint identity in `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs` and `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs`
-- [X] T006 [US1] Preserve Code Unit language assignment, per-path consistency, and distinct retained-file language summaries in `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
-- [X] T007 [US1] Preserve the authorized ordinal language breakdown and Simplified-Chinese `语言分布` presentation in `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`, `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs`, `src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor`, `tests/Vulgata.Tests/RepositoryApiTests.cs`, and `tests/Vulgata.Tests/DashboardPanelTests.cs`
+- [x] T005 [US1] Preserve the exact seven-field Projection A language transport, bounded open parser-token grammar, per-path conflict rejection, and unchanged Projection B endpoint identity in `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs` and `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs`
+- [x] T006 [US1] Preserve Code Unit language assignment, per-path consistency, and distinct retained-file language summaries in `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
+- [x] T007 [US1] Preserve the authorized ordinal language breakdown and Simplified-Chinese `语言分布` presentation in `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`, `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs`, `src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor`, `tests/Vulgata.Tests/RepositoryApiTests.cs`, and `tests/Vulgata.Tests/DashboardPanelTests.cs`
 
-**Independent validation**: The twelve-identifier matrix, extension/token mismatch, same-file multiple Code Units, novel valid token, and distinct-file counts pass without any extension or LLM language authority.
+**Independent validation**: The twelve-identifier matrix, extension/token mismatch, novel valid token, same-file multiple Code Units, and distinct-file counts pass with no extension or LLM language authority.
 
 ---
 
 ## Phase 3: User Story 2 - Use Auditable Framework Facts (Priority: P2)
 
-**Goal**: Preserve deterministic framework facts, then correct lock ownership so a `Medium` fact requires exactly one validated direct-manifest owner.
+**Goal**: Preserve deterministic, scoped framework facts and the validated direct-manifest owner correction.
 
-### Preserved US2 baseline
+- [x] T008 [US2] Preserve the closed embedded framework catalog and exact coordinate matching in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs`, `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json`, and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
+- [x] T009 [US2] Preserve committed-only, bounded, non-executing NuGet/npm/Maven/Python direct-evidence parsing in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
+- [x] T010 [US2] Preserve deepest applicable scope, parser-language compatibility, exact locator construction, `High` over `Medium`, deterministic tie-breaking, and deduplication in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
+- [x] T011 [US2] Preserve per-artifact isolation, Repository-global fail-closed bounds, bounded audit sampling with complete total count, and zero execution/network/LLM behavior in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
+- [x] T012 [US2] Preserve atomic `CodeUnitFramework` persistence and the authorized Simplified-Chinese framework overview in `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
+- [x] T013 [US2] Preserve the observed NuGet RED matrix in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for valid unique, zero, multiple, malformed, unsupported, conditional/dynamic, unsafe/reparse/oversize, mixed valid-invalid, and out-of-root/inapplicable direct-manifest owners
+- [x] T014 [US2] Preserve the observed npm RED matrix in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for valid unique, zero, malformed, unsupported/nonliteral, unsafe/reparse/oversize, multiple where applicable, and out-of-root/inapplicable owners
+- [x] T015 [US2] Preserve `DirectManifestOwnerCandidate` and `ValidatedDirectManifestOwner` with closed read/parse/support/applicability states in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`
+- [x] T016 [US2] Preserve complete same-root NuGet owner-candidate evaluation before lock parsing in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`; exactly one safely read, successfully parsed, supported, literal unconditional, applicable `.csproj` is required and invalid candidates cannot be discarded to manufacture uniqueness
+- [x] T017 [US2] Preserve complete same-root npm owner evaluation before lock parsing in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`; the exact `package.json` must be safely read, successfully parsed, supported, literal top-level, and applicable
+- [x] T018 [US2] Preserve immutable GREEN evidence for the focused `FrameworkDetection` and surrounding Repository profiling filters; direct `High` still beats eligible lock `Medium`, independent valid artifacts continue, diagnostics remain bounded, and package/build/network/LLM execution remains zero
 
-- [X] T008 [US2] Preserve the closed embedded framework catalog and exact coordinate matching in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs`, `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json`, and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
-- [X] T009 [US2] Preserve committed-only, bounded, non-executing NuGet/npm/Maven/Python direct-evidence parsing in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
-- [X] T010 [US2] Preserve deepest applicable scope, parser-language compatibility, exact locator construction, `High` over `Medium`, deterministic tie-breaking, and deduplication in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
-- [X] T011 [US2] Preserve per-artifact isolation, repository-global fail-closed bounds, bounded audit sampling with complete total count, and no execution/network/LLM behavior in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` and `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
-- [X] T012 [US2] Preserve atomic `CodeUnitFramework` persistence and authorized Simplified-Chinese framework overview in `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
-
-### TDD Group R2A - Complete direct-manifest owner RED
-
-- [X] T013 [US2] Add and observe runnable NuGet RED cases in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for a valid unique owner with and without a direct catalog match, zero owners, multiple owners, malformed XML, unsupported project shape, conditional/dynamic declarations or SDK ownership, unsafe/reparse/oversize owner, an invalid candidate beside a valid candidate, and an out-of-root/inapplicable owner; require no `Medium` fact and exactly one bounded closed lock/owner audit outcome for every invalid case
-- [X] T014 [US2] Add and observe runnable npm RED cases in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for a valid unique literal top-level owner with and without a direct catalog match, zero owners, malformed JSON, unsupported/nonliteral shape, unsafe/reparse/oversize owner, multiple owner candidates where applicable, and an out-of-root/inapplicable owner; require no `Medium` fact and exactly one bounded closed lock/owner audit outcome for every invalid case
-
-### TDD Group R2B - Validated owner GREEN
-
-- [X] T015 [US2] Add the transient `DirectManifestOwnerCandidate` and `ValidatedDirectManifestOwner` contracts with closed read/parse/support/applicability states in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`; rerun the contract-focused portions of T013-T014
-- [X] T016 [US2] Replace tracked-file/count ownership with complete same-root NuGet owner-candidate evaluation before lock parsing in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`; require exactly one safely read, successfully parsed, supported, literal unconditional, applicable `.csproj`, do not discard invalid candidates to manufacture uniqueness, and rerun T013 GREEN
-- [X] T017 [US2] Replace tracked-filename ownership with complete same-root npm owner evaluation before lock parsing in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`; require the exact `package.json` to be safely read, successfully parsed, supported, literal top-level, and applicable, then rerun T014 GREEN
-- [X] T018 [US2] Run `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~FrameworkDetection"` and the surrounding Repository profiling framework filters from `specs/002-language-framework-detection/quickstart.md`; record that direct `High` still beats eligible lock `Medium`, independent valid artifacts continue, diagnostics are bounded, and package/build/network/LLM execution remains zero
-
-**Independent validation**: NuGet and npm valid unique owners retain eligible lock facts; malformed, unsupported, conditional/dynamic, unsafe, oversize, zero, multiple, and inapplicable owner sets create no lock-derived fact and one safe audit outcome.
+**Independent validation**: Valid unique owners retain eligible `Medium` lock facts; every invalid owner set creates no lock-derived fact and exactly one bounded closed audit outcome.
 
 ---
 
 ## Phase 4: User Story 3 - Audit Unknown Languages (Priority: P3)
 
-**Goal**: Preserve exact `Filtered/UnknownLanguage` auditing while hardening all provider-derived paths.
+**Goal**: Preserve exact `Filtered/UnknownLanguage` audit behavior and dispatch exclusion.
 
-- [X] T019 [US3] Preserve zero-structure and absent-provider candidate reconciliation as exactly one terminal `Filtered/UnknownLanguage` with no retained Code Unit, Edge, or unresolved relationship in `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
-- [X] T020 [US3] Preserve complete sorted Repository-relative unknown-language paths and distinct count under the accepted 10,000-path/16-MiB bound in `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`, `src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor`, `tests/Vulgata.Tests/RepositoryApiTests.cs`, and `tests/Vulgata.Tests/DashboardPanelTests.cs`
+- [x] T019 [US3] Preserve zero-structure and absent-provider candidate reconciliation as exactly one terminal `Filtered/UnknownLanguage` with no retained Code Unit, Edge, or unresolved relationship in `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
+- [x] T020 [US3] Preserve complete sorted Repository-relative unknown-language paths and distinct count under the 10,000-path/16-MiB bound in `src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs`, `src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor`, `tests/Vulgata.Tests/RepositoryApiTests.cs`, and `tests/Vulgata.Tests/DashboardPanelTests.cs`
 
 **Independent validation**: Unknown candidates remain visible to authorized audit and absent from every dispatchable Code Unit set.
 
@@ -90,172 +89,176 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 
 ## Phase 5: User Story 4 - Preserve Safe and Authorised Profiling (Priority: P4)
 
-**Goal**: Close the captured-logger disclosure before any other provider/coordinator correction and preserve atomicity, visibility, and Chinese presentation.
+**Goal**: Preserve fail-closed provider paths, atomicity, Repository visibility, and Simplified-Chinese presentation.
 
-### Preserved US4 baseline
+- [x] T021 [US4] Preserve provider/global atomic failure, individual evidence isolation, late persistence failure/cancellation recovery, existing `ManagementAccess` and Repository visibility/redaction, and Simplified-Chinese user-visible prose in `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, and `tests/Vulgata.Tests/RepositoryApiTests.cs`
+- [x] T022 [US4] Preserve observed captured-logger RED cases in `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs` and `tests/Vulgata.Tests/RepositoryProfilingTests.cs` for absolute Windows, UNC, POSIX-rooted, escape, control-character, invalid-separator, and oversize provider paths
+- [x] T023 [US4] Preserve the bounded `SafeProviderPath` transition before `ProviderCandidateOutcome` construction in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs` and `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`
+- [x] T024 [US4] Preserve defense-in-depth revalidation before the first log and the identical safe path for log, audit key, durable outcome, DTO, and UI in `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`
+- [x] T025 [US4] Preserve immutable GREEN evidence for provider/profiling and relevant API/component disclosure tests proving two-query atomicity, local candidate audit, authorization, and zero raw-host-path disclosure
 
-- [X] T021 [US4] Preserve provider/global atomic failure, individual evidence isolation, late persistence failure/cancellation recovery, existing `ManagementAccess` and Repository visibility/redaction, and Simplified-Chinese user-visible prose in `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, and `tests/Vulgata.Tests/RepositoryApiTests.cs`
-
-### TDD Group R4A - Captured-logger path disclosure RED
-
-- [X] T022 [US4] Add a captured in-memory logger and observe runnable RED cases in `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs` and `tests/Vulgata.Tests/RepositoryProfilingTests.cs` using malformed Projection A and relationship rows with absolute Windows drive, UNC, POSIX-rooted, `..` escape, control-character, invalid-separator, and over-2,048-character paths; assert logs, exceptions, owned outcomes, durable state, API responses, and rendered output contain neither the raw scalar nor any host-path fragment and use only a safe Repository-relative value or `(unknown)` plus a closed reason
-
-### TDD Group R4B - SafeProviderPath GREEN
-
-- [X] T023 [US4] Introduce the bounded `SafeProviderPath` invariant and make malformed-row path recovery normalize or replace the raw scalar inside the parser stack frame before constructing `ProviderCandidateOutcome` in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs` and `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`; discard the raw scalar and rerun provider portions of T022 GREEN
-- [X] T024 [US4] Revalidate `SafeProviderPath` before the first log call and use the identical safe value for the log, audit key, durable `ScanCandidateOutcome`, DTO, and UI in `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`; rerun coordinator/persistence/API/UI portions of T022 GREEN
-- [X] T025 [US4] Run `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling"` plus relevant API/component disclosure filters in `tests/Vulgata.Tests/RepositoryApiTests.cs` and `tests/Vulgata.Tests/DashboardPanelTests.cs`; record preserved two-query atomicity, local candidate audit, authorization, and zero raw-path disclosure
-
-**Independent validation**: Captured logs and every downstream surface contain no absolute/rooted/escape path fragment; authorized users receive only bounded safe audit data, and unauthorized users receive no profiling detail.
+**Independent validation**: Captured logs and every downstream surface contain only a safe Repository-relative path or `(unknown)`; unauthorized users receive no profiling detail.
 
 ---
 
-## Phase 6: Closed Story 4.1 Evidence Grammar and Corrected Source Binding
+## Phase 6: Preserved Closed Evidence Grammar and Source Binding
 
-**Purpose**: Align the owning contract, Python emitter, C# verifier, fresh image, and evidence to one exact schema and one clean source candidate.
+**Purpose**: Preserve the accepted Story 4.1 v2 evidence grammar and source-to-image preflight implementation while invalidating its stale plan-review claim.
 
-### TDD Group C1 - Exact 19-root and nested grammar RED
+- [x] T026 Preserve observed exact-19-root RED cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`
+- [x] T027 Preserve observed nested-schema RED cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` for unknown, duplicate, missing, alternate, and wrong-typed fields plus duplicate semantic authorities
+- [x] T028 Preserve the exact bounded v2 observer/emitter in `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py`
+- [x] T029 Preserve the exact closed v2 C# parser/verifier in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`
+- [x] T030 Preserve canonical Projection A/B and safe-name equality across `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`, `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py`, `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`, and `specs/001-codegraph-extraction/contracts/repository-profiling-api.md`
+- [x] T031 Preserve observed source-binding preflight RED cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` for dirty, symlink, untracked/missing/case-colliding, stale/unlabelled/mismatched image, reused namespace, and manifest mismatch inputs
+- [x] T032 Preserve canonical `production-source-manifest-v1` creation and validation in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`
+- [x] T033 Preserve immutable source commit/tree/manifest image labels in `docker/Dockerfile` and their pre-provider inspection in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`
+- [x] T034 Preserve equal source/image/verifier identities in `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py` and `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`
 
-- [x] T026 Add and observe runnable RED schema cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` proving the current runner/verifier accepts divergent root names or shapes; require exactly the 19 roots `schemaVersion`, `verdict`, `primaryFailureCategory`, `acceptedCorrectionSha256`, `claimSha256`, `sourceCommit`, `sourceTree`, `productionSourceManifestSha256`, `finalImageSha256`, `verifierBaseImageSha256`, `providerVersion`, `providerLockSha256`, `providerDistributionSha256`, `fixtureTreeSha256`, `projectionObservations`, `coverage`, `immutableSnapshot`, `cleanup`, and `forbiddenRetention`
-- [x] T027 Extend the observed RED cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` to reject unknown, duplicate, missing, alternate-spelled, or wrong-typed root/nested fields; require counts only at `coverage.rowCounts`, five booleans only at `coverage.completeness`, projection completeness only at `projectionObservations.A.shapeComplete` and `.B.shapeComplete`, no `coverage.nodeKinds`, exact cleanup/forbidden-retention fields, and the exact raw safe-name allowlist including `parser_language`, `truncated`, and `result_limit`
-
-### TDD Group C2 - One emitter/verifier grammar GREEN
-
-- [x] T028 Rewrite the bounded observer/emitter in `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py` to emit only the Story 4.1 contract's exact closed 19-root schema, closed `projectionObservations`/`coverage`/`cleanup`/`forbiddenRetention` grammar, finite bounds, HMAC unknown-name handling, and 16-KiB evidence limit; preserve all-row validation while retaining only representative row shape
-- [x] T029 Rewrite the closed parser/verifier in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` to validate the same exact grammar with no parallel field-name model, including duplicate-property detection, strict integer/boolean/type/range/sum/pass invariants, exact A/B alternatives, and canonical query/provider hashes; rerun T026-T027 GREEN
-- [x] T030 Verify the canonical Projection A/B constants and raw property-name set remain identical across `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`, `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py`, `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`, and `specs/001-codegraph-extraction/contracts/repository-profiling-api.md`; run the non-Docker provider-contract schema tests and record GREEN
-
-### TDD Group C3 - Source-to-image RED
-
-- [x] T031 Add and observe runnable RED preflight cases in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` proving a dirty worktree, symlink, untracked/missing/case-colliding context entry, stale or unlabelled image, mismatched commit/tree/manifest label, reused correction namespace, caller-only image assertion, and source-manifest mismatch all fail before provider execution
-
-### TDD Group C4 - Deterministic production-source binding GREEN
-
-- [x] T032 Implement canonical `production-source-manifest-v1` creation and validation in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` over `docker/Dockerfile`, `.dockerignore`, and every tracked non-ignored Docker-context file, sorted by Repository-relative path with SHA-256; bind source commit, Git tree, manifest SHA-256, exact image ID, provider pin/lock/distribution, canonical query hashes, and verifier base image into the retained claim
-- [x] T033 Add immutable build arguments/labels for source commit, source tree, and production-source-manifest SHA-256 in `docker/Dockerfile`, then make `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` inspect and compare all labels before constructing or running the verifier image
-- [x] T034 Emit and validate the same source commit, source tree, production-source-manifest SHA-256, final image ID, and verifier base-image ID in `tests/Vulgata.Tests/CodeGraphProviderContract/runner.py` and `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; rerun T031 GREEN without provider execution
-
-**Independent validation**: The runner and verifier accept only the exact 19-root contract and closed nested grammar, and no image can reach provider execution unless it is freshly source-bound to the clean immutable candidate.
+**Independent validation**: The closed grammar and source preflight remain runnable, but no prior claim, candidate, manifest, image, namespace, review, E2E, verification, T049, or T050 result is accepted after the corrected plan bytes.
 
 ---
 
-## Phase 7: Truthful Historical Reconstruction
+## Phase 7: Executable Accepted-Plan Binding TDD
 
-**Purpose**: Use the approved Story 4.2-only exception without converting missing historical process evidence into ordinary TDD satisfaction.
+**Purpose**: Observe both stale executable bindings before replacing them with the exact fresh verdict/checkpoint/diff contract.
 
-- [X] T035 Inspect immutable history and existing workflow records for every old TDD group using `git log --reverse --format="%H %P %s%n%b" e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD` and `git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..HEAD`; create `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` with exact task-group identities, requirement/test mapping, earliest provable test and implementation commits or explicit null/reason, existing workflow/checkpoint identities only, and truthful `historicalRawRedAvailable`/`checkpointTrailerAvailable` booleans
-- **Independent validation**: T035 creates only truthful historical discovery/scaffolding. It does not finalize current GREEN evidence; finalization and validation wait for T045-T046 after the immutable-candidate GREEN gates through T044.
+### Binding RED
+
+- [ ] T035 Run only `HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes` before changing `CanonicalLfFiles` in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; retain actual assertion failures for exactly `plan.md`, `research.md`, and `quickstart.md` in create-new `TestResults/story-4-2-current-binding/T035-canonical-hash-red.txt`, with command, nonzero exit code, immutable source, and no compile failure
+- [ ] T036 Edit only the focused assertion in `AcceptedCorrectionManifest_IsCanonicalAndArtifactBound` in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` to reject `user-approved-story-4-2-plan-2026-07-20` and require the exact fresh verdict path/hash/diff plus checkpoint ID/commit fields; run that test against the otherwise unchanged `_reviewIdentity`/`CreateAcceptedCorrectionManifest`, and retain the actual stale-claim assertion failure in create-new `TestResults/story-4-2-current-binding/T036-plan-claim-red.txt`
+
+### Binding GREEN
+
+- [ ] T037 After T035-T036 RED, update exactly the three stale `CanonicalLfFiles` hashes and replace `_reviewIdentity`/`reviewIdentity` with `planReviewVerdictPath`, `planReviewVerdictSha256`, `planReviewDiffSha256`, `planCheckpointId`, and `planCheckpointCommit` in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; parse the named verdict; require `plan-review`, `ACCEPT`, the complete artifact map and diff above; resolve exactly one matching `Workflow-Checkpoint` trailer; require commit `fe08df102957276f4376b9ca62b5921d19113003` to contain the plan/verdict checkpoint and be an ancestor of the candidate; add rejection cases for old/alternate verdict, hash/diff drift, missing/duplicate trailer, and ancestry failure
+- [ ] T038 Rerun the two focused tests and the non-Docker `CodeGraphProviderContractTests` suite from `specs/002-language-framework-detection/quickstart.md`; retain GREEN commands, exit codes, immutable source, assertions, and create-new raw outputs `TestResults/story-4-2-current-binding/T038-focused-green.txt` and `TestResults/story-4-2-current-binding/T038-surrounding-green.txt`; verify the tracked test change contains no product, Scan, Worker Agent/tool, or PRD behavior change
+
+**Independent validation**: Both stale bindings fail before T037. Focused and surrounding GREEN then bind the claim to exactly `plan-review-8.json`, its SHA-256/reviewed diff/artifact map, and the unique ancestor checkpoint commit; the static 2026-07-20 identity is absent.
 
 ---
 
-## Phase 8: Immutable Candidate, Final Image, and Regression Gates
+## Phase 8: Truthful Ledger Regeneration
 
-**Purpose**: Produce new source-bound evidence and rerun every accepted current-candidate gate after all corrections.
+**Purpose**: Replace the invalidated ledger without merging unavailable historical time with current verification.
 
-- [x] T036 Run all focused RED/GREEN correction filters from T013-T018, T022-T025, T026-T030, and T031-T034 against one clean candidate, persist raw outputs, and verify no production correction predates its observed RED using `tests/Vulgata.Tests/FrameworkDetectionTests.cs`, `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs`, `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, and `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`
-- [x] T037 Verify the accepted plan/research/data-model/quickstart/contracts hashes and the exact two-migration forward/rollback instructions from `specs/002-language-framework-detection/quickstart.md`; run `dotnet ef migrations script --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext` and `dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext`
-- [x] T038 Create a new unused accepted-correction namespace and deterministic production-source manifest at the clean immutable candidate through `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; stop on dirty status, identity drift, stale namespace, manifest mismatch, or any source path not represented according to `.dockerignore`
-- [x] T039 Build a fresh final runtime image from `docker/Dockerfile` and the exact candidate context with the required source commit/tree/manifest labels, inspect its immutable image ID and labels, and reject any pre-correction, cached-without-proof, unlabelled, or mismatched image before provider execution
-- [x] T040 Run `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract"` once against the fresh image and unused namespace; require exact 0.5.1 pin/lock/distribution, exact query hashes, both projections above 100 complete rows, empty-file `Filtered/UnknownLanguage`, atomic injected failures, cleanup, false forbidden-retention fields, and closed v2 evidence bound to the same source/image identities
-- [x] T041 Rerun `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj` and `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj` at the exact same immutable candidate and record complete non-skipped results; no earlier full-suite run or pre-correction image is candidate evidence
-- [x] T042 Rehearse both additive migrations and rollback at the same candidate using `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs`, `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs`, and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`; prove historical Story 4.1 readability, fresh Story 4.2 invariants, reverse audit-count check/column first, then tables/indexes, and no historical rewrite
-- [x] T043 Run `git diff --check` and `git status --short`, verify the final diff contains no forbidden FR-020 scope and no files outside the accepted correction/evidence boundary, and treat CRLF-only warnings as non-functional only when no actual whitespace defect exists
-- [x] T044 Recheck authorized/unauthorized Repository overview behavior and captured-log redaction after the final image using `tests/Vulgata.Tests/RepositoryApiTests.cs`, `tests/Vulgata.Tests/DashboardPanelTests.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`; require all language/framework/unknown audit facts for authorized users, established 401/403/404 redaction for others, and zero raw host paths
+- [ ] T039 Regenerate and finalize `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` from immutable Git and existing workflow records: preserve every still-provable historical group, earliest test/implementation commit or explicit null/reason, truthful `historicalRawRedAvailable`/`checkpointTrailerAvailable`, the exact unavailable T001 statement, and a link to `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json`; add T035-T038 as separately timed current RED/GREEN evidence and remove every stale accepted claim for the prior candidate, manifest, image, namespace, T049, or T050
+- [ ] T040 Validate the regenerated ledger against Git ancestry, referenced blobs/trailers, T001 and T035-T038 raw-output existence/hashes, and the Story 4.2-only exception; reject fabricated/backdated/amended evidence, a current run labelled historical/pre-correction, missing temporal disclosure, or any claim that the new final image/T049/T050 already passed
 
-### Post-GREEN historical ledger finalization
+**Independent validation**: The ledger is internally consistent, discloses missing history, distinguishes `Current verification`, contains no stale completion identity, and is ready to be included in the new reviewed candidate.
 
-- [x] T045 Record current immutable-candidate GREEN commands through T044, exit codes, source commit, and raw-output paths separately from historical fields in `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json`; explicitly mark unavailable historical raw RED output and missing contemporaneous trailers unavailable, never infer/backdate/amend evidence, and fail validation if any current run is represented as historical RED
-- [x] T046 Validate the finalized reconstruction against current Git ancestry and every referenced path/hash using `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json`, `specs/002-language-framework-detection/workflow-state.json`, and the immutable Git object database; leave T050 incomplete if the ledger is false, internally inconsistent, cites nonexistent evidence, or omits any required GREEN gate through T044
-- [x] T047 Validate claim/evidence/reconstruction JSON parseability, exact 19-root/nested schema, all referenced path/hash/image/commit/tree identities, new immutable namespace, evidence size, raw-output existence, and final-image cleanup using `TestResults/codegraph-provider-contract/<AcceptedCorrectionSha256>/claim.json`, `TestResults/codegraph-provider-contract/<AcceptedCorrectionSha256>/evidence.json`, and `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json`
-- [x] T048 Reconcile every accepted plan obligation and each raw finding `AR2-001`, `AR2-002`, `AR2-003`, `QR2-001`, `QR2-002`, `CF-002`, `EV-002`, `WF-002`, `PL-001`, `TR-001`, and `PA-001` to concrete immutable-candidate evidence in `specs/002-language-framework-detection/reviews/acceptance-review-2.json`, `specs/002-language-framework-detection/reviews/quality-review-2.json`, `specs/002-language-framework-detection/reviews/analyze-final-2.json`, and the new evidence artifacts; unresolved or historical-unavailable items remain explicit and never become fabricated PASS claims
-- [x] T049 Freeze the final immutable-candidate identity after T036-T048, rerun hash/status checks without changing source, tests, contracts, plan artifacts, evidence, or image, and prepare the exact candidate/evidence inputs for the final audit; any mutation invalidates T038-T049 and requires a fresh namespace/image/gate
-- [ ] T050 Audit the immutable candidate last against FR-001-FR-021, AC-1-AC-7, SC-001-SC-008, `specs/002-language-framework-detection/plan.md`, `specs/002-language-framework-detection/data-model.md`, `specs/002-language-framework-detection/quickstart.md`, every file under `specs/002-language-framework-detection/contracts/`, `specs/001-codegraph-extraction/contracts/repository-profiling-api.md`, all iteration-2 findings, the fresh RED/GREEN records, final source/image/evidence binding, two-migration rehearsal, forbidden-scope diff, and truthful historical reconstruction; mark complete only after the audit succeeds with no file mutation, otherwise leave `[ ]`
+---
 
-**Independent validation**: One clean immutable candidate owns every focused GREEN, full suite, Web build, pending-model result, source-bound fresh image, exact closed-schema evidence, migration rehearsal, redaction/authorization check, and truthful historical ledger. T050 is last and remains incomplete until that whole candidate passes.
+## Phase 9: New Candidate, Full Reviews, E2E, and Verification
+
+**Purpose**: Pin and independently judge one candidate containing T001, the accepted-plan binding GREEN, and the truthful regenerated ledger.
+
+- [ ] T041 After T001 and T035-T040, have the root create one clean immutable implementation candidate/checkpoint containing only accepted Story 4.2 owned changes; record commit/tree, exact binary diff SHA-256, artifact hashes, owned paths, and clean status; any implementation/test/ledger mutation after pinning invalidates T041-T049
+- [ ] T042 [P] Have the root dispatch a fresh read-only Full `acceptance-review` against the exact T041 boundary and persist its returned verdict at `specs/002-language-framework-detection/reviews/acceptance-review-3.json`; require every BMad/SpecKit behavior, corrected T001 truth contract, binding RED/GREEN, and forbidden scope to be accepted
+- [ ] T043 [P] Have the root dispatch a fresh read-only Full `quality-review` against the identical T041 boundary and persist its returned verdict at `specs/002-language-framework-detection/reviews/quality-review-3.json`; require correctness, security, evidence integrity, test quality, edge cases, architecture seams, and regression risk to be accepted
+- [ ] T044 After both fresh reviews accept, record and execute the current-boundary E2E decision in `specs/002-language-framework-detection/workflow-state.json` using `docs/agent-workflow/e2e-decision-matrix.md`; cite a complete coverage override only if current integration evidence covers every triggered API/UI/persistence/migration/image boundary, otherwise run the required E2E owner; any tracked test edit reruns T042-T044
+- [ ] T045 Run pre-image verification at the unchanged T041 candidate and persist command evidence through `specs/002-language-framework-detection/workflow-state.json`: focused provider/profiling/framework/binding tests; `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract"`; `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj`; both migration script/rollback checks; `dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext`; authorization/redaction coverage; FR-020 diff audit; `git diff --check`; and clean status
+- [ ] T046 Read-only cross-validate the finalized `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` against the exact T041-T045 candidate, review, E2E, and verification identities without editing the ledger or any Docker-context file; any contradiction, stale boundary, fabricated temporal claim, or missing current evidence blocks before image work
+
+**Independent validation**: Both Full axes accept the same candidate, E2E is passed or completely covered, verification is GREEN, and the finalized ledger remains truthful. No candidate mutation is hidden.
+
+---
+
+## Phase 10: Fresh Manifest, Image, T049 Freeze, and T050 Audit
+
+**Purpose**: Regenerate every Docker-context-dependent proof and leave the final audit last.
+
+- [ ] T047 At the exact clean T041 source candidate, create a new unused accepted-correction namespace and canonical `production-source-manifest-v1` through `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; include the corrected plan/tasks/test/ledger Docker-context bytes, bind candidate commit/tree and every tracked non-ignored context hash, and stop before image creation on dirty status, identity drift, symlink/collision, stale namespace, or manifest mismatch
+- [ ] T048 Build a fresh image from `docker/Dockerfile` with the T047 commit/tree/manifest labels, inspect its immutable ID before provider execution, run `FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract` once in the unused namespace, and rerun the full suite, Web build, migration/model checks, authorization/redaction tests, diff/scope/status checks at the same source; require exact provider 0.5.1/query/schema/accepted-plan binding, both projections above 100 complete rows, empty-file `Filtered/UnknownLanguage`, atomic failures, cleanup, false forbidden retention, and no reused image/evidence/namespace
+- [ ] T049 Freeze the exact T041 source candidate plus T042-T048 verdict/E2E/verification/ledger/manifest/image/claim/evidence identities, rerun all hash/reference/status checks without changing source, tests, contracts, planning artifacts, ledger, evidence, or image, and prepare the immutable inputs for T050; any mutation or stale/missing identity invalidates T041-T049 and requires a new namespace/image/gate
+- [ ] T050 Audit the immutable candidate last against FR-001-FR-021, AC-1-AC-7, SC-001-SC-008, all 16 accepted plan decisions R1-R16, all 11 iteration-2 findings plus `T001-PLAN-001`, the exact plan/data-model/quickstart/contracts, Story 4.1 owning provider contract, T001 current verification, T035-T038 RED/GREEN, both Full reviews, E2E, verification, two-migration rehearsal, forbidden-scope diff, truthful ledger, and fresh source/image/evidence binding; mark complete only after an unchanged audit succeeds, otherwise leave `[ ]`
+
+**Independent validation**: One immutable source candidate owns accepted Full reviews, E2E, verification, truthful ledger, a fresh source-bound image and namespace, exact final-image evidence, and an unchanged T049 freeze. T050 is last and remains incomplete until every prerequisite passes.
 
 ---
 
 ## Dependencies and Execution Order
 
 ```text
-T001
-  -> preserved baseline T002-T012 and T019-T021
-  -> US2 correction: T013 RED -> T014 RED -> T015 -> T016 -> T017 -> T018
-  -> US4 correction: T022 RED -> T023 -> T024 -> T025
-  -> evidence grammar: T026 RED -> T027 RED -> T028 -> T029 -> T030
-  -> source binding: T031 RED -> T032 -> T033 -> T034
-  -> historical discovery/scaffolding: T035
-  -> immutable candidate GREEN gates: T036 -> T037 -> T038 -> T039 -> T040
-  -> current GREEN gates: T041 -> T042 -> T043 -> T044
-  -> historical ledger finalization: T045 -> T046
-  -> evidence/reconciliation/freeze: T047 -> T048 -> T049
+accepted plan checkpoint fe08df1...
+  -> regenerated tasks checkpoint + clean immutable current-verification commit
+  -> T001 Current verification
+  -> preserved valid work T002-T034
+  -> T035 canonical-hash RED
+  -> T036 stale-claim RED
+  -> T037 binding GREEN
+  -> T038 surrounding GREEN
+  -> T039 ledger regeneration
+  -> T040 ledger validation
+  -> T041 immutable candidate pin
+  -> T042 acceptance-review + T043 quality-review on the same boundary
+  -> T044 conditional E2E
+  -> T045 verification
+  -> T046 read-only ledger/current-gate cross-validation
+  -> T047 new manifest + namespace
+  -> T048 fresh image + exact gate + full current gates
+  -> T049 freeze
   -> T050 final audit
 ```
 
-- T013-T018 and T022-T025 may be assigned to separate fresh TDD implementers sequentially because they own different production seams, but they both edit shared test files and therefore must not run concurrently.
-- T026-T030 must finish before T031-T034 because the source-bound image may contain only the final closed evidence implementation.
-- T035 may inspect history and create truthful scaffolding while correction groups run, but T045-T046 cannot finalize or validate the ledger until T036-T044 have supplied every required immutable-candidate GREEN result.
-- T038-T049 are one serialized immutable-candidate lane. Any source, test, contract, evidence, or Docker-context mutation restarts that lane with a new correction namespace.
-- No task that edits `CodeGraphContextProvider.cs`, `RepositoryProfilingCoordinator.cs`, `FrameworkEvidenceDetector.cs`, `runner.py`, `CodeGraphProviderContractTests.cs`, `docker/Dockerfile`, migrations, or final evidence is parallelized with another owner of the same file.
+- Full `speckit-analyze` runs after this `tasks.md` and before T001; implementation does not start until the latest analysis has no Critical/High finding.
+- T001 requires the root's post-task accepted checkpoint/clean immutable commit; it cannot run against this uncommitted task-author boundary.
+- T035 and T036 are serialized because both use `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; only T036's focused assertion edit is allowed before its observed RED.
+- T042 and T043 are the only `[P]` tasks. They are read-only independent axes over the identical T041 boundary and persist separate verdict paths.
+- T044 waits for both reviews. A product correction returns to fresh TDD and reruns both axes; a tracked E2E test edit also reruns both axes before E2E can advance.
+- T041-T049 are one immutable-candidate lane. Review/evidence records may be persisted outside the nonrecursive implementation diff, but source/test/contract/ledger/Docker-context mutation invalidates the lane.
+- T047-T049 are serialized because the namespace, image, claim, evidence, and freeze identities are single-use and candidate-bound.
 
 ## Parallel Opportunities
 
-- After T001, read-only historical discovery for T035 may run independently of the new test authoring, but T045-T046 wait for all current GREEN evidence through T044.
-- Test execution may shard by fully qualified class only when no task is editing that class and all prerequisite GREEN changes are present.
-- There are no `[P]` implementation tasks: the correction seams share test authorities or immutable final-candidate state, so parallel markers would be misleading.
+- T042 and T043 may run concurrently against the exact same T041 boundary.
+- Read-only coverage counting and referenced-hash validation may be sharded only after the owning artifact is immutable.
+- No implementation task is parallelizable: T035-T040 share one test/evidence boundary, and T041-T050 share one immutable candidate or single-use namespace.
 
-## Old-to-New Task Mapping
+## Acceptance, Decision, and Finding Coverage
 
-| Previous tasks | Regenerated authority |
+| Obligation | Executable coverage |
 | --- | --- |
-| T001 | T001 activation with accepted checkpoint `216985b...` and current accepted hashes |
-| T002-T008 | T002-T004 preserved foundation; exact evidence-schema/final proof replaced by T026-T034 and T037-T047 |
-| T009-T015 | T005-T007 preserved US1 plus final regression T036/T041/T044 |
-| T016-T029 | T008-T012 preserved US2 baseline; stale lock-owner completion invalidated and replaced by unchecked T013-T018 |
-| T030-T034 | T019-T020 preserved US3 plus final regression T036/T044 |
-| T035-T044 | T021 preserved safe/authorized baseline; logger-disclosure claim invalidated and replaced by unchecked T022-T025 |
-| T045-T047 | Stale completion-lane evidence invalidated; replaced by unchecked T026-T034 and fresh immutable-image T038-T040 |
-| T048 | Replaced by current two-migration/hash rehearsal T037/T042 |
-| T049 | Pre-correction verification is not final evidence; replaced by T036-T049 |
-| T050 | Remains unchecked, is last, and now consumes the truthful reconstruction plus immutable-candidate audit |
+| FR-001-FR-003, FR-005-FR-006; AC-1-AC-2; SC-001-SC-002 | T001, T005-T007, T035-T038, T042-T045, T048-T050 |
+| FR-004, FR-007; AC-6; SC-004 | T019-T020, T042-T045, T048-T050 |
+| FR-008-FR-014, FR-016, FR-021; AC-3-AC-5; SC-003/SC-005 | T008-T018, T042-T045, T048-T050 |
+| FR-015, FR-017; AC-7; SC-006 | T002-T003, T011, T021-T034, T042-T045, T048-T050 |
+| FR-018-FR-019; AC-7; SC-007-SC-008 | T007, T012, T020-T025, T042-T045, T048-T050 |
+| FR-020 forbidden scope | T038, T042-T045, T048-T050 |
+| R1-R14 functional/evidence design | T002-T034, T042-T050 |
+| R15 / TR-001 truthful unavailable T001 | T001, T039-T040, T046, T049-T050 |
+| R16 / T001-PLAN-001 executable accepted-plan binding | T035-T038, T041-T050 |
+| AR2-001 | T022-T025, T042-T045, T048-T050 |
+| AR2-002 / CF-002 | T026-T030, T042-T043, T048-T050 |
+| QR2-001 | T013-T018, T042-T045, T048-T050 |
+| AR2-003 / QR2-002 / WF-002 | T041-T050, with T049 prerequisite freeze and T050 last |
+| EV-002 | T031-T034, T041, T047-T050 |
+| PL-001 / PA-001 | T001, T035-T038, T045, T048-T050 |
 
-## Acceptance and Finding Coverage
+Coverage totals: **21/21 functional requirements**, **8/8 success criteria**, **7/7 acceptance-criteria groups**, **16/16 accepted plan decisions**, and **12/12 correction findings** (the 11 iteration-2 findings plus `T001-PLAN-001`).
 
-| Obligation/finding | Executable coverage |
-| --- | --- |
-| FR-001-FR-003, FR-005-FR-006; AC-1-AC-2; SC-001-SC-002 | T005-T007, T026-T030, T036, T040-T041, T044, T050 |
-| FR-004, FR-007; AC-6; SC-004 | T019-T020, T036, T040-T041, T044, T050 |
-| FR-008-FR-014, FR-016, FR-021; AC-3-AC-5; SC-003/SC-005 | T008-T018, T036, T041, T044, T050 |
-| FR-015, FR-017; AC-7; SC-006 | T002-T003, T011, T021-T034, T036, T040-T044, T047, T050 |
-| FR-018-FR-019; AC-7; SC-007-SC-008 | T007, T012, T020-T025, T041, T044, T050 |
-| FR-020 forbidden scope | T043, T048-T050 |
-| AR2-001 | T022 RED, T023-T025 GREEN, T044/T050 final proof |
-| AR2-002 and CF-002 | T026-T030 exact contract RED/GREEN, T040/T047/T050 fresh proof |
-| QR2-001 | T013-T014 RED, T015-T018 GREEN, T036/T050 final proof |
-| AR2-003, QR2-002, WF-002 | T049 prerequisite freeze and T050 last/unchecked |
-| EV-002 | T031-T034 source-binding RED/GREEN and T038-T043/T047 one-candidate evidence |
-| PL-001 and PA-001 | Accepted checkpoint/hashes in T001, current plan-set/migration alignment in T037/T042, T050 |
-| TR-001 | T035 and T045-T046 truthful reconstruction, fresh correction RED/GREEN T036, T048/T050 |
+## Bounded Task-Group Partition
 
-## Task-Group Partition Recommendation
+1. **Current verification**: T001 only; evidence write, no product/test change.
+2. **Preserved implementation**: T002-T034; no relabelling of historical evidence and no new implementation.
+3. **Accepted-plan binding TDD**: T035-T038; one test file, two observed REDs, minimal binding GREEN, surrounding GREEN.
+4. **Truthful ledger**: T039-T040 regeneration/validation, then T046 read-only cross-validation after current gates; one durable ledger plus the separate T001 record.
+5. **Full candidate review/E2E/verification**: T041-T045; root/reviewer/runner-owned, one pinned nonrecursive boundary.
+6. **Fresh manifest/image gate**: T047-T049; one candidate, one unused namespace, one fresh image, serialized.
+7. **Final immutable-candidate audit**: T050 alone and last.
 
-Use exactly these seven bounded dispatch slots:
+## Implementation Strategy
 
-1. **R2 owner eligibility**: T013-T018, owned by one fresh TDD implementer.
-2. **R4 path redaction**: T022-T025, owned by one fresh TDD implementer.
-3. **C1/C2 evidence grammar**: T026-T030, owned by one fresh TDD implementer.
-4. **C3/C4 source binding**: T031-T034, owned by one fresh TDD implementer after C1/C2.
-5. **Historical reconstruction**: T035 discovery/scaffolding, then T045-T046 finalization/validation after current GREEN gates, all within the single bounded ledger.
-6. **Immutable candidate verification**: T036-T044 and T047-T049, serialized under the orchestrator; no implementation edits after T038.
-7. **Final immutable-candidate audit**: T050 alone, dispatched only after slot 6 succeeds and leaves the candidate unchanged.
+- Preserve the completed language/framework behavior; the only new tracked implementation work is the evidence-contract test binding in T035-T038.
+- Complete T001 and obtain a clean Full analysis before dispatching the binding group.
+- Do not carry forward the old ledger, candidate, reviews, E2E, verification, manifest, image, namespace, T049, or T050 conclusion.
+- Stop at any failed RED integrity, authority, ancestry, review, E2E, verification, ledger, image, or scope gate. Do not weaken or relabel evidence to advance.
 
 ## Completion Criteria
 
-- All 50 tasks use checkbox, exact ID, story labels where applicable, and concrete repository paths or commands.
-- Every new behavior correction has an observed runnable RED before production changes.
-- All eleven raw iteration-2 findings and every accepted plan obligation map to executable tasks.
-- Historical absence is disclosed, never fabricated or treated as ordinary TDD satisfaction.
-- The exact Story 4.1 evidence grammar has 19 roots and one closed nested authority.
-- NuGet/npm owner matrices include valid unique, zero, multiple, malformed, unsupported, conditional/dynamic where applicable, unsafe, oversize, and inapplicable cases.
-- One fresh final image is bound to the exact clean candidate commit, tree, production-source manifest, image ID, claim, and evidence.
-- T050 is unchecked, last, and cannot pass before T001-T049 and the immutable-candidate audit.
+- All 50 tasks use checkbox, exact ID, required story labels, concrete repository paths or exact commands, and dependency-correct ordering.
+- T001 truthfully records current GREEN without converting it into unavailable historical evidence.
+- T035 and T036 each retain observed runnable RED before T037 changes the stale bindings.
+- Every accepted requirement, success criterion, acceptance group, plan decision, and correction finding maps to executable validation.
+- Prior planned-change authorization remains scoped only to unchanged lock-owner filtering; no new trigger is introduced.
+- The ledger, candidate, both Full reviews, E2E, verification, manifest, image, namespace, T049, and T050 are regenerated rather than carried forward.
+- T049 and T050 remain unchecked; T050 is last and cannot pass before T001-T049 and the immutable-candidate audit.

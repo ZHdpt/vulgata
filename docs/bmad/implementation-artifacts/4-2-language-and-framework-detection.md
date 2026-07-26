@@ -244,11 +244,12 @@ unchanged.
   `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
 - SpecKit feature directory:
   `specs/002-language-framework-detection`.
-- Current workflow stage: `tasks`. The user-approved T001 evidence correction
+- Current workflow stage: `implement`. The user-approved T001 evidence correction
   preserves the unavailable historical pre-correction observation and requires
   a separately timed current immutable GREEN verification. Fresh plan review 8
   accepted the executable stale-binding RED/GREEN and checkpoint-bound review
-  identity contract; tasks and all later evidence must now be regenerated.
+  identity contract. Regenerated tasks passed Full read-only analysis iteration
+  7 with zero Critical/High findings; implementation resumes at corrected T001.
 - Planning is recoverably blocked at Phase 0 by pinned-provider evidence:
   CodeGraphContext 0.5.1 does not persist parser identity on `File` nodes, so a
   parser-supported file with no structural declarations cannot be distinguished
@@ -464,6 +465,13 @@ unchanged.
   binding RED, binds the replacement to plan review 8 plus this plan
   checkpoint, and rejects stale, missing, duplicate, drifted, or non-ancestor
   bindings. Fresh plan review 8 returned `ACCEPT`.
+- Regenerated `tasks.md` preserves 33 valid completed tasks and reopens 17
+  evidence-chain tasks. Analysis iteration 7 accepted all 50 tasks with 21/21
+  functional requirements, 8/8 success criteria, 7/7 acceptance groups, 16/16
+  plan decisions, and 12/12 correction findings covered. The graph is acyclic:
+  corrected T001 precedes stale-binding RED/GREEN, ledger regeneration, a new
+  immutable candidate, Full reviews, E2E, verification, manifest/image gates,
+  T049, and final T050.
 - Regenerated tasks initially passed complete requirements/finding coverage but
   analysis iteration 5 found one High dependency cycle: current-candidate
   ledger finalization/validation preceded the GREEN evidence it required. The
@@ -578,7 +586,7 @@ unchanged.
 - Owner-eligibility implementation checkpoint:
   `bmad-4-2-implement-20260722T061843Z-d9b4e2` (pending Git binding).
 - Analyzed-tasks checkpoint:
-  `bmad-4-2-analyze-20260722T014436Z-c5d8a1` (pending Git binding).
+  `bmad-4-2-analyze-20260726T045251Z-83fcc2` (pending Git binding).
 - Accepted plan checkpoint:
   `bmad-4-2-plan-20260726T041520Z-3fbfd5` (pending Git binding).
 - Implementation checkpoint:
@@ -609,6 +617,7 @@ unchanged.
 - `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json`
 - `specs/002-language-framework-detection/reviews/analyze-5.json`
 - `specs/002-language-framework-detection/reviews/analyze-6.json`
+- `specs/002-language-framework-detection/reviews/analyze-7.json`
 - `specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json`
 - `specs/002-language-framework-detection/tasks.md`
 - `specs/002-language-framework-detection/reviews/analyze-1.json`

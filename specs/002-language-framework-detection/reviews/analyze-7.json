@@ -1,0 +1,180 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "analysis_iteration": 7,
+  "verdict": "ACCEPT",
+  "reviewed_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+  "reviewed_boundary": {
+    "base_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+    "base_tree": "6db827214d282961e4ded4e3c94bc0b975faa827",
+    "candidate_commit": null,
+    "diff_sha256": "37e13238f25a3724deb6ace0d82a1c8c405e2ff33f4d5dfdc27d3684747d9837",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+      "specs/002-language-framework-detection/checklists/requirements.md": "9494531bcd320317c2e74a7cae5cfef7a687e2664b09b11e442c3dae53276bf0",
+      "specs/002-language-framework-detection/plan.md": "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600",
+      "specs/002-language-framework-detection/research.md": "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4",
+      "specs/002-language-framework-detection/data-model.md": "76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c",
+      "specs/002-language-framework-detection/quickstart.md": "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md": "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
+      "specs/002-language-framework-detection/tasks.md": "1fc049fd45857bc6d779805c49e9e05f67c8bc8fba9d72ef2701bae6c084dc47"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/tasks.md"
+    ]
+  },
+  "accepted_plan_binding": {
+    "checkpoint_id": "bmad-4-2-plan-20260726T041520Z-3fbfd5",
+    "resolved_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+    "unique_trailer_match": true,
+    "verdict_path": "specs/002-language-framework-detection/reviews/plan-review-8.json",
+    "verdict_sha256": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+    "verdict": "ACCEPT",
+    "reviewed_diff_sha256": "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79",
+    "artifact_hash_map_matches": true
+  },
+  "coverage_metrics": {
+    "functional_requirements": {
+      "total": 21,
+      "covered": 21,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "success_criteria": {
+      "total": 8,
+      "covered": 8,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "acceptance_criteria_groups": {
+      "total": 7,
+      "covered": 7,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "accepted_plan_decisions": {
+      "total": 16,
+      "covered": 16,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "correction_findings": {
+      "total": 12,
+      "covered": 12,
+      "coverage_percent": 100,
+      "ids": [
+        "AR2-001",
+        "AR2-002",
+        "AR2-003",
+        "QR2-001",
+        "QR2-002",
+        "CF-002",
+        "EV-002",
+        "WF-002",
+        "PL-001",
+        "TR-001",
+        "PA-001",
+        "T001-PLAN-001"
+      ],
+      "uncovered": []
+    },
+    "tasks": {
+      "total": 50,
+      "unique_ids": 50,
+      "mapped": 50,
+      "checked_preserved": 33,
+      "pending": 17,
+      "parallel_read_only_review_tasks": 2,
+      "unmapped": []
+    },
+    "ambiguities": 0,
+    "duplications": 0,
+    "dependency_cycles": 0,
+    "implementation_before_red": 0,
+    "invalidated_evidence_reuse": 0,
+    "critical_findings": 0,
+    "high_findings": 0
+  },
+  "validation_checks": {
+    "truthful_unavailable_t001": "PASS: T001 preserves the exact unavailable historical statement and permits only separately timed Current verification.",
+    "accepted_plan_binding": "PASS: T035 and T036 observe both stale bindings before T037 changes them; T038 supplies focused and surrounding GREEN.",
+    "ledger_regeneration": "PASS: T039-T040 replace and validate the invalidated ledger; T046 only cross-validates the finalized ledger and cannot rewrite it.",
+    "candidate_and_reviews": "PASS: T041 pins the candidate before independent T042/T043 Full reviews on the identical boundary.",
+    "e2e_and_verification": "PASS: T044 follows both accepted reviews; tracked E2E-test mutation invalidates and reruns both axes; T045-T046 precede image work.",
+    "manifest_image_namespace": "PASS: T047-T048 require a new candidate-bound manifest, unused namespace, fresh image, exact provider gate, and full current verification.",
+    "t049_t050_ordering": "PASS: T049 freezes unchanged identities; T050 is the final task and audits T001-T049, all 16 decisions, and all 12 correction findings.",
+    "constitution": "PASS: no MUST conflict.",
+    "prd_bmad": "PASS: preserves PRD FR-4.1 and Story 4.2 scope without Worker Agent/tool, dispatch, retry, Story 4.3, or downstream-language expansion.",
+    "adr": "PASS: no applicable ADR was present.",
+    "terminology": "PASS: Repository, Scan, Code Unit, Worker Agent, and Cross-Repository terminology remains canonical."
+  },
+  "evidence_hashes": {
+    "specs/002-language-framework-detection/reviews/plan-review-8.json": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+    "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json": "33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "fcc6aa38f81c569857a30f641925f25d6436f7869a0a47f639c52db389682d01",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124",
+    ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971"
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/speckit-analyze/SKILL.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    ".specify/extensions.yml",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/activation-handoff.md",
+    "docs/agent-workflow/agent-catalog.md",
+    "docs/agent-workflow/architecture.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/customization-guide.md",
+    "docs/agent-workflow/e2e-decision-matrix.md",
+    "docs/agent-workflow/operator-runbook.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/agent-workflow/skill-validation.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/checklists/requirements.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/002-language-framework-detection/reviews/plan-review-8.json",
+    "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+    "specs/002-language-framework-detection/reviews/quality-review-2.json",
+    "specs/002-language-framework-detection/reviews/analyze-final-2.json",
+    "specs/002-language-framework-detection/reviews/plan-review-7.json",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    ".dockerignore",
+    "docker/Dockerfile",
+    "docker/codegraph/requirements.lock",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+    "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+    "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+    "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py"
+  ],
+  "findings": [],
+  "read_only_status": {
+    "confirmed": true,
+    "repository_writes": 0,
+    "lifecycle_or_git_mutations": 0,
+    "final_status": [
+      " M specs/002-language-framework-detection/tasks.md"
+    ],
+    "status_matches_input_boundary": true
+  },
+  "summary": "ACCEPT. The regenerated 50-task graph is complete, acyclic, test-first, and exactly bound to plan-review-8 and the unique accepted-plan checkpoint. It truthfully handles unavailable historical T001 evidence, requires current GREEN separately, regenerates the invalidated ledger, observes both stale-binding REDs before GREEN, rejects all stale candidate/review/E2E/verification/manifest/image/namespace/T049/T050 claims, and leaves T050 last. Coverage is 21/21 FR, 8/8 SC, 7/7 AC groups, 16/16 accepted decisions, and 12/12 correction findings with no Critical or High finding. This clean validated ACCEPT may advance without duplicate user approval."
+}

@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "tasks",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -507,6 +507,37 @@
         "specs/002-language-framework-detection/reviews/plan-review-8.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-07-26T04:52:51.6011464Z",
+      "completed_at": "2026-07-26T04:52:51.6011464Z",
+      "input_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "1fc049fd45857bc6d779805c49e9e05f67c8bc8fba9d72ef2701bae6c084dc47"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-26T04:52:51.6011464Z",
+      "completed_at": "2026-07-26T04:52:51.6011464Z",
+      "input_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "1fc049fd45857bc6d779805c49e9e05f67c8bc8fba9d72ef2701bae6c084dc47",
+        "specs/002-language-framework-detection/reviews/analyze-7.json": "d9d24ebdbec2a2f77eaf3c230c71ab13dba4f2848408a4078538fafd6fd78a34"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-7.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -515,18 +546,15 @@
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 accepted T001 evidence-contract plan correction, plan-review iterations 7 and 8, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 regenerated tasks, accepted read-only analysis iteration 7, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/research.md",
-      "specs/002-language-framework-detection/quickstart.md",
-      "specs/002-language-framework-detection/reviews/plan-review-7.json",
-      "specs/002-language-framework-detection/reviews/plan-review-8.json"
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/reviews/analyze-7.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-26T04:15:20.8081976Z"
+    "observed_at": "2026-07-26T04:52:51.6011464Z"
   },
   "source_artifacts": [
     {
@@ -870,6 +898,52 @@
         "T001-PLAN-001 resolved",
         "No product, PRD, ADR, Worker Agent/tool, or Scan-strategy change"
       ]
+    },
+    {
+      "role": "task-author",
+      "objective": "Regenerate dependency-ordered Story 4.2 tasks from the accepted truthful T001 evidence-contract plan",
+      "source_boundary": {
+        "base_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+        "candidate_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/reviews/plan-review-8.json": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/tasks.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "output_path": "specs/002-language-framework-detection/tasks.md",
+      "returned_evidence": [
+        "50 sequential tasks: 33 preserved complete and 17 pending",
+        "21/21 FR, 8/8 SC, 7/7 AC groups, 16/16 plan decisions, and 12/12 findings covered",
+        "Corrected T001 through T050 ordering is acyclic and test-first"
+      ]
+    },
+    {
+      "role": "artifact-analyst",
+      "objective": "Run Full read-only cross-artifact consistency analysis for regenerated Story 4.2 tasks",
+      "source_boundary": {
+        "base_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+        "candidate_commit": null,
+        "diff_sha256": "37e13238f25a3724deb6ace0d82a1c8c405e2ff33f4d5dfdc27d3684747d9837",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/tasks.md": "1fc049fd45857bc6d779805c49e9e05f67c8bc8fba9d72ef2701bae6c084dc47"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/tasks.md"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "specs/002-language-framework-detection/reviews/analyze-7.json",
+      "returned_evidence": [
+        "ACCEPT",
+        "Zero Critical or High findings",
+        "Complete requirements, decision, finding, and task coverage"
+      ]
     }
   ],
   "review_iterations": {
@@ -895,14 +969,15 @@
       ]
     },
     "analyze": {
-      "count": 6,
+      "count": 7,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/analyze-1.json",
         "specs/002-language-framework-detection/reviews/analyze-2.json",
         "specs/002-language-framework-detection/reviews/analyze-3.json",
         "specs/002-language-framework-detection/reviews/analyze-final-2.json",
         "specs/002-language-framework-detection/reviews/analyze-5.json",
-        "specs/002-language-framework-detection/reviews/analyze-6.json"
+        "specs/002-language-framework-detection/reviews/analyze-6.json",
+        "specs/002-language-framework-detection/reviews/analyze-7.json"
       ]
     },
     "acceptance-review": {
@@ -1917,27 +1992,40 @@
       "observed_at": "2026-07-26T04:17:30.1153972Z",
       "summary": "Workflow configuration and contracts valid after persisting the accepted T001 evidence-contract plan correction.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/45",
+      "kind": "command",
+      "stage": "analyze",
+      "source_commit": "fe08df102957276f4376b9ca62b5921d19113003",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/reviews/analyze-7.json",
+        "specs/002-language-framework-detection/workflow-state.json"
+      ],
+      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/validate_workflow.py --repo .",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T04:55:38.6131418Z",
+      "summary": "Workflow configuration and contracts valid after persisting regenerated tasks and accepted read-only analysis iteration 7.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-plan-20260726T041520Z-3fbfd5",
+    "checkpoint_id": "bmad-4-2-analyze-20260726T045251Z-83fcc2",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "plan",
+    "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/research.md",
-      "specs/002-language-framework-detection/quickstart.md",
-      "specs/002-language-framework-detection/reviews/plan-review-7.json",
-      "specs/002-language-framework-detection/reviews/plan-review-8.json"
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/reviews/analyze-7.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/plan/44"
+      "4-2-language-and-framework-detection/analyze/45"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T04:17:30.1153972Z"
+  "updated_at": "2026-07-26T04:55:38.6131418Z"
 }
