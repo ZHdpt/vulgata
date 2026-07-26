@@ -2411,24 +2411,38 @@
       "observed_at": "2026-07-26T08:31:43.7238787Z",
       "summary": "T041 pinned clean immutable candidate 1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c and tree ac002fa795614a3eaf752922a95a1e7df20a37ef with an empty fully-trailered checkpoint. The 1,382,640-byte binary diff SHA-256 is e953af5793272a0dfdc3de7a29a01b8d6be9d9cfb9ae8af298166517e25a583f over 72 Story-owned paths.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/4",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-4.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-26T08:56:49.9091503Z",
+      "summary": "Full acceptance review iteration 4 returned ACCEPT with zero findings at the exact T041 boundary. Coverage passed FR 21/21, AC 7/7, SC 8/8, R1-R16, the corrected T001 and T035-T038 evidence contracts, four-trailer bindings, Chinese confidence presentation, and forbidden scope.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-candidate-record-20260726T083632Z-f41b8e",
+    "checkpoint_id": "bmad-4-2-acceptance-review-20260726T085649Z-7c30d5",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "implement",
+    "stage": "acceptance-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+      "specs/002-language-framework-detection/reviews/acceptance-review-4.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/64"
+      "4-2-language-and-framework-detection/acceptance-review/4"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T08:36:32.6600689Z"
+  "updated_at": "2026-07-26T08:56:49.9091503Z"
 }

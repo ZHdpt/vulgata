@@ -1,0 +1,613 @@
+{
+  "schema_version": "1.0",
+  "gate": "acceptance",
+  "mode": "Full",
+  "verdict": "ACCEPT",
+  "reviewer": {
+    "identity": "story_4_2_acceptance_review_4",
+    "role": "independent acceptance-reviewer",
+    "independent": true,
+    "quality_axis_substituted": false
+  },
+  "reviewed_commit": "1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
+  "reviewed_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
+    "candidate_tree": "ac002fa795614a3eaf752922a95a1e7df20a37ef",
+    "candidate_parent": "946eeb047eb63726a93b82e996cc56dc9c6b2672",
+    "candidate_parent_tree": "ac002fa795614a3eaf752922a95a1e7df20a37ef",
+    "candidate_is_empty_checkpoint": true,
+    "base_is_ancestor": true,
+    "binary_diff_command": "git diff --binary --full-index e9824df7300634c19d815bdd7ad591b9fb5366d5..1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
+    "binary_diff_length_bytes": 1382640,
+    "diff_sha256": "e953af5793272a0dfdc3de7a29a01b8d6be9d9cfb9ae8af298166517e25a583f",
+    "owned_path_count": 72,
+    "owned_path_list_matches_candidate_record": true,
+    "candidate_checkpoint": {
+      "id": "bmad-4-2-candidate-20260726T083143Z-a2d6c9",
+      "unique": true,
+      "mandatory_trailers": {
+        "BMad-Story": "4-2-language-and-framework-detection",
+        "Workflow-Scope": "story/4-2-language-and-framework-detection",
+        "Workflow-Stage": "implement",
+        "Workflow-Checkpoint": "bmad-4-2-candidate-20260726T083143Z-a2d6c9"
+      },
+      "all_mandatory_trailers_exact": true
+    },
+    "candidate_record": {
+      "path": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+      "record_commit": "f3028757c5c08c4525762dc3f0b2d6c450d23fcb",
+      "record_tree": "930b28b579c40a0c9bb3f5482a604b9b92854c30",
+      "record_parent_is_candidate": true,
+      "record_is_outside_nonrecursive_implementation_boundary": true,
+      "sha256": "8f957de6a907db4f94c0e376c0b32c590710c8e6e8394bed39a8bb0f3ecc92ae",
+      "hash_reproduced": true
+    },
+    "artifact_hashes": {
+      "AGENTS.md": "9351559ee881ec74b20ccf9de3fadb469099eaa116569ed59d68b01d1bfb6e71",
+      "docs/UBIQUITOUS_LANGUAGE.md": "2f194eddba4afba8d3569c3390b43812fb39ac91665bf598c77d67323a30bda4",
+      "docs/bmad/epics.md": "0de9929db12f7557809818d0aa0848b9cbb10cfa00c55f61e7b65a3d15ebd0ee",
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md": "051750bd9b11e0a86ebaaf7711334a78aa3c789aeabedb8ec5ffa0f1abe5e54b",
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+      "specs/002-language-framework-detection/plan.md": "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600",
+      "specs/002-language-framework-detection/research.md": "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4",
+      "specs/002-language-framework-detection/data-model.md": "76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c",
+      "specs/002-language-framework-detection/quickstart.md": "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md": "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
+      "specs/002-language-framework-detection/tasks.md": "703e721dab208e09230de8a9716ef79ac01e989863f6d7b80a0676c9fb24e567",
+      "specs/002-language-framework-detection/reviews/plan-review-8.json": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+      "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json": "33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f",
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "336d89639309cb3f7fd55e357c378ff451b48f6532cc03e4a2dd9921df46a5a9",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "6425f512df4c9f292c253541df0f003fcfa574fcec1e5ab508aebdb1bf69d77d",
+      "specs/002-language-framework-detection/reviews/acceptance-review-3.json": "e5c10fcb111b5bc6501869538c7263f36c436effbd61fd75b1a6be9b19703d89",
+      "specs/002-language-framework-detection/reviews/quality-review-3.json": "4ef55574eee4c6a02f84992ba7e7c3d82457c6446737452e9fb9e39771ef1999",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs": "7927b776559e04b5b311eebd9bbd50cbf97681d4678aa49b36c8c87627969e2c",
+      "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs": "97dd8d80c0e8ecadfd056ab994830ddf702c66c8937b384d19e7c76c1bc3d3ff",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "c739bb7fb6e0e46ad959eb663faa529d3f41304d14ed98ef4953268a0f1d95a4",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs": "7cfe56cf0adeab52654f7f046ad142722d60a28ca6934bdfea97fbc7df78965c",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "dd1585b287b6a882b4bd30ad11224e47d628e0e29bd3b4c44a58a455a62a818b",
+      "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor": "2f51b0576d6d7208923b228b0251d6597d0ed504e5998cb77d4e1f5d1c2fd296",
+      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs": "cc667144b10ceff7a89684fb54d4cebdc3620bc36a3f6e301d5ecc33891446ad",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "bfe841d4e580054c00fe84a89853b8410771a9e78f77b55e51ecdc2fc0b4a631",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "269cd64e90b7482a96772f0e212db86a492720b49972bbcace364c4d79c64cce",
+      "tests/Vulgata.Tests/RepositoryApiTests.cs": "2b5632df55c05a1bdd5c52883d083dfb1ff7245426ccde17dc99eca0132c9719",
+      "tests/Vulgata.Tests/DashboardPanelTests.cs": "76aecf4eb079e66ac0925a257ee1ffff687032251928da4f734e30e8bcb36c28",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "d987d40b6691ff5c8b341a9d4b1999a5898cc19795074401dbd7db136d67102d"
+    },
+    "artifact_hash_mismatches": []
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/reviews/plan-review-8.json",
+    "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+    "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+    "specs/002-language-framework-detection/reviews/quality-review-3.json",
+    "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+    "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+    "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+    "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+    "tests/Vulgata.Tests/RepositoryApiTests.cs",
+    "tests/Vulgata.Tests/DashboardPanelTests.cs",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+  ],
+  "requirement_coverage": {
+    "functional_requirements": [
+      {
+        "id": "FR-001",
+        "status": "PASS",
+        "evidence": "CodeGraphContextProvider projects parser identity and RepositoryProfilingCoordinator applies one normalized language to each retained Code Unit; tests/Vulgata.Tests/RepositoryProfilingTests.cs:1164 proves persisted per-path languages."
+      },
+      {
+        "id": "FR-002",
+        "status": "PASS",
+        "evidence": "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs:999 uses node.lang AS parser_language; no extension is used as the authoritative projection signal."
+      },
+      {
+        "id": "FR-003",
+        "status": "PASS",
+        "evidence": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs:164 covers the eleven named identifiers and the open normalized provider grammar; Form-KC/open-token coverage is adjacent."
+      },
+      {
+        "id": "FR-004",
+        "status": "PASS",
+        "evidence": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs:220 and tests/Vulgata.Tests/RepositoryProfilingTests.cs:1257 prove exactly one Filtered/UnknownLanguage outcome with all Code Unit/Edge/unresolved structure removed."
+      },
+      {
+        "id": "FR-005",
+        "status": "PASS",
+        "evidence": "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs:597 groups retained paths into ScanRunLanguageSummary; the integration at RepositoryProfilingTests.cs:1164 proves distinct files rather than Code Unit count."
+      },
+      {
+        "id": "FR-006",
+        "status": "PASS",
+        "evidence": "tests/Vulgata.Tests/RepositoryApiTests.cs:89 and DashboardPanelTests.cs:376 prove every sorted language/count reaches the authorized overview and rendered dialog."
+      },
+      {
+        "id": "FR-007",
+        "status": "PASS",
+        "evidence": "RepositoryProfilingCoordinator enforces the 10,000-path/16-MiB complete audit at lines 187 and 652; API/component tests prove exact distinct sorted paths."
+      },
+      {
+        "id": "FR-008",
+        "status": "PASS",
+        "evidence": "The embedded closed catalog and committed-only detector are exercised by tests/Vulgata.Tests/FrameworkDetectionTests.cs:194 and exact catalog startup tests."
+      },
+      {
+        "id": "FR-009",
+        "status": "PASS",
+        "evidence": "FrameworkEvidenceDetector inventories only git ls-files --cached at lines 394-412; FrameworkDetectionTests.DetectAsync_ForbiddenExecutionInferenceAndExternalSurfaces_ReturnsNoMatchesAsync proves zero package/build/network/LLM inference."
+      },
+      {
+        "id": "FR-010",
+        "status": "PASS",
+        "evidence": "Direct declarations are scope- and parser-language-filtered and mapped to High; FrameworkDetectionTests direct/scoping cases and RepositoryProfilingTests.cs:297 prove persisted applicability."
+      },
+      {
+        "id": "FR-011",
+        "status": "PASS",
+        "evidence": "NuGet/npm lock evidence requires a validated same-root owner; negative matrices at FrameworkDetectionTests.cs:483 and :661 and valid-owner cases prove Medium is created only from eligible committed lock evidence."
+      },
+      {
+        "id": "FR-012",
+        "status": "PASS",
+        "evidence": "CodeUnitFramework construction at RepositoryProfilingCoordinator.cs:470-480 supplies Code Unit, normalized catalog name, confidence, and bounded exact locator; persistence integration proves round-trip."
+      },
+      {
+        "id": "FR-013",
+        "status": "PASS",
+        "evidence": "FrameworkDetectionTests.cs:1158 proves direct High wins over paired-lock Medium without duplication; the model and EF configuration independently enforce one Code Unit/framework pair."
+      },
+      {
+        "id": "FR-014",
+        "status": "PASS",
+        "evidence": "Unsupported, ambiguous, unscoped, conflicting, and unpaired fixtures return no fact across the FrameworkDetection test matrix; no hypothesis overwrite path exists."
+      },
+      {
+        "id": "FR-015",
+        "status": "PASS",
+        "evidence": "SafeProviderPath closes raw provider paths at RepositoryProfilingContracts.cs:233-290 before logging/persistence; CodeGraphContextProviderTests.cs:345 and bounded framework tests prove no raw host path/source disclosure."
+      },
+      {
+        "id": "FR-016",
+        "status": "PASS",
+        "evidence": "RepositoryProfilingTests.StartStandaloneRepository_WithInvalidIndividualFrameworkEvidence_IsolatesClosedAuditAndRetainsValidFactAsync proves invalid individual evidence is isolated while independent valid evidence continues."
+      },
+      {
+        "id": "FR-017",
+        "status": "PASS",
+        "evidence": "RepositoryProfileDraft and ScanRunRepository PersistCompletedProfileAsync/RecoverFailedFinalCommitAsync preserve one atomic aggregate; provider conflict/failure and final persistence/cancellation tests prove zero partial provider-derived rows."
+      },
+      {
+        "id": "FR-018",
+        "status": "PASS",
+        "evidence": "RepositoryApiTests.cs:421 and :483 plus RepositoryProfilingTests.cs:2034 prove ManagementAccess, hidden-Repository redaction, and visibility revocation expose no profiling details."
+      },
+      {
+        "id": "FR-019",
+        "status": "PASS",
+        "evidence": "RepositoryDetailDialog.razor:153-159 maps canonical wire values High/Medium only at presentation to 高/中; DashboardPanelTests.cs:260 and :376 require Chinese confidence and reject rendered English values."
+      },
+      {
+        "id": "FR-020",
+        "status": "PASS",
+        "evidence": "The exact 72-path boundary contains no Vulgata.Agents, Scan Coordinator, Orchestrator, Worker Agent/tool, dispatch, scheduling, retry, Communication Pattern Catalog, Story 4.3, document-generation, or downstream scanning implementation path."
+      },
+      {
+        "id": "FR-021",
+        "status": "PASS",
+        "evidence": "Languages come only from the provider structural parser identity and framework facts only from closed Repository evidence; detector/source audit and forbidden-surface tests show no LLM classification path."
+      }
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "AC-1",
+        "status": "PASS",
+        "evidence": "Parser-derived, open-grammar language attribution is implemented and covered by CodeGraphContextProviderTests.cs:164-259 and RepositoryProfilingTests.cs:1164."
+      },
+      {
+        "id": "AC-2",
+        "status": "PASS",
+        "evidence": "Persisted distinct-file language summaries and the authorized Chinese overview are proven by RepositoryProfilingTests.cs:1164, RepositoryApiTests.cs:89, and DashboardPanelTests.cs:376."
+      },
+      {
+        "id": "AC-3",
+        "status": "PASS",
+        "evidence": "Closed catalog, project/package scope, High direct, eligible Medium lock, and zero LLM/external lookup are covered by the FrameworkDetection matrix."
+      },
+      {
+        "id": "AC-4",
+        "status": "PASS",
+        "evidence": "Atomic CodeUnitFramework persistence includes normalized name, confidence, exact safe locator, composite ownership, and duplicate prevention."
+      },
+      {
+        "id": "AC-5",
+        "status": "PASS",
+        "evidence": "Missing, unsupported, ambiguous, dynamic, unpaired, and out-of-scope fixtures create no framework fact; filename/symbol/LLM inference is absent."
+      },
+      {
+        "id": "AC-6",
+        "status": "PASS",
+        "evidence": "Unknown-language reconciliation produces one Filtered/UnknownLanguage audit path and no dispatchable structure, with complete distinct sorted audit paths."
+      },
+      {
+        "id": "AC-7",
+        "status": "PASS",
+        "evidence": "Provider and persistence atomicity, individual evidence isolation, safe-path redaction, unchanged authorization/redaction, and Simplified-Chinese presentation are all directly covered; confidence presentation is corrected at RepositoryDetailDialog.razor:153-159."
+      }
+    ],
+    "success_criteria": [
+      {
+        "id": "SC-001",
+        "status": "PASS",
+        "evidence": "The twelve-identifier parser matrix and per-path integration cover all eleven named languages plus another valid provider identifier with no extension authority."
+      },
+      {
+        "id": "SC-002",
+        "status": "PASS",
+        "evidence": "Multi-unit-per-file integration and API/component assertions prove displayed counts equal distinct source-file counts."
+      },
+      {
+        "id": "SC-003",
+        "status": "PASS",
+        "evidence": "Framework fixtures cover direct, eligible transitive, scope, duplicate, unsupported, missing, ambiguous, invalid-owner, confidence, and exact-locator outcomes."
+      },
+      {
+        "id": "SC-004",
+        "status": "PASS",
+        "evidence": "Provider/coordinator/API/component fixtures prove one UnknownLanguage outcome per missing-identity candidate, exact count/paths, and zero retained structure."
+      },
+      {
+        "id": "SC-005",
+        "status": "PASS",
+        "evidence": "FrameworkEvidenceDetector has only the bounded git inventory subprocess and the forbidden-execution test proves zero LLM, registry, install, restore, build-target, or script execution."
+      },
+      {
+        "id": "SC-006",
+        "status": "PASS",
+        "evidence": "Malformed provider, unsafe path, invalid manifest, detector-global failure, transaction failure, and cancellation cases preserve bounded/atomic outcomes with closed diagnostics."
+      },
+      {
+        "id": "SC-007",
+        "status": "PASS",
+        "evidence": "Unauthenticated, non-management, hidden Repository, and mid-operation visibility-revocation tests reveal no language/framework/audit details."
+      },
+      {
+        "id": "SC-008",
+        "status": "PASS",
+        "evidence": "DashboardPanelTests.RepositoryDetailDialog_AfterRepresentativeProfiling_RendersEveryObjectiveFactAndChineseLabel at line 376 and the representative API fixture assert all languages/counts, strongest confidence, safe evidence, bounded unknown paths, and Chinese labels."
+      }
+    ],
+    "research_decisions": [
+      {
+        "id": "R1",
+        "status": "PASS",
+        "evidence": "Projection A uses structural node.lang/parser_language; File is not language authority."
+      },
+      {
+        "id": "R2",
+        "status": "PASS",
+        "evidence": "No observable structural identity becomes one UnknownLanguage filter; conflicting identities reject atomically."
+      },
+      {
+        "id": "R3",
+        "status": "PASS",
+        "evidence": "Form-KC, trim, invariant lower-case, 64-character bounded open grammar is implemented and matrix-tested."
+      },
+      {
+        "id": "R4",
+        "status": "PASS",
+        "evidence": "Private gateway limit 250001, reserved completeness metadata rejection, two queries, and combined 250000 cap are implemented and tested."
+      },
+      {
+        "id": "R5",
+        "status": "PASS",
+        "evidence": "The embedded catalog and closed NuGet/npm/Maven/Python supported evidence set match the accepted contract."
+      },
+      {
+        "id": "R6",
+        "status": "PASS",
+        "evidence": "Deepest applicable scope, parser compatibility, validated lock owner, High-before-Medium, depth, and ordinal locator ordering are tested."
+      },
+      {
+        "id": "R7",
+        "status": "PASS",
+        "evidence": "Per-artifact, aggregate, entry, path, locator, fact, and audit bounds plus isolated/global failure ownership are implemented and covered."
+      },
+      {
+        "id": "R8",
+        "status": "PASS",
+        "evidence": "Only the two accepted additive migrations exist; historical nullable language remains readable and new complete drafts require language."
+      },
+      {
+        "id": "R9",
+        "status": "PASS",
+        "evidence": "Existing authorized response/dialog and visibility model are extended; all new prose and confidence presentation are Simplified Chinese."
+      },
+      {
+        "id": "R10",
+        "status": "PASS",
+        "evidence": "The exact final-image gate and closed cgc-provider-contract-evidence-v2 verifier are present and reject alternate/partial evidence; execution remains correctly downstream at T048."
+      },
+      {
+        "id": "R11",
+        "status": "PASS",
+        "evidence": "SafeProviderPath is constructed before owned outcomes and revalidated before the coordinator's first log."
+      },
+      {
+        "id": "R12",
+        "status": "PASS",
+        "evidence": "The complete same-root owner set must prove exactly one safely read, supported, applicable manifest; invalid candidates cannot manufacture uniqueness."
+      },
+      {
+        "id": "R13",
+        "status": "PASS",
+        "evidence": "Canonical production-source manifest, clean commit/tree labels, image inspection, and equal claim/evidence identities are implemented in the contract tests and Dockerfile; fresh execution remains downstream."
+      },
+      {
+        "id": "R14",
+        "status": "PASS",
+        "evidence": "The finalized ledger truthfully records unavailable historical RED/trailer evidence and never fabricates or relabels current results."
+      },
+      {
+        "id": "R15",
+        "status": "PASS",
+        "evidence": "Current-verification evidence preserves the exact unavailable statement, actual current times/commit/tree, accepted-plan ancestry, and separately labelled GREEN results."
+      },
+      {
+        "id": "R16",
+        "status": "PASS",
+        "evidence": "T035/T036 observed stale hash/static-claim RED; T037/T038 bind plan-review-8 and the unique four-trailer forward checkpoint, with drift/trailer/ancestry negative cases."
+      }
+    ]
+  },
+  "correction_finding_disposition": [
+    {
+      "id": "AR2-001",
+      "status": "RESOLVED",
+      "evidence": "SafeProviderPath closes provider-derived paths before outcome/log/persistence, with captured disclosure regressions."
+    },
+    {
+      "id": "AR2-002",
+      "status": "RESOLVED",
+      "evidence": "Contract, runner, and C# verifier share the exact closed 19-root v2 evidence grammar."
+    },
+    {
+      "id": "AR2-003",
+      "status": "RESOLVED_AT_CURRENT_STAGE",
+      "evidence": "Premature completion is removed: current T041-T050 downstream claims remain false and T049/T050 are unchecked."
+    },
+    {
+      "id": "QR2-001",
+      "status": "RESOLVED",
+      "evidence": "NuGet/npm lock facts require one validated direct-manifest owner; invalid-owner matrices create no Medium fact."
+    },
+    {
+      "id": "QR2-002",
+      "status": "RESOLVED_AT_CURRENT_STAGE",
+      "evidence": "The story remains in review and tasks T044-T050 remain pending rather than being represented as complete."
+    },
+    {
+      "id": "CF-002",
+      "status": "RESOLVED",
+      "evidence": "Exact closed nested grammar and single semantic authorities are executable in CodeGraphProviderContractTests."
+    },
+    {
+      "id": "EV-002",
+      "status": "RESOLVED_IN_IMPLEMENTATION",
+      "evidence": "Candidate commit/tree/context manifest/image-label binding and pre-provider rejection are implemented; fresh runtime execution remains the correctly ordered T047-T048 gate."
+    },
+    {
+      "id": "WF-002",
+      "status": "RESOLVED_AT_CURRENT_STAGE",
+      "evidence": "No T049/T050 completion is claimed before both Full reviews, E2E, verification, and final image work."
+    },
+    {
+      "id": "PL-001",
+      "status": "RESOLVED",
+      "evidence": "Fresh plan-review-8 is ACCEPT and exact-hash bound to the forward accepted-plan checkpoint."
+    },
+    {
+      "id": "TR-001",
+      "status": "RESOLVED",
+      "evidence": "The ledger explicitly distinguishes unavailable history, capture-only transcripts, current RED/GREEN, and invalidated prior candidate/reviews."
+    },
+    {
+      "id": "PA-001",
+      "status": "RESOLVED",
+      "evidence": "planned-change-authorization-2.json remains hash-bound to the unchanged accepted lock-owner Scan filtering design and waives no later gate."
+    },
+    {
+      "id": "T001-PLAN-001",
+      "status": "RESOLVED",
+      "evidence": "The present-day T001 record binds the accepted plan/verdict/checkpoint and preserves the unavailable temporal fact without a historical claim."
+    },
+    {
+      "id": "AR3-001",
+      "status": "RESOLVED",
+      "evidence": "Accepted-plan checkpoint 36bd6ccc... and candidate 1ce8140d... each have unique exact BMad-Story, Workflow-Scope, Workflow-Stage, and Workflow-Checkpoint trailers; no history was amended."
+    },
+    {
+      "id": "QR3-001",
+      "status": "RESOLVED",
+      "evidence": "RepositoryDetailDialog.razor localizes only the High/Medium presentation to 高/中 while API/DTO wire values remain canonical; focused RED and GREEN prove the correction."
+    }
+  ],
+  "t001_truth_contract": {
+    "status": "PASS",
+    "baseline_statement_exact": true,
+    "baseline_statement": "Pre-correction T001 baseline observation: unavailable",
+    "passing_label_exact": true,
+    "passing_label": "Current verification",
+    "verification_source_commit": "80335ff4c6e405cf5b7e5824b2d080c17b65e3b8",
+    "verification_source_tree": "02f07501de07ac2470b88a291cc0e8c1a0da32df",
+    "accepted_plan_checkpoint": "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
+    "accepted_plan_checkpoint_is_unique_ancestor": true,
+    "accepted_plan_checkpoint_has_all_four_exact_trailers": true,
+    "plan_review_8_hash_and_artifact_map_match": true,
+    "planned_change_authorization_hash_and_scope_match": true,
+    "refreshed_green": {
+      "provider_profiling": {
+        "passed": 107,
+        "failed": 0,
+        "skipped": 0,
+        "raw_output_sha256": "f16be95cd813ceb6173c4519ca6ab62d2745f7a597cb209be27a50d4cfb9467a"
+      },
+      "framework": {
+        "passed": 48,
+        "failed": 0,
+        "skipped": 0,
+        "raw_output_sha256": "98eb69a12205f8dbe5825a6c9ffff1b724dd7fe6e636af4275a5a29b6ff0ad3d"
+      }
+    },
+    "historical_claimed": false,
+    "pre_correction_result_claimed": false,
+    "red_claimed_for_current_green": false,
+    "contemporaneous_ordering_claimed": false
+  },
+  "t035_t038_evidence": {
+    "status": "PASS",
+    "T035": {
+      "classification": "current-red",
+      "exit_code": 1,
+      "failed": 3,
+      "passed": 13,
+      "failure_scope": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/quickstart.md"
+      ],
+      "compile_and_discovery_succeeded": true,
+      "raw_output_sha256": "33cd48334331af2da23da726b20fc834b999ee8dc480575712e545c2255cb98e"
+    },
+    "T036": {
+      "classification": "current-red",
+      "exit_code": 1,
+      "failed": 1,
+      "passed": 0,
+      "observed_failure": "The accepted-correction claim lacked the fresh plan verdict/checkpoint binding while the static prior identity remained.",
+      "compile_and_discovery_succeeded": true,
+      "raw_output_sha256": "4b54b36bf186c148c064c34d23003a7634701c7639dc84d4a9413865aa2f4d24"
+    },
+    "T037": {
+      "classification": "current-review3-correction-red",
+      "plan_binding": {
+        "exit_code": 1,
+        "failed": 1,
+        "observed_failure": "The executable manifest resolved the old checkpoint rather than bmad-4-2-plan-binding-20260726T073452Z-d04e72.",
+        "raw_output_sha256": "423ca09ef5a4d5fce79d4ceabad651c1374f5a575e9b160828684984fbc4667f"
+      },
+      "confidence_presentation": {
+        "exit_code": 1,
+        "failed": 2,
+        "observed_failure": "Both focused UI tests lacked the required Simplified-Chinese confidence labels.",
+        "raw_output_sha256": "8b4c9a3c7cc3778753fd1b75fe7dcc542e5a8d1bfd14d164048e881e88bfb807"
+      }
+    },
+    "T038": {
+      "classification": "current-review3-correction-green",
+      "binding": {
+        "exit_code": 0,
+        "passed": 18,
+        "failed": 0,
+        "skipped": 0,
+        "raw_output_sha256": "efffa36c0079cb060a6966d2df86391c4785d6c333c3e96808fa595d11c59638"
+      },
+      "dashboard": {
+        "exit_code": 0,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0,
+        "raw_output_sha256": "097cdd790014c1a866f38a7ef938e64bf49f7d095a275ae544bbb84a44c0a7fe"
+      },
+      "surrounding": {
+        "exit_code": 0,
+        "passed": 104,
+        "failed": 0,
+        "skipped": 0,
+        "raw_output_sha256": "e91bbce1cc458f9c64c971b8d2f5cbd5f8f715cadb79cb616b21d3053c098456"
+      }
+    },
+    "capture_only_attempts_used_as_test_results": false,
+    "source_or_test_changes_after_green_through_candidate": false,
+    "post_green_candidate_changes": [
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/workflow-state.json"
+    ]
+  },
+  "evidence_integrity_checks": {
+    "status": "PASS",
+    "candidate_record_artifact_hashes_reproduced": true,
+    "candidate_record_artifact_hash_mismatch_count": 0,
+    "candidate_owned_paths_reproduced": true,
+    "candidate_binary_diff_reproduced": true,
+    "candidate_checkpoint_unique": true,
+    "accepted_plan_checkpoint_unique": true,
+    "accepted_plan_checkpoint_ancestor": true,
+    "candidate_record_commit_is_immediate_descendant": true,
+    "ledger_source_range_commit_count": 41,
+    "ledger_source_range_merge_count": 0,
+    "ledger_source_tree_matches": true,
+    "ledger_unique_git_object_references_checked": 70,
+    "ledger_missing_git_object_references": 0,
+    "raw_evidence_file_count_checked": 20,
+    "raw_evidence_hash_or_length_mismatches": 0,
+    "current_test_result_files": 15,
+    "capture_only_files": 5,
+    "capture_only_files_used_for_red_or_green_claims": false,
+    "prior_candidate_and_review3_lane_classified_only_as_invalidated_history": true,
+    "new_e2e_verification_manifest_image_namespace_t049_or_t050_claimed": false,
+    "blocked_network_urls_or_hosts": [],
+    "network_or_proxy_failure_observed": false
+  },
+  "forbidden_scope_audit": {
+    "status": "PASS",
+    "exact_path_count_audited": 72,
+    "scan_coordinator_changed": false,
+    "orchestrator_changed": false,
+    "worker_agent_changed": false,
+    "worker_agent_tool_changed": false,
+    "dispatch_or_retry_policy_changed": false,
+    "communication_pattern_catalog_changed": false,
+    "story_4_3_behavior_changed": false,
+    "document_generation_changed": false,
+    "downstream_language_support_promise_added": false,
+    "llm_language_or_framework_fact_authority_added": false,
+    "new_authorization_model_added": false,
+    "prd_requirement_changed": false,
+    "authorized_scan_filtering_change": {
+      "present": true,
+      "authorization_path": "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+      "authorization_sha256": "33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f",
+      "scope": "Validated NuGet/npm lock-owner filtering only",
+      "later_gates_waived": false
+    }
+  },
+  "findings": [],
+  "summary": "ACCEPT. The exact refreshed T041 boundary is reproduced at candidate 1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c, tree ac002fa795614a3eaf752922a95a1e7df20a37ef, over 72 owned paths and full-index binary diff SHA-256 e953af5793272a0dfdc3de7a29a01b8d6be9d9cfb9ae8af298166517e25a583f. Acceptance coverage is FR 21/21, AC 7/7, SC 8/8, and R1-R16 16/16. The corrected T001 truth contract, T035-T038 current RED/GREEN evidence, truthful ledger, planned-change authorization, forward-only accepted-plan checkpoint, four-trailer candidate checkpoint, Simplified-Chinese confidence presentation, canonical High/Medium API values, and forbidden-scope boundary all pass independent raw-evidence inspection. AR3-001 and QR3-001 are resolved without history rewrite or product-scope expansion. No Critical, High, Medium, or Low acceptance finding blocks advancement to the independent quality axis and subsequent E2E/verification lane."
+}

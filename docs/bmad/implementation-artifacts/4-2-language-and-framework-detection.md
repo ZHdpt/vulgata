@@ -691,6 +691,15 @@ unchanged.
 - Candidate-record checkpoint:
   `bmad-4-2-candidate-record-20260726T083632Z-f41b8e`
   (pending Git binding).
+- Full acceptance review iteration 4 returned `ACCEPT` with zero findings at
+  candidate `1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c`. It passed
+  FR 21/21, AC 7/7, SC 8/8, R1-R16, corrected T001/T035-T038 evidence,
+  both four-trailer bindings, Chinese confidence presentation, and forbidden
+  scope. This acceptance axis does not substitute for the independent quality
+  axis.
+- Acceptance-review-4 checkpoint:
+  `bmad-4-2-acceptance-review-20260726T085649Z-7c30d5`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
