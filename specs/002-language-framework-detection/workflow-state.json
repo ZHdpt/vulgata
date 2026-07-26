@@ -2382,24 +2382,39 @@
       "observed_at": "2026-07-26T08:07:45.0929782Z",
       "summary": "Post-review-3 T001 Current verification passed 48 of 48 framework-detection tests at the same clean immutable correction commit; no blocked URL, network, Clash, or proxy failure occurred.",
       "raw_output_path": "TestResults/story-4-2-current-verification-review3-refresh/T001-framework-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/63",
+      "kind": "command",
+      "stage": "implement",
+      "source_commit": "d20db9fd25c26e0041197e53d3f77f5e22d687ec",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "command": "ConvertFrom-Json; Git linear ancestry and blob validation; Workflow-Checkpoint uniqueness and mandatory-trailer validation; raw evidence existence, SHA-256, length, temporal-label and invalidation checks; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T08:27:52.7476010Z",
+      "summary": "T039-T040 regenerated and validated the truthful ledger at d20db9fd: 41 linear commits, 19 legacy groups, 41 immutable Git references, 11 unique checkpoint records, and 20 raw files. Five transcript-only captures are explicitly excluded from RED/GREEN evidence, and the prior candidate/review-3 lane is retained only as invalidated history.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-t001-refresh-20260726T081132Z-6e7a20",
+    "checkpoint_id": "bmad-4-2-ledger-refresh-20260726T083030Z-48a1de",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/61",
-      "4-2-language-and-framework-detection/implement/62"
+      "4-2-language-and-framework-detection/implement/63"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T08:11:32.8121415Z"
+  "updated_at": "2026-07-26T08:30:30.7138210Z"
 }

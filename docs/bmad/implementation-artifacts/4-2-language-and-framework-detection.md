@@ -666,6 +666,17 @@ unchanged.
 - T001 refresh checkpoint:
   `bmad-4-2-t001-refresh-20260726T081132Z-6e7a20`
   (pending Git binding).
+- T039-T040 regenerated and independently validated the truthful ledger at
+  source `d20db9fd25c26e0041197e53d3f77f5e22d687ec`, tree
+  `5541e14640a907e2d6cedfcad0c1b28a3a9a2ca5`: 41 linear commits,
+  19 legacy groups, 41 immutable Git references, 11 unique checkpoints, and
+  20 raw files. Five transcript-only files are retained as capture failures
+  and excluded from RED/GREEN claims; the prior candidate and review-3 lane
+  remain invalidated history only. No downstream candidate, E2E, image,
+  namespace, T049, or T050 completion is claimed.
+- Truthful-ledger checkpoint:
+  `bmad-4-2-ledger-refresh-20260726T083030Z-48a1de`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
