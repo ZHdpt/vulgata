@@ -589,6 +589,16 @@ unchanged.
   `bmad-4-2-implement-20260723T073700Z-e4d7c1` (pending Git binding).
 - T001 current-verification implementation checkpoint:
   `bmad-4-2-implement-20260726T052236Z-89bc56` (pending Git binding).
+- Accepted-plan binding TDD completed against source commit
+  `92829f9216eb322bf738d598e0717130151c818e`: T035 failed exactly the
+  three stale canonical hashes, T036 failed the stale static review identity,
+  and the preserved first T038 GREEN attempt exposed implicit Git stdout
+  decoding for non-ASCII checkpoint content. Pinning UTF-8 decoding then passed
+  17/17 focused and 80/80 surrounding non-Docker provider-contract tests.
+  Existing RED and failed-GREEN outputs remain immutable; the successful retry
+  uses a distinct create-new path.
+- Accepted-plan binding implementation checkpoint:
+  `bmad-4-2-implement-20260726T061644Z-4c8e71` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

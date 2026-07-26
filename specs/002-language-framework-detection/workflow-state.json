@@ -2148,26 +2148,100 @@
       "observed_at": "2026-07-26T05:16:45.0028050Z",
       "summary": "Current verification passed 48 of 48 framework-detection tests with zero failures or skips at the unchanged immutable source.",
       "raw_output_path": "TestResults/story-4-2-current-verification/T001-framework-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/49",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "92829f9216eb322bf738d598e0717130151c818e",
+      "artifact_paths": [
+        "TestResults/story-4-2-current-binding/T035-canonical-hash-red.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests.HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-26T05:32:27.7657521Z",
+      "summary": "T035 RED failed exactly the three stale accepted-plan hashes for plan.md, research.md, and quickstart.md; 13 tests passed, 3 failed, and compilation/discovery succeeded.",
+      "raw_output_path": "TestResults/story-4-2-current-binding/T035-canonical-hash-red.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/50",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "92829f9216eb322bf738d598e0717130151c818e",
+      "artifact_paths": [
+        "TestResults/story-4-2-current-binding/T036-plan-claim-red.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests.AcceptedCorrectionManifest_IsCanonicalAndArtifactBound\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-26T05:33:50.2537868Z",
+      "summary": "T036 RED failed the new assertion because the stale static reviewIdentity was still emitted; compilation and discovery succeeded.",
+      "raw_output_path": "TestResults/story-4-2-current-binding/T036-plan-claim-red.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/51",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "92829f9216eb322bf738d598e0717130151c818e",
+      "artifact_paths": [
+        "TestResults/story-4-2-current-binding/T038-focused-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests.HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes|FullyQualifiedName~CodeGraphProviderContractTests.AcceptedCorrectionManifest_IsCanonicalAndArtifactBound\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-26T05:40:50.1041471Z",
+      "summary": "The first T038 GREEN attempt passed 16 of 17 tests but exposed implicit Git stdout decoding for non-ASCII checkpoint blobs; the failed output remains immutable recovery evidence and is not relabelled RED.",
+      "raw_output_path": "TestResults/story-4-2-current-binding/T038-focused-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/52",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "92829f9216eb322bf738d598e0717130151c818e",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "TestResults/story-4-2-current-binding/T038-focused-green-retry-1.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests.HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes|FullyQualifiedName~CodeGraphProviderContractTests.AcceptedCorrectionManifest_IsCanonicalAndArtifactBound\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T06:12:12.5868213Z",
+      "summary": "After pinning Git stdout decoding to UTF-8, the accepted-plan binding focused retry passed 17 of 17 tests with zero failures or skips.",
+      "raw_output_path": "TestResults/story-4-2-current-binding/T038-focused-green-retry-1.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/53",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "92829f9216eb322bf738d598e0717130151c818e",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "TestResults/story-4-2-current-binding/T038-surrounding-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T06:12:42.7410492Z",
+      "summary": "The surrounding non-Docker provider-contract suite passed 80 of 80 tests; the tracked correction changes only test/evidence binding and no product, Scan, Worker Agent/tool, or PRD behavior.",
+      "raw_output_path": "TestResults/story-4-2-current-binding/T038-surrounding-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260726T052236Z-89bc56",
+    "checkpoint_id": "bmad-4-2-implement-20260726T061644Z-4c8e71",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/46",
-      "4-2-language-and-framework-detection/implement/47",
-      "4-2-language-and-framework-detection/implement/48"
+      "4-2-language-and-framework-detection/implement/49",
+      "4-2-language-and-framework-detection/implement/50",
+      "4-2-language-and-framework-detection/implement/51",
+      "4-2-language-and-framework-detection/implement/52",
+      "4-2-language-and-framework-detection/implement/53"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T05:22:36.3074335Z"
+  "updated_at": "2026-07-26T06:16:44.5476927Z"
 }

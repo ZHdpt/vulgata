@@ -19,10 +19,10 @@ public sealed class CodeGraphProviderContractTests
         {
             { "docker/codegraph/requirements.lock", _providerLockHash },
             { "specs/002-language-framework-detection/spec.md", "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956" },
-            { "specs/002-language-framework-detection/plan.md", "1ff1d9cdcc715826229bcbf2981f18d221f3d067a0d03de19f1e79b50d0f18df" },
-            { "specs/002-language-framework-detection/research.md", "306d52e498537b4fe9c4ed4478731dbac9569f34df0aebf8f9291337ca41dec9" },
+            { "specs/002-language-framework-detection/plan.md", "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600" },
+            { "specs/002-language-framework-detection/research.md", "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4" },
             { "specs/002-language-framework-detection/data-model.md", "76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c" },
-            { "specs/002-language-framework-detection/quickstart.md", "095b91d28c4c4517c3d8981011c8838fcafdf4b1043b71fc861164b723155664" },
+            { "specs/002-language-framework-detection/quickstart.md", "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115" },
             { "specs/002-language-framework-detection/contracts/framework-detection.md", "74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181" },
             { "specs/002-language-framework-detection/contracts/provider-language-projection.md", "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b" },
             { "specs/002-language-framework-detection/contracts/repository-scan-overview.md", "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad" },
@@ -44,7 +44,25 @@ public sealed class CodeGraphProviderContractTests
     };
     private const string _testIdentity =
         "Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract";
-    private const string _reviewIdentity = "user-approved-story-4-2-plan-2026-07-20";
+    private const string _planReviewVerdictPath =
+        "specs/002-language-framework-detection/reviews/plan-review-8.json";
+    private const string _planReviewVerdictSha256 =
+        "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087";
+    private const string _planReviewDiffSha256 =
+        "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79";
+    private const string _planCheckpointId = "bmad-4-2-plan-20260726T041520Z-3fbfd5";
+    private const string _planCheckpointCommit = "fe08df102957276f4376b9ca62b5921d19113003";
+    private const string _planReviewBaseCommit = "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0";
+    private static readonly IReadOnlyDictionary<string, string> _acceptedPlanArtifactHashes =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["specs/002-language-framework-detection/plan.md"] =
+                "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600",
+            ["specs/002-language-framework-detection/research.md"] =
+                "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4",
+            ["specs/002-language-framework-detection/quickstart.md"] =
+                "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115",
+        };
     private static readonly string[] _planArtifacts =
     [
         "specs/001-codegraph-extraction/plan.md",
@@ -67,8 +85,8 @@ public sealed class CodeGraphProviderContractTests
     {
         string repositoryRoot = FindRepositoryRoot();
         string finalImageId = "sha256:" + new string('a', 64);
-        string sourceCommit = new('b', 40);
-        string sourceTree = new('c', 40);
+        string sourceCommit = RunGitValue(repositoryRoot, ["rev-parse", "HEAD"], "resolve source commit");
+        string sourceTree = RunGitValue(repositoryRoot, ["rev-parse", "HEAD^{tree}"], "resolve source tree");
         byte[] productionSourceManifest = JsonSerializer.SerializeToUtf8Bytes(
             new SortedDictionary<string, object?>(StringComparer.Ordinal)
             {
@@ -89,7 +107,22 @@ public sealed class CodeGraphProviderContractTests
 
         Assert.Equal(first, second);
         using JsonDocument manifest = JsonDocument.Parse(first);
-        Assert.Equal(_reviewIdentity, manifest.RootElement.GetProperty("reviewIdentity").GetString());
+        Assert.False(manifest.RootElement.TryGetProperty("reviewIdentity", out _));
+        Assert.Equal(
+            "specs/002-language-framework-detection/reviews/plan-review-8.json",
+            manifest.RootElement.GetProperty("planReviewVerdictPath").GetString());
+        Assert.Equal(
+            "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+            manifest.RootElement.GetProperty("planReviewVerdictSha256").GetString());
+        Assert.Equal(
+            "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79",
+            manifest.RootElement.GetProperty("planReviewDiffSha256").GetString());
+        Assert.Equal(
+            "bmad-4-2-plan-20260726T041520Z-3fbfd5",
+            manifest.RootElement.GetProperty("planCheckpointId").GetString());
+        Assert.Equal(
+            "fe08df102957276f4376b9ca62b5921d19113003",
+            manifest.RootElement.GetProperty("planCheckpointCommit").GetString());
         Assert.Equal(
             _planArtifacts,
             manifest.RootElement.GetProperty("artifacts")
@@ -103,6 +136,71 @@ public sealed class CodeGraphProviderContractTests
         Assert.Equal(finalImageId, manifest.RootElement.GetProperty("finalImageSha256").GetString());
         Assert.Equal(finalImageId, manifest.RootElement.GetProperty("verifierBaseImageSha256").GetString());
         Assert.Equal(64, Hash(first).Length);
+    }
+
+    [Theory]
+    [InlineData("old-static-identity")]
+    [InlineData("alternate-verdict")]
+    [InlineData("verdict-hash-drift")]
+    [InlineData("review-diff-drift")]
+    [InlineData("artifact-hash-drift")]
+    [InlineData("missing-trailer")]
+    [InlineData("duplicate-trailer")]
+    [InlineData("checkpoint-content-drift")]
+    [InlineData("missing-checkpoint-path")]
+    [InlineData("ancestry-failure")]
+    public void AcceptedPlanBinding_StaleDriftedOrNonAncestor_IsRejected(string caseId)
+    {
+        AcceptedPlanBindingEvidence evidence = CreateCanonicalAcceptedPlanBindingEvidence();
+        evidence = caseId switch
+        {
+            "old-static-identity" => evidence with
+            {
+                VerdictPath = "user-approved-story-4-2-plan-2026-07-20",
+            },
+            "alternate-verdict" => evidence with
+            {
+                VerdictPath = "specs/002-language-framework-detection/reviews/plan-review-7.json",
+            },
+            "verdict-hash-drift" => evidence with { VerdictSha256 = new string('a', 64) },
+            "review-diff-drift" => evidence with { ReviewedDiffSha256 = new string('a', 64) },
+            "artifact-hash-drift" => evidence with
+            {
+                ArtifactHashes = new Dictionary<string, string>(
+                    evidence.ArtifactHashes,
+                    StringComparer.Ordinal)
+                {
+                    ["specs/002-language-framework-detection/plan.md"] = new string('a', 64),
+                },
+            },
+            "missing-trailer" => evidence with { CheckpointMatches = [] },
+            "duplicate-trailer" => evidence with
+            {
+                CheckpointMatches = [_planCheckpointCommit, _planCheckpointCommit],
+            },
+            "checkpoint-content-drift" => evidence with
+            {
+                CheckpointContentHashes = new Dictionary<string, string>(
+                    evidence.CheckpointContentHashes,
+                    StringComparer.Ordinal)
+                {
+                    [_planReviewVerdictPath] = new string('a', 64),
+                },
+            },
+            "missing-checkpoint-path" => evidence with
+            {
+                CheckpointChangedPaths =
+                [
+                    "specs/002-language-framework-detection/plan.md",
+                    "specs/002-language-framework-detection/research.md",
+                    "specs/002-language-framework-detection/quickstart.md",
+                ],
+            },
+            "ancestry-failure" => evidence with { IsAncestorOfCandidate = false },
+            _ => throw new ArgumentOutOfRangeException(nameof(caseId), caseId, null),
+        };
+
+        Assert.Throws<InvalidDataException>(() => ValidateAcceptedPlanBinding(evidence));
     }
 
     [Fact]
@@ -823,6 +921,9 @@ public sealed class CodeGraphProviderContractTests
         string repositoryRoot,
         SourceBindingPreflight sourceBinding)
     {
+        AcceptedPlanBinding planBinding = ResolveAcceptedPlanBinding(
+            repositoryRoot,
+            sourceBinding.SourceCommit);
         using JsonDocument productionManifest = JsonDocument.Parse(sourceBinding.ProductionSourceManifestBytes);
         var artifacts = _planArtifacts.Select(path => new SortedDictionary<string, object?>(StringComparer.Ordinal)
         {
@@ -835,6 +936,11 @@ public sealed class CodeGraphProviderContractTests
             ["evidenceSchema"] = _evidenceSchema,
             ["finalImageSha256"] = sourceBinding.FinalImageId,
             ["gate"] = "provider-contract-e2e",
+            ["planCheckpointCommit"] = planBinding.PlanCheckpointCommit,
+            ["planCheckpointId"] = planBinding.PlanCheckpointId,
+            ["planReviewDiffSha256"] = planBinding.PlanReviewDiffSha256,
+            ["planReviewVerdictPath"] = planBinding.PlanReviewVerdictPath,
+            ["planReviewVerdictSha256"] = planBinding.PlanReviewVerdictSha256,
             ["productionSourceManifest"] = productionManifest.RootElement.Clone(),
             ["productionSourceManifestSha256"] = sourceBinding.ProductionSourceManifestSha256,
             ["providerDistributionSha256"] = _providerDistributionHash,
@@ -842,7 +948,6 @@ public sealed class CodeGraphProviderContractTests
             ["providerVersion"] = "0.5.1",
             ["projectionASha256"] = Hash(CodeGraphContextProviderQueries.CodeUnits),
             ["projectionBSha256"] = Hash(CodeGraphContextProviderQueries.Relationships),
-            ["reviewIdentity"] = _reviewIdentity,
             ["sourceCommit"] = sourceBinding.SourceCommit,
             ["sourceTree"] = sourceBinding.SourceTree,
             ["story"] = "4-2-language-and-framework-detection",
@@ -850,6 +955,262 @@ public sealed class CodeGraphProviderContractTests
             ["verifierBaseImageSha256"] = sourceBinding.VerifierBaseImageId,
         };
         return JsonSerializer.SerializeToUtf8Bytes(manifest);
+    }
+
+    private static AcceptedPlanBinding ResolveAcceptedPlanBinding(
+        string repositoryRoot,
+        string candidateCommit)
+    {
+        if (!IsLowerHex(candidateCommit, 40) && !IsLowerHex(candidateCommit, 64))
+        {
+            throw new InvalidDataException("Accepted-plan candidate is not an immutable Git object ID.");
+        }
+
+        byte[] verdictBytes = File.ReadAllBytes(Path.Combine(
+            repositoryRoot,
+            _planReviewVerdictPath.Replace('/', Path.DirectorySeparatorChar)));
+        using JsonDocument verdictDocument = JsonDocument.Parse(verdictBytes);
+        IReadOnlyDictionary<string, JsonElement> verdictRoot = RequireObject(
+            verdictDocument.RootElement,
+            "planReviewVerdict",
+            [
+                "schema_version", "gate", "verdict", "reviewed_commit", "reviewed_boundary",
+                "reviewed_artifacts", "findings", "summary",
+            ]);
+        IReadOnlyDictionary<string, JsonElement> boundary = RequireObject(
+            verdictRoot["reviewed_boundary"],
+            "planReviewVerdict.reviewed_boundary",
+            ["base_commit", "candidate_commit", "diff_sha256", "artifact_hashes", "owned_paths"]);
+        IReadOnlyDictionary<string, JsonElement> artifactElements = RequireObject(
+            boundary["artifact_hashes"],
+            "planReviewVerdict.reviewed_boundary.artifact_hashes",
+            [.. _acceptedPlanArtifactHashes.Keys]);
+        var artifactHashes = artifactElements.ToDictionary(
+            item => item.Key,
+            item => RequireString(
+                item.Value,
+                $"planReviewVerdict.reviewed_boundary.artifact_hashes.{item.Key}"),
+            StringComparer.Ordinal);
+        string[] ownedPaths = RequireArray(
+                boundary["owned_paths"],
+                _acceptedPlanArtifactHashes.Count,
+                _acceptedPlanArtifactHashes.Count,
+                "planReviewVerdict.reviewed_boundary.owned_paths")
+            .Select((item, index) => RequireString(
+                item,
+                $"planReviewVerdict.reviewed_boundary.owned_paths[{index}]"))
+            .ToArray();
+
+        ProcessResult log = RunGit(
+            repositoryRoot,
+            [
+                "log", "--all", "--format=%H", "--fixed-strings",
+                "--grep", $"Workflow-Checkpoint: {_planCheckpointId}",
+            ]);
+        EnsureGitSuccess(log, "resolve accepted plan checkpoint candidates");
+        var checkpointMatches = new List<string>();
+        foreach (string commit in log.StandardOutput
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Distinct(StringComparer.Ordinal))
+        {
+            string body = RunGitValue(
+                repositoryRoot,
+                ["show", "-s", "--format=%B", commit],
+                "read accepted plan checkpoint trailer");
+            int trailerCount = body
+                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Count(line => string.Equals(
+                    line,
+                    $"Workflow-Checkpoint: {_planCheckpointId}",
+                    StringComparison.Ordinal));
+            checkpointMatches.AddRange(Enumerable.Repeat(commit, trailerCount));
+        }
+
+        var checkpointContentHashes = new Dictionary<string, string>(StringComparer.Ordinal);
+        string[] checkpointChangedPaths = [];
+        bool isAncestor = false;
+        if (checkpointMatches.Count == 1)
+        {
+            string checkpointCommit = checkpointMatches[0];
+            foreach ((string path, string _) in _acceptedPlanArtifactHashes)
+            {
+                ProcessResult content = RunGit(repositoryRoot, ["show", $"{checkpointCommit}:{path}"]);
+                EnsureGitSuccess(content, $"read accepted plan checkpoint content {path}");
+                checkpointContentHashes[path] = Hash(content.StandardOutput);
+            }
+
+            ProcessResult verdictContent = RunGit(
+                repositoryRoot,
+                ["show", $"{checkpointCommit}:{_planReviewVerdictPath}"]);
+            EnsureGitSuccess(verdictContent, "read accepted plan verdict checkpoint content");
+            checkpointContentHashes[_planReviewVerdictPath] = Hash(verdictContent.StandardOutput);
+
+            ProcessResult changedPaths = RunGit(
+                repositoryRoot,
+                ["diff-tree", "--no-commit-id", "--name-only", "-r", checkpointCommit]);
+            EnsureGitSuccess(changedPaths, "read accepted plan checkpoint changed paths");
+            checkpointChangedPaths = changedPaths.StandardOutput
+                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+
+            ProcessResult ancestry = RunGit(
+                repositoryRoot,
+                ["merge-base", "--is-ancestor", checkpointCommit, candidateCommit]);
+            if (ancestry.ExitCode is not (0 or 1))
+            {
+                EnsureGitSuccess(ancestry, "validate accepted plan checkpoint ancestry");
+            }
+
+            isAncestor = ancestry.ExitCode == 0;
+        }
+
+        var evidence = new AcceptedPlanBindingEvidence(
+            _planReviewVerdictPath,
+            Hash(verdictBytes),
+            RequireString(verdictRoot["schema_version"], "planReviewVerdict.schema_version"),
+            RequireString(verdictRoot["gate"], "planReviewVerdict.gate"),
+            RequireString(verdictRoot["verdict"], "planReviewVerdict.verdict"),
+            RequireString(verdictRoot["reviewed_commit"], "planReviewVerdict.reviewed_commit"),
+            RequireString(boundary["base_commit"], "planReviewVerdict.reviewed_boundary.base_commit"),
+            boundary["candidate_commit"].ValueKind == JsonValueKind.Null,
+            RequireString(boundary["diff_sha256"], "planReviewVerdict.reviewed_boundary.diff_sha256"),
+            artifactHashes,
+            ownedPaths,
+            _planCheckpointId,
+            [.. checkpointMatches],
+            checkpointContentHashes,
+            checkpointChangedPaths,
+            isAncestor);
+        return ValidateAcceptedPlanBinding(evidence);
+    }
+
+    private static AcceptedPlanBinding ValidateAcceptedPlanBinding(
+        AcceptedPlanBindingEvidence evidence)
+    {
+        if (!string.Equals(evidence.VerdictPath, _planReviewVerdictPath, StringComparison.Ordinal)
+            || !string.Equals(evidence.VerdictSha256, _planReviewVerdictSha256, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("Accepted plan verdict path or content hash is stale.");
+        }
+
+        if (!string.Equals(evidence.SchemaVersion, "1.0", StringComparison.Ordinal)
+            || !string.Equals(evidence.Gate, "plan-review", StringComparison.Ordinal)
+            || !string.Equals(evidence.Verdict, "ACCEPT", StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("Accepted plan verdict gate or disposition is invalid.");
+        }
+
+        if (!string.Equals(evidence.ReviewedCommit, _planReviewBaseCommit, StringComparison.Ordinal)
+            || !string.Equals(evidence.ReviewedBaseCommit, _planReviewBaseCommit, StringComparison.Ordinal)
+            || !evidence.ReviewedCandidateCommitIsNull)
+        {
+            throw new InvalidDataException("Accepted plan reviewed source boundary is invalid.");
+        }
+
+        if (!string.Equals(evidence.ReviewedDiffSha256, _planReviewDiffSha256, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("Accepted plan reviewed diff identity drifted.");
+        }
+
+        RequireExactHashMap(
+            evidence.ArtifactHashes,
+            _acceptedPlanArtifactHashes,
+            "Accepted plan reviewed artifact map drifted.");
+        if (!evidence.OwnedPaths.SequenceEqual(_acceptedPlanArtifactHashes.Keys, StringComparer.Ordinal))
+        {
+            throw new InvalidDataException("Accepted plan reviewed owned-path set drifted.");
+        }
+
+        if (!string.Equals(evidence.CheckpointId, _planCheckpointId, StringComparison.Ordinal)
+            || evidence.CheckpointMatches.Length != 1
+            || !string.Equals(evidence.CheckpointMatches[0], _planCheckpointCommit, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("Accepted plan checkpoint trailer did not resolve exactly once.");
+        }
+
+        var expectedCheckpointContent = new Dictionary<string, string>(
+            _acceptedPlanArtifactHashes,
+            StringComparer.Ordinal)
+        {
+            [_planReviewVerdictPath] = _planReviewVerdictSha256,
+        };
+        RequireExactHashMap(
+            evidence.CheckpointContentHashes,
+            expectedCheckpointContent,
+            "Accepted plan checkpoint content drifted.");
+        string[] requiredChangedPaths =
+        [
+            .. _acceptedPlanArtifactHashes.Keys,
+            _planReviewVerdictPath,
+        ];
+        if (evidence.CheckpointChangedPaths.Distinct(StringComparer.Ordinal).Count()
+                != evidence.CheckpointChangedPaths.Length
+            || requiredChangedPaths.Any(path => !evidence.CheckpointChangedPaths.Contains(
+                path,
+                StringComparer.Ordinal)))
+        {
+            throw new InvalidDataException("Accepted plan checkpoint does not contain the plan/verdict checkpoint.");
+        }
+
+        if (!evidence.IsAncestorOfCandidate)
+        {
+            throw new InvalidDataException("Accepted plan checkpoint is not an ancestor of the candidate.");
+        }
+
+        return new AcceptedPlanBinding(
+            evidence.VerdictPath,
+            evidence.VerdictSha256,
+            evidence.ReviewedDiffSha256,
+            evidence.CheckpointId,
+            evidence.CheckpointMatches[0]);
+    }
+
+    private static AcceptedPlanBindingEvidence CreateCanonicalAcceptedPlanBindingEvidence()
+    {
+        var checkpointContentHashes = new Dictionary<string, string>(
+            _acceptedPlanArtifactHashes,
+            StringComparer.Ordinal)
+        {
+            [_planReviewVerdictPath] = _planReviewVerdictSha256,
+        };
+        return new AcceptedPlanBindingEvidence(
+            _planReviewVerdictPath,
+            _planReviewVerdictSha256,
+            "1.0",
+            "plan-review",
+            "ACCEPT",
+            _planReviewBaseCommit,
+            _planReviewBaseCommit,
+            true,
+            _planReviewDiffSha256,
+            new Dictionary<string, string>(_acceptedPlanArtifactHashes, StringComparer.Ordinal),
+            [.. _acceptedPlanArtifactHashes.Keys],
+            _planCheckpointId,
+            [_planCheckpointCommit],
+            checkpointContentHashes,
+            [.. _acceptedPlanArtifactHashes.Keys, _planReviewVerdictPath],
+            true);
+    }
+
+    private static void RequireExactHashMap(
+        IReadOnlyDictionary<string, string> actual,
+        IReadOnlyDictionary<string, string> expected,
+        string failure)
+    {
+        if (actual.Count != expected.Count
+            || expected.Any(item => !actual.TryGetValue(item.Key, out string? hash)
+                || !string.Equals(hash, item.Value, StringComparison.Ordinal)))
+        {
+            string expectedDetails = string.Join(
+                ", ",
+                expected.OrderBy(item => item.Key, StringComparer.Ordinal)
+                    .Select(item => $"{item.Key}={item.Value}"));
+            string actualDetails = string.Join(
+                ", ",
+                actual.OrderBy(item => item.Key, StringComparer.Ordinal)
+                    .Select(item => $"{item.Key}={item.Value}"));
+            throw new InvalidDataException(
+                $"{failure} Expected [{expectedDetails}]; actual [{actualDetails}].");
+        }
     }
 
     private static byte[] CreateLegacyEvidence()
@@ -2053,6 +2414,7 @@ public sealed class CodeGraphProviderContractTests
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             },
@@ -2091,6 +2453,31 @@ public sealed class CodeGraphProviderContractTests
         string SourceTree,
         byte[] Bytes,
         string ManifestSha256);
+
+    private sealed record AcceptedPlanBinding(
+        string PlanReviewVerdictPath,
+        string PlanReviewVerdictSha256,
+        string PlanReviewDiffSha256,
+        string PlanCheckpointId,
+        string PlanCheckpointCommit);
+
+    private sealed record AcceptedPlanBindingEvidence(
+        string VerdictPath,
+        string VerdictSha256,
+        string SchemaVersion,
+        string Gate,
+        string Verdict,
+        string ReviewedCommit,
+        string ReviewedBaseCommit,
+        bool ReviewedCandidateCommitIsNull,
+        string ReviewedDiffSha256,
+        IReadOnlyDictionary<string, string> ArtifactHashes,
+        string[] OwnedPaths,
+        string CheckpointId,
+        string[] CheckpointMatches,
+        IReadOnlyDictionary<string, string> CheckpointContentHashes,
+        string[] CheckpointChangedPaths,
+        bool IsAncestorOfCandidate);
 
     private sealed record SourceBindingPreflight(
         string SourceCommit,
