@@ -628,6 +628,14 @@ unchanged.
   not be amended.
 - Acceptance-review checkpoint:
   `bmad-4-2-acceptance-review-20260726T073117Z-a31c84` (pending Git binding).
+- Full quality review iteration 3 returned `REVISE` at the identical T041
+  boundary. `QR3-001` found that the Repository detail UI renders canonical
+  confidence values `High` and `Medium` directly, violating FR-019, AC-7, and
+  the Simplified-Chinese overview contract. The API wire values remain
+  canonical; remediation is limited to presentation mapping and UI regression
+  coverage.
+- Quality-review checkpoint:
+  `bmad-4-2-quality-review-20260726T073255Z-c82f16` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
