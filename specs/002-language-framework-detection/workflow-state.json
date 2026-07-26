@@ -2460,28 +2460,39 @@
       "observed_at": "2026-07-26T09:21:25.4472261Z",
       "summary": "T051-T054 corrected all three quality-review-4 findings. Provider-path RED failed 2 of 30 then GREEN passed 30 of 30; Python and ambiguity REDs each failed 1 of 1 then passed 1 of 1; the preserved first surrounding attempt exposed two superseded audit-count expectations, and the final-byte surrounding suite passed 165 of 165. Root independently repeated 165 of 165.",
       "raw_output_path": "TestResults/story-4-2-quality4-correction/T054-surrounding-green-attempt-0003.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/68",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "3140978f83f03004b9b356ff14441614303a8380",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification-quality4-refresh/T001-provider-profiling-green.txt",
+        "TestResults/story-4-2-current-verification-quality4-refresh/T001-framework-green.txt"
+      ],
+      "command": "dotnet test provider/profiling filter; dotnet test FrameworkDetection filter",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T09:27:40.2964953Z",
+      "summary": "Post-quality-review-4 T001 Current verification passed 116 of 116 provider/profiling tests and 50 of 50 framework-detection tests at clean immutable correction commit 3140978f83f03004b9b356ff14441614303a8380. Prior attempts and the exact unavailable-baseline statement remain preserved.",
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality4-refresh/T001-framework-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-quality4-correction-20260726T092125Z-b7814d",
+    "checkpoint_id": "bmad-4-2-t001-quality4-refresh-20260726T092740Z-9ae52c",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
-      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/67"
+      "4-2-language-and-framework-detection/implement/68"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T09:21:25.4472261Z"
+  "updated_at": "2026-07-26T09:27:40.2964953Z"
 }

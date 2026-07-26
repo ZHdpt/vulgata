@@ -721,6 +721,15 @@ unchanged.
 - Quality-review-4 correction checkpoint:
   `bmad-4-2-quality4-correction-20260726T092125Z-b7814d`
   (pending Git binding).
+- T001 Current verification was refreshed again at correction commit
+  `3140978f83f03004b9b356ff14441614303a8380`, tree
+  `600f60d97c69003a89158d2e0cf233fcff681352`: provider/profiling passed
+  116/116 and framework detection passed 50/50. Prior attempts and the exact
+  unavailable-baseline disclosure remain preserved; no network, URL, Clash,
+  or proxy failure occurred.
+- Post-quality4 T001 checkpoint:
+  `bmad-4-2-t001-quality4-refresh-20260726T092740Z-9ae52c`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
