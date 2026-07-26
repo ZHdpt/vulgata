@@ -2235,24 +2235,33 @@
       "observed_at": "2026-07-26T06:53:47.8000644Z",
       "summary": "T039-T040 regenerated and validated the truthful ledger over 33 linear commits, 19 legacy groups, 32 immutable blob references, 8 unique ancestor checkpoints, and 8 current raw files. The exact unavailable T001 statement and Current verification timing remain separate; prior candidate, review, E2E, verification, manifest, image, namespace, T049, and T050 identities are absent.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/55",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "6199c0be5cb607950fa3e8f8d276ff0735ae2f13",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json"
+      ],
+      "command": "git status --porcelain=v1 --untracked-files=all; git rev-parse HEAD; git rev-parse HEAD^{tree}; git diff --binary --full-index e9824df7300634c19d815bdd7ad591b9fb5366d5..6199c0be5cb607950fa3e8f8d276ff0735ae2f13; SHA-256 over selected candidate Git blobs",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T06:56:19.9281520Z",
+      "summary": "T041 pinned clean immutable candidate 6199c0be5cb607950fa3e8f8d276ff0735ae2f13 and tree 72f9e28e8e55a99b8d8824697c6f2ea30e118abf with an empty unique checkpoint commit. The 1,303,606-byte binary diff SHA-256 is ae7a742e724e41ec9199c6e0a04c2d54539f16bbb98904d81fd2cb6ec0f6fbc0 over 69 Story-owned paths.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260726T065347Z-7d1a63",
+    "checkpoint_id": "bmad-4-2-candidate-20260726T065619Z-5f2b90",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
-    "committed_paths": [
-      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/workflow-state.json",
-      "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
-    ],
+    "committed_paths": [],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/54"
+      "4-2-language-and-framework-detection/implement/55"
     ],
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "6199c0be5cb607950fa3e8f8d276ff0735ae2f13",
+    "binding_status": "bound"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T06:53:47.8000644Z"
+  "updated_at": "2026-07-26T06:56:19.9281520Z"
 }

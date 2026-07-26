@@ -609,6 +609,16 @@ unchanged.
   corrected by hashing the pinned Git blob bytes.
 - Truthful-ledger implementation checkpoint:
   `bmad-4-2-implement-20260726T065347Z-7d1a63` (pending Git binding).
+- T041 pinned clean immutable candidate
+  `6199c0be5cb607950fa3e8f8d276ff0735ae2f13` at tree
+  `72f9e28e8e55a99b8d8824697c6f2ea30e118abf`. Its empty checkpoint
+  commit preserves the accepted implementation tree; the exact 1,303,606-byte
+  binary diff over 69 Story-owned paths has SHA-256
+  `ae7a742e724e41ec9199c6e0a04c2d54539f16bbb98904d81fd2cb6ec0f6fbc0`.
+  Later review/evidence records are outside this nonrecursive candidate diff.
+- Immutable-candidate checkpoint:
+  `bmad-4-2-candidate-20260726T065619Z-5f2b90` (bound to
+  `6199c0be5cb607950fa3e8f8d276ff0735ae2f13`).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
