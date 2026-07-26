@@ -50,9 +50,16 @@ public sealed class CodeGraphProviderContractTests
         "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087";
     private const string _planReviewDiffSha256 =
         "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79";
-    private const string _planCheckpointId = "bmad-4-2-plan-20260726T041520Z-3fbfd5";
-    private const string _planCheckpointCommit = "fe08df102957276f4376b9ca62b5921d19113003";
+    private const string _planCheckpointId = "bmad-4-2-plan-binding-20260726T073452Z-d04e72";
+    private const string _planCheckpointCommit = "36bd6cccdba1fa341eddc8096a5c2269c62c3118";
     private const string _planReviewBaseCommit = "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0";
+    private static readonly string[] _planCheckpointTrailers =
+    [
+        "BMad-Story: 4-2-language-and-framework-detection",
+        "Workflow-Scope: story/4-2-language-and-framework-detection",
+        "Workflow-Stage: plan-review",
+        $"Workflow-Checkpoint: {_planCheckpointId}",
+    ];
     private static readonly IReadOnlyDictionary<string, string> _acceptedPlanArtifactHashes =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -118,11 +125,33 @@ public sealed class CodeGraphProviderContractTests
             "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79",
             manifest.RootElement.GetProperty("planReviewDiffSha256").GetString());
         Assert.Equal(
-            "bmad-4-2-plan-20260726T041520Z-3fbfd5",
+            "bmad-4-2-plan-binding-20260726T073452Z-d04e72",
             manifest.RootElement.GetProperty("planCheckpointId").GetString());
         Assert.Equal(
-            "fe08df102957276f4376b9ca62b5921d19113003",
+            "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
             manifest.RootElement.GetProperty("planCheckpointCommit").GetString());
+        string checkpointMessage = RunGitValue(
+            repositoryRoot,
+            [
+                "show", "-s", "--format=%B",
+                manifest.RootElement.GetProperty("planCheckpointCommit").GetString()!,
+            ],
+            "read replacement accepted plan checkpoint trailers");
+        foreach (string trailer in
+                 new[]
+                 {
+                     "BMad-Story: 4-2-language-and-framework-detection",
+                     "Workflow-Scope: story/4-2-language-and-framework-detection",
+                     "Workflow-Stage: plan-review",
+                     "Workflow-Checkpoint: bmad-4-2-plan-binding-20260726T073452Z-d04e72",
+                 })
+        {
+            Assert.Equal(
+                1,
+                checkpointMessage
+                    .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                    .Count(line => string.Equals(line, trailer, StringComparison.Ordinal)));
+        }
         Assert.Equal(
             _planArtifacts,
             manifest.RootElement.GetProperty("artifacts")
@@ -146,8 +175,15 @@ public sealed class CodeGraphProviderContractTests
     [InlineData("artifact-hash-drift")]
     [InlineData("missing-trailer")]
     [InlineData("duplicate-trailer")]
+    [InlineData("missing-story-trailer")]
+    [InlineData("wrong-story-trailer")]
+    [InlineData("missing-scope-trailer")]
+    [InlineData("wrong-scope-trailer")]
+    [InlineData("missing-stage-trailer")]
+    [InlineData("wrong-stage-trailer")]
+    [InlineData("missing-checkpoint-trailer")]
+    [InlineData("wrong-checkpoint-trailer")]
     [InlineData("checkpoint-content-drift")]
-    [InlineData("missing-checkpoint-path")]
     [InlineData("ancestry-failure")]
     public void AcceptedPlanBinding_StaleDriftedOrNonAncestor_IsRejected(string caseId)
     {
@@ -178,6 +214,64 @@ public sealed class CodeGraphProviderContractTests
             {
                 CheckpointMatches = [_planCheckpointCommit, _planCheckpointCommit],
             },
+            "missing-story-trailer" => evidence with
+            {
+                CheckpointTrailers = [.. evidence.CheckpointTrailers[1..]],
+            },
+            "wrong-story-trailer" => evidence with
+            {
+                CheckpointTrailers =
+                [
+                    "BMad-Story: 4-3-invalid-story",
+                    .. evidence.CheckpointTrailers[1..],
+                ],
+            },
+            "missing-scope-trailer" => evidence with
+            {
+                CheckpointTrailers =
+                [
+                    evidence.CheckpointTrailers[0],
+                    .. evidence.CheckpointTrailers[2..],
+                ],
+            },
+            "wrong-scope-trailer" => evidence with
+            {
+                CheckpointTrailers =
+                [
+                    evidence.CheckpointTrailers[0],
+                    "Workflow-Scope: story/4-3-invalid-story",
+                    .. evidence.CheckpointTrailers[2..],
+                ],
+            },
+            "missing-stage-trailer" => evidence with
+            {
+                CheckpointTrailers =
+                [
+                    .. evidence.CheckpointTrailers[..2],
+                    evidence.CheckpointTrailers[3],
+                ],
+            },
+            "wrong-stage-trailer" => evidence with
+            {
+                CheckpointTrailers =
+                [
+                    .. evidence.CheckpointTrailers[..2],
+                    "Workflow-Stage: implement",
+                    evidence.CheckpointTrailers[3],
+                ],
+            },
+            "missing-checkpoint-trailer" => evidence with
+            {
+                CheckpointTrailers = [.. evidence.CheckpointTrailers[..3]],
+            },
+            "wrong-checkpoint-trailer" => evidence with
+            {
+                CheckpointTrailers =
+                [
+                    .. evidence.CheckpointTrailers[..3],
+                    "Workflow-Checkpoint: bmad-4-2-plan-binding-incorrect",
+                ],
+            },
             "checkpoint-content-drift" => evidence with
             {
                 CheckpointContentHashes = new Dictionary<string, string>(
@@ -186,15 +280,6 @@ public sealed class CodeGraphProviderContractTests
                 {
                     [_planReviewVerdictPath] = new string('a', 64),
                 },
-            },
-            "missing-checkpoint-path" => evidence with
-            {
-                CheckpointChangedPaths =
-                [
-                    "specs/002-language-framework-detection/plan.md",
-                    "specs/002-language-framework-detection/research.md",
-                    "specs/002-language-framework-detection/quickstart.md",
-                ],
             },
             "ancestry-failure" => evidence with { IsAncestorOfCandidate = false },
             _ => throw new ArgumentOutOfRangeException(nameof(caseId), caseId, null),
@@ -1009,6 +1094,7 @@ public sealed class CodeGraphProviderContractTests
             ]);
         EnsureGitSuccess(log, "resolve accepted plan checkpoint candidates");
         var checkpointMatches = new List<string>();
+        string[] checkpointTrailers = [];
         foreach (string commit in log.StandardOutput
             .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
             .Distinct(StringComparer.Ordinal))
@@ -1024,10 +1110,19 @@ public sealed class CodeGraphProviderContractTests
                     $"Workflow-Checkpoint: {_planCheckpointId}",
                     StringComparison.Ordinal));
             checkpointMatches.AddRange(Enumerable.Repeat(commit, trailerCount));
+            if (trailerCount == 1)
+            {
+                checkpointTrailers = body
+                    .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                    .Where(line => line.StartsWith("BMad-Story: ", StringComparison.Ordinal)
+                        || line.StartsWith("Workflow-Scope: ", StringComparison.Ordinal)
+                        || line.StartsWith("Workflow-Stage: ", StringComparison.Ordinal)
+                        || line.StartsWith("Workflow-Checkpoint: ", StringComparison.Ordinal))
+                    .ToArray();
+            }
         }
 
         var checkpointContentHashes = new Dictionary<string, string>(StringComparer.Ordinal);
-        string[] checkpointChangedPaths = [];
         bool isAncestor = false;
         if (checkpointMatches.Count == 1)
         {
@@ -1044,13 +1139,6 @@ public sealed class CodeGraphProviderContractTests
                 ["show", $"{checkpointCommit}:{_planReviewVerdictPath}"]);
             EnsureGitSuccess(verdictContent, "read accepted plan verdict checkpoint content");
             checkpointContentHashes[_planReviewVerdictPath] = Hash(verdictContent.StandardOutput);
-
-            ProcessResult changedPaths = RunGit(
-                repositoryRoot,
-                ["diff-tree", "--no-commit-id", "--name-only", "-r", checkpointCommit]);
-            EnsureGitSuccess(changedPaths, "read accepted plan checkpoint changed paths");
-            checkpointChangedPaths = changedPaths.StandardOutput
-                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
             ProcessResult ancestry = RunGit(
                 repositoryRoot,
@@ -1077,8 +1165,8 @@ public sealed class CodeGraphProviderContractTests
             ownedPaths,
             _planCheckpointId,
             [.. checkpointMatches],
+            checkpointTrailers,
             checkpointContentHashes,
-            checkpointChangedPaths,
             isAncestor);
         return ValidateAcceptedPlanBinding(evidence);
     }
@@ -1126,6 +1214,10 @@ public sealed class CodeGraphProviderContractTests
         {
             throw new InvalidDataException("Accepted plan checkpoint trailer did not resolve exactly once.");
         }
+        if (!evidence.CheckpointTrailers.SequenceEqual(_planCheckpointTrailers, StringComparer.Ordinal))
+        {
+            throw new InvalidDataException("Accepted plan checkpoint mandatory trailers are invalid.");
+        }
 
         var expectedCheckpointContent = new Dictionary<string, string>(
             _acceptedPlanArtifactHashes,
@@ -1137,19 +1229,6 @@ public sealed class CodeGraphProviderContractTests
             evidence.CheckpointContentHashes,
             expectedCheckpointContent,
             "Accepted plan checkpoint content drifted.");
-        string[] requiredChangedPaths =
-        [
-            .. _acceptedPlanArtifactHashes.Keys,
-            _planReviewVerdictPath,
-        ];
-        if (evidence.CheckpointChangedPaths.Distinct(StringComparer.Ordinal).Count()
-                != evidence.CheckpointChangedPaths.Length
-            || requiredChangedPaths.Any(path => !evidence.CheckpointChangedPaths.Contains(
-                path,
-                StringComparer.Ordinal)))
-        {
-            throw new InvalidDataException("Accepted plan checkpoint does not contain the plan/verdict checkpoint.");
-        }
 
         if (!evidence.IsAncestorOfCandidate)
         {
@@ -1186,8 +1265,8 @@ public sealed class CodeGraphProviderContractTests
             [.. _acceptedPlanArtifactHashes.Keys],
             _planCheckpointId,
             [_planCheckpointCommit],
+            [.. _planCheckpointTrailers],
             checkpointContentHashes,
-            [.. _acceptedPlanArtifactHashes.Keys, _planReviewVerdictPath],
             true);
     }
 
@@ -2475,8 +2554,8 @@ public sealed class CodeGraphProviderContractTests
         string[] OwnedPaths,
         string CheckpointId,
         string[] CheckpointMatches,
+        string[] CheckpointTrailers,
         IReadOnlyDictionary<string, string> CheckpointContentHashes,
-        string[] CheckpointChangedPaths,
         bool IsAncestorOfCandidate);
 
     private sealed record SourceBindingPreflight(

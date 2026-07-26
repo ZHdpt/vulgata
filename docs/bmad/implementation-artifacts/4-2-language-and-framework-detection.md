@@ -636,6 +636,26 @@ unchanged.
   coverage.
 - Quality-review checkpoint:
   `bmad-4-2-quality-review-20260726T073255Z-c82f16` (pending Git binding).
+- Review-3 corrections are now GREEN. The accepted-plan resolver binds the
+  forward-only checkpoint
+  `36bd6cccdba1fa341eddc8096a5c2269c62c3118`, verifies its exact plan and
+  verdict bytes in tree `54705660bde4e74decf8baaab32ca6046f420152`,
+  requires unique ancestry and all four mandatory trailers, and no longer
+  requires the empty replacement checkpoint to introduce the accepted files
+  in its own diff. The Repository detail dialog localizes only the presentation
+  of canonical confidence values (`High` to `高`, `Medium` to `中`).
+- T037 retained two genuine RED observations (1/1 binding failure and 2/2
+  confidence-presentation failures). T038 then passed 18/18 binding tests, 2/2
+  focused dashboard tests, and 104/104 surrounding provider-contract/dashboard
+  tests. An independent root rerun also passed 104/104. The first five
+  transcript-only evidence files remain immutable failed-capture attempts; the
+  complete native-output evidence uses create-new `attempt-0002` paths.
+- The former T039-T041 ledger/candidate and T042-T043 review lane remain
+  invalidated. They must be regenerated from this correction checkpoint before
+  the next Full review boundary.
+- Review-3 correction checkpoint:
+  `bmad-4-2-review3-correction-20260726T075812Z-91c3af`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

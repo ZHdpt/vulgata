@@ -2277,23 +2277,105 @@
       "observed_at": "2026-07-26T07:28:35.1963533Z",
       "summary": "Full quality review iteration 3 returned REVISE with one High finding, QR3-001: the Repository detail UI renders canonical confidence values High and Medium directly, violating FR-019, AC-7, and the Simplified-Chinese overview contract. API wire values remain canonical and must not be changed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/56",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
+      "artifact_paths": [
+        "TestResults/story-4-2-review3-correction/T037-plan-binding-red-attempt-0002.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~CodeGraphProviderContractTests.AcceptedCorrectionManifest_IsCanonicalAndArtifactBound\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-26T07:52:04.5041795Z",
+      "summary": "T037 replacement-binding RED failed 1 of 1 tests because the executable manifest still emitted the superseded accepted-plan checkpoint instead of the forward-only fully-trailered replacement checkpoint.",
+      "raw_output_path": "TestResults/story-4-2-review3-correction/T037-plan-binding-red-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/57",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
+      "artifact_paths": [
+        "TestResults/story-4-2-review3-correction/T037-confidence-ui-red-attempt-0002.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~DashboardPanelTests.RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseFrameworkEvidenceOverview|FullyQualifiedName~DashboardPanelTests.RepositoryDetailDialog_AfterRepresentativeProfiling_RendersEveryObjectiveFactAndChineseLabel\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-26T07:52:46.7711016Z",
+      "summary": "T037 confidence-presentation RED failed 2 of 2 tests because the Repository detail dialog did not render the required Simplified-Chinese confidence labels.",
+      "raw_output_path": "TestResults/story-4-2-review3-correction/T037-confidence-ui-red-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/58",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "TestResults/story-4-2-review3-correction/T038-binding-green-attempt-0002.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~CodeGraphProviderContractTests.AcceptedCorrectionManifest_IsCanonicalAndArtifactBound|FullyQualifiedName~CodeGraphProviderContractTests.AcceptedPlanBinding_StaleDriftedOrNonAncestor_IsRejected\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T07:53:20.6214802Z",
+      "summary": "T038 replacement accepted-plan binding passed 18 of 18 tests, including unique resolution, exact plan/verdict tree bytes, ancestry, and all four mandatory checkpoint trailers.",
+      "raw_output_path": "TestResults/story-4-2-review3-correction/T038-binding-green-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/59",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs",
+        "TestResults/story-4-2-review3-correction/T038-dashboard-green-attempt-0002.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~DashboardPanelTests.RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseFrameworkEvidenceOverview|FullyQualifiedName~DashboardPanelTests.RepositoryDetailDialog_AfterRepresentativeProfiling_RendersEveryObjectiveFactAndChineseLabel\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T07:53:44.6881269Z",
+      "summary": "T038 confidence-presentation tests passed 2 of 2 after localizing only the Repository detail display to 高 and 中; canonical API and DTO values remain High and Medium.",
+      "raw_output_path": "TestResults/story-4-2-review3-correction/T038-dashboard-green-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/60",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs",
+        "TestResults/story-4-2-review3-correction/T038-surrounding-green-attempt-0002.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"(FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract)|FullyQualifiedName~DashboardPanelTests\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T07:54:19.2076535Z",
+      "summary": "The surrounding corrected provider-contract and dashboard suites passed 104 of 104 tests. Root independently repeated the same 104-of-104 GREEN result before checkpointing.",
+      "raw_output_path": "TestResults/story-4-2-review3-correction/T038-surrounding-green-attempt-0002.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-quality-review-20260726T073255Z-c82f16",
+    "checkpoint_id": "bmad-4-2-review3-correction-20260726T075812Z-91c3af",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "quality-review",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/quality-review-3.json",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/workflow-state.json",
+      "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+      "tests/Vulgata.Tests/DashboardPanelTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/quality-review/3"
+      "4-2-language-and-framework-detection/implement/56",
+      "4-2-language-and-framework-detection/implement/57",
+      "4-2-language-and-framework-detection/implement/58",
+      "4-2-language-and-framework-detection/implement/59",
+      "4-2-language-and-framework-detection/implement/60"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T07:32:55.1994835Z"
+  "updated_at": "2026-07-26T07:58:12.2970660Z"
 }

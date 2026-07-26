@@ -279,7 +279,10 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("检测依据", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("框架证据警告", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("react", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("High", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("置信度 高", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("置信度 中", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("High", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Medium", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("package.json#json:/dependencies/react", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("101", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("audit/000/package.json", cut.Markup, StringComparison.Ordinal);
@@ -409,7 +412,10 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("3 个文件", markup, StringComparison.Ordinal);
         Assert.Contains("react", markup, StringComparison.Ordinal);
         Assert.Contains("spring-boot", markup, StringComparison.Ordinal);
-        Assert.Contains("High", markup, StringComparison.Ordinal);
+        Assert.Contains("置信度 高", markup, StringComparison.Ordinal);
+        Assert.Contains("置信度 中", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("High", markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Medium", markup, StringComparison.Ordinal);
         Assert.Contains(
             "web/package.json#json:/dependencies/react",
             markup,
@@ -576,7 +582,7 @@ public sealed class DashboardPanelTests : TestContext
             run.Id,
             repositoryId,
             "spring-boot",
-            FrameworkConfidence.High,
+            FrameworkConfidence.Medium,
             "service/pom.xml#xml:dependencies/org.springframework.boot:spring-boot-starter-web",
             DateTimeOffset.UtcNow));
         foreach (string path in
@@ -877,11 +883,11 @@ public sealed class DashboardPanelTests : TestContext
             }
 
             Type frameworkType = frameworksProperty.PropertyType.GetGenericArguments().Single();
-            object framework = Activator.CreateInstance(frameworkType)!;
-            frameworkType.GetProperty("FrameworkName")!.SetValue(framework, "react");
-            frameworkType.GetProperty("CodeUnitCount")!.SetValue(framework, 1);
-            frameworkType.GetProperty("StrongestConfidence")!.SetValue(framework, "High");
-            frameworkType.GetProperty("TotalFactCount")!.SetValue(framework, 1);
+            object highFramework = Activator.CreateInstance(frameworkType)!;
+            frameworkType.GetProperty("FrameworkName")!.SetValue(highFramework, "react");
+            frameworkType.GetProperty("CodeUnitCount")!.SetValue(highFramework, 1);
+            frameworkType.GetProperty("StrongestConfidence")!.SetValue(highFramework, "High");
+            frameworkType.GetProperty("TotalFactCount")!.SetValue(highFramework, 1);
             PropertyInfo samplesProperty = frameworkType.GetProperty("EvidenceSamples")!;
             Type sampleType = samplesProperty.PropertyType.GetGenericArguments().Single();
             object sample = Activator.CreateInstance(sampleType)!;
@@ -892,9 +898,16 @@ public sealed class DashboardPanelTests : TestContext
                 "package.json#json:/dependencies/react");
             Array samples = Array.CreateInstance(sampleType, 1);
             samples.SetValue(sample, 0);
-            samplesProperty.SetValue(framework, samples);
-            Array frameworks = Array.CreateInstance(frameworkType, 1);
-            frameworks.SetValue(framework, 0);
+            samplesProperty.SetValue(highFramework, samples);
+            object mediumFramework = Activator.CreateInstance(frameworkType)!;
+            frameworkType.GetProperty("FrameworkName")!.SetValue(mediumFramework, "spring-boot");
+            frameworkType.GetProperty("CodeUnitCount")!.SetValue(mediumFramework, 1);
+            frameworkType.GetProperty("StrongestConfidence")!.SetValue(mediumFramework, "Medium");
+            frameworkType.GetProperty("TotalFactCount")!.SetValue(mediumFramework, 1);
+            samplesProperty.SetValue(mediumFramework, Array.CreateInstance(sampleType, 0));
+            Array frameworks = Array.CreateInstance(frameworkType, 2);
+            frameworks.SetValue(highFramework, 0);
+            frameworks.SetValue(mediumFramework, 1);
             frameworksProperty.SetValue(summary, frameworks);
 
             Type auditType = auditProperty.PropertyType;

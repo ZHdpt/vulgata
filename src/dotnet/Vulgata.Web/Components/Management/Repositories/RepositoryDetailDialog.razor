@@ -46,7 +46,7 @@
                             {
                                 <li>
                                     <code>@framework.FrameworkName</code>：
-                                    置信度 @framework.StrongestConfidence，
+                                    置信度 @LocalizeConfidence(framework.StrongestConfidence)，
                                     @framework.CodeUnitCount 个代码单元，
                                     @framework.TotalFactCount 条事实
                                     @if (framework.EvidenceSamples.Count > 0)
@@ -149,6 +149,14 @@
     private string? _loadError;
     private ScanRunSummaryDto? _profilingResult;
     private Guid _loadedRepositoryId;
+
+    private static string LocalizeConfidence(string confidence) =>
+        confidence switch
+        {
+            "High" => "高",
+            "Medium" => "中",
+            _ => "未知",
+        };
 
     protected override async Task OnParametersSetAsync()
     {
