@@ -739,6 +739,15 @@ unchanged.
 - Post-quality4 ledger checkpoint:
   `bmad-4-2-ledger-quality4-refresh-20260726T093944Z-6bc20f`
   (pending Git binding).
+- T041 pinned empty fully-trailered replacement candidate
+  `14ed1fd2c2c31350f3a9d70852e2d806ed2e1522`, tree
+  `d7e1329d1a431dcf8ce6c4875a0b33d5fd533cb0`. Its 1,468,107-byte
+  binary diff has SHA-256
+  `25a13c76b50dd95ab80a0d19a09c4b929e1186cb4e06acc73d3b8b1fe3b320cc`
+  over 74 Story-owned paths.
+- Replacement candidate-record checkpoint:
+  `bmad-4-2-candidate-record-20260726T094834Z-3d6f90`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

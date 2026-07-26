@@ -2490,23 +2490,38 @@
       "observed_at": "2026-07-26T09:39:44.4818826Z",
       "summary": "The post-quality4 truthful ledger passed validation over 48 linear commits, 12 authorities, 51 immutable references, 18 unique checkpoint records, 19 legacy groups, and 31 raw files. Twenty-six are valid test results and five are capture-only; the prior candidate/review-4 lane is invalidated and no downstream completion is claimed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/70",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json"
+      ],
+      "command": "Exact candidate/tree/parent/trailer, raw binary diff SHA-256, owned-path/deletion, canonical Git-blob hash, task-marker, status, and diff validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T09:48:34.2633730Z",
+      "summary": "T041 pinned empty fully-trailered replacement candidate 14ed1fd2c2c31350f3a9d70852e2d806ed2e1522, tree d7e1329d1a431dcf8ce6c4875a0b33d5fd533cb0. The 1,468,107-byte binary diff SHA-256 is 25a13c76b50dd95ab80a0d19a09c4b929e1186cb4e06acc73d3b8b1fe3b320cc over 74 owned paths.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-ledger-quality4-refresh-20260726T093944Z-6bc20f",
+    "checkpoint_id": "bmad-4-2-candidate-record-20260726T094834Z-3d6f90",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/69"
+      "4-2-language-and-framework-detection/implement/70"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T09:39:44.4818826Z"
+  "updated_at": "2026-07-26T09:48:34.2633730Z"
 }
