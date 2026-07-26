@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "implement",
+  "stage": "tasks",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -458,23 +458,75 @@
         "TestResults/story-4-2-immutable-candidate/692f95aae7f82192b80d6ffaf68e1af674256039/T038-manifest-preflight-failure.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-07-26T04:15:20.8081976Z",
+      "completed_at": "2026-07-26T04:15:20.8081976Z",
+      "input_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+      "input_hashes": {
+        "specs/002-language-framework-detection/plan.md": "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600",
+        "specs/002-language-framework-detection/research.md": "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4",
+        "specs/002-language-framework-detection/quickstart.md": "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/quickstart.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "started_at": "2026-07-26T04:15:20.8081976Z",
+      "completed_at": "2026-07-26T04:15:20.8081976Z",
+      "input_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/plan-review-7.json": "16ae0e324be3228be42b01f079b9e5f73ebcce64f21888ec53f58314efd70cba"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/plan-review-7.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-07-26T04:15:20.8081976Z",
+      "completed_at": "2026-07-26T04:15:20.8081976Z",
+      "input_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/plan-review-8.json": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/plan-review-8.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "692f95aae7f82192b80d6ffaf68e1af674256039",
+    "preflight_head": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T038 Docker-context symlink correction, regression test, story development record, and workflow state only; no unrelated paths.",
+    "worktree_status": "Story 4.2 accepted T001 evidence-contract plan correction, plan-review iterations 7 and 8, story development record, and workflow state only; no unrelated paths.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      ".dockerignore",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/reviews/plan-review-7.json",
+      "specs/002-language-framework-detection/reviews/plan-review-8.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-23T02:44:03.9742746Z"
+    "observed_at": "2026-07-26T04:15:20.8081976Z"
   },
   "source_artifacts": [
     {
@@ -708,6 +760,116 @@
         "Both prior findings resolved",
         "No new findings"
       ]
+    },
+    {
+      "role": "plan-architect",
+      "objective": "Revise the Story 4.2 T001 evidence contract to preserve the unavailable historical observation and require current immutable verification",
+      "source_boundary": {
+        "base_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+        "candidate_commit": null,
+        "diff_sha256": "8789e2a7dddb0896e1accf79fdb28ec29032fa5fa035fd652f0ad3650baf26d5",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/plan.md": "3f0060958ff92272ef98beacdb51b45f83ff336dabc6bdd842bfc4532da06d46",
+          "specs/002-language-framework-detection/research.md": "3c5f10febd6fb98158db8a9d589277ab1a627cc8f1a3b76e4c9037b4a43f21b9",
+          "specs/002-language-framework-detection/quickstart.md": "1e7723e28283fd07e54d66996dbeac13a42fa39c53dbc87c577da5d57a28f3a9"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/plan.md",
+          "specs/002-language-framework-detection/research.md",
+          "specs/002-language-framework-detection/quickstart.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/quickstart.md"
+      ],
+      "output_path": "specs/002-language-framework-detection/plan.md",
+      "returned_evidence": [
+        "Historical pre-correction T001 observation explicitly unavailable",
+        "Current immutable GREEN verification required",
+        "Downstream task, analysis, review, E2E, candidate, image, and audit evidence invalidated"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently judge the truthful T001 evidence-contract correction",
+      "source_boundary": {
+        "base_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+        "candidate_commit": null,
+        "diff_sha256": "8789e2a7dddb0896e1accf79fdb28ec29032fa5fa035fd652f0ad3650baf26d5",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/plan.md": "3f0060958ff92272ef98beacdb51b45f83ff336dabc6bdd842bfc4532da06d46",
+          "specs/002-language-framework-detection/research.md": "3c5f10febd6fb98158db8a9d589277ab1a627cc8f1a3b76e4c9037b4a43f21b9",
+          "specs/002-language-framework-detection/quickstart.md": "1e7723e28283fd07e54d66996dbeac13a42fa39c53dbc87c577da5d57a28f3a9"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/plan.md",
+          "specs/002-language-framework-detection/research.md",
+          "specs/002-language-framework-detection/quickstart.md"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "specs/002-language-framework-detection/reviews/plan-review-7.json",
+      "returned_evidence": [
+        "REVISE",
+        "T001-PLAN-001",
+        "Executable accepted-plan hashes and static review identity remained stale"
+      ]
+    },
+    {
+      "role": "plan-architect",
+      "objective": "Correct raw finding T001-PLAN-001 within the approved evidence-contract scope",
+      "source_boundary": {
+        "base_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+        "candidate_commit": null,
+        "diff_sha256": "8789e2a7dddb0896e1accf79fdb28ec29032fa5fa035fd652f0ad3650baf26d5",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/reviews/plan-review-7.json": "16ae0e324be3228be42b01f079b9e5f73ebcce64f21888ec53f58314efd70cba"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/plan.md",
+          "specs/002-language-framework-detection/research.md",
+          "specs/002-language-framework-detection/quickstart.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/quickstart.md"
+      ],
+      "output_path": "specs/002-language-framework-detection/plan.md",
+      "returned_evidence": [
+        "Stale hash and static review-identity RED required",
+        "Fresh verdict path, hash, diff, artifact map, and checkpoint binding required",
+        "Stale, missing, duplicate, drifted, and non-ancestor bindings reject"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently judge corrected Story 4.2 plan iteration 8",
+      "source_boundary": {
+        "base_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+        "candidate_commit": null,
+        "diff_sha256": "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79",
+        "artifact_hashes": {
+          "specs/002-language-framework-detection/plan.md": "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600",
+          "specs/002-language-framework-detection/research.md": "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4",
+          "specs/002-language-framework-detection/quickstart.md": "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115"
+        },
+        "owned_paths": [
+          "specs/002-language-framework-detection/plan.md",
+          "specs/002-language-framework-detection/research.md",
+          "specs/002-language-framework-detection/quickstart.md"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "specs/002-language-framework-detection/reviews/plan-review-8.json",
+      "returned_evidence": [
+        "ACCEPT",
+        "T001-PLAN-001 resolved",
+        "No product, PRD, ADR, Worker Agent/tool, or Scan-strategy change"
+      ]
     }
   ],
   "review_iterations": {
@@ -720,14 +882,16 @@
       ]
     },
     "plan-review": {
-      "count": 6,
+      "count": 8,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/plan-review-1.json",
         "specs/002-language-framework-detection/reviews/plan-review-2.json",
         "specs/002-language-framework-detection/reviews/plan-review-3.json",
         "specs/002-language-framework-detection/reviews/plan-review-4.json",
         "specs/002-language-framework-detection/reviews/plan-review-5.json",
-        "specs/002-language-framework-detection/reviews/plan-review-6.json"
+        "specs/002-language-framework-detection/reviews/plan-review-6.json",
+        "specs/002-language-framework-detection/reviews/plan-review-7.json",
+        "specs/002-language-framework-detection/reviews/plan-review-8.json"
       ]
     },
     "analyze": {
@@ -1737,27 +1901,43 @@
       "observed_at": "2026-07-23T07:37:00.3784013Z",
       "summary": "Root inspection confirmed the bounded two-path proxy-neutral correction and independently passed all 52 non-final provider-contract tests; only known line-ending warnings remained.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/plan/44",
+      "kind": "command",
+      "stage": "plan",
+      "source_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/workflow-state.json",
+        "specs/002-language-framework-detection/reviews/plan-review-7.json",
+        "specs/002-language-framework-detection/reviews/plan-review-8.json"
+      ],
+      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/validate_workflow.py --repo .",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T04:17:30.1153972Z",
+      "summary": "Workflow configuration and contracts valid after persisting the accepted T001 evidence-contract plan correction.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260723T073700Z-e4d7c1",
+    "checkpoint_id": "bmad-4-2-plan-20260726T041520Z-3fbfd5",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "implement",
+    "stage": "plan",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "docker/Dockerfile",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/reviews/plan-review-7.json",
+      "specs/002-language-framework-detection/reviews/plan-review-8.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/40",
-      "4-2-language-and-framework-detection/implement/41",
-      "4-2-language-and-framework-detection/implement/42",
-      "4-2-language-and-framework-detection/implement/43"
+      "4-2-language-and-framework-detection/plan/44"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-23T07:37:00.3784013Z"
+  "updated_at": "2026-07-26T04:17:30.1153972Z"
 }

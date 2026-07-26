@@ -1,6 +1,6 @@
 # Implementation Plan: Language and Framework Detection
 
-**Source boundary**: iteration-2 remediation planning source commit `eefa1794a57227428376a6d838593485e491a79b` | **Date**: 2026-07-20 | **Spec**: [spec.md](spec.md)
+**Source boundary**: evidence-contract correction source commit `cfc65b7dc67bf84102fb16bef45f3f62b6d616b0` (tree `0b86efcca825eb9b9e7d6877b72f0402d0879c04`) | **Date**: 2026-07-26 | **Spec**: [spec.md](spec.md)
 **Story**: `4-2-language-and-framework-detection`
 **Provider boundary**: stock exact-pinned `codegraphcontext==0.5.1`
 
@@ -48,6 +48,14 @@ truthful reconstruction from Git and current runnable evidence when historical
 raw RED output or missing checkpoint trailers no longer exist. It never
 authorizes fabricated RED output, backdated evidence, amended history, or a
 claim that a current GREEN rerun is a historical RED observation.
+
+The same truth rule applies to current T001. Its required pre-correction
+baseline was not observed before correction work and is now temporally
+unavailable. Regenerated tasks must preserve that absence explicitly and
+replace the impossible historical prerequisite with a present-day immutable
+Git and current-GREEN verification record. That record proves only the
+accepted/current boundary; it does not prove or imply that the commands ran
+before the corrections.
 
 ## Technical Context
 
@@ -102,7 +110,12 @@ rescans.
   image whose inspected source labels match the clean immutable candidate and
   its deterministic production-source manifest;
 - historical reconstruction is Story 4.2-only and cannot weaken fresh
-  RED-GREEN requirements for any iteration-2 correction.
+  RED-GREEN requirements for any iteration-2 correction;
+- the missing ordered pre-correction T001 observation remains explicitly
+  unavailable. A present-day GREEN verification may satisfy the corrected
+  current-boundary prerequisite only when it is labelled with its actual
+  observation time and immutable commit; it can never be called historical or
+  pre-correction evidence.
 
 **Scale/Scope**: one Repository with approximately 10,000 candidate files;
 at most 1,000 supported evidence artifacts, 64 MiB combined evidence bytes,
@@ -122,7 +135,7 @@ complete aggregate counts.
 | I. Layered Project Boundaries | Core owns entities and service contracts; Infrastructure owns provider/manifest parsing, EF, catalog loading, and persistence; Shared owns DTOs; Web owns authorization/facade/UI. | Pass | Pass |
 | II. Domain Purity & Ubiquitous Language | Uses Repository, Scan, Code Unit, Worker Agent, and Cross-Repository exactly; no EF/data annotations/generic repository/query leakage in Core. | Pass | Pass |
 | III. Validation & API Contract Discipline | Existing plural minimal APIs, `ProblemDetails`, `ManagementAccess`, Repository visibility, and Simplified-Chinese UI are extended, not replaced. No new public input is added. | Pass | Pass |
-| IV. Test-First Integration Harness | Every iteration-2 behavior begins with a named runnable failing test. Existing integration coverage is rerun at the corrected candidate. The bounded historical exception records unavailable earlier raw RED evidence as unavailable rather than fabricating it. | Pass | Pass |
+| IV. Test-First Integration Harness | Every iteration-2 behavior correction retains its named runnable RED/GREEN evidence. Existing integration coverage is rerun at the corrected candidate. The bounded historical exception records unavailable earlier raw RED evidence and the missing ordered T001 observation as unavailable; present-day GREEN is separately identified and never relabelled as historical. | Pass | Pass |
 | V. Security & Data Stewardship | All analysis stays local and non-executing; provider gateway remains loopback-only; provider paths are fail-closed before logging/persistence; evidence, diagnostics, and response sizes are bounded and redacted. | Pass | Pass |
 
 No Constitution exception or ADR conflict was found. The July architecture's
@@ -144,16 +157,20 @@ human-review aid only; it cannot create or replace a Story 4.2 fact or make an
   valid provider identifiers does not promise Worker Agent support beyond the
   V1 demo languages and therefore does not weaken PRD out-of-scope language
   coverage.
-- **Planned-change trigger**: **yes**. In addition to the already accepted
-  structural-node language reconciliation, this corrected plan materially
-  changes Scan evidence filtering by rejecting lock-derived facts unless one
-  successfully parsed, supported, applicable direct-manifest owner is proven.
-  The user's iteration-2 remediation approval authorizes this planning
-  correction; it is not the post-review authorization required by `AGENTS.md`.
-  After fresh independent plan acceptance, the orchestrator must pause for a
-  new explicit planned-change authorization before regenerating tasks.
-- **No other trigger**: no Worker Agent tool is added or changed, and no PRD
-  requirement is changed, weakened, or contradicted.
+- **Previously satisfied planned-change trigger**: the accepted functional plan
+  materially changed Scan evidence filtering by requiring one successfully
+  parsed, supported, applicable direct-manifest owner for lock-derived facts.
+  Independent `plan-review-6.json` accepted that plan and
+  `evidence/planned-change-authorization-2.json` contains the subsequent
+  explicit authorization. Regenerated tasks must verify both immutable records
+  and their accepted artifact boundary.
+- **This correction introduces no new trigger**: it changes only the
+  evidence/process contract for a temporally unavailable T001 observation. It
+  adds or changes no Worker Agent/tool, Scan parsing, filtering, scheduling,
+  grouping, retry, dispatch behavior, or PRD requirement. A fresh plan judge
+  must confirm that the functional design is unchanged. If the correction is
+  found to alter any trigger-bearing behavior, stop rather than treating the
+  prior authorization as covering new intent.
 
 ## Provider and Profiling Design
 
@@ -530,6 +547,99 @@ historical RED.
    rejected. GREEN uses one closed schema, a fresh consumed namespace, and
    exact source-manifest/image binding.
 
+### Corrected T001 current-verification contract
+
+Regenerated `tasks.md` must replace the impossible ordered pre-correction
+baseline clause in current T001 with one bounded present-day verification
+record. T001 is complete only when that record:
+
+1. states verbatim that the pre-correction baseline observation required by the
+   superseded T001 was not captured before T002-T049, is temporally unavailable,
+   and cannot be recreated by running commands now;
+2. records an actual UTC observation time and one clean immutable Git commit and
+   tree containing the accepted corrected plan set and regenerated tasks;
+3. proves the accepted plan checkpoint is an ancestor of that commit, every
+   planning-artifact SHA-256 equals the fresh accepted plan-review boundary, the
+   fresh plan verdict is `ACCEPT`, and
+   `evidence/planned-change-authorization-2.json` remains the valid authorization
+   for the unchanged lock-owner filtering design;
+4. runs the focused provider/profiling and framework-detection commands from
+   `quickstart.md` against that exact commit and records their exit codes, raw
+   output paths, and GREEN results as **current verification**;
+5. contains no `historical`, `pre-correction`, `RED`, or contemporaneous-ordering
+   claim for those current command results and does not amend/backdate any prior
+   record; and
+6. remains a prerequisite for regenerated dependent validation tasks and T050.
+
+The accepted-plan proof in item 3 is executable, not a prose reference.
+Regenerated tasks must carry the exact fresh verdict path and SHA-256, its
+`reviewed_boundary.diff_sha256` and complete reviewed artifact-hash map, and
+the stable plan-accepted `Workflow-Checkpoint` ID. The plan checkpoint is
+assembled with a null commit SHA or pending binding, committed by the root with
+that checkpoint trailer, and only then resolved to the unique immutable commit
+and checked for ancestry. Neither this plan nor a precommit checkpoint record
+may guess or embed the commit that will contain itself.
+
+The accepted code candidate
+`7b9ce590bd161b2cf4ed473a40ab3e9045654975` (tree
+`29cf2469d6fd1a24fddd4353a7c4c7af618ce786`) and its GREEN evidence are
+immutable prior inputs to reconstruction, not the future corrected-plan
+candidate. They may be cited for what they currently prove, but they cannot
+satisfy item 2 after these plan artifacts change and cannot be relabelled as the
+missing pre-correction observation.
+
+### Executable accepted-plan binding RED/GREEN
+
+The corrected plan bytes make three executable constants stale today:
+`CanonicalLfFiles` in
+`tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` still contains the
+prior accepted SHA-256 values for `plan.md`, `research.md`, and
+`quickstart.md`. The same file still uses
+`user-approved-story-4-2-plan-2026-07-20` as `_reviewIdentity`, and
+`CreateAcceptedCorrectionManifest` publishes it into a new accepted-correction
+claim. A fresh image alone cannot repair either stale binding.
+
+Regenerated tasks must create one evidence-only TDD group in this order:
+
+1. **Focused RED**: before changing the three `CanonicalLfFiles` values or the
+   accepted-correction binding, run the canonical-LF hash theory and retain its
+   actual failures for the three changed plan artifacts. Add a focused claim
+   assertion that rejects the static 2026-07-20 identity and requires the exact
+   fresh accepted plan verdict/checkpoint/diff binding, then observe that
+   assertion fail against the unchanged manifest construction. The assertion
+   edit is the only allowed pre-RED change; compile failure or an inferred
+   failure is not RED.
+2. **Binding GREEN**: replace exactly those three stale canonical hashes with
+   the corresponding hashes from the fresh accepted plan verdict. Replace the
+   static review identity in the accepted-correction claim with explicit
+   `planReviewVerdictPath`, `planReviewVerdictSha256`,
+   `planReviewDiffSha256`, `planCheckpointId`, and
+   `planCheckpointCommit` fields. The tests must parse the named verdict,
+   require `gate = plan-review`, `verdict = ACCEPT`, exact reviewed artifact
+   hashes and diff identity, resolve the checkpoint ID through exactly one
+   `Workflow-Checkpoint` trailer, require the resolved commit to contain the
+   accepted plan/verdict checkpoint and be an ancestor of the new candidate,
+   and reject the old identity, an alternate verdict, hash/diff drift, an
+   unresolved/duplicate trailer, or ancestry failure.
+3. **Surrounding GREEN**: rerun the focused canonical-hash/claim tests and the
+   non-Docker `CodeGraphProviderContractTests` contract suite before pinning a
+   new candidate. Preserve command, exit code, immutable source, observed
+   assertion, and raw-output path for RED and GREEN separately.
+4. **Final boundary**: because this is a tracked test/evidence-contract change,
+   regenerate the current ledger; rerun both Full implementation review axes,
+   the E2E decision/result, and verification; then create a new clean candidate,
+   production-source manifest, accepted-correction namespace, and fresh image.
+   Run the mandatory exact final-image gate and full suite on that one boundary
+   before a new T049 freeze and T050 audit.
+
+The verdict binding is intentionally nonrecursive. A judge reviewing the
+uncommitted three-file correction identifies it with the pinned base commit,
+`candidate_commit: null`, exact binary diff SHA-256, reviewed artifact hashes,
+and owned paths; the later verdict file and plan checkpoint are outside that
+reviewed diff identity. The later test/evidence change may safely bind the
+already-existing verdict hash and trailer-resolved plan-checkpoint commit. It
+must not invent a future candidate or checkpoint commit.
+
 ### Story 4.2 historical workflow-evidence exception
 
 The exception is a narrow evidence-disclosure rule for the already executed
@@ -550,15 +660,44 @@ current rerun. The exception does not waive fresh runnable RED-GREEN evidence
 for AR2-001, QR2-001, AR2-002/CF-002, or EV-002, and it does not generalize to
 Story 4.1 or any later story.
 
+The regenerated ledger must also preserve the superseded T001 temporal fact
+using the exact statement **“Pre-correction T001 baseline observation:
+unavailable”**, with the superseded task reference and the T050 blocker
+evidence. It links, but does not merge, the new current-verification record.
+The current record has its own observation time, commit/tree, commands, results,
+and raw outputs and is explicitly labelled **“Current verification”**.
+
 T050 remains unchecked and incomplete while this plan is in review. After
-fresh plan acceptance, new planned-change authorization, task regeneration,
-correction implementation, fresh final-image/full-suite evidence, and
-creation of the truthful reconstruction ledger, T050 audits the one immutable
-candidate. It may pass with disclosed unavailable historical raw evidence
-under this exception, but it blocks on fabricated claims, missing current
-correction RED/GREEN, schema/source-image mismatch, scope drift, or any other
-failed audit item. Only then may a later workflow authority mark T050 complete
-and create a new ready-for-review boundary.
+fresh plan acceptance, task regeneration, current T001 verification, dependent
+revalidation, fresh final-image/full-suite evidence, and regeneration and
+validation of the truthful reconstruction ledger, T050 audits the one new
+immutable candidate. It may pass with the disclosed unavailable historical
+T001 observation and other unavailable historical raw evidence under this
+exception, but it blocks on fabricated claims, a current rerun labelled
+historical, missing current correction RED/GREEN, schema/source-image mismatch,
+scope drift, or any other failed audit item. Only then may a later workflow
+authority mark T050 complete and create a new ready-for-review boundary.
+
+### Downstream invalidation and regeneration
+
+Editing `plan.md`, `research.md`, or `quickstart.md` invalidates the plan stage
+and every dependent stage even though product behavior is unchanged:
+
+| Changed boundary | Invalidated evidence | Required next owner/action |
+| --- | --- | --- |
+| Corrected plan set | prior plan verdict/hash boundary | fresh `plan-judge` reviews the complete unchanged-specification plan set |
+| Accepted corrected plan | current `tasks.md` and task markers | fresh `task-author` regenerates dependency-ordered tasks, including corrected T001 |
+| Regenerated tasks | prior analyze reports | fresh read-only `artifact-analyst` reruns `speckit-analyze` |
+| Corrected T001/process contract | current reconstruction ledger and T049/T050 conclusions | later evidence owner records current verification, regenerates/revalidates the ledger, and reruns its strict audit |
+| `CodeGraphProviderContractTests.cs` canonical hashes/claim binding | prior implementation reviews, E2E decision/result, final verification, reconstruction ledger, candidate identity | observe focused stale-binding RED, implement binding GREEN, rerun surrounding tests, then pin and review the new boundary |
+| Any new committed candidate | prior acceptance and quality verdicts, E2E decision/result, final verification | rerun both Full implementation reviews, conditional E2E decision/result, and verification against one pinned boundary |
+| Plan/research/quickstart and tracked test/evidence bytes in Docker context | prior production-source manifest, image labels/ID, accepted-correction namespace, final-image evidence, T049 freeze | create a new clean committed candidate, manifest, fresh image and namespace, then rerun the mandatory final-image gate, full suite, and T049 |
+| New T049 freeze | blocked T050 | fresh T050 audits T001 through T049 and the new immutable boundary |
+
+No replay from a pre-correction worktree is required by this corrected evidence
+contract. No prior result is silently carried forward: reusable immutable
+evidence is cited as historical input, while every boundary-dependent verdict,
+hash, manifest, image, and audit is regenerated.
 
 Required commands and expected observations are in [quickstart.md](quickstart.md).
 
@@ -579,9 +718,9 @@ Required commands and expected observations are in [quickstart.md](quickstart.md
 | QR2-001 | validated direct-manifest owner model before lock parsing | malformed/unsupported/conditional/unsafe NuGet and npm owner fixtures |
 | AR2-002, CF-002 | one closed v2 evidence grammar across contract/runner/verifier | schema-name/safe-name/unknown-field and fresh namespace tests |
 | EV-002 | candidate commit/tree/source-manifest labels bound to fresh image/evidence | clean candidate build, inspected labels, fresh exact-image gate, full suite |
-| AR2-003, QR2-002, WF-002 | T050 remains incomplete until immutable-candidate audit | regenerated task plus reconstruction/current-evidence ledger |
-| PL-001, PA-001 | fresh plan-review and regenerated dependent artifacts | current hashes, both migrations, no stale accepted-boundary claims |
-| TR-001 | Story 4.2-only truthful historical reconstruction exception | explicit unavailable flags; no fabricated/backdated/amended evidence |
+| AR2-003, QR2-002, WF-002 | T050 remains incomplete until immutable-candidate audit | corrected T001 current-verification record plus regenerated reconstruction ledger and T049/T050 |
+| PL-001, PA-001, T001-PLAN-001 | fresh plan-review and regenerated dependent artifacts | focused stale-binding RED; fresh canonical hashes; exact verdict/checkpoint/diff-bound claim; no stale accepted-boundary claims |
+| TR-001 | Story 4.2-only truthful historical reconstruction exception | explicit unavailable T001/historical flags; separately timed current verification; no fabricated/backdated/amended evidence |
 
 ## Project Structure
 
@@ -610,5 +749,8 @@ single Tests project mirrors these seams.
 
 No Constitution violation requires justification. The historical
 workflow-evidence exception changes only what can be truthfully claimed about
-unavailable past workflow evidence; it does not weaken product tests,
-authorization, security, current correction TDD, or any Constitution gate.
+unavailable past workflow evidence. The corrected T001 substitutes
+current-boundary verification for an impossible temporal prerequisite without
+calling it historical; it does not weaken product tests, authorization,
+security, current correction TDD, source/image binding, or any Constitution
+gate.

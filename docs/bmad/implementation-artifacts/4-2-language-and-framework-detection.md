@@ -244,9 +244,11 @@ unchanged.
   `docs/bmad/implementation-artifacts/workflow-activations/4-2-language-and-framework-detection.json`.
 - SpecKit feature directory:
   `specs/002-language-framework-detection`.
-- Current workflow stage: `acceptance-review`; the corrected specification, plan, and
-  50 dependency-ordered tasks passed independent analysis iteration 3 with
-  zero Critical or High findings and complete FR/SC/AC coverage.
+- Current workflow stage: `tasks`. The user-approved T001 evidence correction
+  preserves the unavailable historical pre-correction observation and requires
+  a separately timed current immutable GREEN verification. Fresh plan review 8
+  accepted the executable stale-binding RED/GREEN and checkpoint-bound review
+  identity contract; tasks and all later evidence must now be regenerated.
 - Planning is recoverably blocked at Phase 0 by pinned-provider evidence:
   CodeGraphContext 0.5.1 does not persist parser identity on `File` nodes, so a
   parser-supported file with no structural declarations cannot be distinguished
@@ -450,6 +452,18 @@ unchanged.
   `tasks`. The prior implementation-review verdicts are invalidated by the
   corrected plan boundary and will be rerun after fresh task analysis and
   implementation correction.
+- T050 exposed that no contemporaneous pre-correction T001 observation was
+  recorded and that recreating one would fabricate history. The user approved
+  the bounded correction: retain that historical observation as unavailable,
+  require a separately labeled current immutable GREEN verification, and
+  invalidate tasks, analysis, ledger, both Full reviews, E2E, verification,
+  candidate, manifest, image, namespace, T049, and T050.
+- Plan review 7 returned one High testability/source-binding finding because
+  the executable provider-contract test still hard-coded the prior plan hashes
+  and static review identity. The corrected plan requires an observed stale
+  binding RED, binds the replacement to plan review 8 plus this plan
+  checkpoint, and rejects stale, missing, duplicate, drifted, or non-ancestor
+  bindings. Fresh plan review 8 returned `ACCEPT`.
 - Regenerated tasks initially passed complete requirements/finding coverage but
   analysis iteration 5 found one High dependency cycle: current-candidate
   ledger finalization/validation preceded the GREEN evidence it required. The
@@ -566,7 +580,7 @@ unchanged.
 - Analyzed-tasks checkpoint:
   `bmad-4-2-analyze-20260722T014436Z-c5d8a1` (pending Git binding).
 - Accepted plan checkpoint:
-  `bmad-4-2-plan-20260720T124952Z-a4c912` (pending Git binding).
+  `bmad-4-2-plan-20260726T041520Z-3fbfd5` (pending Git binding).
 - Implementation checkpoint:
   `bmad-4-2-implement-20260720T104752Z-c7a3e1`
   (pending Git binding).
@@ -590,6 +604,8 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/plan-review-4.json`
 - `specs/002-language-framework-detection/reviews/plan-review-5.json`
 - `specs/002-language-framework-detection/reviews/plan-review-6.json`
+- `specs/002-language-framework-detection/reviews/plan-review-7.json`
+- `specs/002-language-framework-detection/reviews/plan-review-8.json`
 - `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json`
 - `specs/002-language-framework-detection/reviews/analyze-5.json`
 - `specs/002-language-framework-detection/reviews/analyze-6.json`

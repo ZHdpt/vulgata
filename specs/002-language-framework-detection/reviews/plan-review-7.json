@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+  "reviewed_boundary": {
+    "base_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+    "candidate_commit": null,
+    "diff_sha256": "8789e2a7dddb0896e1accf79fdb28ec29032fa5fa035fd652f0ad3650baf26d5",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/plan.md": "3f0060958ff92272ef98beacdb51b45f83ff336dabc6bdd842bfc4532da06d46",
+      "specs/002-language-framework-detection/research.md": "3c5f10febd6fb98158db8a9d589277ab1a627cc8f1a3b76e4c9037b4a43f21b9",
+      "specs/002-language-framework-detection/quickstart.md": "1e7723e28283fd07e54d66996dbeac13a42fa39c53dbc87c577da5d57a28f3a9"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    "docs/agent-workflow/architecture.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/agent-catalog.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/agent-workflow/e2e-decision-matrix.md",
+    "docs/agent-workflow/operator-runbook.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "specs/002-language-framework-detection/workflow-state.json",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "specs/002-language-framework-detection/reviews/plan-review-6.json",
+    "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+    "TestResults/story-4-2-final-audit-20260726T031052Z-7b9f42/T049-freeze-manifest.json",
+    "TestResults/story-4-2-final-audit-20260726T031052Z-7b9f42/T050-audit.json",
+    ".dockerignore",
+    "docker/Dockerfile",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "T001-PLAN-001",
+      "severity": "HIGH",
+      "category": "testability-and-source-binding",
+      "artifact": "specs/002-language-framework-detection/plan.md",
+      "location": "Downstream invalidation and regeneration; corrected T001 and final-image contracts",
+      "affected_requirement": "The corrected boundary must be executable, reject stale accepted-boundary claims, bind the fresh accepted plan to the new candidate/image, and pass full current verification before T049/T050.",
+      "evidence": "CodeGraphProviderContractTests still hard-codes the prior plan/research/quickstart hashes and the static user-approved-story-4-2-plan-2026-07-20 review identity, so the mandatory future full suite and accepted-correction claim would reject or misbind the corrected plan.",
+      "correction_outcome": "Require regenerated tasks to observe stale-binding RED, replace the three canonical hashes, bind the claim to the exact fresh verdict/checkpoint/diff identity, run focused and surrounding GREEN, and invalidate reviews, E2E, verification, manifest, image, namespace, T049, and T050."
+    }
+  ],
+  "summary": "REVISE. The truthful T001 current-verification correction and new source/image boundary are sound, but the plan omitted the executable regeneration of stale accepted-plan hashes and the static review identity. A fresh image alone cannot correct those test and claim bindings."
+}

@@ -322,12 +322,82 @@ current correctness and fresh correction evidence.
   Story 4.2 exception, provided the absence is disclosed and every current gate
   passes.
 
+## R15. Temporally unavailable T001 and current verification
+
+**Decision**: preserve the missing ordered pre-correction T001 observation as
+explicitly unavailable. Replace it in regenerated tasks with a bounded
+present-day verification record over one clean immutable commit: accepted-plan
+ancestry and hashes, fresh plan-review `ACCEPT`, the unchanged prior
+planned-change authorization, and focused current GREEN commands. Store the
+actual observation time and classify those command results only as
+`current-verification`.
+
+**Rationale**: commands executed after T002-T049 cannot establish that they ran
+before those corrections. The current code candidate and its immutable GREEN
+evidence still prove present behavior, but temporal ordering is a separate fact.
+Disclosing the missing fact while demanding a fresh accepted/current boundary
+is truthful and executable.
+
+**Alternatives considered**:
+
+- rerun current GREEN and call it the pre-correction baseline: rejected as a
+  false temporal claim;
+- reconstruct an old worktree and infer that T001 originally ran: rejected
+  because replay proves only the replay observation, not the missing historical
+  event;
+- leave T001 impossible and block T050 permanently: rejected by the user's
+  approved evidence-contract remediation;
+- retain the prior image because product code is unchanged: rejected because
+  `.dockerignore` includes the edited plan artifacts, `docker/Dockerfile` copies
+  the complete remaining context, and the executable production-source
+  manifest hashes every tracked non-ignored context file. A new committed
+  candidate, manifest, image labels/ID, correction namespace, T049, and T050 are
+  required.
+
+## R16. Executable accepted-plan binding after correction
+
+**Decision**: treat the accepted-plan hashes and review identity in
+`CodeGraphProviderContractTests.cs` as evidence-only executable bindings that
+must be regenerated after fresh plan acceptance. First observe focused RED:
+the existing canonical-LF theory fails on the changed plan, research, and
+quickstart bytes, and a focused claim assertion fails because the manifest
+still publishes the static 2026-07-20 identity. Then update the three hashes
+from the fresh accepted verdict and bind the claim to that verdict's exact
+path/content hash/reviewed diff plus the stable plan checkpoint ID and its
+unique trailer-resolved commit. Rerun focused and surrounding GREEN before the
+new final-image/full-suite lane.
+
+**Rationale**: Docker source binding proves which bytes produced an image; it
+does not make stale executable plan hashes pass or identify which plan verdict
+accepted those bytes. The verdict's nonrecursive uncommitted boundary
+(`base_commit`, null `candidate_commit`, binary diff SHA-256, artifact hashes,
+and owned paths) remains stable when the verdict is persisted. The plan
+checkpoint record stores a stable ID with a null SHA before commit, and the
+root later resolves one matching `Workflow-Checkpoint` trailer. A later
+test/evidence change can bind both existing identities without asking a commit
+to contain its own SHA.
+
+**Alternatives considered**:
+
+- rely on a fresh image alone: rejected because the canonical hash theory still
+  fails and the new claim still publishes the stale identity;
+- hard-code a guessed future checkpoint or candidate commit: rejected as
+  self-referential and non-executable;
+- bind only a verdict filename or timestamp: rejected because it does not prove
+  exact reviewed bytes or a unique accepted checkpoint;
+- carry prior reviews, E2E, verification, ledger, manifest, image, namespace,
+  T049, or T050 forward after the tracked test change: rejected by workflow
+  invalidation and source-manifest contracts.
+
 ## Gate result
 
 No `NEEDS CLARIFICATION` remains. Constitution pre-design and post-design
 checks pass. No ADR or context authority exists in the Repository for this
-area, and no conflict was found. The stricter lock-owner eligibility rule is a
-material Scan evidence-filtering change, so fresh planned-change approval
-remains mandatory after independent plan acceptance. The prior approval and
-the iteration-2 remediation approval do not substitute for that post-review
-gate.
+area, and no conflict was found. The stricter lock-owner eligibility rule was a
+material Scan evidence-filtering change and already received the required
+post-review authorization in
+`evidence/planned-change-authorization-2.json`. This correction changes only
+the evidence/process contract and introduces no new planned-change trigger. A
+fresh plan judge must confirm the functional design remains unchanged; any
+actual Worker Agent/tool, Scan strategy, or PRD change stops for a new
+authorization rather than inheriting the old one.

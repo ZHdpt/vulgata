@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+  "reviewed_boundary": {
+    "base_commit": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+    "candidate_commit": null,
+    "diff_sha256": "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/plan.md": "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600",
+      "specs/002-language-framework-detection/research.md": "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4",
+      "specs/002-language-framework-detection/quickstart.md": "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    "docs/agent-workflow/architecture.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/agent-catalog.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/agent-workflow/e2e-decision-matrix.md",
+    "docs/agent-workflow/operator-runbook.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+    "specs/002-language-framework-detection/workflow-state.json",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/checklists/requirements.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "specs/002-language-framework-detection/reviews/plan-review-6.json",
+    "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+    ".dockerignore",
+    "docker/Dockerfile",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. T001-PLAN-001 is resolved. The plan preserves the unavailable pre-correction observation, requires separately timed current verification, observes stale hash and static review-identity RED before binding changes, and uses the exact fresh verdict path/hash/diff/artifact map plus a stable pending checkpoint ID resolved through one ancestor Workflow-Checkpoint trailer. It rejects stale, missing, duplicate, drifted, or non-ancestor bindings and invalidates tasks, analysis, ledger, both Full reviews, E2E, verification, candidate, manifest, image, namespace, T049, and T050. No product, PRD, ADR, Worker Agent/tool, or Scan-strategy change is introduced."
+}
