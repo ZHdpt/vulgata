@@ -710,6 +710,17 @@ unchanged.
 - Quality-review-4 checkpoint:
   `bmad-4-2-quality-review-20260726T085941Z-1f93ac`
   (pending Git binding).
+- T051-T054 corrected all three quality-review-4 findings with observed TDD.
+  Boundary-whitespace provider paths failed 2/30 before rejection and passed
+  30/30 after it. Invalid Python trailing syntax and matched-plus-unmatched
+  direct-manifest ambiguity each failed 1/1 before their minimal corrections
+  and passed 1/1 afterward. The first surrounding run retained two superseded
+  audit-count expectations as failed evidence; the final-byte surrounding
+  suites passed 165/165, and root independently repeated 165/165. T041-T050
+  are invalidated and unchecked pending a replacement candidate.
+- Quality-review-4 correction checkpoint:
+  `bmad-4-2-quality4-correction-20260726T092125Z-b7814d`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

@@ -2439,23 +2439,49 @@
       "observed_at": "2026-07-26T08:59:41.6387670Z",
       "summary": "Full quality review iteration 4 returned REVISE with three High findings: boundary whitespace can bypass rooted provider-path rejection; invalid Python requirement suffixes can create deterministic framework facts; and same-root direct-scope ambiguity ignores valid unmatched manifests. Candidate identity, evidence integrity, AR3-001, and QR3-001 otherwise passed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/67",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "03c43ac12767ff57ca28c674eedd2a0a1cb450ac",
+      "artifact_paths": [
+        "TestResults/story-4-2-quality4-correction/T051-provider-path-red.txt",
+        "TestResults/story-4-2-quality4-correction/T051-provider-path-green.txt",
+        "TestResults/story-4-2-quality4-correction/T052-python-literal-red.txt",
+        "TestResults/story-4-2-quality4-correction/T052-python-literal-green.txt",
+        "TestResults/story-4-2-quality4-correction/T053-scope-ambiguity-red.txt",
+        "TestResults/story-4-2-quality4-correction/T053-scope-ambiguity-green.txt",
+        "TestResults/story-4-2-quality4-correction/T054-surrounding-green.txt",
+        "TestResults/story-4-2-quality4-correction/T054-surrounding-green-attempt-0003.txt"
+      ],
+      "command": "Focused RED/GREEN for QR4-001 through QR4-003; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~CodeGraphContextProviderTests|FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~FrameworkDetectionTests\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T09:21:25.4472261Z",
+      "summary": "T051-T054 corrected all three quality-review-4 findings. Provider-path RED failed 2 of 30 then GREEN passed 30 of 30; Python and ambiguity REDs each failed 1 of 1 then passed 1 of 1; the preserved first surrounding attempt exposed two superseded audit-count expectations, and the final-byte surrounding suite passed 165 of 165. Root independently repeated 165 of 165.",
+      "raw_output_path": "TestResults/story-4-2-quality4-correction/T054-surrounding-green-attempt-0003.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-quality-review-20260726T085941Z-1f93ac",
+    "checkpoint_id": "bmad-4-2-quality4-correction-20260726T092125Z-b7814d",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "quality-review",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/quality-review-4.json",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/workflow-state.json",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/quality-review/4"
+      "4-2-language-and-framework-detection/implement/67"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T08:59:41.6387670Z"
+  "updated_at": "2026-07-26T09:21:25.4472261Z"
 }

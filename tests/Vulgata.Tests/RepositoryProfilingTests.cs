@@ -611,7 +611,7 @@ public sealed class RepositoryProfilingTests
                   </ItemGroup>
                 </Project>
                 """);
-            expectedAuditPaths = ["Api.csproj", "Client.csproj"];
+            expectedAuditPaths = ["Api.csproj"];
             expectedAuditKind = ScanCandidateOutcomeKind.Skipped;
             expectedAuditReason = ScanCandidateOutcomeReasons.FrameworkEvidenceAmbiguousScope;
         }
@@ -896,7 +896,7 @@ public sealed class RepositoryProfilingTests
         db.ChangeTracker.Clear();
         ScanRun run = await db.ScanRuns.SingleAsync();
         Assert.Equal(
-            102,
+            101,
             typeof(ScanRun).GetProperty("FrameworkEvidenceAuditTotalOutcomeCount")!
                 .GetValue(run));
         ScanCandidateOutcome[] retainedFrameworkAudits =
@@ -2986,6 +2986,9 @@ public sealed class RepositoryProfilingTests
                 { @"C:\Users\Admin\private\secret.cs", "Users" },
                 { @"\\build-server\private-share\secret.cs", "build-server" },
                 { "/etc/private/secret.cs", "etc/private" },
+                { @" C:\Users\Admin\private\boundary-secret.cs", "boundary-secret" },
+                { @" \\build-server\private-share\boundary-secret.cs ", "boundary-secret" },
+                { " /etc/private/boundary-secret.cs ", "boundary-secret" },
                 { "../private/secret.cs", "private/secret" },
                 { "src/\u0001host-secret.cs", "host-secret" },
                 { "src//private/secret.cs", "private/secret" },

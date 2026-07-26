@@ -895,6 +895,31 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectDetailedAsync_InvalidPythonTrailingSyntax_IsolatedWhileIndependentEvidenceContinuesAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write("python/requirements.txt", "django???\n");
+        repository.Write(
+            "web/package.json",
+            """
+            { "dependencies": { "react": "19.0.0" } }
+            """);
+        repository.TrackAll();
+
+        DetectedFrameworkResult result = await DetectDetailedAsync(repository.Path);
+
+        DetectedEvidence fact = Assert.Single(result.Evidence);
+        Assert.Equal("npm:react", fact.PackageCoordinate);
+        Assert.Equal("web/package.json", fact.ArtifactPath);
+        DetectedAuditOutcome audit = Assert.Single(result.AuditOutcomes);
+        Assert.Equal("python/requirements.txt", audit.ArtifactPath);
+        Assert.Equal("Skipped", audit.Outcome);
+        Assert.Equal("FrameworkEvidenceUnsupported", audit.Reason);
+        Assert.Equal("框架证据格式不受支持。", audit.Message);
+        Assert.DoesNotContain("django???", RetainedDetectionText(result), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DetectAsync_ForbiddenExecutionInferenceAndExternalSurfaces_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -1065,6 +1090,61 @@ public sealed class FrameworkDetectionTests
             repository.Path,
             "src/SharedComponent.cs",
             "c_sharp"));
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_MatchedAndUnmatchedSameRootManifests_IsolatesOnlyAmbiguousEcosystemAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "Api.csproj",
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.3.0" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write("Client.csproj", ValidUnmatchedNuGetProject());
+        repository.Write(
+            "package.json",
+            """
+            { "dependencies": { "react": "19.0.0" } }
+            """);
+        repository.Write(
+            "nested/Nested.csproj",
+            """
+            <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly" />
+            """);
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult ambiguous = await DetectApplicableGlobalDetailedAsync(
+            repository.Path,
+            "src/SharedController.cs",
+            "c_sharp",
+            GetProductionLimits());
+        DetectedGlobalFrameworkResult independent = await DetectApplicableGlobalDetailedAsync(
+            repository.Path,
+            "src/client/main.ts",
+            "typescript",
+            GetProductionLimits());
+        DetectedGlobalFrameworkResult deeper = await DetectApplicableGlobalDetailedAsync(
+            repository.Path,
+            "nested/src/Component.cs",
+            "c_sharp",
+            GetProductionLimits());
+
+        Assert.True(ambiguous.Succeeded);
+        Assert.Empty(ambiguous.Evidence);
+        DetectedAuditOutcome audit = Assert.Single(
+            ambiguous.AuditOutcomes,
+            outcome => outcome.Reason == "FrameworkEvidenceAmbiguousScope");
+        Assert.Equal("Skipped", audit.Outcome);
+        Assert.Equal("框架证据作用域不明确。", audit.Message);
+        DetectedEvidence react = Assert.Single(independent.Evidence);
+        Assert.Equal("npm:react", react.PackageCoordinate);
+        DetectedEvidence blazor = Assert.Single(deeper.Evidence);
+        Assert.Equal("nuget-sdk:Microsoft.NET.Sdk.BlazorWebAssembly", blazor.PackageCoordinate);
     }
 
     [Fact]

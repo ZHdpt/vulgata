@@ -16,6 +16,8 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
     private const int _maximumDetectionSourceLength = 4_096;
     private static readonly UTF8Encoding _strictUtf8 =
         new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+    private static readonly string[] _pythonVersionSpecifierOperators =
+        ["===", "==", "!=", "~=", "<=", ">=", "<", ">"];
     private readonly FrameworkCatalog _catalog;
     private readonly FrameworkDetectionLimits _limits;
 
@@ -84,6 +86,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         var trackedSet = trackedPaths.ToHashSet(StringComparer.Ordinal);
         var readResults = new Dictionary<string, ArtifactReadResult>(StringComparer.Ordinal);
         var evidence = new List<PackageEvidence>();
+        var directManifestScopes = new List<ValidatedDirectManifestOwner>();
         var auditOutcomes = new List<FrameworkEvidenceAuditOutcome>();
         var budget = new FrameworkDetectionBudget(_limits);
         HashSet<string> nugetLockRoots =
@@ -144,6 +147,15 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             ArtifactParseStatus parseStatus;
             if (artifactKind == ArtifactKind.NuGetProject)
             {
+                DirectManifestOwnerCandidate candidate = CreateDirectManifestOwnerCandidate(
+                    artifactPath,
+                    "nuget",
+                    readResult);
+                if (TryValidateDirectManifestOwner([candidate], out ValidatedDirectManifestOwner? owner))
+                {
+                    directManifestScopes.Add(owner!);
+                }
+
                 parseStatus = ValidateXml(readResult.Content!);
                 if (parseStatus == ArtifactParseStatus.Valid)
                 {
@@ -152,6 +164,15 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             }
             else if (artifactKind == ArtifactKind.NpmManifest)
             {
+                DirectManifestOwnerCandidate candidate = CreateDirectManifestOwnerCandidate(
+                    artifactPath,
+                    "npm",
+                    readResult);
+                if (TryValidateDirectManifestOwner([candidate], out ValidatedDirectManifestOwner? owner))
+                {
+                    directManifestScopes.Add(owner!);
+                }
+
                 parseStatus = ValidateJson(readResult.Content!);
                 if (parseStatus == ArtifactParseStatus.Valid)
                 {
@@ -251,7 +272,8 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             evidence,
             auditOutcomes,
             budget.TotalAuditOutcomeCount,
-            budget.AuditOutcomeIdentities);
+            budget.AuditOutcomeIdentities,
+            directManifestScopes);
     }
 
     public async Task<IReadOnlyList<PackageEvidence>> DetectApplicableAsync(
@@ -302,7 +324,8 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 [],
                 detection.AuditOutcomes,
                 detection.TotalAuditOutcomeCount,
-                detection.AuditOutcomeIdentities);
+                detection.AuditOutcomeIdentities,
+                detection.DirectManifestScopes);
         }
 
         IReadOnlyList<PackageEvidence> detected = detection.Evidence;
@@ -318,39 +341,55 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                          IsLanguageCompatible(evidence, parserLanguage))
                      .GroupBy(evidence => evidence.Ecosystem, StringComparer.Ordinal))
         {
-            int deepestScope = ecosystem.Max(evidence => evidence.ScopeDepth);
+            ValidatedDirectManifestOwner[] manifestScopes =
+            [
+                .. detection.DirectManifestScopes.Where(scope =>
+                    StringComparer.Ordinal.Equals(scope.Ecosystem, ecosystem.Key) &&
+                    IsWithinScope(normalizedCodeUnitPath, scope.ScopeRoot)),
+            ];
+            int deepestScope = Math.Max(
+                ecosystem.Max(evidence => evidence.ScopeDepth),
+                manifestScopes
+                    .Select(scope => ScopeDepth(scope.ScopeRoot))
+                    .DefaultIfEmpty(-1)
+                    .Max());
             PackageEvidence[] winningScope =
             [
                 .. ecosystem.Where(evidence => evidence.ScopeDepth == deepestScope),
             ];
-            int manifestCount = winningScope
-                .Where(evidence => evidence.Relationship == PackageEvidenceRelationship.Direct)
-                .Select(evidence => evidence.ArtifactPath)
-                .Distinct(StringComparer.Ordinal)
-                .Count();
-            if (manifestCount > 1)
+            string[] directManifestPaths =
+            [
+                .. manifestScopes
+                    .Where(scope => ScopeDepth(scope.ScopeRoot) == deepestScope)
+                    .Select(scope => scope.ArtifactPath)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(path => path, StringComparer.Ordinal),
+            ];
+            if (directManifestPaths.Length == 0)
             {
-                foreach (string artifactPath in winningScope
-                             .Where(evidence =>
-                                 evidence.Relationship ==
-                                 PackageEvidenceRelationship.Direct)
-                             .Select(evidence => evidence.ArtifactPath)
-                             .Distinct(StringComparer.Ordinal)
-                             .OrderBy(path => path, StringComparer.Ordinal))
-                {
-                    FrameworkEvidenceAuditOutcome audit =
-                        CreateAuditOutcome(
-                            artifactPath,
-                            ArtifactParseStatus.AmbiguousScope);
-                    var identity = new FrameworkEvidenceAuditIdentity(
-                        audit.ArtifactPath,
-                        audit.Outcome,
-                        audit.Reason);
-                    if (!auditKeys.Add(identity))
-                    {
-                        continue;
-                    }
+                directManifestPaths =
+                [
+                    .. winningScope
+                        .Where(evidence =>
+                            evidence.Relationship == PackageEvidenceRelationship.Direct)
+                        .Select(evidence => evidence.ArtifactPath)
+                        .Distinct(StringComparer.Ordinal)
+                        .OrderBy(path => path, StringComparer.Ordinal),
+                ];
+            }
 
+            if (directManifestPaths.Length > 1)
+            {
+                FrameworkEvidenceAuditOutcome audit =
+                    CreateAuditOutcome(
+                        directManifestPaths[0],
+                        ArtifactParseStatus.AmbiguousScope);
+                var identity = new FrameworkEvidenceAuditIdentity(
+                    audit.ArtifactPath,
+                    audit.Outcome,
+                    audit.Reason);
+                if (auditKeys.Add(identity))
+                {
                     auditOutcomeIdentities.Add(identity);
                     additionalAuditOutcomeCount++;
                     if (auditOutcomes.Count < _limits.MaximumRetainedAuditDetails)
@@ -359,6 +398,11 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                     }
                 }
 
+                continue;
+            }
+
+            if (winningScope.Length == 0)
+            {
                 continue;
             }
 
@@ -388,7 +432,8 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 winners,
                 auditOutcomes,
                 detection.TotalAuditOutcomeCount + additionalAuditOutcomeCount,
-                auditOutcomeIdentities);
+                auditOutcomeIdentities,
+                detection.DirectManifestScopes);
     }
 
     private static async Task<string[]> InventoryTrackedPathsAsync(
@@ -1135,20 +1180,11 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 continue;
             }
 
-            int nameLength = 0;
-            while (nameLength < line.Length &&
-                (char.IsAsciiLetterOrDigit(line[nameLength]) ||
-                 line[nameLength] is '-' or '_' or '.'))
-            {
-                nameLength++;
-            }
-
-            if (nameLength == 0)
+            if (!TryParsePythonLiteralRequirement(line, out string packageName))
             {
                 continue;
             }
 
-            string packageName = NormalizePythonName(line[..nameLength]);
             string coordinate = $"python:{packageName}";
             AddMatched(
                 artifactPath,
@@ -1159,6 +1195,49 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 evidence,
                 budget);
         }
+    }
+
+    private static bool TryParsePythonLiteralRequirement(
+        string line,
+        out string packageName)
+    {
+        packageName = string.Empty;
+        int nameLength = 0;
+        while (nameLength < line.Length &&
+            (char.IsAsciiLetterOrDigit(line[nameLength]) ||
+             line[nameLength] is '-' or '_' or '.'))
+        {
+            nameLength++;
+        }
+
+        if (nameLength == 0)
+        {
+            return false;
+        }
+
+        string specifiers = line[nameLength..];
+        if (specifiers.Length > 0 &&
+            specifiers.Split(',').Any(specifier => !IsPythonVersionSpecifier(specifier.Trim())))
+        {
+            return false;
+        }
+
+        packageName = NormalizePythonName(line[..nameLength]);
+        return true;
+    }
+
+    private static bool IsPythonVersionSpecifier(string specifier)
+    {
+        string? operation = _pythonVersionSpecifierOperators
+            .FirstOrDefault(candidate => specifier.StartsWith(candidate, StringComparison.Ordinal));
+        if (operation is null || specifier.Length == operation.Length)
+        {
+            return false;
+        }
+
+        return specifier[operation.Length..].All(character =>
+            char.IsAsciiLetterOrDigit(character) ||
+            character is '.' or '-' or '_' or '+' or '*');
     }
 
     private void AddMatched(

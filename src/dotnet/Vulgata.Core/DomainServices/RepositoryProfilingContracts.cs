@@ -111,6 +111,7 @@ public sealed class FrameworkEvidenceDetectionResult
         IReadOnlyList<PackageEvidence> evidence,
         IReadOnlyList<FrameworkEvidenceAuditOutcome> auditOutcomes,
         IReadOnlyList<FrameworkEvidenceAuditIdentity> auditOutcomeIdentities,
+        IReadOnlyList<ValidatedDirectManifestOwner> directManifestScopes,
         int totalAuditOutcomeCount,
         FrameworkEvidenceDetectionFailure failure,
         string? error)
@@ -119,6 +120,7 @@ public sealed class FrameworkEvidenceDetectionResult
         Evidence = evidence;
         AuditOutcomes = auditOutcomes;
         AuditOutcomeIdentities = auditOutcomeIdentities;
+        DirectManifestScopes = directManifestScopes;
         TotalAuditOutcomeCount = totalAuditOutcomeCount;
         Failure = failure;
         Error = error;
@@ -128,6 +130,7 @@ public sealed class FrameworkEvidenceDetectionResult
     public IReadOnlyList<PackageEvidence> Evidence { get; }
     public IReadOnlyList<FrameworkEvidenceAuditOutcome> AuditOutcomes { get; }
     public IReadOnlyList<FrameworkEvidenceAuditIdentity> AuditOutcomeIdentities { get; }
+    public IReadOnlyList<ValidatedDirectManifestOwner> DirectManifestScopes { get; }
     public int TotalAuditOutcomeCount { get; }
     public FrameworkEvidenceDetectionFailure Failure { get; }
     public string? Error { get; }
@@ -136,7 +139,8 @@ public sealed class FrameworkEvidenceDetectionResult
         IEnumerable<PackageEvidence> evidence,
         IEnumerable<FrameworkEvidenceAuditOutcome> auditOutcomes,
         int totalAuditOutcomeCount,
-        IEnumerable<FrameworkEvidenceAuditIdentity>? auditOutcomeIdentities = null)
+        IEnumerable<FrameworkEvidenceAuditIdentity>? auditOutcomeIdentities = null,
+        IEnumerable<ValidatedDirectManifestOwner>? directManifestScopes = null)
     {
         PackageEvidence[] retainedEvidence = [.. evidence];
         FrameworkEvidenceAuditOutcome[] retainedOutcomes = [.. auditOutcomes];
@@ -162,6 +166,7 @@ public sealed class FrameworkEvidenceDetectionResult
             Array.AsReadOnly(retainedEvidence),
             Array.AsReadOnly(retainedOutcomes),
             Array.AsReadOnly(completeIdentities),
+            Array.AsReadOnly([.. directManifestScopes ?? []]),
             totalAuditOutcomeCount,
             FrameworkEvidenceDetectionFailure.None,
             error: null);
@@ -181,6 +186,7 @@ public sealed class FrameworkEvidenceDetectionResult
         ArgumentException.ThrowIfNullOrWhiteSpace(error);
         return new(
             succeeded: false,
+            [],
             [],
             [],
             [],
@@ -247,6 +253,7 @@ public sealed record SafeProviderPath
     {
         if (string.IsNullOrWhiteSpace(path) ||
             path.Length > 2_048 ||
+            path.Length != path.Trim().Length ||
             path.Any(char.IsControl) ||
             (path[0] is '/' or '\\') ||
             Path.IsPathRooted(path) ||
