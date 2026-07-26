@@ -2220,28 +2220,39 @@
       "observed_at": "2026-07-26T06:12:42.7410492Z",
       "summary": "The surrounding non-Docker provider-contract suite passed 80 of 80 tests; the tracked correction changes only test/evidence binding and no product, Scan, Worker Agent/tool, or PRD behavior.",
       "raw_output_path": "TestResults/story-4-2-current-binding/T038-surrounding-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/54",
+      "kind": "command",
+      "stage": "implement",
+      "source_commit": "eac4c529c4f9d51a53aee64412e1f1791b8cf353",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "command": "ConvertFrom-Json; SHA-256 over exact Git blob bytes; git rev-parse commit:path; git show checkpoint trailers; git merge-base --is-ancestor; Get-FileHash current raw evidence; git rev-list --count; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T06:53:47.8000644Z",
+      "summary": "T039-T040 regenerated and validated the truthful ledger over 33 linear commits, 19 legacy groups, 32 immutable blob references, 8 unique ancestor checkpoints, and 8 current raw files. The exact unavailable T001 statement and Current verification timing remain separate; prior candidate, review, E2E, verification, manifest, image, namespace, T049, and T050 identities are absent.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260726T061644Z-4c8e71",
+    "checkpoint_id": "bmad-4-2-implement-20260726T065347Z-7d1a63",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/49",
-      "4-2-language-and-framework-detection/implement/50",
-      "4-2-language-and-framework-detection/implement/51",
-      "4-2-language-and-framework-detection/implement/52",
-      "4-2-language-and-framework-detection/implement/53"
+      "4-2-language-and-framework-detection/implement/54"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T06:16:44.5476927Z"
+  "updated_at": "2026-07-26T06:53:47.8000644Z"
 }

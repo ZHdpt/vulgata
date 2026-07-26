@@ -599,6 +599,16 @@ unchanged.
   uses a distinct create-new path.
 - Accepted-plan binding implementation checkpoint:
   `bmad-4-2-implement-20260726T061644Z-4c8e71` (pending Git binding).
+- The T039-T040 reconstruction ledger now preserves 19 legacy groups without
+  inventing unavailable RED or ordering evidence, links the separate T001
+  `Current verification`, records T035-T038 at their actual current times, and
+  removes all stale candidate, review, E2E, verification, manifest, image,
+  namespace, T049, and T050 identities. Root validation passed 33 linear
+  commits, 32 immutable blob references, 8 unique ancestor checkpoints, and 8
+  current raw files. One recoverable CRLF working-tree hash mismatch was
+  corrected by hashing the pinned Git blob bytes.
+- Truthful-ledger implementation checkpoint:
+  `bmad-4-2-implement-20260726T065347Z-7d1a63` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
