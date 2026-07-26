@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "mode": "Full",
+  "verdict": "REVISE",
+  "reviewer": {
+    "identity": "story_4_2_quality_review_4",
+    "role": "independent quality-reviewer",
+    "independent": true,
+    "acceptance_axis_substituted": false
+  },
+  "reviewed_commit": "1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
+  "reviewed_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
+    "candidate_tree": "ac002fa795614a3eaf752922a95a1e7df20a37ef",
+    "binary_diff_length_bytes": 1382640,
+    "diff_sha256": "e953af5793272a0dfdc3de7a29a01b8d6be9d9cfb9ae8af298166517e25a583f",
+    "owned_path_count": 72,
+    "candidate_record_path": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+    "candidate_record_sha256": "8f957de6a907db4f94c0e376c0b32c590710c8e6e8394bed39a8bb0f3ecc92ae",
+    "candidate_boundary_reproduced": true,
+    "candidate_artifact_hashes_reproduced": 26,
+    "raw_evidence_hashes_reproduced": 20,
+    "candidate_checkpoint_four_trailers_unique": true,
+    "accepted_plan_checkpoint_four_trailers_unique": true
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/agent-workflow/agent-catalog.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/reviews/plan-review-8.json",
+    "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+    "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+    "specs/002-language-framework-detection/reviews/quality-review-3.json",
+    "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+    "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+    "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+    "tests/Vulgata.Tests/DashboardPanelTests.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+    "tests/Vulgata.Tests/RepositoryApiTests.cs",
+    "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+  ],
+  "resolved_prior_findings": [
+    {
+      "id": "AR3-001",
+      "status": "RESOLVED",
+      "evidence": "Unique ancestor accepted-plan and candidate checkpoints each carry all four mandatory trailers."
+    },
+    {
+      "id": "QR3-001",
+      "status": "RESOLVED",
+      "evidence": "The UI maps canonical High and Medium values only at presentation to 高 and 中; API values remain canonical."
+    }
+  ],
+  "findings": [
+    {
+      "id": "QR4-001",
+      "severity": "HIGH",
+      "category": "security-path-normalization",
+      "artifact": "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "location": "lines 246-268; missing regression coverage at tests/Vulgata.Tests/CodeGraphContextProviderTests.cs lines 510-544 and tests/Vulgata.Tests/RepositoryProfilingTests.cs lines 2980-2995",
+      "affected_requirement": "Story 4.2 AC-7; FR-015; SC-006; provider-language-projection fail-closed provider-path contract",
+      "evidence": "SafeProviderPath checks Path.IsPathRooted and the drive-letter form before trimming. A provider scalar such as ` C:\\Users\\Admin\\private\\secret.cs` therefore passes the initial checks, is trimmed to `C:/Users/Admin/private/secret.cs`, and is retained as a known path. A read-only .NET path check reproduced that the pre-trim value is not rooted while the post-trim value resolves to `C:\\Users\\Admin\\private\\secret.cs`. A malformed provider row can consequently place the absolute host path in ProviderCandidateOutcome and the coordinator warning log. Existing matrices cover unpadded drive, UNC, POSIX-rooted, traversal, control-character, empty-segment, and oversize inputs but not boundary-whitespace drive paths.",
+      "correction_outcome": "Observe regression RED for leading/trailing-whitespace rooted inputs, then make rooted, drive, segment, and control validation operate on one normalized candidate or reject boundary whitespace outright. Prove the raw value and every host fragment are absent from the provider result, captured logs, durable outcome, API response, and UI."
+    },
+    {
+      "id": "QR4-002",
+      "severity": "HIGH",
+      "category": "correctness-invalid-framework-evidence",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "location": "lines 1119-1160; current unsupported-input coverage at tests/Vulgata.Tests/FrameworkDetectionTests.cs lines 883-895",
+      "affected_requirement": "Story 4.2 AC-3 and AC-5; FR-008, FR-010, FR-014, FR-016; SC-003; framework-detection literal Python requirement contract",
+      "evidence": "ParsePythonRequirements rejects only leading hyphen, URL, and environment-marker forms, then scans a valid package-name prefix without validating the remainder of the line. Invalid or ambiguous text such as `django???` therefore produces the exact catalog coordinate `python:django` and a High-confidence Django fact even though it is not a supported literal requirement. Current tests cover includes, URLs, editable entries, and markers but not invalid trailing syntax.",
+      "correction_outcome": "Add observed RED cases for invalid trailing syntax and require a closed full-line literal-requirement grammar before matching the package coordinate. Unsupported or malformed lines must create no framework fact and must retain only the bounded closed audit outcome while valid independent evidence continues."
+    },
+    {
+      "id": "QR4-003",
+      "severity": "HIGH",
+      "category": "correctness-scope-ambiguity",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "location": "lines 315-365; incomplete ambiguity fixture at tests/Vulgata.Tests/FrameworkDetectionTests.cs lines 1039-1068",
+      "affected_requirement": "Story 4.2 AC-3 and AC-5; FR-010, FR-014, FR-021; SC-003; framework-detection same-ecosystem same-winning-root ambiguity contract",
+      "evidence": "SelectApplicable computes manifestCount only from PackageEvidence that already matched the framework catalog. With two successfully parsed same-root NuGet project manifests where one declares a catalog-matched framework and the other contains only valid unmatched declarations, only the matched project enters winningScope. manifestCount is one, so the matched framework is assigned even though the Code Unit's same-ecosystem project scope is ambiguous. The existing ambiguity test uses two catalog-matched projects and does not exercise the matched-plus-unmatched case.",
+      "correction_outcome": "Observe RED for a matched plus valid-unmatched same-root project pair, retain supported direct-manifest scope identities independently from catalog-matched evidence, and suppress all same-ecosystem facts at an ambiguous winning root with one bounded ambiguity audit outcome. Preserve independent colocated ecosystems and deeper unambiguous scopes."
+    }
+  ],
+  "assessment": {
+    "correctness": "REVISE",
+    "security": "REVISE",
+    "evidence_integrity": "PASS",
+    "test_quality": "REVISE",
+    "architecture": "PASS",
+    "migration_and_persistence": "PASS",
+    "regression_risk": "HIGH"
+  },
+  "summary": "Mode Full; independent reviewer story_4_2_quality_review_4. REVISE and do not substitute this verdict for the separate accepted acceptance axis. QR4-001 permits a boundary-whitespace absolute provider path to bypass fail-closed validation. QR4-002 can invent High-confidence Python framework evidence from invalid trailing syntax. QR4-003 can assign a framework from an ambiguous same-root direct-manifest scope when only one valid manifest has catalog-matched evidence. Candidate identity, 72-path scope, 26 candidate artifact hashes, 20 raw-evidence hashes, evidence grammar, AR3-001, and QR3-001 otherwise pass. All three findings require observed RED, minimal correction, surrounding GREEN, a new immutable candidate, and fresh Full review axes."
+}

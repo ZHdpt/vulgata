@@ -700,6 +700,16 @@ unchanged.
 - Acceptance-review-4 checkpoint:
   `bmad-4-2-acceptance-review-20260726T085649Z-7c30d5`
   (pending Git binding).
+- Full quality review iteration 4 returned `REVISE` at the identical candidate
+  with three High findings. `QR4-001` found that boundary whitespace can
+  bypass rooted provider-path rejection. `QR4-002` found that invalid Python
+  requirement suffixes such as `django???` can create deterministic framework
+  facts. `QR4-003` found that same-root direct-scope ambiguity counts only
+  catalog-matched manifests and can ignore a valid unmatched peer. Candidate
+  identity, evidence integrity, AR3-001, and QR3-001 otherwise passed.
+- Quality-review-4 checkpoint:
+  `bmad-4-2-quality-review-20260726T085941Z-1f93ac`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
