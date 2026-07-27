@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "review_id": "t040-ledger-validation-4",
+  "gate": "T040-ledger-validation",
+  "task_id": "T040",
+  "story_key": "4-2-language-and-framework-detection",
+  "reviewer_role": "fresh-independent-read-only-T040-ledger-auditor",
+  "verdict": "ACCEPT",
+  "completed_at": "2026-07-27T09:18:15.1269395Z",
+  "input_boundary": {
+    "branch": "dev",
+    "reviewed_commit": "586a8204077c5bb0a55ce2185f0e4fc713529b44",
+    "reviewed_tree": "67c13ecc0da357bd57bc6d2c3c36c7167ba8dae8",
+    "correction_parent_commit": "c5fe02bc7000264905147aff9a5017900746a4b9",
+    "base_exclusive": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "ledger_source_commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+    "ledger_source_tree": "d6f846dc295eb99cdf8dbd879a7aa17bc8cc05b6"
+  },
+  "coverage_metrics": {
+    "ledger_source_range_commits": 77,
+    "merge_commits": 0,
+    "authority_hashes_validated": "27/27",
+    "immutable_blob_oids_validated": "83/83",
+    "raw_files_present_and_hash_validated": "66/66",
+    "asserted_raw_lengths_validated": "64/64",
+    "ledger_checkpoint_entries_validated": "47/47",
+    "legacy_missing_trailer_classifications_reproduced": "4/4",
+    "range_checkpoint_ids_unique": "71/71"
+  },
+  "checks": [
+    {
+      "id": "boundary-history-and-forward-only-correction",
+      "status": "PASS",
+      "evidence": "The reviewed commit/tree/branch are exact and clean. Audit 3 remains immutable REVISE at c5fe02b. Correction 586a820 changes exactly the Story record, tasks.md, and workflow-state.json; the ledger blob is unchanged."
+    },
+    {
+      "id": "authority-object-raw-and-checkpoint-identities",
+      "status": "PASS",
+      "evidence": "Independent exact-byte checks reproduced 27/27 authority hashes, 83/83 immutable blob OIDs, 66/66 raw hashes, 64/64 asserted lengths, and 47/47 ledger checkpoint classifications."
+    },
+    {
+      "id": "qr8-chronology-current-verification-and-invalidation",
+      "status": "PASS",
+      "evidence": "QR8 review, approval, correction, authority alignment, Current verification, and ledger chronology reproduce. Candidate 7c24d8d and iteration-8 reviews remain invalidated. Attempts 12-13 remain Current verification only."
+    },
+    {
+      "id": "corrected-task-ledger-and-downstream-state",
+      "status": "PASS",
+      "evidence": "T040, T066, and T041-T050 are pending at the reviewed boundary. The ledger consistently says fresh T040 is next, and no replacement candidate or downstream completion is claimed."
+    }
+  ],
+  "findings": [],
+  "downstream_permission": "T040 may be finalized. T041 becomes permitted only after the root records this accepted audit and completes T066 consistently. No duplicate user approval is required.",
+  "read_only_confirmation": {
+    "files_changed": false,
+    "tests_or_builds_executed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_history_changed": false,
+    "final_branch": "dev",
+    "final_head": "586a8204077c5bb0a55ce2185f0e4fc713529b44",
+    "final_tree": "67c13ecc0da357bd57bc6d2c3c36c7167ba8dae8",
+    "final_porcelain_status": []
+  }
+}

@@ -974,6 +974,12 @@ unchanged.
   QR8 invalidation and audit-3 REVISE verdict. The truthful ledger itself was
   already correct and is unchanged. A new independent T040 audit is still
   required before T066 can complete or T041 can begin.
+- Fresh independent T040 audit 4 ACCEPTED the corrected boundary with no
+  findings: 27/27 authorities, 83/83 immutable references, 66/66 raw hashes,
+  64/64 asserted lengths, and 47/47 checkpoint classifications reproduce.
+  The forward-only audit-3 correction, QR8 chronology, attempts 12-13,
+  invalidations, and absence of downstream completion all pass. T040 and
+  T066 are finalized; T041 is now permitted without duplicate user approval.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

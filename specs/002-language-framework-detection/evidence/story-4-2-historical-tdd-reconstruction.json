@@ -2097,7 +2097,7 @@
       "invalidationReason": "The approved QR8 correction checkpoint df200f0 and authority-alignment checkpoint d77c096 changed production, test, plan, contract, and current-checkout binding bytes."
     },
     "newCandidateOrAcceptedReviewIdentityPresent": false,
-    "reason": "The QR8 correction, authority alignment, post-QR8 T001 record, and this refreshed ledger invalidate candidate 7c24d8d and both iteration-8 review axes. Earlier candidate, review, E2E, T045, T046, and prior T040 lanes remain invalidated history. No replacement candidate, independent T040 acceptance, jointly accepted Full reviews, E2E, candidate verification, manifest, image, namespace, T049 freeze, or T050 audit is claimed for source 8600f8c."
+    "reason": "The QR8 correction, authority alignment, post-QR8 T001 record, and this refreshed ledger invalidate candidate 7c24d8d and both iteration-8 review axes. Earlier candidate, review, E2E, T045, T046, and prior T040 lanes remain invalidated history. Fresh independent T040 audit 4 now accepts the corrected ledger boundary, but no replacement candidate, jointly accepted Full reviews, E2E, candidate verification, manifest, image, namespace, T049 freeze, or T050 audit is claimed."
   },
   "downstreamBoundary": {
     "priorInvalidatedT041LaneOccurred": true,
@@ -2116,17 +2116,17 @@
     "newNamespaceConsumed": false,
     "newFreezeCompleted": false,
     "newFinalAuditCompleted": false,
-    "nextPermittedTask": "T040"
+    "nextPermittedTask": "T041"
   },
   "independentValidation": {
     "taskId": "T040",
-    "status": "invalidated-pending-refresh",
-    "verdict": null,
-    "reviewedCommit": null,
-    "verdictPath": null,
-    "validatedAt": null,
-    "validationCompleted": false,
-    "taskMarkerFinalized": false,
+    "status": "accepted",
+    "verdict": "ACCEPT",
+    "reviewedCommit": "586a8204077c5bb0a55ce2185f0e4fc713529b44",
+    "verdictPath": "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json",
+    "validatedAt": "2026-07-27T09:18:15.1269395Z",
+    "validationCompleted": true,
+    "taskMarkerFinalized": true,
     "priorAcceptedValidation": {
       "recordPath": "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
       "recordSha256": "3045e94a061e6fdc0cc667031e7c8aef66cb939e1d0b03f81b20caf88d410d88",
@@ -2286,8 +2286,8 @@
       "statement": "T001 attempts 12 and 13 ran after correction and authority-alignment checkpoint d77c096 and are Current verification only. They do not recreate the unavailable pre-correction T001 observation, prove historical ordering, or supply historical RED."
     },
     {
-      "id": "post-quality8-independent-t040-pending",
-      "statement": "The prior T040 ACCEPT in t040-ledger-validation-2.json applied to the post-QR7 ledger checkpoint only. QR8 and this ledger mutation invalidate that review; no replacement T040 verdict or T041 candidate is claimed."
+      "id": "post-quality8-independent-t040-revalidated",
+      "statement": "The prior T040 ACCEPT in t040-ledger-validation-2.json applied only to the post-QR7 ledger checkpoint and was invalidated by QR8. Audit 3 preserved that invalidation and rejected a stale task marker; after forward-only correction, fresh independent audit 4 ACCEPTS the corrected ledger boundary. No T041 candidate is claimed."
     }
   ]
 }

@@ -3108,23 +3108,43 @@
       "observed_at": "2026-07-27T09:08:43.9366867Z",
       "summary": "The sole audit-3 finding is corrected forward-only: tasks.md restores T040 to pending and explicitly records that fresh QR8 validation is required. The truthful ledger was already correct and remains unchanged. T041 remains prohibited pending a new independent T040 ACCEPT.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/96",
+      "kind": "review",
+      "stage": "implement",
+      "source_commit": "586a8204077c5bb0a55ce2185f0e4fc713529b44",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json",
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "specs/002-language-framework-detection/evidence/quality8-validation.json",
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T09:18:15.1269395Z",
+      "summary": "Fresh independent T040 audit 4 ACCEPTED the corrected QR8 ledger boundary with no findings. All authority, immutable-object, raw-evidence, checkpoint, chronology, Current-verification, invalidation, and downstream-state checks passed. T040 and T066 are finalized; T041 is permitted without duplicate user approval.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T090843Z-d52f8b",
+    "checkpoint_id": "bmad-4-2-implement-20260727T091815Z-e63a9c",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "specs/002-language-framework-detection/evidence/quality8-validation.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/95"
+      "4-2-language-and-framework-detection/implement/96"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T09:08:43.9366867Z"
+  "updated_at": "2026-07-27T09:18:15.1269395Z"
 }

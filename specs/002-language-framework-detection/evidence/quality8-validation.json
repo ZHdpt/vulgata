@@ -4,8 +4,8 @@
   "kind": "test-run",
   "stage": "implement",
   "bmad_story_key": "4-2-language-and-framework-detection",
-  "source_commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
-  "observed_at": "2026-07-27T08:46:17.7111306Z",
+  "source_commit": "586a8204077c5bb0a55ce2185f0e4fc713529b44",
+  "observed_at": "2026-07-27T09:18:15.1269395Z",
   "results": [
     {
       "scope": "provider/profiling/framework surrounding",
@@ -72,7 +72,5 @@
     "accepted_plan_checkpoint_hash_changed": false,
     "reason": "Only current-checkout canonical LF hash expectations changed. The historical accepted-plan checkpoint hash remains pinned to its immutable plan-review boundary."
   },
-  "remaining_t066": [
-    "Fresh independent T040 ledger validation"
-  ]
+  "remaining_t066": []
 }
