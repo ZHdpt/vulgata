@@ -3078,24 +3078,37 @@
       "observed_at": "2026-07-27T08:46:17.7111306Z",
       "summary": "The QR8 truthful ledger validates 77 linear commits and zero merges, 27 authorities, 83 immutable blob references, 66 raw references, and 47 unique checkpoint entries. It preserves iteration-8 invalidation, attempts 12-13 as Current verification, and no replacement T040/T041 or downstream completion. Fresh independent T040 audit remains mandatory.",
       "raw_output_path": "TestResults/story-4-2-quality8-ledger/T039-ledger-validation.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/94",
+      "kind": "review",
+      "stage": "implement",
+      "source_commit": "63083425731b15401b69e58f3dfb8b77dda89d2c",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T09:05:02.5241827Z",
+      "summary": "Fresh independent T040 audit 3 returned REVISE on one stale task marker: tasks.md still marked T040 complete although the QR8 ledger correctly invalidates the earlier audit and blocks T041. All 27 authorities, 83 immutable references, 66 raw hashes, 64 asserted lengths, 47 ledger checkpoints, QR8 chronology, attempts 12-13 classification, and other downstream-state checks passed.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T084617Z-a08d6e",
+    "checkpoint_id": "bmad-4-2-implement-20260727T090502Z-c41e7a",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/quality8-validation.json",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/93"
+      "4-2-language-and-framework-detection/implement/94"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T08:46:17.7111306Z"
+  "updated_at": "2026-07-27T09:05:02.5241827Z"
 }

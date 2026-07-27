@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "review_id": "t040-ledger-validation-3",
+  "gate": "T040-ledger-validation",
+  "task_id": "T040",
+  "story_key": "4-2-language-and-framework-detection",
+  "reviewer_role": "fresh-independent-read-only-T040-ledger-auditor",
+  "verdict": "REVISE",
+  "completed_at": "2026-07-27T09:05:02.5241827Z",
+  "input_boundary": {
+    "branch": "dev",
+    "reviewed_commit": "63083425731b15401b69e58f3dfb8b77dda89d2c",
+    "reviewed_tree": "b7201c0026458b08907de40c5872151637eb8992",
+    "base_exclusive": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "ledger_source_commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+    "ledger_source_tree": "d6f846dc295eb99cdf8dbd879a7aa17bc8cc05b6"
+  },
+  "coverage_metrics": {
+    "audit_range_commits": 78,
+    "ledger_source_range_commits": 77,
+    "merge_commits": 0,
+    "authority_hashes_validated": "27/27",
+    "immutable_blob_oids_validated": "83/83",
+    "raw_files_present_and_hash_validated": "66/66",
+    "asserted_raw_lengths_validated": "64/64",
+    "ledger_checkpoint_entries_validated": "47/47",
+    "range_checkpoint_ids_unique": "71/71"
+  },
+  "checks": [
+    {
+      "id": "boundary-and-history",
+      "status": "PASS",
+      "evidence": "The reviewed boundary was clean; the base is an ancestor; the ledger source range has 77 linear commits and zero merges; the audit commit is its direct child and changes only the four declared ledger-checkpoint artifacts."
+    },
+    {
+      "id": "authority-object-and-raw-identities",
+      "status": "PASS",
+      "evidence": "Exact immutable Git and raw-file checks reproduced 27/27 authority hashes, 83/83 immutable blob OIDs, 66/66 raw hashes, and 64/64 asserted raw lengths."
+    },
+    {
+      "id": "checkpoint-trailers",
+      "status": "PASS",
+      "evidence": "All 47 ledger checkpoint entries reproduce their immutable commit, checkpoint ID, Workflow-Stage, ancestry, and mandatory-four-trailer classification; all 71 range checkpoint IDs are unique."
+    },
+    {
+      "id": "qr8-chronology-current-verification-and-invalidation",
+      "status": "PASS",
+      "evidence": "The QR8 review, approval, correction, authority alignment, Current verification, and ledger chronology is immutable and ordered. Candidate 7c24d8d and review iteration 8 are invalidated. Attempts 12-13 remain Current verification and make no historical or pre-correction claim."
+    },
+    {
+      "id": "downstream-claim-absence",
+      "status": "FAIL",
+      "evidence": "T041-T050 are unchecked and no replacement T040 verdict exists, but tasks.md still marks T040 complete. This contradicts the ledger's invalidated-pending-refresh status, validationCompleted=false, taskMarkerFinalized=false, and nextPermittedTask=T040."
+    }
+  ],
+  "findings": [
+    {
+      "id": "T040-LEDGER-003-001",
+      "severity": "HIGH",
+      "location": [
+        "specs/002-language-framework-detection/tasks.md:145",
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json#/independentValidation",
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json#/downstreamBoundary"
+      ],
+      "explanation": "The task graph presents T040 as complete while the ledger correctly says the prior acceptance was invalidated by QR8 and fresh validation remains pending. The stale marker can falsely authorize T041.",
+      "remediation": "Restore T040 to pending, preserve this REVISE verdict, commit the forward-only correction, and run a fresh independent T040 audit before T041."
+    }
+  ],
+  "downstream_permission": "T041 prohibited pending correction and a fresh independent T040 audit",
+  "read_only_confirmation": {
+    "files_changed": false,
+    "tests_or_builds_executed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_history_changed": false,
+    "final_head": "63083425731b15401b69e58f3dfb8b77dda89d2c",
+    "final_tree": "b7201c0026458b08907de40c5872151637eb8992",
+    "final_porcelain_status": []
+  }
+}

@@ -961,6 +961,14 @@ unchanged.
   mismatch was corrected by recording checkpoint `8600f8c` with its actual
   immutable `Workflow-Stage: implement` trailer. Fresh independent T040
   validation remains; T066 is not yet complete.
+- Fresh independent T040 audit 3 returned REVISE on one task-graph
+  bookkeeping defect: the ledger correctly invalidates the prior T040
+  acceptance and blocks T041, but `tasks.md` still marks T040 complete.
+  Every substantive audit area passed: 27/27 authorities, 83/83 immutable
+  blob references, 66/66 raw hashes, 64/64 asserted lengths, 47/47 ledger
+  checkpoint entries, QR8 chronology, attempts 12-13 classification, and
+  downstream invalidation. T041 remains prohibited until a forward-only
+  marker correction and fresh independent T040 acceptance.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
