@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/implement/QR7-remediation-approval",
+  "kind": "human-approval",
+  "stage": "implement",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "source_commit": "a31472c6808274db7a3f3b5ea91dc8411f897b1a",
+  "reviewed_candidate_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
+  "quality_verdict_path": "specs/002-language-framework-detection/reviews/quality-review-7.json",
+  "observed_at": "2026-07-27T04:14:20.0070332Z",
+  "decision": "approved",
+  "approval_text": "Approve",
+  "trigger": "Material changes to Scan source-selection, parsing, and artifact fault-isolation behavior require explicit planned-change authorization.",
+  "approved_remediation": [
+    {
+      "finding_id": "QR7-001",
+      "intent": "Determine committed artifact eligibility from the pinned Git tree/object mode and eliminate mutable working-tree metadata from committed evidence selection.",
+      "tests": "Observe RED and GREEN for dirty deletion and reparse substitution of committed direct manifests and paired locks."
+    },
+    {
+      "finding_id": "QR7-002",
+      "intent": "Reject duplicate relevant JSON properties as ambiguous artifact-local evidence, emit one bounded audit, create no framework fact, and continue independent artifacts.",
+      "tests": "Observe RED and GREEN for direct npm manifests and paired npm lock ownership/evidence."
+    },
+    {
+      "finding_id": "QR7-003",
+      "intent": "Replace throwing Maven scalar-child selection with cardinality-aware artifact-local ambiguity handling and continue independent valid manifests.",
+      "tests": "Observe RED and GREEN for duplicate groupId/artifactId children plus an independent valid manifest."
+    }
+  ],
+  "affected_authorities": {
+    "plan": [
+      "specs/002-language-framework-detection/plan.md:350-364",
+      "specs/002-language-framework-detection/plan.md:397-402",
+      "specs/002-language-framework-detection/plan.md:711-712"
+    ],
+    "specification": [
+      "specs/002-language-framework-detection/spec.md:102-115",
+      "specs/002-language-framework-detection/spec.md:132-135"
+    ],
+    "prd": [
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md:157"
+    ]
+  },
+  "scope_effects": {
+    "prd_changed_or_weakened": false,
+    "worker_agent_or_tool_changed": false,
+    "dispatch_scheduling_or_retry_changed": false,
+    "scan_strategy_changed": true,
+    "candidate_and_both_full_reviews_must_be_recreated": true
+  },
+  "waivers": {
+    "tdd": false,
+    "fresh_acceptance_review": false,
+    "fresh_quality_review": false,
+    "conditional_e2e": false,
+    "security_verification": false,
+    "final_verification": false,
+    "git_checkpoint_contract": false
+  }
+}

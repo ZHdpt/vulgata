@@ -7,7 +7,7 @@
   "stage": "implement",
   "active_gates": {
     "acceptance-review": {
-      "status": "accepted",
+      "status": "invalidated",
       "iteration": 7,
       "dispatch_id": null,
       "input_boundary": {
@@ -19,7 +19,7 @@
       "completed_at": "2026-07-27T03:25:46.8342178Z"
     },
     "quality-review": {
-      "status": "revised",
+      "status": "invalidated",
       "iteration": 7,
       "dispatch_id": null,
       "input_boundary": {
@@ -2883,30 +2883,38 @@
       "observed_at": "2026-07-27T03:25:46.8342178Z",
       "summary": "Fresh independent Full quality review 7 returned REVISE with High findings QR7-001 through QR7-003 covering pinned-source metadata stability, duplicate npm JSON properties, and duplicate Maven scalar-child fault isolation.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/83",
+      "kind": "human-approval",
+      "stage": "implement",
+      "source_commit": "a31472c6808274db7a3f3b5ea91dc8411f897b1a",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T04:14:20.0070332Z",
+      "summary": "The user approved the bounded QR7-001 through QR7-003 Scan-strategy remediation. Candidate 6149623 and both Full review axes are invalidated; TDD and every later gate remain mandatory.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-full-reviews-20260727T032546Z-c26f9a",
+    "checkpoint_id": "bmad-4-2-implement-20260727T041420Z-f37a2d",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
-      "specs/002-language-framework-detection/reviews/quality-review-7.json",
+      "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/acceptance-review/7",
-      "4-2-language-and-framework-detection/quality-review/7"
+      "4-2-language-and-framework-detection/implement/83"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": {
-    "stage": "quality-review",
-    "status": "approval-required",
-    "summary": "QR7-001 through QR7-003 require Scan source-selection, parsing, and fault-isolation changes. Planned-change authorization is required before implementation."
-  },
-  "updated_at": "2026-07-27T03:25:46.8342178Z"
+  "recoverable_failure": null,
+  "updated_at": "2026-07-27T04:14:20.0070332Z"
 }

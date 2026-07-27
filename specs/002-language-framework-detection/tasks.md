@@ -173,12 +173,26 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 
 ---
 
+## Phase 8C: Quality Review 7 Corrections
+
+**Purpose**: Apply the explicitly approved QR7 Scan-strategy remediation with one observed RED before each production correction, artifact-local fail-closed behavior, and fresh surrounding evidence.
+
+- [x] T058 Preserve `specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json`, the unchanged iteration-7 Full verdicts, and explicit invalidation of candidate `614962322e9f3578980a6fa28bc8897d22b66c58` plus both review axes before source or test mutation
+- [ ] T059 Observe RED for a committed regular direct manifest and paired lock losing deterministic facts after dirty deletion or reparse substitution; derive eligibility from the pinned Git tree/object mode rather than mutable checkout metadata, then prove all cases GREEN
+- [ ] T060 Observe RED for duplicate relevant JSON properties producing or owning npm evidence; reject the ambiguous artifact locally with one bounded audit, no framework fact, continued independent evidence, then prove direct-manifest and paired-lock cases GREEN
+- [ ] T061 Observe RED for duplicate Maven `groupId` or `artifactId` children escalating to repository-wide `DetectorFailed`; make the ambiguity artifact-local, preserve one bounded audit, continue an independent valid manifest, then prove all cases GREEN
+- [ ] T062 Run the complete `FrameworkDetectionTests` suite, provider/profiling/framework surrounding suite, complete non-final-image test suite, and `Vulgata.Web` build; preserve raw RED/GREEN outputs, verify exact correction scope, refresh Current verification and the truthful ledger, and leave T041-T050 incomplete until a replacement candidate is pinned
+
+**Independent validation**: Each QR7 finding has behavior-level RED before production correction, committed evidence is independent of mutable checkout metadata, ambiguous JSON/XML remains artifact-local and fail-closed, independent valid artifacts continue, and every prior candidate/review/downstream claim remains invalidated history.
+
+---
+
 ## Phase 9: New Candidate, Full Reviews, E2E, and Verification
 
 **Purpose**: Pin and independently judge one candidate containing T001, the accepted-plan binding GREEN, and the truthful regenerated ledger.
 
-- [x] T041 After T001, T035-T040, T051-T054, and T055-T057, have the root create one clean immutable implementation candidate/checkpoint containing only accepted Story 4.2 owned changes; record commit/tree, exact binary diff SHA-256, artifact hashes, owned paths, and clean status; any implementation/test/ledger mutation after pinning invalidates T041-T049
-- [x] T042 [P] Have the root dispatch a fresh read-only Full `acceptance-review` against the exact refreshed T041 boundary and persist its returned verdict at the next create-new review path; require every BMad/SpecKit behavior, corrected T001 truth contract, replacement binding RED/GREEN, Chinese confidence presentation, QR4-001 through QR4-003 and QR6-001 corrections, and forbidden scope to be accepted
+- [ ] T041 After T001, T035-T040, T051-T054, T055-T057, and T058-T062, have the root create one clean immutable implementation candidate/checkpoint containing only accepted Story 4.2 owned changes; record commit/tree, exact binary diff SHA-256, artifact hashes, owned paths, and clean status; any implementation/test/ledger mutation after pinning invalidates T041-T049
+- [ ] T042 [P] Have the root dispatch a fresh read-only Full `acceptance-review` against the exact refreshed T041 boundary and persist its returned verdict at the next create-new review path; require every BMad/SpecKit behavior, corrected T001 truth contract, replacement binding RED/GREEN, Chinese confidence presentation, QR4-001 through QR4-003, QR6-001, QR7-001 through QR7-003 corrections, and forbidden scope to be accepted
 - [ ] T043 [P] Have the root dispatch a fresh read-only Full `quality-review` against the identical refreshed T041 boundary and persist its returned verdict at the next create-new review path; require correctness, localization, security, committed-evidence integrity, test quality, edge cases, architecture seams, and regression risk to be accepted
 - [ ] T044 After both fresh reviews accept, record and execute the current-boundary E2E decision in `specs/002-language-framework-detection/workflow-state.json` using `docs/agent-workflow/e2e-decision-matrix.md`; cite a complete coverage override only if current integration evidence covers every triggered API/UI/persistence/migration/image boundary, otherwise run the required E2E owner; any tracked test edit reruns T042-T044
 - [ ] T045 Run pre-image verification at the unchanged T041 candidate and persist command evidence through `specs/002-language-framework-detection/workflow-state.json`: focused provider/profiling/framework/binding tests; `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract"`; `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj`; both migration script/rollback checks; `dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext`; authorization/redaction coverage; FR-020 diff audit; `git diff --check`; and clean status

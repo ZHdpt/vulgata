@@ -868,6 +868,11 @@ unchanged.
   and fault-isolation behavior. The workflow is paused for the mandatory
   planned-change authorization before implementation. No review, E2E,
   verification, image, namespace, freeze, or final-audit completion is claimed.
+- The user explicitly approved the recommended QR7 remediation. The approval
+  is limited to pinned Git object-mode eligibility, duplicate relevant npm JSON
+  rejection, and artifact-local duplicate Maven scalar handling with TDD.
+  Candidate `614962322e9f3578980a6fa28bc8897d22b66c58` and both iteration-7
+  reviews are invalidated before implementation; no later gate is waived.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
