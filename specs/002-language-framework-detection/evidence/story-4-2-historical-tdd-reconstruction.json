@@ -1,13 +1,13 @@
 {
   "schemaVersion": "1.0",
-  "evidenceId": "4-2-language-and-framework-detection/implement/T039-T040-ledger",
+  "evidenceId": "4-2-language-and-framework-detection/implement/T039-ledger",
   "kind": "historical-tdd-reconstruction",
   "stage": "implement",
-  "taskIds": ["T039", "T040"],
+  "taskIds": ["T039"],
   "bmadStoryKey": "4-2-language-and-framework-detection",
   "featureDirectory": "specs/002-language-framework-detection",
-  "status": "finalized-current-green",
-  "finalizationTaskIds": ["T039", "T040"],
+  "status": "regenerated-pending-independent-validation",
+  "finalizationTaskIds": ["T039"],
   "finalizedAt": "2026-07-27T02:09:17.2330936Z",
   "observedAt": "2026-07-27T02:00:28.2956178Z",
   "sourceRange": {
@@ -24,7 +24,7 @@
   "authorityReferences": [
     {
       "path": "docs/UBIQUITOUS_LANGUAGE.md",
-      "sha256AtSourceCommit": "23088d16c0bf547de647bcf3d7b210a8780116be57349471ffc668fa8e4bfada"
+      "sha256AtSourceCommit": "2f194eddba4afba8d3569c3390b43812fb39ac91665bf598c77d67323a30bda4"
     },
     {
       "path": "specs/002-language-framework-detection/tasks.md",
@@ -76,11 +76,11 @@
     },
     {
       "path": "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
-      "sha256AtSourceCommit": "dee2a3f280a4827d6b5b7fd23ccea42b4587e361995e09d48ac5e3075576e26a"
+      "sha256AtSourceCommit": "55ac2c2ad5e632a5482700d25309319eaf46a3992bbc58d56c507a83e6dc3d37"
     },
     {
       "path": "specs/002-language-framework-detection/reviews/quality-review-6.json",
-      "sha256AtSourceCommit": "083ad69dab551c7ce834d5d19e35c068f43be1438cee562102699fd8da62bf5c"
+      "sha256AtSourceCommit": "04e99796e3fc7d9b5f444db929e833c8a6f1e43759ceb2fa740299327fbb6fea"
     }
   ],
   "historicalEvidencePolicy": {
@@ -652,9 +652,47 @@
     {"commit": "20f1ca871efbe677415d9ff769ab57ce9442617f", "checkpointId": "bmad-4-2-full-reviews-20260726T095959Z-83a6e1", "stage": "quality-review", "mandatoryFourTrailersPresent": true},
     {"commit": "e6192a5393fae58fd12dd3bfe33d8b192102ffff", "checkpointId": "bmad-4-2-e2e-20260727T004131Z-a46c91", "stage": "conditional-e2e", "mandatoryFourTrailersPresent": true},
     {"commit": "42345ac04645ca28f1e5dfd02e971b5316842435", "checkpointId": "bmad-4-2-verification-20260727T004912Z-d2f47a", "stage": "verification", "mandatoryFourTrailersPresent": true},
-    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "checkpointId": "bmad-4-2-implement-20260727T014847Z-qr6001", "stage": "implement", "mandatoryFourTrailersPresent": true, "workflowScopeTrailer": "story"},
-    {"commit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b", "checkpointId": "bmad-4-2-implement-20260727T020318Z-t001qr6", "stage": "implement", "mandatoryFourTrailersPresent": true, "workflowScopeTrailer": "story"}
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "checkpointId": "bmad-4-2-implement-20260727T014847Z-qr6001", "stage": "implement", "mandatoryFourTrailersPresent": false, "workflowScopeTrailer": "story", "contractValid": false, "historicalOnly": true, "invalidReasons": ["Workflow-Scope is not the required story scope", "checkpoint suffix is not six lowercase hexadecimal characters"]},
+    {"commit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b", "checkpointId": "bmad-4-2-implement-20260727T020318Z-t001qr6", "stage": "implement", "mandatoryFourTrailersPresent": false, "workflowScopeTrailer": "story", "contractValid": false, "historicalOnly": true, "invalidReasons": ["Workflow-Scope is not the required story scope", "checkpoint suffix is not six lowercase hexadecimal characters"]}
   ],
+  "forwardOnlyCheckpointRemediation": {
+    "historyRewritten": false,
+    "malformedCommitsAreHistoricalOnly": true,
+    "malformedLedgerCommit": {
+      "commit": "38eac0facbcf62dd3d72588eae0f75dfb1b22109",
+      "checkpointId": "bmad-4-2-implement-20260727T022310Z-ledgerqr6",
+      "workflowScopeTrailer": "story",
+      "contractValid": false,
+      "historicalOnly": true,
+      "invalidReasons": [
+        "Workflow-Scope is not the required story scope",
+        "checkpoint suffix is not six lowercase hexadecimal characters",
+        "the committed ledger prematurely claimed completion of its independent T040 audit"
+      ]
+    },
+    "replacementCheckpoints": [
+      {
+        "commit": "2d1ce00574a38b6bbe082000d17a04a17ee3c8c3",
+        "tree": "44722048354a999ce1d15e2cedbd1d48b15bf910",
+        "checkpointId": "bmad-4-2-implement-20260727T025500Z-a61c3e",
+        "stage": "implement",
+        "workflowScopeTrailer": "story/4-2-language-and-framework-detection",
+        "contractValid": true,
+        "replacementForCommit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+        "trackedBytesChanged": false
+      },
+      {
+        "commit": "d307a27b7502ec96a405a2b5d814beb826ca47cc",
+        "tree": "44722048354a999ce1d15e2cedbd1d48b15bf910",
+        "checkpointId": "bmad-4-2-verification-20260727T025501Z-b72d4f",
+        "stage": "verification",
+        "workflowScopeTrailer": "story/4-2-language-and-framework-detection",
+        "contractValid": true,
+        "replacementForCommit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+        "trackedBytesChanged": false
+      }
+    ]
+  },
   "immutableArtifactReferences": [
     {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "gitBlobOid": "cf67b6cbabdb03d45699a68c11f438903a227206"},
     {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "f0f151e518f74fe103f3060f549bb3cbbade0e27"},
@@ -1218,7 +1256,7 @@
     "taskT055": {
       "acceptanceReview": {
         "path": "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
-        "sha256": "dee2a3f280a4827d6b5b7fd23ccea42b4587e361995e09d48ac5e3075576e26a",
+        "sha256": "55ac2c2ad5e632a5482700d25309319eaf46a3992bbc58d56c507a83e6dc3d37",
         "reviewedCandidateCommit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
         "verdict": "ACCEPT",
         "observedAt": "2026-07-27T01:17:17Z",
@@ -1227,7 +1265,7 @@
       },
       "qualityReview": {
         "path": "specs/002-language-framework-detection/reviews/quality-review-6.json",
-        "sha256": "083ad69dab551c7ce834d5d19e35c068f43be1438cee562102699fd8da62bf5c",
+        "sha256": "04e99796e3fc7d9b5f444db929e833c8a6f1e43759ceb2fa740299327fbb6fea",
         "reviewedCandidateCommit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
         "verdict": "REVISE",
         "findingId": "QR6-001",
@@ -1368,17 +1406,19 @@
         }
       },
       "correctionCheckpoint": {
-        "commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
-        "tree": "e42e961cb401ec7719c96da5047756fa63810035",
-        "checkpointId": "bmad-4-2-implement-20260727T014847Z-qr6001",
-        "recordedAt": "2026-07-27T01:53:53Z",
+        "commit": "2d1ce00574a38b6bbe082000d17a04a17ee3c8c3",
+        "tree": "44722048354a999ce1d15e2cedbd1d48b15bf910",
+        "checkpointId": "bmad-4-2-implement-20260727T025500Z-a61c3e",
+        "recordedAt": "2026-07-27T02:32:35Z",
         "uniqueTrailerMatch": true,
-        "ancestorOfLedgerSource": true,
+        "ancestorOfCorrectiveLedgerCommit": true,
+        "replacementForMalformedCommit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+        "replacementChangedTrackedBytes": false,
         "mandatoryTrailers": {
           "BMad-Story": "4-2-language-and-framework-detection",
-          "Workflow-Scope": "story",
+          "Workflow-Scope": "story/4-2-language-and-framework-detection",
           "Workflow-Stage": "implement",
-          "Workflow-Checkpoint": "bmad-4-2-implement-20260727T014847Z-qr6001"
+          "Workflow-Checkpoint": "bmad-4-2-implement-20260727T025500Z-a61c3e"
         },
         "trackedCorrectionPaths": [
           "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
@@ -1394,10 +1434,13 @@
       "recordPath": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
       "recordSha256": "3c9fd047b3cc2fbbf602ea31d7a9219ac3aa763326699bc43cb129a2fdb510ca",
       "recordCommit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+      "recordCheckpointCommit": "d307a27b7502ec96a405a2b5d814beb826ca47cc",
       "sourceCommit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
       "sourceTree": "e42e961cb401ec7719c96da5047756fa63810035",
-      "checkpointId": "bmad-4-2-implement-20260727T020318Z-t001qr6",
-      "checkpointRecordedAt": "2026-07-27T02:04:43Z",
+      "checkpointId": "bmad-4-2-verification-20260727T025501Z-b72d4f",
+      "checkpointRecordedAt": "2026-07-27T02:32:35Z",
+      "replacementForMalformedCheckpointCommit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+      "replacementChangedTrackedBytes": false,
       "attemptSequences": [8, 9],
       "providerProfiling": {"passed": 116, "failed": 0, "total": 116},
       "framework": {"passed": 53, "failed": 0, "total": 53},
@@ -1520,13 +1563,17 @@
     "newNamespaceConsumed": false,
     "newFreezeCompleted": false,
     "newFinalAuditCompleted": false,
-    "nextPermittedTask": "T041"
+    "nextPermittedTask": "T040 independent validation rerun"
   },
-  "validationFinalization": {
-    "validationTaskId": "T040",
-    "validatedAt": "2026-07-27T02:09:17.2330936Z",
-    "validationCompleted": true,
-    "taskMarkersFinalized": false,
+  "independentValidation": {
+    "taskId": "T040",
+    "status": "pending",
+    "validatedAt": null,
+    "validationCompleted": false,
+    "taskMarkerFinalized": false
+  },
+  "authorPreflight": {
+    "completed": true,
     "sourceRangeCommitCount": 56,
     "sourceRangeMergeCount": 0,
     "historicalExecutionGroupCount": 6,

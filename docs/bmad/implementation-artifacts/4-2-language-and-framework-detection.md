@@ -826,7 +826,22 @@ unchanged.
   Earlier validator-script property mistakes are preserved as failed attempts.
 - Post-QR6 ledger checkpoint:
   `bmad-4-2-implement-20260727T022310Z-ledgerqr6`
-  (pending Git binding).
+  is historical-only: its `Workflow-Scope` and checkpoint suffix violate the
+  checkpoint contract, and its ledger prematurely claimed T040 acceptance.
+- T040 independent audit returned REVISE on three ledger bookkeeping defects:
+  three checkout-normalized authority hashes, the three malformed checkpoint
+  trailers, and the premature T040 completion claim. No product-code or
+  behavior defect was found.
+- Forward-only replacements bind the unchanged QR6 correction and Current
+  verification bytes without rewriting history:
+  `bmad-4-2-implement-20260727T025500Z-a61c3e` at
+  `2d1ce00574a38b6bbe082000d17a04a17ee3c8c3`, and
+  `bmad-4-2-verification-20260727T025501Z-b72d4f` at
+  `d307a27b7502ec96a405a2b5d814beb826ca47cc`.
+- The ledger now uses exact Git-blob SHA-256 values, marks all three malformed
+  commits historical-only, and leaves T040 pending for a fresh independent
+  audit. Correction checkpoint
+  `bmad-4-2-implement-20260727T023616Z-c83e5a` is pending Git binding.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

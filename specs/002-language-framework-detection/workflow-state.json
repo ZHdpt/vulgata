@@ -2797,10 +2797,26 @@
       "observed_at": "2026-07-27T02:23:10.6572363Z",
       "summary": "T039 regenerated the post-QR6 truthful ledger over 56 linear commits, 15 authorities, 26 checkpoint trailers, 64 immutable blob references, and 43 raw references. Root validation passed after preserving earlier script-property failures; review 6 and T046 remain explicitly invalidated rather than current.",
       "raw_output_path": "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/77",
+      "kind": "artifact-correction",
+      "stage": "implement",
+      "source_commit": "d307a27b7502ec96a405a2b5d814beb826ca47cc",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+        "specs/002-language-framework-detection/workflow-state.json"
+      ],
+      "command": "Exact Git-blob SHA-256 correction, forward-only checkpoint replacement, and T040 pending-state remediation",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T02:36:16.6903984Z",
+      "summary": "T040 returned REVISE on three bookkeeping defects. The correction replaces three checkout-normalized hashes with exact Git-blob hashes, preserves the three malformed commits as historical-only, binds unchanged bytes through two contract-valid forward-only checkpoints, and removes every premature T040 completion claim pending a fresh independent audit.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T022310Z-ledgerqr6",
+    "checkpoint_id": "bmad-4-2-implement-20260727T023616Z-c83e5a",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
@@ -2810,11 +2826,16 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/76"
+      "4-2-language-and-framework-detection/implement/77"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-  "updated_at": "2026-07-27T02:23:10.6572363Z"
+  "recoverable_failure": {
+    "stage": "implement",
+    "task_id": "T040",
+    "status": "correction-committed-pending-independent-rerun",
+    "summary": "Independent T040 found three ledger bookkeeping defects; the forward-only correction is ready for a fresh independent audit."
+  },
+  "updated_at": "2026-07-27T02:36:16.6903984Z"
 }
