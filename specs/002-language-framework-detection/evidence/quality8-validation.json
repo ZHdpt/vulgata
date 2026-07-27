@@ -73,7 +73,6 @@
     "reason": "Only current-checkout canonical LF hash expectations changed. The historical accepted-plan checkpoint hash remains pinned to its immutable plan-review boundary."
   },
   "remaining_t066": [
-    "Committed-boundary T001 Current verification refresh",
     "Truthful historical ledger refresh",
     "Fresh independent T040 ledger validation"
   ]

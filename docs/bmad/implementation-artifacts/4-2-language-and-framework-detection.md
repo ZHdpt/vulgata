@@ -949,7 +949,9 @@ unchanged.
   reconciliation. After updating only those expectations, their focused suite
   passes 16/16 and the complete non-final-image suite passes 512/512. The Web
   build succeeds with zero errors and nine known warnings. Current
-  verification, truthful-ledger refresh, and fresh T040 validation remain.
+  verification is now refreshed at clean commit `d77c096`: provider/profiling
+  passes 116/116 and framework detection passes 57/57. Truthful-ledger refresh
+  and fresh T040 validation remain.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

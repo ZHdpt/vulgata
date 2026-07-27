@@ -3047,24 +3047,38 @@
       "observed_at": "2026-07-27T08:21:47.4190618Z",
       "summary": "T066 validation is partially complete. Surrounding passes 173/173. The preserved first non-image attempt passed 510 and failed only two intentionally stale current-checkout authority hashes; focused alignment passes 16/16 and the corrected full non-image suite passes 512/512. Web build succeeds with zero errors and nine known warnings. T001, ledger refresh, and fresh T040 remain.",
       "raw_output_path": "TestResults/story-4-2-quality8-validation/"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/92",
+      "kind": "test-run",
+      "stage": "implement",
+      "source_commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+      ],
+      "command": "Committed-boundary T001 provider/profiling and framework Current verification refresh",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T08:25:15.7924094Z",
+      "summary": "At clean immutable QR8 correction and authority-alignment commit d77c096, provider/profiling passes 116/116 and framework detection passes 57/57. Attempts 12-13 are Current verification only and do not recreate unavailable historical RED or pre-correction evidence.",
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality8-refresh/"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T082147Z-e86b4c",
+    "checkpoint_id": "bmad-4-2-verification-20260727T082515Z-f97c5d",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/evidence/quality8-validation.json",
-      "specs/002-language-framework-detection/workflow-state.json",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/91"
+      "4-2-language-and-framework-detection/implement/92"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T08:21:47.4190618Z"
+  "updated_at": "2026-07-27T08:25:15.7924094Z"
 }

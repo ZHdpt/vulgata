@@ -8,15 +8,15 @@
   "feature_directory": "specs/002-language-framework-detection",
   "baseline_statement": "Pre-correction T001 baseline observation: unavailable",
   "passing_result_label": "Current verification",
-  "observed_at": "2026-07-27T14:25:53.6778621+08:00",
-  "recorded_at": "2026-07-27T06:26:36.3310325Z",
+  "observed_at": "2026-07-27T16:24:41.2380922+08:00",
+  "recorded_at": "2026-07-27T08:25:15.7924094Z",
   "source_boundary": {
-    "commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
-    "tree": "036207197c06f5c64dfa9c619563e123d8428386",
+    "commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+    "tree": "6042812d76cb1ef85082367e6faab2a6def575f7",
     "branch": "dev",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
-    "pinned_diff_boundary": "e9824df7300634c19d815bdd7ad591b9fb5366d5..281c16b01db3b6ff5873fc9535254fa9c4df71c7",
+    "pinned_diff_boundary": "e9824df7300634c19d815bdd7ad591b9fb5366d5..d77c09671d4be870f16fedf8b73e3232b7882bc0",
     "initial_tracked_status": [],
     "source_or_test_bytes_changed": false
   },
@@ -70,6 +70,13 @@
     "sha256": "33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f",
     "scope_validated": true,
     "scope": "The unchanged validated NuGet/npm lock-owner filtering design only; no Worker Agent tool or PRD requirement change, and no later gate is waived."
+  },
+  "quality8_planned_change_authorization": {
+    "path": "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+    "sha256": "c4a56c0b69b295672ba9c113eef25319fffccb635bf31c19d643e0f90ebbc628",
+    "decision": "approved",
+    "scope_validated": true,
+    "scope": "Namespace-closed XML evidence, bounded pinned-tree supported-artifact filtering, and stale authority reconciliation only; no Worker Agent/tool, orchestration, dispatch, PRD, persistence, API, UI, migration, or later-gate waiver."
   },
   "attempts": [
     {
@@ -311,6 +318,50 @@
       "raw_output_path": "TestResults/story-4-2-current-verification-quality7-refresh/T001-framework-green.trx",
       "raw_output_sha256": "50e569fc13933f788fe3798847d85994afd25722c0fd5442498bfd3cb949acd9",
       "raw_output_length_bytes": 130284
+    },
+    {
+      "sequence": 12,
+      "target": "provider-profiling",
+      "kind": "test-green",
+      "label": "Current verification",
+      "source_commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+      "source_tree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProviderTests|FullyQualifiedName~RepositoryProfilingTests\" --no-restore --results-directory TestResults/story-4-2-current-verification-quality8-refresh --logger \"trx;LogFileName=T001-provider-profiling-green.trx\"",
+      "exit_code": 0,
+      "observed_start_utc": "2026-07-27T16:23:47.7517170+08:00",
+      "observed_end_utc": "2026-07-27T16:24:02.0773823+08:00",
+      "test_totals": {
+        "failed": 0,
+        "passed": 116,
+        "skipped": 0,
+        "total": 116,
+        "reported_duration_seconds": 13
+      },
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality8-refresh/T001-provider-profiling-green.trx",
+      "raw_output_sha256": "ed17ba4c2b3481989f5562e4db730209ec10aa8b4023e6f36d786a6f390a88af",
+      "raw_output_length_bytes": 178678
+    },
+    {
+      "sequence": 13,
+      "target": "framework",
+      "kind": "test-green",
+      "label": "Current verification",
+      "source_commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+      "source_tree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetectionTests\" --no-restore --no-build --results-directory TestResults/story-4-2-current-verification-quality8-refresh --logger \"trx;LogFileName=T001-framework-green.trx\"",
+      "exit_code": 0,
+      "observed_start_utc": "2026-07-27T16:24:02.8702112+08:00",
+      "observed_end_utc": "2026-07-27T16:24:41.2380922+08:00",
+      "test_totals": {
+        "failed": 0,
+        "passed": 57,
+        "skipped": 0,
+        "total": 57,
+        "reported_duration_seconds": 37
+      },
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality8-refresh/T001-framework-green.trx",
+      "raw_output_sha256": "5eb95681410e6f53b672174ccc3cb7dc6e2226516a104e6b9f694abf305d96c4",
+      "raw_output_length_bytes": 131836
     }
   ],
   "recovery_diagnosis": {
@@ -332,7 +383,7 @@
   "network_proxy_status": {
     "blocked_urls_or_hosts": [],
     "clash_or_proxy_failure_observed": false,
-    "summary": "No blocked URL or host and no network, Clash, or proxy failure was observed in any retained passing command, including the quality-review-7 Current verification refresh."
+    "summary": "No blocked URL or host and no network, Clash, or proxy failure was observed in any retained passing command, including the quality-review-8 Current verification refresh."
   },
-  "summary": "Current verification was refreshed at clean immutable commit 281c16b01db3b6ff5873fc9535254fa9c4df71c7 after the quality-review-7 correction. Provider/profiling passed 116/116 and framework detection passed 56/56. All earlier attempts remain ordered and source-bound. No historical, pre-correction, RED, or contemporaneous-ordering claim is made."
+  "summary": "Current verification was refreshed at clean immutable commit d77c09671d4be870f16fedf8b73e3232b7882bc0 after the quality-review-8 correction and authority-hash alignment. Provider/profiling passed 116/116 and framework detection passed 57/57. All earlier attempts remain ordered and source-bound. No historical, pre-correction, RED, or contemporaneous-ordering claim is made."
 }
