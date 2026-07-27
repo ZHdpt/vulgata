@@ -764,6 +764,19 @@ unchanged.
 - E2E checkpoint:
   `bmad-4-2-e2e-20260727T004131Z-a46c91`
   (pending Git binding).
+- T045 pre-image verification is GREEN at the unchanged T041 product/test
+  boundary: provider/profiling 116/116, framework 50/50, executable
+  accepted-plan binding 17/17, the complete non-final-image suite 504/504,
+  and Repository API/dashboard authorization-redaction coverage 33/33.
+  The Web build completed with zero errors; forward and reverse migration
+  scripts preserve the accepted two-migration order; the model has no pending
+  changes. The 74-path FR-020 audit found no forbidden Scan Coordinator,
+  orchestration, Worker Agent/tool, dispatch, or retry change. The sole generic
+  filename match is the accepted `RepositoryProfilingCoordinator` language and
+  framework persistence seam, not a Scan Coordinator.
+- Verification checkpoint:
+  `bmad-4-2-verification-20260727T004912Z-d2f47a`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

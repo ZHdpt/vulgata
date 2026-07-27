@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "implement",
+  "stage": "verification",
   "active_gates": {
     "acceptance-review": {
       "status": "revised",
@@ -2546,23 +2546,49 @@
       "observed_at": "2026-07-26T10:04:25.4503372Z",
       "summary": "T044 was required by the user-visible UI, API/persistence/multi-module, and observable data-lifecycle predicates. The economical integration run passed 198 of 198 with no tracked test edit and no coverage override. PostgreSQL migration scripts and final Docker image identity remain explicitly assigned to T045 and T047-T048.",
       "raw_output_path": "TestResults/story-4-2-final-e2e/T044-runtime-integration-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/verification/1",
+      "kind": "test-green",
+      "stage": "verification",
+      "source_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-verification/T045-provider-profiling-green.txt",
+        "TestResults/story-4-2-final-verification/T045-framework-green.txt",
+        "TestResults/story-4-2-final-verification/T045-binding-green.txt",
+        "TestResults/story-4-2-final-verification/T045-non-final-image-suite-green.txt",
+        "TestResults/story-4-2-final-verification/T045-web-build-green.txt",
+        "TestResults/story-4-2-final-verification/T045-migration-forward.sql.txt",
+        "TestResults/story-4-2-final-verification/T045-migration-rollback.sql.txt",
+        "TestResults/story-4-2-final-verification/T045-pending-model-green.txt",
+        "TestResults/story-4-2-final-verification/T045-authorization-redaction-green.txt",
+        "TestResults/story-4-2-final-verification/T045-fr020-owned-paths.txt",
+        "TestResults/story-4-2-final-verification/T045-fr020-audit.txt",
+        "TestResults/story-4-2-final-verification/T045-diff-check.txt",
+        "TestResults/story-4-2-final-verification/T045-status.txt"
+      ],
+      "command": "Focused provider/profiling, framework, and accepted-plan-binding tests; complete non-final-image suite; Web build; forward and reverse VulgataDbContext migration scripts; pending-model check; Repository API and dashboard authorization/redaction tests; FR-020 candidate diff audit; git diff --check; git status --short",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T00:49:12.9821384Z",
+      "summary": "T045 passed at the unchanged T041 product/test boundary: provider/profiling 116/116, framework 50/50, binding 17/17, non-final-image suite 504/504, and authorization/redaction 33/33. Web build completed with zero errors; forward and reverse scripts preserve the two-migration Story 4.2 order; the model has no pending changes. FR-020 has zero forbidden Scan Coordinator/orchestration/tool/dispatch changes; the one generic filename match is the accepted RepositoryProfilingCoordinator integration seam. Diff check and tracked status are clean.",
+      "raw_output_path": "TestResults/story-4-2-final-verification/T045-non-final-image-suite-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-e2e-20260727T004131Z-a46c91",
+    "checkpoint_id": "bmad-4-2-verification-20260727T004912Z-d2f47a",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "conditional-e2e",
+    "stage": "verification",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/conditional-e2e/1"
+      "4-2-language-and-framework-detection/verification/1"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T00:41:31.5144387Z"
+  "updated_at": "2026-07-27T00:49:12.9821384Z"
 }
