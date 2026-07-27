@@ -2942,24 +2942,38 @@
       "observed_at": "2026-07-27T06:38:32.7469721Z",
       "summary": "T039 and T062 are refreshed through QR7. The ledger preserves prior history, records QR7 current evidence without relabelling it historical, invalidates candidate 6149623 and review iteration 7, and claims no replacement downstream gate. The old T040 ACCEPT is invalidated and a fresh independent T040 audit remains mandatory before T041.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/87",
+      "kind": "review",
+      "stage": "implement",
+      "source_commit": "b5d150b4aac274611d63b28604d949e955275c2d",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T06:57:18.9194890Z",
+      "summary": "Fresh independent T040 audit 2 ACCEPTED the QR7-refreshed truthful ledger with no findings. All source-range, authority, immutable blob, raw evidence, temporal, malformed-checkpoint, QR7, and downstream-state checks passed; T041 is permitted.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T063832Z-d4c91b",
+    "checkpoint_id": "bmad-4-2-implement-20260727T065718Z-e52a7c",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/86"
+      "4-2-language-and-framework-detection/implement/87"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T06:38:32.7469721Z"
+  "updated_at": "2026-07-27T06:57:18.9194890Z"
 }

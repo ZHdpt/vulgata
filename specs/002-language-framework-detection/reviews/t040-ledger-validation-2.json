@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "gate": "T040-ledger-validation",
+  "verdict": "ACCEPT",
+  "story": {
+    "key": "4-2-language-and-framework-detection",
+    "epic": "4",
+    "execution_level": "Full",
+    "stage": "implement",
+    "task": "T040"
+  },
+  "reviewed_boundary": {
+    "base_exclusive": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "ledger_source_commit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338",
+    "ledger_source_tree": "4ebfc782bd41235d25b2e353f08f19f461788d9a",
+    "reviewed_checkpoint_commit": "b5d150b4aac274611d63b28604d949e955275c2d",
+    "reviewed_checkpoint_tree": "4bb1b051ff04630eb28cc466796d10d308dfe36c",
+    "checkpoint_parent": "22975db7115ff1afbfcf146aa42ba9aa4dd55338",
+    "source_commit_count": 68,
+    "merge_commit_count": 0,
+    "history_shape": "linear"
+  },
+  "validated_claims": {
+    "authority_git_blob_sha256": {
+      "validated": 19,
+      "mismatches": 0
+    },
+    "immutable_artifact_blob_oids": {
+      "validated": 71,
+      "mismatches": 0
+    },
+    "ledger_raw_evidence": {
+      "validated_files": 53,
+      "missing_files": 0,
+      "hash_mismatches": 0,
+      "length_mismatches": 0
+    },
+    "t001_attempts_10_11": {
+      "validated_separately": true,
+      "provider_profiling_passed": "116/116",
+      "framework_passed": "56/56",
+      "source_commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
+      "historical_or_pre_correction_claimed": false
+    },
+    "checkpoint_truth": {
+      "range_checkpoint_trailers": 62,
+      "unique_range_checkpoint_ids": 62,
+      "ledger_referenced_entries": 38,
+      "mandatory_four_trailers_present": 34,
+      "mandatory_four_trailers_absent": 4,
+      "referenced_entry_mismatches": 0,
+      "history_rewritten": false,
+      "forward_only_replacements_valid": true
+    },
+    "legacy_tdd_truth": {
+      "groups": 19,
+      "historical_raw_red_available": 0,
+      "historical_raw_red_unavailable": 19,
+      "checkpoint_trailer_available": 5,
+      "checkpoint_trailer_unavailable": 14,
+      "historical_order_inferred": false,
+      "exact_t001_disclosure_present": true
+    },
+    "quality_review_7": {
+      "reviewed_candidate": "614962322e9f3578980a6fa28bc8897d22b66c58",
+      "acceptance_verdict": "ACCEPT",
+      "quality_verdict": "REVISE",
+      "quality_findings": [
+        "QR7-001",
+        "QR7-002",
+        "QR7-003"
+      ],
+      "scan_strategy_remediation_explicitly_approved": true,
+      "later_gates_waived": false,
+      "correction_commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
+      "candidate_and_review_lane_invalidated": true
+    },
+    "qr7_temporal_truth": {
+      "review_preceded_approval": true,
+      "approval_preceded_correction": true,
+      "three_behavior_reds_each_failed_1_of_1": true,
+      "focused_green_passed": "3/3",
+      "framework_green_passed": "55/55",
+      "current_results_relabelled_historical": false,
+      "backdated_or_amended_claim_detected": false
+    },
+    "completion_lane_classification": {
+      "first_surrounding_attempt": "258 passed, 1 failed",
+      "sole_failure": "Final-image completion lane lacked VULGATA_PROVIDER_CONTRACT_IMAGE",
+      "environment_bound": true,
+      "product_regression": false,
+      "corrected_surrounding_attempt": "258/258 passed",
+      "full_non_image_suite": "510/510 passed"
+    },
+    "scope_and_downstream_state": {
+      "exception_scope": "Story 4.2 historical task groups only",
+      "exception_generalized": false,
+      "T039_complete": true,
+      "T040_pending_at_reviewed_boundary": true,
+      "T041_through_T050_all_pending": true,
+      "replacement_candidate_or_downstream_gate_claimed": false,
+      "next_permitted_task_after_accept": "T041"
+    }
+  },
+  "findings": [],
+  "read_only_confirmation": {
+    "files_edited": false,
+    "tests_or_builds_executed": false,
+    "task_markers_changed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false,
+    "final_head": "b5d150b4aac274611d63b28604d949e955275c2d",
+    "final_worktree_clean": true
+  },
+  "summary": "The refreshed Story 4.2 truthful ledger is internally consistent with immutable Git, pinned authorities, referenced blobs and raw evidence, QR7 correction chronology, current-only T001 evidence, malformed historical checkpoint classifications, and the pending downstream task boundary. T040 ACCEPT authorizes T041 without duplicate user approval.",
+  "recorded_at": "2026-07-27T06:57:18.9194890Z"
+}

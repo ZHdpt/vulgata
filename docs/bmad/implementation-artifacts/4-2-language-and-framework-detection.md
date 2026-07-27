@@ -897,6 +897,11 @@ unchanged.
   attempts 10-11. T062 is complete. The prior T040 ACCEPT applies only to the
   older ledger boundary, so T040 is reset pending a fresh independent audit;
   T041 remains blocked until that audit accepts.
+- Fresh independent T040 audit 2 ACCEPTS checkpoint
+  `b5d150b4aac274611d63b28604d949e955275c2d` with no findings. It validates
+  19 authority hashes, 71 immutable blob references, 53 raw evidence files,
+  T001 attempts 10-11, 38 referenced checkpoint records, QR7 chronology, and
+  the absence of replacement T041-T050 claims. T041 is now permitted.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
