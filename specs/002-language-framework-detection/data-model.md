@@ -164,6 +164,33 @@ Catalog version and SHA-256 are logged as safe operational metadata. Duplicate
 or overlapping coordinates that can produce multiple framework names fail
 startup.
 
+### `CommittedEvidenceInventoryEntry`
+
+Transient identity for one retained supported artifact from the exact pinned
+Repository tree:
+
+| Field | Rule |
+| --- | --- |
+| `SourceCommit` | Exact immutable commit passed to `git ls-tree`; never mutable `HEAD` after resolution. |
+| `TreeMode` | Exact mode from the NUL-delimited tree record. |
+| `ObjectType` | Must be exactly `blob`; another type fails the Repository detector result. |
+| `ObjectId` | Exact committed blob object ID used to read the artifact. |
+| `ArtifactPath` | Safe Repository-relative path, maximum 2,048 characters. |
+| `ArtifactKind` | Exactly one of `CsProject`, `MavenPom`, `NpmManifest`, `NpmLock`, `NuGetLock`, or `PythonRequirements`. |
+
+Entries come only from incremental parsing of
+`git ls-tree -r -z --full-tree <commit> --`. The stream is limited to 16 MiB,
+100,000 input records, 1,000 retained entries, a 30-second deadline, and caller
+cancellation. Only root or nested `*.csproj`, `pom.xml`, `package.json`,
+`package-lock.json`, `packages.lock.json`, and `requirements.txt` paths are
+retained. A malformed record, bound/deadline/cancellation failure, non-blob
+retained entry, or mode/type/object identity drift returns zero framework
+facts; no partial inventory survives.
+
+The earlier `git ls-files --cached` wording is superseded. The mutable index,
+working tree, untracked files, ignored files, and dirty files cannot create this
+model or supply framework evidence.
+
 ### `PackageEvidence`
 
 | Field | Rule |
@@ -197,10 +224,26 @@ create `PackageEvidence`:
 
 Created only when the complete same-root owner-candidate set has exactly one
 entry and that entry is `SafeAndBounded`, `ParsedSupported`, and applicable.
-NuGet conditional/dynamic owners and npm manifests outside the supported
-literal top-level package shape do not create this model. A catalog-matched
-direct framework declaration is not required: ownership and catalog fact
-matching are separate.
+For NuGet, `ParsedSupported` is closed to the same project-level grammar as
+direct evidence, resolving `QR9-001`:
+
+- a literal root `Project` `Sdk` attribute;
+- a literal direct `Project/Sdk` child; or
+- a literal `PackageReference` or `FrameworkReference` directly beneath a
+  direct project-level `ItemGroup`.
+
+Conditions or dynamic values on these shapes reject ownership. Declarations
+beneath `Target`, `Choose`, `When`, import-driven/evaluated content, or any
+other nested or execution-dependent construct never prove ownership. If one of
+those is the sole apparent declaration, the candidate is `Unsupported`, the
+matched lock creates no `PackageEvidence`/`Medium` fact, and exactly one bounded
+closed audit outcome is retained for the artifact-local lock/owner rejection.
+The outcome contains no raw declaration value, source content, or absolute host
+path, and independent valid Repository evidence continues.
+
+npm manifests outside the supported literal top-level package shape likewise
+do not create this model. A catalog-matched direct framework declaration is not
+required: ownership and catalog fact matching are separate.
 
 `PackageEvidence(Relationship=Transitive)` requires one
 `ValidatedDirectManifestOwner`. If there are zero or multiple candidates, or
@@ -282,6 +325,9 @@ local candidate audit persisted
   -> parser languages reconciled per file
   -> missing-language candidates become Filtered/UnknownLanguage
   -> retained Code Units receive required language
+  -> resolve one exact committed tree
+  -> incrementally parse git ls-tree -r -z --full-tree <commit> --
+  -> retain only six supported blob shapes with exact mode/type/object identity
   -> bounded package evidence parsed in memory
   -> catalog facts scoped, ranked, deduplicated
   -> language summaries computed
@@ -312,7 +358,9 @@ Lock with unproven owner:
 enumerate complete same-root direct-manifest owner candidates
   -> candidate count != 1: bounded ambiguous/unsupported outcome
   -> sole candidate read/parse/support/applicability fails: bounded outcome
+  -> Target/Choose/When/import-driven declaration alone: unsupported
   -> no lock-derived PackageEvidence or framework fact
+  -> exactly one bounded closed lock/owner audit without raw values
   -> independent valid artifacts continue
 ```
 

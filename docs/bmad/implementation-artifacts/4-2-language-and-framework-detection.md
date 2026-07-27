@@ -999,6 +999,16 @@ unchanged.
   planned-change authorization for QR9-001, task regeneration, Full analysis,
   RED-GREEN correction, ledger validation, candidate pinning, and both review
   axes remain mandatory.
+- The complete five-file AR9/QR9 plan set is now accepted by fresh independent
+  plan-review 10. Plan-review 9 first rejected a cyclic order that regenerated
+  the tracked truthful ledger after candidate review; the correction now
+  completes Current verification and ledger regeneration/validation before
+  one candidate pin, with all reviews and downstream gates afterward. R5
+  consistently supersedes mutable-index `git ls-files --cached` with bounded
+  pinned `git ls-tree`, and QR9 uses one closed project-level NuGet owner
+  grammar. Candidate `708b7df` and review iteration 9 are invalidated history.
+  Task generation is blocked pending explicit user authorization for QR9's
+  Scan XML parsing and lock-owner filtering change.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

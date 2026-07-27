@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "fab80f9334b7f2132bc270c9ce99e433b3d77513",
+  "reviewed_boundary": {
+    "base_commit": "fab80f9334b7f2132bc270c9ce99e433b3d77513",
+    "candidate_commit": null,
+    "diff_sha256": "a43053b29e23eacdc6fbe68053087946c2ad3b0f78339c40c7f582bc90761bd5",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/plan.md": "ef9c50c9718ef062f6b1457f9a3d9c81ce9785081042638bb6e99014fe20094b",
+      "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+      "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+      "specs/002-language-framework-detection/quickstart.md": "aa0773fbd33aa25e928375a0ad056f4c68699753babba0324240dfbe17b58ee0"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "specs/002-language-framework-detection/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+    "specs/002-language-framework-detection/reviews/quality-review-9.json",
+    "specs/002-language-framework-detection/reviews/plan-review-8.json",
+    "specs/002-language-framework-detection/reviews/quality-review-8.json",
+    "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json"
+  ],
+  "checks": [
+    {
+      "id": "PR9-FEASIBILITY",
+      "status": "PASS",
+      "evidence": "The QR9 correction reuses the existing direct-manifest parser grammar, remains non-executing and artifact-local, and requires bounded behavior-level RED/GREEN coverage."
+    },
+    {
+      "id": "PR9-ARCHITECTURE",
+      "status": "PASS",
+      "evidence": "Core, Infrastructure, Shared, Web, persistence, authorization, and testing ownership remain within the established project seams. No Worker Agent, orchestration, dispatch, scheduling, grouping, retry, or Story 4.3 scope is added."
+    },
+    {
+      "id": "PR9-AR9-001",
+      "status": "PASS",
+      "evidence": "Research R5, plan constraints/design, data model, framework contract, and quickstart explicitly supersede mutable-index git ls-files --cached with exact pinned git ls-tree, six-shape retention, incremental byte/record/deadline/cancellation bounds, and retained mode/type/blob identity."
+    },
+    {
+      "id": "PR9-QR9-001",
+      "status": "PASS",
+      "evidence": "Research R12/R17 and the plan, data model, contract, and quickstart consistently restrict NuGet ownership to literal root Project Sdk, direct Project/Sdk, or PackageReference/FrameworkReference directly beneath a direct project-level ItemGroup. Target, Choose/When, import-driven, conditional/dynamic, and other execution-dependent declarations cannot prove ownership."
+    },
+    {
+      "id": "PR9-R1-R17",
+      "status": "PASS",
+      "evidence": "Research contains explicit R1 through R17 decisions, rationales, rejected alternatives, and a gate result with no unresolved clarification."
+    },
+    {
+      "id": "PR9-FAILURE-BEHAVIOR",
+      "status": "PASS",
+      "evidence": "Unsupported nested ownership creates zero Medium facts, exactly one bounded closed artifact-local audit without raw values, and does not suppress independent valid Repository evidence. Repository-wide bounds and detector faults remain fail-closed with zero partial framework facts."
+    },
+    {
+      "id": "PR9-TESTABILITY",
+      "status": "PASS",
+      "evidence": "The plan defines observed RED for Target-nested and Choose/When-nested owners, GREEN for both negative cases, positive coverage for all three supported project-level shapes, bounded audit assertions, independent-evidence continuation, and surrounding framework/profiling suites."
+    },
+    {
+      "id": "PR9-DOWNSTREAM-SEQUENCE",
+      "status": "FAIL",
+      "evidence": "quickstart.md lines 416-423 declares a mandatory order that pins the changed candidate and runs both Full reviews and E2E before regenerating the tracked reconstruction ledger. plan.md lines 792-796 states that reconstruction-ledger or related tracked evidence-byte changes invalidate candidate identity, both reviews, E2E, verification, and source-manifest/image bindings. No subsequent repin and rerun is specified."
+    }
+  ],
+  "findings": [
+    {
+      "id": "PR9-001",
+      "severity": "HIGH",
+      "category": "internal-consistency/workflow-boundary/testability",
+      "artifact": "specs/002-language-framework-detection/quickstart.md",
+      "location": "lines 416-423, correlated with plan.md lines 727-732 and 792-796",
+      "affected_requirement": "The Full workflow must regenerate every invalidated downstream artifact and run both implementation review axes, E2E, and verification against one unchanged pinned candidate boundary.",
+      "evidence": [
+        "quickstart.md places candidate pinning, both Full reviews, and E2E before reconstruction-ledger regeneration.",
+        "The reconstruction ledger is a tracked boundary artifact and prior Story 4.2 candidate manifests include it.",
+        "plan.md explicitly says changes to the ledger or tracked test/evidence bytes invalidate candidate identity, both reviews, E2E, verification, and image/source bindings.",
+        "The mandatory sequence does not repin the candidate or rerun the invalidated gates after the ledger changes."
+      ],
+      "correction_outcome": "Define one acyclic downstream sequence. Regenerate current-verification and reconstruction-ledger artifacts before pinning the implementation candidate, then pin once and run both Full reviews, conditional E2E, verification, source-manifest/image qualification, T049, and T050. If a ledger must instead be written after reviews or E2E, explicitly repin the changed candidate and rerun every invalidated review, E2E, verification, manifest, image, and audit gate before advancement."
+    }
+  ],
+  "constitution_assessment": {
+    "status": "PASS",
+    "violated_musts": [],
+    "evidence": [
+      "Layered project boundaries remain intact.",
+      "Canonical Repository, Scan, Code Unit, Worker Agent, and Cross-Repository terminology is preserved.",
+      "The plan retains integration-first RED/GREEN coverage and Simplified-Chinese UI requirements.",
+      "Package evidence stays local, bounded, non-executing, and redacted."
+    ]
+  },
+  "prd_assessment": {
+    "status": "PASS",
+    "prd_requirement": "FR-4.1",
+    "changed_or_weakened": false,
+    "evidence": "The correction preserves deterministic language/framework profiling before Worker Agent dispatch and narrows unsupported evidence to absence rather than creating false facts."
+  },
+  "adr_assessment": {
+    "status": "PASS",
+    "conflicts": [],
+    "evidence": "No system-wide or context-scoped ADR exists in the pinned source tree for this area."
+  },
+  "planned_change_trigger_confirmation": {
+    "triggered": true,
+    "trigger": "QR9-001 materially changes Scan XML parsing and NuGet lock-owner filtering behavior.",
+    "placement_status": "CORRECT",
+    "required_timing": "After a fresh independent plan-review ACCEPT and before task generation.",
+    "prior_qr8_authorization_sufficient": false,
+    "authorization_granted_by_this_review": false,
+    "authorization_currently_presumed": false,
+    "effect": "A future accepted corrected plan must pause for explicit QR9 user authorization; that authorization cannot waive TDD, analysis, both Full reviews, conditional E2E, security, verification, or Git gates."
+  },
+  "dependent_regeneration_requirements": {
+    "required": true,
+    "bounded_correction_first": "Resolve PR9-001 and repin all five plan artifacts for a fresh plan-review.",
+    "required_sequence_after_accept": [
+      "Persist the fresh accepted complete-plan verdict and plan checkpoint.",
+      "Obtain explicit QR9 planned-change authorization before task generation.",
+      "Regenerate dependency-ordered tasks, including corrected T001 and QR9 behavior-level RED/GREEN.",
+      "Run fresh read-only speckit-analyze before implementation.",
+      "Observe QR9 owner-grammar RED, implement minimal GREEN, and run surrounding tests.",
+      "Regenerate current-verification and reconstruction-ledger evidence before the candidate is pinned.",
+      "Pin one unchanged candidate boundary.",
+      "Rerun both Full implementation review axes against that boundary.",
+      "Rerun the conditional E2E decision/result and final verification.",
+      "Regenerate the production-source manifest, image labels/ID, correction namespace, and final-image evidence.",
+      "Run a fresh T049 freeze and T050 audit."
+    ]
+  },
+  "summary": "REVISE. AR9-001 and QR9-001 are technically and authoritatively resolved, R1-R17 are complete, Constitution and PRD FR-4.1 remain satisfied, and the separate post-ACCEPT/pre-task QR9 authorization gate is correctly placed. Advancement is blocked by one bounded downstream-order defect: the mandatory quickstart sequence changes the tracked reconstruction ledger after candidate review and E2E without repinning and rerunning the invalidated gates.",
+  "read_only_confirmation": {
+    "files_changed": false,
+    "tests_or_builds_executed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "task_markers_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false,
+    "tasks_or_code_created": false,
+    "qr9_authorized": false
+  }
+}

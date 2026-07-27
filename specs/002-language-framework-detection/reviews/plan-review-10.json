@@ -1,0 +1,184 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "iteration": 10,
+  "verdict": "ACCEPT",
+  "reviewed_commit": "fab80f9334b7f2132bc270c9ce99e433b3d77513",
+  "reviewed_boundary": {
+    "base_commit": "fab80f9334b7f2132bc270c9ce99e433b3d77513",
+    "candidate_commit": null,
+    "diff_sha256": "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba",
+    "binary_diff_length_bytes": 52541,
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+      "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+      "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+      "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "specs/002-language-framework-detection/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md#FR-4.1",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+    "specs/002-language-framework-detection/reviews/quality-review-9.json",
+    "specs/002-language-framework-detection/reviews/plan-review-9.json",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/quickstart.md"
+  ],
+  "checks": [
+    {
+      "id": "PR10-BOUNDARY",
+      "status": "PASS",
+      "evidence": "The source commit equals the dispatched immutable SHA, all five artifact hashes match exactly, and the complete nonrecursive five-path binary diff is pinned."
+    },
+    {
+      "id": "PR10-FEASIBILITY",
+      "status": "PASS",
+      "evidence": "The QR9 correction reuses the existing bounded non-executing XML parser seam and requires only grammar restriction plus focused behavior-level tests. No unavailable technology or speculative dependency is introduced."
+    },
+    {
+      "id": "PR10-ARCHITECTURE",
+      "status": "PASS",
+      "evidence": "Core, Infrastructure, Shared, Web, persistence, authorization, and test ownership remain within established seams. No Worker Agent, Orchestrator, Scan Coordinator, dispatch, scheduling, grouping, retry, Story 4.3, document-generation, or Cross-Repository Resolution scope is introduced."
+    },
+    {
+      "id": "PR10-AR9-001",
+      "status": "PASS",
+      "evidence": "R5 and every dependent plan artifact now explicitly supersede mutable-index git ls-files --cached with exact pinned git ls-tree enumeration, closed six-shape retention, incremental byte/record/deadline/cancellation bounds, and retained mode/type/blob identity."
+    },
+    {
+      "id": "PR10-QR9-001",
+      "status": "PASS",
+      "evidence": "R12/R17, plan design, data model, contract, and quickstart consistently restrict NuGet ownership to three literal project-level forms. Target, Choose/When, import-driven, conditional/dynamic, and other execution-dependent declarations produce zero Medium facts, one bounded closed artifact-local audit, no raw-value disclosure, and do not suppress independent valid evidence."
+    },
+    {
+      "id": "PR10-FAILURE-BEHAVIOR",
+      "status": "PASS",
+      "evidence": "Individual unsupported owner evidence remains artifact-local and fact-free; Repository-wide bounds, cancellation, malformed inventory, object drift, catalog failure, and unexpected detector faults remain fail-closed with zero partial framework facts."
+    },
+    {
+      "id": "PR10-TESTABILITY",
+      "status": "PASS",
+      "evidence": "The plan requires observed RED before production mutation for Target-nested and Choose/When-nested owners, GREEN for both negative cases, positive coverage for all three supported owner forms, audit/redaction assertions, independent-evidence continuation, and surrounding detector/profiling suites."
+    },
+    {
+      "id": "PR10-PR9-001-CLOSURE",
+      "status": "PASS",
+      "evidence": "Current verification, truthful reconstruction-ledger regeneration, and independent ledger validation now precede exactly one clean candidate pin. Both Full reviews, conditional E2E, verification, read-only cross-validation, production-source manifest, unused namespace, fresh image/final-image gate, T049, and T050 follow that pin without tracked candidate-boundary mutation."
+    },
+    {
+      "id": "PR10-POST-PIN-INVALIDATION",
+      "status": "PASS",
+      "evidence": "The plan and quickstart explicitly state that any post-pin tracked candidate-boundary mutation invalidates the candidate, both Full reviews, E2E, verification, manifest, namespace/image/final-image evidence, T049, and T050, requiring correction, repinning, and rerunning downstream steps 8-13."
+    },
+    {
+      "id": "PR10-DOWNSTREAM-ACYCLICITY",
+      "status": "PASS",
+      "evidence": "The corrected sequence is acyclic: plan acceptance, QR9 authorization, tasks, analysis, RED/GREEN correction, final pre-pin evidence generation and validation, one pin, reviews, E2E, verification, image qualification, T049, then T050."
+    }
+  ],
+  "findings": [],
+  "prior_finding_closure": {
+    "PR9-001": {
+      "status": "CLOSED",
+      "evidence": [
+        "plan.md places Current verification and truthful-ledger regeneration plus independent validation before candidate pinning.",
+        "quickstart.md repeats the same mandatory ordering.",
+        "Both artifacts prohibit post-pin tracked candidate-boundary mutation.",
+        "Both artifacts require complete downstream invalidation, repinning, and reruns if such mutation occurs."
+      ]
+    },
+    "AR9-001": {
+      "status": "CLOSED_IN_PLAN",
+      "evidence": "The complete plan set now has one committed-tree inventory authority and explicitly rejects the former mutable-index mechanism."
+    },
+    "QR9-001": {
+      "status": "CLOSED_IN_PLAN_PENDING_AUTHORIZED_IMPLEMENTATION",
+      "evidence": "The complete plan set defines one supported NuGet owner grammar, bounded failure semantics, and executable RED/GREEN coverage. Implementation remains correctly blocked until the new planned-change authorization."
+    }
+  },
+  "constitution_assessment": {
+    "status": "PASS",
+    "violated_musts": [],
+    "evidence": [
+      "Layered project boundaries are preserved.",
+      "Canonical Repository, Scan, Code Unit, Worker Agent, and Cross-Repository terminology is retained.",
+      "The test-first integration requirement is explicit for QR9 behavior.",
+      "Package evidence remains local, bounded, non-executing, redacted, and deterministic.",
+      "Existing ManagementAccess, Repository visibility, ProblemDetails, and Simplified-Chinese presentation boundaries remain unchanged."
+    ]
+  },
+  "prd_assessment": {
+    "status": "PASS",
+    "prd_requirement": "FR-4.1",
+    "changed_or_weakened": false,
+    "evidence": "The plan continues deterministic language/framework profiling before Worker Agent dispatch and narrows unsupported XML ownership to absence rather than allowing a false framework fact."
+  },
+  "adr_assessment": {
+    "status": "PASS",
+    "conflicts": [],
+    "evidence": "No ADR authority was supplied or identified within the exact dispatched review boundary, and no reviewed plan provision contradicts an ADR requirement present in that boundary."
+  },
+  "planned_change_trigger_confirmation": {
+    "triggered": true,
+    "trigger": "QR9-001 materially changes Scan XML parsing and NuGet lock-owner filtering behavior.",
+    "required_timing": "After this independent plan-review ACCEPT and before task generation.",
+    "prior_qr8_authorization_sufficient": false,
+    "authorization_granted_by_this_review": false,
+    "authorization_currently_presumed": false,
+    "required_request_content": [
+      "Identify the Scan parsing/filtering trigger.",
+      "Explain the three supported project-level NuGet owner forms and rejection of nested or execution-dependent declarations.",
+      "Explain the effect on lock-derived facts and bounded audit behavior.",
+      "State the intended RED-GREEN implementation.",
+      "Cite the accepted plan, framework-detection contract, and PRD FR-4.1."
+    ],
+    "effect": "The orchestrator must preserve the mandatory explicit QR9 authorization gate. This ACCEPT advances to that gate without duplicate plan approval and does not authorize task generation by itself."
+  },
+  "dependent_regeneration_requirements": {
+    "required": true,
+    "required_sequence": [
+      "Persist this exact accepted complete-plan verdict and plan checkpoint.",
+      "Obtain explicit QR9 planned-change authorization before task generation.",
+      "Regenerate dependency-ordered tasks with corrected T001, QR9 owner-grammar RED/GREEN, and accepted-plan binding RED/GREEN.",
+      "Run fresh read-only speckit-analyze.",
+      "Implement only after observed behavior-level RED and obtain focused and surrounding GREEN.",
+      "Regenerate Current verification and the truthful reconstruction ledger, then independently validate the ledger before candidate pinning.",
+      "Pin exactly one clean immutable candidate.",
+      "Run both Full implementation review axes against the identical boundary.",
+      "Run conditional E2E and final verification.",
+      "Run read-only ledger/current-gate cross-validation.",
+      "Generate the production-source manifest and unused correction namespace, build and inspect the fresh image, and run final-image plus full-suite qualification.",
+      "Run T049 without changing the candidate boundary.",
+      "Run T050 last against unchanged T049 inputs."
+    ],
+    "post_pin_mutation_rule": "Any tracked candidate-boundary mutation after pinning invalidates the candidate and every dependent review, E2E, verification, manifest, image, T049, and T050 claim; correct, repin, and rerun all dependent gates."
+  },
+  "summary": "ACCEPT. All five exact-hash planning artifacts are feasible, internally consistent, testable, Constitution-compliant, and aligned with Story 4.2 and PRD FR-4.1. AR9-001, QR9-001 planning coverage, and PR9-001 downstream ordering are closed. Advancement must pause at the separate explicit QR9 planned-change authorization gate before task generation; QR8 authorization is insufficient.",
+  "read_only_confirmation": {
+    "files_changed": false,
+    "tests_or_builds_executed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "task_markers_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false,
+    "tasks_or_code_created": false,
+    "qr9_authorized": false,
+    "architect_conclusions_inherited": false
+  }
+}

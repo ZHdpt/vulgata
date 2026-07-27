@@ -12,11 +12,14 @@ review boundary remains accepted.
 - PostgreSQL 17 for application smoke validation; SQLite is used by the test
   harness
 - exact `docker/codegraph/requirements.lock`
-- a fresh independently accepted plan and regenerated tasks
+- a fresh independently accepted complete plan set containing this five-file
+  correction
+- a new QR9 planned-change authorization recorded after that plan acceptance
+  and before regenerated tasks or implementation
 - the existing
   `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json`,
-  verified as authorization for the unchanged lock-owner filtering design;
-  this evidence-only correction introduces no new planned-change trigger
+  retained only as historical authority for the earlier owner/inventory scope;
+  it does not pre-authorize QR9
 - one clean immutable correction candidate and one unused accepted-correction
   namespace
 
@@ -29,18 +32,18 @@ timestamp.
 
 For this uncommitted correction, the fresh verdict uses the pinned base commit,
 `candidate_commit: null`, the exact binary diff SHA-256, reviewed artifact
-hashes, and the three owned paths. The root then creates the plan-accepted
+hashes, and the five owned paths. The root then creates the plan-accepted
 checkpoint with a stable `Workflow-Checkpoint` ID and a null commit SHA/pending
 binding. After commit, resolve exactly one matching trailer and use that
 trailer-derived commit; never precompute or embed the commit in the checkpoint
 that will contain itself.
 
 ```pwsh
-$CorrectionSourceCommit = 'cfc65b7dc67bf84102fb16bef45f3f62b6d616b0'
+$CorrectionSourceCommit = 'fab80f9334b7f2132bc270c9ce99e433b3d77513'
 
 git merge-base --is-ancestor $CorrectionSourceCommit HEAD
 if ($LASTEXITCODE -ne 0) {
-  throw "Evidence-contract correction source is not an ancestor of HEAD."
+  throw "Iteration-9 plan-correction source is not an ancestor of HEAD."
 }
 
 Get-FileHash `
@@ -100,7 +103,8 @@ if ($LASTEXITCODE -ne 0) { throw "Current framework verification failed." }
 checkpoint from the fresh accepted plan verdict and regenerated tasks. Preserve
 the actual commit, tree, UTC observation time, commands, exit codes, raw-output
 paths, accepted plan-review `ACCEPT`, accepted artifact hashes, and verified
-`planned-change-authorization-2.json` in one T001 record labelled **“Current
+`planned-change-authorization-2.json` as prior-scope history plus the new QR9
+planned-change authorization in one T001 record labelled **“Current
 verification”**. In the same record, preserve the exact separate statement
 **“Pre-correction T001 baseline observation: unavailable”**.
 
@@ -204,6 +208,14 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj `
 
 Required GREEN for both NuGet and npm:
 
+- evidence inventory comes only from bounded incremental
+  `git ls-tree -r -z --full-tree <commit> --` parsing at the exact resolved
+  commit; only root or nested `*.csproj`, `pom.xml`, `package.json`,
+  `package-lock.json`, `packages.lock.json`, and `requirements.txt` blobs are
+  retained with exact mode/type/object identity;
+- `git ls-files --cached` is rejected as a superseded mutable-index authority,
+  and inventory overflow, malformed record, cancellation, deadline, or object
+  drift yields zero partial framework facts;
 - the complete same-root direct-manifest owner-candidate set is evaluated
   before lock entries;
 - exactly one candidate exists and it is safely read, successfully parsed,
@@ -216,6 +228,24 @@ Required GREEN for both NuGet and npm:
 - an invalid candidate is not ignored to manufacture a unique owner;
 - direct `High` still beats eligible lock `Medium`, and no build, restore,
   install, script, network, external package lookup, or LLM runs.
+
+Required QR9 behavior-level RED/GREEN:
+
+- before production changes, assertions for a matched lock with its sole
+  `PackageReference` beneath `Target` and for a matched lock with its sole
+  `FrameworkReference` beneath `Choose/When` fail against the current broad
+  descendant validator;
+- GREEN accepts ownership only from a literal root `Project` `Sdk`, literal
+  direct `Project/Sdk`, or literal
+  `PackageReference`/`FrameworkReference` directly under a direct
+  project-level `ItemGroup`;
+- conditional/dynamic allowed shapes and `Target`, `Choose/When`,
+  import-driven, or other execution-dependent declarations never prove
+  ownership;
+- every rejected lock/owner case produces zero `Medium` facts, exactly one
+  bounded closed audit without raw values, and allows separate valid evidence
+  to continue;
+- positive fixtures preserve all three supported project-level owner shapes.
 
 ## 7. Current migrations and persistence
 
@@ -375,17 +405,41 @@ git status --short
 ```
 
 Before task regeneration, fresh independent plan review must accept the entire
-corrected plan set. Regenerated tasks must verify that
-`planned-change-authorization-2.json` remains bound to the unchanged accepted
-lock-owner filtering design. This evidence-only correction does not require a
-new planned-change authorization. If fresh review finds an actual Worker
-Agent/tool, Scan strategy, or PRD change, stop for the repository's authorization
-gate instead of expanding this remediation.
+complete plan set with these five changed paths. QR9 materially changes Scan XML parsing and
+lock-owner filtering, so the root must then obtain new explicit user
+authorization before task generation. The request must identify the trigger,
+the exact owner-grammar correction and effects, implementation intent, the
+accepted plan/contract, and PRD FR-4.1. The prior QR8 authorization remains
+narrow historical authority and does not satisfy this gate. No approval waives
+TDD, Full reviews, E2E, security, verification, or Git controls.
 
-Execution order after plan acceptance is mandatory: regenerate tasks, rerun
-read-only analysis, observe focused stale-binding RED, implement binding GREEN,
-rerun surrounding contract tests, pin the changed candidate, rerun both Full
-implementation reviews, rerun the E2E decision/result, regenerate and validate
-the reconstruction ledger, then build the new manifest/image/namespace and run
-the exact final-image gate plus full suite. Only a subsequent unchanged T049
-freeze may unblock T050.
+The mandatory downstream sequence is:
+
+1. obtain a fresh independent complete-plan `ACCEPT`;
+2. obtain explicit QR9 planned-change authorization before task generation;
+3. regenerate dependency-ordered tasks;
+4. run fresh read-only `speckit-analyze`;
+5. observe the QR9 owner-grammar RED and focused stale-binding RED, implement
+   minimal GREEN, and rerun surrounding contract tests;
+6. regenerate the **Current verification** record and truthful reconstruction
+   ledger, then complete independent ledger validation, with every tracked
+   source, test, contract, planning, and candidate-bound evidence byte final;
+7. pin exactly one clean immutable candidate boundary;
+8. run both fresh Full implementation review axes against that identical
+   boundary;
+9. run the current-boundary conditional E2E decision/result;
+10. run final verification and read-only ledger/current-gate cross-validation;
+11. create the production-source manifest and unused correction namespace,
+    build and inspect the fresh image, and run the exact final-image gate plus
+    full suite;
+12. run T049 without changing the candidate boundary; and
+13. run T050 last against the unchanged T049 inputs.
+
+After step 7, any change to a tracked candidate-boundary file—including the
+current-verification record, reconstruction ledger, implementation, test,
+contract, planning, or Docker-context evidence bytes—invalidates the candidate,
+both Full review verdicts, conditional E2E decision/result, verification,
+source manifest, namespace/image/final-image evidence, T049, and T050. Complete
+the correction and all candidate-bound evidence writes, repin at step 7, and
+rerun steps 8-13. Post-pin review, E2E, verification, manifest/image, T049, and
+T050 work must not mutate tracked candidate-boundary bytes.

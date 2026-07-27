@@ -84,15 +84,32 @@ provider-marked incomplete.
 **Decision**: use a closed, embedded, version-controlled JSON catalog and
 closed parsers for `.csproj` + `packages.lock.json`, `package.json` +
 `package-lock.json` v2/v3, direct Maven `pom.xml`, and direct Python
-`requirements.txt`. Evidence inventory comes only from
-`git ls-files --cached`; dynamic/conditional constructs, Maven inheritance,
-requirements includes/URLs/markers, and untracked files are unsupported.
-Initial facts are `aspnet-core`, `blazor`,
-`spring-boot`, `react`, `express`, and `django`.
+`requirements.txt`. Resolve one exact committed tree and enumerate it only with
+`git ls-tree -r -z --full-tree <commit> --`. Parse that NUL-delimited output
+incrementally under the 16 MiB, 100,000-input-record, 1,000-retained-artifact,
+2,048-path-character, 30-second, and caller-cancellation bounds. Retain only
+root or nested `*.csproj`, `pom.xml`, `package.json`, `package-lock.json`,
+`packages.lock.json`, and `requirements.txt`, together with each entry's exact
+tree mode, object type, and blob object ID. Any malformed record, non-blob
+retained entry, bound/deadline/cancellation failure, or object-identity drift
+fails the Repository detector result with zero framework facts; no partial
+inventory is materialized.
+
+This decision explicitly supersedes the earlier mutable-index wording
+`git ls-files --cached`. The index, working tree, untracked files, ignored
+files, and dirty files are not framework-evidence inventory authorities.
+Dynamic/conditional constructs, Maven inheritance, requirements
+includes/URLs/markers, and unsupported artifact shapes remain unsupported.
+Initial facts are `aspnet-core`, `blazor`, `spring-boot`, `react`, `express`,
+and `django`.
 
 **Rationale**: these formats cover the story examples and both direct and
-committed-lock evidence while remaining non-executing. Catalog startup
-validation prevents ambiguous coordinates.
+committed-lock evidence while remaining non-executing. Pinned-tree enumeration
+binds every retained path to the exact committed object that is read, while
+closed retention and incremental bounds prevent a huge irrelevant tree from
+forcing unbounded materialization. Catalog startup validation prevents
+ambiguous coordinates. This resolves acceptance finding `AR9-001` within the
+previously approved QR8 inventory/namespace scope.
 
 **Alternatives considered**:
 
@@ -103,6 +120,12 @@ validation prevents ambiguous coordinates.
   formats create no fact.
 - mutable database catalog: rejected; this story requires version-controlled
   deterministic mappings, not user hypotheses.
+- `git ls-files --cached`: rejected and superseded because it observes the
+  mutable index rather than the pinned committed tree and does not bind a
+  retained path to its exact committed mode/type/object identity.
+- materialize the complete `git ls-tree` result before filtering: rejected
+  because irrelevant tracked inventory could exhaust memory before the closed
+  six-shape retention rule or bounds apply.
 
 ## R6. Scope, confidence, and tie-breaking
 
@@ -259,9 +282,24 @@ and applicable to the lock scope. Any zero/multiple, malformed, unsupported,
 conditional/dynamic, unsafe, oversize, or inapplicable owner makes the lock
 ineligible and yields one bounded audit outcome.
 
+For NuGet, `ParsedSupported` uses exactly the project-level direct-manifest
+grammar also consumed for direct evidence: a literal root `Project` `Sdk`
+attribute, a literal direct `Project/Sdk` child, or a literal
+`PackageReference`/`FrameworkReference` directly beneath a direct
+project-level `ItemGroup`. Only those three shapes can prove ownership.
+Declarations beneath `Target`, `Choose`, `When`, import-driven or otherwise
+imported/evaluated content, or any other nested or execution-dependent
+construct never prove ownership.
+If no supported project-level declaration remains, the owner is unsupported,
+the matched `packages.lock.json` yields zero `Medium` facts and exactly one
+bounded closed audit outcome for that lock/owner relationship, raw values are
+not retained, and independent valid Repository evidence continues.
+
 **Rationale**: a tracked filename proves only presence. It does not prove that
 the lock has one valid owner or that the owner can establish an applicable
-project/package scope.
+project/package scope. Reusing the direct parser's project-level grammar keeps
+ownership and direct detection from disagreeing and resolves `QR9-001`
+without evaluating MSBuild behavior.
 
 **Alternatives considered**:
 
@@ -271,6 +309,11 @@ project/package scope.
   relationship to an applicable scope is unproven.
 - treat an invalid owner as absent when another owner is valid: rejected
   because incomplete evidence cannot prove unique ownership.
+- accept any same-namespace descendant declaration: rejected because
+  descendants under `Target`, `Choose`, or `When` are execution-dependent
+  MSBuild constructs and are broader than the supported direct parser.
+- evaluate imports, properties, conditions, targets, or choose branches:
+  rejected by FR-009 and the non-executing deterministic Scan boundary.
 
 ## R13. Corrected source-to-image binding
 
@@ -389,15 +432,57 @@ to contain its own SHA.
   T049, or T050 forward after the tracked test change: rejected by workflow
   invalidation and source-manifest contracts.
 
+## R17. Iteration-9 owner-grammar correction and authorization
+
+**Decision**: treat `QR9-001` as a bounded Scan XML parsing and lock-owner
+filtering correction. After the complete corrected plan set receives a fresh
+independent `plan-review` `ACCEPT`, obtain a new explicit planned-change
+authorization before task generation. The request must name the NuGet
+project-level owner grammar, explain that unsupported nested declarations no
+longer authorize matched lock facts, state the intended TDD correction, and
+cite this plan plus PRD FR-4.1. The QR8 approval remains authority only for its
+closed inventory/namespace changes and does not authorize QR9.
+
+After that authorization, regenerated tasks require behavior-level TDD:
+
+1. observe RED for a matched lock whose sole owner declaration is a
+   `PackageReference` nested under `Target`, and for a
+   `FrameworkReference` nested under `Choose/When`; each assertion expects no
+   `Medium` fact, exactly one bounded closed audit outcome without raw values,
+   and continued processing of separate valid evidence;
+2. make owner validation consume only the three supported project-level shapes
+   defined in R12, without executing or interpreting MSBuild;
+3. observe GREEN for both nested negative cases and for positive owners using
+   the root `Sdk` attribute, direct `Project/Sdk`, and direct project-level
+   `ItemGroup` reference forms; and
+4. rerun the complete framework detector and surrounding profiling suites.
+
+**Rationale**: the current owner validator searches all same-namespace
+descendants while the direct detector consumes only project-level declarations.
+The resulting grammar mismatch can turn an unsupported execution-dependent
+declaration into a false transitive framework fact. A fresh authorization is
+mandatory because correcting that mismatch materially changes Scan parsing and
+filtering behavior, even though it preserves the accepted PRD outcome.
+
+**Alternatives considered**:
+
+- treat the QR8 approval as blanket authorization: rejected because it names
+  only the inventory/namespace scope and explicitly does not waive later gates;
+- ignore nested declarations but retain a lock fact without another supported
+  owner declaration: rejected because ownership would remain unproven;
+- fail the complete Repository when one owner is unsupported: rejected by
+  FR-016; the failure is artifact-local and independent valid evidence
+  continues.
+
 ## Gate result
 
 No `NEEDS CLARIFICATION` remains. Constitution pre-design and post-design
 checks pass. No ADR or context authority exists in the Repository for this
-area, and no conflict was found. The stricter lock-owner eligibility rule was a
-material Scan evidence-filtering change and already received the required
-post-review authorization in
-`evidence/planned-change-authorization-2.json`. This correction changes only
-the evidence/process contract and introduces no new planned-change trigger. A
-fresh plan judge must confirm the functional design remains unchanged; any
-actual Worker Agent/tool, Scan strategy, or PRD change stops for a new
-authorization rather than inheriting the old one.
+area, and no conflict was found. `AR9-001` is resolved by the explicit R5
+supersession to pinned, bounded `git ls-tree`; this remains inside the
+previously approved QR8 inventory scope. `QR9-001` is a new material Scan XML
+parsing/lock-owner filtering correction. It requires a fresh independent
+plan-review `ACCEPT` followed by explicit user authorization before tasks are
+generated. `evidence/quality8-scan-strategy-remediation-approval.json` does not
+pre-authorize it. No PRD requirement, Worker Agent/tool, scheduling, grouping,
+retry, dispatch, or product scope changes, and every Constitution gate passes.

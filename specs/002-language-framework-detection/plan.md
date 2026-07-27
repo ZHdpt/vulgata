@@ -1,6 +1,6 @@
 # Implementation Plan: Language and Framework Detection
 
-**Source boundary**: evidence-contract correction source commit `cfc65b7dc67bf84102fb16bef45f3f62b6d616b0` (tree `0b86efcca825eb9b9e7d6877b72f0402d0879c04`) | **Date**: 2026-07-26 | **Spec**: [spec.md](spec.md)
+**Source boundary**: Full review iteration-9 correction source commit `fab80f9334b7f2132bc270c9ce99e433b3d77513` (tree `90b569cd7934c44a084ab51b3da86c64a1add6f2`) | **Date**: 2026-07-27 | **Spec**: [spec.md](spec.md)
 **Story**: `4-2-language-and-framework-detection`
 **Provider boundary**: stock exact-pinned `codegraphcontext==0.5.1`
 
@@ -57,6 +57,16 @@ Git and current-GREEN verification record. That record proves only the
 accepted/current boundary; it does not prove or imply that the commands ran
 before the corrections.
 
+Full review iteration 9 adds two bounded corrections. `AR9-001` reconciles R5
+with the already approved QR8 committed-tree inventory: exact pinned
+`git ls-tree`, closed six-shape retention, incremental bounds, and retained
+mode/type/blob identity explicitly supersede mutable-index
+`git ls-files --cached`. `QR9-001` makes NuGet lock ownership use exactly the
+supported project-level direct-manifest grammar. Nested or
+execution-dependent MSBuild declarations never prove ownership; rejection is
+artifact-local, creates zero lock-derived facts and one bounded closed audit,
+and does not suppress independent valid evidence.
+
 ## Technical Context
 
 **Language/Version**: C# / .NET 10 (`net10.0`); Python only inside the existing
@@ -106,6 +116,15 @@ rescans.
 - lock-derived framework evidence requires one proven direct-manifest owner,
   not merely a tracked filename, same-root file count, or catalog-matched lock
   entry;
+- committed evidence inventory is only the bounded incremental output of
+  `git ls-tree -r -z --full-tree <commit> --`, filtered to the closed six
+  supported artifact shapes with exact tree mode/type/blob identity;
+  `git ls-files --cached` is superseded and is not an evidence authority;
+- NuGet ownership can be proven only by a literal root `Project` `Sdk`
+  attribute, literal direct `Project/Sdk`, or literal
+  `PackageReference`/`FrameworkReference` directly beneath a project-level
+  `ItemGroup`; nested `Target`/`Choose`/`When`, import-driven, and other
+  execution-dependent constructs never prove ownership;
 - final-image evidence is accepted only from one closed schema and a fresh
   image whose inspected source labels match the clean immutable candidate and
   its deterministic production-source manifest;
@@ -135,7 +154,7 @@ complete aggregate counts.
 | I. Layered Project Boundaries | Core owns entities and service contracts; Infrastructure owns provider/manifest parsing, EF, catalog loading, and persistence; Shared owns DTOs; Web owns authorization/facade/UI. | Pass | Pass |
 | II. Domain Purity & Ubiquitous Language | Uses Repository, Scan, Code Unit, Worker Agent, and Cross-Repository exactly; no EF/data annotations/generic repository/query leakage in Core. | Pass | Pass |
 | III. Validation & API Contract Discipline | Existing plural minimal APIs, `ProblemDetails`, `ManagementAccess`, Repository visibility, and Simplified-Chinese UI are extended, not replaced. No new public input is added. | Pass | Pass |
-| IV. Test-First Integration Harness | Every iteration-2 behavior correction retains its named runnable RED/GREEN evidence. Existing integration coverage is rerun at the corrected candidate. The bounded historical exception records unavailable earlier raw RED evidence and the missing ordered T001 observation as unavailable; present-day GREEN is separately identified and never relabelled as historical. | Pass | Pass |
+| IV. Test-First Integration Harness | Every iteration-2 behavior correction retains its named runnable RED/GREEN evidence. QR9-001 adds fresh behavior-level RED/GREEN for Target-nested and Choose/When-nested owners plus all three valid project-level owner shapes. Existing integration coverage is rerun at the corrected candidate. The bounded historical exception records unavailable earlier raw RED evidence and the missing ordered T001 observation as unavailable; present-day GREEN is separately identified and never relabelled as historical. | Pass | Pass |
 | V. Security & Data Stewardship | All analysis stays local and non-executing; provider gateway remains loopback-only; provider paths are fail-closed before logging/persistence; evidence, diagnostics, and response sizes are bounded and redacted. | Pass | Pass |
 
 No Constitution exception or ADR conflict was found. The July architecture's
@@ -164,13 +183,25 @@ human-review aid only; it cannot create or replace a Story 4.2 fact or make an
   `evidence/planned-change-authorization-2.json` contains the subsequent
   explicit authorization. Regenerated tasks must verify both immutable records
   and their accepted artifact boundary.
-- **This correction introduces no new trigger**: it changes only the
-  evidence/process contract for a temporally unavailable T001 observation. It
-  adds or changes no Worker Agent/tool, Scan parsing, filtering, scheduling,
-  grouping, retry, dispatch behavior, or PRD requirement. A fresh plan judge
-  must confirm that the functional design is unchanged. If the correction is
-  found to alter any trigger-bearing behavior, stop rather than treating the
-  prior authorization as covering new intent.
+- **AR9-001 disposition**: R5 now explicitly supersedes mutable-index
+  `git ls-files --cached` with the pinned committed-tree mechanism already
+  authorized for QR8: exact
+  `git ls-tree -r -z --full-tree <commit> --`, bounded incremental parsing,
+  closed six-shape retention, exact mode/type/blob identity, and zero partial
+  facts. This reconciliation does not expand the approved QR8 scope.
+- **QR9-001 introduces a new planned-change trigger**: restricting NuGet
+  lock-owner validation to the supported project-level direct-manifest grammar
+  materially changes Scan XML parsing and lock-owner filtering. The prior QR8
+  approval covers only its stated inventory/namespace remediation and does not
+  pre-authorize QR9. After a fresh independent plan-review `ACCEPT`, the root
+  must pause before task generation for explicit user authorization naming the
+  trigger, exact owner-grammar correction and effects, implementation intent,
+  this plan, and PRD FR-4.1. That approval waives no TDD, Full reviews, E2E,
+  security, verification, or Git gate.
+- **Scope**: no PRD requirement, Worker Agent/tool, scheduling, grouping,
+  retry, dispatch, or product intent changes. The accepted outcome remains
+  deterministic framework facts before Worker Agent dispatch, with unsupported
+  evidence preserved as absence.
 
 ## Provider and Profiling Design
 
@@ -351,6 +382,14 @@ unpaired lock, import, symbol, filename resemblance, or unsupported manifest
 format is interpreted. More formats require a future catalog/parser change and
 tests.
 
+The retained Git record grammar is the exact NUL-delimited `ls-tree` record:
+tree mode, object type, object ID, and Repository-relative path. A retained
+artifact must be a blob and must be read by that exact object ID. Malformed
+records, object-type/mode/ID drift, byte/record/artifact/path bounds, deadline,
+or cancellation fail the Repository detector result with zero framework facts.
+The former `git ls-files --cached` inventory is explicitly superseded and must
+not be retained as an alternate or fallback evidence path.
+
 XML evidence is namespace-closed. A `.csproj` root may use no namespace or the
 legacy MSBuild namespace; a Maven root may use no namespace or the standard
 Maven POM namespace. Every consumed relevant element must use its accepted root
@@ -373,9 +412,14 @@ Lock ownership is proven before any lock entry is parsed into
 3. safely read and successfully parse that file within the normal artifact
    bounds;
 4. require the direct-manifest shape used to establish ownership to be
-   supported and applicable: NuGet declarations/SDK ownership are literal and
-   unconditional; npm ownership uses the supported literal top-level direct
-   dependency maps and supported package shape;
+   supported and applicable. For NuGet, only a literal root `Project` `Sdk`
+   attribute, literal direct `Project/Sdk` child, or literal
+   `PackageReference`/`FrameworkReference` directly beneath a direct
+   project-level `ItemGroup` can prove ownership. Declarations beneath
+   `Target`, `Choose`, `When`, imported/evaluated content, or any other nested
+   or execution-dependent construct never prove ownership. npm ownership uses
+   the supported literal top-level direct dependency maps and supported package
+   shape;
 5. require the manifest and lock to share ecosystem and scope root, and apply
    eventual facts only to descendant Code Units with a catalog-compatible
    parser language.
@@ -389,6 +433,30 @@ the lock ineligible. It emits one bounded closed audit outcome and no
 lock-derived fact. A tracked filename or count alone never proves ownership,
 and an invalid candidate is never silently discarded to manufacture a unique
 owner.
+
+For an owner whose only apparent declaration is nested or execution-dependent,
+validation returns unsupported before lock entries can create evidence. The
+matched lock creates zero `Medium` facts and exactly one bounded closed audit
+outcome for the artifact-local lock/owner rejection; it retains no raw value,
+source content, or absolute host path. Other valid Repository artifacts remain
+eligible. A valid supported project-level owner remains valid even when it has
+no direct catalog match, because ownership proof and framework matching are
+separate.
+
+The owner-grammar outcomes are testable as a closed matrix:
+
+| Sole apparent NuGet ownership evidence | Owner result | Matched lock result |
+| --- | --- | --- |
+| literal root `Project` `Sdk` attribute | supported | eligible for normal lock matching |
+| literal direct `Project/Sdk` child | supported | eligible for normal lock matching |
+| literal `PackageReference` or `FrameworkReference` directly under a direct project-level `ItemGroup` | supported | eligible for normal lock matching |
+| any allowed shape with a condition or dynamic value | conditional/dynamic | zero `Medium` facts; one bounded closed audit |
+| declaration below `Target` | unsupported | zero `Medium` facts; one bounded closed audit |
+| declaration below `Choose/When` | unsupported | zero `Medium` facts; one bounded closed audit |
+| import-driven or any other execution-dependent declaration | unsupported | zero `Medium` facts; one bounded closed audit |
+
+Every rejected row also proves that independent valid evidence in the same
+Repository continues and that the audit retains no raw declaration value.
 
 Candidate facts group by `(CodeUnitId, FrameworkName)`. `High` outranks
 `Medium`; then deeper scope outranks shallower scope; then the ordinal
@@ -507,7 +575,8 @@ tests/Vulgata.Tests/
 ```
 
 No file above is authorized for implementation by this plan; task generation
-must wait for independent plan acceptance and planned-change approval.
+must wait for independent plan acceptance and fresh QR9 planned-change
+authorization.
 
 ## RED-First Verification Strategy
 
@@ -561,6 +630,19 @@ historical RED.
    against the owned v2 schema, and an image lacking corrected source labels is
    rejected. GREEN uses one closed schema, a fresh consumed namespace, and
    exact source-manifest/image binding.
+10. **Iteration-9 QR9 owner-grammar RED/GREEN**: after fresh plan acceptance
+    and QR9 planned-change authorization, add assertions before production
+    changes for a matched lock whose sole apparent owner is a
+    `PackageReference` beneath `Target`, and another whose sole apparent owner
+    is a `FrameworkReference` beneath `Choose/When`. Observe those assertions
+    RED against the current descendant-search validator: they require no
+    `Medium` fact, exactly one bounded closed audit without raw values, and
+    continued independent valid evidence. GREEN restricts validation to the
+    same three project-level shapes as direct parsing and proves both negative
+    cases plus positive root-`Sdk`, direct-`Project/Sdk`, and direct
+    project-level-`ItemGroup` owners. Rerun the complete framework detector and
+    surrounding profiling suites. Compile failure, inferred failure, or tests
+    added after production code do not satisfy RED.
 
 ### Corrected T001 current-verification contract
 
@@ -576,8 +658,10 @@ record. T001 is complete only when that record:
 3. proves the accepted plan checkpoint is an ancestor of that commit, every
    planning-artifact SHA-256 equals the fresh accepted plan-review boundary, the
    fresh plan verdict is `ACCEPT`, and
-   `evidence/planned-change-authorization-2.json` remains the valid authorization
-   for the unchanged lock-owner filtering design;
+   `evidence/planned-change-authorization-2.json` remains historical authority
+   only for its accepted pre-QR9 owner/inventory scope, and the new post-review
+   QR9 planned-change authorization is present before regenerated task
+   generation or implementation;
 4. runs the focused provider/profiling and framework-detection commands from
    `quickstart.md` against that exact commit and records their exit codes, raw
    output paths, and GREEN results as **current verification**;
@@ -641,11 +725,13 @@ Regenerated tasks must create one evidence-only TDD group in this order:
    new candidate. Preserve command, exit code, immutable source, observed
    assertion, and raw-output path for RED and GREEN separately.
 4. **Final boundary**: because this is a tracked test/evidence-contract change,
-   regenerate the current ledger; rerun both Full implementation review axes,
-   the E2E decision/result, and verification; then create a new clean candidate,
-   production-source manifest, accepted-correction namespace, and fresh image.
-   Run the mandatory exact final-image gate and full suite on that one boundary
-   before a new T049 freeze and T050 audit.
+   finish the current-verification record, regenerate the truthful
+   reconstruction ledger, and independently validate both before pinning one
+   new clean candidate. After that single pin, run both Full implementation
+   review axes, the conditional E2E decision/result, verification, the
+   production-source manifest, accepted-correction namespace, fresh image and
+   exact final-image/full-suite gate, T049, and T050 without changing any
+   tracked candidate-boundary byte.
 
 The verdict binding is intentionally nonrecursive. A judge reviewing the
 uncommitted three-file correction identifies it with the pinned base commit,
@@ -684,30 +770,66 @@ and raw outputs and is explicitly labelled **“Current verification”**.
 
 T050 remains unchecked and incomplete while this plan is in review. After
 fresh plan acceptance, task regeneration, current T001 verification, dependent
-revalidation, fresh final-image/full-suite evidence, and regeneration and
-validation of the truthful reconstruction ledger, T050 audits the one new
-immutable candidate. It may pass with the disclosed unavailable historical
-T001 observation and other unavailable historical raw evidence under this
-exception, but it blocks on fabricated claims, a current rerun labelled
-historical, missing current correction RED/GREEN, schema/source-image mismatch,
-scope drift, or any other failed audit item. Only then may a later workflow
-authority mark T050 complete and create a new ready-for-review boundary.
+revalidation, and regeneration plus independent validation of the truthful
+reconstruction ledger, the root pins one new immutable candidate. Both Full
+reviews, conditional E2E, verification, source-manifest/image qualification,
+T049, and T050 then run without changing that candidate boundary. T050 may pass
+with the disclosed unavailable historical T001 observation and other
+unavailable historical raw evidence under this exception, but it blocks on
+fabricated claims, a current rerun labelled historical, missing current
+correction RED/GREEN, schema/source-image mismatch, scope drift, or any other
+failed audit item. Only then may a later workflow authority mark T050 complete
+and create a new ready-for-review boundary.
 
 ### Downstream invalidation and regeneration
 
-Editing `plan.md`, `research.md`, or `quickstart.md` invalidates the plan stage
-and every dependent stage even though product behavior is unchanged:
+Editing `plan.md` or `research.md` invalidates the plan stage and every
+dependent stage. AR9-001 reconciles authority bytes; QR9-001 also changes
+planned Scan parsing/filtering behavior:
 
 | Changed boundary | Invalidated evidence | Required next owner/action |
 | --- | --- | --- |
-| Corrected plan set | prior plan verdict/hash boundary | fresh `plan-judge` reviews the complete unchanged-specification plan set |
-| Accepted corrected plan | current `tasks.md` and task markers | fresh `task-author` regenerates dependency-ordered tasks, including corrected T001 |
+| Corrected `plan.md`/`research.md` | stale `data-model.md`, `contracts/framework-detection.md`, and `quickstart.md` detail/authorization wording plus prior plan verdict/hash boundary | regenerate those dependent plan artifacts to carry the exact owner grammar, QR9 regressions, and fresh authorization gate, then pin the complete unchanged-specification plan set for a fresh `plan-judge`; do not change specification scope |
+| Fresh complete-plan `ACCEPT` | task generation remains blocked | root obtains the mandatory QR9 planned-change authorization described above |
+| Accepted plan set plus fresh QR9 authorization | current `tasks.md` and task markers | fresh `task-author` regenerates dependency-ordered tasks, including corrected T001 and QR9 behavior-level RED/GREEN |
 | Regenerated tasks | prior analyze reports | fresh read-only `artifact-analyst` reruns `speckit-analyze` |
+| QR9 owner-validator production/test correction | prior ledger, candidate, reviews, E2E, verification, manifest/image/namespace, T049/T050 | fresh TDD implementer observes RED, implements minimal GREEN, reruns surrounding tests, and regenerates every boundary-dependent claim |
 | Corrected T001/process contract | current reconstruction ledger and T049/T050 conclusions | later evidence owner records current verification, regenerates/revalidates the ledger, and reruns its strict audit |
 | `CodeGraphProviderContractTests.cs` canonical hashes/claim binding | prior implementation reviews, E2E decision/result, final verification, reconstruction ledger, candidate identity | observe focused stale-binding RED, implement binding GREEN, rerun surrounding tests, then pin and review the new boundary |
 | Any new committed candidate | prior acceptance and quality verdicts, E2E decision/result, final verification | rerun both Full implementation reviews, conditional E2E decision/result, and verification against one pinned boundary |
 | Plan/research/quickstart and tracked test/evidence bytes in Docker context | prior production-source manifest, image labels/ID, accepted-correction namespace, final-image evidence, T049 freeze | create a new clean committed candidate, manifest, fresh image and namespace, then rerun the mandatory final-image gate, full suite, and T049 |
 | New T049 freeze | blocked T050 | fresh T050 audits T001 through T049 and the new immutable boundary |
+
+The mandatory downstream sequence is:
+
+1. obtain a fresh independent complete-plan `ACCEPT`;
+2. obtain explicit QR9 planned-change authorization before task generation;
+3. regenerate dependency-ordered tasks;
+4. run fresh read-only `speckit-analyze`;
+5. observe the QR9 owner-grammar RED and focused stale-binding RED, implement
+   minimal GREEN, and rerun surrounding contract tests;
+6. regenerate the **Current verification** record and truthful reconstruction
+   ledger, then complete independent ledger validation, with every tracked
+   source, test, contract, planning, and candidate-bound evidence byte final;
+7. pin exactly one clean immutable candidate boundary;
+8. run both fresh Full implementation review axes against that identical
+   boundary;
+9. run the current-boundary conditional E2E decision/result;
+10. run final verification and read-only ledger/current-gate cross-validation;
+11. create the production-source manifest and unused correction namespace,
+    build and inspect the fresh image, and run the exact final-image gate plus
+    full suite;
+12. run T049 without changing the candidate boundary; and
+13. run T050 last against the unchanged T049 inputs.
+
+After step 7, any change to a tracked candidate-boundary file—including the
+current-verification record, reconstruction ledger, implementation, test,
+contract, planning, or Docker-context evidence bytes—invalidates the candidate,
+both Full review verdicts, conditional E2E decision/result, verification,
+source manifest, namespace/image/final-image evidence, T049, and T050. Complete
+the correction and all candidate-bound evidence writes, repin at step 7, and
+rerun steps 8-13. Post-pin review, E2E, verification, manifest/image, T049, and
+T050 work must not mutate tracked candidate-boundary bytes.
 
 No replay from a pre-correction worktree is required by this corrected evidence
 contract. No prior result is silently carried forward: reusable immutable
@@ -731,6 +853,8 @@ Required commands and expected observations are in [quickstart.md](quickstart.md
 | Story 4.1 completeness correction | gateway env + envelope parser + final-image verifier | 101+ rows, truncation metadata, exact two-query and cleanup tests |
 | AR2-001 | safe provider path invariant before logger/outcome construction | captured logger + durable/API absence of raw absolute/escape paths |
 | QR2-001 | validated direct-manifest owner model before lock parsing | malformed/unsupported/conditional/unsafe NuGet and npm owner fixtures |
+| AR9-001 | pinned committed-tree inventory authority | exact `git ls-tree -r -z --full-tree <commit> --`; six retained shapes; incremental bounds; mode/type/blob identity; explicit `git ls-files --cached` supersession |
+| QR9-001 | NuGet project-level lock-owner grammar | RED for Target and Choose/When nested owners; GREEN for zero Medium fact/one bounded audit/independent continuation and all three valid project-level shapes |
 | AR2-002, CF-002 | one closed v2 evidence grammar across contract/runner/verifier | schema-name/safe-name/unknown-field and fresh namespace tests |
 | EV-002 | candidate commit/tree/source-manifest labels bound to fresh image/evidence | clean candidate build, inspected labels, fresh exact-image gate, full suite |
 | AR2-003, QR2-002, WF-002 | T050 remains incomplete until immutable-candidate audit | corrected T001 current-verification record plus regenerated reconstruction ledger and T049/T050 |
@@ -762,7 +886,10 @@ single Tests project mirrors these seams.
 
 ## Complexity Tracking
 
-No Constitution violation requires justification. The historical
+No Constitution violation requires justification. AR9-001 restores one
+committed-tree inventory authority and QR9-001 narrows ownership proof to
+non-executing project-level declarations with artifact-local failure. The
+historical
 workflow-evidence exception changes only what can be truthfully claimed about
 unavailable past workflow evidence. The corrected T001 substitutes
 current-boundary verification for an impossible temporal prerequisite without

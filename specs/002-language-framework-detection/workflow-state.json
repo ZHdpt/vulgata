@@ -4,10 +4,10 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "implement",
+  "stage": "plan-review",
   "active_gates": {
     "acceptance-review": {
-      "status": "revised",
+      "status": "invalidated",
       "iteration": 9,
       "dispatch_id": null,
       "input_boundary": {
@@ -19,7 +19,7 @@
       "completed_at": "2026-07-27T12:51:04.6083701Z"
     },
     "quality-review": {
-      "status": "revised",
+      "status": "invalidated",
       "iteration": 9,
       "dispatch_id": null,
       "input_boundary": {
@@ -3167,25 +3167,49 @@
       "observed_at": "2026-07-27T12:51:04.6083701Z",
       "summary": "Fresh Full quality review 9 returned REVISE with High QR9-001: NuGet lock-owner validation accepts same-namespace declarations nested under unsupported MSBuild execution constructs, creating a false Medium framework fact. The correction changes Scan parsing/filtering and requires planned-change authorization after fresh plan acceptance.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/plan-review/10",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "fab80f9334b7f2132bc270c9ce99e433b3d77513",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/data-model.md",
+        "specs/002-language-framework-detection/contracts/framework-detection.md",
+        "specs/002-language-framework-detection/quickstart.md",
+        "specs/002-language-framework-detection/reviews/plan-review-9.json",
+        "specs/002-language-framework-detection/reviews/plan-review-10.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T13:40:09.9454807Z",
+      "summary": "Fresh independent plan-review 10 ACCEPTED the exact five-file plan boundary after plan-review 9's downstream-order correction. AR9-001, QR9-001 planning, and PR9-001 are closed; Constitution and PRD FR-4.1 pass. Task generation remains blocked by the mandatory explicit QR9 Scan parsing/filtering authorization.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T125104Z-a91c2e",
+    "checkpoint_id": "bmad-4-2-plan-20260727T134009Z-b02d3f",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "implement",
+    "stage": "plan-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
-      "specs/002-language-framework-detection/reviews/quality-review-9.json",
+      "specs/002-language-framework-detection/plan.md",
+      "specs/002-language-framework-detection/research.md",
+      "specs/002-language-framework-detection/data-model.md",
+      "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "specs/002-language-framework-detection/quickstart.md",
+      "specs/002-language-framework-detection/reviews/plan-review-9.json",
+      "specs/002-language-framework-detection/reviews/plan-review-10.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/acceptance-review/9",
-      "4-2-language-and-framework-detection/quality-review/9"
+      "4-2-language-and-framework-detection/plan-review/10"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T12:51:04.6083701Z"
+  "updated_at": "2026-07-27T13:40:09.9454807Z"
 }
