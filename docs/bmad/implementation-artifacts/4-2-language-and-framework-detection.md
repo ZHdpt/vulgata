@@ -915,8 +915,12 @@ unchanged.
   framework facts, and QR8-002 materializes an unbounded whole-tree inventory
   before supported-artifact bounds apply. Both remediations materially change
   Scan parsing or filtering behavior, so corrective task generation is paused
-  for the required planned-change authorization; T043 and all downstream gates
-  remain incomplete.
+  for the required planned-change authorization. The user explicitly approved
+  the recommended remediation: namespace-closed XML evidence, closed-allowlist
+  pinned-tree discovery with incremental byte/record/deadline/cancellation
+  bounds, and reconciliation of stale inventory wording. Candidate
+  `7c24d8d` and both iteration-8 review axes are invalidated before mutation;
+  T063 is complete and T064-T066 plus T041-T050 remain incomplete.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

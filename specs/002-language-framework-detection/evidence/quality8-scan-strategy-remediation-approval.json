@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/implement/QR8-remediation-approval",
+  "kind": "human-approval",
+  "stage": "implement",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "source_commit": "9a13758c603aa3d9328094a894bd43a864f9d6c8",
+  "reviewed_candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+  "quality_verdict_path": "specs/002-language-framework-detection/reviews/quality-review-8.json",
+  "observed_at": "2026-07-27T07:44:16.0530818Z",
+  "decision": "approved",
+  "approval_text": "Approve",
+  "trigger": "Material changes to Scan XML parsing, committed-tree filtering, inventory bounding, and artifact fault-isolation behavior require explicit planned-change authorization.",
+  "approved_remediation": [
+    {
+      "finding_id": "QR8-001",
+      "intent": "Accept only the empty or supported MSBuild/Maven root namespace, require every consumed evidence element to match the accepted root namespace, and reject an artifact containing a relevant foreign-namespace lookalike with one bounded audit and no fact while independent artifacts continue.",
+      "tests": "Observe RED and GREEN for NuGet direct evidence, NuGet lock ownership, Maven evidence, mixed legitimate and foreign elements, and valid standard-namespace or no-namespace documents."
+    },
+    {
+      "finding_id": "QR8-002",
+      "intent": "Enumerate only the six supported committed artifact shapes from the pinned commit with Git tree pathspecs, parse the output incrementally under explicit byte, record, cancellation, and deadline limits, and preserve exact tree mode and object identity.",
+      "tests": "Observe RED and GREEN for a huge irrelevant tracked inventory, bounded output overflow, cancellation, zero partial facts, root and nested supported artifact discovery, and pinned object-mode integrity."
+    },
+    {
+      "finding_id": "QR8-DOC",
+      "intent": "Reconcile plan, contract, and story text from mutable-index git ls-files wording to the exact pinned git ls-tree closed-allowlist and bounded-stream contract.",
+      "tests": "Run executable accepted-plan binding and contradiction checks against the revised authorities."
+    }
+  ],
+  "affected_authorities": {
+    "plan": [
+      "specs/002-language-framework-detection/plan.md:83-100",
+      "specs/002-language-framework-detection/plan.md:121",
+      "specs/002-language-framework-detection/plan.md:327-342"
+    ],
+    "contract": [
+      "specs/002-language-framework-detection/contracts/framework-detection.md:43-55",
+      "specs/002-language-framework-detection/contracts/framework-detection.md:110-129"
+    ],
+    "story": [
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md:73-82",
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md:154-163",
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md:323-329"
+    ],
+    "prd": [
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md:157"
+    ]
+  },
+  "scope_effects": {
+    "prd_changed_or_weakened": false,
+    "worker_agent_or_tool_changed": false,
+    "dispatch_scheduling_grouping_or_retry_changed": false,
+    "scan_strategy_changed": true,
+    "candidate_and_both_full_reviews_must_be_recreated": true
+  },
+  "waivers": {
+    "tdd": false,
+    "fresh_acceptance_review": false,
+    "fresh_quality_review": false,
+    "conditional_e2e": false,
+    "security_verification": false,
+    "final_verification": false,
+    "git_checkpoint_contract": false
+  }
+}
