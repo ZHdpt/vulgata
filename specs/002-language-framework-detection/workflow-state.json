@@ -3092,23 +3092,39 @@
       "observed_at": "2026-07-27T09:05:02.5241827Z",
       "summary": "Fresh independent T040 audit 3 returned REVISE on one stale task marker: tasks.md still marked T040 complete although the QR8 ledger correctly invalidates the earlier audit and blocks T041. All 27 authorities, 83 immutable references, 66 raw hashes, 64 asserted lengths, 47 ledger checkpoints, QR8 chronology, attempts 12-13 classification, and other downstream-state checks passed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/95",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "c5fe02bc7000264905147aff9a5017900746a4b9",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/tasks.md",
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+        "specs/002-language-framework-detection/workflow-state.json"
+      ],
+      "command": "Forward-only T040 task-marker and independent-validation-note reconciliation after audit 3",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T09:08:43.9366867Z",
+      "summary": "The sole audit-3 finding is corrected forward-only: tasks.md restores T040 to pending and explicitly records that fresh QR8 validation is required. The truthful ledger was already correct and remains unchanged. T041 remains prohibited pending a new independent T040 ACCEPT.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T090502Z-c41e7a",
+    "checkpoint_id": "bmad-4-2-implement-20260727T090843Z-d52f8b",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/94"
+      "4-2-language-and-framework-detection/implement/95"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T09:05:02.5241827Z"
+  "updated_at": "2026-07-27T09:08:43.9366867Z"
 }

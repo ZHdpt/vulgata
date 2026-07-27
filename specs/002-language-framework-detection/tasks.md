@@ -142,9 +142,9 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 **Purpose**: Replace the invalidated ledger without merging unavailable historical time with current verification.
 
 - [x] T039 Regenerate and finalize `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` from immutable Git and existing workflow records: preserve every still-provable historical group, earliest test/implementation commit or explicit null/reason, truthful `historicalRawRedAvailable`/`checkpointTrailerAvailable`, the exact unavailable T001 statement, and a link to `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json`; add T035-T038, T055-T057, and T058-T062 as separately timed current RED/GREEN/review-remediation evidence and remove every stale accepted claim for the prior candidate, reviews, manifest, image, namespace, T049, or T050
-- [x] T040 Validate the regenerated ledger against Git ancestry, referenced blobs/trailers, T001, T035-T038, T055-T057, and T058-T062 raw-output existence/hashes, and the Story 4.2-only exception; reject fabricated/backdated/amended evidence, a current run labelled historical/pre-correction, missing temporal disclosure, or any claim that the replacement final image/T049/T050 already passed
+- [ ] T040 Validate the regenerated ledger against Git ancestry, referenced blobs/trailers, T001, T035-T038, T055-T057, and T058-T062 raw-output existence/hashes, and the Story 4.2-only exception; reject fabricated/backdated/amended evidence, a current run labelled historical/pre-correction, missing temporal disclosure, or any claim that the replacement final image/T049/T050 already passed
 
-**Independent validation**: The ledger is internally consistent, discloses missing history, distinguishes `Current verification`, contains no stale completion identity, and is ready to be included in the new reviewed candidate.
+**Independent validation**: Pending fresh validation after QR8. Audit 3 passed every substantive ledger check but rejected this task graph's stale T040 completion marker; T041 remains prohibited until a later independent T040 audit accepts the corrected boundary.
 
 ---
 

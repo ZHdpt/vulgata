@@ -969,6 +969,11 @@ unchanged.
   checkpoint entries, QR8 chronology, attempts 12-13 classification, and
   downstream invalidation. T041 remains prohibited until a forward-only
   marker correction and fresh independent T040 acceptance.
+- The audit-3 bookkeeping finding is corrected forward-only: `tasks.md` now
+  restores T040 to pending and its independent-validation note records the
+  QR8 invalidation and audit-3 REVISE verdict. The truthful ledger itself was
+  already correct and is unchanged. A new independent T040 audit is still
+  required before T066 can complete or T041 can begin.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
