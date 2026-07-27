@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "plan-review",
+  "stage": "analyze",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -3201,23 +3201,37 @@
       "observed_at": "2026-07-27T14:10:00.2520819Z",
       "summary": "The user explicitly approved QR9-001's planned Scan XML parsing and NuGet lock-owner filtering correction after independent plan-review 10 ACCEPT. Task generation, Full analysis, behavior-level TDD, both Full review axes, E2E, security, verification, ledger, candidate, image, T049, and T050 gates remain mandatory.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/102",
+      "kind": "review",
+      "stage": "analyze",
+      "source_commit": "a30f95ef792903ccb43cff5c5e1f42a100e155c7",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-8.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T14:33:19.2798017Z",
+      "summary": "Fresh read-only Full analysis iteration 8 returned REVISE with one High finding, I8-001: T001 remains checked against stale plan-review-8 and pre-QR9 authorization evidence. The bounded tasks-only remediation must reset and rebind T001 to plan-review 10, QR9 approval, and clean immutable post-task-checkpoint Current verification; T001 and T067 must precede T068-T070, while T075 remains the post-correction pre-pin refresh. Explicit user approval is required before tasks.md changes, and implementation remains blocked.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-plan-20260727T141000Z-c13e4a",
+    "checkpoint_id": "bmad-4-2-analyze-20260727T143319Z-04b7fb",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "plan-review",
+    "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+      "specs/002-language-framework-detection/reviews/analyze-8.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/plan-review/101"
+      "4-2-language-and-framework-detection/analyze/102"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T14:10:00.2520819Z"
+  "updated_at": "2026-07-27T14:33:19.2798017Z"
 }

@@ -1,0 +1,178 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "iteration": 8,
+  "verdict": "REVISE",
+  "reviewed_commit": "a30f95ef792903ccb43cff5c5e1f42a100e155c7",
+  "reviewed_boundary": {
+    "base_commit": "a30f95ef792903ccb43cff5c5e1f42a100e155c7",
+    "base_tree": "1776c6940b5ac7eed4728c8d0a4f1911cca39c99",
+    "candidate_commit": null,
+    "diff_sha256": null,
+    "boundary_note": "The dispatch pinned the uncommitted candidate by exact tasks.md SHA-256 rather than a Git binary-diff hash; no diff hash was fabricated.",
+    "artifact_hashes": {
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+      "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+      "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+      "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+      "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
+      "specs/002-language-framework-detection/tasks.md": "74a55d869c40771edd4c30ae6bc3afd547e19ac2340622ed8008ea1e47c14f19",
+      "specs/002-language-framework-detection/reviews/plan-review-10.json": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+      "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+      "AGENTS.md": "9351559ee881ec74b20ccf9de3fadb469099eaa116569ed59d68b01d1bfb6e71",
+      ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971",
+      "docs/UBIQUITOUS_LANGUAGE.md": "23088d16c0bf547de647bcf3d7b210a8780116be57349471ffc668fa8e4bfada",
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md": "28c3f34254405a5350942bbc610d73c85207bab188f224501bf398e86e032b1b",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "46b17291a248a4035f2e9456b43458e5ca0c01217a36d78315122a68d388ebc8",
+      "specs/002-language-framework-detection/reviews/plan-review-9.json": "439a2f562c7b93554d0667b85fb9bb6bbafeefc12e96ab3ece8016977d08480b",
+      "specs/002-language-framework-detection/reviews/acceptance-review-9.json": "3317a8082d8936b3aa09d9ff7915cafefebc0a786835fa0c3b9b24ec06e84ef5",
+      "specs/002-language-framework-detection/reviews/quality-review-9.json": "649052b389b4f0685817c1598e2f7f48cb6ab363169005c97762a1077c88dc91"
+    },
+    "owned_paths": [
+      "specs/002-language-framework-detection/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md#FR-4.1",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/reviews/plan-review-10.json",
+    "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+    "specs/002-language-framework-detection/reviews/plan-review-9.json",
+    "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+    "specs/002-language-framework-detection/reviews/quality-review-9.json"
+  ],
+  "findings": [
+    {
+      "id": "I8-001",
+      "severity": "HIGH",
+      "category": "cross-artifact-consistency/stale-authority-binding/testability",
+      "artifact": "specs/002-language-framework-detection/tasks.md",
+      "location": "lines 22-28, 34-41 (T001), 203-214 (T067-T074), and 220-226 (T075-T077); correlated with plan.md lines 647-680 and 784-832, and plan-review-10.json lines 153-170",
+      "affected_requirement": "Accepted plan decision R15/T001-PLAN-001 and plan-review-10 dependent regeneration require corrected T001 to bind the fresh accepted plan-review-10 artifact map/checkpoint and post-review QR9 authorization before implementation.",
+      "evidence": [
+        "tasks.md line 36 marks T001 complete while requiring plan-review-8 and the earlier authorization, not plan-review-10 and the QR9 approval pinned in the regenerated header.",
+        "plan.md lines 647-680 state T001 is complete only when Current verification uses a clean immutable commit containing the accepted corrected plan set and regenerated tasks, proves the fresh accepted verdict/artifact map/checkpoint, and proves the new post-review QR9 authorization.",
+        "plan-review-10.json lines 153-170 explicitly requires regenerated tasks with corrected T001, QR9 owner-grammar RED/GREEN, exact accepted-plan binding, fresh analysis, and pre-pin Current-verification/ledger regeneration.",
+        "T067 later verifies plan-review-10/QR9 authority before implementation and T075 later refreshes Current verification, but neither makes the already checked stale T001 statement truthful or satisfies the accepted artifact's explicit T001 completion contract.",
+        "The task graph therefore carries one completed stale-authority claim into implementation and cannot truthfully demonstrate the required corrected T001 prerequisite."
+      ],
+      "correction_outcome": "With explicit user approval, regenerate tasks.md only: make T001 pending and replace its plan-review-8/prior-authorization proof with the exact plan-review-10 verdict hash, reviewed diff, five-file artifact map, trailer-resolved accepted-plan checkpoint, QR9 approval hash/scope, and a clean immutable post-task-checkpoint Current-verification record. Preserve the unavailable historical baseline statement and do not relabel current GREEN as historical RED. Keep T067 as the separate executable authority/invalidation check if desired, but require corrected T001 and T067 before T068-T070; retain T075 as the post-correction pre-pin refresh. Then rerun read-only Full analysis. Do not edit spec or plan and do not implement T067."
+    }
+  ],
+  "coverage_metrics": {
+    "functional_requirements": {
+      "total": 21,
+      "covered": 21,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "success_criteria": {
+      "total": 8,
+      "covered": 8,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "combined_buildable_requirements": {
+      "total": 29,
+      "covered": 29,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "acceptance_criteria_groups": {
+      "total": 7,
+      "covered": 7,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "accepted_plan_decisions": {
+      "total": 17,
+      "covered": 17,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "iteration_9_findings": {
+      "total": 3,
+      "covered": 3,
+      "coverage_percent": 100,
+      "ids": [
+        "AR9-001",
+        "QR9-001",
+        "PR9-001"
+      ],
+      "uncovered": []
+    },
+    "tasks": {
+      "total": 77,
+      "unique_ids": 77,
+      "mapped": 77,
+      "checked_preserved": 56,
+      "pending": 21,
+      "parallel_read_only_review_tasks": 2,
+      "unmapped": []
+    },
+    "ambiguities": 0,
+    "duplications": 0,
+    "dependency_cycles": 0,
+    "implementation_before_red": 0,
+    "stale_authority_bindings": 1,
+    "invalidated_evidence_reuse": 1,
+    "critical_findings": 0,
+    "high_findings": 1,
+    "medium_findings": 0,
+    "low_findings": 0
+  },
+  "constitution_assessment": {
+    "status": "PASS",
+    "violated_musts": [],
+    "evidence": "Layering, canonical Vulgata terms, test-first integration, local bounded non-executing evidence, authorization, redaction, and Simplified-Chinese presentation remain represented."
+  },
+  "prd_assessment": {
+    "status": "PASS",
+    "prd_requirement": "FR-4.1",
+    "changed_or_weakened": false,
+    "evidence": "The task set preserves deterministic language/framework profiling before Worker Agent dispatch and adds no PRD scope."
+  },
+  "planned_change_assessment": {
+    "status": "PASS",
+    "plan_review_10_exact": true,
+    "qr9_authorization_exact": true,
+    "scope_bounded_to_qr9_001": true,
+    "new_trigger_introduced": false
+  },
+  "task_order_validation": {
+    "status": "REVISE",
+    "passes": [
+      "T068 and T069 each require independently observed behavior RED before T071.",
+      "T070 requires separate binding RED before T072.",
+      "T075-T077 precede one replacement T041 candidate.",
+      "T042 and T043 share one pinned boundary.",
+      "E2E, verification, ledger cross-validation, manifest/image, T049, and T050 are candidate-stable and acyclic.",
+      "Invalidated candidate 708b7df and iteration-9 reviews are retained only as history.",
+      "FR-020 forbidden scope is explicit."
+    ],
+    "failure": "Checked T001 is bound to stale plan-review-8/prior authorization instead of the exact plan-review-10/QR9 Current-verification contract."
+  },
+  "summary": "REVISE. Product, acceptance, and plan-decision coverage is complete, and the QR9 RED-GREEN plus candidate-stable downstream sequence is otherwise acyclic. The regenerated task artifact nevertheless marks stale T001 complete against plan-review-8 instead of satisfying the accepted corrected T001 contract bound to plan-review-10 and QR9 authorization.",
+  "next_permitted_action": "Persist this report unchanged and obtain explicit user approval for the bounded tasks.md-only remediation. Do not start T067 or any implementation. After approved task regeneration, rerun fresh read-only Full analysis.",
+  "read_only_confirmation": {
+    "files_changed": false,
+    "tests_or_builds_executed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "task_markers_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false,
+    "remediation_applied": false,
+    "implementation_started": false
+  }
+}

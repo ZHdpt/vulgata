@@ -1017,6 +1017,16 @@ unchanged.
   waive regenerated tasks, fresh Full analysis, observed RED-GREEN,
   ledger/current verification, candidate repinning, either Full review axis,
   E2E, verification, image, T049, or T050.
+- Fresh Full analysis iteration 8 returned REVISE with one High finding,
+  I8-001. The regenerated task graph leaves T001 checked against stale
+  plan-review-8 and pre-QR9 authorization evidence. Before implementation,
+  T001 must be reset and rebound to the exact plan-review-10 boundary, QR9
+  approval, and a clean immutable post-task-checkpoint Current verification.
+  T001 and T067 must both precede T068-T070; T075 remains the post-correction
+  pre-pin Current-verification refresh. The tasks-only remediation is pending
+  explicit user approval, and no implementation work is authorized.
+- QR9 Full-analysis checkpoint:
+  `bmad-4-2-analyze-20260727T143319Z-04b7fb` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
@@ -1056,6 +1066,7 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/analyze-5.json`
 - `specs/002-language-framework-detection/reviews/analyze-6.json`
 - `specs/002-language-framework-detection/reviews/analyze-7.json`
+- `specs/002-language-framework-detection/reviews/analyze-8.json`
 - `specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json`
 - `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json`
 - `specs/002-language-framework-detection/evidence/quality7-correction-tdd.json`
