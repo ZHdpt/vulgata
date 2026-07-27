@@ -902,6 +902,14 @@ unchanged.
   19 authority hashes, 71 immutable blob references, 53 raw evidence files,
   T001 attempts 10-11, 38 referenced checkpoint records, QR7 chronology, and
   the absence of replacement T041-T050 claims. T041 is now permitted.
+- Replacement T041 candidate `7c24d8da4230c5753dfe58723f7d3bf82b0c53f0`
+  is an empty checkpoint over parent `5414523d4ee5d532c8c5b8bf1830835e048cb93e`
+  with tree `2eba8a05024036a47dbf9fd7513952bf121b7af6`. Its exact
+  1,709,271-byte binary diff from the Story base has SHA-256
+  `c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0`
+  across 85 owned paths. The create-new record is
+  `specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json`;
+  both fresh Full review axes are pending on this exact boundary.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

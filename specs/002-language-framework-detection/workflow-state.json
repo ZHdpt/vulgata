@@ -4,31 +4,31 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "implement",
+  "stage": "acceptance-review",
   "active_gates": {
     "acceptance-review": {
-      "status": "invalidated",
-      "iteration": 7,
+      "status": "pending",
+      "iteration": 8,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
-        "diff_sha256": "907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae"
+        "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+        "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
-      "completed_at": "2026-07-27T03:25:46.8342178Z"
+      "verdict_path": null,
+      "completed_at": null
     },
     "quality-review": {
-      "status": "invalidated",
-      "iteration": 7,
+      "status": "pending",
+      "iteration": 8,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
-        "diff_sha256": "907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae"
+        "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+        "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-7.json",
-      "completed_at": "2026-07-27T03:25:46.8342178Z"
+      "verdict_path": null,
+      "completed_at": null
     }
   },
   "stage_history": [
@@ -2956,24 +2956,38 @@
       "observed_at": "2026-07-27T06:57:18.9194890Z",
       "summary": "Fresh independent T040 audit 2 ACCEPTED the QR7-refreshed truthful ledger with no findings. All source-range, authority, immutable blob, raw evidence, temporal, malformed-checkpoint, QR7, and downstream-state checks passed; T041 is permitted.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/88",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json"
+      ],
+      "command": "Exact candidate commit/tree/parent/trailers, binary diff byte length and SHA-256, 85 owned paths, immutable Git-blob hashes, deleted paths, and initial clean-status validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T07:03:44.6096829Z",
+      "summary": "T041 pinned empty candidate 7c24d8d with tree 2eba8a0. Its 1,709,271-byte base-to-candidate binary diff hashes to c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0 across 85 owned paths; fresh Full review iteration 8 is pending on this exact boundary.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T065718Z-e52a7c",
+    "checkpoint_id": "bmad-4-2-candidate-record-20260727T070344Z-a74c9e",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/87"
+      "4-2-language-and-framework-detection/implement/88"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T06:57:18.9194890Z"
+  "updated_at": "2026-07-27T07:03:44.6096829Z"
 }
