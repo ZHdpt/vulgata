@@ -324,8 +324,16 @@ substring. Ambiguous or duplicate catalog mappings fail startup.
 
 Supported V1 evidence is deliberately closed:
 
-- inventory only paths returned by `git ls-files --cached`; untracked or
-  ignored working-copy files are never evidence;
+- resolve one exact committed `HEAD` identity, stream
+  `git ls-tree -r -z --full-tree <commit> --` incrementally, and retain only
+  root or nested `*.csproj`, `pom.xml`, `package.json`, `package-lock.json`,
+  `packages.lock.json`, and `requirements.txt` blobs; untracked, ignored, and
+  dirty working-copy files are never evidence;
+- bound the Git inventory before materialization to 16 MiB, 100,000 input
+  records, 1,000 retained supported artifacts, 2,048 path characters, and a
+  30-second deadline with caller cancellation; preserve each retained entry's
+  committed object ID and mode, and fail closed with zero facts on an
+  inventory bound;
 - NuGet: literal unconditional `.csproj`
   `PackageReference`/`FrameworkReference`/SDK declarations
   and eligible committed `packages.lock.json`;
@@ -342,6 +350,13 @@ No Gradle script, generated `project.assets.json`, arbitrary MSBuild target,
 unpaired lock, import, symbol, filename resemblance, or unsupported manifest
 format is interpreted. More formats require a future catalog/parser change and
 tests.
+
+XML evidence is namespace-closed. A `.csproj` root may use no namespace or the
+legacy MSBuild namespace; a Maven root may use no namespace or the standard
+Maven POM namespace. Every consumed relevant element must use its accepted root
+namespace. A relevant foreign-namespace lookalike rejects only that artifact
+with one bounded audit outcome and no fact; independent valid artifacts remain
+eligible.
 
 Each successfully parsed supported direct manifest establishes a scope at its
 parent directory. A Code Unit is eligible only when its path is under that

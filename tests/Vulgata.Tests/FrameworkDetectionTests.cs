@@ -351,6 +351,149 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectDetailedAsync_ForeignXmlNamespaceLookalikes_IsolatesArtifactAndPreservesIndependentEvidenceAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "foreign-root/App.csproj",
+            """
+            <Project xmlns="urn:vulgata:foreign" Sdk="Microsoft.NET.Sdk.Web" />
+            """);
+        repository.Write(
+            "foreign-direct/App.csproj",
+            """
+            <Project xmlns:f="urn:vulgata:foreign">
+              <ItemGroup>
+                <f:PackageReference Include="Microsoft.AspNetCore.Mvc" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write(
+            "foreign-lock/Owner.csproj",
+            """
+            <Project xmlns:f="urn:vulgata:foreign">
+              <ItemGroup>
+                <f:PackageReference Include="Not.In.Catalog" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write(
+            "foreign-lock/packages.lock.json",
+            """
+            {
+              "dependencies": {
+                "net10.0": {
+                  "Microsoft.AspNetCore.Mvc": {
+                    "type": "Transitive"
+                  }
+                }
+              }
+            }
+            """);
+        repository.Write(
+            "foreign-maven/pom.xml",
+            """
+            <project xmlns:f="urn:vulgata:foreign">
+              <f:dependencies>
+                <f:dependency>
+                  <f:groupId>org.springframework.boot</f:groupId>
+                  <f:artifactId>spring-boot-starter-web</f:artifactId>
+                </f:dependency>
+              </f:dependencies>
+            </project>
+            """);
+        repository.Write(
+            "mixed/App.csproj",
+            """
+            <Project xmlns:f="urn:vulgata:foreign">
+              <ItemGroup>
+                <PackageReference Include="Microsoft.AspNetCore.Mvc" />
+                <f:PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write(
+            "valid-msbuild-standard/App.csproj",
+            """
+            <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+                     Sdk="Microsoft.NET.Sdk.Web" />
+            """);
+        repository.Write(
+            "valid-msbuild-empty/App.csproj",
+            """
+            <Project>
+              <ItemGroup>
+                <PackageReference Include="Microsoft.AspNetCore.Mvc" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write(
+            "valid-maven-standard/pom.xml",
+            """
+            <project xmlns="http://maven.apache.org/POM/4.0.0">
+              <dependencies>
+                <dependency>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-starter-web</artifactId>
+                </dependency>
+              </dependencies>
+            </project>
+            """);
+        repository.Write(
+            "valid-maven-empty/pom.xml",
+            """
+            <project>
+              <dependencies>
+                <dependency>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-starter</artifactId>
+                </dependency>
+              </dependencies>
+            </project>
+            """);
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(repository.Path);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(
+            [
+                "valid-maven-empty/pom.xml",
+                "valid-maven-standard/pom.xml",
+                "valid-msbuild-empty/App.csproj",
+                "valid-msbuild-standard/App.csproj",
+            ],
+            result.Evidence
+                .Select(item => item.ArtifactPath)
+                .OrderBy(path => path, StringComparer.Ordinal));
+        Assert.Equal(
+            [
+                "foreign-direct/App.csproj",
+                "foreign-lock/packages.lock.json",
+                "foreign-maven/pom.xml",
+                "foreign-root/App.csproj",
+                "mixed/App.csproj",
+            ],
+            result.AuditOutcomes
+                .Select(item => item.ArtifactPath)
+                .OrderBy(path => path, StringComparer.Ordinal));
+        Assert.Equal(5, result.TotalAuditOutcomeCount);
+        Assert.All(
+            result.AuditOutcomes,
+            audit =>
+            {
+                Assert.Equal("Skipped", audit.Outcome);
+                Assert.Equal("FrameworkEvidenceUnsupported", audit.Reason);
+                Assert.Equal("框架证据格式不受支持。", audit.Message);
+            });
+        Assert.DoesNotContain(
+            result.Evidence,
+            item => item.ArtifactPath.StartsWith("foreign-", StringComparison.Ordinal) ||
+                item.ArtifactPath.StartsWith("mixed/", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task DetectAsync_DirtyTrackedDirectManifest_DoesNotCreateUncommittedFactAsync()
     {
         using var repository = new GitFixture();
@@ -2021,6 +2164,119 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectDetailedAsync_HugeIrrelevantPinnedTree_RemainsBoundedAndProducesNoPartialFactsAsync()
+    {
+        using var repository = new GitFixture();
+        for (var index = 0; index < 300; index++)
+        {
+            repository.Write(
+                $"irrelevant/{index:D4}/source-{index:D4}.txt",
+                $"irrelevant-{index:D4}");
+        }
+
+        repository.Write(
+            "package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+        repository.Write("nested/requirements.txt", "Django==5.2.4\n");
+        repository.CreateFileSymbolicLink(
+            "linked/package.json",
+            "target.txt",
+            """{ "dependencies": { "express": "5.0.0" } }""",
+            targetOutsideRepository: false);
+        repository.TrackAll();
+        string repositoryIdentity =
+            await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
+                repository.Path,
+                CancellationToken.None);
+
+        CommittedRepositoryEntry[] entries =
+            await FrameworkEvidenceDetector.InventoryTrackedEntriesAsync(
+                repository.Path,
+                repositoryIdentity,
+                CancellationToken.None);
+
+        Assert.Equal(
+            [
+                "linked/package.json",
+                "nested/requirements.txt",
+                "package.json",
+            ],
+            entries
+                .Select(entry => entry.Path)
+                .OrderBy(path => path, StringComparer.Ordinal));
+        Assert.Equal(
+            "120000",
+            Assert.Single(entries, entry => entry.Path == "linked/package.json").Mode);
+        Assert.All(
+            entries,
+            entry => Assert.Matches(
+                "^[0-9a-f]{40}([0-9a-f]{24})?$",
+                GetProperty<string>(entry, "ObjectId")));
+
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(repository.Path);
+        Assert.True(result.Succeeded);
+        Assert.Equal(
+            ["nested/requirements.txt", "package.json"],
+            result.Evidence
+                .Select(item => item.ArtifactPath)
+                .OrderBy(path => path, StringComparer.Ordinal));
+        Assert.Single(
+            result.AuditOutcomes,
+            audit => audit.ArtifactPath == "linked/package.json");
+
+        using var byteOverflow = new GitFixture();
+        byteOverflow.Write(
+            "package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+        byteOverflow.TrackAll();
+        string byteOverflowIdentity =
+            await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
+                byteOverflow.Path,
+                CancellationToken.None);
+        Exception byteException = await Assert.ThrowsAnyAsync<Exception>(() =>
+            InvokeBoundedInventoryAsync(
+                byteOverflow.Path,
+                byteOverflowIdentity,
+                maximumOutputBytes: 8,
+                maximumRecords: 1_000,
+                deadline: TimeSpan.FromSeconds(5),
+                CancellationToken.None));
+        Assert.Equal("FrameworkDetectionLimitExceededException", byteException.GetType().Name);
+
+        using var recordOverflow = new GitFixture();
+        recordOverflow.Write(
+            "package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+        recordOverflow.Write("nested/requirements.txt", "Django==5.2.4\n");
+        recordOverflow.TrackAll();
+        string recordOverflowIdentity =
+            await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
+                recordOverflow.Path,
+                CancellationToken.None);
+        Exception recordException = await Assert.ThrowsAnyAsync<Exception>(() =>
+            InvokeBoundedInventoryAsync(
+                recordOverflow.Path,
+                recordOverflowIdentity,
+                maximumOutputBytes: 64 * 1024,
+                maximumRecords: 1,
+                deadline: TimeSpan.FromSeconds(5),
+                CancellationToken.None));
+        Assert.Equal("FrameworkDetectionLimitExceededException", recordException.GetType().Name);
+
+        using var cancellation = new CancellationTokenSource();
+        await cancellation.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            InvokeBoundedInventoryAsync(
+                repository.Path,
+                repositoryIdentity,
+                maximumOutputBytes: 64 * 1024,
+                maximumRecords: 1_000,
+                deadline: TimeSpan.FromSeconds(5),
+                cancellation.Token));
+    }
+
+    [Fact]
     public async Task DetectDetailedAsync_SupportedArtifactOverflow_FailsClosedWithoutPartialFactsAsync()
     {
         using var repository = new GitFixture();
@@ -2478,6 +2734,36 @@ public sealed class FrameworkDetectionTests
         object? limits = property.GetValue(null);
         Assert.NotNull(limits);
         return limits;
+    }
+
+    private static async Task<CommittedRepositoryEntry[]> InvokeBoundedInventoryAsync(
+        string repositoryPath,
+        string repositoryIdentity,
+        long maximumOutputBytes,
+        int maximumRecords,
+        TimeSpan deadline,
+        CancellationToken cancellationToken)
+    {
+        MethodInfo? method = typeof(FrameworkEvidenceDetector)
+            .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+            .SingleOrDefault(candidate =>
+                candidate.Name == "InventoryTrackedEntriesAsync" &&
+                candidate.GetParameters().Length == 6);
+        Assert.NotNull(method);
+        object? invocation = method.Invoke(
+            null,
+            [
+                repositoryPath,
+                repositoryIdentity,
+                maximumOutputBytes,
+                maximumRecords,
+                deadline,
+                cancellationToken,
+            ]);
+        Task task = Assert.IsAssignableFrom<Task>(invocation);
+        await task;
+        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
+        return Assert.IsType<CommittedRepositoryEntry[]>(result);
     }
 
     private static object CreateLimits(

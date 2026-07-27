@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/implement/QR8-correction-tdd",
+  "kind": "test-run",
+  "stage": "implement",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "source_commit_before_correction": "70c122c64a7ee279c2183c1bd50769956169b313",
+  "observed_at": "2026-07-27T08:13:39.7695815Z",
+  "tasks": [
+    "T064",
+    "T065"
+  ],
+  "red": [
+    {
+      "finding_id": "QR8-001",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetectionTests.DetectDetailedAsync_ForeignXmlNamespaceLookalikes_IsolatesArtifactAndPreservesIndependentEvidenceAsync\" --no-restore",
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 1,
+      "reason": "Foreign NuGet direct and lock-owner, Maven, foreign-root, and mixed-namespace XML created false framework facts.",
+      "raw_output_path": "TestResults/story-4-2-quality8-correction/QR8-001-red.txt",
+      "length_bytes": 16588,
+      "sha256": "de55a6dd7a8a0d83ec2c364811ceef8aaf6d6bfb7b65b5762710583223cdbeab"
+    },
+    {
+      "finding_id": "QR8-002",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetectionTests.DetectDetailedAsync_HugeIrrelevantPinnedTree_RemainsBoundedAndProducesNoPartialFactsAsync\" --no-restore",
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 1,
+      "reason": "Committed-tree inventory returned the complete irrelevant tree instead of retaining only supported evidence artifacts.",
+      "raw_output_path": "TestResults/story-4-2-quality8-correction/QR8-002-red.txt",
+      "length_bytes": 16519,
+      "sha256": "4656d1ed133bc452ee09b12e50e763da75c6ff26670661139f2a45c8a1f6b447"
+    }
+  ],
+  "green": [
+    {
+      "scope": "focused QR8 regressions",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetectionTests.DetectDetailedAsync_ForeignXmlNamespaceLookalikes_IsolatesArtifactAndPreservesIndependentEvidenceAsync|FullyQualifiedName~FrameworkDetectionTests.DetectDetailedAsync_HugeIrrelevantPinnedTree_RemainsBoundedAndProducesNoPartialFactsAsync\" --no-restore",
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0,
+      "raw_output_path": "TestResults/story-4-2-quality8-correction/focused-green.txt",
+      "length_bytes": 457246,
+      "sha256": "949f3eec2b1f8944f2f0f7fc6269e18dd296c72d7641a1c4e27f34c50d011735"
+    },
+    {
+      "scope": "complete FrameworkDetectionTests worker run",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetectionTests\" --no-restore --no-build",
+      "exit_code": 0,
+      "passed": 57,
+      "failed": 0,
+      "raw_output_path": "TestResults/story-4-2-quality8-correction/framework-green.txt",
+      "length_bytes": 297,
+      "sha256": "46824895a3cab083ad55b4307564b0538c0e24420aceeef9df55d3263f55475b"
+    },
+    {
+      "scope": "root independent repeat",
+      "command": "focused QR8 2/2 followed by complete FrameworkDetectionTests 57/57",
+      "exit_code": 0,
+      "passed": 59,
+      "failed": 0
+    },
+    {
+      "scope": "executable accepted-plan binding",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~AcceptedPlanBinding\" --no-restore --no-build",
+      "exit_code": 0,
+      "passed": 17,
+      "failed": 0
+    }
+  ],
+  "implemented_behavior": {
+    "xml_namespaces": "NuGet accepts empty or legacy MSBuild root namespace; Maven accepts empty or standard Maven POM root namespace. Every relevant consumed element must match its accepted root namespace. A relevant foreign lookalike rejects only its artifact with one bounded audit and no fact; independent artifacts continue.",
+    "committed_inventory": "One exact committed HEAD tree is streamed incrementally. Only the six supported artifact shapes are retained with exact blob object ID and mode. Output is bounded to 16 MiB, 100,000 input records, 1,000 retained supported artifacts, a bounded record buffer, 30 seconds, bounded stderr, and caller cancellation.",
+    "failure_atomicity": "Inventory bound exhaustion fails the Repository detector closed before artifact parsing can retain framework facts."
+  },
+  "approved_mechanism_adaptation": {
+    "preferred": "Closed Git tree pathspec enumeration plus bounded streaming.",
+    "observed_constraint": "git ls-tree rejects glob-magic pathspecs for the six recursive filename shapes.",
+    "implemented": "The quality finding's explicitly permitted alternative: incrementally parse the pinned full-tree stream under byte, input-record, retained-record, deadline, stderr, and cancellation bounds, retaining only the closed six-shape allowlist.",
+    "scope_expanded": false,
+    "prd_changed_or_weakened": false
+  },
+  "changed_paths": [
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/plan.md",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+  ],
+  "checks": {
+    "git_diff_check_exit_code": 0,
+    "exact_worker_write_boundary": true,
+    "tasks_or_workflow_modified_by_worker": false,
+    "staged_or_committed_by_worker": false,
+    "codegraph_attempted": true,
+    "codegraph_result": "Transport closed; direct reads used as authorized fallback.",
+    "windows_1312_result": "Resolved through narrow approved escalation."
+  },
+  "waivers": {
+    "tdd": false,
+    "surrounding_verification": false,
+    "current_verification": false,
+    "truthful_ledger_refresh": false,
+    "independent_t040": false,
+    "fresh_full_reviews": false
+  }
+}

@@ -40,8 +40,17 @@ is a catalog/code-review change with detector tests, not user input.
 
 ## Supported evidence
 
-The detector inventories only `git ls-files --cached`. Untracked and ignored
-working-copy files are never evidence.
+The detector resolves one exact committed `HEAD`, incrementally streams
+`git ls-tree -r -z --full-tree <commit> --`, and retains only root or nested
+`*.csproj`, `pom.xml`, `package.json`, `package-lock.json`,
+`packages.lock.json`, and `requirements.txt` blobs. It never materializes the
+complete tree. Untracked, ignored, and dirty working-copy files are never
+evidence. Each retained entry preserves its committed blob object ID and mode.
+
+The inventory stream is bounded to 16 MiB, 100,000 input records, 1,000
+retained supported artifacts, 2,048 path characters, and a 30-second deadline
+with caller cancellation. Byte, record, deadline, or cancellation exhaustion
+returns no partial framework facts.
 
 | Ecosystem | Direct (`High`) | Transitive (`Medium`) |
 | --- | --- | --- |
@@ -53,6 +62,13 @@ working-copy files are never evidence.
 Unsupported formats or evidence create no fact. No build/restore/install,
 MSBuild/Gradle/package script, external service, import, filename, symbol, or
 LLM is evaluated.
+
+For XML, a `.csproj` root namespace must be empty or the legacy MSBuild
+namespace, and a Maven `project` root namespace must be empty or the standard
+Maven POM namespace. Every consumed relevant element must match that accepted
+root namespace. A relevant foreign-namespace lookalike makes that artifact
+unsupported, produces exactly one bounded closed audit outcome, creates no
+fact, and does not suppress independent valid evidence.
 
 ## Scope
 
@@ -120,6 +136,9 @@ Code Unit/framework.
 100 retained evidence audit details
 2,048 path characters
 4,096 locator characters
+16 MiB Git inventory output
+100,000 Git inventory input records
+30-second Git inventory deadline
 ```
 
 One invalid/unsafe/unsupported artifact is isolated. A lock whose owner proof

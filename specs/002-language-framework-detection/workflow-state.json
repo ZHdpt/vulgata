@@ -3013,24 +3013,47 @@
       "observed_at": "2026-07-27T07:44:16.0530818Z",
       "summary": "The user explicitly approved the recommended QR8 Scan-strategy remediation. T063 preserves authorization and invalidates candidate 7c24d8d plus both iteration-8 review axes before mutation. T064-T066 require namespace-safe XML RED/GREEN, bounded pinned-tree allowlist discovery, authority reconciliation, complete verification, truthful-ledger refresh, and fresh independent T040 validation.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/90",
+      "kind": "test-run",
+      "stage": "implement",
+      "source_commit": "70c122c64a7ee279c2183c1bd50769956169b313",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/contracts/framework-detection.md",
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md"
+      ],
+      "command": "Independent QR8-001 and QR8-002 RED, focused GREEN, complete FrameworkDetectionTests, authority reconciliation, exact scope check, and git diff check",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T08:13:39.7695815Z",
+      "summary": "T064-T065 are complete with strict independent RED-GREEN evidence. Namespace spoofing is artifact-local and fact-free; pinned-tree inventory is incrementally bounded while retaining only six supported shapes with exact object IDs and modes. Focused QR8 passes 2/2, FrameworkDetectionTests passes 57/57 in both worker and root validation, and executable accepted-plan binding passes 17/17. The implementation uses QR8-002's bounded-stream alternative because git ls-tree rejects glob-magic pathspecs.",
+      "raw_output_path": "TestResults/story-4-2-quality8-correction/"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T074416Z-c64f2a",
+    "checkpoint_id": "bmad-4-2-implement-20260727T081339Z-d75a3b",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+      "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+      "specs/002-language-framework-detection/plan.md",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/workflow-state.json",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/89"
+      "4-2-language-and-framework-detection/implement/90"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T07:44:16.0530818Z"
+  "updated_at": "2026-07-27T08:13:39.7695815Z"
 }

@@ -319,9 +319,20 @@ unchanged.
   catalog, exact committed-manifest parsers, parser-language-compatible scope
   selection, ambiguity suppression, deterministic ranking, and bounded safe
   locators pass 37/37 focused framework tests.
-- Framework detection remains non-executing and uses only
-  `git ls-files --cached -z --` for Repository inventory. It performs no
-  build, restore, install, script, network, LLM, import, or symbol scan.
+- Framework detection remains non-executing. It resolves one exact committed
+  `HEAD`, incrementally streams
+  `git ls-tree -r -z --full-tree <commit> --`, and retains only root or nested
+  `*.csproj`, `pom.xml`, `package.json`, `package-lock.json`,
+  `packages.lock.json`, and `requirements.txt` blobs with their committed
+  object IDs and modes. The complete tree is never materialized; inventory is
+  bounded to 16 MiB, 100,000 input records, 1,000 supported artifacts, and a
+  30-second deadline with caller cancellation. It performs no build, restore,
+  install, script, network, LLM, import, or symbol scan.
+- NuGet XML accepts only an empty or legacy MSBuild root namespace; Maven XML
+  accepts only an empty or standard Maven POM root namespace. Every consumed
+  relevant element must match its accepted root namespace. A relevant foreign
+  lookalike rejects only that artifact with one bounded closed audit and no
+  framework fact while independent valid artifacts continue.
 - Per-artifact failures are isolated with fixed bounded Chinese diagnostics;
   Repository-global limit exhaustion or unexpected detector faults return a
   typed fail-closed result with zero framework evidence. Transaction-order and
@@ -921,6 +932,16 @@ unchanged.
   bounds, and reconciliation of stale inventory wording. Candidate
   `7c24d8d` and both iteration-8 review axes are invalidated before mutation;
   T063 is complete and T064-T066 plus T041-T050 remain incomplete.
+- T064-T065 now have strict observed RED-GREEN evidence. Foreign namespace
+  lookalikes are artifact-local and fact-free while supported namespaces
+  remain eligible. The pinned Git tree is incrementally bounded and retains
+  only six supported artifact shapes with exact object IDs and modes. Because
+  `git ls-tree` rejects glob-magic pathspecs, the implementation uses QR8-002's
+  accepted bounded-stream alternative rather than materializing output:
+  16 MiB, 100,000 input records, 1,000 retained artifacts, bounded records and
+  stderr, 30 seconds, and caller cancellation. Focused tests pass 2/2 and the
+  complete framework suite passes 57/57. The executable accepted-plan binding
+  passes 17/17; T066 remains pending.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
