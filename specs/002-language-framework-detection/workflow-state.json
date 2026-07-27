@@ -3187,29 +3187,37 @@
       "observed_at": "2026-07-27T13:40:09.9454807Z",
       "summary": "Fresh independent plan-review 10 ACCEPTED the exact five-file plan boundary after plan-review 9's downstream-order correction. AR9-001, QR9-001 planning, and PR9-001 are closed; Constitution and PRD FR-4.1 pass. Task generation remains blocked by the mandatory explicit QR9 Scan parsing/filtering authorization.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/plan-review/101",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "3de522a42fc1cc77ae200da7596c8c3c5a1af421",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T14:10:00.2520819Z",
+      "summary": "The user explicitly approved QR9-001's planned Scan XML parsing and NuGet lock-owner filtering correction after independent plan-review 10 ACCEPT. Task generation, Full analysis, behavior-level TDD, both Full review axes, E2E, security, verification, ledger, candidate, image, T049, and T050 gates remain mandatory.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-plan-20260727T134009Z-b02d3f",
+    "checkpoint_id": "bmad-4-2-plan-20260727T141000Z-c13e4a",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "plan-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/research.md",
-      "specs/002-language-framework-detection/data-model.md",
-      "specs/002-language-framework-detection/contracts/framework-detection.md",
-      "specs/002-language-framework-detection/quickstart.md",
-      "specs/002-language-framework-detection/reviews/plan-review-9.json",
-      "specs/002-language-framework-detection/reviews/plan-review-10.json",
+      "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/plan-review/10"
+      "4-2-language-and-framework-detection/plan-review/101"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T13:40:09.9454807Z"
+  "updated_at": "2026-07-27T14:10:00.2520819Z"
 }

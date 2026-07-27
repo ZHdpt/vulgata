@@ -1009,6 +1009,14 @@ unchanged.
   grammar. Candidate `708b7df` and review iteration 9 are invalidated history.
   Task generation is blocked pending explicit user authorization for QR9's
   Scan XML parsing and lock-owner filtering change.
+- The user explicitly approved QR9-001 after plan-review 10 ACCEPT. The
+  authorization is limited to closing NuGet lock ownership to the three
+  accepted project-level literal shapes and rejecting nested or
+  execution-dependent MSBuild declarations with zero Medium facts, one
+  bounded redacted audit, and independent-evidence continuation. It does not
+  waive regenerated tasks, fresh Full analysis, observed RED-GREEN,
+  ledger/current verification, candidate repinning, either Full review axis,
+  E2E, verification, image, T049, or T050.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

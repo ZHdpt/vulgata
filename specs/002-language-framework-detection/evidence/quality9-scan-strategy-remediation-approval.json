@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/plan-review/QR9-remediation-approval",
+  "kind": "human-approval",
+  "stage": "plan-review",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "source_commit": "3de522a42fc1cc77ae200da7596c8c3c5a1af421",
+  "reviewed_candidate_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+  "plan_verdict_path": "specs/002-language-framework-detection/reviews/plan-review-10.json",
+  "quality_verdict_path": "specs/002-language-framework-detection/reviews/quality-review-9.json",
+  "observed_at": "2026-07-27T14:10:00.2520819Z",
+  "decision": "approved",
+  "approval_text": "Approve",
+  "trigger": "QR9-001 materially changes Scan XML parsing and NuGet lock-owner filtering behavior and therefore requires explicit planned-change authorization after accepted plan review and before task generation.",
+  "approved_remediation": [
+    {
+      "finding_id": "QR9-001",
+      "intent": "Restrict NuGet lock-owner proof to a literal root Project Sdk attribute, a literal direct Project/Sdk element, or a literal PackageReference/FrameworkReference directly beneath a project-level ItemGroup.",
+      "rejected_shapes": "Declarations beneath Target, Choose/When, imports, conditions, dynamic values, or other execution-dependent MSBuild structures cannot prove ownership.",
+      "effects": "Unsupported owner evidence creates zero Medium-confidence framework facts, exactly one bounded redacted artifact-local audit, and does not suppress independent valid Repository evidence.",
+      "tests": "Observe behavior-level RED before production mutation for Target-nested and Choose/When-nested owners paired with matched locks, then GREEN for both negative cases and all three supported owner forms."
+    }
+  ],
+  "affected_authorities": {
+    "accepted_plan": [
+      "specs/002-language-framework-detection/plan.md:192-200",
+      "specs/002-language-framework-detection/plan.md:419-455",
+      "specs/002-language-framework-detection/plan.md:634-663"
+    ],
+    "contract": [
+      "specs/002-language-framework-detection/contracts/framework-detection.md:82-105",
+      "specs/002-language-framework-detection/contracts/framework-detection.md:180-201"
+    ],
+    "prd": [
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md:157"
+    ]
+  },
+  "implementation_intent": "Regenerate dependency-ordered tasks; run fresh read-only Full analysis; require observed behavior-level RED; make the minimal owner-grammar correction; run focused and surrounding GREEN; regenerate Current verification and the truthful ledger before one candidate pin; then rerun both Full review axes and every downstream gate.",
+  "scope_effects": {
+    "prd_changed_or_weakened": false,
+    "worker_agent_or_tool_changed": false,
+    "dispatch_scheduling_grouping_or_retry_changed": false,
+    "scan_strategy_changed": true,
+    "candidate_708b7df_and_review_iteration_9_invalidated": true
+  },
+  "waivers": {
+    "task_regeneration": false,
+    "full_analysis": false,
+    "tdd": false,
+    "fresh_acceptance_review": false,
+    "fresh_quality_review": false,
+    "conditional_e2e": false,
+    "security_verification": false,
+    "final_verification": false,
+    "git_checkpoint_contract": false
+  }
+}
