@@ -7,28 +7,28 @@
   "stage": "implement",
   "active_gates": {
     "acceptance-review": {
-      "status": "invalidated",
-      "iteration": 8,
+      "status": "revised",
+      "iteration": 9,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
-        "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0"
+        "candidate_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+        "diff_sha256": "47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
-      "completed_at": "2026-07-27T07:28:36.3160100Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+      "completed_at": "2026-07-27T12:51:04.6083701Z"
     },
     "quality-review": {
-      "status": "invalidated",
-      "iteration": 8,
+      "status": "revised",
+      "iteration": 9,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
-        "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0"
+        "candidate_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+        "diff_sha256": "47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-8.json",
-      "completed_at": "2026-07-27T07:28:36.3160100Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-9.json",
+      "completed_at": "2026-07-27T12:51:04.6083701Z"
     }
   },
   "stage_history": [
@@ -3139,24 +3139,53 @@
       "observed_at": "2026-07-27T09:33:21.2227624Z",
       "summary": "T041 pins clean empty candidate 708b7df with tree 900d936. Its 1,832,428-byte base-to-candidate binary diff hashes to 47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68 across 93 owned paths; fresh Full review iteration 9 is pending on this exact boundary.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/9",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-9.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T12:51:04.6083701Z",
+      "summary": "Fresh Full acceptance review 9 returned REVISE: research decision R5 still mandates git ls-files --cached and plan-review-8 binds pre-QR8 plan bytes, while the authorized current plan, contract, Story, tasks, tests, and production code use bounded pinned git ls-tree. The complete plan set requires reconciliation, fresh plan review, dependent task regeneration, and fresh analysis.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/9",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-9.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T12:51:04.6083701Z",
+      "summary": "Fresh Full quality review 9 returned REVISE with High QR9-001: NuGet lock-owner validation accepts same-namespace declarations nested under unsupported MSBuild execution constructs, creating a false Medium framework fact. The correction changes Scan parsing/filtering and requires planned-change authorization after fresh plan acceptance.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T093321Z-f85b1d",
+    "checkpoint_id": "bmad-4-2-implement-20260727T125104Z-a91c2e",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json",
-      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+      "specs/002-language-framework-detection/reviews/quality-review-9.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/97"
+      "4-2-language-and-framework-detection/acceptance-review/9",
+      "4-2-language-and-framework-detection/quality-review/9"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T09:33:21.2227624Z"
+  "updated_at": "2026-07-27T12:51:04.6083701Z"
 }

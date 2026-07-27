@@ -987,6 +987,18 @@ unchanged.
   across 93 owned paths, with exact candidate Git-blob hashes and one
   intentional deleted path recorded in immutable-candidate manifest 3.
   The candidate was pinned clean; fresh Full review iteration 9 is next.
+- Full review iteration 9 returned REVISE on both independent axes.
+  Acceptance finding AR9-001 found that R5 still mandates mutable-index
+  `git ls-files --cached` and plan-review 8 binds pre-QR8 plan bytes, while
+  the authorized current design uses bounded pinned `git ls-tree`. Quality
+  finding QR9-001 found that the NuGet lock-owner validator accepts literal
+  declarations nested beneath unsupported MSBuild execution constructs and
+  can therefore create a false Medium framework fact. Candidate `708b7df`
+  and both iteration-9 verdicts become invalidated when remediation mutates
+  plan, task, implementation, test, or ledger bytes. Fresh plan judgment,
+  planned-change authorization for QR9-001, task regeneration, Full analysis,
+  RED-GREEN correction, ledger validation, candidate pinning, and both review
+  axes remain mandatory.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

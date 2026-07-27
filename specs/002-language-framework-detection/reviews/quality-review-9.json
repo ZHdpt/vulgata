@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewer_identity": {
+    "role": "quality-reviewer",
+    "identity": "story-4-2-quality-reviewer-iteration-9-independent",
+    "iteration": 9,
+    "fresh_independent_review": true,
+    "acceptance_axis_substituted": false,
+    "prior_review_conclusion_inherited": false
+  },
+  "reviewed_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+  "reviewed_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+    "candidate_tree": "900d936caf31c8dadd2b1aea02f073c0e90d3cdb",
+    "candidate_parent": "29bfc87169c89a73f8bc92923588237d85e6d835",
+    "binary_diff_length_bytes": 1832428,
+    "diff_sha256": "47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68",
+    "owned_path_count": 93,
+    "candidate_record_commit": "b5e8e8ba81cb6ac3d06ee8054e63f3ce7cc704aa",
+    "boundary_verified": true,
+    "final_worktree_clean": true,
+    "artifact_hashes": {
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "5067752aa4e392de16089a13067ab90f2e826c8a39a15aa1e9892db2821b7298",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "a80279d35c1e62eca75a1de0c79570ba6eac49323b1478a5b0c3be1c1133a345",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "857806217393c87f7ab787207b2b42ab3dc27299275cfdfe2ffb578343f99930",
+      "specs/002-language-framework-detection/plan.md": "26d5363c9d5855b283777eab5d452eb6c0ffcb5df47593bc6c66df2e0464bbc1",
+      "specs/002-language-framework-detection/tasks.md": "c06d9aab39fa181519ba2f1376d5f3f3270d9b6eff900fd0c31db5cfdb7c0733"
+    }
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+    "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+    "specs/002-language-framework-detection/evidence/quality8-validation.json",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "QR9-001",
+      "severity": "High",
+      "category": "correctness/data-integrity/architecture-seam",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "location": "1128-1139",
+      "title": "Unsupported nested MSBuild declarations can validate a NuGet lock owner and create a false framework fact",
+      "affected_requirement": [
+        "specs/002-language-framework-detection/contracts/framework-detection.md:62-64 prohibits evaluating MSBuild behavior.",
+        "specs/002-language-framework-detection/contracts/framework-detection.md:82-86 requires the sole NuGet lock owner to use the supported direct-manifest shape with literal, unconditional ownership declarations.",
+        "specs/002-language-framework-detection/contracts/framework-detection.md:154-157 requires rejection coverage for unsupported and conditional/dynamic owners."
+      ],
+      "evidence": [
+        {
+          "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "lines": "1128-1139",
+          "detail": "ValidateNuGetOwnerManifest searches every same-namespace descendant PackageReference or FrameworkReference. It does not require the declaration to be a child of a project-level ItemGroup and does not reject declarations nested beneath Target, Choose, When, or another unsupported MSBuild execution construct."
+        },
+        {
+          "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "lines": "1460-1493",
+          "detail": "The direct evidence parser correctly consumes only project-level ItemGroup children. The owner validator therefore accepts a broader and unsafe syntax than the detector's supported direct-manifest grammar."
+        },
+        {
+          "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+          "detail": "Owner-negative coverage exercises malformed roots, unsupported roots, explicit Condition attributes, dynamic SDK values, unsafe paths, oversize files, and multiple candidates, but does not cover a literal PackageReference or FrameworkReference nested under Target or Choose."
+        }
+      ],
+      "reproduction_reasoning": "A sole same-root owner such as <Project><Target Name=\"Late\"><ItemGroup><PackageReference Include=\"Example.Unmatched\" /></ItemGroup></Target></Project> has no supported project-level ownership declaration. Nevertheless, lines 1128-1139 classify it ParsedSupported because the nested declaration is literal and has no Condition attribute. A matched packages.lock.json is then eligible and can produce a Medium framework fact for an applicable Code Unit.",
+      "impact": "A committed lock file can be associated with a scope through an unsupported, execution-dependent MSBuild construct. This bypasses the validated-owner seam and permits an incorrect persisted framework fact.",
+      "correction_outcome": "Make NuGet owner validation consume exactly the supported project-level grammar used by direct detection: the root SDK attribute, direct Project/Sdk elements, and PackageReference or FrameworkReference elements directly beneath project-level ItemGroup elements. Declarations beneath Target, Choose, When, Import-driven, or other unsupported structures must not prove ownership. Add observed RED/GREEN cases for Target-nested and Choose/When-nested declarations paired with a matched lock; require no Medium fact, one bounded closed audit without raw values, continued independent valid evidence, and preserved valid project-level owner behavior.",
+      "planned_change_authorization": {
+        "required": true,
+        "trigger": "The correction materially changes Scan parsing and lock-owner filtering behavior.",
+        "authority": "AGENTS.md:85-93",
+        "required_action": "Before task generation, obtain explicit user approval identifying this Scan-strategy trigger, the exact owner-grammar correction, its effects, implementation intent, and affected plan and PRD material. The approval does not waive TDD, both Full review axes, E2E, security, or verification."
+      }
+    }
+  ],
+  "quality_assessment": {
+    "correctness": "REVISE",
+    "security_and_redaction": "The QR8 namespace-spoofing and bounded-inventory corrections are sound, fail closed, and retain bounded diagnostics. QR9-001 remains a High data-integrity defect.",
+    "edge_cases": "REVISE because unsupported nested MSBuild ownership structures are not rejected.",
+    "test_quality": "QR8 coverage is substantial for foreign namespaces, pinned object identity, output and retained-record overflow, cancellation, and independent artifact continuation. NuGet owner tests omit the unsupported nested-execution shape that exposes QR9-001.",
+    "architecture_seams": "Layering and the committed-snapshot seam remain sound. The direct-parser and lock-owner-validator grammars are inconsistent.",
+    "regression_risk": "High until QR9-001 receives authorized RED-GREEN correction and both Full review axes are regenerated.",
+    "forbidden_scope": "No Worker Agent/tool, orchestration, dispatch, scheduling, retry, PRD weakening, document generation, persistence-schema, API, or UI expansion was found."
+  },
+  "read_only_confirmation": {
+    "files_edited": false,
+    "tests_or_builds_executed": false,
+    "task_markers_changed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false
+  },
+  "summary": "REVISE. The QR8 namespace and inventory findings are corrected, but QR9-001 is a new High correctness and data-integrity finding: NuGet lock ownership accepts unsupported nested MSBuild declarations and can create a false Medium framework fact."
+}
