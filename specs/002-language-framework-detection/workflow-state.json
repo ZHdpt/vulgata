@@ -4,31 +4,31 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "verification",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
-      "status": "revised",
-      "iteration": 3,
+      "status": "invalidated",
+      "iteration": 6,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "6199c0be5cb607950fa3e8f8d276ff0735ae2f13",
-        "diff_sha256": "ae7a742e724e41ec9199c6e0a04c2d54539f16bbb98904d81fd2cb6ec0f6fbc0"
+        "candidate_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+        "diff_sha256": "25a13c76b50dd95ab80a0d19a09c4b929e1186cb4e06acc73d3b8b1fe3b320cc"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
-      "completed_at": "2026-07-26T07:31:17.9684124Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+      "completed_at": "2026-07-27T01:17:17.0000000Z"
     },
     "quality-review": {
-      "status": "revised",
-      "iteration": 3,
+      "status": "invalidated",
+      "iteration": 6,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "6199c0be5cb607950fa3e8f8d276ff0735ae2f13",
-        "diff_sha256": "ae7a742e724e41ec9199c6e0a04c2d54539f16bbb98904d81fd2cb6ec0f6fbc0"
+        "candidate_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+        "diff_sha256": "25a13c76b50dd95ab80a0d19a09c4b929e1186cb4e06acc73d3b8b1fe3b320cc"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-3.json",
-      "completed_at": "2026-07-26T07:28:35.1963533Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-6.json",
+      "completed_at": "2026-07-27T01:17:17.0000000Z"
     }
   },
   "stage_history": [
@@ -577,6 +577,62 @@
         "TestResults/story-4-2-current-verification/T001-framework-green.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "invalidated",
+      "started_at": "2026-07-27T01:16:38.0000000Z",
+      "completed_at": "2026-07-27T01:17:17.0000000Z",
+      "input_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/acceptance-review-6.json": "dee2a3f280a4827d6b5b7fd23ccea42b4587e361995e09d48ac5e3075576e26a"
+      },
+      "agent_role": "acceptance-reviewer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-6.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "revised",
+      "started_at": "2026-07-27T01:16:40.0000000Z",
+      "completed_at": "2026-07-27T01:17:17.0000000Z",
+      "input_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/quality-review-6.json": "083ad69dab551c7ce834d5d19e35c068f43be1438cee562102699fd8da62bf5c"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-6.json"
+      ],
+      "failure": {
+        "classification": "quality-review-finding",
+        "summary": "QR6-001 found that committed artifact paths were read from mutable working-tree bytes rather than the exact pinned Git object."
+      }
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-27T01:27:08.0000000Z",
+      "completed_at": "2026-07-27T01:44:39.0000000Z",
+      "input_commit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "4fec4cc4c89d82967af3c310bca58c5c34e74955e2b54273e28ca534940141b9",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "8ff83351c3f191a3fcc5558ced76197c5e490e1df45c951f7a611dbccda6a525",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "76def864f548b9c20bedb9345885e5486068902f0a483cacb16fc48df1decba9"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "TestResults/story-4-2-quality6-correction/red-dirty-direct.txt",
+        "TestResults/story-4-2-quality6-correction/refactor-snapshot-green.txt",
+        "TestResults/story-4-2-quality6-correction/root-surrounding-green.txt",
+        "TestResults/story-4-2-quality6-correction/root-surrounding-green-attempt-0002.txt",
+        "TestResults/story-4-2-quality6-correction/root-surrounding-green-attempt-0003.txt",
+        "TestResults/story-4-2-quality6-correction/root-non-final-image-suite-green.txt",
+        "TestResults/story-4-2-quality6-correction/root-web-build-green.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1077,17 +1133,25 @@
       ]
     },
     "acceptance-review": {
-      "count": 2,
+      "count": 6,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
-        "specs/002-language-framework-detection/reviews/acceptance-review-2.json"
+        "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-4.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-6.json"
       ]
     },
     "quality-review": {
-      "count": 2,
+      "count": 6,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/quality-review-1.json",
-        "specs/002-language-framework-detection/reviews/quality-review-2.json"
+        "specs/002-language-framework-detection/reviews/quality-review-2.json",
+        "specs/002-language-framework-detection/reviews/quality-review-3.json",
+        "specs/002-language-framework-detection/reviews/quality-review-4.json",
+        "specs/002-language-framework-detection/reviews/quality-review-5.json",
+        "specs/002-language-framework-detection/reviews/quality-review-6.json"
       ]
     }
   },
@@ -2572,23 +2636,125 @@
       "observed_at": "2026-07-27T00:49:12.9821384Z",
       "summary": "T045 passed at the unchanged T041 product/test boundary: provider/profiling 116/116, framework 50/50, binding 17/17, non-final-image suite 504/504, and authorization/redaction 33/33. Web build completed with zero errors; forward and reverse scripts preserve the two-migration Story 4.2 order; the model has no pending changes. FR-020 has zero forbidden Scan Coordinator/orchestration/tool/dispatch changes; the one generic filename match is the accepted RepositoryProfilingCoordinator integration seam. Diff check and tracked status are clean.",
       "raw_output_path": "TestResults/story-4-2-final-verification/T045-non-final-image-suite-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/71",
+      "kind": "human-approval",
+      "stage": "implement",
+      "source_commit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T01:00:35.8029186Z",
+      "summary": "The user approved create-new contract-valid iteration-6 Full review evidence after T046 found schema and reviewer-identity defects in iteration 5. No product, test, plan, PRD, Scan strategy, Worker Agent/tool, or later gate was waived.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/6",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-6.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T01:17:17.0000000Z",
+      "summary": "Fresh Full acceptance review 6 returned contract-valid ACCEPT at the prior candidate. Its result is preserved but invalidated by the subsequent QR6-001 source/test correction.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/6",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-6.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T01:17:17.0000000Z",
+      "summary": "Fresh Full quality review 6 returned REVISE with QR6-001: tracked manifest and lock paths were read from mutable working-tree bytes rather than the exact committed Repository object.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/72",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+      "artifact_paths": [
+        "TestResults/story-4-2-quality6-correction/red-dirty-direct.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~DetectAsync_DirtyTrackedDirectManifest_DoesNotCreateUncommittedFactAsync",
+      "exit_code": 1,
+      "observed_at": "2026-07-27T01:27:08.0000000Z",
+      "summary": "QR6-001 behavior RED proved that dirty tracked package.json bytes incorrectly produced the uncommitted npm:react fact.",
+      "raw_output_path": "TestResults/story-4-2-quality6-correction/red-dirty-direct.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/73",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+      "artifact_paths": [
+        "TestResults/story-4-2-quality6-correction/green-dirty-direct.txt",
+        "TestResults/story-4-2-quality6-correction/green-dirty-manifest-lock.txt",
+        "TestResults/story-4-2-quality6-correction/refactor-snapshot-green.txt",
+        "TestResults/story-4-2-quality6-correction/framework-detection-full-green.txt"
+      ],
+      "command": "Focused QR6-001 dirty-manifest, dirty-lock, and pinned-snapshot tests; complete FrameworkDetectionTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T01:34:14.0000000Z",
+      "summary": "The detector now pins one validated HEAD commit, inventories tracked paths, and reads exact committed blobs. The three QR6-001 regression cases passed and the complete FrameworkDetectionTests suite passed 52 of 52.",
+      "raw_output_path": "TestResults/story-4-2-quality6-correction/framework-detection-full-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/74",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+      "artifact_paths": [
+        "TestResults/story-4-2-quality6-correction/root-surrounding-green.txt",
+        "TestResults/story-4-2-quality6-correction/root-surrounding-green-attempt-0002.txt",
+        "TestResults/story-4-2-quality6-correction/root-surrounding-green-attempt-0003.txt",
+        "TestResults/story-4-2-quality6-correction/root-non-final-image-suite-green.txt",
+        "TestResults/story-4-2-quality6-correction/root-web-build-green.txt"
+      ],
+      "command": "Provider/profiling/framework surrounding suite; complete non-final-image suite; dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T01:44:39.0000000Z",
+      "summary": "The preserved first surrounding attempt failed 7 of 168 because its Git fixture had no commit. After fixture alignment, worker and root passed 168 of 168, the complete non-final-image suite passed 507 of 507, and the Web build completed with zero errors.",
+      "raw_output_path": "TestResults/story-4-2-quality6-correction/root-non-final-image-suite-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-verification-20260727T004912Z-d2f47a",
+    "checkpoint_id": "bmad-4-2-implement-20260727T014847Z-qr6001",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "verification",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
+      "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+      "specs/002-language-framework-detection/reviews/quality-review-6.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/workflow-state.json",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/verification/1"
+      "4-2-language-and-framework-detection/implement/71",
+      "4-2-language-and-framework-detection/acceptance-review/6",
+      "4-2-language-and-framework-detection/quality-review/6",
+      "4-2-language-and-framework-detection/implement/72",
+      "4-2-language-and-framework-detection/implement/73",
+      "4-2-language-and-framework-detection/implement/74"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T00:49:12.9821384Z"
+  "updated_at": "2026-07-27T01:48:47.1017849Z"
 }

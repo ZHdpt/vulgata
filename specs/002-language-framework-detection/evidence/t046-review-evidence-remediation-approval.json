@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/verification/2",
+  "kind": "human-approval",
+  "stage": "verification",
+  "source_commit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+  "artifact_paths": [
+    "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
+    "specs/002-language-framework-detection/reviews/quality-review-5.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
+  ],
+  "command": null,
+  "exit_code": null,
+  "observed_at": "2026-07-27T01:00:35.8029186Z",
+  "summary": "The user explicitly approved the presented T046 review-evidence remediation after the independent read-only cross-validation returned REVISE. The root will preserve both iteration-5 review files unchanged, dispatch fresh independent Full acceptance and quality reviewers against candidate 14ed1fd2c2c31350f3a9d70852e2d806ed2e1522, persist create-new contract-valid iteration-6 verdicts, and rerun T046. This approval changes no product code, test, specification, plan, PRD, Scan strategy, Worker Agent/tool, dispatch behavior, candidate boundary, E2E result, or T045 verification and waives no remaining review, image, security, verification, freeze, or final-audit gate.",
+  "raw_output_path": null,
+  "trigger": "T046 blocking evidence-integrity findings in the persisted iteration-5 Full-review verdict schemas and reviewer identity.",
+  "implementation_intent": "Create no correction by relabelling or editing iteration-5 evidence; obtain fresh iteration-6 verdicts from independent read-only reviewers, validate their complete artifact hashes and explicit 74-path boundary, then rerun T046 before any image work."
+}

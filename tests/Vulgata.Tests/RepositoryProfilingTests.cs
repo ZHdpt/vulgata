@@ -2442,6 +2442,8 @@ public sealed class RepositoryProfilingTests
             RunGit("init", "--quiet");
             RunGit("config", "core.longpaths", "true");
             RunGit("config", "core.symlinks", "true");
+            RunGit("config", "user.email", "vulgata-tests@example.invalid");
+            RunGit("config", "user.name", "Vulgata Tests");
         }
 
         public string Path { get; }
@@ -2458,13 +2460,18 @@ public sealed class RepositoryProfilingTests
                 new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
-        public void TrackAll() => RunGit("add", "--all");
+        public void TrackAll()
+        {
+            RunGit("add", "--all");
+            RunGit("commit", "--quiet", "-m", "fixture");
+        }
 
         public void Track(params string[] relativePaths)
         {
             var arguments = new List<string> { "add", "--" };
             arguments.AddRange(relativePaths);
             RunGit([.. arguments]);
+            RunGit("commit", "--quiet", "-m", "fixture");
         }
 
         public void CreateFileSymbolicLink(

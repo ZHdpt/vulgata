@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Infrastructure.FrameworkDetection;
 
 namespace Vulgata.Tests;
 
@@ -272,6 +273,77 @@ public sealed class FrameworkDetectionTests
         ];
 
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public async Task DetectAsync_DirtyTrackedDirectManifest_DoesNotCreateUncommittedFactAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "src/ui/package.json",
+            """{ "dependencies": { "not-in-catalog": "1.0.0" } }""");
+        repository.CommitAll();
+        repository.Write(
+            "src/ui/package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+
+        Assert.Empty(await DetectAsync(repository.Path));
+    }
+
+    [Fact]
+    public async Task DetectAsync_DirtyTrackedPairedLock_DoesNotCreateUncommittedFactAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "src/ui/package.json",
+            """{ "dependencies": { "not-in-catalog": "1.0.0" } }""");
+        repository.Write(
+            "src/ui/package-lock.json",
+            """
+            {
+              "lockfileVersion": 3,
+              "packages": {
+                "": {
+                  "dependencies": {
+                    "not-in-catalog": "1.0.0"
+                  }
+                }
+              }
+            }
+            """);
+        repository.CommitAll();
+        repository.Write(
+            "src/ui/package-lock.json",
+            """
+            {
+              "lockfileVersion": 3,
+              "packages": {
+                "node_modules/react": {
+                  "version": "19.0.0"
+                }
+              }
+            }
+            """);
+
+        Assert.Empty(await DetectAsync(repository.Path));
+    }
+
+    [Fact]
+    public async Task DetectAsync_HeadChangesAfterInventory_UsesPinnedCommittedSnapshotAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "src/ui/package.json",
+            """{ "dependencies": { "not-in-catalog": "1.0.0" } }""");
+        repository.CommitAll();
+        var snapshotSource = new HeadMutatingSnapshotSource(repository);
+        var detector = new FrameworkEvidenceDetector(
+            (FrameworkCatalog)LoadEmbedded(),
+            FrameworkDetectionLimits.Production,
+            snapshotSource);
+
+        Assert.Empty(await detector.DetectAsync(repository.Path));
+        Assert.True(snapshotSource.Mutated);
     }
 
     [Fact]
@@ -2348,6 +2420,28 @@ public sealed class FrameworkDetectionTests
         string Failure,
         string? Error);
 
+    private sealed class HeadMutatingSnapshotSource(GitFixture repository)
+        : ICommittedRepositorySnapshotSource
+    {
+        public bool Mutated { get; private set; }
+
+        public async Task<CommittedRepositorySnapshot> CreateAsync(
+            string repositoryRoot,
+            CancellationToken cancellationToken)
+        {
+            CommittedRepositorySnapshot snapshot =
+                await GitCommittedRepositorySnapshotSource.Instance.CreateAsync(
+                    repositoryRoot,
+                    cancellationToken);
+            repository.Write(
+                "src/ui/package.json",
+                """{ "dependencies": { "react": "19.0.0" } }""");
+            repository.CommitAll();
+            Mutated = true;
+            return snapshot;
+        }
+    }
+
     private sealed class GitFixture : IDisposable
     {
         private string? _externalDirectory;
@@ -2361,6 +2455,8 @@ public sealed class FrameworkDetectionTests
             RunGit("init", "--quiet");
             RunGit("config", "core.longpaths", "true");
             RunGit("config", "core.symlinks", "true");
+            RunGit("config", "user.email", "vulgata-tests@example.invalid");
+            RunGit("config", "user.name", "Vulgata Tests");
         }
 
         public string Path { get; }
@@ -2374,13 +2470,20 @@ public sealed class FrameworkDetectionTests
             File.WriteAllText(fullPath, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
-        public void TrackAll() => RunGit("add", "--all");
+        public void TrackAll()
+        {
+            RunGit("add", "--all");
+            RunGit("commit", "--quiet", "-m", "fixture");
+        }
+
+        public void CommitAll() => TrackAll();
 
         public void Track(params string[] relativePaths)
         {
             var arguments = new List<string> { "add", "--" };
             arguments.AddRange(relativePaths);
             RunGit([.. arguments]);
+            RunGit("commit", "--quiet", "-m", "fixture");
         }
 
         public string CreateFileSymbolicLink(

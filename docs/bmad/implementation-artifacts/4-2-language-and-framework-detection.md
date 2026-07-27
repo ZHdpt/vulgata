@@ -777,6 +777,34 @@ unchanged.
 - Verification checkpoint:
   `bmad-4-2-verification-20260727T004912Z-d2f47a`
   (pending Git binding).
+- T046 cross-validation accepted the historical ledger and the prior
+  candidate/E2E/verification byte identities, but rejected the iteration-5
+  review artifacts because their persisted schemas and reviewer identity were
+  not contract-valid. The user approved create-new review evidence without
+  rewriting history in
+  `specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json`.
+- Fresh Full acceptance review 6 returned `ACCEPT`. Fresh Full quality review
+  6 returned `REVISE` with QR6-001: framework artifacts were inventoried as
+  tracked but then read from mutable working-tree bytes, allowing dirty or
+  concurrently replaced manifest/lock content to become deterministic facts.
+- QR6-001 now has observed behavior-level RED and GREEN evidence. The detector
+  pins one validated `HEAD^{commit}` identity, preserves the closed tracked
+  inventory, and reads exact committed blobs through non-executing
+  `git cat-file`. Dirty direct manifests, dirty paired locks, and a HEAD change
+  after inventory cannot alter facts from the pinned Repository state.
+- The initial surrounding run failed 7/168 only because the profiling test
+  fixture staged files without creating a commit. After the fixture was aligned
+  to the immutable Repository contract, worker and root runs passed 168/168,
+  the complete non-final-image suite passed 507/507, and the Web build
+  completed with zero errors.
+- The source/test mutation invalidates the prior T001, T039-T046 candidate
+  lane. The old candidate, reviews, E2E, and verification remain historical
+  evidence and are not relabelled; a clean correction checkpoint, refreshed
+  Current verification and ledger, replacement candidate, both fresh Full
+  reviews, E2E, and verification are required before image work.
+- QR6 correction checkpoint:
+  `bmad-4-2-implement-20260727T014847Z-qr6001`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

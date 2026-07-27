@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Xml;
@@ -20,18 +21,31 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         ["===", "==", "!=", "~=", "<=", ">=", "<", ">"];
     private readonly FrameworkCatalog _catalog;
     private readonly FrameworkDetectionLimits _limits;
+    private readonly ICommittedRepositorySnapshotSource _snapshotSource;
 
     public FrameworkEvidenceDetector(FrameworkCatalog catalog)
-        : this(catalog, FrameworkDetectionLimits.Production)
+        : this(
+            catalog,
+            FrameworkDetectionLimits.Production,
+            GitCommittedRepositorySnapshotSource.Instance)
     {
     }
 
     internal FrameworkEvidenceDetector(
         FrameworkCatalog catalog,
         FrameworkDetectionLimits limits)
+        : this(catalog, limits, GitCommittedRepositorySnapshotSource.Instance)
+    {
+    }
+
+    internal FrameworkEvidenceDetector(
+        FrameworkCatalog catalog,
+        FrameworkDetectionLimits limits,
+        ICommittedRepositorySnapshotSource snapshotSource)
     {
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         _limits = limits ?? throw new ArgumentNullException(nameof(limits));
+        _snapshotSource = snapshotSource ?? throw new ArgumentNullException(nameof(snapshotSource));
     }
 
     public async Task<IReadOnlyList<PackageEvidence>> DetectAsync(
@@ -82,7 +96,9 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         CancellationToken cancellationToken)
     {
         string repositoryRoot = Path.GetFullPath(workingCopyPath);
-        string[] trackedPaths = await InventoryTrackedPathsAsync(repositoryRoot, cancellationToken);
+        CommittedRepositorySnapshot snapshot =
+            await _snapshotSource.CreateAsync(repositoryRoot, cancellationToken);
+        string[] trackedPaths = snapshot.TrackedPaths;
         var trackedSet = trackedPaths.ToHashSet(StringComparer.Ordinal);
         var readResults = new Dictionary<string, ArtifactReadResult>(StringComparer.Ordinal);
         var evidence = new List<PackageEvidence>();
@@ -111,6 +127,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
 
             ArtifactReadResult result = await ReadTrackedTextAsync(
                 repositoryRoot,
+                snapshot.RepositoryIdentity,
                 artifactPath,
                 budget,
                 cancellationToken);
@@ -436,7 +453,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 detection.DirectManifestScopes);
     }
 
-    private static async Task<string[]> InventoryTrackedPathsAsync(
+    internal static async Task<string[]> InventoryTrackedPathsAsync(
         string repositoryRoot,
         CancellationToken cancellationToken)
     {
@@ -480,8 +497,36 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         ];
     }
 
+    internal static async Task<string> ResolveCommittedRepositoryIdentityAsync(
+        string repositoryRoot,
+        CancellationToken cancellationToken)
+    {
+        using Process process = CreateGitProcess(repositoryRoot, "rev-parse", "--verify", "HEAD^{commit}");
+        if (!process.Start())
+        {
+            throw new InvalidOperationException(
+                "Unable to resolve committed Repository evidence.");
+        }
+
+        Task<string> standardOutput = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        Task<string> standardError = process.StandardError.ReadToEndAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken);
+        await standardError;
+        string identity = (await standardOutput).Trim();
+        if (process.ExitCode != 0 ||
+            identity.Length is not (40 or 64) ||
+            !identity.All(char.IsAsciiHexDigit))
+        {
+            throw new InvalidOperationException(
+                "Unable to resolve committed Repository evidence.");
+        }
+
+        return identity;
+    }
+
     private static async Task<ArtifactReadResult> ReadTrackedTextAsync(
         string repositoryRoot,
+        string committedRepositoryIdentity,
         string artifactPath,
         FrameworkDetectionBudget budget,
         CancellationToken cancellationToken)
@@ -520,28 +565,43 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                     CreateAuditOutcome(artifactPath, status));
             }
 
-            await using var stream = new FileStream(
-                fullPath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                bufferSize: 64 * 1024,
-                FileOptions.Asynchronous | FileOptions.SequentialScan);
-            long accountedBytes = stream.Length;
-            budget.RecordArtifactBytes(accountedBytes);
-            if (stream.Length > _maximumArtifactBytes)
+            string committedObject = $"{committedRepositoryIdentity}:{artifactPath}";
+            long? blobLength = await ReadCommittedBlobLengthAsync(
+                repositoryRoot,
+                committedObject,
+                cancellationToken);
+            if (blobLength is null)
+            {
+                return ArtifactReadResult.Rejected(
+                    CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
+            }
+
+            budget.RecordArtifactBytes(blobLength.Value);
+            if (blobLength > _maximumArtifactBytes)
             {
                 return ArtifactReadResult.Rejected(
                     CreateAuditOutcome(artifactPath, ArtifactParseStatus.ArtifactBoundExceeded));
             }
 
+            using Process process = CreateGitProcess(
+                repositoryRoot,
+                "cat-file",
+                "blob",
+                committedObject);
+            if (!process.Start())
+            {
+                return ArtifactReadResult.Rejected(
+                    CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
+            }
+
+            Task<string> standardError = process.StandardError.ReadToEndAsync(cancellationToken);
             using var contentBuffer = new MemoryStream(
-                capacity: checked((int)stream.Length));
+                capacity: checked((int)blobLength.Value));
             byte[] buffer = new byte[64 * 1024];
             int totalBytes = 0;
             while (true)
             {
-                int read = await stream.ReadAsync(
+                int read = await process.StandardOutput.BaseStream.ReadAsync(
                     buffer,
                     cancellationToken);
                 if (read == 0)
@@ -550,13 +610,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 }
 
                 totalBytes += read;
-                if (totalBytes > accountedBytes)
-                {
-                    budget.RecordArtifactBytes(totalBytes - accountedBytes);
-                    accountedBytes = totalBytes;
-                }
-
-                if (totalBytes > _maximumArtifactBytes)
+                if (totalBytes > blobLength)
                 {
                     return ArtifactReadResult.Rejected(
                         CreateAuditOutcome(
@@ -567,6 +621,14 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 await contentBuffer.WriteAsync(
                     buffer.AsMemory(0, read),
                     cancellationToken);
+            }
+
+            await process.WaitForExitAsync(cancellationToken);
+            await standardError;
+            if (process.ExitCode != 0 || totalBytes != blobLength)
+            {
+                return ArtifactReadResult.Rejected(
+                    CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
             }
 
             return ArtifactReadResult.Accepted(
@@ -587,6 +649,60 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             return ArtifactReadResult.Rejected(
                 CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
         }
+    }
+
+    private static async Task<long?> ReadCommittedBlobLengthAsync(
+        string repositoryRoot,
+        string committedObject,
+        CancellationToken cancellationToken)
+    {
+        using Process process = CreateGitProcess(
+            repositoryRoot,
+            "cat-file",
+            "-s",
+            committedObject);
+        if (!process.Start())
+        {
+            return null;
+        }
+
+        Task<string> standardOutput = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        Task<string> standardError = process.StandardError.ReadToEndAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken);
+        await standardError;
+        string output = (await standardOutput).Trim();
+        return process.ExitCode == 0 &&
+            long.TryParse(
+                output,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out long length) &&
+            length >= 0
+            ? length
+            : null;
+    }
+
+    private static Process CreateGitProcess(
+        string repositoryRoot,
+        params string[] arguments)
+    {
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                WorkingDirectory = repositoryRoot,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+            },
+        };
+        foreach (string argument in arguments)
+        {
+            process.StartInfo.ArgumentList.Add(argument);
+        }
+
+        return process;
     }
 
     private static ArtifactKind? GetArtifactKind(string artifactPath)
@@ -1734,6 +1850,42 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         "CA1064:Exceptions should be public",
         Justification = "The sentinel must not escape the detector boundary.")]
     private sealed class FrameworkDetectionLimitExceededException : Exception;
+}
+
+internal interface ICommittedRepositorySnapshotSource
+{
+    Task<CommittedRepositorySnapshot> CreateAsync(
+        string repositoryRoot,
+        CancellationToken cancellationToken);
+}
+
+internal sealed record CommittedRepositorySnapshot(
+    string RepositoryIdentity,
+    string[] TrackedPaths);
+
+internal sealed class GitCommittedRepositorySnapshotSource
+    : ICommittedRepositorySnapshotSource
+{
+    private GitCommittedRepositorySnapshotSource()
+    {
+    }
+
+    public static GitCommittedRepositorySnapshotSource Instance { get; } = new();
+
+    public async Task<CommittedRepositorySnapshot> CreateAsync(
+        string repositoryRoot,
+        CancellationToken cancellationToken)
+    {
+        string repositoryIdentity =
+            await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
+                repositoryRoot,
+                cancellationToken);
+        string[] trackedPaths =
+            await FrameworkEvidenceDetector.InventoryTrackedPathsAsync(
+                repositoryRoot,
+                cancellationToken);
+        return new CommittedRepositorySnapshot(repositoryIdentity, trackedPaths);
+    }
 }
 
 internal sealed class FrameworkDetectionLimits
