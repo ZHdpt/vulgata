@@ -980,6 +980,13 @@ unchanged.
   The forward-only audit-3 correction, QR8 chronology, attempts 12-13,
   invalidations, and absence of downstream completion all pass. T040 and
   T066 are finalized; T041 is now permitted without duplicate user approval.
+- T041 pins replacement immutable candidate `708b7df` with tree `900d936`
+  and parent `29bfc87`. The empty checkpoint carries the four unique required
+  trailers. Its 1,832,428-byte base-to-candidate binary diff hashes to
+  `47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68`
+  across 93 owned paths, with exact candidate Git-blob hashes and one
+  intentional deleted path recorded in immutable-candidate manifest 3.
+  The candidate was pinned clean; fresh Full review iteration 9 is next.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

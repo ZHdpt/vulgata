@@ -3125,26 +3125,38 @@
       "observed_at": "2026-07-27T09:18:15.1269395Z",
       "summary": "Fresh independent T040 audit 4 ACCEPTED the corrected QR8 ledger boundary with no findings. All authority, immutable-object, raw-evidence, checkpoint, chronology, Current-verification, invalidation, and downstream-state checks passed. T040 and T066 are finalized; T041 is permitted without duplicate user approval.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/97",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json"
+      ],
+      "command": "Exact candidate commit/tree/parent/trailers, binary diff byte length and SHA-256, 93 owned paths, immutable Git-blob hashes, deleted paths, and initial clean-status validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T09:33:21.2227624Z",
+      "summary": "T041 pins clean empty candidate 708b7df with tree 900d936. Its 1,832,428-byte base-to-candidate binary diff hashes to 47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68 across 93 owned paths; fresh Full review iteration 9 is pending on this exact boundary.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T091815Z-e63a9c",
+    "checkpoint_id": "bmad-4-2-implement-20260727T093321Z-f85b1d",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/quality8-validation.json",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
-      "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/96"
+      "4-2-language-and-framework-detection/implement/97"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T09:18:15.1269395Z"
+  "updated_at": "2026-07-27T09:33:21.2227624Z"
 }
