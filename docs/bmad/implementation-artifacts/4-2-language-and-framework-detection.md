@@ -755,6 +755,15 @@ unchanged.
 - Final Full-reviews checkpoint:
   `bmad-4-2-full-reviews-20260726T095959Z-83a6e1`
   (pending Git binding).
+- T044 E2E was required rather than skipped: the matrix triggered on the
+  user-visible Repository dialog, API/persistence/multi-module integration,
+  and observable data lifecycle. The combined provider, profiling, framework,
+  API, and dashboard integration run passed 198/198 at the unchanged candidate.
+  PostgreSQL migration scripts and final Docker image identity remain assigned
+  to T045 and T047-T048.
+- E2E checkpoint:
+  `bmad-4-2-e2e-20260727T004131Z-a46c91`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

@@ -2532,26 +2532,37 @@
       "observed_at": "2026-07-26T09:59:59.3331814Z",
       "summary": "Final Full quality review returned ACCEPT with zero findings. QR4-001 through QR4-003 are resolved; correctness, security, evidence integrity, tests, edge cases, architecture, and regression risk passed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/conditional-e2e/1",
+      "kind": "test-green",
+      "stage": "conditional-e2e",
+      "source_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-e2e/T044-runtime-integration-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~CodeGraphContextProviderTests|FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~FrameworkDetectionTests|FullyQualifiedName~RepositoryApiTests|FullyQualifiedName~DashboardPanelTests\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-26T10:04:25.4503372Z",
+      "summary": "T044 was required by the user-visible UI, API/persistence/multi-module, and observable data-lifecycle predicates. The economical integration run passed 198 of 198 with no tracked test edit and no coverage override. PostgreSQL migration scripts and final Docker image identity remain explicitly assigned to T045 and T047-T048.",
+      "raw_output_path": "TestResults/story-4-2-final-e2e/T044-runtime-integration-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-full-reviews-20260726T095959Z-83a6e1",
+    "checkpoint_id": "bmad-4-2-e2e-20260727T004131Z-a46c91",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "quality-review",
+    "stage": "conditional-e2e",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
-      "specs/002-language-framework-detection/reviews/quality-review-5.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/acceptance-review/5",
-      "4-2-language-and-framework-detection/quality-review/5"
+      "4-2-language-and-framework-detection/conditional-e2e/1"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-26T09:59:59.3331814Z"
+  "updated_at": "2026-07-27T00:41:31.5144387Z"
 }
