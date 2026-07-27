@@ -891,6 +891,12 @@ unchanged.
   `036207197c06f5c64dfa9c619563e123d8428386`: provider/profiling passes
   116/116 and framework detection passes 56/56. This is current evidence only;
   it does not recreate or relabel the unavailable pre-correction observation.
+- The truthful ledger now includes iteration-7 review invalidation, the explicit
+  Scan-strategy approval, QR7-001 through QR7-003 RED/GREEN, both T062
+  surrounding attempts, the 510/510 non-image suite, build evidence, and T001
+  attempts 10-11. T062 is complete. The prior T040 ACCEPT applies only to the
+  older ledger boundary, so T040 is reset pending a fresh independent audit;
+  T041 remains blocked until that audit accepts.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

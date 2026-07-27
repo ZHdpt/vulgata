@@ -2927,23 +2927,39 @@
       "observed_at": "2026-07-27T06:26:36.3310325Z",
       "summary": "At clean immutable QR7 correction commit 281c16b, provider/profiling passes 116/116 and framework detection passes 56/56. This is Current verification only and does not recreate unavailable pre-correction evidence. T062 still awaits the truthful-ledger refresh.",
       "raw_output_path": "TestResults/story-4-2-current-verification-quality7-refresh/"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/86",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "command": "QR7 truthful-ledger regeneration with exact Git ancestry, blob, review, approval, TDD, T062, and T001 identities",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T06:38:32.7469721Z",
+      "summary": "T039 and T062 are refreshed through QR7. The ledger preserves prior history, records QR7 current evidence without relabelling it historical, invalidates candidate 6149623 and review iteration 7, and claims no replacement downstream gate. The old T040 ACCEPT is invalidated and a fresh independent T040 audit remains mandatory before T041.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-verification-20260727T062636Z-c72e4a",
+    "checkpoint_id": "bmad-4-2-implement-20260727T063832Z-d4c91b",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "verification",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/workflow-state.json",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/85"
+      "4-2-language-and-framework-detection/implement/86"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T06:26:36.3310325Z"
+  "updated_at": "2026-07-27T06:38:32.7469721Z"
 }
