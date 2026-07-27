@@ -2913,26 +2913,37 @@
       "observed_at": "2026-07-27T06:20:16.2999715Z",
       "summary": "T059-T061 are complete. Each High finding had an independent observed RED before correction; focused QR7 passes 3/3, FrameworkDetectionTests passes 55/55, corrected surrounding tests pass 258/258, the full non-final-image suite passes 510/510, and the Web build succeeds with zero errors. T062 remains pending the post-checkpoint Current verification and truthful-ledger refresh.",
       "raw_output_path": "TestResults/story-4-2-quality7-correction/"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/85",
+      "kind": "test-run",
+      "stage": "implement",
+      "source_commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+      ],
+      "command": "Committed-boundary T001 provider/profiling and framework Current verification refresh",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T06:26:36.3310325Z",
+      "summary": "At clean immutable QR7 correction commit 281c16b, provider/profiling passes 116/116 and framework detection passes 56/56. This is Current verification only and does not recreate unavailable pre-correction evidence. T062 still awaits the truthful-ledger refresh.",
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality7-refresh/"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T062016Z-a61d3e",
+    "checkpoint_id": "bmad-4-2-verification-20260727T062636Z-c72e4a",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "implement",
+    "stage": "verification",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json",
-      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/84"
+      "4-2-language-and-framework-detection/implement/85"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T06:20:16.2999715Z"
+  "updated_at": "2026-07-27T06:26:36.3310325Z"
 }

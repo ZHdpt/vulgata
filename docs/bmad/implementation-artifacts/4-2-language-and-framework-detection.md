@@ -886,6 +886,11 @@ unchanged.
 - T062 remains incomplete until Current verification and the truthful ledger
   are refreshed against the clean immutable correction commit. T041-T050 and
   both review axes remain incomplete or invalidated.
+- T001 Current verification is refreshed against clean correction commit
+  `281c16b01db3b6ff5873fc9535254fa9c4df71c7`, tree
+  `036207197c06f5c64dfa9c619563e123d8428386`: provider/profiling passes
+  116/116 and framework detection passes 56/56. This is current evidence only;
+  it does not recreate or relabel the unavailable pre-correction observation.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

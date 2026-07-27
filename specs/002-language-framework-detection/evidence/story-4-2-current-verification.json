@@ -8,15 +8,15 @@
   "feature_directory": "specs/002-language-framework-detection",
   "baseline_statement": "Pre-correction T001 baseline observation: unavailable",
   "passing_result_label": "Current verification",
-  "observed_at": "2026-07-27T02:00:28.2956178+00:00",
-  "recorded_at": "2026-07-27T02:01:26.8005167+00:00",
+  "observed_at": "2026-07-27T14:25:53.6778621+08:00",
+  "recorded_at": "2026-07-27T06:26:36.3310325Z",
   "source_boundary": {
-    "commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
-    "tree": "e42e961cb401ec7719c96da5047756fa63810035",
+    "commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
+    "tree": "036207197c06f5c64dfa9c619563e123d8428386",
     "branch": "dev",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
-    "pinned_diff_boundary": "e9824df7300634c19d815bdd7ad591b9fb5366d5..38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+    "pinned_diff_boundary": "e9824df7300634c19d815bdd7ad591b9fb5366d5..281c16b01db3b6ff5873fc9535254fa9c4df71c7",
     "initial_tracked_status": [],
     "source_or_test_bytes_changed": false
   },
@@ -267,6 +267,50 @@
       "raw_output_path": "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt",
       "raw_output_sha256": "19a72f80515836bec2da71e7e9d0f0d03601a74ad3611ae94b238449048426a9",
       "raw_output_length_bytes": 18599
+    },
+    {
+      "sequence": 10,
+      "target": "provider-profiling",
+      "kind": "test-green",
+      "label": "Current verification",
+      "source_commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
+      "source_tree": "036207197c06f5c64dfa9c619563e123d8428386",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling\" --no-restore --logger \"trx;LogFileName=T001-provider-profiling-green.trx\" --results-directory TestResults/story-4-2-current-verification-quality7-refresh",
+      "exit_code": 0,
+      "observed_start_utc": "2026-07-27T14:24:56.2572194+08:00",
+      "observed_end_utc": "2026-07-27T14:25:10.5007042+08:00",
+      "test_totals": {
+        "failed": 0,
+        "passed": 116,
+        "skipped": 0,
+        "total": 116,
+        "reported_duration_seconds": 13
+      },
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality7-refresh/T001-provider-profiling-green.trx",
+      "raw_output_sha256": "8e676a6eb764fafc8a19bcf337e9361314ddf08dd562e57cbf1f9eb20cb98cc2",
+      "raw_output_length_bytes": 178678
+    },
+    {
+      "sequence": 11,
+      "target": "framework",
+      "kind": "test-green",
+      "label": "Current verification",
+      "source_commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
+      "source_tree": "036207197c06f5c64dfa9c619563e123d8428386",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetection\" --no-restore --no-build --logger \"trx;LogFileName=T001-framework-green.trx\" --results-directory TestResults/story-4-2-current-verification-quality7-refresh",
+      "exit_code": 0,
+      "observed_start_utc": "2026-07-27T14:25:22.3773983+08:00",
+      "observed_end_utc": "2026-07-27T14:25:53.6778621+08:00",
+      "test_totals": {
+        "failed": 0,
+        "passed": 56,
+        "skipped": 0,
+        "total": 56,
+        "reported_duration_seconds": 30
+      },
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality7-refresh/T001-framework-green.trx",
+      "raw_output_sha256": "50e569fc13933f788fe3798847d85994afd25722c0fd5442498bfd3cb949acd9",
+      "raw_output_length_bytes": 130284
     }
   ],
   "recovery_diagnosis": {
@@ -288,7 +332,7 @@
   "network_proxy_status": {
     "blocked_urls_or_hosts": [],
     "clash_or_proxy_failure_observed": false,
-    "summary": "No blocked URL or host and no network, Clash, or proxy failure was observed in any retained passing command, including the quality-review-6 Current verification refresh."
+    "summary": "No blocked URL or host and no network, Clash, or proxy failure was observed in any retained passing command, including the quality-review-7 Current verification refresh."
   },
-  "summary": "Current verification was refreshed at clean immutable commit 38bff96b7a3b4a1dc442e347d26a5c7afbb62b55 after the quality-review-6 correction. Provider/profiling passed 116/116 and framework detection passed 53/53. All earlier attempts remain ordered and source-bound. No historical, pre-correction, RED, or contemporaneous-ordering claim is made."
+  "summary": "Current verification was refreshed at clean immutable commit 281c16b01db3b6ff5873fc9535254fa9c4df71c7 after the quality-review-7 correction. Provider/profiling passed 116/116 and framework detection passed 56/56. All earlier attempts remain ordered and source-bound. No historical, pre-correction, RED, or contemporaneous-ordering claim is made."
 }
