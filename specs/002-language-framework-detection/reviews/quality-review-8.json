@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewer_identity": {
+    "role": "quality-reviewer",
+    "identity": "story-4-2-quality-reviewer-iteration-8-independent",
+    "iteration": 8,
+    "fresh_independent_review": true,
+    "acceptance_axis_substituted": false,
+    "prior_review_conclusion_inherited": false
+  },
+  "reviewed_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+  "reviewed_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+    "candidate_tree": "2eba8a05024036a47dbf9fd7513952bf121b7af6",
+    "candidate_parent": "5414523d4ee5d532c8c5b8bf1830835e048cb93e",
+    "binary_diff_length_bytes": 1709271,
+    "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0",
+    "owned_path_count": 85,
+    "candidate_record_commit": "57600a456e76684c67816833e0e5f8d0b71e5c9b",
+    "boundary_verified": true,
+    "final_worktree_clean": true
+  },
+  "findings": [
+    {
+      "id": "QR8-001",
+      "severity": "High",
+      "category": "correctness/security/data-integrity",
+      "title": "Foreign XML namespaces can masquerade as NuGet or Maven declarations and create false framework facts",
+      "evidence": [
+        {
+          "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "lines": "899-940",
+          "detail": "NuGet owner validation recognizes Project, Sdk, PackageReference, and FrameworkReference solely through Name.LocalName."
+        },
+        {
+          "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "lines": "1224-1293",
+          "detail": "Direct NuGet parsing similarly ignores element namespaces."
+        },
+        {
+          "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "lines": "1427-1446,1797-1805",
+          "detail": "Maven project, dependencies, dependency, groupId, and artifactId selection uses LocalName without namespace validation."
+        },
+        {
+          "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+          "detail": "The malformed and duplicate XML suite has no namespace-spoofing case."
+        }
+      ],
+      "documented_standard": [
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md:73-82 requires closed deterministic package declarations and no invented facts.",
+        "specs/002-language-framework-detection/contracts/framework-detection.md:46-55 permits only literal NuGet/Maven evidence and requires unsupported evidence to create no fact.",
+        ".specify/memory/constitution.md:67-89 requires deterministic domain facts and authoritative ubiquitous language."
+      ],
+      "impact": "A committed pom.xml or .csproj can place catalog-matching local names in a foreign namespace. The detector treats those non-Maven or non-MSBuild elements as genuine declarations and persists a High-confidence framework fact.",
+      "correction_outcome": "Validate supported root namespaces and require every consumed XML element to belong to the root's supported namespace. Foreign-namespace lookalikes create no fact, remain artifact-local with one bounded closed audit, and do not suppress independent valid evidence. Add RED/GREEN coverage for NuGet direct evidence, NuGet lock ownership, Maven evidence, mixed legitimate and foreign elements, and standard namespace or no-namespace documents.",
+      "planned_change_authorization_required": true
+    },
+    {
+      "id": "QR8-002",
+      "severity": "High",
+      "category": "security/availability/bounds",
+      "title": "Committed-tree inventory is unbounded before the supported-artifact limit is applied",
+      "evidence": [
+        {
+          "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "lines": "463-510",
+          "detail": "ls-tree enumerates the entire pinned tree; ReadToEndAsync, Split, List, and the returned array materialize every tracked entry without a byte or record bound."
+        },
+        {
+          "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "lines": "98-104,144-150",
+          "detail": "The complete inventory is duplicated into arrays, a dictionary, and sets before RecordSupportedArtifact applies the 1,000-artifact limit."
+        },
+        {
+          "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+          "lines": "2024 onward",
+          "detail": "Coverage proves overflow for supported artifacts, but not an arbitrarily large inventory of unrelated tracked paths or bounded inventory output."
+        }
+      ],
+      "documented_standard": [
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md:154-163 requires bounded, non-executing parsing.",
+        "specs/002-language-framework-detection/contracts/framework-detection.md:110-129 defines repository bounds and fail-closed behavior.",
+        "specs/002-language-framework-detection/plan.md:83-100 requires bounded evidence and diagnostics."
+      ],
+      "impact": "A Repository with very many irrelevant tracked files bypasses detector counters and can force large stdout strings plus several full inventory copies, exhausting process memory before a typed fail-closed result is available.",
+      "correction_outcome": "Enumerate only the six supported committed artifact shapes through pinned-tree pathspecs, or parse ls-tree incrementally with explicit byte, record, and deadline bounds before materialization. Preserve commit, tree, and object-mode integrity. Add RED/GREEN cases for huge irrelevant inventories, bounded-output overflow, cancellation, and zero partial facts. Reconcile stale contract, plan, and story wording that still claims git ls-files --cached.",
+      "planned_change_authorization_required": true
+    }
+  ],
+  "quality_assessment": {
+    "correctness": "REVISE",
+    "security_and_redaction": "REVISE",
+    "edge_cases": "REVISE",
+    "test_quality": "REVISE due to the two missing adversarial cases; existing provider, transaction, API, UI, migration, QR7 duplicate, and committed-source tests are otherwise substantial.",
+    "architecture_seams": "Layering, EF configuration, additive migrations, atomic profile persistence and recovery, API authorization and redaction, DTO boundaries, and Chinese UI localization are sound in the reviewed boundary.",
+    "regression_risk": "High until both findings are corrected through authorized RED-GREEN work and both Full review axes are rerun.",
+    "forbidden_scope": "No Worker Agent/tool, orchestration, dispatch, scheduling, retry, PRD weakening, or document-generation implementation was found."
+  },
+  "read_only_confirmation": {
+    "files_edited": false,
+    "tests_or_builds_executed": false,
+    "task_markers_changed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false
+  },
+  "summary": "REVISE. Two High findings block advancement: XML namespace spoofing can persist fabricated framework facts, and committed-tree inventory can exhaust memory before repository bounds apply."
+}

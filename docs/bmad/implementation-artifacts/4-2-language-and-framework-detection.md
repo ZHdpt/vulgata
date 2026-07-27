@@ -909,7 +909,14 @@ unchanged.
   `c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0`
   across 85 owned paths. The create-new record is
   `specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json`;
-  both fresh Full review axes are pending on this exact boundary.
+  fresh Full review iteration 8 used this exact boundary. Acceptance returned
+  `ACCEPT` with no findings. Quality returned `REVISE` with two High findings:
+  QR8-001 permits foreign XML namespace lookalikes to create NuGet or Maven
+  framework facts, and QR8-002 materializes an unbounded whole-tree inventory
+  before supported-artifact bounds apply. Both remediations materially change
+  Scan parsing or filtering behavior, so corrective task generation is paused
+  for the required planned-change authorization; T043 and all downstream gates
+  remain incomplete.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

@@ -4,10 +4,10 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "acceptance-review",
+  "stage": "quality-review",
   "active_gates": {
     "acceptance-review": {
-      "status": "pending",
+      "status": "accepted",
       "iteration": 8,
       "dispatch_id": null,
       "input_boundary": {
@@ -15,11 +15,11 @@
         "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
         "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0"
       },
-      "verdict_path": null,
-      "completed_at": null
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+      "completed_at": "2026-07-27T07:28:36.3160100Z"
     },
     "quality-review": {
-      "status": "pending",
+      "status": "revise",
       "iteration": 8,
       "dispatch_id": null,
       "input_boundary": {
@@ -27,8 +27,8 @@
         "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
         "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0"
       },
-      "verdict_path": null,
-      "completed_at": null
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-8.json",
+      "completed_at": "2026-07-27T07:28:36.3160100Z"
     }
   },
   "stage_history": [
@@ -2970,24 +2970,59 @@
       "observed_at": "2026-07-27T07:03:44.6096829Z",
       "summary": "T041 pinned empty candidate 7c24d8d with tree 2eba8a0. Its 1,709,271-byte base-to-candidate binary diff hashes to c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0 across 85 owned paths; fresh Full review iteration 8 is pending on this exact boundary.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/8",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-8.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T07:28:36.3160100Z",
+      "summary": "Fresh independent Full acceptance review 8 returned ACCEPT with no findings at the exact T041 candidate. FR 21/21, AC 7/7, SC 8/8, R1-R16, T001, QR4/QR6/QR7, T040, Chinese UI, PRD scope, and forbidden scope passed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/8",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-8.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T07:28:36.3160100Z",
+      "summary": "Fresh independent Full quality review 8 returned REVISE with High findings QR8-001 and QR8-002: foreign XML namespaces can fabricate framework facts, and full committed-tree inventory is unbounded before supported-artifact limits. Both corrections materially change Scan parsing or filtering and require planned-change authorization.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-candidate-record-20260727T070344Z-a74c9e",
+    "checkpoint_id": "bmad-4-2-quality-review-20260727T072836Z-b85e2d",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "implement",
+    "stage": "quality-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+      "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+      "specs/002-language-framework-detection/reviews/quality-review-8.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/88"
+      "4-2-language-and-framework-detection/acceptance-review/8",
+      "4-2-language-and-framework-detection/quality-review/8"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-  "updated_at": "2026-07-27T07:03:44.6096829Z"
+  "recoverable_failure": {
+    "stage": "quality-review",
+    "reason": "Iteration-8 quality review returned REVISE with QR8-001 and QR8-002. Corrective task generation is paused for explicit planned-change authorization because both findings materially change Scan parsing or filtering behavior.",
+    "retry_from": "implement",
+    "requires_user_approval": true
+  },
+  "updated_at": "2026-07-27T07:28:36.3160100Z"
 }

@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "gate": "acceptance-review",
+  "verdict": "ACCEPT",
+  "reviewer_identity": {
+    "role": "acceptance-reviewer",
+    "identity": "story-4-2-acceptance-reviewer-iteration-8-independent",
+    "iteration": 8,
+    "fresh_independent_review": true,
+    "quality_axis_substituted": false,
+    "prior_review_conclusion_inherited": false
+  },
+  "reviewed_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+  "reviewed_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+    "candidate_tree": "2eba8a05024036a47dbf9fd7513952bf121b7af6",
+    "candidate_parent": "5414523d4ee5d532c8c5b8bf1830835e048cb93e",
+    "binary_diff_length_bytes": 1709271,
+    "diff_sha256": "c78b62403e5db09ccebf7997d7f91c4649582903dbb31a17740367f9cf2c12c0",
+    "owned_path_count": 85,
+    "non_deleted_hashes_verified": 84,
+    "deleted_paths": [
+      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.py"
+    ],
+    "complete_hash_record": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+    "candidate_record_commit": "57600a456e76684c67816833e0e5f8d0b71e5c9b"
+  },
+  "coverage_summary": {
+    "FR": "FR-001..FR-021 PASS",
+    "AC": "AC-1..AC-7 PASS",
+    "SC": "SC-001..SC-008 PASS",
+    "R": "R1..R16 PASS",
+    "T001": "PASS",
+    "QR4_QR6_QR7": "PASS",
+    "T040": "PASS",
+    "Chinese_UI": "PASS",
+    "PRD": "PASS",
+    "forbidden_scope": "PASS"
+  },
+  "findings": [],
+  "read_only_confirmation": {
+    "files_edited": false,
+    "tests_or_builds_executed": false,
+    "task_markers_changed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false,
+    "final_head": "57600a456e76684c67816833e0e5f8d0b71e5c9b",
+    "final_worktree_clean": true
+  },
+  "summary": "ACCEPT. The exact immutable iteration-8 boundary satisfies all Story 4.2 BMad and SpecKit acceptance behavior, current evidence, prior accepted corrections, Chinese confidence presentation, PRD scope, and forbidden-scope constraints with no findings."
+}
