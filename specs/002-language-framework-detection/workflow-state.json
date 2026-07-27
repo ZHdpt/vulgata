@@ -2897,24 +2897,42 @@
       "observed_at": "2026-07-27T04:14:20.0070332Z",
       "summary": "The user approved the bounded QR7-001 through QR7-003 Scan-strategy remediation. Candidate 6149623 and both Full review axes are invalidated; TDD and every later gate remain mandatory.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/84",
+      "kind": "test-run",
+      "stage": "implement",
+      "source_commit": "1de4cbdb7b768d53ba42b19e2bcbe9ba891a5488",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      ],
+      "command": "Three strict QR7 behavior-level RED-to-GREEN corrections, focused and surrounding tests, complete non-final-image suite, Web build, exact scope check, and diff check",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T06:20:16.2999715Z",
+      "summary": "T059-T061 are complete. Each High finding had an independent observed RED before correction; focused QR7 passes 3/3, FrameworkDetectionTests passes 55/55, corrected surrounding tests pass 258/258, the full non-final-image suite passes 510/510, and the Web build succeeds with zero errors. T062 remains pending the post-checkpoint Current verification and truthful-ledger refresh.",
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T041420Z-f37a2d",
+    "checkpoint_id": "bmad-4-2-implement-20260727T062016Z-a61d3e",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json",
+      "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json"
+      "specs/002-language-framework-detection/workflow-state.json",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/83"
+      "4-2-language-and-framework-detection/implement/84"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T04:14:20.0070332Z"
+  "updated_at": "2026-07-27T06:20:16.2999715Z"
 }

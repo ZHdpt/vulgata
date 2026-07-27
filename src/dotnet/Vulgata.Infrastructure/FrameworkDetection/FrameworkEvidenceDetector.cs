@@ -98,7 +98,9 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         string repositoryRoot = Path.GetFullPath(workingCopyPath);
         CommittedRepositorySnapshot snapshot =
             await _snapshotSource.CreateAsync(repositoryRoot, cancellationToken);
-        string[] trackedPaths = snapshot.TrackedPaths;
+        string[] trackedPaths = [.. snapshot.TrackedEntries.Select(entry => entry.Path)];
+        Dictionary<string, CommittedRepositoryEntry> trackedEntries =
+            snapshot.TrackedEntries.ToDictionary(entry => entry.Path, StringComparer.Ordinal);
         var trackedSet = trackedPaths.ToHashSet(StringComparer.Ordinal);
         var readResults = new Dictionary<string, ArtifactReadResult>(StringComparer.Ordinal);
         var evidence = new List<PackageEvidence>();
@@ -129,6 +131,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 repositoryRoot,
                 snapshot.RepositoryIdentity,
                 artifactPath,
+                trackedEntries[artifactPath].Mode,
                 budget,
                 cancellationToken);
             readResults.Add(artifactPath, result);
@@ -190,7 +193,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                     directManifestScopes.Add(owner!);
                 }
 
-                parseStatus = ValidateJson(readResult.Content!);
+                parseStatus = ValidateJson(readResult.Content!, ArtifactKind.NpmManifest);
                 if (parseStatus == ArtifactParseStatus.Valid)
                 {
                     ParseNpmManifest(artifactPath, readResult.Content!, evidence, budget);
@@ -201,7 +204,11 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 parseStatus = ValidateXml(readResult.Content!);
                 if (parseStatus == ArtifactParseStatus.Valid)
                 {
-                    ParseMavenProject(artifactPath, readResult.Content!, evidence, budget);
+                    parseStatus = ParseMavenProject(
+                        artifactPath,
+                        readResult.Content!,
+                        evidence,
+                        budget);
                 }
             }
             else if (artifactKind == ArtifactKind.PythonRequirements)
@@ -228,7 +235,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
 
                 if (TryValidateDirectManifestOwner(candidates, out _))
                 {
-                    parseStatus = ValidateJson(readResult.Content!);
+                    parseStatus = ValidateJson(readResult.Content!, ArtifactKind.NuGetLock);
                     if (parseStatus == ArtifactParseStatus.Valid)
                     {
                         ParseNuGetLock(artifactPath, readResult.Content!, evidence, budget);
@@ -253,7 +260,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                     : [];
                 if (TryValidateDirectManifestOwner(candidates, out _))
                 {
-                    parseStatus = ValidateJson(readResult.Content!);
+                    parseStatus = ValidateJson(readResult.Content!, ArtifactKind.NpmLock);
                     if (parseStatus == ArtifactParseStatus.Valid)
                     {
                         ParseNpmLock(artifactPath, readResult.Content!, evidence, budget);
@@ -453,26 +460,19 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 detection.DirectManifestScopes);
     }
 
-    internal static async Task<string[]> InventoryTrackedPathsAsync(
+    internal static async Task<CommittedRepositoryEntry[]> InventoryTrackedEntriesAsync(
         string repositoryRoot,
+        string committedRepositoryIdentity,
         CancellationToken cancellationToken)
     {
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "git",
-                WorkingDirectory = repositoryRoot,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-            },
-        };
-        process.StartInfo.ArgumentList.Add("ls-files");
-        process.StartInfo.ArgumentList.Add("--cached");
-        process.StartInfo.ArgumentList.Add("-z");
-        process.StartInfo.ArgumentList.Add("--");
-
+        using Process process = CreateGitProcess(
+            repositoryRoot,
+            "ls-tree",
+            "-r",
+            "-z",
+            "--full-tree",
+            committedRepositoryIdentity,
+            "--");
         if (!process.Start())
         {
             throw new InvalidOperationException(
@@ -489,12 +489,26 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 "Unable to inventory committed Repository evidence.");
         }
 
-        return
-        [
-            .. (await standardOutput)
-                .Split('\0', StringSplitOptions.RemoveEmptyEntries)
-                .Select(NormalizeRelativePath),
-        ];
+        var entries = new List<CommittedRepositoryEntry>();
+        foreach (string record in (await standardOutput)
+                     .Split('\0', StringSplitOptions.RemoveEmptyEntries))
+        {
+            int pathSeparator = record.IndexOf('\t', StringComparison.Ordinal);
+            string[] metadata = pathSeparator > 0
+                ? record[..pathSeparator].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                : [];
+            if (metadata.Length != 3 || pathSeparator == record.Length - 1)
+            {
+                throw new InvalidOperationException(
+                    "Unable to inventory committed Repository evidence.");
+            }
+
+            entries.Add(new(
+                NormalizeRelativePath(record[(pathSeparator + 1)..]),
+                metadata[0]));
+        }
+
+        return [.. entries];
     }
 
     internal static async Task<string> ResolveCommittedRepositoryIdentityAsync(
@@ -528,6 +542,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         string repositoryRoot,
         string committedRepositoryIdentity,
         string artifactPath,
+        string committedMode,
         FrameworkDetectionBudget budget,
         CancellationToken cancellationToken)
     {
@@ -537,35 +552,28 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 CreateAuditOutcome(artifactPath, ArtifactParseStatus.ArtifactBoundExceeded));
         }
 
-        if (!TryResolveRepositoryPath(repositoryRoot, artifactPath, out string fullPath))
+        if (!TryResolveRepositoryPath(repositoryRoot, artifactPath, out _))
         {
             return ArtifactReadResult.Rejected(
                 CreateAuditOutcome(artifactPath, ArtifactParseStatus.UnsafePath));
         }
 
+        string committedObject = $"{committedRepositoryIdentity}:{artifactPath}";
+        if (!IsRegularCommittedBlobMode(committedMode))
+        {
+            ArtifactParseStatus status = committedMode == "120000"
+                ? await ClassifyCommittedSymbolicLinkAsync(
+                    repositoryRoot,
+                    committedObject,
+                    artifactPath,
+                    cancellationToken)
+                : ArtifactParseStatus.ReparsePoint;
+            return ArtifactReadResult.Rejected(
+                CreateAuditOutcome(artifactPath, status));
+        }
+
         try
         {
-            string currentPath = repositoryRoot;
-            foreach (string segment in artifactPath.Split('/'))
-            {
-                currentPath = Path.Combine(currentPath, segment);
-                if (!File.GetAttributes(currentPath).HasFlag(FileAttributes.ReparsePoint))
-                {
-                    continue;
-                }
-
-                FileSystemInfo? target = File.ResolveLinkTarget(
-                    currentPath,
-                    returnFinalTarget: true);
-                ArtifactParseStatus status = target is null ||
-                    !IsWithinRepository(repositoryRoot, target.FullName)
-                    ? ArtifactParseStatus.UnsafePath
-                    : ArtifactParseStatus.ReparsePoint;
-                return ArtifactReadResult.Rejected(
-                    CreateAuditOutcome(artifactPath, status));
-            }
-
-            string committedObject = $"{committedRepositoryIdentity}:{artifactPath}";
             long? blobLength = await ReadCommittedBlobLengthAsync(
                 repositoryRoot,
                 committedObject,
@@ -648,6 +656,60 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         {
             return ArtifactReadResult.Rejected(
                 CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
+        }
+    }
+
+    private static async Task<ArtifactParseStatus> ClassifyCommittedSymbolicLinkAsync(
+        string repositoryRoot,
+        string committedObject,
+        string artifactPath,
+        CancellationToken cancellationToken)
+    {
+        long? blobLength = await ReadCommittedBlobLengthAsync(
+            repositoryRoot,
+            committedObject,
+            cancellationToken);
+        if (blobLength is null or < 1 or > _maximumRepositoryRelativePathLength)
+        {
+            return ArtifactParseStatus.UnsafePath;
+        }
+
+        using Process process = CreateGitProcess(
+            repositoryRoot,
+            "cat-file",
+            "blob",
+            committedObject);
+        if (!process.Start())
+        {
+            return ArtifactParseStatus.ReparsePoint;
+        }
+
+        Task<string> standardOutput = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        Task<string> standardError = process.StandardError.ReadToEndAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken);
+        await standardError;
+        string target = await standardOutput;
+        if (process.ExitCode != 0 || Encoding.UTF8.GetByteCount(target) != blobLength)
+        {
+            return ArtifactParseStatus.UnsafePath;
+        }
+
+        try
+        {
+            string linkPath = Path.Combine(
+                repositoryRoot,
+                artifactPath.Replace('/', Path.DirectorySeparatorChar));
+            string targetPath = Path.IsPathFullyQualified(target)
+                ? Path.GetFullPath(target)
+                : Path.GetFullPath(Path.Combine(Path.GetDirectoryName(linkPath)!, target));
+            return IsWithinRepository(repositoryRoot, targetPath)
+                ? ArtifactParseStatus.ReparsePoint
+                : ArtifactParseStatus.UnsafePath;
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return ArtifactParseStatus.UnsafePath;
         }
     }
 
@@ -890,7 +952,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
 
     private static DirectManifestOwnerParseStatus ValidateNpmOwnerManifest(string content)
     {
-        ArtifactParseStatus validation = ValidateJson(content);
+        ArtifactParseStatus validation = ValidateJson(content, ArtifactKind.NpmManifest);
         if (validation == ArtifactParseStatus.Malformed)
         {
             return DirectManifestOwnerParseStatus.Malformed;
@@ -942,7 +1004,9 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             : DirectManifestOwnerParseStatus.Unsupported;
     }
 
-    private static ArtifactParseStatus ValidateJson(string content)
+    private static ArtifactParseStatus ValidateJson(
+        string content,
+        ArtifactKind artifactKind)
     {
         if (ExceedsJsonDepth(content))
         {
@@ -950,9 +1014,132 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         }
 
         using JsonDocument? document = ParseJson(content);
-        return document is null
-            ? ArtifactParseStatus.Malformed
+        if (document is null)
+        {
+            return ArtifactParseStatus.Malformed;
+        }
+
+        return HasDuplicateRelevantJsonProperties(document.RootElement, artifactKind)
+            ? ArtifactParseStatus.Unsupported
             : ArtifactParseStatus.Valid;
+    }
+
+    private static bool HasDuplicateRelevantJsonProperties(
+        JsonElement root,
+        ArtifactKind artifactKind)
+    {
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        if (artifactKind == ArtifactKind.NpmManifest)
+        {
+            foreach (string mapName in new[]
+                     {
+                         "dependencies",
+                         "devDependencies",
+                         "optionalDependencies",
+                     })
+            {
+                if (HasDuplicateJsonProperty(root, mapName))
+                {
+                    return true;
+                }
+
+                if (root.TryGetProperty(mapName, out JsonElement dependencies) &&
+                    dependencies.ValueKind == JsonValueKind.Object &&
+                    HasDuplicateJsonPropertyNames(dependencies))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (artifactKind == ArtifactKind.NpmLock)
+        {
+            return HasDuplicateJsonProperty(root, "lockfileVersion") ||
+                HasDuplicateJsonProperty(root, "packages") ||
+                (root.TryGetProperty("packages", out JsonElement packages) &&
+                 packages.ValueKind == JsonValueKind.Object &&
+                 HasDuplicateJsonPropertyNames(packages));
+        }
+
+        if (artifactKind != ArtifactKind.NuGetLock)
+        {
+            return false;
+        }
+
+        if (HasDuplicateJsonProperty(root, "dependencies"))
+        {
+            return true;
+        }
+
+        if (!root.TryGetProperty("dependencies", out JsonElement targets) ||
+            targets.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        if (HasDuplicateJsonPropertyNames(targets))
+        {
+            return true;
+        }
+
+        foreach (JsonProperty target in targets.EnumerateObject())
+        {
+            if (target.Value.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            if (HasDuplicateJsonPropertyNames(target.Value))
+            {
+                return true;
+            }
+
+            foreach (JsonProperty package in target.Value.EnumerateObject())
+            {
+                if (package.Value.ValueKind == JsonValueKind.Object &&
+                    HasDuplicateJsonProperty(package.Value, "type"))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasDuplicateJsonProperty(
+        JsonElement parent,
+        string propertyName)
+    {
+        var found = false;
+        foreach (JsonProperty property in parent.EnumerateObject())
+        {
+            if (!StringComparer.Ordinal.Equals(property.Name, propertyName))
+            {
+                continue;
+            }
+
+            if (found)
+            {
+                return true;
+            }
+
+            found = true;
+        }
+
+        return false;
+    }
+
+    private static bool HasDuplicateJsonPropertyNames(JsonElement parent)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        return parent.EnumerateObject().Any(property => !names.Add(property.Name));
     }
 
     private static ArtifactParseStatus ValidateXml(string content)
@@ -1231,7 +1418,7 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         }
     }
 
-    private void ParseMavenProject(
+    private ArtifactParseStatus ParseMavenProject(
         string artifactPath,
         string content,
         ICollection<PackageEvidence> evidence,
@@ -1241,9 +1428,10 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         XElement? project = document?.Root;
         if (project is null || !StringComparer.Ordinal.Equals(project.Name.LocalName, "project"))
         {
-            return;
+            return ArtifactParseStatus.Valid;
         }
 
+        var coordinates = new List<(string GroupId, string ArtifactId)>();
         foreach (XElement dependencies in project.Elements()
                      .Where(element => element.Name.LocalName == "dependencies"))
         {
@@ -1251,24 +1439,38 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                          .Where(element => element.Name.LocalName == "dependency"))
             {
                 budget.RecordParsedPackageEntry();
-                string? groupId = ChildValue(dependency, "groupId");
-                string? artifactId = ChildValue(dependency, "artifactId");
+                if (!TryGetUnambiguousChildValue(dependency, "groupId", out string? groupId) ||
+                    !TryGetUnambiguousChildValue(
+                        dependency,
+                        "artifactId",
+                        out string? artifactId))
+                {
+                    return ArtifactParseStatus.Unsupported;
+                }
+
                 if (!IsLiteral(groupId) || !IsLiteral(artifactId))
                 {
                     continue;
                 }
 
-                string coordinate = $"maven:{groupId}:{artifactId}";
-                AddMatched(
-                    artifactPath,
-                    "maven",
-                    coordinate,
-                    PackageEvidenceRelationship.Direct,
-                    $"xml:dependency[{groupId}:{artifactId}]",
-                    evidence,
-                    budget);
+                coordinates.Add((groupId!, artifactId!));
             }
         }
+
+        foreach ((string groupId, string artifactId) in coordinates)
+        {
+            string coordinate = $"maven:{groupId}:{artifactId}";
+            AddMatched(
+                artifactPath,
+                "maven",
+                coordinate,
+                PackageEvidenceRelationship.Direct,
+                $"xml:dependency[{groupId}:{artifactId}]",
+                evidence,
+                budget);
+        }
+
+        return ArtifactParseStatus.Valid;
     }
 
     private void ParsePythonRequirements(
@@ -1589,11 +1791,31 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         !value.Contains("%(", StringComparison.Ordinal) &&
         !value.Contains("@(", StringComparison.Ordinal);
 
-    private static string? ChildValue(XElement parent, string childName) =>
-        parent.Elements()
-            .SingleOrDefault(element => element.Name.LocalName == childName)
-            ?.Value
-            .Trim();
+    private static bool IsRegularCommittedBlobMode(string mode) =>
+        mode is "100644" or "100755";
+
+    private static bool TryGetUnambiguousChildValue(
+        XElement parent,
+        string childName,
+        out string? value)
+    {
+        value = null;
+        var found = false;
+        foreach (XElement child in parent.Elements()
+                     .Where(element => element.Name.LocalName == childName))
+        {
+            if (found)
+            {
+                value = null;
+                return false;
+            }
+
+            found = true;
+            value = child.Value.Trim();
+        }
+
+        return true;
+    }
 
     private static string NormalizePythonName(string value)
     {
@@ -1861,7 +2083,11 @@ internal interface ICommittedRepositorySnapshotSource
 
 internal sealed record CommittedRepositorySnapshot(
     string RepositoryIdentity,
-    string[] TrackedPaths);
+    CommittedRepositoryEntry[] TrackedEntries);
+
+internal sealed record CommittedRepositoryEntry(
+    string Path,
+    string Mode);
 
 internal sealed class GitCommittedRepositorySnapshotSource
     : ICommittedRepositorySnapshotSource
@@ -1880,11 +2106,12 @@ internal sealed class GitCommittedRepositorySnapshotSource
             await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
                 repositoryRoot,
                 cancellationToken);
-        string[] trackedPaths =
-            await FrameworkEvidenceDetector.InventoryTrackedPathsAsync(
+        CommittedRepositoryEntry[] trackedEntries =
+            await FrameworkEvidenceDetector.InventoryTrackedEntriesAsync(
                 repositoryRoot,
+                repositoryIdentity,
                 cancellationToken);
-        return new CommittedRepositorySnapshot(repositoryIdentity, trackedPaths);
+        return new CommittedRepositorySnapshot(repositoryIdentity, trackedEntries);
     }
 }
 

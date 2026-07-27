@@ -873,6 +873,19 @@ unchanged.
   rejection, and artifact-local duplicate Maven scalar handling with TDD.
   Candidate `614962322e9f3578980a6fa28bc8897d22b66c58` and both iteration-7
   reviews are invalidated before implementation; no later gate is waived.
+- QR7-001 through QR7-003 now have independent behavior-level RED evidence and
+  focused GREEN coverage. Committed manifest and lock eligibility comes from
+  the pinned Git tree mode and exact blob, consumed duplicate npm/NuGet JSON
+  properties fail closed at the artifact or owner relationship, and duplicate
+  Maven scalar children reject only that artifact without partial facts.
+- Root pre-checkpoint verification passes QR7 focused 3/3, the corrected
+  surrounding lane 258/258, the complete non-final-image suite 510/510, and the
+  Web build with zero errors. The first broad surrounding attempt truthfully
+  retains its sole expected completion-lane failure caused by the absent
+  `VULGATA_PROVIDER_CONTRACT_IMAGE`.
+- T062 remains incomplete until Current verification and the truthful ledger
+  are refreshed against the clean immutable correction commit. T041-T050 and
+  both review axes remain incomplete or invalidated.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
@@ -914,6 +927,7 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/analyze-7.json`
 - `specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json`
 - `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json`
+- `specs/002-language-framework-detection/evidence/quality7-correction-tdd.json`
 - `specs/002-language-framework-detection/tasks.md`
 - `specs/002-language-framework-detection/reviews/analyze-1.json`
 - `specs/002-language-framework-detection/reviews/analyze-2.json`

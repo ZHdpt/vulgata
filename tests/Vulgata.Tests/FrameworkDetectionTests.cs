@@ -276,6 +276,81 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectDetailedAsync_DuplicateMavenScalarChildren_IsolatesArtifactAndContinuesIndependentManifestAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "ambiguous-group/pom.xml",
+            """
+            <project>
+              <dependencies>
+                <dependency>
+                  <groupId>org.springframework.boot</groupId>
+                  <groupId>GROUP-SECOND-SECRET</groupId>
+                  <artifactId>spring-boot-starter-web</artifactId>
+                </dependency>
+              </dependencies>
+            </project>
+            """);
+        repository.Write(
+            "ambiguous-artifact/pom.xml",
+            """
+            <project>
+              <dependencies>
+                <dependency>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-starter</artifactId>
+                  <artifactId>ARTIFACT-SECOND-SECRET</artifactId>
+                </dependency>
+              </dependencies>
+            </project>
+            """);
+        repository.Write(
+            "valid/pom.xml",
+            """
+            <project>
+              <dependencies>
+                <dependency>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-starter-web</artifactId>
+                </dependency>
+              </dependencies>
+            </project>
+            """);
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(repository.Path);
+
+        Assert.True(result.Succeeded);
+        DetectedEvidence fact = Assert.Single(result.Evidence);
+        Assert.Equal("valid/pom.xml", fact.ArtifactPath);
+        Assert.Equal(
+            "maven:org.springframework.boot:spring-boot-starter-web",
+            fact.PackageCoordinate);
+        Assert.Equal(2, result.TotalAuditOutcomeCount);
+        Assert.Equal(
+            [
+                "ambiguous-artifact/pom.xml",
+                "ambiguous-group/pom.xml",
+            ],
+            result.AuditOutcomes
+                .Select(audit => audit.ArtifactPath)
+                .OrderBy(path => path, StringComparer.Ordinal));
+        Assert.All(
+            result.AuditOutcomes,
+            audit =>
+            {
+                Assert.Equal("Skipped", audit.Outcome);
+                Assert.Equal("FrameworkEvidenceUnsupported", audit.Reason);
+                Assert.Equal("框架证据格式不受支持。", audit.Message);
+            });
+        string retained = RetainedDetectionText(result);
+        Assert.DoesNotContain("GROUP-SECOND-SECRET", retained, StringComparison.Ordinal);
+        Assert.DoesNotContain("ARTIFACT-SECOND-SECRET", retained, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DetectAsync_DirtyTrackedDirectManifest_DoesNotCreateUncommittedFactAsync()
     {
         using var repository = new GitFixture();
@@ -326,6 +401,102 @@ public sealed class FrameworkDetectionTests
             """);
 
         Assert.Empty(await DetectAsync(repository.Path));
+    }
+
+    [Fact]
+    public async Task DetectAsync_DirtyDeletionAndReparseSubstitution_PreservesPinnedDirectAndPairedLockFactsAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "direct-deleted/package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+        repository.Write(
+            "direct-substituted/package.json",
+            """{ "dependencies": { "express": "5.1.0" } }""");
+        repository.Write(
+            "lock-deleted/package.json",
+            """{ "dependencies": { "not-in-catalog": "1.0.0" } }""");
+        repository.Write(
+            "lock-deleted/package-lock.json",
+            """
+            {
+              "lockfileVersion": 3,
+              "packages": {
+                "node_modules/react": {
+                  "version": "19.0.0"
+                }
+              }
+            }
+            """);
+        repository.Write(
+            "lock-substituted/package.json",
+            """{ "dependencies": { "not-in-catalog": "1.0.0" } }""");
+        repository.Write(
+            "lock-substituted/package-lock.json",
+            """
+            {
+              "lockfileVersion": 3,
+              "packages": {
+                "node_modules/express": {
+                  "version": "5.1.0"
+                }
+              }
+            }
+            """);
+        repository.CommitAll();
+        repository.Delete("direct-deleted/package.json");
+        repository.Delete("lock-deleted/package-lock.json");
+        repository.Delete("direct-substituted/package.json");
+        repository.CreateFileSymbolicLink(
+            "direct-substituted/package.json",
+            "direct-substituted-target/package.json",
+            """{ "dependencies": { "not-in-catalog": "DIRTY-DIRECT" } }""",
+            targetOutsideRepository: false);
+        repository.Delete("lock-substituted/package-lock.json");
+        repository.CreateFileSymbolicLink(
+            "lock-substituted/package-lock.json",
+            "lock-substituted-target/package-lock.json",
+            """{ "lockfileVersion": 3, "packages": {} }""",
+            targetOutsideRepository: false);
+
+        DetectedEvidence[] actual =
+        [
+            .. (await DetectAsync(repository.Path))
+                .OrderBy(item => item.ArtifactPath, StringComparer.Ordinal),
+        ];
+
+        DetectedEvidence[] expected =
+        [
+            new(
+                "direct-deleted/package.json",
+                "direct-deleted",
+                "npm",
+                "npm:react",
+                "Direct",
+                "direct-deleted/package.json#json:/dependencies/react"),
+            new(
+                "direct-substituted/package.json",
+                "direct-substituted",
+                "npm",
+                "npm:express",
+                "Direct",
+                "direct-substituted/package.json#json:/dependencies/express"),
+            new(
+                "lock-deleted/package-lock.json",
+                "lock-deleted",
+                "npm",
+                "npm:react",
+                "Transitive",
+                "lock-deleted/package-lock.json#json:/packages/node_modules~1react"),
+            new(
+                "lock-substituted/package-lock.json",
+                "lock-substituted",
+                "npm",
+                "npm:express",
+                "Transitive",
+                "lock-substituted/package-lock.json#json:/packages/node_modules~1express"),
+        ];
+        Assert.Equal(expected, actual);
     }
 
     [Fact]
@@ -753,6 +924,76 @@ public sealed class FrameworkDetectionTests
 
             AssertInvalidOwnerLockResult(result, expectedReason);
         }
+    }
+
+    [Fact]
+    public async Task DetectDetailedAsync_DuplicateRelevantJsonProperties_IsolatesDirectOwnerAndLockEvidenceAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "direct/package.json",
+            """
+            {
+              "dependencies": { "react": "DIRECT-FIRST-SECRET" },
+              "dependencies": { "express": "DIRECT-SECOND-SECRET" }
+            }
+            """);
+        repository.Write(
+            "owner/package.json",
+            """
+            {
+              "dependencies": { "left-pad": "OWNER-FIRST-SECRET" },
+              "dependencies": { "left-pad": "OWNER-SECOND-SECRET" }
+            }
+            """);
+        repository.Write("owner/package-lock.json", NpmLockJson());
+        repository.Write(
+            "lock/package.json",
+            """{ "dependencies": { "left-pad": "1.3.0" } }""");
+        repository.Write(
+            "lock/package-lock.json",
+            """
+            {
+              "lockfileVersion": 3,
+              "packages": {
+                "node_modules/react": { "version": "19.0.0" }
+              },
+              "packages": {
+                "node_modules/express": { "version": "5.1.0" }
+              }
+            }
+            """);
+        repository.Write("valid/requirements.txt", "Django==5.2.4\n");
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(repository.Path);
+
+        Assert.True(result.Succeeded);
+        DetectedEvidence fact = Assert.Single(result.Evidence);
+        Assert.Equal("valid/requirements.txt", fact.ArtifactPath);
+        Assert.Equal("python:django", fact.PackageCoordinate);
+        Assert.Equal(3, result.TotalAuditOutcomeCount);
+        Assert.Equal(
+            [
+                "direct/package.json",
+                "lock/package-lock.json",
+                "owner/package-lock.json",
+            ],
+            result.AuditOutcomes
+                .Select(audit => audit.ArtifactPath)
+                .OrderBy(path => path, StringComparer.Ordinal));
+        Assert.All(
+            result.AuditOutcomes,
+            audit =>
+            {
+                Assert.Equal("Skipped", audit.Outcome);
+                Assert.Equal("FrameworkEvidenceUnsupported", audit.Reason);
+                Assert.Equal("框架证据格式不受支持。", audit.Message);
+            });
+        string retained = RetainedDetectionText(result);
+        Assert.DoesNotContain("FIRST-SECRET", retained, StringComparison.Ordinal);
+        Assert.DoesNotContain("SECOND-SECRET", retained, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1398,7 +1639,9 @@ public sealed class FrameworkDetectionTests
             """
             {
               "dependencies": {
-                "react": "ARBITRARY-NPM-VALUE",
+                "react": "ARBITRARY-NPM-VALUE"
+              },
+              "devDependencies": {
                 "react": "ARBITRARY-NPM-VALUE"
               },
               "sourceText": "ARBITRARY-SOURCE-TEXT"
@@ -2468,6 +2711,14 @@ public sealed class FrameworkDetectionTests
                 relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(fullPath)!);
             File.WriteAllText(fullPath, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        public void Delete(string relativePath)
+        {
+            string fullPath = System.IO.Path.Combine(
+                Path,
+                relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+            File.Delete(fullPath);
         }
 
         public void TrackAll()

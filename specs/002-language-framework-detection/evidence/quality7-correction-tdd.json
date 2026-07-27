@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "stage": "implement",
+  "purpose": "Durable RED/GREEN and pre-checkpoint validation evidence for the user-approved QR7 Scan-strategy correction.",
+  "authorization": {
+    "path": "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json",
+    "scope": [
+      "QR7-001 pinned Git tree/object-mode eligibility",
+      "QR7-002 duplicate relevant npm JSON property rejection",
+      "QR7-003 artifact-local duplicate Maven scalar rejection"
+    ],
+    "later_gates_waived": false
+  },
+  "source_boundary": {
+    "base_commit": "1de4cbdb7b768d53ba42b19e2bcbe9ba891a5488",
+    "tracked_paths_changed": [
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+    ],
+    "scope_check_passed": true,
+    "diff_check_exit_code": 0,
+    "line_ending_notices_nonfunctional": true
+  },
+  "tdd": [
+    {
+      "task": "T059",
+      "finding": "QR7-001",
+      "test": "DetectAsync_DirtyDeletionAndReparseSubstitution_PreservesPinnedDirectAndPairedLockFactsAsync",
+      "red": {
+        "exit_code": 1,
+        "failed": 1,
+        "passed": 0,
+        "observed_failure": "Expected four pinned committed facts but mutable checkout deletion or reparse substitution suppressed all four.",
+        "raw_output_path": "TestResults/story-4-2-quality7-correction/QR7-001-red.txt",
+        "raw_output_sha256": "4e9b5d7c15667f46a3695838947b32561b6b0d3c4981076316e2b86efcb09ce3",
+        "raw_output_length_bytes": 476772
+      },
+      "green_outcome": "The detector inventories the pinned commit tree, derives eligibility from committed mode 100644 or 100755, and reads the exact commit blob independently of dirty checkout metadata."
+    },
+    {
+      "task": "T060",
+      "finding": "QR7-002",
+      "test": "DetectDetailedAsync_DuplicateRelevantJsonProperties_IsolatesDirectOwnerAndLockEvidenceAsync",
+      "red": {
+        "exit_code": 1,
+        "failed": 1,
+        "passed": 0,
+        "observed_failure": "Ambiguous duplicate direct, owner, and lock JSON properties produced three invalid framework facts in addition to the independent valid fact.",
+        "raw_output_path": "TestResults/story-4-2-quality7-correction/QR7-002-red.txt",
+        "raw_output_sha256": "68bfc00d7852c800a69e05a153c8d846c19039166cb19c524d22f1bd802c6cfb",
+        "raw_output_length_bytes": 208196
+      },
+      "green_outcome": "Duplicate properties consumed by npm or NuGet detection reject only the ambiguous artifact or owner relationship with one bounded unsupported audit; independent evidence continues."
+    },
+    {
+      "task": "T061",
+      "finding": "QR7-003",
+      "test": "DetectDetailedAsync_DuplicateMavenScalarChildren_IsolatesArtifactAndContinuesIndependentManifestAsync",
+      "red": {
+        "exit_code": 1,
+        "failed": 1,
+        "passed": 0,
+        "observed_failure": "Duplicate Maven groupId or artifactId escalated through SingleOrDefault to repository-wide DetectorFailed.",
+        "raw_output_path": "TestResults/story-4-2-quality7-correction/QR7-003-red.txt",
+        "raw_output_sha256": "0df9ebc0407961d8fafcccfba096751e91fa3e4bbc812ac3868b1be4a1c6d065",
+        "raw_output_length_bytes": 207293
+      },
+      "green_outcome": "Cardinality-aware scalar extraction rejects the ambiguous Maven artifact locally, emits one bounded unsupported audit, leaks no partial fact, and continues an independent valid manifest."
+    }
+  ],
+  "green": {
+    "focused": {
+      "exit_code": 0,
+      "passed": 3,
+      "total": 3,
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/focused-green-attempt2.txt",
+      "raw_output_sha256": "f4b79c3ec13318628a4de954521eb776fe40892935a59a8c318cf756956aca71",
+      "raw_output_length_bytes": 457245
+    },
+    "framework_suite": {
+      "exit_code": 0,
+      "passed": 55,
+      "total": 55,
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/framework-suite-green.txt",
+      "raw_output_sha256": "22689a66206f8d6fb3938bdc7f76fb67dd51fdc441cd1c92258f91edcd326c8f",
+      "raw_output_length_bytes": 297
+    }
+  },
+  "root_pre_checkpoint_validation": {
+    "focused": {
+      "exit_code": 0,
+      "passed": 3,
+      "total": 3,
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/T062-focused-root.trx",
+      "raw_output_sha256": "dee907f07115b01419658431c30ae0e40119cc42641625527ac26a67b4d5bf62",
+      "raw_output_length_bytes": 5942
+    },
+    "surrounding_attempt_1": {
+      "exit_code": 1,
+      "passed": 258,
+      "failed": 1,
+      "total": 259,
+      "classification": "Known final-image completion-lane test was unintentionally included and required absent VULGATA_PROVIDER_CONTRACT_IMAGE; no product regression.",
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/T062-surrounding-root.trx",
+      "raw_output_sha256": "a0165c2894c4321a0f9043d3d3afc4d716d57f118db565259be98032f953db88",
+      "raw_output_length_bytes": 437880
+    },
+    "surrounding_attempt_2": {
+      "exit_code": 0,
+      "passed": 258,
+      "failed": 0,
+      "total": 258,
+      "final_image_completion_lane_excluded": true,
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/T062-surrounding-root-attempt2.trx",
+      "raw_output_sha256": "3e3ad2e351d992a99e448b3bb073522623a33200afa3929c000024602790cb41",
+      "raw_output_length_bytes": 434754
+    },
+    "full_non_image": {
+      "exit_code": 0,
+      "passed": 510,
+      "failed": 0,
+      "total": 510,
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/T062-full-non-image-root.trx",
+      "raw_output_sha256": "d8bb89d8dc07e260ed4511041689931b19a77c74aa255ecad2f15a402a7a5d62",
+      "raw_output_length_bytes": 3392803
+    },
+    "web_build": {
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": 9,
+      "warning_classification": "Existing NU1507 package-source mapping and Microsoft.EntityFrameworkCore version-conflict warnings.",
+      "raw_output_path": "TestResults/story-4-2-quality7-correction/T062-web-build.binlog",
+      "raw_output_sha256": "7370091435458f88198d100130af226cfd41f00b030c505d527aebd75dcac7c5",
+      "raw_output_length_bytes": 968093
+    }
+  },
+  "remaining_work": {
+    "T062_complete": false,
+    "reason": "Current verification and the truthful ledger must be refreshed against the clean immutable correction commit created after this record.",
+    "candidate_and_reviews_remain_invalidated": true
+  },
+  "observed_at": "2026-07-27T06:20:16.2999715Z"
+}
