@@ -3,11 +3,11 @@
   "evidenceId": "4-2-language-and-framework-detection/implement/T039-ledger",
   "kind": "historical-tdd-reconstruction",
   "stage": "implement",
-  "taskIds": ["T039"],
+  "taskIds": ["T039", "T040"],
   "bmadStoryKey": "4-2-language-and-framework-detection",
   "featureDirectory": "specs/002-language-framework-detection",
-  "status": "regenerated-pending-independent-validation",
-  "finalizationTaskIds": ["T039"],
+  "status": "validated-current-green",
+  "finalizationTaskIds": ["T039", "T040"],
   "finalizedAt": "2026-07-27T02:09:17.2330936Z",
   "observedAt": "2026-07-27T02:00:28.2956178Z",
   "sourceRange": {
@@ -1563,14 +1563,17 @@
     "newNamespaceConsumed": false,
     "newFreezeCompleted": false,
     "newFinalAuditCompleted": false,
-    "nextPermittedTask": "T040 independent validation rerun"
+    "nextPermittedTask": "T041"
   },
   "independentValidation": {
     "taskId": "T040",
-    "status": "pending",
-    "validatedAt": null,
-    "validationCompleted": false,
-    "taskMarkerFinalized": false
+    "status": "accepted",
+    "verdict": "ACCEPT",
+    "reviewedCommit": "dcaca0e2da62ccf7b4f31a36a9abde396c9fc74c",
+    "verdictPath": "specs/002-language-framework-detection/reviews/t040-ledger-validation.json",
+    "validatedAt": "2026-07-27T02:59:52.0719420Z",
+    "validationCompleted": true,
+    "taskMarkerFinalized": true
   },
   "authorPreflight": {
     "completed": true,

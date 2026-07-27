@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "gate": "T040-ledger-validation",
+  "verdict": "ACCEPT",
+  "reviewer_role": "independent-quality-reviewer",
+  "reviewed_commit": "dcaca0e2da62ccf7b4f31a36a9abde396c9fc74c",
+  "reviewed_tree": "ecf52c24f661b0a95b052005115b90dc6b99c2c8",
+  "observed_at": "2026-07-27T02:59:52.0719420Z",
+  "substantive_boundary": {
+    "commit": "fb93b2050536c0872892b08a54afde69cfa87dad",
+    "tree": "a018d36fbafc9ef5b04b06cd3a2a100fe4bfcf74",
+    "result": "All seven substantive ledger-validation areas passed."
+  },
+  "focused_state_boundary": {
+    "base_commit": "fb93b2050536c0872892b08a54afde69cfa87dad",
+    "candidate_commit": "dcaca0e2da62ccf7b4f31a36a9abde396c9fc74c",
+    "diff_sha256": "2ec05e88e9884f5b4fbecc47e80f89db98e8fbe94c6adf0e5389a1187f0c9390",
+    "workflow_state_sha256": "08ee0930120e3214eada1873143cacde1f50b5915a1ed9a5ca62c2d4b23e7a00",
+    "owned_paths": [
+      "specs/002-language-framework-detection/workflow-state.json"
+    ]
+  },
+  "validated_claims": {
+    "source_history_linear": true,
+    "authority_git_blob_hashes_match": true,
+    "immutable_blob_oids_match": true,
+    "raw_evidence_hashes_and_lengths_match": true,
+    "temporal_classifications_truthful": true,
+    "malformed_checkpoints_historical_only": true,
+    "forward_only_replacements_valid": true,
+    "checkpoint_committed_paths_exact": true,
+    "checkpoint_evidence_kind_allowed": true,
+    "premature_downstream_completion_absent": true
+  },
+  "prior_revise_findings_resolved": [
+    "T040-001",
+    "T040-002",
+    "T040-003",
+    "T040-004",
+    "T040-005"
+  ],
+  "findings": [],
+  "summary": "Independent T040 ACCEPT. The truthful ledger, immutable Git references, raw evidence, temporal disclosures, forward-only checkpoint remediation, and focused workflow-state contract all passed. No files or Git state were modified by the reviewer."
+}

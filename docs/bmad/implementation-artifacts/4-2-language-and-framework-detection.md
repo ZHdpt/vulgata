@@ -842,6 +842,13 @@ unchanged.
   commits historical-only, and leaves T040 pending for a fresh independent
   audit. Correction checkpoint
   `bmad-4-2-implement-20260727T023616Z-c83e5a` is pending Git binding.
+- T040 independently ACCEPTED the corrected ledger at focused state boundary
+  `dcaca0e2da62ccf7b4f31a36a9abde396c9fc74c`. All 15 authority hashes,
+  64 immutable blob references, 43 current raw references, two retained
+  historical-green artifacts, temporal disclosures, and forward-only
+  checkpoints passed. The final focused rerun also verified exact
+  `committed_paths` and the allowed `artifact-hash` evidence kind. T041 is now
+  the next permitted task.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

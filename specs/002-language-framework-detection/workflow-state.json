@@ -2827,26 +2827,39 @@
       "observed_at": "2026-07-27T02:56:50.6542161Z",
       "summary": "The second T040 audit passed every substantive ledger check and returned REVISE only because checkpoint fb93b20 listed unchanged tasks.md and used the undocumented evidence kind artifact-correction. This forward-only state record uses artifact-hash and declares only its actual changed path; fb93b20 remains immutable history.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/79",
+      "kind": "review",
+      "stage": "implement",
+      "source_commit": "dcaca0e2da62ccf7b4f31a36a9abde396c9fc74c",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T02:59:52.0719420Z",
+      "summary": "Independent T040 ACCEPTED the truthful ledger after all five correction findings were resolved. Every substantive ledger area and the focused checkpoint-state contract passed; T041 is now permitted.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T025650Z-d94f6b",
+    "checkpoint_id": "bmad-4-2-implement-20260727T025952Z-ea70c4",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+      "specs/002-language-framework-detection/reviews/t040-ledger-validation.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/78"
+      "4-2-language-and-framework-detection/implement/79"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": {
-    "stage": "implement",
-    "task_id": "T040",
-    "status": "correction-committed-pending-independent-rerun",
-    "summary": "Independent T040 passed the ledger and found two checkpoint-state representation defects; the focused forward-only state correction is ready for a fresh independent audit."
-  },
-  "updated_at": "2026-07-27T02:56:50.6542161Z"
+  "recoverable_failure": null,
+  "updated_at": "2026-07-27T02:59:52.0719420Z"
 }
