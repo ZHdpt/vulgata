@@ -849,6 +849,15 @@ unchanged.
   checkpoints passed. The final focused rerun also verified exact
   `committed_paths` and the allowed `artifact-hash` evidence kind. T041 is now
   the next permitted task.
+- T041 pinned clean immutable candidate
+  `614962322e9f3578980a6fa28bc8897d22b66c58`, tree
+  `29206ebcab35a8d53d4323f23602c559909a857f`, through checkpoint
+  `bmad-4-2-candidate-20260727T030148Z-f15b2c`. The empty checkpoint has the
+  same tree as parent `fb3eca2680cbd2a66384005bbea1cac6527bd84d`.
+  Its exact 1,616,158-byte binary diff from the Story base has SHA-256
+  `907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae`
+  over 80 owned paths. Every non-deleted owned path is bound to its immutable
+  candidate Git-blob SHA-256, and the initial candidate status is clean.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

@@ -2841,25 +2841,38 @@
       "observed_at": "2026-07-27T02:59:52.0719420Z",
       "summary": "Independent T040 ACCEPTED the truthful ledger after all five correction findings were resolved. Every substantive ledger area and the focused checkpoint-state contract passed; T041 is now permitted.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/80",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json"
+      ],
+      "command": "Exact candidate commit/tree/parent/trailers, binary diff byte length and SHA-256, owned/deleted paths, immutable Git-blob hashes, and clean-status validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T03:06:10.0950238Z",
+      "summary": "T041 pinned clean empty candidate 6149623 with tree 29206eb. Its 1,616,158-byte base-to-candidate binary diff hashes to 907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae across 80 owned paths; every non-deleted path has an exact candidate Git-blob SHA-256.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T025952Z-ea70c4",
+    "checkpoint_id": "bmad-4-2-candidate-record-20260727T030610Z-b4c81d",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
-      "specs/002-language-framework-detection/reviews/t040-ledger-validation.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/79"
+      "4-2-language-and-framework-detection/implement/80"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T02:59:52.0719420Z"
+  "updated_at": "2026-07-27T03:06:10.0950238Z"
 }
