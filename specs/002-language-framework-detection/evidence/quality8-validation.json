@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/implement/QR8-validation",
+  "kind": "test-run",
+  "stage": "implement",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "source_commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5",
+  "observed_at": "2026-07-27T08:21:47.4190618Z",
+  "results": [
+    {
+      "scope": "provider/profiling/framework surrounding",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProviderTests|FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~FrameworkDetectionTests\" --no-restore",
+      "exit_code": 0,
+      "passed": 173,
+      "failed": 0,
+      "raw_output_path": "TestResults/story-4-2-quality8-validation/surrounding.trx",
+      "length_bytes": 308916,
+      "sha256": "3a2d52b825eb7a3d9c972392085ddd1ee54ac1aa9ca82e90a2a269b77c712ac7"
+    },
+    {
+      "scope": "first complete non-final-image attempt",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract\" --no-restore --no-build",
+      "exit_code": 1,
+      "passed": 510,
+      "failed": 2,
+      "classification": "Expected authority-hash alignment after the approved plan and framework contract bytes changed; no product behavior failed.",
+      "failed_tests": [
+        "HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes(plan.md)",
+        "HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes(framework-detection.md)"
+      ],
+      "raw_output_path": "TestResults/story-4-2-quality8-validation/full-non-image.trx",
+      "length_bytes": 3399588,
+      "sha256": "ee0fe3572a0740c9422385ad5b9e4a1b36cbe9b8da7162271d820c2bd69ff80d"
+    },
+    {
+      "scope": "canonical authority hash alignment",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests.HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes\" --no-restore",
+      "exit_code": 0,
+      "passed": 16,
+      "failed": 0,
+      "raw_output_path": "TestResults/story-4-2-quality8-validation/authority-hash-green.trx",
+      "length_bytes": 28878,
+      "sha256": "9d39f31105495943680e5f94e68646d30c0a42e64880135d442d7289d705f3c5"
+    },
+    {
+      "scope": "corrected complete non-final-image attempt",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract\" --no-restore --no-build",
+      "exit_code": 0,
+      "passed": 512,
+      "failed": 0,
+      "raw_output_path": "TestResults/story-4-2-quality8-validation/full-non-image-attempt-0002.trx",
+      "length_bytes": 3395696,
+      "sha256": "475f6995689938017e32d9e97841ba839aa36cf594e8bc02ed98aa610f627c79"
+    },
+    {
+      "scope": "Web build",
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": 9,
+      "classification": "Known package-source and EF version-conflict warnings; no QR8 build error.",
+      "raw_output_path": "TestResults/story-4-2-quality8-validation/web-build.log",
+      "length_bytes": 78455,
+      "sha256": "0b0d4dae1c69f2f7b7abc209a65f687c0dc63f0c74aa39aa584d109f005f835c"
+    }
+  ],
+  "authority_hash_updates": {
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": {
+      "specs/002-language-framework-detection/plan.md": "26d5363c9d5855b283777eab5d452eb6c0ffcb5df47593bc6c66df2e0464bbc1",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "857806217393c87f7ab787207b2b42ab3dc27299275cfdfe2ffb578343f99930"
+    },
+    "accepted_plan_checkpoint_hash_changed": false,
+    "reason": "Only current-checkout canonical LF hash expectations changed. The historical accepted-plan checkpoint hash remains pinned to its immutable plan-review boundary."
+  },
+  "remaining_t066": [
+    "Committed-boundary T001 Current verification refresh",
+    "Truthful historical ledger refresh",
+    "Fresh independent T040 ledger validation"
+  ]
+}

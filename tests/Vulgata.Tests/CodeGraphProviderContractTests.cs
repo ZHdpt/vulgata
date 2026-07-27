@@ -19,11 +19,11 @@ public sealed class CodeGraphProviderContractTests
         {
             { "docker/codegraph/requirements.lock", _providerLockHash },
             { "specs/002-language-framework-detection/spec.md", "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956" },
-            { "specs/002-language-framework-detection/plan.md", "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600" },
+            { "specs/002-language-framework-detection/plan.md", "26d5363c9d5855b283777eab5d452eb6c0ffcb5df47593bc6c66df2e0464bbc1" },
             { "specs/002-language-framework-detection/research.md", "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4" },
             { "specs/002-language-framework-detection/data-model.md", "76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c" },
             { "specs/002-language-framework-detection/quickstart.md", "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115" },
-            { "specs/002-language-framework-detection/contracts/framework-detection.md", "74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181" },
+            { "specs/002-language-framework-detection/contracts/framework-detection.md", "857806217393c87f7ab787207b2b42ab3dc27299275cfdfe2ffb578343f99930" },
             { "specs/002-language-framework-detection/contracts/provider-language-projection.md", "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b" },
             { "specs/002-language-framework-detection/contracts/repository-scan-overview.md", "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad" },
             { "specs/001-codegraph-extraction/contracts/repository-profiling-api.md", "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124" },

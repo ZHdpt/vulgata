@@ -3032,28 +3032,39 @@
       "observed_at": "2026-07-27T08:13:39.7695815Z",
       "summary": "T064-T065 are complete with strict independent RED-GREEN evidence. Namespace spoofing is artifact-local and fact-free; pinned-tree inventory is incrementally bounded while retaining only six supported shapes with exact object IDs and modes. Focused QR8 passes 2/2, FrameworkDetectionTests passes 57/57 in both worker and root validation, and executable accepted-plan binding passes 17/17. The implementation uses QR8-002's bounded-stream alternative because git ls-tree rejects glob-magic pathspecs.",
       "raw_output_path": "TestResults/story-4-2-quality8-correction/"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/91",
+      "kind": "test-run",
+      "stage": "implement",
+      "source_commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/quality8-validation.json",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
+      "command": "Committed surrounding suite; first full non-image attempt; exact authority-hash alignment; corrected full non-image suite; Web build",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T08:21:47.4190618Z",
+      "summary": "T066 validation is partially complete. Surrounding passes 173/173. The preserved first non-image attempt passed 510 and failed only two intentionally stale current-checkout authority hashes; focused alignment passes 16/16 and the corrected full non-image suite passes 512/512. Web build succeeds with zero errors and nine known warnings. T001, ledger refresh, and fresh T040 remain.",
+      "raw_output_path": "TestResults/story-4-2-quality8-validation/"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T081339Z-d75a3b",
+    "checkpoint_id": "bmad-4-2-implement-20260727T082147Z-e86b4c",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/contracts/framework-detection.md",
-      "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
-      "specs/002-language-framework-detection/plan.md",
-      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/evidence/quality8-validation.json",
       "specs/002-language-framework-detection/workflow-state.json",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/90"
+      "4-2-language-and-framework-detection/implement/91"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T08:13:39.7695815Z"
+  "updated_at": "2026-07-27T08:21:47.4190618Z"
 }

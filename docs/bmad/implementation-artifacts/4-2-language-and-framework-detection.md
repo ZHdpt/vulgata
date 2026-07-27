@@ -942,6 +942,14 @@ unchanged.
   stderr, 30 seconds, and caller cancellation. Focused tests pass 2/2 and the
   complete framework suite passes 57/57. The executable accepted-plan binding
   passes 17/17; T066 remains pending.
+- T066 validation is partially complete at the committed QR8 correction:
+  provider/profiling/framework surrounding passes 173/173. The first complete
+  non-final-image run passed 510 tests and failed only the two canonical
+  current-checkout hashes intentionally changed by the approved plan/contract
+  reconciliation. After updating only those expectations, their focused suite
+  passes 16/16 and the complete non-final-image suite passes 512/512. The Web
+  build succeeds with zero errors and nine known warnings. Current
+  verification, truthful-ledger refresh, and fresh T040 validation remain.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
