@@ -805,6 +805,16 @@ unchanged.
 - QR6 correction checkpoint:
   `bmad-4-2-implement-20260727T014847Z-qr6001`
   (pending Git binding).
+- Post-QR6 T001 Current verification is GREEN at clean immutable correction
+  commit `38bff96b7a3b4a1dc442e347d26a5c7afbb62b55`, tree
+  `e42e961cb401ec7719c96da5047756fa63810035`: provider/profiling
+  passed 116/116 and the framework filter passed 53/53. The exact statement
+  `Pre-correction T001 baseline observation: unavailable` remains unchanged;
+  no current result is labelled historical, pre-correction, RED, or
+  contemporaneous ordering.
+- Post-QR6 Current-verification checkpoint:
+  `bmad-4-2-implement-20260727T020318Z-t001qr6`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

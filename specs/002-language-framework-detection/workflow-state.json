@@ -633,6 +633,25 @@
         "TestResults/story-4-2-quality6-correction/root-web-build-green.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-27T01:59:10.9327499Z",
+      "completed_at": "2026-07-27T02:01:26.8005167Z",
+      "input_commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+      "input_hashes": {
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "3c9fd047b3cc2fbbf602ea31d7a9219ac3aa763326699bc43cb129a2fdb510ca",
+        "TestResults/story-4-2-current-verification-quality6-refresh/T001-provider-profiling-green.txt": "4dd801f5fac230998ed8e2b1c5697602e26cfef889cdf7a5898aa1fdc86bf156",
+        "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt": "19a72f80515836bec2da71e7e9d0f0d03601a74ad3611ae94b238449048426a9"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification-quality6-refresh/T001-provider-profiling-green.txt",
+        "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -2727,34 +2746,40 @@
       "observed_at": "2026-07-27T01:44:39.0000000Z",
       "summary": "The preserved first surrounding attempt failed 7 of 168 because its Git fixture had no commit. After fixture alignment, worker and root passed 168 of 168, the complete non-final-image suite passed 507 of 507, and the Web build completed with zero errors.",
       "raw_output_path": "TestResults/story-4-2-quality6-correction/root-non-final-image-suite-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/75",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification-quality6-refresh/T001-provider-profiling-green.txt",
+        "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling\"; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetection\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T02:00:28.2956178Z",
+      "summary": "Post-QR6 T001 Current verification passed at clean immutable commit 38bff96b7a3b4a1dc442e347d26a5c7afbb62b55 and tree e42e961cb401ec7719c96da5047756fa63810035: provider/profiling 116 of 116 and framework-filter coverage 53 of 53. The unavailable historical baseline statement and all earlier attempts remain preserved.",
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T014847Z-qr6001",
+    "checkpoint_id": "bmad-4-2-implement-20260727T020318Z-t001qr6",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
-      "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
-      "specs/002-language-framework-detection/reviews/quality-review-6.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/workflow-state.json",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
-      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/71",
-      "4-2-language-and-framework-detection/acceptance-review/6",
-      "4-2-language-and-framework-detection/quality-review/6",
-      "4-2-language-and-framework-detection/implement/72",
-      "4-2-language-and-framework-detection/implement/73",
-      "4-2-language-and-framework-detection/implement/74"
+      "4-2-language-and-framework-detection/implement/75"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T01:48:47.1017849Z"
+  "updated_at": "2026-07-27T02:03:18.0794918Z"
 }
