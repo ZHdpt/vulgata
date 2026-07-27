@@ -3061,24 +3061,41 @@
       "observed_at": "2026-07-27T08:25:15.7924094Z",
       "summary": "At clean immutable QR8 correction and authority-alignment commit d77c096, provider/profiling passes 116/116 and framework detection passes 57/57. Attempts 12-13 are Current verification only and do not recreate unavailable historical RED or pre-correction evidence.",
       "raw_output_path": "TestResults/story-4-2-current-verification-quality8-refresh/"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/93",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "specs/002-language-framework-detection/evidence/quality8-validation.json",
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+        "specs/002-language-framework-detection/workflow-state.json"
+      ],
+      "command": "QR8 truthful-ledger regeneration with exact Git ancestry, authority hashes, immutable blobs, raw evidence identities, checkpoint trailers, invalidation, Current verification, and downstream-state validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T08:46:17.7111306Z",
+      "summary": "The QR8 truthful ledger validates 77 linear commits and zero merges, 27 authorities, 83 immutable blob references, 66 raw references, and 47 unique checkpoint entries. It preserves iteration-8 invalidation, attempts 12-13 as Current verification, and no replacement T040/T041 or downstream completion. Fresh independent T040 audit remains mandatory.",
+      "raw_output_path": "TestResults/story-4-2-quality8-ledger/T039-ledger-validation.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-verification-20260727T082515Z-f97c5d",
+    "checkpoint_id": "bmad-4-2-implement-20260727T084617Z-a08d6e",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/evidence/quality8-validation.json",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/92"
+      "4-2-language-and-framework-detection/implement/93"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T08:25:15.7924094Z"
+  "updated_at": "2026-07-27T08:46:17.7111306Z"
 }

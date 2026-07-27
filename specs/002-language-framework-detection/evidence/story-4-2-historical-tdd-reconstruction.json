@@ -9,16 +9,16 @@
   "status": "pending-independent-validation",
   "finalizationTaskIds": ["T039", "T040"],
   "finalizedAt": null,
-  "observedAt": "2026-07-27T06:26:36.3310325Z",
+  "observedAt": "2026-07-27T08:34:29.7442463Z",
   "sourceRange": {
     "baseExclusive": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-    "head": "22975db7115ff1afbfcf146aa42ba9aa4dd55338",
-    "sourceCommit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338",
-    "sourceTree": "4ebfc782bd41235d25b2e353f08f19f461788d9a",
-    "historyCommand": "git log --reverse --format=\"%H %P %s%n%b\" e9824df7300634c19d815bdd7ad591b9fb5366d5..22975db7115ff1afbfcf146aa42ba9aa4dd55338",
-    "pathCommand": "git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..22975db7115ff1afbfcf146aa42ba9aa4dd55338",
+    "head": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+    "sourceCommit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+    "sourceTree": "d6f846dc295eb99cdf8dbd879a7aa17bc8cc05b6",
+    "historyCommand": "git log --reverse --format=\"%H %P %s%n%b\" e9824df7300634c19d815bdd7ad591b9fb5366d5..8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+    "pathCommand": "git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
     "historyShape": "linear",
-    "commitCount": 68,
+    "commitCount": 77,
     "mergeCommitCount": 0
   },
   "authorityReferences": [
@@ -28,7 +28,7 @@
     },
     {
       "path": "specs/002-language-framework-detection/tasks.md",
-      "sha256AtSourceCommit": "901bd78883cd6a2f4da32e2cea3b743ec59d96e70e1bbcdb0cabcfca970eaf3f"
+      "sha256AtSourceCommit": "61790a51d54b973d9012a62cdbde890d02cb77dd4b31480ada8a864f99bc2d14"
     },
     {
       "path": "specs/002-language-framework-detection/spec.md",
@@ -36,7 +36,11 @@
     },
     {
       "path": "specs/002-language-framework-detection/plan.md",
-      "sha256AtSourceCommit": "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600"
+      "sha256AtSourceCommit": "26d5363c9d5855b283777eab5d452eb6c0ffcb5df47593bc6c66df2e0464bbc1"
+    },
+    {
+      "path": "specs/002-language-framework-detection/contracts/framework-detection.md",
+      "sha256AtSourceCommit": "857806217393c87f7ab787207b2b42ab3dc27299275cfdfe2ffb578343f99930"
     },
     {
       "path": "specs/002-language-framework-detection/quickstart.md",
@@ -44,15 +48,15 @@
     },
     {
       "path": "specs/002-language-framework-detection/workflow-state.json",
-      "sha256AtSourceCommit": "92bb70f0f547ca356e2e0fa6e237d765a9a3cf1233229c299661e714f35c8e38"
+      "sha256AtSourceCommit": "104ca7766be435a052ab7aa8fd34e23ce8ccc57ae14308d2f25347722e6882da"
     },
     {
       "path": "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "sha256AtSourceCommit": "a7a86792527ceb9b69d0feea5fc50c8ca5a6e371195f27deee61ffcea5544978"
+      "sha256AtSourceCommit": "e053ae1209314cb09573b48b4de14318e9dfd7f3c2d53e6d4c3611e76f537251"
     },
     {
       "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
-      "sha256AtSourceCommit": "b8a01d0ea8075e9f5ae78981a543c145daafec28ee4e8cb27b463155b8d52acc"
+      "sha256AtSourceCommit": "83ed1d4de40d1354e14a2288fb2fa7f989ce14d26ca1dbd415f4daef380e5c8e"
     },
     {
       "path": "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
@@ -97,6 +101,34 @@
     {
       "path": "specs/002-language-framework-detection/reviews/quality-review-7.json",
       "sha256AtSourceCommit": "20f878ffd9971d346c366ba8f328f9a38461aaa5adb2f7f158f9da3a59ec6ac6"
+    },
+    {
+      "path": "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
+      "sha256AtSourceCommit": "3045e94a061e6fdc0cc667031e7c8aef66cb939e1d0b03f81b20caf88d410d88"
+    },
+    {
+      "path": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+      "sha256AtSourceCommit": "9896f06c30d91c227cf2db3dab5dcab234ac40f80606d02e96234174652ca289"
+    },
+    {
+      "path": "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+      "sha256AtSourceCommit": "a7d0d0322368809f72c2ac0054b9cdd05da9dd9d47040bfeeb7dec4ecd053073"
+    },
+    {
+      "path": "specs/002-language-framework-detection/reviews/quality-review-8.json",
+      "sha256AtSourceCommit": "bd321059fe6d58f9fbaa60b23d09afa3d55ccbe982d743fa84fdac1e400d2cee"
+    },
+    {
+      "path": "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+      "sha256AtSourceCommit": "c4a56c0b69b295672ba9c113eef25319fffccb635bf31c19d643e0f90ebbc628"
+    },
+    {
+      "path": "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+      "sha256AtSourceCommit": "f9534965b2cfd38091417b22ea692e28936ad51f6970eb2b5f6da1cffe1ec5df"
+    },
+    {
+      "path": "specs/002-language-framework-detection/evidence/quality8-validation.json",
+      "sha256AtSourceCommit": "5a845472898291fb647c230ff8f46d5c7cc4a064bbc5fc211a5d2f53ef1a5bad"
     }
   ],
   "historicalEvidencePolicy": {
@@ -121,12 +153,12 @@
     "supersededTaskReference": "The superseded T001 required an ordered pre-correction observation before T002-T049; that observation was not captured and cannot be recreated now.",
     "currentVerificationLabel": "Current verification",
     "recordPath": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
-    "recordSha256": "b8a01d0ea8075e9f5ae78981a543c145daafec28ee4e8cb27b463155b8d52acc",
-    "recordCommit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338",
-    "recordGitBlobOid": "752f82a0b07abf3a494d858b5f4378c9794ace7d",
-    "verificationSourceCommit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
-    "verificationSourceTree": "036207197c06f5c64dfa9c619563e123d8428386",
-    "observedAt": "2026-07-27T14:25:53.6778621+08:00",
+    "recordSha256": "83ed1d4de40d1354e14a2288fb2fa7f989ce14d26ca1dbd415f4daef380e5c8e",
+    "recordCommit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+    "recordGitBlobOid": "7b2382cb81e5f7f58348dc96dbcd5eac2019032a",
+    "verificationSourceCommit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+    "verificationSourceTree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+    "observedAt": "2026-07-27T16:24:41.2380922+08:00",
     "temporallySeparateFromHistoricalGroups": true,
     "claimBoundaries": {
       "historicalClaimed": false,
@@ -229,6 +261,36 @@
         "sizeBytes": 18599,
         "exitCode": 0,
         "testTotals": {"failed": 0, "passed": 53, "skipped": 0, "total": 53},
+        "historicalClaimed": false,
+        "preCorrectionResultClaimed": false,
+        "redClaimed": false
+      },
+      {
+        "sequence": 12,
+        "classification": "current-green-quality8-refresh",
+        "sourceCommit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+        "sourceTree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+        "observedAt": "2026-07-27T16:24:02.0773823+08:00",
+        "path": "TestResults/story-4-2-current-verification-quality8-refresh/T001-provider-profiling-green.trx",
+        "sha256": "ed17ba4c2b3481989f5562e4db730209ec10aa8b4023e6f36d786a6f390a88af",
+        "sizeBytes": 178678,
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 116, "skipped": 0, "total": 116},
+        "historicalClaimed": false,
+        "preCorrectionResultClaimed": false,
+        "redClaimed": false
+      },
+      {
+        "sequence": 13,
+        "classification": "current-green-quality8-refresh",
+        "sourceCommit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+        "sourceTree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+        "observedAt": "2026-07-27T16:24:41.2380922+08:00",
+        "path": "TestResults/story-4-2-current-verification-quality8-refresh/T001-framework-green.trx",
+        "sha256": "5eb95681410e6f53b672174ccc3cb7dc6e2226516a104e6b9f694abf305d96c4",
+        "sizeBytes": 131836,
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 57, "skipped": 0, "total": 57},
         "historicalClaimed": false,
         "preCorrectionResultClaimed": false,
         "redClaimed": false
@@ -681,7 +743,16 @@
     {"commit": "a31472c6808274db7a3f3b5ea91dc8411f897b1a", "checkpointId": "bmad-4-2-full-reviews-20260727T032546Z-c26f9a", "stage": "quality-review", "mandatoryFourTrailersPresent": true, "contractValid": true},
     {"commit": "1de4cbdb7b768d53ba42b19e2bcbe9ba891a5488", "checkpointId": "bmad-4-2-implement-20260727T041420Z-f37a2d", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
     {"commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7", "checkpointId": "bmad-4-2-implement-20260727T062016Z-a61d3e", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
-    {"commit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338", "checkpointId": "bmad-4-2-verification-20260727T062636Z-c72e4a", "stage": "verification", "mandatoryFourTrailersPresent": true, "contractValid": true}
+    {"commit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338", "checkpointId": "bmad-4-2-verification-20260727T062636Z-c72e4a", "stage": "verification", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "b5d150b4aac274611d63b28604d949e955275c2d", "checkpointId": "bmad-4-2-implement-20260727T063832Z-d4c91b", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "5414523d4ee5d532c8c5b8bf1830835e048cb93e", "checkpointId": "bmad-4-2-implement-20260727T065718Z-e52a7c", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0", "checkpointId": "bmad-4-2-candidate-20260727T065940Z-f63b8d", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "57600a456e76684c67816833e0e5f8d0b71e5c9b", "checkpointId": "bmad-4-2-candidate-record-20260727T070344Z-a74c9e", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "9a13758c603aa3d9328094a894bd43a864f9d6c8", "checkpointId": "bmad-4-2-quality-review-20260727T072836Z-b85e2d", "stage": "quality-review", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "70c122c64a7ee279c2183c1bd50769956169b313", "checkpointId": "bmad-4-2-implement-20260727T074416Z-c64f2a", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5", "checkpointId": "bmad-4-2-implement-20260727T081339Z-d75a3b", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0", "checkpointId": "bmad-4-2-implement-20260727T082147Z-e86b4c", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true},
+    {"commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636", "checkpointId": "bmad-4-2-verification-20260727T082515Z-f97c5d", "stage": "implement", "mandatoryFourTrailersPresent": true, "contractValid": true}
   ],
   "forwardOnlyCheckpointRemediation": {
     "historyRewritten": false,
@@ -792,7 +863,19 @@
     {"commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7", "path": "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json", "gitBlobOid": "e4b0b11b14da5b736024beb98203b2feb0e0cc3b"},
     {"commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7", "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs", "gitBlobOid": "c5f0006196423446faf7c439f59aff6491337c41"},
     {"commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7", "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "gitBlobOid": "aa09e4450161fff9fee79746eaa2ef3b210c79c0"},
-    {"commit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338", "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json", "gitBlobOid": "752f82a0b07abf3a494d858b5f4378c9794ace7d"}
+    {"commit": "22975db7115ff1afbfcf146aa42ba9aa4dd55338", "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json", "gitBlobOid": "752f82a0b07abf3a494d858b5f4378c9794ace7d"},
+    {"commit": "5414523d4ee5d532c8c5b8bf1830835e048cb93e", "path": "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json", "gitBlobOid": "5ba2f843484f1a9b7b8de25fe551dd73e6803ee6"},
+    {"commit": "57600a456e76684c67816833e0e5f8d0b71e5c9b", "path": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json", "gitBlobOid": "511494350a1fe687e6a99e8b86fa525871d7c5e5"},
+    {"commit": "9a13758c603aa3d9328094a894bd43a864f9d6c8", "path": "specs/002-language-framework-detection/reviews/acceptance-review-8.json", "gitBlobOid": "fbaf1fd0ffc290ba530d1b89aadde0e52577e1d2"},
+    {"commit": "9a13758c603aa3d9328094a894bd43a864f9d6c8", "path": "specs/002-language-framework-detection/reviews/quality-review-8.json", "gitBlobOid": "8c7d1314789e0e215444b02c52cbc30a43f78edb"},
+    {"commit": "70c122c64a7ee279c2183c1bd50769956169b313", "path": "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json", "gitBlobOid": "18a527320759d4fccdf1fc37ff60b8e6e7ed5e3c"},
+    {"commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5", "path": "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json", "gitBlobOid": "5bcd40696ca2ac76c8776b35bcf62df18c1509dc"},
+    {"commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5", "path": "specs/002-language-framework-detection/plan.md", "gitBlobOid": "b4ea54b690458d4673ca58bf7268722ef4a97b1f"},
+    {"commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5", "path": "specs/002-language-framework-detection/contracts/framework-detection.md", "gitBlobOid": "38c7e97e3a5651255929960f00772b604a42cde8"},
+    {"commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5", "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs", "gitBlobOid": "3458895d39f3dca1088503634548701e3e87d6fb"},
+    {"commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5", "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "gitBlobOid": "0bf38c03335facc812ba9c539d1ef831378ab635"},
+    {"commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636", "path": "specs/002-language-framework-detection/evidence/quality8-validation.json", "gitBlobOid": "0310d4c9b0bac1d110915d0a31ee1e28e160f0dc"},
+    {"commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636", "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json", "gitBlobOid": "7b2382cb81e5f7f58348dc96dbcd5eac2019032a"}
   ],
   "postHistoricalReviewCorrectionRecords": {
     "evidenceIds": [
@@ -1685,6 +1768,235 @@
       "legacyCheckpointTrailerAvailabilityChanged": false
     }
   },
+  "quality8CorrectionEvidence": {
+    "classification": "current quality-review-8 correction, authority alignment, and post-correction verification; never historical or pre-correction",
+    "chronology": [
+      {
+        "event": "iteration-8-full-review",
+        "commit": "9a13758c603aa3d9328094a894bd43a864f9d6c8",
+        "reviewedCandidateCommit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+        "acceptanceVerdict": "ACCEPT",
+        "qualityVerdict": "REVISE",
+        "qualityFindings": ["QR8-001", "QR8-002"]
+      },
+      {
+        "event": "planned-change-authorization",
+        "commit": "70c122c64a7ee279c2183c1bd50769956169b313",
+        "decision": "approved",
+        "scanStrategyChangeApproved": true,
+        "laterGatesWaived": false
+      },
+      {
+        "event": "behavior-correction",
+        "commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5",
+        "tree": "17bb37b66fc066dee1ec465e351f79515b5df694",
+        "checkpointId": "bmad-4-2-implement-20260727T081339Z-d75a3b"
+      },
+      {
+        "event": "current-checkout-authority-alignment",
+        "commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+        "tree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+        "checkpointId": "bmad-4-2-implement-20260727T082147Z-e86b4c"
+      },
+      {
+        "event": "current-verification-record",
+        "commit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+        "tree": "d6f846dc295eb99cdf8dbd879a7aa17bc8cc05b6",
+        "checkpointId": "bmad-4-2-verification-20260727T082515Z-f97c5d"
+      }
+    ],
+    "approval": {
+      "path": "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+      "sha256": "c4a56c0b69b295672ba9c113eef25319fffccb635bf31c19d643e0f90ebbc628",
+      "sourceCommit": "70c122c64a7ee279c2183c1bd50769956169b313",
+      "observedAt": "2026-07-27T07:44:16.0530818Z",
+      "scope": "Namespace-closed XML evidence, bounded pinned-tree supported-artifact filtering, and stale authority reconciliation only; no Worker Agent/tool, orchestration, dispatch, PRD, persistence, API, UI, migration, or later-gate waiver."
+    },
+    "taskT063": {
+      "priorLedgerValidation": {
+        "path": "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
+        "sha256": "3045e94a061e6fdc0cc667031e7c8aef66cb939e1d0b03f81b20caf88d410d88",
+        "reviewedCheckpointCommit": "b5d150b4aac274611d63b28604d949e955275c2d",
+        "verdict": "ACCEPT",
+        "acceptedAsCurrentCompletionEvidence": false,
+        "invalidationReason": "The iteration-8 candidate/reviews, QR8 production/test correction, current-checkout authority alignment, refreshed T001 record, and this ledger mutation changed the reviewed boundary."
+      },
+      "candidate": {
+        "recordPath": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+        "recordSha256": "9896f06c30d91c227cf2db3dab5dcab234ac40f80606d02e96234174652ca289",
+        "recordCommit": "57600a456e76684c67816833e0e5f8d0b71e5c9b",
+        "candidateCommit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+        "candidateTree": "2eba8a05024036a47dbf9fd7513952bf121b7af6",
+        "acceptedAsCurrentCompletionEvidence": false
+      },
+      "acceptanceReview": {
+        "path": "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+        "sha256": "a7d0d0322368809f72c2ac0054b9cdd05da9dd9d47040bfeeb7dec4ecd053073",
+        "verdict": "ACCEPT",
+        "acceptedAsCurrentCompletionEvidence": false
+      },
+      "qualityReview": {
+        "path": "specs/002-language-framework-detection/reviews/quality-review-8.json",
+        "sha256": "bd321059fe6d58f9fbaa60b23d09afa3d55ccbe982d743fa84fdac1e400d2cee",
+        "verdict": "REVISE",
+        "findingIds": ["QR8-001", "QR8-002"],
+        "severities": ["HIGH", "HIGH"]
+      },
+      "candidateAndBothAxesInvalidatedBeforeCorrection": true
+    },
+    "correctionRecord": {
+      "path": "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+      "sha256": "f9534965b2cfd38091417b22ea692e28936ad51f6970eb2b5f6da1cffe1ec5df",
+      "sourceCommit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5",
+      "sourceTree": "17bb37b66fc066dee1ec465e351f79515b5df694"
+    },
+    "tasksT064ThroughT065": [
+      {
+        "taskId": "T064",
+        "findingId": "QR8-001",
+        "behaviorRed": {
+          "classification": "current-red",
+          "exitCode": 1,
+          "testTotals": {"failed": 1, "passed": 0, "total": 1},
+          "result": "Foreign NuGet direct and lock-owner, Maven, foreign-root, and mixed-namespace XML created false framework facts.",
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality8-correction/QR8-001-red.txt",
+            "sha256": "de55a6dd7a8a0d83ec2c364811ceef8aaf6d6bfb7b65b5762710583223cdbeab",
+            "sizeBytes": 16588
+          }
+        },
+        "implementation": "Every relevant consumed NuGet or Maven XML element must match the supported root namespace; a relevant foreign lookalike rejects only its artifact with one bounded audit and no fact."
+      },
+      {
+        "taskId": "T065",
+        "findingId": "QR8-002",
+        "behaviorRed": {
+          "classification": "current-red",
+          "exitCode": 1,
+          "testTotals": {"failed": 1, "passed": 0, "total": 1},
+          "result": "Committed-tree inventory returned the complete irrelevant tree instead of retaining only supported evidence artifacts.",
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality8-correction/QR8-002-red.txt",
+            "sha256": "4656d1ed133bc452ee09b12e50e763da75c6ff26670661139f2a45c8a1f6b447",
+            "sizeBytes": 16519
+          }
+        },
+        "implementation": "The pinned full-tree stream is parsed incrementally under byte, record, retained-artifact, deadline, stderr, and cancellation bounds while retaining only the closed six-shape allowlist."
+      }
+    ],
+    "focusedAndFrameworkGreens": {
+      "focused": {
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 2, "total": 2},
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality8-correction/focused-green.txt",
+          "sha256": "949f3eec2b1f8944f2f0f7fc6269e18dd296c72d7641a1c4e27f34c50d011735",
+          "sizeBytes": 457246
+        }
+      },
+      "frameworkSuite": {
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 57, "total": 57},
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality8-correction/framework-green.txt",
+          "sha256": "46824895a3cab083ad55b4307564b0538c0e24420aceeef9df55d3263f55475b",
+          "sizeBytes": 297
+        }
+      }
+    },
+    "authorityAlignmentAndSurroundingVerification": {
+      "recordPath": "specs/002-language-framework-detection/evidence/quality8-validation.json",
+      "recordSha256": "5a845472898291fb647c230ff8f46d5c7cc4a064bbc5fc211a5d2f53ef1a5bad",
+      "surrounding": {
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 173, "total": 173},
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality8-validation/surrounding.trx",
+          "sha256": "3a2d52b825eb7a3d9c972392085ddd1ee54ac1aa9ca82e90a2a269b77c712ac7",
+          "sizeBytes": 308916
+        }
+      },
+      "firstFullNonImageAttempt": {
+        "exitCode": 1,
+        "testTotals": {"failed": 2, "passed": 510, "total": 512},
+        "classification": "expected-current-checkout-authority-binding-alignment",
+        "productBehaviorRed": false,
+        "failedTests": [
+          "HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes(plan.md)",
+          "HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes(framework-detection.md)"
+        ],
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality8-validation/full-non-image.trx",
+          "sha256": "ee0fe3572a0740c9422385ad5b9e4a1b36cbe9b8da7162271d820c2bd69ff80d",
+          "sizeBytes": 3399588
+        }
+      },
+      "authorityHashAlignment": {
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 16, "total": 16},
+        "acceptedPlanCheckpointHashChanged": false,
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality8-validation/authority-hash-green.trx",
+          "sha256": "9d39f31105495943680e5f94e68646d30c0a42e64880135d442d7289d705f3c5",
+          "sizeBytes": 28878
+        }
+      },
+      "correctedFullNonImage": {
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 512, "total": 512},
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality8-validation/full-non-image-attempt-0002.trx",
+          "sha256": "475f6995689938017e32d9e97841ba839aa36cf594e8bc02ed98aa610f627c79",
+          "sizeBytes": 3395696
+        }
+      },
+      "webBuild": {
+        "exitCode": 0,
+        "errors": 0,
+        "warnings": 9,
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality8-validation/web-build.log",
+          "sha256": "0b0d4dae1c69f2f7b7abc209a65f687c0dc63f0c74aa39aa584d109f005f835c",
+          "sizeBytes": 78455
+        }
+      }
+    },
+    "postCorrectionT001": {
+      "recordPath": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "recordSha256": "83ed1d4de40d1354e14a2288fb2fa7f989ce14d26ca1dbd415f4daef380e5c8e",
+      "recordCommit": "8600f8c40c2b5bb2cef7dd5e9ccfe3422823e636",
+      "recordGitBlobOid": "7b2382cb81e5f7f58348dc96dbcd5eac2019032a",
+      "sourceCommit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
+      "sourceTree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+      "checkpointId": "bmad-4-2-verification-20260727T082515Z-f97c5d",
+      "attemptSequences": [12, 13],
+      "providerProfiling": {"passed": 116, "failed": 0, "total": 116},
+      "framework": {"passed": 57, "failed": 0, "total": 57},
+      "label": "Current verification",
+      "historicalClaimed": false,
+      "preCorrectionResultClaimed": false,
+      "redClaimed": false,
+      "contemporaneousOrderingClaimed": false
+    },
+    "scopeVerification": {
+      "scanStrategyChanged": true,
+      "scanStrategyChangeApproved": true,
+      "workerAgentOrToolChanged": false,
+      "dispatchSchedulingOrRetryChanged": false,
+      "prdChanged": false,
+      "migrationChanged": false,
+      "persistenceChanged": false,
+      "apiChanged": false,
+      "uiChanged": false
+    },
+    "historicalSeparation": {
+      "qr8RedsRelabelledHistorical": false,
+      "authorityBindingAlignmentRelabelledBehaviorRed": false,
+      "t001Attempts12And13RelabelledHistoricalOrPreCorrection": false,
+      "historicalRawRedAvailabilityChanged": false,
+      "legacyCheckpointTrailerAvailabilityChanged": false
+    }
+  },
   "staleClaimInvalidation": {
     "priorCandidateAccepted": false,
     "priorReviewsAccepted": false,
@@ -1771,13 +2083,26 @@
       "laneAcceptedAsCurrentCompletionEvidence": false,
       "invalidationReason": "The QR7 correction checkpoint 281c16b changed production and test bytes after explicit Scan-strategy authorization."
     },
+    "invalidatedCandidateReview8Lane": {
+      "candidateCommit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+      "candidateTree": "2eba8a05024036a47dbf9fd7513952bf121b7af6",
+      "candidateRecordCommit": "57600a456e76684c67816833e0e5f8d0b71e5c9b",
+      "candidateRecordPath": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+      "acceptanceReviewPath": "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+      "acceptanceReviewVerdict": "ACCEPT",
+      "qualityReviewPath": "specs/002-language-framework-detection/reviews/quality-review-8.json",
+      "qualityReviewVerdict": "REVISE",
+      "qualityReviewFindings": ["QR8-001", "QR8-002"],
+      "laneAcceptedAsCurrentCompletionEvidence": false,
+      "invalidationReason": "The approved QR8 correction checkpoint df200f0 and authority-alignment checkpoint d77c096 changed production, test, plan, contract, and current-checkout binding bytes."
+    },
     "newCandidateOrAcceptedReviewIdentityPresent": false,
-    "reason": "The QR7 correction checkpoint, post-QR7 T001 record, and this refreshed ledger invalidate candidate 6149623 and both iteration-7 review axes. Earlier candidate, review, E2E, T045, and T046 lanes remain invalidated history. No replacement candidate, jointly accepted Full reviews, E2E, candidate verification, manifest, image, namespace, T049 freeze, or T050 audit is claimed for source 22975db."
+    "reason": "The QR8 correction, authority alignment, post-QR8 T001 record, and this refreshed ledger invalidate candidate 7c24d8d and both iteration-8 review axes. Earlier candidate, review, E2E, T045, T046, and prior T040 lanes remain invalidated history. No replacement candidate, independent T040 acceptance, jointly accepted Full reviews, E2E, candidate verification, manifest, image, namespace, T049 freeze, or T050 audit is claimed for source 8600f8c."
   },
   "downstreamBoundary": {
     "priorInvalidatedT041LaneOccurred": true,
-    "invalidatedCandidateCommit": "614962322e9f3578980a6fa28bc8897d22b66c58",
-    "invalidatedReviewIterations": [5, 6, 7],
+    "invalidatedCandidateCommit": "7c24d8da4230c5753dfe58723f7d3bf82b0c53f0",
+    "invalidatedReviewIterations": [5, 6, 7, 8],
     "invalidatedE2eCheckpoint": "e6192a5393fae58fd12dd3bfe33d8b192102ffff",
     "invalidatedVerificationCheckpoint": "42345ac04645ca28f1e5dfd02e971b5316842435",
     "latestT046Result": "REVISE",
@@ -1791,26 +2116,28 @@
     "newNamespaceConsumed": false,
     "newFreezeCompleted": false,
     "newFinalAuditCompleted": false,
-    "nextPermittedTask": "T041"
+    "nextPermittedTask": "T040"
   },
   "independentValidation": {
     "taskId": "T040",
     "status": "invalidated-pending-refresh",
     "verdict": null,
     "reviewedCommit": null,
-    "verdictPath": "specs/002-language-framework-detection/reviews/t040-ledger-validation.json",
+    "verdictPath": null,
     "validatedAt": null,
     "validationCompleted": false,
     "taskMarkerFinalized": false,
     "priorAcceptedValidation": {
-      "reviewedCommit": "dcaca0e2da62ccf7b4f31a36a9abde396c9fc74c",
-      "validatedAt": "2026-07-27T02:59:52.0719420Z",
-      "invalidationReason": "The QR7 correction, refreshed T001 record, and ledger mutation changed the reviewed boundary."
+      "recordPath": "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
+      "recordSha256": "3045e94a061e6fdc0cc667031e7c8aef66cb939e1d0b03f81b20caf88d410d88",
+      "reviewedCommit": "b5d150b4aac274611d63b28604d949e955275c2d",
+      "validatedAt": "2026-07-27T06:57:18.9194890Z",
+      "invalidationReason": "The iteration-8 candidate/reviews, QR8 correction, authority alignment, refreshed T001 record, and this ledger mutation changed the reviewed boundary."
     }
   },
   "authorPreflight": {
     "completed": true,
-    "sourceRangeCommitCount": 68,
+    "sourceRangeCommitCount": 77,
     "sourceRangeMergeCount": 0,
     "historicalExecutionGroupCount": 6,
     "legacyTddGroupCount": 19,
@@ -1819,18 +2146,18 @@
     "legacyCheckpointTrailerAvailableTrueCount": 5,
     "legacyCheckpointTrailerAvailableFalseCount": 14,
     "workflowHistoricalRecordCount": 18,
-    "immutableArtifactReferenceCount": 71,
-    "observedCheckpointTrailerCount": 38,
-    "observedImplementCheckpointTrailerCount": 29,
+    "immutableArtifactReferenceCount": 83,
+    "observedCheckpointTrailerCount": 47,
+    "observedImplementCheckpointTrailerCount": 37,
     "observedPlanReviewCheckpointTrailerCount": 1,
     "observedAcceptanceReviewCheckpointTrailerCount": 1,
-    "observedQualityReviewCheckpointTrailerCount": 3,
+    "observedQualityReviewCheckpointTrailerCount": 4,
     "observedConditionalE2eCheckpointTrailerCount": 1,
     "observedVerificationCheckpointTrailerCount": 3,
-    "currentRawEvidenceFileCount": 53,
-    "currentTestResultEvidenceFileCount": 48,
+    "currentRawEvidenceFileCount": 66,
+    "currentTestResultEvidenceFileCount": 59,
     "currentCaptureOnlyArtifactCount": 5,
-    "currentTestResultEvidenceRecordCount": 48,
+    "currentTestResultEvidenceRecordCount": 59,
     "jsonParsePassed": true,
     "ancestryPassed": true,
     "authorityHashValidationPassed": true,
@@ -1849,7 +2176,8 @@
       "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0002.txt",
       "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0003.txt",
       "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0004.txt",
-      "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt"
+      "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt",
+      "TestResults/story-4-2-quality8-ledger/T039-ledger-validation.txt"
     ],
     "commands": [
       {"command": "ConvertFrom-Json and ledger semantic assertions", "exitCode": 0},
@@ -1857,8 +2185,8 @@
       {"command": "SHA-256 over exact Git blob bytes for source-bound authority references", "exitCode": 0},
       {"command": "git cat-file -e and git rev-parse commit:path for referenced commits/blobs", "exitCode": 0},
       {"command": "Workflow-Checkpoint trailer uniqueness and ancestry validation", "exitCode": 0},
-      {"command": "Test-Path, Get-FileHash SHA256, and byte-length validation for T001 attempts 1-11, T035-T038, transcript-only captures, review-3 attempt-0002, T051-T054 QR4, T055-T057 QR6, and T059-T062 QR7 raw files", "exitCode": 0},
-      {"command": "temporal labels, exact unavailable statement, invalidated review-3/review-4/review-5/review-6/review-7/E2E/T045/T046 classifications, fixture-alignment and completion-lane environment-failure classifications, and replacement T041-T050 non-occurrence assertions", "exitCode": 0},
+      {"command": "Test-Path, Get-FileHash SHA256, and byte-length validation for T001 attempts 1-13, T035-T038, transcript-only captures, review-3 attempt-0002, T051-T054 QR4, T055-T057 QR6, T059-T062 QR7, and T064-T065 QR8 raw files", "exitCode": 0},
+      {"command": "temporal labels, exact unavailable statement, invalidated review-3/review-4/review-5/review-6/review-7/review-8/E2E/T045/T046/prior-T040 classifications, fixture-alignment, completion-lane environment-failure, QR8 authority-binding alignment classifications, and replacement T040-T050 non-occurrence assertions", "exitCode": 0},
       {"command": "git diff --check", "exitCode": 0},
       {"command": "git status --porcelain=v1 --untracked-files=all and forbidden-scope path audit", "exitCode": 0}
     ],
@@ -1871,10 +2199,13 @@
       "historicalOrderingInferred": false,
       "review6AcceptanceClaimedCurrent": false,
       "review7AcceptanceClaimedCurrent": false,
+      "review8AcceptanceClaimedCurrent": false,
       "t046ClaimedPassed": false,
       "fixtureAlignmentFailureRelabelledBehaviorRed": false,
       "completionLaneEnvironmentFailureRelabelledBehaviorRed": false,
-      "qr7CurrentResultsRelabelledHistorical": false
+      "qr7CurrentResultsRelabelledHistorical": false,
+      "qr8CurrentResultsRelabelledHistorical": false,
+      "authorityBindingAlignmentFailureRelabelledBehaviorRed": false
     },
     "recoverableFailure": {
       "classification": "validation-script-property-path",
@@ -1883,6 +2214,10 @@
     "quality7RefreshRecoverableFailure": {
       "classification": "validation-script-git-range-expression",
       "summary": "The first QR7 ledger preflight passed JSON, source-range, authority-hash, immutable-blob, and raw-evidence checks, then failed closed because an unquoted PowerShell Git range produced a null checkpoint-history input. The corrected quoted range and corrected immutableArtifactReferences property passed every author-preflight assertion; no product, test, Git object, or evidence defect was involved."
+    },
+    "quality8RefreshRecoverableFailure": {
+      "classification": "ledger-checkpoint-stage-metadata",
+      "summary": "The first QR8 ledger preflight passed JSON, source-range, authority-hash, immutable-blob, and raw-evidence checks, then failed closed because the ledger inferred verification stage from the checkpoint name at commit 8600f8c even though the immutable Workflow-Stage trailer is implement. The ledger was corrected to the actual trailer before any PASS log was retained; no product, test, Git object, or raw-evidence defect was involved."
     }
   },
   "uncertainties": [
@@ -1937,6 +2272,22 @@
     {
       "id": "post-quality7-t001-is-current-only",
       "statement": "T001 attempts 10 and 11 ran after correction checkpoint 281c16b and are Current verification only. They do not recreate the unavailable pre-correction T001 observation, prove historical ordering, or supply historical RED."
+    },
+    {
+      "id": "review8-candidate-and-lanes-invalidated",
+      "statement": "Candidate 7c24d8d, acceptance-review-8 ACCEPT, and quality-review-8 REVISE occurred but the Full review lane is invalidated by the QR8 correction and authority alignment. None is a current replacement candidate or jointly accepted review evidence."
+    },
+    {
+      "id": "quality8-authority-binding-alignment-is-not-red",
+      "statement": "The first QR8 complete non-final-image attempt passed 510 tests and failed only two canonical-LF authority-hash expectations after approved plan and contract bytes changed. It is retained as expected current-checkout binding alignment, never as behavior RED or a product regression; the aligned attempt passed 512/512."
+    },
+    {
+      "id": "post-quality8-t001-is-current-only",
+      "statement": "T001 attempts 12 and 13 ran after correction and authority-alignment checkpoint d77c096 and are Current verification only. They do not recreate the unavailable pre-correction T001 observation, prove historical ordering, or supply historical RED."
+    },
+    {
+      "id": "post-quality8-independent-t040-pending",
+      "statement": "The prior T040 ACCEPT in t040-ledger-validation-2.json applied to the post-QR7 ledger checkpoint only. QR8 and this ledger mutation invalidate that review; no replacement T040 verdict or T041 candidate is claimed."
     }
   ]
 }

@@ -952,6 +952,15 @@ unchanged.
   verification is now refreshed at clean commit `d77c096`: provider/profiling
   passes 116/116 and framework detection passes 57/57. Truthful-ledger refresh
   and fresh T040 validation remain.
+- The QR8 truthful ledger is refreshed through clean source commit `8600f8c`
+  and tree `d6f846d`: 77 linear commits, zero merges, 27/27 authorities,
+  83/83 immutable blob references, 66/66 raw references, and 47/47 unique
+  checkpoint entries validate. The ledger preserves the iteration-8
+  invalidation, attempts 12-13 as Current verification, and the absence of
+  any replacement T040/T041 or downstream completion. One strict-preflight
+  mismatch was corrected by recording checkpoint `8600f8c` with its actual
+  immutable `Workflow-Stage: implement` trailer. Fresh independent T040
+  validation remains; T066 is not yet complete.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:
