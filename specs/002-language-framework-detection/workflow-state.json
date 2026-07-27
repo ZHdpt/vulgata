@@ -652,6 +652,25 @@
         "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-27T02:09:17.2330936Z",
+      "completed_at": "2026-07-27T02:23:10.6572363Z",
+      "input_commit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+      "input_hashes": {
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "6fb899c196135bbf29f61fdcaab0cdf45715a8057e2514c323ef2b27bf88f6d7",
+        "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0003.txt": "ad3a818067e999fe713bd5e01d3b3b50c1aa631ba7a91ba6eee22d88343c9ccd",
+        "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt": "41b6b3dc09748ed8be4a2ee3652b56fb4ad9077319d08a6613dd5a4485c8a27f"
+      },
+      "agent_role": "evidence-ledger-implementer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0003.txt",
+        "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -2762,24 +2781,40 @@
       "observed_at": "2026-07-27T02:00:28.2956178Z",
       "summary": "Post-QR6 T001 Current verification passed at clean immutable commit 38bff96b7a3b4a1dc442e347d26a5c7afbb62b55 and tree e42e961cb401ec7719c96da5047756fa63810035: provider/profiling 116 of 116 and framework-filter coverage 53 of 53. The unavailable historical baseline statement and all earlier attempts remain preserved.",
       "raw_output_path": "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/76",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0003.txt",
+        "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt"
+      ],
+      "command": "JSON/source/tree/count, authority SHA-256, immutable blob OID, raw file hash/length, exact unavailable statement, invalidation, and observed checkpoint-trailer validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T02:23:10.6572363Z",
+      "summary": "T039 regenerated the post-QR6 truthful ledger over 56 linear commits, 15 authorities, 26 checkpoint trailers, 64 immutable blob references, and 43 raw references. Root validation passed after preserving earlier script-property failures; review 6 and T046 remain explicitly invalidated rather than current.",
+      "raw_output_path": "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T020318Z-t001qr6",
+    "checkpoint_id": "bmad-4-2-implement-20260727T022310Z-ledgerqr6",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/75"
+      "4-2-language-and-framework-detection/implement/76"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T02:03:18.0794918Z"
+  "updated_at": "2026-07-27T02:23:10.6572363Z"
 }

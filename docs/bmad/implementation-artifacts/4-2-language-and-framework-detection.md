@@ -815,6 +815,18 @@ unchanged.
 - Post-QR6 Current-verification checkpoint:
   `bmad-4-2-implement-20260727T020318Z-t001qr6`
   (pending Git binding).
+- The post-QR6 truthful ledger now covers 56 linear commits, 15 authorities,
+  26 observed checkpoint trailers, 64 immutable blob references, and 43 raw
+  references. It preserves T001 attempts 1-9, the QR6 behavior RED/GREEN,
+  fixture-alignment failure, user approval, review-6 verdicts, and explicit
+  invalidation of candidate `14ed1fd2` plus its reviews, E2E, T045, and T046.
+  Root validation passed JSON/source/tree/counts, authority hashes, blob OIDs,
+  every raw hash/length, all 26 checkpoint identities/trailers, the exact
+  unavailable statement, and the absence of a current review-6/T046 claim.
+  Earlier validator-script property mistakes are preserved as failed attempts.
+- Post-QR6 ledger checkpoint:
+  `bmad-4-2-implement-20260727T022310Z-ledgerqr6`
+  (pending Git binding).
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

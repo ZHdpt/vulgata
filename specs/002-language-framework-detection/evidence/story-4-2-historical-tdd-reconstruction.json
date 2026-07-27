@@ -8,27 +8,27 @@
   "featureDirectory": "specs/002-language-framework-detection",
   "status": "finalized-current-green",
   "finalizationTaskIds": ["T039", "T040"],
-  "finalizedAt": "2026-07-26T09:38:06.6600025Z",
-  "observedAt": "2026-07-26T09:28:35.0000000Z",
+  "finalizedAt": "2026-07-27T02:09:17.2330936Z",
+  "observedAt": "2026-07-27T02:00:28.2956178Z",
   "sourceRange": {
     "baseExclusive": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-    "head": "b57e6088002ea57974d3063cee153852206ded63",
-    "sourceCommit": "b57e6088002ea57974d3063cee153852206ded63",
-    "sourceTree": "20b73af9cbf1e8e8d540b142927624963fd555b7",
-    "historyCommand": "git log --reverse --format=\"%H %P %s%n%b\" e9824df7300634c19d815bdd7ad591b9fb5366d5..b57e6088002ea57974d3063cee153852206ded63",
-    "pathCommand": "git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..b57e6088002ea57974d3063cee153852206ded63",
+    "head": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+    "sourceCommit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+    "sourceTree": "36af214630f39cdbe869a23c8df8e7c42b736007",
+    "historyCommand": "git log --reverse --format=\"%H %P %s%n%b\" e9824df7300634c19d815bdd7ad591b9fb5366d5..6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+    "pathCommand": "git diff --name-status e9824df7300634c19d815bdd7ad591b9fb5366d5..6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
     "historyShape": "linear",
-    "commitCount": 48,
+    "commitCount": 56,
     "mergeCommitCount": 0
   },
   "authorityReferences": [
     {
       "path": "docs/UBIQUITOUS_LANGUAGE.md",
-      "sha256AtSourceCommit": "2f194eddba4afba8d3569c3390b43812fb39ac91665bf598c77d67323a30bda4"
+      "sha256AtSourceCommit": "23088d16c0bf547de647bcf3d7b210a8780116be57349471ffc668fa8e4bfada"
     },
     {
       "path": "specs/002-language-framework-detection/tasks.md",
-      "sha256AtSourceCommit": "de43cfa1a229d863f51b87f72a4d06e1a591ed8a252651073537485f85300714"
+      "sha256AtSourceCommit": "cd8e333d5dc936f1ef4ff5b139e0385359a5d34409bdd0ba4dbfbd5cece78fce"
     },
     {
       "path": "specs/002-language-framework-detection/spec.md",
@@ -44,15 +44,15 @@
     },
     {
       "path": "specs/002-language-framework-detection/workflow-state.json",
-      "sha256AtSourceCommit": "15e6a7a750f327ea430861ea93afeba3dec7109262e599763e29b0c54dc1b8d9"
+      "sha256AtSourceCommit": "dbe13e2ef384423d5146313c04c22f9fd4ee00de1cf0cb73b88c2002873abf9f"
     },
     {
       "path": "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "sha256AtSourceCommit": "a99e577b22f640f8fce8cd611cce4ed6b4cd2100b445d6b77bc29c6532cdf557"
+      "sha256AtSourceCommit": "b43824d9cdd977e2eb766ad293fb2a4dddfb1e513c20e26b77353b86215f9a6a"
     },
     {
       "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
-      "sha256AtSourceCommit": "dfb63654b325bb74646c14b761c18b5c4b107e0acb7b5337eec756d76d1c096a"
+      "sha256AtSourceCommit": "3c9fd047b3cc2fbbf602ea31d7a9219ac3aa763326699bc43cb129a2fdb510ca"
     },
     {
       "path": "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
@@ -69,6 +69,18 @@
     {
       "path": "specs/002-language-framework-detection/reviews/quality-review-4.json",
       "sha256AtSourceCommit": "6205b2ea128d0a624a8e948616a3ec93a9449ea68f73c207ab8549d8d0fa1831"
+    },
+    {
+      "path": "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
+      "sha256AtSourceCommit": "a3f8c33f3e6c8e08054c5f4b11b9d818521ab4365117bca47d8a4071629df408"
+    },
+    {
+      "path": "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+      "sha256AtSourceCommit": "dee2a3f280a4827d6b5b7fd23ccea42b4587e361995e09d48ac5e3075576e26a"
+    },
+    {
+      "path": "specs/002-language-framework-detection/reviews/quality-review-6.json",
+      "sha256AtSourceCommit": "083ad69dab551c7ce834d5d19e35c068f43be1438cee562102699fd8da62bf5c"
     }
   ],
   "historicalEvidencePolicy": {
@@ -93,12 +105,12 @@
     "supersededTaskReference": "The superseded T001 required an ordered pre-correction observation before T002-T049; that observation was not captured and cannot be recreated now.",
     "currentVerificationLabel": "Current verification",
     "recordPath": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
-    "recordSha256": "dfb63654b325bb74646c14b761c18b5c4b107e0acb7b5337eec756d76d1c096a",
-    "recordCommit": "b57e6088002ea57974d3063cee153852206ded63",
-    "recordGitBlobOid": "36e42081f2b00fb15c82af3dd6773a6674fce26b",
-    "verificationSourceCommit": "3140978f83f03004b9b356ff14441614303a8380",
-    "verificationSourceTree": "600f60d97c69003a89158d2e0cf233fcff681352",
-    "observedAt": "2026-07-26T09:25:17.4492932Z",
+    "recordSha256": "3c9fd047b3cc2fbbf602ea31d7a9219ac3aa763326699bc43cb129a2fdb510ca",
+    "recordCommit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+    "recordGitBlobOid": "3bf67a6edd9ee206f3349683d637ba6b076c97a1",
+    "verificationSourceCommit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+    "verificationSourceTree": "e42e961cb401ec7719c96da5047756fa63810035",
+    "observedAt": "2026-07-27T02:00:28.2956178Z",
     "temporallySeparateFromHistoricalGroups": true,
     "claimBoundaries": {
       "historicalClaimed": false,
@@ -174,6 +186,36 @@
         "sizeBytes": 21012,
         "exitCode": 0,
         "testTotals": {"failed": 0, "passed": 50, "skipped": 0, "total": 50}
+      },
+      {
+        "sequence": 8,
+        "classification": "current-green-quality6-refresh",
+        "sourceCommit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+        "sourceTree": "e42e961cb401ec7719c96da5047756fa63810035",
+        "observedAt": "2026-07-27T01:59:32.0039408Z",
+        "path": "TestResults/story-4-2-current-verification-quality6-refresh/T001-provider-profiling-green.txt",
+        "sha256": "4dd801f5fac230998ed8e2b1c5697602e26cfef889cdf7a5898aa1fdc86bf156",
+        "sizeBytes": 18599,
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 116, "skipped": 0, "total": 116},
+        "historicalClaimed": false,
+        "preCorrectionResultClaimed": false,
+        "redClaimed": false
+      },
+      {
+        "sequence": 9,
+        "classification": "current-green-quality6-refresh",
+        "sourceCommit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+        "sourceTree": "e42e961cb401ec7719c96da5047756fa63810035",
+        "observedAt": "2026-07-27T02:00:28.2956178Z",
+        "path": "TestResults/story-4-2-current-verification-quality6-refresh/T001-framework-green.txt",
+        "sha256": "19a72f80515836bec2da71e7e9d0f0d03601a74ad3611ae94b238449048426a9",
+        "sizeBytes": 18599,
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 53, "skipped": 0, "total": 53},
+        "historicalClaimed": false,
+        "preCorrectionResultClaimed": false,
+        "redClaimed": false
       }
     ]
   },
@@ -603,7 +645,15 @@
     {"commit": "3dad1e68de4d1e1bacd36a4e41046543791d6894", "checkpointId": "bmad-4-2-acceptance-review-20260726T085649Z-7c30d5", "stage": "acceptance-review", "mandatoryFourTrailersPresent": true},
     {"commit": "03c43ac12767ff57ca28c674eedd2a0a1cb450ac", "checkpointId": "bmad-4-2-quality-review-20260726T085941Z-1f93ac", "stage": "quality-review", "mandatoryFourTrailersPresent": true},
     {"commit": "3140978f83f03004b9b356ff14441614303a8380", "checkpointId": "bmad-4-2-quality4-correction-20260726T092125Z-b7814d", "stage": "implement", "mandatoryFourTrailersPresent": true},
-    {"commit": "b57e6088002ea57974d3063cee153852206ded63", "checkpointId": "bmad-4-2-t001-quality4-refresh-20260726T092740Z-9ae52c", "stage": "implement", "mandatoryFourTrailersPresent": true}
+    {"commit": "b57e6088002ea57974d3063cee153852206ded63", "checkpointId": "bmad-4-2-t001-quality4-refresh-20260726T092740Z-9ae52c", "stage": "implement", "mandatoryFourTrailersPresent": true},
+    {"commit": "493bc0d953b556c70cbf04932b4354f38b51bc88", "checkpointId": "bmad-4-2-ledger-quality4-refresh-20260726T093944Z-6bc20f", "stage": "implement", "mandatoryFourTrailersPresent": true},
+    {"commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522", "checkpointId": "bmad-4-2-candidate-20260726T094049Z-4e17c2", "stage": "implement", "mandatoryFourTrailersPresent": true},
+    {"commit": "bee749b83d9cb1fabc445d3606150a1cfd5ed820", "checkpointId": "bmad-4-2-candidate-record-20260726T094834Z-3d6f90", "stage": "implement", "mandatoryFourTrailersPresent": true},
+    {"commit": "20f1ca871efbe677415d9ff769ab57ce9442617f", "checkpointId": "bmad-4-2-full-reviews-20260726T095959Z-83a6e1", "stage": "quality-review", "mandatoryFourTrailersPresent": true},
+    {"commit": "e6192a5393fae58fd12dd3bfe33d8b192102ffff", "checkpointId": "bmad-4-2-e2e-20260727T004131Z-a46c91", "stage": "conditional-e2e", "mandatoryFourTrailersPresent": true},
+    {"commit": "42345ac04645ca28f1e5dfd02e971b5316842435", "checkpointId": "bmad-4-2-verification-20260727T004912Z-d2f47a", "stage": "verification", "mandatoryFourTrailersPresent": true},
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "checkpointId": "bmad-4-2-implement-20260727T014847Z-qr6001", "stage": "implement", "mandatoryFourTrailersPresent": true, "workflowScopeTrailer": "story"},
+    {"commit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b", "checkpointId": "bmad-4-2-implement-20260727T020318Z-t001qr6", "stage": "implement", "mandatoryFourTrailersPresent": true, "workflowScopeTrailer": "story"}
   ],
   "immutableArtifactReferences": [
     {"commit": "3066e361b6aa43ee3cc735c3c141186fa02a2436", "path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "gitBlobOid": "cf67b6cbabdb03d45699a68c11f438903a227206"},
@@ -656,7 +706,20 @@
     {"commit": "3140978f83f03004b9b356ff14441614303a8380", "path": "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs", "gitBlobOid": "c5161a86cd62076ddae052f5123dbd25c52e4a52"},
     {"commit": "3140978f83f03004b9b356ff14441614303a8380", "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "gitBlobOid": "78a715c8654c0f8095b6daa8061f144b74b8acab"},
     {"commit": "3140978f83f03004b9b356ff14441614303a8380", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "f35800d10732d6f03ada4ae60f31b691512a0ba3"},
-    {"commit": "b57e6088002ea57974d3063cee153852206ded63", "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json", "gitBlobOid": "36e42081f2b00fb15c82af3dd6773a6674fce26b"}
+    {"commit": "b57e6088002ea57974d3063cee153852206ded63", "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json", "gitBlobOid": "36e42081f2b00fb15c82af3dd6773a6674fce26b"},
+    {"commit": "493bc0d953b556c70cbf04932b4354f38b51bc88", "path": "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json", "gitBlobOid": "5f05a4fae203d4ba657961d92f00197d378f4737"},
+    {"commit": "bee749b83d9cb1fabc445d3606150a1cfd5ed820", "path": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json", "gitBlobOid": "32f561a0432093bc95dc598083d5b8a98de199c5"},
+    {"commit": "20f1ca871efbe677415d9ff769ab57ce9442617f", "path": "specs/002-language-framework-detection/reviews/acceptance-review-5.json", "gitBlobOid": "bc21203d1137247192bc0c00521a8e507adc4e3b"},
+    {"commit": "20f1ca871efbe677415d9ff769ab57ce9442617f", "path": "specs/002-language-framework-detection/reviews/quality-review-5.json", "gitBlobOid": "003f975d898f01ab978f179c6adb0308180ca626"},
+    {"commit": "e6192a5393fae58fd12dd3bfe33d8b192102ffff", "path": "specs/002-language-framework-detection/workflow-state.json", "gitBlobOid": "eedf333ff1eefd4f301bdbe7bb0784aaf044e494"},
+    {"commit": "42345ac04645ca28f1e5dfd02e971b5316842435", "path": "specs/002-language-framework-detection/workflow-state.json", "gitBlobOid": "44574c40869ccfe3355f1c5752212e4cd4905848"},
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "path": "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json", "gitBlobOid": "b1515690ce89fa095cd9a1837c718f87997184b1"},
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "path": "specs/002-language-framework-detection/reviews/acceptance-review-6.json", "gitBlobOid": "4b65261a18479e9da90823f9924b0fde96e57747"},
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "path": "specs/002-language-framework-detection/reviews/quality-review-6.json", "gitBlobOid": "13bcee3a03c216d9771ecae85aeabbca17fbc9cc"},
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "path": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs", "gitBlobOid": "655efaaff03b026dfed850a7b3c7c444917458a2"},
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "path": "tests/Vulgata.Tests/FrameworkDetectionTests.cs", "gitBlobOid": "ca464a1b24afed90d9f3d363d7b4777952f9295f"},
+    {"commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55", "path": "tests/Vulgata.Tests/RepositoryProfilingTests.cs", "gitBlobOid": "555b3038fe3d527481c988bd1452e3da66e301e3"},
+    {"commit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b", "path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json", "gitBlobOid": "3bf67a6edd9ee206f3349683d637ba6b076c97a1"}
   ],
   "postHistoricalReviewCorrectionRecords": {
     "evidenceIds": [
@@ -1143,6 +1206,225 @@
       "prdChanged": false
     }
   },
+  "quality6CorrectionEvidence": {
+    "classification": "current quality-review-6 correction and post-correction verification; never historical or pre-correction",
+    "approval": {
+      "path": "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
+      "sha256": "a3f8c33f3e6c8e08054c5f4b11b9d818521ab4365117bca47d8a4071629df408",
+      "sourceCommit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+      "observedAt": "2026-07-27T01:00:35.8029186Z",
+      "scope": "Create new contract-valid iteration-6 review evidence without rewriting iteration 5; no product, test, plan, PRD, Scan strategy, Worker Agent/tool, downstream gate, or final audit waiver."
+    },
+    "taskT055": {
+      "acceptanceReview": {
+        "path": "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+        "sha256": "dee2a3f280a4827d6b5b7fd23ccea42b4587e361995e09d48ac5e3075576e26a",
+        "reviewedCandidateCommit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+        "verdict": "ACCEPT",
+        "observedAt": "2026-07-27T01:17:17Z",
+        "acceptedAsCurrentCompletionEvidence": false,
+        "invalidationReason": "The same-boundary quality review returned REVISE, and the subsequent QR6-001 production/test correction changed the implementation boundary."
+      },
+      "qualityReview": {
+        "path": "specs/002-language-framework-detection/reviews/quality-review-6.json",
+        "sha256": "083ad69dab551c7ce834d5d19e35c068f43be1438cee562102699fd8da62bf5c",
+        "reviewedCandidateCommit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+        "verdict": "REVISE",
+        "findingId": "QR6-001",
+        "severity": "HIGH",
+        "observedAt": "2026-07-27T01:17:17Z",
+        "finding": "Tracked manifest and lock paths were inventoried from Git but parsed from mutable working-tree bytes, so uncommitted or concurrently replaced bytes could become deterministic framework facts."
+      },
+      "iteration5ReviewFilesRewritten": false,
+      "t046PassedClaimed": false
+    },
+    "taskT056": {
+      "findingId": "QR6-001",
+      "behaviorRed": {
+        "classification": "current-red",
+        "sourceCommit": "42345ac04645ca28f1e5dfd02e971b5316842435",
+        "observedAt": "2026-07-27T01:27:08Z",
+        "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~DetectAsync_DirtyTrackedDirectManifest_DoesNotCreateUncommittedFactAsync",
+        "exitCode": 1,
+        "testTotals": {"failed": 1, "passed": 0, "skipped": 0, "total": 1},
+        "result": "A dirty tracked package.json produced an uncommitted npm:react framework fact.",
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality6-correction/red-dirty-direct.txt",
+          "sha256": "d90ac7e6a71cd662090140a393ea01c5fed316d6b104c0556b63703393cd17dc",
+          "sizeBytes": 476484,
+          "lastWriteTimeUtc": "2026-07-27T01:27:08.6175029Z"
+        }
+      },
+      "focusedGreens": [
+        {
+          "classification": "current-green-dirty-direct",
+          "observedAt": "2026-07-27T01:28:38.0470689Z",
+          "exitCode": 0,
+          "testTotals": {"failed": 0, "passed": 1, "skipped": 0, "total": 1},
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality6-correction/green-dirty-direct.txt",
+            "sha256": "5ca5ef8076a996f29c5ef527be9ab90c8647b2fbe950eef131ccce6ff3b5b63d",
+            "sizeBytes": 458003
+          }
+        },
+        {
+          "classification": "current-green-dirty-manifest-lock",
+          "observedAt": "2026-07-27T01:30:26.6127332Z",
+          "exitCode": 0,
+          "testTotals": {"failed": 0, "passed": 2, "skipped": 0, "total": 2},
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality6-correction/green-dirty-manifest-lock.txt",
+            "sha256": "095ad739c128dc7f768e9a523415fb47e665f14391d5ca1ea012de14584c3bab",
+            "sizeBytes": 206580
+          }
+        },
+        {
+          "classification": "current-green-pinned-snapshot",
+          "observedAt": "2026-07-27T01:33:19.1288511Z",
+          "exitCode": 0,
+          "testTotals": {"failed": 0, "passed": 3, "skipped": 0, "total": 3},
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality6-correction/refactor-snapshot-green.txt",
+            "sha256": "6043bcd9fdaef4f24dd38ddc73856e93cd16862b6dc0000ae5505cb3acd705f1",
+            "sizeBytes": 457600
+          }
+        },
+        {
+          "classification": "current-framework-suite-green",
+          "observedAt": "2026-07-27T01:34:14Z",
+          "exitCode": 0,
+          "testTotals": {"failed": 0, "passed": 52, "skipped": 0, "total": 52},
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality6-correction/framework-detection-full-green.txt",
+            "sha256": "e7d45eec78a93e2ba4a80c40538f89ba620facb152657da2b8e7072a8500a748",
+            "sizeBytes": 15412
+          }
+        }
+      ],
+      "implementation": {
+        "pinnedIdentity": "HEAD^{commit}",
+        "inventory": "git ls-files --cached",
+        "blobRead": "git cat-file from the exact pinned commit:path",
+        "missingOrDriftingCommittedObjectFailsClosed": true
+      }
+    },
+    "taskT057": {
+      "fixtureAlignmentFailure": {
+        "classification": "current-fixture-alignment-failure-not-regression-red",
+        "observedAt": "2026-07-27T01:37:02.3974219Z",
+        "completedAt": "2026-07-27T01:37:42.9830541Z",
+        "exitCode": 1,
+        "testTotals": {"failed": 7, "passed": 161, "skipped": 0, "total": 168},
+        "result": "The Git fixture had no committed state after production behavior was corrected. This harness-only failure occurred after QR6 GREEN and is not relabelled as behavior RED.",
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality6-correction/root-surrounding-green.txt",
+          "sha256": "a4025631d760bb96f35492095ad87142f7653b8f28bc8c0a7d65ed30862e4809",
+          "sizeBytes": 23362
+        }
+      },
+      "surroundingGreens": [
+        {
+          "classification": "current-surrounding-green-attempt-0002",
+          "observedAt": "2026-07-27T01:40:16.5120484Z",
+          "completedAt": "2026-07-27T01:40:57.8576433Z",
+          "exitCode": 0,
+          "testTotals": {"failed": 0, "passed": 168, "skipped": 0, "total": 168},
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality6-correction/root-surrounding-green-attempt-0002.txt",
+            "sha256": "fe93d26bf287c292488d109ca6003512aec6a8cf465569ec52879df111defbdf",
+            "sizeBytes": 206911
+          }
+        },
+        {
+          "classification": "current-surrounding-green-attempt-0003",
+          "observedAt": "2026-07-27T01:43:16.8190786Z",
+          "exitCode": 0,
+          "testTotals": {"failed": 0, "passed": 168, "skipped": 0, "total": 168},
+          "rawOutput": {
+            "path": "TestResults/story-4-2-quality6-correction/root-surrounding-green-attempt-0003.txt",
+            "sha256": "f15d0e57376eba61f6f48d2d803a2efd267701b7cc2a5bd620d2272e8d84b4cd",
+            "sizeBytes": 15412
+          }
+        }
+      ],
+      "nonFinalImageSuite": {
+        "observedAt": "2026-07-27T01:44:26.9215400Z",
+        "exitCode": 0,
+        "testTotals": {"failed": 0, "passed": 507, "skipped": 0, "total": 507},
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality6-correction/root-non-final-image-suite-green.txt",
+          "sha256": "7d9edba8320451c3c8401ea3f36e9361db00c2e0bc83f48aa0991657bb4e941f",
+          "sizeBytes": 15412
+        }
+      },
+      "webBuild": {
+        "observedAt": "2026-07-27T01:44:39.7951211Z",
+        "exitCode": 0,
+        "errors": 0,
+        "rawOutput": {
+          "path": "TestResults/story-4-2-quality6-correction/root-web-build-green.txt",
+          "sha256": "9916bca80349be8606974021910a524bed569288aadbe174563179b9ca5270e6",
+          "sizeBytes": 28679
+        }
+      },
+      "correctionCheckpoint": {
+        "commit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+        "tree": "e42e961cb401ec7719c96da5047756fa63810035",
+        "checkpointId": "bmad-4-2-implement-20260727T014847Z-qr6001",
+        "recordedAt": "2026-07-27T01:53:53Z",
+        "uniqueTrailerMatch": true,
+        "ancestorOfLedgerSource": true,
+        "mandatoryTrailers": {
+          "BMad-Story": "4-2-language-and-framework-detection",
+          "Workflow-Scope": "story",
+          "Workflow-Stage": "implement",
+          "Workflow-Checkpoint": "bmad-4-2-implement-20260727T014847Z-qr6001"
+        },
+        "trackedCorrectionPaths": [
+          "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+          "specs/002-language-framework-detection/reviews/quality-review-6.json",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+        ]
+      }
+    },
+    "postCorrectionT001": {
+      "recordPath": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "recordSha256": "3c9fd047b3cc2fbbf602ea31d7a9219ac3aa763326699bc43cb129a2fdb510ca",
+      "recordCommit": "6fc8e56d81f4e1661c68bce60214028bd41f8e8b",
+      "sourceCommit": "38bff96b7a3b4a1dc442e347d26a5c7afbb62b55",
+      "sourceTree": "e42e961cb401ec7719c96da5047756fa63810035",
+      "checkpointId": "bmad-4-2-implement-20260727T020318Z-t001qr6",
+      "checkpointRecordedAt": "2026-07-27T02:04:43Z",
+      "attemptSequences": [8, 9],
+      "providerProfiling": {"passed": 116, "failed": 0, "total": 116},
+      "framework": {"passed": 53, "failed": 0, "total": 53},
+      "label": "Current verification",
+      "historicalClaimed": false,
+      "preCorrectionResultClaimed": false,
+      "redClaimed": false,
+      "contemporaneousOrderingClaimed": false
+    },
+    "scopeVerification": {
+      "scanStrategyChanged": false,
+      "workerAgentOrToolChanged": false,
+      "dispatchSchedulingOrRetryChanged": false,
+      "prdChanged": false,
+      "migrationChanged": false,
+      "persistenceChanged": false,
+      "apiChanged": false,
+      "uiChanged": false
+    },
+    "historicalSeparation": {
+      "qr6RedRelabelledHistorical": false,
+      "fixtureAlignmentFailureRelabelledBehaviorRed": false,
+      "t001Attempts8And9RelabelledHistoricalOrPreCorrection": false,
+      "historicalRawRedAvailabilityChanged": false,
+      "legacyCheckpointTrailerAvailabilityChanged": false
+    }
+  },
   "staleClaimInvalidation": {
     "priorCandidateAccepted": false,
     "priorReviewsAccepted": false,
@@ -1186,11 +1468,48 @@
       "reviewedCandidateCommit": "1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c",
       "laneAcceptedAsCurrentCompletionEvidence": false
     },
+    "invalidatedCandidateReview5E2eVerificationT046Lane": {
+      "candidateCommit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "candidateTree": "d7e1329d1a431dcf8ce6c4875a0b33d5fd533cb0",
+      "candidateRecordCommit": "bee749b83d9cb1fabc445d3606150a1cfd5ed820",
+      "candidateRecordPath": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+      "reviewCheckpoint": "20f1ca871efbe677415d9ff769ab57ce9442617f",
+      "acceptanceReviewPath": "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
+      "acceptanceReviewRecordedVerdict": "ACCEPT",
+      "qualityReviewPath": "specs/002-language-framework-detection/reviews/quality-review-5.json",
+      "qualityReviewRecordedVerdict": "ACCEPT",
+      "t046Result": "REVISE",
+      "t046Findings": [
+        "Iteration-5 acceptance evidence used gate acceptance instead of acceptance-review and omitted the explicit owned-path boundary.",
+        "Iteration-5 quality evidence retained a stale reviewer identity and omitted required reviewed-artifact and explicit artifact-hash/owned-path fields."
+      ],
+      "e2eCheckpoint": "e6192a5393fae58fd12dd3bfe33d8b192102ffff",
+      "e2eResult": "passed-at-invalidated-boundary",
+      "verificationCheckpoint": "42345ac04645ca28f1e5dfd02e971b5316842435",
+      "verificationResult": "passed-at-invalidated-boundary",
+      "acceptedAsCurrentCompletionEvidence": false,
+      "invalidationReason": "T046 returned REVISE, iteration-6 quality review exposed QR6-001, and the committed QR6-001 production/test correction changed the candidate boundary."
+    },
+    "invalidatedReview6Lane": {
+      "reviewedCandidateCommit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+      "acceptanceReviewPath": "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+      "acceptanceReviewVerdict": "ACCEPT",
+      "qualityReviewPath": "specs/002-language-framework-detection/reviews/quality-review-6.json",
+      "qualityReviewVerdict": "REVISE",
+      "qualityReviewFinding": "QR6-001",
+      "laneAcceptedAsCurrentCompletionEvidence": false,
+      "invalidationReason": "Both axes apply only to candidate 14ed1fd2; QR6-001 correction checkpoint 38bff96 changed production and test bytes."
+    },
     "newCandidateOrAcceptedReviewIdentityPresent": false,
-    "reason": "The quality-review-4 findings, correction checkpoint, latest T001 record, task bytes, and regenerated ledger invalidate candidate 1ce8140d and both review-4 lanes; the earlier review-3 lane remains invalidated history. Their identities are retained only to prove invalidation. No current candidate, jointly accepted Full reviews, E2E, verification, manifest, image, namespace, T049 freeze, or T050 audit is claimed for source b57e608."
+    "reason": "The QR6-001 correction checkpoint, post-QR6 T001 record, and this regenerated ledger invalidate candidate 14ed1fd2 and every review-5/review-6/E2E/T045/T046 downstream claim. Earlier review-3 and review-4 lanes remain invalidated history. No current candidate, jointly accepted Full reviews, E2E, verification, manifest, image, namespace, T049 freeze, or T050 audit is claimed for source 6fc8e56."
   },
   "downstreamBoundary": {
     "priorInvalidatedT041LaneOccurred": true,
+    "invalidatedCandidateCommit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
+    "invalidatedReviewIterations": [5, 6],
+    "invalidatedE2eCheckpoint": "e6192a5393fae58fd12dd3bfe33d8b192102ffff",
+    "invalidatedVerificationCheckpoint": "42345ac04645ca28f1e5dfd02e971b5316842435",
+    "latestT046Result": "REVISE",
     "currentTasksT041ThroughT050Occurred": false,
     "newCandidatePinned": false,
     "newReviewsAccepted": false,
@@ -1205,10 +1524,10 @@
   },
   "validationFinalization": {
     "validationTaskId": "T040",
-    "validatedAt": "2026-07-26T09:38:06.6600025Z",
+    "validatedAt": "2026-07-27T02:09:17.2330936Z",
     "validationCompleted": true,
-    "taskMarkersFinalized": true,
-    "sourceRangeCommitCount": 48,
+    "taskMarkersFinalized": false,
+    "sourceRangeCommitCount": 56,
     "sourceRangeMergeCount": 0,
     "historicalExecutionGroupCount": 6,
     "legacyTddGroupCount": 19,
@@ -1217,16 +1536,18 @@
     "legacyCheckpointTrailerAvailableTrueCount": 5,
     "legacyCheckpointTrailerAvailableFalseCount": 14,
     "workflowHistoricalRecordCount": 18,
-    "immutableArtifactReferenceCount": 51,
-    "observedCheckpointTrailerCount": 18,
-    "observedImplementCheckpointTrailerCount": 15,
+    "immutableArtifactReferenceCount": 64,
+    "observedCheckpointTrailerCount": 26,
+    "observedImplementCheckpointTrailerCount": 20,
     "observedPlanReviewCheckpointTrailerCount": 1,
     "observedAcceptanceReviewCheckpointTrailerCount": 1,
-    "observedQualityReviewCheckpointTrailerCount": 1,
-    "currentRawEvidenceFileCount": 31,
-    "currentTestResultEvidenceFileCount": 26,
+    "observedQualityReviewCheckpointTrailerCount": 2,
+    "observedConditionalE2eCheckpointTrailerCount": 1,
+    "observedVerificationCheckpointTrailerCount": 1,
+    "currentRawEvidenceFileCount": 43,
+    "currentTestResultEvidenceFileCount": 38,
     "currentCaptureOnlyArtifactCount": 5,
-    "currentTestResultEvidenceRecordCount": 26,
+    "currentTestResultEvidenceRecordCount": 38,
     "jsonParsePassed": true,
     "ancestryPassed": true,
     "authorityHashValidationPassed": true,
@@ -1238,8 +1559,14 @@
     "forbiddenScopeValidationPassed": true,
     "gitDiffCheckPassed": true,
     "allowedChangedPaths": [
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
-      "specs/002-language-framework-detection/tasks.md"
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
+    ],
+    "allowedIgnoredValidationOutputs": [
+      "TestResults/story-4-2-quality6-ledger/T039-ledger-validation.txt",
+      "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0002.txt",
+      "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0003.txt",
+      "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0004.txt",
+      "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt"
     ],
     "commands": [
       {"command": "ConvertFrom-Json and ledger semantic assertions", "exitCode": 0},
@@ -1247,8 +1574,8 @@
       {"command": "SHA-256 over exact Git blob bytes for source-bound authority references", "exitCode": 0},
       {"command": "git cat-file -e and git rev-parse commit:path for referenced commits/blobs", "exitCode": 0},
       {"command": "Workflow-Checkpoint trailer uniqueness and ancestry validation", "exitCode": 0},
-      {"command": "Test-Path, Get-FileHash SHA256, and byte-length validation for T001, T035-T038, transcript-only captures, review-3 attempt-0002, and T051-T054 QR4 raw files", "exitCode": 0},
-      {"command": "temporal labels, exact unavailable statement, invalidated review-3/review-4 classifications, expectation-alignment failure classification, and current T041-T050 non-occurrence assertions", "exitCode": 0},
+      {"command": "Test-Path, Get-FileHash SHA256, and byte-length validation for T001 attempts 1-9, T035-T038, transcript-only captures, review-3 attempt-0002, T051-T054 QR4, and T055-T057 QR6 raw files", "exitCode": 0},
+      {"command": "temporal labels, exact unavailable statement, invalidated review-3/review-4/review-5/review-6/E2E/T045/T046 classifications, fixture-alignment failure classification, and current T041-T050 non-occurrence assertions", "exitCode": 0},
       {"command": "git diff --check", "exitCode": 0},
       {"command": "git status --porcelain=v1 --untracked-files=all and forbidden-scope path audit", "exitCode": 0}
     ],
@@ -1258,9 +1585,15 @@
       "amendedHistory": false,
       "currentResultRelabelledHistorical": false,
       "currentResultRelabelledPreCorrection": false,
-      "historicalOrderingInferred": false
+      "historicalOrderingInferred": false,
+      "review6AcceptanceClaimedCurrent": false,
+      "t046ClaimedPassed": false,
+      "fixtureAlignmentFailureRelabelledBehaviorRed": false
     },
-    "recoverableFailure": null
+    "recoverableFailure": {
+      "classification": "validation-script-property-path",
+      "summary": "The first two root validation scripts completed JSON, ancestry, authority, blob, and raw-file checks, then referenced two nonexistent property paths for the exact unavailable statement. Both failed closed before a PASS claim. Attempt 0003 corrected that assertion but used the nonexistent checkpointReferences property, so its displayed checkpoint count was not authoritative. Attempt 0004 was a parser-only failure before any assertion. Attempt 0005 validates the actual observedCheckpointTrailers collection; all outputs are preserved."
+    }
   },
   "uncertainties": [
     {
@@ -1290,6 +1623,18 @@
     {
       "id": "review4-candidate-and-lanes-invalidated",
       "statement": "Candidate 1ce8140d1644eb4f52a5f1cc9f4781b57d04b37c, acceptance-review-4 ACCEPT, and quality-review-4 REVISE occurred but the Full review lane is invalidated by QR4 corrections. None is current candidate or jointly accepted review evidence."
+    },
+    {
+      "id": "review5-review6-and-downstream-lanes-invalidated",
+      "statement": "Candidate 14ed1fd2, iteration-5 reviews, iteration-6 reviews, E2E checkpoint e6192a5, T045 checkpoint 42345ac, and the T046 REVISE outcome are retained only as invalidated history. QR6-001 correction changed production/test bytes, so none establishes a current candidate or accepted downstream gate."
+    },
+    {
+      "id": "quality6-fixture-alignment-is-not-red",
+      "statement": "T057's 7-of-168 failure occurred after the QR6-001 behavior GREEN because the test fixture lacked committed Git state. It is retained as a current fixture-alignment failure, never as behavior RED or historical evidence."
+    },
+    {
+      "id": "post-quality6-t001-is-current-only",
+      "statement": "T001 attempts 8 and 9 ran after correction checkpoint 38bff96 and are Current verification only. They do not recreate the unavailable pre-correction T001 observation, prove historical ordering, or supply historical RED."
     }
   ]
 }
