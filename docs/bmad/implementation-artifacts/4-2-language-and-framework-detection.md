@@ -858,6 +858,16 @@ unchanged.
   `907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae`
   over 80 owned paths. Every non-deleted owned path is bound to its immutable
   candidate Git-blob SHA-256, and the initial candidate status is clean.
+- Fresh Full review iteration 7 used the exact T041 boundary. Acceptance
+  returned ACCEPT with no findings. Quality returned REVISE with three High
+  findings: mutable checkout metadata can suppress pinned committed facts
+  (QR7-001), duplicate relevant npm JSON properties are accepted ambiguously
+  (QR7-002), and duplicate Maven scalar children escalate one artifact into a
+  repository-wide detector failure (QR7-003).
+- QR7-001 through QR7-003 require changes to Scan source-selection, parsing,
+  and fault-isolation behavior. The workflow is paused for the mandatory
+  planned-change authorization before implementation. No review, E2E,
+  verification, image, namespace, freeze, or final-audit completion is claimed.
 - Evidence-grammar implementation checkpoint:
   `bmad-4-2-implement-20260722T080736Z-e6c4b1` (pending Git binding).
 - Provider-path redaction implementation checkpoint:

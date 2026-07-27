@@ -7,28 +7,28 @@
   "stage": "implement",
   "active_gates": {
     "acceptance-review": {
-      "status": "invalidated",
-      "iteration": 6,
+      "status": "accepted",
+      "iteration": 7,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
-        "diff_sha256": "25a13c76b50dd95ab80a0d19a09c4b929e1186cb4e06acc73d3b8b1fe3b320cc"
+        "candidate_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
+        "diff_sha256": "907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
-      "completed_at": "2026-07-27T01:17:17.0000000Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
+      "completed_at": "2026-07-27T03:25:46.8342178Z"
     },
     "quality-review": {
-      "status": "invalidated",
-      "iteration": 6,
+      "status": "revised",
+      "iteration": 7,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
-        "diff_sha256": "25a13c76b50dd95ab80a0d19a09c4b929e1186cb4e06acc73d3b8b1fe3b320cc"
+        "candidate_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
+        "diff_sha256": "907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae"
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-6.json",
-      "completed_at": "2026-07-27T01:17:17.0000000Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-7.json",
+      "completed_at": "2026-07-27T03:25:46.8342178Z"
     }
   },
   "stage_history": [
@@ -2855,24 +2855,58 @@
       "observed_at": "2026-07-27T03:06:10.0950238Z",
       "summary": "T041 pinned clean empty candidate 6149623 with tree 29206eb. Its 1,616,158-byte base-to-candidate binary diff hashes to 907256b4e4a88cf0c15ec1c2d23de2eee73f7b408189713fdf760c8ce3aef2ae across 80 owned paths; every non-deleted path has an exact candidate Git-blob SHA-256.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/7",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-7.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T03:25:46.8342178Z",
+      "summary": "Fresh independent Full acceptance review 7 returned ACCEPT with no findings at the exact T041 candidate.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/7",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "614962322e9f3578980a6fa28bc8897d22b66c58",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-7.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-27T03:25:46.8342178Z",
+      "summary": "Fresh independent Full quality review 7 returned REVISE with High findings QR7-001 through QR7-003 covering pinned-source metadata stability, duplicate npm JSON properties, and duplicate Maven scalar-child fault isolation.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-candidate-record-20260727T030610Z-b4c81d",
+    "checkpoint_id": "bmad-4-2-full-reviews-20260727T032546Z-c26f9a",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+      "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
+      "specs/002-language-framework-detection/reviews/quality-review-7.json",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/80"
+      "4-2-language-and-framework-detection/acceptance-review/7",
+      "4-2-language-and-framework-detection/quality-review/7"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-  "updated_at": "2026-07-27T03:06:10.0950238Z"
+  "recoverable_failure": {
+    "stage": "quality-review",
+    "status": "approval-required",
+    "summary": "QR7-001 through QR7-003 require Scan source-selection, parsing, and fault-isolation changes. Planned-change authorization is required before implementation."
+  },
+  "updated_at": "2026-07-27T03:25:46.8342178Z"
 }
