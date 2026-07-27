@@ -2800,7 +2800,7 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/77",
-      "kind": "artifact-correction",
+      "kind": "artifact-hash",
       "stage": "implement",
       "source_commit": "d307a27b7502ec96a405a2b5d814beb826ca47cc",
       "artifact_paths": [
@@ -2813,20 +2813,31 @@
       "observed_at": "2026-07-27T02:36:16.6903984Z",
       "summary": "T040 returned REVISE on three bookkeeping defects. The correction replaces three checkout-normalized hashes with exact Git-blob hashes, preserves the three malformed commits as historical-only, binds unchanged bytes through two contract-valid forward-only checkpoints, and removes every premature T040 completion claim pending a fresh independent audit.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/78",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "fb93b2050536c0872892b08a54afde69cfa87dad",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/workflow-state.json"
+      ],
+      "command": "Checkpoint committed-path exactness and evidence-kind vocabulary validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-27T02:56:50.6542161Z",
+      "summary": "The second T040 audit passed every substantive ledger check and returned REVISE only because checkpoint fb93b20 listed unchanged tasks.md and used the undocumented evidence kind artifact-correction. This forward-only state record uses artifact-hash and declares only its actual changed path; fb93b20 remains immutable history.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260727T023616Z-c83e5a",
+    "checkpoint_id": "bmad-4-2-implement-20260727T025650Z-d94f6b",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
-      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
-      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/77"
+      "4-2-language-and-framework-detection/implement/78"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -2835,7 +2846,7 @@
     "stage": "implement",
     "task_id": "T040",
     "status": "correction-committed-pending-independent-rerun",
-    "summary": "Independent T040 found three ledger bookkeeping defects; the forward-only correction is ready for a fresh independent audit."
+    "summary": "Independent T040 passed the ledger and found two checkpoint-state representation defects; the focused forward-only state correction is ready for a fresh independent audit."
   },
-  "updated_at": "2026-07-27T02:36:16.6903984Z"
+  "updated_at": "2026-07-27T02:56:50.6542161Z"
 }
