@@ -1237,6 +1237,20 @@ unchanged.
   remains external infrastructure failure rather than product/test failure.
 - T048 retry recoverable-failure checkpoint:
   `bmad-4-2-final-image-blocked-20260728T091446Z-470d4b` (pending Git binding).
+- User-authorized T048 retry attempt 0004 reached runtime `apt-get update` and
+  again stopped on external container networking. The exact URL
+  `http://archive.ubuntu.com/ubuntu/dists/noble-backports/InRelease` returned
+  `502 Bad Gateway` through Clash fake IP `198.18.0.4:80`. The 275,089-byte
+  build log has SHA-256
+  `772ae0d564092c6463a9c6f3b78880f4b0e627af19a4ec65335745f477fa849a`;
+  its metadata SHA-256 is
+  `03c9473626049871653b55d97246d5a9aa6b34adf0788108a09866b80e1d13f7`.
+  No image/tag/IID exists, no inspection or provider test ran, and the
+  accepted-correction namespace remains unused in both checkouts. Both
+  tracked statuses are clean. T048 remains unchecked and retryable after the
+  Clash fake-IP routing issue is corrected.
+- T048 retry recoverable-failure checkpoint:
+  `bmad-4-2-final-image-blocked-20260728T105724Z-772ae0` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
