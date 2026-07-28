@@ -1,0 +1,328 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "iteration": 11,
+  "story_key": "4-2-language-and-framework-detection",
+  "analyst_identity": "fresh-independent-read-only-artifact-analyst",
+  "observed_utc": "2026-07-28T06:37:36.0962585Z",
+  "proposed_destination": "specs/002-language-framework-detection/reviews/analyze-11.json",
+  "verdict": "ACCEPT",
+  "reviewed_boundary": {
+    "branch": "dev",
+    "commit": "bff9f5d7036f8904c9625f2469a85809564fa728",
+    "tree": "d07c2125486b4f0c35452acc0883c1b37fa005ba",
+    "initial_porcelain_status": [],
+    "report_path_was_absent": true,
+    "input_hashes": {
+      "AGENTS.md": "9351559ee881ec74b20ccf9de3fadb469099eaa116569ed59d68b01d1bfb6e71",
+      ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971",
+      "docs/UBIQUITOUS_LANGUAGE.md": "23088d16c0bf547de647bcf3d7b210a8780116be57349471ffc668fa8e4bfada",
+      "docs/bmad/epics.md": "0de9929db12f7557809818d0aa0848b9cbb10cfa00c55f61e7b65a3d15ebd0ee",
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md": "a808d4455691b3b6d972afe6c83488ceab1f4bd71d24fbf22a7788bc5e60f912",
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md": "7659898a7fc31a2fb3160143d5c743203945cb51ed688c493dea0db9041a11b1",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "46b17291a248a4035f2e9456b43458e5ca0c01217a36d78315122a68d388ebc8",
+      "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+      "specs/002-language-framework-detection/checklists/requirements.md": "9494531bcd320317c2e74a7cae5cfef7a687e2664b09b11e442c3dae53276bf0",
+      "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+      "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+      "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+      "specs/002-language-framework-detection/contracts/provider-language-projection.md": "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b",
+      "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
+      "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
+      "specs/002-language-framework-detection/tasks.md": "a808c83dfc5928f8b72daac3ea8ab683feef580236ceea49b61934766dc3872b",
+      "specs/002-language-framework-detection/reviews/plan-review-10.json": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+      "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+      "specs/002-language-framework-detection/reviews/analyze-10.json": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd",
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+      "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json": "b2c79cb4a2498e3ecf65f2cb0ef46e35ca03f9ffbed11fc54ae6e048654ec197",
+      "specs/002-language-framework-detection/reviews/plan-review-9.json": "439a2f562c7b93554d0667b85fb9bb6bbafeefc12e96ab3ece8016977d08480b",
+      "specs/002-language-framework-detection/reviews/acceptance-review-9.json": "3317a8082d8936b3aa09d9ff7915cafefebc0a786835fa0c3b9b24ec06e84ef5",
+      "specs/002-language-framework-detection/reviews/quality-review-9.json": "649052b389b4f0685817c1598e2f7f48cb6ab363169005c97762a1077c88dc91",
+      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json": "c9d6708dbad4fe71b686ef4ce664646ee0a25f374889bc8d6f5f30856d944ded",
+      "specs/002-language-framework-detection/workflow-state.json": "62040a57cef0dcf891a6f94e2a6ea416c176830a2d51f56bfd4f087f3ee44c57"
+    }
+  },
+  "preflight": {
+    "prerequisite_command": ".specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks",
+    "feature_directory": "G:\\source\\repos\\vulgata\\specs\\002-language-framework-detection",
+    "available_docs": [
+      "research.md",
+      "data-model.md",
+      "contracts/",
+      "quickstart.md",
+      "tasks.md"
+    ],
+    "before_analyze_hooks": [],
+    "after_analyze_hooks": [],
+    "extension_hook_assessment": "The installed agent-context extension registers only after_specify and after_plan hooks; no before_analyze or after_analyze hook applies."
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md planned-change authorization",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md Story 4.1 and Story 4.2",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md#FR-4.1",
+    "specs/002-language-framework-detection/spec.md",
+    "specs/002-language-framework-detection/checklists/requirements.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/reviews/plan-review-10.json",
+    "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json",
+    "iteration-9 candidate and three verdicts as invalidated history",
+    "specs/002-language-framework-detection/workflow-state.json",
+    "T067-T075 evidence identities and the T074 failed/successful attempt split referenced by the ledger and T077 verdict"
+  ],
+  "findings": [],
+  "coverage_metrics": {
+    "functional_requirements": {
+      "total": 21,
+      "covered": 21,
+      "coverage_percent": 100,
+      "ids": "FR-001 through FR-021",
+      "uncovered": []
+    },
+    "success_criteria": {
+      "total": 8,
+      "covered": 8,
+      "coverage_percent": 100,
+      "ids": "SC-001 through SC-008",
+      "uncovered": []
+    },
+    "bmad_acceptance_criteria_groups": {
+      "total": 7,
+      "covered": 7,
+      "coverage_percent": 100,
+      "ids": "AC-1 through AC-7",
+      "uncovered": []
+    },
+    "speckit_acceptance_scenarios": {
+      "total": 15,
+      "covered": 15,
+      "coverage_percent": 100,
+      "uncovered": []
+    },
+    "accepted_plan_decisions": {
+      "total": 17,
+      "covered": 17,
+      "coverage_percent": 100,
+      "ids": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17"
+      ],
+      "uncovered": []
+    },
+    "iteration_9_findings": {
+      "total": 3,
+      "covered": 3,
+      "coverage_percent": 100,
+      "ids": [
+        "AR9-001",
+        "QR9-001",
+        "PR9-001"
+      ],
+      "uncovered": []
+    },
+    "tasks": {
+      "total": 77,
+      "unique_ids": 77,
+      "mapped": 77,
+      "checked": 67,
+      "pending": 10,
+      "pending_ids": [
+        "T041",
+        "T042",
+        "T043",
+        "T044",
+        "T045",
+        "T046",
+        "T047",
+        "T048",
+        "T049",
+        "T050"
+      ],
+      "parallel_read_only_review_tasks": 2,
+      "parallel_task_ids": [
+        "T042",
+        "T043"
+      ],
+      "unmapped": [],
+      "duplicate_ids": [],
+      "missing_ids": []
+    },
+    "ambiguities": 0,
+    "duplications": 0,
+    "unresolved_placeholders": 0,
+    "dependency_cycles": 0,
+    "implementation_before_red": 0,
+    "stale_authority_bindings": 0,
+    "invalidated_evidence_reuse": 0,
+    "critical_findings": 0,
+    "high_findings": 0,
+    "medium_findings": 0,
+    "low_findings": 0
+  },
+  "artifact_consistency": {
+    "accepted_plan": {
+      "status": "PASS",
+      "plan_review_path": "specs/002-language-framework-detection/reviews/plan-review-10.json",
+      "plan_review_sha256": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+      "verdict": "ACCEPT",
+      "iteration": 10,
+      "reviewed_diff_length_bytes": 52541,
+      "reviewed_diff_sha256": "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba",
+      "five_file_artifact_map_exact": true,
+      "checkpoint_id": "bmad-4-2-plan-20260727T134009Z-b02d3f",
+      "checkpoint_commit": "3de522a42fc1cc77ae200da7596c8c3c5a1af421",
+      "checkpoint_unique": true,
+      "four_mandatory_trailers_exact": true,
+      "checkpoint_is_ancestor": true
+    },
+    "quality9_authorization": {
+      "status": "PASS",
+      "path": "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+      "sha256": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+      "decision": "approved",
+      "scope_exactly_qr9_001": true,
+      "later_gate_waivers": false
+    },
+    "task_state": {
+      "status": "PASS",
+      "t075_t077_checked": true,
+      "t041_t050_pending": true,
+      "t041_dependency_now_satisfied_only_by_this_accept": true,
+      "dependency_graph_acyclic": true,
+      "current_candidate_lane_absent": true
+    },
+    "tdd_chronology": {
+      "status": "PASS",
+      "t068_behavior_red_before_t071_green": true,
+      "t069_behavior_red_before_t071_green": true,
+      "t070_binding_red_before_t072_green": true,
+      "t073_owner_shape_green": "5/5",
+      "t074_attempt_1": "capture-harness failure only; five header-only files support no RED or GREEN claim",
+      "t074_attempt_2": "binding 17/17; framework 61/61; surrounding 57/57; non-final-image 523/523; authorization/redaction 4/4; Web build and FR-020 scope checks passed"
+    },
+    "current_verification_and_ledger": {
+      "status": "PASS",
+      "current_verification_sha256": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+      "ledger_sha256": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+      "t077_verdict_sha256": "b2c79cb4a2498e3ecf65f2cb0ef46e35ca03f9ffbed11fc54ae6e048654ec197",
+      "t077_verdict": "ACCEPT",
+      "pre_correction_t001_statement_exact": true,
+      "current_verification_never_relabelled_historical_or_red": true,
+      "ledger_source_range": "99 linear commits, zero merges",
+      "t077_authority_hashes": "34/34",
+      "t077_immutable_blobs": "83/83",
+      "t077_raw_hashes": "91/91",
+      "t077_asserted_lengths": "89/89",
+      "t077_exit_classifications": "31/31"
+    },
+    "invalidation": {
+      "status": "PASS",
+      "candidate_708b7df_invalidated_history_only": true,
+      "plan_review_9_invalidated_history_only": true,
+      "acceptance_review_9_invalidated_history_only": true,
+      "quality_review_9_invalidated_history_only": true,
+      "stale_e2e_verification_manifest_namespace_image_t049_t050_claims_absent": true,
+      "new_candidate_claim_absent": true
+    },
+    "story_4_1_provider_ownership": {
+      "status": "PASS",
+      "assessment": "Story 4.1 remains the owner of the completed CodeGraph provider, Code Unit structural contract, filtered outcomes, and atomic provider-derived persistence. Story 4.2 extends only language, deterministic framework facts, summaries, and bounded audit behavior without taking over provider transport or structural ownership."
+    },
+    "constitution": {
+      "status": "PASS",
+      "violated_musts": [],
+      "assessment": "Layered ownership, canonical domain language, test-first integration, Simplified-Chinese presentation, authorization, local non-executing evidence, bounded redaction, and data-stewardship requirements remain aligned."
+    },
+    "prd": {
+      "status": "PASS",
+      "requirement": "FR-4.1",
+      "changed_or_weakened": false,
+      "assessment": "Deterministic CodeGraph/tree-sitter language and framework profiling still occurs before Worker Agent dispatch; the authorized correction removes unsupported XML ownership rather than weakening or expanding product intent."
+    },
+    "terminology": {
+      "status": "PASS",
+      "canonical_terms": [
+        "Repository",
+        "Scan",
+        "Scan Run",
+        "Code Unit",
+        "Worker Agent",
+        "Cross-Repository Resolution"
+      ],
+      "deprecated_synonym_drift": []
+    },
+    "forbidden_scope": {
+      "status": "PASS",
+      "worker_agent_or_tool_change": false,
+      "orchestrator_or_scan_coordinator_change": false,
+      "dispatch_scheduling_grouping_retry_change": false,
+      "communication_pattern_or_story_4_3_change": false,
+      "document_generation_or_cross_repository_resolution_change": false,
+      "prd_change": false
+    },
+    "task_generation_temporal_note": {
+      "status": "PASS",
+      "assessment": "The Completion Criteria sentence that corrected T001 and QR9 markers start incomplete is the task-author starting-state criterion under the pinned Stage: tasks header, not a current lifecycle assertion. Current state is governed by the live checkbox set plus workflow/story evidence: 67 tasks are checked and exactly T041-T050 remain pending."
+    }
+  },
+  "planned_change_trigger_assessment": {
+    "status": "PASS",
+    "qr9_trigger": "QR9-001 materially changed Scan XML parsing and NuGet lock-owner filtering.",
+    "qr9_trigger_authorized": true,
+    "authorization_timing_valid": true,
+    "authorized_scope_implemented_only": true,
+    "new_worker_agent_or_tool_trigger": false,
+    "new_scan_strategy_trigger": false,
+    "new_prd_conflict_trigger": false,
+    "additional_user_approval_required": false,
+    "later_gates_waived": false
+  },
+  "t041_permission": true,
+  "permission_statement": "T041 is permitted after the root validates and durably records this exact zero-finding ACCEPT report against the unchanged pinned inputs. No duplicate user approval is required.",
+  "summary": "ACCEPT with zero findings. The pinned post-T077 boundary is clean and exact. All 21 functional requirements, 8 success criteria, 7 BMad acceptance groups, 15 SpecKit acceptance scenarios, 17 accepted plan decisions, and AR9-001/QR9-001/PR9-001 have executable coverage. All 77 task IDs are unique and mapped; 67 are checked and exactly T041-T050 remain pending. Plan-review 10, its five-file plan set, QR9 authorization, Current verification, the truthful ledger, and T077 acceptance are hash-bound and mutually consistent. T068-T070 precede T071-T072 GREEN, T074 failure/success attempts remain truthfully separated, and candidate 708b7df plus iteration-9 downstream claims remain invalidated history only. Constitution, PRD FR-4.1, Ubiquitous Language, Story 4.1 provider ownership, forbidden scope, and planned-change authorization all pass.",
+  "next_permitted_action": "The root may persist this report unchanged, record the analyze checkpoint, and proceed to T041 replacement candidate pinning without duplicate user approval. T042-T050 remain prohibited until their explicit dependencies are satisfied.",
+  "read_only_confirmation": {
+    "input_artifacts_changed_by_analyst": false,
+    "tests_or_builds_executed": false,
+    "workflow_or_lifecycle_state_changed": false,
+    "task_markers_changed_by_analyst": false,
+    "source_or_test_changed_by_analyst": false,
+    "candidate_or_review_input_changed_by_analyst": false,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false,
+    "remediation_applied_by_analyst": false,
+    "implementation_started": false,
+    "report_file_written": true,
+    "only_written_path": "specs/002-language-framework-detection/reviews/analyze-11.json"
+  }
+}
