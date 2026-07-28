@@ -1139,6 +1139,19 @@ unchanged.
   Story 4.1 provider ownership, Ubiquitous Language, QR9 authorization,
   chronology, invalidations, and forbidden scope all pass; no new
   planned-change trigger exists.
+- T041 pins the single replacement immutable candidate as empty checkpoint
+  commit `00bdb87` / tree `422c586`, whose tree exactly matches analyzed
+  parent `6b263d5`. The nonrecursive Story 4.2 diff from base `e9824df` is
+  2,170,074 bytes, SHA-256 `e4885cf0`, across 105 sorted owned paths with one
+  deletion tombstone. Candidate record 4 binds plan-review 10, QR9 approval,
+  T075 Current verification, T076 ledger, T077 ACCEPT, and analyze-11 ACCEPT;
+  all prior candidates including `708b7df` remain invalidated history.
+  T042-T050 remain pending, and any candidate-boundary mutation invalidates
+  this lane.
+- T041 replacement candidate checkpoint:
+  `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
+- T041 candidate-record checkpoint:
+  `bmad-4-2-implement-20260728T065605Z-d01702` (pending Git binding).
 - Post-ledger Full-analysis checkpoint:
   `bmad-4-2-analyze-20260728T063736Z-043954` (pending Git binding).
 - T077 independent ledger ACCEPT checkpoint:

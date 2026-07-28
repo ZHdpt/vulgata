@@ -3628,23 +3628,39 @@
       "observed_at": "2026-07-28T06:37:36.0962585Z",
       "summary": "Fresh Full analysis iteration 11 ACCEPTS the exact post-T077 boundary with zero findings and permits T041 without duplicate approval. FR 21/21, SC 8/8, BMad AC 7/7, SpecKit scenarios 15/15, R1-R17 17/17, AR9/QR9/PR9 3/3, and all 77 unique tasks are covered; 67 are checked and exactly T041-T050 remain pending. Constitution, PRD FR-4.1, Story 4.1 provider ownership, terminology, QR9 authorization, chronology, invalidations, and forbidden scope pass. No new planned-change trigger exists.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/120",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-4.json",
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "command": "Empty immutable candidate checkpoint; exact binary diff/path/blob/hash/binding/invalidation/prohibition validation",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T06:56:05.6130499Z",
+      "summary": "T041 pins replacement candidate commit 00bdb87/tree 422c586 at checkpoint bmad-4-2-candidate-20260728T064315Z-e4885c. Its tree equals analyzed parent 6b263d5. The exact nonrecursive Story 4.2 diff is 2,170,074 bytes, SHA-256 e4885cf0, across 105 sorted owned paths with one deletion tombstone. Candidate record 4 binds plan-review 10, QR9 approval, T075, T076, T077 ACCEPT, and analyze-11 ACCEPT; prior candidates including 708b7df remain invalidated history. T042-T050 remain pending and candidate-boundary mutation invalidates the lane.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-analyze-20260728T063736Z-043954",
+    "checkpoint_id": "bmad-4-2-implement-20260728T065605Z-d01702",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/analyze-11.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-4.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/analyze/119"
+      "4-2-language-and-framework-detection/implement/120"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T06:37:36.0962585Z"
+  "updated_at": "2026-07-28T06:56:05.6130499Z"
 }
