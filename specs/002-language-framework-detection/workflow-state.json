@@ -692,24 +692,40 @@
         "specs/002-language-framework-detection/reviews/analyze-9.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-28T01:58:05.3807702Z",
+      "completed_at": "2026-07-28T01:58:05.3807702Z",
+      "input_commit": "e292873c2e4e704782777d68361cd3be6f46affb",
+      "input_hashes": {
+        "specs/002-language-framework-detection/tasks.md": "b776beca2e70bc6e851320a154fd2202ca20ec40bd8aedb6d348c9ca12efad91",
+        "specs/002-language-framework-detection/reviews/analyze-10.json": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-9.json",
+        "specs/002-language-framework-detection/reviews/analyze-10.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "096eed69abd78f50feff2459c9138a532cea1856",
+    "preflight_head": "e292873c2e4e704782777d68361cd3be6f46affb",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 approved I8-001 tasks remediation, human-approval evidence, accepted analysis report, story development record, and workflow state only; no unrelated paths exist.",
+    "worktree_status": "Story 4.2 mechanical T001 output-path repair, accepted analysis-10 report, story development record, and workflow state only; no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
-      "specs/002-language-framework-detection/reviews/analyze-9.json"
+      "specs/002-language-framework-detection/reviews/analyze-10.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-28T01:33:45.4579601Z"
+    "observed_at": "2026-07-28T01:58:05.3807702Z"
   },
   "source_artifacts": [
     {
@@ -1181,7 +1197,7 @@
       ]
     },
     "analyze": {
-      "count": 9,
+      "count": 10,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/analyze-1.json",
         "specs/002-language-framework-detection/reviews/analyze-2.json",
@@ -1191,7 +1207,8 @@
         "specs/002-language-framework-detection/reviews/analyze-6.json",
         "specs/002-language-framework-detection/reviews/analyze-7.json",
         "specs/002-language-framework-detection/reviews/analyze-8.json",
-        "specs/002-language-framework-detection/reviews/analyze-9.json"
+        "specs/002-language-framework-detection/reviews/analyze-9.json",
+        "specs/002-language-framework-detection/reviews/analyze-10.json"
       ]
     },
     "acceptance-review": {
@@ -3270,26 +3287,57 @@
       "observed_at": "2026-07-28T01:33:45.4579601Z",
       "summary": "Fresh independent read-only Full analysis iteration 9 ACCEPTED the corrected task boundary with no findings. I8-001 is closed; FR 21/21, success criteria 8/8, combined requirements 29/29, acceptance groups 7/7, R1-R17, all 77 unique mapped tasks, dependency/TDD ordering, Constitution, PRD FR-4.1, and QR9 planned-change authorization pass. Implementation may begin with T001 and T067.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/105",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "e292873c2e4e704782777d68361cd3be6f46affb",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt",
+        "TestResults/story-4-2-current-verification/T001-framework-green.txt"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-28T01:58:05.3807702Z",
+      "summary": "The first T001/T067 prerequisite dispatch stopped before tests or edits because the two tasks.md create-new paths already contained immutable historical outputs referenced by the Current-verification ledger. Overwrite would falsify retained evidence. A mechanical tasks-only repair selected verified-unused quality9-prerequisite paths and invalidated analysis 9 for current progression.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/106",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "e292873c2e4e704782777d68361cd3be6f46affb",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/reviews/analyze-10.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-28T01:58:05.3807702Z",
+      "summary": "Fresh independent Full analysis iteration 10 ACCEPTED the mechanical T001 path repair with no findings. Both former outputs remain byte-identical historical evidence, both replacement paths are unused, I8-001 remains closed, all requirement/task/authority checks pass, and no new planned-change authorization is required. Analysis 9 remains valid immutable history but is superseded for current progression.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-analyze-20260728T013345Z-002685",
+    "checkpoint_id": "bmad-4-2-analyze-20260728T015805Z-118bf8",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
-      "specs/002-language-framework-detection/reviews/analyze-9.json",
+      "specs/002-language-framework-detection/reviews/analyze-10.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/analyze/103",
-      "4-2-language-and-framework-detection/analyze/104"
+      "4-2-language-and-framework-detection/implement/105",
+      "4-2-language-and-framework-detection/analyze/106"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T01:33:45.4579601Z"
+  "updated_at": "2026-07-28T01:58:05.3807702Z"
 }

@@ -1035,6 +1035,17 @@ unchanged.
   dependency/TDD order, Constitution, PRD FR-4.1, and planned-change
   authorization all pass. The next permitted stage is implementation,
   beginning with T001 and T067 before any QR9 RED task.
+- The first T001/T067 prerequisite attempt stopped before tests or edits
+  because both analyzed create-new filenames already held immutable historical
+  outputs referenced by the Current-verification ledger. A mechanical
+  tasks-only repair moved the two future outputs to the verified-unused
+  `story-4-2-current-verification-quality9-prerequisite` directory without
+  changing a marker, dependency, behavior, or authority. Fresh independent
+  Full analysis iteration 10 returned ACCEPT with no findings; it preserves
+  both old outputs byte-for-byte, supersedes analysis 9 only for current
+  progression, and permits a clean T001/T067 retry.
+- Superseding QR9 analyzed-tasks checkpoint:
+  `bmad-4-2-analyze-20260728T015805Z-118bf8` (pending Git binding).
 - Accepted QR9 analyzed-tasks checkpoint:
   `bmad-4-2-analyze-20260728T013345Z-002685` (pending Git binding).
 - QR9 Full-analysis checkpoint:
@@ -1081,6 +1092,7 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/analyze-8.json`
 - `specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json`
 - `specs/002-language-framework-detection/reviews/analyze-9.json`
+- `specs/002-language-framework-detection/reviews/analyze-10.json`
 - `specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json`
 - `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json`
 - `specs/002-language-framework-detection/evidence/quality7-correction-tdd.json`
