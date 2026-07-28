@@ -1077,6 +1077,15 @@ unchanged.
   owner and paired-lock tests pass 5/5, with independent Repository evidence
   preserved. Tests are byte-identical, only production and T071 changed, and
   T072 remains pending.
+- T072 closes the executable accepted-plan binding GREEN. The exact T070
+  focused set now passes 17/17, and the expanded stale/missing/wrong binding
+  rejection matrix passes 24/24. The verifier requires plan-review 10, its
+  checkpoint and five accepted artifact hashes, plus the exact QR9 approval
+  path, bytes, decision, and scope; plan-review 8/9 and incomplete QR9 claims
+  are rejected. No production, provider, schema, or API behavior changed.
+  T073 remains pending.
+- T072 plan-review-10 and QR9 binding GREEN checkpoint:
+  `bmad-4-2-implement-20260728T031737Z-e7069f` (pending Git binding).
 - T071 owner-grammar GREEN checkpoint:
   `bmad-4-2-implement-20260728T030048Z-535ae6` (pending Git binding).
 - T070 plan-review-10 binding RED checkpoint:

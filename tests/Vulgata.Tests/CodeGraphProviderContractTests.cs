@@ -19,11 +19,11 @@ public sealed class CodeGraphProviderContractTests
         {
             { "docker/codegraph/requirements.lock", _providerLockHash },
             { "specs/002-language-framework-detection/spec.md", "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956" },
-            { "specs/002-language-framework-detection/plan.md", "26d5363c9d5855b283777eab5d452eb6c0ffcb5df47593bc6c66df2e0464bbc1" },
-            { "specs/002-language-framework-detection/research.md", "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4" },
-            { "specs/002-language-framework-detection/data-model.md", "76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c" },
-            { "specs/002-language-framework-detection/quickstart.md", "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115" },
-            { "specs/002-language-framework-detection/contracts/framework-detection.md", "857806217393c87f7ab787207b2b42ab3dc27299275cfdfe2ffb578343f99930" },
+            { "specs/002-language-framework-detection/plan.md", "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e" },
+            { "specs/002-language-framework-detection/research.md", "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36" },
+            { "specs/002-language-framework-detection/data-model.md", "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a" },
+            { "specs/002-language-framework-detection/quickstart.md", "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e" },
+            { "specs/002-language-framework-detection/contracts/framework-detection.md", "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30" },
             { "specs/002-language-framework-detection/contracts/provider-language-projection.md", "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b" },
             { "specs/002-language-framework-detection/contracts/repository-scan-overview.md", "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad" },
             { "specs/001-codegraph-extraction/contracts/repository-profiling-api.md", "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124" },
@@ -45,14 +45,20 @@ public sealed class CodeGraphProviderContractTests
     private const string _testIdentity =
         "Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract";
     private const string _planReviewVerdictPath =
-        "specs/002-language-framework-detection/reviews/plan-review-8.json";
+        "specs/002-language-framework-detection/reviews/plan-review-10.json";
     private const string _planReviewVerdictSha256 =
-        "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087";
+        "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be";
     private const string _planReviewDiffSha256 =
-        "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79";
-    private const string _planCheckpointId = "bmad-4-2-plan-binding-20260726T073452Z-d04e72";
-    private const string _planCheckpointCommit = "36bd6cccdba1fa341eddc8096a5c2269c62c3118";
-    private const string _planReviewBaseCommit = "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0";
+        "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba";
+    private const string _planCheckpointId = "bmad-4-2-plan-20260727T134009Z-b02d3f";
+    private const string _planCheckpointCommit = "3de522a42fc1cc77ae200da7596c8c3c5a1af421";
+    private const string _planReviewBaseCommit = "fab80f9334b7f2132bc270c9ce99e433b3d77513";
+    private const string _qr9ApprovalPath =
+        "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json";
+    private const string _qr9ApprovalSha256 =
+        "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459";
+    private const string _qr9ApprovalDecision = "approved";
+    private const string _qr9ApprovalScope = "QR9-001";
     private static readonly string[] _planCheckpointTrailers =
     [
         "BMad-Story: 4-2-language-and-framework-detection",
@@ -64,11 +70,15 @@ public sealed class CodeGraphProviderContractTests
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["specs/002-language-framework-detection/plan.md"] =
-                "2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600",
+                "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
             ["specs/002-language-framework-detection/research.md"] =
-                "e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4",
+                "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+            ["specs/002-language-framework-detection/data-model.md"] =
+                "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+            ["specs/002-language-framework-detection/contracts/framework-detection.md"] =
+                "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
             ["specs/002-language-framework-detection/quickstart.md"] =
-                "4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115",
+                "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
         };
     private static readonly string[] _planArtifacts =
     [
@@ -248,9 +258,16 @@ public sealed class CodeGraphProviderContractTests
     [Theory]
     [InlineData("old-static-identity")]
     [InlineData("alternate-verdict")]
+    [InlineData("old-plan-review-8")]
+    [InlineData("old-plan-review-9")]
     [InlineData("verdict-hash-drift")]
     [InlineData("review-diff-drift")]
     [InlineData("artifact-hash-drift")]
+    [InlineData("missing-qr9-approval")]
+    [InlineData("wrong-qr9-path")]
+    [InlineData("wrong-qr9-hash")]
+    [InlineData("wrong-qr9-decision")]
+    [InlineData("wrong-qr9-scope")]
     [InlineData("missing-trailer")]
     [InlineData("duplicate-trailer")]
     [InlineData("missing-story-trailer")]
@@ -276,6 +293,16 @@ public sealed class CodeGraphProviderContractTests
             {
                 VerdictPath = "specs/002-language-framework-detection/reviews/plan-review-7.json",
             },
+            "old-plan-review-8" => evidence with
+            {
+                VerdictPath = "specs/002-language-framework-detection/reviews/plan-review-8.json",
+                ReviewIteration = 8,
+            },
+            "old-plan-review-9" => evidence with
+            {
+                VerdictPath = "specs/002-language-framework-detection/reviews/plan-review-9.json",
+                ReviewIteration = 9,
+            },
             "verdict-hash-drift" => evidence with { VerdictSha256 = new string('a', 64) },
             "review-diff-drift" => evidence with { ReviewedDiffSha256 = new string('a', 64) },
             "artifact-hash-drift" => evidence with
@@ -287,6 +314,11 @@ public sealed class CodeGraphProviderContractTests
                     ["specs/002-language-framework-detection/plan.md"] = new string('a', 64),
                 },
             },
+            "missing-qr9-approval" => evidence with { Qr9ApprovalPath = string.Empty },
+            "wrong-qr9-path" => evidence with { Qr9ApprovalPath = "invalid.json" },
+            "wrong-qr9-hash" => evidence with { Qr9ApprovalSha256 = new string('a', 64) },
+            "wrong-qr9-decision" => evidence with { Qr9ApprovalDecision = "rejected" },
+            "wrong-qr9-scope" => evidence with { Qr9ApprovalScope = "QR8-001" },
             "missing-trailer" => evidence with { CheckpointMatches = [] },
             "duplicate-trailer" => evidence with
             {
@@ -1111,6 +1143,10 @@ public sealed class CodeGraphProviderContractTests
             ["providerVersion"] = "0.5.1",
             ["projectionASha256"] = Hash(CodeGraphContextProviderQueries.CodeUnits),
             ["projectionBSha256"] = Hash(CodeGraphContextProviderQueries.Relationships),
+            ["qr9ApprovalDecision"] = planBinding.Qr9ApprovalDecision,
+            ["qr9ApprovalPath"] = planBinding.Qr9ApprovalPath,
+            ["qr9ApprovalScope"] = planBinding.Qr9ApprovalScope,
+            ["qr9ApprovalSha256"] = planBinding.Qr9ApprovalSha256,
             ["sourceCommit"] = sourceBinding.SourceCommit,
             ["sourceTree"] = sourceBinding.SourceTree,
             ["story"] = "4-2-language-and-framework-detection",
@@ -1137,13 +1173,19 @@ public sealed class CodeGraphProviderContractTests
             verdictDocument.RootElement,
             "planReviewVerdict",
             [
-                "schema_version", "gate", "verdict", "reviewed_commit", "reviewed_boundary",
-                "reviewed_artifacts", "findings", "summary",
+                "schema_version", "gate", "iteration", "verdict", "reviewed_commit",
+                "reviewed_boundary", "reviewed_artifacts", "checks", "findings",
+                "prior_finding_closure", "constitution_assessment", "prd_assessment",
+                "adr_assessment", "planned_change_trigger_confirmation",
+                "dependent_regeneration_requirements", "summary", "read_only_confirmation",
             ]);
         IReadOnlyDictionary<string, JsonElement> boundary = RequireObject(
             verdictRoot["reviewed_boundary"],
             "planReviewVerdict.reviewed_boundary",
-            ["base_commit", "candidate_commit", "diff_sha256", "artifact_hashes", "owned_paths"]);
+            [
+                "base_commit", "candidate_commit", "diff_sha256", "binary_diff_length_bytes",
+                "artifact_hashes", "owned_paths",
+            ]);
         IReadOnlyDictionary<string, JsonElement> artifactElements = RequireObject(
             boundary["artifact_hashes"],
             "planReviewVerdict.reviewed_boundary.artifact_hashes",
@@ -1163,6 +1205,29 @@ public sealed class CodeGraphProviderContractTests
                 item,
                 $"planReviewVerdict.reviewed_boundary.owned_paths[{index}]"))
             .ToArray();
+        byte[] qr9ApprovalBytes = File.ReadAllBytes(Path.Combine(
+            repositoryRoot,
+            _qr9ApprovalPath.Replace('/', Path.DirectorySeparatorChar)));
+        using JsonDocument qr9ApprovalDocument = JsonDocument.Parse(qr9ApprovalBytes);
+        IReadOnlyDictionary<string, JsonElement> qr9ApprovalRoot = RequireObject(
+            qr9ApprovalDocument.RootElement,
+            "qr9Approval",
+            [
+                "schema_version", "evidence_id", "kind", "stage", "bmad_story_key",
+                "source_commit", "reviewed_candidate_commit", "plan_verdict_path",
+                "quality_verdict_path", "observed_at", "decision", "approval_text", "trigger",
+                "approved_remediation", "affected_authorities", "implementation_intent",
+                "scope_effects", "waivers",
+            ]);
+        JsonElement[] approvedRemediation = RequireArray(
+            qr9ApprovalRoot["approved_remediation"],
+            1,
+            1,
+            "qr9Approval.approved_remediation");
+        IReadOnlyDictionary<string, JsonElement> remediation = RequireObject(
+            approvedRemediation[0],
+            "qr9Approval.approved_remediation[0]",
+            ["finding_id", "intent", "rejected_shapes", "effects", "tests"]);
 
         ProcessResult log = RunGit(
             repositoryRoot,
@@ -1234,6 +1299,7 @@ public sealed class CodeGraphProviderContractTests
             Hash(verdictBytes),
             RequireString(verdictRoot["schema_version"], "planReviewVerdict.schema_version"),
             RequireString(verdictRoot["gate"], "planReviewVerdict.gate"),
+            RequireInteger(verdictRoot["iteration"], 10, 10, "planReviewVerdict.iteration"),
             RequireString(verdictRoot["verdict"], "planReviewVerdict.verdict"),
             RequireString(verdictRoot["reviewed_commit"], "planReviewVerdict.reviewed_commit"),
             RequireString(boundary["base_commit"], "planReviewVerdict.reviewed_boundary.base_commit"),
@@ -1241,6 +1307,10 @@ public sealed class CodeGraphProviderContractTests
             RequireString(boundary["diff_sha256"], "planReviewVerdict.reviewed_boundary.diff_sha256"),
             artifactHashes,
             ownedPaths,
+            _qr9ApprovalPath,
+            Hash(qr9ApprovalBytes),
+            RequireString(qr9ApprovalRoot["decision"], "qr9Approval.decision"),
+            RequireString(remediation["finding_id"], "qr9Approval.approved_remediation[0].finding_id"),
             _planCheckpointId,
             [.. checkpointMatches],
             checkpointTrailers,
@@ -1260,6 +1330,7 @@ public sealed class CodeGraphProviderContractTests
 
         if (!string.Equals(evidence.SchemaVersion, "1.0", StringComparison.Ordinal)
             || !string.Equals(evidence.Gate, "plan-review", StringComparison.Ordinal)
+            || evidence.ReviewIteration != 10
             || !string.Equals(evidence.Verdict, "ACCEPT", StringComparison.Ordinal))
         {
             throw new InvalidDataException("Accepted plan verdict gate or disposition is invalid.");
@@ -1284,6 +1355,14 @@ public sealed class CodeGraphProviderContractTests
         if (!evidence.OwnedPaths.SequenceEqual(_acceptedPlanArtifactHashes.Keys, StringComparer.Ordinal))
         {
             throw new InvalidDataException("Accepted plan reviewed owned-path set drifted.");
+        }
+
+        if (!string.Equals(evidence.Qr9ApprovalPath, _qr9ApprovalPath, StringComparison.Ordinal)
+            || !string.Equals(evidence.Qr9ApprovalSha256, _qr9ApprovalSha256, StringComparison.Ordinal)
+            || !string.Equals(evidence.Qr9ApprovalDecision, _qr9ApprovalDecision, StringComparison.Ordinal)
+            || !string.Equals(evidence.Qr9ApprovalScope, _qr9ApprovalScope, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException("Accepted QR9 approval binding is absent, stale, or invalid.");
         }
 
         if (!string.Equals(evidence.CheckpointId, _planCheckpointId, StringComparison.Ordinal)
@@ -1317,6 +1396,10 @@ public sealed class CodeGraphProviderContractTests
             evidence.VerdictPath,
             evidence.VerdictSha256,
             evidence.ReviewedDiffSha256,
+            evidence.Qr9ApprovalPath,
+            evidence.Qr9ApprovalSha256,
+            evidence.Qr9ApprovalDecision,
+            evidence.Qr9ApprovalScope,
             evidence.CheckpointId,
             evidence.CheckpointMatches[0]);
     }
@@ -1334,6 +1417,7 @@ public sealed class CodeGraphProviderContractTests
             _planReviewVerdictSha256,
             "1.0",
             "plan-review",
+            10,
             "ACCEPT",
             _planReviewBaseCommit,
             _planReviewBaseCommit,
@@ -1341,6 +1425,10 @@ public sealed class CodeGraphProviderContractTests
             _planReviewDiffSha256,
             new Dictionary<string, string>(_acceptedPlanArtifactHashes, StringComparer.Ordinal),
             [.. _acceptedPlanArtifactHashes.Keys],
+            _qr9ApprovalPath,
+            _qr9ApprovalSha256,
+            _qr9ApprovalDecision,
+            _qr9ApprovalScope,
             _planCheckpointId,
             [_planCheckpointCommit],
             [.. _planCheckpointTrailers],
@@ -2615,6 +2703,10 @@ public sealed class CodeGraphProviderContractTests
         string PlanReviewVerdictPath,
         string PlanReviewVerdictSha256,
         string PlanReviewDiffSha256,
+        string Qr9ApprovalPath,
+        string Qr9ApprovalSha256,
+        string Qr9ApprovalDecision,
+        string Qr9ApprovalScope,
         string PlanCheckpointId,
         string PlanCheckpointCommit);
 
@@ -2623,6 +2715,7 @@ public sealed class CodeGraphProviderContractTests
         string VerdictSha256,
         string SchemaVersion,
         string Gate,
+        long ReviewIteration,
         string Verdict,
         string ReviewedCommit,
         string ReviewedBaseCommit,
@@ -2630,6 +2723,10 @@ public sealed class CodeGraphProviderContractTests
         string ReviewedDiffSha256,
         IReadOnlyDictionary<string, string> ArtifactHashes,
         string[] OwnedPaths,
+        string Qr9ApprovalPath,
+        string Qr9ApprovalSha256,
+        string Qr9ApprovalDecision,
+        string Qr9ApprovalScope,
         string CheckpointId,
         string[] CheckpointMatches,
         string[] CheckpointTrailers,
