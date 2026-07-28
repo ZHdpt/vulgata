@@ -1044,6 +1044,16 @@ unchanged.
   Full analysis iteration 10 returned ACCEPT with no findings; it preserves
   both old outputs byte-for-byte, supersedes analysis 9 only for current
   progression, and permits a clean T001/T067 retry.
+- T001 and T067 now pass at clean immutable superseding analyzed-task commit
+  `826de50` / tree `923f2d3`. Provider/profiling is GREEN 116/116 and framework
+  detection is GREEN 58/58, with create-new raw outputs under the QR9
+  prerequisite directory. The Current-verification record preserves all prior
+  attempts, the exact unavailable pre-correction statement, plan-review-10 and
+  QR9 authorization bindings, analysis-10 acceptance, and immutable
+  iteration-9 invalidation artifacts. Only the T001/T067 markers and evidence
+  changed; T068 remains pending and is the next task.
+- T001/T067 prerequisite implementation checkpoint:
+  `bmad-4-2-implement-20260728T021545Z-a93861` (pending Git binding).
 - Superseding QR9 analyzed-tasks checkpoint:
   `bmad-4-2-analyze-20260728T015805Z-118bf8` (pending Git binding).
 - Accepted QR9 analyzed-tasks checkpoint:

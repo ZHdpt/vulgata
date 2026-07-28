@@ -8,19 +8,19 @@
   "feature_directory": "specs/002-language-framework-detection",
   "baseline_statement": "Pre-correction T001 baseline observation: unavailable",
   "passing_result_label": "Current verification",
-  "observed_at": "2026-07-27T16:24:41.2380922+08:00",
-  "recorded_at": "2026-07-27T08:25:15.7924094Z",
+  "observed_at": "2026-07-28T02:10:33.2687648+00:00",
+  "recorded_at": "2026-07-28T02:10:57.7490253+00:00",
   "source_boundary": {
-    "commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
-    "tree": "6042812d76cb1ef85082367e6faab2a6def575f7",
+    "commit": "826de50780dfeab3bb615589e71f1495c3c5da53",
+    "tree": "923f2d3a7d217f1fa38cb0a6ef013c9512cc47b0",
     "branch": "dev",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
-    "pinned_diff_boundary": "e9824df7300634c19d815bdd7ad591b9fb5366d5..d77c09671d4be870f16fedf8b73e3232b7882bc0",
+    "pinned_diff_boundary": "e292873c2e4e704782777d68361cd3be6f46affb..826de50780dfeab3bb615589e71f1495c3c5da53",
     "initial_tracked_status": [],
     "source_or_test_bytes_changed": false
   },
-  "accepted_plan_binding": {
+  "prior_accepted_plan_binding": {
     "checkpoint_id": "bmad-4-2-plan-binding-20260726T073452Z-d04e72",
     "checkpoint_commit": "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
     "checkpoint_tree": "54705660bde4e74decf8baaab32ca6046f420152",
@@ -46,7 +46,34 @@
     "supersedes_checkpoint_id": "bmad-4-2-plan-20260726T041520Z-3fbfd5",
     "replacement_binding_verified": true
   },
-  "analyze_binding": {
+  "accepted_plan_binding": {
+    "checkpoint_id": "bmad-4-2-plan-20260727T134009Z-b02d3f",
+    "checkpoint_commit": "3de522a42fc1cc77ae200da7596c8c3c5a1af421",
+    "checkpoint_tree": "19fdba1079022c4f68380fd0181984bbf6adb6c9",
+    "unique_trailer_match": true,
+    "ancestor_of_source_commit": true,
+    "mandatory_trailers": {
+      "BMad-Story": "4-2-language-and-framework-detection",
+      "Workflow-Scope": "story/4-2-language-and-framework-detection",
+      "Workflow-Stage": "plan-review",
+      "Workflow-Checkpoint": "bmad-4-2-plan-20260727T134009Z-b02d3f"
+    },
+    "verdict_path": "specs/002-language-framework-detection/reviews/plan-review-10.json",
+    "verdict_sha256": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+    "iteration": 10,
+    "verdict": "ACCEPT",
+    "reviewed_diff_sha256": "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba",
+    "reviewed_artifact_hashes": {
+      "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+      "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+      "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+      "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+      "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e"
+    },
+    "artifact_hash_map_matches": true,
+    "checkpoint_tree_artifact_hash_map_matches": true
+  },
+  "prior_analyze_binding": {
     "checkpoint_id": "bmad-4-2-analyze-20260726T045251Z-83fcc2",
     "checkpoint_commit": "c04a6b594f4e1bc89baa111d664ff355ffcc57be",
     "unique_trailer_match": true,
@@ -56,14 +83,36 @@
     "report_sha256": "d9d24ebdbec2a2f77eaf3c230c71ab13dba4f2848408a4078538fafd6fd78a34",
     "verdict": "ACCEPT"
   },
+  "analyze_binding": {
+    "checkpoint_id": "bmad-4-2-analyze-20260728T015805Z-118bf8",
+    "checkpoint_commit": "826de50780dfeab3bb615589e71f1495c3c5da53",
+    "checkpoint_tree": "923f2d3a7d217f1fa38cb0a6ef013c9512cc47b0",
+    "unique_trailer_match": true,
+    "source_commit_matches": true,
+    "ancestor_of_source_commit": true,
+    "mandatory_trailers": {
+      "BMad-Story": "4-2-language-and-framework-detection",
+      "Workflow-Scope": "story/4-2-language-and-framework-detection",
+      "Workflow-Stage": "analyze",
+      "Workflow-Checkpoint": "bmad-4-2-analyze-20260728T015805Z-118bf8"
+    },
+    "report_path": "specs/002-language-framework-detection/reviews/analyze-10.json",
+    "report_sha256": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd",
+    "iteration": 10,
+    "verdict": "ACCEPT",
+    "analyzed_tasks_sha256": "b776beca2e70bc6e851320a154fd2202ca20ec40bd8aedb6d348c9ca12efad91"
+  },
   "accepted_input_hashes": {
     "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
     "specs/002-language-framework-detection/checklists/requirements.md": "9494531bcd320317c2e74a7cae5cfef7a687e2664b09b11e442c3dae53276bf0",
-    "specs/002-language-framework-detection/data-model.md": "76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c",
+    "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+    "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+    "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+    "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
     "specs/002-language-framework-detection/contracts/provider-language-projection.md": "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b",
-    "specs/002-language-framework-detection/contracts/framework-detection.md": "74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181",
+    "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
     "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
-    "specs/002-language-framework-detection/tasks.md": "de43cfa1a229d863f51b87f72a4d06e1a591ed8a252651073537485f85300714"
+    "specs/002-language-framework-detection/tasks.md": "b776beca2e70bc6e851320a154fd2202ca20ec40bd8aedb6d348c9ca12efad91"
   },
   "planned_change_authorization": {
     "path": "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
@@ -77,6 +126,17 @@
     "decision": "approved",
     "scope_validated": true,
     "scope": "Namespace-closed XML evidence, bounded pinned-tree supported-artifact filtering, and stale authority reconciliation only; no Worker Agent/tool, orchestration, dispatch, PRD, persistence, API, UI, migration, or later-gate waiver."
+  },
+  "quality9_planned_change_authorization": {
+    "path": "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+    "sha256": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+    "commit": "a30f95ef792903ccb43cff5c5e1f42a100e155c7",
+    "commit_tree": "1776c6940b5ac7eed4728c8d0a4f1911cca39c99",
+    "ancestor_of_source_commit": true,
+    "decision": "approved",
+    "finding_id": "QR9-001",
+    "scope_validated": true,
+    "scope": "Exactly three literal project-level NuGet owner forms; nested or execution-dependent declarations produce zero Medium facts, one bounded redacted artifact-local audit, and do not suppress independent valid Repository evidence. No later gate is waived."
   },
   "attempts": [
     {
@@ -362,8 +422,126 @@
       "raw_output_path": "TestResults/story-4-2-current-verification-quality8-refresh/T001-framework-green.trx",
       "raw_output_sha256": "5eb95681410e6f53b672174ccc3cb7dc6e2226516a104e6b9f694abf305d96c4",
       "raw_output_length_bytes": 131836
+    },
+    {
+      "sequence": 14,
+      "target": "provider-profiling",
+      "kind": "test-green",
+      "label": "Current verification",
+      "source_commit": "826de50780dfeab3bb615589e71f1495c3c5da53",
+      "source_tree": "923f2d3a7d217f1fa38cb0a6ef013c9512cc47b0",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphContextProvider|FullyQualifiedName~RepositoryProfiling\"",
+      "exit_code": 0,
+      "observed_start_utc": "2026-07-28T02:08:58.4191947+00:00",
+      "observed_end_utc": "2026-07-28T02:09:34.1640754+00:00",
+      "test_totals": {
+        "failed": 0,
+        "passed": 116,
+        "skipped": 0,
+        "total": 116,
+        "reported_duration_seconds": 13
+      },
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality9-prerequisite/T001-provider-profiling-green.txt",
+      "raw_output_sha256": "d0a9917298e170e8b275a4ada4a39946aa8cd0bca5c9f201e9642c2f2b714ece",
+      "raw_output_length_bytes": 477867
+    },
+    {
+      "sequence": 15,
+      "target": "framework",
+      "kind": "test-green",
+      "label": "Current verification",
+      "source_commit": "826de50780dfeab3bb615589e71f1495c3c5da53",
+      "source_tree": "923f2d3a7d217f1fa38cb0a6ef013c9512cc47b0",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetection\"",
+      "exit_code": 0,
+      "observed_start_utc": "2026-07-28T02:09:50.4223362+00:00",
+      "observed_end_utc": "2026-07-28T02:10:33.2687648+00:00",
+      "test_totals": {
+        "failed": 0,
+        "passed": 58,
+        "skipped": 0,
+        "total": 58,
+        "reported_duration_seconds": 37
+      },
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality9-prerequisite/T001-framework-green.txt",
+      "raw_output_sha256": "255d003b709927dd0048bf638a72e49c6ae234e92ca0f92b53121b2f5286243b",
+      "raw_output_length_bytes": 18599
     }
   ],
+  "t067_authority_and_invalidation_verification": {
+    "task_id": "T067",
+    "kind": "artifact-hash",
+    "label": "Current verification",
+    "observed_at": "2026-07-28T02:10:57.7490253+00:00",
+    "source_commit": "826de50780dfeab3bb615589e71f1495c3c5da53",
+    "source_tree": "923f2d3a7d217f1fa38cb0a6ef013c9512cc47b0",
+    "plan_review_10": {
+      "path": "specs/002-language-framework-detection/reviews/plan-review-10.json",
+      "sha256": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+      "iteration": 10,
+      "verdict": "ACCEPT",
+      "reviewed_diff_sha256": "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba",
+      "five_file_artifact_map_matches": true
+    },
+    "qr9_authorization": {
+      "path": "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+      "sha256": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+      "decision": "approved",
+      "finding_id": "QR9-001",
+      "scope_bounded_to_qr9_001": true,
+      "authorization_commit": "a30f95ef792903ccb43cff5c5e1f42a100e155c7",
+      "authorization_commit_is_ancestor": true,
+      "later_gate_waivers": false
+    },
+    "current_analysis": {
+      "path": "specs/002-language-framework-detection/reviews/analyze-10.json",
+      "sha256": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd",
+      "iteration": 10,
+      "verdict": "ACCEPT",
+      "finding_count": 0,
+      "analyzed_tasks_sha256": "b776beca2e70bc6e851320a154fd2202ca20ec40bd8aedb6d348c9ca12efad91",
+      "contained_in_source_checkpoint": true
+    },
+    "preserved_iteration_9_invalidation_artifacts": [
+      {
+        "path": "specs/002-language-framework-detection/reviews/plan-review-9.json",
+        "git_blob_oid": "ecee804958799f96754966af9f7d550948dec542",
+        "sha256": "439a2f562c7b93554d0667b85fb9bb6bbafeefc12e96ab3ece8016977d08480b",
+        "verdict": "REVISE",
+        "finding_id": "PR9-001"
+      },
+      {
+        "path": "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+        "git_blob_oid": "de0318eff1456b36c8ffcc2ce0e7d4fc6fd0a526",
+        "sha256": "3317a8082d8936b3aa09d9ff7915cafefebc0a786835fa0c3b9b24ec06e84ef5",
+        "verdict": "REVISE",
+        "finding_id": "AR9-001"
+      },
+      {
+        "path": "specs/002-language-framework-detection/reviews/quality-review-9.json",
+        "git_blob_oid": "536b3d4359061656bfbdb121d646ff80d4ba3303",
+        "sha256": "649052b389b4f0685817c1598e2f7f48cb6ab363169005c97762a1077c88dc91",
+        "verdict": "REVISE",
+        "finding_id": "QR9-001"
+      },
+      {
+        "path": "specs/002-language-framework-detection/workflow-state.json",
+        "git_blob_oid": "31874aaa1169d3b81e9c972656bd8d0d8f4eb897",
+        "sha256": "3e2931d9571ea9ded7a9c0a9466519fbdf5251a7efeef4da2a57996e8ca93b91",
+        "stage": "implement",
+        "candidate_708b7df_invalidated": true
+      },
+      {
+        "path": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json",
+        "git_blob_oid": "036807de80e325c79bea25d8ce80dda1f7b964cf",
+        "sha256": "c9d6708dbad4fe71b686ef4ce664646ee0a25f374889bc8d6f5f30856d944ded",
+        "candidate_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
+        "classification": "invalidated-history-only"
+      }
+    ],
+    "candidate_708b7df_and_iteration_9_downstream_invalidated": true,
+    "production_or_test_bytes_changed": false
+  },
   "recovery_diagnosis": {
     "root_cause": "A transient corrupted generated Core reference assembly, not a source, test, network, or proxy defect.",
     "generated_reference_path": "src/dotnet/Vulgata.Core/obj/Debug/net10.0/ref/Vulgata.Core.dll",
@@ -383,7 +561,7 @@
   "network_proxy_status": {
     "blocked_urls_or_hosts": [],
     "clash_or_proxy_failure_observed": false,
-    "summary": "No blocked URL or host and no network, Clash, or proxy failure was observed in any retained passing command, including the quality-review-8 Current verification refresh."
+    "summary": "No blocked URL or host and no network, Clash, or proxy failure was observed in any retained passing command, including the quality9-prerequisite Current verification."
   },
-  "summary": "Current verification was refreshed at clean immutable commit d77c09671d4be870f16fedf8b73e3232b7882bc0 after the quality-review-8 correction and authority-hash alignment. Provider/profiling passed 116/116 and framework detection passed 57/57. All earlier attempts remain ordered and source-bound. No historical, pre-correction, RED, or contemporaneous-ordering claim is made."
+  "summary": "Current verification was refreshed at clean immutable superseding analyzed-task commit 826de50780dfeab3bb615589e71f1495c3c5da53. Provider/profiling passed 116/116 and framework detection passed 58/58. The exact plan-review-10 checkpoint, QR9 authorization, analyze-10 acceptance, and five iteration-9 invalidation artifacts were independently verified for T067. All earlier attempts remain ordered and source-bound. No historical, pre-correction, RED, or contemporaneous-ordering claim is made."
 }
