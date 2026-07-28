@@ -866,6 +866,47 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetTargetNestedOwner_RejectsLockWithOneClosedAuditAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "target-nested/App.csproj",
+            """
+            <Project>
+              <Target Name="CollectFrameworks">
+                <PackageReference Include="Example.Unmatched" Version="1.0.0" />
+              </Target>
+            </Project>
+            """);
+        repository.Write("target-nested/packages.lock.json", NuGetLockJson());
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult result =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "target-nested/src/Controller.cs",
+                "c_sharp",
+                GetProductionLimits());
+
+        Assert.True(result.Succeeded);
+        Assert.DoesNotContain(
+            result.Evidence,
+            evidence => evidence.Relationship == "Transitive");
+        Assert.Empty(result.Evidence);
+        DetectedAuditOutcome audit = Assert.Single(result.AuditOutcomes);
+        Assert.Equal(1, result.TotalAuditOutcomeCount);
+        Assert.Equal("target-nested/packages.lock.json", audit.ArtifactPath);
+        Assert.Equal("Skipped", audit.Outcome);
+        Assert.Equal("FrameworkEvidenceUnsupported", audit.Reason);
+        Assert.InRange(audit.Message.Length, 1, 32);
+        Assert.Matches("[\u4e00-\u9fff]", audit.Message);
+        Assert.DoesNotContain("Target", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("PackageReference", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Example.Unmatched", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Microsoft.AspNetCore.Mvc", audit.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DetectApplicableDetailedAsync_NuGetInvalidOwnerShapes_RejectLockWithOneClosedAuditAsync()
     {
         foreach ((string name, string project, string expectedReason) in new[]

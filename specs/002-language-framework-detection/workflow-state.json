@@ -729,23 +729,42 @@
         "TestResults/story-4-2-current-verification-quality9-prerequisite/T001-framework-green.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-28T02:24:29.9813376Z",
+      "completed_at": "2026-07-28T02:26:25.0066554Z",
+      "input_commit": "9b711a572a79d9c0ad9535af430f9a8558079729",
+      "input_hashes": {
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "1fc395e282bed06ea9fdf34338ec9c8d43cb2133487f4c9091f880d481a4d4cc",
+        "specs/002-language-framework-detection/tasks.md": "a5b5c9886ab7b43462881310c62740def2a1ecc78e1c7501eb789110f191e3fe",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "5067752aa4e392de16089a13067ab90f2e826c8a39a15aa1e9892db2821b7298",
+        "TestResults/story-4-2-quality9-correction/T068-target-owner-red.txt": "bce63a4980be307ec2651a03fa268282eed673fcee887228cbfbd5ae4aa30e4c"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "TestResults/story-4-2-quality9-correction/T068-target-owner-red.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "826de50780dfeab3bb615589e71f1495c3c5da53",
+    "preflight_head": "9b711a572a79d9c0ad9535af430f9a8558079729",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T001/T067 Current-verification evidence, two task markers, story development record, and workflow state only; ignored raw outputs are evidence and no unrelated paths exist.",
+    "worktree_status": "Story 4.2 T068 test-only behavior RED, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-28T02:15:45.9796715Z"
+    "observed_at": "2026-07-28T02:26:25.0066554Z"
   },
   "source_artifacts": [
     {
@@ -3356,24 +3375,40 @@
       "observed_at": "2026-07-28T02:15:45.9796715Z",
       "summary": "T001 and T067 pass at clean immutable superseding analyzed-task commit 826de50/tree 923f2d3. Provider/profiling passes 116/116 and framework detection passes 58/58. Exact plan-review-10 checkpoint/trailers/five-file map, QR9 approval, analysis-10, and five iteration-9 invalidation artifacts validate. The evidence preserves all prior attempts and makes no historical, pre-correction, RED, or contemporaneous-ordering claim. T068 remains pending.",
       "raw_output_path": "TestResults/story-4-2-current-verification-quality9-prerequisite/"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/108",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "9b711a572a79d9c0ad9535af430f9a8558079729",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "specs/002-language-framework-detection/tasks.md",
+        "TestResults/story-4-2-quality9-correction/T068-target-owner-red.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName=Vulgata.Tests.FrameworkDetectionTests.DetectApplicableDetailedAsync_NuGetTargetNestedOwner_RejectsLockWithOneClosedAuditAsync\" --logger \"console;verbosity=normal\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-28T02:26:25.0066554Z",
+      "summary": "T068 compiled, discovered, and produced the required behavior-level RED against unchanged FrameworkEvidenceDetector hash 5067752a. Assert.DoesNotContain failed because the Target-nested owner produced a forbidden transitive nuget:Microsoft.AspNetCore.Mvc fact from target-nested/packages.lock.json. No production or GREEN mutation occurred; T069 remains pending.",
+      "raw_output_path": "TestResults/story-4-2-quality9-correction/T068-target-owner-red.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T021545Z-a93861",
+    "checkpoint_id": "bmad-4-2-implement-20260728T022625Z-bce63a",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
       "specs/002-language-framework-detection/tasks.md",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/107"
+      "4-2-language-and-framework-detection/implement/108"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T02:15:45.9796715Z"
+  "updated_at": "2026-07-28T02:26:25.0066554Z"
 }

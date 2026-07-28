@@ -1052,6 +1052,14 @@ unchanged.
   QR9 authorization bindings, analysis-10 acceptance, and immutable
   iteration-9 invalidation artifacts. Only the T001/T067 markers and evidence
   changed; T068 remains pending and is the next task.
+- T068 now has an independently observed behavior-level RED at unchanged
+  production hash `5067752a`. The focused Target-nested `PackageReference`
+  test compiles and runs, then fails because the detector emits a forbidden
+  transitive `nuget:Microsoft.AspNetCore.Mvc` fact from the committed lock
+  file instead of zero facts and one bounded closed audit. Only the new test
+  and T068 marker changed; T069 remains pending and no GREEN work has started.
+- T068 Target-nested RED checkpoint:
+  `bmad-4-2-implement-20260728T022625Z-bce63a` (pending Git binding).
 - T001/T067 prerequisite implementation checkpoint:
   `bmad-4-2-implement-20260728T021545Z-a93861` (pending Git binding).
 - Superseding QR9 analyzed-tasks checkpoint:
