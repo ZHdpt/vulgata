@@ -1123,6 +1123,16 @@ unchanged.
   invalidated history only, with no new candidate, review, E2E, verification,
   manifest, namespace, image, T049, or T050 claim. T077 independent ledger
   validation is next.
+- T077 independently ACCEPTS the committed T076 ledger with zero findings and
+  explicitly permits T041. The fresh validator rederived 99 commits, 34/34
+  authority hashes, 83/83 immutable blobs, 91/91 raw hashes, 89/89 lengths,
+  31/31 asserted exit classifications, plan-review-10/QR9/analyze bindings,
+  RED-before-GREEN chronology, Current-verification separation, and all
+  invalidations/prohibitions. No ledger, Current-verification, source, test,
+  plan, or workflow byte was repaired by the validator. A fresh Full analysis
+  remains required before T041 candidate pinning.
+- T077 independent ledger ACCEPT checkpoint:
+  `bmad-4-2-implement-20260728T062428Z-b2c79c` (pending Git binding).
 - T076 truthful ledger regeneration checkpoint:
   `bmad-4-2-implement-20260728T035738Z-533e33` (pending Git binding).
 - T075 Current-verification refresh checkpoint:

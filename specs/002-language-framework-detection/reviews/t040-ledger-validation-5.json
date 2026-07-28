@@ -1,0 +1,200 @@
+{
+  "schema_version": "1.0",
+  "review_id": "t040-ledger-validation-5",
+  "gate": "ledger-validation",
+  "iteration": 5,
+  "task_id": "T077",
+  "story_key": "4-2-language-and-framework-detection",
+  "reviewer_identity": "fresh-independent-read-only-ledger-validator",
+  "verdict": "ACCEPT",
+  "observed_utc": "2026-07-28T06:24:28.9264281Z",
+  "pinned_boundary": {
+    "branch": "dev",
+    "commit": "ab8bb171cff147e36d7930f8d25cf0cb8a872263",
+    "tree": "7c9d0a4594e8802500812fef8b494b9a3e4128a1",
+    "initial_porcelain_status": [],
+    "ledger_path": "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "ledger_sha256": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+    "current_verification_path": "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+    "current_verification_sha256": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+    "tasks_path": "specs/002-language-framework-detection/tasks.md",
+    "tasks_sha256": "128f4991393fea919acb05a5488c7d37baca231b4fe0b12b3b23b9e01687fe15",
+    "verdict_path_was_absent": true
+  },
+  "commands_and_results": [
+    {
+      "id": "boundary",
+      "commands": [
+        "git rev-parse HEAD",
+        "git rev-parse 'HEAD^{tree}'",
+        "git status --porcelain=v1",
+        "Get-FileHash <ledger>,<current-verification>,<tasks> -Algorithm SHA256"
+      ],
+      "status": "PASS",
+      "result": "The exact dispatched commit, tree, clean status, three input hashes, and create-new verdict-path absence were reproduced."
+    },
+    {
+      "id": "source-range",
+      "commands": [
+        "git merge-base --is-ancestor e9824df7300634c19d815bdd7ad591b9fb5366d5 3078b03f15cd8dd0787a79c7be23b45bad31eae8",
+        "git rev-list --reverse e9824df7300634c19d815bdd7ad591b9fb5366d5..3078b03f15cd8dd0787a79c7be23b45bad31eae8",
+        "git rev-list --parents -n 1 <each-range-commit>",
+        "git rev-parse '3078b03f15cd8dd0787a79c7be23b45bad31eae8^{tree}'"
+      ],
+      "status": "PASS",
+      "result": {
+        "commit_count": 99,
+        "merge_commit_count": 0,
+        "nonlinear_commit_count": 0,
+        "source_tree": "27d69c6f71c2b6f8e62891366d1789753396bede",
+        "source_is_ancestor_of_pinned_boundary": true
+      }
+    },
+    {
+      "id": "authorities-blobs-checkpoints-and-raw-files",
+      "commands": [
+        "git rev-parse <commit>:<path>",
+        "git cat-file blob <git-blob-oid>",
+        "git show -s --format=%B <checkpoint-commit>",
+        "Get-FileHash <referenced-TestResults-path> -Algorithm SHA256"
+      ],
+      "status": "PASS",
+      "result": {
+        "authority_hashes": "34/34",
+        "immutable_blob_oids": "83/83",
+        "valid_checkpoint_trailer_sets": "43/43",
+        "legacy_missing_or_malformed_checkpoint_classifications": "4/4",
+        "observed_checkpoint_ids_unique": "47/47",
+        "range_checkpoint_ids_unique": "93/93",
+        "unique_raw_files_present_and_hash_validated": "91/91",
+        "asserted_raw_lengths_validated": "89/89",
+        "asserted_exit_classifications_validated": "31/31"
+      }
+    },
+    {
+      "id": "plan-review-10-binding",
+      "commands": [
+        "git diff --binary --full-index --no-ext-diff --no-renames fab80f9334b7f2132bc270c9ce99e433b3d77513 3de522a42fc1cc77ae200da7596c8c3c5a1af421 -- specs/002-language-framework-detection/plan.md specs/002-language-framework-detection/research.md specs/002-language-framework-detection/data-model.md specs/002-language-framework-detection/contracts/framework-detection.md specs/002-language-framework-detection/quickstart.md",
+        "git log --all --format=%H%x00%B%x00END",
+        "git merge-base --is-ancestor 3de522a42fc1cc77ae200da7596c8c3c5a1af421 3078b03f15cd8dd0787a79c7be23b45bad31eae8"
+      ],
+      "status": "PASS",
+      "result": {
+        "verdict_path": "specs/002-language-framework-detection/reviews/plan-review-10.json",
+        "verdict_sha256": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+        "iteration": 10,
+        "verdict": "ACCEPT",
+        "reviewed_diff_length_bytes": 52541,
+        "reviewed_diff_sha256": "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba",
+        "five_file_artifact_map_exact": true,
+        "checkpoint_id": "bmad-4-2-plan-20260727T134009Z-b02d3f",
+        "checkpoint_commit": "3de522a42fc1cc77ae200da7596c8c3c5a1af421",
+        "checkpoint_unique": true,
+        "four_mandatory_trailers_exact": true,
+        "checkpoint_is_ancestor": true
+      }
+    },
+    {
+      "id": "qr9-and-analysis-binding",
+      "commands": [
+        "git rev-parse 3078b03f15cd8dd0787a79c7be23b45bad31eae8:<QR9-or-analyze-path>",
+        "git cat-file blob <QR9-or-analyze-blob-oid>",
+        "git merge-base --is-ancestor a30f95ef792903ccb43cff5c5e1f42a100e155c7 3078b03f15cd8dd0787a79c7be23b45bad31eae8",
+        "git merge-base --is-ancestor 826de50780dfeab3bb615589e71f1495c3c5da53 3078b03f15cd8dd0787a79c7be23b45bad31eae8"
+      ],
+      "status": "PASS",
+      "result": {
+        "qr9_path": "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+        "qr9_sha256": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+        "qr9_decision": "approved",
+        "qr9_scope_exactly_one_finding": "QR9-001",
+        "qr9_later_gate_waivers": false,
+        "analyze_path": "specs/002-language-framework-detection/reviews/analyze-10.json",
+        "analyze_sha256": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd",
+        "analyze_iteration": 10,
+        "analyze_verdict": "ACCEPT",
+        "analyze_findings": 0,
+        "analyzed_tasks_sha256": "b776beca2e70bc6e851320a154fd2202ca20ec40bd8aedb6d348c9ca12efad91"
+      }
+    },
+    {
+      "id": "quality9-chronology",
+      "commands": [
+        "git rev-parse <checkpoint-commit>^",
+        "git merge-base --is-ancestor <earlier-checkpoint> <later-checkpoint>",
+        "git show -s --format=%B <checkpoint-commit>",
+        "read exact retained T068-T075 raw outputs and classify their asserted totals and exit results"
+      ],
+      "status": "PASS",
+      "result": {
+        "chronology_entries": 10,
+        "t068_red_before_t071_green": true,
+        "t069_red_before_t071_green": true,
+        "t070_red_before_t072_green": true,
+        "t073_green": "5/5",
+        "t074_first_attempt": "capture-harness-failure-only; five files contain no test/build result claim",
+        "t074_attempt_0002": "binding 17/17, Framework Detection 61/61, surrounding 57/57, full non-image 523/523, authorization/redaction 4/4, Web build success, FR-020/diff/status success",
+        "t075_sequences": [
+          16,
+          17,
+          18
+        ],
+        "t075_is_current_verification_only": true,
+        "pre_correction_t001_baseline": "unavailable"
+      }
+    },
+    {
+      "id": "legacy-and-invalidation-boundaries",
+      "commands": [
+        "git log --reverse --format=%H -S<test-identity> e9824df7300634c19d815bdd7ad591b9fb5366d5..3078b03f15cd8dd0787a79c7be23b45bad31eae8 -- <test-path>",
+        "git show <claimed-commit>:<test-path>",
+        "parse workflow-state.json and iteration-9 verdicts at the immutable source boundary"
+      ],
+      "status": "PASS",
+      "result": {
+        "legacy_groups": 19,
+        "cited_test_identities": 74,
+        "literal_first_additions_in_story_range": 73,
+        "p1_complete_runner_verifier_fixture_milestone": "ba50c8c213929a44a66931fb6d0b420aea55b528",
+        "legacy_raw_red_available": "0/19",
+        "legacy_checkpoint_available": "5/19",
+        "legacy_checkpoint_unavailable_with_reason": "14/19",
+        "candidate_708b7df_invalidated_history_only": true,
+        "iteration_9_plan_acceptance_quality_reviews_invalidated_history_only": true,
+        "current_workflow_candidate_absent": true,
+        "current_review_gates_invalidated": true,
+        "coverage_ids": "R1-R17, AR9-001, QR9-001, PR9-001",
+        "coverage_count": "20/20"
+      }
+    }
+  ],
+  "findings": [],
+  "t041_permission": true,
+  "permission_statement": "T041 is permitted only after the root validates and durably records this exact ACCEPT verdict and T077 marker against the unchanged pinned inputs. No duplicate user approval is required.",
+  "prohibitions_confirmed": {
+    "fabricated_evidence": false,
+    "backdated_evidence": false,
+    "amended_history": false,
+    "historical_relabel_of_current_result": false,
+    "pre_correction_t001_reconstruction": false,
+    "contemporaneous_order_inference_from_co_presence": false,
+    "new_candidate_claim": false,
+    "new_acceptance_or_quality_review_claim": false,
+    "new_e2e_or_verification_claim": false,
+    "new_manifest_namespace_image_t049_or_t050_claim": false,
+    "ledger_or_current_verification_repair_by_validator": false
+  },
+  "read_only_boundary_confirmation": {
+    "ledger_changed": false,
+    "current_verification_changed": false,
+    "source_or_test_changed": false,
+    "plan_spec_contract_story_or_workflow_changed": false,
+    "candidate_or_review_changed": false,
+    "index_or_staging_changed": false,
+    "commit_or_git_history_changed": false,
+    "allowed_output_writes": [
+      "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json",
+      "specs/002-language-framework-detection/tasks.md T077 marker only"
+    ]
+  }
+}
