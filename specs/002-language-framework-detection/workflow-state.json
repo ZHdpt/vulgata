@@ -3511,24 +3511,40 @@
       "observed_at": "2026-07-28T03:17:37.2375913Z",
       "summary": "T072 updates only the executable accepted-plan resolver and canonical claim. The exact T070 focused set passes 17/17, and the rejection matrix passes 24/24. Plan-review 10, its checkpoint, reviewed diff, all five accepted artifact hashes, and the exact QR9 approval path/SHA-256/decision/scope are mandatory; plan-review 8/9 and absent or wrong QR9 bindings are rejected. No production, provider, schema, or API behavior changed. T073 remains pending.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T072-plan-review-10-binding-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/113",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "52e2e1c03c18350e2af775f4129cf21b368fa0c2",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "specs/002-language-framework-detection/tasks.md",
+        "TestResults/story-4-2-quality9-correction/T073-owner-grammar-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter <T068|T069|root-Project-Sdk|direct-Project-Sdk|direct-ItemGroup-reference exact focused set> --logger \"console;verbosity=normal\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T03:24:53.3106694Z",
+      "summary": "T073 passes 5/5 focused owner-grammar cases. Root Project Sdk, direct Project/Sdk, and direct project-level ItemGroup references retain eligible lock evidence. Target and Choose/When nested declarations emit zero invalid NuGet facts, exactly one bounded redacted closed audit each, and preserve independent npm Repository evidence. The production detector hash remains 7b9d615a. T074 remains pending.",
+      "raw_output_path": "TestResults/story-4-2-quality9-correction/T073-owner-grammar-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T031737Z-e7069f",
+    "checkpoint_id": "bmad-4-2-implement-20260728T032453Z-c46af6",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/112"
+      "4-2-language-and-framework-detection/implement/113"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T03:17:37.2375913Z"
+  "updated_at": "2026-07-28T03:24:53.3106694Z"
 }

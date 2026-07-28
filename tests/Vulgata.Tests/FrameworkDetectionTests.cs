@@ -866,6 +866,66 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetDirectProjectSdkOwner_AllowsEligibleLockAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "direct-sdk/App.csproj",
+            """
+            <Project>
+              <Sdk Name="Microsoft.NET.Sdk" />
+            </Project>
+            """);
+        repository.Write("direct-sdk/packages.lock.json", NuGetLockJson());
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult result =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "direct-sdk/src/Controller.cs",
+                "c_sharp",
+                GetProductionLimits());
+
+        Assert.True(result.Succeeded);
+        DetectedEvidence winner = Assert.Single(result.Evidence);
+        Assert.Equal("nuget:Microsoft.AspNetCore.Mvc", winner.PackageCoordinate);
+        Assert.Equal("Transitive", winner.Relationship);
+        Assert.Empty(result.AuditOutcomes);
+    }
+
+    [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetDirectItemGroupFrameworkReferenceOwner_AllowsEligibleLockAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "direct-framework-reference/App.csproj",
+            """
+            <Project>
+              <ItemGroup>
+                <FrameworkReference Include="Example.Unmatched" />
+              </ItemGroup>
+            </Project>
+            """);
+        repository.Write(
+            "direct-framework-reference/packages.lock.json",
+            NuGetLockJson());
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult result =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "direct-framework-reference/src/Controller.cs",
+                "c_sharp",
+                GetProductionLimits());
+
+        Assert.True(result.Succeeded);
+        DetectedEvidence winner = Assert.Single(result.Evidence);
+        Assert.Equal("nuget:Microsoft.AspNetCore.Mvc", winner.PackageCoordinate);
+        Assert.Equal("Transitive", winner.Relationship);
+        Assert.Empty(result.AuditOutcomes);
+    }
+
+    [Fact]
     public async Task DetectApplicableDetailedAsync_NuGetTargetNestedOwner_RejectsLockWithOneClosedAuditAsync()
     {
         using var repository = new GitFixture();

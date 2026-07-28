@@ -1084,6 +1084,14 @@ unchanged.
   path, bytes, decision, and scope; plan-review 8/9 and incomplete QR9 claims
   are rejected. No production, provider, schema, or API behavior changed.
   T073 remains pending.
+- T073 explicitly closes the owner-grammar regression boundary. Five focused
+  cases pass: root `Project Sdk`, direct `Project/Sdk`, and direct
+  project-level `ItemGroup` references remain valid, while Target and
+  Choose/When nesting yield zero invalid NuGet facts, one bounded redacted
+  closed audit each, and preserved independent Repository evidence. The
+  production detector is byte-identical. T074 broad validation is next.
+- T073 explicit owner-shape regression checkpoint:
+  `bmad-4-2-implement-20260728T032453Z-c46af6` (pending Git binding).
 - T072 plan-review-10 and QR9 binding GREEN checkpoint:
   `bmad-4-2-implement-20260728T031737Z-e7069f` (pending Git binding).
 - T071 owner-grammar GREEN checkpoint:
