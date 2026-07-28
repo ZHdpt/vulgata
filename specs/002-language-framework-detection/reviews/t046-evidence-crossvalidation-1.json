@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "gate": "evidence-crossvalidation",
+  "iteration": 1,
+  "task_id": "T046",
+  "verdict": "ACCEPT",
+  "observed_at": "2026-07-28T08:17:32.8752866Z",
+  "reviewer_role": "artifact-analyst",
+  "read_only_confirmation": true,
+  "source_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+    "candidate_tree": "422c586c9cf83f6cbd4fe76c81449a3ad8e3cbf8",
+    "candidate_parent": "6b263d5f81cdbe3539ee8a4b60cf39cd27afada6",
+    "binary_diff_length_bytes": 2170074,
+    "binary_diff_sha256": "e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab",
+    "owned_path_count": 105,
+    "candidate_record_sha256": "d01702dee7265156bc0d1ed9edcbd141f3bac4445ceb1112bd5d704c8565b3b2",
+    "candidate_drift": false
+  },
+  "validated_bindings": {
+    "historical_tdd_ledger_sha256": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+    "current_verification_sha256": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+    "t077_verdict_sha256": "b2c79cb4a2498e3ecf65f2cb0ef46e35ca03f9ffbed11fc54ae6e048654ec197",
+    "plan_review_10_sha256": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+    "qr9_authorization_sha256": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+    "acceptance_review_10_sha256": "3896aed71c51b9fac97c66aef6786db9a3938b8905d624a4cf2ed9f11907d4dd",
+    "quality_review_10_sha256": "4b57f03667da606124cb9b40fca08307679155126eb8621b022845c2e1905a83"
+  },
+  "recomputed_counts": {
+    "ledger_commits": 99,
+    "merge_commits": 0,
+    "authority_hashes": "34/34",
+    "immutable_git_blobs": "83/83",
+    "raw_sha256_identities": "91/91",
+    "asserted_raw_lengths": "89/89",
+    "asserted_exit_classifications": "31/31",
+    "candidate_paths": "105/105",
+    "candidate_present_blobs": "104/104",
+    "candidate_deletion_tombstones": "1/1"
+  },
+  "current_results": {
+    "t075_provider_profiling": "116/116",
+    "t075_framework_detection": "62/62",
+    "t075_plan_qr9_binding": "17/17",
+    "t044_e2e": "210/210",
+    "t045_provider_profiling": "116/116",
+    "t045_framework_detection": "62/62",
+    "t045_plan_qr9_binding": "17/17",
+    "t045_full_non_final_image": "523/523",
+    "t045_authorization_redaction": "33/33",
+    "t045_web_build": "0 errors, 9 existing warnings",
+    "t045_migrations": "forward and reverse order valid",
+    "t045_pending_model_changes": false,
+    "t045_fr020_forbidden_changes": 0
+  },
+  "capture_classification": {
+    "t044_header_only_115_bytes": "harness-failure-only",
+    "t044_attempt_0002": "valid-current-green",
+    "t045_text_path_binary_identity": "harness-failure-only",
+    "t045_initial_empty_success_capture": "harness-failure-only",
+    "t045_attempt_0002_empty_success_wrappers": "harness-failure-only",
+    "t045_byte_exact_identity_attempt_0002": "valid-current-identity",
+    "t045_diff_and_status_attempt_0003": "valid-current-green"
+  },
+  "post_pin_validation": {
+    "lifecycle_only_commits_after_candidate": 4,
+    "production_source_mutated": false,
+    "tests_mutated": false,
+    "contracts_mutated": false,
+    "accepted_plan_set_mutated": false,
+    "ledger_mutated": false,
+    "current_verification_mutated": false,
+    "docker_context_authority_mutated": false,
+    "tracked_status_clean": true
+  },
+  "task_state_observed": {
+    "unique_task_count": 77,
+    "checked_before_t046_record": 72,
+    "pending_before_t046_record": 5,
+    "t041_through_t045_checked": true,
+    "t046_pending_during_read_only_review": true,
+    "t047_through_t050_pending": true
+  },
+  "findings": [],
+  "summary": "T046 independently accepts the finalized ledger, Current verification, T077 verdict, immutable candidate, both Full reviews, E2E, and pre-image verification with zero findings. Failed capture methods remain harness-only history and no success claim depends on them. No post-pin candidate-bound mutation exists. T047 fresh manifest and image work may begin.",
+  "t047_image_work_may_begin": true,
+  "blocked_urls": []
+}

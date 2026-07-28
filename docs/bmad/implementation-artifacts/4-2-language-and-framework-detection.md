@@ -1187,6 +1187,16 @@ unchanged.
   observed.
 - T045 verification checkpoint:
   `bmad-4-2-verification-20260728T080359Z-07fa3b` (pending Git binding).
+- T046 independent read-only cross-validation ACCEPTS with zero findings. It
+  rederived 99 commits with zero merges, 34/34 authorities, 83/83 immutable
+  blobs, 91/91 raw identities, 89/89 asserted sizes, 31/31 exit
+  classifications, all 105 candidate paths, both Full reviews, current E2E,
+  and all pre-image verification results. Harness failures remain isolated
+  from success evidence. Exactly four post-pin lifecycle-only commits changed
+  no candidate-bound source, tests, contracts, accepted plan set, ledger,
+  Current verification, or Docker authority. T047 image work may begin.
+- T046 cross-validation checkpoint:
+  `bmad-4-2-verification-20260728T081732Z-t046ac` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:

@@ -3970,24 +3970,38 @@
       "observed_at": "2026-07-28T08:03:59.3375403Z",
       "summary": "T045 passed at unchanged candidate 00bdb87/tree 422c586: provider/profiling 116/116, FrameworkDetection 62/62, plan-review-10/QR9 binding 17/17, full non-final-image 523/523, and authorization/redaction 33/33. Web build passed with 9 existing warnings and zero errors. Forward migrations order AddLanguageFrameworkDetection before FrameworkEvidenceAuditCount; idempotent rollback reverses that order; no pending model changes exist. FR-020 has no forbidden Scan Coordinator, orchestration, Worker Agent/tool, scheduling/grouping/retry, or dispatch change; RepositoryProfilingCoordinator is the accepted integration seam. Corrected byte-exact identity confirms diff SHA-256 e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab and 2,170,074 bytes. Attempt-0003 diff check and tracked status are clean. Final-image identity remains T047-T048.",
       "raw_output_path": "TestResults/story-4-2-final-verification-quality9/T045-full-non-final-image.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/verification/127",
+      "kind": "review",
+      "stage": "verification",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/t046-evidence-crossvalidation-1.json"
+      ],
+      "command": "Fresh independent read-only Git/blob/hash/raw/capture/task-state cross-validation of T041-T045 and the finalized ledger",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T08:17:32.8752866Z",
+      "summary": "T046 ACCEPTS with zero findings. It independently rederived 99 commits with zero merges, 34/34 authorities, 83/83 immutable blobs, 91/91 raw identities, 89/89 asserted sizes, 31/31 exit classifications, all 105 candidate paths, both iteration-10 Full reviews, T044 210/210, and all T045 results. Harness-only captures remain separated from current success evidence. Exactly four post-pin lifecycle-only commits changed no candidate-bound source, tests, contracts, accepted plan set, ledger, Current verification, or Docker authority. T047 may begin.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-verification-20260728T080359Z-07fa3b",
+    "checkpoint_id": "bmad-4-2-verification-20260728T081732Z-t046ac",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "verification",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/reviews/t046-evidence-crossvalidation-1.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/verification/125",
-      "4-2-language-and-framework-detection/verification/126"
+      "4-2-language-and-framework-detection/verification/127"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T08:03:59.3375403Z"
+  "updated_at": "2026-07-28T08:17:32.8752866Z"
 }
