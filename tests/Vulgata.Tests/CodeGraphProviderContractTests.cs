@@ -91,6 +91,72 @@ public sealed class CodeGraphProviderContractTests
     public void AcceptedCorrectionManifest_IsCanonicalAndArtifactBound()
     {
         string repositoryRoot = FindRepositoryRoot();
+        const string planReviewPath =
+            "specs/002-language-framework-detection/reviews/plan-review-10.json";
+        const string planReviewSha256 =
+            "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be";
+        const string planReviewDiffSha256 =
+            "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba";
+        const string qr9ApprovalPath =
+            "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json";
+        const string qr9ApprovalSha256 =
+            "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459";
+        var acceptedPlanArtifactHashes = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["specs/002-language-framework-detection/plan.md"] =
+                "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+            ["specs/002-language-framework-detection/research.md"] =
+                "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+            ["specs/002-language-framework-detection/data-model.md"] =
+                "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+            ["specs/002-language-framework-detection/contracts/framework-detection.md"] =
+                "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+            ["specs/002-language-framework-detection/quickstart.md"] =
+                "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
+        };
+
+        byte[] planReviewBytes = File.ReadAllBytes(Path.Combine(
+            repositoryRoot,
+            planReviewPath.Replace('/', Path.DirectorySeparatorChar)));
+        Assert.Equal(planReviewSha256, Hash(planReviewBytes));
+        using (JsonDocument planReview = JsonDocument.Parse(planReviewBytes))
+        {
+            Assert.Equal(10, planReview.RootElement.GetProperty("iteration").GetInt32());
+            Assert.Equal("ACCEPT", planReview.RootElement.GetProperty("verdict").GetString());
+            JsonElement reviewedBoundary = planReview.RootElement.GetProperty("reviewed_boundary");
+            Assert.Equal(
+                planReviewDiffSha256,
+                reviewedBoundary.GetProperty("diff_sha256").GetString());
+            JsonElement reviewedArtifactHashes = reviewedBoundary.GetProperty("artifact_hashes");
+            Assert.Equal(acceptedPlanArtifactHashes.Count, reviewedArtifactHashes.EnumerateObject().Count());
+            foreach ((string path, string sha256) in acceptedPlanArtifactHashes)
+            {
+                Assert.Equal(sha256, reviewedArtifactHashes.GetProperty(path).GetString());
+                Assert.Equal(
+                    sha256,
+                    Hash(File.ReadAllBytes(Path.Combine(
+                        repositoryRoot,
+                        path.Replace('/', Path.DirectorySeparatorChar)))));
+            }
+        }
+
+        byte[] qr9ApprovalBytes = File.ReadAllBytes(Path.Combine(
+            repositoryRoot,
+            qr9ApprovalPath.Replace('/', Path.DirectorySeparatorChar)));
+        Assert.Equal(qr9ApprovalSha256, Hash(qr9ApprovalBytes));
+        using (JsonDocument qr9Approval = JsonDocument.Parse(qr9ApprovalBytes))
+        {
+            Assert.Equal("approved", qr9Approval.RootElement.GetProperty("decision").GetString());
+            JsonElement[] approvedRemediation = qr9Approval.RootElement
+                .GetProperty("approved_remediation")
+                .EnumerateArray()
+                .ToArray();
+            Assert.Single(approvedRemediation);
+            Assert.Equal(
+                "QR9-001",
+                approvedRemediation[0].GetProperty("finding_id").GetString());
+        }
+
         string finalImageId = "sha256:" + new string('a', 64);
         string sourceCommit = RunGitValue(repositoryRoot, ["rev-parse", "HEAD"], "resolve source commit");
         string sourceTree = RunGitValue(repositoryRoot, ["rev-parse", "HEAD^{tree}"], "resolve source tree");
@@ -116,20 +182,32 @@ public sealed class CodeGraphProviderContractTests
         using JsonDocument manifest = JsonDocument.Parse(first);
         Assert.False(manifest.RootElement.TryGetProperty("reviewIdentity", out _));
         Assert.Equal(
-            "specs/002-language-framework-detection/reviews/plan-review-8.json",
+            planReviewPath,
             manifest.RootElement.GetProperty("planReviewVerdictPath").GetString());
         Assert.Equal(
-            "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+            planReviewSha256,
             manifest.RootElement.GetProperty("planReviewVerdictSha256").GetString());
         Assert.Equal(
-            "b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79",
+            planReviewDiffSha256,
             manifest.RootElement.GetProperty("planReviewDiffSha256").GetString());
         Assert.Equal(
-            "bmad-4-2-plan-binding-20260726T073452Z-d04e72",
+            "bmad-4-2-plan-20260727T134009Z-b02d3f",
             manifest.RootElement.GetProperty("planCheckpointId").GetString());
         Assert.Equal(
-            "36bd6cccdba1fa341eddc8096a5c2269c62c3118",
+            "3de522a42fc1cc77ae200da7596c8c3c5a1af421",
             manifest.RootElement.GetProperty("planCheckpointCommit").GetString());
+        Assert.Equal(
+            qr9ApprovalPath,
+            manifest.RootElement.GetProperty("qr9ApprovalPath").GetString());
+        Assert.Equal(
+            qr9ApprovalSha256,
+            manifest.RootElement.GetProperty("qr9ApprovalSha256").GetString());
+        Assert.Equal(
+            "approved",
+            manifest.RootElement.GetProperty("qr9ApprovalDecision").GetString());
+        Assert.Equal(
+            "QR9-001",
+            manifest.RootElement.GetProperty("qr9ApprovalScope").GetString());
         string checkpointMessage = RunGitValue(
             repositoryRoot,
             [
@@ -143,7 +221,7 @@ public sealed class CodeGraphProviderContractTests
                      "BMad-Story: 4-2-language-and-framework-detection",
                      "Workflow-Scope: story/4-2-language-and-framework-detection",
                      "Workflow-Stage: plan-review",
-                     "Workflow-Checkpoint: bmad-4-2-plan-binding-20260726T073452Z-d04e72",
+                     "Workflow-Checkpoint: bmad-4-2-plan-20260727T134009Z-b02d3f",
                  })
         {
             Assert.Equal(

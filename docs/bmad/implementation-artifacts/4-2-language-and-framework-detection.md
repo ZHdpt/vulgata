@@ -1064,6 +1064,14 @@ unchanged.
   then fails because the invalid NuGet owner still emits a forbidden
   transitive framework fact. Only the new test and T069 marker changed; T070
   remains pending and production is still untouched.
+- T070 now has the independent stale-binding RED. Exact assertions for
+  plan-review 10, the five accepted plan hashes, checkpoint identity, and the
+  QR9 approval compile and run; 6/17 focused cases fail because the canonical
+  hashes and manifest remain bound to plan-review 8 with no QR9 claim fields.
+  Only the assertion surface and T070 marker changed; the resolver/constants
+  remain intentionally stale and T071/T072 are pending.
+- T070 plan-review-10 binding RED checkpoint:
+  `bmad-4-2-implement-20260728T025054Z-81c2f6` (pending Git binding).
 - T069 Choose/When-nested RED checkpoint:
   `bmad-4-2-implement-20260728T023613Z-5e6546` (pending Git binding).
 - T068 Target-nested RED checkpoint:

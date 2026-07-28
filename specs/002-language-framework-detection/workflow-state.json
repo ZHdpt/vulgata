@@ -767,23 +767,41 @@
         "TestResults/story-4-2-quality9-correction/T069-choose-when-owner-red.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-28T02:47:43.0799066Z",
+      "completed_at": "2026-07-28T02:50:54.3212297Z",
+      "input_commit": "e928048fcb6c7b23403d30358d6cc777ad408eb3",
+      "input_hashes": {
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "93c6c6ac0cb91d63f3ce48cbf1c379173c9b5201cb98ff743aff8ddbfd59e1ee",
+        "specs/002-language-framework-detection/tasks.md": "c04a2ef2bc359e784a4df704726f40ddc2f372db5d5682259b05bac1667f23d7",
+        "TestResults/story-4-2-quality9-correction/T070-plan-review-10-binding-red.txt": "81c2f61e747c218702ae1e44b1bd357f1cf22fdea9fae365863ac8fe2db55599"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "TestResults/story-4-2-quality9-correction/T070-plan-review-10-binding-red.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "a7027d2f8fb34be322f782427c6cdf1d861bf157",
+    "preflight_head": "e928048fcb6c7b23403d30358d6cc777ad408eb3",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T069 test-only behavior RED, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
+    "worktree_status": "Story 4.2 T070 assertion-only stale-binding RED, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-28T02:36:13.8358082Z"
+    "observed_at": "2026-07-28T02:50:54.3212297Z"
   },
   "source_artifacts": [
     {
@@ -3426,24 +3444,40 @@
       "observed_at": "2026-07-28T02:36:13.8358082Z",
       "summary": "T069 compiled, discovered, and produced the required separate behavior RED at unchanged production hash 5067752a. The independent direct npm:react Repository fact was asserted first; Assert.DoesNotContain then failed because the Choose/When-nested owner emitted a forbidden transitive NuGet fact. No production or GREEN mutation occurred; T070 remains pending.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T069-choose-when-owner-red.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/110",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "e928048fcb6c7b23403d30358d6cc777ad408eb3",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "specs/002-language-framework-detection/tasks.md",
+        "TestResults/story-4-2-quality9-correction/T070-plan-review-10-binding-red.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~CodeGraphProviderContractTests.HashBoundFile_WindowsCheckout_PreservesCanonicalLfBytes|FullyQualifiedName~CodeGraphProviderContractTests.AcceptedCorrectionManifest_IsCanonicalAndArtifactBound\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-28T02:50:54.3212297Z",
+      "summary": "T070 compiled and produced the required exact-binding RED: 17 focused cases ran, 11 passed, and 6 assertion cases failed because all five canonical plan hashes remain stale and the manifest expected plan-review-10 but emitted plan-review-8. The resolver/constants and canonical builder remain intentionally unchanged; T071 and T072 are pending.",
+      "raw_output_path": "TestResults/story-4-2-quality9-correction/T070-plan-review-10-binding-red.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T023613Z-5e6546",
+    "checkpoint_id": "bmad-4-2-implement-20260728T025054Z-81c2f6",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/109"
+      "4-2-language-and-framework-detection/implement/110"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T02:36:13.8358082Z"
+  "updated_at": "2026-07-28T02:50:54.3212297Z"
 }
