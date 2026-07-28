@@ -3984,24 +3984,60 @@
       "observed_at": "2026-07-28T08:17:32.8752866Z",
       "summary": "T046 ACCEPTS with zero findings. It independently rederived 99 commits with zero merges, 34/34 authorities, 83/83 immutable blobs, 91/91 raw identities, 89/89 asserted sizes, 31/31 exit classifications, all 105 candidate paths, both iteration-10 Full reviews, T044 210/210, and all T045 results. Harness-only captures remain separated from current success evidence. Exactly four post-pin lifecycle-only commits changed no candidate-bound source, tests, contracts, accepted plan set, ledger, Current verification, or Docker authority. T047 may begin.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/128",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness.txt",
+        "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness-attempt-0003.txt",
+        "TestResults/story-4-2-final-image-quality9/T047-production-source-manifest-attempt-0004.json",
+        "TestResults/story-4-2-final-image-quality9/T047-production-source-manifest-attempt-0005.json"
+      ],
+      "command": "Initial detached-worktree --no-restore harness; incomplete obj copy; inline and file-based canonical-manifest generator attempts",
+      "exit_code": null,
+      "observed_at": "2026-07-28T08:43:14.9090000Z",
+      "summary": "T047 preserved environment and generator-harness failures without promoting them. The fresh detached worktree initially lacked restored obj assets, so dotnet test skipped the test project with zero native bytes; a partial asset copy then failed NETSDK1004. Later generator attempts failed at PowerShell parse time, byte-array enumeration, and ambiguous JsonDocument overload selection. Two partial manifest-only files are retained as invalid attempts. No assertion failure, product failure, namespace consumption, image build, provider execution, or candidate mutation occurred.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/129",
+      "kind": "test-green",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T047-restore-attempt-0004.txt",
+        "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness-attempt-0004.txt",
+        "TestResults/story-4-2-final-image-quality9/T047-production-source-manifest-attempt-0006.json",
+        "TestResults/story-4-2-final-image-quality9/T047-accepted-correction-input-attempt-0006.json",
+        "TestResults/story-4-2-final-image-quality9/T047-state-attempt-0006.json",
+        "TestResults/story-4-2-final-image-quality9/T047-test-observer-verdict.json"
+      ],
+      "command": "Isolated restore; exact SourceBindingPreflight/CreateProductionSourceManifest tests; double canonical manifest generation; reflection-based exact test-method byte comparison; fresh namespace proof",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T08:43:24.2329818Z",
+      "summary": "T047 passed at detached candidate 00bdb87/tree 422c586. Restore completed without a blocked URL; the exact non-Docker harness passed 18/18. Two manifest generations were byte-identical, and the test assembly's private CreateProductionSourceManifest observer independently produced the same 132,104 bytes and SHA-256 0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138 across 904 sorted entries. Canonical accepted-correction input is 1,230 bytes; its exact SHA-256 a9f2805eec37b8859b7aaf52d3cde8cc98227a49cd5bfebfed821ff5c86d3a6a is the fresh namespace, absent in both candidate worktree and main checkout. Both tracked statuses are clean. No image or provider action occurred; T048 may build.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness-attempt-0004.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-verification-20260728T081732Z-t046ac",
+    "checkpoint_id": "bmad-4-2-manifest-20260728T084324Z-0d5074",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "verification",
+    "stage": "final-image",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/reviews/t046-evidence-crossvalidation-1.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/verification/127"
+      "4-2-language-and-framework-detection/final-image/128",
+      "4-2-language-and-framework-detection/final-image/129"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T08:17:32.8752866Z"
+  "updated_at": "2026-07-28T08:43:24.2329818Z"
 }

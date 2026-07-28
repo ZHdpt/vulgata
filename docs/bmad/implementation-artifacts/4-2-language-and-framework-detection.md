@@ -1197,6 +1197,24 @@ unchanged.
   Current verification, or Docker authority. T047 image work may begin.
 - T046 cross-validation checkpoint:
   `bmad-4-2-verification-20260728T081732Z-t046ac` (pending Git binding).
+- T047 fresh-manifest gate is GREEN in detached candidate worktree
+  `.worktrees/story42-final-quality9` at `00bdb87`/`422c586`. An isolated
+  restore corrected the absent generated test assets, then the exact
+  source-binding/manifest harness passed 18/18. Two manifest generations and
+  a reflection-based test-only observer over
+  `CodeGraphProviderContractTests.CreateProductionSourceManifest` produced
+  identical 132,104-byte canonical bytes with 904 sorted entries and SHA-256
+  `0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138`.
+  The 1,230-byte accepted-correction input hashes to fresh namespace
+  `a9f2805eec37b8859b7aaf52d3cde8cc98227a49cd5bfebfed821ff5c86d3a6a`,
+  proven absent in both candidate worktree and main checkout. Both tracked
+  statuses are clean; no image or provider action occurred.
+- Initial missing-assets, partial-copy, parser, byte-enumeration, and overload
+  failures remain harness-only evidence. Two partial manifest-only attempts
+  are preserved but invalid; no namespace was consumed and no product
+  assertion failed.
+- T047 manifest checkpoint:
+  `bmad-4-2-manifest-20260728T084324Z-0d5074` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
