@@ -3566,23 +3566,42 @@
       "observed_at": "2026-07-28T03:39:26.8492601Z",
       "summary": "T074 attempt 2 passes with valid native output capture: binding 17/17, FrameworkDetection 61/61, CodeGraphContextProvider 57/57, full non-final-image 523/523, authorization/redaction 4/4, and Web build with 9 existing warnings and zero errors. FR-020 comparison 3de522a..a6d6aed finds only the approved FrameworkEvidenceDetector owner-grammar product change and no Worker Agent/tool, orchestration, dispatch/scheduling/grouping/retry, persistence, API, UI, migration, Docker, or PRD change. Diff and status checks pass. T075 remains pending.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T074-*-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/116",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "152c9c9c5f8e974470141d58691402c86ce20152",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "specs/002-language-framework-detection/tasks.md",
+        "TestResults/story-4-2-current-verification-quality9-refresh/T075-provider-profiling-green.txt",
+        "TestResults/story-4-2-current-verification-quality9-refresh/T075-framework-green.txt",
+        "TestResults/story-4-2-current-verification-quality9-refresh/T075-binding-green.txt"
+      ],
+      "command": "Focused provider/profiling; focused FrameworkDetection; exact plan-review-10/QR9 binding verification",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T03:46:35.9397235Z",
+      "summary": "T075 refreshes Current verification at immutable post-T074 commit 152c9c9/tree b0bab29. Provider/profiling passes 116/116, framework detection 62/62, and exact binding 17/17. Attempts 1-15 and the unavailable pre-correction statement remain unchanged; attempts 16-18 add truthfully timed current evidence and bind plan-review 10, QR9 authorization, executable binding, correction bytes, and prior invalidation facts. No historical, pre-correction result, RED, or contemporaneous-ordering claim is made. T076 remains pending.",
+      "raw_output_path": "TestResults/story-4-2-current-verification-quality9-refresh/"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T033926Z-06ff52",
+    "checkpoint_id": "bmad-4-2-implement-20260728T034635Z-a32e87",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/115"
+      "4-2-language-and-framework-detection/implement/116"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T03:39:26.8492601Z"
+  "updated_at": "2026-07-28T03:46:35.9397235Z"
 }

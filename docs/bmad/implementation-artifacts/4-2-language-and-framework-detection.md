@@ -1105,6 +1105,16 @@ unchanged.
   `FrameworkEvidenceDetector` owner-grammar product change and no Worker
   Agent/tool, orchestration, dispatch, persistence, API, UI, migration,
   Docker, or PRD change. T075 Current-verification refresh is next.
+- T075 refreshes Current verification at immutable post-T074 commit
+  `152c9c9` / tree `b0bab29`. Provider/profiling passes 116/116, framework
+  detection 62/62, and exact accepted-plan binding 17/17. Attempts 1-15 and
+  the exact unavailable pre-correction statement are preserved; attempts
+  16-18 add only truthfully timed current results and bind plan-review 10,
+  QR9 authorization, executable binding, correction bytes, and prior
+  invalidation facts. All historical, pre-correction result, RED, and
+  contemporaneous-ordering claim flags remain false. T076 is next.
+- T075 Current-verification refresh checkpoint:
+  `bmad-4-2-implement-20260728T034635Z-a32e87` (pending Git binding).
 - T074 broad validation GREEN checkpoint:
   `bmad-4-2-implement-20260728T033926Z-06ff52` (pending Git binding).
 - T074 failed capture-harness checkpoint:
