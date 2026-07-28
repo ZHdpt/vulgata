@@ -1090,6 +1090,14 @@ unchanged.
   Choose/When nesting yield zero invalid NuGet facts, one bounded redacted
   closed audit each, and preserved independent Repository evidence. The
   production detector is byte-identical. T074 broad validation is next.
+- The first T074 validation attempt stopped without changing a task marker or
+  source file because its PowerShell capture helper combined incompatible
+  `Tee-Object -LiteralPath` and `-Append` parameters. Five retained raw files
+  contain only attempt headers, not test-harness output, so no test/build pass
+  is claimed. This is a recoverable evidence-harness failure; T074 remains
+  pending for a fresh attempt using unused `attempt-0002` paths.
+- T074 failed capture-harness checkpoint:
+  `bmad-4-2-implement-20260728T033046Z-03da75` (pending Git binding).
 - T073 explicit owner-shape regression checkpoint:
   `bmad-4-2-implement-20260728T032453Z-c46af6` (pending Git binding).
 - T072 plan-review-10 and QR9 binding GREEN checkpoint:

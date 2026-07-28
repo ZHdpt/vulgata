@@ -3527,24 +3527,40 @@
       "observed_at": "2026-07-28T03:24:53.3106694Z",
       "summary": "T073 passes 5/5 focused owner-grammar cases. Root Project Sdk, direct Project/Sdk, and direct project-level ItemGroup references retain eligible lock evidence. Target and Choose/When nested declarations emit zero invalid NuGet facts, exactly one bounded redacted closed audit each, and preserve independent npm Repository evidence. The production detector hash remains 7b9d615a. T074 remains pending.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T073-owner-grammar-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/114",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "428476a3fe3875509b5e7985a62537e14c59ec54",
+      "artifact_paths": [
+        "TestResults/story-4-2-quality9-correction/T074-binding.txt",
+        "TestResults/story-4-2-quality9-correction/T074-framework.txt",
+        "TestResults/story-4-2-quality9-correction/T074-surrounding.txt",
+        "TestResults/story-4-2-quality9-correction/T074-full-non-image.txt",
+        "TestResults/story-4-2-quality9-correction/T074-web-build.txt"
+      ],
+      "command": "T074 validation capture helper using Tee-Object -LiteralPath <path> -Append",
+      "exit_code": null,
+      "observed_at": "2026-07-28T03:30:46.1396050Z",
+      "summary": "The first T074 attempt stopped before valid command evidence was captured because Tee-Object -LiteralPath and -Append are an incompatible PowerShell parameter set. The five retained files contain headers only and cannot support pass claims. This is an evidence-harness failure, not a product failure. T074 remains pending; retry must use unused attempt-0002 paths and a valid capture mechanism.",
+      "raw_output_path": "TestResults/story-4-2-quality9-correction/T074-*.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T032453Z-c46af6",
+    "checkpoint_id": "bmad-4-2-implement-20260728T033046Z-03da75",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/113"
+      "4-2-language-and-framework-detection/implement/114"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T03:24:53.3106694Z"
+  "updated_at": "2026-07-28T03:30:46.1396050Z"
 }
