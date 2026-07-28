@@ -3584,24 +3584,39 @@
       "observed_at": "2026-07-28T03:46:35.9397235Z",
       "summary": "T075 refreshes Current verification at immutable post-T074 commit 152c9c9/tree b0bab29. Provider/profiling passes 116/116, framework detection 62/62, and exact binding 17/17. Attempts 1-15 and the unavailable pre-correction statement remain unchanged; attempts 16-18 add truthfully timed current evidence and bind plan-review 10, QR9 authorization, executable binding, correction bytes, and prior invalidation facts. No historical, pre-correction result, RED, or contemporaneous-ordering claim is made. T076 remains pending.",
       "raw_output_path": "TestResults/story-4-2-current-verification-quality9-refresh/"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/117",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "3078b03f15cd8dd0787a79c7be23b45bad31eae8",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "command": "JSON parse; immutable Git ancestry/tree/blob/trailer validation; raw SHA-256/size validation; chronology, invalidation, coverage, and prohibition assertions",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T03:57:38.2553444Z",
+      "summary": "T076 regenerates the ledger forward-only through commit 3078b03/tree 27d69c6. The linear 99-commit zero-merge range, 34 authority hashes, 10 T067-T075 chronology records, and 23 new raw files validate. T001-T066 boundaries remain preserved; T068-T070 RED-before-GREEN chronology, T074 capture-only failure versus attempt-0002 GREEN, T075 current-only separation, R1-R17, and AR9/QR9/PR9 pass. Candidate 708b7df and iteration-9/downstream identities remain invalidated history only; no new candidate or downstream completion claim is made. T077 remains pending.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T034635Z-a32e87",
+    "checkpoint_id": "bmad-4-2-implement-20260728T035738Z-533e33",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+      "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/116"
+      "4-2-language-and-framework-detection/implement/117"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T03:46:35.9397235Z"
+  "updated_at": "2026-07-28T03:57:38.2553444Z"
 }

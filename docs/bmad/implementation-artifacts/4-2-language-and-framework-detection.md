@@ -1113,6 +1113,18 @@ unchanged.
   QR9 authorization, executable binding, correction bytes, and prior
   invalidation facts. All historical, pre-correction result, RED, and
   contemporaneous-ordering claim flags remain false. T076 is next.
+- T076 regenerates the historical TDD ledger forward-only through post-T075
+  commit `3078b03` / tree `27d69c6`: 99 linear commits, zero merges, 34
+  source-bound authority hashes, 10 T067-T075 chronology records, and 23 new
+  raw files validate. T001-T066 claims and uncertainties remain bounded;
+  T068-T070 RED-before-GREEN order, the T074 capture failure/success split,
+  T075 current-only separation, R1-R17, and AR9/QR9/PR9 are explicit.
+  Candidate `708b7df` and iteration-9/downstream identities remain
+  invalidated history only, with no new candidate, review, E2E, verification,
+  manifest, namespace, image, T049, or T050 claim. T077 independent ledger
+  validation is next.
+- T076 truthful ledger regeneration checkpoint:
+  `bmad-4-2-implement-20260728T035738Z-533e33` (pending Git binding).
 - T075 Current-verification refresh checkpoint:
   `bmad-4-2-implement-20260728T034635Z-a32e87` (pending Git binding).
 - T074 broad validation GREEN checkpoint:
