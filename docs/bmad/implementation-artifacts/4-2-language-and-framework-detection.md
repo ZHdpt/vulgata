@@ -1025,6 +1025,18 @@ unchanged.
   T001 and T067 must both precede T068-T070; T075 remains the post-correction
   pre-pin Current-verification refresh. The tasks-only remediation is pending
   explicit user approval, and no implementation work is authorized.
+- The user approved the exact I8-001 tasks-only remediation. Fresh task
+  generation reset T001 to pending, rebound it to plan-review 10 and the QR9
+  authorization, preserved the unavailable pre-correction baseline statement,
+  made T001 and T067 prerequisites of T068-T070, and retained T075 as the
+  post-correction pre-pin Current-verification refresh. Fresh independent Full
+  analysis iteration 9 returned ACCEPT with no findings: FR 21/21, success
+  criteria 8/8, acceptance groups 7/7, R1-R17, all 77 unique mapped tasks,
+  dependency/TDD order, Constitution, PRD FR-4.1, and planned-change
+  authorization all pass. The next permitted stage is implementation,
+  beginning with T001 and T067 before any QR9 RED task.
+- Accepted QR9 analyzed-tasks checkpoint:
+  `bmad-4-2-analyze-20260728T013345Z-002685` (pending Git binding).
 - QR9 Full-analysis checkpoint:
   `bmad-4-2-analyze-20260727T143319Z-04b7fb` (pending Git binding).
 - Evidence-grammar implementation checkpoint:
@@ -1067,6 +1079,8 @@ unchanged.
 - `specs/002-language-framework-detection/reviews/analyze-6.json`
 - `specs/002-language-framework-detection/reviews/analyze-7.json`
 - `specs/002-language-framework-detection/reviews/analyze-8.json`
+- `specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json`
+- `specs/002-language-framework-detection/reviews/analyze-9.json`
 - `specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json`
 - `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json`
 - `specs/002-language-framework-detection/evidence/quality7-correction-tdd.json`

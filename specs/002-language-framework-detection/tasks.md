@@ -9,33 +9,31 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 
 **BMad Story**: `4-2-language-and-framework-detection` (Full execution; lifecycle remains `review`; this artifact does not advance or repair lifecycle state)
 
-**Source boundary**: commit `fe08df102957276f4376b9ca62b5921d19113003`, tree `6db827214d282961e4ded4e3c94bc0b975faa827`, empty candidate diff SHA-256 `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+**Source boundary**: pinned checkpoint `a30f95ef792903ccb43cff5c5e1f42a100e155c7`, tree `1776c6940b5ac7eed4728c8d0a4f1911cca39c99`; this task-author boundary changes only this file and is not an implementation candidate
 
-**Accepted plan checkpoint**: ID `bmad-4-2-plan-20260726T041520Z-3fbfd5`, uniquely trailer-resolved commit `fe08df102957276f4376b9ca62b5921d19113003`
+**Accepted complete-plan verdict**: `specs/002-language-framework-detection/reviews/plan-review-10.json`, SHA-256 `dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be`, iteration `10`, verdict `ACCEPT`, reviewed five-path binary diff SHA-256 `3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba`
 
-**Fresh accepted verdict**: `specs/002-language-framework-detection/reviews/plan-review-8.json`, SHA-256 `fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087`, verdict `ACCEPT`, reviewed diff SHA-256 `b9e98e34ec19b6c495a3478de9811974222001a3931f2ccffbf279d6b3e4eb79`
+**Exact accepted five-file plan set**: `specs/002-language-framework-detection/plan.md` `3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e`; `specs/002-language-framework-detection/research.md` `8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36`; `specs/002-language-framework-detection/data-model.md` `504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a`; `specs/002-language-framework-detection/contracts/framework-detection.md` `27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30`; `specs/002-language-framework-detection/quickstart.md` `5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e`
 
-**Complete reviewed artifact-hash map**: `specs/002-language-framework-detection/plan.md` `2cc2a9cb0bf25f31d03e56066043916f91a607267e660e4caa0fd4c1fe948600`; `specs/002-language-framework-detection/research.md` `e75d65e261bedb7417d0aa4682096308970cb07ed01b1fe078285d44b31427c4`; `specs/002-language-framework-detection/quickstart.md` `4565c5a3a5404f72018d00c103247ae84db8f1bce22febcd87bff6137da21115`
-
-**Unchanged accepted inputs**: `spec.md` `924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956`; `data-model.md` `76130d3cd76e029e0e112041be05b4822dcd15e430f38ff3502b53a228b3288c`; Story 4.2 contracts `b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b`, `74f71a218adca654b79d24bd1558f585b9ae7ff7ec95ca5370f5d153d7826181`, and `b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad`; Story 4.1 owning provider contract `ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124`
-
-**Authorization**: `specs/002-language-framework-detection/evidence/planned-change-authorization-2.json`, SHA-256 `33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f`, authorizes only the unchanged validated NuGet/npm lock-owner filtering design. It does not cover a new Worker Agent/tool, Scan strategy, or PRD change and waives no analysis, TDD, review, E2E, security, verification, or Git gate.
+**QR9 planned-change authorization**: `specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json`, SHA-256 `09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459`, decision `approved`; it authorizes only QR9-001's three literal project-level NuGet owner forms and rejection of nested/execution-dependent owners after plan-review 10. It does not authorize a Worker Agent/tool, orchestration, dispatch, scheduling, grouping, retry, PRD, persistence, API, UI, migration, or later-gate waiver.
 
 ## Evidence and Ordering Rules
 
 - The exact historical statement is **“Pre-correction T001 baseline observation: unavailable”**. The superseded T001 observation was not captured before T002-T049, is temporally unavailable, and cannot be recreated by running commands now.
 - A result produced now is **Current verification** only. It must retain its actual UTC time, immutable commit/tree, command, exit code, and raw-output path and must not be called historical, pre-correction, RED, or proof of contemporaneous ordering.
 - Checked tasks preserve still-valid implementation and immutable evidence. They do not manufacture unavailable historical raw RED output or missing checkpoint trailers.
+- Candidate `708b7dfca397b8d155111d512c7950bc68651ea8`, `acceptance-review-9.json`, `quality-review-9.json`, and all candidate-bound downstream claims are invalidated history. The formerly checked historical T041 pin does not satisfy the replacement T041 marker below.
 - Every new changed behavior uses observed runnable RED before implementation. Compile failure, broken fixture, inferred failure, fabricated output, backdating, amended history, or implementation-before-RED is a blocker.
-- The only permitted edit before the second accepted-plan-binding RED is the focused assertion added by T036. T035 changes no file. T037 may not start until both T035 and T036 retain actual failing output.
+- T001 and T067 must both complete before T068-T070. T001 binds a clean immutable post-task-checkpoint **Current verification** record to the accepted plan-review-10 checkpoint and QR9 authorization; T067 separately verifies the executable authority/invalidation boundary before implementation. T068 and T069 must each independently retain behavior-level RED, and T070 must retain the separate stale-binding RED, before T071 or T072 may mutate production/binding behavior.
 - Each RED/GREEN record includes the exact command, exit code, immutable source, observed assertion, and create-new raw-output path. Current GREEN is never relabelled as historical RED.
+- Any tracked candidate-boundary mutation after the replacement T041 pin invalidates T041-T050 and requires correction, pre-pin evidence regeneration/validation, one new pin, and rerun of every dependent gate.
 - No task adds or changes a Scan Coordinator, Orchestrator, Worker Agent/tool, dispatch, scheduling, grouping, retry, LLM fact authority, Communication Pattern Catalog, Story 4.3 behavior, document generation, Cross-Repository Resolution, or downstream language-support promise.
 
 ## Phase 1: Current Verification and Preserved Foundation
 
 **Purpose**: Replace the impossible old T001 prerequisite with truthful present-day verification and retain only still-valid foundation behavior.
 
-- [x] T001 Create `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json` against a root-supplied clean immutable commit containing the accepted plan set and this regenerated `tasks.md`: preserve the exact unavailable-baseline statement above; record `Current verification`, actual UTC observation time, commit/tree, commands, exit codes, and create-new raw outputs `TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt` and `TestResults/story-4-2-current-verification/T001-framework-green.txt`; prove the checkpoint ID/commit and ancestor relationship above, the exact `plan-review-8.json` path/hash/verdict/diff/artifact map, and the unchanged authorization path/hash/scope; then run the two focused provider/profiling and framework commands from `specs/002-language-framework-detection/quickstart.md` GREEN without any historical/pre-correction/RED/contemporaneous-ordering claim
+- [ ] T001 Create `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json` against a root-supplied clean immutable post-task-checkpoint commit containing this regenerated `tasks.md`, its accepted fresh Full analysis, and the exact accepted five-file plan set: preserve verbatim `Pre-correction T001 baseline observation: unavailable`; record only `Current verification` with the actual UTC observation time, immutable commit/tree, commands, exit codes, and create-new raw outputs `TestResults/story-4-2-current-verification/T001-provider-profiling-green.txt` and `TestResults/story-4-2-current-verification/T001-framework-green.txt`; prove that `Workflow-Checkpoint` `bmad-4-2-plan-20260727T134009Z-b02d3f` resolves uniquely through the required four trailers to accepted-plan commit `3de522a42fc1cc77ae200da7596c8c3c5a1af421` and is its ancestor; prove exact `specs/002-language-framework-detection/reviews/plan-review-10.json` SHA-256 `dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be`, iteration `10`, verdict `ACCEPT`, reviewed diff `3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba`, and the complete five-file artifact-hash map in this header; prove QR9 authorization path `specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json`, SHA-256 `09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459`, decision `approved`, scope limited to QR9-001, and committed authorization boundary `a30f95ef792903ccb43cff5c5e1f42a100e155c7`; then run the two focused provider/profiling and framework commands from `specs/002-language-framework-detection/quickstart.md` GREEN without calling any current result historical, pre-correction, RED, or proof of contemporaneous ordering
 - [x] T002 Preserve the implemented atomic `RepositoryProfileDraft`, rollback/detach/reload failure and cancellation recovery, historical nullable Story 4.1 language compatibility, and additive mappings in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`, `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, and `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
 - [x] T003 Preserve the private `TOOL_RESULT_LIMITS={"execute_cypher_query":250001}`, reserved `truncated`/`result_limit` rejection, exact two-query lifecycle, and 250,000 combined-row cap in `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs` and `tests/Vulgata.Tests/CodeGraphContextProviderTests.cs`
 - [x] T004 Preserve exactly the two additive migrations `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs` and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs`, their Designer files, and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`; no third remediation migration is permitted
@@ -200,16 +198,45 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 
 ---
 
-## Phase 9: New Candidate, Full Reviews, E2E, and Verification
+## Phase 8E: Quality Review 9 Correction and Accepted-Plan Binding
 
-**Purpose**: Pin and independently judge one candidate containing T001, the accepted-plan binding GREEN, and the truthful regenerated ledger.
+**Purpose**: Apply only the explicitly authorized QR9-001 Scan XML owner-grammar correction, bind executable evidence to the exact accepted plan-review-10 bytes, and finish all mutable evidence work before candidate pinning.
 
-- [x] T041 After T001, T035-T040, T051-T054, T055-T057, T058-T062, and T063-T066, have the root create one clean immutable implementation candidate/checkpoint containing only accepted Story 4.2 owned changes; record commit/tree, exact binary diff SHA-256, artifact hashes, owned paths, and clean status; any implementation/test/ledger mutation after pinning invalidates T041-T049
-- [ ] T042 [P] Have the root dispatch a fresh read-only Full `acceptance-review` against the exact refreshed T041 boundary and persist its returned verdict at the next create-new review path; require every BMad/SpecKit behavior, corrected T001 truth contract, replacement binding RED/GREEN, Chinese confidence presentation, QR4-001 through QR4-003, QR6-001, QR7-001 through QR7-003, QR8-001 through QR8-002 corrections, and forbidden scope to be accepted
-- [ ] T043 [P] Have the root dispatch a fresh read-only Full `quality-review` against the identical refreshed T041 boundary and persist its returned verdict at the next create-new review path; require correctness, localization, security, committed-evidence integrity, test quality, edge cases, architecture seams, and regression risk to be accepted
+- [ ] T067 Verify before implementation that `specs/002-language-framework-detection/reviews/plan-review-10.json` is iteration-10 `ACCEPT` with SHA-256 `dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be`, reviewed diff `3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba`, and the exact five-file artifact map in this header; verify `specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json` has SHA-256 `09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459`, decision `approved`, and scope limited to QR9-001; preserve `specs/002-language-framework-detection/reviews/plan-review-9.json`, `specs/002-language-framework-detection/reviews/acceptance-review-9.json`, `specs/002-language-framework-detection/reviews/quality-review-9.json`, `specs/002-language-framework-detection/workflow-state.json`, and `specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json` as immutable proof that AR9-001/QR9-001/PR9-001 invalidated candidate `708b7dfca397b8d155111d512c7950bc68651ea8` and every iteration-9 downstream claim
+- [ ] T068 [US2] Add only the Target-nested owner assertion in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for a sole literal `PackageReference` beneath `Target` paired with a catalog-matched committed `packages.lock.json`; run the focused test against unchanged production bytes and retain independently observed behavior-level RED at create-new `TestResults/story-4-2-quality9-correction/T068-target-owner-red.txt`, proving the current detector creates a forbidden `Medium` framework fact rather than zero facts and one bounded closed audit
+- [ ] T069 [US2] After T068 without production mutation, add the separate Choose/When-nested owner assertion in `tests/Vulgata.Tests/FrameworkDetectionTests.cs` for a sole literal `FrameworkReference` beneath `Choose/When` paired with a catalog-matched committed `packages.lock.json`; run only that focused case and retain independently observed behavior-level RED at create-new `TestResults/story-4-2-quality9-correction/T069-choose-when-owner-red.txt`, proving the same forbidden `Medium` fact while an independently valid Repository manifest remains detectable
+- [ ] T070 Add focused exact-byte assertions in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` for `plan-review-10.json`, its SHA-256/verdict/reviewed diff/five-file artifact map, all five canonical plan hashes, and the QR9 approval path/SHA-256/decision/scope; run only the stale binding assertions before changing resolver/manifest bindings and retain actual assertion RED at create-new `TestResults/story-4-2-quality9-correction/T070-plan-review-10-binding-red.txt`
+- [ ] T071 [US2] After T068-T070 RED integrity is accepted, minimally restrict `ValidateNuGetOwnerManifest` in `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` to exactly three literal, unconditional, same-supported-namespace project-level owner shapes: root `Project Sdk`, direct `Project/Sdk`, and `PackageReference`/`FrameworkReference` directly beneath a direct project-level `ItemGroup`; reject `Target`, `Choose/When`, import-driven, conditional/dynamic, or other execution-dependent declarations without evaluating MSBuild, producing zero `Medium` facts, exactly one bounded redacted artifact-local audit with no raw values, and continued independent valid Repository evidence
+- [ ] T072 Update only the executable accepted-plan resolver/canonical claim in `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs` to require the exact T067 plan-review-10 verdict/diff/five-file hashes and QR9 approval bytes, reject plan-review-8/9 or absent/wrong QR9 bindings, and pass the focused T070 binding test without changing provider, production schema, API, persistence, migration, UI, Docker, or PRD behavior
+- [ ] T073 [US2] Run focused GREEN for T068-T069 plus positive fixtures for all three valid project-level owner shapes in `tests/Vulgata.Tests/FrameworkDetectionTests.cs`; retain create-new `TestResults/story-4-2-quality9-correction/T073-owner-grammar-green.txt` and assert zero `Medium` facts for both invalid nested shapes, exactly one bounded closed redacted audit per invalid artifact, no raw package/property values, deterministic independent-evidence continuation, and unchanged valid owner facts
+- [ ] T074 Run the focused T070 binding GREEN, complete `FrameworkDetectionTests`, complete `CodeGraphContextProviderTests`/`RepositoryProfilingTests` surrounding suites, the full non-final-image `tests/Vulgata.Tests/Vulgata.Tests.csproj` suite, `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj`, authorization/redaction coverage, FR-020 scope audit, `git diff --check`, and status checks; retain create-new raw outputs under `TestResults/story-4-2-quality9-correction/`, require all current tests GREEN with no `Medium` fact from unsupported owner shapes, and verify no unapproved scope
+
+**Independent validation**: T067 proves plan-review-10 and QR9 authority before implementation. T068 and T069 are separate observed behavior REDs, T070 is a separate exact-binding RED, T071 is minimal production GREEN, T072 binds exact accepted bytes, and T073-T074 prove all three valid owner shapes, bounded redaction, zero false `Medium` facts, independent continuation, and surrounding/full regression safety.
+
+---
+
+## Phase 8F: Final Pre-Pin Current Verification and Ledger
+
+**Purpose**: Regenerate every tracked mutable evidence artifact and independently validate it before exactly one replacement candidate pin.
+
+- [ ] T075 Refresh `specs/002-language-framework-detection/evidence/story-4-2-current-verification.json` at the clean post-T074 immutable source boundary; preserve **“Pre-correction T001 baseline observation: unavailable”**, append only truthfully timed `Current verification` for the exact plan-review-10/QR9/binding/QR9-correction bytes, run focused provider/profiling/framework/binding commands GREEN, and retain create-new raw outputs under `TestResults/story-4-2-current-verification-quality9-refresh/` without calling any result historical, pre-correction, RED, or contemporaneous-order proof
+- [ ] T076 Regenerate `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` from immutable Git and existing records; preserve all still-provable completed T001-T066 history, add T067-T075 with truthful timestamps and raw hashes, explicitly record candidate `708b7dfca397b8d155111d512c7950bc68651ea8` plus iteration-9 reviews/downstream as invalidated history, cover R1-R17/AR9-001/QR9-001/PR9-001, and claim no new candidate, review, E2E, verification, manifest, namespace, image, T049, or T050
+- [ ] T077 Dispatch fresh independent read-only validation of the regenerated ledger and persist the verdict at create-new `specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json`; require exact Git ancestry/blob/trailer and raw-output hashes, exact plan-review-10/QR9 bindings, truthful Current-verification separation, T068/T069/T070 RED-before-GREEN chronology, complete invalidation claims, and zero fabricated/backdated/amended evidence before permitting T041
+
+**Independent validation**: The refreshed Current verification is current-only, the ledger truthfully preserves completed history and invalidations, and a fresh independent validator accepts its exact immutable evidence before any candidate is pinned.
+
+---
+
+## Phase 9: Replacement Candidate, Full Reviews, E2E, and Verification
+
+**Purpose**: Pin and independently judge exactly one candidate containing the accepted plan-review-10 binding, authorized QR9 correction, final Current verification, and independently accepted truthful ledger.
+
+- [ ] T041 After T067-T077 and fresh Full analysis accept, have the root preserve the former checked T041 and `specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json` as invalidated history and create exactly one clean immutable replacement implementation candidate/checkpoint containing only accepted Story 4.2 owned changes; record commit/tree, exact binary diff SHA-256, artifact hashes, owned paths, plan-review-10/QR9 identities, final T075/T076/T077 hashes, and clean status; any tracked implementation/test/contract/planning/ledger/current-verification/Docker-context mutation after pinning invalidates T041-T050
+- [ ] T042 [P] Have the root dispatch a fresh read-only Full `acceptance-review` against the exact replacement T041 boundary and persist its returned verdict at the next create-new review path; require every BMad/SpecKit behavior, truthful T001/T075 contract, exact plan-review-10/QR9 binding, Chinese confidence presentation, QR4-001 through QR4-003, QR6-001, QR7-001 through QR7-003, QR8-001 through QR8-002, QR9-001, AR9-001, PR9-001, all three valid owner shapes, zero invalid-owner `Medium` facts, and forbidden scope to be accepted
+- [ ] T043 [P] Have the root dispatch a fresh read-only Full `quality-review` against the identical replacement T041 boundary and persist its returned verdict at the next create-new review path; require correctness, localization, security, committed-evidence integrity, bounded redaction, independent-evidence continuation, test quality, edge cases, architecture seams, and regression risk to be accepted
 - [ ] T044 After both fresh reviews accept, record and execute the current-boundary E2E decision in `specs/002-language-framework-detection/workflow-state.json` using `docs/agent-workflow/e2e-decision-matrix.md`; cite a complete coverage override only if current integration evidence covers every triggered API/UI/persistence/migration/image boundary, otherwise run the required E2E owner; any tracked test edit reruns T042-T044
 - [ ] T045 Run pre-image verification at the unchanged T041 candidate and persist command evidence through `specs/002-language-framework-detection/workflow-state.json`: focused provider/profiling/framework/binding tests; `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract"`; `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj`; both migration script/rollback checks; `dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext`; authorization/redaction coverage; FR-020 diff audit; `git diff --check`; and clean status
-- [ ] T046 Read-only cross-validate the finalized `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json` against the exact T041-T045 candidate, review, E2E, and verification identities without editing the ledger or any Docker-context file; any contradiction, stale boundary, fabricated temporal claim, or missing current evidence blocks before image work
+- [ ] T046 Read-only cross-validate the finalized `specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json`, T075 Current verification, and T077 independent verdict against the exact T041-T045 candidate/review/E2E/verification identities without editing any candidate-boundary file; any contradiction, stale boundary, fabricated temporal claim, missing current evidence, or post-pin tracked mutation blocks before image work
 
 **Independent validation**: Both Full axes accept the same candidate, E2E is passed or completely covered, verification is GREEN, and the finalized ledger remains truthful. No candidate mutation is hidden.
 
@@ -222,7 +249,7 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 - [ ] T047 At the exact clean T041 source candidate, create a new unused accepted-correction namespace and canonical `production-source-manifest-v1` through `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; include the corrected plan/tasks/test/ledger Docker-context bytes, bind candidate commit/tree and every tracked non-ignored context hash, and stop before image creation on dirty status, identity drift, symlink/collision, stale namespace, or manifest mismatch
 - [ ] T048 Build a fresh image from `docker/Dockerfile` with the T047 commit/tree/manifest labels, inspect its immutable ID before provider execution, run `FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract` once in the unused namespace, and rerun the full suite, Web build, migration/model checks, authorization/redaction tests, diff/scope/status checks at the same source; require exact provider 0.5.1/query/schema/accepted-plan binding, both projections above 100 complete rows, empty-file `Filtered/UnknownLanguage`, atomic failures, cleanup, false forbidden retention, and no reused image/evidence/namespace
 - [ ] T049 Freeze the exact T041 source candidate plus T042-T048 verdict/E2E/verification/ledger/manifest/image/claim/evidence identities, rerun all hash/reference/status checks without changing source, tests, contracts, planning artifacts, ledger, evidence, or image, and prepare the immutable inputs for T050; any mutation or stale/missing identity invalidates T041-T049 and requires a new namespace/image/gate
-- [ ] T050 Audit the immutable candidate last against FR-001-FR-021, AC-1-AC-7, SC-001-SC-008, all 16 accepted plan decisions R1-R16, all 11 iteration-2 findings plus `T001-PLAN-001`, the exact plan/data-model/quickstart/contracts, Story 4.1 owning provider contract, T001 current verification, T035-T038 RED/GREEN, both Full reviews, E2E, verification, two-migration rehearsal, forbidden-scope diff, truthful ledger, and fresh source/image/evidence binding; mark complete only after an unchanged audit succeeds, otherwise leave `[ ]`
+- [ ] T050 Audit the immutable candidate last against FR-001-FR-021, AC-1-AC-7, SC-001-SC-008, accepted decisions R1-R17, AR9-001, QR9-001, PR9-001, all prior accepted correction findings, the exact five-file plan set and plan-review-10/QR9 approval, Story 4.1 owning provider contract, truthful T001/T075 Current verification, T068-T074 RED/GREEN, T076-T077 ledger proof, both Full reviews, E2E, verification, two-migration rehearsal, forbidden-scope diff, and fresh source/image/evidence binding; mark complete only after an unchanged audit succeeds, otherwise leave `[ ]`
 
 **Independent validation**: One immutable source candidate owns accepted Full reviews, E2E, verification, truthful ledger, a fresh source-bound image and namespace, exact final-image evidence, and an unchanged T049 freeze. T050 is last and remains incomplete until every prerequisite passes.
 
@@ -231,17 +258,24 @@ description: "Dependency-ordered remediation tasks for Story 4.2 language and fr
 ## Dependencies and Execution Order
 
 ```text
-accepted plan checkpoint fe08df1...
-  -> regenerated tasks checkpoint + clean immutable current-verification commit
-  -> T001 Current verification
-  -> preserved valid work T002-T034
-  -> T035 canonical-hash RED
-  -> T036 stale-claim RED
-  -> T037 binding GREEN
-  -> T038 surrounding GREEN
-  -> T039 ledger regeneration
-  -> T040 ledger validation
-  -> T041 immutable candidate pin
+plan-review-10 exact five-file ACCEPT + QR9 approval
+  -> regenerated tasks checkpoint
+  -> fresh Full analysis
+  -> preserved valid completed history T002-T040 + T051-T066
+  -> T001 clean immutable post-task-checkpoint Current verification
+  -> T067 authority/invalidation binding
+  -> T001 + T067 prerequisites satisfied
+     -> T068 Target-nested RED
+     -> T069 Choose/When-nested RED
+     -> T070 plan-review-10 stale-binding RED
+  -> T071 minimal owner-grammar GREEN
+  -> T072 exact executable binding GREEN
+  -> T073 focused owner-shape GREEN
+  -> T074 surrounding/full GREEN
+  -> T075 Current verification
+  -> T076 truthful ledger regeneration
+  -> T077 fresh independent ledger validation
+  -> T041 one replacement immutable candidate pin
   -> T042 acceptance-review + T043 quality-review on the same boundary
   -> T044 conditional E2E
   -> T045 verification
@@ -252,9 +286,10 @@ accepted plan checkpoint fe08df1...
   -> T050 final audit
 ```
 
-- Full `speckit-analyze` runs after this `tasks.md` and before T001; implementation does not start until the latest analysis has no Critical/High finding.
-- T001 requires the root's post-task accepted checkpoint/clean immutable commit; it cannot run against this uncommitted task-author boundary.
-- T035 and T036 are serialized because both use `tests/Vulgata.Tests/CodeGraphProviderContractTests.cs`; only T036's focused assertion edit is allowed before its observed RED.
+- Full `speckit-analyze` runs after this `tasks.md` and before T001 or T067; implementation does not start until the latest analysis has no Critical/High finding.
+- T001 and T067 are both prerequisites of T068-T070. T001 creates the clean immutable post-task-checkpoint Current-verification record; T067 is the separate executable authority/invalidation check. T068 and T069 are serialized because they edit `tests/Vulgata.Tests/FrameworkDetectionTests.cs`, and both must independently fail before T071 changes `FrameworkEvidenceDetector.cs`.
+- T070 is independent of the two owner-behavior RED observations but must also retain its exact stale-binding failure before T072; T071 and T072 remain serialized so the accepted boundary has one auditable GREEN transition.
+- T075-T077 are serialized and precede T041 because Current verification and ledger bytes are tracked candidate inputs.
 - T042 and T043 are the only `[P]` tasks. They are read-only independent axes over the identical T041 boundary and persist separate verdict paths.
 - T044 waits for both reviews. A product correction returns to fresh TDD and reruns both axes; a tracked E2E test edit also reruns both axes before E2E can advance.
 - T041-T049 are one immutable-candidate lane. Review/evidence records may be persisted outside the nonrecursive implementation diff, but source/test/contract/ledger/Docker-context mutation invalidates the lane.
@@ -264,21 +299,24 @@ accepted plan checkpoint fe08df1...
 
 - T042 and T043 may run concurrently against the exact same T041 boundary.
 - Read-only coverage counting and referenced-hash validation may be sharded only after the owning artifact is immutable.
-- No implementation task is parallelizable: T035-T040 share one test/evidence boundary, and T041-T050 share one immutable candidate or single-use namespace.
+- No implementation task is parallelizable: T068-T074 share test/production/binding boundaries, T075-T077 share tracked pre-pin evidence, and T041-T050 share one immutable candidate or single-use namespace.
 
 ## Acceptance, Decision, and Finding Coverage
 
 | Obligation | Executable coverage |
 | --- | --- |
-| FR-001-FR-003, FR-005-FR-006; AC-1-AC-2; SC-001-SC-002 | T001, T005-T007, T035-T038, T042-T045, T048-T050 |
+| FR-001-FR-003, FR-005-FR-006; AC-1-AC-2; SC-001-SC-002 | T001, T005-T007, T075, T042-T045, T048-T050 |
 | FR-004, FR-007; AC-6; SC-004 | T019-T020, T042-T045, T048-T050 |
-| FR-008-FR-014, FR-016, FR-021; AC-3-AC-5; SC-003/SC-005 | T008-T018, T042-T045, T048-T050 |
+| FR-008-FR-014, FR-016, FR-021; AC-3-AC-5; SC-003/SC-005 | T008-T018, T068-T074, T042-T045, T048-T050 |
 | FR-015, FR-017; AC-7; SC-006 | T002-T003, T011, T021-T034, T042-T045, T048-T050 |
 | FR-018-FR-019; AC-7; SC-007-SC-008 | T007, T012, T020-T025, T042-T045, T048-T050 |
 | FR-020 forbidden scope | T038, T042-T045, T048-T050 |
-| R1-R14 functional/evidence design | T002-T034, T042-T050 |
-| R15 / TR-001 truthful unavailable T001 | T001, T039-T040, T046, T049-T050 |
-| R16 / T001-PLAN-001 executable accepted-plan binding | T035-T038, T041-T050 |
+| R1-R14 functional/evidence design | T002-T034, T068-T074, T042-T050 |
+| R15 / TR-001 truthful unavailable T001 | T001, T075-T077, T046, T049-T050 |
+| R16 / T001-PLAN-001 executable accepted-plan binding | T001, T067, T070, T072, T074-T077, T041-T050 |
+| R17 / QR9-001 authorized owner grammar | T067-T074, T076-T077, T041-T050 |
+| AR9-001 pinned committed-tree authority | T063-T067, T074, T076-T077, T042-T050 |
+| PR9-001 candidate-stable downstream ordering | T067, T075-T077, T041-T050 |
 | AR2-001 | T022-T025, T042-T045, T048-T050 |
 | AR2-002 / CF-002 | T026-T030, T042-T043, T048-T050 |
 | QR2-001 | T013-T018, T042-T045, T048-T050 |
@@ -286,31 +324,33 @@ accepted plan checkpoint fe08df1...
 | EV-002 | T031-T034, T041, T047-T050 |
 | PL-001 / PA-001 | T001, T035-T038, T045, T048-T050 |
 
-Coverage totals: **21/21 functional requirements**, **8/8 success criteria**, **7/7 acceptance-criteria groups**, **16/16 accepted plan decisions**, and **12/12 correction findings** (the 11 iteration-2 findings plus `T001-PLAN-001`).
+Coverage totals: **21/21 functional requirements**, **8/8 success criteria**, **7/7 acceptance-criteria groups**, **17/17 accepted plan decisions**, with explicit executable coverage for **AR9-001**, **QR9-001**, and **PR9-001**.
 
 ## Bounded Task-Group Partition
 
-1. **Current verification**: T001 only; evidence write, no product/test change.
-2. **Preserved implementation**: T002-T034; no relabelling of historical evidence and no new implementation.
-3. **Accepted-plan binding TDD**: T035-T038; one test file, two observed REDs, minimal binding GREEN, surrounding GREEN.
-4. **Truthful ledger**: T039-T040 regeneration/validation, then T046 read-only cross-validation after current gates; one durable ledger plus the separate T001 record.
-5. **Full candidate review/E2E/verification**: T041-T045; root/reviewer/runner-owned, one pinned nonrecursive boundary.
-6. **Fresh manifest/image gate**: T047-T049; one candidate, one unused namespace, one fresh image, serialized.
-7. **Final immutable-candidate audit**: T050 alone and last.
+1. **Preserved completed history**: T002-T040 and T051-T066; no relabelling, implementation, or fabricated evidence.
+2. **Current authority prerequisites**: T001 and T067; clean immutable post-task-checkpoint Current verification plus separate exact plan-review-10/QR9 executable authority/invalidation verification before T068-T070.
+3. **QR9 and binding RED**: T068-T070 after both T001 and T067; two independent behavior REDs plus one exact stale-binding RED.
+4. **Minimal GREEN and regression**: T071-T074; one production correction, one binding correction, focused and surrounding/full GREEN.
+5. **Final mutable pre-pin evidence**: T075-T077; Current verification, truthful ledger, fresh independent validation.
+6. **Full candidate review/E2E/verification**: T041-T046; root/reviewer/runner-owned, one pinned nonrecursive boundary.
+7. **Fresh manifest/image gate**: T047-T049; one candidate, one unused namespace, one fresh image, serialized.
+8. **Final immutable-candidate audit**: T050 alone and last.
 
 ## Implementation Strategy
 
-- Preserve the completed language/framework behavior; the only new tracked implementation work is the evidence-contract test binding in T035-T038.
-- Complete T001 and obtain a clean Full analysis before dispatching the binding group.
-- Do not carry forward the old ledger, candidate, reviews, E2E, verification, manifest, image, namespace, T049, or T050 conclusion.
+- Preserve completed pre-QR9 behavior/evidence as history; implement only the QR9 owner grammar and exact plan-review-10/QR9 binding after fresh Full analysis and observed RED.
+- Regenerate Current verification and the ledger, then obtain fresh independent ledger acceptance before exactly one replacement candidate pin.
+- Do not carry forward candidate `708b7df`, iteration-9 reviews, E2E, verification, manifest, image, namespace, T049, or T050 conclusions.
 - Stop at any failed RED integrity, authority, ancestry, review, E2E, verification, ledger, image, or scope gate. Do not weaken or relabel evidence to advance.
 
 ## Completion Criteria
 
-- All 50 tasks use checkbox, exact ID, required story labels, concrete repository paths or exact commands, and dependency-correct ordering.
-- T001 truthfully records current GREEN without converting it into unavailable historical evidence.
-- T035 and T036 each retain observed runnable RED before T037 changes the stale bindings.
+- All 77 task markers use checkbox, exact ID, required story labels, concrete repository paths or exact commands, and dependency-correct ordering.
+- Completed pre-QR9 tasks remain truthful history; corrected T001, every QR9 task, and every downstream marker are incomplete.
+- T001 and T067 both bind the exact plan-review-10 and QR9 authorization boundary before T068-T070; T001 additionally requires clean immutable post-task-checkpoint Current verification.
+- T068 and T069 each retain independently observed runnable behavior RED, and T070 retains stale-binding RED, before T071-T072 GREEN.
 - Every accepted requirement, success criterion, acceptance group, plan decision, and correction finding maps to executable validation.
-- Prior planned-change authorization remains scoped only to unchanged lock-owner filtering; no new trigger is introduced.
-- The ledger, candidate, both Full reviews, E2E, verification, manifest, image, namespace, T049, and T050 are regenerated rather than carried forward.
-- T049 and T050 remain unchecked; T050 is last and cannot pass before T001-T049 and the immutable-candidate audit.
+- QR9 approval remains exact and bounded; no additional planned-change trigger beyond the authorized QR9 scope is introduced.
+- Current verification and the ledger are regenerated and independently validated before one candidate pin; both Full reviews and every dependent gate then use that unchanged boundary.
+- T041-T050 remain unchecked; T050 is last and cannot pass before every prerequisite and the immutable-candidate audit.

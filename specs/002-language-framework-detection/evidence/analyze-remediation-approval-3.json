@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/analyze/103",
+  "kind": "human-approval",
+  "stage": "analyze",
+  "source_commit": "096eed69abd78f50feff2459c9138a532cea1856",
+  "artifact_paths": [
+    "specs/002-language-framework-detection/reviews/analyze-8.json",
+    "specs/002-language-framework-detection/tasks.md"
+  ],
+  "command": null,
+  "exit_code": null,
+  "observed_at": "2026-07-28T01:06:42.1703022Z",
+  "summary": "The user explicitly approved the presented tasks.md-only remediation for High finding I8-001: reset T001 to pending; bind it to plan-review 10, the QR9 authorization, and clean immutable post-task-checkpoint Current verification; require T001 and T067 before T068-T070; preserve the exact unavailable pre-correction baseline statement; and retain T075 as the post-correction pre-pin Current-verification refresh. The approval authorizes no specification, plan, PRD, source-code, test, or unrelated cleanup change.",
+  "raw_output_path": null
+}

@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "analyze",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -671,23 +671,45 @@
         "TestResults/story-4-2-quality6-ledger/T039-ledger-validation-attempt-0005.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-28T01:06:42.1703022Z",
+      "completed_at": "2026-07-28T01:33:45.4579601Z",
+      "input_commit": "096eed69abd78f50feff2459c9138a532cea1856",
+      "input_hashes": {
+        "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
+        "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+        "specs/002-language-framework-detection/tasks.md": "22b8c86409974b5a872e5d7ef13a7e65da81b2752cd95cf31b35d629800ed0f0",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json": "25c0ab11c38c81edbc2d8099d2e935cb9cda5c00f3158a7e2484249a6b5571eb",
+        "specs/002-language-framework-detection/reviews/analyze-9.json": "002685b2b3121729eeeeaaecaf70beeffaba3be371bf120923f155f19bdf3b1f"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-8.json",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
+        "specs/002-language-framework-detection/reviews/analyze-9.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "cfc65b7dc67bf84102fb16bef45f3f62b6d616b0",
+    "preflight_head": "096eed69abd78f50feff2459c9138a532cea1856",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T001 current-verification evidence, one task marker, story development record, and workflow state only; raw command outputs are ignored and no unrelated paths exist.",
+    "worktree_status": "Story 4.2 approved I8-001 tasks remediation, human-approval evidence, accepted analysis report, story development record, and workflow state only; no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json"
+      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
+      "specs/002-language-framework-detection/reviews/analyze-9.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-26T05:22:36.3074335Z"
+    "observed_at": "2026-07-28T01:33:45.4579601Z"
   },
   "source_artifacts": [
     {
@@ -1159,7 +1181,7 @@
       ]
     },
     "analyze": {
-      "count": 7,
+      "count": 9,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/analyze-1.json",
         "specs/002-language-framework-detection/reviews/analyze-2.json",
@@ -1167,7 +1189,9 @@
         "specs/002-language-framework-detection/reviews/analyze-final-2.json",
         "specs/002-language-framework-detection/reviews/analyze-5.json",
         "specs/002-language-framework-detection/reviews/analyze-6.json",
-        "specs/002-language-framework-detection/reviews/analyze-7.json"
+        "specs/002-language-framework-detection/reviews/analyze-7.json",
+        "specs/002-language-framework-detection/reviews/analyze-8.json",
+        "specs/002-language-framework-detection/reviews/analyze-9.json"
       ]
     },
     "acceptance-review": {
@@ -3215,23 +3239,57 @@
       "observed_at": "2026-07-27T14:33:19.2798017Z",
       "summary": "Fresh read-only Full analysis iteration 8 returned REVISE with one High finding, I8-001: T001 remains checked against stale plan-review-8 and pre-QR9 authorization evidence. The bounded tasks-only remediation must reset and rebind T001 to plan-review 10, QR9 approval, and clean immutable post-task-checkpoint Current verification; T001 and T067 must precede T068-T070, while T075 remains the post-correction pre-pin refresh. Explicit user approval is required before tasks.md changes, and implementation remains blocked.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/103",
+      "kind": "human-approval",
+      "stage": "analyze",
+      "source_commit": "096eed69abd78f50feff2459c9138a532cea1856",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/analyze-8.json",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
+        "specs/002-language-framework-detection/tasks.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-28T01:06:42.1703022Z",
+      "summary": "The user explicitly approved the exact I8-001 tasks-only remediation: reset and rebind T001 to plan-review 10, QR9 authorization, and clean immutable post-task-checkpoint Current verification; require T001 and T067 before T068-T070; preserve the unavailable pre-correction baseline statement; and retain T075 as the post-correction pre-pin refresh. No specification, plan, PRD, source, test, or cleanup change was authorized.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/analyze/104",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "096eed69abd78f50feff2459c9138a532cea1856",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/reviews/analyze-9.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-28T01:33:45.4579601Z",
+      "summary": "Fresh independent read-only Full analysis iteration 9 ACCEPTED the corrected task boundary with no findings. I8-001 is closed; FR 21/21, success criteria 8/8, combined requirements 29/29, acceptance groups 7/7, R1-R17, all 77 unique mapped tasks, dependency/TDD ordering, Constitution, PRD FR-4.1, and QR9 planned-change authorization pass. Implementation may begin with T001 and T067.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-analyze-20260727T143319Z-04b7fb",
+    "checkpoint_id": "bmad-4-2-analyze-20260728T013345Z-002685",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "analyze",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/reviews/analyze-8.json",
+      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
+      "specs/002-language-framework-detection/reviews/analyze-9.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/analyze/102"
+      "4-2-language-and-framework-detection/analyze/103",
+      "4-2-language-and-framework-detection/analyze/104"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-27T14:33:19.2798017Z"
+  "updated_at": "2026-07-28T01:33:45.4579601Z"
 }
