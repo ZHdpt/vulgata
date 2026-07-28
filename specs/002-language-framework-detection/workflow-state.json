@@ -748,15 +748,34 @@
         "TestResults/story-4-2-quality9-correction/T068-target-owner-red.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-28T02:34:02.0572002Z",
+      "completed_at": "2026-07-28T02:36:13.8358082Z",
+      "input_commit": "a7027d2f8fb34be322f782427c6cdf1d861bf157",
+      "input_hashes": {
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "1cbdbc59adf0afc80ea4cc778f4d7969209080c01bc7306418b961412ec90332",
+        "specs/002-language-framework-detection/tasks.md": "6b7f3c5eaa7eecc6854f86c8415d49eb3c1a1b2125a08b72f0468466539f12c8",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "5067752aa4e392de16089a13067ab90f2e826c8a39a15aa1e9892db2821b7298",
+        "TestResults/story-4-2-quality9-correction/T069-choose-when-owner-red.txt": "5e6546bdc544e395bffc5290baacfa1f52f95356e46e187ca9c65d5c1f3544ca"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "TestResults/story-4-2-quality9-correction/T069-choose-when-owner-red.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "9b711a572a79d9c0ad9535af430f9a8558079729",
+    "preflight_head": "a7027d2f8fb34be322f782427c6cdf1d861bf157",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T068 test-only behavior RED, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
+    "worktree_status": "Story 4.2 T069 test-only behavior RED, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
@@ -764,7 +783,7 @@
       "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-28T02:26:25.0066554Z"
+    "observed_at": "2026-07-28T02:36:13.8358082Z"
   },
   "source_artifacts": [
     {
@@ -3391,10 +3410,26 @@
       "observed_at": "2026-07-28T02:26:25.0066554Z",
       "summary": "T068 compiled, discovered, and produced the required behavior-level RED against unchanged FrameworkEvidenceDetector hash 5067752a. Assert.DoesNotContain failed because the Target-nested owner produced a forbidden transitive nuget:Microsoft.AspNetCore.Mvc fact from target-nested/packages.lock.json. No production or GREEN mutation occurred; T069 remains pending.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T068-target-owner-red.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/109",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "a7027d2f8fb34be322f782427c6cdf1d861bf157",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "specs/002-language-framework-detection/tasks.md",
+        "TestResults/story-4-2-quality9-correction/T069-choose-when-owner-red.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName=Vulgata.Tests.FrameworkDetectionTests.DetectApplicableDetailedAsync_NuGetChooseWhenNestedOwner_RejectsLockAndPreservesIndependentEvidenceAsync\" --logger \"console;verbosity=detailed\"",
+      "exit_code": 1,
+      "observed_at": "2026-07-28T02:36:13.8358082Z",
+      "summary": "T069 compiled, discovered, and produced the required separate behavior RED at unchanged production hash 5067752a. The independent direct npm:react Repository fact was asserted first; Assert.DoesNotContain then failed because the Choose/When-nested owner emitted a forbidden transitive NuGet fact. No production or GREEN mutation occurred; T070 remains pending.",
+      "raw_output_path": "TestResults/story-4-2-quality9-correction/T069-choose-when-owner-red.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T022625Z-bce63a",
+    "checkpoint_id": "bmad-4-2-implement-20260728T023613Z-5e6546",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
@@ -3404,11 +3439,11 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/108"
+      "4-2-language-and-framework-detection/implement/109"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T02:26:25.0066554Z"
+  "updated_at": "2026-07-28T02:36:13.8358082Z"
 }

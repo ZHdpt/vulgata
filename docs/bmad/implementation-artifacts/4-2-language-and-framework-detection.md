@@ -1058,6 +1058,14 @@ unchanged.
   transitive `nuget:Microsoft.AspNetCore.Mvc` fact from the committed lock
   file instead of zero facts and one bounded closed audit. Only the new test
   and T068 marker changed; T069 remains pending and no GREEN work has started.
+- T069 now has its separate behavior-level RED at the same unchanged
+  production hash. The focused Choose/When-nested `FrameworkReference` test
+  first proves independent direct `npm:react` Repository evidence survives,
+  then fails because the invalid NuGet owner still emits a forbidden
+  transitive framework fact. Only the new test and T069 marker changed; T070
+  remains pending and production is still untouched.
+- T069 Choose/When-nested RED checkpoint:
+  `bmad-4-2-implement-20260728T023613Z-5e6546` (pending Git binding).
 - T068 Target-nested RED checkpoint:
   `bmad-4-2-implement-20260728T022625Z-bce63a` (pending Git binding).
 - T001/T067 prerequisite implementation checkpoint:

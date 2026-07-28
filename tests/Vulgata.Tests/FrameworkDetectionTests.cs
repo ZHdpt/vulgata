@@ -907,6 +907,68 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
+    public async Task DetectApplicableDetailedAsync_NuGetChooseWhenNestedOwner_RejectsLockAndPreservesIndependentEvidenceAsync()
+    {
+        using var repository = new GitFixture();
+        repository.Write(
+            "choose-when-nested/App.csproj",
+            """
+            <Project>
+              <Choose>
+                <When>
+                  <ItemGroup>
+                    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+                  </ItemGroup>
+                </When>
+              </Choose>
+            </Project>
+            """);
+        repository.Write("choose-when-nested/packages.lock.json", NuGetLockJson());
+        repository.Write(
+            "valid/package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+        repository.TrackAll();
+
+        DetectedGlobalFrameworkResult invalid =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "choose-when-nested/src/Controller.cs",
+                "c_sharp",
+                GetProductionLimits());
+        DetectedGlobalFrameworkResult valid =
+            await DetectApplicableGlobalDetailedAsync(
+                repository.Path,
+                "valid/src/App.tsx",
+                "tsx",
+                GetProductionLimits());
+
+        Assert.True(invalid.Succeeded);
+        Assert.True(valid.Succeeded);
+        DetectedEvidence validFact = Assert.Single(valid.Evidence);
+        Assert.Equal("npm:react", validFact.PackageCoordinate);
+        Assert.Equal("Direct", validFact.Relationship);
+
+        Assert.DoesNotContain(
+            invalid.Evidence,
+            evidence =>
+                evidence.PackageCoordinate == "nuget:Microsoft.AspNetCore.Mvc" &&
+                evidence.Relationship == "Transitive");
+        Assert.Empty(invalid.Evidence);
+        DetectedAuditOutcome audit = Assert.Single(invalid.AuditOutcomes);
+        Assert.Equal(1, invalid.TotalAuditOutcomeCount);
+        Assert.Equal("choose-when-nested/packages.lock.json", audit.ArtifactPath);
+        Assert.Equal("Skipped", audit.Outcome);
+        Assert.Equal("FrameworkEvidenceUnsupported", audit.Reason);
+        Assert.InRange(audit.Message.Length, 1, 32);
+        Assert.Matches("[\u4e00-\u9fff]", audit.Message);
+        Assert.DoesNotContain("Choose", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("When", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("FrameworkReference", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Microsoft.AspNetCore.App", audit.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("Microsoft.AspNetCore.Mvc", audit.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task DetectApplicableDetailedAsync_NuGetInvalidOwnerShapes_RejectLockWithOneClosedAuditAsync()
     {
         foreach ((string name, string project, string expectedReason) in new[]
