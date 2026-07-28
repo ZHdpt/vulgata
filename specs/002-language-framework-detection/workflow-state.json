@@ -1330,21 +1330,249 @@
     }
   },
   "e2e_decision": {
-    "required": false,
-    "predicates": [],
+    "required": true,
+    "predicates": [
+      {
+        "predicate_id": "user-visible-workflow",
+        "change_type": "User-visible workflow",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+          "tests/Vulgata.Tests/DashboardPanelTests.cs"
+        ],
+        "affected_behavior": "Repository scan language and framework facts, confidence, and diagnostics are rendered to authorized management users.",
+        "evidence": [
+          "4-2-language-and-framework-detection/acceptance-review/121",
+          "4-2-language-and-framework-detection/quality-review/122",
+          "4-2-language-and-framework-detection/conditional-e2e/124"
+        ]
+      },
+      {
+        "predicate_id": "authentication-authorization",
+        "change_type": "Authentication/authorization",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+          "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+          "tests/Vulgata.Tests/RepositoryApiTests.cs",
+          "tests/Vulgata.Tests/DashboardPanelTests.cs"
+        ],
+        "affected_behavior": "Repository membership and management authorization are rechecked before language/framework facts or diagnostics are disclosed.",
+        "evidence": [
+          "4-2-language-and-framework-detection/acceptance-review/121",
+          "4-2-language-and-framework-detection/quality-review/122",
+          "4-2-language-and-framework-detection/conditional-e2e/124"
+        ]
+      },
+      {
+        "predicate_id": "api-persistence-multi-module",
+        "change_type": "API/SignalR/persistence/multi-module integration",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+          "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+          "tests/Vulgata.Tests/RepositoryApiTests.cs"
+        ],
+        "affected_behavior": "Provider observations flow through framework detection and persistence into the repository API and management UI.",
+        "evidence": [
+          "4-2-language-and-framework-detection/acceptance-review/121",
+          "4-2-language-and-framework-detection/quality-review/122",
+          "4-2-language-and-framework-detection/conditional-e2e/124"
+        ]
+      },
+      {
+        "predicate_id": "observable-data-lifecycle",
+        "change_type": "EF migration or observable data lifecycle",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+          "tests/Vulgata.Tests/RepositoryApiTests.cs"
+        ],
+        "affected_behavior": "A profiling attempt atomically replaces the repository's latest language/framework snapshot and exposes only the current authorized result.",
+        "evidence": [
+          "4-2-language-and-framework-detection/acceptance-review/121",
+          "4-2-language-and-framework-detection/quality-review/122",
+          "4-2-language-and-framework-detection/conditional-e2e/124"
+        ]
+      },
+      {
+        "predicate_id": "existing-integration-coverage",
+        "change_type": "Existing integration test proves full changed behavior",
+        "gate": "may-skip",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "No coverage override was claimed because migration script/rollback checks and final image identity remain separate required gates.",
+        "evidence": []
+      },
+      {
+        "predicate_id": "documentation-or-refactor-only",
+        "change_type": "Documentation-only or behavior-preserving refactor",
+        "gate": "may-skip",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "Story 4.2 changes provider, persistence, API, UI, authorization, and observable lifecycle behavior.",
+        "evidence": []
+      }
+    ],
     "coverage_override": null,
-    "rationale": "Not evaluated before implementation planning",
-    "covering_tests": [],
-    "owner": "orchestrator",
+    "rationale": "Required execution passed. Four Required predicates are triggered, so the e2e-runner executed the economical current-candidate integration boundary. The corrected capture passed 210 of 210 with no tracked test edit. PostgreSQL migration script/rollback and pending-model checks remain T045; final Docker image identity remains T047-T048.",
+    "covering_tests": [
+      {
+        "test_id": "Vulgata.Tests.CodeGraphContextProviderTests",
+        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
+      },
+      {
+        "test_id": "Vulgata.Tests.RepositoryProfilingTests",
+        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
+      },
+      {
+        "test_id": "Vulgata.Tests.FrameworkDetectionTests",
+        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
+      },
+      {
+        "test_id": "Vulgata.Tests.RepositoryApiTests",
+        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
+      },
+      {
+        "test_id": "Vulgata.Tests.DashboardPanelTests",
+        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
+      }
+    ],
+    "owner": "e2e-runner",
     "source_boundary": {
-      "base_commit": "cfd1b2d45a1bb03d4c8f0f2b1271a06f42ce5531",
-      "candidate_commit": null,
-      "diff_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-      "artifact_hashes": {},
-      "owned_paths": []
+      "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+      "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "diff_sha256": "e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab",
+      "artifact_hashes": {
+        "source": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-4.json",
+        "source_sha256": "d01702dee7265156bc0d1ed9edcbd141f3bac4445ceb1112bd5d704c8565b3b2",
+        "verified_entry_count": 105,
+        "all_entries_match_candidate_tree": true
+      },
+      "owned_paths": [
+        ".dockerignore",
+        ".gitattributes",
+        "docker/Dockerfile",
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml",
+        "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+        "specs/002-language-framework-detection/contracts/framework-detection.md",
+        "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+        "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+        "specs/002-language-framework-detection/data-model.md",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
+        "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+        "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json",
+        "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json",
+        "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+        "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+        "specs/002-language-framework-detection/evidence/quality8-validation.json",
+        "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json",
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+        "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
+        "specs/002-language-framework-detection/plan.md",
+        "specs/002-language-framework-detection/quickstart.md",
+        "specs/002-language-framework-detection/research.md",
+        "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-4.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+        "specs/002-language-framework-detection/reviews/analyze-10.json",
+        "specs/002-language-framework-detection/reviews/analyze-11.json",
+        "specs/002-language-framework-detection/reviews/analyze-5.json",
+        "specs/002-language-framework-detection/reviews/analyze-6.json",
+        "specs/002-language-framework-detection/reviews/analyze-7.json",
+        "specs/002-language-framework-detection/reviews/analyze-8.json",
+        "specs/002-language-framework-detection/reviews/analyze-9.json",
+        "specs/002-language-framework-detection/reviews/analyze-final-1.json",
+        "specs/002-language-framework-detection/reviews/analyze-final-2.json",
+        "specs/002-language-framework-detection/reviews/plan-review-10.json",
+        "specs/002-language-framework-detection/reviews/plan-review-4.json",
+        "specs/002-language-framework-detection/reviews/plan-review-5.json",
+        "specs/002-language-framework-detection/reviews/plan-review-6.json",
+        "specs/002-language-framework-detection/reviews/plan-review-7.json",
+        "specs/002-language-framework-detection/reviews/plan-review-8.json",
+        "specs/002-language-framework-detection/reviews/plan-review-9.json",
+        "specs/002-language-framework-detection/reviews/quality-review-1.json",
+        "specs/002-language-framework-detection/reviews/quality-review-2.json",
+        "specs/002-language-framework-detection/reviews/quality-review-3.json",
+        "specs/002-language-framework-detection/reviews/quality-review-4.json",
+        "specs/002-language-framework-detection/reviews/quality-review-5.json",
+        "specs/002-language-framework-detection/reviews/quality-review-6.json",
+        "specs/002-language-framework-detection/reviews/quality-review-7.json",
+        "specs/002-language-framework-detection/reviews/quality-review-8.json",
+        "specs/002-language-framework-detection/reviews/quality-review-9.json",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation.json",
+        "specs/002-language-framework-detection/tasks.md",
+        "specs/002-language-framework-detection/workflow-state.json",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+        "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs",
+        "src/dotnet/Vulgata.Core/Entities/CodeUnitFramework.cs",
+        "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+        "src/dotnet/Vulgata.Core/Entities/ScanRunLanguageSummary.cs",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitFrameworkConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunLanguageSummaryConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+        "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+        "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+        "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "tests/Vulgata.Tests/RepositoryApiTests.cs",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      ]
     },
-    "result": "pending",
-    "evidence_ids": []
+    "result": "passed",
+    "evidence_ids": [
+      "4-2-language-and-framework-detection/conditional-e2e/123",
+      "4-2-language-and-framework-detection/conditional-e2e/124"
+    ]
   },
   "verification": [
     {
@@ -3671,26 +3899,52 @@
       "observed_at": "2026-07-28T07:28:25.4578021Z",
       "summary": "T043 quality review iteration 10 ACCEPTS candidate 00bdb87/tree 422c586 with zero findings. Correctness, security, parsing/resource bounds, redaction, exact owner grammar, independent evidence, provider/persistence/API/authorization/localization, cancellation/recovery, migrations, tests, regression risk, evidence integrity, candidate blobs, chronology, invalidations, and forbidden scope pass.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/conditional-e2e/123",
+      "kind": "failure",
+      "stage": "conditional-e2e",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~CodeGraphContextProviderTests|FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~FrameworkDetectionTests|FullyQualifiedName~RepositoryApiTests|FullyQualifiedName~DashboardPanelTests\"",
+      "exit_code": null,
+      "observed_at": "2026-07-28T07:39:26.0000000Z",
+      "summary": "The first captured T044 path is a 115-byte header-only artifact with no native dotnet test output and no result classification. It is preserved as an ambiguous capture-harness failure only; it is not product, test, or passing evidence and advanced no gate.",
+      "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124",
+      "kind": "test-green",
+      "stage": "conditional-e2e",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~CodeGraphContextProviderTests|FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~FrameworkDetectionTests|FullyQualifiedName~RepositoryApiTests|FullyQualifiedName~DashboardPanelTests\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T07:41:50.4214577Z",
+      "summary": "Required T044 E2E passed 210 of 210 in 41 seconds at the exact T041 candidate after corrected native-output capture. The 15,503-byte raw output has SHA-256 1065b203520e7d64c7c10f5f15387a19450d9e907ad4d4a42a1c3ece47ce5e2b and contains the native Test run for and Passed! markers. No tracked test edit, candidate mutation, proxy failure, or coverage override occurred. Migration and final-image checks remain T045 and T047-T048.",
+      "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-review-20260728T072954Z-3896ae",
+    "checkpoint_id": "bmad-4-2-e2e-20260728T074150Z-1065b2",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "implement",
+    "stage": "conditional-e2e",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
-      "specs/002-language-framework-detection/reviews/acceptance-review-10.json",
-      "specs/002-language-framework-detection/reviews/quality-review-10.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/acceptance-review/121",
-      "4-2-language-and-framework-detection/quality-review/122"
+      "4-2-language-and-framework-detection/conditional-e2e/123",
+      "4-2-language-and-framework-detection/conditional-e2e/124"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T07:29:54.0820094Z"
+  "updated_at": "2026-07-28T07:41:50.4214577Z"
 }

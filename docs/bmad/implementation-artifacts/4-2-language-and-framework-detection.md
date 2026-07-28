@@ -1158,6 +1158,17 @@ unchanged.
   other axis nor a prior verdict. T044 E2E decision is next.
 - Dual Full-review ACCEPT checkpoint:
   `bmad-4-2-review-20260728T072954Z-3896ae` (pending Git binding).
+- T044 required E2E is GREEN at the unchanged T041 candidate. The decision
+  matrix triggered on user-visible workflow, authorization, API/persistence
+  multi-module integration, and observable data lifecycle; no coverage
+  override was claimed. The first 115-byte output is preserved only as an
+  ambiguous capture-harness failure because it contains no native test
+  result. Corrected attempt 0002 passed 210 of 210 with no tracked test edit
+  (`sha256:1065b203520e7d64c7c10f5f15387a19450d9e907ad4d4a42a1c3ece47ce5e2b`).
+  PostgreSQL migration script/rollback and pending-model checks remain T045;
+  exact final-image identity remains T047-T048.
+- Required E2E checkpoint:
+  `bmad-4-2-e2e-20260728T074150Z-1065b2` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
