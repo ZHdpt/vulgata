@@ -1,0 +1,229 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "iteration": 10,
+  "story_key": "4-2-language-and-framework-detection",
+  "verdict": "ACCEPT",
+  "candidate_quality_accepted": true,
+  "reviewer_identity": {
+    "role": "quality-reviewer",
+    "identity": "story-4-2-quality-reviewer-iteration-10-independent",
+    "fresh_independent_review": true,
+    "acceptance_axis_substituted": false,
+    "prior_review_conclusion_inherited": false
+  },
+  "observed_utc": "2026-07-28T07:28:25.4578021Z",
+  "reviewed_boundary": {
+    "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
+    "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+    "candidate_tree": "422c586c9cf83f6cbd4fe76c81449a3ad8e3cbf8",
+    "candidate_parent": "6b263d5f81cdbe3539ee8a4b60cf39cd27afada6",
+    "candidate_checkpoint_id": "bmad-4-2-candidate-20260728T064315Z-e4885c",
+    "candidate_checkpoint_unique": true,
+    "candidate_commit_empty": true,
+    "candidate_tree_matches_parent": true,
+    "binary_diff_sha256": "e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab",
+    "binary_diff_length_bytes": 2170074,
+    "owned_path_count": 105,
+    "artifact_hash_entry_count": 105,
+    "non_deleted_blob_hash_count": 104,
+    "null_deleted_path_marker_count": 1,
+    "deleted_paths": [
+      "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.py"
+    ],
+    "candidate_record_path": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-4.json",
+    "candidate_record_sha256": "d01702dee7265156bc0d1ed9edcbd141f3bac4445ceb1112bd5d704c8565b3b2",
+    "candidate_record_outside_nonrecursive_candidate_diff": true,
+    "boundary_verified": true,
+    "all_candidate_blob_hashes_verified": true,
+    "candidate_path_map_verified": true,
+    "git_diff_check_passed": true
+  },
+  "pinned_input_hashes": {
+    "specs/002-language-framework-detection/reviews/plan-review-10.json": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+    "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+    "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+    "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json": "b2c79cb4a2498e3ecf65f2cb0ef46e35ca03f9ffbed11fc54ae6e048654ec197",
+    "specs/002-language-framework-detection/reviews/analyze-11.json": "043954534f173d943562193dcd97b9f26cefc1bae3ddd47d4cb06e212a404193",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "7b9d615a0b448b6fdb9895f28a815eb9209718e64eb59613add456f4adf05fb2",
+    "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs": "97dd8d80c0e8ecadfd056ab994830ddf702c66c8937b384d19e7c76c1bc3d3ff",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "dd1585b287b6a882b4bd30ad11224e47d628e0e29bd3b4c44a58a455a62a818b",
+    "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs": "7cfe56cf0adeab52654f7f046ad142722d60a28ca6934bdfea97fbc7df78965c",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "d90d2369d48d75261d5bc57366c50650b25509c4327ca740714910c4c59af1fd",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "055452f7bc9a40da4ec880a5cd54d04adad107325581596d7c6e41494e5361cd"
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+    "specs/002-language-framework-detection/plan.md",
+    "specs/002-language-framework-detection/research.md",
+    "specs/002-language-framework-detection/data-model.md",
+    "specs/002-language-framework-detection/quickstart.md",
+    "specs/002-language-framework-detection/tasks.md",
+    "specs/002-language-framework-detection/contracts/framework-detection.md",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+    "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+    "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+    "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+    "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json",
+    "specs/002-language-framework-detection/reviews/analyze-11.json",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+    "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+    "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+    "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+    "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+    "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+    "tests/Vulgata.Tests/RepositoryApiTests.cs",
+    "tests/Vulgata.Tests/DashboardPanelTests.cs",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+  ],
+  "review_layers": [
+    {
+      "layer": "correctness-and-edge-cases",
+      "status": "PASS",
+      "result": "Language identity is normalized and conflict-checked atomically; unknown-language structure is removed; framework facts use exact catalog coordinates, deterministic deepest-scope selection, direct-over-transitive ranking, ambiguity suppression, and a 64-fact final cap."
+    },
+    {
+      "layer": "xml-owner-grammar-and-non-execution",
+      "status": "PASS",
+      "result": "NuGet ownership is limited to literal unconditional Project Sdk, direct Project/Sdk, or PackageReference/FrameworkReference directly beneath a direct project-level ItemGroup. Target, Choose, When, imported, conditional, dynamic, foreign-namespace, and other execution-dependent declarations do not prove ownership. XML DTD processing is prohibited and no build target or package script is executed."
+    },
+    {
+      "layer": "security-bounds-and-redaction",
+      "status": "PASS",
+      "result": "Committed-tree inventory and blob reads are object-bound, strict-UTF8, containment checked, symlink/reparse aware, deadline bounded, and limited by output, record, artifact, aggregate-byte, parse-depth, parsed-entry, candidate-fact, final-fact, and retained-audit ceilings. Durable and user-visible diagnostics use closed Simplified-Chinese mappings and safe Repository-relative paths or (unknown); raw provider or manifest values are not retained."
+    },
+    {
+      "layer": "provider-projection-and-resource-control",
+      "status": "PASS",
+      "result": "Exactly two immutable CodeGraphContext projections are used. The private process receives only execute_cypher_query=250001; any reserved truncation metadata is rejected; response bytes, combined rows, row bytes, JSON depth, fields, types, duplicates, query echo, and record counts are bounded and validated before provider results are accepted."
+    },
+    {
+      "layer": "persistence-failure-cancellation-and-recovery",
+      "status": "PASS",
+      "result": "Provider-derived Code Units, relationships, unresolved candidates, framework facts, language summaries, and provider audits persist through one completed-draft EF transaction. Provider/detector failure retains only already-persisted local audit. Late cancellation, commit failure, and non-DbUpdate failure recover a durable Aborted or Failed ScanRun with closed Chinese messages and no partial provider rows."
+    },
+    {
+      "layer": "authorization-visibility-and-localization",
+      "status": "PASS",
+      "result": "Management routes retain ManagementAccess, unauthenticated and non-management boundaries remain 401/403, hidden or visibility-revoked System Repositories return redacted 404, and the authorized API/UI expose complete bounded summaries with Simplified-Chinese labels and localized confidence values."
+    },
+    {
+      "layer": "migration-and-model-consistency",
+      "status": "PASS",
+      "result": "The two additive Story 4.2 migrations, entity configurations, relationships, indexes, constraints, and VulgataDbContext model snapshot consistently represent language summaries, framework facts, and the non-negative complete framework-audit count."
+    },
+    {
+      "layer": "test-quality-and-regression-risk",
+      "status": "PASS",
+      "result": "Tests cover valid/invalid owner matrices, Target and Choose/When regressions, independent-evidence continuation, unsafe and oversize artifacts, foreign namespaces, inventory/object drift, cancellation, atomic persistence and recovery, projection completeness, authorization/redaction, summary completeness, Chinese rendering, migration persistence, and forbidden scope. Broad retained verification passed without candidate-byte drift."
+    },
+    {
+      "layer": "evidence-integrity",
+      "status": "PASS",
+      "result": "All 23 T067-T075 raw files independently matched recorded SHA-256 and byte lengths. T068/T069/T070 RED checkpoints precede T071/T072 GREEN by linear ancestry and unchanged pre-GREEN production bytes. T073 proves all three valid and both nested invalid shapes. The first T074 capture contains wrapper headers only and makes no product claim; attempt-0002 is the broad GREEN. T075 is Current verification only. T076, T077 ACCEPT, and analyze-11 ACCEPT are mutually hash-bound."
+    },
+    {
+      "layer": "scope-and-architecture-seams",
+      "status": "PASS",
+      "result": "Project boundaries and Story 4.1 provider ownership are preserved. No Vulgata.Agents, Worker Agent/tool, Orchestrator, Scan Coordinator, dispatch, scheduling, grouping, retry, PRD, or unrelated product behavior changed. The QR9 delta from invalidated candidate 708b7df touches only the framework detector, two test files, and required planning/evidence/lifecycle records; it does not touch Docker. Historical Story 4.2 Docker-context bytes are unchanged from 708b7df."
+    }
+  ],
+  "evidence_checks": {
+    "plan_review_10": {
+      "verdict": "ACCEPT",
+      "finding_count": 0,
+      "reviewed_diff_sha256": "3d273cf81ad4321abd983c6cc72c4b7f5a2612c06ca3363fb9007978cd8834ba",
+      "five_file_hash_map_exact": true,
+      "checkpoint_id": "bmad-4-2-plan-20260727T134009Z-b02d3f"
+    },
+    "qr9_authorization": {
+      "decision": "approved",
+      "finding_id": "QR9-001",
+      "scope_exact": true,
+      "later_gate_waiver": false
+    },
+    "red_green_chronology": {
+      "t068_red_before_t071_green": true,
+      "t069_red_before_t071_green": true,
+      "t070_red_before_t072_green": true,
+      "pre_green_production_blob": "3458895d39f3dca1088503634548701e3e87d6fb",
+      "green_production_blob": "e66345ce9f31ec709d217a97c39d1efa3a0ba783",
+      "t073_valid_and_invalid_owner_matrix": "5/5",
+      "t074_first_attempt": "capture-harness-failure-only",
+      "t074_attempt_0002": "binding 17/17; framework 61/61; surrounding 57/57; non-final-image 523/523; authorization/redaction 4/4; Web build succeeded; FR-020 and status passed",
+      "t075_current_verification": "provider/profiling 116/116; framework 62/62; binding 17/17",
+      "t075_historical_or_pre_correction_claimed": false
+    },
+    "ledger_and_analysis": {
+      "t076_ledger_sha256": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+      "t077_iteration": 5,
+      "t077_verdict": "ACCEPT",
+      "t077_findings": 0,
+      "analyze_iteration": 11,
+      "analyze_verdict": "ACCEPT",
+      "analyze_findings": 0
+    },
+    "invalidation": {
+      "invalidated_candidate": "708b7dfca397b8d155111d512c7950bc68651ea8",
+      "invalidated_iteration_9_downstream_claims_preserved_as_history_only": true,
+      "replacement_candidate_is_only_current_candidate": true
+    }
+  },
+  "findings": [],
+  "quality_assessment": {
+    "correctness": "ACCEPT",
+    "security": "ACCEPT",
+    "edge_cases": "ACCEPT",
+    "test_quality": "ACCEPT",
+    "architecture_seams": "ACCEPT",
+    "localization": "ACCEPT",
+    "evidence_integrity": "ACCEPT",
+    "migration_consistency": "ACCEPT",
+    "regression_risk": "LOW within the pinned candidate. The remaining T044-T050 gates must still execute against the unchanged candidate."
+  },
+  "security_assessment": {
+    "verdict": "ACCEPT",
+    "raw_source_or_manifest_value_disclosure_found": false,
+    "path_escape_or_reparse_bypass_found": false,
+    "xml_external_entity_or_build_execution_found": false,
+    "unbounded_candidate_owned_diagnostic_found": false,
+    "authorization_or_visibility_regression_found": false,
+    "partial_provider_persistence_found": false,
+    "summary": "No correctness, confidentiality, integrity, availability, authorization, redaction, or resource-control defect was found in the pinned candidate."
+  },
+  "planned_change_authorization": {
+    "new_approval_required_by_this_review": false,
+    "reason": "The candidate implements only the already-approved QR9-001 Scan XML owner-grammar correction. This review adds no Worker Agent/tool, Scan strategy, or PRD change."
+  },
+  "t044_implication": {
+    "quality_axis_accepted": true,
+    "quality_finding_count": 0,
+    "advance_without_duplicate_user_approval": true,
+    "t044_permitted_only_after_root_records_both_full_review_accepts": true,
+    "candidate_must_remain_unchanged": true
+  },
+  "read_only_confirmation": {
+    "candidate_files_edited": false,
+    "source_or_tests_edited": false,
+    "tasks_story_workflow_or_ledger_edited": false,
+    "acceptance_review_read_or_substituted": false,
+    "tests_or_builds_executed_by_reviewer": false,
+    "retained_test_and_build_outputs_read_and_hash_verified": true,
+    "index_or_staging_changed": false,
+    "commits_or_git_history_changed": false,
+    "only_output_written": "specs/002-language-framework-detection/reviews/quality-review-10.json"
+  },
+  "summary": "ACCEPT with zero findings. The pinned replacement T041 candidate is correct, bounded, non-executing, redacted, atomic, authorized, localized, migration-consistent, and regression-tested. Its 105-path binary diff and every candidate blob hash are exact; QR9 RED-before-GREEN, broad GREEN, Current-verification-only, ledger, invalidation, and plan/authorization bindings are truthful. The quality axis permits ordinary progression after the root records both Full review accepts, without duplicate user approval and without changing the candidate."
+}

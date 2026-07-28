@@ -1148,6 +1148,16 @@ unchanged.
   all prior candidates including `708b7df` remain invalidated history.
   T042-T050 remain pending, and any candidate-boundary mutation invalidates
   this lane.
+- T042 and T043 independently ACCEPT the identical immutable candidate with
+  zero findings. Acceptance covers FR 21/21, SC 8/8, AC 7/7, scenarios
+  15/15, R1-R17 17/17, and all 12 correction groups. Quality independently
+  accepts correctness, security, parser/resource bounds, redaction,
+  provider/persistence/API/auth/localization, migrations, tests, regression
+  risk, evidence integrity, and forbidden scope. Both reviewers recomputed
+  the 105-path candidate map from raw Git blobs and inherited neither the
+  other axis nor a prior verdict. T044 E2E decision is next.
+- Dual Full-review ACCEPT checkpoint:
+  `bmad-4-2-review-20260728T072954Z-3896ae` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:

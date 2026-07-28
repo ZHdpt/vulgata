@@ -3643,24 +3643,54 @@
       "observed_at": "2026-07-28T06:56:05.6130499Z",
       "summary": "T041 pins replacement candidate commit 00bdb87/tree 422c586 at checkpoint bmad-4-2-candidate-20260728T064315Z-e4885c. Its tree equals analyzed parent 6b263d5. The exact nonrecursive Story 4.2 diff is 2,170,074 bytes, SHA-256 e4885cf0, across 105 sorted owned paths with one deletion tombstone. Candidate record 4 binds plan-review 10, QR9 approval, T075, T076, T077 ACCEPT, and analyze-11 ACCEPT; prior candidates including 708b7df remain invalidated history. T042-T050 remain pending and candidate-boundary mutation invalidates the lane.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/121",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-10.json"
+      ],
+      "command": "Fresh independent Full acceptance review of immutable replacement T041 candidate",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T07:29:54.0820094Z",
+      "summary": "T042 acceptance review iteration 10 ACCEPTS candidate 00bdb87/tree 422c586 with zero findings. FR 21/21, SC 8/8, AC 7/7, scenarios 15/15, R1-R17 17/17, and 12/12 correction groups pass. The reviewer independently verifies all 105 raw Git blobs, 23 QR9 outputs, provider/persistence/API/UI/auth/redaction/Chinese confidence behavior, plan-review-10/QR9, Current verification, ledger/T077, invalidations, and forbidden scope.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/122",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-10.json"
+      ],
+      "command": "Fresh independent Full quality review of immutable replacement T041 candidate",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T07:28:25.4578021Z",
+      "summary": "T043 quality review iteration 10 ACCEPTS candidate 00bdb87/tree 422c586 with zero findings. Correctness, security, parsing/resource bounds, redaction, exact owner grammar, independent evidence, provider/persistence/API/authorization/localization, cancellation/recovery, migrations, tests, regression risk, evidence integrity, candidate blobs, chronology, invalidations, and forbidden scope pass.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T065605Z-d01702",
+    "checkpoint_id": "bmad-4-2-review-20260728T072954Z-3896ae",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-4.json",
       "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/reviews/acceptance-review-10.json",
+      "specs/002-language-framework-detection/reviews/quality-review-10.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/120"
+      "4-2-language-and-framework-detection/acceptance-review/121",
+      "4-2-language-and-framework-detection/quality-review/122"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T06:56:05.6130499Z"
+  "updated_at": "2026-07-28T07:29:54.0820094Z"
 }
