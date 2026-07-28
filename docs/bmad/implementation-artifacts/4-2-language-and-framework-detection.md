@@ -1096,6 +1096,17 @@ unchanged.
   contain only attempt headers, not test-harness output, so no test/build pass
   is claimed. This is a recoverable evidence-harness failure; T074 remains
   pending for a fresh attempt using unused `attempt-0002` paths.
+- T074 attempt 2 passes the complete broad correction gate with valid native
+  output capture: binding 17/17, Framework Detection 61/61,
+  CodeGraphContextProvider 57/57, full non-final-image 523/523, and focused
+  authorization/redaction 4/4. The Web build succeeds with 9 existing
+  warnings and zero errors. The FR-020 audit from accepted-plan commit
+  `3de522a` through the validation source finds only the approved
+  `FrameworkEvidenceDetector` owner-grammar product change and no Worker
+  Agent/tool, orchestration, dispatch, persistence, API, UI, migration,
+  Docker, or PRD change. T075 Current-verification refresh is next.
+- T074 broad validation GREEN checkpoint:
+  `bmad-4-2-implement-20260728T033926Z-06ff52` (pending Git binding).
 - T074 failed capture-harness checkpoint:
   `bmad-4-2-implement-20260728T033046Z-03da75` (pending Git binding).
 - T073 explicit owner-shape regression checkpoint:

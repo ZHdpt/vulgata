@@ -3545,22 +3545,44 @@
       "observed_at": "2026-07-28T03:30:46.1396050Z",
       "summary": "The first T074 attempt stopped before valid command evidence was captured because Tee-Object -LiteralPath and -Append are an incompatible PowerShell parameter set. The five retained files contain headers only and cannot support pass claims. This is an evidence-harness failure, not a product failure. T074 remains pending; retry must use unused attempt-0002 paths and a valid capture mechanism.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T074-*.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/115",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "a6d6aedb8ff21c485a9b703ec28ce9f831cc4ba2",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/tasks.md",
+        "TestResults/story-4-2-quality9-correction/T074-binding-attempt-0002.txt",
+        "TestResults/story-4-2-quality9-correction/T074-framework-attempt-0002.txt",
+        "TestResults/story-4-2-quality9-correction/T074-surrounding-attempt-0002.txt",
+        "TestResults/story-4-2-quality9-correction/T074-full-non-image-attempt-0002.txt",
+        "TestResults/story-4-2-quality9-correction/T074-web-build-attempt-0002.txt",
+        "TestResults/story-4-2-quality9-correction/T074-authorization-redaction-attempt-0002.txt",
+        "TestResults/story-4-2-quality9-correction/T074-fr020-scope-status-attempt-0002.txt"
+      ],
+      "command": "Focused plan binding; complete FrameworkDetectionTests; complete CodeGraphContextProviderTests; full suite excluding FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract; Web build; focused authorization/redaction; FR-020 scope/diff/status audit",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T03:39:26.8492601Z",
+      "summary": "T074 attempt 2 passes with valid native output capture: binding 17/17, FrameworkDetection 61/61, CodeGraphContextProvider 57/57, full non-final-image 523/523, authorization/redaction 4/4, and Web build with 9 existing warnings and zero errors. FR-020 comparison 3de522a..a6d6aed finds only the approved FrameworkEvidenceDetector owner-grammar product change and no Worker Agent/tool, orchestration, dispatch/scheduling/grouping/retry, persistence, API, UI, migration, Docker, or PRD change. Diff and status checks pass. T075 remains pending.",
+      "raw_output_path": "TestResults/story-4-2-quality9-correction/T074-*-attempt-0002.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T033046Z-03da75",
+    "checkpoint_id": "bmad-4-2-implement-20260728T033926Z-06ff52",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/114"
+      "4-2-language-and-framework-detection/implement/115"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T03:30:46.1396050Z"
+  "updated_at": "2026-07-28T03:39:26.8492601Z"
 }
