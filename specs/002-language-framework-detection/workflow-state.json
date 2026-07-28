@@ -4020,10 +4020,27 @@
       "observed_at": "2026-07-28T08:43:24.2329818Z",
       "summary": "T047 passed at detached candidate 00bdb87/tree 422c586. Restore completed without a blocked URL; the exact non-Docker harness passed 18/18. Two manifest generations were byte-identical, and the test assembly's private CreateProductionSourceManifest observer independently produced the same 132,104 bytes and SHA-256 0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138 across 904 sorted entries. Canonical accepted-correction input is 1,230 bytes; its exact SHA-256 a9f2805eec37b8859b7aaf52d3cde8cc98227a49cd5bfebfed821ff5c86d3a6a is the fresh namespace, absent in both candidate worktree and main checkout. Both tracked statuses are clean. No image or provider action occurred; T048 may build.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness-attempt-0004.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/130",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0001.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0001.meta.json",
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0002.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0002.meta.json"
+      ],
+      "command": "docker build --no-cache --progress=plain -f <candidate>/docker/Dockerfile --iidfile <create-new> --build-arg VULGATA_SOURCE_COMMIT=00bdb87... --build-arg VULGATA_SOURCE_TREE=422c586... --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=0d507418... -t vulgata-final-quality9-a9f2805eec37b885 <candidate>",
+      "exit_code": 1,
+      "observed_at": "2026-07-28T08:50:50.1328513Z",
+      "summary": "T048 remains pending. Attempt 0001 failed before build because the harness omitted the Dockerfile path. Corrected attempt 0002 reached the runtime apt-get update step, then external/container traffic to http://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease returned 502 Bad Gateway at Clash fake IP 198.18.1.63:80; Docker exited 100 and the build exited 1. No image/IID exists, no inspection or provider test ran, and accepted-correction namespace a9f2805e... remains unused in both checkouts. Candidate/tree/manifest bindings and both tracked statuses remain clean. This is an ambiguous external network blocker, not product or test failure.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0002.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-manifest-20260728T084324Z-0d5074",
+    "checkpoint_id": "bmad-4-2-final-image-blocked-20260728T085050Z-f480eb",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
@@ -4032,12 +4049,25 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/128",
-      "4-2-language-and-framework-detection/final-image/129"
+      "4-2-language-and-framework-detection/final-image/130"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-  "updated_at": "2026-07-28T08:43:24.2329818Z"
+  "recoverable_failure": {
+    "task_id": "T048",
+    "classification": "external-container-network",
+    "retryable": true,
+    "blocked_command": "docker build --no-cache --progress=plain -f docker/Dockerfile",
+    "blocked_urls": [
+      "http://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease"
+    ],
+    "observed_endpoint": "198.18.1.63:80",
+    "error": "502 Bad Gateway",
+    "required_resolution": "Restore container access through Clash/proxy to the blocked Ubuntu archive URL, then retry T048 with a new build evidence attempt.",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/130",
+    "namespace_still_unused": true,
+    "image_created": false
+  },
+  "updated_at": "2026-07-28T08:50:50.1328513Z"
 }

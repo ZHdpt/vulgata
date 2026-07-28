@@ -1215,6 +1215,18 @@ unchanged.
   assertion failed.
 - T047 manifest checkpoint:
   `bmad-4-2-manifest-20260728T084324Z-0d5074` (pending Git binding).
+- T048 is recoverably blocked before image creation. Attempt 0001 is a
+  harness-command failure because it omitted the Dockerfile path. Corrected
+  attempt 0002 reached runtime `apt-get update`, then container traffic to
+  `http://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease` returned
+  `502 Bad Gateway` at Clash fake IP `198.18.1.63:80`. Docker exited 100 and
+  the build exited 1. No IID/image exists, no inspection or provider test ran,
+  and namespace `a9f2805eec37b8859b7aaf52d3cde8cc98227a49cd5bfebfed821ff5c86d3a6a`
+  remains unused in both checkouts. Candidate/tree/manifest identities and
+  tracked statuses remain clean. T048 stays unchecked until container access
+  to the exact URL is restored.
+- T048 recoverable-failure checkpoint:
+  `bmad-4-2-final-image-blocked-20260728T085050Z-f480eb` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
