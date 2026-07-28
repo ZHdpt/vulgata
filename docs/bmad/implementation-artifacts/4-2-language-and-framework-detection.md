@@ -1070,6 +1070,15 @@ unchanged.
   hashes and manifest remain bound to plan-review 8 with no QR9 claim fields.
   Only the assertion surface and T070 marker changed; the resolver/constants
   remain intentionally stale and T071/T072 are pending.
+- T071 applies the minimal production GREEN: NuGet ownership declarations are
+  now considered only when they are direct children of a direct project-level
+  `ItemGroup`; root `Project Sdk` and direct `Project/Sdk` handling remain
+  unchanged. The two nested-owner regressions plus relevant valid/invalid
+  owner and paired-lock tests pass 5/5, with independent Repository evidence
+  preserved. Tests are byte-identical, only production and T071 changed, and
+  T072 remains pending.
+- T071 owner-grammar GREEN checkpoint:
+  `bmad-4-2-implement-20260728T030048Z-535ae6` (pending Git binding).
 - T070 plan-review-10 binding RED checkpoint:
   `bmad-4-2-implement-20260728T025054Z-81c2f6` (pending Git binding).
 - T069 Choose/When-nested RED checkpoint:

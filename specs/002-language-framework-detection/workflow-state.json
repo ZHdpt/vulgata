@@ -785,23 +785,42 @@
         "TestResults/story-4-2-quality9-correction/T070-plan-review-10-binding-red.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-28T02:57:27.3726156Z",
+      "completed_at": "2026-07-28T03:00:48.3148882Z",
+      "input_commit": "278211d2d3bac5a2877a194b43bfbfb20ec7c615",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "7b9d615a0b448b6fdb9895f28a815eb9209718e64eb59613add456f4adf05fb2",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "1cbdbc59adf0afc80ea4cc778f4d7969209080c01bc7306418b961412ec90332",
+        "specs/002-language-framework-detection/tasks.md": "28073121f8a2e9193cc559197e76bbfa868898450086f372e5b3309e01434341",
+        "TestResults/story-4-2-quality9-correction/T071-owner-grammar-green.txt": "535ae67c92b7ef71688040f109b98071d9fcf8270fad27390cbbb2f94e881983"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "TestResults/story-4-2-quality9-correction/T071-owner-grammar-green.txt"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "e928048fcb6c7b23403d30358d6cc777ad408eb3",
+    "preflight_head": "278211d2d3bac5a2877a194b43bfbfb20ec7c615",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": ".git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": "Story 4.2 T070 assertion-only stale-binding RED, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
+    "worktree_status": "Story 4.2 T071 minimal owner-grammar production GREEN, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/workflow-state.json",
       "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-28T02:50:54.3212297Z"
+    "observed_at": "2026-07-28T03:00:48.3148882Z"
   },
   "source_artifacts": [
     {
@@ -3460,24 +3479,40 @@
       "observed_at": "2026-07-28T02:50:54.3212297Z",
       "summary": "T070 compiled and produced the required exact-binding RED: 17 focused cases ran, 11 passed, and 6 assertion cases failed because all five canonical plan hashes remain stale and the manifest expected plan-review-10 but emitted plan-review-8. The resolver/constants and canonical builder remain intentionally unchanged; T071 and T072 are pending.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T070-plan-review-10-binding-red.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/111",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "278211d2d3bac5a2877a194b43bfbfb20ec7c615",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "specs/002-language-framework-detection/tasks.md",
+        "TestResults/story-4-2-quality9-correction/T071-owner-grammar-green.txt"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter <T068|T069|valid-owner|invalid-owner|paired-lock exact focused set> --logger \"console;verbosity=normal\"",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T03:00:48.3148882Z",
+      "summary": "T071 minimally replaces unrestricted descendant ownership discovery with direct project-level ItemGroup/direct declaration traversal. T068, T069, and relevant valid/invalid owner and paired-lock tests pass 5/5; independent npm Repository evidence continues; tests are byte-identical. Root Project Sdk and direct Project/Sdk branches remain unchanged. T072 remains pending.",
+      "raw_output_path": "TestResults/story-4-2-quality9-correction/T071-owner-grammar-green.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-implement-20260728T025054Z-81c2f6",
+    "checkpoint_id": "bmad-4-2-implement-20260728T030048Z-535ae6",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
-      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/implement/110"
+      "4-2-language-and-framework-detection/implement/111"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T02:50:54.3212297Z"
+  "updated_at": "2026-07-28T03:00:48.3148882Z"
 }

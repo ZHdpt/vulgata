@@ -1125,17 +1125,21 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
             hasLiteralOwnership = true;
         }
 
-        foreach (XElement declaration in project.Descendants().Where(element =>
-                     element.Name.Namespace == projectNamespace &&
-                     element.Name.LocalName is "PackageReference" or "FrameworkReference"))
+        foreach (XElement itemGroup in project.Elements(projectNamespace + "ItemGroup"))
         {
-            if (declaration.AncestorsAndSelf().Any(HasCondition) ||
-                !IsLiteral(declaration.Attribute("Include")?.Value))
+            foreach (XElement declaration in itemGroup.Elements().Where(element =>
+                         element.Name.Namespace == projectNamespace &&
+                         element.Name.LocalName is "PackageReference" or "FrameworkReference"))
             {
-                return DirectManifestOwnerParseStatus.ConditionalOrDynamic;
-            }
+                if (HasCondition(itemGroup) ||
+                    HasCondition(declaration) ||
+                    !IsLiteral(declaration.Attribute("Include")?.Value))
+                {
+                    return DirectManifestOwnerParseStatus.ConditionalOrDynamic;
+                }
 
-            hasLiteralOwnership = true;
+                hasLiteralOwnership = true;
+            }
         }
 
         return hasLiteralOwnership
