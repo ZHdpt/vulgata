@@ -1169,6 +1169,24 @@ unchanged.
   exact final-image identity remains T047-T048.
 - Required E2E checkpoint:
   `bmad-4-2-e2e-20260728T074150Z-1065b2` (pending Git binding).
+- T045 pre-image verification is GREEN at the unchanged T041 candidate:
+  provider/profiling 116/116, FrameworkDetection 62/62, exact
+  plan-review-10/QR9 binding 17/17, full non-final-image 523/523, and
+  authorization/redaction 33/33. The Web build passed with 9 existing warnings
+  and zero errors. Forward and idempotent rollback scripts preserve the two
+  Story 4.2 migrations in upgrade/reverse order, and the model has no pending
+  changes. FR-020 found no forbidden Scan Coordinator, orchestration, Worker
+  Agent/tool, scheduling/grouping/retry, or dispatch change; the generic
+  `RepositoryProfilingCoordinator` match is the accepted integration seam.
+  Corrected byte-exact evidence confirms candidate diff `e4885cf0` at
+  2,170,074 bytes; `git diff --check` and tracked status are clean.
+- The first candidate-drift capture and the first two empty-success Git capture
+  methods are preserved as harness-only failures. They advanced no gate and
+  were superseded by byte-exact identity attempt 0002 plus line-delimited
+  diff/status attempt 0003. No product or test failure and no blocked URL was
+  observed.
+- T045 verification checkpoint:
+  `bmad-4-2-verification-20260728T080359Z-07fa3b` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:

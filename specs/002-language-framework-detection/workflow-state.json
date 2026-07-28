@@ -3927,24 +3927,67 @@
       "observed_at": "2026-07-28T07:41:50.4214577Z",
       "summary": "Required T044 E2E passed 210 of 210 in 41 seconds at the exact T041 candidate after corrected native-output capture. The 15,503-byte raw output has SHA-256 1065b203520e7d64c7c10f5f15387a19450d9e907ad4d4a42a1c3ece47ce5e2b and contains the native Test run for and Passed! markers. No tracked test edit, candidate mutation, proxy failure, or coverage override occurred. Migration and final-image checks remain T045 and T047-T048.",
       "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/verification/125",
+      "kind": "failure",
+      "stage": "verification",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-verification-quality9/T045-candidate-drift-status.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-diff-check.txt.meta.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-diff-check-attempt-0002.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-final-status-attempt-0002.txt"
+      ],
+      "command": "Initial PowerShell text-path candidate diff capture; initial and attempt-0002 empty-success git diff/status capture wrappers",
+      "exit_code": null,
+      "observed_at": "2026-07-28T08:03:59.1890000Z",
+      "summary": "T045 preserved three capture-harness defects without classifying them as product or test failures. The initial candidate identity used a PowerShell text path for binary Git diff bytes and produced invalid encoding-dependent values. Initial empty-success Git commands produced no raw file; attempt 0002 materialized content but lacked the required line-delimited command metadata. Corrected byte-exact identity and attempt-0003 empty-success captures supersede these artifacts. No gate advanced on the defective methods.",
+      "raw_output_path": "TestResults/story-4-2-final-verification-quality9/T045-candidate-drift-status.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/verification/126",
+      "kind": "test-green",
+      "stage": "verification",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-verification-quality9/T045-provider-profiling.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-framework-detection.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-plan-review-10-qr9-binding.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-full-non-final-image.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-web-build.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-authorization-redaction.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-migration-forward.sql.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-migration-rollback.sql.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-pending-model-changes.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-fr020-diff-audit.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-candidate-identity-attempt-0002.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-diff-check-attempt-0003.txt",
+        "TestResults/story-4-2-final-verification-quality9/T045-final-status-attempt-0003.txt"
+      ],
+      "command": "Focused provider/profiling, FrameworkDetection, and plan-review-10/QR9 binding tests; full non-final-image suite; Web build; authorization/redaction tests; forward and idempotent reverse VulgataDbContext migration scripts; pending-model check; FR-020 candidate audit; byte-exact candidate identity; git diff --check; tracked clean status",
+      "exit_code": 0,
+      "observed_at": "2026-07-28T08:03:59.3375403Z",
+      "summary": "T045 passed at unchanged candidate 00bdb87/tree 422c586: provider/profiling 116/116, FrameworkDetection 62/62, plan-review-10/QR9 binding 17/17, full non-final-image 523/523, and authorization/redaction 33/33. Web build passed with 9 existing warnings and zero errors. Forward migrations order AddLanguageFrameworkDetection before FrameworkEvidenceAuditCount; idempotent rollback reverses that order; no pending model changes exist. FR-020 has no forbidden Scan Coordinator, orchestration, Worker Agent/tool, scheduling/grouping/retry, or dispatch change; RepositoryProfilingCoordinator is the accepted integration seam. Corrected byte-exact identity confirms diff SHA-256 e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab and 2,170,074 bytes. Attempt-0003 diff check and tracked status are clean. Final-image identity remains T047-T048.",
+      "raw_output_path": "TestResults/story-4-2-final-verification-quality9/T045-full-non-final-image.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-e2e-20260728T074150Z-1065b2",
+    "checkpoint_id": "bmad-4-2-verification-20260728T080359Z-07fa3b",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "conditional-e2e",
+    "stage": "verification",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
       "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/conditional-e2e/123",
-      "4-2-language-and-framework-detection/conditional-e2e/124"
+      "4-2-language-and-framework-detection/verification/125",
+      "4-2-language-and-framework-detection/verification/126"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-28T07:41:50.4214577Z"
+  "updated_at": "2026-07-28T08:03:59.3375403Z"
 }
