@@ -4037,10 +4037,25 @@
       "observed_at": "2026-07-28T08:50:50.1328513Z",
       "summary": "T048 remains pending. Attempt 0001 failed before build because the harness omitted the Dockerfile path. Corrected attempt 0002 reached the runtime apt-get update step, then external/container traffic to http://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease returned 502 Bad Gateway at Clash fake IP 198.18.1.63:80; Docker exited 100 and the build exited 1. No image/IID exists, no inspection or provider test ran, and accepted-correction namespace a9f2805e... remains unused in both checkouts. Candidate/tree/manifest bindings and both tracked statuses remain clean. This is an ambiguous external network blocker, not product or test failure.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/131",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0003.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0003.meta.json"
+      ],
+      "command": "docker build --no-cache --progress=plain -f <candidate>/docker/Dockerfile --iidfile <attempt-0003> --build-arg VULGATA_SOURCE_COMMIT=00bdb87... --build-arg VULGATA_SOURCE_TREE=422c586... --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=0d507418... -t vulgata-final-quality9-a9f2805eec37b885 <candidate>",
+      "exit_code": 1,
+      "observed_at": "2026-07-28T09:14:46.0197134Z",
+      "summary": "User-authorized T048 retry attempt 0003 reached the runtime apt-get install phase and failed after 201.7 seconds. Three archive package URLs returned 502 Bad Gateway through Clash fake IP 198.18.1.63:80: libgdbm-compat4t64, libbrotli1, and librtmp1. The 289,147-byte raw log has SHA-256 470d4be917f8a2a860f5119c8b1e4fd1f7ce919ce24fab456be07aba90dd70b3. No image/tag/IID exists, no inspection/provider test ran, and namespace a9f2805e... remains absent in both checkouts. Both tracked statuses are clean. T048 remains an external network blocker, not a product or test failure.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0003.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-blocked-20260728T085050Z-f480eb",
+    "checkpoint_id": "bmad-4-2-final-image-blocked-20260728T091446Z-470d4b",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
@@ -4049,7 +4064,7 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/130"
+      "4-2-language-and-framework-detection/final-image/131"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -4060,14 +4075,16 @@
     "retryable": true,
     "blocked_command": "docker build --no-cache --progress=plain -f docker/Dockerfile",
     "blocked_urls": [
-      "http://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease"
+      "http://archive.ubuntu.com/ubuntu/pool/main/g/gdbm/libgdbm-compat4t64_1.23-5.1build1_amd64.deb",
+      "http://archive.ubuntu.com/ubuntu/pool/main/b/brotli/libbrotli1_1.1.0-2build2_amd64.deb",
+      "http://archive.ubuntu.com/ubuntu/pool/main/r/rtmpdump/librtmp1_2.4%2b20151223.gitfa8646d.1-2build7_amd64.deb"
     ],
     "observed_endpoint": "198.18.1.63:80",
     "error": "502 Bad Gateway",
     "required_resolution": "Restore container access through Clash/proxy to the blocked Ubuntu archive URL, then retry T048 with a new build evidence attempt.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/130",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/131",
     "namespace_still_unused": true,
     "image_created": false
   },
-  "updated_at": "2026-07-28T08:50:50.1328513Z"
+  "updated_at": "2026-07-28T09:14:46.0197134Z"
 }

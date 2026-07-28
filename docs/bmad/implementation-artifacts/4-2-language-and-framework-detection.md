@@ -1227,6 +1227,16 @@ unchanged.
   to the exact URL is restored.
 - T048 recoverable-failure checkpoint:
   `bmad-4-2-final-image-blocked-20260728T085050Z-f480eb` (pending Git binding).
+- User-authorized T048 retry attempt 0003 again stopped on container
+  networking, this time after reaching runtime `apt-get install`. Three exact
+  Ubuntu archive package URLs returned `502 Bad Gateway` through Clash fake IP
+  `198.18.1.63:80`: `libgdbm-compat4t64`, `libbrotli1`, and `librtmp1`.
+  The 289,147-byte build log has SHA-256 `470d4be9`. No image/tag/IID exists,
+  no inspection or provider test ran, and the accepted-correction namespace
+  remains unused in both checkouts. Both tracked statuses are clean. This
+  remains external infrastructure failure rather than product/test failure.
+- T048 retry recoverable-failure checkpoint:
+  `bmad-4-2-final-image-blocked-20260728T091446Z-470d4b` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
