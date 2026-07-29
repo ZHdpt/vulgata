@@ -4535,6 +4535,22 @@
       "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
     },
     {
+      "evidence_id": "4-2-language-and-framework-detection/verify/148",
+      "kind": "artifact-hash",
+      "stage": "verify",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0008-manifest.json",
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0008-metadata.json",
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0008-verdict.json"
+      ],
+      "command": "Regenerate T049 attempt 0008 from attempt 0007, reclassify review-10 as rejected history, add review-11 as accepted T042/T043 identities, and independently rehash every frozen identity.",
+      "exit_code": 0,
+      "observed_at": "2026-07-29T13:16:30.9649499Z",
+      "summary": "T049 attempt 0008 passed with manifest SHA-256 de6201eafe55fcd41a02b66bf104306ac4a5403ed80e908d98eb42c5053db33a. All 86 unique identities rehash exactly with zero missing, hash, length, or duplicate mismatch; 75 are accepted and 11 are rejected history. Review-10 is rejected history, review-11 is accepted, and provider/Docker/image/namespace action counters remain zero.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0008-verdict.json"
+    },
+    {
       "evidence_id": "4-2-language-and-framework-detection/verify/147",
       "kind": "command",
       "stage": "verify",
@@ -4926,19 +4942,14 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-review11-accepted-20260729T130944Z-6e4a91",
+    "checkpoint_id": "bmad-4-2-freeze8-passed-20260729T131630Z-de6201",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "quality-review",
+    "stage": "verify",
     "committed_paths": [
-      "specs/002-language-framework-detection/reviews/acceptance-review-11.json",
-      "specs/002-language-framework-detection/reviews/quality-review-11.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/acceptance-review/144",
-      "4-2-language-and-framework-detection/quality-review/145",
-      "4-2-language-and-framework-detection/conditional-e2e/146",
-      "4-2-language-and-framework-detection/verify/147"
+      "4-2-language-and-framework-detection/verify/148"
     ],
     "commit_sha": null,
     "binding_status": "pending"
