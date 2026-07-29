@@ -4,12 +4,12 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "implement",
+  "stage": "verify",
   "active_gates": {
     "acceptance-review": {
-      "status": "invalidated",
-      "iteration": 10,
-      "dispatch_id": null,
+      "status": "accepted",
+      "iteration": 11,
+      "dispatch_id": "story42_acceptance_review11",
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
         "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
@@ -228,13 +228,13 @@
           "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
         ]
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-10.json",
-      "completed_at": "2026-07-27T12:51:04.6083701Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-11.json",
+      "completed_at": "2026-07-29T13:11:13.1665477Z"
     },
     "quality-review": {
-      "status": "invalidated",
-      "iteration": 10,
-      "dispatch_id": null,
+      "status": "accepted",
+      "iteration": 11,
+      "dispatch_id": "story42_quality_review11",
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
         "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
@@ -453,8 +453,8 @@
           "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
         ]
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-10.json",
-      "completed_at": "2026-07-27T12:51:04.6083701Z"
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-11.json",
+      "completed_at": "2026-07-29T13:11:13.1665477Z"
     }
   },
   "stage_history": [
@@ -1245,6 +1245,36 @@
         "specs/002-language-framework-detection/reviews/t050-final-audit-1.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "accepted",
+      "started_at": "2026-07-29T13:11:13.1665477Z",
+      "completed_at": "2026-07-29T13:11:13.1665477Z",
+      "input_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/acceptance-review-11.json": "67fe9ed778add5b6f921550d33f8a26a6bc0a7fa1761106ff2659b18b63a0860"
+      },
+      "agent_role": "acceptance-reviewer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-11.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "accepted",
+      "started_at": "2026-07-29T13:11:13.1665477Z",
+      "completed_at": "2026-07-29T13:11:13.1665477Z",
+      "input_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/quality-review-11.json": "3b64fa3f3d9fb9b2a57d465cb4aa2e235e147abc8b8c0783eae62df6310f7d81"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-11.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1750,7 +1780,7 @@
       ]
     },
     "acceptance-review": {
-      "count": 10,
+      "count": 11,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
@@ -1761,11 +1791,12 @@
         "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
-        "specs/002-language-framework-detection/reviews/acceptance-review-10.json"
+        "specs/002-language-framework-detection/reviews/acceptance-review-10.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-11.json"
       ]
     },
     "quality-review": {
-      "count": 10,
+      "count": 11,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/quality-review-1.json",
         "specs/002-language-framework-detection/reviews/quality-review-2.json",
@@ -1776,7 +1807,8 @@
         "specs/002-language-framework-detection/reviews/quality-review-7.json",
         "specs/002-language-framework-detection/reviews/quality-review-8.json",
         "specs/002-language-framework-detection/reviews/quality-review-9.json",
-        "specs/002-language-framework-detection/reviews/quality-review-10.json"
+        "specs/002-language-framework-detection/reviews/quality-review-10.json",
+        "specs/002-language-framework-detection/reviews/quality-review-11.json"
       ]
     }
   },
@@ -2107,7 +2139,8 @@
     "result": "passed",
     "evidence_ids": [
       "4-2-language-and-framework-detection/conditional-e2e/123",
-      "4-2-language-and-framework-detection/conditional-e2e/124"
+      "4-2-language-and-framework-detection/conditional-e2e/124",
+      "4-2-language-and-framework-detection/conditional-e2e/146"
     ]
   },
   "verification": [
@@ -4502,6 +4535,22 @@
       "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
     },
     {
+      "evidence_id": "4-2-language-and-framework-detection/verify/147",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-11.json",
+        "specs/002-language-framework-detection/reviews/quality-review-11.json",
+        "specs/002-language-framework-detection/workflow-state.json"
+      ],
+      "command": "Validate both review-11 verdicts and workflow-state against checked-in schemas; regenerate the canonical --binary --full-index --no-ext-diff --no-renames candidate diff; inspect root and candidate worktree status.",
+      "exit_code": 0,
+      "observed_at": "2026-07-29T13:13:13.7007844Z",
+      "summary": "Both review-11 verdicts and workflow-state validate. The unchanged canonical candidate diff is exactly 2,170,074 bytes with SHA-256 e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab; the candidate worktree is clean and root changes are limited to review/lifecycle evidence.",
+      "raw_output_path": null
+    },
+    {
       "evidence_id": "4-2-language-and-framework-detection/verify/125",
       "kind": "failure",
       "stage": "verify",
@@ -4830,22 +4879,70 @@
       "observed_at": "2026-07-29T12:49:03.6182591Z",
       "summary": "T050 final audit returned REVISE because review-10 verdicts and workflow lifecycle projections violate executable schemas; the immutable product candidate remains unchanged.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/144",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-11.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-29T13:11:13.1665477Z",
+      "summary": "Fresh schema-conformant Full acceptance review 11 accepted the unchanged immutable candidate with zero findings.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/145",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-11.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-29T13:11:13.1665477Z",
+      "summary": "Fresh schema-conformant Full quality review 11 accepted the unchanged immutable candidate with zero findings after source, security, architecture, edge-case, and test review.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/conditional-e2e/146",
+      "kind": "e2e-decision",
+      "stage": "conditional-e2e",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-11.json",
+        "specs/002-language-framework-detection/reviews/quality-review-11.json",
+        "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
+      ],
+      "command": null,
+      "exit_code": 0,
+      "observed_at": "2026-07-29T13:11:13.1665477Z",
+      "summary": "The Full review-11 evidence changed only lifecycle artifacts. Candidate, tests, triggered E2E predicates, and the existing 210/210 current-candidate integration evidence are unchanged, so the required E2E decision remains passed without rerunning the consumed provider or Docker qualification.",
+      "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-t050-revise-20260729T125046Z-4d7c2a",
+    "checkpoint_id": "bmad-4-2-review11-accepted-20260729T130944Z-6e4a91",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "quality-review",
     "committed_paths": [
-      "specs/002-language-framework-detection/reviews/t050-final-audit-1.json",
+      "specs/002-language-framework-detection/reviews/acceptance-review-11.json",
+      "specs/002-language-framework-detection/reviews/quality-review-11.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/quality-review/143"
+      "4-2-language-and-framework-detection/acceptance-review/144",
+      "4-2-language-and-framework-detection/quality-review/145",
+      "4-2-language-and-framework-detection/conditional-e2e/146",
+      "4-2-language-and-framework-detection/verify/147"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-29T12:49:03.6182591Z"
+  "updated_at": "2026-07-29T13:11:13.1665477Z"
 }
