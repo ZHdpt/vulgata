@@ -4189,18 +4189,35 @@
       "observed_at": "2026-07-29T08:25:27.9417129Z",
       "summary": "Option A corrected the checkout-byte contract. LF preflight passed at 11,525 bytes, 184 LF, zero CRLF, and SHA-256 dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be. The replacement 904-entry manifest is SHA-256 8c4ed1537a67a1d44dd9dd59cb042fd10589ea9709ee3b3f31efdd8d1ca21cfd; the fresh image is sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 with exact labels. The provider gate executed exactly once in namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 and exited 0. Its immutable claim SHA-256 is b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975; its closed cgc-provider-contract-evidence-v2 SHA-256 is 963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8 and verdict is pass, with 139/138 projection rows, provider 0.5.1, cleanup true, and forbidden retention false. However the runner's relative Tee-Object destination resolved to nonexistent .worktrees/TestResults, so the console transcript and later command transcripts were not captured. The namespace is consumed and must not be rerun. Focused provider/profiling, framework, full non-final-image, Web build, migration/rollback/model, and authorization/redaction commands all recorded exit 0, but FR-020/final-status and durable replacement command captures remain pending. This is an ambiguous evidence-capture test-runner failure, not product/provider failure.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0001-verdict.json"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/140",
+      "kind": "human-approval",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/t048-provider-evidence-disposition-approval.json",
+        ".worktrees/story42-final-quality9-lf-attempt-0010/TestResults/codegraph-provider-contract/a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89/claim.json",
+        ".worktrees/story42-final-quality9-lf-attempt-0010/TestResults/codegraph-provider-contract/a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89/evidence.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-29T08:28:46.4834710Z",
+      "summary": "The user explicitly approved the recommended evidence disposition. The immutable claim SHA-256 b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975, closed v2 evidence SHA-256 963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8, exact image identity, and recorded provider exit 0 are accepted as the canonical one-time provider proof. Namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 must not be rerun. Only repeatable post-provider commands may be rerun with absolute create-new capture paths; FR-020 and final status remain mandatory.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T082527Z-44627a",
+    "checkpoint_id": "bmad-4-2-final-image-disposition-approved-20260729T082846Z-fd4535",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "specs/002-language-framework-detection/evidence/t048-provider-evidence-disposition-approval.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/139"
+      "4-2-language-and-framework-detection/final-image/140"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -4208,17 +4225,18 @@
   "recoverable_failure": {
     "task_id": "T048",
     "classification": "evidence-capture-path",
-    "retryable": false,
+    "retryable": true,
     "blocked_command": "VULGATA_PROVIDER_CONTRACT_IMAGE=sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 VULGATA_PROVIDER_CONTRACT_ACCEPTED_CORRECTION_SHA256=a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
     "blocked_urls": [],
     "observed_endpoint": ".worktrees/TestResults/story-4-2-final-image-quality9",
     "error": "The provider gate passed and consumed its namespace, but the runner's relative Tee-Object path resolved under a nonexistent .worktrees/TestResults directory, so no provider console transcript was captured.",
-    "required_resolution": "Obtain explicit user direction for the ambiguous E2E evidence failure. Recommended: accept the immutable provider claim and closed v2 evidence plus recorded exit 0 as the canonical provider proof, do not rerun the consumed namespace, and rerun only the repeatable post-provider verification commands with correct absolute create-new capture paths before FR-020/final-status completion. Strict alternative: regenerate another manifest namespace, build another fresh image, and reproduce the entire one-time gate with corrected absolute capture.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/139",
+    "required_resolution": "The user approved the recommended disposition at 2026-07-29T08:28:46.4834710Z. Preserve the immutable provider claim and closed v2 evidence as accepted one-time proof; perform zero provider reruns and zero image builds; rerun only repeatable post-provider verification with absolute create-new captures, then complete FR-020 and final clean-status checks.",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/140",
     "approval_path": "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json",
+    "evidence_disposition_approval_path": "specs/002-language-framework-detection/evidence/t048-provider-evidence-disposition-approval.json",
     "namespace_still_unused": false,
     "image_created": true,
     "provider_gate_passed": true
   },
-  "updated_at": "2026-07-29T08:25:27.9417129Z"
+  "updated_at": "2026-07-29T08:28:46.4834710Z"
 }

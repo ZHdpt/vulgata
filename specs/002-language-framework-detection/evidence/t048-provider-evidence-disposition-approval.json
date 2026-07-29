@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/final-image/140",
+  "kind": "human-approval",
+  "stage": "final-image",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+  "observed_at": "2026-07-29T08:28:46.4834710Z",
+  "decision": "approved",
+  "approval_text": "Approve",
+  "trigger": "The one-time provider gate passed and consumed namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89, but the e2e-runner's relative Tee-Object destination resolved under nonexistent .worktrees/TestResults and did not retain the provider console transcript.",
+  "approved_disposition": {
+    "provider_proof": "Accept the immutable claim and closed cgc-provider-contract-evidence-v2 artifact plus the recorded provider command exit code 0 as the canonical provider proof required by the accepted plan.",
+    "claim_sha256": "b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975",
+    "evidence_sha256": "963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8",
+    "image_sha256": "sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5",
+    "namespace": "a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89",
+    "one_time_rule": "The consumed namespace, image qualification, provider claim, and provider evidence must not be rerun, overwritten, or replaced.",
+    "repeatable_recovery": "Rerun only the repeatable post-provider T048 commands with absolute create-new output paths, then complete FR-020 and final clean-status checks."
+  },
+  "accepted_plan_basis": [
+    "specs/002-language-framework-detection/plan.md:292-335 defines the closed v2 evidence, claim, source/image binding, and one-time namespace as the final-image proof.",
+    "specs/002-language-framework-detection/tasks.md:250 requires one provider invocation in an unused namespace plus the repeatable full suite, build, migration/model, authorization/redaction, diff/scope, and status checks.",
+    "specs/002-language-framework-detection/contracts/provider-language-projection.md:105-143 delegates the only exact closed evidence grammar to the Story 4.1 contract."
+  ],
+  "implementation_intent": "Dispatch a fresh e2e-runner that independently validates the immutable image, claim, and closed evidence identities, performs zero provider invocations and zero image builds, reruns only repeatable post-provider verification with correct absolute create-new capture paths, and stops on any failed or ambiguous result.",
+  "scope_effects": {
+    "tracked_candidate_changed": false,
+    "provider_contract_weakened": false,
+    "provider_rerun_authorized": false,
+    "new_namespace_or_image_authorized": false,
+    "product_or_test_changed": false,
+    "accepted_plan_or_prd_changed": false,
+    "worker_agent_or_tool_changed": false,
+    "scan_strategy_changed": false
+  },
+  "waivers": {
+    "provider_closed_evidence": false,
+    "repeatable_post_provider_verification": false,
+    "fr020_scope_audit": false,
+    "final_status_check": false,
+    "t049_freeze": false,
+    "t050_final_audit": false,
+    "git_checkpoint_contract": false
+  }
+}

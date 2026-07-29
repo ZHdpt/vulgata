@@ -1360,6 +1360,15 @@ unchanged.
 - T048 evidence-capture blocker checkpoint:
   `bmad-4-2-final-image-blocked-20260729T082527Z-44627a`
   (pending Git binding).
+- The user explicitly approved the recommended disposition: accept immutable
+  claim `b36ae93a...`, closed v2 evidence `963a8632...`, exact image identity,
+  and recorded provider exit `0` as the canonical one-time provider proof.
+  Namespace `a4abf083...` must not be rerun. A fresh runner may rerun only
+  repeatable post-provider commands with absolute create-new output paths;
+  FR-020 and final clean-status checks remain mandatory.
+- T048 provider-evidence disposition checkpoint:
+  `bmad-4-2-final-image-disposition-approved-20260729T082846Z-fd4535`
+  (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
