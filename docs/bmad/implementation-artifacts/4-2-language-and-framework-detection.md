@@ -1277,6 +1277,27 @@ unchanged.
   statuses are clean. T048 remains unchecked and safely retryable.
 - T048 retry recoverable-failure checkpoint:
   `bmad-4-2-final-image-blocked-20260729T030124Z-9e285f` (pending Git binding).
+- Post-reboot attempt 0007 built a fresh exact-candidate image successfully in
+  275.1 seconds. Image
+  `sha256:ae4bdc11f1157c48af6b2c8be99e4c97849a2da19e5a59fad7e1ba975eb4b3fa`
+  passed immutable commit/tree/manifest label inspection. The one-time
+  final-image test then failed before provider execution because its IID file
+  was stored inside the candidate checkout as untracked
+  `.t048-attempt-0007.iid`; the source-manifest preflight correctly rejected
+  it. Namespace, claim, and provider evidence remained absent, so no second
+  invocation occurred and a fresh corrected layout remained safe.
+- Attempt 0008 used a new tracked-clean worktree and stored its IID under the
+  main ignored `TestResults` directory, outside the Docker context. That
+  corrected command failed after 55.2 seconds when
+  `http://archive.ubuntu.com/ubuntu/dists/noble/InRelease` returned
+  `502 Bad Gateway` through Clash fake IP `198.18.0.207:80`. The 11,925-byte
+  native stderr has SHA-256
+  `26f2d19280e5b56f94912fe6c5eb7fb1c6a0732146427d3aef241dfd4fb19092`.
+  No IID/tag/image or provider execution occurred, and the accepted-correction
+  namespace remains unused. T048 stays unchecked and retryable only after
+  user direction on the external network failure.
+- T048 retry recoverable-failure checkpoint:
+  `bmad-4-2-final-image-blocked-20260729T070455Z-26f2d1` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:

@@ -4100,10 +4100,47 @@
       "observed_at": "2026-07-29T03:01:24.7486296Z",
       "summary": "Fresh direct-child attempt 0006 rebuilt from the exact clean candidate but runtime apt-get update failed after 171.7 seconds when http://archive.ubuntu.com/ubuntu/dists/noble-backports/InRelease returned 502 Bad Gateway through Clash fake IP 198.18.0.43:80; the Docker step exited 100 and build exited 1. The 287,744-byte raw log has SHA-256 9e285f96db2890371bd4888ff9d0be51cc30cc20e695781d7b63f130d9d4e119; metadata SHA-256 is db9a81e0eb4995a8878df9c386624fbb4903791e2f2397e0b4cce09bc347eb0f and verdict SHA-256 is 007e8cb3582306788dd37709600f07fec05f2cdfb136c01d547744704b6c1cc9. No IID/tag/image exists, no provider test ran, namespace a9f2805e... remains unused, and both main and clean candidate tracked statuses are clean. This is an external container-network failure, not product or test failure.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0006.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/135",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0007.native.stderr.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0007-image-inspection.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-provider-contract-attempt-0007.native.stdout.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-provider-contract-attempt-0007.native.stderr.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0007-meta.json",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0007-verdict.json"
+      ],
+      "command": "Fresh exact-candidate Docker build attempt 0007 followed by one invocation of dotnet test --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
+      "exit_code": 1,
+      "observed_at": "2026-07-29T06:58:02.0000000Z",
+      "summary": "Post-reboot attempt 0007 built a fresh exact-candidate image in 275.1 seconds: sha256:ae4bdc11f1157c48af6b2c8be99e4c97849a2da19e5a59fad7e1ba975eb4b3fa. Pre-provider inspection confirmed exact commit/tree/manifest labels. The single final-image test invocation then failed before Python provider execution because the required IID file had been placed inside the candidate Docker context as untracked .t048-attempt-0007.iid; CreateProductionSourceManifest correctly rejected the untracked entry. Provider stdout SHA-256 is bebee1accd44ff15c15135181e5b3110c5c947a987f1540974449a80f8c754b5 and stderr SHA-256 is 71d12ca8092f142758c9e7f06187d83a16652d0378e8e160235c2648a34143f4. Namespace, claim, and evidence remained absent, so this was a retry-safe invocation-layout failure rather than product/provider failure.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-provider-contract-attempt-0007.native.stdout.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/136",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0008-preflight.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0008.native.stdout.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0008.native.stderr.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0008-meta.json",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0008-verdict.json"
+      ],
+      "command": "docker build --no-cache --progress=plain --iidfile \"G:\\source\\repos\\vulgata\\TestResults\\story-4-2-final-image-quality9\\T048-final-image-attempt-0008.iid\" --build-arg VULGATA_SOURCE_COMMIT=00bdb87a94e28bc91f561e080709f4ca07de0776 --build-arg VULGATA_SOURCE_TREE=422c586c9cf83f6cbd4fe76c81449a3ad8e3cbf8 --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138 --tag vulgata-story42-final-quality9-attempt-0008 -f docker/Dockerfile .",
+      "exit_code": 1,
+      "observed_at": "2026-07-29T07:04:55.0000000Z",
+      "summary": "Fresh-child attempt 0008 corrected the invocation layout by storing the IID outside a new tracked-clean candidate worktree. Its exact no-cache build then failed after 55.2 seconds before image creation when http://archive.ubuntu.com/ubuntu/dists/noble/InRelease returned 502 Bad Gateway through Clash fake IP 198.18.0.207:80; the runtime apt stage exited 100. Native stderr is 11,925 bytes with SHA-256 26f2d19280e5b56f94912fe6c5eb7fb1c6a0732146427d3aef241dfd4fb19092; metadata SHA-256 is db6c867e3c99e490dbef20d89a0aec678b300bb66aadf3b9ef4ebbdb18552db2 and verdict SHA-256 is 11f0d760de968ff73304faf8e97eb58b3901c91815fd971d06b397058b75fcda. No IID/tag/image or provider execution occurred, namespace/claim/evidence remain absent, and the candidate stayed clean. This is an ambiguous external container-network failure.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0008.native.stderr.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T030124Z-9e285f",
+    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T070455Z-26f2d1",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
@@ -4112,7 +4149,7 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/134"
+      "4-2-language-and-framework-detection/final-image/136"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -4121,16 +4158,16 @@
     "task_id": "T048",
     "classification": "external-container-network",
     "retryable": true,
-    "blocked_command": "docker build --no-cache --progress=plain -f docker/Dockerfile",
+    "blocked_command": "docker build --no-cache --progress=plain --iidfile \"G:\\source\\repos\\vulgata\\TestResults\\story-4-2-final-image-quality9\\T048-final-image-attempt-0008.iid\" --build-arg VULGATA_SOURCE_COMMIT=00bdb87a94e28bc91f561e080709f4ca07de0776 --build-arg VULGATA_SOURCE_TREE=422c586c9cf83f6cbd4fe76c81449a3ad8e3cbf8 --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138 --tag vulgata-story42-final-quality9-attempt-0008 -f docker/Dockerfile .",
     "blocked_urls": [
-      "http://archive.ubuntu.com/ubuntu/dists/noble-backports/InRelease"
+      "http://archive.ubuntu.com/ubuntu/dists/noble/InRelease"
     ],
-    "observed_endpoint": "198.18.0.43:80",
+    "observed_endpoint": "198.18.0.207:80",
     "error": "502 Bad Gateway",
     "required_resolution": "Correct Clash fake-IP filtering/routing so container traffic to archive.ubuntu.com, including /ubuntu/dists/noble-backports/InRelease, no longer reaches an unusable fake-IP endpoint; then retry T048 with a new build evidence attempt.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/134",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/136",
     "namespace_still_unused": true,
     "image_created": false
   },
-  "updated_at": "2026-07-29T03:01:24.7486296Z"
+  "updated_at": "2026-07-29T07:04:55.0000000Z"
 }
