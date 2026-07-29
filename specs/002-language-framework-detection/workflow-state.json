@@ -4137,10 +4137,27 @@
       "observed_at": "2026-07-29T07:04:55.0000000Z",
       "summary": "Fresh-child attempt 0008 corrected the invocation layout by storing the IID outside a new tracked-clean candidate worktree. Its exact no-cache build then failed after 55.2 seconds before image creation when http://archive.ubuntu.com/ubuntu/dists/noble/InRelease returned 502 Bad Gateway through Clash fake IP 198.18.0.207:80; the runtime apt stage exited 100. Native stderr is 11,925 bytes with SHA-256 26f2d19280e5b56f94912fe6c5eb7fb1c6a0732146427d3aef241dfd4fb19092; metadata SHA-256 is db6c867e3c99e490dbef20d89a0aec678b300bb66aadf3b9ef4ebbdb18552db2 and verdict SHA-256 is 11f0d760de968ff73304faf8e97eb58b3901c91815fd971d06b397058b75fcda. No IID/tag/image or provider execution occurred, namespace/claim/evidence remain absent, and the candidate stayed clean. This is an ambiguous external container-network failure.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0008.native.stderr.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/137",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0009-build.raw.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-final-image-attempt-0009.iid",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0009-provider.raw.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0009-verdict.json"
+      ],
+      "command": "Fresh exact-candidate Docker build attempt 0009 followed by one invocation of dotnet test --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
+      "exit_code": 1,
+      "observed_at": "2026-07-29T07:42:35.3692582Z",
+      "summary": "Attempt 0009 proved the network remediation effective: the exact no-cache image build passed in 281.3 seconds and produced immutable image sha256:8aec7fc369e7f916b91ea4f8873d5f2f70d55148b9301f82f53e4a853a3035ed with exact commit/tree/manifest labels and an external IID. The single final-image test invocation then failed before provider execution at accepted-plan binding with 'Accepted plan verdict path or content hash is stale.' Read-only diagnosis proved no Git content change: candidate plan-review-10.json contains 184 CRLF line endings and hashes to db83a12633aacf3461625fe85410ca2c1e513053b2ed70f65a63999019b60690, while the main LF working file and the test constant hash to dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be; LF-normalizing the candidate bytes produces that exact expected hash. Global core.autocrlf=true caused the clean detached checkout conversion. The 302,291-byte build output has SHA-256 de42b2a18a2010700a79390c48e2373299539958dbb50e63c0c79130f877c8d7; the 608,713-byte provider-test output has SHA-256 722a38f29ebc1f6dbd265d82294197e5beb29add0da9a710273146b791e62f58. Namespace, claim, and provider evidence remain absent; candidate and main tracked statuses are clean. T048 is blocked on an explicit checkout-byte canonicalization decision, not product/provider behavior.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-attempt-0009-provider.raw.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T070455Z-26f2d1",
+    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T074235Z-722a38",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
@@ -4149,25 +4166,23 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/136"
+      "4-2-language-and-framework-detection/final-image/137"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": {
     "task_id": "T048",
-    "classification": "external-container-network",
+    "classification": "checkout-line-ending-contract",
     "retryable": true,
-    "blocked_command": "docker build --no-cache --progress=plain --iidfile \"G:\\source\\repos\\vulgata\\TestResults\\story-4-2-final-image-quality9\\T048-final-image-attempt-0008.iid\" --build-arg VULGATA_SOURCE_COMMIT=00bdb87a94e28bc91f561e080709f4ca07de0776 --build-arg VULGATA_SOURCE_TREE=422c586c9cf83f6cbd4fe76c81449a3ad8e3cbf8 --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138 --tag vulgata-story42-final-quality9-attempt-0008 -f docker/Dockerfile .",
-    "blocked_urls": [
-      "http://archive.ubuntu.com/ubuntu/dists/noble/InRelease"
-    ],
-    "observed_endpoint": "198.18.0.207:80",
-    "error": "502 Bad Gateway",
-    "required_resolution": "Correct Clash fake-IP filtering/routing so container traffic to archive.ubuntu.com, including /ubuntu/dists/noble-backports/InRelease, no longer reaches an unusable fake-IP endpoint; then retry T048 with a new build evidence attempt.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/136",
+    "blocked_command": "VULGATA_PROVIDER_CONTRACT_IMAGE=sha256:8aec7fc369e7f916b91ea4f8873d5f2f70d55148b9301f82f53e4a853a3035ed VULGATA_PROVIDER_CONTRACT_ACCEPTED_CORRECTION_SHA256=a9f2805eec37b8859b7aaf52d3cde8cc98227a49cd5bfebfed821ff5c86d3a6a dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
+    "blocked_urls": [],
+    "observed_endpoint": "specs/002-language-framework-detection/reviews/plan-review-10.json working-tree bytes",
+    "error": "Accepted plan verdict path or content hash is stale: clean detached CRLF checkout db83a12633aacf3461625fe85410ca2c1e513053b2ed70f65a63999019b60690 does not equal pinned LF hash dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be.",
+    "required_resolution": "Obtain explicit user approval for Option A: supersede T047 and T048 evidence without tracked candidate mutation by recreating the detached candidate with core.autocrlf=false, regenerating the production-source manifest and a new unused namespace from canonical Git blob bytes, then building a fresh image and running the final-image gate once.",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/137",
     "namespace_still_unused": true,
-    "image_created": false
+    "image_created": true
   },
-  "updated_at": "2026-07-29T07:04:55.0000000Z"
+  "updated_at": "2026-07-29T07:42:35.3692582Z"
 }

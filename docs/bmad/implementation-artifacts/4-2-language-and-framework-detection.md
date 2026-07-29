@@ -1298,6 +1298,30 @@ unchanged.
   user direction on the external network failure.
 - T048 retry recoverable-failure checkpoint:
   `bmad-4-2-final-image-blocked-20260729T070455Z-26f2d1` (pending Git binding).
+- Attempt 0009 confirmed the new network remediation: a fresh no-cache image
+  built successfully in 281.3 seconds as
+  `sha256:8aec7fc369e7f916b91ea4f8873d5f2f70d55148b9301f82f53e4a853a3035ed`,
+  with an external IID and exact candidate/tree/manifest labels. The single
+  final-image test invocation then stopped before provider execution because
+  the accepted plan verdict content hash appeared stale.
+- Read-only diagnosis found no Git content change. Global
+  `core.autocrlf=true` converted the detached candidate's
+  `plan-review-10.json` to 184 CRLF lines, yielding SHA-256 `db83a126...`;
+  the test pins the canonical LF bytes at SHA-256 `dc0638af...`. Normalizing
+  only those candidate bytes to LF produces the exact pinned hash. Earlier
+  binding checks passed in the long-lived main checkout because its file
+  retained LF bytes; the fresh detached Windows checkout exposed the
+  checkout-dependent evidence contract.
+- Namespace, claim, and provider evidence remain absent, but the mandated
+  one-time attempt was consumed. T048 remains unchecked. Recommended Option A
+  is to supersede T047/T048 evidence without any tracked candidate mutation:
+  create a fresh candidate checkout with `core.autocrlf=false`, regenerate
+  the production-source manifest and a new unused namespace from canonical
+  Git blob bytes, build a new image, and run the final-image gate once. This
+  requires explicit user direction because the current E2E result is
+  ambiguous.
+- T048 checkout-contract blocker checkpoint:
+  `bmad-4-2-final-image-blocked-20260729T074235Z-722a38` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
