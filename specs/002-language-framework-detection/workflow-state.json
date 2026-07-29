@@ -8,26 +8,452 @@
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
-      "iteration": 9,
+      "iteration": 10,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
-        "diff_sha256": "47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68"
+        "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+        "diff_sha256": "e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab",
+        "artifact_hashes": {
+          ".dockerignore": "c8105035de8c4556f16143982e36628f97db8435d483058b6fbf0f59ebe786d2",
+          ".gitattributes": "cf1ebc1feae1321c339982a4b797e5ab722f1fde84457efb06ad0d45e45a3ecc",
+          "docker/Dockerfile": "f113bb6340fd3cd17adb15451d5d79ec98e408914be8a970d9ada63d1432b4fc",
+          "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md": "f943ff9341f8fe5e9a7320e17ac8a27ca79b8a794a8498ef3721704564843517",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml": "11225553567d5112a71d26ef9f195c4ab942ebdedfe0b0eb233b1dfc23699691",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124",
+          "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+          "specs/002-language-framework-detection/contracts/provider-language-projection.md": "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b",
+          "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
+          "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json": "b9057f17f296994578c171c9c86ea583862f025dacf4018bbe0ed3f2eaf75cd5",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json": "25c0ab11c38c81edbc2d8099d2e935cb9cda5c00f3158a7e2484249a6b5571eb",
+          "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json": "33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f",
+          "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json": "66cfd6ddaa5711e9dfc479b864c5c08938d50a8c132c45ae2e4f69902575ed4a",
+          "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json": "511abd0f18ef48cf7bb6ae00bce344a43625e4a9e0baeb6860b7b51df8a1bdfa",
+          "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json": "f9534965b2cfd38091417b22ea692e28936ad51f6970eb2b5f6da1cffe1ec5df",
+          "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json": "c4a56c0b69b295672ba9c113eef25319fffccb635bf31c19d643e0f90ebbc628",
+          "specs/002-language-framework-detection/evidence/quality8-validation.json": "87804901eef51732b8366106fe429a6b53b2efc73beda122658759e14a18e712",
+          "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+          "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+          "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json": "9896f06c30d91c227cf2db3dab5dcab234ac40f80606d02e96234174652ca289",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json": "c9d6708dbad4fe71b686ef4ce664646ee0a25f374889bc8d6f5f30856d944ded",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json": "23674d84e801ebcf0ae143ba512263a51675f4b5ac9603b5016b2d25b7b7620b",
+          "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json": "a3f8c33f3e6c8e08054c5f4b11b9d818521ab4365117bca47d8a4071629df408",
+          "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+          "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
+          "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+          "specs/002-language-framework-detection/reviews/acceptance-review-1.json": "0c65df8145f80fb9d876bb1dcd58e5d5abf747f6e4480a5217338779911ec42c",
+          "specs/002-language-framework-detection/reviews/acceptance-review-2.json": "46b76146c500a230d2481391cbc395c9354c7454813c21335b8dd14398e1c6eb",
+          "specs/002-language-framework-detection/reviews/acceptance-review-3.json": "e5c10fcb111b5bc6501869538c7263f36c436effbd61fd75b1a6be9b19703d89",
+          "specs/002-language-framework-detection/reviews/acceptance-review-4.json": "87c6ed4302c4382653c0f38ec942131ff9fce52c476659ea0a9f51cd67405efa",
+          "specs/002-language-framework-detection/reviews/acceptance-review-5.json": "3644a8c20c27bffff504aecba449046255d72049fbcf4f750868d63f8d0dce86",
+          "specs/002-language-framework-detection/reviews/acceptance-review-6.json": "55ac2c2ad5e632a5482700d25309319eaf46a3992bbc58d56c507a83e6dc3d37",
+          "specs/002-language-framework-detection/reviews/acceptance-review-7.json": "f868a7dc093c98a943c18cbc252351a97f656c437efa923f20b7701bf99ce3a2",
+          "specs/002-language-framework-detection/reviews/acceptance-review-8.json": "a7d0d0322368809f72c2ac0054b9cdd05da9dd9d47040bfeeb7dec4ecd053073",
+          "specs/002-language-framework-detection/reviews/acceptance-review-9.json": "3317a8082d8936b3aa09d9ff7915cafefebc0a786835fa0c3b9b24ec06e84ef5",
+          "specs/002-language-framework-detection/reviews/analyze-10.json": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd",
+          "specs/002-language-framework-detection/reviews/analyze-11.json": "043954534f173d943562193dcd97b9f26cefc1bae3ddd47d4cb06e212a404193",
+          "specs/002-language-framework-detection/reviews/analyze-5.json": "1178bcdfad3274cc7bce6297d97cc1177545b9569e826e857e3883c5c9869305",
+          "specs/002-language-framework-detection/reviews/analyze-6.json": "6e4f5e8d00d891ecd95a6744880cd51734e54b39a1def758b2edd9a71b242130",
+          "specs/002-language-framework-detection/reviews/analyze-7.json": "d9d24ebdbec2a2f77eaf3c230c71ab13dba4f2848408a4078538fafd6fd78a34",
+          "specs/002-language-framework-detection/reviews/analyze-8.json": "04b7fb5d7d78e34de944eb0bd303818823d1c7c1a43204a0aa3bfa4d5e2c3264",
+          "specs/002-language-framework-detection/reviews/analyze-9.json": "002685b2b3121729eeeeaaecaf70beeffaba3be371bf120923f155f19bdf3b1f",
+          "specs/002-language-framework-detection/reviews/analyze-final-1.json": "0a0c7697c47c97aab9a37753d8b39bf3c21e2dd31915915f071f764e105597b9",
+          "specs/002-language-framework-detection/reviews/analyze-final-2.json": "9938264d99b7d8b5edbfdfb42d9c32c9364a63dfe8a3221daaf078a86ae58279",
+          "specs/002-language-framework-detection/reviews/plan-review-10.json": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+          "specs/002-language-framework-detection/reviews/plan-review-4.json": "88d0d00fce950aef3243befeb48bff7c0358713f23f69dfed01e050ddaadfb4d",
+          "specs/002-language-framework-detection/reviews/plan-review-5.json": "f6f9708c22d74ea5acdb7c15540f1756e200b0f22c5626c43378ca84e3c758ae",
+          "specs/002-language-framework-detection/reviews/plan-review-6.json": "b457447ae58cda265448f93aa66bb7b0ecb1ba9033573ffb5641c9ad7d48ee12",
+          "specs/002-language-framework-detection/reviews/plan-review-7.json": "16ae0e324be3228be42b01f079b9e5f73ebcce64f21888ec53f58314efd70cba",
+          "specs/002-language-framework-detection/reviews/plan-review-8.json": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+          "specs/002-language-framework-detection/reviews/plan-review-9.json": "439a2f562c7b93554d0667b85fb9bb6bbafeefc12e96ab3ece8016977d08480b",
+          "specs/002-language-framework-detection/reviews/quality-review-1.json": "34eaecc6f10ca3f9804c1c40c3c2fabde37777d638107cd29c9b92f3ca746612",
+          "specs/002-language-framework-detection/reviews/quality-review-2.json": "fa275815d5d586add910d25f5c34d5a5f91d41b2cb89a3fddd268881797cafae",
+          "specs/002-language-framework-detection/reviews/quality-review-3.json": "4ef55574eee4c6a02f84992ba7e7c3d82457c6446737452e9fb9e39771ef1999",
+          "specs/002-language-framework-detection/reviews/quality-review-4.json": "6205b2ea128d0a624a8e948616a3ec93a9449ea68f73c207ab8549d8d0fa1831",
+          "specs/002-language-framework-detection/reviews/quality-review-5.json": "89f39a3f0803e8daa46227213fdca5441a1b4798820fbc4a5a162bf557fb0b89",
+          "specs/002-language-framework-detection/reviews/quality-review-6.json": "04e99796e3fc7d9b5f444db929e833c8a6f1e43759ceb2fa740299327fbb6fea",
+          "specs/002-language-framework-detection/reviews/quality-review-7.json": "20f878ffd9971d346c366ba8f328f9a38461aaa5adb2f7f158f9da3a59ec6ac6",
+          "specs/002-language-framework-detection/reviews/quality-review-8.json": "bd321059fe6d58f9fbaa60b23d09afa3d55ccbe982d743fa84fdac1e400d2cee",
+          "specs/002-language-framework-detection/reviews/quality-review-9.json": "649052b389b4f0685817c1598e2f7f48cb6ab363169005c97762a1077c88dc91",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json": "3045e94a061e6fdc0cc667031e7c8aef66cb939e1d0b03f81b20caf88d410d88",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json": "fb4805593176aec0f681a8686fbd3bf1b5010c2ff16fccfcb0d3f74ddaa10e48",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json": "1be9c3704b505ab554b68750a6f68f9b9dfe986f6b89d10a0291e6b6766bdcdf",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json": "b2c79cb4a2498e3ecf65f2cb0ef46e35ca03f9ffbed11fc54ae6e048654ec197",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation.json": "12c75218297a8666a98fd672dce48ef51e16b622a4801df550f381e966fb810f",
+          "specs/002-language-framework-detection/tasks.md": "a808c83dfc5928f8b72daac3ea8ab683feef580236ceea49b61934766dc3872b",
+          "specs/002-language-framework-detection/workflow-state.json": "fcc46d2ddd6f15d77e889f8c02ee22a9f3a2ec945a3cfe70c23a64be0b1a6ab7",
+          "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs": "e0a3a4768ae073cd1400c633cf1856c42e75d426cf611dc558033d29e9531fbb",
+          "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs": "0388f54da79dfc1d6568fed4986bb233f58c9493479ec3591e9977d0e0289066",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs": "d11728cbcb88642c77f378b524ec98b8cb44085af476097252785c52fb97698e",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnitFramework.cs": "ad756a1e2f3a26b89eee668d1d1209391563c2af1862026e45479262c79729cc",
+          "src/dotnet/Vulgata.Core/Entities/ScanRun.cs": "3dd0e59fd3966d7baff71e9aba4d8f8fc502303678954e97a74c5846acd93411",
+          "src/dotnet/Vulgata.Core/Entities/ScanRunLanguageSummary.cs": "0b25eb8e45fd6565339283cf9742d6ccc27ac408b24a5653a28e324ba8f0c8dc",
+          "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs": "97dd8d80c0e8ecadfd056ab994830ddf702c66c8937b384d19e7c76c1bc3d3ff",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitFrameworkConfiguration.cs": "168c4ebdca85e0dc49ef66587eef0e10e2d658f44cf1c78992861ac263953255",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs": "276d002d1b6b923263f526cda224ef52a0fcd836458b07aff0edb79fa204050c",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunLanguageSummaryConfiguration.cs": "2845ebf222b18bc7518028887858d0888e6270f5472fd2567e77c0643bc000c8",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs": "ed6d6655a40c83b449172fd7d4a561acfcc27b49cd03532b7bad0957135dd16e",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs": "624cd5c697ad297ae73bedf745356f72da7f42865d7c63a0de5c90aa7dc605d5",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs": "8779eae9446b26a68eacf8e1be19881f3f8a5c51b02af57006aca6bdc83f83df",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs": "b2b82921c105d47e04c2c606c663387fbf9cd142be375a2c3a3fa6fecbef8367",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs": "760cc9bd1214e9efca0fdfd817e9a29ffd73fdeac69f2a1e61ccf06b8ae631cc",
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs": "7cfe56cf0adeab52654f7f046ad142722d60a28ca6934bdfea97fbc7df78965c",
+          "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs": "acebe56d4c9dd14d173aa91940215dcfd62506eebf9ef610ab41cfdd757e7e1b",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json": "06959d23ff2b6354a0368cefe1b916d45b9eec8bd561e2df79062656334e3700",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs": "560453a16375df9614214fb45e337a94223eff29d0015e8986f1d45d7206db8f",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "7b9d615a0b448b6fdb9895f28a815eb9209718e64eb59613add456f4adf05fb2",
+          "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj": "d1797c78681e1a00382b9c3c7c1904b7ad400ff5b08f0ad2474d57e46706a8b9",
+          "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs": "bc19d56051258b2d3f5d56ba2b9927485152e4906bab742a08ce72b94da7e9da",
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs": "439fa5a97f4706a673a1e2058ad5a81db27d5a910725ebabce7774a8246d67bd",
+          "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor": "2f51b0576d6d7208923b228b0251d6597d0ed504e5998cb77d4e1f5d1c2fd296",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "dd1585b287b6a882b4bd30ad11224e47d628e0e29bd3b4c44a58a455a62a818b",
+          "src/dotnet/Vulgata.Web/Program.cs": "a4669e2f6bdaa33d0aada7a6c7c932b7b66d7124253bae32e58d63d419576d75",
+          "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs": "e5084118924279ab8e116d49d28860b69016ab45509f1e6dee0e2f3b0abfc22d",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py": "e0cdb86a2eddbee5255740b8ab4d9e488d9013d7bc544447e62b32110fc37013",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py": "334d96719da04e5041cb963499418cc0b1aceb29b0949150b2f9889b7ca1f71e",
+          "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "055452f7bc9a40da4ec880a5cd54d04adad107325581596d7c6e41494e5361cd",
+          "tests/Vulgata.Tests/DashboardPanelTests.cs": "76aecf4eb079e66ac0925a257ee1ffff687032251928da4f734e30e8bcb36c28",
+          "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "d90d2369d48d75261d5bc57366c50650b25509c4327ca740714910c4c59af1fd",
+          "tests/Vulgata.Tests/RepositoryApiTests.cs": "2b5632df55c05a1bdd5c52883d083dfb1ff7245426ccde17dc99eca0132c9719",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "76def864f548b9c20bedb9345885e5486068902f0a483cacb16fc48df1decba9"
+        },
+        "owned_paths": [
+          ".dockerignore",
+          ".gitattributes",
+          "docker/Dockerfile",
+          "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+          "specs/002-language-framework-detection/contracts/framework-detection.md",
+          "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+          "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+          "specs/002-language-framework-detection/data-model.md",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
+          "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+          "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json",
+          "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json",
+          "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+          "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+          "specs/002-language-framework-detection/evidence/quality8-validation.json",
+          "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+          "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
+          "specs/002-language-framework-detection/plan.md",
+          "specs/002-language-framework-detection/quickstart.md",
+          "specs/002-language-framework-detection/research.md",
+          "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-4.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+          "specs/002-language-framework-detection/reviews/analyze-10.json",
+          "specs/002-language-framework-detection/reviews/analyze-11.json",
+          "specs/002-language-framework-detection/reviews/analyze-5.json",
+          "specs/002-language-framework-detection/reviews/analyze-6.json",
+          "specs/002-language-framework-detection/reviews/analyze-7.json",
+          "specs/002-language-framework-detection/reviews/analyze-8.json",
+          "specs/002-language-framework-detection/reviews/analyze-9.json",
+          "specs/002-language-framework-detection/reviews/analyze-final-1.json",
+          "specs/002-language-framework-detection/reviews/analyze-final-2.json",
+          "specs/002-language-framework-detection/reviews/plan-review-10.json",
+          "specs/002-language-framework-detection/reviews/plan-review-4.json",
+          "specs/002-language-framework-detection/reviews/plan-review-5.json",
+          "specs/002-language-framework-detection/reviews/plan-review-6.json",
+          "specs/002-language-framework-detection/reviews/plan-review-7.json",
+          "specs/002-language-framework-detection/reviews/plan-review-8.json",
+          "specs/002-language-framework-detection/reviews/plan-review-9.json",
+          "specs/002-language-framework-detection/reviews/quality-review-1.json",
+          "specs/002-language-framework-detection/reviews/quality-review-2.json",
+          "specs/002-language-framework-detection/reviews/quality-review-3.json",
+          "specs/002-language-framework-detection/reviews/quality-review-4.json",
+          "specs/002-language-framework-detection/reviews/quality-review-5.json",
+          "specs/002-language-framework-detection/reviews/quality-review-6.json",
+          "specs/002-language-framework-detection/reviews/quality-review-7.json",
+          "specs/002-language-framework-detection/reviews/quality-review-8.json",
+          "specs/002-language-framework-detection/reviews/quality-review-9.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation.json",
+          "specs/002-language-framework-detection/tasks.md",
+          "specs/002-language-framework-detection/workflow-state.json",
+          "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+          "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnitFramework.cs",
+          "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+          "src/dotnet/Vulgata.Core/Entities/ScanRunLanguageSummary.cs",
+          "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitFrameworkConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunLanguageSummaryConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+          "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+          "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+          "src/dotnet/Vulgata.Web/Program.cs",
+          "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.py",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+          "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+          "tests/Vulgata.Tests/DashboardPanelTests.cs",
+          "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+          "tests/Vulgata.Tests/RepositoryApiTests.cs",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+        ]
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+      "verdict_path": "specs/002-language-framework-detection/reviews/acceptance-review-10.json",
       "completed_at": "2026-07-27T12:51:04.6083701Z"
     },
     "quality-review": {
       "status": "invalidated",
-      "iteration": 9,
+      "iteration": 10,
       "dispatch_id": null,
       "input_boundary": {
         "base_commit": "e9824df7300634c19d815bdd7ad591b9fb5366d5",
-        "candidate_commit": "708b7dfca397b8d155111d512c7950bc68651ea8",
-        "diff_sha256": "47c1bdcb21bd08f3c51662e33b77a6e7a67c94ef393c76b6970fe404e11b1e68"
+        "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+        "diff_sha256": "e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab",
+        "artifact_hashes": {
+          ".dockerignore": "c8105035de8c4556f16143982e36628f97db8435d483058b6fbf0f59ebe786d2",
+          ".gitattributes": "cf1ebc1feae1321c339982a4b797e5ab722f1fde84457efb06ad0d45e45a3ecc",
+          "docker/Dockerfile": "f113bb6340fd3cd17adb15451d5d79ec98e408914be8a970d9ada63d1432b4fc",
+          "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md": "f943ff9341f8fe5e9a7320e17ac8a27ca79b8a794a8498ef3721704564843517",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml": "11225553567d5112a71d26ef9f195c4ab942ebdedfe0b0eb233b1dfc23699691",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124",
+          "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+          "specs/002-language-framework-detection/contracts/provider-language-projection.md": "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b",
+          "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
+          "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json": "b9057f17f296994578c171c9c86ea583862f025dacf4018bbe0ed3f2eaf75cd5",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json": "25c0ab11c38c81edbc2d8099d2e935cb9cda5c00f3158a7e2484249a6b5571eb",
+          "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json": "33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f",
+          "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json": "66cfd6ddaa5711e9dfc479b864c5c08938d50a8c132c45ae2e4f69902575ed4a",
+          "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json": "511abd0f18ef48cf7bb6ae00bce344a43625e4a9e0baeb6860b7b51df8a1bdfa",
+          "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json": "f9534965b2cfd38091417b22ea692e28936ad51f6970eb2b5f6da1cffe1ec5df",
+          "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json": "c4a56c0b69b295672ba9c113eef25319fffccb635bf31c19d643e0f90ebbc628",
+          "specs/002-language-framework-detection/evidence/quality8-validation.json": "87804901eef51732b8366106fe429a6b53b2efc73beda122658759e14a18e712",
+          "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+          "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+          "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json": "9896f06c30d91c227cf2db3dab5dcab234ac40f80606d02e96234174652ca289",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json": "c9d6708dbad4fe71b686ef4ce664646ee0a25f374889bc8d6f5f30856d944ded",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json": "23674d84e801ebcf0ae143ba512263a51675f4b5ac9603b5016b2d25b7b7620b",
+          "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json": "a3f8c33f3e6c8e08054c5f4b11b9d818521ab4365117bca47d8a4071629df408",
+          "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+          "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
+          "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+          "specs/002-language-framework-detection/reviews/acceptance-review-1.json": "0c65df8145f80fb9d876bb1dcd58e5d5abf747f6e4480a5217338779911ec42c",
+          "specs/002-language-framework-detection/reviews/acceptance-review-2.json": "46b76146c500a230d2481391cbc395c9354c7454813c21335b8dd14398e1c6eb",
+          "specs/002-language-framework-detection/reviews/acceptance-review-3.json": "e5c10fcb111b5bc6501869538c7263f36c436effbd61fd75b1a6be9b19703d89",
+          "specs/002-language-framework-detection/reviews/acceptance-review-4.json": "87c6ed4302c4382653c0f38ec942131ff9fce52c476659ea0a9f51cd67405efa",
+          "specs/002-language-framework-detection/reviews/acceptance-review-5.json": "3644a8c20c27bffff504aecba449046255d72049fbcf4f750868d63f8d0dce86",
+          "specs/002-language-framework-detection/reviews/acceptance-review-6.json": "55ac2c2ad5e632a5482700d25309319eaf46a3992bbc58d56c507a83e6dc3d37",
+          "specs/002-language-framework-detection/reviews/acceptance-review-7.json": "f868a7dc093c98a943c18cbc252351a97f656c437efa923f20b7701bf99ce3a2",
+          "specs/002-language-framework-detection/reviews/acceptance-review-8.json": "a7d0d0322368809f72c2ac0054b9cdd05da9dd9d47040bfeeb7dec4ecd053073",
+          "specs/002-language-framework-detection/reviews/acceptance-review-9.json": "3317a8082d8936b3aa09d9ff7915cafefebc0a786835fa0c3b9b24ec06e84ef5",
+          "specs/002-language-framework-detection/reviews/analyze-10.json": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd",
+          "specs/002-language-framework-detection/reviews/analyze-11.json": "043954534f173d943562193dcd97b9f26cefc1bae3ddd47d4cb06e212a404193",
+          "specs/002-language-framework-detection/reviews/analyze-5.json": "1178bcdfad3274cc7bce6297d97cc1177545b9569e826e857e3883c5c9869305",
+          "specs/002-language-framework-detection/reviews/analyze-6.json": "6e4f5e8d00d891ecd95a6744880cd51734e54b39a1def758b2edd9a71b242130",
+          "specs/002-language-framework-detection/reviews/analyze-7.json": "d9d24ebdbec2a2f77eaf3c230c71ab13dba4f2848408a4078538fafd6fd78a34",
+          "specs/002-language-framework-detection/reviews/analyze-8.json": "04b7fb5d7d78e34de944eb0bd303818823d1c7c1a43204a0aa3bfa4d5e2c3264",
+          "specs/002-language-framework-detection/reviews/analyze-9.json": "002685b2b3121729eeeeaaecaf70beeffaba3be371bf120923f155f19bdf3b1f",
+          "specs/002-language-framework-detection/reviews/analyze-final-1.json": "0a0c7697c47c97aab9a37753d8b39bf3c21e2dd31915915f071f764e105597b9",
+          "specs/002-language-framework-detection/reviews/analyze-final-2.json": "9938264d99b7d8b5edbfdfb42d9c32c9364a63dfe8a3221daaf078a86ae58279",
+          "specs/002-language-framework-detection/reviews/plan-review-10.json": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+          "specs/002-language-framework-detection/reviews/plan-review-4.json": "88d0d00fce950aef3243befeb48bff7c0358713f23f69dfed01e050ddaadfb4d",
+          "specs/002-language-framework-detection/reviews/plan-review-5.json": "f6f9708c22d74ea5acdb7c15540f1756e200b0f22c5626c43378ca84e3c758ae",
+          "specs/002-language-framework-detection/reviews/plan-review-6.json": "b457447ae58cda265448f93aa66bb7b0ecb1ba9033573ffb5641c9ad7d48ee12",
+          "specs/002-language-framework-detection/reviews/plan-review-7.json": "16ae0e324be3228be42b01f079b9e5f73ebcce64f21888ec53f58314efd70cba",
+          "specs/002-language-framework-detection/reviews/plan-review-8.json": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+          "specs/002-language-framework-detection/reviews/plan-review-9.json": "439a2f562c7b93554d0667b85fb9bb6bbafeefc12e96ab3ece8016977d08480b",
+          "specs/002-language-framework-detection/reviews/quality-review-1.json": "34eaecc6f10ca3f9804c1c40c3c2fabde37777d638107cd29c9b92f3ca746612",
+          "specs/002-language-framework-detection/reviews/quality-review-2.json": "fa275815d5d586add910d25f5c34d5a5f91d41b2cb89a3fddd268881797cafae",
+          "specs/002-language-framework-detection/reviews/quality-review-3.json": "4ef55574eee4c6a02f84992ba7e7c3d82457c6446737452e9fb9e39771ef1999",
+          "specs/002-language-framework-detection/reviews/quality-review-4.json": "6205b2ea128d0a624a8e948616a3ec93a9449ea68f73c207ab8549d8d0fa1831",
+          "specs/002-language-framework-detection/reviews/quality-review-5.json": "89f39a3f0803e8daa46227213fdca5441a1b4798820fbc4a5a162bf557fb0b89",
+          "specs/002-language-framework-detection/reviews/quality-review-6.json": "04e99796e3fc7d9b5f444db929e833c8a6f1e43759ceb2fa740299327fbb6fea",
+          "specs/002-language-framework-detection/reviews/quality-review-7.json": "20f878ffd9971d346c366ba8f328f9a38461aaa5adb2f7f158f9da3a59ec6ac6",
+          "specs/002-language-framework-detection/reviews/quality-review-8.json": "bd321059fe6d58f9fbaa60b23d09afa3d55ccbe982d743fa84fdac1e400d2cee",
+          "specs/002-language-framework-detection/reviews/quality-review-9.json": "649052b389b4f0685817c1598e2f7f48cb6ab363169005c97762a1077c88dc91",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json": "3045e94a061e6fdc0cc667031e7c8aef66cb939e1d0b03f81b20caf88d410d88",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json": "fb4805593176aec0f681a8686fbd3bf1b5010c2ff16fccfcb0d3f74ddaa10e48",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json": "1be9c3704b505ab554b68750a6f68f9b9dfe986f6b89d10a0291e6b6766bdcdf",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json": "b2c79cb4a2498e3ecf65f2cb0ef46e35ca03f9ffbed11fc54ae6e048654ec197",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation.json": "12c75218297a8666a98fd672dce48ef51e16b622a4801df550f381e966fb810f",
+          "specs/002-language-framework-detection/tasks.md": "a808c83dfc5928f8b72daac3ea8ab683feef580236ceea49b61934766dc3872b",
+          "specs/002-language-framework-detection/workflow-state.json": "fcc46d2ddd6f15d77e889f8c02ee22a9f3a2ec945a3cfe70c23a64be0b1a6ab7",
+          "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs": "e0a3a4768ae073cd1400c633cf1856c42e75d426cf611dc558033d29e9531fbb",
+          "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs": "0388f54da79dfc1d6568fed4986bb233f58c9493479ec3591e9977d0e0289066",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs": "d11728cbcb88642c77f378b524ec98b8cb44085af476097252785c52fb97698e",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnitFramework.cs": "ad756a1e2f3a26b89eee668d1d1209391563c2af1862026e45479262c79729cc",
+          "src/dotnet/Vulgata.Core/Entities/ScanRun.cs": "3dd0e59fd3966d7baff71e9aba4d8f8fc502303678954e97a74c5846acd93411",
+          "src/dotnet/Vulgata.Core/Entities/ScanRunLanguageSummary.cs": "0b25eb8e45fd6565339283cf9742d6ccc27ac408b24a5653a28e324ba8f0c8dc",
+          "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs": "97dd8d80c0e8ecadfd056ab994830ddf702c66c8937b384d19e7c76c1bc3d3ff",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitFrameworkConfiguration.cs": "168c4ebdca85e0dc49ef66587eef0e10e2d658f44cf1c78992861ac263953255",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs": "276d002d1b6b923263f526cda224ef52a0fcd836458b07aff0edb79fa204050c",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunLanguageSummaryConfiguration.cs": "2845ebf222b18bc7518028887858d0888e6270f5472fd2567e77c0643bc000c8",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs": "ed6d6655a40c83b449172fd7d4a561acfcc27b49cd03532b7bad0957135dd16e",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs": "624cd5c697ad297ae73bedf745356f72da7f42865d7c63a0de5c90aa7dc605d5",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs": "8779eae9446b26a68eacf8e1be19881f3f8a5c51b02af57006aca6bdc83f83df",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs": "b2b82921c105d47e04c2c606c663387fbf9cd142be375a2c3a3fa6fecbef8367",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs": "760cc9bd1214e9efca0fdfd817e9a29ffd73fdeac69f2a1e61ccf06b8ae631cc",
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs": "7cfe56cf0adeab52654f7f046ad142722d60a28ca6934bdfea97fbc7df78965c",
+          "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs": "acebe56d4c9dd14d173aa91940215dcfd62506eebf9ef610ab41cfdd757e7e1b",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json": "06959d23ff2b6354a0368cefe1b916d45b9eec8bd561e2df79062656334e3700",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs": "560453a16375df9614214fb45e337a94223eff29d0015e8986f1d45d7206db8f",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "7b9d615a0b448b6fdb9895f28a815eb9209718e64eb59613add456f4adf05fb2",
+          "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj": "d1797c78681e1a00382b9c3c7c1904b7ad400ff5b08f0ad2474d57e46706a8b9",
+          "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs": "bc19d56051258b2d3f5d56ba2b9927485152e4906bab742a08ce72b94da7e9da",
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs": "439fa5a97f4706a673a1e2058ad5a81db27d5a910725ebabce7774a8246d67bd",
+          "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor": "2f51b0576d6d7208923b228b0251d6597d0ed504e5998cb77d4e1f5d1c2fd296",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "dd1585b287b6a882b4bd30ad11224e47d628e0e29bd3b4c44a58a455a62a818b",
+          "src/dotnet/Vulgata.Web/Program.cs": "a4669e2f6bdaa33d0aada7a6c7c932b7b66d7124253bae32e58d63d419576d75",
+          "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs": "e5084118924279ab8e116d49d28860b69016ab45509f1e6dee0e2f3b0abfc22d",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py": "e0cdb86a2eddbee5255740b8ab4d9e488d9013d7bc544447e62b32110fc37013",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py": "334d96719da04e5041cb963499418cc0b1aceb29b0949150b2f9889b7ca1f71e",
+          "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "055452f7bc9a40da4ec880a5cd54d04adad107325581596d7c6e41494e5361cd",
+          "tests/Vulgata.Tests/DashboardPanelTests.cs": "76aecf4eb079e66ac0925a257ee1ffff687032251928da4f734e30e8bcb36c28",
+          "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "d90d2369d48d75261d5bc57366c50650b25509c4327ca740714910c4c59af1fd",
+          "tests/Vulgata.Tests/RepositoryApiTests.cs": "2b5632df55c05a1bdd5c52883d083dfb1ff7245426ccde17dc99eca0132c9719",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "76def864f548b9c20bedb9345885e5486068902f0a483cacb16fc48df1decba9"
+        },
+        "owned_paths": [
+          ".dockerignore",
+          ".gitattributes",
+          "docker/Dockerfile",
+          "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
+          "specs/002-language-framework-detection/contracts/framework-detection.md",
+          "specs/002-language-framework-detection/contracts/provider-language-projection.md",
+          "specs/002-language-framework-detection/contracts/repository-scan-overview.md",
+          "specs/002-language-framework-detection/data-model.md",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json",
+          "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json",
+          "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json",
+          "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json",
+          "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json",
+          "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json",
+          "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json",
+          "specs/002-language-framework-detection/evidence/quality8-validation.json",
+          "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json",
+          "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json",
+          "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json",
+          "specs/002-language-framework-detection/plan.md",
+          "specs/002-language-framework-detection/quickstart.md",
+          "specs/002-language-framework-detection/research.md",
+          "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-4.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+          "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+          "specs/002-language-framework-detection/reviews/analyze-10.json",
+          "specs/002-language-framework-detection/reviews/analyze-11.json",
+          "specs/002-language-framework-detection/reviews/analyze-5.json",
+          "specs/002-language-framework-detection/reviews/analyze-6.json",
+          "specs/002-language-framework-detection/reviews/analyze-7.json",
+          "specs/002-language-framework-detection/reviews/analyze-8.json",
+          "specs/002-language-framework-detection/reviews/analyze-9.json",
+          "specs/002-language-framework-detection/reviews/analyze-final-1.json",
+          "specs/002-language-framework-detection/reviews/analyze-final-2.json",
+          "specs/002-language-framework-detection/reviews/plan-review-10.json",
+          "specs/002-language-framework-detection/reviews/plan-review-4.json",
+          "specs/002-language-framework-detection/reviews/plan-review-5.json",
+          "specs/002-language-framework-detection/reviews/plan-review-6.json",
+          "specs/002-language-framework-detection/reviews/plan-review-7.json",
+          "specs/002-language-framework-detection/reviews/plan-review-8.json",
+          "specs/002-language-framework-detection/reviews/plan-review-9.json",
+          "specs/002-language-framework-detection/reviews/quality-review-1.json",
+          "specs/002-language-framework-detection/reviews/quality-review-2.json",
+          "specs/002-language-framework-detection/reviews/quality-review-3.json",
+          "specs/002-language-framework-detection/reviews/quality-review-4.json",
+          "specs/002-language-framework-detection/reviews/quality-review-5.json",
+          "specs/002-language-framework-detection/reviews/quality-review-6.json",
+          "specs/002-language-framework-detection/reviews/quality-review-7.json",
+          "specs/002-language-framework-detection/reviews/quality-review-8.json",
+          "specs/002-language-framework-detection/reviews/quality-review-9.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json",
+          "specs/002-language-framework-detection/reviews/t040-ledger-validation.json",
+          "specs/002-language-framework-detection/tasks.md",
+          "specs/002-language-framework-detection/workflow-state.json",
+          "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+          "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs",
+          "src/dotnet/Vulgata.Core/Entities/CodeUnitFramework.cs",
+          "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+          "src/dotnet/Vulgata.Core/Entities/ScanRunLanguageSummary.cs",
+          "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitFrameworkConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunLanguageSummaryConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs",
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+          "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+          "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+          "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+          "src/dotnet/Vulgata.Web/Program.cs",
+          "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.py",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py",
+          "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+          "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+          "tests/Vulgata.Tests/DashboardPanelTests.cs",
+          "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+          "tests/Vulgata.Tests/RepositoryApiTests.cs",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+        ]
       },
-      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-9.json",
+      "verdict_path": "specs/002-language-framework-detection/reviews/quality-review-10.json",
       "completed_at": "2026-07-27T12:51:04.6083701Z"
     }
   },
@@ -167,7 +593,7 @@
       "stage": "tasks",
       "status": "accepted",
       "started_at": "2026-07-19T13:29:40.9418361Z",
-      "completed_at": "2026-07-20T02:45:08.9688990Z",
+      "completed_at": "2026-07-20T02:45:08.968899Z",
       "input_commit": "6ba4a5c0c805580cf3838b71b587b74e5122a21c",
       "input_hashes": {
         "specs/002-language-framework-detection/plan.md": "b53b2ee92dc36e5b76aaf721a0beb07fa4d75bbcc3710f08f40937b0ddefaf97",
@@ -183,7 +609,7 @@
       "stage": "analyze",
       "status": "accepted",
       "started_at": "2026-07-20T01:58:40.5829577Z",
-      "completed_at": "2026-07-20T02:45:08.9688990Z",
+      "completed_at": "2026-07-20T02:45:08.968899Z",
       "input_commit": "366f25824b38627d3e840ebe5de4533ec44e84cf",
       "input_hashes": {
         "specs/002-language-framework-detection/spec.md": "924d9d5d1f104e4206f145f565eb7f3e8c813c67fdd88da2abf55cb08456f956",
@@ -203,7 +629,7 @@
       "stage": "acceptance-review",
       "status": "revised",
       "started_at": "2026-07-20T09:22:24.2511172Z",
-      "completed_at": "2026-07-20T10:47:52.5668230Z",
+      "completed_at": "2026-07-20T10:47:52.566823Z",
       "input_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
       "input_hashes": {
         "specs/002-language-framework-detection/reviews/acceptance-review-1.json": "0c65df8145f80fb9d876bb1dcd58e5d5abf747f6e4480a5217338779911ec42c"
@@ -218,7 +644,7 @@
       "stage": "quality-review",
       "status": "revised",
       "started_at": "2026-07-20T09:22:24.2511172Z",
-      "completed_at": "2026-07-20T10:47:52.5668230Z",
+      "completed_at": "2026-07-20T10:47:52.566823Z",
       "input_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
       "input_hashes": {
         "specs/002-language-framework-detection/reviews/quality-review-1.json": "34eaecc6f10ca3f9804c1c40c3c2fabde37777d638107cd29c9b92f3ca746612"
@@ -233,8 +659,8 @@
     {
       "stage": "implement",
       "status": "accepted",
-      "started_at": "2026-07-20T10:47:52.5668230Z",
-      "completed_at": "2026-07-20T10:47:52.5668230Z",
+      "started_at": "2026-07-20T10:47:52.566823Z",
+      "completed_at": "2026-07-20T10:47:52.566823Z",
       "input_commit": "ba50c8c213929a44a66931fb6d0b420aea55b528",
       "input_hashes": {
         "specs/002-language-framework-detection/reviews/acceptance-review-1.json": "0c65df8145f80fb9d876bb1dcd58e5d5abf747f6e4480a5217338779911ec42c",
@@ -264,7 +690,7 @@
       "stage": "plan",
       "status": "accepted",
       "started_at": "2026-07-20T11:34:11.4566124Z",
-      "completed_at": "2026-07-20T12:38:00.0000000Z",
+      "completed_at": "2026-07-20T12:38:00Z",
       "input_commit": "eefa1794a57227428376a6d838593485e491a79b",
       "input_hashes": {
         "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124",
@@ -290,7 +716,7 @@
     {
       "stage": "plan-review",
       "status": "accepted",
-      "started_at": "2026-07-20T12:38:00.0000000Z",
+      "started_at": "2026-07-20T12:38:00Z",
       "completed_at": "2026-07-20T12:49:52.5988743Z",
       "input_commit": "eefa1794a57227428376a6d838593485e491a79b",
       "input_hashes": {
@@ -327,7 +753,7 @@
       "stage": "analyze",
       "status": "accepted",
       "started_at": "2026-07-22T01:27:39.6643161Z",
-      "completed_at": "2026-07-22T01:44:36.1076500Z",
+      "completed_at": "2026-07-22T01:44:36.10765Z",
       "input_commit": "216985b812613ad20994d300fae072b69093e6b6",
       "input_hashes": {
         "specs/002-language-framework-detection/tasks.md": "bbf8e99dd3c6e10803bcad3985d811caab714c5f6c2e1d3037a51f79cecf6cd9",
@@ -342,7 +768,7 @@
     {
       "stage": "implement",
       "status": "accepted",
-      "started_at": "2026-07-22T01:44:36.1076500Z",
+      "started_at": "2026-07-22T01:44:36.10765Z",
       "completed_at": "2026-07-22T06:18:43.9419894Z",
       "input_commit": "30d7991fa14ec8382d80fddb6e140b48d3bf55d5",
       "input_hashes": {
@@ -581,8 +1007,8 @@
     {
       "stage": "acceptance-review",
       "status": "invalidated",
-      "started_at": "2026-07-27T01:16:38.0000000Z",
-      "completed_at": "2026-07-27T01:17:17.0000000Z",
+      "started_at": "2026-07-27T01:16:38Z",
+      "completed_at": "2026-07-27T01:17:17Z",
       "input_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
       "input_hashes": {
         "specs/002-language-framework-detection/reviews/acceptance-review-6.json": "dee2a3f280a4827d6b5b7fd23ccea42b4587e361995e09d48ac5e3075576e26a"
@@ -596,8 +1022,8 @@
     {
       "stage": "quality-review",
       "status": "revised",
-      "started_at": "2026-07-27T01:16:40.0000000Z",
-      "completed_at": "2026-07-27T01:17:17.0000000Z",
+      "started_at": "2026-07-27T01:16:40Z",
+      "completed_at": "2026-07-27T01:17:17Z",
       "input_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
       "input_hashes": {
         "specs/002-language-framework-detection/reviews/quality-review-6.json": "083ad69dab551c7ce834d5d19e35c068f43be1438cee562102699fd8da62bf5c"
@@ -614,8 +1040,8 @@
     {
       "stage": "implement",
       "status": "accepted",
-      "started_at": "2026-07-27T01:27:08.0000000Z",
-      "completed_at": "2026-07-27T01:44:39.0000000Z",
+      "started_at": "2026-07-27T01:27:08Z",
+      "completed_at": "2026-07-27T01:44:39Z",
       "input_commit": "42345ac04645ca28f1e5dfd02e971b5316842435",
       "input_hashes": {
         "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "4fec4cc4c89d82967af3c310bca58c5c34e74955e2b54273e28ca534940141b9",
@@ -804,14 +1230,29 @@
         "TestResults/story-4-2-quality9-correction/T071-owner-grammar-green.txt"
       ],
       "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "revised",
+      "started_at": "2026-07-29T12:49:03.6182591Z",
+      "completed_at": "2026-07-29T12:49:03.6182591Z",
+      "input_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/t050-final-audit-1.json": "4648e2567cf8cc6c6ef3bb20e8bebb969f4895e3295eb4eb08b06f6086480edf"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/t050-final-audit-1.json"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
     "preflight_head": "278211d2d3bac5a2877a194b43bfbfb20ec7c615",
-    "repository_root": "G:/source/repos/vulgata",
+    "repository_root": ".",
     "git_common_directory": ".git",
-    "worktree_path": "G:/source/repos/vulgata",
+    "worktree_path": ".",
     "worktree_status": "Story 4.2 T071 minimal owner-grammar production GREEN, one task marker, story development record, and workflow state only; ignored raw output is evidence and no unrelated paths exist.",
     "owned_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
@@ -1279,7 +1720,7 @@
       ]
     },
     "plan-review": {
-      "count": 8,
+      "count": 10,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/plan-review-1.json",
         "specs/002-language-framework-detection/reviews/plan-review-2.json",
@@ -1288,7 +1729,9 @@
         "specs/002-language-framework-detection/reviews/plan-review-5.json",
         "specs/002-language-framework-detection/reviews/plan-review-6.json",
         "specs/002-language-framework-detection/reviews/plan-review-7.json",
-        "specs/002-language-framework-detection/reviews/plan-review-8.json"
+        "specs/002-language-framework-detection/reviews/plan-review-8.json",
+        "specs/002-language-framework-detection/reviews/plan-review-9.json",
+        "specs/002-language-framework-detection/reviews/plan-review-10.json"
       ]
     },
     "analyze": {
@@ -1297,35 +1740,43 @@
         "specs/002-language-framework-detection/reviews/analyze-1.json",
         "specs/002-language-framework-detection/reviews/analyze-2.json",
         "specs/002-language-framework-detection/reviews/analyze-3.json",
-        "specs/002-language-framework-detection/reviews/analyze-final-2.json",
         "specs/002-language-framework-detection/reviews/analyze-5.json",
         "specs/002-language-framework-detection/reviews/analyze-6.json",
         "specs/002-language-framework-detection/reviews/analyze-7.json",
         "specs/002-language-framework-detection/reviews/analyze-8.json",
         "specs/002-language-framework-detection/reviews/analyze-9.json",
-        "specs/002-language-framework-detection/reviews/analyze-10.json"
+        "specs/002-language-framework-detection/reviews/analyze-10.json",
+        "specs/002-language-framework-detection/reviews/analyze-11.json"
       ]
     },
     "acceptance-review": {
-      "count": 6,
+      "count": 10,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-3.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-4.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-5.json",
-        "specs/002-language-framework-detection/reviews/acceptance-review-6.json"
+        "specs/002-language-framework-detection/reviews/acceptance-review-6.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-7.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-10.json"
       ]
     },
     "quality-review": {
-      "count": 6,
+      "count": 10,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/quality-review-1.json",
         "specs/002-language-framework-detection/reviews/quality-review-2.json",
         "specs/002-language-framework-detection/reviews/quality-review-3.json",
         "specs/002-language-framework-detection/reviews/quality-review-4.json",
         "specs/002-language-framework-detection/reviews/quality-review-5.json",
-        "specs/002-language-framework-detection/reviews/quality-review-6.json"
+        "specs/002-language-framework-detection/reviews/quality-review-6.json",
+        "specs/002-language-framework-detection/reviews/quality-review-7.json",
+        "specs/002-language-framework-detection/reviews/quality-review-8.json",
+        "specs/002-language-framework-detection/reviews/quality-review-9.json",
+        "specs/002-language-framework-detection/reviews/quality-review-10.json"
       ]
     }
   },
@@ -1428,26 +1879,11 @@
     "coverage_override": null,
     "rationale": "Required execution passed. Four Required predicates are triggered, so the e2e-runner executed the economical current-candidate integration boundary. The corrected capture passed 210 of 210 with no tracked test edit. PostgreSQL migration script/rollback and pending-model checks remain T045; final Docker image identity remains T047-T048.",
     "covering_tests": [
-      {
-        "test_id": "Vulgata.Tests.CodeGraphContextProviderTests",
-        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
-      },
-      {
-        "test_id": "Vulgata.Tests.RepositoryProfilingTests",
-        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
-      },
-      {
-        "test_id": "Vulgata.Tests.FrameworkDetectionTests",
-        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
-      },
-      {
-        "test_id": "Vulgata.Tests.RepositoryApiTests",
-        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
-      },
-      {
-        "test_id": "Vulgata.Tests.DashboardPanelTests",
-        "passing_evidence_id": "4-2-language-and-framework-detection/conditional-e2e/124"
-      }
+      "Vulgata.Tests.CodeGraphContextProviderTests",
+      "Vulgata.Tests.RepositoryProfilingTests",
+      "Vulgata.Tests.FrameworkDetectionTests",
+      "Vulgata.Tests.RepositoryApiTests",
+      "Vulgata.Tests.DashboardPanelTests"
     ],
     "owner": "e2e-runner",
     "source_boundary": {
@@ -1455,10 +1891,110 @@
       "candidate_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "diff_sha256": "e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab",
       "artifact_hashes": {
-        "source": "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-4.json",
-        "source_sha256": "d01702dee7265156bc0d1ed9edcbd141f3bac4445ceb1112bd5d704c8565b3b2",
-        "verified_entry_count": 105,
-        "all_entries_match_candidate_tree": true
+        ".dockerignore": "c8105035de8c4556f16143982e36628f97db8435d483058b6fbf0f59ebe786d2",
+        ".gitattributes": "cf1ebc1feae1321c339982a4b797e5ab722f1fde84457efb06ad0d45e45a3ecc",
+        "docker/Dockerfile": "f113bb6340fd3cd17adb15451d5d79ec98e408914be8a970d9ada63d1432b4fc",
+        "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md": "f943ff9341f8fe5e9a7320e17ac8a27ca79b8a794a8498ef3721704564843517",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml": "11225553567d5112a71d26ef9f195c4ab942ebdedfe0b0eb233b1dfc23699691",
+        "specs/001-codegraph-extraction/contracts/repository-profiling-api.md": "ca2086166c91820e48f3e5869374ffa1c5fcb8fdddf20480e402194856238124",
+        "specs/002-language-framework-detection/contracts/framework-detection.md": "27a53d1413433f69213c7a141d115f32e32020c0b5d8d111643837e8fdc00d30",
+        "specs/002-language-framework-detection/contracts/provider-language-projection.md": "b5503794a0b05076b441f684b50948b419bcfdd7d21736f0f5430de7eaf04d9b",
+        "specs/002-language-framework-detection/contracts/repository-scan-overview.md": "b3b7d0c3cfe6a236d4b25b54239cf207fe546d2518956afb9d54abdae7c94dad",
+        "specs/002-language-framework-detection/data-model.md": "504a63a0d5872db386170e5353dd550c55e1fa58a5c8732820f79a760bb2509a",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-2.json": "b9057f17f296994578c171c9c86ea583862f025dacf4018bbe0ed3f2eaf75cd5",
+        "specs/002-language-framework-detection/evidence/analyze-remediation-approval-3.json": "25c0ab11c38c81edbc2d8099d2e935cb9cda5c00f3158a7e2484249a6b5571eb",
+        "specs/002-language-framework-detection/evidence/planned-change-authorization-2.json": "33c926b9125fb35628489f13971172d8d083b0ab5d8c8a432815d463731ab24f",
+        "specs/002-language-framework-detection/evidence/quality7-correction-tdd.json": "66cfd6ddaa5711e9dfc479b864c5c08938d50a8c132c45ae2e4f69902575ed4a",
+        "specs/002-language-framework-detection/evidence/quality7-scan-strategy-remediation-approval.json": "511abd0f18ef48cf7bb6ae00bce344a43625e4a9e0baeb6860b7b51df8a1bdfa",
+        "specs/002-language-framework-detection/evidence/quality8-correction-tdd.json": "f9534965b2cfd38091417b22ea692e28936ad51f6970eb2b5f6da1cffe1ec5df",
+        "specs/002-language-framework-detection/evidence/quality8-scan-strategy-remediation-approval.json": "c4a56c0b69b295672ba9c113eef25319fffccb635bf31c19d643e0f90ebbc628",
+        "specs/002-language-framework-detection/evidence/quality8-validation.json": "87804901eef51732b8366106fe429a6b53b2efc73beda122658759e14a18e712",
+        "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json": "09a9f89d9f7c25ca523198949fd88ad82cb1e440623d25a0a3bce8418b51d459",
+        "specs/002-language-framework-detection/evidence/story-4-2-current-verification.json": "632a7e6734a007e6b95a4fa589bc9746886c82d6513427edd4ef2b1839dfbdf1",
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json": "533e3301433b80b309c6f2c76f74cca7644a0e0c2a1c03f8533a40c5f6ad1132",
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-2.json": "9896f06c30d91c227cf2db3dab5dcab234ac40f80606d02e96234174652ca289",
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate-3.json": "c9d6708dbad4fe71b686ef4ce664646ee0a25f374889bc8d6f5f30856d944ded",
+        "specs/002-language-framework-detection/evidence/story-4-2-immutable-candidate.json": "23674d84e801ebcf0ae143ba512263a51675f4b5ac9603b5016b2d25b7b7620b",
+        "specs/002-language-framework-detection/evidence/t046-review-evidence-remediation-approval.json": "a3f8c33f3e6c8e08054c5f4b11b9d818521ab4365117bca47d8a4071629df408",
+        "specs/002-language-framework-detection/plan.md": "3a455c1b61b0b5d3179a52ca1d28ac11e973bdcbfc787285ad528b84e1193f7e",
+        "specs/002-language-framework-detection/quickstart.md": "5e876703be51cbba7e9efa06ca5e6e2d73f3a5323adb9727f0526403f76dc54e",
+        "specs/002-language-framework-detection/research.md": "8b0de0d30fb6ad98078e8e0af6405165d6d87f67239a5af1365538e91d22ae36",
+        "specs/002-language-framework-detection/reviews/acceptance-review-1.json": "0c65df8145f80fb9d876bb1dcd58e5d5abf747f6e4480a5217338779911ec42c",
+        "specs/002-language-framework-detection/reviews/acceptance-review-2.json": "46b76146c500a230d2481391cbc395c9354c7454813c21335b8dd14398e1c6eb",
+        "specs/002-language-framework-detection/reviews/acceptance-review-3.json": "e5c10fcb111b5bc6501869538c7263f36c436effbd61fd75b1a6be9b19703d89",
+        "specs/002-language-framework-detection/reviews/acceptance-review-4.json": "87c6ed4302c4382653c0f38ec942131ff9fce52c476659ea0a9f51cd67405efa",
+        "specs/002-language-framework-detection/reviews/acceptance-review-5.json": "3644a8c20c27bffff504aecba449046255d72049fbcf4f750868d63f8d0dce86",
+        "specs/002-language-framework-detection/reviews/acceptance-review-6.json": "55ac2c2ad5e632a5482700d25309319eaf46a3992bbc58d56c507a83e6dc3d37",
+        "specs/002-language-framework-detection/reviews/acceptance-review-7.json": "f868a7dc093c98a943c18cbc252351a97f656c437efa923f20b7701bf99ce3a2",
+        "specs/002-language-framework-detection/reviews/acceptance-review-8.json": "a7d0d0322368809f72c2ac0054b9cdd05da9dd9d47040bfeeb7dec4ecd053073",
+        "specs/002-language-framework-detection/reviews/acceptance-review-9.json": "3317a8082d8936b3aa09d9ff7915cafefebc0a786835fa0c3b9b24ec06e84ef5",
+        "specs/002-language-framework-detection/reviews/analyze-10.json": "118bf839ef6f00faa95a61b252db153f75b2226cce33fc27558852ec98f9afdd",
+        "specs/002-language-framework-detection/reviews/analyze-11.json": "043954534f173d943562193dcd97b9f26cefc1bae3ddd47d4cb06e212a404193",
+        "specs/002-language-framework-detection/reviews/analyze-5.json": "1178bcdfad3274cc7bce6297d97cc1177545b9569e826e857e3883c5c9869305",
+        "specs/002-language-framework-detection/reviews/analyze-6.json": "6e4f5e8d00d891ecd95a6744880cd51734e54b39a1def758b2edd9a71b242130",
+        "specs/002-language-framework-detection/reviews/analyze-7.json": "d9d24ebdbec2a2f77eaf3c230c71ab13dba4f2848408a4078538fafd6fd78a34",
+        "specs/002-language-framework-detection/reviews/analyze-8.json": "04b7fb5d7d78e34de944eb0bd303818823d1c7c1a43204a0aa3bfa4d5e2c3264",
+        "specs/002-language-framework-detection/reviews/analyze-9.json": "002685b2b3121729eeeeaaecaf70beeffaba3be371bf120923f155f19bdf3b1f",
+        "specs/002-language-framework-detection/reviews/analyze-final-1.json": "0a0c7697c47c97aab9a37753d8b39bf3c21e2dd31915915f071f764e105597b9",
+        "specs/002-language-framework-detection/reviews/analyze-final-2.json": "9938264d99b7d8b5edbfdfb42d9c32c9364a63dfe8a3221daaf078a86ae58279",
+        "specs/002-language-framework-detection/reviews/plan-review-10.json": "dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be",
+        "specs/002-language-framework-detection/reviews/plan-review-4.json": "88d0d00fce950aef3243befeb48bff7c0358713f23f69dfed01e050ddaadfb4d",
+        "specs/002-language-framework-detection/reviews/plan-review-5.json": "f6f9708c22d74ea5acdb7c15540f1756e200b0f22c5626c43378ca84e3c758ae",
+        "specs/002-language-framework-detection/reviews/plan-review-6.json": "b457447ae58cda265448f93aa66bb7b0ecb1ba9033573ffb5641c9ad7d48ee12",
+        "specs/002-language-framework-detection/reviews/plan-review-7.json": "16ae0e324be3228be42b01f079b9e5f73ebcce64f21888ec53f58314efd70cba",
+        "specs/002-language-framework-detection/reviews/plan-review-8.json": "fcfd3fefc3914d5d01d3021869c2856cba6e6b7139106e4821deb6d554371087",
+        "specs/002-language-framework-detection/reviews/plan-review-9.json": "439a2f562c7b93554d0667b85fb9bb6bbafeefc12e96ab3ece8016977d08480b",
+        "specs/002-language-framework-detection/reviews/quality-review-1.json": "34eaecc6f10ca3f9804c1c40c3c2fabde37777d638107cd29c9b92f3ca746612",
+        "specs/002-language-framework-detection/reviews/quality-review-2.json": "fa275815d5d586add910d25f5c34d5a5f91d41b2cb89a3fddd268881797cafae",
+        "specs/002-language-framework-detection/reviews/quality-review-3.json": "4ef55574eee4c6a02f84992ba7e7c3d82457c6446737452e9fb9e39771ef1999",
+        "specs/002-language-framework-detection/reviews/quality-review-4.json": "6205b2ea128d0a624a8e948616a3ec93a9449ea68f73c207ab8549d8d0fa1831",
+        "specs/002-language-framework-detection/reviews/quality-review-5.json": "89f39a3f0803e8daa46227213fdca5441a1b4798820fbc4a5a162bf557fb0b89",
+        "specs/002-language-framework-detection/reviews/quality-review-6.json": "04e99796e3fc7d9b5f444db929e833c8a6f1e43759ceb2fa740299327fbb6fea",
+        "specs/002-language-framework-detection/reviews/quality-review-7.json": "20f878ffd9971d346c366ba8f328f9a38461aaa5adb2f7f158f9da3a59ec6ac6",
+        "specs/002-language-framework-detection/reviews/quality-review-8.json": "bd321059fe6d58f9fbaa60b23d09afa3d55ccbe982d743fa84fdac1e400d2cee",
+        "specs/002-language-framework-detection/reviews/quality-review-9.json": "649052b389b4f0685817c1598e2f7f48cb6ab363169005c97762a1077c88dc91",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-2.json": "3045e94a061e6fdc0cc667031e7c8aef66cb939e1d0b03f81b20caf88d410d88",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-3.json": "fb4805593176aec0f681a8686fbd3bf1b5010c2ff16fccfcb0d3f74ddaa10e48",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-4.json": "1be9c3704b505ab554b68750a6f68f9b9dfe986f6b89d10a0291e6b6766bdcdf",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation-5.json": "b2c79cb4a2498e3ecf65f2cb0ef46e35ca03f9ffbed11fc54ae6e048654ec197",
+        "specs/002-language-framework-detection/reviews/t040-ledger-validation.json": "12c75218297a8666a98fd672dce48ef51e16b622a4801df550f381e966fb810f",
+        "specs/002-language-framework-detection/tasks.md": "a808c83dfc5928f8b72daac3ea8ab683feef580236ceea49b61934766dc3872b",
+        "specs/002-language-framework-detection/workflow-state.json": "fcc46d2ddd6f15d77e889f8c02ee22a9f3a2ec945a3cfe70c23a64be0b1a6ab7",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs": "e0a3a4768ae073cd1400c633cf1856c42e75d426cf611dc558033d29e9531fbb",
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs": "0388f54da79dfc1d6568fed4986bb233f58c9493479ec3591e9977d0e0289066",
+        "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs": "d11728cbcb88642c77f378b524ec98b8cb44085af476097252785c52fb97698e",
+        "src/dotnet/Vulgata.Core/Entities/CodeUnitFramework.cs": "ad756a1e2f3a26b89eee668d1d1209391563c2af1862026e45479262c79729cc",
+        "src/dotnet/Vulgata.Core/Entities/ScanRun.cs": "3dd0e59fd3966d7baff71e9aba4d8f8fc502303678954e97a74c5846acd93411",
+        "src/dotnet/Vulgata.Core/Entities/ScanRunLanguageSummary.cs": "0b25eb8e45fd6565339283cf9742d6ccc27ac408b24a5653a28e324ba8f0c8dc",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs": "97dd8d80c0e8ecadfd056ab994830ddf702c66c8937b384d19e7c76c1bc3d3ff",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitFrameworkConfiguration.cs": "168c4ebdca85e0dc49ef66587eef0e10e2d658f44cf1c78992861ac263953255",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs": "276d002d1b6b923263f526cda224ef52a0fcd836458b07aff0edb79fa204050c",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunLanguageSummaryConfiguration.cs": "2845ebf222b18bc7518028887858d0888e6270f5472fd2567e77c0643bc000c8",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.Designer.cs": "ed6d6655a40c83b449172fd7d4a561acfcc27b49cd03532b7bad0957135dd16e",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720030657_AddLanguageFrameworkDetection.cs": "624cd5c697ad297ae73bedf745356f72da7f42865d7c63a0de5c90aa7dc605d5",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.Designer.cs": "8779eae9446b26a68eacf8e1be19881f3f8a5c51b02af57006aca6bdc83f83df",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs": "b2b82921c105d47e04c2c606c663387fbf9cd142be375a2c3a3fa6fecbef8367",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs": "760cc9bd1214e9efca0fdfd817e9a29ffd73fdeac69f2a1e61ccf06b8ae631cc",
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs": "7cfe56cf0adeab52654f7f046ad142722d60a28ca6934bdfea97fbc7df78965c",
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs": "acebe56d4c9dd14d173aa91940215dcfd62506eebf9ef610ab41cfdd757e7e1b",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/Catalog/framework-catalog.v1.json": "06959d23ff2b6354a0368cefe1b916d45b9eec8bd561e2df79062656334e3700",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkCatalog.cs": "560453a16375df9614214fb45e337a94223eff29d0015e8986f1d45d7206db8f",
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "7b9d615a0b448b6fdb9895f28a815eb9209718e64eb59613add456f4adf05fb2",
+        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj": "d1797c78681e1a00382b9c3c7c1904b7ad400ff5b08f0ad2474d57e46706a8b9",
+        "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs": "bc19d56051258b2d3f5d56ba2b9927485152e4906bab742a08ce72b94da7e9da",
+        "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs": "439fa5a97f4706a673a1e2058ad5a81db27d5a910725ebabce7774a8246d67bd",
+        "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor": "2f51b0576d6d7208923b228b0251d6597d0ed504e5998cb77d4e1f5d1c2fd296",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "dd1585b287b6a882b4bd30ad11224e47d628e0e29bd3b4c44a58a455a62a818b",
+        "src/dotnet/Vulgata.Web/Program.cs": "a4669e2f6bdaa33d0aada7a6c7c932b7b66d7124253bae32e58d63d419576d75",
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs": "e5084118924279ab8e116d49d28860b69016ab45509f1e6dee0e2f3b0abfc22d",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/empty_file.cs": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/ProviderFixture/many_rows.py": "e0cdb86a2eddbee5255740b8ab4d9e488d9013d7bc544447e62b32110fc37013",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py": "334d96719da04e5041cb963499418cc0b1aceb29b0949150b2f9889b7ca1f71e",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "055452f7bc9a40da4ec880a5cd54d04adad107325581596d7c6e41494e5361cd",
+        "tests/Vulgata.Tests/DashboardPanelTests.cs": "76aecf4eb079e66ac0925a257ee1ffff687032251928da4f734e30e8bcb36c28",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "d90d2369d48d75261d5bc57366c50650b25509c4327ca740714910c4c59af1fd",
+        "tests/Vulgata.Tests/RepositoryApiTests.cs": "2b5632df55c05a1bdd5c52883d083dfb1ff7245426ccde17dc99eca0132c9719",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "76def864f548b9c20bedb9345885e5486068902f0a483cacb16fc48df1decba9"
       },
       "owned_paths": [
         ".dockerignore",
@@ -1734,7 +2270,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-20T02:30:00.0000000Z",
+      "observed_at": "2026-07-20T02:30:00Z",
       "summary": "Independent analysis confirmed the original seven findings resolved and required correction of one stale activation hash and duplicate final-commit recovery ownership.",
       "raw_output_path": null
     },
@@ -1752,7 +2288,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-20T02:45:08.9688990Z",
+      "observed_at": "2026-07-20T02:45:08.968899Z",
       "summary": "Independent analysis accepted T001-T050 with zero Critical or High findings and complete 21/21 FR, 8/8 SC, and 7/7 AC coverage.",
       "raw_output_path": null
     },
@@ -1768,7 +2304,7 @@
       ],
       "command": "git merge-base --is-ancestor; Get-FileHash; dotnet test --filter RepositoryProfilingTests|DashboardPanelTests|CodeGraphProviderContractTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T02:49:00.0000000Z",
+      "observed_at": "2026-07-20T02:49:00Z",
       "summary": "T001 accepted boundary and focused pre-change baseline passed 24 of 24 tests.",
       "raw_output_path": null
     },
@@ -1783,7 +2319,7 @@
       ],
       "command": "dotnet test --filter RepositoryProfilingTests; dotnet ef migrations has-pending-model-changes --context VulgataDbContext",
       "exit_code": 0,
-      "observed_at": "2026-07-20T03:10:00.0000000Z",
+      "observed_at": "2026-07-20T03:10:00Z",
       "summary": "T002 observed three behavior failures and one compatibility pass; T003-T006 reached 16 of 16 GREEN, one additive migration, and no pending model changes.",
       "raw_output_path": null
     },
@@ -1814,7 +2350,7 @@
       ],
       "command": "dotnet test --filter CodeGraphContextProviderTests|RepositoryProfilingTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T03:37:00.0000000Z",
+      "observed_at": "2026-07-20T03:37:00Z",
       "summary": "T009 observed 24 parser-language behavior failures while 9 foundational cases passed; T010 reached 49 of 49 provider/profiling GREEN after updating the canonical Projection A fixture.",
       "raw_output_path": null
     },
@@ -1828,7 +2364,7 @@
       ],
       "command": "dotnet test --filter RepositoryProfilingTests; dotnet test --filter CodeGraphContextProviderTests|RepositoryProfilingTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T03:44:00.0000000Z",
+      "observed_at": "2026-07-20T03:44:00Z",
       "summary": "T011 observed five complete-draft and path-conflict failures; T012 reached 23 of 23 focused and 56 of 56 combined GREEN while retaining the 1800-second lifecycle.",
       "raw_output_path": null
     },
@@ -1845,7 +2381,7 @@
       ],
       "command": "dotnet test --filter CodeGraphContextProviderTests|RepositoryProfilingTests|RepositoryApiTests|DashboardPanelTests; dotnet ef migrations has-pending-model-changes --context VulgataDbContext",
       "exit_code": 0,
-      "observed_at": "2026-07-20T03:54:02.9910280Z",
+      "observed_at": "2026-07-20T03:54:02.991028Z",
       "summary": "T013 observed three missing-overview failures while 404 and 403 disclosure checks passed; T014-T015 reached 71 of 71 GREEN, 12 of 12 language identifiers, portable migration startup, and no pending model changes.",
       "raw_output_path": null
     },
@@ -1862,7 +2398,7 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T04:10:00.0000000Z",
+      "observed_at": "2026-07-20T04:10:00Z",
       "summary": "T016-T019 reached 17 of 17 GREEN for the closed catalog, exact committed-manifest evidence parsers, paired lock handling, and git-only non-executing inventory.",
       "raw_output_path": null
     },
@@ -1877,7 +2413,7 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T04:45:00.0000000Z",
+      "observed_at": "2026-07-20T04:45:00Z",
       "summary": "T020-T023 reached 25 of 25 GREEN for parser-language-compatible deepest scope, ambiguity suppression, direct-over-lock ranking, duplicate collapse, and bounded closed evidence locators.",
       "raw_output_path": null
     },
@@ -1892,7 +2428,7 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T05:20:00.0000000Z",
+      "observed_at": "2026-07-20T05:20:00Z",
       "summary": "T024-T025 reached 29 of 29 GREEN for 8 MiB and depth-64 per-artifact bounds, Repository-relative and reparse safety, fixed Chinese audits, and isolated continuation.",
       "raw_output_path": null
     },
@@ -1908,7 +2444,7 @@
       ],
       "command": "dotnet test --filter FrameworkDetectionTests; dotnet build Vulgata.Core; dotnet build Vulgata.Infrastructure",
       "exit_code": 0,
-      "observed_at": "2026-07-20T05:50:00.0000000Z",
+      "observed_at": "2026-07-20T05:50:00Z",
       "summary": "T026-T027 reached 37 of 37 GREEN with exact Repository-global production limits and typed fail-closed zero-fact results for global overflow or unexpected detector failure.",
       "raw_output_path": null
     },
@@ -1945,7 +2481,7 @@
       ],
       "command": "dotnet test --filter CodeGraphContextProviderTests|RepositoryProfilingTests",
       "exit_code": 0,
-      "observed_at": "2026-07-20T06:30:00.0000000Z",
+      "observed_at": "2026-07-20T06:30:00Z",
       "summary": "T030-T031 reached 61 of 61 GREEN: valid complete unknown candidates now create one Filtered/UnknownLanguage outcome and retain no Code Unit, Edge endpoint, unresolved relationship, or dispatchable structure.",
       "raw_output_path": null
     },
@@ -2040,7 +2576,7 @@
       ],
       "command": "dotnet test --filter late-final-boundary regressions; dotnet test --filter same-root lock-only ambiguity regression",
       "exit_code": 1,
-      "observed_at": "2026-07-20T10:47:52.5668230Z",
+      "observed_at": "2026-07-20T10:47:52.566823Z",
       "summary": "Observed three meaningful atomicity failures: cancellation after draft attachment, cancellation during final persistence, and non-EF final persistence failure all left the durable ScanRun Profiling after provider-derived rows were attached. The lock-only same-root fixture also emitted a framework fact despite two possible NuGet project owners.",
       "raw_output_path": null
     },
@@ -2059,7 +2595,7 @@
       ],
       "command": "dotnet test --filter four focused correction regressions; dotnet test --filter RepositoryProfilingTests|FrameworkDetectionTests; dotnet build Vulgata.Web; git diff --check",
       "exit_code": 0,
-      "observed_at": "2026-07-20T10:47:52.5668230Z",
+      "observed_at": "2026-07-20T10:47:52.566823Z",
       "summary": "The four new regressions pass 4 of 4, existing recovery regressions pass 2 of 2, affected profiling/framework suites pass 87 of 87, and the Web build succeeds with zero errors. Cancellation and non-EF finalization failures now persist Aborted or sanitized Failed from a fresh durable unit of work with zero provider-derived rows; an ambiguous same-root NuGet lock yields one bounded outcome and no framework fact.",
       "raw_output_path": null
     },
@@ -2135,7 +2671,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-20T12:05:00.0000000Z",
+      "observed_at": "2026-07-20T12:05:00Z",
       "summary": "Fresh plan review returned REVISE because Story 4.2 declared root rowCounts/completeness fields outside the closed Story 4.1 provider-evidence grammar.",
       "raw_output_path": null
     },
@@ -2149,7 +2685,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-20T12:25:00.0000000Z",
+      "observed_at": "2026-07-20T12:25:00Z",
       "summary": "Fresh plan review returned REVISE because the corrected 19-member root still lacked exact nested coverage and projection-observation field grammar.",
       "raw_output_path": null
     },
@@ -2163,7 +2699,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-20T12:49:00.0000000Z",
+      "observed_at": "2026-07-20T12:49:00Z",
       "summary": "Fresh independent plan review ACCEPTED the exact eight-path boundary with a single closed, typed, bounded provider-evidence grammar and no Constitution or authority conflict.",
       "raw_output_path": null
     },
@@ -2219,7 +2755,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-22T01:44:36.1076500Z",
+      "observed_at": "2026-07-22T01:44:36.10765Z",
       "summary": "Fresh analysis ACCEPTED the acyclic 50-task graph with complete requirement/finding coverage, RED-before-GREEN ordering, and T050 last.",
       "raw_output_path": null
     },
@@ -2364,7 +2900,9 @@
       "kind": "test-red",
       "stage": "implement",
       "source_commit": "017b3f38d14057d2908fb355ed0a3e939501b049",
-      "artifact_paths": ["tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.CodeGraphProviderContractTests.SourceBindingPreflight --no-restore",
       "exit_code": 1,
       "observed_at": "2026-07-22T08:44:38.6672307Z",
@@ -2376,7 +2914,11 @@
       "kind": "test-green",
       "stage": "implement",
       "source_commit": "017b3f38d14057d2908fb355ed0a3e939501b049",
-      "artifact_paths": ["docker/Dockerfile", "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        "docker/Dockerfile",
+        "tests/Vulgata.Tests/CodeGraphProviderContract/runner.py",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter non-Docker CodeGraphProviderContractTests -v:q",
       "exit_code": 0,
       "observed_at": "2026-07-22T08:44:38.6672307Z",
@@ -2385,10 +2927,12 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/31",
-      "kind": "historical-tdd-reconstruction",
+      "kind": "analysis",
       "stage": "implement",
       "source_commit": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
-      "artifact_paths": ["specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"],
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
+      ],
       "command": "git log --reverse and git diff --name-status over e9824df7300634c19d815bdd7ad591b9fb5366d5..93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
       "exit_code": 0,
       "observed_at": "2026-07-23T01:21:58.4397292Z",
@@ -2397,10 +2941,12 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/32",
-      "kind": "validation",
+      "kind": "command",
       "stage": "implement",
       "source_commit": "93b99a49a8f8b9974e00d4274fd4c5ba64c467d6",
-      "artifact_paths": ["specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"],
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/story-4-2-historical-tdd-reconstruction.json"
+      ],
       "command": "ConvertFrom-Json; git merge-base --is-ancestor; git rev-list --count; git cat-file -e; git rev-parse commit:path; checkpoint trailer validation; git diff --check",
       "exit_code": 0,
       "observed_at": "2026-07-23T01:34:12.0168529Z",
@@ -2409,10 +2955,12 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/33",
-      "kind": "failed-preflight",
+      "kind": "failure",
       "stage": "implement",
       "source_commit": "692f95aae7f82192b80d6ffaf68e1af674256039",
-      "artifact_paths": ["TestResults/story-4-2-immutable-candidate/692f95aae7f82192b80d6ffaf68e1af674256039/T038-manifest-preflight-failure.json"],
+      "artifact_paths": [
+        "TestResults/story-4-2-immutable-candidate/692f95aae7f82192b80d6ffaf68e1af674256039/T038-manifest-preflight-failure.json"
+      ],
       "command": "CreateProductionSourceManifest at clean immutable candidate",
       "exit_code": 1,
       "observed_at": "2026-07-23T02:44:03.9742746Z",
@@ -2424,7 +2972,9 @@
       "kind": "test-red",
       "stage": "implement",
       "source_commit": "692f95aae7f82192b80d6ffaf68e1af674256039",
-      "artifact_paths": ["tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "dotnet test --filter FullyQualifiedName~CreateProductionSourceManifest_TrackedIgnoredDevelopmentAgentAliases_ProducesCanonicalManifest --no-restore",
       "exit_code": 1,
       "observed_at": "2026-07-23T02:44:03.9742746Z",
@@ -2436,7 +2986,10 @@
       "kind": "test-green",
       "stage": "implement",
       "source_commit": "692f95aae7f82192b80d6ffaf68e1af674256039",
-      "artifact_paths": [".dockerignore", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        ".dockerignore",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "focused alias test; invalid repository-state control; non-Docker CodeGraphProviderContractTests",
       "exit_code": 0,
       "observed_at": "2026-07-23T02:44:03.9742746Z",
@@ -2445,10 +2998,12 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/36",
-      "kind": "failed-preflight",
+      "kind": "failure",
       "stage": "implement",
       "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
-      "artifact_paths": ["TestResults/story-4-2-immutable-candidate/df65a770bba8b50270dc71879d01ae909bcb0e92/T038-manifest-preflight-failure-retry3.json"],
+      "artifact_paths": [
+        "TestResults/story-4-2-immutable-candidate/df65a770bba8b50270dc71879d01ae909bcb0e92/T038-manifest-preflight-failure-retry3.json"
+      ],
       "command": "CreateProductionSourceManifest at clean immutable candidate after T036 and T037 GREEN",
       "exit_code": 1,
       "observed_at": "2026-07-23T06:27:34.4507877Z",
@@ -2460,7 +3015,9 @@
       "kind": "test-red",
       "stage": "implement",
       "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
-      "artifact_paths": ["tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "dotnet test --filter FullyQualifiedName~CreateProductionSourceManifest_TrackedIgnoredRootClaudeAlias_ProducesCanonicalManifest",
       "exit_code": 1,
       "observed_at": "2026-07-23T06:27:34.4507877Z",
@@ -2472,7 +3029,10 @@
       "kind": "test-green",
       "stage": "implement",
       "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
-      "artifact_paths": [".dockerignore", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        ".dockerignore",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "focused root alias test; invalid repository-state controls; non-Docker CodeGraphProviderContractTests",
       "exit_code": 0,
       "observed_at": "2026-07-23T06:27:34.4507877Z",
@@ -2481,10 +3041,13 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/39",
-      "kind": "validation",
+      "kind": "command",
       "stage": "implement",
       "source_commit": "df65a770bba8b50270dc71879d01ae909bcb0e92",
-      "artifact_paths": [".dockerignore", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        ".dockerignore",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "git diff; git diff --check; git status --short; dotnet test --no-restore --no-build --filter FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_",
       "exit_code": 0,
       "observed_at": "2026-07-23T06:27:34.4507877Z",
@@ -2493,10 +3056,12 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/40",
-      "kind": "failed-infrastructure",
+      "kind": "failure",
       "stage": "implement",
       "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
-      "artifact_paths": ["TestResults/story-4-2-immutable-candidate/13cba2eaffbb48051d8001a2ced8905028548e8e/retry-2-f069abf9ee17/T039-docker-build.txt"],
+      "artifact_paths": [
+        "TestResults/story-4-2-immutable-candidate/13cba2eaffbb48051d8001a2ced8905028548e8e/retry-2-f069abf9ee17/T039-docker-build.txt"
+      ],
       "command": "docker build --no-cache --file docker/Dockerfile with exact source labels and per-build proxy arguments",
       "exit_code": 1,
       "observed_at": "2026-07-23T07:37:00.3784013Z",
@@ -2508,7 +3073,9 @@
       "kind": "test-red",
       "stage": "implement",
       "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
-      "artifact_paths": ["tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "dotnet test --filter FullyQualifiedName~RuntimeDockerfile_AptAcquisition_UsesBoundedRetriesAndTimeouts",
       "exit_code": 1,
       "observed_at": "2026-07-23T07:37:00.3784013Z",
@@ -2520,7 +3087,10 @@
       "kind": "test-green",
       "stage": "implement",
       "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
-      "artifact_paths": ["docker/Dockerfile", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        "docker/Dockerfile",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "focused apt policy test; RuntimeDockerfile tests; non-Docker CodeGraphProviderContractTests",
       "exit_code": 0,
       "observed_at": "2026-07-23T07:37:00.3784013Z",
@@ -2529,10 +3099,13 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/43",
-      "kind": "validation",
+      "kind": "command",
       "stage": "implement",
       "source_commit": "13cba2eaffbb48051d8001a2ced8905028548e8e",
-      "artifact_paths": ["docker/Dockerfile", "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"],
+      "artifact_paths": [
+        "docker/Dockerfile",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
       "command": "git diff; git diff --check; dotnet test --no-restore --no-build --filter FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_",
       "exit_code": 0,
       "observed_at": "2026-07-23T07:37:00.3784013Z",
@@ -2611,7 +3184,7 @@
       ],
       "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~FrameworkDetection\"",
       "exit_code": 0,
-      "observed_at": "2026-07-26T05:16:45.0028050Z",
+      "observed_at": "2026-07-26T05:16:45.002805Z",
       "summary": "Current verification passed 48 of 48 framework-detection tests with zero failures or skips at the unchanged immutable source.",
       "raw_output_path": "TestResults/story-4-2-current-verification/T001-framework-green.txt"
     },
@@ -2712,7 +3285,7 @@
       ],
       "command": "git status --porcelain=v1 --untracked-files=all; git rev-parse HEAD; git rev-parse HEAD^{tree}; git diff --binary --full-index e9824df7300634c19d815bdd7ad591b9fb5366d5..6199c0be5cb607950fa3e8f8d276ff0735ae2f13; SHA-256 over selected candidate Git blobs",
       "exit_code": 0,
-      "observed_at": "2026-07-26T06:56:19.9281520Z",
+      "observed_at": "2026-07-26T06:56:19.928152Z",
       "summary": "T041 pinned clean immutable candidate 6199c0be5cb607950fa3e8f8d276ff0735ae2f13 and tree 72f9e28e8e55a99b8d8824697c6f2ea30e118abf with an empty unique checkpoint commit. The 1,303,606-byte binary diff SHA-256 is ae7a742e724e41ec9199c6e0a04c2d54539f16bbb98904d81fd2cb6ec0f6fbc0 over 69 Story-owned paths.",
       "raw_output_path": null
     },
@@ -2860,7 +3433,7 @@
       ],
       "command": "ConvertFrom-Json; Git linear ancestry and blob validation; Workflow-Checkpoint uniqueness and mandatory-trailer validation; raw evidence existence, SHA-256, length, temporal-label and invalidation checks; git diff --check",
       "exit_code": 0,
-      "observed_at": "2026-07-26T08:27:52.7476010Z",
+      "observed_at": "2026-07-26T08:27:52.747601Z",
       "summary": "T039-T040 regenerated and validated the truthful ledger at d20db9fd: 41 linear commits, 19 legacy groups, 41 immutable Git references, 11 unique checkpoint records, and 20 raw files. Five transcript-only captures are explicitly excluded from RED/GREEN evidence, and the prior candidate/review-3 lane is retained only as invalidated history.",
       "raw_output_path": null
     },
@@ -2902,7 +3475,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-26T08:59:41.6387670Z",
+      "observed_at": "2026-07-26T08:59:41.638767Z",
       "summary": "Full quality review iteration 4 returned REVISE with three High findings: boundary whitespace can bypass rooted provider-path rejection; invalid Python requirement suffixes can create deterministic framework facts; and same-root direct-scope ambiguity ignores valid unmatched manifests. Candidate identity, evidence integrity, AR3-001, and QR3-001 otherwise passed.",
       "raw_output_path": null
     },
@@ -2967,7 +3540,7 @@
       ],
       "command": "Exact candidate/tree/parent/trailer, raw binary diff SHA-256, owned-path/deletion, canonical Git-blob hash, task-marker, status, and diff validation",
       "exit_code": 0,
-      "observed_at": "2026-07-26T09:48:34.2633730Z",
+      "observed_at": "2026-07-26T09:48:34.263373Z",
       "summary": "T041 pinned empty fully-trailered replacement candidate 14ed1fd2c2c31350f3a9d70852e2d806ed2e1522, tree d7e1329d1a431dcf8ce6c4875a0b33d5fd533cb0. The 1,468,107-byte binary diff SHA-256 is 25a13c76b50dd95ab80a0d19a09c4b929e1186cb4e06acc73d3b8b1fe3b320cc over 74 owned paths.",
       "raw_output_path": null
     },
@@ -3014,9 +3587,9 @@
       "raw_output_path": "TestResults/story-4-2-final-e2e/T044-runtime-integration-green.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/verification/1",
+      "evidence_id": "4-2-language-and-framework-detection/verify/1",
       "kind": "test-green",
-      "stage": "verification",
+      "stage": "verify",
       "source_commit": "14ed1fd2c2c31350f3a9d70852e2d806ed2e1522",
       "artifact_paths": [
         "TestResults/story-4-2-final-verification/T045-provider-profiling-green.txt",
@@ -3063,7 +3636,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-27T01:17:17.0000000Z",
+      "observed_at": "2026-07-27T01:17:17Z",
       "summary": "Fresh Full acceptance review 6 returned contract-valid ACCEPT at the prior candidate. Its result is preserved but invalidated by the subsequent QR6-001 source/test correction.",
       "raw_output_path": null
     },
@@ -3077,7 +3650,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-27T01:17:17.0000000Z",
+      "observed_at": "2026-07-27T01:17:17Z",
       "summary": "Fresh Full quality review 6 returned REVISE with QR6-001: tracked manifest and lock paths were read from mutable working-tree bytes rather than the exact committed Repository object.",
       "raw_output_path": null
     },
@@ -3091,7 +3664,7 @@
       ],
       "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~DetectAsync_DirtyTrackedDirectManifest_DoesNotCreateUncommittedFactAsync",
       "exit_code": 1,
-      "observed_at": "2026-07-27T01:27:08.0000000Z",
+      "observed_at": "2026-07-27T01:27:08Z",
       "summary": "QR6-001 behavior RED proved that dirty tracked package.json bytes incorrectly produced the uncommitted npm:react fact.",
       "raw_output_path": "TestResults/story-4-2-quality6-correction/red-dirty-direct.txt"
     },
@@ -3108,7 +3681,7 @@
       ],
       "command": "Focused QR6-001 dirty-manifest, dirty-lock, and pinned-snapshot tests; complete FrameworkDetectionTests",
       "exit_code": 0,
-      "observed_at": "2026-07-27T01:34:14.0000000Z",
+      "observed_at": "2026-07-27T01:34:14Z",
       "summary": "The detector now pins one validated HEAD commit, inventories tracked paths, and reads exact committed blobs. The three QR6-001 regression cases passed and the complete FrameworkDetectionTests suite passed 52 of 52.",
       "raw_output_path": "TestResults/story-4-2-quality6-correction/framework-detection-full-green.txt"
     },
@@ -3126,7 +3699,7 @@
       ],
       "command": "Provider/profiling/framework surrounding suite; complete non-final-image suite; dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
       "exit_code": 0,
-      "observed_at": "2026-07-27T01:44:39.0000000Z",
+      "observed_at": "2026-07-27T01:44:39Z",
       "summary": "The preserved first surrounding attempt failed 7 of 168 because its Git fixture had no commit. After fixture alignment, worker and root passed 168 of 168, the complete non-final-image suite passed 507 of 507, and the Web build completed with zero errors.",
       "raw_output_path": "TestResults/story-4-2-quality6-correction/root-non-final-image-suite-green.txt"
     },
@@ -3202,7 +3775,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-27T02:59:52.0719420Z",
+      "observed_at": "2026-07-27T02:59:52.071942Z",
       "summary": "Independent T040 ACCEPTED the truthful ledger after all five correction findings were resolved. Every substantive ledger area and the focused checkpoint-state contract passed; T041 is now permitted.",
       "raw_output_path": null
     },
@@ -3264,7 +3837,7 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/84",
-      "kind": "test-run",
+      "kind": "test-green",
       "stage": "implement",
       "source_commit": "1de4cbdb7b768d53ba42b19e2bcbe9ba891a5488",
       "artifact_paths": [
@@ -3280,7 +3853,7 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/85",
-      "kind": "test-run",
+      "kind": "test-green",
       "stage": "implement",
       "source_commit": "281c16b01db3b6ff5873fc9535254fa9c4df71c7",
       "artifact_paths": [
@@ -3317,7 +3890,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-27T06:57:18.9194890Z",
+      "observed_at": "2026-07-27T06:57:18.919489Z",
       "summary": "Fresh independent T040 audit 2 ACCEPTED the QR7-refreshed truthful ledger with no findings. All source-range, authority, immutable blob, raw evidence, temporal, malformed-checkpoint, QR7, and downstream-state checks passed; T041 is permitted.",
       "raw_output_path": null
     },
@@ -3345,7 +3918,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-27T07:28:36.3160100Z",
+      "observed_at": "2026-07-27T07:28:36.31601Z",
       "summary": "Fresh independent Full acceptance review 8 returned ACCEPT with no findings at the exact T041 candidate. FR 21/21, AC 7/7, SC 8/8, R1-R16, T001, QR4/QR6/QR7, T040, Chinese UI, PRD scope, and forbidden scope passed.",
       "raw_output_path": null
     },
@@ -3359,7 +3932,7 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-27T07:28:36.3160100Z",
+      "observed_at": "2026-07-27T07:28:36.31601Z",
       "summary": "Fresh independent Full quality review 8 returned REVISE with High findings QR8-001 and QR8-002: foreign XML namespaces can fabricate framework facts, and full committed-tree inventory is unbounded before supported-artifact limits. Both corrections materially change Scan parsing or filtering and require planned-change authorization.",
       "raw_output_path": null
     },
@@ -3380,7 +3953,7 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/90",
-      "kind": "test-run",
+      "kind": "test-green",
       "stage": "implement",
       "source_commit": "70c122c64a7ee279c2183c1bd50769956169b313",
       "artifact_paths": [
@@ -3399,7 +3972,7 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/91",
-      "kind": "test-run",
+      "kind": "test-green",
       "stage": "implement",
       "source_commit": "df200f0818e9b24c476bc28dd5e5dd9969634ff5",
       "artifact_paths": [
@@ -3414,7 +3987,7 @@
     },
     {
       "evidence_id": "4-2-language-and-framework-detection/implement/92",
-      "kind": "test-run",
+      "kind": "test-green",
       "stage": "implement",
       "source_commit": "d77c09671d4be870f16fedf8b73e3232b7882bc0",
       "artifact_paths": [
@@ -3770,7 +4343,7 @@
       ],
       "command": "T074 validation capture helper using Tee-Object -LiteralPath <path> -Append",
       "exit_code": null,
-      "observed_at": "2026-07-28T03:30:46.1396050Z",
+      "observed_at": "2026-07-28T03:30:46.139605Z",
       "summary": "The first T074 attempt stopped before valid command evidence was captured because Tee-Object -LiteralPath and -Append are an incompatible PowerShell parameter set. The five retained files contain headers only and cannot support pass claims. This is an evidence-harness failure, not a product failure. T074 remains pending; retry must use unused attempt-0002 paths and a valid capture mechanism.",
       "raw_output_path": "TestResults/story-4-2-quality9-correction/T074-*.txt"
     },
@@ -3910,7 +4483,7 @@
       ],
       "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~CodeGraphContextProviderTests|FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~FrameworkDetectionTests|FullyQualifiedName~RepositoryApiTests|FullyQualifiedName~DashboardPanelTests\"",
       "exit_code": null,
-      "observed_at": "2026-07-28T07:39:26.0000000Z",
+      "observed_at": "2026-07-28T07:39:26Z",
       "summary": "The first captured T044 path is a 115-byte header-only artifact with no native dotnet test output and no result classification. It is preserved as an ambiguous capture-harness failure only; it is not product, test, or passing evidence and advanced no gate.",
       "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green.txt"
     },
@@ -3929,9 +4502,9 @@
       "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/verification/125",
+      "evidence_id": "4-2-language-and-framework-detection/verify/125",
       "kind": "failure",
-      "stage": "verification",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-verification-quality9/T045-candidate-drift-status.txt",
@@ -3941,14 +4514,14 @@
       ],
       "command": "Initial PowerShell text-path candidate diff capture; initial and attempt-0002 empty-success git diff/status capture wrappers",
       "exit_code": null,
-      "observed_at": "2026-07-28T08:03:59.1890000Z",
+      "observed_at": "2026-07-28T08:03:59.189Z",
       "summary": "T045 preserved three capture-harness defects without classifying them as product or test failures. The initial candidate identity used a PowerShell text path for binary Git diff bytes and produced invalid encoding-dependent values. Initial empty-success Git commands produced no raw file; attempt 0002 materialized content but lacked the required line-delimited command metadata. Corrected byte-exact identity and attempt-0003 empty-success captures supersede these artifacts. No gate advanced on the defective methods.",
       "raw_output_path": "TestResults/story-4-2-final-verification-quality9/T045-candidate-drift-status.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/verification/126",
+      "evidence_id": "4-2-language-and-framework-detection/verify/126",
       "kind": "test-green",
-      "stage": "verification",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-verification-quality9/T045-provider-profiling.txt",
@@ -3972,9 +4545,9 @@
       "raw_output_path": "TestResults/story-4-2-final-verification-quality9/T045-full-non-final-image.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/verification/127",
+      "evidence_id": "4-2-language-and-framework-detection/verify/127",
       "kind": "review",
-      "stage": "verification",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "specs/002-language-framework-detection/reviews/t046-evidence-crossvalidation-1.json"
@@ -3986,9 +4559,9 @@
       "raw_output_path": null
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/128",
+      "evidence_id": "4-2-language-and-framework-detection/verify/128",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness.txt",
@@ -3998,14 +4571,14 @@
       ],
       "command": "Initial detached-worktree --no-restore harness; incomplete obj copy; inline and file-based canonical-manifest generator attempts",
       "exit_code": null,
-      "observed_at": "2026-07-28T08:43:14.9090000Z",
+      "observed_at": "2026-07-28T08:43:14.909Z",
       "summary": "T047 preserved environment and generator-harness failures without promoting them. The fresh detached worktree initially lacked restored obj assets, so dotnet test skipped the test project with zero native bytes; a partial asset copy then failed NETSDK1004. Later generator attempts failed at PowerShell parse time, byte-array enumeration, and ambiguous JsonDocument overload selection. Two partial manifest-only files are retained as invalid attempts. No assertion failure, product failure, namespace consumption, image build, provider execution, or candidate mutation occurred.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/129",
+      "evidence_id": "4-2-language-and-framework-detection/verify/129",
       "kind": "test-green",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T047-restore-attempt-0004.txt",
@@ -4022,9 +4595,9 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T047-source-binding-manifest-harness-attempt-0004.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/130",
+      "evidence_id": "4-2-language-and-framework-detection/verify/130",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0001.txt",
@@ -4039,9 +4612,9 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0002.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/131",
+      "evidence_id": "4-2-language-and-framework-detection/verify/131",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0003.txt",
@@ -4054,9 +4627,9 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0003.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/132",
+      "evidence_id": "4-2-language-and-framework-detection/verify/132",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0004.txt",
@@ -4069,9 +4642,9 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0004.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/133",
+      "evidence_id": "4-2-language-and-framework-detection/verify/133",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0005.txt",
@@ -4081,14 +4654,14 @@
       ],
       "command": "Fresh direct-child clean-candidate Docker build attempt 0005 with create-new capture; root-directed stop after the capture harness failed before Docker output and a second invocation began",
       "exit_code": null,
-      "observed_at": "2026-07-29T02:53:00.0000000Z",
+      "observed_at": "2026-07-29T02:53:00Z",
       "summary": "Attempt 0005 used a new detached worktree at exact candidate 00bdb87/tree 422c586 and proved the committed Dockerfile blob a8cebd0/SHA-256 5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c. The first 45-byte capture exited 1 before Docker output; its SHA-256 is 90e41b9257ab98428bb7463865e7881ccc582b792d11ad3c30d28e40e136cd78. A second 6,284-byte invocation reached network/pip restore but was stopped under the recoverable-failure rule; its SHA-256 is 279a012ad0f6de77de54dce264d8919153e3fc58c25a09d491abf6a26a05c03e. No IID/tag/image or provider execution occurred, namespace a9f2805e... remained unused, and both main and clean candidate tracked statuses stayed clean. The user's diagnostic worktree remained untouched with only its Dockerfile edit.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0005.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/134",
+      "evidence_id": "4-2-language-and-framework-detection/verify/134",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0006.txt",
@@ -4102,9 +4675,9 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0006.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/135",
+      "evidence_id": "4-2-language-and-framework-detection/verify/135",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0007.native.stderr.txt",
@@ -4116,14 +4689,14 @@
       ],
       "command": "Fresh exact-candidate Docker build attempt 0007 followed by one invocation of dotnet test --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
       "exit_code": 1,
-      "observed_at": "2026-07-29T06:58:02.0000000Z",
+      "observed_at": "2026-07-29T06:58:02Z",
       "summary": "Post-reboot attempt 0007 built a fresh exact-candidate image in 275.1 seconds: sha256:ae4bdc11f1157c48af6b2c8be99e4c97849a2da19e5a59fad7e1ba975eb4b3fa. Pre-provider inspection confirmed exact commit/tree/manifest labels. The single final-image test invocation then failed before Python provider execution because the required IID file had been placed inside the candidate Docker context as untracked .t048-attempt-0007.iid; CreateProductionSourceManifest correctly rejected the untracked entry. Provider stdout SHA-256 is bebee1accd44ff15c15135181e5b3110c5c947a987f1540974449a80f8c754b5 and stderr SHA-256 is 71d12ca8092f142758c9e7f06187d83a16652d0378e8e160235c2648a34143f4. Namespace, claim, and evidence remained absent, so this was a retry-safe invocation-layout failure rather than product/provider failure.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-provider-contract-attempt-0007.native.stdout.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/136",
+      "evidence_id": "4-2-language-and-framework-detection/verify/136",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-attempt-0008-preflight.txt",
@@ -4134,14 +4707,14 @@
       ],
       "command": "docker build --no-cache --progress=plain --iidfile \"G:\\source\\repos\\vulgata\\TestResults\\story-4-2-final-image-quality9\\T048-final-image-attempt-0008.iid\" --build-arg VULGATA_SOURCE_COMMIT=00bdb87a94e28bc91f561e080709f4ca07de0776 --build-arg VULGATA_SOURCE_TREE=422c586c9cf83f6cbd4fe76c81449a3ad8e3cbf8 --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138 --tag vulgata-story42-final-quality9-attempt-0008 -f docker/Dockerfile .",
       "exit_code": 1,
-      "observed_at": "2026-07-29T07:04:55.0000000Z",
+      "observed_at": "2026-07-29T07:04:55Z",
       "summary": "Fresh-child attempt 0008 corrected the invocation layout by storing the IID outside a new tracked-clean candidate worktree. Its exact no-cache build then failed after 55.2 seconds before image creation when http://archive.ubuntu.com/ubuntu/dists/noble/InRelease returned 502 Bad Gateway through Clash fake IP 198.18.0.207:80; the runtime apt stage exited 100. Native stderr is 11,925 bytes with SHA-256 26f2d19280e5b56f94912fe6c5eb7fb1c6a0732146427d3aef241dfd4fb19092; metadata SHA-256 is db6c867e3c99e490dbef20d89a0aec678b300bb66aadf3b9ef4ebbdb18552db2 and verdict SHA-256 is 11f0d760de968ff73304faf8e97eb58b3901c91815fd971d06b397058b75fcda. No IID/tag/image or provider execution occurred, namespace/claim/evidence remain absent, and the candidate stayed clean. This is an ambiguous external container-network failure.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0008.native.stderr.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/137",
+      "evidence_id": "4-2-language-and-framework-detection/verify/137",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-attempt-0009-build.raw.txt",
@@ -4156,9 +4729,9 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-attempt-0009-provider.raw.txt"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/138",
+      "evidence_id": "4-2-language-and-framework-detection/verify/138",
       "kind": "human-approval",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json"
@@ -4170,9 +4743,9 @@
       "raw_output_path": null
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/139",
+      "evidence_id": "4-2-language-and-framework-detection/verify/139",
       "kind": "failure",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-build.raw.txt",
@@ -4191,9 +4764,9 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0001-verdict.json"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/140",
+      "evidence_id": "4-2-language-and-framework-detection/verify/140",
       "kind": "human-approval",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "specs/002-language-framework-detection/evidence/t048-provider-evidence-disposition-approval.json",
@@ -4202,14 +4775,14 @@
       ],
       "command": null,
       "exit_code": null,
-      "observed_at": "2026-07-29T08:28:46.4834710Z",
+      "observed_at": "2026-07-29T08:28:46.483471Z",
       "summary": "The user explicitly approved the recommended evidence disposition. The immutable claim SHA-256 b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975, closed v2 evidence SHA-256 963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8, exact image identity, and recorded provider exit 0 are accepted as the canonical one-time provider proof. Namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 must not be rerun. Only repeatable post-provider commands may be rerun with absolute create-new capture paths; FR-020 and final status remain mandatory.",
       "raw_output_path": null
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/final-image/141",
+      "evidence_id": "4-2-language-and-framework-detection/verify/141",
       "kind": "test-green",
-      "stage": "final-image",
+      "stage": "verify",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
       "artifact_paths": [
         "TestResults/story-4-2-final-image-quality9/T047-production-source-manifest-lf-attempt-0010.json",
@@ -4229,7 +4802,7 @@
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0003-metadata.json"
     },
     {
-      "evidence_id": "4-2-language-and-framework-detection/freeze/142",
+      "evidence_id": "4-2-language-and-framework-detection/verify/142",
       "kind": "artifact-hash",
       "stage": "implement",
       "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
@@ -4240,26 +4813,39 @@
       ],
       "command": "Read-only T049 freeze plus root rehash of all serialized identities",
       "exit_code": 0,
-      "observed_at": "2026-07-29T09:40:40.8577050Z",
+      "observed_at": "2026-07-29T09:40:40.857705Z",
       "summary": "T049 passed read-only at unchanged candidate 00bdb87/tree 422c586. The final deterministic freeze manifest SHA-256 is fa9724cd82ad15ce9a10bbe2446ae1975d27d6dc5b79920f5b066045fe862548. Root independently rehashed 84 unique identities: 84/84 byte lengths and SHA-256 values match, with zero missing, duplicate, or mismatched paths. Truthful coverage is T041=10, T042=1, T043=1, T044=1, T045=13, T046=1, T047=2, and T048=55; provider claim/evidence are correctly owned by T048. Exact candidate/diff, accepted reviews, E2E, verification, approvals, LF manifest, image labels, namespace consumption, provider proof, recovery records, checkpoints, and post-pin lifecycle-only changes validate. Provider invocations, Docker builds, image mutations, namespace mutations, claim/evidence writes, and one-time tests are all zero. Root and candidate tracked statuses are clean. Attempts 0001-0006 remain rejected/blocked/superseded evidence history and are not freeze inputs.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0007-manifest.json"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/143",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/t050-final-audit-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-29T12:49:03.6182591Z",
+      "summary": "T050 final audit returned REVISE because review-10 verdicts and workflow lifecycle projections violate executable schemas; the immutable product candidate remains unchanged.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-freeze-passed-20260729T094040Z-86bfac",
+    "checkpoint_id": "bmad-4-2-t050-revise-20260729T125046Z-4d7c2a",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "final-image",
+    "stage": "quality-review",
     "committed_paths": [
-      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/reviews/t050-final-audit-1.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/freeze/142"
+      "4-2-language-and-framework-detection/quality-review/143"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-29T09:40:40.8577050Z"
+  "updated_at": "2026-07-29T12:49:03.6182591Z"
 }
