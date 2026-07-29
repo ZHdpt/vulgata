@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-2-language-and-framework-detection/final-image/138",
+  "kind": "human-approval",
+  "stage": "final-image",
+  "bmad_story_key": "4-2-language-and-framework-detection",
+  "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+  "observed_at": "2026-07-29T08:00:21.7522059Z",
+  "decision": "approved",
+  "approval_text": "Approve",
+  "trigger": "T048 attempt 0009 exposed an ambiguous checkout-byte contract: global core.autocrlf=true converted the clean detached candidate's plan-review-10.json to CRLF, producing SHA-256 db83a12633aacf3461625fe85410ca2c1e513053b2ed70f65a63999019b60690 instead of the canonical LF SHA-256 dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be pinned by the accepted plan binding.",
+  "approved_remediation": {
+    "option": "A",
+    "intent": "Supersede only T047-T048 final-image evidence without mutating the tracked T041 candidate.",
+    "checkout": "Create a fresh detached checkout of candidate 00bdb87a94e28bc91f561e080709f4ca07de0776 with command-scoped core.autocrlf=false and prove plan-review-10.json contains canonical LF bytes with SHA-256 dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be.",
+    "manifest_and_namespace": "Regenerate the canonical production-source-manifest-v1 and a new unused accepted-correction SHA-256 namespace from the LF-canonical candidate bytes; prove independent generator equality and namespace non-use.",
+    "image_and_gate": "Build a fresh no-cache image with the candidate commit/tree and replacement manifest labels, inspect its immutable image identity, and invoke the final-image provider gate exactly once in the new namespace before running the remaining T048 verification.",
+    "preserved_evidence": "T041-T046 remain accepted and unchanged. Prior T047-T048 attempts remain historical evidence and are not relabelled or overwritten."
+  },
+  "implementation_intent": "Dispatch a fresh e2e-runner under the accepted T047-T048 boundary. The runner may create only untracked TestResults evidence and a disposable detached worktree, must not edit tracked product, test, plan, contract, task, story, or workflow files, and must stop without a second provider invocation if the namespace is consumed or any identity check fails.",
+  "scope_effects": {
+    "tracked_candidate_changed": false,
+    "product_or_test_changed": false,
+    "accepted_plan_or_contract_changed": false,
+    "prd_changed_or_weakened": false,
+    "worker_agent_or_tool_changed": false,
+    "scan_strategy_changed": false,
+    "dispatch_scheduling_grouping_or_retry_changed": false,
+    "t047_t048_evidence_superseded": true
+  },
+  "waivers": {
+    "tdd": false,
+    "accepted_full_reviews": false,
+    "conditional_e2e": false,
+    "provider_contract": false,
+    "security_verification": false,
+    "migration_model_verification": false,
+    "final_verification": false,
+    "freeze_and_final_audit": false,
+    "git_checkpoint_contract": false
+  }
+}

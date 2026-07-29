@@ -1322,6 +1322,18 @@ unchanged.
   ambiguous.
 - T048 checkout-contract blocker checkpoint:
   `bmad-4-2-final-image-blocked-20260729T074235Z-722a38` (pending Git binding).
+- The user explicitly approved recommended Option A. The remediation is
+  limited to superseding T047-T048 evidence: create a fresh detached
+  `core.autocrlf=false` checkout, prove canonical LF plan-verdict bytes,
+  regenerate the production-source manifest and a new unused namespace,
+  build a fresh no-cache image, and invoke the final-image provider gate once.
+  It changes no tracked T041 candidate, product, test, accepted plan,
+  contract, task, PRD, Worker Agent/tool, Scan strategy, scheduling,
+  grouping, retry, or dispatch behavior; T041-T046 remain accepted and no
+  later gate is waived.
+- T047-T048 checkout-canonicalization approval checkpoint:
+  `bmad-4-2-final-image-remediation-approved-20260729T080021Z-961d2a`
+  (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:

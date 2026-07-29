@@ -4154,19 +4154,33 @@
       "observed_at": "2026-07-29T07:42:35.3692582Z",
       "summary": "Attempt 0009 proved the network remediation effective: the exact no-cache image build passed in 281.3 seconds and produced immutable image sha256:8aec7fc369e7f916b91ea4f8873d5f2f70d55148b9301f82f53e4a853a3035ed with exact commit/tree/manifest labels and an external IID. The single final-image test invocation then failed before provider execution at accepted-plan binding with 'Accepted plan verdict path or content hash is stale.' Read-only diagnosis proved no Git content change: candidate plan-review-10.json contains 184 CRLF line endings and hashes to db83a12633aacf3461625fe85410ca2c1e513053b2ed70f65a63999019b60690, while the main LF working file and the test constant hash to dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be; LF-normalizing the candidate bytes produces that exact expected hash. Global core.autocrlf=true caused the clean detached checkout conversion. The 302,291-byte build output has SHA-256 de42b2a18a2010700a79390c48e2373299539958dbb50e63c0c79130f877c8d7; the 608,713-byte provider-test output has SHA-256 722a38f29ebc1f6dbd265d82294197e5beb29add0da9a710273146b791e62f58. Namespace, claim, and provider evidence remain absent; candidate and main tracked statuses are clean. T048 is blocked on an explicit checkout-byte canonicalization decision, not product/provider behavior.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-attempt-0009-provider.raw.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/138",
+      "kind": "human-approval",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-29T08:00:21.7522059Z",
+      "summary": "The user explicitly approved Option A. T047-T048 evidence may be superseded using a fresh detached core.autocrlf=false checkout, an LF-canonical replacement production-source manifest, a new unused namespace, a fresh image, and one provider-gate invocation. The approval changes no tracked candidate, product, test, accepted plan, contract, task, PRD, Worker Agent/tool, Scan strategy, scheduling, grouping, retry, or dispatch behavior; it preserves T041-T046 and waives no remaining gate.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T074235Z-722a38",
+    "checkpoint_id": "bmad-4-2-final-image-remediation-approved-20260729T080021Z-961d2a",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/tasks.md",
+      "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/137"
+      "4-2-language-and-framework-detection/final-image/138"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -4179,10 +4193,11 @@
     "blocked_urls": [],
     "observed_endpoint": "specs/002-language-framework-detection/reviews/plan-review-10.json working-tree bytes",
     "error": "Accepted plan verdict path or content hash is stale: clean detached CRLF checkout db83a12633aacf3461625fe85410ca2c1e513053b2ed70f65a63999019b60690 does not equal pinned LF hash dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be.",
-    "required_resolution": "Obtain explicit user approval for Option A: supersede T047 and T048 evidence without tracked candidate mutation by recreating the detached candidate with core.autocrlf=false, regenerating the production-source manifest and a new unused namespace from canonical Git blob bytes, then building a fresh image and running the final-image gate once.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/137",
+    "required_resolution": "Option A was explicitly approved at 2026-07-29T08:00:21.7522059Z. Execute it with a fresh direct-child e2e-runner: recreate the detached candidate with command-scoped core.autocrlf=false, verify canonical LF bytes, regenerate the production-source manifest and a new unused namespace, build a fresh image, and invoke the final-image provider gate exactly once.",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/138",
+    "approval_path": "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json",
     "namespace_still_unused": true,
     "image_created": true
   },
-  "updated_at": "2026-07-29T07:42:35.3692582Z"
+  "updated_at": "2026-07-29T08:00:21.7522059Z"
 }
