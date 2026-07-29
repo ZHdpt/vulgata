@@ -4067,10 +4067,43 @@
       "observed_at": "2026-07-28T10:57:24.4208824Z",
       "summary": "User-authorized T048 retry attempt 0004 reached runtime apt-get update and failed after 95.9 seconds when http://archive.ubuntu.com/ubuntu/dists/noble-backports/InRelease returned 502 Bad Gateway through Clash fake IP 198.18.0.4:80. The 275,089-byte raw log has SHA-256 772ae0d564092c6463a9c6f3b78880f4b0e627af19a4ec65335745f477fa849a; the metadata SHA-256 is 03c9473626049871653b55d97246d5a9aa6b34adf0788108a09866b80e1d13f7. No image/tag/IID exists, no inspection/provider test ran, and namespace a9f2805e... remains absent in both checkouts. Both tracked statuses are clean. T048 remains an external container network/proxy blocker, not a product or test failure.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0004.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/133",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0005.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0005-retry-0001.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0005-meta.json",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0005-verdict.json"
+      ],
+      "command": "Fresh direct-child clean-candidate Docker build attempt 0005 with create-new capture; root-directed stop after the capture harness failed before Docker output and a second invocation began",
+      "exit_code": null,
+      "observed_at": "2026-07-29T02:53:00.0000000Z",
+      "summary": "Attempt 0005 used a new detached worktree at exact candidate 00bdb87/tree 422c586 and proved the committed Dockerfile blob a8cebd0/SHA-256 5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c. The first 45-byte capture exited 1 before Docker output; its SHA-256 is 90e41b9257ab98428bb7463865e7881ccc582b792d11ad3c30d28e40e136cd78. A second 6,284-byte invocation reached network/pip restore but was stopped under the recoverable-failure rule; its SHA-256 is 279a012ad0f6de77de54dce264d8919153e3fc58c25a09d491abf6a26a05c03e. No IID/tag/image or provider execution occurred, namespace a9f2805e... remained unused, and both main and clean candidate tracked statuses stayed clean. The user's diagnostic worktree remained untouched with only its Dockerfile edit.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0005.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/134",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0006.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0006-meta.json",
+        "TestResults/story-4-2-final-image-quality9/T048-attempt-0006-verdict.json"
+      ],
+      "command": "docker build --no-cache --progress=plain -f docker/Dockerfile --iidfile .t048-attempt-0006.iid --build-arg VULGATA_SOURCE_COMMIT=00bdb87a94e28bc91f561e080709f4ca07de0776 --build-arg VULGATA_SOURCE_TREE=422c586c9cf83f6cbd4fe76c81449a3ad8e3cbf8 --build-arg VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256=0d507418f327a61c1f7cf081ed3de5cc253c4ff9aef6a241f3e8d2f01e906138 -t vulgata-story42-final-quality9-attempt-0006 .",
+      "exit_code": 1,
+      "observed_at": "2026-07-29T03:01:24.7486296Z",
+      "summary": "Fresh direct-child attempt 0006 rebuilt from the exact clean candidate but runtime apt-get update failed after 171.7 seconds when http://archive.ubuntu.com/ubuntu/dists/noble-backports/InRelease returned 502 Bad Gateway through Clash fake IP 198.18.0.43:80; the Docker step exited 100 and build exited 1. The 287,744-byte raw log has SHA-256 9e285f96db2890371bd4888ff9d0be51cc30cc20e695781d7b63f130d9d4e119; metadata SHA-256 is db9a81e0eb4995a8878df9c386624fbb4903791e2f2397e0b4cce09bc347eb0f and verdict SHA-256 is 007e8cb3582306788dd37709600f07fec05f2cdfb136c01d547744704b6c1cc9. No IID/tag/image exists, no provider test ran, namespace a9f2805e... remains unused, and both main and clean candidate tracked statuses are clean. This is an external container-network failure, not product or test failure.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-docker-build-attempt-0006.txt"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-blocked-20260728T105724Z-772ae0",
+    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T030124Z-9e285f",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
@@ -4079,7 +4112,7 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/132"
+      "4-2-language-and-framework-detection/final-image/134"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -4092,12 +4125,12 @@
     "blocked_urls": [
       "http://archive.ubuntu.com/ubuntu/dists/noble-backports/InRelease"
     ],
-    "observed_endpoint": "198.18.0.4:80",
+    "observed_endpoint": "198.18.0.43:80",
     "error": "502 Bad Gateway",
     "required_resolution": "Correct Clash fake-IP filtering/routing so container traffic to archive.ubuntu.com, including /ubuntu/dists/noble-backports/InRelease, no longer reaches an unusable fake-IP endpoint; then retry T048 with a new build evidence attempt.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/132",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/134",
     "namespace_still_unused": true,
     "image_created": false
   },
-  "updated_at": "2026-07-28T10:57:24.4208824Z"
+  "updated_at": "2026-07-29T03:01:24.7486296Z"
 }

@@ -1251,6 +1251,32 @@ unchanged.
   Clash fake-IP routing issue is corrected.
 - T048 retry recoverable-failure checkpoint:
   `bmad-4-2-final-image-blocked-20260728T105724Z-772ae0` (pending Git binding).
+- The user's manual build produced image
+  `sha256:f4434cb2c71c6f47135ab2013636c236b8deadab8ed3350eb14bbd49406e6346`,
+  but its build context contained a 12-line uncommitted diagnostic edit in
+  `docker/Dockerfile` that prints proxy, APT, DNS, and resolver state.
+  Although the supplied labels name candidate `00bdb87`, they cannot prove
+  byte-exact source binding, so T048 did not consume that image. The
+  diagnostic worktree and image remain untouched.
+- Fresh-child attempt 0005 created a separate detached, tracked-clean
+  candidate at commit `00bdb87`, tree `422c586`, and committed Dockerfile
+  SHA-256 `5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c`.
+  Its first capture harness exited before Docker output; a second invocation
+  began downloading but was stopped under the recoverable-failure rule. The
+  two raw logs are 45 and 6,284 bytes with SHA-256 `90e41b92` and `279a012a`.
+  No IID/tag/image or provider execution occurred, and the namespace remained
+  unused.
+- Fresh-child attempt 0006 used the same exact clean candidate and reached
+  runtime `apt-get update`, but
+  `http://archive.ubuntu.com/ubuntu/dists/noble-backports/InRelease` returned
+  `502 Bad Gateway` through Clash fake IP `198.18.0.43:80`. The 287,744-byte
+  raw log has SHA-256
+  `9e285f96db2890371bd4888ff9d0be51cc30cc20e695781d7b63f130d9d4e119`.
+  No IID/tag/image exists, no provider test ran, the accepted-correction
+  namespace remains unused, and both main and clean candidate tracked
+  statuses are clean. T048 remains unchecked and safely retryable.
+- T048 retry recoverable-failure checkpoint:
+  `bmad-4-2-final-image-blocked-20260729T030124Z-9e285f` (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
