@@ -4205,38 +4205,45 @@
       "observed_at": "2026-07-29T08:28:46.4834710Z",
       "summary": "The user explicitly approved the recommended evidence disposition. The immutable claim SHA-256 b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975, closed v2 evidence SHA-256 963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8, exact image identity, and recorded provider exit 0 are accepted as the canonical one-time provider proof. Namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 must not be rerun. Only repeatable post-provider commands may be rerun with absolute create-new capture paths; FR-020 and final status remain mandatory.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/141",
+      "kind": "test-green",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T047-production-source-manifest-lf-attempt-0010.json",
+        "TestResults/story-4-2-final-image-quality9/T047-accepted-correction-input-lf-attempt-0010.json",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010.iid",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0002-metadata.json",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0002-verdict.json",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0003-metadata.json",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0003-verdict.json",
+        ".worktrees/story42-final-quality9-lf-attempt-0010/TestResults/codegraph-provider-contract/a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89/claim.json",
+        ".worktrees/story42-final-quality9-lf-attempt-0010/TestResults/codegraph-provider-contract/a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89/evidence.json"
+      ],
+      "command": "User-approved one-time provider proof plus repeatable post-provider verification and canonical git diff --binary --full-index --no-ext-diff --no-renames e9824df7300634c19d815bdd7ad591b9fb5366d5..00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "exit_code": 0,
+      "observed_at": "2026-07-29T08:54:03.0130364Z",
+      "summary": "T048 passed at unchanged candidate 00bdb87/tree 422c586. LF-canonical T047 produced a 904-entry manifest SHA-256 8c4ed1537a67a1d44dd9dd59cb042fd10589ea9709ee3b3f31efdd8d1ca21cfd and new namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89. Fresh image sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 has exact commit/tree/manifest labels. The provider gate executed exactly once and passed; claim SHA-256 b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975 and closed v2 evidence SHA-256 963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8 prove provider 0.5.1, 139/138 complete projection rows, empty-file UnknownLanguage, atomic rejection coverage, cleanup, and false forbidden retention. Under the approved disposition, repeatable focused provider/profiling, FrameworkDetection, full non-final-image, Web build, forward/two rollback/pending-model, and authorization/redaction commands all passed with 34 validated absolute native captures (manifest SHA-256 3afbcaa2fe0f68df325cd6209775a6efdfa1f832aa6a28882f961baf79a49887). Canonical candidate diff is exactly 2,170,074 bytes and SHA-256 e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab; FR-020, diff check, and root/candidate clean statuses passed. The superseded 8637b12a diff came from a noncanonical command and is not an identity baseline. No provider, image, namespace, product, test, plan, contract, or tracked-candidate mutation occurred during recovery.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0003-metadata.json"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-disposition-approved-20260729T082846Z-fd4535",
+    "checkpoint_id": "bmad-4-2-final-image-passed-20260729T085403Z-cb23b0",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/t048-provider-evidence-disposition-approval.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/140"
+      "4-2-language-and-framework-detection/final-image/141"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": {
-    "task_id": "T048",
-    "classification": "evidence-capture-path",
-    "retryable": true,
-    "blocked_command": "VULGATA_PROVIDER_CONTRACT_IMAGE=sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 VULGATA_PROVIDER_CONTRACT_ACCEPTED_CORRECTION_SHA256=a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
-    "blocked_urls": [],
-    "observed_endpoint": ".worktrees/TestResults/story-4-2-final-image-quality9",
-    "error": "The provider gate passed and consumed its namespace, but the runner's relative Tee-Object path resolved under a nonexistent .worktrees/TestResults directory, so no provider console transcript was captured.",
-    "required_resolution": "The user approved the recommended disposition at 2026-07-29T08:28:46.4834710Z. Preserve the immutable provider claim and closed v2 evidence as accepted one-time proof; perform zero provider reruns and zero image builds; rerun only repeatable post-provider verification with absolute create-new captures, then complete FR-020 and final clean-status checks.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/140",
-    "approval_path": "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json",
-    "evidence_disposition_approval_path": "specs/002-language-framework-detection/evidence/t048-provider-evidence-disposition-approval.json",
-    "namespace_still_unused": false,
-    "image_created": true,
-    "provider_gate_passed": true
-  },
-  "updated_at": "2026-07-29T08:28:46.4834710Z"
+  "recoverable_failure": null,
+  "updated_at": "2026-07-29T08:54:03.0130364Z"
 }

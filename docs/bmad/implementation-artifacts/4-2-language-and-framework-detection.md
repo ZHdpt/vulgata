@@ -1369,6 +1369,23 @@ unchanged.
 - T048 provider-evidence disposition checkpoint:
   `bmad-4-2-final-image-disposition-approved-20260729T082846Z-fd4535`
   (pending Git binding).
+- T048 is GREEN at unchanged candidate `00bdb87` / tree `422c586`.
+  LF-canonical T047 produced manifest `8c4ed153...` (904 entries); fresh image
+  `sha256:1011a992...` carries the exact candidate/tree/manifest labels. The
+  one-time provider gate passed in namespace `a4abf083...`; immutable claim
+  `b36ae93a...` and closed v2 evidence `963a8632...` prove provider `0.5.1`,
+  complete 139/138-row projections, empty-file `UnknownLanguage`, atomic
+  failures, cleanup, and no forbidden retention.
+- Under the approved evidence disposition, all repeatable post-provider
+  tests, Web build, migration/rollback/model, authorization/redaction,
+  FR-020, canonical diff, diff-check, and clean-status checks passed with
+  absolute create-new captures. The canonical diff is 2,170,074 bytes,
+  SHA-256 `e4885cf0...`. The earlier `8637b12a...` result is retained only as
+  noncanonical-command evidence.
+- T048 final-image PASS checkpoint:
+  `bmad-4-2-final-image-passed-20260729T085403Z-cb23b0`
+  (pending Git binding). T049 may begin without any provider, image,
+  namespace, or candidate mutation.
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
