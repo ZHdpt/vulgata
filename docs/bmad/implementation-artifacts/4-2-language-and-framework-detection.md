@@ -1386,6 +1386,18 @@ unchanged.
   `bmad-4-2-final-image-passed-20260729T085403Z-cb23b0`
   (pending Git binding). T049 may begin without any provider, image,
   namespace, or candidate mutation.
+- T049 is GREEN read-only. Final freeze attempt 0007 serializes 84 unique
+  identities with SHA-256 `fa9724cd...`; root independently rehashed all
+  84 byte lengths and hashes with zero missing, duplicate, or mismatched
+  paths. Coverage is truthful across T041-T048, including T042/T043 review
+  ownership and T048 ownership of provider claim/evidence. Candidate/diff,
+  reviews, E2E, verification, approvals, LF manifest, image, namespace,
+  provider proof, recovery evidence, and checkpoints remain unchanged.
+  Provider, Docker, image, namespace, claim/evidence, and one-time-test action
+  counters are all zero; both tracked statuses are clean.
+- T049 freeze PASS checkpoint:
+  `bmad-4-2-freeze-passed-20260729T094040Z-86bfac`
+  (pending Git binding). T050 may audit only the frozen attempt-0007 inputs.
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:

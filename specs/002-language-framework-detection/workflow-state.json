@@ -4227,10 +4227,26 @@
       "observed_at": "2026-07-29T08:54:03.0130364Z",
       "summary": "T048 passed at unchanged candidate 00bdb87/tree 422c586. LF-canonical T047 produced a 904-entry manifest SHA-256 8c4ed1537a67a1d44dd9dd59cb042fd10589ea9709ee3b3f31efdd8d1ca21cfd and new namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89. Fresh image sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 has exact commit/tree/manifest labels. The provider gate executed exactly once and passed; claim SHA-256 b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975 and closed v2 evidence SHA-256 963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8 prove provider 0.5.1, 139/138 complete projection rows, empty-file UnknownLanguage, atomic rejection coverage, cleanup, and false forbidden retention. Under the approved disposition, repeatable focused provider/profiling, FrameworkDetection, full non-final-image, Web build, forward/two rollback/pending-model, and authorization/redaction commands all passed with 34 validated absolute native captures (manifest SHA-256 3afbcaa2fe0f68df325cd6209775a6efdfa1f832aa6a28882f961baf79a49887). Canonical candidate diff is exactly 2,170,074 bytes and SHA-256 e4885cf0f34dab37ba670efaebc1fb8ba908797a21668a83a8a52ffeeae72dab; FR-020, diff check, and root/candidate clean statuses passed. The superseded 8637b12a diff came from a noncanonical command and is not an identity baseline. No provider, image, namespace, product, test, plan, contract, or tracked-candidate mutation occurred during recovery.",
       "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0003-metadata.json"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/freeze/142",
+      "kind": "artifact-hash",
+      "stage": "implement",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0007-manifest.json",
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0007-metadata.json",
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0007-verdict.json"
+      ],
+      "command": "Read-only T049 freeze plus root rehash of all serialized identities",
+      "exit_code": 0,
+      "observed_at": "2026-07-29T09:40:40.8577050Z",
+      "summary": "T049 passed read-only at unchanged candidate 00bdb87/tree 422c586. The final deterministic freeze manifest SHA-256 is fa9724cd82ad15ce9a10bbe2446ae1975d27d6dc5b79920f5b066045fe862548. Root independently rehashed 84 unique identities: 84/84 byte lengths and SHA-256 values match, with zero missing, duplicate, or mismatched paths. Truthful coverage is T041=10, T042=1, T043=1, T044=1, T045=13, T046=1, T047=2, and T048=55; provider claim/evidence are correctly owned by T048. Exact candidate/diff, accepted reviews, E2E, verification, approvals, LF manifest, image labels, namespace consumption, provider proof, recovery records, checkpoints, and post-pin lifecycle-only changes validate. Provider invocations, Docker builds, image mutations, namespace mutations, claim/evidence writes, and one-time tests are all zero. Root and candidate tracked statuses are clean. Attempts 0001-0006 remain rejected/blocked/superseded evidence history and are not freeze inputs.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0007-manifest.json"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-passed-20260729T085403Z-cb23b0",
+    "checkpoint_id": "bmad-4-2-freeze-passed-20260729T094040Z-86bfac",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
@@ -4239,11 +4255,11 @@
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/141"
+      "4-2-language-and-framework-detection/freeze/142"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-29T08:54:03.0130364Z"
+  "updated_at": "2026-07-29T09:40:40.8577050Z"
 }
