@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/002-language-framework-detection",
   "execution_level": "full",
-  "stage": "verify",
+  "stage": "complete",
   "active_gates": {
     "acceptance-review": {
       "status": "accepted",
@@ -1273,6 +1273,22 @@
       "agent_role": "quality-reviewer",
       "evidence_paths": [
         "specs/002-language-framework-detection/reviews/quality-review-11.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "complete",
+      "status": "accepted",
+      "started_at": "2026-07-29T13:33:18.2784688Z",
+      "completed_at": "2026-07-29T13:33:18.2784688Z",
+      "input_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "input_hashes": {
+        "specs/002-language-framework-detection/reviews/t050-final-audit-2.json": "597a0bf52af78dddf6428aff75798d2a62caded166a7cf386453158b65218129",
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0008-manifest.json": "de6201eafe55fcd41a02b66bf104306ac4a5403ed80e908d98eb42c5053db33a"
+      },
+      "agent_role": "root-orchestrator",
+      "evidence_paths": [
+        "specs/002-language-framework-detection/reviews/t050-final-audit-2.json"
       ],
       "failure": null
     }
@@ -4939,21 +4955,40 @@
       "observed_at": "2026-07-29T13:11:13.1665477Z",
       "summary": "The Full review-11 evidence changed only lifecycle artifacts. Candidate, tests, triggered E2E predicates, and the existing 210/210 current-candidate integration evidence are unchanged, so the required E2E decision remains passed without rerunning the consumed provider or Docker qualification.",
       "raw_output_path": "TestResults/story-4-2-final-e2e-quality9/T044-runtime-integration-green-attempt-0002.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/149",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/t050-final-audit-2.json",
+        "TestResults/story-4-2-final-image-quality9/T049-freeze-attempt-0008-manifest.json"
+      ],
+      "command": null,
+      "exit_code": 0,
+      "observed_at": "2026-07-29T13:33:18.2784688Z",
+      "summary": "T050 final audit 2 accepted the unchanged immutable Story 4.2 candidate and corrected freeze with zero findings.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-freeze8-passed-20260729T131630Z-de6201",
+    "checkpoint_id": "bmad-4-2-complete-20260729T133318Z-8f3d41",
     "scope_key": "4-2-language-and-framework-detection",
-    "stage": "verify",
+    "stage": "complete",
     "committed_paths": [
+      "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/002-language-framework-detection/reviews/t050-final-audit-2.json",
+      "specs/002-language-framework-detection/tasks.md",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/verify/148"
+      "4-2-language-and-framework-detection/quality-review/149"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-29T13:11:13.1665477Z"
+  "updated_at": "2026-07-29T13:33:18.2784688Z"
 }

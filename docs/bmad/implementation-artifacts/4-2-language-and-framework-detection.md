@@ -1,7 +1,7 @@
 ---
 story_key: 4-2-language-and-framework-detection
 title: "Story 4.2: Language and Framework Detection"
-Status: review
+Status: done
 Epic: 4
 Story: 2
 created: 2026-07-19
@@ -1449,6 +1449,15 @@ unchanged.
   (pending Git binding).
 - Story preparation checkpoint:
   `bmad-4-2-prepared-20260719T111713Z-e5ad70` (pending Git binding).
+- T050 final audit 2 returned schema-valid `ACCEPT` with zero findings against
+  immutable candidate `00bdb87`, canonical diff SHA-256 `e4885cf0...`, both
+  accepted Full review-11 axes, and T049 attempt 0008. The corrected freeze
+  rehashed 86/86 unique identities with zero missing, hash, length, or duplicate
+  mismatch; review-10 remains rejected history and review-11 is authoritative.
+  Exact image, provider claim, and provider evidence identities remain unchanged,
+  and provider/Docker/image/namespace action counters remain zero.
+- Story 4.2 completion checkpoint:
+  `bmad-4-2-complete-20260729T133318Z-8f3d41` (pending Git binding).
 
 ### File list
 
