@@ -4168,36 +4168,57 @@
       "observed_at": "2026-07-29T08:00:21.7522059Z",
       "summary": "The user explicitly approved Option A. T047-T048 evidence may be superseded using a fresh detached core.autocrlf=false checkout, an LF-canonical replacement production-source manifest, a new unused namespace, a fresh image, and one provider-gate invocation. The approval changes no tracked candidate, product, test, accepted plan, contract, task, PRD, Worker Agent/tool, Scan strategy, scheduling, grouping, retry, or dispatch behavior; it preserves T041-T046 and waives no remaining gate.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/final-image/139",
+      "kind": "failure",
+      "stage": "final-image",
+      "source_commit": "00bdb87a94e28bc91f561e080709f4ca07de0776",
+      "artifact_paths": [
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-build.raw.txt",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010.iid",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-metadata.json",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-verdict.json",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0001-metadata.json",
+        "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0001-verdict.json",
+        ".worktrees/story42-final-quality9-lf-attempt-0010/TestResults/codegraph-provider-contract/a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89/claim.json",
+        ".worktrees/story42-final-quality9-lf-attempt-0010/TestResults/codegraph-provider-contract/a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89/evidence.json"
+      ],
+      "command": "VULGATA_PROVIDER_CONTRACT_IMAGE=sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 VULGATA_PROVIDER_CONTRACT_ACCEPTED_CORRECTION_SHA256=a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
+      "exit_code": 0,
+      "observed_at": "2026-07-29T08:25:27.9417129Z",
+      "summary": "Option A corrected the checkout-byte contract. LF preflight passed at 11,525 bytes, 184 LF, zero CRLF, and SHA-256 dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be. The replacement 904-entry manifest is SHA-256 8c4ed1537a67a1d44dd9dd59cb042fd10589ea9709ee3b3f31efdd8d1ca21cfd; the fresh image is sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 with exact labels. The provider gate executed exactly once in namespace a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 and exited 0. Its immutable claim SHA-256 is b36ae93ac8ee56de1640412ebc9de34e92f5e0c987dbe5b5f4f6a312d4a29975; its closed cgc-provider-contract-evidence-v2 SHA-256 is 963a8632e4e962507647db5ecfe2350f77d96a062c494bb49f866987eedde5b8 and verdict is pass, with 139/138 projection rows, provider 0.5.1, cleanup true, and forbidden retention false. However the runner's relative Tee-Object destination resolved to nonexistent .worktrees/TestResults, so the console transcript and later command transcripts were not captured. The namespace is consumed and must not be rerun. Focused provider/profiling, framework, full non-final-image, Web build, migration/rollback/model, and authorization/redaction commands all recorded exit 0, but FR-020/final-status and durable replacement command captures remain pending. This is an ambiguous evidence-capture test-runner failure, not product/provider failure.",
+      "raw_output_path": "TestResults/story-4-2-final-image-quality9/T048-lf-attempt-0010-recovery-0001-verdict.json"
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-final-image-remediation-approved-20260729T080021Z-961d2a",
+    "checkpoint_id": "bmad-4-2-final-image-blocked-20260729T082527Z-44627a",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "final-image",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
-      "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/final-image/138"
+      "4-2-language-and-framework-detection/final-image/139"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": {
     "task_id": "T048",
-    "classification": "checkout-line-ending-contract",
-    "retryable": true,
-    "blocked_command": "VULGATA_PROVIDER_CONTRACT_IMAGE=sha256:8aec7fc369e7f916b91ea4f8873d5f2f70d55148b9301f82f53e4a853a3035ed VULGATA_PROVIDER_CONTRACT_ACCEPTED_CORRECTION_SHA256=a9f2805eec37b8859b7aaf52d3cde8cc98227a49cd5bfebfed821ff5c86d3a6a dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
+    "classification": "evidence-capture-path",
+    "retryable": false,
+    "blocked_command": "VULGATA_PROVIDER_CONTRACT_IMAGE=sha256:1011a992ea397135ca25e551e4f2b19559b4d22daf1f55e0f2b81c04ebc9fcd5 VULGATA_PROVIDER_CONTRACT_ACCEPTED_CORRECTION_SHA256=a4abf083843659cedf4d9e8bc9c4e98282eef3616dedfa5cc1536237c610ff89 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
     "blocked_urls": [],
-    "observed_endpoint": "specs/002-language-framework-detection/reviews/plan-review-10.json working-tree bytes",
-    "error": "Accepted plan verdict path or content hash is stale: clean detached CRLF checkout db83a12633aacf3461625fe85410ca2c1e513053b2ed70f65a63999019b60690 does not equal pinned LF hash dc0638af64c19545adc96a3e8462abc4b9302ac77bc13c3b267726d565ce32be.",
-    "required_resolution": "Option A was explicitly approved at 2026-07-29T08:00:21.7522059Z. Execute it with a fresh direct-child e2e-runner: recreate the detached candidate with command-scoped core.autocrlf=false, verify canonical LF bytes, regenerate the production-source manifest and a new unused namespace, build a fresh image, and invoke the final-image provider gate exactly once.",
-    "last_evidence_id": "4-2-language-and-framework-detection/final-image/138",
+    "observed_endpoint": ".worktrees/TestResults/story-4-2-final-image-quality9",
+    "error": "The provider gate passed and consumed its namespace, but the runner's relative Tee-Object path resolved under a nonexistent .worktrees/TestResults directory, so no provider console transcript was captured.",
+    "required_resolution": "Obtain explicit user direction for the ambiguous E2E evidence failure. Recommended: accept the immutable provider claim and closed v2 evidence plus recorded exit 0 as the canonical provider proof, do not rerun the consumed namespace, and rerun only the repeatable post-provider verification commands with correct absolute create-new capture paths before FR-020/final-status completion. Strict alternative: regenerate another manifest namespace, build another fresh image, and reproduce the entire one-time gate with corrected absolute capture.",
+    "last_evidence_id": "4-2-language-and-framework-detection/final-image/139",
     "approval_path": "specs/002-language-framework-detection/evidence/t047-t048-checkout-canonicalization-approval.json",
-    "namespace_still_unused": true,
-    "image_created": true
+    "namespace_still_unused": false,
+    "image_created": true,
+    "provider_gate_passed": true
   },
-  "updated_at": "2026-07-29T08:00:21.7522059Z"
+  "updated_at": "2026-07-29T08:25:27.9417129Z"
 }

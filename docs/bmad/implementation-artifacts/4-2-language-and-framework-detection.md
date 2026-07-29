@@ -1334,6 +1334,32 @@ unchanged.
 - T047-T048 checkout-canonicalization approval checkpoint:
   `bmad-4-2-final-image-remediation-approved-20260729T080021Z-961d2a`
   (pending Git binding).
+- Option A corrected the checkout-byte contract. The fresh LF-canonical
+  manifest is `8c4ed153...` across 904 entries. The same no-cache build
+  completed after its harness timeout as immutable image
+  `sha256:1011a992...`; commit/tree/manifest labels and the external IID match.
+- The exact provider gate then executed once in new namespace `a4abf083...`
+  and passed. Its claim is SHA-256 `b36ae93a...`; its closed
+  `cgc-provider-contract-evidence-v2` is SHA-256 `963a8632...`, verdict
+  `pass`, provider `0.5.1`, 139/138 projection rows, successful cleanup, and
+  no forbidden retention. The namespace is consumed and must not be rerun.
+- The recovery runner used a relative `Tee-Object` path from the nested
+  candidate worktree. It resolved to nonexistent `.worktrees/TestResults`, so
+  the provider console transcript and later command transcripts were not
+  captured even though the provider, focused/surrounding/full non-final-image
+  tests, Web build, migration/rollback/model checks, and
+  authorization/redaction commands recorded exit 0. FR-020/final status were
+  not run. T048 remains unchecked pending explicit disposition of this
+  ambiguous evidence-capture failure.
+- Recommended disposition is to accept the immutable provider claim plus the
+  closed v2 evidence and recorded exit 0 as canonical provider proof, forbid
+  any rerun of the consumed namespace, and rerun only the repeatable
+  post-provider commands with corrected absolute create-new capture paths.
+  The strict alternative is a new namespace, fresh image, and complete
+  one-time reproduction.
+- T048 evidence-capture blocker checkpoint:
+  `bmad-4-2-final-image-blocked-20260729T082527Z-44627a`
+  (pending Git binding).
 - T041 replacement candidate checkpoint:
   `bmad-4-2-candidate-20260728T064315Z-e4885c` at commit `00bdb87`.
 - T041 candidate-record checkpoint:
