@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+  "reviewed_boundary": {
+    "base_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+    "candidate_commit": null,
+    "diff_sha256": "874256ed5066a7b91d9c4915ed28396f89d04f2454e8d2a741b3a5ae33882c7a",
+    "artifact_hashes": {
+      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md": "8439e9a1e539714ae2fa4eeb737c07f3e3d0874a3c071eae3a868b243edd6fff",
+      "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+      "specs/001-codegraph-extraction/plan.md": "8c93567823b1c20ad81c212cd6d346831d0623fe9ee7eecbf5f305cb9ba68663",
+      "specs/001-codegraph-extraction/tasks.md": "8a164d118073add48ca4d662ace5e2ae0623dc49c4ee0e79c593d7959c44ed69",
+      "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs": "42fdc30df8536ff7120299fbfea0878113cdc2dff7536f69ea6846addd162b37",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "7db4a315b8fd47f7a9caa3cb1ba22b2f0997e5b1fe0e3f4f352ff2b4455fdf1a",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "098975045a650142087517e7f3ce6fe8db73707f045565d056d97b4bedc5fc2f"
+    },
+    "owned_paths": [
+      "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    ".agents/skills/run-bmad-sprint-loop/references/dispatch-contract.md",
+    ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json",
+    ".codex/agents/quality-reviewer.toml",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/001-codegraph-extraction/plan.md",
+    "specs/001-codegraph-extraction/reviews/quality-review-1.json",
+    "specs/001-codegraph-extraction/spec.md",
+    "specs/001-codegraph-extraction/tasks.md",
+    "src/dotnet/Vulgata.Core/Entities/Repository.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "Q4.1-002",
+      "severity": "MEDIUM",
+      "category": "reliability-resource-cleanup-test-gap",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+      "location": "RecreateAsync, lines 93-126; RepositoryProfilingTests, lines 2145-2231",
+      "affected_requirement": "specs/001-codegraph-extraction/plan.md lines 134-135 requires a safe working-copy acquisition failure; the Full quality-review contract requires cancellation, failure containment, edge-case, and regression-test assessment.",
+      "evidence": "The original working copy remains canonical until the replacement clone succeeds, and every observed swap failure returns failure without profiling the old remote, so this does not reopen Q4.1-001. However, cancellation from RunGitAsync at line 98 propagates before any TryDeleteDirectory call and can leave a partial .rebind-* clone containing source and remote metadata. The nonzero-clone branch also ignores cleanup failure, while stale cleanup failure intentionally leaves .stale-* behind. The added regression test proves only the successful A-to-B rebind; it does not exercise clone cancellation, clone failure with cleanup failure, replacement-move rollback, or stale cleanup failure.",
+      "correction_outcome": "Use a finally-backed replacement cleanup path that runs after cancellation and every unsuccessful rebind, preserve fail-closed rollback semantics, and add injected process/filesystem tests covering cancellation, clone failure, replacement-move rollback, and cleanup failure. This is bounded nonblocking debt because the current implementation does not profile the old remote after detecting a mismatch and exposes only sanitized diagnostics."
+    }
+  ],
+  "summary": "ACCEPT: the exact pinned hashes and diff were verified twice. Q4.1-001 is closed: AcquireAsync compares the reusable checkout's origin URL with the current Repository GitUrl, clones the replacement before moving the old checkout, fails closed on clone/swap/cleanup errors, and the two-remote regression proves the second Profiled Revision and content come from remote B under the same Repository identity. Remote output and Git failures are not exposed; coordinator Git-failure details and missing-provider logs are bounded and sanitized. The three focused corrected regressions passed. No Critical or High correctness, security, architecture, or regression issue was found; one Medium cancellation/temporary-directory cleanup and test-coverage gap remains."
+}

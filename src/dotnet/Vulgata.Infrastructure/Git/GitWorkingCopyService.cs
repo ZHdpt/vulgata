@@ -30,9 +30,23 @@ public sealed class GitWorkingCopyService(GitWorkingCopyOptions options) : IGitW
                 return GitWorkingCopyResult.Failure("本地工作副本包含未提交更改。");
             }
 
-            result = await RunGitAsync(
-                ["-C", workingCopyPath, "pull", "--ff-only"],
-                cancellationToken);
+            ProcessResult boundRemote = await RunGitAsync(
+                ["-C", workingCopyPath, "remote", "get-url", "origin"],
+                cancellationToken,
+                maximumStandardOutputCharacters: 4_096,
+                requireCompleteStandardOutput: true);
+            result = boundRemote.ExitCode == 0 &&
+                StringComparer.Ordinal.Equals(
+                    boundRemote.StandardOutput.TrimEnd('\r', '\n'),
+                    repository.GitUrl)
+                ? await RunGitAsync(
+                    ["-C", workingCopyPath, "pull", "--ff-only"],
+                    cancellationToken)
+                : await RecreateAsync(
+                    repositoryRoot,
+                    workingCopyPath,
+                    repository.GitUrl,
+                    cancellationToken);
         }
         else
         {
@@ -68,6 +82,79 @@ public sealed class GitWorkingCopyService(GitWorkingCopyOptions options) : IGitW
             TryParseProfiledRevision(revision.StandardOutput, out string? profiledRevision)
             ? GitWorkingCopyResult.Success(workingCopyPath, profiledRevision!)
             : GitWorkingCopyResult.Failure(SanitizeDiagnostic(revision.StandardError));
+    }
+
+    private static async Task<ProcessResult> RecreateAsync(
+        string repositoryRoot,
+        string workingCopyPath,
+        string gitUrl,
+        CancellationToken cancellationToken)
+    {
+        string suffix = Guid.NewGuid().ToString("N");
+        string replacementPath = Path.Combine(repositoryRoot, $".rebind-{suffix}");
+        string stalePath = Path.Combine(repositoryRoot, $".stale-{suffix}");
+        ProcessResult clone = await RunGitAsync(
+            ["clone", "--no-tags", "--", gitUrl, replacementPath],
+            cancellationToken);
+        if (clone.ExitCode != 0)
+        {
+            _ = TryDeleteDirectory(replacementPath);
+            return clone;
+        }
+
+        try
+        {
+            Directory.Move(workingCopyPath, stalePath);
+            try
+            {
+                Directory.Move(replacementPath, workingCopyPath);
+            }
+            catch
+            {
+                Directory.Move(stalePath, workingCopyPath);
+                throw;
+            }
+
+            return TryDeleteDirectory(stalePath)
+                ? clone
+                : new ProcessResult(-1, string.Empty, "WorkingCopyCleanupFailed");
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            _ = TryDeleteDirectory(replacementPath);
+            return new ProcessResult(-1, string.Empty, exception.GetType().Name);
+        }
+    }
+
+    private static bool TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (!Directory.Exists(path))
+            {
+                return true;
+            }
+
+            var enumerationOptions = new EnumerationOptions
+            {
+                AttributesToSkip = FileAttributes.ReparsePoint,
+                IgnoreInaccessible = false,
+                RecurseSubdirectories = true,
+            };
+            foreach (string file in Directory.EnumerateFiles(path, "*", enumerationOptions))
+            {
+                File.SetAttributes(file, File.GetAttributes(file) & ~FileAttributes.ReadOnly);
+            }
+
+            Directory.Delete(path, recursive: true);
+            return true;
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     internal static bool TryParseProfiledRevision(string output, out string? revision)

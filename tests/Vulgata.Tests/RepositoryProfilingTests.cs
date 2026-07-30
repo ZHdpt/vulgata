@@ -256,13 +256,13 @@ public sealed class RepositoryProfilingTests
     }
 
     [Fact]
-    public async Task StartStandaloneRepository_WithAdversarialGitFailure_ReturnsAndPersistsClosedChineseFailureAsync()
+    public async Task StartStandaloneRepository_WithAdversarialGitFailure_ReturnsAndPersistsRequiredSanitizedDetailsAsync()
     {
         const string rawDiagnostic =
             "fatal: query=MATCH (n) RETURN n; source=class Secret {}; " +
             "C:\\host\\repo\\Secret.cs; package=attacker-value; password=hunter2; " +
             "token=sk-live-secret; elapsed=9876ms";
-        const string safeMessage = "仓库克隆失败，请检查仓库地址和访问权限。";
+        const string safeMessage = "仓库克隆失败：Git 命令执行失败，请检查仓库地址和访问权限。";
         var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
             .UseSqlite("Data Source=:memory:")
             .Options;
@@ -2146,6 +2146,93 @@ public sealed class RepositoryProfilingTests
     }
 
     [Fact]
+    public async Task AcquireAsync_SameRepositoryGitUrlChanges_RecreatesWorkingCopyAtNewProfiledRevisionWithoutCredentialDiagnosticsAsync()
+    {
+        using var firstRemote = new ProfilingEvidenceGitFixture();
+        using var secondRemote =
+            new ProfilingEvidenceGitFixture("alice-supersecret-token-");
+        firstRemote.Write("src/remote.txt", "remote-a");
+        firstRemote.TrackAll();
+        string firstRevision = firstRemote.GetRevision();
+        secondRemote.Write("src/remote.txt", "remote-b");
+        secondRemote.TrackAll();
+        string secondRevision = secondRemote.GetRevision();
+        string storageRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-profile-working-copy-{Guid.NewGuid():N}");
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            "rebound-source",
+            firstRemote.Path,
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        Guid repositoryId = repository.Id;
+        var service = new GitWorkingCopyService(new GitWorkingCopyOptions(storageRoot));
+        try
+        {
+            GitWorkingCopyResult first = await service.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                CancellationToken.None);
+            Assert.True(first.Succeeded, first.Error);
+            Assert.Equal(firstRevision, first.ProfiledRevision);
+            Assert.Equal(
+                "remote-a",
+                await File.ReadAllTextAsync(
+                    Path.Combine(first.WorkingCopyPath!, "src", "remote.txt")));
+
+            repository.UpdateDetails(
+                repository.Name,
+                secondRemote.Path,
+                repository.Description,
+                repository.Context,
+                DateTimeOffset.UtcNow.AddMinutes(1));
+
+            GitWorkingCopyResult second = await service.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                CancellationToken.None);
+
+            Assert.Equal(repositoryId, repository.Id);
+            Assert.True(second.Succeeded, second.Error);
+            Assert.Equal(first.WorkingCopyPath, second.WorkingCopyPath);
+            Assert.NotEqual(firstRevision, second.ProfiledRevision);
+            Assert.Equal(secondRevision, second.ProfiledRevision);
+            Assert.Equal(
+                "remote-b",
+                await File.ReadAllTextAsync(
+                    Path.Combine(second.WorkingCopyPath!, "src", "remote.txt")));
+            string observable = string.Join(
+                '\n',
+                second.Error,
+                second.WorkingCopyPath,
+                second.ProfiledRevision);
+            Assert.DoesNotContain("alice", observable, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(
+                "supersecret",
+                observable,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("token", observable, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (Directory.Exists(storageRoot))
+            {
+                try
+                {
+                    Directory.Delete(storageRoot, recursive: true);
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+        }
+    }
+
+    [Fact]
     public async Task StartStandaloneRepository_WithControlledProvider_PersistsTraceableResultAsync()
     {
         string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
@@ -2621,6 +2708,7 @@ public sealed class RepositoryProfilingTests
                 DateTimeOffset.UtcNow);
             db.Repositories.Add(repository);
             await db.SaveChangesAsync();
+            var logger = new CapturedLogger<RepositoryProfilingCoordinator>();
             var coordinator = new RepositoryProfilingCoordinator(
                 new SystemRepository(db),
                 new RepositoryRepository(db),
@@ -2630,7 +2718,7 @@ public sealed class RepositoryProfilingTests
                 new ControlledCandidates(),
                 new MissingProvider(),
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
-                NullLogger<RepositoryProfilingCoordinator>.Instance,
+                logger,
                 new EmptyFrameworkEvidenceDetector(),
                 FrameworkCatalog.LoadEmbedded());
 
@@ -2652,6 +2740,16 @@ public sealed class RepositoryProfilingTests
             Assert.Equal(0, await db.CodeUnitEdges.CountAsync());
             Assert.Empty(await db.Set<PreScanResult>().ToListAsync());
             Assert.Empty(await db.Set<CommunicationKindClassification>().ToListAsync());
+            CapturedLogEntry error = Assert.Single(
+                logger.Entries,
+                entry => entry.Level == LogLevel.Error);
+            Assert.Contains("CodeGraph CLI not found", error.Message, StringComparison.Ordinal);
+            Assert.Equal(repository.Id, error.Properties["RepositoryId"]);
+            Assert.DoesNotContain(root, error.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(
+                repository.GitUrl,
+                error.Message,
+                StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -3299,11 +3397,11 @@ public sealed class RepositoryProfilingTests
     {
         private string? _externalDirectory;
 
-        public ProfilingEvidenceGitFixture()
+        public ProfilingEvidenceGitFixture(string pathCanary = "")
         {
             Path = System.IO.Path.Combine(
                 System.IO.Path.GetTempPath(),
-                $"vulgata-profile-evidence-{Guid.NewGuid():N}");
+                $"vulgata-profile-evidence-{pathCanary}{Guid.NewGuid():N}");
             Directory.CreateDirectory(Path);
             RunGit("init", "--quiet");
             RunGit("config", "core.longpaths", "true");

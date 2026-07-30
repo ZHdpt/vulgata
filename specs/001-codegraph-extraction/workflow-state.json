@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
   "execution_level": "full",
-  "stage": "acceptance-review",
+  "stage": "conditional-e2e",
   "plan_revision": {
     "status": "story-complete-user-waived-remaining-ceremony",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
@@ -53,20 +53,56 @@
   },
   "active_gates": {
     "acceptance-review": {
-      "status": "pending",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "accepted",
+      "iteration": 2,
+      "dispatch_id": "story_4_1_acceptance_review_2",
+      "verdict_path": "specs/001-codegraph-extraction/reviews/acceptance-review-2.json",
+      "input_boundary": {
+        "base_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+        "candidate_commit": null,
+        "diff_sha256": "874256ed5066a7b91d9c4915ed28396f89d04f2454e8d2a741b3a5ae33882c7a",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md": "8439e9a1e539714ae2fa4eeb737c07f3e3d0874a3c071eae3a868b243edd6fff",
+          "specs/001-codegraph-extraction/plan.md": "8c93567823b1c20ad81c212cd6d346831d0623fe9ee7eecbf5f305cb9ba68663",
+          "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+          "specs/001-codegraph-extraction/tasks.md": "8a164d118073add48ca4d662ace5e2ae0623dc49c4ee0e79c593d7959c44ed69",
+          "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs": "42fdc30df8536ff7120299fbfea0878113cdc2dff7536f69ea6846addd162b37",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "7db4a315b8fd47f7a9caa3cb1ba22b2f0997e5b1fe0e3f4f352ff2b4455fdf1a",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "098975045a650142087517e7f3ce6fe8db73707f045565d056d97b4bedc5fc2f"
+        },
+        "owned_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+        ]
+      },
+      "completed_at": "2026-07-30T13:42:59Z"
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "accepted",
+      "iteration": 2,
+      "dispatch_id": "story_4_1_quality_review_2",
+      "verdict_path": "specs/001-codegraph-extraction/reviews/quality-review-2.json",
+      "input_boundary": {
+        "base_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+        "candidate_commit": null,
+        "diff_sha256": "874256ed5066a7b91d9c4915ed28396f89d04f2454e8d2a741b3a5ae33882c7a",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md": "8439e9a1e539714ae2fa4eeb737c07f3e3d0874a3c071eae3a868b243edd6fff",
+          "specs/001-codegraph-extraction/plan.md": "8c93567823b1c20ad81c212cd6d346831d0623fe9ee7eecbf5f305cb9ba68663",
+          "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+          "specs/001-codegraph-extraction/tasks.md": "8a164d118073add48ca4d662ace5e2ae0623dc49c4ee0e79c593d7959c44ed69",
+          "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs": "42fdc30df8536ff7120299fbfea0878113cdc2dff7536f69ea6846addd162b37",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "7db4a315b8fd47f7a9caa3cb1ba22b2f0997e5b1fe0e3f4f352ff2b4455fdf1a",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "098975045a650142087517e7f3ce6fe8db73707f045565d056d97b4bedc5fc2f"
+        },
+        "owned_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+          "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+        ]
+      },
+      "completed_at": "2026-07-30T13:42:59Z"
     }
   },
   "stage_history": [
@@ -617,6 +653,119 @@
       "agent_role": "root-orchestrator",
       "evidence_paths": [
         "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-1-close-readiness.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "revised",
+      "started_at": "2026-07-30T12:59:01Z",
+      "completed_at": "2026-07-30T13:12:47Z",
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/acceptance-review-1.json": "3f13cb7c0b1af0c6121712734156c737808173b98df17fe8ba76cdbb92fd80bd"
+      },
+      "agent_role": "acceptance-reviewer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/acceptance-review-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "revised",
+      "started_at": "2026-07-30T12:59:01Z",
+      "completed_at": "2026-07-30T13:12:47Z",
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/quality-review-1.json": "a6ef6b78498b07ff912fdbbb5f3297207a3188966e4c9e6bffec6e2c781e0f9e"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/quality-review-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "active",
+      "started_at": "2026-07-30T13:12:47Z",
+      "completed_at": null,
+      "input_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/acceptance-review-1.json": "3f13cb7c0b1af0c6121712734156c737808173b98df17fe8ba76cdbb92fd80bd",
+        "specs/001-codegraph-extraction/reviews/quality-review-1.json": "a6ef6b78498b07ff912fdbbb5f3297207a3188966e4c9e6bffec6e2c781e0f9e"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/acceptance-review-1.json",
+        "specs/001-codegraph-extraction/reviews/quality-review-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-30T13:12:47Z",
+      "completed_at": "2026-07-30T13:42:59Z",
+      "input_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs": "42fdc30df8536ff7120299fbfea0878113cdc2dff7536f69ea6846addd162b37",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "7db4a315b8fd47f7a9caa3cb1ba22b2f0997e5b1fe0e3f4f352ff2b4455fdf1a",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "098975045a650142087517e7f3ce6fe8db73707f045565d056d97b4bedc5fc2f"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/acceptance-review-1.json",
+        "specs/001-codegraph-extraction/reviews/quality-review-1.json",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "accepted",
+      "started_at": "2026-07-30T13:30:00Z",
+      "completed_at": "2026-07-30T13:42:59Z",
+      "input_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/acceptance-review-2.json": "4021ce7d3b8fde62a5bca722299a892fd43fc024affffcafda44670e45765d69"
+      },
+      "agent_role": "acceptance-reviewer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/acceptance-review-2.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "accepted",
+      "started_at": "2026-07-30T13:30:00Z",
+      "completed_at": "2026-07-30T13:42:59Z",
+      "input_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/quality-review-2.json": "de7b6b21cf300dd891c3087a29e00482ced27e9c1bc70fcb433e2fe7a5603978"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/quality-review-2.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "conditional-e2e",
+      "status": "active",
+      "started_at": "2026-07-30T13:42:59Z",
+      "completed_at": null,
+      "input_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "input_hashes": {
+        "specs/001-codegraph-extraction/reviews/acceptance-review-2.json": "4021ce7d3b8fde62a5bca722299a892fd43fc024affffcafda44670e45765d69",
+        "specs/001-codegraph-extraction/reviews/quality-review-2.json": "de7b6b21cf300dd891c3087a29e00482ced27e9c1bc70fcb433e2fe7a5603978"
+      },
+      "agent_role": "e2e-runner",
+      "evidence_paths": [
+        "specs/001-codegraph-extraction/reviews/acceptance-review-2.json",
+        "specs/001-codegraph-extraction/reviews/quality-review-2.json"
       ],
       "failure": null
     }
@@ -1410,12 +1559,18 @@
       ]
     },
     "acceptance-review": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 2,
+      "verdict_paths": [
+        "specs/001-codegraph-extraction/reviews/acceptance-review-1.json",
+        "specs/001-codegraph-extraction/reviews/acceptance-review-2.json"
+      ]
     },
     "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 2,
+      "verdict_paths": [
+        "specs/001-codegraph-extraction/reviews/quality-review-1.json",
+        "specs/001-codegraph-extraction/reviews/quality-review-2.json"
+      ]
     }
   },
   "e2e_decision": {
@@ -2169,20 +2324,88 @@
       "observed_at": "2026-07-19T08:42:17Z",
       "summary": "The exact pinned CodeGraphContext 0.5.1 final-image provider contract passed with bounded redacted evidence; Story 4.1 tests passed 16/16, all remaining tests passed 242/242, Web built with zero errors, VulgataDbContext had no pending model changes, and repository workflow/diff checks passed.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/17",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName=Vulgata.Tests.RepositoryProfilingTests.<focused-regression>",
+      "exit_code": 1,
+      "observed_at": "2026-07-30T13:30:00Z",
+      "summary": "Three focused regressions independently failed before production edits: clone failure returned the old comma message, missing-provider logging lacked the required literal marker, and a same-Repository-ID Git URL change retained remote A's Profiled Revision.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/implement/18",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Vulgata.Tests.RepositoryProfilingTests|FullyQualifiedName~Vulgata.Tests.CodeGraphContextProviderTests|FullyQualifiedName~Vulgata.Tests.ScanCandidateEnumeratorTests|FullyQualifiedName~Vulgata.Tests.RepositoryApiTests|FullyQualifiedName~Vulgata.Tests.PreScanCommunicationDetectionTests.AcquireAsync --logger console;verbosity=minimal",
+      "exit_code": 0,
+      "observed_at": "2026-07-30T13:42:59Z",
+      "summary": "Root rerun passed the corrected Story 4.1 subset: 170 passed, 0 failed, 0 skipped.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/acceptance-review/19",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/acceptance-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-30T13:42:59Z",
+      "summary": "Fresh independent acceptance review accepted the exact corrected boundary with no findings; AR41-001 and AR41-002 are closed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-1-codegraph-integration-and-code-unit-extraction/quality-review/20",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "e1b75e4eec1dd245834a9af90dc1bf304962c03e",
+      "artifact_paths": [
+        "specs/001-codegraph-extraction/reviews/quality-review-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-30T13:42:59Z",
+      "summary": "Fresh independent quality review accepted the exact corrected boundary; Q4.1-001 is closed and Q4.1-002 remains a nonblocking Medium cleanup/test-coverage finding.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-close-readiness-format-20260730T125901Z-b71d20",
+    "checkpoint_id": "bmad-4-1-review-correction-20260730T134259Z-c4d912",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "acceptance-review",
+    "stage": "quality-review",
     "committed_paths": [
-      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-1-close-readiness.md",
-      "specs/001-codegraph-extraction/workflow-state.json"
+      "specs/001-codegraph-extraction/reviews/acceptance-review-1.json",
+      "specs/001-codegraph-extraction/reviews/acceptance-review-2.json",
+      "specs/001-codegraph-extraction/reviews/quality-review-1.json",
+      "specs/001-codegraph-extraction/reviews/quality-review-2.json",
+      "specs/001-codegraph-extraction/workflow-state.json",
+      "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
     ],
-    "verification_evidence_ids": [],
+    "verification_evidence_ids": [
+      "4-1-codegraph-integration-and-code-unit-extraction/implement/18",
+      "4-1-codegraph-integration-and-code-unit-extraction/acceptance-review/19",
+      "4-1-codegraph-integration-and-code-unit-extraction/quality-review/20"
+    ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-30T12:59:01Z"
+  "updated_at": "2026-07-30T13:42:59Z"
 }

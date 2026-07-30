@@ -263,7 +263,8 @@ public sealed class RepositoryProfilingCoordinator(
             await workingCopyService.AcquireAsync(repository, scanRun.Id, cancellationToken);
         if (!workingCopy.Succeeded)
         {
-            const string message = "仓库克隆失败，请检查仓库地址和访问权限。";
+            const string details = "Git 命令执行失败，请检查仓库地址和访问权限。";
+            const string message = $"仓库克隆失败：{details}";
             logger.LogError("Repository clone failed for {RepositoryId}.", repository.Id);
             scanRun.Fail(message, DateTimeOffset.UtcNow);
             await scanRunRepository.SaveChangesAsync(cancellationToken);
@@ -343,7 +344,20 @@ public sealed class RepositoryProfilingCoordinator(
             string display = outcome == RepositoryProfilingOutcome.ProviderUnavailable
                 ? "本地 CodeGraph 服务不可用，请联系管理员。"
                 : "代码结构分析失败，请稍后重试。";
-            logger.LogError("CodeGraph profiling failed for {RepositoryId}: {Reason}", repository.Id, display);
+            if (outcome == RepositoryProfilingOutcome.ProviderUnavailable)
+            {
+                logger.LogError(
+                    "CodeGraph CLI not found for Repository {RepositoryId}.",
+                    repository.Id);
+            }
+            else
+            {
+                logger.LogError(
+                    "CodeGraph profiling failed for {RepositoryId}: {Reason}",
+                    repository.Id,
+                    display);
+            }
+
             scanRun.Fail(display, DateTimeOffset.UtcNow);
             await scanRunRepository.SaveChangesAsync(cancellationToken);
             return new(outcome, Map(scanRun), display);
@@ -1042,6 +1056,7 @@ public sealed class RepositoryProfilingCoordinator(
         return run.TerminalMessage switch
         {
             "仓库克隆失败，请检查仓库地址和访问权限。" => run.TerminalMessage,
+            "仓库克隆失败：Git 命令执行失败，请检查仓库地址和访问权限。" => run.TerminalMessage,
             "候选源文件审计范围超出限制。" => run.TerminalMessage,
             "本地 CodeGraph 服务不可用，请联系管理员。" => run.TerminalMessage,
             "框架证据检测失败。" => run.TerminalMessage,
