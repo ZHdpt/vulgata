@@ -10,6 +10,24 @@ public interface IGitWorkingCopyService
         CancellationToken cancellationToken = default);
 }
 
+public interface ICommittedRepositorySnapshotService
+{
+    Task<ICommittedRepositorySnapshotLease> AcquireAsync(
+        Repository repository,
+        Guid scanRunId,
+        GitWorkingCopyResult workingCopy,
+        CancellationToken cancellationToken = default);
+}
+
+public interface ICommittedRepositorySnapshotLease : IAsyncDisposable
+{
+    Guid RepositoryId { get; }
+    Guid ScanRunId { get; }
+    string ProfiledRevision { get; }
+    string RootPath { get; }
+    Task VerifyIdentityAsync(CancellationToken cancellationToken = default);
+}
+
 public interface IScanCandidateEnumerator
 {
     Task<IReadOnlyList<ScanSourceCandidate>> EnumerateAsync(
@@ -196,10 +214,40 @@ public sealed class FrameworkEvidenceDetectionResult
     }
 }
 
-public sealed record GitWorkingCopyResult(bool Succeeded, string? WorkingCopyPath, string? Error)
+public sealed record GitWorkingCopyResult(
+    bool Succeeded,
+    string? WorkingCopyPath,
+    string? ProfiledRevision,
+    string? Error)
 {
-    public static GitWorkingCopyResult Success(string path) => new(true, path, null);
-    public static GitWorkingCopyResult Failure(string error) => new(false, null, error);
+    public static GitWorkingCopyResult Success(string path, string profiledRevision)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        return new(true, path, RequireProfiledRevision(profiledRevision), null);
+    }
+
+    public static GitWorkingCopyResult Failure(string error)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
+        return new(false, null, null, error);
+    }
+
+    private static string RequireProfiledRevision(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        if (value.Length > 64 ||
+            value.Length == 0 ||
+            value.Any(static character =>
+                character is not (>= '0' and <= '9') and
+                    not (>= 'a' and <= 'f')))
+        {
+            throw new ArgumentException(
+                "Profiled Revision must be a bounded lowercase Git object ID.",
+                nameof(value));
+        }
+
+        return value;
+    }
 }
 
 public sealed record ScanSourceCandidate(
@@ -419,5 +467,77 @@ public sealed class RepositoryProfileDraft
         {
             throw new InvalidOperationException("Repository Profile Draft records must share one ScanRun identity.");
         }
+    }
+}
+
+public sealed class PreScanResultDraft
+{
+    private PreScanResultDraft(PreScanResult result)
+    {
+        Result = result;
+    }
+
+    public PreScanResult Result { get; }
+    public Guid RepositoryId => Result.RepositoryId;
+    public Guid ScanRunId => Result.ScanRunId;
+    public string ProfiledRevision => Result.ProfiledRevision;
+    public PreScanApprovalState State => Result.State;
+    public string SchemaVersion => Result.SchemaVersion;
+    public DateTimeOffset ApprovedAt => Result.ApprovedAt;
+    public string Fingerprint => Result.Fingerprint;
+    public string ApprovalMessage => Result.ApprovalMessage;
+    public ConfirmedCommunicationKinds ConfirmedCommunicationKinds =>
+        Result.ConfirmedCommunicationKinds;
+    public int TotalConfirmedEvidenceCount => Result.TotalConfirmedEvidenceCount;
+    public int TotalHintCount => Result.TotalHintCount;
+    public int TotalWarningCount => Result.TotalWarningCount;
+    public bool EvidenceTruncated => Result.EvidenceTruncated;
+    public IReadOnlyList<CommunicationKindClassification> Classifications =>
+        Result.Classifications;
+
+    public static PreScanResultDraft Create(PreScanResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        return new(result);
+    }
+}
+
+public sealed class RepositoryProfileCommitDraft
+{
+    private RepositoryProfileCommitDraft(
+        RepositoryProfileDraft profile,
+        PreScanResultDraft preScanResult)
+    {
+        Profile = profile;
+        PreScanResult = preScanResult;
+    }
+
+    public RepositoryProfileDraft Profile { get; }
+    public PreScanResultDraft PreScanResult { get; }
+
+    public static RepositoryProfileCommitDraft Create(
+        RepositoryProfileDraft profile,
+        PreScanResultDraft preScanResult)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentNullException.ThrowIfNull(preScanResult);
+        if (profile.ScanRun.ProfiledRevision is null)
+        {
+            profile.ScanRun.BindProfiledRevision(preScanResult.ProfiledRevision);
+        }
+
+        if (profile.ScanRun.Status != ScanRunStatus.Completed ||
+            profile.ScanRun.RepositoryId != preScanResult.RepositoryId ||
+            profile.ScanRun.Id != preScanResult.ScanRunId ||
+            !StringComparer.Ordinal.Equals(
+                profile.ScanRun.ProfiledRevision,
+                preScanResult.ProfiledRevision) ||
+            preScanResult.ApprovedAt < profile.ScanRun.StartedAt)
+        {
+            throw new InvalidOperationException(
+                "The profile and approved Pre-Scan Result must share one completed Repository and ScanRun identity.");
+        }
+
+        return new(profile, preScanResult);
     }
 }

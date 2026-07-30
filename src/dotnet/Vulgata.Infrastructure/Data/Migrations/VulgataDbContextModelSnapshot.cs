@@ -183,6 +183,88 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.CommunicationKindClassification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Confidence")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Kind")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Locator")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<int>("OccurrenceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PreScanResultId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Provenance")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("Rule")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PreScanResultId", "Fingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("PreScanResultId", "Level", "Kind");
+
+                    b.ToTable("CommunicationKindClassifications", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_Compatibility", "(\"Rule\" = 'RpcDirectAnnotation' AND \"Kind\" = 'Rpc' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'StructuralAnnotation') OR (\"Rule\" = 'RpcMatchedConfiguration' AND \"Kind\" = 'Rpc' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'MatchedConfiguration') OR (\"Rule\" IN ('HttpControllerAnnotation', 'HttpClientAnnotation') AND \"Kind\" = 'Http' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'StructuralAnnotation') OR (\"Rule\" = 'HttpMatchedConfiguration' AND \"Kind\" = 'Http' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'MatchedConfiguration') OR (\"Rule\" = 'RpcImportOnly' AND \"Kind\" = 'Rpc' AND \"Level\" = 'Hint' AND \"Confidence\" = 'Conservative' AND \"Provenance\" IN ('Import', 'PackageManifest', 'FrameworkFact')) OR (\"Rule\" = 'HttpImportOnly' AND \"Kind\" = 'Http' AND \"Level\" = 'Hint' AND \"Confidence\" = 'Conservative' AND \"Provenance\" IN ('Import', 'PackageManifest', 'FrameworkFact')) OR (\"Rule\" IN ('MalformedEvidence', 'UnsafePath', 'BoundExceeded', 'ContradictoryEvidence') AND \"Level\" = 'Warning' AND \"Confidence\" = 'None' AND \"Provenance\" = 'Detector') OR (\"Rule\" = 'UnsupportedFamily' AND \"Kind\" IS NULL AND \"Level\" = 'Warning' AND \"Confidence\" = 'None' AND \"Provenance\" = 'Detector')");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_Confidence", "\"Confidence\" IN ('High', 'Conservative', 'None')");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_Fingerprint_Length", "length(\"Fingerprint\") = 64");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_Kind", "\"Kind\" IS NULL OR \"Kind\" IN ('Rpc', 'Http')");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_Level", "\"Level\" IN ('Confirmed', 'Hint', 'Warning')");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_LevelConfidence", "(\"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Kind\" IS NOT NULL) OR (\"Level\" = 'Hint' AND \"Confidence\" = 'Conservative' AND \"Kind\" IS NOT NULL) OR (\"Level\" = 'Warning' AND \"Confidence\" = 'None')");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_OccurrenceCount", "\"OccurrenceCount\" BETWEEN 1 AND 250000");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_PathLocator", "length(\"RelativePath\") BETWEEN 1 AND 2048 AND length(\"Locator\") BETWEEN 1 AND 4096");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_Provenance", "\"Provenance\" IN ('StructuralAnnotation', 'FrameworkFact', 'PackageManifest', 'MatchedConfiguration', 'Import', 'Detector')");
+
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_Rule", "\"Rule\" IN ('RpcDirectAnnotation', 'RpcMatchedConfiguration', 'HttpControllerAnnotation', 'HttpClientAnnotation', 'HttpMatchedConfiguration', 'RpcImportOnly', 'HttpImportOnly', 'MalformedEvidence', 'UnsafePath', 'BoundExceeded', 'ContradictoryEvidence', 'UnsupportedFamily')");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
                 {
                     b.Property<Guid>("Id")
@@ -315,6 +397,89 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("PendingContextChanges", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.PreScanResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovalMessage")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ConfirmedCommunicationKinds")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("EvidenceTruncated")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SchemaVersion")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("TotalConfirmedEvidenceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalHintCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalWarningCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id", "RepositoryId")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "ScanRunId")
+                        .IsUnique();
+
+                    b.ToTable("PreScanResults", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_PreScanResults_ApprovalMessage_Length", "length(\"ApprovalMessage\") BETWEEN 1 AND 256");
+
+                            t.HasCheckConstraint("CK_PreScanResults_ConfirmedKinds", "\"ConfirmedCommunicationKinds\" BETWEEN 0 AND 3");
+
+                            t.HasCheckConstraint("CK_PreScanResults_Counts", "\"TotalConfirmedEvidenceCount\" BETWEEN 0 AND 250000 AND \"TotalHintCount\" BETWEEN 0 AND 250000 AND \"TotalWarningCount\" BETWEEN 0 AND 250000");
+
+                            t.HasCheckConstraint("CK_PreScanResults_Fingerprint_Length", "length(\"Fingerprint\") = 64");
+
+                            t.HasCheckConstraint("CK_PreScanResults_Identity", "\"Id\" = \"ScanRunId\"");
+
+                            t.HasCheckConstraint("CK_PreScanResults_ProfiledRevision_Length", "length(\"ProfiledRevision\") BETWEEN 1 AND 64");
+
+                            t.HasCheckConstraint("CK_PreScanResults_SchemaVersion", "\"SchemaVersion\" = '1.0'");
+
+                            t.HasCheckConstraint("CK_PreScanResults_State", "\"State\" = 'PreScanApproved'");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.Repository", b =>
                 {
                     b.Property<Guid>("Id")
@@ -421,6 +586,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.Property<int>("ParsedFileCount")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ProfiledRevision")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<int>("ProviderProcessTimeoutSeconds")
                         .HasColumnType("integer");
@@ -682,6 +851,17 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("ScanRun");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.CommunicationKindClassification", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.PreScanResult", "PreScanResult")
+                        .WithMany("Classifications")
+                        .HasForeignKey("PreScanResultId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PreScanResult");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
@@ -691,6 +871,18 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Repository");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreScanResult", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", "ScanRun")
+                        .WithOne("PreScanResult")
+                        .HasForeignKey("Vulgata.Core.Entities.PreScanResult", "Id", "RepositoryId")
+                        .HasPrincipalKey("Vulgata.Core.Entities.ScanRun", "Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ScanRun");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Repository", b =>
@@ -798,6 +990,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("SystemLlmProviderOverrides");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.PreScanResult", b =>
+                {
+                    b.Navigation("Classifications");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.Repository", b =>
                 {
                     b.Navigation("DatabaseConnection");
@@ -814,6 +1011,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("CodeUnits");
 
                     b.Navigation("LanguageSummaries");
+
+                    b.Navigation("PreScanResult");
 
                     b.Navigation("UnresolvedRelationships");
                 });

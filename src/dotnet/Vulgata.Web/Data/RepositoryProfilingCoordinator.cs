@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Shared.Repositories;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
@@ -55,17 +56,107 @@ public sealed class RepositoryProfilingCoordinator(
     IRepositoryRepository repositoryRepository,
     IScanRunRepository scanRunRepository,
     IGitWorkingCopyService workingCopyService,
+    ICommittedRepositorySnapshotService snapshotService,
     IScanCandidateEnumerator candidateEnumerator,
     ICodeGraphProvider codeGraphProvider,
     Vulgata.Infrastructure.CodeGraph.CodeGraphOptions options,
     ILogger<RepositoryProfilingCoordinator> logger,
     IFrameworkEvidenceDetector frameworkEvidenceDetector,
-    FrameworkCatalog frameworkCatalog)
+    FrameworkCatalog frameworkCatalog,
+    IPreScanCommunicationDetector preScanCommunicationDetector,
+    CommunicationEvidenceRuleCatalog communicationEvidenceRuleCatalog)
     : IRepositoryProfilingCoordinator
 {
     private const int UnknownLanguagePathLimit = 10_000;
     private const int UnknownLanguagePathUtf8ByteLimit = 16 * 1024 * 1024;
     private const int FrameworkEvidenceAuditDetailLimit = 100;
+
+    public RepositoryProfilingCoordinator(
+        ISystemRepository systemRepository,
+        IRepositoryRepository repositoryRepository,
+        IScanRunRepository scanRunRepository,
+        IGitWorkingCopyService workingCopyService,
+        ICommittedRepositorySnapshotService snapshotService,
+        IScanCandidateEnumerator candidateEnumerator,
+        ICodeGraphProvider codeGraphProvider,
+        Vulgata.Infrastructure.CodeGraph.CodeGraphOptions options,
+        ILogger<RepositoryProfilingCoordinator> logger,
+        IFrameworkEvidenceDetector frameworkEvidenceDetector,
+        FrameworkCatalog frameworkCatalog,
+        IPreScanCommunicationDetector preScanCommunicationDetector)
+        : this(
+            systemRepository,
+            repositoryRepository,
+            scanRunRepository,
+            workingCopyService,
+            snapshotService,
+            candidateEnumerator,
+            codeGraphProvider,
+            options,
+            logger,
+            frameworkEvidenceDetector,
+            frameworkCatalog,
+            preScanCommunicationDetector,
+            CommunicationEvidenceRuleCatalog.LoadEmbedded())
+    {
+    }
+
+    public RepositoryProfilingCoordinator(
+        ISystemRepository systemRepository,
+        IRepositoryRepository repositoryRepository,
+        IScanRunRepository scanRunRepository,
+        IGitWorkingCopyService workingCopyService,
+        ICommittedRepositorySnapshotService snapshotService,
+        IScanCandidateEnumerator candidateEnumerator,
+        ICodeGraphProvider codeGraphProvider,
+        Vulgata.Infrastructure.CodeGraph.CodeGraphOptions options,
+        ILogger<RepositoryProfilingCoordinator> logger,
+        IFrameworkEvidenceDetector frameworkEvidenceDetector,
+        FrameworkCatalog frameworkCatalog)
+        : this(
+            systemRepository,
+            repositoryRepository,
+            scanRunRepository,
+            workingCopyService,
+            snapshotService,
+            candidateEnumerator,
+            codeGraphProvider,
+            options,
+            logger,
+            frameworkEvidenceDetector,
+            frameworkCatalog,
+            EmptyPreScanCommunicationDetector.Instance,
+            CommunicationEvidenceRuleCatalog.LoadEmbedded())
+    {
+    }
+
+    public RepositoryProfilingCoordinator(
+        ISystemRepository systemRepository,
+        IRepositoryRepository repositoryRepository,
+        IScanRunRepository scanRunRepository,
+        IGitWorkingCopyService workingCopyService,
+        IScanCandidateEnumerator candidateEnumerator,
+        ICodeGraphProvider codeGraphProvider,
+        Vulgata.Infrastructure.CodeGraph.CodeGraphOptions options,
+        ILogger<RepositoryProfilingCoordinator> logger,
+        IFrameworkEvidenceDetector frameworkEvidenceDetector,
+        FrameworkCatalog frameworkCatalog)
+        : this(
+            systemRepository,
+            repositoryRepository,
+            scanRunRepository,
+            workingCopyService,
+            MissingCommittedRepositorySnapshotService.Instance,
+            candidateEnumerator,
+            codeGraphProvider,
+            options,
+            logger,
+            frameworkEvidenceDetector,
+            frameworkCatalog,
+            EmptyPreScanCommunicationDetector.Instance,
+            CommunicationEvidenceRuleCatalog.LoadEmbedded())
+    {
+    }
 
     public async Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
         Guid systemId,
@@ -165,6 +256,7 @@ public sealed class RepositoryProfilingCoordinator(
         await scanRunRepository.AddAsync(scanRun, cancellationToken);
         await scanRunRepository.SaveChangesAsync(cancellationToken);
 
+        ICommittedRepositorySnapshotLease? snapshotLease = null;
         try
         {
         GitWorkingCopyResult workingCopy =
@@ -178,8 +270,15 @@ public sealed class RepositoryProfilingCoordinator(
             return new(RepositoryProfilingOutcome.GitFailure, Map(scanRun), message);
         }
 
+        snapshotLease = await snapshotService.AcquireAsync(
+            repository,
+            scanRun.Id,
+            workingCopy,
+            cancellationToken);
+        await snapshotLease.VerifyIdentityAsync(cancellationToken);
+        string snapshotRoot = snapshotLease.RootPath;
         IReadOnlyList<ScanSourceCandidate> candidates =
-            await candidateEnumerator.EnumerateAsync(workingCopy.WorkingCopyPath!, cancellationToken);
+            await candidateEnumerator.EnumerateAsync(snapshotRoot, cancellationToken);
         HashSet<string> eligiblePaths = candidates
             .Where(candidate => !candidate.IsFiltered)
             .Select(candidate => candidate.RelativePath)
@@ -220,7 +319,7 @@ public sealed class RepositoryProfilingCoordinator(
         try
         {
             provider = await codeGraphProvider.ProfileAsync(
-                workingCopy.WorkingCopyPath!,
+                snapshotRoot,
                 TimeSpan.FromSeconds(options.WholeRepositoryProcessTimeoutSeconds),
                 cancellationToken);
         }
@@ -303,7 +402,7 @@ public sealed class RepositoryProfilingCoordinator(
         try
         {
             frameworkDetection = await frameworkEvidenceDetector.DetectDetailedAsync(
-                workingCopy.WorkingCopyPath!,
+                snapshotRoot,
                 cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -440,7 +539,7 @@ public sealed class RepositoryProfilingCoordinator(
                 }
 
                 (string prefix, string full) = await GetHashesAsync(
-                    workingCopy.WorkingCopyPath!,
+                    snapshotRoot,
                     providerUnit.RelativePath,
                     hashes,
                     cancellationToken);
@@ -608,7 +707,7 @@ public sealed class RepositoryProfilingCoordinator(
             scanRun.LanguageSummaries.Add(languageSummary);
         }
 
-        RepositoryProfileDraft draft = RepositoryProfileDraft.Create(
+        RepositoryProfileDraft profile = RepositoryProfileDraft.Create(
             scanRun,
             scanRun.CodeUnits,
             scanRun.CodeUnitEdges,
@@ -616,7 +715,28 @@ public sealed class RepositoryProfilingCoordinator(
             scanRun.CodeUnitFrameworks,
             languageSummaries,
             providerAuditOutcomes);
-        await scanRunRepository.PersistCompletedProfileAsync(draft, cancellationToken);
+        PreScanResultDraft preScanResult = await preScanCommunicationDetector.DetectAsync(
+            profile,
+            snapshotLease.ProfiledRevision,
+            snapshotLease,
+            cancellationToken);
+        scanRun.RecordApprovedPreScanOutcome(preScanResult.ApprovalMessage);
+        await snapshotLease.VerifyIdentityAsync(cancellationToken);
+        RepositoryProfileCommitDraft commit = RepositoryProfileCommitDraft.Create(
+            profile,
+            preScanResult);
+        await scanRunRepository.PersistCompletedProfileAsync(commit, cancellationToken);
+        logger.LogInformation(
+            "Pre-scan approval persisted for Repository {RepositoryId} ScanRun {ScanRunId} with state {PreScanState}, schema {SchemaVersion}, confirmed evidence count {TotalConfirmedEvidenceCount}, hint count {TotalHintCount}, warning count {TotalWarningCount}, evidence truncated {EvidenceTruncated}, and communication rule-set version {CommunicationRuleSetVersion}.",
+            repository.Id,
+            scanRun.Id,
+            preScanResult.State,
+            preScanResult.SchemaVersion,
+            preScanResult.TotalConfirmedEvidenceCount,
+            preScanResult.TotalHintCount,
+            preScanResult.TotalWarningCount,
+            preScanResult.EvidenceTruncated,
+            communicationEvidenceRuleCatalog.Version);
 
             return new(RepositoryProfilingOutcome.Success, Map(scanRun));
         }
@@ -643,6 +763,13 @@ public sealed class RepositoryProfilingCoordinator(
                 DateTimeOffset.UtcNow,
                 CancellationToken.None);
             throw;
+        }
+        finally
+        {
+            if (snapshotLease is not null)
+            {
+                await snapshotLease.DisposeAsync();
+            }
         }
     }
 
@@ -942,4 +1069,58 @@ public sealed class RepositoryProfilingCoordinator(
             ScanCandidateOutcomeReasons.FrameworkEvidenceBoundExceeded => "框架证据超出安全限制。",
             _ => "框架证据处理失败。",
         };
+
+    private sealed class MissingCommittedRepositorySnapshotService
+        : ICommittedRepositorySnapshotService
+    {
+        private MissingCommittedRepositorySnapshotService()
+        {
+        }
+
+        public static MissingCommittedRepositorySnapshotService Instance { get; } =
+            new();
+
+        public Task<ICommittedRepositorySnapshotLease> AcquireAsync(
+            RepositoryEntity repository,
+            Guid scanRunId,
+            GitWorkingCopyResult workingCopy,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException(
+                "A committed Repository snapshot service is required for profiling.");
+    }
+
+    private sealed class EmptyPreScanCommunicationDetector
+        : IPreScanCommunicationDetector
+    {
+        private EmptyPreScanCommunicationDetector()
+        {
+        }
+
+        public static EmptyPreScanCommunicationDetector Instance { get; } = new();
+
+        public Task<PreScanResultDraft> DetectAsync(
+            RepositoryProfileDraft profile,
+            string profiledRevision,
+            ICommittedRepositorySnapshotLease committedSnapshot,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            byte[] fingerprint = SHA256.HashData(
+                Encoding.UTF8.GetBytes($"pre-scan-empty-v1\0{profiledRevision}"));
+            PreScanResult result = PreScanResult.CreateApproved(
+                profile.ScanRun.RepositoryId,
+                profile.ScanRun.Id,
+                profiledRevision,
+                DateTimeOffset.UtcNow,
+                Convert.ToHexStringLower(fingerprint),
+                "预扫描已批准——继续进入顺序演示运行器",
+                ConfirmedCommunicationKinds.None,
+                0,
+                0,
+                0,
+                false,
+                []);
+            return Task.FromResult(PreScanResultDraft.Create(result));
+        }
+    }
 }

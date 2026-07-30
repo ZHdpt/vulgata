@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "rpc.dubbo.service-annotation",
+      "kind": "Rpc",
+      "category": "DirectAnnotation",
+      "disposition": "Confirmed",
+      "tokens": [ "@DubboService", "@DubboReference" ],
+      "keys": []
+    },
+    {
+      "id": "rpc.sofa.service-annotation",
+      "kind": "Rpc",
+      "category": "DirectAnnotation",
+      "disposition": "Confirmed",
+      "tokens": [ "@SofaService", "@SofaReference" ],
+      "keys": []
+    },
+    {
+      "id": "rpc.dubbo.application-configuration",
+      "kind": "Rpc",
+      "category": "MatchedConfiguration",
+      "disposition": "Confirmed",
+      "tokens": [],
+      "keys": [ "dubbo.application.name", "dubbo.protocol.name" ]
+    },
+    {
+      "id": "http.spring.controller-annotation",
+      "kind": "Http",
+      "category": "ControllerAnnotation",
+      "disposition": "Confirmed",
+      "tokens": [ "@RestController", "@RequestMapping", "@GetMapping", "@PostMapping", "@PutMapping", "@DeleteMapping", "@PatchMapping" ],
+      "keys": []
+    },
+    {
+      "id": "http.dotnet.controller-annotation",
+      "kind": "Http",
+      "category": "ControllerAnnotation",
+      "disposition": "Confirmed",
+      "tokens": [ "[ApiController]", "[HttpGet", "[HttpPost", "[HttpPut", "[HttpDelete", "[HttpPatch" ],
+      "keys": []
+    },
+    {
+      "id": "http.feign.client-annotation",
+      "kind": "Http",
+      "category": "ClientAnnotation",
+      "disposition": "Confirmed",
+      "tokens": [ "@FeignClient" ],
+      "keys": []
+    },
+    {
+      "id": "http.versioned-route-configuration",
+      "kind": "Http",
+      "category": "MatchedConfiguration",
+      "disposition": "Confirmed",
+      "tokens": [],
+      "keys": [ "server.servlet.context-path", "spring.mvc.servlet.path" ]
+    },
+    {
+      "id": "rpc.import-presence",
+      "kind": "Rpc",
+      "category": "Import",
+      "disposition": "Hint",
+      "tokens": [ "org.apache.dubbo", "com.alipay.sofa.rpc" ],
+      "keys": []
+    },
+    {
+      "id": "http.import-presence",
+      "kind": "Http",
+      "category": "Import",
+      "disposition": "Hint",
+      "tokens": [ "org.springframework.web", "System.Net.Http" ],
+      "keys": []
+    },
+    {
+      "id": "rpc.package-presence",
+      "kind": "Rpc",
+      "category": "PackageManifest",
+      "disposition": "Hint",
+      "tokens": [ "maven:org.apache.dubbo:dubbo", "maven:com.alipay.sofa:sofa-rpc-all" ],
+      "keys": []
+    },
+    {
+      "id": "http.package-presence",
+      "kind": "Http",
+      "category": "PackageManifest",
+      "disposition": "Hint",
+      "tokens": [ "maven:org.springframework.boot:spring-boot-starter-web", "nuget:microsoft.extensions.http" ],
+      "keys": []
+    },
+    {
+      "id": "rpc.framework-presence",
+      "kind": "Rpc",
+      "category": "FrameworkFact",
+      "disposition": "Hint",
+      "tokens": [ "dubbo", "sofa-rpc" ],
+      "keys": []
+    },
+    {
+      "id": "http.framework-presence",
+      "kind": "Http",
+      "category": "FrameworkFact",
+      "disposition": "Hint",
+      "tokens": [ "aspnet-core", "spring-boot" ],
+      "keys": []
+    }
+  ]
+}

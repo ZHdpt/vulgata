@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -123,6 +124,80 @@ public sealed class RepositoryApiTests
                         item.GetProperty("distinctFileCount").GetInt32()))
                     .ToArray());
         }
+    }
+
+    [Fact]
+    public async Task ManagementScanRunGetRoutes_ApprovedPreScanHandoff_ComposesBoundedContractWithoutChangingRouteAsync()
+    {
+        ScanRunSummaryDto summary = CreateSummaryWithLanguages();
+        ApprovedPreScanHandoffDto handoff = CreateSensitivePreScanHandoff(summary);
+        using WebApplicationFactory<Program> factory = CreateFactory(
+            summary,
+            handoffService: new FixedPreScanHandoffService(handoff));
+        const string email = "story43.handoff.admin@example.com";
+        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
+        using HttpClient client = CreateClient(factory);
+        await LoginAsync(client, email);
+        Guid systemId = Guid.NewGuid();
+        string[] routes =
+        [
+            $"/api/systems/{systemId}/repositories/{summary.RepositoryId}/scan-runs/{summary.Id}",
+            $"/api/repositories/standalone/{summary.RepositoryId}/scan-runs/{summary.Id}",
+        ];
+
+        foreach (string route in routes)
+        {
+            using HttpResponseMessage response = await client.GetAsync(route);
+            string body = await response.Content.ReadAsStringAsync();
+            using JsonDocument document = JsonDocument.Parse(body);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(summary.Id, document.RootElement.GetProperty("id").GetGuid());
+            JsonElement value = document.RootElement.GetProperty("preScanHandoff");
+            Assert.Equal("1.0", value.GetProperty("schemaVersion").GetString());
+            Assert.Equal(
+                ["Rpc", "Http"],
+                value.GetProperty("confirmedKinds")
+                    .EnumerateArray()
+                    .Select(item => item.GetString())
+                    .ToArray());
+            Assert.Equal(
+                2,
+                value.GetProperty("confirmedEvidence").GetArrayLength());
+            Assert.Equal(
+                "src/Client.cs#annotation:http-client",
+                value.GetProperty("confirmedEvidence")[0]
+                    .GetProperty("evidenceLocator")
+                    .GetString());
+            Assert.DoesNotContain("fingerprint", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("classificationId", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("C:\\host", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("\\\\server", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("sk-live-secret", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("source=class", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("providerPayload", body, StringComparison.Ordinal);
+            Assert.DoesNotContain("elapsed=9876ms", body, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void RepositoryEndpoints_PreScanHandoff_AddsNoPublicRoute()
+    {
+        EndpointDataSource dataSource =
+            _factory.Services.GetRequiredService<EndpointDataSource>();
+
+        string[] routePatterns =
+        [
+            .. dataSource.Endpoints
+                .OfType<RouteEndpoint>()
+                .Select(endpoint => endpoint.RoutePattern.RawText ?? string.Empty),
+        ];
+
+        Assert.DoesNotContain(
+            routePatterns,
+            pattern =>
+                pattern.Contains("handoff", StringComparison.OrdinalIgnoreCase) ||
+                pattern.Contains("pre-scan", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -457,7 +532,10 @@ public sealed class RepositoryApiTests
     public async Task ManagementScanRunRoutes_Unauthenticated_ReturnUnauthorizedWithoutProfilingDisclosureAsync()
     {
         ScanRunSummaryDto summary = CreateSensitiveSummary();
-        using WebApplicationFactory<Program> factory = CreateFactory(summary);
+        using WebApplicationFactory<Program> factory = CreateFactory(
+            summary,
+            handoffService: new FixedPreScanHandoffService(
+                CreateSensitivePreScanHandoff(summary)));
         using HttpClient client = CreateClient(factory);
         Guid systemId = Guid.NewGuid();
         (HttpMethod Method, string Route)[] routes =
@@ -482,8 +560,11 @@ public sealed class RepositoryApiTests
     [Fact]
     public async Task ManagementScanRunRoutes_UserWithoutManagementAccess_ReturnForbiddenAsync()
     {
+        ScanRunSummaryDto summary = CreateSensitiveSummary();
         using WebApplicationFactory<Program> factory = CreateFactory(
-            CreateSensitiveSummary());
+            summary,
+            handoffService: new FixedPreScanHandoffService(
+                CreateSensitivePreScanHandoff(summary)));
         const string email = "story42.languages.user@example.com";
         await CreateUserWithRoleAsync(factory.Services, email, RoleNames.User);
         using HttpClient client = CreateClient(factory);
@@ -577,16 +658,25 @@ public sealed class RepositoryApiTests
 
     private WebApplicationFactory<Program> CreateFactory(
         ScanRunSummaryDto? summary,
-        RepositoryProfilingResult? startResult = null) =>
-        CreateFactoryWithCoordinator(new StubRepositoryProfilingCoordinator(summary, startResult));
+        RepositoryProfilingResult? startResult = null,
+        IPreScanHandoffService? handoffService = null) =>
+        CreateFactoryWithCoordinator(
+            new StubRepositoryProfilingCoordinator(summary, startResult),
+            handoffService);
 
     private WebApplicationFactory<Program> CreateFactoryWithCoordinator(
-        IRepositoryProfilingCoordinator coordinator) =>
+        IRepositoryProfilingCoordinator coordinator,
+        IPreScanHandoffService? handoffService = null) =>
         _factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IRepositoryProfilingCoordinator>();
                 services.AddSingleton(coordinator);
+                if (handoffService is not null)
+                {
+                    services.RemoveAll<IPreScanHandoffService>();
+                    services.AddSingleton(handoffService);
+                }
             }));
 
     private static HttpClient CreateClient(WebApplicationFactory<Program> factory) =>
@@ -738,6 +828,73 @@ public sealed class RepositoryApiTests
         return summary;
     }
 
+    private static ApprovedPreScanHandoffDto CreateSensitivePreScanHandoff(
+        ScanRunSummaryDto summary) =>
+        new()
+        {
+            ResultId = summary.Id,
+            RepositoryId = summary.RepositoryId,
+            ScanRunId = summary.Id,
+            ProfiledRevision = "0123456789abcdef0123456789abcdef01234567",
+            State = "PreScanApproved",
+            SchemaVersion = "1.0",
+            ApprovedAt = DateTimeOffset.UtcNow,
+            ApprovalMessage = "预扫描已批准并保留审慎警告——继续进入顺序演示运行器",
+            ConfirmedKinds = ["Rpc", "Http"],
+            TotalConfirmedEvidenceCount = 150,
+            TotalHintCount = 3,
+            TotalWarningCount = 2,
+            EvidenceTruncated = true,
+            ConfirmedEvidence =
+            [
+                new ApprovedPreScanClassificationDto
+                {
+                    Kind = "Http",
+                    Level = "Confirmed",
+                    Confidence = "High",
+                    Rule = "HttpClientAnnotation",
+                    Provenance = "StructuralAnnotation",
+                    EvidenceLocator = "src/Client.cs#annotation:http-client",
+                    OccurrenceCount = 1,
+                },
+                new ApprovedPreScanClassificationDto
+                {
+                    Kind = "Rpc",
+                    Level = "Confirmed",
+                    Confidence = "High",
+                    Rule = "RpcDirectAnnotation",
+                    Provenance = "StructuralAnnotation",
+                    EvidenceLocator = "src/Service.cs#annotation:rpc",
+                    OccurrenceCount = 1,
+                },
+            ],
+            Hints =
+            [
+                new ApprovedPreScanClassificationDto
+                {
+                    Kind = "Http",
+                    Level = "Hint",
+                    Confidence = "Conservative",
+                    Rule = "HttpImportOnly",
+                    Provenance = "Import",
+                    EvidenceLocator = "src/Imports.cs#import:http",
+                    OccurrenceCount = 1,
+                },
+            ],
+            Warnings =
+            [
+                new ApprovedPreScanClassificationDto
+                {
+                    Level = "Warning",
+                    Confidence = "None",
+                    Rule = "BoundExceeded",
+                    Provenance = "Detector",
+                    EvidenceLocator = "(unknown)#detector:bound-exceeded",
+                    OccurrenceCount = 1,
+                },
+            ],
+        };
+
     private static void AddUnknownLanguageOverview(
         ScanRunSummaryDto summary,
         IReadOnlyList<string> paths)
@@ -878,6 +1035,9 @@ public sealed class RepositoryApiTests
         Assert.DoesNotContain("未知语言文件", body, StringComparison.Ordinal);
         Assert.DoesNotContain("src/unknown", body, StringComparison.Ordinal);
         Assert.DoesNotContain("Secret.txt", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("annotation:http-client", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("sk-live-secret", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("providerPayload", body, StringComparison.Ordinal);
     }
 
     private sealed class VisibleThenRevokedSystemRepository(
@@ -1011,6 +1171,11 @@ public sealed class RepositoryApiTests
 
     private sealed class FixedScanRunRepository(ScanRun run) : IScanRunRepository
     {
+        public Task<PreScanResult> PersistCompletedProfileAsync(
+            RepositoryProfileCommitDraft draft,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<ScanRun?> GetAsync(
             Guid repositoryId,
             Guid scanRunId,
@@ -1085,5 +1250,32 @@ public sealed class RepositoryApiTests
             IUserContext user,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(summary);
+    }
+
+    private sealed class FixedPreScanHandoffService(ApprovedPreScanHandoffDto? handoff)
+        : IPreScanHandoffService
+    {
+        public Task<ApprovedPreScanHandoffDto?> GetSystemRepositoryAsync(
+            Guid systemId,
+            Guid repositoryId,
+            Guid scanRunId,
+            string? requestedProfiledRevision,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                handoff?.RepositoryId == repositoryId && handoff.ScanRunId == scanRunId
+                    ? handoff
+                    : null);
+
+        public Task<ApprovedPreScanHandoffDto?> GetStandaloneRepositoryAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string? requestedProfiledRevision,
+            IUserContext user,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(
+                handoff?.RepositoryId == repositoryId && handoff.ScanRunId == scanRunId
+                    ? handoff
+                    : null);
     }
 }

@@ -3,13 +3,17 @@ using System.Text.Json;
 using System.Security.Cryptography;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CodeGraph;
+using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.FrameworkDetection;
+using Vulgata.Infrastructure.Git;
 using Vulgata.Shared.Repositories;
 using Vulgata.Web.Data;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
@@ -18,6 +22,26 @@ namespace Vulgata.Tests;
 
 public sealed class RepositoryProfilingTests
 {
+    [Theory]
+    [InlineData("预扫描已批准并保留审慎警告——继续进入顺序演示运行器")]
+    [InlineData("预扫描已批准——继续进入顺序演示运行器")]
+    public void RecordApprovedPreScanOutcome_CompletedRun_PersistsExactApprovedMessage(
+        string approvedMessage)
+    {
+        DateTimeOffset started = DateTimeOffset.UtcNow;
+        ScanRun run = ScanRun.Start(Guid.NewGuid(), 1_800, started);
+        run.SetCandidateCount(0);
+        run.Complete(0, 0, started.AddSeconds(1));
+        MethodInfo? method = typeof(ScanRun).GetMethod(
+            "RecordApprovedPreScanOutcome",
+            [typeof(string)]);
+
+        Assert.NotNull(method);
+        method!.Invoke(run, [approvedMessage]);
+
+        Assert.Equal(approvedMessage, run.TerminalMessage);
+    }
+
     [Fact]
     public void ScanRun_CompleteWithFiveHundredCandidatesAndNoUnits_RequiresHumanReview()
     {
@@ -258,6 +282,7 @@ public sealed class RepositoryProfilingTests
             new RepositoryRepository(db),
             new ScanRunRepository(db),
             new FailingWorkingCopy(rawDiagnostic),
+            new PassthroughSnapshotService(),
             new FixedCandidates([]),
             new CountingFailureProvider(),
             new CodeGraphOptions(Path.Combine(Path.GetTempPath(), "unused-state"), 1_800),
@@ -1523,6 +1548,604 @@ public sealed class RepositoryProfilingTests
         });
 
     [Fact]
+    public async Task StartStandaloneRepository_UsesOneVerifiedPrivateSnapshotForEveryProfileReaderUntilPersistenceAsync()
+    {
+        const string profiledRevision = "0123456789abcdef0123456789abcdef01234567";
+        string checkoutRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-profile-checkout-{Guid.NewGuid():N}");
+        string snapshotRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-profile-snapshot-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(checkoutRoot, "src"));
+        Directory.CreateDirectory(Path.Combine(snapshotRoot, "src"));
+        await File.WriteAllTextAsync(
+            Path.Combine(checkoutRoot, "src", "A.cs"),
+            "checkout bytes");
+        await File.WriteAllTextAsync(
+            Path.Combine(snapshotRoot, "src", "A.cs"),
+            "private snapshot bytes");
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "private-snapshot",
+                "https://example.invalid/private-snapshot.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var timeline = new List<string>();
+            var snapshotService = new RecordingSnapshotService(
+                snapshotRoot,
+                profiledRevision,
+                timeline);
+            var candidates = new RootRecordingCandidates(timeline);
+            var provider = new RootRecordingProvider(timeline);
+            var detector = new RootRecordingFrameworkDetector(timeline);
+            var repositoryObserver = new LeaseLifetimeScanRunRepository(
+                new ScanRunRepository(db),
+                snapshotService,
+                timeline);
+            RepositoryProfilingCoordinator coordinator = CreateCoordinatorWithSnapshot(
+                db,
+                repositoryObserver,
+                new FixedWorkingCopy(checkoutRoot, profiledRevision),
+                snapshotService,
+                candidates,
+                provider,
+                detector);
+
+            RepositoryProfilingResult result =
+                await coordinator.StartStandaloneRepositoryAsync(
+                    repository.Id,
+                    null!,
+                    CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            Assert.Equal(profiledRevision, snapshotService.ObservedProfiledRevision);
+            Assert.Equal(profiledRevision, snapshotService.Lease.ProfiledRevision);
+            Assert.Equal(snapshotRoot, candidates.ObservedRootPath);
+            Assert.Equal(snapshotRoot, provider.ObservedRootPath);
+            Assert.Equal(snapshotRoot, detector.ObservedRootPath);
+            Assert.Equal(2, snapshotService.Lease.VerificationCount);
+            Assert.True(snapshotService.Lease.Disposed);
+            Assert.True(repositoryObserver.ObservedLeaseHeldAtPersistence);
+            Assert.True(snapshotService.Lease.CompletedProfilePersistedAtDisposal);
+            Assert.Equal(
+                ["acquire", "verify", "candidates", "codegraph", "framework", "verify", "persist", "dispose"],
+                timeline);
+            CodeUnit unit = await db.CodeUnits.SingleAsync();
+            byte[] snapshotBytes = await File.ReadAllBytesAsync(
+                Path.Combine(snapshotRoot, "src", "A.cs"));
+            Assert.Equal(
+                Convert.ToHexStringLower(SHA256.HashData(snapshotBytes)),
+                unit.SourceHash);
+        }
+        finally
+        {
+            Directory.Delete(checkoutRoot, recursive: true);
+            Directory.Delete(snapshotRoot, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(LateIdentityMutation.PrivateSnapshotBytes)]
+    [InlineData(LateIdentityMutation.PrivateSnapshotTreeShape)]
+    [InlineData(LateIdentityMutation.ProfiledRevisionAdvance)]
+    [InlineData(LateIdentityMutation.DirtyReusableCheckout)]
+    [InlineData(LateIdentityMutation.TrackedBytesWithUnchangedHead)]
+    public async Task StartStandaloneRepository_WhenLeasedIdentityChanges_FailsClosedBeforeProfilePersistenceAsync(
+        LateIdentityMutation mutation)
+    {
+        using var source = new ProfilingEvidenceGitFixture();
+        source.Write("src/A.cs", "class A { }");
+        source.TrackAll();
+        string profiledRevision = source.GetRevision();
+        string storageRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-profile-snapshot-storage-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(storageRoot);
+        try
+        {
+            var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseSqlite("Data Source=:memory:")
+                .Options;
+            await using var db = new VulgataDbContext(dbOptions);
+            await db.Database.OpenConnectionAsync();
+            await db.Database.EnsureCreatedAsync();
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                $"late-identity-{mutation}",
+                "https://example.invalid/late-identity.git",
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            db.Repositories.Add(repository);
+            await db.SaveChangesAsync();
+            var provider = new MutatingSnapshotProvider(root =>
+            {
+                switch (mutation)
+                {
+                    case LateIdentityMutation.PrivateSnapshotBytes:
+                        File.WriteAllText(
+                            Path.Combine(root, "src", "A.cs"),
+                            "class MutatedSnapshot { }");
+                        break;
+                    case LateIdentityMutation.PrivateSnapshotTreeShape:
+                        File.WriteAllText(
+                            Path.Combine(root, "src", "Added.cs"),
+                            "class AddedSnapshotEntry { }");
+                        break;
+                    case LateIdentityMutation.ProfiledRevisionAdvance:
+                        source.Write("src/B.cs", "class B { }");
+                        source.TrackAll();
+                        break;
+                    case LateIdentityMutation.DirtyReusableCheckout:
+                        source.Write("untracked.tmp", "dirty");
+                        break;
+                    case LateIdentityMutation.TrackedBytesWithUnchangedHead:
+                        source.Write("src/A.cs", "class MutatedCheckout { }");
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(mutation));
+                }
+            });
+            var snapshotService = new CommittedRepositorySnapshotService(
+                new GitWorkingCopyOptions(storageRoot));
+            var repositoryObserver = new RecoveryLeaseObservationScanRunRepository(
+                new ScanRunRepository(db),
+                () => provider.ObservedRootPath);
+            RepositoryProfilingCoordinator coordinator = CreateCoordinatorWithSnapshot(
+                db,
+                repositoryObserver,
+                new FixedWorkingCopy(source.Path, profiledRevision),
+                snapshotService,
+                new FixedCandidates(
+                [
+                    new("src/A.cs", false, "Eligible", 0),
+                ]),
+                provider,
+                new EmptyFrameworkEvidenceDetector());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                coordinator.StartStandaloneRepositoryAsync(
+                    repository.Id,
+                    null!,
+                    CancellationToken.None));
+
+            Assert.True(repositoryObserver.ObservedLeaseHeldDuringRecovery);
+            Assert.False(Directory.Exists(provider.ObservedRootPath));
+            db.ChangeTracker.Clear();
+            ScanRun run = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Failed, run.Status);
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+            Assert.Empty(await db.CodeUnitFrameworks.ToListAsync());
+            Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+        }
+        finally
+        {
+            Directory.Delete(storageRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void PersistCompletedProfileAsync_CompositeContract_RequiresExplicitImplementation()
+    {
+        MethodInfo? method = typeof(IScanRunRepository).GetMethod(
+            nameof(IScanRunRepository.PersistCompletedProfileAsync),
+            [typeof(RepositoryProfileCommitDraft), typeof(CancellationToken)]);
+
+        Assert.NotNull(method);
+        Assert.True(method!.IsAbstract);
+        Assert.Null(method.GetMethodBody());
+    }
+
+    [Fact]
+    public async Task PreScanPersistenceModel_ClassificationChecks_CloseValuesAndCompatibilityAsync()
+    {
+        await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+        var classification = db.GetService<IDesignTimeModel>().Model.FindEntityType(
+            typeof(CommunicationKindClassification));
+        Assert.NotNull(classification);
+        Dictionary<string, string> checks = classification!.GetCheckConstraints()
+            .ToDictionary(check => check.Name!, check => check.Sql!);
+
+        string ruleSql = checks[
+            "CK_CommunicationKindClassifications_Rule"];
+        Assert.All(
+            Enum.GetNames<EvidenceRule>(),
+            value => Assert.Contains($"'{value}'", ruleSql, StringComparison.Ordinal));
+        string provenanceSql = checks[
+            "CK_CommunicationKindClassifications_Provenance"];
+        Assert.All(
+            Enum.GetNames<EvidenceProvenance>(),
+            value => Assert.Contains($"'{value}'", provenanceSql, StringComparison.Ordinal));
+        string compatibilitySql = checks[
+            "CK_CommunicationKindClassifications_Compatibility"];
+        Assert.Contains("'RpcDirectAnnotation'", compatibilitySql, StringComparison.Ordinal);
+        Assert.Contains("'HttpMatchedConfiguration'", compatibilitySql, StringComparison.Ordinal);
+        Assert.Contains("'RpcImportOnly'", compatibilitySql, StringComparison.Ordinal);
+        Assert.Contains("'UnsupportedFamily'", compatibilitySql, StringComparison.Ordinal);
+        Assert.Contains("\"Provenance\"", compatibilitySql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PreScanPersistenceModel_ResultOwnership_UsesRepositoryBoundScanRunForeignKeyAsync()
+    {
+        await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+        var result = db.Model.FindEntityType(typeof(PreScanResult));
+        Assert.NotNull(result);
+        var ownership = Assert.Single(result!.GetForeignKeys().Where(
+            foreignKey => foreignKey.PrincipalEntityType.ClrType == typeof(ScanRun)));
+
+        Assert.Equal(
+            [nameof(PreScanResult.Id), nameof(PreScanResult.RepositoryId)],
+            ownership.Properties.Select(property => property.Name));
+        Assert.Equal(
+            [nameof(ScanRun.Id), nameof(ScanRun.RepositoryId)],
+            ownership.PrincipalKey.Properties.Select(property => property.Name));
+    }
+
+    [Fact]
+    public async Task PersistCompletedProfileAsync_PreScanPersistence_CommitsProfileAndApprovedResultAtomicallyAsync()
+    {
+        await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+        RepositoryEntity repository = await AddStandaloneRepositoryAsync(db, "atomic-pre-scan");
+        RepositoryProfileCommitDraft draft = await CreatePreScanCommitDraftAsync(
+            db,
+            repository.Id,
+            new('a', 64));
+        var repositoryService = new ScanRunRepository(db);
+
+        PreScanResult persisted = await PersistCompositeProfileAsync(repositoryService, draft);
+
+        db.ChangeTracker.Clear();
+        ScanRun durableRun = await db.ScanRuns.SingleAsync();
+        PreScanResult durableResult = await db.Set<PreScanResult>()
+            .Include(result => result.Classifications)
+            .SingleAsync();
+        CommunicationKindClassification durableClassification =
+            Assert.Single(durableResult.Classifications);
+        Assert.Equal(ScanRunStatus.Completed, durableRun.Status);
+        string? durableRevision = GetProfiledRevision(durableRun);
+        Assert.Equal(draft.PreScanResult.ProfiledRevision, durableRevision);
+        Assert.Equal(durableRevision, durableResult.ProfiledRevision);
+        Assert.Equal(draft.PreScanResult.Fingerprint, durableResult.Fingerprint);
+        Assert.Equal(PreScanApprovalState.PreScanApproved, durableResult.State);
+        Assert.Equal(durableRun.Id, persisted.Id);
+        Assert.Equal(durableRun.Id, durableResult.Id);
+        Assert.Equal(durableRun.Id, durableClassification.PreScanResultId);
+        Assert.Equal(1, await db.ScanRunLanguageSummaries.CountAsync());
+        Assert.Equal(1, await db.CodeUnits.CountAsync());
+    }
+
+    [Fact]
+    public async Task PersistCompletedProfileAsync_PreScanPersistence_SameFingerprintReplayReturnsOneLogicalResultAsync()
+    {
+        await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+        RepositoryEntity repository = await AddStandaloneRepositoryAsync(db, "idempotent-pre-scan");
+        RepositoryProfileCommitDraft draft = await CreatePreScanCommitDraftAsync(
+            db,
+            repository.Id,
+            new('b', 64));
+        var repositoryService = new ScanRunRepository(db);
+
+        PreScanResult first = await PersistCompositeProfileAsync(repositoryService, draft);
+        db.ChangeTracker.Clear();
+        PreScanResult replay = await PersistCompositeProfileAsync(repositoryService, draft);
+
+        Assert.Equal(first.Id, replay.Id);
+        Assert.Equal(first.Fingerprint, replay.Fingerprint);
+        Assert.Equal(1, await db.Set<PreScanResult>().CountAsync());
+        Assert.Equal(1, await db.Set<CommunicationKindClassification>().CountAsync());
+        Assert.Equal(1, await db.CodeUnits.CountAsync());
+        Assert.Equal(1, await db.ScanRunLanguageSummaries.CountAsync());
+    }
+
+    [Fact]
+    public async Task PersistCompletedProfileAsync_PreScanPersistence_DifferentFingerprintReplayFailsClosedAsync()
+    {
+        await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+        RepositoryEntity repository = await AddStandaloneRepositoryAsync(db, "immutable-pre-scan");
+        RepositoryProfileCommitDraft accepted = await CreatePreScanCommitDraftAsync(
+            db,
+            repository.Id,
+            new('c', 64));
+        var repositoryService = new ScanRunRepository(db);
+        await PersistCompositeProfileAsync(repositoryService, accepted);
+        RepositoryProfileCommitDraft changed = CreatePreScanCommitDraft(
+            accepted.Profile,
+            new('d', 64));
+        db.ChangeTracker.Clear();
+
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => PersistCompositeProfileAsync(repositoryService, changed));
+
+        Assert.Contains("fingerprint", failure.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, await db.Set<PreScanResult>().CountAsync());
+        Assert.Equal(1, await db.Set<CommunicationKindClassification>().CountAsync());
+        Assert.Equal(new string('c', 64), (await db.Set<PreScanResult>().SingleAsync()).Fingerprint);
+    }
+
+    [Fact]
+    public async Task PersistCompletedProfileAsync_PreScanPersistence_FinalSaveFailureRollsBackEveryProfileAndResultRowAsync()
+    {
+        await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+        RepositoryEntity repository = await AddStandaloneRepositoryAsync(db, "rollback-pre-scan");
+        RepositoryProfileCommitDraft draft = await CreatePreScanCommitDraftAsync(
+            db,
+            repository.Id,
+            new('e', 64));
+        EventHandler<SavingChangesEventArgs> failFinalSave = (_, _) =>
+        {
+            if (db.ChangeTracker.Entries<PreScanResult>()
+                .Any(entry => entry.State == EntityState.Added))
+            {
+                throw new DbUpdateException("Injected atomic Pre-Scan persistence failure.");
+            }
+        };
+        db.SavingChanges += failFinalSave;
+        try
+        {
+            await Assert.ThrowsAsync<DbUpdateException>(
+                () => PersistCompositeProfileAsync(new ScanRunRepository(db), draft));
+        }
+        finally
+        {
+            db.SavingChanges -= failFinalSave;
+        }
+
+        db.ChangeTracker.Clear();
+        ScanRun durableRun = await db.ScanRuns.SingleAsync();
+        Assert.Equal(ScanRunStatus.Profiling, durableRun.Status);
+        Assert.Null(GetProfiledRevision(durableRun));
+        Assert.Empty(await db.CodeUnits.ToListAsync());
+        Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+        Assert.Empty(await db.Set<PreScanResult>().ToListAsync());
+        Assert.Empty(await db.Set<CommunicationKindClassification>().ToListAsync());
+    }
+
+    [Fact]
+    public async Task StartStandaloneRepository_PreScanPersistence_WhenDetectorFailsPublishesNoProfileOrResultAsync()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-pre-scan-detector-failure-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "A.cs"), "class A { }");
+        await File.WriteAllTextAsync(Path.Combine(root, "src", "B.cs"), "class B { }");
+        try
+        {
+            await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+            RepositoryEntity repository = await AddStandaloneRepositoryAsync(
+                db,
+                "detector-failure-pre-scan");
+            RepositoryProfilingCoordinator coordinator = CreateCoordinatorWithPreScanDetector(
+                db,
+                root,
+                new ControlledProvider(),
+                new ControlledCandidates(),
+                new EmptyFrameworkEvidenceDetector(),
+                new FailingPreScanCommunicationDetector());
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                coordinator.StartStandaloneRepositoryAsync(
+                    repository.Id,
+                    null!,
+                    CancellationToken.None));
+
+            db.ChangeTracker.Clear();
+            ScanRun durableRun = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Failed, durableRun.Status);
+            Assert.Null(GetProfiledRevision(durableRun));
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+            Assert.Empty(await db.CodeUnitFrameworks.ToListAsync());
+            Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+            Assert.Empty(await db.Set<PreScanResult>().ToListAsync());
+            Assert.Empty(await db.Set<CommunicationKindClassification>().ToListAsync());
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(
+        1,
+        "预扫描已批准并保留审慎警告——继续进入顺序演示运行器")]
+    [InlineData(
+        0,
+        "预扫描已批准——继续进入顺序演示运行器")]
+    public async Task StartStandaloneRepository_ApprovedPreScanOutcome_PersistsExactMessageAndEmitsBoundedStructuredLogAsync(
+        int totalWarningCount,
+        string approvedMessage)
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-host-secret-pre-scan-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        await File.WriteAllTextAsync(
+            Path.Combine(root, "src", "A.cs"),
+            "class A { string privateSecret = \"do-not-log\"; }");
+        await File.WriteAllTextAsync(
+            Path.Combine(root, "src", "B.cs"),
+            "class B { }");
+        try
+        {
+            await using VulgataDbContext db = await CreatePreScanPersistenceDatabaseAsync();
+            RepositoryEntity repository = await AddStandaloneRepositoryAsync(
+                db,
+                "bounded-observability");
+            var logger = new CapturedLogger<RepositoryProfilingCoordinator>();
+            RepositoryProfilingCoordinator coordinator = CreateCoordinatorWithPreScanDetector(
+                db,
+                root,
+                new ControlledProvider(),
+                new ControlledCandidates(),
+                new EmptyFrameworkEvidenceDetector(),
+                new FixedApprovedPreScanCommunicationDetector(totalWarningCount),
+                logger);
+
+            RepositoryProfilingResult result =
+                await coordinator.StartStandaloneRepositoryAsync(
+                    repository.Id,
+                    null!,
+                    CancellationToken.None);
+
+            Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
+            db.ChangeTracker.Clear();
+            ScanRun durableRun = await db.ScanRuns.SingleAsync();
+            PreScanResult durableResult = await db.Set<PreScanResult>().SingleAsync();
+            Assert.Equal(approvedMessage, durableRun.TerminalMessage);
+            Assert.Equal(approvedMessage, durableResult.ApprovalMessage);
+            Assert.Equal(totalWarningCount, durableResult.TotalWarningCount);
+
+            CapturedLogEntry approvalLog = Assert.Single(
+                logger.Entries,
+                entry => entry.Properties.ContainsKey("PreScanState"));
+            Assert.Equal(LogLevel.Information, approvalLog.Level);
+            Assert.Null(approvalLog.Exception);
+            Assert.Equal(
+                [
+                    "CommunicationRuleSetVersion",
+                    "EvidenceTruncated",
+                    "PreScanState",
+                    "RepositoryId",
+                    "ScanRunId",
+                    "SchemaVersion",
+                    "TotalConfirmedEvidenceCount",
+                    "TotalHintCount",
+                    "TotalWarningCount",
+                    "{OriginalFormat}",
+                ],
+                approvalLog.Properties.Keys.Order(StringComparer.Ordinal));
+            Assert.Equal(repository.Id, approvalLog.Properties["RepositoryId"]);
+            Assert.Equal(durableRun.Id, approvalLog.Properties["ScanRunId"]);
+            Assert.Equal(
+                PreScanApprovalState.PreScanApproved,
+                approvalLog.Properties["PreScanState"]);
+            Assert.Equal("1.0", approvalLog.Properties["SchemaVersion"]);
+            Assert.Equal(0, approvalLog.Properties["TotalConfirmedEvidenceCount"]);
+            Assert.Equal(0, approvalLog.Properties["TotalHintCount"]);
+            Assert.Equal(totalWarningCount, approvalLog.Properties["TotalWarningCount"]);
+            Assert.Equal(false, approvalLog.Properties["EvidenceTruncated"]);
+            Assert.Equal(
+                CommunicationEvidenceRuleCatalog.LoadEmbedded().Version,
+                approvalLog.Properties["CommunicationRuleSetVersion"]);
+
+            string captured = string.Join(
+                '\n',
+                logger.Entries.Select(entry =>
+                    $"{entry.Message}\n{string.Join('|', entry.Properties.Values)}"));
+            Assert.DoesNotContain(approvedMessage, captured, StringComparison.Ordinal);
+            Assert.DoesNotContain(root, captured, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("src/A.cs", captured, StringComparison.Ordinal);
+            Assert.DoesNotContain("privateSecret", captured, StringComparison.Ordinal);
+            Assert.DoesNotContain("do-not-log", captured, StringComparison.Ordinal);
+            Assert.DoesNotContain("example.invalid", captured, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("(unknown)", captured, StringComparison.Ordinal);
+            Assert.DoesNotContain("#detector", captured, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task DisposeAsync_WhenSnapshotCleanupIsDenied_DoesNotEscapeAndReleasesRepositoryLockAsync()
+    {
+        using var source = new ProfilingEvidenceGitFixture();
+        source.Write("src/A.cs", "class A { }");
+        source.TrackAll();
+        string profiledRevision = source.GetRevision();
+        string storageRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-profile-disposal-denial-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(storageRoot);
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            "cleanup-denial",
+            "https://example.invalid/cleanup-denial.git",
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        GitWorkingCopyResult workingCopy =
+            GitWorkingCopyResult.Success(source.Path, profiledRevision);
+        var service = new CommittedRepositorySnapshotService(
+            new GitWorkingCopyOptions(storageRoot));
+        ICommittedRepositorySnapshotLease? first = null;
+        ICommittedRepositorySnapshotLease? second = null;
+        FileStream? cleanupDenial = null;
+        try
+        {
+            first = await service.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                workingCopy,
+                CancellationToken.None);
+            string firstRoot = first.RootPath;
+            cleanupDenial = new FileStream(
+                Path.Combine(firstRoot, "src", "A.cs"),
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.None);
+
+            await first.DisposeAsync();
+
+            Assert.True(Directory.Exists(firstRoot));
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            second = await service.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                workingCopy,
+                timeout.Token);
+            Assert.NotEqual(firstRoot, second.RootPath);
+        }
+        finally
+        {
+            if (second is not null)
+            {
+                await second.DisposeAsync();
+            }
+
+            if (cleanupDenial is not null)
+            {
+                await cleanupDenial.DisposeAsync();
+            }
+
+            if (first is not null)
+            {
+                try
+                {
+                    await first.DisposeAsync();
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+
+            if (Directory.Exists(storageRoot))
+            {
+                Directory.Delete(storageRoot, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task StartStandaloneRepository_WithControlledProvider_PersistsTraceableResultAsync()
     {
         string root = Path.Combine(Path.GetTempPath(), $"vulgata-profile-{Guid.NewGuid():N}");
@@ -1551,6 +2174,7 @@ public sealed class RepositoryProfilingTests
                 new RepositoryRepository(db),
                 new ScanRunRepository(db),
                 new SuccessfulWorkingCopy(root),
+                new PassthroughSnapshotService(),
                 new ControlledCandidates(),
                 new ControlledProvider(),
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
@@ -1625,6 +2249,7 @@ public sealed class RepositoryProfilingTests
                 new RepositoryRepository(db),
                 failingRepository,
                 new SuccessfulWorkingCopy(root),
+                new PassthroughSnapshotService(),
                 new ControlledCandidates(),
                 new ControlledProvider(),
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
@@ -1711,6 +2336,7 @@ public sealed class RepositoryProfilingTests
                 new RepositoryRepository(db),
                 boundaryRepository,
                 new SuccessfulWorkingCopy(root),
+                new PassthroughSnapshotService(),
                 new ControlledCandidates(),
                 new ControlledProvider(),
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
@@ -2000,6 +2626,7 @@ public sealed class RepositoryProfilingTests
                 new RepositoryRepository(db),
                 new ScanRunRepository(db),
                 new SuccessfulWorkingCopy(root),
+                new PassthroughSnapshotService(),
                 new ControlledCandidates(),
                 new MissingProvider(),
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
@@ -2023,6 +2650,8 @@ public sealed class RepositoryProfilingTests
             Assert.Equal(1, await db.ScanCandidateOutcomes.CountAsync());
             Assert.Equal(0, await db.CodeUnits.CountAsync());
             Assert.Equal(0, await db.CodeUnitEdges.CountAsync());
+            Assert.Empty(await db.Set<PreScanResult>().ToListAsync());
+            Assert.Empty(await db.Set<CommunicationKindClassification>().ToListAsync());
         }
         finally
         {
@@ -2062,6 +2691,7 @@ public sealed class RepositoryProfilingTests
                 new RepositoryRepository(db),
                 new ScanRunRepository(db),
                 new SuccessfulWorkingCopy(root),
+                new PassthroughSnapshotService(),
                 new ControlledCandidates(),
                 new MalformedAuditProvider(),
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
@@ -2111,13 +2741,249 @@ public sealed class RepositoryProfilingTests
             filtered_target = false,
         };
 
-    private sealed class SuccessfulWorkingCopy(string path) : IGitWorkingCopyService
+    public enum LateIdentityMutation
+    {
+        PrivateSnapshotBytes,
+        PrivateSnapshotTreeShape,
+        ProfiledRevisionAdvance,
+        DirtyReusableCheckout,
+        TrackedBytesWithUnchangedHead,
+    }
+
+    private sealed class FixedWorkingCopy(
+        string path,
+        string profiledRevision) : IGitWorkingCopyService
     {
         public Task<GitWorkingCopyResult> AcquireAsync(
             RepositoryEntity repository,
             Guid scanRunId,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(GitWorkingCopyResult.Success(path));
+            Task.FromResult(GitWorkingCopyResult.Success(path, profiledRevision));
+    }
+
+    private sealed class PassthroughSnapshotService
+        : ICommittedRepositorySnapshotService
+    {
+        public Task<ICommittedRepositorySnapshotLease> AcquireAsync(
+            RepositoryEntity repository,
+            Guid scanRunId,
+            GitWorkingCopyResult workingCopy,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ICommittedRepositorySnapshotLease>(
+                new PassthroughSnapshotLease(
+                    repository.Id,
+                    scanRunId,
+                    workingCopy.ProfiledRevision!,
+                    workingCopy.WorkingCopyPath!));
+    }
+
+    private sealed record PassthroughSnapshotLease(
+        Guid RepositoryId,
+        Guid ScanRunId,
+        string ProfiledRevision,
+        string RootPath) : ICommittedRepositorySnapshotLease
+    {
+        public Task VerifyIdentityAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class RecordingSnapshotService : ICommittedRepositorySnapshotService
+    {
+        private readonly string _profiledRevision;
+        private readonly List<string> _timeline;
+
+        public RecordingSnapshotService(
+            string rootPath,
+            string profiledRevision,
+            List<string> timeline)
+        {
+            _profiledRevision = profiledRevision;
+            _timeline = timeline;
+            Lease = new RecordingSnapshotLease(
+                profiledRevision,
+                rootPath,
+                timeline);
+        }
+
+        public string? ObservedProfiledRevision { get; private set; }
+        public RecordingSnapshotLease Lease { get; }
+
+        public Task<ICommittedRepositorySnapshotLease> AcquireAsync(
+            RepositoryEntity repository,
+            Guid scanRunId,
+            GitWorkingCopyResult workingCopy,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedProfiledRevision = workingCopy.ProfiledRevision;
+            Assert.Equal(_profiledRevision, workingCopy.ProfiledRevision);
+            _timeline.Add("acquire");
+            Lease.SetIdentities(repository.Id, scanRunId);
+            return Task.FromResult<ICommittedRepositorySnapshotLease>(Lease);
+        }
+    }
+
+    private sealed class RecordingSnapshotLease(
+        string profiledRevision,
+        string rootPath,
+        List<string> timeline) : ICommittedRepositorySnapshotLease
+    {
+        public Guid RepositoryId { get; private set; }
+        public Guid ScanRunId { get; private set; }
+        public string ProfiledRevision { get; } = profiledRevision;
+        public string RootPath { get; } = rootPath;
+        public int VerificationCount { get; private set; }
+        public bool Disposed { get; private set; }
+        public bool CompletedProfilePersisted { get; set; }
+        public bool CompletedProfilePersistedAtDisposal { get; private set; }
+
+        public void SetIdentities(Guid repositoryId, Guid scanRunId)
+        {
+            RepositoryId = repositoryId;
+            ScanRunId = scanRunId;
+        }
+
+        public Task VerifyIdentityAsync(CancellationToken cancellationToken = default)
+        {
+            Assert.False(Disposed);
+            VerificationCount++;
+            timeline.Add("verify");
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            CompletedProfilePersistedAtDisposal = CompletedProfilePersisted;
+            Disposed = true;
+            timeline.Add("dispose");
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class RootRecordingCandidates(List<string> timeline)
+        : IScanCandidateEnumerator
+    {
+        public string? ObservedRootPath { get; private set; }
+
+        public Task<IReadOnlyList<ScanSourceCandidate>> EnumerateAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedRootPath = workingCopyPath;
+            timeline.Add("candidates");
+            return Task.FromResult<IReadOnlyList<ScanSourceCandidate>>(
+            [
+                new("src/A.cs", false, "Eligible", 0),
+            ]);
+        }
+    }
+
+    private sealed class RootRecordingProvider(List<string> timeline) : ICodeGraphProvider
+    {
+        public string? ObservedRootPath { get; private set; }
+
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedRootPath = workingCopyPath;
+            timeline.Add("codegraph");
+            return Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [
+                    new(
+                        "src/A.cs",
+                        "A",
+                        CodeUnitType.Class,
+                        1,
+                        1,
+                        "a",
+                        RangeConfidence.Exact,
+                        "c_sharp"),
+                ],
+                [],
+                [],
+                1,
+                TimeSpan.FromMilliseconds(1),
+                null));
+        }
+    }
+
+    private sealed class MutatingSnapshotProvider(Action<string> mutation)
+        : ICodeGraphProvider
+    {
+        public string ObservedRootPath { get; private set; } = string.Empty;
+
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedRootPath = workingCopyPath;
+            mutation(workingCopyPath);
+            return Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [
+                    new(
+                        "src/A.cs",
+                        "A",
+                        CodeUnitType.Class,
+                        1,
+                        1,
+                        "a",
+                        RangeConfidence.Exact,
+                        "c_sharp"),
+                ],
+                [],
+                [],
+                1,
+                TimeSpan.FromMilliseconds(1),
+                null));
+        }
+    }
+
+    private sealed class RootRecordingFrameworkDetector(List<string> timeline)
+        : IFrameworkEvidenceDetector
+    {
+        public string? ObservedRootPath { get; private set; }
+
+        public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Legacy detector wrapper must not be used.");
+
+        public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
+            string workingCopyPath,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedRootPath = workingCopyPath;
+            timeline.Add("framework");
+            return Task.FromResult(FrameworkEvidenceDetectionResult.Success([], [], 0));
+        }
+
+        public FrameworkEvidenceDetectionResult SelectApplicable(
+            FrameworkEvidenceDetectionResult detection,
+            string codeUnitPath,
+            string parserLanguage) =>
+            FrameworkEvidenceDetectionResult.Success(
+                [],
+                detection.AuditOutcomes,
+                detection.TotalAuditOutcomeCount);
+    }
+
+    private sealed class SuccessfulWorkingCopy(string path) : IGitWorkingCopyService
+    {
+        private const string _profiledRevision =
+            "0123456789abcdef0123456789abcdef01234567";
+
+        public Task<GitWorkingCopyResult> AcquireAsync(
+            RepositoryEntity repository,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(GitWorkingCopyResult.Success(path, _profiledRevision));
     }
 
     private sealed class FailingWorkingCopy(string diagnostic) : IGitWorkingCopyService
@@ -2474,6 +3340,9 @@ public sealed class RepositoryProfilingTests
             RunGit("commit", "--quiet", "-m", "fixture");
         }
 
+        public string GetRevision() =>
+            RunGit("rev-parse", "--verify", "HEAD").Trim();
+
         public void CreateFileSymbolicLink(
             string linkRelativePath,
             string targetRelativePath,
@@ -2531,7 +3400,7 @@ public sealed class RepositoryProfilingTests
             }
         }
 
-        private void RunGit(params string[] arguments)
+        private string RunGit(params string[] arguments)
         {
             using var process = new System.Diagnostics.Process
             {
@@ -2551,10 +3420,12 @@ public sealed class RepositoryProfilingTests
 
             Assert.True(process.Start());
             string standardError = process.StandardError.ReadToEnd();
+            string standardOutput = process.StandardOutput.ReadToEnd();
             process.WaitForExit();
             Assert.True(
                 process.ExitCode == 0,
                 $"git {string.Join(' ', arguments)} failed: {standardError}");
+            return standardOutput;
         }
     }
 
@@ -2755,6 +3626,39 @@ public sealed class RepositoryProfilingTests
         public int ObservedCodeUnitCount { get; private set; }
         public int ObservedFrameworkCount { get; private set; }
 
+        public async Task<PreScanResult> PersistCompletedProfileAsync(
+            RepositoryProfileCommitDraft draft,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedCodeUnitCount = draft.Profile.CodeUnits.Count;
+            ObservedFrameworkCount = draft.Profile.CodeUnitFrameworks.Count;
+            if (failureMode == LateFinalBoundaryFailureMode.CancelBeforePersistence)
+            {
+                throw new OperationCanceledException(
+                    new CancellationToken(canceled: true));
+            }
+
+            if (failureMode == LateFinalBoundaryFailureMode.NonDbUpdateFailure)
+            {
+                throw new IOException("Injected non-DbUpdate final persistence failure.");
+            }
+
+            using var cancellation = new CancellationTokenSource();
+            EventHandler<SavingChangesEventArgs> cancelDuringSave =
+                (_, _) => cancellation.Cancel();
+            dbContext.SavingChanges += cancelDuringSave;
+            try
+            {
+                return await inner.PersistCompletedProfileAsync(
+                    draft,
+                    cancellation.Token);
+            }
+            finally
+            {
+                dbContext.SavingChanges -= cancelDuringSave;
+            }
+        }
+
         public Task<ScanRun?> GetAsync(
             Guid repositoryId,
             Guid scanRunId,
@@ -2838,6 +3742,11 @@ public sealed class RepositoryProfilingTests
     {
         public int RecoveryCount { get; private set; }
 
+        public Task<PreScanResult> PersistCompletedProfileAsync(
+            RepositoryProfileCommitDraft draft,
+            CancellationToken cancellationToken = default) =>
+            throw new DbUpdateException("Injected final commit failure.");
+
         public Task<ScanRun?> GetAsync(
             Guid repositoryId,
             Guid scanRunId,
@@ -2869,6 +3778,218 @@ public sealed class RepositoryProfilingTests
             CancellationToken cancellationToken = default)
         {
             RecoveryCount++;
+            await inner.RecoverFailedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                failedAt,
+                cancellationToken);
+        }
+
+        public Task RecoverAbortedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset abortedAt,
+            CancellationToken cancellationToken = default) =>
+            inner.RecoverAbortedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                abortedAt,
+                cancellationToken);
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            inner.SaveChangesAsync(cancellationToken);
+    }
+
+    private sealed class FailingPreScanCommunicationDetector : IPreScanCommunicationDetector
+    {
+        public Task<PreScanResultDraft> DetectAsync(
+            RepositoryProfileDraft profile,
+            string profiledRevision,
+            ICommittedRepositorySnapshotLease committedSnapshot,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Injected Pre-Scan detector failure.");
+    }
+
+    private sealed class FixedApprovedPreScanCommunicationDetector(int totalWarningCount)
+        : IPreScanCommunicationDetector
+    {
+        public Task<PreScanResultDraft> DetectAsync(
+            RepositoryProfileDraft profile,
+            string profiledRevision,
+            ICommittedRepositorySnapshotLease committedSnapshot,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CommunicationKindClassification[] classifications =
+                totalWarningCount == 0
+                    ? []
+                    :
+                    [
+                        CommunicationKindClassification.Create(
+                            profile.ScanRun.Id,
+                            null,
+                            ClassificationLevel.Warning,
+                            ConfidenceBand.None,
+                            EvidenceRule.UnsupportedFamily,
+                            EvidenceProvenance.Detector,
+                            CommunicationKindClassification.UnknownRelativePath,
+                            $"{CommunicationKindClassification.UnknownRelativePath}#detector:unsupported",
+                            1,
+                            new('f', 64)),
+                    ];
+            PreScanResult result = PreScanResult.CreateApproved(
+                profile.ScanRun.RepositoryId,
+                profile.ScanRun.Id,
+                profiledRevision,
+                profile.ScanRun.CompletedAt!.Value,
+                new('e', 64),
+                totalWarningCount == 0
+                    ? "预扫描已批准——继续进入顺序演示运行器"
+                    : "预扫描已批准并保留审慎警告——继续进入顺序演示运行器",
+                ConfirmedCommunicationKinds.None,
+                0,
+                0,
+                totalWarningCount,
+                false,
+                classifications);
+            return Task.FromResult(PreScanResultDraft.Create(result));
+        }
+    }
+
+    private sealed class LeaseLifetimeScanRunRepository(
+        IScanRunRepository inner,
+        RecordingSnapshotService snapshotService,
+        List<string> timeline) : IScanRunRepository
+    {
+        public bool ObservedLeaseHeldAtPersistence { get; private set; }
+
+        public async Task<PreScanResult> PersistCompletedProfileAsync(
+            RepositoryProfileCommitDraft draft,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedLeaseHeldAtPersistence = !snapshotService.Lease.Disposed &&
+                snapshotService.Lease.VerificationCount == 2;
+            Assert.True(ObservedLeaseHeldAtPersistence);
+            PreScanResult result = await inner.PersistCompletedProfileAsync(
+                draft,
+                cancellationToken);
+            snapshotService.Lease.CompletedProfilePersisted = true;
+            timeline.Add("persist");
+            return result;
+        }
+
+        public Task<ScanRun?> GetAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            inner.GetAsync(repositoryId, scanRunId, cancellationToken);
+
+        public Task AddAsync(
+            ScanRun scanRun,
+            CancellationToken cancellationToken = default) =>
+            inner.AddAsync(scanRun, cancellationToken);
+
+        public void AddCandidateOutcomes(IEnumerable<ScanCandidateOutcome> outcomes) =>
+            inner.AddCandidateOutcomes(outcomes);
+
+        public void AddStructuralRecords(
+            IEnumerable<CodeUnit> codeUnits,
+            IEnumerable<CodeUnitEdge> edges,
+            IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
+            inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
+
+        public async Task PersistCompletedProfileAsync(
+            RepositoryProfileDraft draft,
+            CancellationToken cancellationToken = default)
+        {
+            ObservedLeaseHeldAtPersistence = !snapshotService.Lease.Disposed &&
+                snapshotService.Lease.VerificationCount == 2;
+            Assert.True(ObservedLeaseHeldAtPersistence);
+            await inner.PersistCompletedProfileAsync(draft, cancellationToken);
+            snapshotService.Lease.CompletedProfilePersisted = true;
+            timeline.Add("persist");
+        }
+
+        public Task RecoverFailedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset failedAt,
+            CancellationToken cancellationToken = default) =>
+            inner.RecoverFailedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                failedAt,
+                cancellationToken);
+
+        public Task RecoverAbortedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset abortedAt,
+            CancellationToken cancellationToken = default) =>
+            inner.RecoverAbortedFinalCommitAsync(
+                repositoryId,
+                scanRunId,
+                sanitizedMessage,
+                abortedAt,
+                cancellationToken);
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            inner.SaveChangesAsync(cancellationToken);
+    }
+
+    private sealed class RecoveryLeaseObservationScanRunRepository(
+        IScanRunRepository inner,
+        Func<string?> snapshotRoot) : IScanRunRepository
+    {
+        public bool ObservedLeaseHeldDuringRecovery { get; private set; }
+
+        public Task<PreScanResult> PersistCompletedProfileAsync(
+            RepositoryProfileCommitDraft draft,
+            CancellationToken cancellationToken = default) =>
+            inner.PersistCompletedProfileAsync(draft, cancellationToken);
+
+        public Task<ScanRun?> GetAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            inner.GetAsync(repositoryId, scanRunId, cancellationToken);
+
+        public Task AddAsync(
+            ScanRun scanRun,
+            CancellationToken cancellationToken = default) =>
+            inner.AddAsync(scanRun, cancellationToken);
+
+        public void AddCandidateOutcomes(IEnumerable<ScanCandidateOutcome> outcomes) =>
+            inner.AddCandidateOutcomes(outcomes);
+
+        public void AddStructuralRecords(
+            IEnumerable<CodeUnit> codeUnits,
+            IEnumerable<CodeUnitEdge> edges,
+            IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
+            inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
+
+        public Task PersistCompletedProfileAsync(
+            RepositoryProfileDraft draft,
+            CancellationToken cancellationToken = default) =>
+            inner.PersistCompletedProfileAsync(draft, cancellationToken);
+
+        public async Task RecoverFailedFinalCommitAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            string sanitizedMessage,
+            DateTimeOffset failedAt,
+            CancellationToken cancellationToken = default)
+        {
+            string? root = snapshotRoot();
+            ObservedLeaseHeldDuringRecovery =
+                !string.IsNullOrWhiteSpace(root) && Directory.Exists(root);
+            Assert.True(ObservedLeaseHeldDuringRecovery);
             await inner.RecoverFailedFinalCommitAsync(
                 repositoryId,
                 scanRunId,
@@ -2977,11 +4098,35 @@ public sealed class RepositoryProfilingTests
             new RepositoryRepository(db),
             new ScanRunRepository(db),
             new SuccessfulWorkingCopy(root),
+            new PassthroughSnapshotService(),
             candidates ?? new ControlledCandidates(),
             provider,
             new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
             logger ?? NullLogger<RepositoryProfilingCoordinator>.Instance,
             new EmptyFrameworkEvidenceDetector(),
+            FrameworkCatalog.LoadEmbedded());
+
+    private static RepositoryProfilingCoordinator CreateCoordinatorWithSnapshot(
+        VulgataDbContext db,
+        IScanRunRepository scanRunRepository,
+        IGitWorkingCopyService workingCopyService,
+        ICommittedRepositorySnapshotService snapshotService,
+        IScanCandidateEnumerator candidates,
+        ICodeGraphProvider provider,
+        IFrameworkEvidenceDetector detector) =>
+        new(
+            new SystemRepository(db),
+            new RepositoryRepository(db),
+            scanRunRepository,
+            workingCopyService,
+            snapshotService,
+            candidates,
+            provider,
+            new CodeGraphOptions(
+                Path.Combine(Path.GetTempPath(), $"vulgata-codegraph-state-{Guid.NewGuid():N}"),
+                1_800),
+            NullLogger<RepositoryProfilingCoordinator>.Instance,
+            detector,
             FrameworkCatalog.LoadEmbedded());
 
     public static TheoryData<string, string> UnsafeProviderPathCases
@@ -3008,6 +4153,7 @@ public sealed class RepositoryProfilingTests
     private sealed class CapturedLogger<T> : ILogger<T>
     {
         public List<string> Messages { get; } = [];
+        public List<CapturedLogEntry> Entries { get; } = [];
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
@@ -3018,9 +4164,28 @@ public sealed class RepositoryProfilingTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter) =>
-            Messages.Add(formatter(state, exception));
+            Func<TState, Exception?, string> formatter)
+        {
+            string message = formatter(state, exception);
+            Messages.Add(message);
+            Entries.Add(new(
+                logLevel,
+                message,
+                exception,
+                state is IEnumerable<KeyValuePair<string, object?>> properties
+                    ? properties.ToDictionary(
+                        property => property.Key,
+                        property => property.Value,
+                        StringComparer.Ordinal)
+                    : new Dictionary<string, object?>(StringComparer.Ordinal)));
+        }
     }
+
+    private sealed record CapturedLogEntry(
+        LogLevel Level,
+        string Message,
+        Exception? Exception,
+        IReadOnlyDictionary<string, object?> Properties);
 
     private static string[] CreateExactUnknownAuditByteBoundPaths()
     {
@@ -3115,6 +4280,7 @@ public sealed class RepositoryProfilingTests
             new RepositoryRepository(db),
             new ScanRunRepository(db),
             new SuccessfulWorkingCopy(root),
+            new PassthroughSnapshotService(),
             candidates,
             provider,
             new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
@@ -3134,6 +4300,168 @@ public sealed class RepositoryProfilingTests
         Assert.NotNull(constructor);
         return Assert.IsType<RepositoryProfilingCoordinator>(
             constructor!.Invoke(services));
+    }
+
+    private static RepositoryProfilingCoordinator CreateCoordinatorWithPreScanDetector(
+        VulgataDbContext db,
+        string root,
+        ICodeGraphProvider provider,
+        IScanCandidateEnumerator candidates,
+        IFrameworkEvidenceDetector frameworkDetector,
+        IPreScanCommunicationDetector preScanDetector,
+        ILogger<RepositoryProfilingCoordinator>? logger = null)
+    {
+        object[] services =
+        [
+            new SystemRepository(db),
+            new RepositoryRepository(db),
+            new ScanRunRepository(db),
+            new SuccessfulWorkingCopy(root),
+            new PassthroughSnapshotService(),
+            candidates,
+            provider,
+            new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
+            logger ?? NullLogger<RepositoryProfilingCoordinator>.Instance,
+            frameworkDetector,
+            FrameworkCatalog.LoadEmbedded(),
+            preScanDetector,
+        ];
+        ConstructorInfo? constructor = typeof(RepositoryProfilingCoordinator)
+            .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+            .SingleOrDefault(candidate =>
+            {
+                ParameterInfo[] parameters = candidate.GetParameters();
+                return parameters.Length == services.Length &&
+                    parameters.Zip(services).All(pair =>
+                        pair.First.ParameterType.IsInstanceOfType(pair.Second));
+            });
+        Assert.NotNull(constructor);
+        return Assert.IsType<RepositoryProfilingCoordinator>(
+            constructor!.Invoke(services));
+    }
+
+    private static async Task<VulgataDbContext> CreatePreScanPersistenceDatabaseAsync()
+    {
+        var dbOptions = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseSqlite("Data Source=:memory:")
+            .Options;
+        var db = new VulgataDbContext(dbOptions);
+        await db.Database.OpenConnectionAsync();
+        await db.Database.EnsureCreatedAsync();
+        return db;
+    }
+
+    private static async Task<RepositoryEntity> AddStandaloneRepositoryAsync(
+        VulgataDbContext db,
+        string name)
+    {
+        RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+            name,
+            $"https://example.invalid/{name}.git",
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        db.Repositories.Add(repository);
+        await db.SaveChangesAsync();
+        return repository;
+    }
+
+    private static async Task<RepositoryProfileCommitDraft> CreatePreScanCommitDraftAsync(
+        VulgataDbContext db,
+        Guid repositoryId,
+        string resultFingerprint)
+    {
+        DateTimeOffset startedAt = DateTimeOffset.UtcNow;
+        ScanRun run = ScanRun.Start(repositoryId, 1_800, startedAt);
+        db.ScanRuns.Add(run);
+        await db.SaveChangesAsync();
+        string sourceHash = new('f', 64);
+        var codeUnit = new CodeUnit(
+            run.Id,
+            repositoryId,
+            "src/Prepared.cs",
+            sourceHash,
+            sourceHash,
+            1,
+            1,
+            "Prepared",
+            CodeUnitType.Class,
+            RangeConfidence.Exact,
+            "c_sharp");
+        run.CodeUnits.Add(codeUnit);
+        run.SetCandidateCount(1);
+        run.BindProfiledRevision("0123456789abcdef0123456789abcdef01234567");
+        run.Complete(1, 1, startedAt.AddSeconds(1));
+        var summary = new ScanRunLanguageSummary(
+            run.Id,
+            repositoryId,
+            "c_sharp",
+            1);
+        run.LanguageSummaries.Add(summary);
+        RepositoryProfileDraft profile = RepositoryProfileDraft.Create(
+            run,
+            [codeUnit],
+            [],
+            [],
+            [],
+            [summary],
+            []);
+        return CreatePreScanCommitDraft(profile, resultFingerprint);
+    }
+
+    private static RepositoryProfileCommitDraft CreatePreScanCommitDraft(
+        RepositoryProfileDraft profile,
+        string resultFingerprint)
+    {
+        var classification = CommunicationKindClassification.Create(
+            profile.ScanRun.Id,
+            null,
+            ClassificationLevel.Warning,
+            ConfidenceBand.None,
+            EvidenceRule.UnsupportedFamily,
+            EvidenceProvenance.Detector,
+            CommunicationKindClassification.UnknownRelativePath,
+            $"{CommunicationKindClassification.UnknownRelativePath}#detector:unsupported",
+            1,
+            new('1', 64));
+        PreScanResult result = PreScanResult.CreateApproved(
+            profile.ScanRun.RepositoryId,
+            profile.ScanRun.Id,
+            "0123456789abcdef0123456789abcdef01234567",
+            profile.ScanRun.StartedAt.AddSeconds(2),
+            resultFingerprint,
+            "预扫描已批准并保留审慎警告——继续进入顺序演示运行器",
+            ConfirmedCommunicationKinds.None,
+            0,
+            0,
+            1,
+            false,
+            [classification]);
+        return RepositoryProfileCommitDraft.Create(
+            profile,
+            PreScanResultDraft.Create(result));
+    }
+
+    private static async Task<PreScanResult> PersistCompositeProfileAsync(
+        IScanRunRepository repository,
+        RepositoryProfileCommitDraft draft)
+    {
+        MethodInfo? method = typeof(IScanRunRepository).GetMethod(
+            nameof(IScanRunRepository.PersistCompletedProfileAsync),
+            [typeof(RepositoryProfileCommitDraft), typeof(CancellationToken)]);
+        Assert.NotNull(method);
+        object? invocation = method!.Invoke(
+            repository,
+            [draft, CancellationToken.None]);
+        Task<PreScanResult> task = Assert.IsAssignableFrom<Task<PreScanResult>>(invocation);
+        return await task;
+    }
+
+    private static string? GetProfiledRevision(ScanRun scanRun)
+    {
+        PropertyInfo? property = typeof(ScanRun).GetProperty("ProfiledRevision");
+        Assert.NotNull(property);
+        return (string?)property!.GetValue(scanRun);
     }
 
     private sealed record CandidateBoundObservation(

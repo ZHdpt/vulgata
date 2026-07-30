@@ -125,6 +125,7 @@ internal static class RepositoryApiEndpoints
             Guid repositoryId,
             Guid scanRunId,
             IRepositoryProfilingCoordinator coordinator,
+            IPreScanHandoffService handoffService,
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
@@ -134,9 +135,22 @@ internal static class RepositoryApiEndpoints
                 scanRunId,
                 user,
                 cancellationToken);
-            return result is null
-                ? Results.Problem(detail: "扫描记录不存在。", statusCode: StatusCodes.Status404NotFound)
-                : Results.Ok(result);
+            if (result is null)
+            {
+                return Results.Problem(
+                    detail: "扫描记录不存在。",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
+
+            ApprovedPreScanHandoffDto? handoff =
+                await handoffService.GetSystemRepositoryAsync(
+                    systemId,
+                    repositoryId,
+                    scanRunId,
+                    requestedProfiledRevision: null,
+                    user,
+                    cancellationToken);
+            return Results.Ok(ComposeScanRunResponse(result, handoff));
         });
 
         var standaloneRepoApi = app.MapGroup("/api/repositories/standalone")
@@ -211,6 +225,7 @@ internal static class RepositoryApiEndpoints
             Guid repositoryId,
             Guid scanRunId,
             IRepositoryProfilingCoordinator coordinator,
+            IPreScanHandoffService handoffService,
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
@@ -219,9 +234,21 @@ internal static class RepositoryApiEndpoints
                 scanRunId,
                 user,
                 cancellationToken);
-            return result is null
-                ? Results.Problem(detail: "扫描记录不存在。", statusCode: StatusCodes.Status404NotFound)
-                : Results.Ok(result);
+            if (result is null)
+            {
+                return Results.Problem(
+                    detail: "扫描记录不存在。",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
+
+            ApprovedPreScanHandoffDto? handoff =
+                await handoffService.GetStandaloneRepositoryAsync(
+                    repositoryId,
+                    scanRunId,
+                    requestedProfiledRevision: null,
+                    user,
+                    cancellationToken);
+            return Results.Ok(ComposeScanRunResponse(result, handoff));
         });
 
         var repositoryDatabaseConnectionApi = app.MapGroup("/api/repositories/{repositoryId:guid}/database-connection")
@@ -337,4 +364,25 @@ internal static class RepositoryApiEndpoints
             _ => Results.Problem(detail: "扫描启动失败。", statusCode: StatusCodes.Status500InternalServerError),
         };
     }
+
+    private static object ComposeScanRunResponse(
+        ScanRunSummaryDto summary,
+        ApprovedPreScanHandoffDto? preScanHandoff) =>
+        new
+        {
+            summary.Id,
+            summary.RepositoryId,
+            summary.Status,
+            summary.ParsedFileCount,
+            summary.TotalCandidateFileCount,
+            summary.NeedsHumanReview,
+            summary.StartedAt,
+            summary.CompletedAt,
+            summary.Message,
+            summary.Languages,
+            summary.Frameworks,
+            summary.UnknownLanguage,
+            summary.FrameworkEvidenceAudit,
+            PreScanHandoff = preScanHandoff,
+        };
 }

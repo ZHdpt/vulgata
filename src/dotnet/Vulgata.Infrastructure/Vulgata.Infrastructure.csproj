@@ -12,6 +12,8 @@
   <ItemGroup>
     <EmbeddedResource Include="FrameworkDetection\Catalog\framework-catalog.v1.json"
                       LogicalName="Vulgata.Infrastructure.FrameworkDetection.Catalog.framework-catalog.v1.json" />
+    <EmbeddedResource Include="CommunicationDetection\Catalog\communication-evidence-rules.v1.json"
+                      LogicalName="Vulgata.Infrastructure.CommunicationDetection.Catalog.communication-evidence-rules.v1.json" />
   </ItemGroup>
 
   <PropertyGroup>

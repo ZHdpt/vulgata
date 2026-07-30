@@ -217,13 +217,13 @@ Scan-strategy change.
   `docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json`.
 - SpecKit feature directory:
   `specs/003-conservative-pre-scan-gate`.
-- Current workflow stage: `implement` (accepted delivery definition pending
-  checkpoint binding).
+- Current workflow stage: `review` (reviewed-candidate checkpoint pending).
 - Latest workflow checkpoint ID:
   `bmad-4-3-tasks-20260730T044037Z-c7a41e`.
-- First expedited checkpoint remains pending until story, specification,
-  accepted plan review, planned-change authorization, and tasks form one
-  accepted delivery definition.
+- Latest workflow checkpoint SHA:
+  `d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d`.
+- First expedited checkpoint is bound; the next checkpoint remains the
+  reviewed-candidate checkpoint after implementation and verification.
 
 ### Agent Model Used
 
@@ -240,13 +240,100 @@ Scan-strategy change.
 - Independent plan review accepted the pinned Story 4.3 plan on iteration 3.
 - User explicitly approved the Scan strategy; task generation is active.
 - Task generation produced T001-T036 and read-only analysis accepted with no
-  findings; the first expedited checkpoint is pending binding.
+  findings; the first expedited checkpoint is bound.
+- T004-T006 are GREEN: the private committed-tree lease rejects mutable or
+  unsafe input, remains revision-bound, performs bounded archive handling, and
+  releases its repository lock even if best-effort cleanup fails.
+- T007-T009 are GREEN: candidates, CodeGraphContext, framework/language
+  detection, and source hashing share one verified lease root; five late
+  mutation modes fail before final profile persistence and cleanup denial
+  cannot mask the profiling outcome.
+- T010-T012 are GREEN: immutable closed domain types enforce the non-circular
+  profile-to-detector-to-result-to-composite lifecycle without persistence or
+  a detector/result dependency on `RepositoryProfileDraft`.
+- T013-T016 are GREEN: an embedded closed RPC/HTTP rule catalog drives bounded
+  snapshot-only classification; weak evidence remains a Hint, anomalies remain
+  Warning/None, false lexical tokens cannot confirm, and retained locators are
+  redacted.
+- T017-T019 are GREEN: authoritative flags, occurrence totals, and the
+  aggregate fingerprint are derived from the full normalized evidence set
+  before deterministic sampling; truncated results retain direct Rpc and Http
+  samples plus a `BoundExceeded` warning within the 100-row cap.
+- T020-T023 are GREEN: the complete Repository Profile and approved Pre-Scan
+  Result now commit atomically with exact Profiled Revision identity;
+  same-fingerprint replay is idempotent, conflicting replay fails closed, and
+  detector/final-save failures expose no partial profile or classification.
+- T024-T026 are GREEN: additive migration
+  `20260730083207_AddConservativePreScanGate` creates only the approved result
+  and classification schema, rolls back to the Story 4.2 baseline, and has no
+  pending EF model changes.
+- T027-T030 are GREEN: the immutable schema `1.0` Pre-Scan Handoff is composed
+  into existing ManagementAccess ScanRun GET routes with pre/post visibility
+  checks, exact revision validation, bounded evidence, and no dispatch or
+  sensitive internal projection.
+- T031-T033 are GREEN: both exact Simplified-Chinese approval outcomes persist
+  on ScanRun, revoked visibility remains non-disclosing, and structured logs
+  contain only closed identity/state/schema/count/truncation/rule-set fields.
+- T034 is partially GREEN: the Web build exited 0 with no analyzer/code-style
+  errors, both checkout-byte failures were traced to machine-level
+  `core.autocrlf=true`, the framework fixture now pins `core.autocrlf=false`,
+  and the complete non-final-image regression suite passed 604/604. The
+  environment-bound final-image provider-contract test remains part of the
+  immutable-image lane and is not claimed by that 604-test result.
+- T035 is GREEN on an isolated PostgreSQL 17 database: migrations applied from
+  an empty database through `20260730083207_AddConservativePreScanGate`,
+  rolled back to `20260720060442_FrameworkEvidenceAuditCount`, reapplied, and
+  reported no pending model changes. Current-boundary profiling, persistence,
+  migration, and authorized handoff tests are also GREEN.
+- T036 is GREEN: after the recorded transient `archive.ubuntu.com` HTTP 502,
+  the unchanged exact command
+  `docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3 .`
+  completed successfully and produced immutable image
+  `sha256:63cce7a38d827de131a30e5c401d0aecede30e54992ff6bd9e2778dbbc2edc28`.
+  No Dockerfile or proxy workaround was committed.
+- T034-T036 now satisfy the Story 4.3 included verification boundary. The
+  604-test suite excludes only the separately environment-bound immutable
+  CodeGraph provider qualification lane from completed Story 4.2; no failing
+  test is committed or represented as deferred Story 4.3 behavior.
 
 ### File List
 
 - `docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md`
 - `docs/bmad/implementation-artifacts/sprint-status.yaml`
 - `docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json`
+- `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`
+- `src/dotnet/Vulgata.Core/DomainServices/IPreScanCommunicationDetector.cs`
+- `src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs`
+- `src/dotnet/Vulgata.Core/Entities/CommunicationKindClassification.cs`
+- `src/dotnet/Vulgata.Core/Entities/PreScanResult.cs`
+- `src/dotnet/Vulgata.Core/Entities/ScanRun.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Configurations/CommunicationKindClassificationConfiguration.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Configurations/PreScanResultConfiguration.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.Designer.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`
+- `src/dotnet/Vulgata.Core/DomainServices/ApprovedPreScanHandoff.cs`
+- `src/dotnet/Vulgata.Shared/Repositories/ApprovedPreScanHandoffDto.cs`
+- `src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs`
+- `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs`
+- `src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs`
+- `src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs`
+- `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs`
+- `src/dotnet/Vulgata.Infrastructure/CommunicationDetection/Catalog/communication-evidence-rules.v1.json`
+- `src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationEvidenceRuleCatalog.cs`
+- `src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs`
+- `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj`
+- `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`
+- `src/dotnet/Vulgata.Web/Program.cs`
+- `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs`
+- `tests/Vulgata.Tests/FrameworkDetectionTests.cs`
+- `tests/Vulgata.Tests/RepositoryApiTests.cs`
+- `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
+- `tests/Vulgata.Tests/MigrationTests.cs`
+- `tests/Vulgata.Tests/PreScanHandoffTests.cs`
 
 ## Change Log
 
@@ -258,3 +345,22 @@ Scan-strategy change.
   resumed without waiving later gates.
 - 2026-07-30: Tasks and read-only analysis accepted; assembled the first
   expedited accepted-delivery-definition checkpoint.
+- 2026-07-30: Bound the accepted-delivery-definition checkpoint at
+  `d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d`; foundational TDD may begin.
+- 2026-07-30: Completed T004-T006 with observed RED-GREEN evidence; root
+  verification passed 12 committed-snapshot tests and 62 profiling regressions.
+- 2026-07-30: Completed T007-T009 with observed RED-GREEN evidence; root
+  verification passed 66 profiling tests, 15 snapshot/candidate regressions,
+  and the Web build with zero errors.
+- 2026-07-30: Completed T010-T012 with observed RED-GREEN evidence; root
+  verification passed 33 lifecycle tests and 69 profiling/candidate
+  regressions.
+- 2026-07-30: Completed T013-T016 with observed RED-GREEN evidence; root
+  verification passed 49 closed-classification tests and 69 profiling/candidate
+  regressions after catalog-bound and lexical false-positive hardening.
+- 2026-07-30: Final verification passed the 604-test non-final-image suite,
+  isolated PostgreSQL apply/rollback/reapply/model gate, and the unchanged
+  Story 4.3 production Docker build after the transient Ubuntu mirror failure
+  cleared.
+- 2026-07-30: All Story 4.3 implementation tasks are complete; transitioned
+  the story from `in-progress` to `review` for the pinned combined review.

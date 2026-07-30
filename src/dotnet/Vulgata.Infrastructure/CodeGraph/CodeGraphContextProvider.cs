@@ -21,6 +21,7 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
     {
         var stopwatch = Stopwatch.StartNew();
         string contextName = $"vulgata-{Guid.NewGuid():N}";
+        string snapshotRoot = Path.GetFullPath(workingCopyPath);
         string stateRoot = Path.GetFullPath(options.StateRootPath);
         string homePath = Path.Combine(stateRoot, contextName, "home");
         string databasePath = Path.Combine(stateRoot, contextName, "graph.kuzu");
@@ -51,7 +52,7 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
                 EnsureSuccess(await RunAsync(homePath, ["context", "default", contextName], deadline.Token), "CodeGraph context default");
                 EnsureSuccess(await RunAsync(
                     homePath,
-                    ["index", Path.GetFullPath(workingCopyPath), "--force", "--context", contextName],
+                    ["index", snapshotRoot, "--force", "--context", contextName],
                     deadline.Token), "CodeGraph index");
 
                 int port = ReserveLoopbackPort();
@@ -71,7 +72,7 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
                 CodeGraphProviderResult parsed = CodeGraphHttpProjectionParser.Parse(
                     codeUnitResponse,
                     relationshipResponse,
-                    workingCopyPath,
+                    snapshotRoot,
                     stopwatch.Elapsed);
                 result = parsed with { Duration = stopwatch.Elapsed };
             }

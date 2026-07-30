@@ -8,6 +8,7 @@ using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CodeGraph;
+using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
@@ -113,6 +114,7 @@ builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
 builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
 builder.Services.AddScoped<IRepositoryProfilingCoordinator, RepositoryProfilingCoordinator>();
+builder.Services.AddScoped<IPreScanHandoffService, PreScanHandoffService>();
 builder.Services.AddScoped<IRepositoryDatabaseConnectionCoordinator, RepositoryDatabaseConnectionCoordinator>();
 builder.Services.AddScoped<ILlmProviderConnectionTestService, LlmProviderConnectionTestService>();
 builder.Services.AddScoped<IDatabaseConnectionTestService, DatabaseConnectionTestService>();
@@ -122,6 +124,9 @@ builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationServi
 var frameworkCatalog = FrameworkCatalog.LoadEmbedded();
 builder.Services.AddSingleton(frameworkCatalog);
 builder.Services.AddScoped<IFrameworkEvidenceDetector, FrameworkEvidenceDetector>();
+var communicationEvidenceRuleCatalog = CommunicationEvidenceRuleCatalog.LoadEmbedded();
+builder.Services.AddSingleton(communicationEvidenceRuleCatalog);
+builder.Services.AddScoped<IPreScanCommunicationDetector, CommunicationKindDetector>();
 string profilingDataRoot = builder.Configuration["CodeGraph:DataRootPath"]
     ?? (OperatingSystem.IsLinux()
         ? "/var/lib/vulgata-codegraph"
@@ -132,6 +137,7 @@ var codeGraphOptions = new CodeGraphOptions(
 builder.Services.AddSingleton(codeGraphOptions);
 builder.Services.AddSingleton(new GitWorkingCopyOptions(Path.Combine(profilingDataRoot, "repositories")));
 builder.Services.AddScoped<IGitWorkingCopyService, GitWorkingCopyService>();
+builder.Services.AddScoped<ICommittedRepositorySnapshotService, CommittedRepositorySnapshotService>();
 builder.Services.AddScoped<IScanCandidateEnumerator, ScanCandidateEnumerator>();
 builder.Services.AddScoped<IScanStateService, NoOpScanStateService>();
 builder.Services.AddScoped<IContextCompositionService, ContextCompositionService>();

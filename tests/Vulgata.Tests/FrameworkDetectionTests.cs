@@ -3145,6 +3145,7 @@ public sealed class FrameworkDetectionTests
                 $"vulgata-framework-{Guid.NewGuid():N}");
             Directory.CreateDirectory(Path);
             RunGit("init", "--quiet");
+            RunGit("config", "core.autocrlf", "false");
             RunGit("config", "core.longpaths", "true");
             RunGit("config", "core.symlinks", "true");
             RunGit("config", "user.email", "vulgata-tests@example.invalid");

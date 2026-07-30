@@ -23,6 +23,9 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
         Set<UnresolvedStructuralRelationshipCandidate>();
     public DbSet<CodeUnitFramework> CodeUnitFrameworks => Set<CodeUnitFramework>();
     public DbSet<ScanRunLanguageSummary> ScanRunLanguageSummaries => Set<ScanRunLanguageSummary>();
+    public DbSet<PreScanResult> PreScanResults => Set<PreScanResult>();
+    public DbSet<CommunicationKindClassification> CommunicationKindClassifications =>
+        Set<CommunicationKindClassification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

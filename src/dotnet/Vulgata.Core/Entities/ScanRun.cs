@@ -41,7 +41,9 @@ public sealed class ScanRun
     public long? DurationMilliseconds { get; private set; }
     public bool NeedsHumanReview { get; private set; }
     public string? TerminalMessage { get; private set; }
+    public string? ProfiledRevision { get; private set; }
     public Repository? Repository { get; private set; }
+    public PreScanResult? PreScanResult { get; private set; }
     public ICollection<ScanCandidateOutcome> CandidateOutcomes { get; } = [];
     public ICollection<CodeUnit> CodeUnits { get; } = [];
     public ICollection<CodeUnitEdge> CodeUnitEdges { get; } = [];
@@ -66,6 +68,35 @@ public sealed class ScanRun
         FrameworkEvidenceAuditTotalOutcomeCount = count;
     }
 
+    public void BindProfiledRevision(string profiledRevision)
+    {
+        if (Status is not (ScanRunStatus.Profiling or ScanRunStatus.Completed))
+        {
+            throw new InvalidOperationException(
+                "A terminal failed or aborted ScanRun cannot bind a Profiled Revision.");
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(profiledRevision);
+        if (profiledRevision.Length > 64 ||
+            profiledRevision.Any(character =>
+                character is not (>= '0' and <= '9') and
+                    not (>= 'a' and <= 'f')))
+        {
+            throw new ArgumentException(
+                "Profiled Revision must be a bounded lowercase Git object ID.",
+                nameof(profiledRevision));
+        }
+
+        if (ProfiledRevision is not null &&
+            !StringComparer.Ordinal.Equals(ProfiledRevision, profiledRevision))
+        {
+            throw new InvalidOperationException(
+                "A ScanRun cannot change its bound Profiled Revision.");
+        }
+
+        ProfiledRevision = profiledRevision;
+    }
+
     public void Complete(int parsedFileCount, int codeUnitCount, DateTimeOffset now, string? message = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(parsedFileCount);
@@ -79,6 +110,24 @@ public sealed class ScanRun
         ParsedFileCount = parsedFileCount;
         NeedsHumanReview = TotalCandidateFileCount >= 500 && codeUnitCount == 0;
         Finish(ScanRunStatus.Completed, now, message);
+    }
+
+    public void RecordApprovedPreScanOutcome(string approvedMessage)
+    {
+        if (Status != ScanRunStatus.Completed)
+        {
+            throw new InvalidOperationException(
+                "Only a completed ScanRun can record an approved pre-scan outcome.");
+        }
+
+        TerminalMessage = approvedMessage switch
+        {
+            "预扫描已批准并保留审慎警告——继续进入顺序演示运行器" => approvedMessage,
+            "预扫描已批准——继续进入顺序演示运行器" => approvedMessage,
+            _ => throw new ArgumentException(
+                "The approved pre-scan outcome must use the closed message vocabulary.",
+                nameof(approvedMessage)),
+        };
     }
 
     public void Fail(string message, DateTimeOffset now) =>

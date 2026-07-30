@@ -8,6 +8,8 @@ public sealed record GitWorkingCopyOptions(string RootPath);
 
 public sealed class GitWorkingCopyService(GitWorkingCopyOptions options) : IGitWorkingCopyService
 {
+    private const int _maximumProfiledRevisionOutputCharacters = 66;
+
     public async Task<GitWorkingCopyResult> AcquireAsync(
         Repository repository,
         Guid scanRunId,
@@ -20,6 +22,14 @@ public sealed class GitWorkingCopyService(GitWorkingCopyOptions options) : IGitW
         ProcessResult result;
         if (Directory.Exists(Path.Combine(workingCopyPath, ".git")))
         {
+            ProcessResult cleanBeforePull = await RunGitAsync(
+                ["-C", workingCopyPath, "status", "--porcelain=v1", "--untracked-files=all"],
+                cancellationToken);
+            if (cleanBeforePull.ExitCode != 0 || cleanBeforePull.StandardOutput.Length != 0)
+            {
+                return GitWorkingCopyResult.Failure("本地工作副本包含未提交更改。");
+            }
+
             result = await RunGitAsync(
                 ["-C", workingCopyPath, "pull", "--ff-only"],
                 cancellationToken);
@@ -36,9 +46,45 @@ public sealed class GitWorkingCopyService(GitWorkingCopyOptions options) : IGitW
                 cancellationToken);
         }
 
-        return result.ExitCode == 0
-            ? GitWorkingCopyResult.Success(workingCopyPath)
-            : GitWorkingCopyResult.Failure(SanitizeDiagnostic(result.StandardError));
+        if (result.ExitCode != 0)
+        {
+            return GitWorkingCopyResult.Failure(SanitizeDiagnostic(result.StandardError));
+        }
+
+        ProcessResult clean = await RunGitAsync(
+            ["-C", workingCopyPath, "status", "--porcelain=v1", "--untracked-files=all"],
+            cancellationToken);
+        if (clean.ExitCode != 0 || clean.StandardOutput.Length != 0)
+        {
+            return GitWorkingCopyResult.Failure("本地工作副本包含未提交更改。");
+        }
+
+        ProcessResult revision = await RunGitAsync(
+            ["-C", workingCopyPath, "rev-parse", "--verify", "HEAD"],
+            cancellationToken,
+            _maximumProfiledRevisionOutputCharacters,
+            requireCompleteStandardOutput: true);
+        return revision.ExitCode == 0 &&
+            TryParseProfiledRevision(revision.StandardOutput, out string? profiledRevision)
+            ? GitWorkingCopyResult.Success(workingCopyPath, profiledRevision!)
+            : GitWorkingCopyResult.Failure(SanitizeDiagnostic(revision.StandardError));
+    }
+
+    internal static bool TryParseProfiledRevision(string output, out string? revision)
+    {
+        revision = output.TrimEnd('\r', '\n');
+        if (revision.Length == 0 ||
+            revision.Length > 64 ||
+            output.AsSpan(revision.Length).ContainsAnyExcept('\r', '\n') ||
+            revision.Any(static character =>
+                character is not (>= '0' and <= '9') and
+                    not (>= 'a' and <= 'f')))
+        {
+            revision = null;
+            return false;
+        }
+
+        return true;
     }
 
     internal static async Task<ProcessResult> RunGitAsync(
@@ -103,7 +149,7 @@ public sealed class GitWorkingCopyService(GitWorkingCopyOptions options) : IGitW
         await process.WaitForExitAsync(CancellationToken.None);
     }
 
-    private static async Task<string> ReadBoundedAsync(
+    internal static async Task<string> ReadBoundedAsync(
         StreamReader reader,
         int maximumCharacters,
         bool requireComplete,
