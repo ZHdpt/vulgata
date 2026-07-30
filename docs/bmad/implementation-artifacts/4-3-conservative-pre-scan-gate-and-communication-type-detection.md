@@ -217,13 +217,15 @@ Scan-strategy change.
   `docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json`.
 - SpecKit feature directory:
   `specs/003-conservative-pre-scan-gate`.
-- Current workflow stage: `review` (reviewed-candidate checkpoint pending).
+- Current workflow stage: `review` (recovery candidate assembly after combined
+  review correction iteration 1).
 - Latest workflow checkpoint ID:
-  `bmad-4-3-tasks-20260730T044037Z-c7a41e`.
+  `bmad-4-3-recovery-20260730T100625Z-2d17c4`.
 - Latest workflow checkpoint SHA:
-  `d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d`.
-- First expedited checkpoint is bound; the next checkpoint remains the
-  reviewed-candidate checkpoint after implementation and verification.
+  pending commit binding.
+- The reviewer-authorized recovery checkpoint is being assembled; after it is
+  bound, a fresh combined reviewer must assess the full candidate before the
+  E2E decision.
 
 ### Agent Model Used
 
@@ -295,6 +297,20 @@ Scan-strategy change.
   604-test suite excludes only the separately environment-bound immutable
   CodeGraph provider qualification lane from completed Story 4.2; no failing
   test is committed or represented as deferred Story 4.3 behavior.
+- Reviewed candidate
+  `64930fce2af96767c95abb848807eadd0419ad3f` is uniquely bound to checkpoint
+  `bmad-4-3-review-20260730T092942Z-8516f1`.
+- Combined review iteration 1 returned `REVISE`: annotation-leading string
+  decoys can be promoted to Confirmed/High, and committed configuration-only
+  artifacts are not inspected. Fresh focused regressions failed 2/2 before
+  production correction: the decoys produced Rpc and Http while the
+  configuration-only snapshot produced neither. Exact leading Java/.NET
+  invocation parsing and bounded deterministic committed-configuration
+  inspection now make those regressions GREEN 2/2; the full detector and
+  profiling boundary is GREEN 130/130 and the Web build exits 0. The recovery
+  remains subject to fresh combined review. The reviewer classified
+  the Story 4.2 final-image exclusion as truthful and the observed line-ending
+  handling as non-defective.
 
 ### File List
 
@@ -364,3 +380,9 @@ Scan-strategy change.
   cleared.
 - 2026-07-30: All Story 4.3 implementation tasks are complete; transitioned
   the story from `in-progress` to `review` for the pinned combined review.
+- 2026-07-30: Combined review iteration 1 returned `REVISE` with two High
+  detector acceptance defects; dispatched a fresh TDD correction without
+  advancing to E2E.
+- 2026-07-30: Corrected both High findings with observed 2/2 RED, focused 2/2
+  GREEN, and independently rebuilt detector/profiling GREEN 130/130; assembling
+  the permitted recovery checkpoint for fresh combined review.

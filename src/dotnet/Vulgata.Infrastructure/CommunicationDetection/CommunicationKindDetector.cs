@@ -11,6 +11,8 @@ public sealed class CommunicationKindDetector(
     CommunicationEvidenceRuleCatalog catalog) : IPreScanCommunicationDetector
 {
     private const long _maximumArtifactBytes = 8L * 1024 * 1024;
+    private const long _maximumAggregateArtifactBytes = 64L * 1024 * 1024;
+    private const int _maximumSupportedArtifacts = 1_000;
     private const int _maximumSourceRangeBytes = 64 * 1024;
     private const int _maximumAggregateSourceRangeBytes = 16 * 1024 * 1024;
     private const int _maximumCandidateFacts = 250_000;
@@ -61,9 +63,13 @@ public sealed class CommunicationKindDetector(
 
             aggregateRangeBytes += range.ByteCount;
             MatchDirectAnnotations(codeUnit, range.Source, candidates);
-            MatchConfiguration(codeUnit, range.Source, candidates);
             MatchImports(codeUnit, range.Source, candidates);
         }
+
+        await MatchCommittedConfigurationsAsync(
+            committedSnapshot.RootPath,
+            candidates,
+            cancellationToken);
 
         ClassificationCandidate[] normalized = candidates
             .GroupBy(candidate => candidate.Identity, StringComparer.Ordinal)
@@ -153,65 +159,481 @@ public sealed class CommunicationKindDetector(
                 for (var index = 0; index < lines.Length; index++)
                 {
                     string line = lines[index].TrimStart();
-                    if (!IsDirectEvidenceLine(line))
-                    {
-                        continue;
-                    }
-
-                    int searchStart = 0;
-                    while (TryFindExactToken(line, token, searchStart, out int matchIndex))
+                    int occurrenceCount = CountDirectInvocations(line, token);
+                    for (var occurrence = 0; occurrence < occurrenceCount; occurrence++)
                     {
                         AddCandidate(candidates, CreateDirectCandidate(
                             rule,
                             codeUnit.FilePath,
                             $"L{codeUnit.LineStart + index}"));
-                        searchStart = matchIndex + token.Length;
                     }
                 }
             }
         }
     }
 
-    private static bool IsDirectEvidenceLine(string line) =>
-        line.Length > 1 &&
-        (line[0] == '@' && char.IsAsciiLetter(line[1]) ||
-            line[0] == '[' && (char.IsAsciiLetter(line[1]) || line[1] == '_'));
+    private async Task MatchCommittedConfigurationsAsync(
+        string snapshotRoot,
+        List<ClassificationCandidate> candidates,
+        CancellationToken cancellationToken)
+    {
+        List<string> relativePaths =
+            EnumerateConfigurationArtifactPaths(snapshotRoot);
+        if (relativePaths.Count > _maximumSupportedArtifacts)
+        {
+            AddCandidate(candidates, CreateWarning(
+                CommunicationKindClassification.UnknownRelativePath,
+                EvidenceRule.BoundExceeded,
+                "artifact-count-bound"));
+            return;
+        }
 
-    private void MatchConfiguration(
-        CodeUnit codeUnit,
-        string source,
+        long aggregateBytes = 0;
+        foreach (string relativePath in relativePaths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!TryResolveContainedPath(
+                    snapshotRoot,
+                    relativePath,
+                    out string fullPath,
+                    out string safeRelativePath))
+            {
+                AddCandidate(candidates, CreateWarning(
+                    safeRelativePath,
+                    EvidenceRule.UnsafePath,
+                    "unsafe-path"));
+                continue;
+            }
+
+            try
+            {
+                if (!File.Exists(fullPath) ||
+                    HasReparsePoint(snapshotRoot, fullPath))
+                {
+                    AddCandidate(candidates, CreateWarning(
+                        safeRelativePath,
+                        EvidenceRule.UnsafePath,
+                        "unsafe-path"));
+                    continue;
+                }
+
+                var file = new FileInfo(fullPath);
+                if (file.Length > _maximumArtifactBytes ||
+                    aggregateBytes > _maximumAggregateArtifactBytes - file.Length)
+                {
+                    AddCandidate(candidates, CreateWarning(
+                        safeRelativePath,
+                        EvidenceRule.BoundExceeded,
+                        "artifact-bound"));
+                    continue;
+                }
+
+                aggregateBytes += file.Length;
+                var artifactCandidates = new List<ClassificationCandidate>();
+                await MatchConfigurationArtifactAsync(
+                    fullPath,
+                    safeRelativePath,
+                    artifactCandidates,
+                    cancellationToken);
+                foreach (ClassificationCandidate candidate in artifactCandidates)
+                {
+                    AddCandidate(candidates, candidate);
+                }
+            }
+            catch (Exception exception) when (
+                exception is IOException or
+                    UnauthorizedAccessException or
+                    DecoderFallbackException)
+            {
+                AddCandidate(candidates, CreateWarning(
+                    safeRelativePath,
+                    EvidenceRule.MalformedEvidence,
+                    "unreadable-artifact"));
+            }
+        }
+    }
+
+    private async Task MatchConfigurationArtifactAsync(
+        string fullPath,
+        string relativePath,
+        List<ClassificationCandidate> candidates,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = new FileStream(
+            fullPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 4096,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var reader = new StreamReader(
+            stream,
+            new UTF8Encoding(
+                encoderShouldEmitUTF8Identifier: false,
+                throwOnInvalidBytes: true),
+            detectEncodingFromByteOrderMarks: true);
+        var lineNumber = 0;
+        string? sourceLine;
+        while ((sourceLine = await reader.ReadLineAsync(cancellationToken)) is not null)
+        {
+            lineNumber++;
+            MatchConfigurationLine(
+                relativePath,
+                sourceLine.TrimStart(),
+                lineNumber,
+                candidates);
+        }
+    }
+
+    private void MatchConfigurationLine(
+        string relativePath,
+        string line,
+        int lineNumber,
         List<ClassificationCandidate> candidates)
     {
-        string[] lines = source.Split('\n');
         foreach (CommunicationEvidenceRule rule in _catalog.Rules.Where(
                      rule => rule.Category ==
                          CommunicationEvidenceCategory.MatchedConfiguration))
         {
             foreach (string key in rule.Keys)
             {
-                for (var index = 0; index < lines.Length; index++)
+                if (!line.StartsWith(key, StringComparison.Ordinal) ||
+                    line.Length == key.Length ||
+                    line[key.Length] is not ('=' or ':'))
                 {
-                    string line = lines[index].TrimStart();
-                    if (!line.StartsWith(key, StringComparison.Ordinal) ||
-                        line.Length == key.Length ||
-                        line[key.Length] is not ('=' or ':'))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    AddCandidate(candidates, new(
-                        rule.Kind,
-                        ClassificationLevel.Confirmed,
-                        ConfidenceBand.High,
-                        rule.Kind == CommunicationKind.Rpc
-                            ? EvidenceRule.RpcMatchedConfiguration
-                            : EvidenceRule.HttpMatchedConfiguration,
-                        EvidenceProvenance.MatchedConfiguration,
-                        codeUnit.FilePath,
-                        $"L{codeUnit.LineStart + index}",
-                        OccurrenceCount: 1));
+                AddCandidate(candidates, new(
+                    rule.Kind,
+                    ClassificationLevel.Confirmed,
+                    ConfidenceBand.High,
+                    rule.Kind == CommunicationKind.Rpc
+                        ? EvidenceRule.RpcMatchedConfiguration
+                        : EvidenceRule.HttpMatchedConfiguration,
+                    EvidenceProvenance.MatchedConfiguration,
+                    relativePath,
+                    $"L{lineNumber}",
+                    OccurrenceCount: 1));
+            }
+        }
+    }
+
+    private static List<string> EnumerateConfigurationArtifactPaths(
+        string snapshotRoot)
+    {
+        string normalizedRoot = Path.GetFullPath(snapshotRoot);
+        if (!Directory.Exists(normalizedRoot) ||
+            (File.GetAttributes(normalizedRoot) & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new InvalidOperationException(
+                "Committed configuration snapshot is unavailable.");
+        }
+
+        var relativePaths = new List<string>();
+        var pendingDirectories = new Stack<string>();
+        pendingDirectories.Push(normalizedRoot);
+        while (pendingDirectories.TryPop(out string? directory))
+        {
+            foreach (string entryPath in Directory.EnumerateFileSystemEntries(
+                         directory,
+                         "*",
+                         SearchOption.TopDirectoryOnly))
+            {
+                FileAttributes attributes = File.GetAttributes(entryPath);
+                if ((attributes & FileAttributes.ReparsePoint) != 0)
+                {
+                    throw new InvalidOperationException(
+                        "Committed configuration snapshot contains a reparse point.");
+                }
+
+                if ((attributes & FileAttributes.Directory) != 0)
+                {
+                    pendingDirectories.Push(entryPath);
+                    continue;
+                }
+
+                string relativePath = Path.GetRelativePath(
+                        normalizedRoot,
+                        entryPath)
+                    .Replace(Path.DirectorySeparatorChar, '/');
+                if (!IsSupportedConfigurationArtifact(relativePath))
+                {
+                    continue;
+                }
+
+                relativePaths.Add(relativePath);
+                if (relativePaths.Count > _maximumSupportedArtifacts)
+                {
+                    return relativePaths;
                 }
             }
+        }
+
+        relativePaths.Sort(StringComparer.Ordinal);
+        return relativePaths;
+    }
+
+    private static bool IsSupportedConfigurationArtifact(string relativePath) =>
+        Path.GetFileName(relativePath) is string fileName &&
+        (fileName.Equals("application.properties", StringComparison.OrdinalIgnoreCase) ||
+            fileName.Equals("application.yml", StringComparison.OrdinalIgnoreCase) ||
+            fileName.Equals("application.yaml", StringComparison.OrdinalIgnoreCase));
+
+    private static int CountDirectInvocations(string line, string token)
+    {
+        if (line.Length == 0 || token.Length < 2)
+        {
+            return 0;
+        }
+
+        string expectedName = token[0] switch
+        {
+            '@' => token[1..],
+            '[' => token.EndsWith(']')
+                ? token[1..^1]
+                : token[1..],
+            _ => string.Empty,
+        };
+        if (expectedName.Length == 0)
+        {
+            return 0;
+        }
+
+        return token[0] == '@'
+            ? CountJavaAnnotationInvocations(line, expectedName)
+            : CountDotNetAttributeInvocations(line, expectedName);
+    }
+
+    private static int CountJavaAnnotationInvocations(
+        string line,
+        string expectedName)
+    {
+        var count = 0;
+        var index = 0;
+        while (true)
+        {
+            SkipWhitespace(line, ref index);
+            if (index >= line.Length || line[index] != '@')
+            {
+                return count;
+            }
+
+            index++;
+            int nameStart = index;
+            while (index < line.Length && IsIdentifierCharacter(line[index]))
+            {
+                index++;
+            }
+
+            if (index == nameStart)
+            {
+                return count;
+            }
+
+            string name = line[nameStart..index];
+            SkipWhitespace(line, ref index);
+            if (index < line.Length && line[index] == '(' &&
+                !TrySkipBalancedInvocation(line, ref index, '(', ')'))
+            {
+                return count;
+            }
+
+            if (StringComparer.Ordinal.Equals(name, expectedName))
+            {
+                count++;
+            }
+
+            SkipWhitespace(line, ref index);
+            if (index >= line.Length || line[index] != '@')
+            {
+                return count;
+            }
+        }
+    }
+
+    private static int CountDotNetAttributeInvocations(
+        string line,
+        string expectedName)
+    {
+        var count = 0;
+        var index = 0;
+        while (true)
+        {
+            SkipWhitespace(line, ref index);
+            if (index >= line.Length || line[index] != '[')
+            {
+                return count;
+            }
+
+            int contentStart = index + 1;
+            if (!TrySkipBalancedInvocation(line, ref index, '[', ']'))
+            {
+                return count;
+            }
+
+            string content = line[contentStart..(index - 1)];
+            count += CountMatchingAttributeNames(content, expectedName);
+        }
+    }
+
+    private static int CountMatchingAttributeNames(
+        string content,
+        string expectedName)
+    {
+        var count = 0;
+        var segmentStart = 0;
+        var parenthesisDepth = 0;
+        char quote = '\0';
+        var escaped = false;
+        for (var index = 0; index <= content.Length; index++)
+        {
+            if (index == content.Length)
+            {
+                count += AttributeSegmentMatches(
+                    content[segmentStart..],
+                    expectedName)
+                    ? 1
+                    : 0;
+                break;
+            }
+
+            char character = content[index];
+            if (quote != '\0')
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                }
+                else if (character == '\\')
+                {
+                    escaped = true;
+                }
+                else if (character == quote)
+                {
+                    quote = '\0';
+                }
+
+                continue;
+            }
+
+            if (character is '"' or '\'')
+            {
+                quote = character;
+            }
+            else if (character == '(')
+            {
+                parenthesisDepth++;
+            }
+            else if (character == ')')
+            {
+                if (parenthesisDepth == 0)
+                {
+                    return 0;
+                }
+
+                parenthesisDepth--;
+            }
+            else if (character == ',' && parenthesisDepth == 0)
+            {
+                count += AttributeSegmentMatches(
+                    content[segmentStart..index],
+                    expectedName)
+                    ? 1
+                    : 0;
+                segmentStart = index + 1;
+            }
+        }
+
+        return quote == '\0' && parenthesisDepth == 0 ? count : 0;
+    }
+
+    private static bool AttributeSegmentMatches(
+        string segment,
+        string expectedName)
+    {
+        var index = 0;
+        SkipWhitespace(segment, ref index);
+        int nameStart = index;
+        while (index < segment.Length && IsIdentifierCharacter(segment[index]))
+        {
+            index++;
+        }
+
+        if (!segment.AsSpan(nameStart, index - nameStart).SequenceEqual(expectedName))
+        {
+            return false;
+        }
+
+        SkipWhitespace(segment, ref index);
+        if (index == segment.Length)
+        {
+            return true;
+        }
+
+        return segment[index] == '(' &&
+            TrySkipBalancedInvocation(segment, ref index, '(', ')') &&
+            segment[index..].Trim().Length == 0;
+    }
+
+    private static bool TrySkipBalancedInvocation(
+        string value,
+        ref int index,
+        char opening,
+        char closing)
+    {
+        if (index >= value.Length || value[index] != opening)
+        {
+            return false;
+        }
+
+        var depth = 0;
+        char quote = '\0';
+        var escaped = false;
+        for (; index < value.Length; index++)
+        {
+            char character = value[index];
+            if (quote != '\0')
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                }
+                else if (character == '\\')
+                {
+                    escaped = true;
+                }
+                else if (character == quote)
+                {
+                    quote = '\0';
+                }
+
+                continue;
+            }
+
+            if (character is '"' or '\'')
+            {
+                quote = character;
+            }
+            else if (character == opening)
+            {
+                depth++;
+            }
+            else if (character == closing && --depth == 0)
+            {
+                index++;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void SkipWhitespace(string value, ref int index)
+    {
+        while (index < value.Length && char.IsWhiteSpace(value[index]))
+        {
+            index++;
         }
     }
 

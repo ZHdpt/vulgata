@@ -92,16 +92,110 @@ public sealed class PreScanCommunicationDetectionTests
     }
 
     [Fact]
+    public async Task DetectAsync_AnnotationLeadingStringArgumentDecoys_DoNotCreateConfirmedEvidence()
+    {
+        const string relativePath = "src/AnnotationArgumentDecoys.java";
+        const string source =
+            "@SuppressWarnings(\"@DubboService\")\n" +
+            "[Description(\"[ApiController]\")]\n" +
+            "public class AnnotationArgumentDecoys {}\n";
+        using var snapshot = new TemporaryDirectory();
+        WriteSnapshotFile(snapshot.Path, relativePath, source);
+        RepositoryProfileDraft profile = CreateCompletedProfileDraft(
+            relativePath,
+            source,
+            "java",
+            "AnnotationArgumentDecoys");
+        await using var lease = new TestSnapshotLease(
+            profile.ScanRun.RepositoryId,
+            profile.ScanRun.Id,
+            ProfiledRevision,
+            snapshot.Path);
+        var detector = new CommunicationKindDetector(
+            CommunicationEvidenceRuleCatalog.LoadEmbedded());
+
+        PreScanResultDraft result = await detector.DetectAsync(
+            profile,
+            ProfiledRevision,
+            lease,
+            CancellationToken.None);
+
+        Assert.Equal(ConfirmedCommunicationKinds.None, result.ConfirmedCommunicationKinds);
+        Assert.DoesNotContain(
+            result.Classifications,
+            item => item.Level == ClassificationLevel.Confirmed);
+    }
+
+    [Fact]
+    public async Task DetectAsync_ConfigOnlyCommittedArtifacts_ReturnsConfirmedRpcAndHttp()
+    {
+        using var snapshot = new TemporaryDirectory();
+        WriteSnapshotFile(
+            snapshot.Path,
+            "config/application.properties",
+            "dubbo.application.name=ledger\n");
+        WriteSnapshotFile(
+            snapshot.Path,
+            "config/application.yml",
+            "server.servlet.context-path: /ledger\n");
+        RepositoryProfileDraft profile = CreateCompletedProfileDraft();
+        await using var lease = new TestSnapshotLease(
+            profile.ScanRun.RepositoryId,
+            profile.ScanRun.Id,
+            ProfiledRevision,
+            snapshot.Path);
+        var detector = new CommunicationKindDetector(
+            CommunicationEvidenceRuleCatalog.LoadEmbedded());
+
+        PreScanResultDraft result = await detector.DetectAsync(
+            profile,
+            ProfiledRevision,
+            lease,
+            CancellationToken.None);
+
+        Assert.Equal(
+            ConfirmedCommunicationKinds.Rpc | ConfirmedCommunicationKinds.Http,
+            result.ConfirmedCommunicationKinds);
+        Assert.Contains(
+            result.Classifications,
+            item => item is
+            {
+                Kind: CommunicationKind.Rpc,
+                Rule: EvidenceRule.RpcMatchedConfiguration,
+                Provenance: EvidenceProvenance.MatchedConfiguration,
+                RelativePath: "config/application.properties",
+                Level: ClassificationLevel.Confirmed,
+                Confidence: ConfidenceBand.High,
+            });
+        Assert.Contains(
+            result.Classifications,
+            item => item is
+            {
+                Kind: CommunicationKind.Http,
+                Rule: EvidenceRule.HttpMatchedConfiguration,
+                Provenance: EvidenceProvenance.MatchedConfiguration,
+                RelativePath: "config/application.yml",
+                Level: ClassificationLevel.Confirmed,
+                Confidence: ConfidenceBand.High,
+            });
+    }
+
+    [Fact]
     public async Task DetectAsync_DirectPreparedHttpControllerClientAndConfiguration_ReturnsConfirmedHigh()
     {
         const string relativePath = "src/PreparedHttp.java";
         const string source =
             "@RestController\n" +
             "[ApiController]\n" +
+            "[HttpGet(\"ledger/{id}\")]\n" +
             "@FeignClient(name=\"ledger\")\n" +
-            "server.servlet.context-path=/ledger\n";
+            "public class PreparedHttp {}\n";
         using var snapshot = new TemporaryDirectory();
         WriteSnapshotFile(snapshot.Path, relativePath, source);
+        WriteSnapshotFile(
+            snapshot.Path,
+            "config/application.properties",
+            "server.servlet.context-path=/ledger\n");
         RepositoryProfileDraft profile = CreateCompletedProfileDraft(
             relativePath,
             source,
