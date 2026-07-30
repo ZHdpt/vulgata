@@ -358,8 +358,8 @@ def validate_workflow_state(data: Any) -> list[str]:
     _unknown(state, STATE_REQUIRED, "", errors)
     if state.get("schema_version") != "1.0":
         errors.append("schema_version must equal 1.0")
-    if state.get("execution_level") not in {"full", "standard"}:
-        errors.append("execution_level must be full or standard")
+    if state.get("execution_level") not in {"full", "standard", "expedited-mvp"}:
+        errors.append("execution_level must be full, standard, or expedited-mvp")
     _nonempty_string(state.get("bmad_story_key"), "bmad_story_key", errors)
     _nonempty_string(state.get("bmad_epic_key"), "bmad_epic_key", errors)
     _repo_path(state.get("feature_directory"), "feature_directory", errors)
@@ -376,11 +376,11 @@ def validate_workflow_state(data: Any) -> list[str]:
                 errors.append(f"active_gates.{name}")
             else:
                 _validate_gate_record(gates[name], f"active_gates.{name}", errors)
-        if state.get("execution_level") == "standard":
+        if state.get("execution_level") in {"standard", "expedited-mvp"}:
             acceptance = gates.get("acceptance-review")
             if not isinstance(acceptance, dict) or acceptance.get("status") != "invalidated":
                 errors.append(
-                    "active_gates.acceptance-review.status must be invalidated for standard execution_level"
+                    "active_gates.acceptance-review.status must be invalidated for reduced execution_level"
                 )
             elif (
                 acceptance.get("iteration") != 0
@@ -390,7 +390,7 @@ def validate_workflow_state(data: Any) -> list[str]:
                 )
             ):
                 errors.append(
-                    "active_gates.acceptance-review must be unused at iteration zero for standard execution_level"
+                    "active_gates.acceptance-review must be unused at iteration zero for reduced execution_level"
                 )
 
     history = _array(state.get("stage_history"), "stage_history", errors)

@@ -286,6 +286,49 @@ Optional Language Server Protocol integration for IDE-level code intelligence du
 - **FR-15.2:** The scanning pipeline shall optionally use LSP type information to augment LLM-based code understanding.
 - **FR-15.3:** LSP integration shall be configurable per Repository, with language-specific server configuration.
 
+### 5.16 August 15 Demonstration MVP Boundary
+
+The delivery deadline for the competition demonstration is **2026-08-15**.
+The full V1 requirements remain the product backlog, but the deadline-bound
+demonstration is accepted against the following vertical slice:
+
+- two prepared, organization-controlled demo Repositories with one known RPC
+  or HTTP Cross-Repository flow;
+- deterministic CodeGraphContext-backed profiling and a non-blocking,
+  automatically approved pre-scan result;
+- a sequential, one-Scan-at-a-time runner with one deterministic dispatch
+  path and no concurrent supersteps;
+- generation and persistence of Code Logic Documents and at least one Business
+  Logic Document for the prepared flow;
+- exact source anchors, the minimal graph/reference facts needed by the demo,
+  and database-backed retrieval sections;
+- exact configured RPC/HTTP provider-consumer matching between the two demo
+  Repositories;
+- a minimal Chinese chat experience with Business/IT prompt modes,
+  Repository/System selection for the prepared scope, grounded retrieval, and
+  citations to Documents and source lines; and
+- one clean-database end-to-end rehearsal and one final Docker image build.
+
+The following are explicitly deferred beyond the August 15 demonstration:
+
+- pre-scan LLM question generation, seven-day review lifecycle, and the full
+  Human-in-the-Loop review surface;
+- concurrent scans, superstep concurrency, leases, state replay, advanced
+  retry, and dynamic provider failover;
+- Worker Agent database tools and advanced uncertainty-resolution policies;
+- third-party library on-demand scanning and unknown-library inference;
+- message-queue, file/storage, page-navigation, object-flow, Service Topology
+  MCP, and Prompt Workbench detection;
+- the full notification center, SignalR dashboard, live graph, graph filters,
+  and graph detail interactions;
+- chat file upload and autonomous scope determination; and
+- git monitoring and incremental re-scan.
+
+This deadline boundary does not permit a failing delivery branch. Deferred
+edge cases are removed from the August acceptance boundary and documented as
+known limitations. Included tests, authorization checks, migrations, the Web
+build, and the final demonstration path must be green.
+
 ## 6. Non-Functional Requirements
 
 ### 6.1 Performance

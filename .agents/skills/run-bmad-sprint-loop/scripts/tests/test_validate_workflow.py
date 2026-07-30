@@ -180,7 +180,17 @@ class WorkflowValidationTests(unittest.TestCase):
 
         state["active_gates"]["acceptance-review"]["status"] = "pending"
         errors = validate_workflow_state(state)
-        self.assertTrue(any("standard execution_level" in error for error in errors))
+        self.assertTrue(any("reduced execution_level" in error for error in errors))
+
+    def test_expedited_mvp_execution_level_uses_one_combined_quality_gate(self):
+        state = valid_state()
+        state["execution_level"] = "expedited-mvp"
+        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
+        self.assertEqual([], validate_workflow_state(state))
+
+        state["active_gates"]["acceptance-review"]["status"] = "pending"
+        errors = validate_workflow_state(state)
+        self.assertTrue(any("reduced execution_level" in error for error in errors))
 
     def test_sprint_loop_skill_defines_standard_level_without_unsafe_shortcuts(self):
         skill = (
@@ -202,6 +212,21 @@ class WorkflowValidationTests(unittest.TestCase):
         ]:
             self.assertIn(marker, skill)
         self.assertIn("standard-level combined acceptance-and-quality review", quality_agent)
+
+    def test_sprint_loop_skill_closes_the_expedited_mvp_exception(self):
+        skill = (
+            self.REPOSITORY_ROOT / ".agents/skills/run-bmad-sprint-loop/SKILL.md"
+        ).read_text(encoding="utf-8").lower()
+
+        for marker in [
+            "expedited-mvp",
+            "story 4.3 and epic 11",
+            "2026-08-15 23:59:59 asia/shanghai",
+            "three planned checkpoints",
+            "no failing test is committed",
+            "planned-change authorization",
+        ]:
+            self.assertIn(marker, skill)
 
     def test_every_nonterminal_stage_accepts_a_well_formed_active_record(self):
         stages = ["context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze",

@@ -25,7 +25,7 @@ The workflow does not fork installed skills. The project skills dispatch them by
 
 When authorities conflict, the orchestrator stops and reports the conflict. It does not weaken a Constitution requirement, silently override an ADR, or substitute noncanonical terms such as “Cross-System” for **Cross-Repository**.
 
-Each story records one execution level. Full is the default and uses every independent judgment and analysis gate. Explicitly requested Standard is limited to bounded deterministic work under accepted authorities; it keeps concise SpecKit artifacts, TDD, one combined independent acceptance-and-quality review, conditional E2E, final verification, planned-change authorization, and Git/checkpoint safety.
+Each story records one execution level. Full is the default and uses every independent judgment and analysis gate. Explicitly requested Standard is limited to bounded deterministic work under accepted authorities; it keeps concise SpecKit artifacts, TDD, one combined independent acceptance-and-quality review, conditional E2E, final verification, planned-change authorization, and Git/checkpoint safety. The temporary `expedited-mvp` level is separately allowlisted to Story 4.3 and Epic 11 under the dated August 15 exception; it is not a weaker interpretation of Standard.
 
 ## Atomic Identity
 
@@ -71,13 +71,13 @@ Two thin skills control the topology:
 
 1. The root resolves a BMad story and records branch, preflight `HEAD`, repository/Git/worktree identities, porcelain status, exact owned paths, and unrelated paths. After context succeeds it writes the canonical story-keyed activation record and checkpoints `ready-for-dev → in-progress` before specification begins, atomically lifting a `backlog` parent epic to `in-progress` when applicable.
 2. `story-context-synthesizer` emits a cited brief, separating sourced facts from inference.
-3. `spec-author` runs `speckit-specify` and returns the created feature path/artifacts without writing workflow state or BMad mappings. The root initializes workflow state and both mapping sides atomically. Full dispatches `spec-judge`; Standard performs root contract validation.
-4. `plan-architect` runs `speckit-plan`. Full always dispatches `plan-judge`; Standard dispatches it when planned-change authorization or material architecture/testability uncertainty applies.
+3. `spec-author` runs `speckit-specify` and returns the created feature path/artifacts without writing workflow state or BMad mappings. The root initializes workflow state and both mapping sides atomically. Full dispatches `spec-judge`; Standard and `expedited-mvp` perform root contract validation.
+4. `plan-architect` runs `speckit-plan`. Full always dispatches `plan-judge`; Standard dispatches it when planned-change authorization or material architecture/testability uncertainty applies. `expedited-mvp` always retains independent plan review.
 5. `task-author` runs `speckit-tasks` with tests before implementation tasks.
-6. In Full, `artifact-analyst` immediately runs read-only `speckit-analyze` across `spec.md`, `plan.md`, and `tasks.md`. Blocking remediation requires explicit user approval; approved upstream edits regenerate all dependent downstream artifacts before analysis reruns. Standard instead requires recorded eligibility and root acceptance/task coverage validation.
+6. In Full, `artifact-analyst` immediately runs read-only `speckit-analyze` across `spec.md`, `plan.md`, and `tasks.md`. Blocking remediation requires explicit user approval; approved upstream edits regenerate all dependent downstream artifacts before analysis reruns. Standard instead requires recorded eligibility and root acceptance/task coverage validation. `expedited-mvp` requires the dated authority plus an accepted, scope-cut delivery definition.
 7. Fresh `tdd-implementer` children deliver bounded task groups with observed red and green evidence.
-8. When all implementation groups pass, the root checkpoints `in-progress → review`. Full dispatches fresh acceptance and quality reviewers over the same boundary. Standard dispatches one fresh quality reviewer under the combined acceptance-and-quality contract.
-9. The root applies the E2E decision matrix. `e2e-runner` may edit test code but never production code. Any tracked test edit changes the reviewed boundary and reruns the applicable Full axes or Standard combined review before E2E can advance.
+8. When all implementation groups pass, the root checkpoints `in-progress → review`. Full dispatches fresh acceptance and quality reviewers over the same boundary. Standard and `expedited-mvp` dispatch one fresh quality reviewer under the combined acceptance-and-quality contract.
+9. The root applies the E2E decision matrix or the expedited exception's final-slice E2E rule. `e2e-runner` may edit test code but never production code. Any tracked test edit changes the reviewed boundary and reruns the applicable Full axes or combined review before E2E can advance.
 10. The root runs story verification, records evidence, transitions `review → done`, and continues the queue.
 
 Full uses:
@@ -88,7 +88,9 @@ speckit-specify -> speckit-plan -> speckit-tasks -> speckit-analyze -> speckit-i
 
 Independent specification and plan judges surround this flow; they never replace or relocate `speckit-analyze`.
 
-Standard uses `speckit-specify -> speckit-plan -> conditional plan-review -> speckit-tasks -> speckit-implement`. Its omitted stages are an eligibility-controlled reduction, not permission to improvise a third flow.
+Standard uses `speckit-specify -> speckit-plan -> conditional plan-review -> speckit-tasks -> speckit-implement`. Its omitted stages are an eligibility-controlled reduction.
+
+`expedited-mvp` uses `context -> speckit-specify -> speckit-plan -> plan-review -> planned-change authorization when triggered -> speckit-tasks -> TDD implementation -> combined quality-review -> conditional or final-slice E2E -> verify -> complete`. Its scope, expiry, three planned checkpoints, evidence-capture limit, and non-waivable quality floor come only from [the August 15 exception](august-15-expedited-mvp-exception.md).
 
 ## Gate Decision Policy
 

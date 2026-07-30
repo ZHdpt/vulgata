@@ -40,7 +40,24 @@ Resolve the dependency graph before startup. Reorder prerequisites already insid
 
 ## Execution Levels
 
-Resolve one execution level independently for every selected story. Full is the default when the user omits a level. Full may always be requested. `Standard` must be explicitly requested, assessed before activation, persisted as `execution_level: "standard"` in `workflow-state.json`, and recorded in the BMad development record. An epic-level Standard request applies the eligibility test separately to every story.
+Resolve one execution level independently for every selected story. Full is the default when the user omits a level. Full may always be requested. `Standard` must be explicitly requested, assessed before activation, persisted as `execution_level: "standard"` in `workflow-state.json`, and recorded in the BMad development record. An epic-level Standard request applies the eligibility test separately to every story. `expedited-mvp` is a separate, temporary level available only under the dated authority below; it is never an alias for Standard.
+
+### August 15 Expedited MVP Authority
+
+`expedited-mvp` is authorized by
+`docs/agent-workflow/august-15-expedited-mvp-exception.md`. Read that document
+completely before selecting or resuming this level.
+
+It is permitted only for Story
+`4-3-conservative-pre-scan-gate-and-communication-type-detection` and Epic 11
+Stories `11-1` through `11-5`. It expires when Epic 11 completes or at
+`2026-08-15T23:59:59+08:00`, whichever occurs first. Persist
+`execution_level: "expedited-mvp"` in workflow state and the BMad development
+record. Outside this closed story allowlist and lifetime, stop; never relabel
+risky work Standard or improvise a deadline hybrid.
+
+In plain terms, this authority covers Story 4.3 and Epic 11 only and ends no
+later than 2026-08-15 23:59:59 Asia/Shanghai.
 
 ### Standard Eligibility
 
@@ -60,6 +77,7 @@ Standard never permits bypassing a planned-change authorization, Constitution/AD
 |---|---|---|---|---|
 | Full | Default or explicit | Fresh spec and plan judges | `speckit-analyze` | Separate acceptance and quality reviewers |
 | Standard | Explicit and eligible per story | Conditional plan judge; planned-change authorization remains mandatory | Root acceptance/task/test coverage validation | One fresh combined acceptance-and-quality reviewer |
+| expedited-mvp | Explicit approved deadline allowlist only | Conditional plan judge; planned-change authorization remains mandatory | Root acceptance/task/test/security/migration coverage validation | One fresh combined acceptance-and-quality reviewer |
 
 ### Level Flows
 
@@ -81,6 +99,16 @@ context
 Standard still creates one mapped SpecKit feature with concise `spec.md`, `plan.md`, and `tasks.md`. The root validates acceptance coverage, test-first task ordering, repository invariants, and unresolved placeholders before implementation. Standard omits `spec-review`, `speckit-analyze`, and the separate `acceptance-review`; set `active_gates.acceptance-review.status` to `invalidated`, iteration zero, with no verdict. Use a fresh `quality-reviewer` over the pinned boundary for the Standard-level combined acceptance-and-quality review. Its raw inputs include the BMad story, concise SpecKit artifacts, repository authorities, implementation/tests, and evidence.
 
 Run `plan-review` in Standard when the plan triggers the repository's planned-change authorization or the root finds a material architecture/testability uncertainty. A clean plan judge `ACCEPT` does not replace the mandatory user approval. For other eligible Standard stories, the root's mechanical plan/task validation is sufficient.
+
+`expedited-mvp` follows the same stage sequence as Standard, but its authority
+comes from the closed deadline allowlist rather than Standard eligibility. It
+keeps concise SpecKit artifacts, conditional plan review, mandatory
+planned-change authorization, TDD, one combined `quality-review`, conditional
+E2E, and final verification. It omits `spec-review`, `speckit-analyze`, and the
+separate `acceptance-review`; record each omitted gate as invalidated at
+iteration zero. Follow the three planned checkpoints, evidence limit, final
+clean-database E2E/Docker placement, quality floor, correction loop, and expiry
+rules in the exception document.
 
 ## Preflight and Ownership
 
@@ -136,7 +164,7 @@ Analysis approval is limited to the presented remediation. It cannot authorize p
 
 ## Planned-Change Authorization
 
-For either level, after an independent `plan-review` accepts and before task generation, pause when `AGENTS.md` identifies a planned-change trigger. The request must name the trigger, explain the proposed approach and effects, state the root's implementation intention, and cite the affected plan and PRD material. Approval authorizes only progression to task generation; it never waives later TDD, review, E2E, security, verification, or Git gates. Standard eligibility cannot override this authorization.
+For every execution level, after an independent `plan-review` accepts and before task generation, pause when `AGENTS.md` identifies a planned-change trigger. The request must name the trigger, explain the proposed approach and effects, state the root's implementation intention, and cite the affected plan and PRD material. Approval authorizes only progression to task generation; it never waives later TDD, review, E2E, security, verification, or Git gates. Standard eligibility and the expedited authority cannot override this authorization.
 
 ## Direct-Child Dispatch
 
@@ -183,7 +211,7 @@ For Full, dispatch fresh `acceptance-reviewer` and `quality-reviewer` in paralle
 
 The BMad story remains `review` during correction. Never defer, waive, or “risk accept” a Critical/High finding to reach `done`.
 
-For Standard, dispatch one fresh `quality-reviewer` with the Standard-level combined acceptance-and-quality contract. It checks every BMad acceptance criterion and SpecKit/task outcome plus correctness, security, edge cases, tests, architecture seams, and regression risk. `REVISE` returns raw findings to a fresh `tdd-implementer`; changed behavior requires regression RED, then the combined review reruns on the new boundary. The third `REVISE` or any `BLOCKED` stops for user direction.
+For Standard or `expedited-mvp`, dispatch one fresh `quality-reviewer` with the applicable combined acceptance-and-quality contract. It checks every included BMad acceptance criterion and SpecKit/task outcome plus correctness, security, edge cases, tests, architecture seams, regression risk, and truthful known limitations. `REVISE` returns raw findings to a fresh `tdd-implementer`; changed behavior requires regression RED, then the combined review reruns on the new boundary. The third `REVISE` or any `BLOCKED` stops for user direction.
 
 ## Conditional E2E
 
@@ -211,11 +239,16 @@ Adjacent artifact-only checkpoints may combine only when no useful recovery boun
 
 For Standard, combine specification, plan, any required accepted plan verdict/approval, tasks, mapping, and state into one pre-implementation checkpoint. Keep story prepared, story activated, implementation recovery boundaries, ready-for-review, correction when needed, and story complete as distinct checkpoints. Do not create separate specification/plan/tasks artifact-only commits.
 
+For `expedited-mvp`, use exactly the three planned checkpoints defined by its
+exception document: accepted delivery definition, reviewed candidate, and
+completed story. A real correction may add one recovery checkpoint. Do not
+create audit-only, freeze, manifest, or ledger checkpoints.
+
 ## Resume and Invalidation
 
 On resume, validate BMad state, canonical activation, unique two-way mapping, branch/Git/worktree identity, ownership, artifact hashes, exact review boundary, checkpoint trailer uniqueness, and ancestor relationship to `HEAD`. Permit the documented legacy fallback only for pre-workflow `in-progress`/`review` stories with an explicit, valid, unique mapping.
 
-Unchanged completed stages are no-ops. Restart at the earliest invalid owner: source/context change at `context`; spec at `specify`; plan at `plan`; tasks at `tasks`; Full analysis at `analyze`; implementation/test at `implement`; tracked E2E test at the applicable Full reviews or Standard combined review; verification boundary at `verify`. Preserve prior durable records as invalidated/superseded history and clear only dependent later claims. Hash/boundary invalidation is not a judge `REVISE` and does not increment the three-revision counter.
+Unchanged completed stages are no-ops. Restart at the earliest invalid owner: source/context change at `context`; spec at `specify`; plan at `plan`; tasks at `tasks`; Full analysis at `analyze`; implementation/test at `implement`; tracked E2E test at the applicable Full reviews or reduced-level combined review; verification boundary at `verify`. Preserve prior durable records as invalidated/superseded history and clear only dependent later claims. Hash/boundary invalidation is not a judge `REVISE` and does not increment the three-revision counter.
 
 Record recoverable agent/tool failures without advancing and retry the same stage with a fresh child when safe. Stop for divergent history, destructive recovery, inseparable ownership, authority conflict, unavailable infrastructure, unsafe external action, or reserved human decisions. Report the canonical checkpoint ID/SHA, active `HEAD`, and identities; resume only after separately authorized user-chosen recovery and a full new preflight. If divergence coexists with a dirty/inseparable boundary, preserve every byte and stop without writing there. Never repair resume state with reset, rebase, force-push, silent branch switching, implicit merge/cherry-pick, or guessed mappings.
 
@@ -225,7 +258,16 @@ Before assembling Full completion, require: every task/checklist complete; accep
 
 Before assembling Standard completion, require: eligibility still true; every concise spec/plan/task acceptance item complete; any required plan review and planned-change authorization durable; observed task-group RED/GREEN evidence; the combined `quality-review` accepted on the current boundary; required E2E passed or has a complete current-boundary coverage override; story-specific tests, web build, and full tests passing; unchanged review boundary; and durable evidence.
 
-For either level, stage explicit completion paths containing provisional `stage: complete`, `review -> done`, and a pending final checkpoint ID; commit with its trailer; resolve that ID to the new SHA; and trust/report completion only after unique trailer binding and ancestry validation succeed.
+Before assembling `expedited-mvp` completion, require: its story allowlist and
+lifetime still apply; every included acceptance item is complete; deferred
+items are explicitly recorded and not claimed complete; required plan review
+and planned-change authorization are durable; observed RED/GREEN evidence
+exists; the combined `quality-review` accepts the current boundary; the
+exception's story-level or final-slice E2E rule is satisfied; included tests,
+migrations, authorization/security checks, Web build, and verification pass;
+no failing test is committed; and the reviewed boundary is unchanged.
+
+For every execution level, stage explicit completion paths containing provisional `stage: complete`, `review -> done`, and a pending final checkpoint ID; commit with its trailer; resolve that ID to the new SHA; and trust/report completion only after unique trailer binding and ancestry validation succeed.
 
 Report the completed story, feature directory, local checkpoint SHAs, tests/build, E2E decision, review verdicts, residual nonblocking findings, and next queued story. Do not claim epic completion; use `$close-bmad-epic` after all epic stories qualify.
 
@@ -235,18 +277,20 @@ Report the completed story, feature directory, local checkpoint SHAs, tests/buil
 |---|---|
 | “BMad context/prototype is enough.” | Cite it as input; still create one feature and run the full SpecKit cycle. |
 | “Call it Standard to skip a risky gate.” | Standard is eligibility-based; an ineligible story stops and requires explicit `Standard -> Full` authorization. |
-| “Skip fresh judges for the deadline.” | Full keeps every judge; Standard keeps conditional plan judgment and its independent combined final review. |
+| “Skip fresh judges for the deadline.” | Full keeps every judge; Standard keeps its gates; only the closed `expedited-mvp` authority may use its combined review. |
+| “The deadline makes this risky story Standard.” | Risky work is never Standard. Use `expedited-mvp` only for its closed allowlist and lifetime, otherwise stop. |
+| “Leave the deferred edge case RED.” | RED is transient. Remove deferred behavior from deadline acceptance and record a limitation; every committed test stays green. |
 | “Judges replace analyze.” | Full runs read-only analysis after tasks; Standard omits it only under its recorded eligibility and coverage contract. |
 | “Tests can be added later/where practical.” | Observe RED before each changed behavior's production code. |
 | “Meaningful units/one big commit are simpler.” | Use gate checkpoints; isolate stories and unrelated edits. |
 | “Include the whole worktree.” | Stage explicit owned paths only; stop if inseparable. |
 | “Passing tests make review optional.” | Full requires both axes; Standard requires its combined review; both require the E2E decision and verification. |
-| “A High finding can be accepted/deferred.” | Correct it with fresh TDD work and rerun the applicable Full axes or Standard combined review. |
+| “A High finding can be accepted/deferred.” | Correct it with fresh TDD work and rerun the applicable Full axes or reduced-level combined review. |
 | “Use `ready-for-review`.” | Use only BMad's validated status vocabulary; the status is `review`. |
 | “Ask the user after every AI review.” | A validated independent `ACCEPT` is the stage approval; do not duplicate it. |
 | “Passing tests are enough to close the epic.” | Verification and the current architecture audit are separate mandatory gates. |
 | “Executive acceptance replaces the audit/architecture can wait.” | Never close the epic without a current audit and approved Strong/ADR dispositions. |
 
-Red flags: unrecorded or changed execution level; claiming Standard without eligibility evidence; bypassing planned-change authorization; skipping or reordering a level-required stage; Full implementation before analysis; editing after a pinned review without invalidation; workers staging/committing; `git add -A`; mixed-story commits; invented status; marking `done` with unresolved Critical/High; claiming completion from tests alone; silently repairing Git history; or asking for duplicate approval after validated `ACCEPT`. Stop and restore the contract.
+Red flags: unrecorded or changed execution level; claiming Standard without eligibility evidence; applying `expedited-mvp` outside its story/date authority; bypassing planned-change authorization; skipping or reordering a level-required stage; Full implementation before analysis; leaving committed tests RED; claiming deferred work complete; editing after a pinned review without invalidation; workers staging/committing; `git add -A`; mixed-story commits; invented status; marking `done` with unresolved Critical/High; claiming completion from tests alone; silently repairing Git history; or asking for duplicate approval after validated `ACCEPT`. Stop and restore the contract.
 
 Common mistakes are trusting summaries instead of raw artifacts, dispatching an intermediate orchestrator, combining review axes, letting E2E edit production, treating test-only edits as review-neutral, committing before evidence is durable, and forgetting dependent regeneration after analysis remediation.

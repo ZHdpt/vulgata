@@ -1,5 +1,5 @@
 # generated: 2026-07-10
-# last_updated: 2026-07-10
+# last_updated: 2026-07-30
 # project: vulgata
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,11 +35,26 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-07-10
-last_updated: 2026-07-19
+last_updated: 2026-07-30
 project: vulgata
 project_key: NOKEY
 tracking_system: file-system
 story_location: docs/bmad/implementation-artifacts
+
+delivery_scope:
+  name: august-15-demonstration-slice
+  deadline: 2026-08-15
+  execution_level: expedited-mvp
+  active_sequence:
+    - 4-3-conservative-pre-scan-gate-and-communication-type-detection
+    - epic-11
+  deferred_until_after_deadline:
+    - epic-5
+    - epic-6
+    - epic-7
+    - epic-8
+    - epic-9
+    - epic-10
 
 development_status:
   pre-epic-gate: done
@@ -68,8 +83,15 @@ development_status:
   epic-4: in-progress
   4-1-codegraph-integration-and-code-unit-extraction: done
   4-2-language-and-framework-detection: done
-  4-3-pre-scan-agent-question-gate-and-communication-type-detection: backlog
+  4-3-conservative-pre-scan-gate-and-communication-type-detection: backlog
   epic-4-retrospective: optional
+  epic-11: backlog
+  11-1-minimal-knowledge-store-and-retrieval-projection: backlog
+  11-2-sequential-scan-runner-and-typed-agent-dispatch: backlog
+  11-3-pass-1-and-pass-2-demo-document-generation: backlog
+  11-4-exact-rpc-http-cross-repository-demo-resolution: backlog
+  11-5-demo-chat-citations-and-release-gate: backlog
+  epic-11-retrospective: optional
   epic-5: backlog
   5-1-document-version-and-source-anchor-store: backlog
   5-2-graph-edge-endpoint-and-uncertainty-store: backlog
@@ -105,6 +127,7 @@ development_status:
   8-4-signalr-state-replay-and-authorization: backlog
   8-5-live-knowledge-graph-projection: backlog
   8-6-graph-filtering-details-and-error-states: backlog
+  8-7-pre-scan-llm-question-and-approval-lifecycle: backlog
   epic-8-retrospective: optional
   epic-9: backlog
   9-1-chat-page-shell-and-mode-switching: backlog

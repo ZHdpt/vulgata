@@ -32,7 +32,7 @@ Severity is evidence-based and never downgraded to escape a loop. Every finding 
 - `analyze`: read-only consistency and coverage across `spec.md`, `plan.md`, and `tasks.md` immediately after task generation.
 - `acceptance-review`: missing, partial, incorrect, and out-of-scope behavior against BMad and SpecKit.
 - `quality-review`: standards, correctness, security, edge cases, test quality, architecture seams, and regression risk.
-- Standard combined `quality-review`: all ordinary quality concerns plus missing, partial, incorrect, and out-of-scope behavior against the BMad story and concise SpecKit artifacts.
+- Standard or `expedited-mvp` combined `quality-review`: all ordinary quality concerns plus missing, partial, incorrect, and out-of-scope behavior against the BMad story and concise SpecKit artifacts. Expedited review judges only the accepted deadline scope and verifies every deferred item is truthfully recorded rather than claimed complete.
 - Epic architecture review: Strong recommendations and ADR conflicts at the current commit.
 
 ## Raw-Finding Handoff

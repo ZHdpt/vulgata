@@ -334,9 +334,14 @@ Before any scanning infrastructure is built, validate that the Microsoft Agent F
 **Architecture:** Isolated prototype — instantiate the deterministic Orchestrator harness and a Worker Agent execution adapter, dispatch mock typed jobs, verify tool-call wiring and result collection. Document fallback options (direct OpenAI SDK, LangChain.NET, custom worker adapter) with migration effort estimates.
 
 ### Epic 4: Pre-Scan Profiling
-Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, apply a scan filter, and derive deterministic communication-kind hypotheses. Ordinary low-confidence hints do not block the scan. A bounded pre-scan LLM pass may phrase up to five questions only for blocking ambiguities that could exclude important source, omit large areas, fail framework detection, or require unsupported resource interpretation. If review is not completed within the seven-day V1 review window, the pre-scan gate continues with conservative scope and records a warning.
+Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, apply a scan filter, and derive deterministic communication-kind hypotheses. For the August 15 demonstration, all profiling outcomes continue conservatively to an automatically approved pre-scan handoff; the LLM question generator and Human-in-the-Loop review lifecycle are deferred.
 **FRs covered:** FR-4.1
-**Architecture:** CodeGraphContextProvider HTTP integration, Code Unit data model (file path, line range, language, framework), scan filter rules, deterministic communication-kind hypotheses, bounded pre-scan question surface, and a persisted approval/handoff state. Output: a structured pre-scan result ready for the Epic 5 deterministic Orchestrator; Epic 4 does not implement the Scan Coordinator queue or Worker Agent dispatch.
+**Architecture:** CodeGraphContextProvider HTTP integration, Code Unit data model (file path, line range, language, framework), scan filter rules, deterministic communication-kind hypotheses, and a persisted automatically approved handoff. Output: a structured pre-scan result ready for the deadline delivery slice; Epic 4 does not implement the Scan Coordinator queue or Worker Agent dispatch.
+
+### Epic 11: August 15 Demonstration Slice
+Deliver one prepared two-Repository path from source profiling through sequential Worker Agent generation, exact RPC/HTTP Cross-Repository matching, database-backed retrieval, and a cited Business/IT chat answer. This is the deadline delivery overlay; it implements deliberately narrow seams that later Epics 5–10 deepen rather than duplicate.
+**FRs covered for the demonstration:** FR-4.2–4.8 (sequential/minimal subset), FR-5.1–5.5 and FR-5.8 (configured RPC/HTTP subset), FR-6.1–6.3 (exact prepared-flow subset), FR-11.1–11.6 (prepared-scope subset), NFR-2.3, NFR-3.3, NFR-4.1, NFR-6.1
+**Architecture:** PostgreSQL-backed minimal Document/source/reference/retrieval store; one-Scan-at-a-time deterministic runner; one typed Worker Agent path for Pass 1 and Pass 2; configured exact RPC/HTTP matching for two prepared Repositories; Chinese Business/IT chat with citations; one final clean-database E2E and Docker build.
 
 ### Epic 5: Core Single Repository Scanning
 The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, deterministic Orchestrator planning the per-Repository workflow, and LLM-powered Worker Agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties and dispatch sites; Epic 5 owns same-Repository resolution and best-effort matching against already-scanned Repositories, while final Cross-Repository Resolution is completed in Epic 7 after full detection evidence exists. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
@@ -1008,11 +1013,14 @@ So that Worker Agents receive accurate language context for prompt generation.
 **Then** the file shall be tagged as language "Unknown" and filtered out of the scan with status `Filtered`
 **And** the profiling summary shall include a count of skipped unknown files with their paths for audit
 
-#### Story 4.3: Pre-Scan Agent Question Gate & Communication Type Detection
+#### Story 4.3: Conservative Pre-Scan Gate & Communication Type Detection
 
 As a **SystemOwner**,
-I want the system to detect cross-repo communication types deterministically after profiling and surface clarifying questions via an LLM agent only for detected ambiguities,
-So that I can confirm communication patterns and resolve uncertainties before document generation begins.
+I want the system to detect Cross-Repository communication kinds
+deterministically after profiling and persist a conservative automatically
+approved pre-scan handoff,
+So that the August 15 Scan can proceed without treating weak hints as confirmed
+facts or waiting for an LLM/Human-in-the-Loop cycle.
 
 **Acceptance Criteria:**
 
@@ -1026,43 +1034,134 @@ So that I can confirm communication patterns and resolve uncertainties before do
 **When** the results are compiled
 **Then** high-confidence detections (framework annotations found, config entries matched) shall be automatically marked as confirmed and seeded into the Communication Pattern Catalog for the System
 **And** ordinary low-confidence hints (only import found without config, weak URL or path hints) shall be retained as conservative, auditable scan metadata without blocking the scan
-**And** only blocking ambiguities that could exclude important source, omit large areas, fail framework detection, or require unsupported resource interpretation shall require human confirmation
+**And** blocking ambiguities shall be converted to conservative scope warnings for the August 15 demonstration rather than invoking an LLM or waiting for human review
+**And** warnings shall not be promoted to confirmed code-derived facts
 
-**Given** the deterministic pre-scan gate identifies one or more blocking ambiguities
-**When** an LLM agent reviews the profiling summary
-**Then** the LLM agent shall only review items the deterministic pass flagged as ambiguous
-**And** shall surface up to 5 clarifying questions covering: (a) ambiguous language/framework detections that could fail framework detection, (b) communication-type ambiguity that changes conservative scan scope, and (c) structural decisions that could omit large or important source areas
-**And** the LLM agent shall phrase questions only; it shall not classify evidence, change confidence, approve a scan, or dispatch a Worker Agent
+**Given** pre-scan profiling and deterministic communication-kind detection complete
+**When** the August 15 pre-scan gate runs
+**Then** the persisted result shall transition directly to `pre_scan_approved` without an LLM call or human wait
+**And** it shall contain confirmed high-confidence types, conservative hints and warnings, evidence locators, and provenance as bounded supplementary scan metadata
+**And** it shall be exposed through a typed handoff without implementing a Scan Coordinator queue, Worker Agent lease, retry policy, or dispatch
+**And** the scan log shall record "Pre-scan approved with conservative warnings — proceeding to the sequential demo runner"
 
-**Given** the question gate displays results to the SystemOwner
-**When** they view the Repository in 系统管理
-**Then** blocking communication-type ambiguities shall each have a toggle: ✅ 确认 (Confirm) or ⛔ 排除 (Exclude)
-**And** the SystemOwner shall be able to add communication types the detection missed via "添加通信类型"
-**And** confirmed communication types shall seed the Communication Pattern Catalog (consumed in Epic 7)
-**And** the repo status shall show "等待回答" with the question count
-**And** the bell icon shall increment its notification badge count (UX-DR-15, global HITL notification)
+**Deferred beyond the August 15 demonstration:** bounded LLM question generation, the five-question limit, confirm/exclude/add interactions, the `等待回答` state, the bell badge, the seven-day review lifecycle, and manual `确认并开始扫描` approval. These move to post-deadline Story 8.7 with the existing Epic 8 HITL stories and are not claimed complete by Story 4.3.
 
-**Given** the SystemOwner answers all blocking questions, resolves all blocking communication-type ambiguities, and clicks "确认并开始扫描" (Confirm and Start Scan)
-**When** the approval is registered
-**Then** the persisted pre-scan result shall transition to `pre_scan_approved` and become available to the Epic 5 deterministic Orchestrator handoff
-**And** the answers and confirmed communication types shall be stored as scan metadata, available to Worker Agents as supplementary context
-**And** Story 4.3 shall not implement the Epic 5 Scan Coordinator queue, Worker Agent leases, retry policy, or dispatch
+---
 
-**Given** the SystemOwner does not resolve blocking questions within 7 days
-**When** the V1 review window elapses
-**Then** the pre-scan gate shall continue with conservative scope and transition to `pre_scan_approved`
-**And** unresolved review items shall remain auditable warnings and shall not be promoted to confirmed code-derived facts
-**And** the SystemOwner shall be notified "预扫描等待已超时，系统已按保守范围继续" on next visit
+### Epic 11: August 15 Demonstration Slice
 
-**Given** pre-scan profiling completes with zero blocking questions
-**When** the question gate phase runs
-**Then** high-confidence communication types shall be auto-confirmed, ordinary low-confidence hints shall be retained conservatively, and the persisted result shall transition directly to `pre_scan_approved` without waiting for human input
-**And** the approved result shall be exposed to the future Epic 5 deterministic Orchestrator handoff without implementing Worker Agent dispatch in Story 4.3
-**And** the scan log shall record "All communication types auto-confirmed; no questions generated — proceeding to scan"
+This deadline overlay delivers one prepared two-Repository business path. Its
+minimal interfaces become foundations for the post-demo Epics 5–10; it does
+not mark their broader acceptance criteria complete.
+
+#### Story 11.1: Minimal Knowledge Store & Retrieval Projection
+
+As a **SystemOwner**,
+I want generated Documents, source anchors, essential references, and retrieval sections stored durably,
+So that the demonstration can persist and retrieve a traceable Cross-Repository business flow.
+
+**Acceptance Criteria:**
+
+**Given** the VulgataDbContext is migrated
+**When** the deadline knowledge-store migration is applied
+**Then** it shall add the minimum Logical Document, immutable Document Version, source-anchor, REFERENCES/GENERATED_FROM relationship, flow-evidence, `index_entries`, and `document_sections` shapes required by the prepared demo
+**And** entity configuration shall remain in Infrastructure with indexed foreign keys and Repository-scoped authorization paths
+**And** a clean database shall migrate successfully with no pending model changes
+
+**Given** a Code Logic Document or Business Logic Document is committed
+**When** its retrieval projection is rebuilt
+**Then** its current version, source anchors, essential relationships, Markdown/content payload, and searchable sections shall be retrievable without reading `index.md` as canonical state
+**And** superseded immutable versions shall not be deleted or mutated
+
+#### Story 11.2: Sequential Scan Runner & Typed Agent Dispatch
+
+As a **SystemOwner**,
+I want one prepared Repository Scan to run sequentially from approved pre-scan metadata into typed Worker Agent jobs,
+So that the demonstration has a reliable execution path without unfinished concurrency infrastructure.
+
+**Acceptance Criteria:**
+
+**Given** a Repository has a `pre_scan_approved` result
+**When** the SystemOwner starts the deadline Scan
+**Then** deterministic application code shall create one durable Scan execution, process one Repository at a time, and dispatch typed jobs sequentially
+**And** the runner shall persist enough state to report current phase, success, and failure after a server restart
+**And** the runner shall not implement concurrent supersteps, dynamic leases, state replay, provider failover, or multi-Repository scheduling
+
+**Given** a Worker Agent job fails
+**When** the sequential runner records the failure
+**Then** the Scan shall stop with a durable, Chinese user-visible failure rather than continue from partially trusted output
+**And** no generated Document Version shall be committed from an invalid result
+
+#### Story 11.3: Pass 1 & Pass 2 Demo Document Generation
+
+As a **SystemOwner**,
+I want bounded Worker Agents to generate technical and business explanations for the prepared flow,
+So that the demonstration produces source-grounded Code Logic Documents and an understandable Business Logic Document.
+
+**Acceptance Criteria:**
+
+**Given** the sequential runner dispatches a Pass 1 job
+**When** the Worker Agent receives a bounded Code Unit packet
+**Then** it shall return schema-validated Code Logic Document content, source claims, essential local references, and communication evidence
+**And** prompts shall be embedded resources and only the source/context required for the job shall be transmitted
+
+**Given** the prepared Pass 1 Documents and exact flow evidence exist
+**When** the runner dispatches the single prepared Pass 2 flow
+**Then** one schema-validated Business Logic Document shall explain the business process in language suitable for a non-technical reviewer
+**And** it shall persist GENERATED_FROM provenance to the Code Logic Document Versions actually used
+**And** bounded refinement, cross-verification waves, partial-failure continuation, and general flow clustering shall remain deferred
+
+#### Story 11.4: Exact RPC/HTTP Cross-Repository Demo Resolution
+
+As a **SystemOwner**,
+I want one configured RPC or HTTP communication path resolved across the two prepared Repositories,
+So that the demonstration can trace a real business flow across a Repository boundary.
+
+**Acceptance Criteria:**
+
+**Given** a version-controlled demo communication configuration identifies the allowed RPC interface or HTTP route patterns
+**When** Pass 1 results from both prepared Repositories are available
+**Then** deterministic matching shall identify provider and consumer roles from exact normalized evidence
+**And** the resulting Cross-Repository REFERENCES relationship shall preserve endpoint identifiers, evidence, confidence, and source anchors
+**And** ambiguous or unmatched evidence shall remain a warning or Uncertainty and shall not create a false exact relationship
+
+**Given** a communication type is MQ, file/storage, page navigation, indirect object flow, or requires Service Topology MCP
+**When** the deadline resolver encounters it
+**Then** it shall record the unsupported/deferred condition without attempting general resolution
+
+#### Story 11.5: Demo Chat, Citations & Release Gate
+
+As a **user**,
+I want to ask Business or IT questions about the prepared two-Repository flow and verify every answer,
+So that the competition demonstration proves Vulgata's end-to-end value.
+
+**Acceptance Criteria:**
+
+**Given** I open the Chinese chat page
+**When** I select Business or IT mode and the prepared System/Repositories
+**Then** the chat shall use database-backed retrieval over the current Documents, sections, source anchors, and exact Cross-Repository relationship
+**And** Business mode shall return an understandable narrative while IT mode may include technical detail
+**And** autonomous scope selection and file upload shall remain deferred
+
+**Given** the Chat Agent returns an answer
+**When** claims are rendered
+**Then** every material claim shall cite a persisted Document and available source line range
+**And** unauthorized Systems, Repositories, Documents, source anchors, and credentials shall not be retrieved or rendered
+
+**Given** the deadline slice is ready for release
+**When** final verification runs from a clean database
+**Then** the included tests, authorization checks, migrations, Web build, one two-Repository end-to-end demonstration path, and one final Docker image build shall pass
+**And** no deliberately failing or unresolved RED test shall be committed
+**And** known post-demo limitations shall be shown separately from completed acceptance criteria
 
 ---
 
 ### Epic 5: Core Single Repository Scanning
+
+**Post-August 15 continuation:** this epic deepens the minimal Epic 11 seams
+with the full graph store, concurrent Scan Coordinator, deterministic
+Orchestrator, retries, Worker Agent policies, uncertainty infrastructure, and
+database tools. Epic 11 completion does not mark these stories done.
 
 #### Story 5.1: Document Version & Source Anchor Store
 
@@ -1441,7 +1540,7 @@ So that agents don't waste time generating documents for standard libraries or c
 
 **Given** a library reference is ambiguous — could match an allowlist entry or could be an internal org library
 **When** the evaluation runs
-**Then** the ambiguity shall be surfaced to the System Owner as a question in the pre-scan gate (Story 4.3)
+**Then** the ambiguity shall be surfaced to the System Owner as a question in the post-deadline pre-scan approval lifecycle (Story 8.7)
 **And** the System Owner's answer shall be cached per Repository for future scans
 
 #### Story 6.2: On-Demand Standalone Repository Scanning
@@ -1898,6 +1997,39 @@ So that I can inspect the specific Documents, edges, and Uncertainties behind a 
 **When** the page renders
 **Then** it shall show the UX empty state "尚无扫描数据。启动一次扫描后，知识图谱将在此展示。" with a primary action to go to 系统管理
 **And** graph loading and error states shall use the shared `LoadState` conventions
+
+#### Story 8.7: Pre-Scan LLM Question & Approval Lifecycle
+
+As a **SystemOwner**,
+I want blocking pre-scan ambiguities converted into bounded LLM-generated
+questions with an explicit approval lifecycle,
+So that post-deadline Scans can resolve genuine unknowns without asking about
+deterministically known facts.
+
+**Acceptance Criteria:**
+
+**Given** Story 4.3 has persisted deterministic facts, conservative hints, and
+blocking ambiguity evidence
+**When** the post-deadline question generator runs
+**Then** it shall ask at most five concise questions only for ambiguities that
+materially affect Scan scope or Cross-Repository interpretation
+**And** it shall not ask about high-confidence detections or ordinary weak hints
+**And** every question shall preserve its evidence locators and provenance
+
+**Given** at least one blocking question is generated
+**When** the pre-scan lifecycle begins
+**Then** the Scan shall enter `等待回答`
+**And** authorized System Owners shall receive the Epic 8 notification and
+answer/dismiss interactions
+**And** answers shall support confirm, exclude, or add semantics without
+promoting unsupported LLM output to code-derived fact
+
+**Given** all blocking questions are resolved
+**When** an authorized System Owner selects `确认并开始扫描`
+**Then** the system shall persist the reviewed pre-scan result and approval
+metadata before dispatch
+**And** unanswered reviews shall remain available for seven days under the
+documented lifecycle rather than silently autoapproving
 
 ---
 

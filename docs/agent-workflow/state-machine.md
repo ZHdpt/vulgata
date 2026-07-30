@@ -6,7 +6,14 @@ BMad owns coarse lifecycle state. A story-local `workflow-state.json` owns resum
 
 ## Execution Levels
 
-Every story records `execution_level` as `full` or `standard`; omission is invalid. Full is the default at initial selection. Standard is available only through the eligibility contract in `$run-bmad-sprint-loop` and keeps TDD, conditional E2E, final verification, Git safety, and planned-change authorization.
+Every story records `execution_level` as `full`, `standard`, or
+`expedited-mvp`; omission is invalid. Full is the default at initial selection.
+Standard is available only through the eligibility contract in
+`$run-bmad-sprint-loop`. `expedited-mvp` is a temporary closed allowlist
+defined by `docs/agent-workflow/august-15-expedited-mvp-exception.md`; it
+expires after Epic 11 or the August 15 deadline and cannot be generalized.
+Both reduced levels keep TDD, conditional E2E, final verification, Git safety,
+and planned-change authorization.
 
 Full uses every internal stage. Standard uses:
 
@@ -15,7 +22,13 @@ context, specify, plan, conditional plan-review, tasks, implement,
 quality-review, conditional-e2e, verify, complete
 ```
 
-For Standard, `quality-review` is one independent combined acceptance-and-quality gate and `active_gates.acceptance-review.status` is `invalidated`. Skipped Full-only stages do not acquire fabricated accepted records. A level change is never implicit: if Standard eligibility becomes false, stop for explicit `Standard -> Full` authorization and resume from the earliest omitted or invalid stage.
+For Standard and `expedited-mvp`, `quality-review` is one independent combined acceptance-and-quality gate and `active_gates.acceptance-review.status` is `invalidated`. Skipped Full-only stages do not acquire fabricated accepted records. A level change is never implicit: if Standard eligibility becomes false, stop for explicit `Standard -> Full` authorization and resume from the earliest omitted or invalid stage. If the expedited allowlist or lifetime no longer applies, stop and select Standard or Full under its ordinary rules.
+
+`expedited-mvp` uses the same internal stage sequence and combined review shape
+as Standard, but only for its approved deadline stories. Its three planned
+checkpoints and evidence limits come from the dated exception. Deferred
+acceptance is recorded as a limitation, never as a passing result or failing
+committed test.
 
 ## BMad Lifecycle
 
@@ -25,8 +38,8 @@ The only permitted status vocabulary is `backlog`, `ready-for-dev`, `in-progress
 |---|---|---|---|
 | `backlog` | BMad create-story produces validated story context | `ready-for-dev` | Story file and sprint status are checkpointed |
 | `ready-for-dev` | Queue selection, preflight, and context synthesis succeed; SpecKit cycle is about to start | `in-progress` | A story-activation checkpoint durably records the development record, sprint status, branch/HEAD, ownership, and activation checkpoint ID before `speckit-specify`; it contains no unaccepted SpecKit artifact |
-| `in-progress` | Every implementation task group has verified red-green-refactor evidence and the candidate boundary is pinned | `review` | A ready-for-review checkpoint durably records the story/status transition and candidate identity before the applicable Full review axes or Standard combined review is dispatched |
-| `review` | Full: both independent reviews accept. Standard: its combined quality review accepts. In either level, required E2E passes or has a valid coverage override, final verification passes, the reviewed boundary remains current, and every task/checklist is complete | `done` | Story development record, workflow state, and sprint status are checkpointed |
+| `in-progress` | Every implementation task group has verified red-green-refactor evidence and the candidate boundary is pinned | `review` | A ready-for-review checkpoint durably records the story/status transition and candidate identity before the applicable Full review axes or reduced-level combined review is dispatched |
+| `review` | Full: both independent reviews accept. Standard or `expedited-mvp`: its combined quality review accepts. In every level, required E2E passes or has a valid coverage override, final verification passes, the reviewed boundary remains current, and every task/checklist is complete | `done` | Story development record, workflow state, and sprint status are checkpointed |
 
 `done` is terminal for this workflow. A requested `done` story is rejected as new work. An `in-progress` or `review` story is resumed rather than duplicated. Any reverse transition or status not listed above requires the applicable BMad correction workflow and explicit user direction; the sprint loop does not invent it.
 
@@ -59,7 +72,7 @@ implement, acceptance-review, quality-review, conditional-e2e, verify, complete
 | `plan-review` | Fresh `plan-judge` | Complete planning set pinned | `ACCEPT` with no gate failure → `tasks`; `REVISE` → fresh `plan`; `BLOCKED` → stop |
 | `tasks` | `task-author` | Accepted plan | Dependency-ordered `tasks.md` with test-first groups → `analyze` |
 | `analyze` | Read-only `artifact-analyst` | Current `spec.md`, `plan.md`, and `tasks.md` | No Critical/High → `implement`; blocking findings → human approval gate, responsible author, dependent regeneration, then rerun `analyze` |
-| `implement` | Fresh `tdd-implementer` per group | Full: accepted analysis. Standard: accepted eligibility and root coverage validation. In either level, the dependency group is unblocked | Red-green-refactor evidence and completed task group; after all groups, checkpoint `in-progress → review`, pin boundary, then enter the applicable Full axes or Standard combined review |
+| `implement` | Fresh `tdd-implementer` per group | Full: accepted analysis. Standard: accepted eligibility and root coverage validation. `expedited-mvp`: active dated authority and accepted delivery definition. In every level, the dependency group is unblocked | Red-green-refactor evidence and completed task group; after all groups, checkpoint `in-progress → review`, pin boundary, then enter the applicable Full axes or combined review |
 | `acceptance-review` | Fresh `acceptance-reviewer` | Story status is `review`; same pinned implementation boundary as quality review | Per-gate verdict recorded in `active_gates`; scalar stage remains here until both axes return |
 | `quality-review` | Fresh `quality-reviewer` | Story status is `review`; Full uses the same pinned implementation boundary as acceptance review; Standard supplies story/spec/plan/tasks plus the pinned implementation boundary | Full applies the stored quality verdict after acceptance joins; Standard uses one combined acceptance-and-quality verdict; applicable `ACCEPT` → `conditional-e2e` |
 | `conditional-e2e` | Orchestrator; `e2e-runner` when required | Full: both review axes accepted. Standard: combined quality review accepted | Required E2E passes, or skip rationale cites covering evidence → `verify` |
@@ -70,7 +83,7 @@ In Full, acceptance and quality reviews may run in parallel but are represented 
 
 In Standard, scalar stage enters `quality-review` directly. The acceptance gate remains `invalidated`; the quality verdict explicitly covers both acceptance completeness and quality. Any tracked correction invalidates and reruns that combined gate.
 
-The BMad story remains `review` during review-driven implementation or E2E correction. Internal state returns to `implement`, creates a new pinned candidate, and reruns the applicable Full axes or Standard combined review; it does not invent a reverse BMad status transition.
+The BMad story remains `review` during review-driven implementation or E2E correction. Internal state returns to `implement`, creates a new pinned candidate, and reruns the applicable Full axes or reduced-level combined review; it does not invent a reverse BMad status transition.
 
 ## Gate Advancement and Human Decisions
 
@@ -92,7 +105,7 @@ Changing an input invalidates its owning stage and every dependent stage. The ea
 | Analysis report, analyzed artifact hash, or approved analysis remediation | `analyze` | `implement` through `complete`; upstream remediation additionally invalidates dependent plan/tasks as applicable |
 | Implementation or test file | `implement` | Both review axes, E2E decision/result, `verify`, and `complete` |
 | Review correction | `implement` | Every affected review axis and all later stages |
-| Tracked E2E/integration test only | Full: `acceptance-review`; Standard: `quality-review` | Applicable Full verdicts or Standard combined verdict, E2E decision/result, `verify`, and `complete`; ownership stays with `e2e-runner` and there is no test-only review bypass |
+| Tracked E2E/integration test only | Full: `acceptance-review`; Standard or `expedited-mvp`: `quality-review` | Applicable Full verdicts or combined verdict, E2E decision/result, `verify`, and `complete`; ownership stays with `e2e-runner` and there is no test-only review bypass |
 | Production behavior covered by E2E | `implement` | Both reviews, E2E decision/result, `verify`, and `complete`; production correction returns to `tdd-implementer` |
 | Verification command set or final candidate boundary | `verify` | `complete`; changed production boundary returns to affected review axes |
 | Malformed or missing workflow state | Earliest stage provable from validated artifacts | All unproven later stages |
