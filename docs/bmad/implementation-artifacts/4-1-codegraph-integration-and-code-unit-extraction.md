@@ -1,7 +1,7 @@
 ---
 story_key: 4-1-codegraph-integration-and-code-unit-extraction
 title: Story 4.1: CodeGraph Integration and Code Unit Extraction
-Status: review
+Status: done
 Epic: 4
 Story: 1
 created: 2026-07-14
@@ -256,3 +256,13 @@ before implementation and does not change the current PRD.
   narrow Correct Course proposal, the story is temporarily back in `review`
   for fresh acceptance review, quality review, and an E2E decision. No product
   behavior change is planned.
+- The close-readiness remediation completed on 2026-07-30. Fresh Full
+  acceptance and quality reviews accepted the corrected boundary; the required
+  E2E suite passed 251/251, the complete deterministic suite passed 614/614,
+  the Web build succeeded, and EF reported no pending model changes.
+- The remediation corrected three review-proven blockers: required sanitized
+  clone-failure details, the required `CodeGraph CLI not found` Error marker,
+  and stale source provenance when a Repository Git URL changes. One
+  nonblocking Medium cleanup/test gap remains in the accepted quality verdict:
+  cancellation during replacement cloning may leave a private `.rebind-*`
+  temporary directory.
