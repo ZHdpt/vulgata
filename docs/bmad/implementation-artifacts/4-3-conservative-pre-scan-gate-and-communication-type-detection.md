@@ -1,7 +1,7 @@
 ---
 story_key: 4-3-conservative-pre-scan-gate-and-communication-type-detection
 title: "Story 4.3: Conservative Pre-Scan Gate and Communication Type Detection"
-Status: in-progress
+Status: done
 Epic: 4
 Story: 3
 created: 2026-07-30
@@ -193,9 +193,9 @@ atomicity and does not publish an approved handoff.
 
 ## Tasks / Subtasks
 
-Task generation is intentionally paused. Tasks will be generated only after an
-independent plan review accepts and the user explicitly authorizes the
-Scan-strategy change.
+T001-T036 are complete. The accepted delivery definition, observed RED/GREEN
+evidence, combined review history, required E2E, and final verification are
+recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
 
 ## References
 
@@ -217,15 +217,13 @@ Scan-strategy change.
   `docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json`.
 - SpecKit feature directory:
   `specs/003-conservative-pre-scan-gate`.
-- Current workflow stage: `review` (recovery candidate assembly after combined
-  review correction iteration 1).
+- Current workflow stage: `complete`.
 - Latest workflow checkpoint ID:
-  `bmad-4-3-recovery-20260730T100625Z-2d17c4`.
+  `bmad-4-3-complete-20260730T115911Z-9c4a10`.
 - Latest workflow checkpoint SHA:
-  pending commit binding.
-- The reviewer-authorized recovery checkpoint is being assembled; after it is
-  bound, a fresh combined reviewer must assess the full candidate before the
-  E2E decision.
+  pending final checkpoint binding.
+- The provisional completed-story checkpoint contains the accepted combined
+  review, required E2E, final verification, and `review` to `done` transition.
 
 ### Agent Model Used
 
@@ -311,6 +309,62 @@ Scan-strategy change.
   remains subject to fresh combined review. The reviewer classified
   the Story 4.2 final-image exclusion as truthful and the observed line-ending
   handling as non-defective.
+- Combined review iteration 2 confirmed both iteration-1 High findings
+  corrected and accepted the current 606/606 non-final-image regression
+  evidence, but returned `REVISE` for two additional High defects: the
+  committed-snapshot entry-count limit is enforced only after materialization,
+  and direct annotation recognition remains vulnerable to multiline lexical
+  decoys and foreign-language Code Units. E2E is paused while a fresh TDD
+  implementer corrects those findings. Case-distinct Linux paths, the public
+  empty-detector constructor seam, and flattened-key-only YAML support remain
+  explicit nonblocking Medium findings pending re-review/E2E disposition.
+- The iteration-2 High findings now have observed regression REDs: the first
+  excess archive destination was created before rejection, and Java/C#
+  multiline plus foreign-language annotation decoys falsely confirmed Rpc/Http.
+  `MaximumEntries` is now enforced before destination resolution/creation, and
+  bounded Java/C# lexical masking plus language gating preserves valid
+  parameterized annotations while rejecting those decoys. Root verification is
+  GREEN 136/136 for detector/profiling, GREEN 612/612 for the current complete
+  non-final-image suite, and the Web build exits 0. The exact uncommitted
+  correction boundary is pinned from `f501103657c67325be304a3b92ca779c75c74bbe`
+  by diff SHA-256
+  `5d504730573a51643950915ede14bccf35c6274f5708999fc23cc3902c45c2bd`
+  for the final permitted combined review iteration.
+- Combined review iteration 3 independently rehashed the exact correction
+  boundary, passed detector/profiling 136/136, and returned `ACCEPT` with no
+  unresolved Critical/High. It retained three explicit nonblocking Medium
+  limitations: case-distinct Linux paths, the public empty-detector
+  compatibility seam, and flattened-key-only YAML/application.yaml coverage.
+  The accepted review requires conditional E2E of the actual prepared
+  Repository configuration/persistence/handoff path before completion.
+- Conditional E2E rejected an incomplete 164-test coverage override and added
+  one bounded integration test. Root then rebuilt the current E2E-relevant
+  boundary GREEN 165/165. The new test commits all three flattened prepared
+  configuration filenames in a temporary Git Repository and exercises the
+  private snapshot through Rpc/Http detection, atomic persistence,
+  same-fingerprint replay, exact Profiled Revision, and schema `1.0` Approved
+  Pre-Scan Handoff. Existing cited tests cover authorization/revocation,
+  revision mismatch, migration, zero dispatch, and deferred-family absence.
+  Because the E2E test is tracked, review iteration 3 is invalidated and a
+  fresh combined re-review of the enlarged test boundary is mandatory.
+- Combined review iteration 4 independently reran the enlarged E2E boundary
+  GREEN 165/165, rehashed the unchanged product correction and new E2E file,
+  and returned `ACCEPT`. Review iteration 3's product acceptance remains valid;
+  iteration 4 accepts the complete enlarged boundary and advances to final
+  verification.
+- Final verification passed the complete current non-final-image regression
+  suite GREEN 613/613, the Web build, and the EF no-pending-model gate. The
+  exact Docker command
+  `docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3 .`
+  produced immutable image
+  `sha256:851adce25ca8b5a799f2d62553aea9589918aa550ea48e23c6bf6c1159594c7a`.
+- Story 4.3 is complete with no unresolved Critical/High finding. The accepted
+  prepared-scope limitations are: case-distinct Linux Repository paths remain
+  unsupported; public compatibility construction can substitute the empty
+  detector although production DI uses `CommunicationKindDetector`; and
+  prepared flattened keys are supported for `application.properties`,
+  `application.yml`, and `application.yaml`, while general nested YAML remains
+  unsupported.
 
 ### File List
 
@@ -350,6 +404,10 @@ Scan-strategy change.
 - `tests/Vulgata.Tests/RepositoryProfilingTests.cs`
 - `tests/Vulgata.Tests/MigrationTests.cs`
 - `tests/Vulgata.Tests/PreScanHandoffTests.cs`
+- `tests/Vulgata.Tests/Story43EndToEndTests.cs`
+- `specs/003-conservative-pre-scan-gate/reviews/quality-review-2.json`
+- `specs/003-conservative-pre-scan-gate/reviews/quality-review-3.json`
+- `specs/003-conservative-pre-scan-gate/reviews/quality-review-4.json`
 
 ## Change Log
 
@@ -384,5 +442,27 @@ Scan-strategy change.
   detector acceptance defects; dispatched a fresh TDD correction without
   advancing to E2E.
 - 2026-07-30: Corrected both High findings with observed 2/2 RED, focused 2/2
-  GREEN, and independently rebuilt detector/profiling GREEN 130/130; assembling
-  the permitted recovery checkpoint for fresh combined review.
+  GREEN, and independently rebuilt detector/profiling GREEN 130/130; bound the
+  permitted recovery checkpoint at
+  `f501103657c67325be304a3b92ca779c75c74bbe` for fresh combined review.
+- 2026-07-30: Combined review iteration 2 confirmed both prior High fixes but
+  returned `REVISE` for pre-materialization entry-count enforcement and
+  multiline/foreign-language annotation false confirmations; dispatched a
+  fresh bounded TDD correction and kept E2E paused.
+- 2026-07-30: Corrected both iteration-2 High findings with observed 0/1 and
+  0/3 REDs, focused GREEN, root detector/profiling GREEN 136/136, complete
+  non-final-image GREEN 612/612, and Web build 0 errors; pinned the exact
+  correction diff for combined review iteration 3 without adding another
+  expedited recovery checkpoint.
+- 2026-07-30: Combined review iteration 3 accepted the exact hash-pinned
+  correction boundary with no unresolved Critical/High and advanced the story
+  to conditional E2E without duplicate user approval.
+- 2026-07-30: Required conditional E2E passed GREEN 165/165 after adding one
+  prepared three-configuration integration test; the tracked test-only change
+  invalidated review iteration 3 and triggered a fresh combined re-review.
+- 2026-07-30: Combined review iteration 4 accepted the complete enlarged
+  product-plus-E2E boundary and advanced the story to final verification.
+- 2026-07-30: Final verification passed 613/613 current non-final-image tests,
+  the Web build, the EF no-pending-model gate, and the exact Story 4.3 Docker
+  build; assembled the provisional completed-story checkpoint and transitioned
+  the story from `review` to `done`.

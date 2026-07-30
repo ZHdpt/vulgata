@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "gate": "combined-acceptance-and-quality-review",
+  "execution_level": "expedited-mvp",
+  "verdict": "REVISE",
+  "reviewer_identity": {
+    "role": "quality-reviewer",
+    "iteration": 2,
+    "fresh_independent_review": true
+  },
+  "reviewed_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
+  "reviewed_boundary": {
+    "base_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
+    "candidate_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
+    "candidate_tree": "bcfe1b4d4b18856b2eb5940b8e8fc69ff9dba9f4",
+    "candidate_parent": "64930fce2af96767c95abb848807eadd0419ad3f",
+    "boundary_verified": true
+  },
+  "prior_findings_resolution": {
+    "QR1-001": {
+      "status": "corrected",
+      "evidence": "Exact leading Java and .NET invocation parsing rejects @SuppressWarnings(\"@DubboService\") and [Description(\"[ApiController]\")] while preserving parameterized [HttpGet(\"ledger/{id}\")]."
+    },
+    "QR1-002": {
+      "status": "corrected_for_flat_exact_keys",
+      "evidence": "The detector now deterministically enumerates committed application.properties, application.yml, and application.yaml candidates through the leased snapshot, applies 1000-artifact, 8 MiB per-artifact, and 64 MiB aggregate limits, and confirms exact flattened RPC/HTTP configuration keys."
+    },
+    "QR1-003": {
+      "status": "open_nonblocking_portability_defect",
+      "evidence": "CommittedRepositorySnapshotService still uses StringComparer.OrdinalIgnoreCase for archive-path duplicate detection on every operating system."
+    }
+  },
+  "findings": [
+    {
+      "id": "QR2-001",
+      "severity": "High",
+      "blocking": true,
+      "category": "security/resource-bounds",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+      "location": "177-252, 433-437",
+      "title": "MaximumEntries is enforced only after archive extraction",
+      "evidence": "MaterializeAsync creates every accepted archive directory or file without comparing paths.Count to MaximumEntries. The 10000-entry limit is first enforced later by ComputeSnapshotIdentityAsync, after extraction. Within the separate 128 MiB raw-tar limit, a hostile committed tree can therefore create far more than 10000 empty files and consume substantial inode, disk-metadata, and processing resources before rejection.",
+      "affected_acceptance": [
+        "AC-6",
+        "FR-002",
+        "FR-008",
+        "T004-T006"
+      ],
+      "required_remediation": "Enforce MaximumEntries before creating each destination and add a regression proving the over-limit entry is never materialized, no lease is published, and the partial snapshot is removed."
+    },
+    {
+      "id": "QR2-002",
+      "severity": "High",
+      "blocking": true,
+      "category": "acceptance/correctness/non-promotion",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
+      "location": "145-173, 383-629",
+      "title": "Direct-annotation recognition still lacks language and lexical context",
+      "evidence": "CountDirectInvocations examines each trimmed line independently and does not use CodeUnit.Language or track comment/string state across lines. A supported token beginning a line inside a Java text block, C# raw multiline string, block comment, or foreign-language Code Unit can still become Confirmed/High even though it is not executable annotation syntax.",
+      "affected_acceptance": [
+        "AC-2",
+        "FR-004",
+        "FR-005",
+        "FR-006",
+        "T013-T016"
+      ],
+      "required_remediation": "Add transient RED regressions for line-leading tokens inside multiline comments/strings and foreign-language Code Units, then make direct recognition language-aware and lexical-context-aware while retaining parameterized Java/.NET annotation support."
+    },
+    {
+      "id": "QR2-003",
+      "severity": "Medium",
+      "blocking": false,
+      "category": "portability",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+      "location": "177, 329, 341",
+      "title": "Valid case-distinct Linux Repository paths are rejected",
+      "evidence": "Archive duplicate detection is unconditionally OrdinalIgnoreCase, so Foo.cs and foo.cs collide on case-sensitive Linux filesystems. Containment and ancestor comparisons also use unconditional case-insensitive comparison.",
+      "affected_acceptance": [
+        "Target platform: Linux deployment",
+        "T004-T006"
+      ],
+      "required_remediation": "Use operating-system-appropriate path comparison and add a Linux-sensitive regression, or preserve this explicitly as a bounded known limitation."
+    },
+    {
+      "id": "QR2-004",
+      "severity": "Medium",
+      "blocking": false,
+      "category": "architecture/seam",
+      "artifact": "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "location": "104-130, 1092-1124",
+      "title": "A public coordinator overload can approve without communication detection",
+      "evidence": "The public overload omitting IPreScanCommunicationDetector substitutes EmptyPreScanCommunicationDetector, which creates pre_scan_approved with zero evidence. Production DI currently resolves the full constructor, but alternate composition can silently bypass the conservative gate.",
+      "affected_acceptance": [
+        "AC-1",
+        "AC-3",
+        "FR-001",
+        "FR-009"
+      ],
+      "required_remediation": "Require an explicit detector for public production construction, or move the empty detector and compatibility overload behind a test-only boundary."
+    },
+    {
+      "id": "QR2-005",
+      "severity": "Medium",
+      "blocking": false,
+      "category": "test-quality/configuration-compatibility",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
+      "location": "288-381",
+      "title": "YAML support is limited to flattened dotted keys and application.yaml is untested",
+      "evidence": "The line matcher confirms only lines beginning with catalog keys such as server.servlet.context-path. Standard nested YAML does not match, and the committed regression covers application.properties plus application.yml but not application.yaml. The accepted closed contract does not explicitly require general YAML parsing, so this is not independently blocking, but the actual prepared Repository syntax remains unproved.",
+      "affected_acceptance": [
+        "AC-1",
+        "FR-004",
+        "T013-T016"
+      ],
+      "required_remediation": "Exercise the actual prepared Repository files in conditional E2E. If they use nested YAML, implement bounded structural matching; otherwise record flattened-key YAML as the supported deadline syntax and add application.yaml coverage."
+    }
+  ],
+  "acceptance_coverage": {
+    "AC-1": "partial",
+    "AC-2": "failed",
+    "AC-3": "pass",
+    "AC-4": "pass",
+    "AC-5": "pass",
+    "AC-6": "failed"
+  },
+  "task_outcome_coverage": {
+    "T001-T003": "pass",
+    "T004-T006": "failed_due_to_late_entry_count_enforcement",
+    "T007-T012": "pass",
+    "T013-T016": "partial_due_to_remaining_lexical_context_and_yaml_coverage",
+    "T017-T033": "pass",
+    "T034-T036": "credible_but_not_sufficient_for_uncovered_findings"
+  },
+  "standards_judgment": {
+    "core_independence": "pass",
+    "specific_repository_boundary": "pass",
+    "authorization_and_redaction": "pass",
+    "atomic_persistence_and_idempotency": "pass",
+    "deterministic_evidence": "failed_on_remaining_false-confirmation_context",
+    "bounded_input_security": "failed_on_archive_entry_materialization",
+    "migration_boundary": "pass",
+    "deferred_scope_and_zero_dispatch": "pass",
+    "expedited_mvp_exception": "compliant_but_review_gate_not_passed"
+  },
+  "verification_judgment": {
+    "focused_recovery_tests": {
+      "result": "pass",
+      "passed": 3,
+      "failed": 0,
+      "coverage": [
+        "annotation-leading string-argument decoys",
+        "configuration-only properties/yml evidence",
+        "parameterized HttpGet annotation"
+      ]
+    },
+    "root_current_candidate_suite": {
+      "result": "pass",
+      "passed": 606,
+      "failed": 0,
+      "excluded_lane": "Story 4.2 immutable final-image CodeGraph provider qualification"
+    },
+    "story_4_2_final_image_exclusion": "truthful and not represented as deferred Story 4.3 behavior",
+    "overall": "Passing tests are credible but do not exercise pre-materialization MaximumEntries enforcement, multiline lexical-context decoys, case-distinct Linux paths, nested YAML, or application.yaml."
+  },
+  "e2e_recommendation": {
+    "advance_now": false,
+    "reason": "Blocking High security and conservative-truth findings remain.",
+    "required_after_correction": [
+      "Reject an over-MaximumEntries committed archive before creating the first excess destination; publish no lease and leave no snapshot remnants.",
+      "Prove line-leading supported tokens inside multiline comments, multiline strings, and foreign-language Code Units create zero Confirmed facts while valid parameterized Java and .NET annotations remain Confirmed/High.",
+      "Run the actual prepared configuration-only Repository through profiling using its application.properties, application.yml, and application.yaml syntax and confirm expected Rpc/Http evidence.",
+      "Exercise profile to atomic persistence to authorized Pre-Scan Handoff, including exact Profiled Revision, bounded Repository-relative evidence, redaction, and exact Chinese approval outcome.",
+      "Verify retry idempotency, visibility revocation non-disclosure, zero Worker Agent dispatch, and zero deferred-family facts.",
+      "Exercise case-distinct paths on Linux or explicitly retain the limitation."
+    ],
+    "final_slice_owner": "Story 11.5 retains the clean-database two-Repository E2E and final Docker verification."
+  },
+  "review_layer_triage": {
+    "nested_yaml_high": "downgraded_to_medium because the accepted closed deadline contract specifies exact matched keys but does not explicitly require general nested-YAML semantics; actual prepared syntax must be resolved by E2E",
+    "archive_entry_bound_high": "confirmed_blocking",
+    "case_distinct_linux_medium": "confirmed_nonblocking_portability_defect",
+    "empty_detector_overload_medium": "confirmed_nonblocking_architecture_seam"
+  },
+  "reviewed_at": "2026-07-30T10:57:53.5676507Z"
+}

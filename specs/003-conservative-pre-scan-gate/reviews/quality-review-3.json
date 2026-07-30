@@ -1,0 +1,226 @@
+{
+  "schema_version": "1.0",
+  "gate": "combined-acceptance-and-quality-review",
+  "execution_level": "expedited-mvp",
+  "verdict": "ACCEPT",
+  "reviewer_identity": {
+    "role": "quality-reviewer",
+    "iteration": 3,
+    "fresh_independent_review": true,
+    "final_permitted_iteration": true
+  },
+  "reviewed_boundary": {
+    "implementation_base_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
+    "rejected_recovery_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
+    "candidate_commit": null,
+    "correction_form": "uncommitted product correction over f501103657c67325be304a3b92ca779c75c74bbe",
+    "binary_diff_length_bytes": 23786,
+    "binary_diff_sha256": "5d504730573a51643950915ede14bccf35c6274f5708999fc23cc3902c45c2bd",
+    "file_sha256": {
+      "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "93584a35d47a281d74251474a122a89cdaf1c2b297f7b1667a12739dd864ae74",
+      "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs": "0f532d534b92b165649c7d1dfb45ecbb117ca034b76027de18d568da902b4aaf",
+      "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "ebcd4f99c4711c38904e73379ed09897f2cddfc1f06286f5cff1d32eb19c3a4b"
+    },
+    "initial_verification": "match",
+    "final_verification": "match",
+    "boundary_verified": true,
+    "product_boundary_drift_observed": false
+  },
+  "prior_findings_resolution": {
+    "QR1-001": {
+      "status": "corrected",
+      "blocking": false,
+      "evidence": "Exact Java/.NET invocation parsing rejects annotation-leading string-argument decoys. The iteration-3 lexical mask further rejects supported tokens inside multiline comments and strings while preserving parameterized annotations."
+    },
+    "QR1-002": {
+      "status": "corrected",
+      "blocking": false,
+      "evidence": "Committed configuration-only application.properties, application.yml, and application.yaml candidates are enumerated through the bounded private committed snapshot. Exact flattened keys can confirm Rpc/Http."
+    },
+    "QR1-003": {
+      "status": "open_nonblocking",
+      "superseded_by": "QR2-003",
+      "evidence": "Case-insensitive path comparison remains unconditional."
+    },
+    "QR2-001": {
+      "status": "corrected",
+      "blocking": false,
+      "evidence": "MaximumEntries is checked before ResolveContainedPath, ancestor checks, directory creation, or file creation. The regression verifies rejection, no published lease, no excess destination observation, and complete cleanup."
+    },
+    "QR2-002": {
+      "status": "corrected",
+      "blocking": false,
+      "evidence": "Direct matching is gated to java and c_sharp Code Unit languages and runs after stateful lexical masking. Regressions cover Java/C# multiline decoys, foreign-language tokens, and valid parameterized annotations."
+    },
+    "QR2-003": {
+      "status": "open_nonblocking",
+      "evidence": "The Linux case-distinct path limitation remains explicit and does not weaken the prepared two-Repository deadline path."
+    },
+    "QR2-004": {
+      "status": "open_nonblocking",
+      "evidence": "Public compatibility constructors can substitute EmptyPreScanCommunicationDetector. Production DI registers CommunicationKindDetector and resolves the complete constructor."
+    },
+    "QR2-005": {
+      "status": "open_nonblocking",
+      "evidence": "YAML confirmation is limited to exact flattened catalog keys and application.yaml lacks a dedicated unit fixture. General nested YAML is outside the accepted closed deadline contract; prepared syntax must be established in E2E."
+    }
+  },
+  "findings": [
+    {
+      "id": "QR2-003",
+      "severity": "Medium",
+      "blocking": false,
+      "category": "portability",
+      "title": "Case-distinct Linux Repository paths remain unsupported",
+      "acceptance_disposition": "Accepted as a truthful prepared-scope limitation.",
+      "remediation": "Use an operating-system-appropriate path comparer and add a Linux regression after the deadline, or retain the limitation until corrected."
+    },
+    {
+      "id": "QR2-004",
+      "severity": "Medium",
+      "blocking": false,
+      "category": "architecture/seam",
+      "title": "Public compatibility construction can bypass communication detection",
+      "acceptance_disposition": "Production acceptance passes, but alternate composition remains capable of bypassing the conservative gate.",
+      "remediation": "Require an explicit detector for public production construction or move compatibility construction behind a test-only/internal seam."
+    },
+    {
+      "id": "QR2-005",
+      "severity": "Medium",
+      "blocking": false,
+      "category": "test-quality/configuration-compatibility",
+      "title": "YAML confirmation supports flattened keys only and application.yaml lacks direct coverage",
+      "acceptance_disposition": "The accepted contract requires exact matched configuration, not general YAML parsing. Actual prepared syntax is an E2E condition.",
+      "remediation": "Exercise actual prepared application files in E2E; fail E2E if nested YAML is required."
+    }
+  ],
+  "acceptance_coverage": {
+    "AC-1": "accepted",
+    "AC-2": "accepted",
+    "AC-3": "accepted",
+    "AC-4": "accepted",
+    "AC-5": "accepted",
+    "AC-6": "accepted"
+  },
+  "task_outcome_coverage": {
+    "T001-T003": "accepted",
+    "T004-T006": "accepted",
+    "T007-T009": "accepted",
+    "T010-T012": "accepted",
+    "T013-T016": "accepted_with_QR2-005_limitation",
+    "T017-T019": "accepted",
+    "T020-T023": "accepted",
+    "T024-T026": "accepted",
+    "T027-T030": "accepted",
+    "T031-T033": "accepted",
+    "T034-T036": "accepted"
+  },
+  "standards_judgment": {
+    "constitution_version": "1.0.0",
+    "core_independence": "pass",
+    "specific_repository_boundary": "pass",
+    "authorization_and_non_disclosure": "pass",
+    "source_isolation_and_redaction": "pass",
+    "deterministic_offline_detection": "pass",
+    "immutable_profiled_revision_truth": "pass",
+    "atomicity_and_idempotency": "pass",
+    "migration_boundary": "pass",
+    "zero_dispatch_and_deferred_scope": "pass",
+    "expedited_mvp_exception": "compliant",
+    "adr_conflicts": "none found"
+  },
+  "security_judgment": {
+    "verdict": "pass",
+    "resource_bounds": "pass after QR2-001 correction",
+    "path_containment_and_reparse_rejection": "pass, subject to nonblocking case-distinct portability limitation",
+    "network_llm_package_execution": "absent",
+    "source_secret_host_path_retention": "absent",
+    "authorization_revocation": "pre/post visibility rechecks present",
+    "partial_approval_visibility": "transactionally prevented"
+  },
+  "test_quality_judgment": {
+    "verdict": "pass",
+    "qr2_001_regression": "Asserts exception type, null lease, no excess destination observed during archive reads, and no remaining snapshot.",
+    "qr2_002_regressions": "Cover Java/C# multiline decoys, foreign-language tokens, and positive parameterized annotations.",
+    "remaining_gap": "No dedicated application.yaml or nested-YAML fixture; bounded by QR2-005 and conditional E2E."
+  },
+  "verification_judgment": {
+    "independent_focused_run": {
+      "exit_code": 0,
+      "passed": 136,
+      "failed": 0,
+      "skipped": 0,
+      "total": 136
+    },
+    "independent_full_unfiltered_attempt": {
+      "exit_code": 1,
+      "classification": "environment-inconclusive",
+      "evidence": "The managed Windows sandbox denied EventLog source writes during WebApplicationFactory startup and included the explicitly excluded final-image provider lane."
+    },
+    "root_current_candidate_suite": {
+      "result": "pass",
+      "passed": 612,
+      "failed": 0,
+      "excluded_lane": "Story 4.2 immutable final-image CodeGraph provider qualification"
+    },
+    "root_web_build": {
+      "result": "pass",
+      "errors": 0
+    },
+    "boundary_hash_commands": {
+      "result": "pass",
+      "initial_and_final_match": true
+    },
+    "overall": "sufficient_for_accept"
+  },
+  "story_4_2_exclusion_judgment": {
+    "status": "accepted",
+    "unchanged": true,
+    "truthful": true
+  },
+  "residual_limitations": [
+    "Case-distinct paths such as Foo.cs and foo.cs are rejected on Linux.",
+    "Public compatibility construction can substitute an empty communication detector, although production DI uses CommunicationKindDetector.",
+    "Configuration confirmation supports exact flattened keys; general nested YAML is not implemented and application.yaml lacks direct unit coverage.",
+    "Story 4.3 creates no provider/consumer roles, endpoint matches, REFERENCES Edges, Uncertainties, Worker Agent jobs, dispatch, or deferred communication-family facts."
+  ],
+  "e2e_recommendation": {
+    "advance_to_conditional_e2e": true,
+    "run_story_4_3_e2e": true,
+    "duplicate_user_approval_required": false,
+    "required_coverage": [
+      "Run actual prepared Repository application.properties, application.yml, and application.yaml artifacts through committed-snapshot profiling and detection.",
+      "Fail E2E if required evidence uses nested YAML.",
+      "Exercise profiling through atomic persistence to authorized schema-1.0 Pre-Scan Handoff at exact Profiled Revision.",
+      "Assert confirmed kinds, bounded relative evidence, deterministic provenance, totals, and exact Chinese approval outcome.",
+      "Assert retry idempotency and revision mismatch fail-closed behavior.",
+      "Assert revocation non-disclosure and zero dispatch/deferred-scope facts."
+    ],
+    "final_slice_owner": "Story 11.5 retains the clean-database two-Repository E2E and final Docker verification."
+  },
+  "advancement": {
+    "allowed": true,
+    "next_stage": "conditional-e2e",
+    "reason": "No unresolved Critical or High finding remains."
+  },
+  "commands_run": [
+    {
+      "command": "boundary hash verification",
+      "exit_code": 0,
+      "sha256": "5d504730573a51643950915ede14bccf35c6274f5708999fc23cc3902c45c2bd",
+      "bytes": 23786
+    },
+    {
+      "command": "dotnet test focused detector/profiling",
+      "exit_code": 0,
+      "passed": 136,
+      "failed": 0
+    },
+    {
+      "command": "dotnet test full unfiltered in managed sandbox",
+      "exit_code": 1,
+      "result": "sandbox EventLog denial; non-authoritative"
+    }
+  ],
+  "reviewed_at": "2026-07-30T00:00:00+08:00"
+}

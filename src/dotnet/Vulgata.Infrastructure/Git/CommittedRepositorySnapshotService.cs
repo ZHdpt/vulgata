@@ -206,6 +206,12 @@ public sealed class CommittedRepositorySnapshotService : ICommittedRepositorySna
                         "Committed snapshot contains a duplicate path.");
                 }
 
+                if (paths.Count > _limits.MaximumEntries)
+                {
+                    throw new InvalidDataException(
+                        "Committed snapshot exceeds its entry bound.");
+                }
+
                 string destinationPath = ResolveContainedPath(snapshotRoot, relativePath);
                 EnsureSafeAncestors(snapshotRoot, destinationPath);
                 if (directory)

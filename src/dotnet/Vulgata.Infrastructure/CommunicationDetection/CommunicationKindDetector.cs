@@ -147,7 +147,14 @@ public sealed class CommunicationKindDetector(
         string source,
         List<ClassificationCandidate> candidates)
     {
-        string[] lines = source.Split('\n');
+        if (!TryGetDirectAnnotationLanguage(
+                codeUnit.Language,
+                out DirectAnnotationLanguage language))
+        {
+            return;
+        }
+
+        string[] lines = MaskLexicalNonCode(source, language).Split('\n');
         foreach (CommunicationEvidenceRule rule in _catalog.Rules.Where(
                      rule => rule.Category is
                          CommunicationEvidenceCategory.DirectAnnotation or
@@ -159,7 +166,10 @@ public sealed class CommunicationKindDetector(
                 for (var index = 0; index < lines.Length; index++)
                 {
                     string line = lines[index].TrimStart();
-                    int occurrenceCount = CountDirectInvocations(line, token);
+                    int occurrenceCount = CountDirectInvocations(
+                        line,
+                        token,
+                        language);
                     for (var occurrence = 0; occurrence < occurrenceCount; occurrence++)
                     {
                         AddCandidate(candidates, CreateDirectCandidate(
@@ -380,9 +390,208 @@ public sealed class CommunicationKindDetector(
             fileName.Equals("application.yml", StringComparison.OrdinalIgnoreCase) ||
             fileName.Equals("application.yaml", StringComparison.OrdinalIgnoreCase));
 
-    private static int CountDirectInvocations(string line, string token)
+    private static bool TryGetDirectAnnotationLanguage(
+        string? language,
+        out DirectAnnotationLanguage directLanguage)
+    {
+        if (StringComparer.Ordinal.Equals(language, "java"))
+        {
+            directLanguage = DirectAnnotationLanguage.Java;
+            return true;
+        }
+
+        if (StringComparer.Ordinal.Equals(language, "c_sharp"))
+        {
+            directLanguage = DirectAnnotationLanguage.CSharp;
+            return true;
+        }
+
+        directLanguage = default;
+        return false;
+    }
+
+    private static string MaskLexicalNonCode(
+        string source,
+        DirectAnnotationLanguage language)
+    {
+        char[] masked = source.ToCharArray();
+        var state = LexicalState.Code;
+        var rawQuoteCount = 0;
+        var escaped = false;
+        for (var index = 0; index < source.Length; index++)
+        {
+            char character = source[index];
+            if (character is '\r' or '\n')
+            {
+                if (state == LexicalState.LineComment)
+                {
+                    state = LexicalState.Code;
+                }
+
+                escaped = false;
+                continue;
+            }
+
+            switch (state)
+            {
+                case LexicalState.Code:
+                    if (character == '/' &&
+                        index + 1 < source.Length &&
+                        source[index + 1] == '/')
+                    {
+                        MaskCharacters(masked, index, 2);
+                        index++;
+                        state = LexicalState.LineComment;
+                    }
+                    else if (character == '/' &&
+                        index + 1 < source.Length &&
+                        source[index + 1] == '*')
+                    {
+                        MaskCharacters(masked, index, 2);
+                        index++;
+                        state = LexicalState.BlockComment;
+                    }
+                    else if (character == '"')
+                    {
+                        int quoteCount = CountCharacterRun(source, index, '"');
+                        if (quoteCount >= 3)
+                        {
+                            rawQuoteCount = language == DirectAnnotationLanguage.Java
+                                ? 3
+                                : quoteCount;
+                            MaskCharacters(masked, index, quoteCount);
+                            index += quoteCount - 1;
+                            state = LexicalState.RawString;
+                        }
+                        else
+                        {
+                            masked[index] = ' ';
+                            bool verbatim = language == DirectAnnotationLanguage.CSharp &&
+                                index > 0 &&
+                                source[index - 1] == '@';
+                            if (verbatim)
+                            {
+                                masked[index - 1] = ' ';
+                            }
+
+                            state = verbatim
+                                ? LexicalState.VerbatimString
+                                : LexicalState.String;
+                            escaped = false;
+                        }
+                    }
+                    else if (character == '\'')
+                    {
+                        masked[index] = ' ';
+                        state = LexicalState.Character;
+                        escaped = false;
+                    }
+
+                    break;
+
+                case LexicalState.LineComment:
+                    masked[index] = ' ';
+                    break;
+
+                case LexicalState.BlockComment:
+                    masked[index] = ' ';
+                    if (character == '*' &&
+                        index + 1 < source.Length &&
+                        source[index + 1] == '/')
+                    {
+                        masked[++index] = ' ';
+                        state = LexicalState.Code;
+                    }
+
+                    break;
+
+                case LexicalState.String:
+                case LexicalState.Character:
+                    masked[index] = ' ';
+                    if (escaped)
+                    {
+                        escaped = false;
+                    }
+                    else if (character == '\\')
+                    {
+                        escaped = true;
+                    }
+                    else if ((state == LexicalState.String && character == '"') ||
+                        (state == LexicalState.Character && character == '\''))
+                    {
+                        state = LexicalState.Code;
+                    }
+
+                    break;
+
+                case LexicalState.VerbatimString:
+                    masked[index] = ' ';
+                    if (character == '"' &&
+                        index + 1 < source.Length &&
+                        source[index + 1] == '"')
+                    {
+                        masked[++index] = ' ';
+                    }
+                    else if (character == '"')
+                    {
+                        state = LexicalState.Code;
+                    }
+
+                    break;
+
+                case LexicalState.RawString:
+                    masked[index] = ' ';
+                    if (character == '"')
+                    {
+                        int quoteCount = CountCharacterRun(source, index, '"');
+                        MaskCharacters(masked, index, quoteCount);
+                        if (quoteCount >= rawQuoteCount)
+                        {
+                            state = LexicalState.Code;
+                        }
+
+                        index += quoteCount - 1;
+                    }
+
+                    break;
+            }
+        }
+
+        return new string(masked);
+    }
+
+    private static int CountCharacterRun(
+        string value,
+        int startIndex,
+        char character)
+    {
+        var index = startIndex;
+        while (index < value.Length && value[index] == character)
+        {
+            index++;
+        }
+
+        return index - startIndex;
+    }
+
+    private static void MaskCharacters(
+        char[] value,
+        int startIndex,
+        int count) =>
+        Array.Fill(value, ' ', startIndex, count);
+
+    private static int CountDirectInvocations(
+        string line,
+        string token,
+        DirectAnnotationLanguage language)
     {
         if (line.Length == 0 || token.Length < 2)
+        {
+            return 0;
+        }
+
+        if ((language == DirectAnnotationLanguage.Java && token[0] != '@') ||
+            (language == DirectAnnotationLanguage.CSharp && token[0] != '['))
         {
             return 0;
         }
@@ -1290,5 +1499,22 @@ public sealed class CommunicationKindDetector(
             EvidenceRule rule,
             string selector) =>
             new(safeRelativePath, null, 0, rule, selector);
+    }
+
+    private enum DirectAnnotationLanguage
+    {
+        Java,
+        CSharp,
+    }
+
+    private enum LexicalState
+    {
+        Code,
+        LineComment,
+        BlockComment,
+        String,
+        Character,
+        VerbatimString,
+        RawString,
     }
 }

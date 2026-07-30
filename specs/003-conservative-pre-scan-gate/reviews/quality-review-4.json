@@ -1,0 +1,205 @@
+{
+  "schema_version": "1.0",
+  "gate": "combined-acceptance-and-quality-review",
+  "execution_level": "expedited-mvp",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
+  "reviewer_identity": {
+    "role": "quality-reviewer",
+    "iteration": 4,
+    "fresh_independent_review": true,
+    "invalidation_rerun": true,
+    "invalidation_reason": "Required conditional E2E added tests/Vulgata.Tests/Story43EndToEndTests.cs. This invalidated iteration 3 for the enlarged test boundary without constituting another REVISE.",
+    "delegated": false,
+    "read_only": true
+  },
+  "reviewed_boundary": {
+    "base_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
+    "candidate_commit": null,
+    "product_binary_diff_length_bytes": 23786,
+    "product_binary_diff_sha256": "5d504730573a51643950915ede14bccf35c6274f5708999fc23cc3902c45c2bd",
+    "e2e_test_sha256": "87a8bef3c95cf78dbf1c430424462eaa588e7b96b5b99764b56fa416ba4eacea",
+    "candidate_bundle_sha256": "f7f81ca46fbce77f3042a7306716450f8384122fbc2ce5159340fbc27f81790e",
+    "artifact_hashes": {
+      "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "93584a35d47a281d74251474a122a89cdaf1c2b297f7b1667a12739dd864ae74",
+      "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs": "0f532d534b92b165649c7d1dfb45ecbb117ca034b76027de18d568da902b4aaf",
+      "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "ebcd4f99c4711c38904e73379ed09897f2cddfc1f06286f5cff1d32eb19c3a4b",
+      "tests/Vulgata.Tests/Story43EndToEndTests.cs": "87a8bef3c95cf78dbf1c430424462eaa588e7b96b5b99764b56fa416ba4eacea"
+    },
+    "initial_verification": "match",
+    "final_verification": "match",
+    "boundary_verified": true,
+    "boundary_drift_observed": false
+  },
+  "review3_disposition": {
+    "product_acceptance_remains_valid": true,
+    "review3_verdict_valid_for_enlarged_boundary": false,
+    "reason": "All product hashes match review 3. Only a tracked E2E test was added, requiring this fresh rerun."
+  },
+  "prior_findings_disposition": {
+    "QR1-001": "corrected",
+    "QR1-002": "corrected",
+    "QR1-003": "superseded_by_QR2-003",
+    "QR2-001": "corrected",
+    "QR2-002": "corrected",
+    "QR2-003": "open_nonblocking_MEDIUM",
+    "QR2-004": "open_nonblocking_MEDIUM",
+    "QR2-005": "partially_resolved_nonblocking_MEDIUM"
+  },
+  "findings": [
+    {
+      "id": "QR2-003",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "category": "portability",
+      "evidence": "Case-distinct committed paths such as Foo.cs and foo.cs remain rejected.",
+      "remediation": "Use an operating-system-appropriate path comparer and add a Linux regression after the deadline."
+    },
+    {
+      "id": "QR2-004",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "category": "architecture-seam",
+      "evidence": "Alternate public composition can bypass communication detection, although production DI uses the complete detector constructor.",
+      "remediation": "Require an explicit detector or move the compatibility seam behind an internal/test-only boundary."
+    },
+    {
+      "id": "QR2-005",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "category": "configuration-compatibility",
+      "evidence": "All three prepared filenames now have passing E2E coverage using exact flattened keys. General nested YAML remains unsupported.",
+      "remediation": "Add bounded structural YAML matching only if a future accepted Repository contract requires nested YAML."
+    }
+  ],
+  "acceptance_coverage": {
+    "AC-1": "accepted",
+    "AC-2": "accepted",
+    "AC-3": "accepted",
+    "AC-4": "accepted",
+    "AC-5": "accepted",
+    "AC-6": "accepted"
+  },
+  "task_outcome_coverage": {
+    "T001-T003": "accepted",
+    "T004-T006": "accepted",
+    "T007-T009": "accepted",
+    "T010-T012": "accepted",
+    "T013-T016": "accepted_with_general_nested_yaml_limitation",
+    "T017-T019": "accepted",
+    "T020-T023": "accepted",
+    "T024-T026": "accepted",
+    "T027-T030": "accepted",
+    "T031-T033": "accepted",
+    "T034-T036": "accepted"
+  },
+  "security_judgment": {
+    "verdict": "pass",
+    "resource_bounds": "pass",
+    "path_containment_and_reparse_rejection": "pass subject to QR2-003",
+    "network_llm_package_execution": "absent",
+    "authorization": "pass",
+    "post_materialization_revocation": "non-disclosing",
+    "revision_mismatch": "fails_closed",
+    "atomic_partial_visibility": "prevented"
+  },
+  "architecture_judgment": {
+    "verdict": "pass",
+    "core_independence": "pass",
+    "specific_repository_boundary": "pass",
+    "deterministic_offline_detection": "pass",
+    "immutable_profiled_revision_truth": "pass",
+    "atomicity_and_idempotency": "pass",
+    "migration_boundary": "pass",
+    "handoff_dispatch_authority": "none",
+    "adr_conflicts": "none_found"
+  },
+  "test_quality_judgment": {
+    "verdict": "pass",
+    "new_e2e_credibility": "The test commits a real temporary Git Repository, acquires its private committed snapshot, detects all three prepared configuration filenames, persists/replays the result, and materializes the Approved Pre-Scan Handoff.",
+    "remaining_gap": "General nested YAML remains outside accepted prepared syntax."
+  },
+  "e2e_judgment": {
+    "required": true,
+    "result": "passed",
+    "credible_passing_boundary": true,
+    "predicate_coverage": {
+      "user-visible-workflow": "covered",
+      "authorization": "covered_by_current_boundary_suite",
+      "api-persistence-multimodule": "covered",
+      "migration-data-lifecycle": "covered_by_current_boundary_suite_and_postgresql_evidence"
+    },
+    "prepared_configuration_coverage": {
+      "application.properties": "Rpc confirmed",
+      "application.yml": "Http confirmed",
+      "application.yaml": "Http confirmed",
+      "syntax": "exact flattened keys"
+    },
+    "independent_current_run": {
+      "exit_code": 0,
+      "passed": 165,
+      "failed": 0,
+      "skipped": 0,
+      "total": 165
+    }
+  },
+  "story_4_2_exclusion_judgment": {
+    "status": "accepted",
+    "unchanged": true,
+    "truthful": true
+  },
+  "verification_judgment": {
+    "focused_detector_profiling": {
+      "result": "pass",
+      "passed": 136,
+      "failed": 0
+    },
+    "pre_e2e_complete_non_final_image_suite": {
+      "result": "pass",
+      "passed": 612,
+      "failed": 0
+    },
+    "e2e_relevant_suite": {
+      "result": "pass",
+      "passed": 165,
+      "failed": 0,
+      "independently_rerun_by_reviewer": true
+    },
+    "web_build": {
+      "result": "pass",
+      "errors": 0
+    },
+    "postgresql_migration": "unchanged_passing",
+    "docker": "requires current final verification after product correction",
+    "overall": "sufficient_for_accept"
+  },
+  "residual_limitations": [
+    "Case-distinct Linux Repository paths remain unsupported.",
+    "Public compatibility construction can substitute an empty communication detector, although production DI resolves CommunicationKindDetector.",
+    "Prepared flattened keys are covered for all three filenames; general nested YAML remains unsupported.",
+    "Story 4.3 creates no provider/consumer roles, endpoint matches, REFERENCES Edges, Uncertainties, Worker Agent jobs, dispatch, or deferred-family facts.",
+    "The clean-database two-Repository demonstration and final Docker verification remain Story 11.5 responsibilities."
+  ],
+  "advancement": {
+    "allowed": true,
+    "next_stage": "verify",
+    "duplicate_user_approval_required": false,
+    "review3_product_acceptance_remains_valid": true,
+    "enlarged_boundary_accepted": true,
+    "reason": "No unresolved Critical or High remains, required E2E is credible and passing, and all hashes match."
+  },
+  "commands_run": [
+    {
+      "command": "boundary and bundle hash verification",
+      "exit_code": 0,
+      "result": "all hashes matched"
+    },
+    {
+      "command": "dotnet test Story 4.3 E2E-relevant filter",
+      "exit_code": 0,
+      "passed": 165,
+      "failed": 0
+    }
+  ],
+  "summary": "ACCEPT. The enlarged boundary may advance to final verification."
+}

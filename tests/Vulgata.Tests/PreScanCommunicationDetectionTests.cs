@@ -127,6 +127,169 @@ public sealed class PreScanCommunicationDetectionTests
     }
 
     [Fact]
+    public async Task DetectAsync_JavaMultilineLexicalDecoys_DoNotCreateConfirmedEvidence()
+    {
+        const string relativePath = "src/JavaMultilineDecoys.java";
+        const string source =
+            "/*\n" +
+            "@DubboService\n" +
+            "@RestController\n" +
+            "*/\n" +
+            "String payload = \"\"\"\n" +
+            "@DubboService\n" +
+            "@FeignClient(name=\"ledger\")\n" +
+            "\"\"\";\n" +
+            "public class JavaMultilineDecoys {}\n";
+        using var snapshot = new TemporaryDirectory();
+        WriteSnapshotFile(snapshot.Path, relativePath, source);
+        RepositoryProfileDraft profile = CreateCompletedProfileDraft(
+            relativePath,
+            source,
+            "java",
+            "JavaMultilineDecoys");
+        await using var lease = new TestSnapshotLease(
+            profile.ScanRun.RepositoryId,
+            profile.ScanRun.Id,
+            ProfiledRevision,
+            snapshot.Path);
+        var detector = new CommunicationKindDetector(
+            CommunicationEvidenceRuleCatalog.LoadEmbedded());
+
+        PreScanResultDraft result = await detector.DetectAsync(
+            profile,
+            ProfiledRevision,
+            lease,
+            CancellationToken.None);
+
+        Assert.Equal(ConfirmedCommunicationKinds.None, result.ConfirmedCommunicationKinds);
+        Assert.DoesNotContain(
+            result.Classifications,
+            item => item.Level == ClassificationLevel.Confirmed);
+    }
+
+    [Fact]
+    public async Task DetectAsync_CSharpMultilineLexicalDecoys_DoNotCreateConfirmedEvidence()
+    {
+        const string relativePath = "src/CSharpMultilineDecoys.cs";
+        const string source =
+            "/*\n" +
+            "[ApiController]\n" +
+            "[HttpGet(\"ledger/{id}\")]\n" +
+            "*/\n" +
+            "var payload = \"\"\"\n" +
+            "[ApiController]\n" +
+            "[HttpGet(\"ledger/{id}\")]\n" +
+            "\"\"\";\n" +
+            "public sealed class CSharpMultilineDecoys {}\n";
+        using var snapshot = new TemporaryDirectory();
+        WriteSnapshotFile(snapshot.Path, relativePath, source);
+        RepositoryProfileDraft profile = CreateCompletedProfileDraft(
+            relativePath,
+            source,
+            "c_sharp",
+            "CSharpMultilineDecoys");
+        await using var lease = new TestSnapshotLease(
+            profile.ScanRun.RepositoryId,
+            profile.ScanRun.Id,
+            ProfiledRevision,
+            snapshot.Path);
+        var detector = new CommunicationKindDetector(
+            CommunicationEvidenceRuleCatalog.LoadEmbedded());
+
+        PreScanResultDraft result = await detector.DetectAsync(
+            profile,
+            ProfiledRevision,
+            lease,
+            CancellationToken.None);
+
+        Assert.Equal(ConfirmedCommunicationKinds.None, result.ConfirmedCommunicationKinds);
+        Assert.DoesNotContain(
+            result.Classifications,
+            item => item.Level == ClassificationLevel.Confirmed);
+    }
+
+    [Fact]
+    public async Task DetectAsync_ForeignLanguageAnnotationTokens_DoNotCreateConfirmedEvidence()
+    {
+        const string relativePath = "src/foreign.py";
+        const string source =
+            "@DubboService\n" +
+            "[HttpGet(\"ledger/{id}\")]\n" +
+            "class ForeignLanguageTokens:\n" +
+            "    pass\n";
+        using var snapshot = new TemporaryDirectory();
+        WriteSnapshotFile(snapshot.Path, relativePath, source);
+        RepositoryProfileDraft profile = CreateCompletedProfileDraft(
+            relativePath,
+            source,
+            "python",
+            "ForeignLanguageTokens");
+        await using var lease = new TestSnapshotLease(
+            profile.ScanRun.RepositoryId,
+            profile.ScanRun.Id,
+            ProfiledRevision,
+            snapshot.Path);
+        var detector = new CommunicationKindDetector(
+            CommunicationEvidenceRuleCatalog.LoadEmbedded());
+
+        PreScanResultDraft result = await detector.DetectAsync(
+            profile,
+            ProfiledRevision,
+            lease,
+            CancellationToken.None);
+
+        Assert.Equal(ConfirmedCommunicationKinds.None, result.ConfirmedCommunicationKinds);
+        Assert.DoesNotContain(
+            result.Classifications,
+            item => item.Level == ClassificationLevel.Confirmed);
+    }
+
+    [Theory]
+    [InlineData(
+        "java",
+        "src/ParameterizedRpc.java",
+        "@DubboService(version=\"1.0\")\npublic class ParameterizedRpc {}\n",
+        EvidenceRule.RpcDirectAnnotation)]
+    [InlineData(
+        "c_sharp",
+        "src/ParameterizedHttp.cs",
+        "[HttpGet(\"ledger/{id}\")]\npublic string GetLedger() => \"ledger\";\n",
+        EvidenceRule.HttpControllerAnnotation)]
+    public async Task DetectAsync_ParameterizedSupportedLanguageAnnotations_ReturnConfirmedHigh(
+        string language,
+        string relativePath,
+        string source,
+        EvidenceRule expectedRule)
+    {
+        using var snapshot = new TemporaryDirectory();
+        WriteSnapshotFile(snapshot.Path, relativePath, source);
+        RepositoryProfileDraft profile = CreateCompletedProfileDraft(
+            relativePath,
+            source,
+            language,
+            "ParameterizedAnnotations");
+        await using var lease = new TestSnapshotLease(
+            profile.ScanRun.RepositoryId,
+            profile.ScanRun.Id,
+            ProfiledRevision,
+            snapshot.Path);
+        var detector = new CommunicationKindDetector(
+            CommunicationEvidenceRuleCatalog.LoadEmbedded());
+
+        PreScanResultDraft result = await detector.DetectAsync(
+            profile,
+            ProfiledRevision,
+            lease,
+            CancellationToken.None);
+
+        Assert.Contains(
+            result.Classifications,
+            item => item.Rule == expectedRule &&
+                item.Level == ClassificationLevel.Confirmed &&
+                item.Confidence == ConfidenceBand.High);
+    }
+
+    [Fact]
     public async Task DetectAsync_ConfigOnlyCommittedArtifacts_ReturnsConfirmedRpcAndHttp()
     {
         using var snapshot = new TemporaryDirectory();
@@ -1012,6 +1175,47 @@ public sealed class PreScanCommunicationDetectionTests
     }
 
     [Fact]
+    public async Task AcquireAsync_EntryBoundExceeded_RejectsBeforeCreatingExcessDestinationAndCleansPartialSnapshot()
+    {
+        using var source = new TemporaryGitRepository();
+        source.Write("tracked.txt", "tracked");
+        source.CommitAll();
+        using var storage = new TemporaryDirectory();
+        RepositoryEntity repository = CreateRepository(source.Path);
+        GitWorkingCopyResult workingCopy = await new GitWorkingCopyService(
+                new GitWorkingCopyOptions(storage.Path))
+            .AcquireAsync(repository, Guid.NewGuid(), CancellationToken.None);
+        var archiveSource = new ExcessDestinationObservingArchiveSource(
+            CreateTar(
+                ("retained.txt", TarEntryType.RegularFile, "retained"),
+                ("excess.txt", TarEntryType.RegularFile, "excess")),
+            storage.Path,
+            "excess.txt");
+        var service = new CommittedRepositorySnapshotService(
+            new GitWorkingCopyOptions(storage.Path),
+            archiveSource,
+            new CommittedRepositorySnapshotLimits(
+                MaximumEntryBytes: 64,
+                MaximumAggregateBytes: 64,
+                MaximumEntries: 1));
+        ICommittedRepositorySnapshotLease? lease = null;
+
+        Exception? failure = await Record.ExceptionAsync(async () =>
+        {
+            lease = await service.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                workingCopy,
+                CancellationToken.None);
+        });
+
+        Assert.IsType<InvalidDataException>(failure);
+        Assert.Null(lease);
+        Assert.False(archiveSource.ExcessDestinationWasObserved);
+        AssertNoSnapshots(storage.Path);
+    }
+
+    [Fact]
     public async Task AcquireAsync_MalformedArchive_RejectsAndCleansPartialSnapshot()
     {
         await AssertRejectedArchiveAsync(
@@ -1303,7 +1507,12 @@ public sealed class PreScanCommunicationDetectionTests
                 ? "import org.apache.dubbo.Service;\n@DubboService @DubboService\n"
                 : "@DubboService\n";
             WriteSnapshotFile(snapshotRoot, path, source);
-            codeUnits.Add(CreateCodeUnit(scanRun, path, source, $"Rpc{index:D3}"));
+            codeUnits.Add(CreateCodeUnit(
+                scanRun,
+                path,
+                source,
+                $"Rpc{index:D3}",
+                "java"));
             expected.Add(new(
                 CommunicationKind.Rpc,
                 ClassificationLevel.Confirmed,
@@ -1334,7 +1543,12 @@ public sealed class PreScanCommunicationDetectionTests
                 ? "using System.Net.Http;\n[ApiController]\n"
                 : "[ApiController]\n";
             WriteSnapshotFile(snapshotRoot, path, source);
-            codeUnits.Add(CreateCodeUnit(scanRun, path, source, $"Http{index:D3}"));
+            codeUnits.Add(CreateCodeUnit(
+                scanRun,
+                path,
+                source,
+                $"Http{index:D3}",
+                "c_sharp"));
             expected.Add(new(
                 CommunicationKind.Http,
                 ClassificationLevel.Confirmed,
@@ -1384,11 +1598,11 @@ public sealed class PreScanCommunicationDetectionTests
             "sampling-bound",
             1));
         scanRun.Complete(104, 104, DateTimeOffset.UtcNow);
-        var languageSummary = new ScanRunLanguageSummary(
-            scanRun.Id,
-            repositoryId,
-            "test",
-            distinctFileCount: 104);
+        ScanRunLanguageSummary[] languageSummaries =
+        [
+            new(scanRun.Id, repositoryId, "java", distinctFileCount: 52),
+            new(scanRun.Id, repositoryId, "c_sharp", distinctFileCount: 52),
+        ];
         RepositoryProfileDraft Create(IEnumerable<CodeUnit> orderedUnits) =>
             RepositoryProfileDraft.Create(
                 scanRun,
@@ -1396,7 +1610,7 @@ public sealed class PreScanCommunicationDetectionTests
                 [],
                 [],
                 [],
-                [languageSummary],
+                languageSummaries,
                 [warning]);
         return (
             Create(codeUnits),
@@ -1408,7 +1622,8 @@ public sealed class PreScanCommunicationDetectionTests
         ScanRun scanRun,
         string relativePath,
         string source,
-        string symbolName) =>
+        string symbolName,
+        string language) =>
         new(
             scanRun.Id,
             scanRun.RepositoryId,
@@ -1420,7 +1635,7 @@ public sealed class PreScanCommunicationDetectionTests
             symbolName,
             CodeUnitType.Class,
             RangeConfidence.Exact,
-            "test");
+            language);
 
     private static string ComputeExpectedAggregateFingerprint(
         IEnumerable<ExpectedClassification> candidates)
@@ -1650,6 +1865,38 @@ public sealed class PreScanCommunicationDetectionTests
             string profiledRevision,
             CancellationToken cancellationToken) =>
             Task.FromResult(stream);
+    }
+
+    private sealed class ExcessDestinationObservingArchiveSource(
+        Stream archive,
+        string storageRoot,
+        string excessFileName) : ICommittedRepositoryArchiveSource
+    {
+        public bool ExcessDestinationWasObserved { get; private set; }
+
+        public Task<Stream> OpenArchiveAsync(
+            string workingCopyPath,
+            string profiledRevision,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<Stream>(
+                new CallbackReadStream(archive, ObserveExcessDestination));
+
+        private void ObserveExcessDestination()
+        {
+            if (ExcessDestinationWasObserved)
+            {
+                return;
+            }
+
+            string snapshotStorage = System.IO.Path.Combine(storageRoot, ".snapshots");
+            ExcessDestinationWasObserved =
+                Directory.Exists(snapshotStorage) &&
+                Directory.EnumerateFiles(
+                        snapshotStorage,
+                        excessFileName,
+                        SearchOption.AllDirectories)
+                    .Any();
+        }
     }
 
     private static string ReadEmbeddedCommunicationCatalogJson()
