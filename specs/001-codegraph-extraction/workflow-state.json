@@ -45,6 +45,8 @@
       "approval_summary": "The user approved the narrow evidence-only remediation plan. No product behavior, agent tool, Scan strategy, PRD requirement, persistence model, or migration change is authorized.",
       "historical_completion_checkpoint_id": "bmad-4-1-complete-20260719T084217Z-cc7334",
       "historical_completion_commit": "15d2f00a2c5d8609d64960ab170f314dae76a09c",
+      "review_activation_checkpoint_id": "bmad-4-1-close-readiness-review-20260730T125509Z-4a1e7c",
+      "review_activation_commit": "146a24979eefdee567fc914c5eb87e19859cec48",
       "integrated_candidate_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
       "owned_boundary_sha256": "983c79d647401b0a18bcafdee201f2660592891d82ab5210fb7429f47ff8df9f"
     }
@@ -2170,12 +2172,10 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-close-readiness-review-20260730T125509Z-4a1e7c",
+    "checkpoint_id": "bmad-4-1-close-readiness-format-20260730T125901Z-b71d20",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
     "stage": "acceptance-review",
     "committed_paths": [
-      "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-1-close-readiness.md",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
@@ -2184,5 +2184,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-30T12:55:09Z"
+  "updated_at": "2026-07-30T12:59:01Z"
 }

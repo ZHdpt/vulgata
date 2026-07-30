@@ -1,9 +1,9 @@
 # Sprint Change Proposal: Restore Story 4.1 Full Close Readiness
 
-**Date:** 2026-07-30  
-**Trigger:** Epic 4 closure found missing durable Full-level review and E2E evidence for Story 4.1.  
-**Mode:** Batch  
-**Approval:** The user approved the narrow remediation plan on 2026-07-30.  
+**Date:** 2026-07-30
+**Trigger:** Epic 4 closure found missing durable Full-level review and E2E evidence for Story 4.1.
+**Mode:** Batch
+**Approval:** The user approved the narrow remediation plan on 2026-07-30.
 **Scope classification:** Minor evidence and lifecycle correction.
 
 ## 1. Issue Summary
