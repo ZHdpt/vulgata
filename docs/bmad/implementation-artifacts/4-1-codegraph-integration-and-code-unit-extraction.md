@@ -1,7 +1,7 @@
 ---
 story_key: 4-1-codegraph-integration-and-code-unit-extraction
 title: Story 4.1: CodeGraph Integration and Code Unit Extraction
-Status: done
+Status: review
 Epic: 4
 Story: 1
 created: 2026-07-14
@@ -251,3 +251,8 @@ before implementation and does not change the current PRD.
 - The user explicitly waived the remaining BMad sprint-loop ceremony for this
   story to recover schedule. Plan/task bookkeeping may be backfilled without
   reopening the completed implementation boundary.
+- Epic 4 close-readiness review on 2026-07-30 correctly treated that waiver as
+  historical context rather than a passed Full gate. Under the user-approved
+  narrow Correct Course proposal, the story is temporarily back in `review`
+  for fresh acceptance review, quality review, and an E2E decision. No product
+  behavior change is planned.

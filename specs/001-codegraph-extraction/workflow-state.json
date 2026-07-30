@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/001-codegraph-extraction",
   "execution_level": "full",
-  "stage": "complete",
+  "stage": "acceptance-review",
   "plan_revision": {
     "status": "story-complete-user-waived-remaining-ceremony",
     "latest_spec_review_artifact": "specs/001-codegraph-extraction/reviews/spec-review-4.json",
@@ -34,24 +34,37 @@
       "tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs",
       "specs/001-codegraph-extraction/qualification/qualification-result.schema.json"
     ],
-    "next_required_steps": []
+    "next_required_steps": [
+      "Run fresh independent Full acceptance and quality reviews over the identical pinned Story 4.1 integrated boundary.",
+      "Run the required E2E decision and execution for the user-visible, authorization, API/persistence, and migration predicates.",
+      "After accepted reviews, satisfied E2E, and green verification, restore review -> done and resume Epic 4 closure."
+    ],
+    "close_readiness_remediation": {
+      "proposal_path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-1-close-readiness.md",
+      "approval_observed_at": "2026-07-30T12:55:09Z",
+      "approval_summary": "The user approved the narrow evidence-only remediation plan. No product behavior, agent tool, Scan strategy, PRD requirement, persistence model, or migration change is authorized.",
+      "historical_completion_checkpoint_id": "bmad-4-1-complete-20260719T084217Z-cc7334",
+      "historical_completion_commit": "15d2f00a2c5d8609d64960ab170f314dae76a09c",
+      "integrated_candidate_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "owned_boundary_sha256": "983c79d647401b0a18bcafdee201f2660592891d82ab5210fb7429f47ff8df9f"
+    }
   },
   "active_gates": {
     "acceptance-review": {
-      "status": "waived",
+      "status": "pending",
       "iteration": 0,
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
-      "completed_at": "2026-07-19T11:10:00+08:00"
+      "completed_at": null
     },
     "quality-review": {
-      "status": "waived",
+      "status": "pending",
       "iteration": 0,
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
-      "completed_at": "2026-07-19T11:10:00+08:00"
+      "completed_at": null
     }
   },
   "stage_history": [
@@ -583,42 +596,47 @@
         "specs/001-codegraph-extraction/qualification/evidence/verification.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "active",
+      "started_at": "2026-07-30T12:55:09Z",
+      "completed_at": null,
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {
+        "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md": "a808d4455691b3b6d972afe6c83488ceab1f4bd71d24fbf22a7788bc5e60f912",
+        "docs/bmad/epics.md": "eab86791edfabbd8ecbee7bf434bb89c5f70d1fc86ac9ce8e0f99fcb1e8f9b46",
+        "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md": "b9eeedc4afc93f16e3cad2a8b8809dcba5ba4b764d60e8ec2471e3ca1fc1d147",
+        "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "5ec8248ce7236b0c67bda6e6ebb1c1e7c2fde8150fdc750c4cfabe5f712a633e",
+        "specs/001-codegraph-extraction/plan.md": "8c93567823b1c20ad81c212cd6d346831d0623fe9ee7eecbf5f305cb9ba68663",
+        "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+        "specs/001-codegraph-extraction/tasks.md": "8a164d118073add48ca4d662ace5e2ae0623dc49c4ee0e79c593d7959c44ed69"
+      },
+      "agent_role": "root-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-1-close-readiness.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "dev",
-    "preflight_head": "266f3b9591e022c6da2d4af58f7cef048e43b583",
+    "preflight_head": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": " M .codegraph/.gitignore\n M docker/Dockerfile\n M docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md\n M specs/001-codegraph-extraction/contracts/repository-profiling-api.md\n M specs/001-codegraph-extraction/data-model.md\n M specs/001-codegraph-extraction/plan.md\n M specs/001-codegraph-extraction/research.md\n M specs/001-codegraph-extraction/tasks.md\n M specs/001-codegraph-extraction/workflow-state.json\n?? docker/codegraph/python-version.txt\n?? docker/codegraph/requirements.lock\n?? docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15.md\n?? specs/001-codegraph-extraction/qualification/evidence/.gitignore\n?? specs/001-codegraph-extraction/qualification/evidence/red.md\n?? specs/001-codegraph-extraction/qualification/evidence/verification.md\n?? specs/001-codegraph-extraction/qualification/qualification-result.json\n?? specs/001-codegraph-extraction/qualification/qualification-result.schema.json\n?? specs/001-codegraph-extraction/reviews/analyze-3.json\n?? specs/001-codegraph-extraction/reviews/analyze-4.json\n?? specs/001-codegraph-extraction/reviews/plan-review-7.json\n?? tests/Vulgata.Tests/CodeGraphQualification/CgcCommandQualificationTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserver.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CgcStreamingEvidenceObserverTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CodeGraphImageQualificationTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/CodeGraphQualificationRunner.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Eligible/BaseProcessor.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Eligible/OrderRunner.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Eligible/OrderService.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/QualificationRepository/src/Filtered/GeneratedClient.g.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/historical-qualification-result.schema1.0.json\n?? tests/Vulgata.Tests/CodeGraphQualification/Fixtures/qualification-fixture-manifest.json\n?? tests/Vulgata.Tests/CodeGraphQualification/QualificationGateTests.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/QualificationResultWriter.cs\n?? tests/Vulgata.Tests/CodeGraphQualification/QualificationTestPaths.cs",
+    "worktree_status": "",
     "owned_paths": [
-      "specs/001-codegraph-extraction/qualification",
-      "tests/Vulgata.Tests/CodeGraphQualification",
       "docker/Dockerfile",
       "docker/codegraph",
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
-      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15-http-json-qualification.md",
-      "specs/001-codegraph-extraction/plan.md",
-      "specs/001-codegraph-extraction/research.md",
-      "specs/001-codegraph-extraction/data-model.md",
-      "specs/001-codegraph-extraction/quickstart.md",
-      "specs/001-codegraph-extraction/contracts/repository-profiling-api.md",
-      "specs/001-codegraph-extraction/reviews/plan-review-4.json",
-      "specs/001-codegraph-extraction/reviews/plan-review-5.json",
-      "specs/001-codegraph-extraction/reviews/analyze-3.json",
-      "specs/001-codegraph-extraction/reviews/analyze-4.json",
-      "specs/001-codegraph-extraction/reviews/analyze-5.json",
-      "specs/001-codegraph-extraction/reviews/plan-review-6.json",
-      "specs/001-codegraph-extraction/reviews/spec-review-4.json",
-      "specs/001-codegraph-extraction/reviews/plan-review-7.json",
-      "specs/001-codegraph-extraction/spec.md",
-      "specs/001-codegraph-extraction/checklists/requirements.md",
-      "specs/001-codegraph-extraction/tasks.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-1-close-readiness.md",
+      "specs/001-codegraph-extraction",
       "specs/001-codegraph-extraction/workflow-state.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-19T08:42:17Z"
+    "observed_at": "2026-07-30T12:55:09Z"
   },
   "source_artifacts": [
     {
@@ -1399,23 +1417,102 @@
     }
   },
   "e2e_decision": {
-    "required": false,
-    "predicates": [],
+    "required": true,
+    "predicates": [
+      {
+        "predicate_id": "story-4-1-user-visible-workflow",
+        "change_type": "User-visible workflow",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs"
+        ],
+        "affected_behavior": "An authorised SystemOwner starts repository profiling and receives a Simplified-Chinese outcome.",
+        "evidence": [
+          "Story 4.1 AC-1, AC-7, and AC-8"
+        ]
+      },
+      {
+        "predicate_id": "story-4-1-authorization",
+        "change_type": "Authentication/authorization",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs"
+        ],
+        "affected_behavior": "Repository profiling start and status surfaces preserve Repository visibility and management authorization.",
+        "evidence": [
+          "Story 4.1 scope and boundary"
+        ]
+      },
+      {
+        "predicate_id": "story-4-1-api-persistence-integration",
+        "change_type": "API/persistence/multi-module integration",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/CodeGraph",
+          "src/dotnet/Vulgata.Infrastructure/Data",
+          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+          "tests/Vulgata.Tests"
+        ],
+        "affected_behavior": "The authorised API path acquires a working copy, profiles it through the owned CodeGraph boundary, and atomically persists the ScanRun, Code Units, audits, and structural edges.",
+        "evidence": [
+          "Story 4.1 AC-1 through AC-8"
+        ]
+      },
+      {
+        "predicate_id": "story-4-1-migration-lifecycle",
+        "change_type": "EF migration or observable data lifecycle",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260718123909_AddCodeGraphProfiling.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
+        ],
+        "affected_behavior": "A clean database receives the Story 4.1 persistence model and retains its documented lifecycle and constraints.",
+        "evidence": [
+          "Story 4.1 AC-3 through AC-5"
+        ]
+      }
+    ],
     "coverage_override": null,
-    "rationale": "Not evaluated before implementation planning.",
+    "rationale": "Story 4.1 crosses user-visible, authorization, API/persistence, and migration boundaries. Required E2E must pass or a complete current-boundary coverage override must be established by the e2e-runner.",
     "covering_tests": [],
-    "owner": "orchestrator",
+    "owner": "e2e-runner",
     "source_boundary": {
-      "base_commit": "ce8d98c7cce0dfc684f828f0aa3149e7fab9dadb",
-      "candidate_commit": null,
-      "diff_sha256": "8ebf8f7546e743bbcc3c29cc85b856379d192e639ce3b3332eae72718dc580ea",
+      "base_commit": "9b7f3ec56cd343de012620345f4297e003fdef75",
+      "candidate_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "diff_sha256": "983c79d647401b0a18bcafdee201f2660592891d82ab5210fb7429f47ff8df9f",
       "artifact_hashes": {
-        "specs/001-codegraph-extraction/spec.md": "b89124bef8a0a0b88549eac3d5044bd6409701d29671bdfedf9a6ac0362ddd2d",
-        "specs/001-codegraph-extraction/checklists/requirements.md": "6a6e122faeedf14740d98d338eeb6355bc08b16467b834547a70ce70684ff0df"
+        "docs/bmad/epics.md": "eab86791edfabbd8ecbee7bf434bb89c5f70d1fc86ac9ce8e0f99fcb1e8f9b46",
+        "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md": "a808d4455691b3b6d972afe6c83488ceab1f4bd71d24fbf22a7788bc5e60f912",
+        "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md": "b9eeedc4afc93f16e3cad2a8b8809dcba5ba4b764d60e8ec2471e3ca1fc1d147",
+        "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "5ec8248ce7236b0c67bda6e6ebb1c1e7c2fde8150fdc750c4cfabe5f712a633e",
+        "specs/001-codegraph-extraction/plan.md": "8c93567823b1c20ad81c212cd6d346831d0623fe9ee7eecbf5f305cb9ba68663",
+        "specs/001-codegraph-extraction/spec.md": "07b3676695965bc80805ed72b6714be8f17c62c220eaf4f29ef716ed8fba6d49",
+        "specs/001-codegraph-extraction/tasks.md": "8a164d118073add48ca4d662ace5e2ae0623dc49c4ee0e79c593d7959c44ed69"
       },
       "owned_paths": [
-        "specs/001-codegraph-extraction/spec.md",
-        "specs/001-codegraph-extraction/checklists/requirements.md"
+        "docker/Dockerfile",
+        "docker/codegraph",
+        "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+        "specs/001-codegraph-extraction",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+        "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs",
+        "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+        "src/dotnet/Vulgata.Core/Entities/ScanStructuralRecords.cs",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph",
+        "src/dotnet/Vulgata.Infrastructure/Data",
+        "src/dotnet/Vulgata.Infrastructure/Git",
+        "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+        "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+        "src/dotnet/Vulgata.Web/Components/Management/Repositories/RepositoryDetailDialog.razor",
+        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests"
       ]
     },
     "result": "pending",
@@ -2073,29 +2170,19 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-1-complete-20260719T084217Z-cc7334",
+    "checkpoint_id": "bmad-4-1-close-readiness-review-20260730T125509Z-4a1e7c",
     "scope_key": "story/4-1-codegraph-integration-and-code-unit-extraction",
-    "stage": "complete",
+    "stage": "acceptance-review",
     "committed_paths": [
-      ".codegraph/.gitignore",
-      ".specify/feature.json",
-      "docker/Dockerfile",
       "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-15.md",
-      "specs/001-codegraph-extraction",
-      "src/dotnet/Vulgata.Core",
-      "src/dotnet/Vulgata.Infrastructure",
-      "src/dotnet/Vulgata.Shared",
-      "src/dotnet/Vulgata.Web",
-      "tests/Vulgata.Tests"
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-1-close-readiness.md",
+      "specs/001-codegraph-extraction/workflow-state.json"
     ],
-    "verification_evidence_ids": [
-      "4-1-codegraph-integration-and-code-unit-extraction/complete/16"
-    ],
+    "verification_evidence_ids": [],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-19T16:42:17.2167536+08:00"
+  "updated_at": "2026-07-30T12:55:09Z"
 }

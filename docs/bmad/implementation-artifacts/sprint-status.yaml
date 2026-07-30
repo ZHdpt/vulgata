@@ -81,7 +81,7 @@ development_status:
   3-3-database-connection-configuration: done
   epic-3-retrospective: done
   epic-4: in-progress
-  4-1-codegraph-integration-and-code-unit-extraction: done
+  4-1-codegraph-integration-and-code-unit-extraction: review
   4-2-language-and-framework-detection: done
   4-3-conservative-pre-scan-gate-and-communication-type-detection: done
   epic-4-retrospective: optional
