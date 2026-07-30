@@ -334,9 +334,9 @@ Before any scanning infrastructure is built, validate that the Microsoft Agent F
 **Architecture:** Isolated prototype — instantiate the deterministic Orchestrator harness and a Worker Agent execution adapter, dispatch mock typed jobs, verify tool-call wiring and result collection. Document fallback options (direct OpenAI SDK, LangChain.NET, custom worker adapter) with migration effort estimates.
 
 ### Epic 4: Pre-Scan Profiling
-Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter. After profiling, agents may surface clarifying questions to the System Owner; the scan pauses and waits for user answers and approval before proceeding to worker dispatch.
+Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, apply a scan filter, and derive deterministic communication-kind hypotheses. Ordinary low-confidence hints do not block the scan. A bounded pre-scan LLM pass may phrase up to five questions only for blocking ambiguities that could exclude important source, omit large areas, fail framework detection, or require unsupported resource interpretation. If review is not completed within the seven-day V1 review window, the pre-scan gate continues with conservative scope and records a warning.
 **FRs covered:** FR-4.1
-**Architecture:** CodeGraphCliService shell invocation, Code Unit data model (file path, line range, language, framework), scan filter rules, agent question surface (HITL integration), approval gate state machine. Output: structured list of Code Units ready for Epic 5 dispatch.
+**Architecture:** CodeGraphContextProvider HTTP integration, Code Unit data model (file path, line range, language, framework), scan filter rules, deterministic communication-kind hypotheses, bounded pre-scan question surface, and a persisted approval/handoff state. Output: a structured pre-scan result ready for the Epic 5 deterministic Orchestrator; Epic 4 does not implement the Scan Coordinator queue or Worker Agent dispatch.
 
 ### Epic 5: Core Single Repository Scanning
 The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, deterministic Orchestrator planning the per-Repository workflow, and LLM-powered Worker Agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties and dispatch sites; Epic 5 owns same-Repository resolution and best-effort matching against already-scanned Repositories, while final Cross-Repository Resolution is completed in Epic 7 after full detection evidence exists. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
@@ -1025,34 +1025,39 @@ So that I can confirm communication patterns and resolve uncertainties before do
 **Given** the deterministic communication type detection pass completes
 **When** the results are compiled
 **Then** high-confidence detections (framework annotations found, config entries matched) shall be automatically marked as confirmed and seeded into the Communication Pattern Catalog for the System
-**And** low-confidence or ambiguous detections (only import found without config, mixed framework versions) shall be surfaced for human confirmation
+**And** ordinary low-confidence hints (only import found without config, weak URL or path hints) shall be retained as conservative, auditable scan metadata without blocking the scan
+**And** only blocking ambiguities that could exclude important source, omit large areas, fail framework detection, or require unsupported resource interpretation shall require human confirmation
 
-**Given** the scan coordinator transitions to the question gate phase
+**Given** the deterministic pre-scan gate identifies one or more blocking ambiguities
 **When** an LLM agent reviews the profiling summary
 **Then** the LLM agent shall only review items the deterministic pass flagged as ambiguous
-**And** shall surface up to 5 clarifying questions covering: (a) ambiguous language/framework detections (e.g., "Detected Spring Boot 3.x and Spring 2.x in the same project — which is primary?"), (b) low-confidence communication types needing confirmation, (c) structural decisions (e.g., "Include or exclude 200+ test files?")
+**And** shall surface up to 5 clarifying questions covering: (a) ambiguous language/framework detections that could fail framework detection, (b) communication-type ambiguity that changes conservative scan scope, and (c) structural decisions that could omit large or important source areas
+**And** the LLM agent shall phrase questions only; it shall not classify evidence, change confidence, approve a scan, or dispatch a Worker Agent
 
 **Given** the question gate displays results to the SystemOwner
 **When** they view the Repository in 系统管理
-**Then** low-confidence communication types shall each have a toggle: ✅ 确认 (Confirm) or ⛔ 排除 (Exclude)
+**Then** blocking communication-type ambiguities shall each have a toggle: ✅ 确认 (Confirm) or ⛔ 排除 (Exclude)
 **And** the SystemOwner shall be able to add communication types the detection missed via "添加通信类型"
 **And** confirmed communication types shall seed the Communication Pattern Catalog (consumed in Epic 7)
 **And** the repo status shall show "等待回答" with the question count
 **And** the bell icon shall increment its notification badge count (UX-DR-15, global HITL notification)
 
-**Given** the SystemOwner answers all questions, resolves all communication types, and clicks "确认并开始扫描" (Confirm and Start Scan)
+**Given** the SystemOwner answers all blocking questions, resolves all blocking communication-type ambiguities, and clicks "确认并开始扫描" (Confirm and Start Scan)
 **When** the approval is registered
-**Then** the scan coordinator shall proceed to worker dispatch (Epic 5)
+**Then** the persisted pre-scan result shall transition to `pre_scan_approved` and become available to the Epic 5 deterministic Orchestrator handoff
 **And** the answers and confirmed communication types shall be stored as scan metadata, available to Worker Agents as supplementary context
+**And** Story 4.3 shall not implement the Epic 5 Scan Coordinator queue, Worker Agent leases, retry policy, or dispatch
 
-**Given** the SystemOwner does not respond to questions within 7 days
-**When** the timeout elapses
-**Then** the scan shall be marked as "已过期" (Expired)
-**And** the SystemOwner shall be notified "扫描已过期，请重新启动扫描" on next visit
+**Given** the SystemOwner does not resolve blocking questions within 7 days
+**When** the V1 review window elapses
+**Then** the pre-scan gate shall continue with conservative scope and transition to `pre_scan_approved`
+**And** unresolved review items shall remain auditable warnings and shall not be promoted to confirmed code-derived facts
+**And** the SystemOwner shall be notified "预扫描等待已超时，系统已按保守范围继续" on next visit
 
-**Given** pre-scan profiling completes with zero questions and all communication types at high confidence
+**Given** pre-scan profiling completes with zero blocking questions
 **When** the question gate phase runs
-**Then** the scan coordinator shall proceed directly to worker dispatch without waiting for human input
+**Then** high-confidence communication types shall be auto-confirmed, ordinary low-confidence hints shall be retained conservatively, and the persisted result shall transition directly to `pre_scan_approved` without waiting for human input
+**And** the approved result shall be exposed to the future Epic 5 deterministic Orchestrator handoff without implementing Worker Agent dispatch in Story 4.3
 **And** the scan log shall record "All communication types auto-confirmed; no questions generated — proceeding to scan"
 
 ---
