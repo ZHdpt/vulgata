@@ -1,1 +1,3 @@
-{"feature_directory":"specs/002-language-framework-detection"}
+{
+  "feature_directory": "specs/003-conservative-pre-scan-gate"
+}

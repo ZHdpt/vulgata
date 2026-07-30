@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+  "reviewed_boundary": {
+    "base_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+    "candidate_commit": null,
+    "diff_sha256": "1e9a0caa32bd2d25d004820c7ad5e78ce688504761c020047492981a6482f4a2",
+    "artifact_hashes": {
+      "AGENTS.md": "66366ffc2f19ac019c9e68f2d0ad3713afed9c9baac57c43da6f909b843996f8",
+      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md": "27d319faa971c69344e42aaca15fbf9fa9465ad97c63f748f5affeca484ef71f",
+      "specs/003-conservative-pre-scan-gate/spec.md": "ed81307515ec3f3ab7867e350eb92329bf2dc16e4832daac2b27a3784ad8b1cb",
+      "specs/003-conservative-pre-scan-gate/checklists/requirements.md": "9d5c5ee48b3186482aac4c626b89eb9d04022601dca1d26990abe9611fecc8db",
+      "specs/003-conservative-pre-scan-gate/plan.md": "af0f6f2d96843598f2c43539a2c07027c5a6cb6ff44066820736a7dfb14a5d79",
+      "specs/003-conservative-pre-scan-gate/research.md": "e57c7696b91b5193a174dfc04ec5619d91449686be80ef50b5974e892ee606db",
+      "specs/003-conservative-pre-scan-gate/data-model.md": "534a62325c4aadae010d95bdb05dfd8778534e0b068b1f040ac666e959cf4e65",
+      "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md": "a241bdd6f4b7d2f1aaa9efdfe46355e5098f8451280edadb5fde8da21baf9cef",
+      "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md": "d9442bb1c617b883547af6f85209d79b2ee8b3ab572382be7584d8d22578baf9",
+      "specs/003-conservative-pre-scan-gate/quickstart.md": "2fab7e76d5c868ecf598a0164b1d09983ffd74a07235f8fcfa2f9796cf19412e"
+    },
+    "owned_paths": [
+      "AGENTS.md",
+      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+      "specs/003-conservative-pre-scan-gate/spec.md",
+      "specs/003-conservative-pre-scan-gate/checklists/requirements.md",
+      "specs/003-conservative-pre-scan-gate/plan.md",
+      "specs/003-conservative-pre-scan-gate/research.md",
+      "specs/003-conservative-pre-scan-gate/data-model.md",
+      "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+      "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md",
+      "specs/003-conservative-pre-scan-gate/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md#Story-4.3-and-Epic-11",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md#FR-4.x-FR-5.x-FR-7.x-and-5.16",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-story-4-3-pre-scan-gate.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-august-15-demo-slice.md",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+    "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+    "specs/003-conservative-pre-scan-gate/spec.md",
+    "specs/003-conservative-pre-scan-gate/checklists/requirements.md",
+    "specs/003-conservative-pre-scan-gate/plan.md",
+    "specs/003-conservative-pre-scan-gate/research.md",
+    "specs/003-conservative-pre-scan-gate/data-model.md",
+    "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+    "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md",
+    "specs/003-conservative-pre-scan-gate/quickstart.md",
+    "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+    "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+    "src/dotnet/Vulgata.Shared/Repositories/ScanRunSummaryDto.cs",
+    "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260720060442_FrameworkEvidenceAuditCount.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
+  ],
+  "findings": [
+    {
+      "id": "PLR-001",
+      "severity": "HIGH",
+      "category": "architecture-security",
+      "artifact": "specs/003-conservative-pre-scan-gate/data-model.md",
+      "location": "PreScanResult fields and Transport projection",
+      "affected_requirement": "Story 4.3 AC-2/AC-4; spec FR-001, FR-007, FR-010, FR-013; PRD section 5.16",
+      "evidence": "The detector is explicitly committed-snapshot based, but neither PreScanResult nor the typed handoff persists the profiled commit/repository snapshot identity, and the aggregate fingerprint is defined only over classification content. The existing GitWorkingCopyService reuses a mutable checkout and pulls on later acquisition. Story 11.2 therefore cannot prove that its source packets come from the same commit that produced the approved profile and classifications.",
+      "correction_outcome": "Persist the immutable profiled commit identity in the ScanRun/PreScanResult, bind it into the aggregate fingerprint and typed handoff, require the detector and later consumer to validate the same committed snapshot, fail closed on mismatch, and specify tests where the working copy advances after approval."
+    },
+    {
+      "id": "PLR-002",
+      "severity": "HIGH",
+      "category": "feasibility",
+      "artifact": "specs/003-conservative-pre-scan-gate/plan.md",
+      "location": "Design sections 1-2 and Planned source boundary",
+      "affected_requirement": "spec FR-001, FR-009, FR-011; Story 4.3 AC-3/AC-6",
+      "evidence": "The plan names ICommunicationKindDetector and says RepositoryProfileDraft is extended with a required PreScanResultDraft. The communication contract instead names IPreScanCommunicationDetector, requires a completed RepositoryProfileDraft as detector input, and returns the PreScanResult. This is circular: the required final draft cannot be constructed until detection returns, while detection requires that completed draft.",
+      "correction_outcome": "Define one canonical detector interface and a non-circular lifecycle: construct an identity-valid persistence-ready profile input without a pre-scan result, detect from that input plus the committed snapshot, then compose a final atomic persistence draft containing both profile and result. Align plan, research, contract, source boundary, and tests on the same types."
+    },
+    {
+      "id": "PLR-003",
+      "severity": "HIGH",
+      "category": "architecture",
+      "artifact": "specs/003-conservative-pre-scan-gate/plan.md",
+      "location": "Design section 3 and Project Structure",
+      "affected_requirement": "Constitution Principle I; spec FR-013/FR-014",
+      "evidence": "The plan requires IScanRunRepository in Core to return an ApprovedPreScanHandoff materialized read, but the only planned handoff projection is ApprovedPreScanHandoffDto under Vulgata.Shared. Core cannot depend on Shared under the mandated dependency direction. Returning the EF entity would also contradict the stated projection boundary. No Core read model or explicit aggregate-return contract is planned.",
+      "correction_outcome": "Choose and document a compilable layer seam: either add a Core-owned immutable handoff/read model returned by IScanRunRepository and map it to the Shared DTO in Web, or return the Core aggregate and map it in an authorized Web facade. Name the facade and tests explicitly and preserve post-load visibility checks."
+    },
+    {
+      "id": "PLR-004",
+      "severity": "HIGH",
+      "category": "acceptance-testability",
+      "artifact": "specs/003-conservative-pre-scan-gate/data-model.md",
+      "location": "Aggregate construction step 6",
+      "affected_requirement": "spec FR-004, FR-007, FR-010; SC-001; Story 4.3 AC-1/AC-2",
+      "evidence": "The model caps all classification and audit rows at 100 and truncates after sorting by level, kind, rule, path, and selector. Confirmed truth is derived from retained Confirmed rows. More than 99 distinct direct matches can therefore discard every retained row for a later-sorted communication kind, causing a supported RPC or HTTP kind to disappear from confirmedKinds despite direct evidence.",
+      "correction_outcome": "Separate normalized confirmed-kind truth from bounded evidence samples, or define a deterministic reservation/aggregation algorithm that always preserves every observed prepared kind and its auditable evidence before truncation. Record total counts and a truncation warning, and add adversarial tests with more than 100 distinct direct matches across both kinds."
+    },
+    {
+      "id": "PLR-005",
+      "severity": "HIGH",
+      "category": "constitution",
+      "artifact": "specs/003-conservative-pre-scan-gate/plan.md",
+      "location": "Constitution Check and domain model",
+      "affected_requirement": "Constitution Principle II MUST; AGENTS.md canonical terminology rule",
+      "evidence": "The plan introduces Pre-Scan Result, Communication Kind Classification, Evidence Locator, and Typed Pre-Scan Handoff as domain terms while docs/UBIQUITOUS_LANGUAGE.md contains none of them. Constitution Principle II says a needed concept absent from the glossary must be surfaced rather than invented. The plan declares the Constitution check PASS and records no glossary gap or justified violation.",
+      "correction_outcome": "Surface and resolve the terminology gap before acceptance: establish canonical glossary entries through the repository's authority process or revise the design to existing canonical terms, then update the Constitution check to cite the resolved authority."
+    }
+  ],
+  "summary": "REVISE. The scope overlay, migration serialization, atomic transaction direction, authorization intent, and deferred-feature boundaries are viable, but five High defects prevent task generation: the handoff is not bound to a committed source snapshot, the detector lifecycle is circular and inconsistently named, the Core/Shared projection seam is not compilable as planned, bounded truncation can erase confirmed communication truth, and the plan violates the Constitution's mandatory glossary rule."
+}

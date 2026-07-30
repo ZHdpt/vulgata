@@ -1,0 +1,333 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "4-3-conservative-pre-scan-gate-and-communication-type-detection",
+  "bmad_epic_key": "4",
+  "feature_directory": "specs/003-conservative-pre-scan-gate",
+  "execution_level": "expedited-mvp",
+  "stage": "implement",
+  "active_gates": {
+    "acceptance-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": "2026-07-30T02:48:42.5923332Z"
+    },
+    "quality-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-07-30T02:40:54.9612425Z",
+      "completed_at": "2026-07-30T02:40:54.9612425Z",
+      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "input_hashes": {
+        "docs/bmad/epics.md": "12de4cebad3af356f0a4a2ef8f6755183c354a6a45967c534bdb0496a267c634",
+        "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834"
+      },
+      "agent_role": "story-context-synthesizer",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-07-30T02:40:54.9612425Z",
+      "completed_at": "2026-07-30T02:48:42.5923332Z",
+      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "input_hashes": {
+        "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md": "7c7c3b8198aa2ce70b5399a81fbbfb1d2322f59255c73ecba3ae07ef33bc9b9b",
+        "specs/003-conservative-pre-scan-gate/spec.md": "ed81307515ec3f3ab7867e350eb92329bf2dc16e4832daac2b27a3784ad8b1cb"
+      },
+      "agent_role": "spec-author",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/spec.md",
+        "specs/003-conservative-pre-scan-gate/checklists/requirements.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-07-30T02:48:42.5923332Z",
+      "completed_at": "2026-07-30T04:03:48.8622966Z",
+      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/spec.md": "ed81307515ec3f3ab7867e350eb92329bf2dc16e4832daac2b27a3784ad8b1cb",
+        ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/plan.md",
+        "specs/003-conservative-pre-scan-gate/research.md",
+        "specs/003-conservative-pre-scan-gate/data-model.md",
+        "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+        "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md",
+        "specs/003-conservative-pre-scan-gate/quickstart.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-07-30T02:48:42.5923332Z",
+      "completed_at": "2026-07-30T04:03:48.8622966Z",
+      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/plan.md": "7c956c827f58d67ae42ab6808d4bb8a5e5798356e9e4cc3a37819f2ff1ca475b",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json": "eaee228d42fe149a7d52548bb0d5ee86076cfe94be47fcc53f0373446c9bb9eb"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-1.json",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-2.json",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-07-30T04:20:43.9150140Z",
+      "completed_at": "2026-07-30T04:40:37Z",
+      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json": "eaee228d42fe149a7d52548bb0d5ee86076cfe94be47fcc53f0373446c9bb9eb",
+        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json": "5024e082868ee49503b367c6684e457c8b312226bb9b4aacdb70bc4a4cdf85ed"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json",
+        "specs/003-conservative-pre-scan-gate/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-30T04:20:43.9150140Z",
+      "completed_at": "2026-07-30T04:40:37Z",
+      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/tasks.md": "7357a816a0385ab0a85b68a433bb993b7d6a71ebcbc8ffe7c1d50578f30c88a1",
+        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json": "5024e082868ee49503b367c6684e457c8b312226bb9b4aacdb70bc4a4cdf85ed"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "active",
+      "started_at": "2026-07-30T04:40:37Z",
+      "completed_at": null,
+      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json": "f8151100028597acca11e4265a8a8dbbda00d22c830a33d537125421c7f8a96e"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [],
+      "failure": null
+    }
+  ],
+  "repository_preflight": {
+    "branch": "story4.3",
+    "preflight_head": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/a521/vulgata",
+    "worktree_status": "Story 4.3 accepted delivery definition pending checkpoint binding; no implementation changes",
+    "owned_paths": [
+      ".specify/feature.json",
+      "AGENTS.md",
+      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json",
+      "specs/003-conservative-pre-scan-gate"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-30T02:48:42.5923332Z"
+  },
+  "source_artifacts": [
+    {
+      "authority": "bmad-story",
+      "path": "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "sha256": "852049fcdd436c9c3c1d45616bc5832be67bf1b342faa88ae0487075c9aff9e5"
+    },
+    {
+      "authority": "speckit-specification",
+      "path": "specs/003-conservative-pre-scan-gate/spec.md",
+      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "sha256": "b099383dfd7f66c483c080bad474a931233d5a09e47f7bca37b1ea1ecf6ecd68"
+    },
+    {
+      "authority": "bmad-epics",
+      "path": "docs/bmad/epics.md",
+      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "sha256": "12de4cebad3af356f0a4a2ef8f6755183c354a6a45967c534bdb0496a267c634"
+    },
+    {
+      "authority": "prd",
+      "path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "sha256": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834"
+    },
+    {
+      "authority": "constitution",
+      "path": ".specify/memory/constitution.md",
+      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "sha256": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5"
+    }
+  ],
+  "dispatches": [
+    {
+      "dispatch_id": "story43_context",
+      "role": "story-context-synthesizer",
+      "objective": "Synthesize the bounded Story 4.3 context from raw repository authorities.",
+      "source_boundary": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "permitted_writes": [],
+      "output_path": "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+      "returned_evidence": [
+        "source-grounded context brief"
+      ]
+    },
+    {
+      "dispatch_id": "story43_spec",
+      "role": "spec-author",
+      "objective": "Create and validate one concise expedited-mvp Story 4.3 specification.",
+      "source_boundary": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "permitted_writes": [
+        ".specify/feature.json",
+        "specs/003-conservative-pre-scan-gate/spec.md",
+        "specs/003-conservative-pre-scan-gate/checklists/requirements.md"
+      ],
+      "output_path": "specs/003-conservative-pre-scan-gate/spec.md",
+      "returned_evidence": [
+        "specs/003-conservative-pre-scan-gate/spec.md",
+        "specs/003-conservative-pre-scan-gate/checklists/requirements.md"
+      ]
+    }
+  ],
+  "review_iterations": {
+    "spec-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "plan-review": {
+      "count": 3,
+      "verdict_paths": [
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-1.json",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-2.json",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json"
+      ]
+    },
+    "analyze": {
+      "count": 1,
+      "verdict_paths": [
+        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json"
+      ]
+    },
+    "acceptance-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 0,
+      "verdict_paths": []
+    }
+  },
+  "e2e_decision": {
+    "triggered_predicates": [],
+    "complete_coverage_override": null,
+    "required": null,
+    "rationale": "Pending implementation boundary.",
+    "covering_tests": [],
+    "owner": "e2e-runner",
+    "result": "pending",
+    "source_boundary": null,
+    "evidence_ids": []
+  },
+  "verification": [
+    {
+      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/plan-review/4",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "artifact_paths": [
+        "specs/003-conservative-pre-scan-gate/plan.md",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json",
+        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-30T04:20:43.9150140Z",
+      "summary": "User explicitly approved the accepted Story 4.3 Scan strategy for progression to task generation only; all later workflow gates remain required.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/analyze/1",
+      "kind": "analysis",
+      "stage": "analyze",
+      "source_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "artifact_paths": [
+        "specs/003-conservative-pre-scan-gate/tasks.md",
+        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-30T04:40:37Z",
+      "summary": "Read-only analysis accepted with FR 19/19, SC 7/7, scenarios 12/12, Story ACs 6/6, edge cases 6/6, and all nine RED-to-GREEN groups covered; no findings.",
+      "raw_output_path": null
+    }
+  ],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-4-3-tasks-20260730T044037Z-c7a41e",
+    "scope_key": "story/4-3-conservative-pre-scan-gate-and-communication-type-detection",
+    "stage": "tasks",
+    "committed_paths": [
+      ".specify/feature.json",
+      "AGENTS.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json",
+      "specs/003-conservative-pre-scan-gate/checklists/requirements.md",
+      "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+      "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md",
+      "specs/003-conservative-pre-scan-gate/data-model.md",
+      "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json",
+      "specs/003-conservative-pre-scan-gate/plan.md",
+      "specs/003-conservative-pre-scan-gate/quickstart.md",
+      "specs/003-conservative-pre-scan-gate/research.md",
+      "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json",
+      "specs/003-conservative-pre-scan-gate/reviews/plan-review-1.json",
+      "specs/003-conservative-pre-scan-gate/reviews/plan-review-2.json",
+      "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json",
+      "specs/003-conservative-pre-scan-gate/spec.md",
+      "specs/003-conservative-pre-scan-gate/tasks.md",
+      "specs/003-conservative-pre-scan-gate/workflow-state.json"
+    ],
+    "verification_evidence_ids": [
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/plan-review/4",
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/analyze/1"
+    ],
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-07-30T04:40:37Z"
+}

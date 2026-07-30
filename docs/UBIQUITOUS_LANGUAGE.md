@@ -13,6 +13,11 @@
 | **Pass 1** | The first phase of document generation: Code Logic Documents are produced per Code Unit, with intra-repo REFERENCES edges and cross-repo uncertainties. | CL Doc Generation |
 | **Pass 2** | The second phase: deterministic planning traces path-aware graph slices from entry points, clusters them into flow groups, and dispatches one Worker Agent per flow group to synthesize Business Logic Documents from Code Logic Documents and trace evidence. | BL Doc Generation |
 | **Document Pre-Allocation** | Creating logical Document slots or planned version rows for filtered Code Units before Worker Agents run, so same-scan references can target stable identities without treating unfinished placeholders as generated Documents. | Pre-seeding |
+| **Profiled Revision** | The immutable Git commit identity from which one ScanRun profile and its Pre-Scan Result are derived. Later consumers must use that exact revision rather than whichever commit is currently checked out. | Current Revision, Working-Copy Revision |
+| **Pre-Scan Result** | The immutable, ScanRun-scoped deterministic result produced after Repository profiling. It records `pre_scan_approved`, confirmed communication kinds, bounded evidence samples, warnings, and integrity metadata without dispatching any Worker Agent. | Pre-Scan Report, Scan Approval |
+| **Communication Kind Classification** | A conservative classification of an observed prepared communication kind as Confirmed, Hint, or Warning. It identifies only the kind of communication and does not resolve providers, consumers, endpoints, or Cross-Repository relationships. | Communication Type Detection, Endpoint Detection |
+| **Evidence Locator** | A bounded Repository-relative source location plus rule and provenance metadata supporting a Communication Kind Classification. It never contains source content or an absolute path. | Evidence Record, Source Snippet |
+| **Pre-Scan Handoff** | The versioned, authorized view of an approved Pre-Scan Result supplied to a downstream scan runner. It is bound to the Profiled Revision and grants no dispatch authority by itself. | Typed Pre-Scan Handoff, Dispatch Handoff |
 
 ## Graph & Relationships
 
@@ -56,6 +61,9 @@
 - A **System** contains one or more **Repositories** (organizational grouping only — no detection significance).
 - A **Scan** targets exactly one **Repository**.
 - An **Orchestrator** manages one **Scan** and dispatches N **Worker Agents**.
+- A **ScanRun** profiles exactly one **Profiled Revision** and produces at most one **Pre-Scan Result** for that revision.
+- A **Pre-Scan Result** contains zero or more **Communication Kind Classifications**, each supported by bounded **Evidence Locators**.
+- An authorized **Pre-Scan Handoff** exposes an approved **Pre-Scan Result** to a downstream runner, which must verify the same **Profiled Revision** before continuing.
 - A **Worker Agent** processes one **Code Unit** (Pass 1) or one flow group's Code Logic Documents and trace evidence (Pass 2).
 - A **Code Logic Document** is generated from one or more **Code Units** (via `document_sources`).
 - A **Business Logic Document** is generated from one or more **Code Logic Documents** (via `GENERATED_FROM` edges).
@@ -64,6 +72,14 @@
 - **Cross-Repository Resolution** runs after each **Repository Scan** completes and is bidirectional (resolves both outgoing and incoming uncertainties).
 
 ## Example Dialogue
+
+> **Dev:** "The working copy advanced after profiling. Can the scan runner use the approved pre-scan data with the newer commit?"
+
+> **Domain expert:** "No. The **Pre-Scan Result** and **Pre-Scan Handoff** are bound to the original **Profiled Revision**. A downstream runner must acquire and verify that exact commit or fail closed."
+
+> **Dev:** "Does a confirmed HTTP classification mean we have already found the provider, consumer, and endpoint?"
+
+> **Domain expert:** "No. A **Communication Kind Classification** only says that direct evidence confirmed the prepared HTTP kind. Endpoint roles and **Cross-Repository Resolution** happen later, and the handoff itself does not authorize dispatch."
 
 > **Dev:** "When we scan `mbank-core` and it detects a call to `riskeng-service`, what happens if `riskeng-service` hasn't been scanned yet?"
 
@@ -86,3 +102,5 @@
 - "Cross-System" was used throughout the original PRD to mean "Cross-Repository." The architecture plan has renamed this to **Cross-Repository** because detection granularity is at the repository level, and intra-System cross-repo calls were invisible under the old terminology. "System" is now purely an organizational grouping.
 - "Scan" previously meant "either a single repository or an entire system." Now it always means "a single repository." There is no System-level scan — scanning all repos in a System is a convenience trigger that queues N independent repo scans.
 - "Uncertainty" previously had 3 user-facing states. The architecture plan adds `sub_status` for internal refinement and a `wontfix` terminal state for human-accepted dangling links.
+- A **Communication Kind Classification** is a pre-scan hypothesis about prepared RPC or HTTP communication. It is not an endpoint, provider/consumer role, REFERENCES Edge, or completed Cross-Repository detection.
+- A **Pre-Scan Handoff** means that deterministic pre-scan checks were approved for a specific Profiled Revision. It does not authorize or perform Worker Agent dispatch.

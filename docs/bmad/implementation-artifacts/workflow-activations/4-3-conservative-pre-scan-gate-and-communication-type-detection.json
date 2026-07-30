@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "4-3-conservative-pre-scan-gate-and-communication-type-detection",
+  "bmad_epic_key": "4",
+  "story_path": "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+  "proposed_feature_short_name": "conservative-pre-scan-gate",
+  "stage": "implement",
+  "repository_preflight": {
+    "branch": "story4.3",
+    "preflight_head": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/a521/vulgata",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-30T02:40:54.9612425Z"
+  },
+  "activation_checkpoint_id": "bmad-4-3-context-20260730T024054Z-54cbdd",
+  "feature_directory": "specs/003-conservative-pre-scan-gate",
+  "superseded_by_state": "specs/003-conservative-pre-scan-gate/workflow-state.json"
+}

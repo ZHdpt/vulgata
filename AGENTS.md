@@ -139,5 +139,5 @@ Multi-context layout via `CONTEXT-MAP.md`. See `docs/agents/domain.md`.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/002-language-framework-detection/plan.md`
+`specs/003-conservative-pre-scan-gate/plan.md`
 <!-- SPECKIT END -->
