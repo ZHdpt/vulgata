@@ -7,6 +7,7 @@
 /specs/002-language-framework-detection/contracts/framework-detection.md text eol=lf
 /specs/002-language-framework-detection/contracts/provider-language-projection.md text eol=lf
 /specs/002-language-framework-detection/contracts/repository-scan-overview.md text eol=lf
+/specs/002-language-framework-detection/reviews/plan-review-10.json text eol=lf
 /specs/001-codegraph-extraction/contracts/repository-profiling-api.md text eol=lf
 /specs/001-codegraph-extraction/reviews/plan-review-10.json text eol=lf
 /specs/001-codegraph-extraction/qualification/attempts/authorized.schema.json text eol=lf
