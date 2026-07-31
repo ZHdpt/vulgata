@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4/verify-build/1",
+  "kind": "command",
+  "stage": "verify-build",
+  "source_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+  "artifact_paths": [
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-build-1b9c98b.txt"
+  ],
+  "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+  "exit_code": 0,
+  "observed_at": "2026-07-31T01:17:46.9393278Z",
+  "summary": "Web build succeeded with 15 warnings and 0 errors.",
+  "raw_output_path": "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-build-1b9c98b.txt",
+  "raw_output_sha256": "ecbe004d795189e9e4d17771ae7f90faaee7970eeee140ffb422bcaca796883f",
+  "execution_worktree": "G:/source/repos/vulgata/.worktrees/epic-4-close-verify-1b9c98b",
+  "execution_worktree_head": "1b9c98bb4999e254ab19704643477732f92c842c",
+  "execution_worktree_git_identity": "zhdpt <1372879802@qq.com>",
+  "boundary_clean": true,
+  "source_equality_validated_at": "2026-07-31T01:24:29.8432821Z",
+  "environment_summary": "Windows host; .NET SDK 10.0.302; clean detached worktree pinned to the Epic 4 source checkpoint."
+}

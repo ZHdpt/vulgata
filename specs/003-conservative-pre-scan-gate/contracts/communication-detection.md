@@ -13,8 +13,16 @@
 It returns one complete `PreScanResultDraft` or throws/cancels before
 persistence. The coordinator combines the unchanged profile-only draft and
 result draft into `RepositoryProfileCommitDraft`.
+The sole public final profile operation accepts that composite; no
+`RepositoryProfileDraft` persistence overload exists.
 It performs no database write, network call, package execution, dispatch, or
 LLM/Human-in-the-Loop operation.
+
+Framework detection receives this same
+`ICommittedRepositorySnapshotLease`, verifies it, and reads the materialized
+archive representation directly. It never runs Git against the lease's
+archive-only `RootPath`. See
+[Repository Profiling Composition](repository-profiling-composition.md).
 
 ## Input authority
 
@@ -78,10 +86,12 @@ lowercase Profiled Revision with `git rev-parse --verify HEAD`.
 `CommittedRepositorySnapshotService` holds the Repository acquisition lock,
 rechecks cleanliness/revision, and safely materializes that exact tree from Git
 object data into a private per-ScanRun snapshot. CodeGraphContext and the
-detector consume only this shared snapshot. The coordinator verifies the
-snapshot identity immediately before atomic persistence. Dirty state, a tracked
-byte mutation without a HEAD move, unsafe archive content, snapshot mutation,
-or revision mismatch publishes no result. For identical profile,
+detectors consume only this shared snapshot. Framework and communication
+detection accept the live lease rather than rediscovering Git identity from
+`RootPath`; each verifies identity around its reads, and the coordinator
+verifies identity immediately before atomic persistence. Dirty state, a
+tracked-byte mutation without a HEAD move, unsafe archive content, snapshot
+mutation, or revision mismatch publishes no result. For identical profile,
 Profiled Revision, and committed inputs, the ordered safe classification fields
 and aggregate fingerprint are identical. Current time and generated child IDs
 are excluded. The aggregate fingerprint covers all normalized locator metadata

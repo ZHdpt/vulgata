@@ -1,5 +1,20 @@
 # Data Model: Conservative Pre-Scan Gate
 
+## Remediation impact
+
+The July 31 Epic 4 architecture correction changes no domain entity, field,
+relationship, enum, EF configuration, table, constraint, index, migration, or
+transport projection described below. The existing model remains the accepted
+Story 4.3 model. The correction removes service-layer paths that could bypass
+it:
+
+- framework detection receives the Profiled Revision-bound
+  `ICommittedRepositorySnapshotLease`;
+- every profiling coordinator construction requires the snapshot and real
+  Pre-Scan detector services; and
+- the sole public final persistence input is
+  `RepositoryProfileCommitDraft(profile + result)`.
+
 ## Closed types
 
 | Type | Values | Rule |
@@ -70,8 +85,9 @@ Compatibility invariants:
 
 ## Aggregate construction
 
-1. Require a completed ScanRun, complete identity-consistent profile, and
-   captured Profiled Revision; verify the committed snapshot matches it.
+1. Require a completed ScanRun, complete identity-consistent profile, captured
+   Profiled Revision, and the same committed-snapshot lease used by framework
+   and communication detection; verify the lease identity.
 2. Normalize every path and selector before constructing a candidate child.
 3. Reject unknown enum values and incompatible level/confidence/rule tuples.
 4. Group exact canonical child keys and increment `OccurrenceCount`.
@@ -93,6 +109,7 @@ completed profile-only RepositoryProfileDraft + Profiled Revision
   -> deterministic classification
   -> RepositoryProfileCommitDraft(profile + result)
   -> PreScanApproved (in memory)
+  -> sole IScanRunRepository final operation
   -> profile + approved result atomically committed
 ```
 
@@ -100,9 +117,11 @@ There is no `Waiting`, `PendingApproval`, `Expired`, `Rejected`, or manual
 approval transition in Story 4.3. A detector-level individual anomaly becomes
 a Warning. A detector infrastructure failure or persistence failure publishes
 no result. A same-fingerprint retry returns the committed result; a different-
-fingerprint retry fails closed.
+fingerprint retry fails closed. No public service operation may transition a
+completed `RepositoryProfileDraft` to durable state without its
+`PreScanResultDraft`.
 
-## Database constraints and indexes
+## Existing database constraints and indexes
 
 - `PreScanResults` PK/FK `Id` uses the ScanRun ID; unique
   `(RepositoryId, ScanRunId)`. Domain construction and repository
@@ -115,6 +134,9 @@ fingerprint retry fails closed.
   Profiled Revision equality, confirmed-kind flags/counts, sample
   path/locator/count/fingerprint bounds, and nullable Kind rules.
 - index `(PreScanResultId, Level, Kind)` for deterministic materialization.
+
+The remediation adds no constraint or index. Validation must confirm the
+existing model has no pending migration change.
 
 ## Transport projection
 

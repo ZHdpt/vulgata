@@ -1,208 +1,142 @@
-# Tasks: Conservative Pre-Scan Gate
+# Tasks: Story 4.3 Architecture Remediation
 
-**Input**: Accepted design documents from `specs/003-conservative-pre-scan-gate/`
-
-**Boundary**: Base commit `e7597082bf6acd4e7dfa05a56d393deae787a3d4`; accepted plan bundle SHA-256 `32dbd8130f68051942fd5f832444e987af8439fc6a239e05b1ab9e77e0dd817b`; planned-change authorization SHA-256 `5024e082868ee49503b367c6684e457c8b312226bb9b4aacdb70bc4a4cdf85ed`
+**Input**: Accepted July 31 correction plan under `specs/003-conservative-pre-scan-gate/`
 
 **Execution level**: `expedited-mvp`
 
-**Tests**: Every behavior group starts with an observed, transient RED test and ends with focused GREEN verification. Never stage, commit, or checkpoint a failing test.
-
-**Organization**: Tasks are grouped by user story and bounded so each group can be implemented with RED → GREEN → REFACTOR evidence.
+**Scope**: Correction-only closure of the three reserved Epic 4 architecture findings at source commit `1b9c98bb4999e254ab19704643477732f92c842c`. The medium catalog-locality refactor, new product behavior, migrations, Worker Agent tools, dispatch, scheduling, retry, and provider failover are excluded.
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: Can run in parallel after its stated dependencies because it owns different files
-- **[Story]**: Maps the task to the corresponding story in `spec.md`
-- Every task names its exact file path(s)
+- **[P]**: May run concurrently because the task owns different files and has no dependency on an incomplete task.
+- **[US1]**: Restores deterministic framework evidence over the verified committed Repository snapshot.
+- **[US2]**: Restores mandatory Communication Kind Classification and atomic profile-to-approval persistence.
+- Every test task must be observed RED before its paired production task; no failing state may be staged or committed.
+
+## Phase 1: Accepted Correction Boundary
+
+**Purpose**: Pin the authorized remediation before any implementation work.
+
+- [x] T001 Verify `specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json` is `ACCEPT`, `specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json` authorizes task generation at commit `1b9c98bb4999e254ab19704643477732f92c842c`, and `docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md` reserves exactly the three HIGH/MUST/Strong findings; stop if any boundary differs and do not edit those files.
 
 ---
 
-## Phase 1: Setup and Accepted Delivery Definition
+## Phase 2: Remediation RED Baseline
 
-**Purpose**: Bind the independently accepted and explicitly authorized delivery boundary before implementation.
+**Purpose**: Make every reserved defect and the production composition gap fail observably before production edits.
 
-- [x] T001 [P] Verify `specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json` is `ACCEPT` for base commit `e7597082bf6acd4e7dfa05a56d393deae787a3d4` and bundle SHA-256 `32dbd8130f68051942fd5f832444e987af8439fc6a239e05b1ab9e77e0dd817b`, and verify `specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json` has SHA-256 `5024e082868ee49503b367c6684e457c8b312226bb9b4aacdb70bc4a4cdf85ed` and authorizes task generation without authorizing dispatch or waiving later gates.
-- [x] T002 [P] Run the read-only `speckit-analyze` cross-artifact check after this task list exists against `specs/003-conservative-pre-scan-gate/spec.md`, `specs/003-conservative-pre-scan-gate/plan.md`, and `specs/003-conservative-pre-scan-gate/tasks.md`; stop for correction if it finds a blocking inconsistency and do not edit the accepted spec or plan.
-- [x] T003 Create the first expedited accepted-delivery-definition checkpoint containing the activated Story 4.3 brief at `docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md`, accepted artifacts under `specs/003-conservative-pre-scan-gate/`, plan-review acceptance, authorization evidence, analysis result, and this task list; begin implementation only after T001 and T002 pass, and retain Story 4.3 ownership of `src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs`, `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`, and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/*AddConservativePreScanGate*` through the completed-story checkpoint.
+- [ ] T002 [P] [US1] Add and run `ArchiveOnlyLease_*` tests in `tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs` through public `ICommittedRepositorySnapshotService` and `IFrameworkEvidenceDetector`, proving the real materialized lease has no `.git`, the current detector fails on that archive representation, lease identity is checked around reads, unsafe or mutated identity fails closed, and expected bounded framework facts are the required GREEN outcome; retain the observed RED output without staging or committing it.
+- [ ] T003 [P] [US2] Add and run `PublicConstructors_*` and `FinalPersistenceContract_*` reflection tests in `tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs`, proving the current public `RepositoryProfilingCoordinator` surface contains a constructor missing `IPreScanCommunicationDetector` or `ICommittedRepositorySnapshotService`, the empty/missing adapters remain discoverable, and `IScanRunRepository` exposes a `RepositoryProfileDraft` final persistence overload; retain the observed RED output without staging or committing it.
+- [ ] T004 [P] [US2] Replace the manual-only happy path with a failing `ProductionComposition_*` regression in `tests/Vulgata.Tests/Story43EndToEndTests.cs` that resolves `IRepositoryProfilingCoordinator` from the Web composition root, uses a clean temporary database and two committed Repositories, replaces only external `ICodeGraphProvider`, and requires real snapshot, framework, communication, and persistence interfaces to produce Profiled Revision-bound framework/RPC/HTTP facts plus one atomically visible approved Pre-Scan Result per ScanRun; retain the observed RED output without staging or committing it.
 
-**Checkpoint**: The accepted delivery definition is pinned; no implementation starts earlier.
-
----
-
-## Phase 2: Foundational — Exact Committed-Tree Snapshot
-
-**Purpose**: Establish one safe immutable Profiled Revision snapshot used by all profiling and detection readers.
-
-**Critical**: This phase blocks every user story.
-
-- [x] T004 Add and run failing committed-snapshot tests in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` proving that acquisition rejects a dirty reusable checkout; safely materializes the exact Profiled Revision from Git object data; rejects absolute, escaping, control-bearing, symlink, reparse-point, duplicate, per-entry oversized, aggregate oversized, and malformed entries; and never publishes a usable lease on failure. Record the observed RED before production changes and do not commit it.
-- [x] T005 Extend `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs` with the bounded lowercase `GitWorkingCopyResult.ProfiledRevision` and committed-snapshot lease contract, harden `src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs` to reject dirty reusable checkouts and capture `git rev-parse --verify HEAD`, and implement guarded Git-object materialization plus acquisition-lock lifetime in `src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs`.
-- [x] T006 Run the committed-snapshot filter in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` to GREEN, including disposal/cleanup and cancellation, then refactor without changing the observed behavior.
-- [x] T007 Add and run failing integration tests in `tests/Vulgata.Tests/RepositoryProfilingTests.cs` proving CodeGraph profiling and the detector receive the same private snapshot root and Profiled Revision, while a snapshot mutation, revision advance, dirty late checkout, or tracked-byte mutation with unchanged `HEAD` fails closed before persistence. Record the observed RED and do not commit it.
-- [x] T008 Change `src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs` and `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs` to consume one leased committed snapshot for CodeGraphContext, language/framework readers, and later detection; verify snapshot identity immediately before persistence and release the lease only after commit/failure.
-- [x] T009 Run the snapshot-sharing and late-mutation filter in `tests/Vulgata.Tests/RepositoryProfilingTests.cs` to GREEN and verify zero partial profile or Pre-Scan Result is observable on every fail-closed path.
-
-**Checkpoint**: All profiling inputs are bound to one immutable committed tree; mutable checkout bytes are no longer a profiling authority.
+**Checkpoint**: T002, T003, and T004 each fail for the corresponding pre-correction defect, not for fixture, build, or environment errors.
 
 ---
 
-## Phase 3: User Story 1 — Classify Prepared Communication Evidence (Priority: P1) MVP
+## Phase 3: User Story 1 — Archive-Only Framework Detection (Priority: P1)
 
-**Goal**: Deterministically classify only prepared RPC/HTTP evidence with closed truth levels, complete confirmed-kind truth, bounded samples, and no LLM or Human-in-the-Loop.
+**Goal**: Framework evidence consumes the live verified committed snapshot lease and never treats `RootPath` as a Git working tree.
 
-**Independent Test**: Run `PreScanCommunicationDetectionTests` against direct RPC/HTTP, import-only, malformed, unsafe, unsupported, duplicate, and more-than-100 both-kind fixtures; only direct supported evidence confirms, all outputs are deterministic and bounded, and the exact Profiled Revision remains authoritative.
+**Independent Test**: The archive-only lease contains no `.git`, yet the public framework detector returns the expected bounded facts for its exact Profiled Revision, verifies identity before and after reads, and fails closed after mutation without invoking Git under `RootPath`.
 
-### Domain lifecycle RED → GREEN
+- [ ] T005 [US1] Change `IFrameworkEvidenceDetector.DetectAsync` and `DetectDetailedAsync` in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs` to require `ICommittedRepositorySnapshotLease`, retaining the existing closed result and applicability contracts.
+- [ ] T006 [US1] Rework `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs` to reject null/disposed/identity-invalid leases, verify identity before and after bounded reads, inventory containment-checked regular files directly under the live lease `RootPath`, preserve existing path/artifact/aggregate/record/parse/audit/redaction bounds, and remove all Git identity, inventory, and blob operations from the archive detector path.
+- [ ] T007 [US1] Run `FrameworkDetectionArchiveLeaseTests` in `tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs` to GREEN and confirm success without `.git`, exact Profiled Revision binding, before/after identity verification, mutation failure with no result, bounded diagnostics, and zero Git command against the archive `RootPath`.
 
-- [x] T010 [US1] Add and run failing domain tests in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` for the non-circular `RepositoryProfileDraft` → `IPreScanCommunicationDetector` → `PreScanResultDraft` → `RepositoryProfileCommitDraft` lifecycle, closed Rpc/Http and Confirmed/Hint/Warning values, confidence/rule/provenance compatibility, safe Evidence Locator bounds, and identity/Profiled Revision invariants. Record the observed RED and do not commit it.
-- [x] T011 [US1] Implement immutable domain types and invariants in `src/dotnet/Vulgata.Core/Entities/PreScanResult.cs` and `src/dotnet/Vulgata.Core/Entities/CommunicationKindClassification.cs`, add `IPreScanCommunicationDetector` in `src/dotnet/Vulgata.Core/DomainServices/IPreScanCommunicationDetector.cs`, and add profile-only `PreScanResultDraft` plus composite `RepositoryProfileCommitDraft` in `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`.
-- [x] T012 [US1] Run the domain-lifecycle filter in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` to GREEN and verify `RepositoryProfileDraft` has no detector/result dependency and no intermediate durable state.
-
-### Closed classification RED → GREEN
-
-- [x] T013 [US1] Add and run failing detector tests in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` for exact direct RPC and HTTP annotations/controllers/clients/configuration as Confirmed/High; package, namespace, import, and framework-only evidence as Hint/Conservative; malformed, unsafe, oversized, contradictory, truncated, and unsupported-family inputs as Warning/None or omission; exact duplicate collapse; independent hint retention; path/source/secret redaction; zero-evidence and warnings-only approval; and zero network, package execution, LLM, HITL, endpoint resolution, catalog management, deferred-family confirmation, Worker Agent tool, or dispatch behavior. Record the observed RED and do not commit it.
-- [x] T014 [US1] Add the embedded closed rule vocabulary and validated loader in `src/dotnet/Vulgata.Infrastructure/CommunicationDetection/Catalog/communication-evidence-rules.v1.json` and `src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationEvidenceRuleCatalog.cs`, accepting only versioned Rpc/Http rules and closed evidence categories/tokens.
-- [x] T015 [US1] Implement bounded snapshot-only matching, normalization, duplicate aggregation, fixed confidence/provenance mapping, safe Evidence Locators, and isolated anomaly handling in `src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs`; never retain matched source text or attacker-controlled discriminators.
-- [x] T016 [US1] Run the closed-classification filter in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` to GREEN and confirm unsupported MQ, file/storage, page-navigation, object-flow, Service Topology, provider/consumer, endpoint, REFERENCES, Uncertainty, and Cross-Repository Resolution behavior remains absent.
-
-### Complete truth and bounded sampling RED → GREEN
-
-- [x] T017 [US1] Add and run a failing adversarial test in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` with more than 100 direct matches across both Rpc and Http plus duplicate/hint/warning evidence, asserting authoritative pre-truncation confirmed flags and counts, a streaming ordinal SHA-256 over every normalized pre-truncation locator plus Profiled Revision/flags/counts, deterministic maximum-100 sampling, one reserved direct confirmed sample per confirmed kind, one reserved `BoundExceeded` warning when truncated, and identical output across input-order permutations. Record the observed RED and do not commit it.
-- [x] T018 [US1] Implement authoritative `ConfirmedCommunicationKinds`, pre-truncation totals, streaming canonical fingerprinting, deterministic ordering/reservation/fill, `OccurrenceCount`, and the 100-sample cap in `src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs` without deriving confirmed truth from retained samples.
-- [x] T019 [US1] Run the adversarial sampling/fingerprint filter in `tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs` to GREEN and verify Rpc and Http both remain confirmed and auditable after truncation.
-
-**Checkpoint**: User Story 1 is independently complete and is the expedited MVP classification increment.
+**Checkpoint**: `epic4-framework-snapshot-representation-mismatch` has behavior-level RED/GREEN evidence through the public interfaces.
 
 ---
 
-## Phase 4: User Story 2 — Publish One Approved Pre-Scan Handoff (Priority: P1)
+## Phase 4: User Story 2 — Required Detection and Atomic Final Persistence (Priority: P1)
 
-**Goal**: Atomically commit one immutable approved result with the profile and expose a typed, authorized, revision-bound handoff through existing routes only.
+**Goal**: No public construction or repository seam can approve without real detection or durably complete a profile without its Pre-Scan Result.
 
-**Independent Test**: Persist, retry, and retrieve confirmed, warning-only, and truncated both-kind outcomes. Verify one atomic logical result, complete confirmed evidence projection, current authorization checks, exact revision binding, no partial rows, no new route, and no dispatch side effect.
+**Independent Test**: Reflection finds only constructors requiring both real seams and exactly one composite final persistence method; focused integration proves rollback, same-fingerprint replay, conflicting replay rejection, redaction, and idempotency remain intact.
 
-### Atomic profile/result persistence RED → GREEN
+- [ ] T008 [US2] Update `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs` to pass the live `ICommittedRepositorySnapshotLease` into framework detection, keep the coordinator identity verification immediately before atomic persistence, remove the two bypass constructors plus `EmptyPreScanCommunicationDetector` and `MissingCommittedRepositorySnapshotService`, and retain only public constructors that explicitly require both `ICommittedRepositorySnapshotService` and `IPreScanCommunicationDetector`.
+- [ ] T009 [US2] Remove the `RepositoryProfileDraft` overload from `src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs` and `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, leaving `PersistCompletedProfileAsync(RepositoryProfileCommitDraft, CancellationToken)` as the sole final profile operation while preserving its single transaction, rollback, same-fingerprint no-op replay, conflicting-replay failure, recovery, and materialized handoff reads.
+- [ ] T010 [US2] Update every affected explicit real/fake framework, snapshot, detector, and Scan Run repository seam in `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, including decorators that observe late failure, persistence, recovery, and snapshot lifetime; remove profile-only fake methods and pass the lease through all `IFrameworkEvidenceDetector` fakes.
+- [ ] T011 [US2] Update constructor callers and `IScanRunRepository` fakes in `tests/Vulgata.Tests/RepositoryApiTests.cs` and `tests/Vulgata.Tests/PreScanHandoffTests.cs` to supply explicit required real/fake snapshot and Communication Kind Classification seams and to implement only the composite final persistence contract.
+- [ ] T012 [US2] Run `ArchitectureRemediationContractTests` in `tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs` plus the Pre-Scan, rollback, replay, late-mutation, and recovery filters in `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, `tests/Vulgata.Tests/RepositoryApiTests.cs`, and `tests/Vulgata.Tests/PreScanHandoffTests.cs` to GREEN, proving no bypass adapter/type/constructor or profile-only overload remains and security, redaction, atomicity, idempotency, and fail-closed Profiled Revision behavior are unchanged.
 
-- [x] T020 [US2] Add and run failing integration tests in `tests/Vulgata.Tests/RepositoryProfilingTests.cs` for one composite profile/result transaction, `pre_scan_approved` direct transition, same-fingerprint idempotent replay, different-fingerprint fail-closed replay, provider/detector/persistence failure rollback, Profiled Revision equality across ScanRun/profile/result/fingerprint, and zero Worker Agent jobs, dispatches, REFERENCES Edges, Uncertainties, endpoint resolutions, or deferred-family facts. Record the observed RED and do not commit it.
-- [x] T021 [US2] Add EF mappings, closed-value checks, one-to-one/child ownership, cascade, uniqueness, compatibility constraints, and deterministic materialization indexes in `src/dotnet/Vulgata.Infrastructure/Data/Configurations/PreScanResultConfiguration.cs`, `src/dotnet/Vulgata.Infrastructure/Data/Configurations/CommunicationKindClassificationConfiguration.cs`, and `src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs`.
-- [x] T022 [US2] Extend the specific contract in `src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs`, implement atomic composite persistence and replay fingerprint checks in `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, and invoke detection plus `RepositoryProfileCommitDraft` persistence only after a complete profile in `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`.
-- [x] T023 [US2] Run the `RepositoryProfilingTests` PreScan persistence filter to GREEN and verify an injected final-commit failure leaves zero profile/result/classification rows while same-fingerprint retry yields one logical immutable result.
-
-### Additive migration RED → GREEN
-
-- [x] T024 [P] [US2] Add and run failing model/migration tests in `tests/Vulgata.Tests/MigrationTests.cs` under class `PreScanMigrationTests` for the new tables, PK/FK ownership, unique `(RepositoryId, ScanRunId)` result, unique `(PreScanResultId, Fingerprint)` child, closed-state/schema/revision/flag/count/path/locator/occurrence compatibility checks, rollback atomicity, and no unrelated Document, retrieval, graph, endpoint, dispatch, or uncertainty table. Record the observed RED and do not commit it.
-- [x] T025 [P] [US2] Generate the additive `AddConservativePreScanGate` migration files under `src/dotnet/Vulgata.Infrastructure/Data/Migrations/*_AddConservativePreScanGate.cs` and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/*_AddConservativePreScanGate.Designer.cs`, and update `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`; preserve Story 4.3 exclusive ownership of these paths through its completed-story checkpoint.
-- [x] T026 [US2] Run `PreScanMigrationTests` in `tests/Vulgata.Tests/MigrationTests.cs` to GREEN on the test provider and verify the model has no unintended table or relationship.
-
-### Typed authorized handoff RED → GREEN
-
-- [x] T027 [P] [US2] Add and run failing handoff/application tests in `tests/Vulgata.Tests/PreScanHandoffTests.cs` plus existing-route composition tests in `tests/Vulgata.Tests/RepositoryApiTests.cs` for all schema `1.0` fields; confirmed kinds derived from flags; bounded ordered `confirmedEvidence`, hints, and warnings; one reserved confirmed sample per kind after truncation; stable original Profiled Revision after checkout advancement; downstream requested-revision mismatch failure; wrong-System, hidden, revoked-after-load, missing, unauthenticated, and non-ManagementAccess non-disclosure; and zero new public route. Record the observed RED and do not commit it.
-- [x] T028 [P] [US2] Add immutable `ApprovedPreScanHandoff` materialization and Profiled Revision validation in `src/dotnet/Vulgata.Core/DomainServices/ApprovedPreScanHandoff.cs`, extend the materialized query in `src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs` and `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, and add the bounded transport projection including `confirmedEvidence` in `src/dotnet/Vulgata.Shared/Repositories/ApprovedPreScanHandoffDto.cs`.
-- [x] T029 [US2] Implement system-scoped and standalone pre/post-load visibility checks, schema/revision fail-closed mapping, and redaction in `src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs`; register it in `src/dotnet/Vulgata.Web/Program.cs` and compose it only into the existing GET handlers in `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs` under `ManagementAccess`.
-- [x] T030 [US2] Run `PreScanHandoffTests` and the PreScan subset of `RepositoryApiTests` to GREEN, proving no absolute/UNC/host path, working-copy root, source, secret, raw diagnostic/provider payload, internal database ID, entity fingerprint, existence timing, or arbitrary discriminator is returned.
-
-**Checkpoint**: User Story 2 independently supplies one durable, authorized, revision-bound Pre-Scan Handoff and grants no dispatch authority.
+**Checkpoint**: `epic4-empty-prescan-compatibility-path` and `epic4-profile-only-persistence-path` have contract-level RED/GREEN evidence, and all callers compile against explicit required seams.
 
 ---
 
-## Phase 5: User Story 3 — Review a Safe Conservative Outcome (Priority: P2)
+## Phase 5: Production Composition Closure
 
-**Goal**: Durably expose the exact bounded Simplified-Chinese approval outcome and structurally safe logs under current visibility.
+**Goal**: Exercise the corrected path through the Web production composition root.
 
-**Independent Test**: Approve warning-bearing and warning-free results, inspect persistence/log capture/authorized summaries, then revoke visibility; exact messages persist, logs contain only closed identifiers/counts/rule-set version, and the revoked user learns nothing.
+**Independent Test**: Two clean committed Repositories complete through the resolved production coordinator with only CodeGraph replaced; their archive-only snapshots, framework and Communication Kind Classification facts, Profiled Revisions, and atomic Pre-Scan Results remain isolated and correct.
 
-### Chinese observability and redaction RED → GREEN
+- [ ] T013 [US2] Run the `ProductionComposition_*` regression in `tests/Vulgata.Tests/Story43EndToEndTests.cs` to GREEN through the registrations in `src/dotnet/Vulgata.Web/Program.cs`, verifying only `ICodeGraphProvider` is replaced, all four real interfaces are crossed, each archive has no `.git`, framework and RPC/HTTP facts share the exact Profiled Revision, profile plus Pre-Scan Result visibility is atomic, and no Worker Agent job, dispatch, Edge, Uncertainty, endpoint resolution, or Cross-Repository Resolution is created.
 
-- [x] T031 [US3] Add and run failing tests in `tests/Vulgata.Tests/PreScanHandoffTests.cs` and `tests/Vulgata.Tests/RepositoryProfilingTests.cs` asserting exact warning message `预扫描已批准并保留审慎警告——继续进入顺序演示运行器`, exact warning-free message `预扫描已批准——继续进入顺序演示运行器`, durable ScanRun storage, safe structured logs limited to RepositoryId/ScanRunId/state/schema/counts/rule-set version, bounded closed warning data, and zero disclosure after visibility revocation. Record the observed RED and do not commit it.
-- [x] T032 [US3] Persist the closed approval message on `src/dotnet/Vulgata.Core/Entities/ScanRun.cs`, select it and emit identifier/count-only structured logging in `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, and preserve post-load redaction in `src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs`.
-- [x] T033 [US3] Run the Chinese observability and revoked-visibility filters in `tests/Vulgata.Tests/PreScanHandoffTests.cs` and `tests/Vulgata.Tests/RepositoryProfilingTests.cs` to GREEN and inspect captured logs for source, secret, host path, raw exception, or unbounded data.
-
-**Checkpoint**: All three user stories are independently testable and the accepted expedited-MVP behavior is complete.
+**Checkpoint**: Production composition supplies shared closure evidence for all three reserved findings.
 
 ---
 
-## Phase 6: Verification and Cross-Cutting Gates
+## Phase 6: Verification and Review/E2E Handoff
 
-**Purpose**: Verify the current Story 4.3 boundary without expanding into deferred families or Story 11 dispatch.
+**Purpose**: Prove migration neutrality and deliver a clean expedited-MVP review boundary.
 
-- [x] T034 Run `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj`, the focused `PreScanCommunicationDetectionTests`, `RepositoryProfilingTests` PreScan filter, `PreScanHandoffTests`, `PreScanMigrationTests`, and full `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj`; all must pass with no analyzer warnings and no committed failing test, using `specs/003-conservative-pre-scan-gate/quickstart.md` as the expected-result authority.
-- [x] T035 Validate PostgreSQL migration apply, rollback to `20260720060442_FrameworkEvidenceAuditCount`, re-apply, and `dotnet ef migrations has-pending-model-changes` for `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj` with startup `src/dotnet/Vulgata.Web/Vulgata.Web.csproj`, then run current-boundary profiling/persistence/read integration from `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, `tests/Vulgata.Tests/PreScanHandoffTests.cs`, and `tests/Vulgata.Tests/MigrationTests.cs`.
-- [x] T036 [P] Inspect the implemented diff for changes to `docker/Dockerfile`, `docker-compose.yml`, `src/dotnet/Vulgata.Web/Program.cs` startup/runtime behavior, or container dependencies; if none exist, record the explicit no-trigger Docker decision in `docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md`, otherwise run the Story 4.3 Docker build and record its result there. The clean-database two-Repository rehearsal and unconditional final Docker build remain Story 11.5 responsibilities.
+- [ ] T014 Run `dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web` and `PreScanMigrationTests` in `tests/Vulgata.Tests/MigrationTests.cs`; require no pending model change and no diff under `src/dotnet/Vulgata.Infrastructure/Data/Migrations/`, `src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs`, or `src/dotnet/Vulgata.Infrastructure/Data/Configurations/`.
+- [ ] T015 Run the focused architecture, framework, profiling, handoff, API, and production-composition regressions in `tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs`, `tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs`, `tests/Vulgata.Tests/FrameworkDetectionTests.cs`, `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, `tests/Vulgata.Tests/PreScanHandoffTests.cs`, `tests/Vulgata.Tests/RepositoryApiTests.cs`, and `tests/Vulgata.Tests/Story43EndToEndTests.cs`; require all GREEN with bounded/redacted diagnostics and no deferred catalog-locality behavior.
+- [ ] T016 Run `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj` and full `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj`; require exit 0 with no analyzer/code-style failure and no failing test.
+- [ ] T017 Run the clean-database two-Repository Story 4.3 E2E in `tests/Vulgata.Tests/Story43EndToEndTests.cs` and `docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3-architecture-remediation .`; require exact Profiled Revision isolation, one approved result per ScanRun, and a successful container build.
+- [ ] T018 Prepare the accepted source/test boundary for one independent combined quality review and conditional E2E handoff by returning the exact diff and RED/GREEN, migration-neutral, focused, full-build/test, clean-database two-Repository, and Docker command evidence for `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`, `src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs`, `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`, `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, and the changed files under `tests/Vulgata.Tests/`; do not update workflow/BMad lifecycle state, stage, or commit.
 
 ---
 
 ## Dependencies and Execution Order
 
-### Phase dependencies
-
-- **Setup (T001–T003)**: T001 and T002 may run in parallel; T003 depends on both and blocks implementation.
-- **Foundational snapshot (T004–T009)**: Depends on T003; execute each RED → implementation → GREEN group in order and complete the phase before any user story.
-- **US1 (T010–T019)**: Depends on T009; lifecycle precedes classification, which precedes sampling.
-- **US2 (T020–T030)**: Depends on T019; atomic persistence must be GREEN before migration and handoff groups. After T023, migration RED work (T024) and handoff RED work (T027) may proceed in parallel; T025 depends on T024, T026 depends on T025, T028 depends on T027, T029 depends on T028, and T030 depends on T029.
-- **US3 (T031–T033)**: Depends on T030 because it reuses the persisted result and authorized service.
-- **Verification (T034–T036)**: Depends on T026 and T033; T036 may run beside T034, while T035 follows the generated migration and must finish before review.
-
-### User story completion order
+### Task dependency graph
 
 ```text
-Accepted delivery definition
-  -> committed-tree foundation
-  -> US1 deterministic classification
-  -> US2 atomic persistence + handoff
-  -> US3 safe Chinese outcome
-  -> current-boundary verification
+T001
+ ├─ T002 ─ T005 ─ T006 ─ T007 ─┐
+ ├─ T003 ────────────────────────┼─ T008 ─ T009 ─ T010 ─ T011 ─ T012 ─┐
+ └─ T004 ────────────────────────┘                                     ├─ T013
+                                                                       └─ T014
+T013 + T014 ─ T015 ─ T016 ─ T017 ─ T018
 ```
 
-- **US1** has no dependency on another user story after the foundation and is the classification MVP.
-- **US2** consumes US1's complete immutable draft and authoritative flags/fingerprint.
-- **US3** consumes US2's durable result and authorization service.
-- No task may introduce a new public route, Worker Agent tool/job/dispatch, Scan Coordinator, LLM/HITL/manual approval, endpoint resolution, Communication Pattern Catalog management, deferred communication family, REFERENCES Edge, Uncertainty, or Cross-Repository Resolution.
+- T002, T003, and T004 may run in parallel after T001 because they own different test files.
+- T008 depends on T007 because the coordinator must compile against the lease-based framework interface.
+- T009 follows T008 so the coordinator and repository move to their final public shapes before fake/decorator cleanup.
+- T010 and T011 are ordered because `tests/Vulgata.Tests/RepositoryApiTests.cs` participates in both constructor and repository fake compilation.
+- T013 requires T012; it must turn the already-observed production-composition RED from T004 GREEN without replacing any additional production interface.
+- T014 may run after T012 and in parallel with T013 because it is read-only and migration-neutral.
+- T015 through T018 are sequential acceptance gates.
 
-### Shared-file ownership
+### Bounded TDD groups and file ownership
 
-- Story 4.3 exclusively owns `src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs`, `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`, and `src/dotnet/Vulgata.Infrastructure/Data/Migrations/*_AddConservativePreScanGate*` from T003 through migration verification, combined quality review, acceptance, and the completed-story checkpoint.
-- Story 11.1 must not mutate those paths during this interval and must branch/rebase from the exact published Story 4.3 completed-story checkpoint before creating its migration.
+- **Group A — archive framework seam (T002, T005–T007)** owns `tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs`, `src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs`, and `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`.
+- **Group B — mandatory construction and composite persistence (T003, T008–T012)** owns `tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs`, `src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs`, `src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs`, `src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs`, `tests/Vulgata.Tests/RepositoryProfilingTests.cs`, `tests/Vulgata.Tests/RepositoryApiTests.cs`, and `tests/Vulgata.Tests/PreScanHandoffTests.cs`.
+- **Group C — production composition (T004, T013)** owns `tests/Vulgata.Tests/Story43EndToEndTests.cs`; it writes its RED before Groups A/B production edits and resumes for GREEN only after T012.
+- **Verification group (T014–T018)** owns no production file and performs only checks and evidence handoff.
 
----
+The groups have disjoint write ownership. Group A completes before Group B production edits; Group C pauses between its RED and GREEN while Groups A/B correct the production seams.
 
-## Parallel Examples
+## Parallel Opportunities
 
-### Accepted boundary
+- T002, T003, and T004 are parallel RED tasks with disjoint files.
+- After T012, T013 production-composition GREEN and T014 migration-neutral verification may run in parallel.
+- No production implementation tasks are marked parallel because the public interface changes compile through the coordinator and its fakes in dependency order.
 
-```text
-Task T001: Verify plan-review and planned-change authorization evidence.
-Task T002: Run read-only cross-artifact analysis over spec, plan, and tasks.
-```
+## Implementation Strategy
 
-### User Story 2 after T023
+1. Pin the accepted correction boundary with T001.
+2. Observe all three discriminating RED surfaces with T002–T004.
+3. Complete Group A and independently validate archive-only framework detection.
+4. Complete Group B and independently validate required construction plus sole atomic persistence.
+5. Complete Group C through the Web production composition root.
+6. Run migration-neutral, focused, full, E2E, Docker, and combined-review handoff gates.
 
-```text
-Migration lane:
-  T024 RED migration/model tests -> T025 migration -> T026 GREEN
+## Completion Criteria
 
-Handoff lane:
-  T027 RED handoff/API tests -> T028 Core/Infrastructure/Shared projection
-  -> T029 Web authorization/existing-route composition -> T030 GREEN
-```
-
-These lanes own different files except that Story 4.3 remains the sole owner of all EF migration/snapshot work; merge and verify both lanes before T031.
-
----
-
-## Expedited-MVP Implementation Strategy
-
-1. Pin the accepted delivery definition with T001–T003.
-2. Complete the committed-tree foundation with two bounded RED → GREEN groups.
-3. Deliver US1 in three bounded RED → GREEN groups: domain lifecycle, closed classification, and deterministic complete-truth sampling.
-4. Deliver US2 in three bounded groups: atomic persistence, migration, and authorized handoff; parallelize only the migration and handoff lanes after persistence is GREEN.
-5. Deliver US3 as one bounded RED → GREEN observability group.
-6. Run current-boundary build, focused/full tests, PostgreSQL migration validation, integration coverage, and the conditional Docker decision.
-7. Hand the pinned implementation and RED/GREEN evidence to one fresh combined quality reviewer, then perform the conditional E2E decision and final verification required by `expedited-mvp`; do not claim deferred Epic 5–10 or Story 11 behavior.
-
-## Notes
-
-- RED evidence must identify the focused command, expected missing behavior, actual failure, and boundary; it is transient and must never be committed.
-- A GREEN task includes focused regression and refactor verification for its preceding behavior group.
-- Evidence remains concise: command, exit code, observed boundary/commit, timestamp, and result; retain raw output only for failures, security, migrations, or runtime contracts.
-- Do not edit the accepted `spec.md` or `plan.md` during implementation. A material contradiction returns to correction and fresh authorization when required.
+- All three reserved audit findings have explicit observed RED and GREEN tasks.
+- Production composition crosses real snapshot, framework, communication, and persistence interfaces and replaces only CodeGraph.
+- Every public coordinator constructor requires the snapshot and Pre-Scan detector seams.
+- The only final profile persistence method accepts `RepositoryProfileCommitDraft`.
+- No migration/model, PRD/spec/plan, catalog-locality, Worker Agent, dispatch, scheduling, retry, provider-failover, Edge, Uncertainty, endpoint, or Cross-Repository Resolution scope is added.
+- Security, redaction, atomicity, idempotency, Profiled Revision binding, focused/full tests, clean-database two-Repository E2E, Docker, and combined review remain mandatory.

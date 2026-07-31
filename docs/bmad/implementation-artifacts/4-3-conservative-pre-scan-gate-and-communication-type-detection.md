@@ -1,7 +1,7 @@
 ---
 story_key: 4-3-conservative-pre-scan-gate-and-communication-type-detection
 title: "Story 4.3: Conservative Pre-Scan Gate and Communication Type Detection"
-Status: done
+Status: in-progress
 Epic: 4
 Story: 3
 created: 2026-07-30
@@ -217,13 +217,15 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   `docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json`.
 - SpecKit feature directory:
   `specs/003-conservative-pre-scan-gate`.
-- Current workflow stage: `complete`.
+- Current workflow stage: `implement` (July 31 architecture remediation).
 - Latest workflow checkpoint ID:
-  `bmad-4-3-complete-20260730T115911Z-9c4a10`.
+  `bmad-4-3-remediation-tasks-20260731T092200Z`.
 - Latest workflow checkpoint SHA:
-  pending final checkpoint binding.
-- The provisional completed-story checkpoint contains the accepted combined
-  review, required E2E, final verification, and `review` to `done` transition.
+  pending accepted-delivery checkpoint binding.
+- The prior completed-story boundary was invalidated by the Epic 4 architecture
+  gate. The accepted July 31 correction plan, independent plan review, explicit
+  Scan-strategy authorization, and correction-only tasks now define the active
+  delivery boundary.
 
 ### Agent Model Used
 
@@ -236,6 +238,15 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
 
 ### Completion Notes List
 
+- July 31 correction: the Epic 4 architecture gate found three reserved
+  Story 4.3 defects. The accepted remediation makes framework detection consume
+  the verified archive lease, removes public coordinator/adaptor bypasses, and
+  makes composite Repository Profile plus Pre-Scan Result persistence the only
+  final persistence path. No migration, PRD, dispatch, scheduling, retry,
+  Worker Agent tool, or provider-failover change is authorized.
+- The user explicitly approved this accepted Scan-strategy correction for task
+  generation. All transient RED, combined quality review, clean-database
+  two-Repository E2E, migration-neutrality, and Docker gates remain required.
 - Story context prepared and activated from the accepted August 15 scope.
 - Independent plan review accepted the pinned Story 4.3 plan on iteration 3.
 - User explicitly approved the Scan strategy; task generation is active.
@@ -358,13 +369,15 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   `docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3 .`
   produced immutable image
   `sha256:851adce25ca8b5a799f2d62553aea9589918aa550ea48e23c6bf6c1159594c7a`.
-- Story 4.3 is complete with no unresolved Critical/High finding. The accepted
+- Superseded by the July 31 architecture remediation: Story 4.3 was previously
+  recorded complete with no unresolved Critical/High finding. The previously accepted
   prepared-scope limitations are: case-distinct Linux Repository paths remain
-  unsupported; public compatibility construction can substitute the empty
-  detector although production DI uses `CommunicationKindDetector`; and
+  unsupported; public compatibility construction could substitute the empty
+  detector although production DI used `CommunicationKindDetector`; and
   prepared flattened keys are supported for `application.properties`,
   `application.yml`, and `application.yaml`, while general nested YAML remains
-  unsupported.
+  unsupported. The compatibility-construction limitation is no longer accepted
+  and is an explicit correction target.
 
 ### File List
 

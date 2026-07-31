@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4/verify-test/1",
+  "kind": "command",
+  "stage": "verify-test",
+  "source_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+  "artifact_paths": [
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-test-1b9c98b.txt",
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/source-binding/accepted-correction-input-1b9c98b.json",
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/source-binding/production-source-manifest-1b9c98b.json",
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/source-binding/provider-contract-claim-dc9ce5c30f6a.json",
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/source-binding/provider-contract-evidence-dc9ce5c30f6a.json"
+  ],
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+  "exit_code": 0,
+  "observed_at": "2026-07-31T01:20:39.3729008Z",
+  "summary": "Complete suite passed: 615 passed, 0 failed, 0 skipped. Final provider-contract E2E used immutable image sha256:c7a73d0108b320a56dedfc83a45022f38069b8dc15720392ad5b173ead9e3e43.",
+  "raw_output_path": "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-test-1b9c98b.txt",
+  "raw_output_sha256": "a5c85ab3443354bbe163cb094fc85115bbe70e0bc1fc43066d52ab35fa9367ee",
+  "execution_worktree": "G:/source/repos/vulgata/.worktrees/epic-4-close-verify-1b9c98b",
+  "execution_worktree_head": "1b9c98bb4999e254ab19704643477732f92c842c",
+  "execution_worktree_git_identity": "zhdpt <1372879802@qq.com>",
+  "boundary_clean": true,
+  "source_equality_validated_at": "2026-07-31T01:24:29.8432821Z",
+  "environment_summary": "Windows host; .NET SDK 10.0.302; Docker Desktop Linux image sha256:c7a73d0108b320a56dedfc83a45022f38069b8dc15720392ad5b173ead9e3e43; CodeGraphContext 0.5.1; clean detached worktree pinned to the Epic 4 source checkpoint."
+}

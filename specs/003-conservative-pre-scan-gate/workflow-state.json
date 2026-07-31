@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/003-conservative-pre-scan-gate",
   "execution_level": "expedited-mvp",
-  "stage": "complete",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -12,26 +12,15 @@
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
-      "completed_at": "2026-07-30T02:48:42.5923332Z"
+      "completed_at": null
     },
     "quality-review": {
-      "status": "accepted",
-      "iteration": 4,
-      "dispatch_id": "story43_combined_review4",
-      "verdict_path": "specs/003-conservative-pre-scan-gate/reviews/quality-review-4.json",
-      "input_boundary": {
-        "base_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-        "candidate_commit": null,
-        "worktree_diff_sha256": "5d504730573a51643950915ede14bccf35c6274f5708999fc23cc3902c45c2bd",
-        "candidate_bundle_sha256": "f7f81ca46fbce77f3042a7306716450f8384122fbc2ce5159340fbc27f81790e",
-        "file_sha256": {
-          "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "93584a35d47a281d74251474a122a89cdaf1c2b297f7b1667a12739dd864ae74",
-          "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs": "0f532d534b92b165649c7d1dfb45ecbb117ca034b76027de18d568da902b4aaf",
-          "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "ebcd4f99c4711c38904e73379ed09897f2cddfc1f06286f5cff1d32eb19c3a4b",
-          "tests/Vulgata.Tests/Story43EndToEndTests.cs": "87a8bef3c95cf78dbf1c430424462eaa588e7b96b5b99764b56fa416ba4eacea"
-        }
-      },
-      "completed_at": "2026-07-30T12:00:00Z"
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
     }
   },
   "stage_history": [
@@ -203,9 +192,9 @@
     },
     {
       "stage": "complete",
-      "status": "active",
+      "status": "invalidated",
       "started_at": "2026-07-30T12:09:57.2211007Z",
-      "completed_at": null,
+      "completed_at": "2026-07-31T09:22:00.2580528Z",
       "input_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
       "input_hashes": {
         "candidate_bundle_sha256": "f7f81ca46fbce77f3042a7306716450f8384122fbc2ce5159340fbc27f81790e"
@@ -217,15 +206,82 @@
         "specs/003-conservative-pre-scan-gate/workflow-state.json"
       ],
       "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-07-31T09:00:00Z",
+      "completed_at": "2026-07-31T09:08:42.3851147Z",
+      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/plan.md": "f70eb515835046dde4252b50c08a3e3c52e4edf43197c30f63ef08ddb5a288e3",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md": "beec11ae88baa819640e3f00975c98b506d27fd60bd82282566141009de93c71"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/plan.md",
+        "specs/003-conservative-pre-scan-gate/research.md",
+        "specs/003-conservative-pre-scan-gate/data-model.md",
+        "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+        "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md",
+        "specs/003-conservative-pre-scan-gate/quickstart.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-07-31T09:00:00Z",
+      "completed_at": "2026-07-31T09:08:42.3851147Z",
+      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/plan.md": "f70eb515835046dde4252b50c08a3e3c52e4edf43197c30f63ef08ddb5a288e3",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json": "55a8225d989f0d1d05681c540d5cea6e0e5475e1a9780327de5813b3e2984e13"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-07-31T09:08:42.3851147Z",
+      "completed_at": "2026-07-31T09:22:00.2580528Z",
+      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json": "5d5a1f549066b75963b993d9bfc7f29d43d31ab5f9a7b9900ae6068dd76eb52e",
+        "specs/003-conservative-pre-scan-gate/tasks.md": "36aa14315f8aee481e46bb042f9e7922e3711265cb675d1273d902433b7e3bd1"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json",
+        "specs/003-conservative-pre-scan-gate/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "active",
+      "started_at": "2026-07-31T09:22:00.2580528Z",
+      "completed_at": null,
+      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+      "input_hashes": {
+        "specs/003-conservative-pre-scan-gate/tasks.md": "36aa14315f8aee481e46bb042f9e7922e3711265cb675d1273d902433b7e3bd1"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [],
+      "failure": null
     }
   ],
   "repository_preflight": {
-    "branch": "story4.3",
-    "preflight_head": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
+    "branch": "dev",
+    "preflight_head": "1b9c98bb4999e254ab19704643477732f92c842c",
     "repository_root": ".",
-    "git_common_directory": "G:/source/repos/vulgata/.git",
-    "worktree_path": "C:/Users/13728/.codex/worktrees/a521/vulgata",
-    "worktree_status": "Recovery candidate f501103657c67325be304a3b92ca779c75c74bbe rejected by combined quality review iteration 2; fresh TDD correction active",
+    "git_common_directory": ".git",
+    "worktree_path": ".",
+    "worktree_status": "Accepted July 31 Story 4.3 architecture remediation active on dev; planning and failed Epic 4 gate evidence are owned by the root orchestrator.",
     "owned_paths": [
       ".specify/feature.json",
       "AGENTS.md",
@@ -235,7 +291,7 @@
       "specs/003-conservative-pre-scan-gate"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-30T04:44:55.2861167Z"
+    "observed_at": "2026-07-31T09:22:00.2580528Z"
   },
   "source_artifacts": [
     {
@@ -570,11 +626,12 @@
       "verdict_paths": []
     },
     "plan-review": {
-      "count": 3,
+      "count": 4,
       "verdict_paths": [
         "specs/003-conservative-pre-scan-gate/reviews/plan-review-1.json",
         "specs/003-conservative-pre-scan-gate/reviews/plan-review-2.json",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json"
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json"
       ]
     },
     "analyze": {
@@ -660,7 +717,7 @@
     ],
     "complete_coverage_override": null,
     "required": true,
-    "rationale": "All four Required predicates were triggered. Existing tests were incomplete for the three prepared configuration filenames, so the required E2E was executed and passed.",
+    "rationale": "The prior E2E result is invalidated by the accepted July 31 architecture correction. A fresh clean-database two-Repository production-composition E2E remains required before completion.",
     "covering_tests": [
       "Story43EndToEndTests.PreparedCommittedConfigurations_ThreeFlattenedSyntaxes_DetectPersistReplayAndMaterializeApprovedHandoffAsync",
       "PreScanCommunicationDetectionTests",
@@ -670,7 +727,7 @@
       "PreScanMigrationTests"
     ],
     "owner": "e2e-runner",
-    "result": "passed",
+    "result": "pending",
     "source_boundary": {
       "base_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
       "candidate_commit": null,
@@ -688,11 +745,27 @@
         "tests/Vulgata.Tests/Story43EndToEndTests.cs"
       ]
     },
-    "evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/e2e/prepared-config-persistence-handoff-green"
-    ]
+    "evidence_ids": []
   },
   "verification": [
+    {
+      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/planned-change-authorization-2",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+      "artifact_paths": [
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md",
+        "specs/003-conservative-pre-scan-gate/plan.md",
+        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json",
+        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json",
+        "specs/003-conservative-pre-scan-gate/tasks.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-31T09:08:42.3851147Z",
+      "summary": "User explicitly approved the accepted correction to the Story 4.3 Scan strategy for task generation; all implementation, review, clean-database E2E, migration-neutrality, and Docker gates remain required.",
+      "raw_output_path": null
+    },
     {
       "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/plan-review/4",
       "kind": "human-approval",
@@ -1187,31 +1260,34 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-3-complete-20260730T115911Z-9c4a10",
+    "checkpoint_id": "bmad-4-3-remediation-tasks-20260731T092200Z",
     "scope_key": "story/4-3-conservative-pre-scan-gate-and-communication-type-detection",
-    "stage": "complete",
+    "stage": "tasks",
     "committed_paths": [
+      "docs/bmad/implementation-artifacts/epic-gates/4/architecture-gate.json",
+      "docs/bmad/implementation-artifacts/epic-gates/4/audit-raw/dispatch-2.json",
+      "docs/bmad/implementation-artifacts/epic-gates/4/evidence/build.json",
+      "docs/bmad/implementation-artifacts/epic-gates/4/evidence/test.json",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md",
       "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "specs/003-conservative-pre-scan-gate/workflow-state.json",
-      "specs/003-conservative-pre-scan-gate/reviews/quality-review-2.json",
-      "specs/003-conservative-pre-scan-gate/reviews/quality-review-3.json",
-      "specs/003-conservative-pre-scan-gate/reviews/quality-review-4.json",
-      "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
-      "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-      "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-      "tests/Vulgata.Tests/Story43EndToEndTests.cs"
+      "specs/003-conservative-pre-scan-gate/plan.md",
+      "specs/003-conservative-pre-scan-gate/research.md",
+      "specs/003-conservative-pre-scan-gate/data-model.md",
+      "specs/003-conservative-pre-scan-gate/quickstart.md",
+      "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+      "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md",
+      "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json",
+      "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json",
+      "specs/003-conservative-pre-scan-gate/tasks.md"
     ],
     "verification_evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/review/quality-review-2-correction-green",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/e2e/prepared-config-persistence-handoff-green",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/verify/final-non-final-image-suite",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/verify/final-build-model",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/verify/final-docker"
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/planned-change-authorization-2"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-30T12:09:57.2211007Z"
+  "updated_at": "2026-07-31T09:22:00.2580528Z"
 }

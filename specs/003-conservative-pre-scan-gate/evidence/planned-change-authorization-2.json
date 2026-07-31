@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/architecture-remediation/planned-change-authorization-2",
+  "kind": "human-approval",
+  "stage": "plan-review",
+  "source_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+  "artifact_paths": [
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md",
+    "specs/003-conservative-pre-scan-gate/plan.md",
+    "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md",
+    "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
+  ],
+  "command": null,
+  "exit_code": null,
+  "observed_at": "2026-07-31T09:08:42.3851147Z",
+  "summary": "After independent plan-review ACCEPT, the user explicitly approved progression to task generation for the narrow Story 4.3 Scan profiling remediation. Authorization covers changing framework evidence detection to consume the verified committed Repository snapshot lease without Git under the archive RootPath, removing empty or missing detector compatibility construction paths, removing profile-only final persistence, and adding production-composition regression coverage. It adds no Worker Agent tool, dispatch, scheduling, retry, provider failover, migration, external dependency, or PRD change. It does not waive transient RED-GREEN TDD, combined quality review, E2E, security, migration-neutral verification, Docker verification, or the fresh Epic 4 architecture audit.",
+  "raw_output_path": null,
+  "trigger": "Material change to the internal Scan profiling strategy under AGENTS.md planned-change authorization.",
+  "affected_plan": "specs/003-conservative-pre-scan-gate/plan.md",
+  "affected_prd": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md#5-16-august-15-demonstration-mvp-boundary",
+  "implementation_intent": "Regenerate dependency-ordered test-first correction tasks, create the expedited accepted-delivery-definition checkpoint, implement only the accepted architecture remediation through bounded RED-GREEN groups, run one combined quality review, satisfy E2E and verification, and rerun the Epic 4 architecture gate."
+}

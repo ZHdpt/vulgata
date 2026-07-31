@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+  "reviewed_at": "2026-07-31T03:45:55.0465154Z",
+  "review_mode": "read-only",
+  "reviewed_boundary": {
+    "base_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "AGENTS.md": "ea8537b1ad46609e4ffb7e39b6920c3837ca725850b830634905f8728a225d8a",
+      ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971",
+      "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+      "docs/bmad/epics.md": "eab86791edfabbd8ecbee7bf434bb89c5f70d1fc86ac9ce8e0f99fcb1e8f9b46",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "5ec8248ce7236b0c67bda6e6ebb1c1e7c2fde8150fdc750c4cfabe5f712a633e",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md": "beec11ae3936c6615e179a44811a2e23ba646006adbda42462bcc853d55ab7f3",
+      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md": "4c42b15f8474443cc9f6af30a31a4896eca3bb1be6f16ee32e25fa0be9421e8c",
+      "docs/bmad/implementation-artifacts/epic-gates/4/audit-raw/dispatch-2.json": "41411e2de28156d343d47f255bceb5807e34eb346e16e9278bbae1eb9631d07b",
+      "specs/003-conservative-pre-scan-gate/spec.md": "e8788067201a62caf95b0cd9f65a7794a5217430e38388e2cd6a2613bb80d2ac",
+      "specs/003-conservative-pre-scan-gate/plan.md": "f70eb515835046dde4252b50c08a3e3c52e4edf43197c30f63ef08ddb5a288e3",
+      "specs/003-conservative-pre-scan-gate/research.md": "4aed8b8f2d6b1425592a602b9a604bd7487b90d58807feffb95d12c44b6da2e9",
+      "specs/003-conservative-pre-scan-gate/data-model.md": "35c938d0531cc086b79e2fa1809368533e0e88c2d76a6b55b6d7c5c4efc185ae",
+      "specs/003-conservative-pre-scan-gate/quickstart.md": "3b444510801019ea32fa1e7f371683426412a914fd35cc95d86360295f268ccd",
+      "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md": "173c0a2ff397651d7ee982e3ca48e8927056f497a34146598d3fe6ec413b1fb3",
+      "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md": "3f32ef47d4c127dbfe2e8966932e9cdca78c9add06e8ca8eaddea4dccf9d1fc0",
+      "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md": "58222fb600e6fcaf584b879ab3287f985fb9444d8ec00be4ec083c0d0108b7db"
+    },
+    "owned_paths": [
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md",
+      "specs/003-conservative-pre-scan-gate/plan.md",
+      "specs/003-conservative-pre-scan-gate/research.md",
+      "specs/003-conservative-pre-scan-gate/data-model.md",
+      "specs/003-conservative-pre-scan-gate/quickstart.md",
+      "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+      "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md#Story-4.3-and-Epic-11",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md#5-16-august-15-demonstration-mvp-boundary",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md",
+    "docs/bmad/implementation-artifacts/epic-gates/4/audit-raw/dispatch-2.json",
+    "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+    "specs/003-conservative-pre-scan-gate/spec.md",
+    "specs/003-conservative-pre-scan-gate/plan.md",
+    "specs/003-conservative-pre-scan-gate/research.md",
+    "specs/003-conservative-pre-scan-gate/data-model.md",
+    "specs/003-conservative-pre-scan-gate/quickstart.md",
+    "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+    "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md",
+    "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md",
+    "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Program.cs"
+  ],
+  "reserved_finding_coverage": [
+    {
+      "finding_id": "epic4-framework-snapshot-representation-mismatch",
+      "status": "completely-addressed",
+      "plan_evidence": "IFrameworkEvidenceDetector consumes the live ICommittedRepositorySnapshotLease, performs bounded archive inventory and reads with before/after identity verification, and runs no Git command against RootPath.",
+      "test_evidence": "A real archive-only lease without .git is required to fail before the correction and return expected framework facts after the correction through the public detector interface."
+    },
+    {
+      "finding_id": "epic4-empty-prescan-compatibility-path",
+      "status": "completely-addressed",
+      "plan_evidence": "Both compatibility constructors and both empty/missing adapters are removed; every public coordinator construction path requires the committed snapshot and real Pre-Scan detector seams.",
+      "test_evidence": "Public-constructor shape testing and production Web composition prove deterministic Communication Kind Classification occurs before approval."
+    },
+    {
+      "finding_id": "epic4-profile-only-persistence-path",
+      "status": "completely-addressed",
+      "plan_evidence": "The profile-only overload is removed from the Core interface, Infrastructure implementation, and fakes/decorators; the sole final operation accepts RepositoryProfileCommitDraft.",
+      "test_evidence": "Interface-shape, transaction rollback, same-fingerprint replay, and conflicting-replay tests cover the composite path."
+    }
+  ],
+  "findings": [],
+  "nonblocking_observations": [
+    {
+      "severity": "LOW",
+      "location": "specs/003-conservative-pre-scan-gate/research.md",
+      "observation": "One sentence says the correction adds Scan classification behavior, although classification already exists. The normative plan correctly identifies the trigger as a material profiling-strategy and interface correction."
+    }
+  ],
+  "impact": {
+    "prd_change": false,
+    "spec_change": false,
+    "migration_change": false,
+    "worker_agent_tool_change": false,
+    "dispatch_or_scheduling_change": false,
+    "security_atomicity_idempotency": "preserved-or-strengthened",
+    "deferred_medium_catalog_locality": true
+  },
+  "planned_change_authorization": {
+    "required": true,
+    "trigger": "Material change to the internal Scan profiling strategy: framework evidence consumes the committed snapshot lease directly and invalid profile completion bypasses are removed.",
+    "pause_before": "task-generation"
+  },
+  "summary": "ACCEPT. The corrected plan is directly implementable against the pinned source, completely addresses all three reserved HIGH/MUST/Strong Epic 4 findings, preserves the accepted Story 4.3 product boundary and security invariants, requires no migration or ADR/PRD/spec change, and defines discriminating RED/GREEN plus production-composition coverage. Explicit Scan-strategy authorization remains mandatory before task generation."
+}
