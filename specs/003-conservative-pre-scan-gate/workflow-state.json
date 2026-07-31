@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/003-conservative-pre-scan-gate",
   "execution_level": "expedited-mvp",
-  "stage": "verify",
+  "stage": "complete",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -315,9 +315,9 @@
     },
     {
       "stage": "verify",
-      "status": "active",
+      "status": "accepted",
       "started_at": "2026-07-31T11:39:50.5499241Z",
-      "completed_at": null,
+      "completed_at": "2026-07-31T12:04:12.0715146Z",
       "input_commit": "4968a0431caf52583d50720951d6a11b294381d8",
       "input_hashes": {
         "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e"
@@ -326,6 +326,24 @@
       "evidence_paths": [
         "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json",
         "tests/Vulgata.Tests/Story43EndToEndTests.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "complete",
+      "status": "active",
+      "started_at": "2026-07-31T12:04:12.0715146Z",
+      "completed_at": null,
+      "input_commit": "f8f8253d19f0776dea1b24cefd20b9dc4de30d80",
+      "input_hashes": {
+        "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
+        "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json": "239b896ac20198ce883c160c996077405f11c992d0af74303ea67cdb0c024807"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml",
+        "specs/003-conservative-pre-scan-gate/workflow-state.json"
       ],
       "failure": null
     }
@@ -1362,27 +1380,13 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-3-remediation-review-20260731T113950Z",
+    "checkpoint_id": "bmad-4-3-remediation-complete-20260731T120412Z",
     "scope_key": "story/4-3-conservative-pre-scan-gate-and-communication-type-detection",
-    "stage": "review",
+    "stage": "complete",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
-      "specs/003-conservative-pre-scan-gate/workflow-state.json",
-      "specs/003-conservative-pre-scan-gate/tasks.md",
-      "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json",
-      "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "src/dotnet/Vulgata.Infrastructure/Git/ScanCandidateEnumerator.cs",
-      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-      "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs",
-      "tests/Vulgata.Tests/PreScanHandoffTests.cs",
-      "tests/Vulgata.Tests/RepositoryApiTests.cs",
-      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-      "tests/Vulgata.Tests/ScanCandidateEnumeratorTests.cs",
-      "tests/Vulgata.Tests/Story43EndToEndTests.cs"
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/003-conservative-pre-scan-gate/workflow-state.json"
     ],
     "verification_evidence_ids": [
       "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/quality-review-5-accept",
@@ -1393,5 +1397,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-31T11:39:50.5499241Z"
+  "updated_at": "2026-07-31T12:04:12.0715146Z"
 }

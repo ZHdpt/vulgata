@@ -1,7 +1,7 @@
 ---
 story_key: 4-3-conservative-pre-scan-gate-and-communication-type-detection
 title: "Story 4.3: Conservative Pre-Scan Gate and Communication Type Detection"
-Status: in-progress
+Status: done
 Epic: 4
 Story: 3
 created: 2026-07-30
@@ -217,11 +217,11 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   `docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json`.
 - SpecKit feature directory:
   `specs/003-conservative-pre-scan-gate`.
-- Current workflow stage: `verify` (July 31 architecture remediation).
+- Current workflow stage: `complete`.
 - Latest workflow checkpoint ID:
-  `bmad-4-3-remediation-review-20260731T113950Z`.
+  `bmad-4-3-remediation-complete-20260731T120412Z`.
 - Latest workflow checkpoint SHA:
-  pending reviewed-candidate checkpoint binding.
+  pending final completion checkpoint binding.
 - The prior completed-story boundary was invalidated by the Epic 4 architecture
   gate. The accepted July 31 correction plan, independent plan review, explicit
   Scan-strategy authorization, and correction-only tasks now define the active
@@ -264,6 +264,9 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   interface and production composition are lease-bound.
 - Independent final E2E returned `PASS`: production composition 1/1 and the
   complete Story 4.3 E2E class 2/2, with all 13 implementation hashes unchanged.
+- Reviewed candidate `f8f8253d19f0776dea1b24cefd20b9dc4de30d80`
+  contains the exact independently accepted implementation, tests, review, and
+  verification evidence. Story 4.3 architecture remediation is complete.
 - Story context prepared and activated from the accepted August 15 scope.
 - Independent plan review accepted the pinned Story 4.3 plan on iteration 3.
 - User explicitly approved the Scan strategy; task generation is active.
