@@ -8,7 +8,10 @@ internal sealed class IndexEntryConfiguration : IEntityTypeConfiguration<IndexEn
 {
     public void Configure(EntityTypeBuilder<IndexEntry> builder)
     {
-        builder.ToTable("IndexEntries");
+        builder.ToTable("IndexEntries", table =>
+            table.HasCheckConstraint(
+                "CK_IndexEntries_DocumentType_Closed",
+                "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')"));
         builder.HasKey(entry => entry.Id);
         builder.Property(entry => entry.Id).ValueGeneratedNever();
         builder.Property(entry => entry.DocumentType).HasConversion<string>().HasMaxLength(32);

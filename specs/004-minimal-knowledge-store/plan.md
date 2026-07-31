@@ -13,7 +13,11 @@ flow-group/trace/step evidence, and database-backed `IndexEntry` and
 retry-safe EF transactions with deterministic owner-row locking. Current
 retrieval accepts an explicit authorized
 Repository scope, returns only bounded materialized Core read models, and
-fully redacts unauthorized Edge and flow-step targets.
+fully redacts unauthorized Edge and flow-step targets. Retry verification binds
+the stable `OperationId` to the complete canonical aggregate and its derived
+projections with a deterministic `CommitFingerprint`; current retrieval clears
+all potentially target-derived text when any referenced target is no longer
+authorized.
 
 This story adds no public API, UI, Agent tool, Scan behavior, generator,
 Cross-Repository matcher, Story 4.3 change, or deferred Story 5.3 binding
@@ -62,6 +66,9 @@ unbounded expansion
   unknown/duplicate fields, raw-source carriers, closed credential markers,
   closed host-path markers, closed raw-diagnostic markers, forbidden controls,
   and over-bound values are rejected deterministically;
+- the same closed sensitive-text guard applies to source-anchor evidence
+  locators, Flow Group titles, and Flow Trace Step descriptions before any
+  entity is attached;
 - no failing test is committed.
 
 **Scale/Scope**: prepared two-Repository demonstration data; one Logical
@@ -102,19 +109,22 @@ retained without a deletion path
 | --- | --- | --- |
 | I. Layered boundaries | PASS | Core owns entities/contracts; Infrastructure alone owns EF, transactions, mappings, migration, and materialization; Web only registers the specific repository. |
 | II. Domain purity/language | PASS | No annotations, generic repository, `IQueryable`, or `DbSet` escape; exact Logical Document, Document Version, Edge, Version Chain, and Cross-Repository terms are used. |
-| III. Validation/contracts | PASS | No public/API DTO is introduced. The internal typed contract is a closed allowlist and validates UTF-8/count/path plus explicit sensitive-content rejection rules before persistence; a later public input must add FluentValidation outside this story. |
+| III. Validation/contracts | PASS | No public/API DTO is introduced. The internal typed contract is a closed allowlist and validates UTF-8/count/path plus explicit sensitive-content rejection rules for canonical content and evidence-bearing text before persistence; a later public input must add FluentValidation outside this story. |
 | IV. Test-first integration | PASS, dependency noted | Six transient RED→GREEN groups cover domain, commit, PostgreSQL row-lock races, rebuild, authorization/redaction, and migration. The protected Story 4.3 migration-test compatibility edit is integration-owner work requiring user exception before tasks. |
-| V. Security/stewardship | PASS | Repository scope is outermost; hidden source results are indistinguishable from missing; unauthorized targets disclose only a restricted marker; the closed schema has no source/secret/diagnostic field and deterministic lexical guards reject the accepted prohibited fixtures. |
+| V. Security/stewardship | PASS | Repository scope is outermost; hidden source results are indistinguishable from missing; unauthorized targets disclose only a restricted marker and cause potentially target-derived text projections to be cleared; the closed schema has no source/secret/diagnostic field and deterministic lexical guards reject the accepted prohibited fixtures across canonical and evidence-bearing text. |
 | Immutable traceable truth | PASS | Canonical content/evidence are insert-only; only predecessor `SupersededById` and Logical Document current pointer transition. |
 | Deadline exception | PASS | Migration, authorization, security, test, review, E2E-decision, and verification gates remain; deferred Epic 5 families are absent. |
 
 ### After design
 
 PASS. Phase 1 keeps all EF work in Infrastructure, adds one specific repository,
-uses owner-safe composite foreign keys, deterministic PostgreSQL row locks, and
-optimistic concurrency for exactly one current Document Version, makes every
-write/rebuild atomic, and keeps the public/API, Agent-tool, Scan, and deferred
-binding boundaries unchanged. Implementation remains blocked before task
+uses owner-safe composite foreign keys, deterministic PostgreSQL row locks, an
+aggregate `CommitFingerprint`, and optimistic concurrency for exactly one
+current Document Version, makes every write/rebuild atomic, fails closed on
+restricted target-derived text, and keeps the public/API, Agent-tool, Scan, and
+deferred binding boundaries unchanged. The `IndexEntry.DocumentType` check
+closes the projection discriminator independently of its owning Logical
+Document. Implementation remains blocked before task
 generation on the separately authorized, integration-owner-only Story 4.3
 test compatibility line. The Complexity Tracking table is unnecessary.
 
@@ -158,12 +168,16 @@ renders deterministic Markdown from title plus ordered section headings and
 Markdown. The complete UTF-8 JSON/Markdown is measured before entities are
 attached.
 
-Every string is Form-C normalized, rejects forbidden controls, and is checked
-against the closed credential, host-path, raw-source-carrier, and raw-diagnostic
-rules in the contract. Unknown or duplicate JSON properties and document-type,
-section-kind, or schema values are rejected. This is the testable FR-019
-boundary; the plan does not claim semantic detection of every possible secret
-or source fragment.
+Every canonical string is Form-C normalized, rejects forbidden controls, and
+is checked against the closed credential, host-path, raw-source-carrier, and
+raw-diagnostic rules in the contract. The same Core-owned guard is applied to
+source-anchor evidence locators, Flow Group titles, and Flow Trace Step
+descriptions before persistence. Unknown or duplicate JSON properties and
+document-type, section-kind, or schema values are rejected. Unsafe
+noncanonical evidence text returns only closed `InvalidContent`; the rejected
+value and provider diagnostics do not cross the contract. This is the testable
+FR-019 boundary; the plan does not claim semantic detection of every possible
+secret or source fragment.
 
 `KnowledgeDocumentMaterializer` derives exactly one `IndexEntry` and the full
 ordered `DocumentSection` set from this canonical content. Rebuild reads only
@@ -220,11 +234,27 @@ then performs the same post-lock validation. SQLite tests prove deterministic
 sequential behavior and rollback only; a real PostgreSQL two-context test is
 the authority for row-lock waiting and currentness races.
 
-The commit identity is caller-supplied and stable across a retry; the
-verification delegate checks the committed version identity. Validation,
-unique/FK failures, injected `SaveChanges` failures, and concurrency conflicts
-return closed outcomes and clear the change tracker without leaking provider
-diagnostics.
+The caller supplies a non-empty `OperationId` that remains stable across every
+execution-strategy attempt. Before insertion, Infrastructure computes a
+lowercase SHA-256 `CommitFingerprint` over that `OperationId`, the commit
+identity/current expectation/timestamp, canonical JSON and Markdown, source
+anchors, Edges, ordered flow evidence, and the exact derived `IndexEntry` and
+ordered `DocumentSection` rows. Unordered child families are sorted by their
+stable IDs; ordered flow and section families retain their accepted order with
+stable-ID tie breakers. The 64-character fingerprint is stored on the immutable
+Document Version and protected by a relational length check.
+
+The post-commit verification delegate does not treat the version ID alone as
+proof. It re-materializes the expected canonical content and projections,
+recomputes `CommitFingerprint`, and compares the durable Document Version,
+anchors, Edges, Flow Groups/Traces/Steps, `IndexEntry`, ordered
+`DocumentSection` rows, timestamp, current pointer, and predecessor link. Only
+an exact replay returns `Committed`. Reusing the new Document Version identity
+with another `OperationId`, changed aggregate input, changed projection, or
+tampered durable row returns closed `Conflict`; replay never repairs or accepts
+drift. Validation, unique/FK failures, injected `SaveChanges` failures, and
+concurrency conflicts return closed outcomes and clear the change tracker
+without leaking provider diagnostics.
 
 No production failure hook is added. Tests inject persistence faults with an
 EF interceptor.
@@ -236,14 +266,26 @@ and 0–100 explicit stable section IDs. The query applies source Repository
 authorization before materializing content. Missing and unauthorized source
 documents both return `null` with no differentiated diagnostic.
 
-Authorized results are immutable Core read models. Anchors contain locators
-and hashes, never source text. For an Edge or flow step whose target Repository
-is unauthorized, the result contains only `IsRestrictedRelationship=true`;
-it omits Edge ID/type, target Repository/Logical Document/Document Version,
-title, path, anchor, content, and behavior. Section Document references use
-the same rule: authorized IDs only plus a restricted-reference indicator.
-Revocation is honored because every call receives and applies current scope;
-no tracked entity or cached authorization result is returned.
+Authorized results are immutable Core read models. Anchors contain safe
+locators and hashes, never source text. For an Edge or flow step whose target
+Repository is unauthorized, the result contains only
+`IsRestrictedRelationship=true`; it omits Edge ID/type, target
+Repository/Logical Document/Document Version, title, path, anchor, content,
+and behavior. Section Document references use the same rule: authorized IDs
+only plus a restricted-reference indicator.
+
+Canonical JSON/Markdown, index summary/terms/search text, and section
+heading/Markdown/search text can contain target-derived prose even when they
+carry no machine-readable target ID. Therefore retrieval fails closed on
+textual projection: when any Edge, flow step, or section Document reference
+targets a Repository outside the current scope, it returns empty canonical
+content/Markdown, an empty `CurrentIndexEntry`, and empty section text
+projections. A section with a restricted Document reference also returns no
+source-anchor or Document Version IDs and sets only its restricted-reference
+indicator. Current scope is reevaluated on every call; no tracked entity or
+cached authorization result can preserve access after revocation. The exact
+materialized contract is in
+[knowledge-retrieval-projection.md](contracts/knowledge-retrieval-projection.md).
 
 ### 6. Relational invariants and deletion policy
 
@@ -260,8 +302,11 @@ Repository/ScanRun identity for anchors, Edge endpoints, and flow-step version
 endpoints. Unique constraints enforce stable slots, version numbers, single
 predecessor/successor links, exact Edge uniqueness, one index entry per
 version, stable section ID/order, and contiguous-order preconditions backed by
-repository validation. Repository-scoped current, Edge endpoint, anchor, flow,
-index, and section query paths are indexed.
+repository validation. `IndexEntry.DocumentType` has its own closed relational
+constraint, `CK_IndexEntries_DocumentType_Closed`, permitting only `CodeLogic`
+or `BusinessLogic`; conversion to a string is not treated as sufficient
+closure. Repository-scoped current, Edge endpoint, anchor, flow, index, and
+section query paths are indexed.
 
 Migration verification must:
 
@@ -298,7 +343,8 @@ specs/004-minimal-knowledge-store/
 ├── quickstart.md
 ├── contracts/
 │   ├── canonical-document-content.md
-│   └── knowledge-store-repository.md
+│   ├── knowledge-store-repository.md
+│   └── knowledge-retrieval-projection.md
 ├── checklists/requirements.md
 └── spec.md
 ```
@@ -365,12 +411,12 @@ DI registration are the only existing production files updated by Story 11.1.
 | Group | Production ownership | Test ownership / required RED |
 | --- | --- | --- |
 | G0 protected predecessor compatibility | none | Integration owner only, after user exception: pin `MigrationTests.cs:142` to Story 4.3 migration; Story 11.1 task generation cannot start before this dependency is authorized |
-| G1 closed content/bounds | Core types/entities; `KnowledgeDocumentMaterializer` | `KnowledgeStoreDomainTests`: exact JSON allowlist/duplicate rejection; UTF-8 limits; closed secret/source/host/diagnostic fixtures; collection/order rules |
-| G2 atomic initial commit | `IKnowledgeStoreRepository`, `KnowledgeStoreRepository`, configurations | `KnowledgeStorePersistenceTests`: success plus interceptor failure at validation/each save boundary leaves zero rows |
+| G1 closed content/bounds | Core types/entities; `KnowledgeDocumentMaterializer` | `KnowledgeStoreDomainTests`: exact JSON allowlist/duplicate rejection; UTF-8 limits; closed secret/source/host/diagnostic fixtures across canonical content, anchor locators, Flow Group titles, and Flow Trace Step descriptions; collection/order rules |
+| G2 atomic initial commit | `IKnowledgeStoreRepository`, `KnowledgeStoreRepository`, configurations | `KnowledgeStorePersistenceTests`: success plus interceptor failure at validation/each save boundary leaves zero rows; exact replay succeeds while changed `OperationId`, aggregate child, flow, or durable projection conflicts |
 | G3 Version Chain/currentness | owner-safe configurations and repository row-lock/supersession | SQLite sequential/rollback tests plus PostgreSQL two-context barriers: one successor, one conflict; waiting stale-endpoint commit rejects after lock; no losing/stale Edge rows |
 | G4 projection/rebuild | materializer, `IndexEntry`, `DocumentSection`, repository rebuild | `KnowledgeStorePersistenceTests`: repeat/rebuild/failure, one equivalent index, stable ordered sections, zero canonical mutation, no `index.md` read |
-| G5 retrieval/redaction | Core read models and repository materialized query | `KnowledgeStoreRetrievalTests`: authorized/partial/hidden/revoked scopes, restricted Edge/flow/section refs, requested-section and output bounds |
-| G6 migration | nine configurations, DbContext, migration, snapshot | `KnowledgeStoreMigrationTests`: operation allowlist, FK/delete/index/check shape, clean apply, rollback baseline, reapply; PostgreSQL commands in quickstart |
+| G5 retrieval/redaction | Core read models and repository materialized query | `KnowledgeStoreRetrievalTests`: authorized/partial/hidden/revoked scopes, restricted Edge/flow/section refs, target-derived text projection clearing, requested-section and output bounds |
+| G6 migration | nine configurations, DbContext, migration, snapshot | `KnowledgeStoreMigrationTests`: operation allowlist, FK/delete/index/check shape including commit-fingerprint length and closed `IndexEntry.DocumentType`, clean apply, rollback baseline, reapply; PostgreSQL commands in quickstart |
 
 Every group records transient failing test evidence before its production
 change and reaches GREEN before the next group. Full regression and Web build
@@ -380,10 +426,10 @@ follow the focused groups.
 
 | Requirements | Design | Tests |
 | --- | --- | --- |
-| FR-001–FR-004 | split identity, current pointer, immutable version, optimistic supersession | G1, G2, G3 |
+| FR-001–FR-004 | split identity, current pointer, immutable version, aggregate `CommitFingerprint`, exact replay verification, optimistic supersession | G1, G2, G3 |
 | FR-005–FR-010 | composite anchor ownership, exact typed Edges, minimal ordered flow | G1, G2, G5 |
 | FR-011–FR-015 | canonical materializer and transactional projection replacement | G2, G4 |
-| FR-016–FR-019 | finite materialized read model and Repository-first redaction | G5 |
+| FR-016–FR-019 | finite materialized read model, sensitive evidence guard, Repository-first redaction, and fail-closed restricted target-derived text | G1, G5 |
 | FR-020–FR-022 | exact UTF-8/count limits in contract, entities, and retrieval | G1, G2, G5 |
 | FR-023–FR-025 | table/type/path allowlists and Story 4.3 regression | G6 plus full suite |
 

@@ -41,14 +41,22 @@ Expected after recorded transient RED→GREEN:
 - canonical JSON rejects unknown/duplicate fields and every required
   secret/source-text/host-path/raw-diagnostic fixture while accepting the safe
   counterexamples;
+- the same closed sensitive-text fixtures are rejected from source-anchor
+  evidence locators, Flow Group titles, and Flow Trace Step descriptions with
+  only `InvalidContent` returned;
 - initial commit is all-or-nothing under injected failures;
+- an identical execution-strategy replay returns `Committed`, while a changed
+  `OperationId`, anchor, Edge, flow value, or durable projection returns
+  `Conflict` because `CommitFingerprint` and the complete aggregate no longer
+  match;
 - supersession preserves old content/evidence and one current pointer;
 - SQLite uses its supported write-reservation path and never emits
   `FOR UPDATE`;
 - `REFERENCES`, `GENERATED_FROM`, anchors, and flow steps use exact versions;
 - rebuild is repeatable, atomic, and reads no `index.md`;
-- source authorization is non-disclosing and target redaction contains no
-  restricted identity/behavior;
+- source authorization is non-disclosing and target revocation contains no
+  restricted identity/behavior or target-derived canonical, index, or section
+  text;
 - only explicitly requested sections are returned.
 
 ## 3. PostgreSQL locking/currentness group
@@ -79,7 +87,9 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedNam
 
 Expected: only the nine Story 11.1 table families are added; FK/delete,
 uniqueness, check, concurrency, and Repository-query indexes match
-[data-model.md](data-model.md); Story 4.3 tables remain unchanged.
+[data-model.md](data-model.md), including the fixed 64-character
+`CommitFingerprint` and
+`CK_IndexEntries_DocumentType_Closed`; Story 4.3 tables remain unchanged.
 
 The full suite also verifies the separately authorized integration-owner pin:
 

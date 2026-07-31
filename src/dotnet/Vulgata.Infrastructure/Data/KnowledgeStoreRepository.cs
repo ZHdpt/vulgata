@@ -100,6 +100,8 @@ public sealed class KnowledgeStoreRepository(
                         owner.SystemId,
                         request.Content,
                         request.CommittedAt);
+                    string commitFingerprint =
+                        _materializer.CreateCommitFingerprint(request, projection);
                     LogicalDocument logicalDocument;
                     int versionNumber;
                     if (request.ExpectedCurrentVersionId is null)
@@ -140,6 +142,7 @@ public sealed class KnowledgeStoreRepository(
                         projection.ContentJson,
                         projection.ContentMarkdown,
                         projection.ContentFingerprint,
+                        commitFingerprint,
                         request.CommittedAt);
                     if (request.ExpectedCurrentVersionId is null)
                     {
@@ -224,7 +227,7 @@ public sealed class KnowledgeStoreRepository(
             version.ScanRunId != request.ScanRunId ||
             !StringComparer.Ordinal.Equals(version.ProfiledRevision, request.ProfiledRevision))
         {
-            return null;
+            return KnowledgeCommitResult.Conflict();
         }
 
         KnowledgeDocumentMaterialization expected = _materializer.Materialize(
@@ -233,23 +236,29 @@ public sealed class KnowledgeStoreRepository(
             request.RepositoryId,
             version.SystemId,
             request.Content,
-            version.CreatedAt);
+            request.CommittedAt);
+        string expectedCommitFingerprint =
+            _materializer.CreateCommitFingerprint(request, expected);
         if (!StringComparer.Ordinal.Equals(version.Title, expected.Content.Title) ||
             !StringComparer.Ordinal.Equals(
                 version.RepositoryRelativePath,
                 expected.Content.RepositoryRelativePath) ||
             !StringComparer.Ordinal.Equals(version.SchemaIdentity, expected.Content.SchemaIdentity) ||
+            !JsonMatches(version.ContentJson, expected.ContentJson) ||
             !StringComparer.Ordinal.Equals(version.ContentMarkdown, expected.ContentMarkdown) ||
-            !StringComparer.Ordinal.Equals(version.ContentFingerprint, expected.ContentFingerprint))
+            !StringComparer.Ordinal.Equals(version.ContentFingerprint, expected.ContentFingerprint) ||
+            !StringComparer.Ordinal.Equals(version.CommitFingerprint, expectedCommitFingerprint) ||
+            version.CreatedAt != request.CommittedAt ||
+            !await DurableAggregateMatchesAsync(request, expected, cancellationToken))
         {
-            return null;
+            return KnowledgeCommitResult.Conflict();
         }
 
         if (request.ExpectedCurrentVersionId is null)
         {
             if (version.VersionNumber != 1)
             {
-                return null;
+                return KnowledgeCommitResult.Conflict();
             }
         }
         else
@@ -265,13 +274,231 @@ public sealed class KnowledgeStoreRepository(
                     cancellationToken);
             if (!predecessorMatches)
             {
-                return null;
+                return KnowledgeCommitResult.Conflict();
             }
         }
 
         return KnowledgeCommitResult.Committed(
             request.LogicalDocumentId,
             request.NewDocumentVersionId);
+    }
+
+    private async Task<bool> DurableAggregateMatchesAsync(
+        KnowledgeCommit request,
+        KnowledgeDocumentMaterialization expected,
+        CancellationToken cancellationToken)
+    {
+        SourceAnchor[] anchors = await _context.Set<SourceAnchor>()
+            .AsNoTracking()
+            .Where(anchor => anchor.DocumentVersionId == request.NewDocumentVersionId)
+            .OrderBy(anchor => anchor.Id)
+            .ToArrayAsync(cancellationToken);
+        SourceAnchorDraft[] expectedAnchors = request.SourceAnchors
+            .OrderBy(anchor => anchor.Id)
+            .ToArray();
+        if (anchors.Length != expectedAnchors.Length ||
+            anchors.Zip(expectedAnchors).Any(pair =>
+                pair.First.Id != pair.Second.Id ||
+                pair.First.DocumentVersionId != pair.Second.DocumentVersionId ||
+                pair.First.RepositoryId != pair.Second.RepositoryId ||
+                pair.First.ScanRunId != pair.Second.ScanRunId ||
+                pair.First.CodeUnitId != pair.Second.CodeUnitId ||
+                !StringComparer.Ordinal.Equals(
+                    pair.First.ProfiledRevision,
+                    pair.Second.ProfiledRevision) ||
+                !StringComparer.Ordinal.Equals(
+                    pair.First.RepositoryRelativePath,
+                    pair.Second.RepositoryRelativePath) ||
+                !StringComparer.Ordinal.Equals(
+                    pair.First.EvidenceLocator,
+                    pair.Second.EvidenceLocator) ||
+                pair.First.LineStart != pair.Second.LineStart ||
+                pair.First.LineEnd != pair.Second.LineEnd ||
+                !StringComparer.Ordinal.Equals(pair.First.SourceHash, pair.Second.SourceHash) ||
+                pair.First.CreatedAt != request.CommittedAt))
+        {
+            return false;
+        }
+
+        DocumentEdge[] edges = await _context.Set<DocumentEdge>()
+            .AsNoTracking()
+            .Where(edge => edge.SourceDocumentVersionId == request.NewDocumentVersionId)
+            .OrderBy(edge => edge.Id)
+            .ToArrayAsync(cancellationToken);
+        EdgeDraft[] expectedEdges = request.Edges.OrderBy(edge => edge.Id).ToArray();
+        if (edges.Length != expectedEdges.Length ||
+            edges.Zip(expectedEdges).Any(pair =>
+                pair.First.Id != pair.Second.Id ||
+                pair.First.SourceDocumentVersionId != pair.Second.SourceDocumentVersionId ||
+                pair.First.SourceRepositoryId != pair.Second.SourceRepositoryId ||
+                pair.First.SourceScanRunId != pair.Second.SourceScanRunId ||
+                pair.First.TargetDocumentVersionId != pair.Second.TargetDocumentVersionId ||
+                pair.First.TargetRepositoryId != pair.Second.TargetRepositoryId ||
+                pair.First.TargetScanRunId != pair.Second.TargetScanRunId ||
+                pair.First.EdgeType != pair.Second.EdgeType ||
+                pair.First.CreatedAt != request.CommittedAt))
+        {
+            return false;
+        }
+
+        if (!await DurableFlowsMatchAsync(request, cancellationToken))
+        {
+            return false;
+        }
+
+        IndexEntry? index = await _context.Set<IndexEntry>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                entry => entry.DocumentVersionId == request.NewDocumentVersionId,
+                cancellationToken);
+        IndexEntry expectedIndex = expected.IndexEntry;
+        if (index is null ||
+            index.Id != expectedIndex.Id ||
+            index.LogicalDocumentId != expectedIndex.LogicalDocumentId ||
+            index.DocumentVersionId != expectedIndex.DocumentVersionId ||
+            index.RepositoryId != expectedIndex.RepositoryId ||
+            index.SystemId != expectedIndex.SystemId ||
+            index.DocumentType != expectedIndex.DocumentType ||
+            !StringComparer.Ordinal.Equals(index.Title, expectedIndex.Title) ||
+            !StringComparer.Ordinal.Equals(index.Summary, expectedIndex.Summary) ||
+            !StringComparer.Ordinal.Equals(
+                index.RepositoryRelativePath,
+                expectedIndex.RepositoryRelativePath) ||
+            !JsonMatches(index.KeySymbolsJson, expectedIndex.KeySymbolsJson) ||
+            !JsonMatches(index.BusinessTermsJson, expectedIndex.BusinessTermsJson) ||
+            !JsonMatches(index.TechnicalTermsJson, expectedIndex.TechnicalTermsJson) ||
+            !StringComparer.Ordinal.Equals(index.SearchText, expectedIndex.SearchText) ||
+            index.CreatedAt != request.CommittedAt)
+        {
+            return false;
+        }
+
+        DocumentSection[] sections = await _context.Set<DocumentSection>()
+            .AsNoTracking()
+            .Where(section => section.DocumentVersionId == request.NewDocumentVersionId)
+            .OrderBy(section => section.SectionOrder)
+            .ThenBy(section => section.Id)
+            .ToArrayAsync(cancellationToken);
+        DocumentSection[] expectedSections = expected.Sections
+            .OrderBy(section => section.SectionOrder)
+            .ThenBy(section => section.Id)
+            .ToArray();
+        return sections.Length == expectedSections.Length &&
+            !sections.Zip(expectedSections).Any(pair =>
+                pair.First.Id != pair.Second.Id ||
+                pair.First.LogicalDocumentId != pair.Second.LogicalDocumentId ||
+                pair.First.DocumentVersionId != pair.Second.DocumentVersionId ||
+                pair.First.RepositoryId != pair.Second.RepositoryId ||
+                pair.First.StableSectionId != pair.Second.StableSectionId ||
+                pair.First.SectionOrder != pair.Second.SectionOrder ||
+                pair.First.SectionKind != pair.Second.SectionKind ||
+                !StringComparer.Ordinal.Equals(pair.First.Heading, pair.Second.Heading) ||
+                !StringComparer.Ordinal.Equals(
+                    pair.First.ContentMarkdown,
+                    pair.Second.ContentMarkdown) ||
+                !StringComparer.Ordinal.Equals(pair.First.SearchText, pair.Second.SearchText) ||
+                !JsonMatches(
+                    pair.First.SourceAnchorIdsJson,
+                    pair.Second.SourceAnchorIdsJson) ||
+                !JsonMatches(
+                    pair.First.DocumentVersionIdsJson,
+                    pair.Second.DocumentVersionIdsJson) ||
+                pair.First.CreatedAt != request.CommittedAt);
+    }
+
+    private async Task<bool> DurableFlowsMatchAsync(
+        KnowledgeCommit request,
+        CancellationToken cancellationToken)
+    {
+        FlowGroup[] groups = await _context.Set<FlowGroup>()
+            .AsNoTracking()
+            .Where(group =>
+                group.BusinessLogicDocumentVersionId == request.NewDocumentVersionId)
+            .OrderBy(group => group.GroupOrder)
+            .ThenBy(group => group.Id)
+            .ToArrayAsync(cancellationToken);
+        FlowGroupDraft[] expectedGroups = request.FlowGroups
+            .OrderBy(group => group.GroupOrder)
+            .ThenBy(group => group.Id)
+            .ToArray();
+        if (groups.Length != expectedGroups.Length)
+        {
+            return false;
+        }
+
+        for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
+        {
+            FlowGroup group = groups[groupIndex];
+            FlowGroupDraft expectedGroup = expectedGroups[groupIndex];
+            if (group.Id != expectedGroup.Id ||
+                group.BusinessLogicDocumentVersionId != request.NewDocumentVersionId ||
+                group.RepositoryId != request.RepositoryId ||
+                group.ScanRunId != request.ScanRunId ||
+                group.GroupOrder != expectedGroup.GroupOrder ||
+                !StringComparer.Ordinal.Equals(group.Title, expectedGroup.Title) ||
+                group.CreatedAt != request.CommittedAt)
+            {
+                return false;
+            }
+
+            FlowTrace[] traces = await _context.Set<FlowTrace>()
+                .AsNoTracking()
+                .Where(trace => trace.FlowGroupId == group.Id)
+                .OrderBy(trace => trace.TraceOrder)
+                .ThenBy(trace => trace.Id)
+                .ToArrayAsync(cancellationToken);
+            FlowTraceDraft[] expectedTraces = expectedGroup.Traces
+                .OrderBy(trace => trace.TraceOrder)
+                .ThenBy(trace => trace.Id)
+                .ToArray();
+            if (traces.Length != expectedTraces.Length)
+            {
+                return false;
+            }
+
+            for (int traceIndex = 0; traceIndex < traces.Length; traceIndex++)
+            {
+                FlowTrace trace = traces[traceIndex];
+                FlowTraceDraft expectedTrace = expectedTraces[traceIndex];
+                if (trace.Id != expectedTrace.Id ||
+                    trace.FlowGroupId != group.Id ||
+                    trace.TraceOrder != expectedTrace.TraceOrder ||
+                    trace.CreatedAt != request.CommittedAt)
+                {
+                    return false;
+                }
+
+                FlowTraceStep[] steps = await _context.Set<FlowTraceStep>()
+                    .AsNoTracking()
+                    .Where(step => step.FlowTraceId == trace.Id)
+                    .OrderBy(step => step.StepOrder)
+                    .ThenBy(step => step.Id)
+                    .ToArrayAsync(cancellationToken);
+                FlowTraceStepDraft[] expectedSteps = expectedTrace.Steps
+                    .OrderBy(step => step.StepOrder)
+                    .ThenBy(step => step.Id)
+                    .ToArray();
+                if (steps.Length != expectedSteps.Length ||
+                    steps.Zip(expectedSteps).Any(pair =>
+                        pair.First.Id != pair.Second.Id ||
+                        pair.First.FlowTraceId != trace.Id ||
+                        pair.First.StepOrder != pair.Second.StepOrder ||
+                        pair.First.DocumentVersionId != pair.Second.DocumentVersionId ||
+                        pair.First.DocumentRepositoryId != pair.Second.DocumentRepositoryId ||
+                        pair.First.DocumentScanRunId != pair.Second.DocumentScanRunId ||
+                        pair.First.EdgeId != pair.Second.EdgeId ||
+                        pair.First.StepKind != pair.Second.StepKind ||
+                        !StringComparer.Ordinal.Equals(
+                            pair.First.Description,
+                            pair.Second.Description) ||
+                        pair.First.CreatedAt != request.CommittedAt))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     public async Task<RebuildProjectionStatus> RebuildProjectionAsync(
@@ -531,6 +758,15 @@ public sealed class KnowledgeStoreRepository(
                 .Select(candidate => candidate.Id)
                 .ToArrayAsync(cancellationToken);
         var authorizedDocumentVersionIdSet = authorizedDocumentVersionIds.ToHashSet();
+        bool hasRestrictedTextProjection =
+            edges.Any(edge => !scope.Contains(edge.TargetRepositoryId)) ||
+            flowGroups
+                .SelectMany(group => group.Traces)
+                .SelectMany(trace => trace.Steps)
+                .Any(step => step.IsRestrictedRelationship) ||
+            allSectionDocumentReferences
+                .SelectMany(DeserializeGuids)
+                .Any(id => !authorizedDocumentVersionIdSet.Contains(id));
 
         return new CurrentKnowledge(
             source.Id,
@@ -539,36 +775,47 @@ public sealed class KnowledgeStoreRepository(
             source.DocumentType,
             version.Title,
             version.RepositoryRelativePath,
-            RedactDocumentReferences(
-                version.ContentJson,
-                authorizedDocumentVersionIdSet),
-            version.ContentMarkdown,
+            hasRestrictedTextProjection
+                ? string.Empty
+                : RedactDocumentReferences(
+                    version.ContentJson,
+                    authorizedDocumentVersionIdSet),
+            hasRestrictedTextProjection ? string.Empty : version.ContentMarkdown,
             anchors,
             relationships,
             flowGroups,
-            new CurrentIndexEntry(
-                index.Summary,
-                DeserializeStrings(index.KeySymbolsJson),
-                DeserializeStrings(index.BusinessTermsJson),
-                DeserializeStrings(index.TechnicalTermsJson),
-                index.SearchText),
+            hasRestrictedTextProjection
+                ? new CurrentIndexEntry(string.Empty, [], [], [], string.Empty)
+                : new CurrentIndexEntry(
+                    index.Summary,
+                    DeserializeStrings(index.KeySymbolsJson),
+                    DeserializeStrings(index.BusinessTermsJson),
+                    DeserializeStrings(index.TechnicalTermsJson),
+                    index.SearchText),
             sections.Select(section =>
             {
                 IReadOnlyList<Guid> documentVersionIds =
                     DeserializeGuids(section.DocumentVersionIdsJson);
+                bool hasRestrictedDocumentReference = documentVersionIds.Any(id =>
+                    !authorizedDocumentVersionIdSet.Contains(id));
+                bool redactTextProjection =
+                    hasRestrictedTextProjection || hasRestrictedDocumentReference;
                 return new CurrentDocumentSection(
                     section.StableSectionId,
                     section.SectionOrder,
                     section.SectionKind,
-                    section.Heading,
-                    section.ContentMarkdown,
-                    section.SearchText,
-                    DeserializeGuids(section.SourceAnchorIdsJson),
-                    documentVersionIds
-                        .Where(authorizedDocumentVersionIdSet.Contains)
-                        .ToArray(),
-                    documentVersionIds.Any(id =>
-                        !authorizedDocumentVersionIdSet.Contains(id)));
+                    redactTextProjection ? string.Empty : section.Heading,
+                    redactTextProjection ? string.Empty : section.ContentMarkdown,
+                    redactTextProjection ? string.Empty : section.SearchText,
+                    hasRestrictedDocumentReference
+                        ? []
+                        : DeserializeGuids(section.SourceAnchorIdsJson),
+                    hasRestrictedDocumentReference
+                        ? []
+                        : documentVersionIds
+                            .Where(authorizedDocumentVersionIdSet.Contains)
+                            .ToArray(),
+                    hasRestrictedDocumentReference);
             }).ToArray());
     }
 
@@ -631,6 +878,9 @@ public sealed class KnowledgeStoreRepository(
 
     private static IReadOnlyList<Guid> DeserializeGuids(string json) =>
         JsonSerializer.Deserialize<Guid[]>(json) ?? [];
+
+    private static bool JsonMatches(string first, string second) =>
+        JsonNode.DeepEquals(JsonNode.Parse(first), JsonNode.Parse(second));
 
     private static string RedactDocumentReferences(
         string contentJson,

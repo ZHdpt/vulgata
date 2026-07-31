@@ -429,6 +429,12 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CommitFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<string>("ContentFingerprint")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -505,6 +511,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("DocumentVersions", "vulgata", t =>
                         {
+                            t.HasCheckConstraint("CK_DocumentVersions_CommitFingerprint_Length", "length(\"CommitFingerprint\") = 64");
+
                             t.HasCheckConstraint("CK_DocumentVersions_ContentFingerprint_Length", "length(\"ContentFingerprint\") = 64");
 
                             t.HasCheckConstraint("CK_DocumentVersions_SchemaIdentity_Closed", "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
@@ -720,7 +728,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.HasIndex("RepositoryId", "DocumentType", "Title");
 
-                    b.ToTable("IndexEntries", "vulgata");
+                    b.ToTable("IndexEntries", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_IndexEntries_DocumentType_Closed", "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.LlmProvider", b =>

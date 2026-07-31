@@ -157,6 +157,102 @@ public sealed class KnowledgeStorePersistenceTests
         Assert.Equal(4, await session.Context.Set<DocumentSection>().CountAsync());
     }
 
+    [Theory]
+    [InlineData("operation")]
+    [InlineData("anchor")]
+    [InlineData("edge")]
+    [InlineData("flow")]
+    [InlineData("projection")]
+    public async Task CommitAsync_ReplayDiffersFromCompleteAggregate_ReturnsConflict(
+        string mismatch)
+    {
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        await SeedRepositoryEvidenceAsync(session.Context);
+        var repository = CreateRepository(session.Context);
+        await CommitCodeAsync(
+            repository,
+            _targetLogicalDocumentId,
+            KnowledgeStoreTestFixtures.TargetDocumentVersionId,
+            KnowledgeStoreTestFixtures.TargetRepositoryId,
+            KnowledgeStoreTestFixtures.TargetScanRunId,
+            _targetCodeUnitId);
+        KnowledgeDocumentMaterialization materialization = Materialize(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            KnowledgeStoreTestFixtures.DocumentVersionId,
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            "BusinessLogic");
+        KnowledgeCommit original =
+            KnowledgeStoreTestFixtures.CreateBusinessKnowledgeCommit(materialization);
+        RepositoryAccessScope scope = new(
+        [
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            KnowledgeStoreTestFixtures.TargetRepositoryId,
+        ]);
+        KnowledgeCommitResult committed = await repository.CommitAsync(original, scope);
+        KnowledgeCommitResult identicalReplay = await repository.CommitAsync(original, scope);
+        Assert.Equal(KnowledgeCommitStatus.Committed, committed.Status);
+        Assert.Equal(KnowledgeCommitStatus.Committed, identicalReplay.Status);
+
+        KnowledgeCommit replay = mismatch switch
+        {
+            "operation" => original with
+            {
+                OperationId = Guid.Parse("e0000000-0000-0000-0000-000000000099"),
+            },
+            "anchor" => original with
+            {
+                SourceAnchors =
+                [
+                    new SourceAnchorDraft(
+                        Guid.Parse("80000000-0000-0000-0000-000000000099"),
+                        original.NewDocumentVersionId,
+                        original.RepositoryId,
+                        original.ScanRunId,
+                        KnowledgeStoreTestFixtures.SourceCodeUnitId,
+                        original.ProfiledRevision,
+                        "src/orders.cs",
+                        "OrderService:1-10",
+                        1,
+                        10,
+                        KnowledgeStoreTestFixtures.SourceHash),
+                ],
+            },
+            "edge" => original with
+            {
+                Edges =
+                [
+                    original.Edges[0] with { EdgeType = DocumentEdgeType.References },
+                ],
+            },
+            "flow" => original with
+            {
+                FlowGroups =
+                [
+                    original.FlowGroups[0] with { Title = "不同订单流" },
+                ],
+            },
+            "projection" => original,
+            _ => throw new InvalidOperationException("Unknown replay mismatch."),
+        };
+        if (mismatch == "projection")
+        {
+            IndexEntry index = await session.Context.Set<IndexEntry>()
+                .SingleAsync(entry => entry.DocumentVersionId == original.NewDocumentVersionId);
+            session.Context.Entry(index).Property(entry => entry.SearchText).CurrentValue =
+                "tampered projection";
+            await session.Context.SaveChangesAsync();
+            session.Context.ChangeTracker.Clear();
+        }
+
+        KnowledgeCommitResult result = await repository.CommitAsync(replay, scope);
+
+        Assert.Equal(KnowledgeCommitStatus.Conflict, result.Status);
+        Assert.Equal(2, await session.Context.Set<LogicalDocument>().CountAsync());
+        Assert.Equal(2, await session.Context.Set<DocumentVersion>().CountAsync());
+        KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
+    }
+
     [Fact]
     public async Task RebuildProjectionAsync_ExistingVersion_ReplacesOnlyDerivedRowsRepeatably()
     {
@@ -755,11 +851,19 @@ public sealed class KnowledgeStorePersistenceTests
             "length(\"ContentFingerprint\") = 64");
         AssertCheckConstraint<DocumentVersion>(
             model,
+            "CK_DocumentVersions_CommitFingerprint_Length",
+            "length(\"CommitFingerprint\") = 64");
+        AssertCheckConstraint<DocumentVersion>(
+            model,
             "CK_DocumentVersions_SchemaIdentity_Closed",
             "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
         AssertCheckConstraint<LogicalDocument>(
             model,
             "CK_LogicalDocuments_DocumentType_Closed",
+            "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')");
+        AssertCheckConstraint<IndexEntry>(
+            model,
+            "CK_IndexEntries_DocumentType_Closed",
             "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')");
         AssertCheckConstraint<DocumentEdge>(
             model,

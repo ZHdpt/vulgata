@@ -81,6 +81,7 @@ it impossible for current to point to another Logical Document or Repository.
 | `ContentJson` | allowlisted JSON object, UTF-8 <=1 MiB, depth <=4 | canonical structured content; PostgreSQL `jsonb` |
 | `ContentMarkdown` | UTF-8 1..1 MiB | deterministic render |
 | `ContentFingerprint` | lowercase SHA-256, 64 | canonical JSON + Markdown |
+| `CommitFingerprint` | lowercase SHA-256, 64 | binds stable `OperationId` to complete canonical aggregate and derived projections |
 | `SupersededById` | nullable Guid | sole historical transition; EF concurrency token |
 | `CreatedAt` | `DateTimeOffset` | immutable |
 
@@ -101,11 +102,14 @@ Constraints/indexes:
   `(SupersededById, LogicalDocumentId, RepositoryId)` →
   `DocumentVersion(Id, LogicalDocumentId, RepositoryId)`;
 - all ownership/successor delete behavior `Restrict`/`NoAction`;
-- checks: version positive, successor differs from self, fingerprint length,
-  schema exact, closed Document type through owner.
+- checks: version positive, successor differs from self, content/commit
+  fingerprint lengths, schema exact, closed Document type through owner.
 
 Canonical fields have no mutation method. `SupersedeWith` may set a previously
-null successor exactly once.
+null successor exactly once. `CommitFingerprint` is immutable and is not a
+second content hash: it includes `OperationId`, commit identity/current
+expectation/timestamp, canonical JSON/Markdown, anchors, Edges, ordered flow
+evidence, `IndexEntry`, and ordered `DocumentSection` rows.
 
 ## Source Anchor
 
@@ -118,7 +122,7 @@ null successor exactly once.
 | `CodeUnitId` | Guid | exact durable Code Unit |
 | `ProfiledRevision` | lowercase hex <=64 | equals ScanRun/version |
 | `RepositoryRelativePath` | UTF-8 1..2,048 | equals Code Unit path |
-| `EvidenceLocator` | UTF-8 1..4,096 | safe `path#line-range`, no source |
+| `EvidenceLocator` | UTF-8 1..4,096 | safe `path#line-range`, no source; closed sensitive-text guard required |
 | `LineStart`, `LineEnd` | int >=1 | inclusive, start <= end, within Code Unit |
 | `SourceHash` | lowercase SHA-256, 64 | exact source/snippet integrity |
 | `CreatedAt` | `DateTimeOffset` | immutable |
@@ -173,7 +177,7 @@ Cross-Repository is derived by comparing Repository IDs. Constraints:
 | `BusinessLogicDocumentVersionId` | Guid | exact committed BL version |
 | `RepositoryId`, `ScanRunId` | Guid | equal BL version ownership |
 | `GroupOrder` | int 1..32 | contiguous within BL version |
-| `Title` | UTF-8 1..4,096 | bounded label |
+| `Title` | UTF-8 1..4,096 | bounded label; closed sensitive-text guard required |
 | `CreatedAt` | `DateTimeOffset` | immutable |
 
 Unique `(BusinessLogicDocumentVersionId, GroupOrder)`. Composite version FK,
@@ -202,7 +206,7 @@ Unique `(FlowGroupId, TraceOrder)`; group FK `Restrict`; index `FlowGroupId`.
 | `DocumentScanRunId` | Guid | exact endpoint ScanRun |
 | `EdgeId` | nullable Guid | required only for Relationship |
 | `StepKind` | closed enum | Document/Relationship/Termination |
-| `Description` | UTF-8 1..4,096 | returned only when step Repository authorized |
+| `Description` | UTF-8 1..4,096 | closed sensitive-text guard required; returned only when step Repository authorized |
 | `CreatedAt` | `DateTimeOffset` | immutable |
 
 Unique `(FlowTraceId, StepOrder)`. Composite FK
@@ -229,8 +233,11 @@ continuity because contiguity across rows is not expressible as a check.
 
 Exactly one row per version: unique `DocumentVersionId`. Composite
 version/Repository FK `Restrict`; indexes `(RepositoryId, DocumentType)` and
-`LogicalDocumentId`. It is replaceable projection truth, not canonical
-content.
+`LogicalDocumentId`. Check constraint
+`CK_IndexEntries_DocumentType_Closed` requires
+`DocumentType IN ('CodeLogic', 'BusinessLogic')`; the string conversion alone
+is not accepted as relational closure. It is replaceable projection truth,
+not canonical content.
 
 ## Document Section
 
@@ -272,6 +279,7 @@ as proof of PostgreSQL row-lock behavior.
 
 ```text
 validate scope/content/endpoints/anchors/flow in memory
+-> derive canonical aggregate/projections and CommitFingerprint(OperationId, ...)
 -> begin retryable transaction
 -> lock all existing endpoint owner rows and revalidate currentness
 -> insert Logical Document with null current pointer
@@ -279,6 +287,13 @@ validate scope/content/endpoints/anchors/flow in memory
 -> move current pointer to new version
 -> commit
 ```
+
+If execution-strategy verification observes the requested new Document Version
+identity, it re-materializes the expected projection and compares
+`CommitFingerprint` plus every durable Document Version, anchor, Edge, flow,
+index, and section field. Only an exact aggregate match is an idempotent
+`Committed`; any changed `OperationId`, request child, projection, timestamp,
+or durable tampering is `Conflict`.
 
 ### Supersession
 
@@ -311,3 +326,17 @@ read immutable canonical JSON
 Every FK is `Restrict` or `NoAction`. Projection replacement uses explicit
 version-scoped deletes; no cascade can remove a Logical Document, historical
 Document Version, source anchor, Edge, or flow fact.
+
+## Current retrieval redaction transition
+
+Retrieval reevaluates the supplied Repository scope on every call. A restricted
+Edge or flow target is represented only by its restricted marker. A restricted
+section Document reference returns no referenced Document Version or
+source-anchor IDs and sets its restricted-reference indicator.
+
+Because canonical and search projections may contain target-derived prose
+without an explicit target identifier, any restricted Edge, flow step, or
+section Document reference also causes the materialized read to clear
+`ContentJson`, `ContentMarkdown`, every `CurrentIndexEntry` text/list field, and
+section heading/Markdown/search text. This is a read-model transition only; it
+does not mutate the immutable stored Document Version or projection rows.

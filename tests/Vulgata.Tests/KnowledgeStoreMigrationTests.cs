@@ -37,6 +37,8 @@ public sealed class KnowledgeStoreMigrationTests
             ["CK_DocumentSections_SectionKind_Closed"] =
                 "\"SectionKind\" IN ('Overview', 'BusinessRule', 'ProcessStep', 'TechnicalDetail', 'Evidence', 'Other')",
             ["CK_DocumentSections_SectionOrder_Positive"] = "\"SectionOrder\" > 0",
+            ["CK_DocumentVersions_CommitFingerprint_Length"] =
+                "length(\"CommitFingerprint\") = 64",
             ["CK_DocumentVersions_ContentFingerprint_Length"] =
                 "length(\"ContentFingerprint\") = 64",
             ["CK_DocumentVersions_SchemaIdentity_Closed"] =
@@ -49,6 +51,8 @@ public sealed class KnowledgeStoreMigrationTests
                 "\"StepKind\" IN ('Document', 'Relationship', 'Termination')",
             ["CK_FlowTraceSteps_StepOrder_Positive"] = "\"StepOrder\" > 0",
             ["CK_FlowTraces_TraceOrder_Positive"] = "\"TraceOrder\" > 0",
+            ["CK_IndexEntries_DocumentType_Closed"] =
+                "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')",
             ["CK_LogicalDocuments_DocumentType_Closed"] =
                 "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')",
             ["CK_SourceAnchors_LineEnd_Range"] = "\"LineEnd\" >= \"LineStart\"",
@@ -111,6 +115,17 @@ public sealed class KnowledgeStoreMigrationTests
                 foreignKey.PrincipalTable == "CodeUnits" &&
                 foreignKey.PrincipalColumns!.SequenceEqual(
                     ["Id", "ScanRunId", "RepositoryId"]));
+
+        CreateTableOperation documentVersions = Assert.Single(
+            migration.UpOperations.OfType<CreateTableOperation>(),
+            operation => operation.Name == "DocumentVersions");
+        AddColumnOperation commitFingerprint = Assert.Single(
+            documentVersions.Columns,
+            column => column.Name == nameof(DocumentVersion.CommitFingerprint));
+        Assert.Equal(typeof(string), commitFingerprint.ClrType);
+        Assert.False(commitFingerprint.IsNullable);
+        Assert.True(commitFingerprint.IsFixedLength);
+        Assert.Equal(64, commitFingerprint.MaxLength);
 
         Dictionary<string, string> migrationCheckSqlByName =
             migration.UpOperations
@@ -191,6 +206,11 @@ public sealed class KnowledgeStoreMigrationTests
                     ]));
 
         IEntityType documentVersion = model.FindEntityType(typeof(DocumentVersion))!;
+        IProperty commitFingerprint = Assert.IsAssignableFrom<IProperty>(
+            documentVersion.FindProperty(nameof(DocumentVersion.CommitFingerprint)));
+        Assert.False(commitFingerprint.IsNullable);
+        Assert.True(commitFingerprint.IsFixedLength());
+        Assert.Equal(64, commitFingerprint.GetMaxLength());
         AssertIndex(
             logicalDocument,
             true,

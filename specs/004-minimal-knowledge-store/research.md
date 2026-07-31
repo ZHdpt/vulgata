@@ -66,17 +66,29 @@ production proof was rejected.
 
 **Decision**: execute commit/rebuild through the context execution strategy's
 `ExecuteInTransactionAsync`, using stable caller-provided IDs and a
-post-commit verification query.
+post-commit verification query. Persist a deterministic SHA-256
+`CommitFingerprint` on the immutable Document Version. It binds the stable
+`OperationId` to the commit identity/current expectation/timestamp, canonical
+JSON/Markdown, anchors, Edges, ordered flow evidence, and exact derived
+`IndexEntry`/`DocumentSection` projections. Verification recomputes the
+fingerprint and compares every durable aggregate/projection row before an
+existing version identity is accepted as an exact replay.
 
 **Rationale**: Program enables Npgsql retries. EF documents that a
 user-initiated transaction must be replayed as one execution-strategy unit;
-transactions make all included operations atomic. See
+transactions make all included operations atomic. Version identity alone does
+not prove that a prior attempt committed the same operation and all intended
+children/projections. Fingerprint plus full durable comparison makes an
+identical retry idempotent and a changed/tampered replay a closed `Conflict`.
+See
 [Connection resiliency](https://learn.microsoft.com/ef/core/miscellaneous/connection-resiliency#execution-strategies-and-transactions)
 and [Using transactions](https://learn.microsoft.com/ef/core/saving/transactions).
 
 **Alternatives considered**: naked `BeginTransactionAsync` was rejected as
 incompatible with the configured retry strategy; separate child saves were
-rejected because they expose partial state.
+rejected because they expose partial state; checking only the Document Version
+ID or content fingerprint was rejected because neither binds `OperationId`,
+provenance children, flow evidence, nor retrieval projections.
 
 ## Decision 6: Closed typed canonical content drives both projections
 
@@ -96,19 +108,25 @@ canonical; filesystem export was rejected as non-canonical.
 ## Decision 7: Deterministic FR-019 rejection boundary
 
 **Decision**: remove source/secret/diagnostic fields structurally and scan every
-normalized string for the closed credential, host-path, raw-source-carrier, and
-raw-diagnostic markers listed in the canonical-content contract. Reject
-unknown/duplicate properties, forbidden controls, and exact boundary overflow
-with closed `InvalidContent`.
+normalized canonical string for the closed credential, host-path,
+raw-source-carrier, and raw-diagnostic markers listed in the
+canonical-content contract. Reuse the same Core-owned guard for source-anchor
+evidence locators, Flow Group titles, and Flow Trace Step descriptions before
+persistence. Reject unknown/duplicate properties, forbidden controls, unsafe
+evidence text, and exact boundary overflow with closed `InvalidContent`.
 
 **Rationale**: “detect every possible secret or source fragment” is not a
 testable claim. A typed allowlist plus explicit marker fixtures is finite,
-deterministic, fail-closed, and directly reviewable.
+deterministic, fail-closed, and directly reviewable. Evidence locators, Flow
+Group titles, and step descriptions cross the same retrieval boundary as
+canonical prose, so leaving them outside the guard would reopen the prohibited
+secret/source/path/diagnostic channel.
 
 **Alternatives considered**: arbitrary JSON key blacklists were rejected
-because unknown fields remain open; entropy/semantic secret classifiers were
-rejected as nondeterministic; an unqualified universal detection claim was
-rejected as unverifiable.
+because unknown fields remain open; guarding only canonical JSON was rejected
+because noncanonical evidence text is still persisted and returned;
+entropy/semantic secret classifiers were rejected as nondeterministic; an
+unqualified universal detection claim was rejected as unverifiable.
 
 ## Decision 8: Composite provenance ownership
 
@@ -150,14 +168,22 @@ because order and exact references need relational constraints.
 **Decision**: the specific Core repository takes a bounded set of currently
 authorized Repository IDs. Hidden source reads return the same `null` as
 missing. Unauthorized relationship targets collapse to a marker with no type,
-ID, title, path, content, anchor, or behavior.
+ID, title, path, content, anchor, or behavior. If an Edge, flow step, or
+section Document reference targets a Repository outside current scope,
+retrieval also clears canonical JSON/Markdown, index summary/terms/search
+text, and section heading/Markdown/search text because those projections may
+contain target-derived prose without carrying an explicit target ID.
 
 **Rationale**: Repository authorization is the outer boundary, and returning a
-partially populated target would leak identity.
+partially populated target would leak identity. Removing identifiers alone is
+not sufficient: target-derived business text can disclose the same restricted
+behavior. Empty bounded projection shapes plus the restricted marker are the
+deterministic fail-closed response after revocation.
 
 **Alternatives considered**: loading then filtering in Web, caching ownership,
-and revealing target IDs/types were rejected. No public API or new policy is
-needed.
+revealing target IDs/types, and attempting selective prose scrubbing were
+rejected. Selective scrubbing has no complete provenance map and could miss a
+derived disclosure. No public API or new policy is needed.
 
 ## Decision 12: Restrictive history with explicit projection replacement
 
@@ -179,6 +205,10 @@ Story 4.3 migration `20260730083207_AddConservativePreScanGate` as exact
 rollback target. Test clean apply, rollback, reapply, and no pending model
 changes. EF documents the pending-model command in
 [Managing migrations](https://learn.microsoft.com/ef/core/managing-schemas/migrations/managing#checking-for-pending-model-changes).
+The migration includes a non-null fixed-length `CommitFingerprint` column with
+`CK_DocumentVersions_CommitFingerprint_Length` and an explicit
+`CK_IndexEntries_DocumentType_Closed` constraint allowing only `CodeLogic` and
+`BusinessLogic`.
 Separately, after explicit user exception, the integration owner changes only
 `tests/Vulgata.Tests/MigrationTests.cs:142` from latest migration to the exact
 Story 4.3 migration. Story 11.1 implementers never edit that file.
@@ -186,8 +216,10 @@ Story 4.3 migration. Story 11.1 implementers never edit that file.
 **Rationale**: the existing Story 4.3 test asserts that only its two tables are
 added; `Migrate()` becomes invalid as soon as a later migration exists. Pinning
 the migration is the only change that preserves the test's intended boundary,
-but its completed-story ownership requires a narrow user exception. Task
-generation remains blocked until authorized.
+but its completed-story ownership requires a narrow user exception. The
+fingerprint check proves its digest shape, while the explicit index-entry check
+prevents an undefined converted enum string from entering retrieval truth.
+Task generation remains blocked until authorized.
 
 **Alternatives considered**: editing/combining Story 4.3 migration, manual SQL
 without snapshot evolution, weakening/removing the Story 4.3 assertion, letting

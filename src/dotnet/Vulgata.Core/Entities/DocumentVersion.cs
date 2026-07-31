@@ -20,6 +20,7 @@ public sealed class DocumentVersion
         string contentJson,
         string contentMarkdown,
         string contentFingerprint,
+        string commitFingerprint,
         DateTimeOffset createdAt)
     {
         Id = id;
@@ -35,6 +36,7 @@ public sealed class DocumentVersion
         ContentJson = contentJson;
         ContentMarkdown = contentMarkdown;
         ContentFingerprint = contentFingerprint;
+        CommitFingerprint = commitFingerprint;
         CreatedAt = createdAt;
     }
 
@@ -51,6 +53,7 @@ public sealed class DocumentVersion
     public string ContentJson { get; private set; } = string.Empty;
     public string ContentMarkdown { get; private set; } = string.Empty;
     public string ContentFingerprint { get; private set; } = string.Empty;
+    public string CommitFingerprint { get; private set; } = string.Empty;
     public Guid? SupersededById { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public LogicalDocument? LogicalDocument { get; private set; }
@@ -75,6 +78,7 @@ public sealed class DocumentVersion
         string contentJson,
         string contentMarkdown,
         string contentFingerprint,
+        string commitFingerprint,
         DateTimeOffset createdAt)
     {
         if (id == Guid.Empty ||
@@ -101,6 +105,7 @@ public sealed class DocumentVersion
             contentJson,
             contentMarkdown,
             contentFingerprint,
+            commitFingerprint,
             createdAt);
     }
 

@@ -45,6 +45,14 @@ KnowledgeRejectionCode
 `Rejected` returns only a closed code. Raw database/provider/exception text is
 not part of the contract. A failure makes zero new rows visible.
 
+Before any entity is attached, the repository applies the same deterministic
+sensitive-text guard defined by
+[canonical-document-content.md](canonical-document-content.md) to canonical
+content plus every source-anchor `evidenceLocator`, Flow Group `title`, and
+Flow Trace Step `description`. A credential/secret, host path, raw-source
+carrier, or raw-diagnostic marker returns `Rejected/InvalidContent` without
+echoing the rejected value.
+
 Initial creation requires no existing stable slot and atomically creates one
 Logical Document plus one complete current version. Supersession requires the
 expected current version and atomically inserts a successor, sets the
@@ -58,6 +66,29 @@ Every `EdgeDraft` supplies source/target Document Version, Repository, and
 ScanRun IDs. Every anchor supplies Document Version/Repository/ScanRun and
 Code Unit/ScanRun/Repository tuples. The database composite foreign keys—not
 only application validation—must accept those ownership tuples.
+
+## Deterministic replay identity
+
+`operationId` is stable across execution-strategy attempts. Infrastructure
+stores a lowercase SHA-256 `CommitFingerprint` on the immutable Document
+Version. Its canonical input is:
+
+- `operationId`, Logical Document/new Document Version identity, nullable
+  expected current version, Repository, ScanRun, Profiled Revision, and
+  `committedAt`;
+- canonical JSON, deterministic Markdown, and `ContentFingerprint`;
+- all source anchors and Edges sorted by stable ID;
+- Flow Groups/Traces/Steps in accepted order with stable-ID tie breakers; and
+- every field of the derived `IndexEntry` and ordered `DocumentSection` rows.
+
+The verification query is aggregate-wide. It re-materializes the expected
+content/projections, recomputes `CommitFingerprint`, and compares every durable
+Document Version, anchor, Edge, flow, index, and section field plus current and
+predecessor links. An identical replay returns the original `Committed`
+result. Reusing the new Document Version identity with another `operationId`,
+changed aggregate input, changed/tampered projection, or different timestamp
+returns `Conflict`; the repository neither repairs the existing aggregate nor
+treats version identity alone as proof.
 
 ## Lock and currentness protocol
 
@@ -101,7 +132,9 @@ RebuildProjectionAsync(
 The method reads immutable canonical JSON, prepares one bounded index entry and
 all sections, then replaces only those rows in one transaction. Failure leaves
 the previous complete projection. Repeat rebuilds yield one equivalent index
-entry and the same stable ordered section set.
+entry and the same stable ordered section set. The relational model separately
+constrains `IndexEntry.DocumentType` to `CodeLogic` or `BusinessLogic` with
+`CK_IndexEntries_DocumentType_Closed`.
 
 ## Current retrieval
 
@@ -130,3 +163,13 @@ RestrictedRelationship
 It contains no Edge ID/type or target Repository, Logical Document, Document
 Version, title, path, anchor, content, source, term, or behavior. Flow steps and
 section Document references apply the same rule.
+
+If any Edge, flow step, or section Document reference resolves to a Repository
+outside the current scope, the read fails closed for all text that can contain
+target-derived prose: canonical JSON/Markdown is empty, the returned
+`CurrentIndexEntry` has empty summary/lists/search text, and returned section
+heading/Markdown/search text is empty. A section carrying a restricted Document
+reference also returns no source-anchor or Document Version IDs and sets only
+its restricted-reference indicator. This read-time redaction never rewrites
+stored canonical or projection rows. See
+[knowledge-retrieval-projection.md](knowledge-retrieval-projection.md).

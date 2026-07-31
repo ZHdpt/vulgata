@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Core.DomainServices;
@@ -179,6 +180,69 @@ public sealed record CurrentDocumentSection(
     IReadOnlyList<Guid> AuthorizedDocumentVersionIds,
     bool HasRestrictedDocumentReference);
 
+public static class KnowledgeTextSafety
+{
+    private static readonly string[] _prohibitedMarkers =
+    [
+        "password=",
+        "pwd=",
+        "api_key=",
+        "apikey=",
+        "client_secret=",
+        "secret=",
+        "access_token=",
+        "authorization: bearer",
+        "-----BEGIN PRIVATE KEY-----",
+        "-----BEGIN RSA PRIVATE KEY-----",
+        "file://",
+        "/home/",
+        "/users/",
+        "/var/",
+        "/tmp/",
+        "/etc/",
+        "/root/",
+        "stack trace:",
+        "traceback (most recent call last):",
+        "innerexception",
+        "sqlstate",
+        "```",
+        "~~~",
+        "<pre",
+        "<code",
+    ];
+    private static readonly Regex _drivePathPattern = new(
+        @"[A-Za-z]:[\\/]",
+        RegexOptions.CultureInvariant);
+    private static readonly Regex _uncPathPattern = new(
+        @"(?:\\\\|//)[^\\/\s]+[\\/][^\\/\s]+",
+        RegexOptions.CultureInvariant);
+    private static readonly Regex _indentedSourcePattern = new(
+        @"(?m)^ {4}\S",
+        RegexOptions.CultureInvariant);
+    private static readonly Regex _exceptionLinePattern = new(
+        @"(?im)^Exception:",
+        RegexOptions.CultureInvariant);
+    private static readonly Regex _stackFramePattern = new(
+        @"(?m)^ at [A-Za-z_][A-Za-z0-9_+`]*(?:\.[A-Za-z_][A-Za-z0-9_+`]*)+\(",
+        RegexOptions.CultureInvariant);
+
+    public static void EnsureSafe(string value)
+    {
+        if (_prohibitedMarkers.Any(marker =>
+                value.Contains(marker, StringComparison.OrdinalIgnoreCase)) ||
+            _drivePathPattern.IsMatch(value) ||
+            _uncPathPattern.IsMatch(value) ||
+            _indentedSourcePattern.IsMatch(value) ||
+            _exceptionLinePattern.IsMatch(value) ||
+            _stackFramePattern.IsMatch(value) ||
+            (value.Contains("Host=", StringComparison.OrdinalIgnoreCase) &&
+                value.Contains("Password=", StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new KnowledgeStoreContractException(KnowledgeRejectionCode.InvalidContent);
+        }
+    }
+}
+
 public static class KnowledgeStoreContractValidator
 {
     public static void ValidateRequestedStableSectionIds(
@@ -248,6 +312,8 @@ public static class KnowledgeStoreContractValidator
             {
                 Reject(KnowledgeRejectionCode.InvalidAnchor);
             }
+
+            KnowledgeTextSafety.EnsureSafe(anchor.EvidenceLocator);
         }
 
         if (request.SourceAnchors.Select(anchor => anchor.Id).Distinct().Count() !=
@@ -318,6 +384,7 @@ public static class KnowledgeStoreContractValidator
                 Reject(KnowledgeRejectionCode.InvalidFlow);
             }
 
+            KnowledgeTextSafety.EnsureSafe(group.Title);
             for (int traceIndex = 0; traceIndex < group.Traces.Count; traceIndex++)
             {
                 FlowTraceDraft trace = group.Traces[traceIndex];
@@ -353,6 +420,7 @@ public static class KnowledgeStoreContractValidator
                 Reject(KnowledgeRejectionCode.InvalidFlow);
             }
 
+            KnowledgeTextSafety.EnsureSafe(step.Description);
             if (step.StepKind == FlowTraceStepKind.Relationship)
             {
                 if (stepIndex == 0 || step.EdgeId is null)

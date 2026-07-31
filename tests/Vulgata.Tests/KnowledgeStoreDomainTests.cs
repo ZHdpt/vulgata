@@ -345,6 +345,104 @@ public sealed class KnowledgeStoreDomainTests
         KnowledgeStoreContractValidator.ValidateCommit(commit);
     }
 
+    [Theory]
+    [MemberData(nameof(UnsafeEvidenceTextCases))]
+    public void ValidateCommit_SensitiveEvidenceText_RejectsClosedCode(
+        string evidenceLocation,
+        string unsafeText)
+    {
+        var materializer = new KnowledgeDocumentMaterializer();
+        KnowledgeDocumentMaterialization content = materializer.Materialize(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            KnowledgeStoreTestFixtures.DocumentVersionId,
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            KnowledgeStoreTestFixtures.SystemId,
+            KnowledgeStoreTestFixtures.CreateCanonicalJson(documentType: "BusinessLogic"),
+            KnowledgeStoreTestFixtures.CreatedAt);
+        KnowledgeCommit valid =
+            KnowledgeStoreTestFixtures.CreateBusinessKnowledgeCommit(content);
+        KnowledgeCommit invalid = evidenceLocation switch
+        {
+            "anchor" => valid with
+            {
+                SourceAnchors =
+                [
+                    new SourceAnchorDraft(
+                        Guid.Parse("80000000-0000-0000-0000-000000000099"),
+                        valid.NewDocumentVersionId,
+                        valid.RepositoryId,
+                        valid.ScanRunId,
+                        KnowledgeStoreTestFixtures.SourceCodeUnitId,
+                        valid.ProfiledRevision,
+                        "src/orders.cs",
+                        unsafeText,
+                        1,
+                        10,
+                        KnowledgeStoreTestFixtures.SourceHash),
+                ],
+            },
+            "flow-title" => valid with
+            {
+                FlowGroups =
+                [
+                    valid.FlowGroups[0] with { Title = unsafeText },
+                ],
+            },
+            "step-description" => valid with
+            {
+                FlowGroups =
+                [
+                    valid.FlowGroups[0] with
+                    {
+                        Traces =
+                        [
+                            valid.FlowGroups[0].Traces[0] with
+                            {
+                                Steps =
+                                [
+                                    valid.FlowGroups[0].Traces[0].Steps[0] with
+                                    {
+                                        Description = unsafeText,
+                                    },
+                                    .. valid.FlowGroups[0].Traces[0].Steps.Skip(1),
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            _ => throw new InvalidOperationException("Unknown evidence location."),
+        };
+
+        KnowledgeStoreContractException exception =
+            Assert.Throws<KnowledgeStoreContractException>(
+                () => KnowledgeStoreContractValidator.ValidateCommit(invalid));
+
+        Assert.Equal(KnowledgeRejectionCode.InvalidContent, exception.RejectionCode);
+        Assert.DoesNotContain(unsafeText, exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static TheoryData<string, string> UnsafeEvidenceTextCases()
+    {
+        string[] unsafeValues =
+        [
+            "password=hunter2",
+            "Stack trace: provider detail",
+            @"C:\agent\_work\repo",
+            "```csharp\nvar rawSource = true;\n```",
+        ];
+        var cases = new TheoryData<string, string>();
+        foreach (string location in new[] { "anchor", "flow-title", "step-description" })
+        {
+            foreach (string unsafeValue in unsafeValues)
+            {
+                cases.Add(location, unsafeValue);
+            }
+        }
+
+        return cases;
+    }
+
     [Fact]
     public void ValidateCommit_UndefinedDocumentEdgeType_RejectsClosedCode()
     {
@@ -506,5 +604,6 @@ public sealed class KnowledgeStoreDomainTests
             content.ContentJson,
             content.ContentMarkdown,
             content.ContentFingerprint,
+            new string('1', 64),
             KnowledgeStoreTestFixtures.CreatedAt.AddMinutes(versionNumber - 1));
 }

@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Data;
@@ -14,50 +14,6 @@ public sealed class KnowledgeDocumentMaterializer
         CommentHandling = JsonCommentHandling.Disallow,
         MaxDepth = 4,
     };
-    private static readonly string[] _prohibitedMarkers =
-    [
-        "password=",
-        "pwd=",
-        "api_key=",
-        "apikey=",
-        "client_secret=",
-        "secret=",
-        "access_token=",
-        "authorization: bearer",
-        "-----BEGIN PRIVATE KEY-----",
-        "-----BEGIN RSA PRIVATE KEY-----",
-        "file://",
-        "/home/",
-        "/users/",
-        "/var/",
-        "/tmp/",
-        "/etc/",
-        "/root/",
-        "stack trace:",
-        "traceback (most recent call last):",
-        "innerexception",
-        "sqlstate",
-        "```",
-        "~~~",
-        "<pre",
-        "<code",
-    ];
-    private static readonly Regex _drivePathPattern = new(
-        @"[A-Za-z]:[\\/]",
-        RegexOptions.CultureInvariant);
-    private static readonly Regex _uncPathPattern = new(
-        @"(?:\\\\|//)[^\\/\s]+[\\/][^\\/\s]+",
-        RegexOptions.CultureInvariant);
-    private static readonly Regex _indentedSourcePattern = new(
-        @"(?m)^ {4}\S",
-        RegexOptions.CultureInvariant);
-    private static readonly Regex _exceptionLinePattern = new(
-        @"(?im)^Exception:",
-        RegexOptions.CultureInvariant);
-    private static readonly Regex _stackFramePattern = new(
-        @"(?m)^ at [A-Za-z_][A-Za-z0-9_+`]*(?:\.[A-Za-z_][A-Za-z0-9_+`]*)+\(",
-        RegexOptions.CultureInvariant);
-
     public KnowledgeDocumentMaterialization Materialize(
         Guid logicalDocumentId,
         Guid documentVersionId,
@@ -146,6 +102,176 @@ public sealed class KnowledgeDocumentMaterializer
             systemId,
             Serialize(content),
             createdAt);
+
+    public string CreateCommitFingerprint(
+        KnowledgeCommit request,
+        KnowledgeDocumentMaterialization projection)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WriteString("operationId", request.OperationId);
+            writer.WriteString("logicalDocumentId", request.LogicalDocumentId);
+            if (request.ExpectedCurrentVersionId is Guid expectedCurrentVersionId)
+            {
+                writer.WriteString("expectedCurrentVersionId", expectedCurrentVersionId);
+            }
+            else
+            {
+                writer.WriteNull("expectedCurrentVersionId");
+            }
+
+            writer.WriteString("newDocumentVersionId", request.NewDocumentVersionId);
+            writer.WriteString("repositoryId", request.RepositoryId);
+            writer.WriteString("scanRunId", request.ScanRunId);
+            writer.WriteString("profiledRevision", request.ProfiledRevision);
+            writer.WriteString("committedAt", request.CommittedAt);
+            writer.WriteString("contentJson", projection.ContentJson);
+            writer.WriteString("contentMarkdown", projection.ContentMarkdown);
+            writer.WriteString("contentFingerprint", projection.ContentFingerprint);
+
+            writer.WriteStartArray("sourceAnchors");
+            foreach (SourceAnchorDraft anchor in request.SourceAnchors.OrderBy(anchor => anchor.Id))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("id", anchor.Id);
+                writer.WriteString("documentVersionId", anchor.DocumentVersionId);
+                writer.WriteString("repositoryId", anchor.RepositoryId);
+                writer.WriteString("scanRunId", anchor.ScanRunId);
+                writer.WriteString("codeUnitId", anchor.CodeUnitId);
+                writer.WriteString("profiledRevision", anchor.ProfiledRevision);
+                writer.WriteString("repositoryRelativePath", anchor.RepositoryRelativePath);
+                writer.WriteString("evidenceLocator", anchor.EvidenceLocator);
+                writer.WriteNumber("lineStart", anchor.LineStart);
+                writer.WriteNumber("lineEnd", anchor.LineEnd);
+                writer.WriteString("sourceHash", anchor.SourceHash);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.WriteStartArray("edges");
+            foreach (EdgeDraft edge in request.Edges.OrderBy(edge => edge.Id))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("id", edge.Id);
+                writer.WriteString("sourceDocumentVersionId", edge.SourceDocumentVersionId);
+                writer.WriteString("sourceRepositoryId", edge.SourceRepositoryId);
+                writer.WriteString("sourceScanRunId", edge.SourceScanRunId);
+                writer.WriteString("targetDocumentVersionId", edge.TargetDocumentVersionId);
+                writer.WriteString("targetRepositoryId", edge.TargetRepositoryId);
+                writer.WriteString("targetScanRunId", edge.TargetScanRunId);
+                writer.WriteString("edgeType", edge.EdgeType.ToString());
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.WriteStartArray("flowGroups");
+            foreach (FlowGroupDraft group in request.FlowGroups
+                .OrderBy(group => group.GroupOrder)
+                .ThenBy(group => group.Id))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("id", group.Id);
+                writer.WriteNumber("groupOrder", group.GroupOrder);
+                writer.WriteString("title", group.Title);
+                writer.WriteStartArray("traces");
+                foreach (FlowTraceDraft trace in group.Traces
+                    .OrderBy(trace => trace.TraceOrder)
+                    .ThenBy(trace => trace.Id))
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("id", trace.Id);
+                    writer.WriteNumber("traceOrder", trace.TraceOrder);
+                    writer.WriteStartArray("steps");
+                    foreach (FlowTraceStepDraft step in trace.Steps
+                        .OrderBy(step => step.StepOrder)
+                        .ThenBy(step => step.Id))
+                    {
+                        writer.WriteStartObject();
+                        writer.WriteString("id", step.Id);
+                        writer.WriteNumber("stepOrder", step.StepOrder);
+                        writer.WriteString("documentVersionId", step.DocumentVersionId);
+                        writer.WriteString("documentRepositoryId", step.DocumentRepositoryId);
+                        writer.WriteString("documentScanRunId", step.DocumentScanRunId);
+                        if (step.EdgeId is Guid edgeId)
+                        {
+                            writer.WriteString("edgeId", edgeId);
+                        }
+                        else
+                        {
+                            writer.WriteNull("edgeId");
+                        }
+
+                        writer.WriteString("stepKind", step.StepKind.ToString());
+                        writer.WriteString("description", step.Description);
+                        writer.WriteEndObject();
+                    }
+
+                    writer.WriteEndArray();
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            WriteIndexEntry(writer, projection.IndexEntry);
+            writer.WriteStartArray("sections");
+            foreach (DocumentSection section in projection.Sections
+                .OrderBy(section => section.SectionOrder)
+                .ThenBy(section => section.Id))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("id", section.Id);
+                writer.WriteString("logicalDocumentId", section.LogicalDocumentId);
+                writer.WriteString("documentVersionId", section.DocumentVersionId);
+                writer.WriteString("repositoryId", section.RepositoryId);
+                writer.WriteString("stableSectionId", section.StableSectionId);
+                writer.WriteNumber("sectionOrder", section.SectionOrder);
+                writer.WriteString("sectionKind", section.SectionKind.ToString());
+                writer.WriteString("heading", section.Heading);
+                writer.WriteString("contentMarkdown", section.ContentMarkdown);
+                writer.WriteString("searchText", section.SearchText);
+                writer.WriteString("sourceAnchorIdsJson", section.SourceAnchorIdsJson);
+                writer.WriteString("documentVersionIdsJson", section.DocumentVersionIdsJson);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+
+        return Convert.ToHexStringLower(SHA256.HashData(stream.ToArray()));
+    }
+
+    private static void WriteIndexEntry(Utf8JsonWriter writer, IndexEntry entry)
+    {
+        writer.WriteStartObject("indexEntry");
+        writer.WriteString("id", entry.Id);
+        writer.WriteString("logicalDocumentId", entry.LogicalDocumentId);
+        writer.WriteString("documentVersionId", entry.DocumentVersionId);
+        writer.WriteString("repositoryId", entry.RepositoryId);
+        if (entry.SystemId is Guid systemId)
+        {
+            writer.WriteString("systemId", systemId);
+        }
+        else
+        {
+            writer.WriteNull("systemId");
+        }
+
+        writer.WriteString("documentType", entry.DocumentType.ToString());
+        writer.WriteString("title", entry.Title);
+        writer.WriteString("summary", entry.Summary);
+        writer.WriteString("repositoryRelativePath", entry.RepositoryRelativePath);
+        writer.WriteString("keySymbolsJson", entry.KeySymbolsJson);
+        writer.WriteString("businessTermsJson", entry.BusinessTermsJson);
+        writer.WriteString("technicalTermsJson", entry.TechnicalTermsJson);
+        writer.WriteString("searchText", entry.SearchText);
+        writer.WriteEndObject();
+    }
 
     private static CanonicalDocumentContent Parse(string contentJson)
     {
@@ -429,25 +555,9 @@ public sealed class KnowledgeDocumentMaterializer
             }
         }
 
-        EnsureNoSensitiveMarker(normalized);
+        KnowledgeTextSafety.EnsureSafe(normalized);
         EnsureUtf8Bound(normalized, maximumBytes);
         return normalized;
-    }
-
-    private static void EnsureNoSensitiveMarker(string value)
-    {
-        if (_prohibitedMarkers.Any(marker =>
-                value.Contains(marker, StringComparison.OrdinalIgnoreCase)) ||
-            _drivePathPattern.IsMatch(value) ||
-            _uncPathPattern.IsMatch(value) ||
-            _indentedSourcePattern.IsMatch(value) ||
-            _exceptionLinePattern.IsMatch(value) ||
-            _stackFramePattern.IsMatch(value) ||
-            (value.Contains("Host=", StringComparison.OrdinalIgnoreCase) &&
-                value.Contains("Password=", StringComparison.OrdinalIgnoreCase)))
-        {
-            Reject(KnowledgeRejectionCode.InvalidContent);
-        }
     }
 
     private static string NormalizeRepositoryPath(string value)

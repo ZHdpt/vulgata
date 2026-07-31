@@ -66,6 +66,12 @@ diagnostic. Inputs outside the exact typed schema or matching a prohibited
 marker fail closed with `InvalidContent`; no raw value is returned in the
 rejection.
 
+The guard is Core-owned rather than materializer-private. Commit validation
+reuses the exact marker/regex families for source-anchor evidence locators,
+Flow Group titles, and Flow Trace Step descriptions. Those values are not
+canonical JSON fields, but they are persisted evidence-bearing text and must
+not reopen a secret, host-path, raw-source, or diagnostic channel.
+
 ## Required rejection fixtures
 
 `KnowledgeStoreDomainTests` must include, at minimum:
@@ -96,3 +102,11 @@ Source-anchor IDs must belong to the committed version's supplied anchors.
 Document Version references must be the source version itself or an authorized
 exact endpoint represented by a permitted Edge. Rebuild parses this canonical
 JSON and never reads `index.md`.
+
+When current retrieval discovers that any referenced target Repository is
+outside the caller's current scope, it does not attempt to selectively scrub
+this canonical prose. It returns empty canonical JSON/Markdown and empty
+textual retrieval projections while preserving only closed restricted markers,
+as defined by
+[knowledge-retrieval-projection.md](knowledge-retrieval-projection.md). Stored
+canonical content remains immutable.

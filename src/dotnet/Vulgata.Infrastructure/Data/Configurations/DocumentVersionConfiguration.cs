@@ -18,6 +18,9 @@ internal sealed class DocumentVersionConfiguration : IEntityTypeConfiguration<Do
                 "CK_DocumentVersions_ContentFingerprint_Length",
                 "length(\"ContentFingerprint\") = 64");
             table.HasCheckConstraint(
+                "CK_DocumentVersions_CommitFingerprint_Length",
+                "length(\"CommitFingerprint\") = 64");
+            table.HasCheckConstraint(
                 "CK_DocumentVersions_SchemaIdentity_Closed",
                 "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
         });
@@ -42,6 +45,7 @@ internal sealed class DocumentVersionConfiguration : IEntityTypeConfiguration<Do
         builder.Property(version => version.ContentJson).HasColumnType("jsonb");
         builder.Property(version => version.ContentMarkdown).HasMaxLength(1_048_576);
         builder.Property(version => version.ContentFingerprint).HasMaxLength(64).IsFixedLength();
+        builder.Property(version => version.CommitFingerprint).HasMaxLength(64).IsFixedLength();
         builder.Property(version => version.SupersededById).IsConcurrencyToken();
         builder.HasIndex(version => new { version.LogicalDocumentId, version.VersionNumber })
             .IsUnique();

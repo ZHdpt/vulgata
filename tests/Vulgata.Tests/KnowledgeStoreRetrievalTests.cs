@@ -121,6 +121,7 @@ public sealed class KnowledgeStoreRetrievalTests
                 staleMaterialization.ContentJson,
                 staleMaterialization.ContentMarkdown,
                 staleMaterialization.ContentFingerprint,
+                new string('1', 64),
                 KnowledgeStoreTestFixtures.CreatedAt.AddMinutes(1)));
         session.Context.Set<IndexEntry>().Add(staleMaterialization.IndexEntry);
         session.Context.Set<DocumentSection>().AddRange(staleMaterialization.Sections);
@@ -316,6 +317,7 @@ public sealed class KnowledgeStoreRetrievalTests
                 "{}",
                 string.Empty,
                 new string('0', 64),
+                new string('1', 64),
                 KnowledgeStoreTestFixtures.CreatedAt))
             .ToArray();
         session.Context.Set<DocumentVersion>().AddRange(extraTargetVersions);
@@ -546,6 +548,104 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
+    [Fact]
+    public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_RedactsTargetDerivedTextProjection()
+    {
+        const string targetDerivedSentinel = "REVOKED_TARGET_DERIVED_SENTINEL";
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        await SeedSourceRepositoryAsync(session.Context);
+        await SeedTargetRepositoryAsync(session.Context);
+        KnowledgeStoreRepository repository = CreateRepository(session.Context);
+        await CommitCrossRepositoryBusinessKnowledgeAsync(
+            repository,
+            targetDerivedSentinel);
+
+        CurrentKnowledge? authorized = await repository.GetCurrentAsync(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            new RepositoryAccessScope(
+            [
+                KnowledgeStoreTestFixtures.SourceRepositoryId,
+                KnowledgeStoreTestFixtures.TargetRepositoryId,
+            ]),
+            [KnowledgeStoreTestFixtures.FirstSectionId]);
+        CurrentKnowledge? revoked = await repository.GetCurrentAsync(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            new RepositoryAccessScope([KnowledgeStoreTestFixtures.SourceRepositoryId]),
+            [KnowledgeStoreTestFixtures.FirstSectionId]);
+
+        Assert.NotNull(authorized);
+        Assert.Contains(targetDerivedSentinel, authorized.ContentJson, StringComparison.Ordinal);
+        Assert.Contains(targetDerivedSentinel, authorized.ContentMarkdown, StringComparison.Ordinal);
+        Assert.Contains(targetDerivedSentinel, authorized.IndexEntry.SearchText, StringComparison.Ordinal);
+        Assert.Contains(
+            targetDerivedSentinel,
+            Assert.Single(authorized.Sections).ContentMarkdown,
+            StringComparison.Ordinal);
+
+        Assert.NotNull(revoked);
+        Assert.DoesNotContain(
+            targetDerivedSentinel,
+            JsonSerializer.Serialize(revoked),
+            StringComparison.Ordinal);
+        Assert.Empty(revoked.ContentJson);
+        Assert.Empty(revoked.ContentMarkdown);
+        Assert.Equal(
+            new CurrentIndexEntry(string.Empty, [], [], [], string.Empty),
+            revoked.IndexEntry);
+        CurrentDocumentSection section = Assert.Single(revoked.Sections);
+        Assert.Empty(section.Heading);
+        Assert.Empty(section.ContentMarkdown);
+        Assert.Empty(section.SearchText);
+        Assert.Empty(section.SourceAnchorIds);
+        Assert.Empty(section.AuthorizedDocumentVersionIds);
+        Assert.True(section.HasRestrictedDocumentReference);
+        KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
+    }
+
+    [Fact]
+    public async Task GetCurrentAsync_RestrictedEdgeWithoutSectionReference_RedactsTextProjection()
+    {
+        const string targetDerivedSentinel = "UNPROVEN_TARGET_DERIVED_SENTINEL";
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        await SeedSourceRepositoryAsync(session.Context);
+        await SeedTargetRepositoryAsync(session.Context);
+        KnowledgeStoreRepository repository = CreateRepository(session.Context);
+        KnowledgeCommitResult target = await repository.CommitAsync(
+            CreateTargetCommit(),
+            new RepositoryAccessScope([KnowledgeStoreTestFixtures.TargetRepositoryId]));
+        KnowledgeCommitResult source = await repository.CommitAsync(
+            CreateBusinessCommit(
+                targetDerivedSentinel,
+                includeTargetSectionReference: false),
+            new RepositoryAccessScope(
+            [
+                KnowledgeStoreTestFixtures.SourceRepositoryId,
+                KnowledgeStoreTestFixtures.TargetRepositoryId,
+            ]));
+        Assert.Equal(KnowledgeCommitStatus.Committed, target.Status);
+        Assert.Equal(KnowledgeCommitStatus.Committed, source.Status);
+
+        CurrentKnowledge? revoked = await repository.GetCurrentAsync(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            new RepositoryAccessScope([KnowledgeStoreTestFixtures.SourceRepositoryId]),
+            [KnowledgeStoreTestFixtures.FirstSectionId]);
+
+        Assert.NotNull(revoked);
+        Assert.Empty(revoked.ContentJson);
+        Assert.Empty(revoked.ContentMarkdown);
+        Assert.Equal(
+            new CurrentIndexEntry(string.Empty, [], [], [], string.Empty),
+            revoked.IndexEntry);
+        Assert.DoesNotContain(
+            targetDerivedSentinel,
+            JsonSerializer.Serialize(revoked),
+            StringComparison.Ordinal);
+        Assert.IsType<RestrictedRelationship>(Assert.Single(revoked.Relationships));
+        KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
+    }
+
     private static KnowledgeStoreRepository CreateRepository(VulgataDbContext context) =>
         new(context, new KnowledgeDocumentMaterializer());
 
@@ -701,13 +801,14 @@ public sealed class KnowledgeStoreRetrievalTests
         Guid.Parse($"{prefix}-0000-0000-0000-{index:D12}");
 
     private static async Task CommitCrossRepositoryBusinessKnowledgeAsync(
-        KnowledgeStoreRepository repository)
+        KnowledgeStoreRepository repository,
+        string? targetDerivedText = null)
     {
         KnowledgeCommitResult target = await repository.CommitAsync(
             CreateTargetCommit(),
             new RepositoryAccessScope([KnowledgeStoreTestFixtures.TargetRepositoryId]));
         KnowledgeCommitResult source = await repository.CommitAsync(
-            CreateBusinessCommit(),
+            CreateBusinessCommit(targetDerivedText),
             new RepositoryAccessScope(
             [
                 KnowledgeStoreTestFixtures.SourceRepositoryId,
@@ -777,8 +878,11 @@ public sealed class KnowledgeStoreRetrievalTests
             KnowledgeStoreTestFixtures.CreatedAt);
     }
 
-    private static KnowledgeCommit CreateBusinessCommit()
+    private static KnowledgeCommit CreateBusinessCommit(
+        string? targetDerivedText = null,
+        bool includeTargetSectionReference = true)
     {
+        string sectionText = targetDerivedText ?? "处理订单业务。";
         KnowledgeDocumentMaterialization materialization =
             new KnowledgeDocumentMaterializer().Materialize(
                 KnowledgeStoreTestFixtures.LogicalDocumentId,
@@ -794,10 +898,12 @@ public sealed class KnowledgeStoreRetrievalTests
                             1,
                             "Overview",
                             "业务概览",
-                            "处理订单业务。",
-                            "订单业务",
+                            sectionText,
+                            sectionText,
                             [],
-                            [KnowledgeStoreTestFixtures.TargetDocumentVersionId]),
+                            includeTargetSectionReference
+                                ? [KnowledgeStoreTestFixtures.TargetDocumentVersionId]
+                                : []),
                     ]),
                 KnowledgeStoreTestFixtures.CreatedAt);
         return KnowledgeStoreTestFixtures.CreateBusinessKnowledgeCommit(

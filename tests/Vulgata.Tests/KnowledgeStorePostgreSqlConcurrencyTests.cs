@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Reflection;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Vulgata.Core.DomainServices;
@@ -226,6 +227,71 @@ public sealed class KnowledgeStorePostgreSqlConcurrencyTests
         KnowledgeCommitResult first =
             await CreateRepository(firstContext).CommitAsync(commit, Scope());
         await using VulgataDbContext replayContext = CreateContext(connectionString);
+        DocumentVersion storedVersion = await replayContext.Set<DocumentVersion>()
+            .AsNoTracking()
+            .SingleAsync(version => version.Id == commit.NewDocumentVersionId);
+        var materializer = new KnowledgeDocumentMaterializer();
+        KnowledgeDocumentMaterialization expected = materializer.Materialize(
+            commit.LogicalDocumentId,
+            commit.NewDocumentVersionId,
+            commit.RepositoryId,
+            storedVersion.SystemId,
+            commit.Content,
+            commit.CommittedAt);
+        Assert.Equal(expected.Content.Title, storedVersion.Title);
+        Assert.Equal(
+            expected.Content.RepositoryRelativePath,
+            storedVersion.RepositoryRelativePath);
+        Assert.Equal(expected.Content.SchemaIdentity, storedVersion.SchemaIdentity);
+        Assert.True(
+            JsonNode.DeepEquals(
+                JsonNode.Parse(expected.ContentJson),
+                JsonNode.Parse(storedVersion.ContentJson)));
+        Assert.Equal(expected.ContentMarkdown, storedVersion.ContentMarkdown);
+        Assert.Equal(expected.ContentFingerprint, storedVersion.ContentFingerprint);
+        Assert.Equal(
+            materializer.CreateCommitFingerprint(commit, expected),
+            storedVersion.CommitFingerprint);
+        Assert.Equal(commit.CommittedAt, storedVersion.CreatedAt);
+        IndexEntry storedIndex = await replayContext.Set<IndexEntry>()
+            .AsNoTracking()
+            .SingleAsync(entry => entry.DocumentVersionId == commit.NewDocumentVersionId);
+        Assert.Equal(expected.IndexEntry.Id, storedIndex.Id);
+        Assert.Equal(expected.IndexEntry.Title, storedIndex.Title);
+        Assert.Equal(expected.IndexEntry.Summary, storedIndex.Summary);
+        Assert.True(
+            JsonNode.DeepEquals(
+                JsonNode.Parse(expected.IndexEntry.KeySymbolsJson),
+                JsonNode.Parse(storedIndex.KeySymbolsJson)));
+        Assert.True(
+            JsonNode.DeepEquals(
+                JsonNode.Parse(expected.IndexEntry.BusinessTermsJson),
+                JsonNode.Parse(storedIndex.BusinessTermsJson)));
+        Assert.True(
+            JsonNode.DeepEquals(
+                JsonNode.Parse(expected.IndexEntry.TechnicalTermsJson),
+                JsonNode.Parse(storedIndex.TechnicalTermsJson)));
+        DocumentSection[] storedSections = await replayContext.Set<DocumentSection>()
+            .AsNoTracking()
+            .Where(section => section.DocumentVersionId == commit.NewDocumentVersionId)
+            .OrderBy(section => section.SectionOrder)
+            .ToArrayAsync();
+        Assert.Equal(expected.Sections.Count, storedSections.Length);
+        foreach ((DocumentSection expectedSection, DocumentSection storedSection) in
+            expected.Sections.Zip(storedSections))
+        {
+            Assert.Equal(expectedSection.Id, storedSection.Id);
+            Assert.Equal(expectedSection.Heading, storedSection.Heading);
+            Assert.Equal(expectedSection.ContentMarkdown, storedSection.ContentMarkdown);
+            Assert.True(
+                JsonNode.DeepEquals(
+                    JsonNode.Parse(expectedSection.SourceAnchorIdsJson),
+                    JsonNode.Parse(storedSection.SourceAnchorIdsJson)));
+            Assert.True(
+                JsonNode.DeepEquals(
+                    JsonNode.Parse(expectedSection.DocumentVersionIdsJson),
+                    JsonNode.Parse(storedSection.DocumentVersionIdsJson)));
+        }
 
         KnowledgeCommitResult replay =
             await CreateRepository(replayContext).CommitAsync(commit, Scope());

@@ -76,6 +76,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     ContentJson = table.Column<string>(type: "jsonb", nullable: false),
                     ContentMarkdown = table.Column<string>(type: "character varying(1048576)", maxLength: 1048576, nullable: false),
                     ContentFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    CommitFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
                     SupersededById = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -84,6 +85,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     table.PrimaryKey("PK_DocumentVersions", x => x.Id);
                     table.UniqueConstraint("AK_DocumentVersions_Id_LogicalDocumentId_RepositoryId", x => new { x.Id, x.LogicalDocumentId, x.RepositoryId });
                     table.UniqueConstraint("AK_DocumentVersions_Id_RepositoryId_ScanRunId", x => new { x.Id, x.RepositoryId, x.ScanRunId });
+                    table.CheckConstraint("CK_DocumentVersions_CommitFingerprint_Length", "length(\"CommitFingerprint\") = 64");
                     table.CheckConstraint("CK_DocumentVersions_ContentFingerprint_Length", "length(\"ContentFingerprint\") = 64");
                     table.CheckConstraint("CK_DocumentVersions_SchemaIdentity_Closed", "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
                     table.CheckConstraint("CK_DocumentVersions_SupersededBy_NotSelf", "\"SupersededById\" IS NULL OR \"SupersededById\" <> \"Id\"");
@@ -153,6 +155,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_IndexEntries", x => x.Id);
+                    table.CheckConstraint("CK_IndexEntries_DocumentType_Closed", "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')");
                     table.ForeignKey(
                         name: "FK_IndexEntries_DocumentVersions_DocumentVersionId_LogicalDocu~",
                         columns: x => new { x.DocumentVersionId, x.LogicalDocumentId, x.RepositoryId },
@@ -563,7 +566,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            if (ActiveProvider == "Microsoft.EntityFrameworkCore.Sqlite")
+            if (ActiveProvider.Contains("Sqlite", StringComparison.Ordinal))
             {
                 migrationBuilder.Sql(
                     """
