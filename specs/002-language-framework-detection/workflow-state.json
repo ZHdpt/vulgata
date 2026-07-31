@@ -1796,7 +1796,7 @@
       ]
     },
     "acceptance-review": {
-      "count": 11,
+      "count": 12,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/acceptance-review-1.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-2.json",
@@ -1808,11 +1808,12 @@
         "specs/002-language-framework-detection/reviews/acceptance-review-8.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-9.json",
         "specs/002-language-framework-detection/reviews/acceptance-review-10.json",
-        "specs/002-language-framework-detection/reviews/acceptance-review-11.json"
+        "specs/002-language-framework-detection/reviews/acceptance-review-11.json",
+        "specs/002-language-framework-detection/reviews/acceptance-review-12.json"
       ]
     },
     "quality-review": {
-      "count": 11,
+      "count": 12,
       "verdict_paths": [
         "specs/002-language-framework-detection/reviews/quality-review-1.json",
         "specs/002-language-framework-detection/reviews/quality-review-2.json",
@@ -1824,7 +1825,8 @@
         "specs/002-language-framework-detection/reviews/quality-review-8.json",
         "specs/002-language-framework-detection/reviews/quality-review-9.json",
         "specs/002-language-framework-detection/reviews/quality-review-10.json",
-        "specs/002-language-framework-detection/reviews/quality-review-11.json"
+        "specs/002-language-framework-detection/reviews/quality-review-11.json",
+        "specs/002-language-framework-detection/reviews/quality-review-12.json"
       ]
     }
   },
@@ -4970,25 +4972,107 @@
       "observed_at": "2026-07-29T13:33:18.2784688Z",
       "summary": "T050 final audit 2 accepted the unchanged immutable Story 4.2 candidate and corrected freeze with zero findings.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/150",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "4a6527d20e86fb13d6812939fae22b58dd886841",
+      "artifact_paths": [
+        "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-test.txt",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-epic-4-close-lf-binding.md"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+      "exit_code": 1,
+      "observed_at": "2026-07-30T14:00:00Z",
+      "summary": "A clean detached Epic-close checkout under core.autocrlf=true reproduced the canonical-byte defect. The separate final-image test also reported its expected missing one-time authorization input and was not rerun.",
+      "raw_output_path": "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-test.txt"
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/implement/151",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "50628b6a611080b465580980f55f0ea8b9df072f",
+      "artifact_paths": [
+        ".gitattributes",
+        "specs/002-language-framework-detection/reviews/plan-review-10.json",
+        "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+        "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphProviderContractTests.AcceptedCorrectionManifest_IsCanonicalAndArtifactBound; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~CodeGraphProviderContractTests&FullyQualifiedName!~FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
+      "exit_code": 0,
+      "observed_at": "2026-07-30T14:35:00Z",
+      "summary": "Fresh detached checkout with core.autocrlf=true produced both exact canonical hashes. Focused 1/1 and surrounding repeatable provider-contract 94/94 tests passed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/acceptance-review/152",
+      "kind": "review",
+      "stage": "acceptance-review",
+      "source_commit": "50628b6a611080b465580980f55f0ea8b9df072f",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/acceptance-review-12.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-31T00:50:00Z",
+      "summary": "Independent acceptance review 12 accepted the exact two-line LF correction with no findings and no planned-change trigger.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/quality-review/153",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "50628b6a611080b465580980f55f0ea8b9df072f",
+      "artifact_paths": [
+        "specs/002-language-framework-detection/reviews/quality-review-12.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-31T00:45:00Z",
+      "summary": "Independent quality review 12 accepted the exact correction with no findings.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-2-language-and-framework-detection/conditional-e2e/154",
+      "kind": "e2e-decision",
+      "stage": "conditional-e2e",
+      "source_commit": "50628b6a611080b465580980f55f0ea8b9df072f",
+      "artifact_paths": [
+        ".gitattributes",
+        "specs/002-language-framework-detection/reviews/acceptance-review-12.json",
+        "specs/002-language-framework-detection/reviews/quality-review-12.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-31T00:51:00Z",
+      "summary": "Additional product E2E is not required for a Git checkout-normalization-only correction. The relevant executable contract passed in a clean checkout; the consumed one-time provider namespace was not rerun.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-2-complete-20260729T133318Z-8f3d41",
+    "checkpoint_id": "bmad-4-2-lf-binding-complete-20260731T005500Z-75e21c",
     "scope_key": "4-2-language-and-framework-detection",
     "stage": "complete",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+      "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-test.txt",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/002-language-framework-detection/reviews/t050-final-audit-2.json",
-      "specs/002-language-framework-detection/tasks.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-epic-4-close-lf-binding.md",
+      "specs/002-language-framework-detection/reviews/acceptance-review-12.json",
+      "specs/002-language-framework-detection/reviews/quality-review-12.json",
       "specs/002-language-framework-detection/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-2-language-and-framework-detection/quality-review/149"
+      "4-2-language-and-framework-detection/implement/150",
+      "4-2-language-and-framework-detection/implement/151",
+      "4-2-language-and-framework-detection/acceptance-review/152",
+      "4-2-language-and-framework-detection/quality-review/153",
+      "4-2-language-and-framework-detection/conditional-e2e/154"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-29T13:33:18.2784688Z"
+  "updated_at": "2026-07-31T00:55:00Z"
 }

@@ -272,6 +272,24 @@ unchanged.
 
 ### Completion notes
 
+- 2026-07-30 Epic-close verification reopened this story for a bounded
+  checkout-canonicalization correction. A fresh detached checkout under
+  `core.autocrlf=true` materialized
+  `specs/002-language-framework-detection/reviews/plan-review-10.json` as
+  CRLF, causing the accepted-plan artifact hash contract to fail despite a
+  clean Git status. The first GREEN attempt then exposed the same conversion
+  on the hash-bound
+  `evidence/quality9-scan-strategy-remediation-approval.json`. The approved
+  correction is limited to explicit LF attributes for those two executable
+  manifest inputs; it changes no product, Scan, Worker Agent/tool, PRD,
+  persistence, migration, API, or UI behavior.
+- The corrected commit `50628b6a611080b465580980f55f0ea8b9df072f`
+  was checked out afresh with `core.autocrlf=true`. Both canonical SHA-256
+  values matched, the focused manifest test passed 1/1, and the surrounding
+  repeatable provider-contract suite passed 94/94. The consumed one-time
+  final-image namespace was not rerun. Independent acceptance review 12 and
+  quality review 12 both returned `ACCEPT` with no findings.
+
 - Ultimate context engine analysis completed; comprehensive developer guide
   created.
 - SpecKit specification and requirements checklist created at the pinned

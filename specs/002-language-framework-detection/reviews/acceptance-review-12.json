@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "gate": "acceptance-review",
+  "iteration": 12,
+  "verdict": "ACCEPT",
+  "reviewed_commit": "50628b6a611080b465580980f55f0ea8b9df072f",
+  "reviewed_boundary": {
+    "base_commit": "4a6527d20e86fb13d6812939fae22b58dd886841",
+    "candidate_commit": "50628b6a611080b465580980f55f0ea8b9df072f",
+    "diff_sha256": "2a5780cf9ca1685957495ca7d6cbf3f66c559819290c0cf0db4c9d21e22b7cd0",
+    "artifact_hashes": {
+      ".gitattributes": "7a3a71ef31424a0112cc7bdb2e5f45de39fc4c91f77aaa2cef9b206535ca0889"
+    },
+    "owned_paths": [
+      ".gitattributes"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".gitattributes",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+    "specs/002-language-framework-detection/reviews/plan-review-10.json",
+    "specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-epic-4-close-lf-binding.md",
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-test.txt"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. The exact two LF checkout rules restore both canonical evidence hashes without changing evidence content, executable requirements, product behavior, Scan strategy, Worker Agent/tools, PRD, persistence, migrations, API, or UI. The consumed one-time provider evidence remains immutable and is not misrepresented as repeatable verification."
+}
