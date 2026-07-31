@@ -634,12 +634,14 @@ public sealed class RepositoryApiTests
             new FixedRepositoryRepository(repository),
             new FixedScanRunRepository(run),
             null!,
+            new UnusedCommittedSnapshotService(),
             null!,
             null!,
             null!,
             null!,
             null!,
-            null!);
+            null!,
+            new UnusedPreScanCommunicationDetector());
         using WebApplicationFactory<Program> factory = CreateFactoryWithCoordinator(coordinator);
         const string email = "story42.visibility-revoked-read.admin@example.com";
         await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
@@ -1197,11 +1199,6 @@ public sealed class RepositoryApiTests
             IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
             throw new NotSupportedException();
 
-        public Task PersistCompletedProfileAsync(
-            RepositoryProfileDraft draft,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
-
         public Task RecoverFailedFinalCommitAsync(
             Guid repositoryId,
             Guid scanRunId,
@@ -1211,6 +1208,28 @@ public sealed class RepositoryApiTests
             throw new NotSupportedException();
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class UnusedCommittedSnapshotService
+        : ICommittedRepositorySnapshotService
+    {
+        public Task<ICommittedRepositorySnapshotLease> AcquireAsync(
+            Vulgata.Core.Entities.Repository repository,
+            Guid scanRunId,
+            GitWorkingCopyResult workingCopy,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class UnusedPreScanCommunicationDetector
+        : IPreScanCommunicationDetector
+    {
+        public Task<PreScanResultDraft> DetectAsync(
+            RepositoryProfileDraft profile,
+            string profiledRevision,
+            ICommittedRepositorySnapshotLease committedSnapshot,
+            CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
     }
 

@@ -67,31 +67,6 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         dbContext.UnresolvedStructuralRelationshipCandidates.AddRange(unresolvedRelationships);
     }
 
-    public async Task PersistCompletedProfileAsync(
-        RepositoryProfileDraft draft,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(draft);
-        EnsureCompleteLanguageProfile(draft);
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            dbContext.CodeUnits.AddRange(draft.CodeUnits);
-            dbContext.CodeUnitEdges.AddRange(draft.CodeUnitEdges);
-            dbContext.UnresolvedStructuralRelationshipCandidates.AddRange(draft.UnresolvedRelationships);
-            dbContext.CodeUnitFrameworks.AddRange(draft.CodeUnitFrameworks);
-            dbContext.ScanRunLanguageSummaries.AddRange(draft.LanguageSummaries);
-            dbContext.ScanCandidateOutcomes.AddRange(draft.CandidateOutcomes);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(CancellationToken.None);
-            throw;
-        }
-    }
-
     public async Task<PreScanResult> PersistCompletedProfileAsync(
         RepositoryProfileCommitDraft draft,
         CancellationToken cancellationToken = default)

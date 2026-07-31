@@ -288,7 +288,8 @@ public sealed class RepositoryProfilingTests
             new CodeGraphOptions(Path.Combine(Path.GetTempPath(), "unused-state"), 1_800),
             NullLogger<RepositoryProfilingCoordinator>.Instance,
             new EmptyFrameworkEvidenceDetector(),
-            FrameworkCatalog.LoadEmbedded());
+            FrameworkCatalog.LoadEmbedded(),
+            new FixedApprovedPreScanCommunicationDetector(0));
 
         RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
             repository.Id,
@@ -581,7 +582,7 @@ public sealed class RepositoryProfilingTests
     [InlineData(InvalidFrameworkEvidence.Escape)]
     [InlineData(InvalidFrameworkEvidence.Reparse)]
     [InlineData(InvalidFrameworkEvidence.Oversize)]
-    public async Task StartStandaloneRepository_WithInvalidIndividualFrameworkEvidence_IsolatesClosedAuditAndRetainsValidFactAsync(
+    public async Task StartStandaloneRepository_WithInvalidFrameworkEvidence_IsolatesRegularArtifactsOrFailsClosedForInvalidArchiveAsync(
         InvalidFrameworkEvidence invalidEvidence)
     {
         using var fixture = new ProfilingEvidenceGitFixture();
@@ -737,6 +738,23 @@ public sealed class RepositoryProfilingTests
             repository.Id,
             null!,
             CancellationToken.None);
+
+        if (invalidEvidence is InvalidFrameworkEvidence.Escape or InvalidFrameworkEvidence.Reparse)
+        {
+            Assert.Equal(RepositoryProfilingOutcome.ProviderFailure, result.Outcome);
+            Assert.Equal("框架证据检测失败。", result.Message);
+            db.ChangeTracker.Clear();
+            ScanRun failedRun = await db.ScanRuns.SingleAsync();
+            Assert.Equal(ScanRunStatus.Failed, failedRun.Status);
+            Assert.Equal("框架证据检测失败。", failedRun.TerminalMessage);
+            Assert.Empty(await db.CodeUnits.ToListAsync());
+            Assert.Empty(await db.CodeUnitEdges.ToListAsync());
+            Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.ToListAsync());
+            Assert.Empty(await db.CodeUnitFrameworks.ToListAsync());
+            Assert.Empty(await db.ScanRunLanguageSummaries.ToListAsync());
+            Assert.Empty(await db.PreScanResults.ToListAsync());
+            return;
+        }
 
         Assert.Equal(RepositoryProfilingOutcome.Success, result.Outcome);
         db.ChangeTracker.Clear();
@@ -2267,7 +2285,8 @@ public sealed class RepositoryProfilingTests
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
                 NullLogger<RepositoryProfilingCoordinator>.Instance,
                 new EmptyFrameworkEvidenceDetector(),
-                FrameworkCatalog.LoadEmbedded());
+                FrameworkCatalog.LoadEmbedded(),
+                new FixedApprovedPreScanCommunicationDetector(0));
 
             RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
                 repository.Id,
@@ -2342,7 +2361,8 @@ public sealed class RepositoryProfilingTests
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
                 NullLogger<RepositoryProfilingCoordinator>.Instance,
                 new EmptyFrameworkEvidenceDetector(),
-                FrameworkCatalog.LoadEmbedded());
+                FrameworkCatalog.LoadEmbedded(),
+                new FixedApprovedPreScanCommunicationDetector(0));
 
             await Assert.ThrowsAsync<DbUpdateException>(() =>
                 coordinator.StartStandaloneRepositoryAsync(repository.Id, null!, CancellationToken.None));
@@ -2429,7 +2449,8 @@ public sealed class RepositoryProfilingTests
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
                 NullLogger<RepositoryProfilingCoordinator>.Instance,
                 new AspNetFrameworkDetector(),
-                FrameworkCatalog.LoadEmbedded());
+                FrameworkCatalog.LoadEmbedded(),
+                new FixedApprovedPreScanCommunicationDetector(0));
 
             if (failureMode == LateFinalBoundaryFailureMode.NonDbUpdateFailure)
             {
@@ -2720,7 +2741,8 @@ public sealed class RepositoryProfilingTests
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
                 logger,
                 new EmptyFrameworkEvidenceDetector(),
-                FrameworkCatalog.LoadEmbedded());
+                FrameworkCatalog.LoadEmbedded(),
+                new FixedApprovedPreScanCommunicationDetector(0));
 
             RepositoryProfilingResult result = await coordinator.StartStandaloneRepositoryAsync(
                 repository.Id,
@@ -2795,7 +2817,8 @@ public sealed class RepositoryProfilingTests
                 new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
                 NullLogger<RepositoryProfilingCoordinator>.Instance,
                 new EmptyFrameworkEvidenceDetector(),
-                FrameworkCatalog.LoadEmbedded());
+                FrameworkCatalog.LoadEmbedded(),
+                new FixedApprovedPreScanCommunicationDetector(0));
 
             RepositoryProfilingResult result = await coordinator.StartSystemRepositoryAsync(
                 system.Id,
@@ -3049,15 +3072,15 @@ public sealed class RepositoryProfilingTests
         public string? ObservedRootPath { get; private set; }
 
         public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Legacy detector wrapper must not be used.");
 
         public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default)
         {
-            ObservedRootPath = workingCopyPath;
+            ObservedRootPath = committedSnapshot.RootPath;
             timeline.Add("framework");
             return Task.FromResult(FrameworkEvidenceDetectionResult.Success([], [], 0));
         }
@@ -3354,12 +3377,12 @@ public sealed class RepositoryProfilingTests
         public int ApplicabilityCount { get; private set; }
 
         public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Legacy detector wrapper must not be used.");
 
         public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default)
         {
             DetectionCount++;
@@ -3533,16 +3556,16 @@ public sealed class RepositoryProfilingTests
         public int DetectionCount { get; private set; }
 
         public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
-            inner.DetectAsync(workingCopyPath, cancellationToken);
+            inner.DetectAsync(committedSnapshot, cancellationToken);
 
         public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default)
         {
             DetectionCount++;
-            return inner.DetectDetailedAsync(workingCopyPath, cancellationToken);
+            return inner.DetectDetailedAsync(committedSnapshot, cancellationToken);
         }
 
         public FrameworkEvidenceDetectionResult SelectApplicable(
@@ -3555,12 +3578,12 @@ public sealed class RepositoryProfilingTests
     private sealed class EmptyFrameworkEvidenceDetector : IFrameworkEvidenceDetector
     {
         public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<PackageEvidence>>([]);
 
         public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(FrameworkEvidenceDetectionResult.Success([], [], 0));
 
@@ -3580,12 +3603,12 @@ public sealed class RepositoryProfilingTests
         public int ApplicabilityCount { get; private set; }
 
         public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Legacy detector wrapper must not be used.");
 
         public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default)
         {
             DetectionCount++;
@@ -3657,12 +3680,12 @@ public sealed class RepositoryProfilingTests
         public int DetectionCount { get; private set; }
 
         public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Legacy detector wrapper must not be used.");
 
         public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default)
         {
             DetectionCount++;
@@ -3690,12 +3713,12 @@ public sealed class RepositoryProfilingTests
             0);
 
         public Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<PackageEvidence>>([_evidence]);
 
         public Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-            string workingCopyPath,
+            ICommittedRepositorySnapshotLease committedSnapshot,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(FrameworkEvidenceDetectionResult.Success([_evidence], [], 0));
 
@@ -3775,37 +3798,6 @@ public sealed class RepositoryProfilingTests
             IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
             inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
 
-        public async Task PersistCompletedProfileAsync(
-            RepositoryProfileDraft draft,
-            CancellationToken cancellationToken = default)
-        {
-            ObservedCodeUnitCount = draft.CodeUnits.Count;
-            ObservedFrameworkCount = draft.CodeUnitFrameworks.Count;
-            if (failureMode == LateFinalBoundaryFailureMode.CancelBeforePersistence)
-            {
-                throw new OperationCanceledException(
-                    new CancellationToken(canceled: true));
-            }
-
-            if (failureMode == LateFinalBoundaryFailureMode.NonDbUpdateFailure)
-            {
-                throw new IOException("Injected non-DbUpdate final persistence failure.");
-            }
-
-            using var cancellation = new CancellationTokenSource();
-            EventHandler<SavingChangesEventArgs> cancelDuringSave =
-                (_, _) => cancellation.Cancel();
-            dbContext.SavingChanges += cancelDuringSave;
-            try
-            {
-                await inner.PersistCompletedProfileAsync(draft, cancellation.Token);
-            }
-            finally
-            {
-                dbContext.SavingChanges -= cancelDuringSave;
-            }
-        }
-
         public Task RecoverFailedFinalCommitAsync(
             Guid repositoryId,
             Guid scanRunId,
@@ -3862,11 +3854,6 @@ public sealed class RepositoryProfilingTests
             IEnumerable<CodeUnitEdge> edges,
             IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
             inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
-
-        public Task PersistCompletedProfileAsync(
-            RepositoryProfileDraft draft,
-            CancellationToken cancellationToken = default) =>
-            throw new DbUpdateException("Injected final commit failure.");
 
         public async Task RecoverFailedFinalCommitAsync(
             Guid repositoryId,
@@ -3999,18 +3986,6 @@ public sealed class RepositoryProfilingTests
             IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
             inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
 
-        public async Task PersistCompletedProfileAsync(
-            RepositoryProfileDraft draft,
-            CancellationToken cancellationToken = default)
-        {
-            ObservedLeaseHeldAtPersistence = !snapshotService.Lease.Disposed &&
-                snapshotService.Lease.VerificationCount == 2;
-            Assert.True(ObservedLeaseHeldAtPersistence);
-            await inner.PersistCompletedProfileAsync(draft, cancellationToken);
-            snapshotService.Lease.CompletedProfilePersisted = true;
-            timeline.Add("persist");
-        }
-
         public Task RecoverFailedFinalCommitAsync(
             Guid repositoryId,
             Guid scanRunId,
@@ -4071,11 +4046,6 @@ public sealed class RepositoryProfilingTests
             IEnumerable<CodeUnitEdge> edges,
             IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
             inner.AddStructuralRecords(codeUnits, edges, unresolvedRelationships);
-
-        public Task PersistCompletedProfileAsync(
-            RepositoryProfileDraft draft,
-            CancellationToken cancellationToken = default) =>
-            inner.PersistCompletedProfileAsync(draft, cancellationToken);
 
         public async Task RecoverFailedFinalCommitAsync(
             Guid repositoryId,
@@ -4202,7 +4172,8 @@ public sealed class RepositoryProfilingTests
             new CodeGraphOptions(Path.Combine(root, "state"), 1_800),
             logger ?? NullLogger<RepositoryProfilingCoordinator>.Instance,
             new EmptyFrameworkEvidenceDetector(),
-            FrameworkCatalog.LoadEmbedded());
+            FrameworkCatalog.LoadEmbedded(),
+            new FixedApprovedPreScanCommunicationDetector(0));
 
     private static RepositoryProfilingCoordinator CreateCoordinatorWithSnapshot(
         VulgataDbContext db,
@@ -4225,7 +4196,8 @@ public sealed class RepositoryProfilingTests
                 1_800),
             NullLogger<RepositoryProfilingCoordinator>.Instance,
             detector,
-            FrameworkCatalog.LoadEmbedded());
+            FrameworkCatalog.LoadEmbedded(),
+            new FixedApprovedPreScanCommunicationDetector(0));
 
     public static TheoryData<string, string> UnsafeProviderPathCases
     {
@@ -4385,6 +4357,7 @@ public sealed class RepositoryProfilingTests
             NullLogger<RepositoryProfilingCoordinator>.Instance,
             detector,
             FrameworkCatalog.LoadEmbedded(),
+            new FixedApprovedPreScanCommunicationDetector(0),
         ];
         ConstructorInfo? constructor = typeof(RepositoryProfilingCoordinator)
             .GetConstructors(BindingFlags.Public | BindingFlags.Instance)

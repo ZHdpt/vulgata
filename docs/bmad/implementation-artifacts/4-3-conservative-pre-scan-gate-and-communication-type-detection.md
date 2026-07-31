@@ -217,11 +217,11 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   `docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json`.
 - SpecKit feature directory:
   `specs/003-conservative-pre-scan-gate`.
-- Current workflow stage: `implement` (July 31 architecture remediation).
+- Current workflow stage: `verify` (July 31 architecture remediation).
 - Latest workflow checkpoint ID:
-  `bmad-4-3-remediation-tasks-20260731T092200Z`.
+  `bmad-4-3-remediation-review-20260731T113950Z`.
 - Latest workflow checkpoint SHA:
-  pending accepted-delivery checkpoint binding.
+  pending reviewed-candidate checkpoint binding.
 - The prior completed-story boundary was invalidated by the Epic 4 architecture
   gate. The accepted July 31 correction plan, independent plan review, explicit
   Scan-strategy authorization, and correction-only tasks now define the active
@@ -247,6 +247,23 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
 - The user explicitly approved this accepted Scan-strategy correction for task
   generation. All transient RED, combined quality review, clean-database
   two-Repository E2E, migration-neutrality, and Docker gates remain required.
+- July 31 remediation implementation is GREEN: archive-only framework tests
+  4/4 and their combined boundary 144/144; construction/persistence contracts
+  4/4 and their combined boundary 108/108; isolated candidate enumeration 4/4;
+  focused remediation coverage 179/179; and the repeatable full suite 624/624.
+- Production composition exposed and then corrected an ancestor-Git defect in
+  candidate enumeration. The enumerator now treats the committed snapshot as
+  a materialized archive, and the clean-database two-Repository E2E passes with
+  only external `ICodeGraphProvider` replaced.
+- `VulgataDbContext` has no pending model changes, Pre-Scan migration tests pass
+  3/3, the Web build has zero errors, and the unchanged Docker command produced
+  `vulgata:story-4-3-architecture-remediation` successfully.
+- Independent combined quality review 5 returned `ACCEPT` with no unresolved
+  Critical/High. It records one nonblocking Medium cleanup: concrete detector
+  string overloads remain for legacy reflection tests, while the public Core
+  interface and production composition are lease-bound.
+- Independent final E2E returned `PASS`: production composition 1/1 and the
+  complete Story 4.3 E2E class 2/2, with all 13 implementation hashes unchanged.
 - Story context prepared and activated from the accepted August 15 scope.
 - Independent plan review accepted the pinned Story 4.3 plan on iteration 3.
 - User explicitly approved the Scan strategy; task generation is active.

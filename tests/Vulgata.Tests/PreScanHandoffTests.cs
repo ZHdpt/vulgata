@@ -510,11 +510,6 @@ public sealed class PreScanHandoffTests
             IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships) =>
             throw new NotSupportedException();
 
-        public Task PersistCompletedProfileAsync(
-            RepositoryProfileDraft draft,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
-
         public Task<PreScanResult> PersistCompletedProfileAsync(
             RepositoryProfileCommitDraft draft,
             CancellationToken cancellationToken = default) =>

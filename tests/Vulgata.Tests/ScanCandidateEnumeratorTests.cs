@@ -1,10 +1,58 @@
-using System.Diagnostics;
 using Vulgata.Infrastructure.Git;
 
 namespace Vulgata.Tests;
 
 public sealed class ScanCandidateEnumeratorTests
 {
+    [Fact]
+    public async Task EnumerateAsync_WithMaterializedArchiveOutsideGit_EnumeratesDeterministicFilteredGroupsAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-archive-candidates-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            Assert.DoesNotContain(
+                EnumeratePathHierarchy(root),
+                path => Directory.Exists(Path.Combine(path, ".git")));
+            await File.WriteAllTextAsync(Path.Combine(root, ".gitignore"), "eligible/*.cs\n");
+            string eligibleDirectory = Path.Combine(root, "eligible");
+            Directory.CreateDirectory(eligibleDirectory);
+            for (int index = 0; index <= 1_000; index++)
+            {
+                await File.WriteAllTextAsync(
+                    Path.Combine(eligibleDirectory, $"{index:D4}.cs"),
+                    "public sealed class Candidate;");
+            }
+
+            string vendorDirectory = Path.Combine(root, "vendor");
+            Directory.CreateDirectory(vendorDirectory);
+            await File.WriteAllTextAsync(Path.Combine(vendorDirectory, "Dependency.cs"), "vendored");
+            await File.WriteAllTextAsync(Path.Combine(root, "Generated.g.cs"), "generated");
+            await File.WriteAllTextAsync(Path.Combine(root, "bundle.min.js"), "minified");
+            await File.WriteAllBytesAsync(Path.Combine(root, "payload.bin"), [1, 0, 2]);
+            var enumerator = new ScanCandidateEnumerator();
+
+            IReadOnlyList<Vulgata.Core.DomainServices.ScanSourceCandidate> candidates =
+                await enumerator.EnumerateAsync(root);
+
+            Assert.Equal(
+                candidates.Select(candidate => candidate.RelativePath).Order(StringComparer.Ordinal),
+                candidates.Select(candidate => candidate.RelativePath));
+            AssertCandidate(candidates, "eligible/0000.cs", isFiltered: false, "Eligible", group: 0);
+            AssertCandidate(candidates, "eligible/0998.cs", isFiltered: false, "Eligible", group: 0);
+            AssertCandidate(candidates, "eligible/0999.cs", isFiltered: false, "Eligible", group: 1);
+            AssertCandidate(candidates, "eligible/1000.cs", isFiltered: false, "Eligible", group: 1);
+            AssertCandidate(candidates, "vendor/Dependency.cs", isFiltered: true, "Vendored", group: 0);
+            AssertCandidate(candidates, "Generated.g.cs", isFiltered: true, "Generated", group: 0);
+            AssertCandidate(candidates, "bundle.min.js", isFiltered: true, "MinifiedJavaScript", group: 0);
+            AssertCandidate(candidates, "payload.bin", isFiltered: true, "Binary", group: 0);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public void SanitizeDiagnostic_WithCredentialAndTokenShapes_ReturnsChineseSecretSafeReason()
     {
@@ -20,14 +68,12 @@ public sealed class ScanCandidateEnumeratorTests
     }
 
     [Fact]
-    public async Task EnumerateAsync_WithLargeIgnoredInventory_ClassifiesEveryIgnoredPathAsync()
+    public async Task EnumerateAsync_WithLargeGeneratedArchiveInventory_ClassifiesEveryGeneratedPathAsync()
     {
         string root = Path.Combine(Path.GetTempPath(), $"vulgata-candidates-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
         try
         {
-            await RunGitAsync(root, "init");
-            await File.WriteAllTextAsync(Path.Combine(root, ".gitignore"), "*.generated.cs\n");
             for (int index = 0; index < 300; index++)
             {
                 string name = $"{index:D4}-{new string('x', 32)}.generated.cs";
@@ -44,7 +90,7 @@ public sealed class ScanCandidateEnumeratorTests
                 candidates.Count(candidate =>
                     candidate.RelativePath.EndsWith(".generated.cs", StringComparison.Ordinal) &&
                     candidate.IsFiltered &&
-                    candidate.Category == "GitIgnore"));
+                    candidate.Category == "Generated"));
         }
         finally
         {
@@ -60,7 +106,6 @@ public sealed class ScanCandidateEnumeratorTests
         Directory.CreateDirectory(root);
         try
         {
-            await RunGitAsync(root, "init");
             string outsidePath = Path.Combine(parent, "outside.cs");
             await File.WriteAllTextAsync(outsidePath, "outside");
             File.CreateSymbolicLink(Path.Combine(root, "linked.cs"), outsidePath);
@@ -80,23 +125,25 @@ public sealed class ScanCandidateEnumeratorTests
         }
     }
 
-    private static async Task RunGitAsync(string workingDirectory, params string[] arguments)
+    private static IEnumerable<string> EnumeratePathHierarchy(string path)
     {
-        var startInfo = new ProcessStartInfo("git")
+        for (DirectoryInfo? directory = new(path); directory is not null; directory = directory.Parent)
         {
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-        foreach (string argument in arguments)
-        {
-            startInfo.ArgumentList.Add(argument);
+            yield return directory.FullName;
         }
+    }
 
-        using Process process = Process.Start(startInfo)!;
-        await process.WaitForExitAsync();
-        Assert.True(process.ExitCode == 0, await process.StandardError.ReadToEndAsync());
+    private static void AssertCandidate(
+        IReadOnlyList<Vulgata.Core.DomainServices.ScanSourceCandidate> candidates,
+        string relativePath,
+        bool isFiltered,
+        string category,
+        int group)
+    {
+        Vulgata.Core.DomainServices.ScanSourceCandidate candidate =
+            Assert.Single(candidates, item => item.RelativePath == relativePath);
+        Assert.Equal(isFiltered, candidate.IsFiltered);
+        Assert.Equal(category, candidate.Category);
+        Assert.Equal(group, candidate.AuditGroupOrdinal);
     }
 }

@@ -46,11 +46,11 @@ public interface ICodeGraphProvider
 public interface IFrameworkEvidenceDetector
 {
     Task<IReadOnlyList<PackageEvidence>> DetectAsync(
-        string workingCopyPath,
+        ICommittedRepositorySnapshotLease committedSnapshot,
         CancellationToken cancellationToken = default);
 
     Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
-        string workingCopyPath,
+        ICommittedRepositorySnapshotLease committedSnapshot,
         CancellationToken cancellationToken = default);
 
     FrameworkEvidenceDetectionResult SelectApplicable(

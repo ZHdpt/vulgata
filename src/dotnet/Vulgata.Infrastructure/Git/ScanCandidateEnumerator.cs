@@ -4,7 +4,6 @@ namespace Vulgata.Infrastructure.Git;
 
 public sealed class ScanCandidateEnumerator : IScanCandidateEnumerator
 {
-    private const int _maximumIgnoredInventoryCharacters = 4 * 1_024 * 1_024;
     private static readonly string[] _vendoredSegments =
         ["/vendor/", "/vendors/", "/node_modules/", "/packages/", "/third_party/", "/third-party/"];
 
@@ -13,7 +12,6 @@ public sealed class ScanCandidateEnumerator : IScanCandidateEnumerator
         CancellationToken cancellationToken = default)
     {
         string root = Path.GetFullPath(workingCopyPath);
-        HashSet<string> ignored = await ReadGitPathsAsync(root, ignored: true, cancellationToken);
         List<string> paths = EnumerateCandidateFiles(root)
             .Select(path => Path.GetRelativePath(root, path).Replace('\\', '/'))
             .OrderBy(path => path, StringComparer.Ordinal)
@@ -24,7 +22,7 @@ public sealed class ScanCandidateEnumerator : IScanCandidateEnumerator
         foreach (string path in paths)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string? category = ignored.Contains(path) ? "GitIgnore" : await GetFilterCategoryAsync(root, path, cancellationToken);
+            string? category = await GetFilterCategoryAsync(root, path, cancellationToken);
             int group = category is null ? eligibleOrdinal++ / 1_000 : 0;
             results.Add(new ScanSourceCandidate(path, category is not null, category ?? "Eligible", group));
         }
@@ -55,31 +53,6 @@ public sealed class ScanCandidateEnumerator : IScanCandidateEnumerator
                 }
             }
         }
-    }
-
-    private static async Task<HashSet<string>> ReadGitPathsAsync(
-        string root,
-        bool ignored,
-        CancellationToken cancellationToken)
-    {
-        IReadOnlyList<string> arguments = ignored
-            ? ["-C", root, "ls-files", "-z", "--cached", "--others", "--ignored", "--exclude-standard"]
-            : ["-C", root, "ls-files", "-z", "--cached", "--others", "--exclude-standard"];
-        GitWorkingCopyService.ProcessResult result =
-            await GitWorkingCopyService.RunGitAsync(
-                arguments,
-                cancellationToken,
-                _maximumIgnoredInventoryCharacters,
-                requireCompleteStandardOutput: true);
-        if (result.ExitCode != 0)
-        {
-            throw new InvalidOperationException("无法安全读取 Git 文件清单。");
-        }
-
-        return result.StandardOutput
-            .Split('\0', StringSplitOptions.RemoveEmptyEntries)
-            .Select(path => path.Replace('\\', '/'))
-            .ToHashSet(StringComparer.Ordinal);
     }
 
     private static async Task<string?> GetFilterCategoryAsync(

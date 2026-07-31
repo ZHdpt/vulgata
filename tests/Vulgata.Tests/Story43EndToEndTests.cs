@@ -1,11 +1,17 @@
 using System.Diagnostics;
 using System.Text;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
+using Vulgata.Web.Data;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
 
 namespace Vulgata.Tests;
@@ -18,6 +24,120 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class Story43EndToEndTests
 {
+    [Fact]
+    public async Task ProductionComposition_TwoCommittedRepositories_PersistsIsolatedProfilesAndApprovedPreScanResultsAsync()
+    {
+        using var firstSource = new TemporaryGitRepository();
+        string firstRevision = WritePreparedRepository(firstSource, "ledger-one");
+        using var secondSource = new TemporaryGitRepository();
+        string secondRevision = WritePreparedRepository(secondSource, "ledger-two");
+        Assert.NotEqual(firstRevision, secondRevision);
+
+        using var storage = new TemporaryDirectory();
+        var codeGraph = new PreparedCodeGraphProvider();
+        using var databaseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
+        using WebApplicationFactory<Program> factory = databaseFactory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<GitWorkingCopyOptions>();
+                services.AddSingleton(new GitWorkingCopyOptions(storage.Path));
+                services.RemoveAll<ICodeGraphProvider>();
+                services.AddSingleton<ICodeGraphProvider>(codeGraph);
+            });
+        });
+
+        using IServiceScope scope = factory.Services.CreateScope();
+        IServiceProvider services = scope.ServiceProvider;
+        Assert.Same(codeGraph, services.GetRequiredService<ICodeGraphProvider>());
+        Assert.IsType<GitWorkingCopyService>(services.GetRequiredService<IGitWorkingCopyService>());
+        Assert.IsType<CommittedRepositorySnapshotService>(services.GetRequiredService<ICommittedRepositorySnapshotService>());
+        Assert.IsType<FrameworkEvidenceDetector>(services.GetRequiredService<IFrameworkEvidenceDetector>());
+        Assert.IsType<CommunicationKindDetector>(services.GetRequiredService<IPreScanCommunicationDetector>());
+        Assert.IsType<ScanRunRepository>(services.GetRequiredService<IScanRunRepository>());
+        IRepositoryProfilingCoordinator coordinator = services.GetRequiredService<IRepositoryProfilingCoordinator>();
+        Assert.IsType<RepositoryProfilingCoordinator>(coordinator);
+
+        VulgataDbContext db = services.GetRequiredService<VulgataDbContext>();
+        Assert.Empty(await db.Repositories.AsNoTracking().ToListAsync());
+        Assert.Empty(await db.ScanRuns.AsNoTracking().ToListAsync());
+        var firstRepository = RepositoryEntity.CreateStandalone(
+            "production-composition-one",
+            firstSource.Path,
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        var secondRepository = RepositoryEntity.CreateStandalone(
+            "production-composition-two",
+            secondSource.Path,
+            null,
+            null,
+            DateTimeOffset.UtcNow);
+        db.Repositories.AddRange(firstRepository, secondRepository);
+        await db.SaveChangesAsync();
+
+        var user = new TestUserContext();
+        RepositoryProfilingResult first = await coordinator.StartStandaloneRepositoryAsync(
+            firstRepository.Id,
+            user);
+        RepositoryProfilingResult second = await coordinator.StartStandaloneRepositoryAsync(
+            secondRepository.Id,
+            user);
+
+        Assert.Equal(RepositoryProfilingOutcome.Success, first.Outcome);
+        Assert.Equal(RepositoryProfilingOutcome.Success, second.Outcome);
+        Assert.NotNull(first.Value);
+        Assert.NotNull(second.Value);
+        Assert.NotEqual(first.Value.Id, second.Value.Id);
+        Assert.Equal(2, codeGraph.SnapshotRoots.Count);
+        Assert.All(codeGraph.SnapshotRoots, observation => Assert.False(observation.ContainsGitMetadata));
+
+        db.ChangeTracker.Clear();
+        Guid[] repositoryIds = [firstRepository.Id, secondRepository.Id];
+        ScanRun[] runs = await db.ScanRuns
+            .AsNoTracking()
+            .Where(run => repositoryIds.Contains(run.RepositoryId))
+            .ToArrayAsync();
+        PreScanResult[] results = await db.PreScanResults
+            .AsNoTracking()
+            .Include(result => result.Classifications)
+            .Where(result => repositoryIds.Contains(result.RepositoryId))
+            .ToArrayAsync();
+        CodeUnit[] codeUnits = await db.CodeUnits
+            .AsNoTracking()
+            .Where(unit => repositoryIds.Contains(unit.RepositoryId))
+            .ToArrayAsync();
+        CodeUnitFramework[] frameworks = await db.CodeUnitFrameworks
+            .AsNoTracking()
+            .Where(framework => repositoryIds.Contains(framework.RepositoryId))
+            .ToArrayAsync();
+
+        Assert.Equal(2, runs.Length);
+        Assert.Equal(2, results.Length);
+        Assert.Equal(2, codeUnits.Length);
+        Assert.Equal(2, frameworks.Length);
+        AssertPersistedComposition(
+            firstRepository.Id,
+            first.Value.Id,
+            firstRevision,
+            runs,
+            results,
+            codeUnits,
+            frameworks);
+        AssertPersistedComposition(
+            secondRepository.Id,
+            second.Value.Id,
+            secondRevision,
+            runs,
+            results,
+            codeUnits,
+            frameworks);
+
+        Assert.All(codeUnits, unit => Assert.NotEqual(CodeUnitStatus.Dispatched, unit.Status));
+        Assert.Empty(await db.CodeUnitEdges.AsNoTracking().ToListAsync());
+        Assert.Empty(await db.UnresolvedStructuralRelationshipCandidates.AsNoTracking().ToListAsync());
+    }
+
     [Fact]
     public async Task PreparedCommittedConfigurations_ThreeFlattenedSyntaxes_DetectPersistReplayAndMaterializeApprovedHandoffAsync()
     {
@@ -102,6 +222,118 @@ public sealed class Story43EndToEndTests
         return db;
     }
 
+    private static string WritePreparedRepository(TemporaryGitRepository source, string marker)
+    {
+        source.Write(
+            "src/App/App.csproj",
+            """
+            <Project Sdk="Microsoft.NET.Sdk.Web">
+              <ItemGroup>
+                <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.3.0" />
+              </ItemGroup>
+            </Project>
+            """);
+        source.Write(
+            "src/App/Controller.cs",
+            $$"""
+            using Microsoft.AspNetCore.Mvc;
+            namespace Prepared;
+            [ApiController]
+            public sealed class {{marker.Replace("-", "_", StringComparison.Ordinal)}}Controller : ControllerBase
+            {
+                [HttpGet("/{{marker}}")]
+                public string Get() => "ok";
+            }
+            """);
+        source.Write("config/application.properties", $"dubbo.application.name={marker}\n");
+        source.Write("config/application.yml", $"server.servlet.context-path: /{marker}\n");
+        return source.CommitAll();
+    }
+
+    private static void AssertPersistedComposition(
+        Guid repositoryId,
+        Guid scanRunId,
+        string profiledRevision,
+        IReadOnlyList<ScanRun> runs,
+        IReadOnlyList<PreScanResult> results,
+        IReadOnlyList<CodeUnit> codeUnits,
+        IReadOnlyList<CodeUnitFramework> frameworks)
+    {
+        ScanRun run = Assert.Single(runs, item => item.RepositoryId == repositoryId);
+        Assert.Equal(scanRunId, run.Id);
+        Assert.Equal(ScanRunStatus.Completed, run.Status);
+        Assert.Equal(profiledRevision, run.ProfiledRevision);
+
+        PreScanResult result = Assert.Single(results, item => item.RepositoryId == repositoryId);
+        Assert.Equal(scanRunId, result.ScanRunId);
+        Assert.Equal(profiledRevision, result.ProfiledRevision);
+        Assert.Equal(PreScanApprovalState.PreScanApproved, result.State);
+        Assert.Equal(
+            ConfirmedCommunicationKinds.Rpc | ConfirmedCommunicationKinds.Http,
+            result.ConfirmedCommunicationKinds);
+        Assert.Contains(
+            result.Classifications,
+            item => item.Kind == CommunicationKind.Rpc && item.Level == ClassificationLevel.Confirmed);
+        Assert.Contains(
+            result.Classifications,
+            item => item.Kind == CommunicationKind.Http && item.Level == ClassificationLevel.Confirmed);
+
+        CodeUnit unit = Assert.Single(codeUnits, item => item.RepositoryId == repositoryId);
+        Assert.Equal(scanRunId, unit.ScanRunId);
+        Assert.Equal("src/App/Controller.cs", unit.FilePath);
+        CodeUnitFramework framework = Assert.Single(
+            frameworks,
+            item => item.RepositoryId == repositoryId);
+        Assert.Equal(scanRunId, framework.ScanRunId);
+        Assert.Equal(unit.Id, framework.CodeUnitId);
+        Assert.Equal("aspnet-core", framework.FrameworkName);
+        Assert.Equal(FrameworkConfidence.High, framework.Confidence);
+        Assert.StartsWith("src/App/App.csproj#", framework.DetectionSource, StringComparison.Ordinal);
+    }
+
+    private sealed class PreparedCodeGraphProvider : ICodeGraphProvider
+    {
+        public List<SnapshotObservation> SnapshotRoots { get; } = [];
+
+        public Task<CodeGraphProviderResult> ProfileAsync(
+            string workingCopyPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SnapshotRoots.Add(new(
+                workingCopyPath,
+                Directory.Exists(System.IO.Path.Combine(workingCopyPath, ".git"))));
+            return Task.FromResult(new CodeGraphProviderResult(
+                true,
+                [
+                    new ProviderCodeUnit(
+                        "src/App/Controller.cs",
+                        "PreparedController",
+                        CodeUnitType.Class,
+                        3,
+                        8,
+                        "prepared-controller",
+                        RangeConfidence.Exact,
+                        "c_sharp"),
+                ],
+                [],
+                [],
+                1,
+                TimeSpan.FromMilliseconds(1),
+                null));
+        }
+    }
+
+    private sealed record SnapshotObservation(string RootPath, bool ContainsGitMetadata);
+
+    private sealed class TestUserContext : IUserContext
+    {
+        public string UserId => "production-composition-user";
+        public bool IsAdministrator => false;
+        public SystemOwnerFilter ToSystemOwnerFilter() => SystemOwnerFilter.OwnedBy(UserId);
+    }
+
     private sealed class TemporaryGitRepository : IDisposable
     {
         public TemporaryGitRepository()
@@ -111,6 +343,7 @@ public sealed class Story43EndToEndTests
             RunGit("init", "--quiet");
             RunGit("config", "user.email", "vulgata-tests@example.invalid");
             RunGit("config", "user.name", "Vulgata Tests");
+            RunGit("config", "core.autocrlf", "false");
         }
 
         public string Path { get; }

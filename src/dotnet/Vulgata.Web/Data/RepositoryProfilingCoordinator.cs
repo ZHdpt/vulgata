@@ -101,63 +101,6 @@ public sealed class RepositoryProfilingCoordinator(
     {
     }
 
-    public RepositoryProfilingCoordinator(
-        ISystemRepository systemRepository,
-        IRepositoryRepository repositoryRepository,
-        IScanRunRepository scanRunRepository,
-        IGitWorkingCopyService workingCopyService,
-        ICommittedRepositorySnapshotService snapshotService,
-        IScanCandidateEnumerator candidateEnumerator,
-        ICodeGraphProvider codeGraphProvider,
-        Vulgata.Infrastructure.CodeGraph.CodeGraphOptions options,
-        ILogger<RepositoryProfilingCoordinator> logger,
-        IFrameworkEvidenceDetector frameworkEvidenceDetector,
-        FrameworkCatalog frameworkCatalog)
-        : this(
-            systemRepository,
-            repositoryRepository,
-            scanRunRepository,
-            workingCopyService,
-            snapshotService,
-            candidateEnumerator,
-            codeGraphProvider,
-            options,
-            logger,
-            frameworkEvidenceDetector,
-            frameworkCatalog,
-            EmptyPreScanCommunicationDetector.Instance,
-            CommunicationEvidenceRuleCatalog.LoadEmbedded())
-    {
-    }
-
-    public RepositoryProfilingCoordinator(
-        ISystemRepository systemRepository,
-        IRepositoryRepository repositoryRepository,
-        IScanRunRepository scanRunRepository,
-        IGitWorkingCopyService workingCopyService,
-        IScanCandidateEnumerator candidateEnumerator,
-        ICodeGraphProvider codeGraphProvider,
-        Vulgata.Infrastructure.CodeGraph.CodeGraphOptions options,
-        ILogger<RepositoryProfilingCoordinator> logger,
-        IFrameworkEvidenceDetector frameworkEvidenceDetector,
-        FrameworkCatalog frameworkCatalog)
-        : this(
-            systemRepository,
-            repositoryRepository,
-            scanRunRepository,
-            workingCopyService,
-            MissingCommittedRepositorySnapshotService.Instance,
-            candidateEnumerator,
-            codeGraphProvider,
-            options,
-            logger,
-            frameworkEvidenceDetector,
-            frameworkCatalog,
-            EmptyPreScanCommunicationDetector.Instance,
-            CommunicationEvidenceRuleCatalog.LoadEmbedded())
-    {
-    }
-
     public async Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
         Guid systemId,
         Guid repositoryId,
@@ -416,7 +359,7 @@ public sealed class RepositoryProfilingCoordinator(
         try
         {
             frameworkDetection = await frameworkEvidenceDetector.DetectDetailedAsync(
-                snapshotRoot,
+                snapshotLease,
                 cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -1085,57 +1028,4 @@ public sealed class RepositoryProfilingCoordinator(
             _ => "框架证据处理失败。",
         };
 
-    private sealed class MissingCommittedRepositorySnapshotService
-        : ICommittedRepositorySnapshotService
-    {
-        private MissingCommittedRepositorySnapshotService()
-        {
-        }
-
-        public static MissingCommittedRepositorySnapshotService Instance { get; } =
-            new();
-
-        public Task<ICommittedRepositorySnapshotLease> AcquireAsync(
-            RepositoryEntity repository,
-            Guid scanRunId,
-            GitWorkingCopyResult workingCopy,
-            CancellationToken cancellationToken = default) =>
-            throw new InvalidOperationException(
-                "A committed Repository snapshot service is required for profiling.");
-    }
-
-    private sealed class EmptyPreScanCommunicationDetector
-        : IPreScanCommunicationDetector
-    {
-        private EmptyPreScanCommunicationDetector()
-        {
-        }
-
-        public static EmptyPreScanCommunicationDetector Instance { get; } = new();
-
-        public Task<PreScanResultDraft> DetectAsync(
-            RepositoryProfileDraft profile,
-            string profiledRevision,
-            ICommittedRepositorySnapshotLease committedSnapshot,
-            CancellationToken cancellationToken = default)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            byte[] fingerprint = SHA256.HashData(
-                Encoding.UTF8.GetBytes($"pre-scan-empty-v1\0{profiledRevision}"));
-            PreScanResult result = PreScanResult.CreateApproved(
-                profile.ScanRun.RepositoryId,
-                profile.ScanRun.Id,
-                profiledRevision,
-                DateTimeOffset.UtcNow,
-                Convert.ToHexStringLower(fingerprint),
-                "预扫描已批准——继续进入顺序演示运行器",
-                ConfirmedCommunicationKinds.None,
-                0,
-                0,
-                0,
-                false,
-                []);
-            return Task.FromResult(PreScanResultDraft.Create(result));
-        }
-    }
 }

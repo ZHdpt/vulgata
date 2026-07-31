@@ -78,6 +78,18 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
     }
 
     public async Task<IReadOnlyList<PackageEvidence>> DetectAsync(
+        ICommittedRepositorySnapshotLease committedSnapshot,
+        CancellationToken cancellationToken = default)
+    {
+        FrameworkEvidenceDetectionResult result = await DetectDetailedAsync(
+            committedSnapshot,
+            cancellationToken);
+        return result.Succeeded
+            ? result.Evidence
+            : throw new InvalidOperationException(result.Error);
+    }
+
+    public async Task<IReadOnlyList<PackageEvidence>> DetectAsync(
         string workingCopyPath,
         CancellationToken cancellationToken = default)
     {
@@ -93,6 +105,38 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         "Design",
         "CA1031:Do not catch general exception types",
         Justification = "The detector is a fail-closed boundary and must convert unexpected faults to a safe result.")]
+    public async Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
+        ICommittedRepositorySnapshotLease committedSnapshot,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(committedSnapshot);
+        try
+        {
+            await committedSnapshot.VerifyIdentityAsync(cancellationToken);
+            FrameworkEvidenceDetectionResult result = await DetectArchiveDetailedCoreAsync(
+                committedSnapshot.RootPath,
+                cancellationToken);
+            await committedSnapshot.VerifyIdentityAsync(cancellationToken);
+            return result;
+        }
+        catch (FrameworkDetectionLimitExceededException)
+        {
+            return FrameworkEvidenceDetectionResult.Failed(
+                FrameworkEvidenceDetectionFailure.RepositoryBoundExceeded,
+                "框架证据超出仓库级限制。");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return FrameworkEvidenceDetectionResult.Failed(
+                FrameworkEvidenceDetectionFailure.DetectorFailed,
+                "框架证据检测失败。");
+        }
+    }
+
     public async Task<FrameworkEvidenceDetectionResult> DetectDetailedAsync(
         string workingCopyPath,
         CancellationToken cancellationToken = default)
@@ -127,9 +171,37 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         string repositoryRoot = Path.GetFullPath(workingCopyPath);
         CommittedRepositorySnapshot snapshot =
             await _snapshotSource.CreateAsync(repositoryRoot, cancellationToken);
-        string[] trackedPaths = [.. snapshot.TrackedEntries.Select(entry => entry.Path)];
+        return await DetectDetailedCoreAsync(
+            repositoryRoot,
+            snapshot.TrackedEntries,
+            readMaterializedFiles: false,
+            cancellationToken);
+    }
+
+    private async Task<FrameworkEvidenceDetectionResult> DetectArchiveDetailedCoreAsync(
+        string snapshotRoot,
+        CancellationToken cancellationToken)
+    {
+        string repositoryRoot = Path.GetFullPath(snapshotRoot);
+        CommittedRepositoryEntry[] trackedEntries = InventoryMaterializedEntries(
+            repositoryRoot,
+            cancellationToken);
+        return await DetectDetailedCoreAsync(
+            repositoryRoot,
+            trackedEntries,
+            readMaterializedFiles: true,
+            cancellationToken);
+    }
+
+    private async Task<FrameworkEvidenceDetectionResult> DetectDetailedCoreAsync(
+        string repositoryRoot,
+        CommittedRepositoryEntry[] committedEntries,
+        bool readMaterializedFiles,
+        CancellationToken cancellationToken)
+    {
+        string[] trackedPaths = [.. committedEntries.Select(entry => entry.Path)];
         Dictionary<string, CommittedRepositoryEntry> trackedEntries =
-            snapshot.TrackedEntries.ToDictionary(entry => entry.Path, StringComparer.Ordinal);
+            committedEntries.ToDictionary(entry => entry.Path, StringComparer.Ordinal);
         var trackedSet = trackedPaths.ToHashSet(StringComparer.Ordinal);
         var readResults = new Dictionary<string, ArtifactReadResult>(StringComparer.Ordinal);
         var evidence = new List<PackageEvidence>();
@@ -156,13 +228,20 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 return cached;
             }
 
-            ArtifactReadResult result = await ReadTrackedTextAsync(
-                repositoryRoot,
-                artifactPath,
-                trackedEntries[artifactPath].Mode,
-                trackedEntries[artifactPath].ObjectId,
-                budget,
-                cancellationToken);
+            CommittedRepositoryEntry entry = trackedEntries[artifactPath];
+            ArtifactReadResult result = readMaterializedFiles
+                ? await ReadMaterializedTextAsync(
+                    repositoryRoot,
+                    artifactPath,
+                    budget,
+                    cancellationToken)
+                : await ReadTrackedTextAsync(
+                    repositoryRoot,
+                    artifactPath,
+                    entry.Mode,
+                    entry.ObjectId,
+                    budget,
+                    cancellationToken);
             readResults.Add(artifactPath, result);
             return result;
         }
@@ -493,6 +572,88 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
                 detection.DirectManifestScopes);
     }
 
+    private static CommittedRepositoryEntry[] InventoryMaterializedEntries(
+        string repositoryRoot,
+        CancellationToken cancellationToken)
+    {
+        if (!Directory.Exists(repositoryRoot))
+        {
+            throw new InvalidOperationException(
+                "Unable to inventory committed Repository evidence.");
+        }
+
+        FileAttributes rootAttributes = File.GetAttributes(repositoryRoot);
+        if ((rootAttributes & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new InvalidOperationException(
+                "Unable to inventory committed Repository evidence.");
+        }
+
+        var supportedEntries = new List<CommittedRepositoryEntry>();
+        var pendingDirectories = new Stack<string>();
+        pendingDirectories.Push(repositoryRoot);
+        var inputRecordCount = 0;
+        while (pendingDirectories.TryPop(out string? directory))
+        {
+            foreach (string entryPath in Directory
+                         .EnumerateFileSystemEntries(directory)
+                         .OrderBy(path => path, StringComparer.Ordinal))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                inputRecordCount++;
+                if (inputRecordCount > _maximumInventoryInputRecords ||
+                    !IsWithinRepository(repositoryRoot, entryPath))
+                {
+                    throw new FrameworkDetectionLimitExceededException();
+                }
+
+                FileAttributes attributes = File.GetAttributes(entryPath);
+                if ((attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0)
+                {
+                    throw new InvalidOperationException(
+                        "Unable to inventory committed Repository evidence.");
+                }
+
+                if ((attributes & FileAttributes.Directory) != 0)
+                {
+                    pendingDirectories.Push(entryPath);
+                    continue;
+                }
+
+                string relativePath = NormalizeRelativePath(
+                    Path.GetRelativePath(repositoryRoot, entryPath));
+                if (relativePath.Length > _maximumRepositoryRelativePathLength ||
+                    !TryResolveRepositoryPath(repositoryRoot, relativePath, out string resolvedPath) ||
+                    !StringComparer.OrdinalIgnoreCase.Equals(
+                        Path.GetFullPath(entryPath),
+                        resolvedPath))
+                {
+                    throw new FrameworkDetectionLimitExceededException();
+                }
+
+                if (GetArtifactKind(relativePath) is null)
+                {
+                    continue;
+                }
+
+                if (supportedEntries.Count >= _maximumInventoryRecords)
+                {
+                    throw new FrameworkDetectionLimitExceededException();
+                }
+
+                supportedEntries.Add(new CommittedRepositoryEntry(
+                    relativePath,
+                    "100644",
+                    string.Empty));
+            }
+        }
+
+        return
+        [
+            .. supportedEntries.OrderBy(entry => entry.Path, StringComparer.Ordinal),
+        ];
+    }
+
     internal static async Task<CommittedRepositoryEntry[]> InventoryTrackedEntriesAsync(
         string repositoryRoot,
         string committedRepositoryIdentity,
@@ -671,6 +832,102 @@ public sealed class FrameworkEvidenceDetector : IFrameworkEvidenceDetector
         }
 
         return identity;
+    }
+
+    private static async Task<ArtifactReadResult> ReadMaterializedTextAsync(
+        string repositoryRoot,
+        string artifactPath,
+        FrameworkDetectionBudget budget,
+        CancellationToken cancellationToken)
+    {
+        if (artifactPath.Length > _maximumRepositoryRelativePathLength)
+        {
+            return ArtifactReadResult.Rejected(
+                CreateAuditOutcome(artifactPath, ArtifactParseStatus.ArtifactBoundExceeded));
+        }
+
+        if (!TryResolveRepositoryPath(repositoryRoot, artifactPath, out string fullPath))
+        {
+            return ArtifactReadResult.Rejected(
+                CreateAuditOutcome(artifactPath, ArtifactParseStatus.UnsafePath));
+        }
+
+        try
+        {
+            FileAttributes attributes = File.GetAttributes(fullPath);
+            if ((attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint |
+                    FileAttributes.Device)) != 0)
+            {
+                return ArtifactReadResult.Rejected(
+                    CreateAuditOutcome(artifactPath, ArtifactParseStatus.ReparsePoint));
+            }
+
+            await using var stream = new FileStream(
+                fullPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 64 * 1024,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            long expectedLength = stream.Length;
+            budget.RecordArtifactBytes(expectedLength);
+            if (expectedLength > _maximumArtifactBytes)
+            {
+                return ArtifactReadResult.Rejected(
+                    CreateAuditOutcome(
+                        artifactPath,
+                        ArtifactParseStatus.ArtifactBoundExceeded));
+            }
+
+            using var contentBuffer = new MemoryStream(capacity: checked((int)expectedLength));
+            byte[] buffer = new byte[64 * 1024];
+            int totalBytes = 0;
+            while (true)
+            {
+                int read = await stream.ReadAsync(buffer, cancellationToken);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                totalBytes = checked(totalBytes + read);
+                if (totalBytes > expectedLength || totalBytes > _maximumArtifactBytes)
+                {
+                    return ArtifactReadResult.Rejected(
+                        CreateAuditOutcome(
+                            artifactPath,
+                            ArtifactParseStatus.ArtifactBoundExceeded));
+                }
+
+                await contentBuffer.WriteAsync(
+                    buffer.AsMemory(0, read),
+                    cancellationToken);
+            }
+
+            if (totalBytes != expectedLength)
+            {
+                return ArtifactReadResult.Rejected(
+                    CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
+            }
+
+            return ArtifactReadResult.Accepted(
+                _strictUtf8.GetString(contentBuffer.GetBuffer(), 0, totalBytes));
+        }
+        catch (DecoderFallbackException)
+        {
+            return ArtifactReadResult.Rejected(
+                CreateAuditOutcome(artifactPath, ArtifactParseStatus.Malformed));
+        }
+        catch (IOException)
+        {
+            return ArtifactReadResult.Rejected(
+                CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return ArtifactReadResult.Rejected(
+                CreateAuditOutcome(artifactPath, ArtifactParseStatus.Unsupported));
+        }
     }
 
     private static async Task<ArtifactReadResult> ReadTrackedTextAsync(

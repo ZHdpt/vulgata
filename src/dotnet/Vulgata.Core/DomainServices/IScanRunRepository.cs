@@ -16,9 +16,6 @@ public interface IScanRunRepository
         IEnumerable<CodeUnit> codeUnits,
         IEnumerable<CodeUnitEdge> edges,
         IEnumerable<UnresolvedStructuralRelationshipCandidate> unresolvedRelationships);
-    Task PersistCompletedProfileAsync(
-        RepositoryProfileDraft draft,
-        CancellationToken cancellationToken = default);
     Task<PreScanResult> PersistCompletedProfileAsync(
         RepositoryProfileCommitDraft draft,
         CancellationToken cancellationToken = default);

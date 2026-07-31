@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "4968a0431caf52583d50720951d6a11b294381d8",
+  "reviewed_boundary": {
+    "base_commit": "4968a0431caf52583d50720951d6a11b294381d8",
+    "candidate_commit": null,
+    "diff_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
+    "artifact_hashes": {
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs": "c1d19f505e5272d7166c6a43d6e14edb80a2c0a84f969ffc43a57869c62cd9d2",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs": "998657914ee2e420a505eafc1e4b5d4e44f8026ea464e23b1ec556210dd67619",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs": "75246e47943584c948dd0b21254a48c0cb4a54c6b0e85ba4656c5282cf09283d",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "5227f2de4929658a02bcaeedc352a898edafb4b69945b7465630d5c53238536a",
+      "src/dotnet/Vulgata.Infrastructure/Git/ScanCandidateEnumerator.cs": "0c067ef090dd5689cfe4bbe1d16ab6f40dc31c3207e83dc57aefb775a65d0452",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs": "f87c7b3fdb710f1f8a65bbc400ccc988feb478d94b8906ecde006a8c6185e2b5",
+      "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs": "1ebe2b3ff5691837efa92171e30622cf0de158a460feca6dd18d12abf46af5d3",
+      "tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs": "cea25a96e48991781dbd3cff656ecc4fa505b82d84ac09b1e47dc9eda411f321",
+      "tests/Vulgata.Tests/PreScanHandoffTests.cs": "007280f015ff1e1c82fd1064f074012297f182685213ddb22f813ce6003ea57d",
+      "tests/Vulgata.Tests/RepositoryApiTests.cs": "d10e38731cb43e08d66cf6198aeedcd56ddcf1fe010895d0a8edc8408b9b28cc",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs": "1320b3afafc91a208070f6071ed2c4a617d40a45bb1e3245529ca544843e0764",
+      "tests/Vulgata.Tests/ScanCandidateEnumeratorTests.cs": "67070f4514309162a565c5901d968c547c30151f1785a9193c12f7e08bb7681e",
+      "tests/Vulgata.Tests/Story43EndToEndTests.cs": "2919e682cda612ed072e93cf4456a625c05c50a246f53ba88fc51f0b70498135"
+    },
+    "owned_paths": [
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "src/dotnet/Vulgata.Infrastructure/Git/ScanCandidateEnumerator.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs",
+      "tests/Vulgata.Tests/PreScanHandoffTests.cs",
+      "tests/Vulgata.Tests/RepositoryApiTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+      "tests/Vulgata.Tests/ScanCandidateEnumeratorTests.cs",
+      "tests/Vulgata.Tests/Story43EndToEndTests.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md",
+    "docs/bmad/implementation-artifacts/epic-gates/4/architecture-gate.json",
+    "docs/bmad/implementation-artifacts/epic-gates/4/audit-raw/dispatch-2.json",
+    "specs/003-conservative-pre-scan-gate/spec.md",
+    "specs/003-conservative-pre-scan-gate/plan.md",
+    "specs/003-conservative-pre-scan-gate/research.md",
+    "specs/003-conservative-pre-scan-gate/data-model.md",
+    "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
+    "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md",
+    "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json",
+    "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json",
+    "specs/003-conservative-pre-scan-gate/tasks.md",
+    "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/ScanCandidateEnumerator.cs",
+    "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+    "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionArchiveLeaseTests.cs",
+    "tests/Vulgata.Tests/PreScanHandoffTests.cs",
+    "tests/Vulgata.Tests/RepositoryApiTests.cs",
+    "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
+    "tests/Vulgata.Tests/ScanCandidateEnumeratorTests.cs",
+    "tests/Vulgata.Tests/Story43EndToEndTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "QR5-001",
+      "severity": "MEDIUM",
+      "category": "architecture-test-surface",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "location": "public DetectAsync(string) and DetectDetailedAsync(string) overloads at lines 92-157",
+      "affected_requirement": "specs/003-conservative-pre-scan-gate/plan.md Design 1 and contracts/repository-profiling-composition.md require the live committed-snapshot lease to be the framework inventory authority and describe path-based Git discovery as outside the production/test entry point",
+      "evidence": "The corrected IFrameworkEvidenceDetector and production coordinator use ICommittedRepositorySnapshotLease, but the concrete detector retains public string overloads and FrameworkDetectionTests still discover those Git-backed overloads by reflection. This does not bypass the production interface or the accepted production-composition path, so it is nonblocking and matches the earlier medium reflection-test-surface debt.",
+      "correction_outcome": "Required remediation for a future bounded cleanup: move the string overloads behind an internal implementation boundary and migrate focused tests to IFrameworkEvidenceDetector plus a lease. No Story 4.3 correction is required before advancement because production DI, coordinator construction, archive identity, and the public Core interface are lease-bound."
+    }
+  ],
+  "summary": "ACCEPT. The canonical UTF-8 path-sorted candidate-manifest bundle was recomputed before and after review as 6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e at base/HEAD 4968a0431caf52583d50720951d6a11b294381d8; reviewed_boundary.diff_sha256 carries that dispatch bundle binding and every one of the 13 path hashes matched. Combined acceptance: BMad AC-1 through AC-6, SpecKit FR-001 through FR-019 and SC-001 through SC-007, and remediation tasks T001 through T018 are satisfied by the unchanged accepted Story 4.3 behavior plus the candidate closure evidence. The three reserved HIGH/MUST/Strong defects are closed: framework detection consumes and verifies the archive-only lease, every public coordinator constructor requires the snapshot and real Pre-Scan detector seams with no empty/missing adapters, and only RepositoryProfileCommitDraft can make the final profile plus Pre-Scan Result durable. The production-composition-discovered ancestor-Git defect is also closed: ScanCandidateEnumerator performs no Git invocation, deterministically inventories the materialized archive, skips reparse directories, classifies reparse files without reading them, and in production is bounded by the already verified committed snapshot's 10,000-entry and 64 MiB limits before the lease is reverified prior to atomic persistence. Security passes for containment, reparse handling, bounded/redacted diagnostics, offline execution, exact Profiled Revision identity, atomic rollback/replay, authorization/non-disclosure, and zero Worker Agent dispatch, Edge, Uncertainty, endpoint resolution, or Cross-Repository Resolution. Architecture passes Core/Infrastructure boundaries, required production seams, atomicity/idempotency, and no PRD/tool/dispatch/provider-failover expansion. Migration neutrality passes because the candidate changes no EF model, configuration, DbContext, or migration path; root evidence reports the clean model gate and 3/3 migration checks. Test/evidence quality is sufficient: independently rerun focused boundary 179/179 and narrow seam boundary 13/13; dispatch evidence records archive RED then 4/4 GREEN, contract RED 0/4 then 4/4 GREEN, candidate-enumerator RED then 4/4 GREEN, production composition 1/1, migration 3/3, repeatable full suite 624/624 excluding only the truthfully separated environment-bound CodeGraph final-image contract, Web build with zero errors, clean-database two-Repository E2E, and successful exact Docker build with manifest-list SHA-256 6be38dd6be26caee69a327adbbf722f2e4b0a1772aa4d683ba68b14e33385a4e. Remaining nonblocking risks are QR5-001, the explicitly deferred detector/catalog test-locality debt, and the previously accepted case-distinct Linux path and general nested-YAML limitations; none is introduced as a product-completion claim. No unresolved Critical or High remains. Advancement to conditional E2E/verification is allowed without duplicate user approval; this reviewer did not change lifecycle state or Git history."
+}
