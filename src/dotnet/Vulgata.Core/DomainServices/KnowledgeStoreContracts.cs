@@ -25,18 +25,52 @@ public sealed record RepositoryAccessScope
     public bool Contains(Guid repositoryId) => AuthorizedRepositoryIds.Contains(repositoryId);
 }
 
-public sealed record SourceAnchorDraft(
-    Guid Id,
-    Guid DocumentVersionId,
-    Guid RepositoryId,
-    Guid ScanRunId,
-    Guid CodeUnitId,
-    string ProfiledRevision,
-    string RepositoryRelativePath,
-    string EvidenceLocator,
-    int LineStart,
-    int LineEnd,
-    string SourceHash);
+public sealed record SourceAnchorDraft
+{
+    private string _evidenceLocator = null!;
+
+    public SourceAnchorDraft(
+        Guid id,
+        Guid documentVersionId,
+        Guid repositoryId,
+        Guid scanRunId,
+        Guid codeUnitId,
+        string profiledRevision,
+        string repositoryRelativePath,
+        string evidenceLocator,
+        int lineStart,
+        int lineEnd,
+        string sourceHash)
+    {
+        Id = id;
+        DocumentVersionId = documentVersionId;
+        RepositoryId = repositoryId;
+        ScanRunId = scanRunId;
+        CodeUnitId = codeUnitId;
+        ProfiledRevision = profiledRevision;
+        RepositoryRelativePath = repositoryRelativePath;
+        EvidenceLocator = evidenceLocator;
+        LineStart = lineStart;
+        LineEnd = lineEnd;
+        SourceHash = sourceHash;
+    }
+
+    public Guid Id { get; init; }
+    public Guid DocumentVersionId { get; init; }
+    public Guid RepositoryId { get; init; }
+    public Guid ScanRunId { get; init; }
+    public Guid CodeUnitId { get; init; }
+    public string ProfiledRevision { get; init; }
+    public string RepositoryRelativePath { get; init; }
+    public string EvidenceLocator
+    {
+        get => _evidenceLocator;
+        init => _evidenceLocator = KnowledgeTextSafety.NormalizeEvidenceText(value);
+    }
+    public int LineStart { get; init; }
+    public int LineEnd { get; init; }
+    public string SourceHash { get; init; }
+}
 
 public sealed record EdgeDraft(
     Guid Id,
@@ -48,26 +82,74 @@ public sealed record EdgeDraft(
     Guid TargetScanRunId,
     DocumentEdgeType EdgeType);
 
-public sealed record FlowTraceStepDraft(
-    Guid Id,
-    int StepOrder,
-    Guid DocumentVersionId,
-    Guid DocumentRepositoryId,
-    Guid DocumentScanRunId,
-    Guid? EdgeId,
-    FlowTraceStepKind StepKind,
-    string Description);
+public sealed record FlowTraceStepDraft
+{
+    private string _description = null!;
+
+    public FlowTraceStepDraft(
+        Guid id,
+        int stepOrder,
+        Guid documentVersionId,
+        Guid documentRepositoryId,
+        Guid documentScanRunId,
+        Guid? edgeId,
+        FlowTraceStepKind stepKind,
+        string description)
+    {
+        Id = id;
+        StepOrder = stepOrder;
+        DocumentVersionId = documentVersionId;
+        DocumentRepositoryId = documentRepositoryId;
+        DocumentScanRunId = documentScanRunId;
+        EdgeId = edgeId;
+        StepKind = stepKind;
+        Description = description;
+    }
+
+    public Guid Id { get; init; }
+    public int StepOrder { get; init; }
+    public Guid DocumentVersionId { get; init; }
+    public Guid DocumentRepositoryId { get; init; }
+    public Guid DocumentScanRunId { get; init; }
+    public Guid? EdgeId { get; init; }
+    public FlowTraceStepKind StepKind { get; init; }
+    public string Description
+    {
+        get => _description;
+        init => _description = KnowledgeTextSafety.NormalizeEvidenceText(value);
+    }
+}
 
 public sealed record FlowTraceDraft(
     Guid Id,
     int TraceOrder,
     IReadOnlyList<FlowTraceStepDraft> Steps);
 
-public sealed record FlowGroupDraft(
-    Guid Id,
-    int GroupOrder,
-    string Title,
-    IReadOnlyList<FlowTraceDraft> Traces);
+public sealed record FlowGroupDraft
+{
+    private string _title = null!;
+
+    public FlowGroupDraft(
+        Guid id,
+        int groupOrder,
+        string title,
+        IReadOnlyList<FlowTraceDraft> traces)
+    {
+        Id = id;
+        GroupOrder = groupOrder;
+        Title = title;
+        Traces = traces;
+    }
+
+    public Guid Id { get; init; }
+    public int GroupOrder { get; init; }
+    public string Title
+    {
+        get => _title;
+        init => _title = KnowledgeTextSafety.NormalizeEvidenceText(value);
+    }
+    public IReadOnlyList<FlowTraceDraft> Traces { get; init; }
+}
 
 public sealed record KnowledgeCommit(
     Guid OperationId,
@@ -225,6 +307,19 @@ public static class KnowledgeTextSafety
     private static readonly Regex _stackFramePattern = new(
         @"(?m)^ at [A-Za-z_][A-Za-z0-9_+`]*(?:\.[A-Za-z_][A-Za-z0-9_+`]*)+\(",
         RegexOptions.CultureInvariant);
+
+    internal static string NormalizeEvidenceText(string value)
+    {
+        string normalized = value?.Normalize(NormalizationForm.FormC)!;
+        if (normalized?.Any(character =>
+                character <= '\u001f' ||
+                character is >= '\u007f' and <= '\u009f') == true)
+        {
+            throw new KnowledgeStoreContractException(KnowledgeRejectionCode.InvalidContent);
+        }
+
+        return normalized;
+    }
 
     public static void EnsureSafe(string value)
     {

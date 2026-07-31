@@ -62,6 +62,7 @@ these deterministic rules:
 ```text
 CurrentKnowledge.contentJson = ""
 CurrentKnowledge.contentMarkdown = ""
+CurrentKnowledge.title = ""
 
 CurrentIndexEntry
   summary = ""
@@ -74,6 +75,12 @@ each returned CurrentDocumentSection
   heading = ""
   contentMarkdown = ""
   searchText = ""
+
+each returned CurrentFlowGroup
+  title = ""
+
+each returned CurrentFlowTraceStep
+  description = ""
 ```
 
 A section with a restricted Document reference additionally returns empty

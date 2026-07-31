@@ -260,7 +260,7 @@ not stored as a separate Edge type.
   passed SpecKit analysis with 33 of 33 requirements covered and 29 of 29
   implementation tasks aligned.
 - The EF integration owner generated
-  `20260731034018_AddMinimalKnowledgeStore`, verified rollback to Story 4.3,
+  `20260731041654_AddMinimalKnowledgeStore`, verified rollback to Story 4.3,
   reapply, fourteen accepted check constraints, unchanged prior migrations,
   and no pending model changes.
 - The candidate has independent PostgreSQL currentness-race evidence, a

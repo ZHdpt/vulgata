@@ -254,6 +254,96 @@ public sealed class KnowledgeStorePersistenceTests
     }
 
     [Fact]
+    public async Task CommitAsync_ReplayedSuccessorHasTamperedVersionNumber_ReturnsConflictWithoutMutation()
+    {
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        await SeedRepositoryEvidenceAsync(session.Context);
+        var repository = CreateRepository(session.Context);
+        KnowledgeCommit initial = CreateCodeCommit(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            KnowledgeStoreTestFixtures.DocumentVersionId,
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            KnowledgeStoreTestFixtures.SourceScanRunId,
+            KnowledgeStoreTestFixtures.SourceCodeUnitId);
+        KnowledgeCommit successor = CreateSuccessorCodeCommit(
+            Guid.Parse("60000000-0000-0000-0000-000000000012"),
+            Guid.Parse("80000000-0000-0000-0000-000000000012"),
+            Guid.Parse("90000000-0000-0000-0000-000000000012"));
+        RepositoryAccessScope scope =
+            new([KnowledgeStoreTestFixtures.SourceRepositoryId]);
+        Assert.Equal(
+            KnowledgeCommitStatus.Committed,
+            (await repository.CommitAsync(initial, scope)).Status);
+        Assert.Equal(
+            KnowledgeCommitStatus.Committed,
+            (await repository.CommitAsync(successor, scope)).Status);
+
+        DocumentVersion storedSuccessor = await session.Context.Set<DocumentVersion>()
+            .SingleAsync(version => version.Id == successor.NewDocumentVersionId);
+        session.Context.Entry(storedSuccessor)
+            .Property(version => version.VersionNumber)
+            .CurrentValue = 3;
+        await session.Context.SaveChangesAsync();
+        session.Context.ChangeTracker.Clear();
+
+        KnowledgeCommitResult replay = await repository.CommitAsync(successor, scope);
+
+        Assert.Equal(KnowledgeCommitStatus.Conflict, replay.Status);
+        DocumentVersion tamperedSuccessor = await session.Context.Set<DocumentVersion>()
+            .AsNoTracking()
+            .SingleAsync(version => version.Id == successor.NewDocumentVersionId);
+        Assert.Equal(3, tamperedSuccessor.VersionNumber);
+        Assert.Equal(2, await session.Context.Set<DocumentVersion>().CountAsync());
+        KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
+    }
+
+    [Fact]
+    public async Task CommitAsync_ReplayedCurrentVersionHasSuccessor_ReturnsConflictWithoutMutation()
+    {
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        await SeedRepositoryEvidenceAsync(session.Context);
+        var repository = CreateRepository(session.Context);
+        KnowledgeCommit initial = CreateCodeCommit(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            KnowledgeStoreTestFixtures.DocumentVersionId,
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            KnowledgeStoreTestFixtures.SourceScanRunId,
+            KnowledgeStoreTestFixtures.SourceCodeUnitId);
+        KnowledgeCommit successor = CreateSuccessorCodeCommit(
+            Guid.Parse("60000000-0000-0000-0000-000000000013"),
+            Guid.Parse("80000000-0000-0000-0000-000000000013"),
+            Guid.Parse("90000000-0000-0000-0000-000000000013"));
+        RepositoryAccessScope scope =
+            new([KnowledgeStoreTestFixtures.SourceRepositoryId]);
+        Assert.Equal(
+            KnowledgeCommitStatus.Committed,
+            (await repository.CommitAsync(initial, scope)).Status);
+        Assert.Equal(
+            KnowledgeCommitStatus.Committed,
+            (await repository.CommitAsync(successor, scope)).Status);
+
+        DocumentVersion storedSuccessor = await session.Context.Set<DocumentVersion>()
+            .SingleAsync(version => version.Id == successor.NewDocumentVersionId);
+        session.Context.Entry(storedSuccessor)
+            .Property(version => version.SupersededById)
+            .CurrentValue = initial.NewDocumentVersionId;
+        await session.Context.SaveChangesAsync();
+        session.Context.ChangeTracker.Clear();
+
+        KnowledgeCommitResult replay = await repository.CommitAsync(successor, scope);
+
+        Assert.Equal(KnowledgeCommitStatus.Conflict, replay.Status);
+        DocumentVersion tamperedSuccessor = await session.Context.Set<DocumentVersion>()
+            .AsNoTracking()
+            .SingleAsync(version => version.Id == successor.NewDocumentVersionId);
+        Assert.Equal(initial.NewDocumentVersionId, tamperedSuccessor.SupersededById);
+        Assert.Equal(2, await session.Context.Set<DocumentVersion>().CountAsync());
+        KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
+    }
+
+    [Fact]
     public async Task RebuildProjectionAsync_ExistingVersion_ReplacesOnlyDerivedRowsRepeatably()
     {
         await using SqliteKnowledgeStoreSession session =

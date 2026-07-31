@@ -9,7 +9,8 @@ description: "Dependency-ordered, test-first tasks for Story 11.1"
 
 **Prerequisites**: `spec.md`, `plan.md`, `research.md`, `data-model.md`,
 `quickstart.md`, `contracts/canonical-document-content.md`, and
-`contracts/knowledge-store-repository.md`
+`contracts/knowledge-store-repository.md`,
+`contracts/knowledge-retrieval-projection.md`
 
 **Execution level**: `expedited-mvp`
 
@@ -168,7 +169,7 @@ and regression safety.
 
 - [x] T030 Refactor duplicated test builders and validate all rejection results remain closed and provider diagnostics absent across `tests/Vulgata.Tests/KnowledgeStoreDomainTests.cs`, `tests/Vulgata.Tests/KnowledgeStorePersistenceTests.cs`, `tests/Vulgata.Tests/KnowledgeStoreRetrievalTests.cs`, and `tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs`
 - [x] T031 Root only: after every included focused test is GREEN, pin the reviewed-candidate boundary and RED/GREEN/REFACTOR evidence in `specs/004-minimal-knowledge-store/workflow-state.json` without staging any failing state
-- [ ] T032 Dispatch one fresh independent combined expedited quality review over `specs/004-minimal-knowledge-store/spec.md`, `specs/004-minimal-knowledge-store/plan.md`, `specs/004-minimal-knowledge-store/tasks.md`, the pinned implementation diff, all Story 11.1 tests, authorization/security boundaries, migration invariants, regressions, and known limitations; record ACCEPT or raw REVISE findings in `specs/004-minimal-knowledge-store/workflow-state.json`
+- [ ] T032 Dispatch one fresh independent combined expedited quality review over `specs/004-minimal-knowledge-store/spec.md`, `specs/004-minimal-knowledge-store/plan.md`, `specs/004-minimal-knowledge-store/contracts/knowledge-retrieval-projection.md`, `specs/004-minimal-knowledge-store/tasks.md`, the pinned implementation diff, all Story 11.1 tests, authorization/security boundaries, migration invariants, regressions, and known limitations; record ACCEPT or raw REVISE findings in `specs/004-minimal-knowledge-store/workflow-state.json`
 - [ ] T033 After combined-review ACCEPT, have the E2E runner execute the focused domain, persistence, retrieval/redaction, PostgreSQL concurrency, and migration groups from `specs/004-minimal-knowledge-store/quickstart.md`; record `passed` or a fully justified current-boundary `skipped-covered` decision in `specs/004-minimal-knowledge-store/workflow-state.json`
 - [ ] T034 Apply Story 11.1 to a clean disposable PostgreSQL database, roll back exactly to `20260730083207_AddConservativePreScanGate`, prove all nine Story 11.1 tables disappear while Story 4.3 remains, reapply, and run `dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web`; record exit-0 evidence against `src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs`
 - [ ] T035 Run `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj` and `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj`, with zero warnings/errors/failures, against `src/dotnet/Vulgata.Web/Vulgata.Web.csproj` and `tests/Vulgata.Tests/Vulgata.Tests.csproj`

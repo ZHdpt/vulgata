@@ -346,6 +346,72 @@ public sealed class KnowledgeStoreDomainTests
     }
 
     [Theory]
+    [InlineData("anchor")]
+    [InlineData("flow-title")]
+    [InlineData("step-description")]
+    public void ValidateCommit_NonFormCEvidenceText_NormalizesBeforePersistence(
+        string evidenceLocation)
+    {
+        var materializer = new KnowledgeDocumentMaterializer();
+        KnowledgeDocumentMaterialization content = materializer.Materialize(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            KnowledgeStoreTestFixtures.DocumentVersionId,
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            KnowledgeStoreTestFixtures.SystemId,
+            KnowledgeStoreTestFixtures.CreateCanonicalJson(documentType: "BusinessLogic"),
+            KnowledgeStoreTestFixtures.CreatedAt);
+        KnowledgeCommit valid =
+            KnowledgeStoreTestFixtures.CreateBusinessKnowledgeCommit(content);
+        KnowledgeCommit commit = WithEvidenceText(valid, evidenceLocation, "Cafe\u0301");
+
+        KnowledgeStoreContractValidator.ValidateCommit(commit);
+
+        string storedValue = GetEvidenceText(commit, evidenceLocation);
+        Assert.Equal("Café", storedValue);
+        Assert.True(storedValue.IsNormalized(NormalizationForm.FormC));
+    }
+
+    [Theory]
+    [InlineData("anchor")]
+    [InlineData("flow-title")]
+    [InlineData("step-description")]
+    public void ValidateCommit_EvidenceTextByteBound_IsMeasuredAfterFormCNormalization(
+        string evidenceLocation)
+    {
+        var materializer = new KnowledgeDocumentMaterializer();
+        KnowledgeDocumentMaterialization content = materializer.Materialize(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            KnowledgeStoreTestFixtures.DocumentVersionId,
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            KnowledgeStoreTestFixtures.SystemId,
+            KnowledgeStoreTestFixtures.CreateCanonicalJson(documentType: "BusinessLogic"),
+            KnowledgeStoreTestFixtures.CreatedAt);
+        KnowledgeCommit valid =
+            KnowledgeStoreTestFixtures.CreateBusinessKnowledgeCommit(content);
+        string exactBound = string.Concat(Enumerable.Repeat("e\u0301", 2048));
+        KnowledgeCommit exact = WithEvidenceText(valid, evidenceLocation, exactBound);
+
+        KnowledgeStoreContractValidator.ValidateCommit(exact);
+
+        string storedValue = GetEvidenceText(exact, evidenceLocation);
+        Assert.Equal(
+            KnowledgeDocumentLimits.MaximumShortTextBytes,
+            Encoding.UTF8.GetByteCount(storedValue));
+        Assert.True(storedValue.IsNormalized(NormalizationForm.FormC));
+
+        string overflow = $"{exactBound}e\u0301";
+        KnowledgeCommit overBound = WithEvidenceText(valid, evidenceLocation, overflow);
+        KnowledgeStoreContractException exception =
+            Assert.Throws<KnowledgeStoreContractException>(
+                () => KnowledgeStoreContractValidator.ValidateCommit(overBound));
+        Assert.Equal(
+            evidenceLocation == "anchor"
+                ? KnowledgeRejectionCode.InvalidAnchor
+                : KnowledgeRejectionCode.InvalidFlow,
+            exception.RejectionCode);
+    }
+
+    [Theory]
     [MemberData(nameof(UnsafeEvidenceTextCases))]
     public void ValidateCommit_SensitiveEvidenceText_RejectsClosedCode(
         string evidenceLocation,
@@ -361,65 +427,45 @@ public sealed class KnowledgeStoreDomainTests
             KnowledgeStoreTestFixtures.CreatedAt);
         KnowledgeCommit valid =
             KnowledgeStoreTestFixtures.CreateBusinessKnowledgeCommit(content);
-        KnowledgeCommit invalid = evidenceLocation switch
-        {
-            "anchor" => valid with
-            {
-                SourceAnchors =
-                [
-                    new SourceAnchorDraft(
-                        Guid.Parse("80000000-0000-0000-0000-000000000099"),
-                        valid.NewDocumentVersionId,
-                        valid.RepositoryId,
-                        valid.ScanRunId,
-                        KnowledgeStoreTestFixtures.SourceCodeUnitId,
-                        valid.ProfiledRevision,
-                        "src/orders.cs",
-                        unsafeText,
-                        1,
-                        10,
-                        KnowledgeStoreTestFixtures.SourceHash),
-                ],
-            },
-            "flow-title" => valid with
-            {
-                FlowGroups =
-                [
-                    valid.FlowGroups[0] with { Title = unsafeText },
-                ],
-            },
-            "step-description" => valid with
-            {
-                FlowGroups =
-                [
-                    valid.FlowGroups[0] with
-                    {
-                        Traces =
-                        [
-                            valid.FlowGroups[0].Traces[0] with
-                            {
-                                Steps =
-                                [
-                                    valid.FlowGroups[0].Traces[0].Steps[0] with
-                                    {
-                                        Description = unsafeText,
-                                    },
-                                    .. valid.FlowGroups[0].Traces[0].Steps.Skip(1),
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-            _ => throw new InvalidOperationException("Unknown evidence location."),
-        };
-
         KnowledgeStoreContractException exception =
-            Assert.Throws<KnowledgeStoreContractException>(
-                () => KnowledgeStoreContractValidator.ValidateCommit(invalid));
+            Assert.Throws<KnowledgeStoreContractException>(() =>
+            {
+                KnowledgeCommit invalid = WithEvidenceText(valid, evidenceLocation, unsafeText);
+                KnowledgeStoreContractValidator.ValidateCommit(invalid);
+            });
 
         Assert.Equal(KnowledgeRejectionCode.InvalidContent, exception.RejectionCode);
         Assert.DoesNotContain(unsafeText, exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [MemberData(nameof(ForbiddenEvidenceControlCases))]
+    public void ValidateCommit_ForbiddenEvidenceControl_RejectsClosedCode(
+        string evidenceLocation,
+        string forbiddenControl)
+    {
+        var materializer = new KnowledgeDocumentMaterializer();
+        KnowledgeDocumentMaterialization content = materializer.Materialize(
+            KnowledgeStoreTestFixtures.LogicalDocumentId,
+            KnowledgeStoreTestFixtures.DocumentVersionId,
+            KnowledgeStoreTestFixtures.SourceRepositoryId,
+            KnowledgeStoreTestFixtures.SystemId,
+            KnowledgeStoreTestFixtures.CreateCanonicalJson(documentType: "BusinessLogic"),
+            KnowledgeStoreTestFixtures.CreatedAt);
+        KnowledgeCommit valid =
+            KnowledgeStoreTestFixtures.CreateBusinessKnowledgeCommit(content);
+
+        KnowledgeStoreContractException exception =
+            Assert.Throws<KnowledgeStoreContractException>(() =>
+            {
+                KnowledgeCommit invalid = WithEvidenceText(
+                    valid,
+                    evidenceLocation,
+                    $"safe{forbiddenControl}text");
+                KnowledgeStoreContractValidator.ValidateCommit(invalid);
+            });
+
+        Assert.Equal(KnowledgeRejectionCode.InvalidContent, exception.RejectionCode);
     }
 
     public static TheoryData<string, string> UnsafeEvidenceTextCases()
@@ -442,6 +488,98 @@ public sealed class KnowledgeStoreDomainTests
 
         return cases;
     }
+
+    public static TheoryData<string, string> ForbiddenEvidenceControlCases()
+    {
+        string[] forbiddenControls =
+        [
+            "\u0000",
+            "\u0009",
+            "\u000a",
+            "\u001f",
+            "\u007f",
+            "\u0080",
+            "\u009f",
+        ];
+        var cases = new TheoryData<string, string>();
+        foreach (string location in new[] { "anchor", "flow-title", "step-description" })
+        {
+            foreach (string forbiddenControl in forbiddenControls)
+            {
+                cases.Add(location, forbiddenControl);
+            }
+        }
+
+        return cases;
+    }
+
+    private static KnowledgeCommit WithEvidenceText(
+        KnowledgeCommit valid,
+        string evidenceLocation,
+        string value) =>
+        evidenceLocation switch
+        {
+            "anchor" => valid with
+            {
+                SourceAnchors =
+                [
+                    new SourceAnchorDraft(
+                        Guid.Parse("80000000-0000-0000-0000-000000000099"),
+                        valid.NewDocumentVersionId,
+                        valid.RepositoryId,
+                        valid.ScanRunId,
+                        KnowledgeStoreTestFixtures.SourceCodeUnitId,
+                        valid.ProfiledRevision,
+                        "src/orders.cs",
+                        value,
+                        1,
+                        10,
+                        KnowledgeStoreTestFixtures.SourceHash),
+                ],
+            },
+            "flow-title" => valid with
+            {
+                FlowGroups =
+                [
+                    valid.FlowGroups[0] with { Title = value },
+                ],
+            },
+            "step-description" => valid with
+            {
+                FlowGroups =
+                [
+                    valid.FlowGroups[0] with
+                    {
+                        Traces =
+                        [
+                            valid.FlowGroups[0].Traces[0] with
+                            {
+                                Steps =
+                                [
+                                    valid.FlowGroups[0].Traces[0].Steps[0] with
+                                    {
+                                        Description = value,
+                                    },
+                                    .. valid.FlowGroups[0].Traces[0].Steps.Skip(1),
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            _ => throw new InvalidOperationException("Unknown evidence location."),
+        };
+
+    private static string GetEvidenceText(
+        KnowledgeCommit commit,
+        string evidenceLocation) =>
+        evidenceLocation switch
+        {
+            "anchor" => commit.SourceAnchors[0].EvidenceLocator,
+            "flow-title" => commit.FlowGroups[0].Title,
+            "step-description" => commit.FlowGroups[0].Traces[0].Steps[0].Description,
+            _ => throw new InvalidOperationException("Unknown evidence location."),
+        };
 
     [Fact]
     public void ValidateCommit_UndefinedDocumentEdgeType_RejectsClosedCode()

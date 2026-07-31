@@ -450,7 +450,7 @@ public sealed class KnowledgeStoreRetrievalTests
         Assert.Equal(
             KnowledgeStoreTestFixtures.DocumentVersionId,
             revokedTrace.Steps[0].DocumentVersionId);
-        Assert.Equal("业务逻辑", revokedTrace.Steps[0].Description);
+        Assert.Null(revokedTrace.Steps[0].Description);
         Assert.False(revokedTrace.Steps[0].IsRestrictedRelationship);
         Assert.Null(revokedTrace.Steps[1].DocumentVersionId);
         Assert.Null(revokedTrace.Steps[1].Description);
@@ -600,6 +600,59 @@ public sealed class KnowledgeStoreRetrievalTests
         Assert.Empty(section.SourceAnchorIds);
         Assert.Empty(section.AuthorizedDocumentVersionIds);
         Assert.True(section.HasRestrictedDocumentReference);
+        KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
+    }
+
+    [Fact]
+    public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_RedactsAllRemainingTextProjection()
+    {
+        const string documentTitleSentinel = "REVOKED_TARGET_DOCUMENT_TITLE";
+        const string flowGroupTitleSentinel = "REVOKED_TARGET_FLOW_GROUP_TITLE";
+        const string sourceStepDescriptionSentinel = "REVOKED_TARGET_SOURCE_STEP_DESCRIPTION";
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        await SeedSourceRepositoryAsync(session.Context);
+        await SeedTargetRepositoryAsync(session.Context);
+        KnowledgeStoreRepository repository = CreateRepository(session.Context);
+        await CommitCrossRepositoryBusinessKnowledgeAsync(
+            repository,
+            documentTitle: documentTitleSentinel,
+            flowGroupTitle: flowGroupTitleSentinel,
+            sourceStepDescription: sourceStepDescriptionSentinel);
+
+        CurrentKnowledge authorized = Assert.IsType<CurrentKnowledge>(
+            await repository.GetCurrentAsync(
+                KnowledgeStoreTestFixtures.LogicalDocumentId,
+                new RepositoryAccessScope(
+                [
+                    KnowledgeStoreTestFixtures.SourceRepositoryId,
+                    KnowledgeStoreTestFixtures.TargetRepositoryId,
+                ]),
+                []));
+        CurrentKnowledge revoked = Assert.IsType<CurrentKnowledge>(
+            await repository.GetCurrentAsync(
+                KnowledgeStoreTestFixtures.LogicalDocumentId,
+                new RepositoryAccessScope([KnowledgeStoreTestFixtures.SourceRepositoryId]),
+                []));
+
+        Assert.Equal(documentTitleSentinel, authorized.Title);
+        CurrentFlowGroup authorizedGroup = Assert.Single(authorized.FlowGroups);
+        Assert.Equal(flowGroupTitleSentinel, authorizedGroup.Title);
+        Assert.Equal(
+            sourceStepDescriptionSentinel,
+            Assert.Single(authorizedGroup.Traces).Steps[0].Description);
+
+        string serializedRevoked = JsonSerializer.Serialize(revoked);
+        Assert.DoesNotContain(documentTitleSentinel, serializedRevoked, StringComparison.Ordinal);
+        Assert.DoesNotContain(flowGroupTitleSentinel, serializedRevoked, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            sourceStepDescriptionSentinel,
+            serializedRevoked,
+            StringComparison.Ordinal);
+        Assert.Empty(revoked.Title);
+        CurrentFlowGroup revokedGroup = Assert.Single(revoked.FlowGroups);
+        Assert.Empty(revokedGroup.Title);
+        Assert.Null(Assert.Single(revokedGroup.Traces).Steps[0].Description);
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
@@ -802,13 +855,20 @@ public sealed class KnowledgeStoreRetrievalTests
 
     private static async Task CommitCrossRepositoryBusinessKnowledgeAsync(
         KnowledgeStoreRepository repository,
-        string? targetDerivedText = null)
+        string? targetDerivedText = null,
+        string? documentTitle = null,
+        string? flowGroupTitle = null,
+        string? sourceStepDescription = null)
     {
         KnowledgeCommitResult target = await repository.CommitAsync(
             CreateTargetCommit(),
             new RepositoryAccessScope([KnowledgeStoreTestFixtures.TargetRepositoryId]));
         KnowledgeCommitResult source = await repository.CommitAsync(
-            CreateBusinessCommit(targetDerivedText),
+            CreateBusinessCommit(
+                targetDerivedText,
+                documentTitle: documentTitle,
+                flowGroupTitle: flowGroupTitle,
+                sourceStepDescription: sourceStepDescription),
             new RepositoryAccessScope(
             [
                 KnowledgeStoreTestFixtures.SourceRepositoryId,
@@ -880,7 +940,10 @@ public sealed class KnowledgeStoreRetrievalTests
 
     private static KnowledgeCommit CreateBusinessCommit(
         string? targetDerivedText = null,
-        bool includeTargetSectionReference = true)
+        bool includeTargetSectionReference = true,
+        string? documentTitle = null,
+        string? flowGroupTitle = null,
+        string? sourceStepDescription = null)
     {
         string sectionText = targetDerivedText ?? "处理订单业务。";
         KnowledgeDocumentMaterialization materialization =
@@ -891,6 +954,7 @@ public sealed class KnowledgeStoreRetrievalTests
                 null,
                 KnowledgeStoreTestFixtures.CreateCanonicalJson(
                     documentType: "BusinessLogic",
+                    title: documentTitle ?? "订单业务逻辑",
                     sections:
                     [
                         new(
@@ -913,7 +977,7 @@ public sealed class KnowledgeStoreRetrievalTests
                 new(
                     Guid.Parse("b0000000-0000-0000-0000-000000000001"),
                     1,
-                    "订单流",
+                    flowGroupTitle ?? "订单流",
                     [
                         new(
                             Guid.Parse("c0000000-0000-0000-0000-000000000001"),
@@ -927,7 +991,7 @@ public sealed class KnowledgeStoreRetrievalTests
                                     KnowledgeStoreTestFixtures.SourceScanRunId,
                                     null,
                                     FlowTraceStepKind.Document,
-                                    "业务逻辑"),
+                                    sourceStepDescription ?? "业务逻辑"),
                                 new(
                                     Guid.Parse("d0000000-0000-0000-0000-000000000002"),
                                     2,

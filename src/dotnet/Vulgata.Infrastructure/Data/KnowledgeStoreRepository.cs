@@ -225,7 +225,8 @@ public sealed class KnowledgeStoreRepository(
             version.LogicalDocumentId != request.LogicalDocumentId ||
             version.RepositoryId != request.RepositoryId ||
             version.ScanRunId != request.ScanRunId ||
-            !StringComparer.Ordinal.Equals(version.ProfiledRevision, request.ProfiledRevision))
+            !StringComparer.Ordinal.Equals(version.ProfiledRevision, request.ProfiledRevision) ||
+            version.SupersededById is not null)
         {
             return KnowledgeCommitResult.Conflict();
         }
@@ -263,16 +264,17 @@ public sealed class KnowledgeStoreRepository(
         }
         else
         {
-            bool predecessorMatches = await _context.Set<DocumentVersion>()
+            DocumentVersion? predecessor = await _context.Set<DocumentVersion>()
                 .AsNoTracking()
-                .AnyAsync(
+                .SingleOrDefaultAsync(
                     candidate =>
                         candidate.Id == request.ExpectedCurrentVersionId.Value &&
                         candidate.LogicalDocumentId == request.LogicalDocumentId &&
                         candidate.RepositoryId == request.RepositoryId &&
                         candidate.SupersededById == request.NewDocumentVersionId,
                     cancellationToken);
-            if (!predecessorMatches)
+            if (predecessor is null ||
+                version.VersionNumber != predecessor.VersionNumber + 1)
             {
                 return KnowledgeCommitResult.Conflict();
             }
@@ -773,7 +775,7 @@ public sealed class KnowledgeStoreRepository(
             version.Id,
             source.RepositoryId,
             source.DocumentType,
-            version.Title,
+            hasRestrictedTextProjection ? string.Empty : version.Title,
             version.RepositoryRelativePath,
             hasRestrictedTextProjection
                 ? string.Empty
@@ -783,7 +785,9 @@ public sealed class KnowledgeStoreRepository(
             hasRestrictedTextProjection ? string.Empty : version.ContentMarkdown,
             anchors,
             relationships,
-            flowGroups,
+            hasRestrictedTextProjection
+                ? RedactFlowTextProjection(flowGroups)
+                : flowGroups,
             hasRestrictedTextProjection
                 ? new CurrentIndexEntry(string.Empty, [], [], [], string.Empty)
                 : new CurrentIndexEntry(
@@ -818,6 +822,23 @@ public sealed class KnowledgeStoreRepository(
                     hasRestrictedDocumentReference);
             }).ToArray());
     }
+
+    private static IReadOnlyList<CurrentFlowGroup> RedactFlowTextProjection(
+        IReadOnlyList<CurrentFlowGroup> flowGroups) =>
+        flowGroups
+            .Select(group => group with
+            {
+                Title = string.Empty,
+                Traces = group.Traces
+                    .Select(trace => trace with
+                    {
+                        Steps = trace.Steps
+                            .Select(step => step with { Description = null })
+                            .ToArray(),
+                    })
+                    .ToArray(),
+            })
+            .ToArray();
 
     private async Task<IReadOnlyList<CurrentFlowGroup>> LoadFlowGroupsAsync(
         Guid documentVersionId,
