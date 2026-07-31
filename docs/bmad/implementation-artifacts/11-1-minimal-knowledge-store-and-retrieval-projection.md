@@ -220,9 +220,9 @@ not stored as a separate Edge type.
   `docs/bmad/implementation-artifacts/workflow-activations/11-1-minimal-knowledge-store-and-retrieval-projection.json`.
 - Proposed SpecKit short name: `minimal-knowledge-store`.
 - SpecKit feature directory: `specs/004-minimal-knowledge-store`.
-- Current workflow stage: `review`.
+- Current workflow stage: `quality-review`.
 - Latest workflow checkpoint ID:
-  `bmad-11-1-review-binding-recovery-20260731T073219Z-8a5f31`.
+  `bmad-11-1-quality-review-20260731T081847Z-7f3a2c`.
 - Latest workflow checkpoint SHA: pending commit-trailer binding.
 
 ### Agent Model Used
@@ -267,6 +267,10 @@ not stored as a separate Edge type.
   619-test non-provider/non-PostgreSQL regression pass, and all focused
   knowledge-store suites green. The artifact-bound Epic 4.1 provider-contract
   class remains outside this story boundary.
+- The user-approved Correct Course repair restored the activation record to
+  its historical `tasks` checkpoint and resumed current progress exclusively
+  from the validated `quality-review` workflow state. No product, Story 4.3,
+  EF migration, or model-snapshot file changed.
 
 ### File List
 
