@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4/verify-test/1",
+  "kind": "command",
+  "stage": "verify-test",
+  "source_commit": "4d73d4380248799ef1a3adc900344a9a1e125048",
+  "artifact_paths": [
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-test-4d73d43.raw.txt",
+    "tests/Vulgata.Tests/Vulgata.Tests.csproj"
+  ],
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+  "exit_code": 0,
+  "observed_at": "2026-07-31T12:16:49.3863247Z",
+  "summary": "Fresh detached-worktree full suite passed 625/625, including the exact source-bound CodeGraphContext 0.5.1 final-image provider contract.",
+  "raw_output_path": "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-test-4d73d43.raw.txt",
+  "raw_output_sha256": "4aa3c1ba6ea0a0eb5e6ed44e1b0fc5de4b91718762d2fee39907231b8237d317",
+  "execution_worktree": "G:/source/repos/vulgata/.worktrees/epic4-close-verify-4d73d43",
+  "execution_worktree_head": "4d73d4380248799ef1a3adc900344a9a1e125048",
+  "execution_worktree_git_identity": "G:/source/repos/vulgata/.git/worktrees/epic4-close-verify-4d73d43",
+  "boundary_clean": true,
+  "source_equality_validated_at": "2026-07-31T12:17:23Z",
+  "environment_summary": "Windows PowerShell host; .NET 10 SDK; Docker image sha256:1a9e3d6ecbfe87dd0ce0a5ed3b9af7d551f7ea7a6462cac44d0f268d65772596 bound to the pinned source and production manifest b0d560bf2c47fc7c64038ae2583ac62e7983818a2b2b69121108f5eb685d212b."
+}
