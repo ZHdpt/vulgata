@@ -222,7 +222,7 @@ not stored as a separate Edge type.
 - SpecKit feature directory: `specs/004-minimal-knowledge-store`.
 - Current workflow stage: `review`.
 - Latest workflow checkpoint ID:
-  `bmad-11-1-candidate-20260731T034532Z-c8e2b4`.
+  `bmad-11-1-review-binding-recovery-20260731T073219Z-8a5f31`.
 - Latest workflow checkpoint SHA: pending commit-trailer binding.
 
 ### Agent Model Used

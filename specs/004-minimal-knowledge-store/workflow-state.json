@@ -16,7 +16,7 @@
     },
     "quality-review": {
       "status": "pending",
-      "iteration": 3,
+      "iteration": 4,
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
@@ -265,16 +265,31 @@
     },
     {
       "stage": "review",
-      "status": "active",
+      "status": "blocked",
       "started_at": "2026-07-31T07:21:41Z",
-      "completed_at": null,
-      "input_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "completed_at": "2026-07-31T07:32:19Z",
+      "input_commit": "930ab025494442128eab9c0486c70f7b12e57595",
       "input_hashes": {},
       "agent_role": "quality-reviewer",
       "evidence_paths": [
         "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
         "docs/bmad/implementation-artifacts/sprint-status.yaml",
         "specs/004-minimal-knowledge-store/contracts/knowledge-retrieval-projection.md"
+      ],
+      "failure": "BLOCKED: the BMad development record retained an obsolete checkpoint ID and last_checkpoint.committed_paths did not truthfully enumerate the review-repair commit."
+    },
+    {
+      "stage": "review",
+      "status": "active",
+      "started_at": "2026-07-31T07:32:19Z",
+      "completed_at": null,
+      "input_commit": "930ab025494442128eab9c0486c70f7b12e57595",
+      "input_hashes": {},
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+        "docs/bmad/implementation-artifacts/workflow-activations/11-1-minimal-knowledge-store-and-retrieval-projection.json",
+        "specs/004-minimal-knowledge-store/workflow-state.json"
       ],
       "failure": null
     }
@@ -551,7 +566,7 @@
       "verdict_paths": []
     },
     "quality-review": {
-      "count": 3,
+      "count": 4,
       "verdict_paths": []
     }
   },
@@ -880,19 +895,13 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-1-ready-review-repair-20260731T072141Z-3c7e52",
+    "checkpoint_id": "bmad-11-1-review-binding-recovery-20260731T073219Z-8a5f31",
     "scope_key": "story/11-1-minimal-knowledge-store-and-retrieval-projection",
     "stage": "review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "docs/bmad/implementation-artifacts/workflow-activations/11-1-minimal-knowledge-store-and-retrieval-projection.json",
-      "specs/004-minimal-knowledge-store/tasks.md",
-      "specs/004-minimal-knowledge-store/workflow-state.json",
-      "src/dotnet/Vulgata.Core",
-      "src/dotnet/Vulgata.Infrastructure",
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests"
+      "specs/004-minimal-knowledge-store/workflow-state.json"
     ],
     "verification_evidence_ids": [
       "11-1-minimal-knowledge-store-and-retrieval-projection/implement/tdd-groups",
@@ -913,5 +922,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-31T07:21:41Z"
+  "updated_at": "2026-07-31T07:32:19Z"
 }
