@@ -1,7 +1,7 @@
 ---
 story_key: 11-1-minimal-knowledge-store-and-retrieval-projection
 title: "Story 11.1: Minimal Knowledge Store and Retrieval Projection"
-Status: in-progress
+Status: review
 Epic: 11
 Story: 1
 created: 2026-07-30
@@ -261,7 +261,7 @@ not stored as a separate Edge type.
   implementation tasks aligned.
 - The EF integration owner generated
   `20260731041654_AddMinimalKnowledgeStore`, verified rollback to Story 4.3,
-  reapply, fourteen accepted check constraints, unchanged prior migrations,
+  reapply, sixteen accepted check constraints, unchanged prior migrations,
   and no pending model changes.
 - The candidate has independent PostgreSQL currentness-race evidence, a
   619-test non-provider/non-PostgreSQL regression pass, and all focused

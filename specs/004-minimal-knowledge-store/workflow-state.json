@@ -16,7 +16,7 @@
     },
     "quality-review": {
       "status": "pending",
-      "iteration": 2,
+      "iteration": 3,
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
@@ -254,13 +254,28 @@
     },
     {
       "stage": "review",
-      "status": "active",
+      "status": "blocked",
       "started_at": "2026-07-31T07:05:20Z",
-      "completed_at": null,
-      "input_commit": "cd8bfcbb607b9acb8dca00ec0a121a4ca5c3ded3",
+      "completed_at": "2026-07-31T07:21:41Z",
+      "input_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
       "input_hashes": {},
       "agent_role": "quality-reviewer",
       "evidence_paths": [],
+      "failure": "BLOCKED: BMad story and sprint authority remained in-progress instead of review at reviewer dispatch; retrieval contract also used empty string where the accepted implementation returns null."
+    },
+    {
+      "stage": "review",
+      "status": "active",
+      "started_at": "2026-07-31T07:21:41Z",
+      "completed_at": null,
+      "input_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "input_hashes": {},
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml",
+        "specs/004-minimal-knowledge-store/contracts/knowledge-retrieval-projection.md"
+      ],
       "failure": null
     }
   ],
@@ -536,7 +551,7 @@
       "verdict_paths": []
     },
     "quality-review": {
-      "count": 2,
+      "count": 3,
       "verdict_paths": []
     }
   },
@@ -845,12 +860,29 @@
       "observed_at": "2026-07-31T07:05:20Z",
       "summary": "Current-boundary non-provider, non-PostgreSQL regression passed 671 of 671; PostgreSQL was verified separately.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/additional-correction/analyze-accepted",
+      "kind": "independent-review",
+      "stage": "analyze",
+      "source_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "artifact_paths": [
+        "specs/004-minimal-knowledge-store/spec.md",
+        "specs/004-minimal-knowledge-store/plan.md",
+        "specs/004-minimal-knowledge-store/tasks.md",
+        "specs/004-minimal-knowledge-store/contracts"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-31T07:21:41Z",
+      "summary": "Final read-only analysis accepted 33 of 33 requirements and 36 of 36 task mappings with zero critical, high, medium, ambiguity, Constitution, or scope findings.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-1-additional-correction-20260731T070520Z-9d4a71",
+    "checkpoint_id": "bmad-11-1-ready-review-repair-20260731T072141Z-3c7e52",
     "scope_key": "story/11-1-minimal-knowledge-store-and-retrieval-projection",
-    "stage": "correction",
+    "stage": "review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
@@ -874,11 +906,12 @@
       "11-1-minimal-knowledge-store-and-retrieval-projection/correction/regression",
       "11-1-minimal-knowledge-store-and-retrieval-projection/additional-correction/tdd",
       "11-1-minimal-knowledge-store-and-retrieval-projection/additional-correction/postgresql",
-      "11-1-minimal-knowledge-store-and-retrieval-projection/additional-correction/regression"
+      "11-1-minimal-knowledge-store-and-retrieval-projection/additional-correction/regression",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/additional-correction/analyze-accepted"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-31T07:05:20Z"
+  "updated_at": "2026-07-31T07:21:41Z"
 }

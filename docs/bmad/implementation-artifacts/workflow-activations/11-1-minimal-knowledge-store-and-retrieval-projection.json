@@ -20,7 +20,7 @@
     "unrelated_paths": [],
     "observed_at": "2026-07-30T13:01:38.1933047Z"
   },
-  "activation_checkpoint_id": "bmad-11-1-additional-correction-20260731T070520Z-9d4a71",
+  "activation_checkpoint_id": "bmad-11-1-ready-review-repair-20260731T072141Z-3c7e52",
   "feature_directory": "specs/004-minimal-knowledge-store",
   "superseded_by_state": "specs/004-minimal-knowledge-store/workflow-state.json"
 }

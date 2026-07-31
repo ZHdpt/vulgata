@@ -80,7 +80,7 @@ each returned CurrentFlowGroup
   title = ""
 
 each returned CurrentFlowTraceStep
-  description = ""
+  description = null
 ```
 
 A section with a restricted Document reference additionally returns empty
