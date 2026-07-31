@@ -22,7 +22,7 @@ context, specify, plan, conditional plan-review, tasks, implement,
 quality-review, conditional-e2e, verify, complete
 ```
 
-For Standard and `expedited-mvp`, `quality-review` is one independent combined acceptance-and-quality gate and `active_gates.acceptance-review.status` is `invalidated`. Skipped Full-only stages do not acquire fabricated accepted records. A level change is never implicit: if Standard eligibility becomes false, stop for explicit `Standard -> Full` authorization and resume from the earliest omitted or invalid stage. If the expedited allowlist or lifetime no longer applies, stop and select Standard or Full under its ordinary rules.
+For Standard and `expedited-mvp`, `quality-review` is one independent combined acceptance-and-quality gate and `active_gates.acceptance-review.status` is `invalidated` at iteration zero with no dispatch or verdict. For `expedited-mvp`, omitted `spec-review`, `analyze`, and `acceptance-review` iteration records likewise stay unused at count zero with no verdict paths. Skipped Full-only stages do not acquire fabricated accepted records. A level change is never implicit: if Standard eligibility becomes false, stop for explicit `Standard -> Full` authorization and resume from the earliest omitted or invalid stage. If the expedited allowlist or lifetime no longer applies, stop and select Standard or Full under its ordinary rules.
 
 `expedited-mvp` uses the same internal stage sequence and combined review shape
 as Standard, but only for its approved deadline stories. Its three planned
@@ -89,7 +89,7 @@ The BMad story remains `review` during review-driven implementation or E2E corre
 
 A validated `ACCEPT` from `spec-judge`, `plan-judge`, `acceptance-reviewer`, or `quality-reviewer` completes that gate. Once all required reviewers for a boundary accept, the orchestrator advances and creates the applicable local checkpoint without requesting duplicate user approval. A nonblocking analysis result, passing E2E gate, or passing verification behaves the same way.
 
-The workflow pauses for explicit user direction when the next action depends on authority outside the reviewing agent's contract: remediation of a Critical/High `speckit-analyze` finding; unresolved product intent/scope or three `REVISE` outcomes; a Strong architecture recommendation or ADR conflict; divergent history or destructive VCS recovery; inseparable worktree ownership; unavailable required infrastructure; unsafe external actions; or an ambiguous E2E failure. `REVISE` findings that remain inside already approved intent and scope follow the correction loop automatically for at most three attempts. `BLOCKED` stops immediately and does not consume an attempt.
+The workflow pauses for explicit user direction when the next action depends on authority outside the reviewing agent's contract: remediation of a Critical/High `speckit-analyze` finding; unresolved product intent/scope or three `REVISE` outcomes; a Strong architecture recommendation or ADR conflict; divergent history or destructive VCS recovery; inseparable worktree ownership; unavailable required infrastructure; unsafe external actions; or an ambiguous E2E failure. Every completed gate persists its raw verdict output against the pinned boundary. Only `REVISE` increments `review_iterations.<gate>.count`; `BLOCKED` stops immediately without consuming an attempt.
 
 ## Invalidation Dependencies
 

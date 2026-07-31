@@ -164,6 +164,32 @@ class WorkflowValidationTests(unittest.TestCase):
     def test_workflow_state_accepts_complete_contract(self):
         self.assertEqual([], validate_workflow_state(valid_state()))
 
+    def test_workflow_state_accepts_canonical_absolute_checkout_identities(self):
+        state = valid_state()
+        state["repository_preflight"]["git_common_directory"] = "C:/source/vulgata/.git"
+        state["repository_preflight"]["worktree_path"] = "C:/source/vulgata/.worktrees/story-11-1"
+
+        self.assertEqual([], validate_workflow_state(state))
+
+    def test_workflow_state_keeps_repository_and_artifact_paths_relative(self):
+        state = valid_state()
+        state["repository_preflight"]["repository_root"] = "C:/source/vulgata"
+        state["repository_preflight"]["owned_paths"] = ["C:/source/vulgata/specs/001-example"]
+        state["source_artifacts"][0]["path"] = "C:/source/vulgata/docs/bmad/story.md"
+        state["dispatches"][0]["output_path"] = "C:/source/vulgata/specs/001-example/context-brief.md"
+        state["verification"][0]["raw_output_path"] = "C:/source/vulgata/specs/001-example/context.log"
+
+        errors = validate_workflow_state(state)
+
+        for expected in [
+            "repository_preflight.repository_root",
+            "repository_preflight.owned_paths[0]",
+            "source_artifacts[0].path",
+            "dispatches[0].output_path",
+            "verification[0].raw_output_path",
+        ]:
+            self.assertTrue(any(expected in error for error in errors), (expected, errors))
+
     def test_workflow_state_requires_a_closed_execution_level(self):
         state = valid_state()
         del state["execution_level"]
@@ -191,6 +217,51 @@ class WorkflowValidationTests(unittest.TestCase):
         state["active_gates"]["acceptance-review"]["status"] = "pending"
         errors = validate_workflow_state(state)
         self.assertTrue(any("reduced execution_level" in error for error in errors))
+
+    def test_expedited_mvp_omitted_review_gates_remain_unused_at_iteration_zero(self):
+        state = valid_state()
+        state["execution_level"] = "expedited-mvp"
+        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
+
+        for gate in ("spec-review", "analyze", "acceptance-review"):
+            with self.subTest(gate=gate):
+                invalid = copy.deepcopy(state)
+                invalid["review_iterations"][gate] = {
+                    "count": 1,
+                    "verdict_paths": [f"specs/001-example/reviews/{gate}-1.json"],
+                }
+                errors = validate_workflow_state(invalid)
+                self.assertTrue(
+                    any(f"review_iterations.{gate}" in error and "expedited-mvp" in error for error in errors),
+                    errors,
+                )
+
+    def test_blocked_combined_review_requires_raw_verdict_without_revision_increment_or_evidence_ledger(self):
+        state = valid_state()
+        state["execution_level"] = "expedited-mvp"
+        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
+        verdict_path = "specs/001-example/reviews/quality-review-blocked.json"
+        state["active_gates"]["quality-review"].update(
+            status="blocked",
+            iteration=1,
+            dispatch_id="quality-review-1",
+            verdict_path=verdict_path,
+            input_boundary=copy.deepcopy(BOUNDARY),
+            completed_at="2026-07-12T01:00:00Z",
+        )
+        state["review_iterations"]["quality-review"] = {
+            "count": 0,
+            "verdict_paths": [verdict_path],
+        }
+
+        self.assertEqual([], validate_workflow_state(state))
+
+        state["active_gates"]["quality-review"]["verdict_path"] = None
+        errors = validate_workflow_state(state)
+        self.assertTrue(
+            any("active_gates.quality-review.verdict_path" in error and "blocked" in error for error in errors),
+            errors,
+        )
 
     def test_sprint_loop_skill_defines_standard_level_without_unsafe_shortcuts(self):
         skill = (
@@ -497,13 +568,19 @@ class WorkflowValidationTests(unittest.TestCase):
         state = json.loads((refs / "workflow-state.schema.json").read_text(encoding="utf-8"))
         self.assertTrue({
             "boundary", "gateRecord", "stageRecord", "preflight", "sourceArtifact", "dispatch",
-            "reviewIteration", "e2eDecision", "evidence", "checkpoint", "failure",
+            "reviewIteration", "e2eDecision", "evidence", "checkpoint", "failure", "checkoutIdentityPath",
         } <= set(state["$defs"]))
         self.assertTrue(state["allOf"])
         self.assertFalse(verdict["additionalProperties"])
         self.assertFalse(verdict["$defs"]["boundary"]["additionalProperties"])
         self.assertTrue(verdict["properties"]["reviewed_artifacts"]["uniqueItems"])
         self.assertFalse(state["additionalProperties"])
+        self.assertEqual(".", state["$defs"]["preflight"]["properties"]["repository_root"]["const"])
+        for field in ("git_common_directory", "worktree_path"):
+            self.assertEqual(
+                "#/$defs/checkoutIdentityPath",
+                state["$defs"]["preflight"]["properties"][field]["$ref"],
+            )
         self.assertEqual("#/$defs/boundary", state["$defs"]["e2eDecision"]["properties"]["source_boundary"]["$ref"])
         self.assertFalse(state["$defs"]["e2ePredicate"]["additionalProperties"])
         self.assertFalse(state["$defs"]["coverageOverride"]["additionalProperties"])

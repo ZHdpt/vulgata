@@ -12,6 +12,8 @@ Every independent gate returns exactly one verdict:
 
 Passing tests cannot convert a review into `ACCEPT`. In Full, a judge cannot replace `speckit-analyze`, and one review axis cannot replace another. Standard intentionally omits analysis and the separate acceptance axis only after recorded eligibility; its one quality verdict uses the documented combined acceptance-and-quality contract.
 
+Each completed gate dispatch returns and persists one unchanged raw verdict. The active-gate record points to that output for `ACCEPT`, `REVISE`, and `BLOCKED`; it is not duplicated into an independent evidence ledger. Recovery never fabricates an unavailable historical verdict and instead reruns the gate for fresh boundary-pinned output when needed.
+
 `ACCEPT` is also the stage's approval: after validating and persisting it, the orchestrator does not ask the user to approve that same specification, plan, acceptance review, or quality review again. This removes duplicate confirmation, not independent judgment. Human direction is still required for blocking analysis remediation; unresolved intent/scope or three failed revision outcomes; Strong architecture recommendations or ADR conflicts; divergent/destructive VCS recovery; inseparable ownership; unavailable required infrastructure; unsafe external actions; and ambiguous E2E failures.
 
 ## Severities
@@ -43,7 +45,7 @@ Authors never receive a judge's private reasoning transcript. Judges receive raw
 
 ## Correction Loops
 
-1. Persist the rejected verdict and increment that gate's iteration count.
+1. Persist the rejected verdict. Increment `review_iterations.<gate>.count` only for `REVISE`; `BLOCKED` leaves the revision count unchanged.
 2. Route specification findings to a fresh `spec-author`, planning findings to a fresh `plan-architect`, task findings to a fresh `task-author`, and implementation findings to a fresh `tdd-implementer`. If correction would choose or expand product intent/scope rather than restore the approved contract, stop for explicit user direction first.
 3. When behavior changes, require a failing regression test before production correction, then targeted green and surrounding verification.
 4. Regenerate every dependent downstream artifact invalidated by an upstream correction.

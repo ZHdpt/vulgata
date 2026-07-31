@@ -162,6 +162,31 @@ def _repo_path(value: Any, field: str, errors: list[str], nullable: bool = False
         errors.append(f"{field} must not escape the repository")
 
 
+def _checkout_identity_path(value: Any, field: str, errors: list[str]) -> None:
+    if not isinstance(value, str) or not value.strip():
+        errors.append(f"{field} must be a canonical checkout identity path")
+        return
+    if "\\" in value or value.startswith("~"):
+        errors.append(f"{field} must use canonical forward-slash path syntax")
+        return
+    absolute = value.startswith("/") or re.match(r"^[A-Za-z]:/", value) is not None
+    if not absolute:
+        _repo_path(value, field, errors)
+        return
+    if value.startswith("//"):
+        errors.append(f"{field} must be a normalized absolute path")
+        return
+    if value != "/" and value.endswith("/"):
+        errors.append(f"{field} must be a normalized absolute path without a trailing slash")
+        return
+    if re.match(r"^[A-Za-z]:/", value):
+        path_parts = value[3:].split("/")
+    else:
+        path_parts = value[1:].split("/")
+    if any(part in {"", ".", ".."} for part in path_parts):
+        errors.append(f"{field} must be a normalized absolute path")
+
+
 def _string_array(value: Any, field: str, errors: list[str], paths: bool = False) -> None:
     items = _array(value, field, errors)
     if items is None:
@@ -278,13 +303,14 @@ def _validate_gate_record(value: Any, field: str, errors: list[str]) -> None:
     if data.get("input_boundary") is not None:
         _boundary(data["input_boundary"], f"{field}.input_boundary", errors)
     _timestamp(data.get("completed_at"), f"{field}.completed_at", errors, nullable=True)
-    if data.get("status") == "accepted":
+    if data.get("status") in {"accepted", "revised", "blocked"}:
+        status = data.get("status")
         if data.get("verdict_path") is None:
-            errors.append(f"{field}.verdict_path is required when accepted")
+            errors.append(f"{field}.verdict_path is required when {status}")
         if data.get("input_boundary") is None:
-            errors.append(f"{field}.input_boundary is required when accepted")
+            errors.append(f"{field}.input_boundary is required when {status}")
         if data.get("completed_at") is None:
-            errors.append(f"{field}.completed_at is required when accepted")
+            errors.append(f"{field}.completed_at is required when {status}")
 
 
 def _validate_evidence(value: Any, field: str, errors: list[str], story_key: str | None) -> None:
@@ -434,8 +460,11 @@ def validate_workflow_state(data: Any) -> list[str]:
         _unknown(preflight, fields, "repository_preflight.", errors)
         _nonempty_string(preflight.get("branch"), "repository_preflight.branch", errors)
         _sha(preflight.get("preflight_head"), "repository_preflight.preflight_head", errors)
-        for key in ("repository_root", "git_common_directory", "worktree_path"):
-            _repo_path(preflight.get(key), f"repository_preflight.{key}", errors)
+        _repo_path(preflight.get("repository_root"), "repository_preflight.repository_root", errors)
+        if isinstance(preflight.get("repository_root"), str) and preflight["repository_root"] != ".":
+            errors.append("repository_preflight.repository_root must equal .")
+        for key in ("git_common_directory", "worktree_path"):
+            _checkout_identity_path(preflight.get(key), f"repository_preflight.{key}", errors)
         if not isinstance(preflight.get("worktree_status"), str):
             errors.append("repository_preflight.worktree_status must be a string")
         _string_array(preflight.get("owned_paths"), "repository_preflight.owned_paths", errors, paths=True)
@@ -487,6 +516,14 @@ def validate_workflow_state(data: Any) -> list[str]:
             if not isinstance(count, int) or isinstance(count, bool) or count < 0:
                 errors.append(f"review_iterations.{gate}.count must be a non-negative integer")
             _string_array(record.get("verdict_paths"), f"review_iterations.{gate}.verdict_paths", errors, paths=True)
+            if (
+                state.get("execution_level") == "expedited-mvp"
+                and gate in {"spec-review", "analyze", "acceptance-review"}
+                and (count != 0 or record.get("verdict_paths") != [])
+            ):
+                errors.append(
+                    f"review_iterations.{gate} must remain unused at iteration zero for expedited-mvp"
+                )
 
     e2e = _mapping(state.get("e2e_decision"), "e2e_decision", errors)
     if e2e is not None:
@@ -1397,6 +1434,27 @@ def _validate_schema_semantics(filename: str, schema: dict[str, Any], path: Path
             if isinstance(e2e_rules, list)
             and _schema_at(rule, "if", "properties", "result", "const") == "skipped-covered"
         ), None) if isinstance(e2e_rules, list) else None
+        gate_rules = _schema_at(schema, "$defs", "gateRecord", "allOf")
+        verdict_output_rule = next((
+            rule for rule in gate_rules
+            if isinstance(gate_rules, list)
+            and _schema_enum(rule, "if", "properties", "status", "enum")
+            == {"accepted", "revised", "blocked"}
+        ), None) if isinstance(gate_rules, list) else None
+        workflow_rules = schema.get("allOf")
+        expedited_rule = next((
+            rule for rule in workflow_rules
+            if isinstance(workflow_rules, list)
+            and _schema_at(rule, "if", "properties", "execution_level", "const") == "expedited-mvp"
+        ), None) if isinstance(workflow_rules, list) else None
+        expedited_iterations = _schema_at(
+            expedited_rule, "then", "properties", "review_iterations", "properties"
+        )
+        expedited_omissions = isinstance(expedited_iterations, dict) and all(
+            _schema_at(expedited_iterations, gate, "properties", "count", "const") == 0
+            and _schema_at(expedited_iterations, gate, "properties", "verdict_paths", "maxItems") == 0
+            for gate in ("spec-review", "analyze", "acceptance-review")
+        )
         checks = [
             (_schema_at(schema, "properties", "schema_version", "const") == "1.0", "schema version const"),
             (_schema_enum(schema, "$defs", "stage", "enum") == VALID_STAGES, "stage enum"),
@@ -1416,6 +1474,18 @@ def _validate_schema_semantics(filename: str, schema: dict[str, Any], path: Path
                 == "#/$defs/boundary",
                 "E2E source boundary reference",
             ),
+            (
+                _schema_at(schema, "$defs", "preflight", "properties", "repository_root", "const") == "."
+                and _schema_at(
+                    schema, "$defs", "preflight", "properties", "git_common_directory", "$ref"
+                ) == "#/$defs/checkoutIdentityPath"
+                and _schema_at(
+                    schema, "$defs", "preflight", "properties", "worktree_path", "$ref"
+                ) == "#/$defs/checkoutIdentityPath",
+                "checkout identity path contract",
+            ),
+            (isinstance(verdict_output_rule, dict), "gate raw verdict output rule"),
+            (expedited_omissions, "expedited omitted-gate iteration rules"),
             (coverage_nonempty, "coverage override nonempty arrays"),
             (
                 isinstance(skipped_rule, dict)

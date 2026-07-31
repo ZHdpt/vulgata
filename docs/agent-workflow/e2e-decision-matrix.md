@@ -27,6 +27,8 @@ The record contains:
 
 “Tests exist” is insufficient. A coverage override must identify the tests, cover every triggered Required predicate ID, show that they exercise the full changed behavior across each relevant observable boundary, match the decision's current `source_boundary`, and cite nonempty passing evidence from that boundary. Otherwise `required` stays true. `skipped-covered` is valid only with this complete override.
 
+Under `expedited-mvp`, persistence and migration/data-lifecycle predicates remain Required unless a complete current-boundary integration test satisfies this override. Story 11.1 therefore retains persistence and migration E2E responsibility. The clean-database two-Repository demonstration and final Docker release verification belong to Story 11.5; Story 11.1 runs Docker only if it changes container/runtime behavior.
+
 ## Runner Boundary
 
 `e2e-runner` uses `gpt-5.6-terra` with low reasoning effort. It may add or update E2E, API, or integration test code and run the repository's existing test framework. It may not change production code, alter requirements, accept a failed product behavior, update BMad lifecycle state, stage files, or commit.

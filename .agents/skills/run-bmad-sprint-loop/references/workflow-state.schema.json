@@ -48,6 +48,14 @@
     "hash": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
     "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
     "path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
+    "checkoutIdentityPath": {
+      "type": "string",
+      "minLength": 1,
+      "anyOf": [
+        {"$ref": "#/$defs/path"},
+        {"pattern": "^(?:[A-Za-z]:)?/(?!/)(?!.*(?:^|/)(?:\\.|\\.\\.)(?:/|$))(?!.*//)(?!.*\\\\)(?!.*[^/]/$).+$"}
+      ]
+    },
     "stage": {"enum": ["context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze", "implement", "acceptance-review", "quality-review", "conditional-e2e", "verify", "complete"]},
     "status": {"enum": ["pending", "active", "accepted", "revised", "blocked", "failed", "invalidated"]},
     "boundary": {
@@ -76,7 +84,7 @@
       "additionalProperties": false,
       "allOf": [
         {
-          "if": {"properties": {"status": {"const": "accepted"}}, "required": ["status"]},
+          "if": {"properties": {"status": {"enum": ["accepted", "revised", "blocked"]}}, "required": ["status"]},
           "then": {
             "properties": {
               "verdict_path": {"$ref": "#/$defs/path"},
@@ -112,7 +120,7 @@
       "required": ["branch", "preflight_head", "repository_root", "git_common_directory", "worktree_path", "worktree_status", "owned_paths", "unrelated_paths", "observed_at"],
       "properties": {
         "branch": {"type": "string", "minLength": 1}, "preflight_head": {"$ref": "#/$defs/commit"},
-        "repository_root": {"$ref": "#/$defs/path"}, "git_common_directory": {"$ref": "#/$defs/path"}, "worktree_path": {"$ref": "#/$defs/path"},
+        "repository_root": {"const": "."}, "git_common_directory": {"$ref": "#/$defs/checkoutIdentityPath"}, "worktree_path": {"$ref": "#/$defs/checkoutIdentityPath"},
         "worktree_status": {"type": "string"},
         "owned_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
         "unrelated_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
@@ -252,6 +260,20 @@
                   "completed_at": {"type": "null"}
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"execution_level": {"const": "expedited-mvp"}}, "required": ["execution_level"]},
+      "then": {
+        "properties": {
+          "review_iterations": {
+            "properties": {
+              "spec-review": {"properties": {"count": {"const": 0}, "verdict_paths": {"maxItems": 0}}},
+              "analyze": {"properties": {"count": {"const": 0}, "verdict_paths": {"maxItems": 0}}},
+              "acceptance-review": {"properties": {"count": {"const": 0}, "verdict_paths": {"maxItems": 0}}}
             }
           }
         }

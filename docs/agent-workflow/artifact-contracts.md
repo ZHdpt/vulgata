@@ -1,6 +1,6 @@
 # Sprint Loop Artifact Contracts
 
-All contracts are JSON-compatible even when rendered as Markdown or embedded in a dispatch prompt. Paths are repository-relative with `/` separators. Timestamps use UTC RFC 3339. Git commits are full immutable SHAs except while a not-yet-committed checkpoint is being assembled.
+All contracts are JSON-compatible even when rendered as Markdown or embedded in a dispatch prompt. Durable artifact, output, ownership, and authority paths are repository-relative with `/` separators. The only checkout-identity exceptions are `repository_preflight.git_common_directory` and `repository_preflight.worktree_path`, which may carry canonical normalized absolute paths; `repository_root` remains exactly `.`. Timestamps use UTC RFC 3339. Git commits are full immutable SHAs except while a not-yet-committed checkpoint is being assembled.
 
 ## Workflow State
 
@@ -26,9 +26,9 @@ Each feature owns `specs/<feature>/workflow-state.json`.
 | `recoverable_failure` | object or null | yes | Failure evidence and earliest safe resume stage |
 | `updated_at` | string | yes | UTC timestamp of the atomic state write |
 
-Stage and active-gate `status` is `pending`, `active`, `accepted`, `revised`, `blocked`, `failed`, or `invalidated`. The scalar `stage` remains canonical. Full parallel implementation review uses `acceptance-review` plus `quality-review`. Standard and `expedited-mvp` set the unused acceptance gate to `invalidated` at iteration zero and enter `quality-review` directly for their combined acceptance-and-quality verdict. A state file cannot claim a stage accepted without evidence paths and validated inputs. It may contain provisional `stage: "complete"` with a pending final binding, but that claim is untrusted until the BMad story is `done` and the final checkpoint ID resolves uniquely from Git trailers.
+Stage and active-gate `status` is `pending`, `active`, `accepted`, `revised`, `blocked`, `failed`, or `invalidated`. The scalar `stage` remains canonical. Full parallel implementation review uses `acceptance-review` plus `quality-review`. Standard and `expedited-mvp` set the unused acceptance gate to `invalidated` at iteration zero and enter `quality-review` directly for their combined acceptance-and-quality verdict. For `expedited-mvp`, omitted `spec-review`, `analyze`, and `acceptance-review` iteration records stay at count zero with no verdict paths; they never receive fabricated accepted history. An `accepted`, `revised`, or `blocked` active gate references its persisted raw verdict, pinned input boundary, and completion time. A state file cannot claim a stage accepted without evidence paths and validated inputs. It may contain provisional `stage: "complete"` with a pending final binding, but that claim is untrusted until the BMad story is `done` and the final checkpoint ID resolves uniquely from Git trailers.
 
-`repository_preflight` is refreshed before every mutation and checkpoint. Resume compares its branch, Git/worktree identities, preflight `HEAD`, exact porcelain status snapshot, owned paths, and unrelated paths with current state. A missing ownership field prevents mutation; changed ownership or inseparable edits require user direction rather than inference.
+`repository_preflight` is refreshed before every mutation and checkpoint. `repository_root` is the repository-relative anchor `.`. `git_common_directory` and `worktree_path` are the only fields that may use canonical absolute checkout identities (forward slashes, no traversal, redundant separators, dot segments, or trailing separator); repository-relative fixture values remain valid. Every nested artifact/output/ownership path remains repository-relative and traversal-safe. Resume compares the branch, Git/worktree identities, preflight `HEAD`, exact porcelain status snapshot, owned paths, and unrelated paths with current state. A missing ownership field prevents mutation; changed ownership or inseparable edits require user direction rather than inference.
 
 ## Story/Feature Mapping
 
@@ -48,6 +48,8 @@ Before `speckit-specify` creates a feature directory, the root orchestrator atom
 The activation checkpoint commits this record with the story `ready-for-dev → in-progress` transition and, when the parent epic is `backlog`, the parent epic `backlog → in-progress` transition in the same commit. Resume derives the canonical path from the exact story key and validates its checkpoint trailer, so it never needs a feature mapping to find active work.
 
 After `spec-author` returns the SpecKit-created feature path and artifacts, the root alone creates `workflow-state.json`, writes both mapping sides atomically, sets the activation record's `feature_directory` and `superseded_by_state`, and validates one-to-one ownership. Resume then follows the activation pointer to the mapped state; a partial or conflicting handoff blocks.
+
+For `expedited-mvp`, the accepted delivery-definition checkpoint at `tasks` becomes the durable activation checkpoint. Once mapped and superseded, that activation record remains the historical `tasks` checkpoint; current implementation, review, E2E, and verification progress belongs only in `workflow-state.json` and must not overwrite activation history.
 
 Legacy fallback is deterministic and applies only to a BMad story already `in-progress` or `review` before this workflow introduced activation records. If the canonical activation file is absent, resume may use the feature directory explicitly recorded in the BMad story development record only when that directory contains a valid `workflow-state.json` whose story key, epic key, and feature path point back exactly; no other story or feature claims either side; artifact/checkpoint validation succeeds; and current ownership is separable. The validated pair is treated as a legacy activation source and resumed at the earliest incomplete/invalid stage. It is never duplicated merely because the activation file is absent. Missing, inferred, partial, or conflicting legacy mappings still block. Every story activated by this workflow must have the canonical activation record; the fallback cannot excuse a missing record for new work.
 
@@ -72,11 +74,13 @@ Each finding contains `id`, `severity`, `category`, `artifact`, `location`, `aff
 
 A schema-valid `ACCEPT` from the independent role assigned to the gate is sufficient stage-approval evidence. It does not require a second `human-approval` evidence object. Human-approval evidence remains required for decisions reserved to the operator contract: blocking analysis remediation; unresolved intent/scope or three failed revision outcomes; Strong architecture recommendations or ADR conflicts; divergent/destructive VCS recovery; inseparable worktree ownership; unavailable required infrastructure; unsafe external actions; and ambiguous E2E failures.
 
+Every completed gate outcome (`ACCEPT`, `REVISE`, or `BLOCKED`) is persisted unchanged at the gate's repository-relative `verdict_path` and is the required raw output of that review dispatch. The gate record and verdict path are authoritative; no duplicate `verification` entry or independent evidence ledger is required. If a historical raw verdict was not durably saved, recovery records that limitation and reruns the gate for fresh output rather than reconstructing or fabricating the missing verdict.
+
 ## Analyze Report
 
 The read-only `artifact-analyst` returns the verdict contract with `gate = "analyze"`, plus `coverage_metrics` and hashes of `spec.md`, the complete plan set, and `tasks.md`. `ACCEPT` means no Critical/High finding and advances without duplicate user approval. `REVISE` means blocking artifact findings exist; the report is persisted unchanged and remediation requires explicit user approval. `BLOCKED` means analysis could not complete because inputs, authority, or tooling are unavailable.
 
-`review_iterations.analyze` increments for every completed report. An approved remediation invalidates affected downstream artifacts, then analysis reruns as a new iteration. Three `REVISE` outcomes at the same source scope stop for user direction; the workflow never attempts a fourth remediation automatically. `BLOCKED` stops immediately and is not a revision attempt.
+`review_iterations.analyze.count` increments only for `REVISE` outcomes. Its verdict paths preserve every durably persisted report, including `BLOCKED`, without treating path count as the revision count. An approved remediation invalidates affected downstream artifacts, then analysis reruns as a new iteration. Three `REVISE` outcomes at the same source scope stop for user direction; the workflow never attempts a fourth remediation automatically. `BLOCKED` stops immediately and is not a revision attempt.
 
 Example:
 
@@ -134,7 +138,7 @@ Every durable claim references an evidence object:
 
 Epic-close command evidence is stored at `docs/bmad/implementation-artifacts/epic-gates/<bmad-epic-key>/evidence/<evidence-id>.json`, one atomic file per command. It contains every field above plus `execution_worktree`, `execution_worktree_head`, `boundary_clean`, `source_equality_validated_at`, `environment_summary`, required `raw_output_path`, and `raw_output_sha256`. The raw stdout/stderr file is repository-relative under the same `evidence/` directory, exists, hashes correctly, and is committed with the JSON. `source_commit`, execution checkout `HEAD`, and the epic gate's pinned commit must be equal. The final gate record references these repository-relative paths, and the final checkpoint commits every referenced evidence and raw-output file.
 
-Red evidence states the expected missing behavior and observed failure. Green evidence identifies the same behavior and passing targeted/surrounding tests. Review and analysis evidence link to their complete verdict/report, not only a prose summary.
+Red evidence states the expected missing behavior and observed failure. Green evidence identifies the same behavior and passing targeted/surrounding tests. Gate-bearing raw verdicts and reports are required dispatch outputs referenced directly by gate and iteration records; they are not duplicated into an independent review-evidence ledger.
 
 ## Epic Architecture Evidence
 

@@ -35,6 +35,11 @@ Create one concise SpecKit feature per story. `spec-review`,
 included acceptance criterion, security boundary, migration, regression risk,
 test, and known limitation.
 
+The omitted gates remain unused at iteration zero with no fabricated verdict
+history. The combined quality gate persists one unchanged raw verdict as its
+required output, not as an independent evidence ledger; unavailable historical
+raw verdicts are never reconstructed.
+
 Plan review remains mandatory when the plan changes an agent tool, Scan
 strategy, PRD requirement, authorization/security boundary, migration
 invariant, or Cross-Repository matching behavior. One accepted plan does not
@@ -66,7 +71,8 @@ manifest, or audit-only checkpoints.
   build, and story verification must pass.
 - Run one clean-database two-Repository E2E and one final Docker image build in
   Story 11.5. Earlier stories use current-boundary integration coverage unless
-  they change container/runtime behavior.
+  they change container/runtime behavior. Story 11.1 Docker is final-slice-only,
+  while its persistence and migration E2E predicates remain required.
 - Never weaken secret handling, source isolation, authorization, migration
   safety, deterministic evidence, or exact Cross-Repository matching.
 
@@ -86,7 +92,8 @@ them. Evidence production must not become a separate product subsystem.
 A combined-review `REVISE` returns raw findings to a fresh TDD implementer.
 Behavior changes require regression RED, then GREEN. Re-pin the candidate and
 rerun the combined review. The third `REVISE`, any `BLOCKED`, or a finding that
-requires scope beyond the deadline slice stops for user direction.
+requires scope beyond the deadline slice stops for user direction. `BLOCKED`
+persists its raw verdict but does not increment the revision count.
 
 ## Red flags
 
