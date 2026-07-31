@@ -1,7 +1,7 @@
 ---
 story_key: 11-1-minimal-knowledge-store-and-retrieval-projection
 title: "Story 11.1: Minimal Knowledge Store and Retrieval Projection"
-Status: review
+Status: done
 Epic: 11
 Story: 1
 created: 2026-07-30
@@ -220,9 +220,9 @@ not stored as a separate Edge type.
   `docs/bmad/implementation-artifacts/workflow-activations/11-1-minimal-knowledge-store-and-retrieval-projection.json`.
 - Proposed SpecKit short name: `minimal-knowledge-store`.
 - SpecKit feature directory: `specs/004-minimal-knowledge-store`.
-- Current workflow stage: `quality-review`.
+- Current workflow stage: `complete`.
 - Latest workflow checkpoint ID:
-  `bmad-11-1-quality-review-20260731T081847Z-7f3a2c`.
+  `bmad-11-1-complete-20260731T090255Z-c7e441`.
 - Latest workflow checkpoint SHA: pending commit-trailer binding.
 
 ### Agent Model Used
@@ -271,6 +271,18 @@ not stored as a separate Edge type.
   its historical `tasks` checkpoint and resumed current progress exclusively
   from the validated `quality-review` workflow state. No product, Story 4.3,
   EF migration, or model-snapshot file changed.
+- The fresh independent combined quality review accepted the complete recovery
+  boundary with zero findings.
+- The fresh E2E runner passed PostgreSQL concurrency 4 of 4 and migration tests
+  3 of 3, then applied, rolled back, and reapplied the migration on the isolated
+  `vulgata_story111_e2e_runner` database. Rollback preserved both Story 4.3
+  tables while removing all nine Story 11.1 tables; reapply restored all nine,
+  and EF reported no pending model changes. The database was then removed.
+- Final verification passed the focused Story 11.1/protected migration selection
+  155 of 155, the non-provider/non-PostgreSQL regression 671 of 671, and the Web
+  build with zero errors. Existing package-source and EF-version warnings remain.
+- Story 11.1 is complete. Docker verification and the final clean-database
+  two-Repository demonstration remain assigned to Story 11.5.
 
 ### File List
 

@@ -1,0 +1,48 @@
+Story 11.1 final verification
+Observed at: 2026-07-31T09:02:55Z
+Source commit: f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d
+
+Independent quality review
+Result: ACCEPT
+Verdict: specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json
+Reviewed boundary: 3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427..f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d
+Diff SHA-256: 228ba301b9752490acd495bdeeba665fce8ac5b188594aeb0cf044c0c1344d9a
+Findings: 0
+
+Focused Story 11.1 and protected migration selection
+Command: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~KnowledgeStoreDomainTests|FullyQualifiedName~KnowledgeStorePersistenceTests|FullyQualifiedName~KnowledgeStoreRetrievalTests|FullyQualifiedName~KnowledgeStoreMigrationTests|FullyQualifiedName~PreScanMigrationTests"
+Exit code: 0
+Result: Passed 155/155
+
+Independent PostgreSQL E2E
+Database: vulgata_story111_e2e_runner (isolated, disposable)
+Command: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~KnowledgeStorePostgreSqlConcurrencyTests"
+Exit code: 0
+Result: Passed 4/4
+Command: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~KnowledgeStoreMigrationTests"
+Exit code: 0
+Result: Passed 3/3
+Lifecycle: clean apply through 20260731041654_AddMinimalKnowledgeStore; rollback exactly to 20260730083207_AddConservativePreScanGate; reapply.
+Rollback observation: Story 11.1 tables=0; Story 4.3 tables=2.
+Reapply observation: Story 11.1 tables=9; Story 4.3 tables=2.
+Command: dotnet ef migrations has-pending-model-changes --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --context VulgataDbContext --no-build
+Exit code: 0
+Result: No changes have been made to the model since the last migration.
+Cleanup: vulgata_story111_e2e_runner dropped with force; remaining database count=0.
+
+Final build
+Command: dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
+Exit code: 0
+Result: Build succeeded; 0 errors, 9 existing warnings.
+Warnings: existing NU1507 package-source mapping and Microsoft.EntityFrameworkCore 10.0.4/10.0.9 assembly conflicts.
+
+Final regression
+Command: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests"
+Exit code: 0
+Result: Passed 671/671; failed=0; skipped=0.
+
+Scope verification
+No Story 4.3 file was modified during finalization.
+No EF migration or model snapshot was modified during finalization.
+No candidate-selection, dispatch-binding, endpoint-binding, Uncertainty, reverse-index, virtual-tree/export, public API, Agent tool, Scan strategy, or container/runtime behavior was added.
+Docker and the final clean-database two-Repository demonstration remain Story 11.5 responsibilities.
