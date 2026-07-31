@@ -220,9 +220,9 @@ not stored as a separate Edge type.
   `docs/bmad/implementation-artifacts/workflow-activations/11-1-minimal-knowledge-store-and-retrieval-projection.json`.
 - Proposed SpecKit short name: `minimal-knowledge-store`.
 - SpecKit feature directory: `specs/004-minimal-knowledge-store`.
-- Current workflow stage: `tasks`.
+- Current workflow stage: `review`.
 - Latest workflow checkpoint ID:
-  `bmad-11-1-tasks-20260731T010200Z-a4d1c7`.
+  `bmad-11-1-candidate-20260731T034532Z-c8e2b4`.
 - Latest workflow checkpoint SHA: pending commit-trailer binding.
 
 ### Agent Model Used
@@ -256,6 +256,17 @@ not stored as a separate Edge type.
 - The accepted delivery definition contains 36 dependency-ordered tasks with
   transient RED, GREEN, and REFACTOR evidence required for every production
   group.
+- TDD groups G1, G2, G5, G6, and G3/G4 are complete. The corrected candidate
+  passed SpecKit analysis with 33 of 33 requirements covered and 29 of 29
+  implementation tasks aligned.
+- The EF integration owner generated
+  `20260731034018_AddMinimalKnowledgeStore`, verified rollback to Story 4.3,
+  reapply, fourteen accepted check constraints, unchanged prior migrations,
+  and no pending model changes.
+- The candidate has independent PostgreSQL currentness-race evidence, a
+  619-test non-provider/non-PostgreSQL regression pass, and all focused
+  knowledge-store suites green. The artifact-bound Epic 4.1 provider-contract
+  class remains outside this story boundary.
 
 ### File List
 

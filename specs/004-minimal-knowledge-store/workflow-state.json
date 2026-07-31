@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/004-minimal-knowledge-store",
   "execution_level": "expedited-mvp",
-  "stage": "tasks",
+  "stage": "review",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -127,6 +127,60 @@
       "evidence_paths": [
         "specs/004-minimal-knowledge-store/tasks.md"
       ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-31T01:02:00.8994362Z",
+      "completed_at": "2026-07-31T03:45:32.9154971Z",
+      "input_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "input_hashes": {
+        "specs/004-minimal-knowledge-store/tasks.md": "1826616156795e03bdb09ef298e5620a5292c62d622d89f9308e0b2b986e9c34"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/Entities",
+        "src/dotnet/Vulgata.Core/DomainServices/IKnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeDocumentMaterializer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731034018_AddMinimalKnowledgeStore.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreDomainTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePersistenceTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreRetrievalTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreMigrationTests.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-07-31T03:15:00Z",
+      "completed_at": "2026-07-31T03:45:32.9154971Z",
+      "input_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "input_hashes": {
+        "specs/004-minimal-knowledge-store/spec.md": "c7a36a49663eef0a556d5488a4d832ef5c9bf8aa12bb01ecedc87e4a23e5843d",
+        "specs/004-minimal-knowledge-store/plan.md": "fd800a4bd0ec852ae2a820efb2e11a900a1c143996d1f42664a78e73881b6834"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/spec.md",
+        "specs/004-minimal-knowledge-store/plan.md",
+        "specs/004-minimal-knowledge-store/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "review",
+      "status": "active",
+      "started_at": "2026-07-31T03:45:32.9154971Z",
+      "completed_at": null,
+      "input_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "input_hashes": {},
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [],
       "failure": null
     }
   ],
@@ -333,6 +387,49 @@
       "returned_evidence": [
         "Exactly one authorized line changed; focused PreScan migration test exited 0."
       ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Implement five collision-safe Story 11.1 groups with observed transient RED-GREEN-REFACTOR evidence.",
+      "source_boundary": {
+        "base_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+        "candidate_commit": null,
+        "diff_sha256": "0999290fca6c56a8d5ba5125b1ac71a61c59d5d803167b3ea325ca4abebb038f",
+        "artifact_hashes": {},
+        "owned_paths": [
+          "src/dotnet/Vulgata.Core",
+          "src/dotnet/Vulgata.Infrastructure/Data",
+          "src/dotnet/Vulgata.Web/Program.cs",
+          "tests/Vulgata.Tests/KnowledgeStore*.cs"
+        ]
+      },
+      "permitted_writes": [
+        "Disjoint G1, G2, G5, G6, and G3/G4 paths recorded in tasks.md."
+      ],
+      "output_path": null,
+      "returned_evidence": [
+        "Focused domain, persistence, retrieval, migration, and PostgreSQL suites passed.",
+        "Artifact-analysis correction closed undefined enum and relational-check gaps."
+      ]
+    },
+    {
+      "role": "artifact-analyst",
+      "objective": "Perform read-only cross-artifact and candidate consistency analysis.",
+      "source_boundary": {
+        "base_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+        "candidate_commit": null,
+        "diff_sha256": "0999290fca6c56a8d5ba5125b1ac71a61c59d5d803167b3ea325ca4abebb038f",
+        "artifact_hashes": {
+          "specs/004-minimal-knowledge-store/spec.md": "c7a36a49663eef0a556d5488a4d832ef5c9bf8aa12bb01ecedc87e4a23e5843d",
+          "specs/004-minimal-knowledge-store/plan.md": "fd800a4bd0ec852ae2a820efb2e11a900a1c143996d1f42664a78e73881b6834"
+        },
+        "owned_paths": []
+      },
+      "permitted_writes": [],
+      "output_path": null,
+      "returned_evidence": [
+        "ACCEPT after one correction: 33/33 requirements and 29/29 implementation tasks aligned."
+      ]
     }
   ],
   "review_iterations": {
@@ -347,8 +444,12 @@
       ]
     },
     "analyze": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 2,
+      "verdict_paths": [
+        "specs/004-minimal-knowledge-store/spec.md",
+        "specs/004-minimal-knowledge-store/plan.md",
+        "specs/004-minimal-knowledge-store/tasks.md"
+      ]
     },
     "acceptance-review": {
       "count": 0,
@@ -482,29 +583,111 @@
       "observed_at": "2026-07-31T01:02:00.8994362Z",
       "summary": "The integration-owner-only migration pin changed exactly one authorized line and its focused regression test exited 0.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/implement/tdd-groups",
+      "kind": "test",
+      "stage": "implement",
+      "source_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/KnowledgeStoreDomainTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePersistenceTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreRetrievalTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreMigrationTests.cs"
+      ],
+      "command": "Transient focused RED-GREEN-REFACTOR groups G1, G2, G5, G6, and G3/G4",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T03:45:32.9154971Z",
+      "summary": "Every production group captured genuine RED, reached GREEN, and completed focused regression verification.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/verify/postgresql-concurrency",
+      "kind": "e2e",
+      "stage": "implement",
+      "source_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~KnowledgeStorePostgreSqlConcurrencyTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T03:45:32.9154971Z",
+      "summary": "Independent disposable PostgreSQL 17 verification passed 4 of 4 currentness, replay, and composite-ownership tests; container cleanup was verified.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/verify/migration-model",
+      "kind": "migration",
+      "stage": "implement",
+      "source_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731034018_AddMinimalKnowledgeStore.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731034018_AddMinimalKnowledgeStore.Designer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
+      ],
+      "command": "dotnet ef migrations has-pending-model-changes --context VulgataDbContext --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web --no-build",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T03:45:32.9154971Z",
+      "summary": "Exactly nine additive tables and fourteen accepted checks apply, roll back to Story 4.3, reapply, preserve prior migration hashes, and have no pending model changes.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/verify/non-provider-regression",
+      "kind": "test",
+      "stage": "implement",
+      "source_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "artifact_paths": [
+        "tests/Vulgata.Tests"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T03:45:32.9154971Z",
+      "summary": "All 619 non-provider, non-PostgreSQL regression tests passed; PostgreSQL was verified separately. Epic 4.1 artifact-bound provider tests remain outside this story.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/analyze/accepted",
+      "kind": "independent-review",
+      "stage": "analyze",
+      "source_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "artifact_paths": [
+        "specs/004-minimal-knowledge-store/spec.md",
+        "specs/004-minimal-knowledge-store/plan.md",
+        "specs/004-minimal-knowledge-store/tasks.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-31T03:45:32.9154971Z",
+      "summary": "SpecKit analysis accepted after one correction: 33 of 33 requirements covered, 29 of 29 implementation tasks aligned, zero critical or high findings.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-1-tasks-20260731T010200Z-a4d1c7",
+    "checkpoint_id": "bmad-11-1-candidate-20260731T034532Z-c8e2b4",
     "scope_key": "story/11-1-minimal-knowledge-store-and-retrieval-projection",
-    "stage": "tasks",
+    "stage": "review",
     "committed_paths": [
-      ".specify/feature.json",
-      "AGENTS.md",
       "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "docs/bmad/implementation-artifacts/workflow-activations/11-1-minimal-knowledge-store-and-retrieval-projection.json",
-      "specs/004-minimal-knowledge-store",
-      "tests/Vulgata.Tests/MigrationTests.cs"
+      "specs/004-minimal-knowledge-store/tasks.md",
+      "specs/004-minimal-knowledge-store/workflow-state.json",
+      "src/dotnet/Vulgata.Core",
+      "src/dotnet/Vulgata.Infrastructure",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests"
     ],
     "verification_evidence_ids": [
-      "11-1-minimal-knowledge-store-and-retrieval-projection/plan-review/1",
-      "11-1-minimal-knowledge-store-and-retrieval-projection/tasks/1",
-      "11-1-minimal-knowledge-store-and-retrieval-projection/integration/pre-scan-pin"
+      "11-1-minimal-knowledge-store-and-retrieval-projection/implement/tdd-groups",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/verify/postgresql-concurrency",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/verify/migration-model",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/verify/non-provider-regression",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/analyze/accepted"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-31T01:02:00.8994362Z"
+  "updated_at": "2026-07-31T03:45:32.9154971Z"
 }

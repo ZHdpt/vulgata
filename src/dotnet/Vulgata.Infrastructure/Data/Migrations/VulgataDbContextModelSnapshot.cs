@@ -303,6 +303,338 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("DatabaseConnections", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.DocumentEdge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EdgeType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("SourceDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SourceRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SourceScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TargetScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceRepositoryId", "SourceDocumentVersionId");
+
+                    b.HasIndex("TargetRepositoryId", "TargetDocumentVersionId");
+
+                    b.HasIndex("SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId");
+
+                    b.HasIndex("SourceDocumentVersionId", "TargetDocumentVersionId", "EdgeType")
+                        .IsUnique();
+
+                    b.HasIndex("TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId");
+
+                    b.ToTable("DocumentEdges", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_DocumentEdges_EdgeType_Closed", "\"EdgeType\" IN ('References', 'GeneratedFrom')");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.DocumentSection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentMarkdown")
+                        .IsRequired()
+                        .HasMaxLength(65536)
+                        .HasColumnType("character varying(65536)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentVersionIdsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Heading")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<Guid>("LogicalDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasMaxLength(131072)
+                        .HasColumnType("character varying(131072)");
+
+                    b.Property<string>("SectionKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("SectionOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceAnchorIdsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("StableSectionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentVersionId", "SectionOrder")
+                        .IsUnique();
+
+                    b.HasIndex("DocumentVersionId", "StableSectionId")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "LogicalDocumentId");
+
+                    b.HasIndex("DocumentVersionId", "LogicalDocumentId", "RepositoryId");
+
+                    b.ToTable("DocumentSections", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_DocumentSections_SectionKind_Closed", "\"SectionKind\" IN ('Overview', 'BusinessRule', 'ProcessStep', 'TechnicalDetail', 'Evidence', 'Other')");
+
+                            t.HasCheckConstraint("CK_DocumentSections_SectionOrder_Positive", "\"SectionOrder\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.DocumentVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ContentJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ContentMarkdown")
+                        .IsRequired()
+                        .HasMaxLength(1048576)
+                        .HasColumnType("character varying(1048576)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LogicalDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RepositoryRelativePath")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("SupersededById")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupersededById")
+                        .IsUnique();
+
+                    b.HasIndex("LogicalDocumentId", "RepositoryId");
+
+                    b.HasIndex("LogicalDocumentId", "VersionNumber")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "ScanRunId");
+
+                    b.HasIndex("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("SupersededById", "LogicalDocumentId", "RepositoryId")
+                        .IsUnique();
+
+                    b.ToTable("DocumentVersions", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_DocumentVersions_ContentFingerprint_Length", "length(\"ContentFingerprint\") = 64");
+
+                            t.HasCheckConstraint("CK_DocumentVersions_SchemaIdentity_Closed", "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
+
+                            t.HasCheckConstraint("CK_DocumentVersions_SupersededBy_NotSelf", "\"SupersededById\" IS NULL OR \"SupersededById\" <> \"Id\"");
+
+                            t.HasCheckConstraint("CK_DocumentVersions_VersionNumber_Positive", "\"VersionNumber\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessLogicDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("GroupOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessLogicDocumentVersionId", "GroupOrder")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "BusinessLogicDocumentVersionId");
+
+                    b.HasIndex("BusinessLogicDocumentVersionId", "RepositoryId", "ScanRunId");
+
+                    b.ToTable("FlowGroups", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_FlowGroups_GroupOrder_Positive", "\"GroupOrder\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowTrace", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FlowGroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TraceOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FlowGroupId", "TraceOrder")
+                        .IsUnique();
+
+                    b.ToTable("FlowTraces", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_FlowTraces_TraceOrder_Positive", "\"TraceOrder\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowTraceStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<Guid>("DocumentRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DocumentScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("EdgeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FlowTraceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StepKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("StepOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EdgeId");
+
+                    b.HasIndex("DocumentRepositoryId", "DocumentVersionId");
+
+                    b.HasIndex("FlowTraceId", "StepOrder")
+                        .IsUnique();
+
+                    b.HasIndex("DocumentVersionId", "DocumentRepositoryId", "DocumentScanRunId");
+
+                    b.ToTable("FlowTraceSteps", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_FlowTraceSteps_StepKind_Closed", "\"StepKind\" IN ('Document', 'Relationship', 'Termination')");
+
+                            t.HasCheckConstraint("CK_FlowTraceSteps_StepOrder_Positive", "\"StepOrder\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.GlobalContext", b =>
                 {
                     b.Property<Guid>("Id")
@@ -319,6 +651,76 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GlobalContexts", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.IndexEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BusinessTermsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("KeySymbolsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("LogicalDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RepositoryRelativePath")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasMaxLength(4194304)
+                        .HasColumnType("character varying(4194304)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<Guid?>("SystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TechnicalTermsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentVersionId")
+                        .IsUnique();
+
+                    b.HasIndex("DocumentVersionId", "LogicalDocumentId", "RepositoryId")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "DocumentType", "Title");
+
+                    b.ToTable("IndexEntries", "vulgata");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.LlmProvider", b =>
@@ -364,6 +766,47 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("LlmProviders", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.LogicalDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CurrentVersionId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StableKey")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RepositoryId", "CurrentVersionId");
+
+                    b.HasIndex("CurrentVersionId", "Id", "RepositoryId")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "DocumentType", "StableKey")
+                        .IsUnique();
+
+                    b.ToTable("LogicalDocuments", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_LogicalDocuments_DocumentType_Closed", "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.PendingContextChange", b =>
@@ -649,6 +1092,71 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.SourceAnchor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CodeUnitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EvidenceLocator")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<int>("LineEnd")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LineStart")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RepositoryRelativePath")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("CodeUnitId", "ScanRunId", "RepositoryId");
+
+                    b.HasIndex("DocumentVersionId", "RepositoryId", "ScanRunId");
+
+                    b.HasIndex("RepositoryId", "DocumentVersionId", "CodeUnitId");
+
+                    b.ToTable("SourceAnchors", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_SourceAnchors_LineEnd_Range", "\"LineEnd\" >= \"LineStart\"");
+
+                            t.HasCheckConstraint("CK_SourceAnchors_LineStart_Positive", "\"LineStart\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.System", b =>
                 {
                     b.Property<Guid>("Id")
@@ -873,6 +1381,149 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("Repository");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.DocumentEdge", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "SourceDocumentVersion")
+                        .WithMany()
+                        .HasForeignKey("SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "TargetDocumentVersion")
+                        .WithMany()
+                        .HasForeignKey("TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SourceDocumentVersion");
+
+                    b.Navigation("TargetDocumentVersion");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.DocumentSection", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "DocumentVersion")
+                        .WithMany("Sections")
+                        .HasForeignKey("DocumentVersionId", "LogicalDocumentId", "RepositoryId")
+                        .HasPrincipalKey("Id", "LogicalDocumentId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DocumentVersion");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.DocumentVersion", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.LogicalDocument", "LogicalDocument")
+                        .WithMany("Versions")
+                        .HasForeignKey("LogicalDocumentId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", "ScanRun")
+                        .WithMany()
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "SupersededBy")
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.DocumentVersion", "SupersededById", "LogicalDocumentId", "RepositoryId")
+                        .HasPrincipalKey("Vulgata.Core.Entities.DocumentVersion", "Id", "LogicalDocumentId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("LogicalDocument");
+
+                    b.Navigation("ScanRun");
+
+                    b.Navigation("SupersededBy");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "BusinessLogicDocumentVersion")
+                        .WithMany("FlowGroups")
+                        .HasForeignKey("BusinessLogicDocumentVersionId", "RepositoryId", "ScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BusinessLogicDocumentVersion");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowTrace", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.FlowGroup", "FlowGroup")
+                        .WithMany("Traces")
+                        .HasForeignKey("FlowGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FlowGroup");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowTraceStep", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentEdge", "Edge")
+                        .WithMany()
+                        .HasForeignKey("EdgeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.FlowTrace", "FlowTrace")
+                        .WithMany("Steps")
+                        .HasForeignKey("FlowTraceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "DocumentVersion")
+                        .WithMany()
+                        .HasForeignKey("DocumentVersionId", "DocumentRepositoryId", "DocumentScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DocumentVersion");
+
+                    b.Navigation("Edge");
+
+                    b.Navigation("FlowTrace");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.IndexEntry", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "DocumentVersion")
+                        .WithOne("IndexEntry")
+                        .HasForeignKey("Vulgata.Core.Entities.IndexEntry", "DocumentVersionId", "LogicalDocumentId", "RepositoryId")
+                        .HasPrincipalKey("Vulgata.Core.Entities.DocumentVersion", "Id", "LogicalDocumentId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DocumentVersion");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.LogicalDocument", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
+                        .WithMany()
+                        .HasForeignKey("RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "CurrentVersion")
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.LogicalDocument", "CurrentVersionId", "Id", "RepositoryId")
+                        .HasPrincipalKey("Vulgata.Core.Entities.DocumentVersion", "Id", "LogicalDocumentId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CurrentVersion");
+
+                    b.Navigation("Repository");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.PreScanResult", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.ScanRun", "ScanRun")
@@ -925,6 +1576,36 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasPrincipalKey("Id", "RepositoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ScanRun");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.SourceAnchor", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", "ScanRun")
+                        .WithMany()
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.CodeUnit", "CodeUnit")
+                        .WithMany()
+                        .HasForeignKey("CodeUnitId", "ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "ScanRunId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "DocumentVersion")
+                        .WithMany("SourceAnchors")
+                        .HasForeignKey("DocumentVersionId", "RepositoryId", "ScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CodeUnit");
+
+                    b.Navigation("DocumentVersion");
 
                     b.Navigation("ScanRun");
                 });
@@ -985,9 +1666,35 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("Frameworks");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.DocumentVersion", b =>
+                {
+                    b.Navigation("FlowGroups");
+
+                    b.Navigation("IndexEntry");
+
+                    b.Navigation("Sections");
+
+                    b.Navigation("SourceAnchors");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
+                {
+                    b.Navigation("Traces");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.FlowTrace", b =>
+                {
+                    b.Navigation("Steps");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.LlmProvider", b =>
                 {
                     b.Navigation("SystemLlmProviderOverrides");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.LogicalDocument", b =>
+                {
+                    b.Navigation("Versions");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.PreScanResult", b =>

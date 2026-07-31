@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "story_path": "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
   "proposed_feature_short_name": "minimal-knowledge-store",
-  "stage": "tasks",
+  "stage": "review",
   "repository_preflight": {
     "branch": "codex/story-11-1-knowledge-store",
     "preflight_head": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
@@ -20,7 +20,7 @@
     "unrelated_paths": [],
     "observed_at": "2026-07-30T13:01:38.1933047Z"
   },
-  "activation_checkpoint_id": "bmad-11-1-tasks-20260731T010200Z-a4d1c7",
+  "activation_checkpoint_id": "bmad-11-1-candidate-20260731T034532Z-c8e2b4",
   "feature_directory": "specs/004-minimal-knowledge-store",
   "superseded_by_state": "specs/004-minimal-knowledge-store/workflow-state.json"
 }

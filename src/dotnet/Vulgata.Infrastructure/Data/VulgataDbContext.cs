@@ -26,6 +26,15 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<PreScanResult> PreScanResults => Set<PreScanResult>();
     public DbSet<CommunicationKindClassification> CommunicationKindClassifications =>
         Set<CommunicationKindClassification>();
+    public DbSet<LogicalDocument> LogicalDocuments => Set<LogicalDocument>();
+    public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
+    public DbSet<SourceAnchor> SourceAnchors => Set<SourceAnchor>();
+    public DbSet<DocumentEdge> DocumentEdges => Set<DocumentEdge>();
+    public DbSet<FlowGroup> FlowGroups => Set<FlowGroup>();
+    public DbSet<FlowTrace> FlowTraces => Set<FlowTrace>();
+    public DbSet<FlowTraceStep> FlowTraceSteps => Set<FlowTraceStep>();
+    public DbSet<IndexEntry> IndexEntries => Set<IndexEntry>();
+    public DbSet<DocumentSection> DocumentSections => Set<DocumentSection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -108,6 +108,8 @@ builder.Services.AddScoped<ISystemOwnershipCoordinator, SystemOwnershipCoordinat
 
 builder.Services.AddScoped<ISystemRepository, SystemRepository>();
 builder.Services.AddScoped<IRepositoryRepository, RepositoryRepository>();
+builder.Services.AddScoped<KnowledgeDocumentMaterializer>();
+builder.Services.AddScoped<IKnowledgeStoreRepository, KnowledgeStoreRepository>();
 builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
 builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
 builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
