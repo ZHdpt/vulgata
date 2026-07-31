@@ -139,7 +139,7 @@ public sealed class PreScanMigrationTests
             nameof(ScanRun.ProfiledRevision),
             ReadScanRunColumns(connection));
 
-        migrator.Migrate();
+        migrator.Migrate("20260730083207_AddConservativePreScanGate");
 
         Assert.Equal(
             ["CommunicationKindClassifications", "PreScanResults"],

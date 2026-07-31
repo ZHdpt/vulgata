@@ -85,8 +85,8 @@ development_status:
   4-2-language-and-framework-detection: done
   4-3-conservative-pre-scan-gate-and-communication-type-detection: done
   epic-4-retrospective: optional
-  epic-11: backlog
-  11-1-minimal-knowledge-store-and-retrieval-projection: backlog
+  epic-11: in-progress
+  11-1-minimal-knowledge-store-and-retrieval-projection: in-progress
   11-2-sequential-scan-runner-and-typed-agent-dispatch: backlog
   11-3-pass-1-and-pass-2-demo-document-generation: backlog
   11-4-exact-rpc-http-cross-repository-demo-resolution: backlog
