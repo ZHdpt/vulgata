@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/003-conservative-pre-scan-gate",
   "execution_level": "expedited-mvp",
-  "stage": "verify",
+  "stage": "complete",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -1379,30 +1379,42 @@
       "observed_at": "2026-07-30T12:09:57.2211007Z",
       "summary": "The exact final Docker build completed successfully and produced vulgata:story-4-3 at immutable image sha256:851adce25ca8b5a799f2d62553aea9589918aa550ea48e23c6bf6c1159594c7a.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/final-verification-green",
+      "kind": "build-test-runtime",
+      "stage": "verify",
+      "source_commit": "643c8c6dafac4114e789e54e85afa9168a34e3eb",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "docker/Dockerfile"
+      ],
+      "command": "focused detector/architecture tests; dotnet build Vulgata.Web; Story43EndToEndTests; dotnet ef migrations has-pending-model-changes; canonical source-labeled docker build; full dotnet test with final-image provider contract",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T11:18:49.0761748+08:00",
+      "summary": "Focused correction tests passed 70/70; Web build and Story 4.3 production composition passed; EF reported no pending model changes; the source-labeled image sha256:afa0cff88b91a6c2562fbb0db5d9c9b50a25baa7e2c895dcbd725cc8421f9d2e passed the CodeGraphContext final-image contract; the complete clean suite passed 626/626.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-3-lease-only-correction-20260801T110114",
+    "checkpoint_id": "bmad-4-3-lease-only-complete-20260801T111849",
     "scope_key": "story/4-3-conservative-pre-scan-gate-and-communication-type-detection",
-    "stage": "verify",
+    "stage": "complete",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-framework-detector-lease-only.md",
-      "specs/003-conservative-pre-scan-gate/reviews/quality-review-6.json",
       "specs/003-conservative-pre-scan-gate/tasks.md",
-      "specs/003-conservative-pre-scan-gate/workflow-state.json",
-      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-      "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
-      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+      "specs/003-conservative-pre-scan-gate/workflow-state.json"
     ],
     "verification_evidence_ids": [
       "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/quality-review-6-accept",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/precheckpoint-verification-green"
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/final-verification-green"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T11:01:14.4791635+08:00"
+  "updated_at": "2026-08-01T11:18:49.0761748+08:00"
 }

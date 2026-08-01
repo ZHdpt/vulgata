@@ -169,14 +169,14 @@ changing the accepted Scan strategy or public lease contract.
   source, and now-unused Git inventory/blob helpers from
   `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`;
   run T019-T020 to GREEN through the public lease-only interface.
-- [ ] T022 Run migration-neutral verification, focused detector/architecture/
+- [x] T022 Run migration-neutral verification, focused detector/architecture/
   profiling tests, the complete test suite, Web build, Story 4.3 production
   composition regression, and the exact Docker build; record commands and
   immutable results.
-- [ ] T023 Submit the exact correction boundary to one fresh independent
-  combined quality review. After `ACCEPT`, complete Story 4.3 and rerun the
-  fresh exact-source Epic 4 architecture gate; do not mark Epic 4 `done` until
-  that audit clears every reserved finding.
+- [x] T023 Submit the exact correction boundary to one fresh independent
+  combined quality review. After `ACCEPT`, complete Story 4.3 and hand the new
+  committed boundary to the fresh exact-source Epic 4 architecture gate; do
+  not mark Epic 4 `done` until that audit clears every reserved finding.
 
 **Dependency order**: T019 RED -> T020 test conversion -> T021 GREEN -> T022
 verification -> T023 review and Epic-close retry.

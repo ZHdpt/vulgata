@@ -1,7 +1,7 @@
 ---
 story_key: 4-3-conservative-pre-scan-gate-and-communication-type-detection
 title: "Story 4.3: Conservative Pre-Scan Gate and Communication Type Detection"
-Status: in-progress
+Status: done
 Epic: 4
 Story: 3
 created: 2026-07-30
@@ -504,3 +504,10 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   point contrary to the accepted lease-only plan. The user approved the narrow
   correction; Story 4.3 returned to `in-progress` for RED-GREEN implementation,
   combined review, verification, and a fresh Epic 4 audit.
+- 2026-08-01: Completed the lease-only correction with observed public-surface
+  RED, focused GREEN 70/70, independent combined review `ACCEPT`, Web build,
+  Story 4.3 production-composition E2E, EF no-pending-model verification, and
+  clean exact-source full-suite GREEN 626/626. The canonical source-labeled
+  Docker image is `sha256:afa0cff88b91a6c2562fbb0db5d9c9b50a25baa7e2c895dcbd725cc8421f9d2e`;
+  Story 4.3 returned to `done` and the new committed boundary was handed to the
+  fresh Epic 4 architecture gate.
