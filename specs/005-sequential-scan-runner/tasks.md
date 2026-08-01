@@ -80,15 +80,15 @@
 
 ### G2 Tests (RED first)
 
-- [ ] T021 [P] [US1] Write failing test: valid start from approved handoff creates exactly one `ScanExecution` in `Pass1Planning` with exact identity links (ScanRun, Repository, System, PreScanResult) in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
-- [ ] T022 [P] [US1] Write failing test: refusal with `MissingPrerequisite` when handoff is missing, not approved, or missing Profiled Revision in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
-- [ ] T023 [P] [US1] Write failing test: refusal with `DuplicateActiveScan` when an active `ScanExecution` already exists for the Repository/ScanRun in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
-- [ ] T024 [P] [US1] Write failing test: no concurrency, lease, replay, failover, retry, or multi-Repository scheduling is introduced on start (negative assertion) in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
+- [X] T021 [P] [US1] Write failing test: valid start from approved handoff creates exactly one `ScanExecution` in `Pass1Planning` with exact identity links (ScanRun, Repository, System, PreScanResult) in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
+- [X] T022 [P] [US1] Write failing test: refusal with `MissingPrerequisite` when handoff is missing, not approved, or missing Profiled Revision in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
+- [X] T023 [P] [US1] Write failing test: refusal with `DuplicateActiveScan` when an active `ScanExecution` already exists for the Repository/ScanRun in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
+- [X] T024 [P] [US1] Write failing test: no concurrency, lease, replay, failover, retry, or multi-Repository scheduling is introduced on start (negative assertion) in `tests/Vulgata.Tests/SequentialScanRunnerStartTests.cs`
 
 ### G2 Implementation (GREEN)
 
-- [ ] T025 [US1] Create `SequentialScanRunner` Core domain service in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — implement `StartAsync(repositoryId, scanRunId, systemId, cancellationToken)`: load handoff via `IApprovedPreScanHandoffSource`; refuse `MissingPrerequisite` if missing/not-approved/missing-revision; refuse `DuplicateActiveScan` via `IScanExecutionStore.FindActiveAsync`; on success create one `ScanExecution` via `ScanExecution.Start`, persist atomically via `IScanExecutionStore.PersistAsync`, return its `Id`. Inject `TimeProvider` for deterministic timestamps.
-- [ ] T026 [US1] Verify G2 GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerStartTests` and confirm all G2 tests pass
+- [X] T025 [US1] Create `SequentialScanRunner` Core domain service in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — implement `StartAsync(repositoryId, scanRunId, systemId, cancellationToken)`: load handoff via `IApprovedPreScanHandoffSource`; refuse `MissingPrerequisite` if missing/not-approved/missing-revision; refuse `DuplicateActiveScan` via `IScanExecutionStore.FindActiveAsync`; on success create one `ScanExecution` via `ScanExecution.Start`, persist atomically via `IScanExecutionStore.PersistAsync`, return its `Id`. Inject `TimeProvider` for deterministic timestamps.
+- [X] T026 [US1] Verify G2 GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerStartTests` and confirm all G2 tests pass
 
 **Checkpoint**: User Story 1 fully functional — a deadline Scan can be started from an approved Pre-Scan and refusals are bounded.
 
