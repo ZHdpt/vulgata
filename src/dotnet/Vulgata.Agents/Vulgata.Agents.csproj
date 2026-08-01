@@ -3,6 +3,22 @@
   <ItemGroup>
     <ProjectReference Include="..\Vulgata.Core\Vulgata.Core.csproj" />
     <ProjectReference Include="..\Vulgata.Infrastructure\Vulgata.Infrastructure.csproj" />
+    <ProjectReference Include="..\Vulgata.Shared\Vulgata.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Prompts\pass1-code-logic-worker.v1.md"
+                      LogicalName="Vulgata.Agents.Prompts.pass1-code-logic-worker.v1.md" />
+    <EmbeddedResource Include="Prompts\pass2-business-flow-worker.v1.md"
+                      LogicalName="Vulgata.Agents.Prompts.pass2-business-flow-worker.v1.md" />
+    <EmbeddedResource Include="PreparedFlows\demo-business-flow.v1.json"
+                      LogicalName="Vulgata.Agents.PreparedFlows.demo-business-flow.v1.json" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -10,5 +26,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Vulgata.Tests" />
+  </ItemGroup>
 
 </Project>

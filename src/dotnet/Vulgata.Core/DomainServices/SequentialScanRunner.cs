@@ -18,6 +18,8 @@ public sealed class SequentialScanRunner
     private readonly IScanExecutionStore _executionStore;
     private readonly ICodeUnitSource _codeUnitSource;
     private readonly IWorkerAgentDispatcher _dispatcher;
+    private readonly IWorkerAgentResultCommitter? _resultCommitter;
+    private readonly PreparedPass2Flow? _preparedPass2Flow;
     private readonly TimeProvider _timeProvider;
 
     public SequentialScanRunner(
@@ -32,6 +34,42 @@ public sealed class SequentialScanRunner
         _codeUnitSource = codeUnitSource ?? throw new ArgumentNullException(nameof(codeUnitSource));
         _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    }
+
+    public SequentialScanRunner(
+        IApprovedPreScanHandoffSource handoffSource,
+        IScanExecutionStore executionStore,
+        ICodeUnitSource codeUnitSource,
+        IWorkerAgentDispatcher dispatcher,
+        IWorkerAgentResultCommitter resultCommitter,
+        TimeProvider timeProvider)
+    {
+        _handoffSource = handoffSource ?? throw new ArgumentNullException(nameof(handoffSource));
+        _executionStore = executionStore ?? throw new ArgumentNullException(nameof(executionStore));
+        _codeUnitSource = codeUnitSource ?? throw new ArgumentNullException(nameof(codeUnitSource));
+        _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+        _resultCommitter = resultCommitter ?? throw new ArgumentNullException(nameof(resultCommitter));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+    }
+
+    public SequentialScanRunner(
+        IApprovedPreScanHandoffSource handoffSource,
+        IScanExecutionStore executionStore,
+        ICodeUnitSource codeUnitSource,
+        IWorkerAgentDispatcher dispatcher,
+        IWorkerAgentResultCommitter resultCommitter,
+        PreparedPass2Flow preparedPass2Flow,
+        TimeProvider timeProvider)
+        : this(
+            handoffSource,
+            executionStore,
+            codeUnitSource,
+            dispatcher,
+            resultCommitter,
+            timeProvider)
+    {
+        _preparedPass2Flow = preparedPass2Flow ??
+            throw new ArgumentNullException(nameof(preparedPass2Flow));
     }
 
     /// <summary>
@@ -149,6 +187,147 @@ public sealed class SequentialScanRunner
         Guid scanExecutionId,
         CancellationToken cancellationToken = default)
     {
+        await RunPass1CoreAsync(scanExecutionId, null, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Run Pass 1 with caller authorization. Every valid result is committed
+    /// through the knowledge store before durable progress is recorded, and
+    /// the completed pass stops at the nonterminal Pass1Completed boundary.
+    /// </summary>
+    public async Task RunPass1Async(
+        Guid scanExecutionId,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        if (_resultCommitter is null)
+        {
+            throw new InvalidOperationException(
+                "The Sequential Scan Runner has no result committer configured.");
+        }
+
+        await RunPass1CoreAsync(scanExecutionId, scope, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Dispatch exactly one already-resolved prepared Pass 2 flow and expose
+    /// terminal success only after its Business Logic Document commits.
+    /// </summary>
+    public async Task RunPreparedPass2Async(
+        Guid scanExecutionId,
+        ResolvedPreparedPass2Flow resolvedFlow,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(resolvedFlow);
+        ArgumentNullException.ThrowIfNull(scope);
+        if (_resultCommitter is null)
+        {
+            throw new InvalidOperationException(
+                "The Sequential Scan Runner has no result committer configured.");
+        }
+
+        ScanExecution? execution = await _executionStore.GetAsync(
+            scanExecutionId, cancellationToken).ConfigureAwait(false);
+        if (execution is null)
+        {
+            throw new InvalidOperationException(
+                $"找不到标识为 {scanExecutionId} 的扫描执行记录。");
+        }
+
+        Pass2BusinessLogicJobPayload payload = Pass2BusinessLogicJobPayload.Create(
+            resolvedFlow.Flow,
+            resolvedFlow.CodeLogicDocuments);
+        WorkerAgentJobPacket packet = WorkerAgentJobPacket.Create(
+            Guid.NewGuid(),
+            WorkerAgentJobKind.Pass2BusinessLogicDocument,
+            execution.Id,
+            execution.RepositoryId,
+            execution.SystemId,
+            execution.ScanRunId,
+            execution.ProfiledRevision,
+            WorkerAgentContractLimits.SupportedSchemaVersion,
+            payload);
+
+        execution.BeginPass2(packet.JobId);
+        await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+
+        WorkerAgentResultEnvelope result;
+        try
+        {
+            result = await _dispatcher.DispatchAsync(packet, scope, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            await FailPass2Async(
+                execution,
+                packet.JobId,
+                ScanExecutionFailureKind.Error,
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (result.Outcome != WorkerAgentResultOutcome.Valid)
+        {
+            ScanExecutionFailureKind kind = result.Outcome switch
+            {
+                WorkerAgentResultOutcome.SchemaInvalid => ScanExecutionFailureKind.SchemaInvalid,
+                WorkerAgentResultOutcome.Unbounded => ScanExecutionFailureKind.Unbounded,
+                _ => ScanExecutionFailureKind.Error,
+            };
+            await FailPass2Async(execution, packet.JobId, kind, cancellationToken)
+                .ConfigureAwait(false);
+            return;
+        }
+
+        WorkerAgentResultCommitOutcome commitOutcome;
+        try
+        {
+            commitOutcome = await _resultCommitter.CommitAsync(
+                packet,
+                result,
+                scope,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            commitOutcome = WorkerAgentResultCommitOutcome.Failed;
+        }
+
+        if (commitOutcome != WorkerAgentResultCommitOutcome.Committed)
+        {
+            await FailPass2Async(
+                execution,
+                packet.JobId,
+                ScanExecutionFailureKind.Error,
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        execution.CompletePass2(
+            packet.JobId,
+            BuildPass2SuccessMessage(execution.RepositoryId),
+            _timeProvider.GetUtcNow());
+        await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task RunPass1CoreAsync(
+        Guid scanExecutionId,
+        RepositoryAccessScope? scope,
+        CancellationToken cancellationToken)
+    {
         ScanExecution? execution = await _executionStore.GetAsync(
             scanExecutionId, cancellationToken).ConfigureAwait(false);
         if (execution is null)
@@ -199,21 +378,64 @@ public sealed class SequentialScanRunner
             WorkerAgentResultEnvelope result;
             try
             {
-                result = await _dispatcher.DispatchAsync(packet, cancellationToken)
-                    .ConfigureAwait(false);
+                result = scope is null
+                    ? await _dispatcher.DispatchAsync(packet, cancellationToken)
+                        .ConfigureAwait(false)
+                    : await _dispatcher.DispatchAsync(packet, scope, cancellationToken)
+                        .ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
+            }
+            catch (Exception)
+            {
+                execution.RecordFailure(
+                    jobId,
+                    ScanExecutionFailureKind.Error,
+                    BuildFailureMessage(
+                        ScanExecutionFailureKind.Error,
+                        execution.RepositoryId),
+                    _timeProvider.GetUtcNow());
+                await _executionStore.PersistAsync(execution, cancellationToken)
+                    .ConfigureAwait(false);
+                return;
             }
 
             DateTimeOffset receivedAt = _timeProvider.GetUtcNow();
             switch (result.Outcome)
             {
                 case WorkerAgentResultOutcome.Valid:
+                    if (_resultCommitter is not null && scope is not null)
+                    {
+                        WorkerAgentResultCommitOutcome commitOutcome =
+                            await _resultCommitter.CommitAsync(
+                                packet,
+                                result,
+                                scope,
+                                cancellationToken).ConfigureAwait(false);
+                        if (commitOutcome != WorkerAgentResultCommitOutcome.Committed)
+                        {
+                            execution.RecordFailure(
+                                jobId,
+                                ScanExecutionFailureKind.Error,
+                                BuildFailureMessage(
+                                    ScanExecutionFailureKind.Error,
+                                    execution.RepositoryId),
+                                _timeProvider.GetUtcNow());
+                            await _executionStore.PersistAsync(execution, cancellationToken)
+                                .ConfigureAwait(false);
+                            return;
+                        }
+                    }
+
                     execution.RecordValid(jobId);
-                    await _executionStore.PersistAsync(execution, cancellationToken)
-                        .ConfigureAwait(false);
+                    await PersistValidProgressAsync(
+                        execution,
+                        packet,
+                        result,
+                        scope,
+                        cancellationToken).ConfigureAwait(false);
                     break;
                 case WorkerAgentResultOutcome.SchemaInvalid:
                     execution.RecordFailure(
@@ -254,8 +476,64 @@ public sealed class SequentialScanRunner
             }
         }
 
-        execution.Finalize(
-            BuildSuccessMessage(execution.RepositoryId, ordered.Count),
+        if (_resultCommitter is not null && scope is not null)
+        {
+            execution.CompletePass1();
+        }
+        else
+        {
+            execution.Finalize(
+                BuildSuccessMessage(execution.RepositoryId, ordered.Count),
+                _timeProvider.GetUtcNow());
+        }
+
+        await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task PersistValidProgressAsync(
+        ScanExecution execution,
+        WorkerAgentJobPacket packet,
+        WorkerAgentResultEnvelope result,
+        RepositoryAccessScope? scope,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _executionStore.PersistAsync(execution, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch when (_resultCommitter is not null && scope is not null)
+        {
+            WorkerAgentResultCommitOutcome replay = await _resultCommitter.CommitAsync(
+                packet,
+                result,
+                scope,
+                cancellationToken).ConfigureAwait(false);
+            if (replay != WorkerAgentResultCommitOutcome.Committed)
+            {
+                throw new InvalidOperationException(
+                    "Knowledge replay did not commit before the progress retry.");
+            }
+
+            await _executionStore.PersistAsync(execution, cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    private async Task FailPass2Async(
+        ScanExecution execution,
+        Guid jobId,
+        ScanExecutionFailureKind kind,
+        CancellationToken cancellationToken)
+    {
+        execution.FailPass2(
+            jobId,
+            kind,
+            BuildFailureMessage(kind, execution.RepositoryId),
             _timeProvider.GetUtcNow());
         await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
     }
@@ -267,9 +545,9 @@ public sealed class SequentialScanRunner
             .ThenBy(u => u.Id)
             .ToList();
 
-    private static WorkerAgentJobPacket BuildPacket(ScanExecution execution, CodeUnit unit) =>
+    private WorkerAgentJobPacket BuildPacket(ScanExecution execution, CodeUnit unit) =>
         WorkerAgentJobPacket.Create(
-            jobId: Guid.NewGuid(),
+            jobId: ResolvePass1JobId(execution, unit),
             kind: WorkerAgentJobKind.Pass1CodeLogicDocument,
             scanExecutionId: execution.Id,
             repositoryId: execution.RepositoryId,
@@ -285,6 +563,27 @@ public sealed class SequentialScanRunner
             language: unit.Language,
             sourceHash: unit.SourceHash,
             fileIdentityHash: unit.FileIdentityHash);
+
+    private Guid ResolvePass1JobId(ScanExecution execution, CodeUnit unit)
+    {
+        if (_preparedPass2Flow is null)
+        {
+            return Guid.NewGuid();
+        }
+
+        PreparedPass2FlowMember? member = _preparedPass2Flow.Members
+            .SingleOrDefault(candidate => candidate.CodeUnitId == unit.Id);
+        if (_preparedPass2Flow.SystemId != execution.SystemId ||
+            _preparedPass2Flow.RepositoryId != execution.RepositoryId ||
+            member is null)
+        {
+            throw new ArgumentException(
+                "The prepared Code Unit is not a member of the accepted Pass 2 flow.",
+                nameof(unit));
+        }
+
+        return member.JobId;
+    }
 
     private static ScanExecutionFailureKind ClassifyPacketRejection(CodeUnit unit)
     {
@@ -352,6 +651,12 @@ public sealed class SequentialScanRunner
             "仓库 {0} 的 Pass 1 扫描已完成,共调度 {1} 个 Worker Agent 作业。",
             repositoryId,
             jobCount);
+
+    private static string BuildPass2SuccessMessage(Guid repositoryId) =>
+        string.Format(
+            CultureInfo.InvariantCulture,
+            "仓库 {0} 的准备业务流程已生成,扫描已完成。",
+            repositoryId);
 
     private static string BuildRefusalMessage(ScanExecutionFailureKind kind, Guid repositoryId) =>
         kind switch

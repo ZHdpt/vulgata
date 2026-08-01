@@ -17,4 +17,24 @@ public interface IWorkerAgentDispatcher
     Task<WorkerAgentResultEnvelope> DispatchAsync(
         WorkerAgentJobPacket packet,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Dispatch one bounded job under an explicit Repository authorization
+    /// scope. Implementations that retain only the Story 11.2 compatibility
+    /// method may proceed only after this default guard proves the packet's
+    /// Repository is in scope.
+    /// </summary>
+    Task<WorkerAgentResultEnvelope> DispatchAsync(
+        WorkerAgentJobPacket packet,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(packet);
+        ArgumentNullException.ThrowIfNull(scope);
+        return !scope.Contains(packet.RepositoryId)
+            ? Task.FromException<WorkerAgentResultEnvelope>(
+                new UnauthorizedAccessException(
+                    "The Worker Agent Repository is outside the authorized scope."))
+            : DispatchAsync(packet, cancellationToken);
+    }
 }

@@ -51,11 +51,15 @@ public sealed class SequentialScanRunnerContractTests
     // --- T003: closed kind allowlist ---
 
     [Fact]
-    public void WorkerAgentJobKind_DefinesOnlyPass1CodeLogicDocument()
+    public void WorkerAgentJobKind_DefinesOnlyPass1AndPass2DocumentKinds()
     {
         WorkerAgentJobKind[] values = Enum.GetValues<WorkerAgentJobKind>();
-        Assert.Single(values);
-        Assert.Equal(WorkerAgentJobKind.Pass1CodeLogicDocument, values[0]);
+        Assert.Equal(
+            [
+                WorkerAgentJobKind.Pass1CodeLogicDocument,
+                WorkerAgentJobKind.Pass2BusinessLogicDocument,
+            ],
+            values);
     }
 
     [Fact]

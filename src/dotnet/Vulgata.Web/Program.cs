@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CodeGraph;
@@ -114,12 +115,20 @@ builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
 builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
 builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
 builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
-// SequentialScanRunner itself is NOT registered here: it depends on
-// IWorkerAgentDispatcher, which has no production implementation until
-// Story 11.3. Registering it now would break DI validation in every
-// WebApplicationFactory test. The three adapter registrations above are
-// the only Story 11.2 production DI surface; the runner registration is
-// deferred to Story 11.3 alongside the LLM-backed dispatcher.
+PreparedPass2FlowCatalog preparedPass2FlowCatalog =
+    PreparedPass2FlowCatalog.Load(typeof(WorkerAgentDispatcher).Assembly);
+builder.Services.AddSingleton(preparedPass2FlowCatalog);
+builder.Services.AddSingleton(preparedPass2FlowCatalog.Flow);
+builder.Services.AddScoped<RevisionBoundWorkerContextHydrator>();
+builder.Services.AddScoped<
+    IWorkerAgentExecutionContextSource,
+    RevisionBoundWorkerExecutionContextSource>();
+builder.Services.AddScoped<WorkerAgentProviderResolver>();
+builder.Services.AddScoped<IWorkerAgentDispatcher, WorkerAgentDispatcher>();
+builder.Services.AddScoped<IWorkerAgentResultCommitter, WorkerAgentResultCommitter>();
+builder.Services.AddScoped<SequentialScanRunner>();
+builder.Services.AddScoped<HttpMessageHandler, SocketsHttpHandler>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
 builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();

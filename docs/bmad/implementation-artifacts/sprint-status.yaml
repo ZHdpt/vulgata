@@ -88,7 +88,7 @@ development_status:
   epic-11: in-progress
   11-1-minimal-knowledge-store-and-retrieval-projection: done
   11-2-sequential-scan-runner-and-typed-agent-dispatch: done
-  11-3-pass-1-and-pass-2-demo-document-generation: in-progress
+  11-3-pass-1-and-pass-2-demo-document-generation: review
   11-4-exact-rpc-http-cross-repository-demo-resolution: backlog
   11-5-demo-chat-citations-and-release-gate: backlog
   epic-11-retrospective: optional

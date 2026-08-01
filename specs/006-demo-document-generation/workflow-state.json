@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/006-demo-document-generation",
   "execution_level": "expedited-mvp",
-  "stage": "tasks",
+  "stage": "implement",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -159,6 +159,25 @@
       "evidence_paths": [
         "specs/006-demo-document-generation/tasks.md",
         "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-01T11:54:00Z",
+      "completed_at": "2026-08-01T16:08:42Z",
+      "input_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "input_hashes": {
+        "specs/006-demo-document-generation/tasks.md": "a84f34879ca4f68dc4e96e7e2b6c083c348d1b410bceb0690f56843faacd1336"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs",
+        "specs/006-demo-document-generation/tasks.md"
       ],
       "failure": null
     }
@@ -455,6 +474,33 @@
         "formatting-only-no-semantic-drift",
         "reviewed-boundary-e69b706a82c0498b68587d2ace4a99d430998befc7fefd4fe4842a786f0d9443"
       ]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Execute G0 T002-T004 and correct the inherited F003 SQLite reservation ordering before production DI.",
+      "source_boundary": {
+        "base_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/006-demo-document-generation/tasks.md": "a84f34879ca4f68dc4e96e7e2b6c083c348d1b410bceb0690f56843faacd1336"
+        },
+        "owned_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+          "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs"
+        ]
+      },
+      "permitted_writes": [
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+        "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs"
+      ],
+      "output_path": "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs",
+      "returned_evidence": [
+        "observed-red-expected-1-actual-0",
+        "focused-g0-green-1-of-1",
+        "g0-plus-restart-green-7-of-7",
+        "root-rebuild-green-7-of-7"
+      ]
     }
   ],
   "review_iterations": {
@@ -566,39 +612,298 @@
       "observed_at": "2026-08-01T11:53:08Z",
       "summary": "Independent correction review ACCEPT re-pinned the plan after trailing-whitespace normalization and confirmed no semantic drift; the approved planned changes are unchanged.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/1",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Vulgata.Tests.ScanExecutionRepositoryConcurrencyTests",
+      "exit_code": 1,
+      "observed_at": "2026-08-01T12:03:00Z",
+      "summary": "G0 observable RED: the two-context SQLite restart transition expected durable RestartIndicator 1 but observed 0 before the repository correction.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/2",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+        "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.ScanExecutionRepositoryConcurrencyTests|FullyQualifiedName~Vulgata.Tests.SequentialScanRunnerRestartTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T12:07:00Z",
+      "summary": "G0 independently rebuilt GREEN: 7 of 7 SQLite concurrency and sequential restart tests passed; no migration or DI change.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/3",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentHydrationTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentDispatcherTests.cs"
+      ],
+      "command": "focused G1-G3 contract, hydration, prompt-resource, and loopback tests before production edits",
+      "exit_code": 1,
+      "observed_at": "2026-08-01T13:00:00Z",
+      "summary": "G1-G3 RED evidence observed missing typed Pass 1 payloads, missing revision hydrator, absent embedded prompt, and missing production dispatcher/provider resolver.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/4",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentHydrationTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentDispatcherTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter WorkerAgentContractTests|WorkerAgentHydrationTests|WorkerAgentDispatcherTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T13:25:00Z",
+      "summary": "G1-G3 GREEN: closed Pass 1 contracts, exact committed-revision hydration, embedded prompt, one configured endpoint, and bounded provider validation passed without a live provider.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/5",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs",
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"
+      ],
+      "command": "focused G4 and US2 persistence, ordering, and fail-closed tests before production edits",
+      "exit_code": 1,
+      "observed_at": "2026-08-01T14:00:00Z",
+      "summary": "G4 and US2 RED evidence observed missing committer, replay conflicts, progress-before-commit reachability, raw boundary exceptions, accepted invalid UTF-8, invalid store calls, and unbounded lifecycle failure.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/6",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs",
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter WorkerAgentResultCommitterTests|SequentialScanRunnerDocumentGenerationTests|WorkerAgentHydrationTests|WorkerAgentDispatcherTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T14:30:00Z",
+      "summary": "G4 and US2 GREEN: commit-before-progress, idempotent replay, Version Chain, exact Evidence sections, 51 of 51 fail-closed tests, zero invalid writes, and zero invalid progress.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/7",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/PreparedPass2FlowTests.cs",
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"
+      ],
+      "command": "focused G5 prepared-flow, Pass 2 union, persistence, and lifecycle tests before production edits",
+      "exit_code": 1,
+      "observed_at": "2026-08-01T15:00:00Z",
+      "summary": "G5 RED evidence observed missing prepared catalog/resolver, missing Pass 2 union/prompt, attempted source hydration, rejected real multiline projections, rejected Business Logic commit, and missing Pass 2 lifecycle.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/8",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/PreparedPass2FlowTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs",
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter PreparedPass2FlowTests|WorkerAgentContractTests|WorkerAgentDispatcherTests|WorkerAgentResultCommitterTests|SequentialScanRunnerDocumentGenerationTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T15:25:00Z",
+      "summary": "G5 GREEN: fixed manifest 19 of 19, Pass 2 contract/provider 36 of 36, and complete US3 78 of 78 with exact GENERATED_FROM and zero narrative REFERENCES.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/9",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs"
+      ],
+      "command": "focused G6 production registration and scoped dispatch tests before production edits",
+      "exit_code": 1,
+      "observed_at": "2026-08-01T15:35:00Z",
+      "summary": "G6 RED evidence observed missing SequentialScanRunner registration, unsafe unscoped Pass 1 reachability, missing scoped dispatch overload, and missing production context source.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/10",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs",
+        "src/dotnet/Vulgata.Web/Program.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter WorkerAgentProductionRegistrationTests|WorkerAgentDispatcherTests|SequentialScanRunner",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T15:45:00Z",
+      "summary": "G6 GREEN: production composition 3 of 3, dispatcher and runner regressions 64 of 64, and G0 7 of 7 with authorization-scoped revision hydration.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/11",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"
+      ],
+      "command": "exact current-boundary relational Story 11.3 scenario before integration corrections",
+      "exit_code": 1,
+      "observed_at": "2026-08-01T15:50:00Z",
+      "summary": "G7 RED evidence observed disconnected manifest identities, noncanonical generated version ordering, and relational rejection of Pass1Completed persistence.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/12",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter WorkerAgent|PreparedPass2|SequentialScanRunner",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T16:00:00Z",
+      "summary": "G7 exact relational scenario passed and the complete focused Story 11.3 lane passed 166 of 166 with relational Scan execution and knowledge ordering.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/13",
+      "kind": "command",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj"
+      ],
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --nologo",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T16:02:00Z",
+      "summary": "T054 Web build succeeded with zero errors; existing package-source and EF assembly-version warnings remain.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/14",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/Vulgata.Tests.csproj"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests&FullyQualifiedName!~CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T16:07:00Z",
+      "summary": "T055 non-final-image regression lane passed 944 of 944; four PostgreSQL and one final-image test were separately confirmed unavailable because required environment inputs are absent.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/15",
+      "kind": "analysis",
+      "stage": "implement",
+      "source_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+      "artifact_paths": [
+        "specs/006-demo-document-generation/tasks.md"
+      ],
+      "command": "FR SC AC coverage enumeration and migration model API UI Docker diff guard",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T16:08:42Z",
+      "summary": "T052 and T056 passed: no forbidden artifact drift, all 56 tasks complete, and FR-001 through FR-020, SC-001 through SC-006, and AC-1 through AC-6 have named observed coverage.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-3-context-20260801T100122Z-7c3a91",
+    "checkpoint_id": "bmad-11-3-implement-20260801T160718Z-5e73d4",
     "scope_key": "story/11-3-pass-1-and-pass-2-demo-document-generation",
-    "stage": "tasks",
+    "stage": "implement",
     "committed_paths": [
-      ".specify/feature.json",
       "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json",
-      "specs/006-demo-document-generation/spec.md",
-      "specs/006-demo-document-generation/checklists/requirements.md",
-      "specs/006-demo-document-generation/workflow-state.json",
-      "specs/006-demo-document-generation/plan.md",
-      "specs/006-demo-document-generation/research.md",
-      "specs/006-demo-document-generation/data-model.md",
-      "specs/006-demo-document-generation/quickstart.md",
-      "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
-      "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
-      "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
-      "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md",
       "specs/006-demo-document-generation/tasks.md",
-      "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-1.json",
-      "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+      "specs/006-demo-document-generation/workflow-state.json",
+      "src/dotnet/Vulgata.Agents/PreparedFlows/demo-business-flow.v1.json",
+      "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v1.md",
+      "src/dotnet/Vulgata.Agents/Prompts/pass2-business-flow-worker.v1.md",
+      "src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass2FlowCatalog.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass2FlowResolver.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/RevisionBoundWorkerContextHydrator.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/RevisionBoundWorkerExecutionContextSource.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentDispatcher.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentExecutionContext.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentJsonContext.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentJsonPreflight.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentProviderResolver.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentResultValidator.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IWorkerAgentDispatcher.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IWorkerAgentResultCommitter.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedPass2Flow.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentJobKind.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentJobPacket.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentResultEnvelope.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentResultPayload.cs",
+      "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/PreparedPass2FlowTests.cs",
+      "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs",
+      "tests/Vulgata.Tests/SequentialScanRunnerContractTests.cs",
+      "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentDispatcherTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentHydrationTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentTestFixtures.cs"
     ],
     "verification_evidence_ids": [
       "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/1",
-      "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/2"
+      "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/2",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/1",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/2",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/3",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/4",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/5",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/6",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/7",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/8",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/9",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/10",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/11",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/12",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/13",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/14",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/15"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T11:53:08Z"
+  "updated_at": "2026-08-01T16:08:42Z"
 }

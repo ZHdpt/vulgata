@@ -1,7 +1,7 @@
 ---
 story_key: 11-3-pass-1-and-pass-2-demo-document-generation
 title: "Story 11.3: Pass 1 & Pass 2 Demo Document Generation"
-Status: in-progress
+Status: review
 Epic: 11
 Story: 3
 created: 2026-08-01
@@ -260,7 +260,7 @@ workflow evidence or their completed lifecycle records.
 
 ## Tasks / Subtasks
 
-- [ ] Tasks are generated only after independent plan-review acceptance and
+- [x] Tasks are generated only after independent plan-review acceptance and
       explicit planned-change authorization, then recorded in the mapped
       SpecKit `tasks.md`.
 
@@ -287,33 +287,54 @@ workflow evidence or their completed lifecycle records.
   `docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json`.
 - Proposed SpecKit short name: `demo-document-generation`.
 - SpecKit feature directory: `specs/006-demo-document-generation`.
-- Current workflow stage: `plan`.
-- Latest workflow checkpoint ID: pending accepted-delivery-definition
-  checkpoint.
+- Current workflow stage: `implement` (reviewed candidate).
+- Latest workflow checkpoint ID:
+  `bmad-11-3-implement-20260801T160718Z-5e73d4`.
 
 ### Agent Model Used
 
-- Root sprint-loop orchestrator with a fresh read-only
-  `story-context-synthesizer`.
+- Root sprint-loop orchestrator with direct-child `task-author`, sequential
+  `tdd-implementer` groups, and pending combined `quality-reviewer`.
 
 ### Debug Log References
 
 - Story 11.2 combined quality review F003:
   `specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json`.
+- Story 11.3 plan review ACCEPT:
+  `specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json`.
+- Story 11.3 implementation evidence is recorded in
+  `specs/006-demo-document-generation/workflow-state.json`.
 
 ### Completion Notes List
 
 - Stories 11.1 and 11.2 are complete at the pinned source boundary.
 - The approved August 15 replan resolves the ordinary retry/continuation
   tension by deferring advanced failure policy without marking it complete.
-- Planned-change authorization is triggered for the production Worker Agent
-  execution adapter and the prepared Pass 2/Scan dispatch strategy. The root
-  will pause after independent plan-review accepts and before task generation.
-- No migration is expected. Any discovered schema change must return to plan
-  review and the planned-change authorization gate.
+- The user explicitly authorized the accepted production Worker Agent adapter
+  and prepared Pass 2 Scan strategy before task generation.
+- G0-G7 completed with observed transient RED then GREEN evidence. The focused
+  Story 11.3 lane passes 166/166, Web builds with zero errors, and the
+  non-final-image regression lane passes 944/944.
+- The current-boundary relational scenario proves exact committed source,
+  Pass 1 commit-before-progress, one prepared Pass 2, exact `GENERATED_FROM`,
+  zero narrative `REFERENCES`, and completion only after the Business Logic
+  Document commit.
+- No migration, model snapshot, API, UI, Chat, or Docker artifact changed.
+  PostgreSQL/final-image environment lanes remain conditional and Story 11.5
+  retains clean-database two-Repository and Docker verification.
 
 ### File List
 
 - `docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md`
 - `docs/bmad/implementation-artifacts/sprint-status.yaml`
 - `docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json`
+- `specs/006-demo-document-generation/`
+- `src/dotnet/Vulgata.Core/DomainServices/`
+- `src/dotnet/Vulgata.Core/Entities/ScanExecution.cs`
+- `src/dotnet/Vulgata.Agents/WorkerExecution/`
+- `src/dotnet/Vulgata.Agents/Prompts/`
+- `src/dotnet/Vulgata.Agents/PreparedFlows/`
+- `src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs`
+- `src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs`
+- `src/dotnet/Vulgata.Web/Program.cs`
+- `tests/Vulgata.Tests/`

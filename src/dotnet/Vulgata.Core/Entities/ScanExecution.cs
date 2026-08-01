@@ -188,6 +188,114 @@ public sealed class ScanExecution
     }
 
     /// <summary>
+    /// Mark Pass 1 durably complete while preserving the nonterminal boundary
+    /// required before the prepared Pass 2 flow can begin.
+    /// </summary>
+    public void CompletePass1()
+    {
+        EnsurePhase(ScanExecutionPhase.Pass1Running);
+        if (InFlightJobId is not null)
+        {
+            throw new InvalidOperationException(
+                "Cannot complete Pass 1 while a job is in flight.");
+        }
+
+        if (CompletedJobCount != TotalJobCount)
+        {
+            throw new InvalidOperationException(
+                "Cannot complete Pass 1 before every prepared job is valid.");
+        }
+
+        Phase = ScanExecutionPhase.Pass1Completed;
+    }
+
+    /// <summary>
+    /// Begin the single prepared Pass 2 dispatch from the durable
+    /// <see cref="ScanExecutionPhase.Pass1Completed"/> boundary.
+    /// </summary>
+    public void BeginPass2(Guid jobId)
+    {
+        if (jobId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "The Pass 2 job identifier must be non-empty.",
+                nameof(jobId));
+        }
+
+        EnsurePhase(ScanExecutionPhase.Pass1Completed);
+        if (InFlightJobId is not null)
+        {
+            throw new InvalidOperationException(
+                "A Pass 2 job is already in flight.");
+        }
+
+        if (CompletedJobCount != TotalJobCount)
+        {
+            throw new InvalidOperationException(
+                "Pass 2 cannot begin before every Pass 1 job is valid.");
+        }
+
+        InFlightJobId = jobId;
+    }
+
+    /// <summary>
+    /// Complete the Scan only after the prepared Pass 2 result has committed.
+    /// </summary>
+    public void CompletePass2(
+        Guid jobId,
+        string successMessage,
+        DateTimeOffset completedAt)
+    {
+        EnsurePhase(ScanExecutionPhase.Pass1Completed);
+        EnsureInFlightMatch(jobId);
+        string message = RequireTerminalMessage(successMessage);
+        if (completedAt < StartedAt)
+        {
+            throw new ArgumentException(
+                "The terminal timestamp must be at or after the start timestamp.",
+                nameof(completedAt));
+        }
+
+        Phase = ScanExecutionPhase.Completed;
+        TerminalMessage = message;
+        TerminalAt = completedAt;
+        InFlightJobId = null;
+    }
+
+    /// <summary>
+    /// Stop a non-committed Pass 2 outcome without exposing a successful Scan.
+    /// </summary>
+    public void FailPass2(
+        Guid jobId,
+        ScanExecutionFailureKind reasonKind,
+        string terminalMessage,
+        DateTimeOffset failedAt)
+    {
+        EnsurePhase(ScanExecutionPhase.Pass1Completed);
+        EnsureInFlightMatch(jobId);
+        if (!Enum.IsDefined(reasonKind))
+        {
+            throw new ArgumentException(
+                "The failure reason kind is not on the closed allowlist.",
+                nameof(reasonKind));
+        }
+
+        string message = RequireTerminalMessage(terminalMessage);
+        if (failedAt < StartedAt)
+        {
+            throw new ArgumentException(
+                "The terminal timestamp must be at or after the start timestamp.",
+                nameof(failedAt));
+        }
+
+        Phase = ScanExecutionPhase.Failed;
+        TerminalReasonKind = reasonKind;
+        TerminalMessage = message;
+        TerminalAt = failedAt;
+        InFlightJobId = null;
+    }
+
+    /// <summary>
     /// Record a failure: transition to <see cref="ScanExecutionPhase.Failed"/>
     /// with a bounded Chinese terminal message and closed failure kind. Clears
     /// <see cref="InFlightJobId"/>. The atomic transaction ensures no partial

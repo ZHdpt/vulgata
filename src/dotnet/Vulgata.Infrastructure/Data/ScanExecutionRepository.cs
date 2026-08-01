@@ -1,4 +1,6 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -52,19 +54,253 @@ public sealed class ScanExecutionRepository(VulgataDbContext dbContext) : IScanE
     {
         ArgumentNullException.ThrowIfNull(execution);
 
-        await using var transaction = await dbContext.Database
-            .BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken)
+        bool isSqlite = StringComparer.Ordinal.Equals(
+            dbContext.Database.ProviderName,
+            "Microsoft.EntityFrameworkCore.Sqlite");
+        bool isPostgreSql = StringComparer.Ordinal.Equals(
+            dbContext.Database.ProviderName,
+            "Npgsql.EntityFrameworkCore.PostgreSQL");
+        await using IDbContextTransaction transaction = await dbContext.Database
+            .BeginTransactionAsync(
+                isSqlite ? IsolationLevel.Serializable : IsolationLevel.ReadCommitted,
+                cancellationToken)
             .ConfigureAwait(false);
+        try
+        {
+            if (isSqlite)
+            {
+                await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE \"Repositories\" SET \"Id\" = \"Id\" WHERE \"Id\" = {execution.RepositoryId}",
+                    cancellationToken).ConfigureAwait(false);
+            }
+            else if (isPostgreSql)
+            {
+                await dbContext.Repositories
+                    .FromSqlInterpolated(
+                        $"SELECT * FROM \"vulgata\".\"Repositories\" WHERE \"Id\" = {execution.RepositoryId} FOR UPDATE")
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
-        // Parameterized no-op update mirrors the Story 11.1 SQLite-safe lock
-        // acquisition pattern. On PostgreSQL this is a row lock; on SQLite it
-        // acquires the database-wide write reservation.
-        // NOTE: Until G6 adds the table, this call will fail at runtime. The
-        // G6 migration must land before any integration test exercises this
-        // path. Unit tests use in-memory fakes.
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            IQueryable<ScanExecution> durableQuery = isPostgreSql
+                ? dbContext.ScanExecutions.FromSqlInterpolated(
+                    $"SELECT * FROM \"vulgata\".\"ScanExecutions\" WHERE \"Id\" = {execution.Id} FOR UPDATE")
+                : dbContext.ScanExecutions.Where(item => item.Id == execution.Id);
+            ScanExecution? durable = await durableQuery
+                .SingleOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (durable is null)
+            {
+                await dbContext.ScanExecutions.AddAsync(execution, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                ApplyRequestedTransition(durable, execution);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            dbContext.ChangeTracker.Clear();
+            throw;
+        }
     }
+
+    private static void ApplyRequestedTransition(
+        ScanExecution durable,
+        ScanExecution requested)
+    {
+        EnsureIdentityMatches(durable, requested);
+        if (StateMatches(durable, requested))
+        {
+            return;
+        }
+
+        if (requested.Phase == ScanExecutionPhase.Cancelled &&
+            requested.TerminalMessage is not null &&
+            requested.TerminalAt is not null)
+        {
+            durable.Cancel(requested.TerminalMessage, requested.TerminalAt.Value);
+        }
+        else if (durable.Phase == ScanExecutionPhase.Pass1Planning &&
+            requested.Phase == ScanExecutionPhase.Pass1Running &&
+            requested.InFlightJobId is null)
+        {
+            durable.Plan(requested.TotalJobCount, requested.StartedAt);
+        }
+        else if (durable.Phase == ScanExecutionPhase.Pass1Running &&
+            requested.Phase == ScanExecutionPhase.Pass1Running)
+        {
+            ApplyRunningTransition(durable, requested);
+        }
+        else if (durable.Phase == ScanExecutionPhase.Pass1Running &&
+            requested.Phase == ScanExecutionPhase.Pass1Completed &&
+            requested.InFlightJobId is null)
+        {
+            durable.CompletePass1();
+        }
+        else if (durable.Phase == ScanExecutionPhase.Pass1Completed)
+        {
+            ApplyPass1CompletedTransition(durable, requested);
+        }
+        else if (durable.Phase == ScanExecutionPhase.Pass1Running &&
+            requested.Phase == ScanExecutionPhase.Failed &&
+            requested.TerminalReasonKind is not null &&
+            requested.TerminalMessage is not null &&
+            requested.TerminalAt is not null)
+        {
+            if (durable.InFlightJobId is Guid jobId)
+            {
+                durable.RecordFailure(
+                    jobId,
+                    requested.TerminalReasonKind.Value,
+                    requested.TerminalMessage,
+                    requested.TerminalAt.Value);
+            }
+            else
+            {
+                durable.RecordBoundaryRejection(
+                    requested.TerminalReasonKind.Value,
+                    requested.TerminalMessage,
+                    requested.TerminalAt.Value);
+            }
+        }
+        else if (durable.Phase == ScanExecutionPhase.Pass1Running &&
+            requested.Phase == ScanExecutionPhase.Completed &&
+            requested.TerminalMessage is not null &&
+            requested.TerminalAt is not null)
+        {
+            durable.Finalize(requested.TerminalMessage, requested.TerminalAt.Value);
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "The Scan execution transition is stale or invalid.");
+        }
+
+        if (!StateMatches(durable, requested))
+        {
+            throw new InvalidOperationException(
+                "The Scan execution transition no longer matches durable state.");
+        }
+    }
+
+    private static void ApplyRunningTransition(
+        ScanExecution durable,
+        ScanExecution requested)
+    {
+        if (durable.InFlightJobId is null && requested.InFlightJobId is Guid jobId)
+        {
+            durable.Advance(jobId);
+            return;
+        }
+
+        if (durable.InFlightJobId is Guid completedJobId &&
+            requested.InFlightJobId is null &&
+            requested.CompletedJobCount == durable.CompletedJobCount + 1)
+        {
+            durable.RecordValid(completedJobId);
+            return;
+        }
+
+        if (requested.RestartIndicator == durable.RestartIndicator + 1)
+        {
+            durable.ObserveRestart();
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "The Scan execution transition is stale or invalid.");
+    }
+
+    private static void ApplyPass1CompletedTransition(
+        ScanExecution durable,
+        ScanExecution requested)
+    {
+        if (requested.Phase == ScanExecutionPhase.Pass1Completed &&
+            durable.InFlightJobId is null &&
+            requested.InFlightJobId is Guid pass2JobId)
+        {
+            durable.BeginPass2(pass2JobId);
+            return;
+        }
+
+        if (durable.InFlightJobId is not Guid inFlightJobId ||
+            requested.InFlightJobId is not null ||
+            requested.TerminalMessage is null ||
+            requested.TerminalAt is null)
+        {
+            throw new InvalidOperationException(
+                "The Scan execution transition is stale or invalid.");
+        }
+
+        if (requested.Phase == ScanExecutionPhase.Completed)
+        {
+            durable.CompletePass2(
+                inFlightJobId,
+                requested.TerminalMessage,
+                requested.TerminalAt.Value);
+            return;
+        }
+
+        if (requested.Phase == ScanExecutionPhase.Failed &&
+            requested.TerminalReasonKind is ScanExecutionFailureKind reasonKind)
+        {
+            durable.FailPass2(
+                inFlightJobId,
+                reasonKind,
+                requested.TerminalMessage,
+                requested.TerminalAt.Value);
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "The Scan execution transition is stale or invalid.");
+    }
+
+    private static void EnsureIdentityMatches(
+        ScanExecution durable,
+        ScanExecution requested)
+    {
+        if (durable.Id != requested.Id ||
+            durable.RepositoryId != requested.RepositoryId ||
+            durable.SystemId != requested.SystemId ||
+            durable.ScanRunId != requested.ScanRunId ||
+            durable.PreScanResultId != requested.PreScanResultId ||
+            !StringComparer.Ordinal.Equals(
+                durable.ProfiledRevision,
+                requested.ProfiledRevision) ||
+            durable.StartedAt != requested.StartedAt)
+        {
+            throw new InvalidOperationException(
+                "The Scan execution identity does not match durable state.");
+        }
+    }
+
+    private static bool StateMatches(
+        ScanExecution left,
+        ScanExecution right) =>
+        left.Id == right.Id &&
+        left.RepositoryId == right.RepositoryId &&
+        left.SystemId == right.SystemId &&
+        left.ScanRunId == right.ScanRunId &&
+        left.PreScanResultId == right.PreScanResultId &&
+        StringComparer.Ordinal.Equals(left.ProfiledRevision, right.ProfiledRevision) &&
+        left.Phase == right.Phase &&
+        left.InFlightJobId == right.InFlightJobId &&
+        left.CompletedJobCount == right.CompletedJobCount &&
+        left.TotalJobCount == right.TotalJobCount &&
+        left.RestartIndicator == right.RestartIndicator &&
+        StringComparer.Ordinal.Equals(left.TerminalMessage, right.TerminalMessage) &&
+        left.TerminalReasonKind == right.TerminalReasonKind &&
+        left.StartedAt == right.StartedAt &&
+        left.TerminalAt == right.TerminalAt;
 
     public async Task<ScanExecutionStateView> ReadStateAsync(
         Guid scanExecutionId,
