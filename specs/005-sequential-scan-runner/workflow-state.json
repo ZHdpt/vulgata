@@ -159,7 +159,123 @@
       ]
     }
   },
-  "e2e_decision": null,
+  "e2e_decision": {
+    "required": false,
+    "result": "skipped-covered",
+    "owner": "orchestrator",
+    "decided_at": "2026-08-01T04:35:00Z",
+    "source_boundary": {
+      "base_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "candidate_commit": "9f1a6fbbcbf88fac297be81e230c5df302d4111b"
+    },
+    "predicates": [
+      {
+        "predicate_id": "P001",
+        "change_type": "User-visible workflow",
+        "gate": "required",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "No UI/API/Razor/SignalR surface added. Only Program.cs adapter DI registrations with no caller. T079 negative assertions confirmed.",
+        "evidence": [
+          "T079: only Program.cs references new types; no API endpoint, UI, Razor component, Chat Agent tool, or SignalR hub introduced"
+        ]
+      },
+      {
+        "predicate_id": "P002",
+        "change_type": "Authentication/authorization",
+        "gate": "required",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "No auth changes. No new policies, roles, or authorization requirements.",
+        "evidence": []
+      },
+      {
+        "predicate_id": "P003",
+        "change_type": "API/SignalR/persistence/multi-module integration",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/ApprovedPreScanHandoffSource.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/CodeUnitSource.cs",
+          "src/dotnet/Vulgata.Web/Program.cs"
+        ],
+        "affected_behavior": "New ScanExecutionRepository and 3 Infrastructure adapters registered in DI. However, SequentialScanRunner is NOT registered (deferred to Story 11.3 per plan-contradiction resolution), so no production code path reaches the repository. The EF Core mapping (entity -> table -> columns -> constraints) is exercised by G6 migration tests.",
+        "evidence": [
+          "G6 migration tests prove EF Core mapping: ApplyRollbackAndReapply_PreservesStory111Schema, Operations_AreAdditiveCompleteAndReversible, Model_ChecksAndIndexes_MatchAcceptedSchema",
+          "workflow-state.last_checkpoint.plan_contradiction_resolved: SequentialScanRunner DI registration deferred to Story 11.3 because IWorkerAgentDispatcher has no production implementation in Story 11.2",
+          "T079: no API endpoint or SignalR hub introduced"
+        ]
+      },
+      {
+        "predicate_id": "P004",
+        "change_type": "EF migration or observable data lifecycle",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.Designer.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanExecutionConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs"
+        ],
+        "affected_behavior": "Additive CreateTable migration for ScanExecutions with PK, 2 alternate keys, 3 CHECK constraints (closed-enum Phase, closed-enum TerminalReasonKind, bound RestartIndicator), 2 Restrict FKs (Repository simple, ScanRun composite), 3 indexes. Story 11.1 migration history untouched.",
+        "evidence": [
+          "SequentialScanRunnerMigrationTests.AddSequentialScanRunner_ApplyRollbackAndReapply_PreservesStory111Schema: apply from clean baseline, rollback to 20260731041654_AddMinimalKnowledgeStore with Story 11.1 tables intact, reapply with all 3 CHECK constraints present",
+          "SequentialScanRunnerMigrationTests.AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible: operation allowlist (CreateTable+CreateIndex+AddForeignKey only), Restrict FKs, composite FK to ScanRun alternate key, alternate keys present, CHECK constraint SQL matches, Down only drops",
+          "SequentialScanRunnerMigrationTests.AddSequentialScanRunner_Model_ChecksAndIndexes_MatchAcceptedSchema: model snapshot matches accepted schema, alternate keys, Restrict FKs, CHECK constraints mirrored, indexes by Repository/ScanRun/Phase, DbSet declared",
+          "dotnet ef migrations has-pending-model-changes => exit 0"
+        ]
+      },
+      {
+        "predicate_id": "P005",
+        "change_type": "Container/runtime behavior",
+        "gate": "may-skip",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "No Dockerfile, docker-compose, or middleware change. Docker E2E belongs to Story 11.5.",
+        "evidence": [
+          "git diff f23f6ee..9f1a6fb -- docker/ shows no changes",
+          "git diff f23f6ee..9f1a6fb -- src/dotnet/Vulgata.Web/Program.cs shows only DI registrations, no middleware/pipeline change"
+        ]
+      }
+    ],
+    "coverage_override": {
+      "test_ids": [
+        "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible",
+        "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Model_ChecksAndIndexes_MatchAcceptedSchema",
+        "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_ApplyRollbackAndReapply_PreservesStory111Schema"
+      ],
+      "covered_predicate_ids": ["P003", "P004"],
+      "source_boundary": {
+        "base_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+        "candidate_commit": "9f1a6fbbcbf88fac297be81e230c5df302d4111b"
+      },
+      "passing_evidence_ids": [
+        "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb",
+        "dotnet ef migrations has-pending-model-changes => exit 0 at 9f1a6fb"
+      ],
+      "completeness_rationale": "The G6 migration tests exercise the full changed migration behavior across every triggered observable boundary: additive operation allowlist (CreateTable+CreateIndex+AddForeignKey only), closed-enum CHECK constraints (Phase, TerminalReasonKind), bound CHECK constraint (RestartIndicator 0-32), Restrict FKs (Repository simple + ScanRun composite via alternate key), alternate keys (Id,RepositoryId and ScanRunId,RepositoryId), indexes (Repository, ScanRun, Phase), model snapshot matches accepted schema, DbSet declared, apply from clean baseline, rollback to Story 11.1 baseline 20260731041654_AddMinimalKnowledgeStore with Story 11.1 tables intact, reapply with all constraints present, and has-pending-model-changes exits 0. For the persistence predicate (P003), the EF Core mapping is proven by the same migration tests; the repository's transaction semantics are not 'changed behavior' in Story 11.2 because ScanExecutionRepository is not registered in DI (deferred to Story 11.3 per plan-contradiction resolution) and no production code path reaches it. The 3 adapter DI registrations (IApprovedPreScanHandoffSource, ICodeUnitSource, IScanExecutionStore) wire up but have no caller until Story 11.3 registers SequentialScanRunner. Quality-review F003 recorded the latent SQLite-safe no-op write-reservation gap as a Story 11.3 precondition."
+    },
+    "rationale": "Story 11.2 adds an additive EF migration and persistence infrastructure that is not reachable in production (SequentialScanRunner DI registration deferred to Story 11.3). The G6 migration tests provide complete current-boundary coverage of the full migration behavior (apply/rollback/reapply, operation allowlist, CHECK constraints, FKs, alternate keys, indexes, model snapshot, no pending changes). No user-visible workflow, auth, API, SignalR, or container/runtime behavior changed. Docker E2E belongs to Story 11.5. The clean-database two-Repository demonstration is also deferred to Story 11.5.",
+    "covering_tests": [
+      {
+        "test_id": "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible",
+        "covers": ["P004: operation allowlist, Restrict FKs, alternate keys, CHECK constraint SQL, Down reversibility"],
+        "passing_evidence": "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb"
+      },
+      {
+        "test_id": "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Model_ChecksAndIndexes_MatchAcceptedSchema",
+        "covers": ["P004: model snapshot matches accepted schema, alternate keys, Restrict FKs, CHECK constraints mirrored, indexes, DbSet declared"],
+        "passing_evidence": "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb"
+      },
+      {
+        "test_id": "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_ApplyRollbackAndReapply_PreservesStory111Schema",
+        "covers": ["P003: EF Core mapping works", "P004: apply from clean baseline, rollback to Story 11.1 baseline with tables intact, reapply with CHECK constraints present"],
+        "passing_evidence": "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb"
+      }
+    ]
+  },
   "verification": [],
   "last_checkpoint": {
     "checkpoint_id": "bmad-11-2-polish-20260801T040000Z-polish-green",
@@ -200,5 +316,5 @@
     "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T04:30:00Z"
+  "updated_at": "2026-08-01T04:35:00Z"
 }
