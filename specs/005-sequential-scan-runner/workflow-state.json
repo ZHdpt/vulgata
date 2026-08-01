@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/005-sequential-scan-runner",
   "execution_level": "expedited-mvp",
-  "stage": "specify",
+  "stage": "plan-review",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -94,8 +94,10 @@
       "verdict_paths": []
     },
     "plan-review": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 1,
+      "verdict_paths": [
+        "specs/005-sequential-scan-runner/reviews/plan-review/plan-review-20e6c83.json"
+      ]
     },
     "acceptance-review": {
       "count": 0,

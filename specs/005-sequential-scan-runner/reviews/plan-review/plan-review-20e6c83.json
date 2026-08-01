@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0",
+  "verdict": "ACCEPT",
+  "review_role": "plan-judge",
+  "execution_level": "expedited-mvp",
+  "story_key": "11-2-sequential-scan-runner-and-typed-agent-dispatch",
+  "feature_directory": "specs/005-sequential-scan-runner",
+  "input_boundary": {
+    "base_commit": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+    "candidate_commit": "20e6c830bc1fd81a53e0284c47209535389e8d91",
+    "plan_path": "specs/005-sequential-scan-runner/plan.md",
+    "plan_sha256": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759",
+    "spec_path": "specs/005-sequential-scan-runner/spec.md",
+    "spec_sha256": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519",
+    "artifact_hashes": {
+      "specs/005-sequential-scan-runner/plan.md": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759",
+      "specs/005-sequential-scan-runner/spec.md": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519",
+      "specs/005-sequential-scan-runner/research.md": null,
+      "specs/005-sequential-scan-runner/data-model.md": null,
+      "specs/005-sequential-scan-runner/contracts/worker-agent-job-packet.md": null,
+      "specs/005-sequential-scan-runner/contracts/worker-agent-result-envelope.md": null,
+      "specs/005-sequential-scan-runner/contracts/sequential-scan-runner.md": null,
+      "specs/005-sequential-scan-runner/quickstart.md": null
+    }
+  },
+  "authoritative_inputs": [
+    "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+    "specs/005-sequential-scan-runner/spec.md",
+    "specs/005-sequential-scan-runner/plan.md",
+    "specs/005-sequential-scan-runner/research.md",
+    "specs/005-sequential-scan-runner/data-model.md",
+    "specs/005-sequential-scan-runner/contracts/",
+    "specs/005-sequential-scan-runner/quickstart.md",
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-august-15-demo-slice.md",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+    "specs/004-minimal-knowledge-store/plan.md",
+    "src/dotnet/Vulgata.Core/DomainServices/ApprovedPreScanHandoff.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
+    "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
+    "src/dotnet/Vulgata.Core/Entities/PreScanResult.cs",
+    "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "axis": "constitution",
+      "gate": "I. Layered boundaries",
+      "finding": "Core owns the typed job/result contracts, the IWorkerAgentDispatcher port, the ScanExecution entity, and the runner domain service. Infrastructure owns EF, transactions, migration, and the durable runner-state repository. Web only registers the one-line runner DI. The layering is correct and matches the Story 11.1 pattern.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "constitution",
+      "gate": "II. Domain purity/language",
+      "finding": "No data annotations, no generic repository, no IQueryable/DbSet escape. The plan uses exact Ubiquitous Language terms: Scan, Repository, Code Unit, Worker Agent, Pre-Scan, Pass 1, Cross-Repository. AgentType is not modified; WorkerAgentJobKind is added alongside it.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "constitution",
+      "gate": "III. Validation/contracts",
+      "finding": "No public/API DTO is introduced. The typed job packet and result envelope are closed allowlists with UTF-8/count limits and the Story 11.1 sensitive-content guard enforced before dispatch and on every result. Failure produces a bounded Chinese user-visible message.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "constitution",
+      "gate": "IV. Test-first integration",
+      "finding": "Six transient RED-GREEN groups G1-G6 cover contracts, start/refusal, sequential dispatch, restart, failure isolation, and migration lifecycle. Each group records RED before production change and reaches GREEN before the next. Full regression and Web build follow.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "constitution",
+      "gate": "V. Security/stewardship",
+      "finding": "Typed job packets carry no source text, secret, absolute host path, raw-source carrier, or unbounded diagnostic. Results are schema-validated and bounded. On failure no Document Version is committed and no Story 11.1 invariant is weakened. The runner has no direct knowledge-store write path in this story.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "scope",
+      "gate": "PRD alignment",
+      "finding": "PRD section 5.16 and Epic 11 are the accepted deadline overlay. The plan implements the sequential dispatch path for the August 15 demonstration and explicitly defers concurrency, leases, supersteps, replay, failover, retry, Pass 2 flow planning, flow-group clustering, candidate selection, dispatch-site/endpoint binding, general Cross-Repository Resolution, and the LLM-backed Worker Agent (Story 11.3). No PRD requirement is weakened.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "scope",
+      "gate": "Story 11.1 boundary",
+      "finding": "The plan reuses ScanRun, PreScanResult, ApprovedPreScanHandoff, IScanRunRepository.GetApprovedPreScanHandoffAsync, and IKnowledgeStoreRepository without modifying Story 11.1 entities, services, migration, tests, or workflow files. The additive ScanExecutions migration rolls back to the Story 11.1 baseline 20260731041654_AddMinimalKnowledgeStore.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "architecture",
+      "gate": "Sequential dispatch design",
+      "finding": "The single in-order cursor with one IWorkerAgentDispatcher.DispatchAsync call at a time is the simplest deterministic path that satisfies FR-003 and FR-011 and keeps the Story 11.3 LLM-backed Worker Agent behind a stable port. No concurrency, lease, replay, failover, or retry is introduced.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "architecture",
+      "gate": "Restart semantics",
+      "finding": "The bounded RestartIndicator (0-32) makes a restart observable without an unbounded retry counter. The re-read path does not mutate phase and does not resume the LLM job or fabricate a result, satisfying FR-005, FR-006, and FR-007.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "architecture",
+      "gate": "Failure isolation",
+      "finding": "On SchemaInvalid/Error/Unbounded the runner transitions to Failed inside one atomic transaction, sets a bounded Chinese TerminalMessage and closed TerminalReasonKind, clears InFlightJobId, and does not call IKnowledgeStoreRepository. The atomic transaction ensures no partial ScanExecution state is visible. Story 11.1 invariants are structurally and transactionally protected.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "migration",
+      "gate": "Additive-only migration",
+      "finding": "The migration adds only ScanExecutions with Restrict/NoAction FKs, owner-safe alternate/composite keys, closed relational check constraints for Phase and TerminalReasonKind, a bound RestartIndicator check, and indexed query paths. Rollback to the Story 11.1 baseline preserves Story 11.1 tables. EF migrations, VulgataDbContext.cs, and Program.cs are integration-owner-gated per the operator directive.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "e2e",
+      "gate": "E2E decision",
+      "finding": "Persistence/multi-module and migration/observable-lifecycle predicates are triggered and required. User-visible and authorization predicates are not triggered (no UI/API, no new policy; reuses existing SystemOwner role). The economical E2E is the focused runner-state persistence, restart, and migration integration groups. Clean-database two-Repository demonstration and Docker image remain Story 11.5.",
+      "disposition": "ACCEPT"
+    },
+    {
+      "severity": "info",
+      "axis": "planned-change",
+      "gate": "Planned-change triggers",
+      "finding": "The plan correctly identifies two planned-change triggers: Scan strategy dispatch behavior and Worker Agent tool / agent execution adapter. The orchestrator must pause for planned-change authorization after this plan-review ACCEPT and before task generation. A clean plan-judge ACCEPT does not replace the mandatory user approval.",
+      "disposition": "ACCEPT"
+    }
+  ],
+  "recommendations": [],
+  "blocking_issues": [],
+  "revision_count_for_plan": 1,
+  "completed_at": "2026-07-31T14:35:00Z",
+  "judge_notes": "Independent plan-judge review over the pinned raw plan boundary at 20e6c830. The plan is bounded under the current PRD, Constitution, ADRs, and accepted Story 11.1 architecture. All Constitution gates pass. The design is the simplest deterministic path that satisfies the deadline acceptance criteria. The two planned-change triggers are correctly identified and must be authorized before task generation. No Critical or High findings. No Strong architecture recommendations. ACCEPT."
+}
