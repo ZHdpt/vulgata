@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/005-sequential-scan-runner",
   "execution_level": "expedited-mvp",
-  "stage": "implement",
+  "stage": "complete",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -69,9 +69,9 @@
     },
     {
       "stage": "implement",
-      "status": "in_progress",
+      "status": "complete",
       "started_at": "2026-08-01T00:30:00Z",
-      "completed_at": null,
+      "completed_at": "2026-08-01T04:35:00Z",
       "input_commit": "daf5314",
       "input_hashes": {},
       "agent_role": "bmad-sprint-orchestrator",
@@ -87,6 +87,73 @@
         "G5": "complete",
         "G6": "complete"
       }
+    },
+    {
+      "stage": "polish",
+      "status": "complete",
+      "started_at": "2026-08-01T03:36:55Z",
+      "completed_at": "2026-08-01T04:00:00Z",
+      "input_commit": "b4f34df",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "complete",
+      "started_at": "2026-08-01T04:00:00Z",
+      "completed_at": "2026-08-01T04:30:00Z",
+      "input_commit": "9f1a6fb",
+      "input_hashes": {},
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json"
+      ],
+      "failure": null,
+      "verdict": "ACCEPT"
+    },
+    {
+      "stage": "e2e",
+      "status": "complete",
+      "started_at": "2026-08-01T04:30:00Z",
+      "completed_at": "2026-08-01T04:35:00Z",
+      "input_commit": "9f1a6fb",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/workflow-state.json"
+      ],
+      "failure": null,
+      "result": "skipped-covered"
+    },
+    {
+      "stage": "verify",
+      "status": "complete",
+      "started_at": "2026-08-01T04:35:00Z",
+      "completed_at": "2026-08-01T04:40:00Z",
+      "input_commit": "c7b6672",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/workflow-state.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "complete",
+      "status": "complete",
+      "started_at": "2026-08-01T04:40:00Z",
+      "completed_at": "2026-08-01T04:45:00Z",
+      "input_commit": "c7b6672",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/sprint-status.yaml"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -276,29 +343,64 @@
       }
     ]
   },
-  "verification": [],
+  "verification": [
+    {
+      "id": "V001",
+      "stage": "verify",
+      "completed_at": "2026-08-01T04:40:00Z",
+      "commit": "c7b6672",
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --nologo --verbosity quiet",
+      "result": "0 errors, 9 warnings (pre-existing package-source/EF-version)",
+      "exit_code": 0
+    },
+    {
+      "id": "V002",
+      "stage": "verify",
+      "completed_at": "2026-08-01T04:40:00Z",
+      "commit": "c7b6672",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests\" --nologo --verbosity quiet",
+      "result": "Passed! - Failed: 0, Passed: 744, Skipped: 0, Total: 744, Duration: 52s",
+      "exit_code": 0,
+      "excluded": [
+        "CodeGraphProviderContractTests (requires running Code Graph service)",
+        "KnowledgeStorePostgreSqlConcurrencyTests (requires PostgreSQL + concurrency fixture)"
+      ]
+    }
+  ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-2-polish-20260801T040000Z-polish-green",
+    "checkpoint_id": "bmad-11-2-complete-20260801T044500Z",
     "scope_key": "story/11-2-sequential-scan-runner-and-typed-agent-dispatch",
-    "stage": "polish",
+    "stage": "complete",
     "committed_paths": [
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "specs/005-sequential-scan-runner/tasks.md"
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/005-sequential-scan-runner/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "T076 dotnet test (full non-final-image suite) => 744 passed, 0 failed",
-      "T077 dotnet build Vulgata.Web => 0 errors, 9 warnings (pre-existing package-source/EF-version)",
-      "T078 dotnet test --filter FullyQualifiedName~SequentialScanRunner => 62 passed, 0 failed (6 quickstart scenarios)",
-      "T079 negative assertions: only Program.cs references new types; no API/UI/Chat/Pass2/Cross-Repo/Story 11.3 surface",
-      "T080 no failing test committed at 3e299e1"
+      "V001 dotnet build Vulgata.Web at c7b6672 => 0 errors, 9 warnings (pre-existing)",
+      "V002 dotnet test full non-final-image suite at c7b6672 => 744 passed, 0 failed",
+      "quality-review ACCEPT at 9f1a6fb (verdict: specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json)",
+      "e2e skipped-covered at 9f1a6fb (G6 migration tests cover full migration behavior)",
+      "sprint-status.yaml story 11-2 status flipped to done"
     ],
-    "commit_sha": "195aedf",
+    "commit_sha": "pending",
     "binding_status": "bound",
     "plan_contradiction_resolved": {
       "trigger": "T073 asked to register SequentialScanRunner in Program.cs, but the runner depends on IWorkerAgentDispatcher which has no production impl until Story 11.3 (plan.md line 191: 'Story 11.2 ships only a fake/test dispatcher in Tests')",
       "resolution": "Registered only the three Infrastructure adapters (IApprovedPreScanHandoffSource, ICodeUnitSource, IScanExecutionStore); deferred SequentialScanRunner registration to Story 11.3 alongside its LLM-backed dispatcher. Surface per AGENTS.md rather than silently overriding.",
       "affected_task": "T073"
-    }
+    },
+    "deferred_to_story_11_3": [
+      "SequentialScanRunner DI registration (depends on IWorkerAgentDispatcher production impl)",
+      "LLM-backed Worker Agent dispatcher",
+      "ScanExecutionRepository SQLite-safe no-op write-reservation pattern (quality-review F003)",
+      "MissingCodeUnit/OverLimitPacket reason kind test coverage (quality-review F001)",
+      "RecordingDispatcher placeholder envelope identity match (quality-review F004)",
+      "IScanExecutionStore.ReadStateAsync XML doc correction (quality-review F005)"
+    ],
+    "deferred_to_story_11_5": [
+      "Clean-database two-Repository demonstration E2E",
+      "Docker release verification"
+    ]
   },
   "planned_change_triggers": [
     "scan-strategy-dispatch-behavior",
@@ -316,5 +418,5 @@
     "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T04:35:00Z"
+  "updated_at": "2026-08-01T04:45:00Z"
 }
