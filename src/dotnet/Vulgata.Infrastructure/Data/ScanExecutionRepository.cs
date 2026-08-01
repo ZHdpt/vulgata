@@ -27,7 +27,7 @@ public sealed class ScanExecutionRepository(VulgataDbContext dbContext) : IScanE
     public Task<ScanExecution?> GetAsync(
         Guid scanExecutionId,
         CancellationToken cancellationToken = default) =>
-        dbContext.Set<ScanExecution>()
+        dbContext.ScanExecutions
             .AsNoTracking()
             .SingleOrDefaultAsync(e => e.Id == scanExecutionId, cancellationToken);
 
@@ -35,7 +35,7 @@ public sealed class ScanExecutionRepository(VulgataDbContext dbContext) : IScanE
         Guid repositoryId,
         Guid scanRunId,
         CancellationToken cancellationToken = default) =>
-        dbContext.Set<ScanExecution>()
+        dbContext.ScanExecutions
             .AsNoTracking()
             .Where(e =>
                 e.RepositoryId == repositoryId &&

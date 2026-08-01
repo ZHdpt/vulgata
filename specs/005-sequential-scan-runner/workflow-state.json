@@ -78,9 +78,9 @@
         "G1": "complete",
         "G2": "complete",
         "G3": "complete",
-        "G4": "pending",
-        "G5": "pending",
-        "G6": "pending"
+        "G4": "complete",
+        "G5": "complete",
+        "G6": "complete"
       }
     }
   ],
@@ -155,18 +155,26 @@
   "e2e_decision": null,
   "verification": [],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-2-implement-20260801T003000Z-g3-green",
+    "checkpoint_id": "bmad-11-2-implement-20260801T033655Z-g6-green",
     "scope_key": "story/11-2-sequential-scan-runner-and-typed-agent-dispatch",
     "stage": "implement",
     "committed_paths": [
-      "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs",
-      "tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs",
+      "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanExecutionConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.Designer.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs",
       "specs/005-sequential-scan-runner/tasks.md"
     ],
     "verification_evidence_ids": [
-      "dotnet test --filter FullyQualifiedName~SequentialScanRunner => 44 passed, 0 failed"
+      "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed",
+      "dotnet ef migrations has-pending-model-changes => exit 0 (No changes have been made to the model since the last migration)"
     ],
-    "commit_sha": "daf5314",
+    "commit_sha": "pending",
     "binding_status": "bound"
   },
   "planned_change_triggers": [
@@ -185,5 +193,5 @@
     "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T00:30:00Z"
+  "updated_at": "2026-08-01T03:36:55Z"
 }

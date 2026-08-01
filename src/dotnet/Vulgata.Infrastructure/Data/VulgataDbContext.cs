@@ -35,6 +35,7 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<FlowTraceStep> FlowTraceSteps => Set<FlowTraceStep>();
     public DbSet<IndexEntry> IndexEntries => Set<IndexEntry>();
     public DbSet<DocumentSection> DocumentSections => Set<DocumentSection>();
+    public DbSet<ScanExecution> ScanExecutions => Set<ScanExecution>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

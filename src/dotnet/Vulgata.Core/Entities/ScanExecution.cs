@@ -20,6 +20,12 @@ public sealed class ScanExecution
     private const int MaximumProfiledRevisionLength = 64;
     private const int MaximumTerminalMessageUtf8Bytes = 512;
 
+    // EF Core requires a parameterless constructor. It can be private.
+    private ScanExecution()
+    {
+        ProfiledRevision = string.Empty;
+    }
+
     private ScanExecution(
         Guid id,
         Guid repositoryId,

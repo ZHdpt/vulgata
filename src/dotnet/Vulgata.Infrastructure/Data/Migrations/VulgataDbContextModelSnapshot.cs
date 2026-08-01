@@ -1021,6 +1021,81 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("ScanCandidateOutcomes", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CompletedJobCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("InFlightJobId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Phase")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("PreScanResultId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RestartIndicator")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("TerminalAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TerminalMessage")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("TerminalReasonKind")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("TotalJobCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("Id", "RepositoryId");
+
+                    b.HasAlternateKey("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("RepositoryId");
+
+                    b.HasIndex("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("RepositoryId", "ScanRunId", "Phase");
+
+                    b.ToTable("ScanExecutions", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_ScanExecutions_Phase_Closed", "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled')");
+
+                            t.HasCheckConstraint("CK_ScanExecutions_RestartIndicator_Bound", "0 <= \"RestartIndicator\" AND \"RestartIndicator\" <= 32");
+
+                            t.HasCheckConstraint("CK_ScanExecutions_TerminalReasonKind_Closed", "\"TerminalReasonKind\" IS NULL OR \"TerminalReasonKind\" IN ('SchemaInvalid', 'Error', 'Unbounded', 'MissingPrerequisite', 'DuplicateActiveScan', 'MissingCodeUnit', 'ForbiddenContent', 'OverLimitPacket')");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.ScanRun", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1566,6 +1641,22 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("ScanRun");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanExecution", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", null)
+                        .WithMany()
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.ScanRun", b =>
