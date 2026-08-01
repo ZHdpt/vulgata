@@ -24,8 +24,8 @@
     "observed_at": "2026-07-31T14:15:00Z"
   },
   "activation_checkpoint_id": "bmad-11-2-activated-20260731T141500Z-a3c2b1",
-  "feature_directory": null,
-  "superseded_by_state": null,
+  "feature_directory": "specs/005-sequential-scan-runner",
+  "superseded_by_state": "specs/005-sequential-scan-runner/workflow-state.json",
   "planned_change_triggers": [
     "scan-strategy-dispatch-behavior",
     "worker-agent-tool-execution-adapter"

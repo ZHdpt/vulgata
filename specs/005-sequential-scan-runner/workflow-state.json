@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-2-sequential-scan-runner-and-typed-agent-dispatch",
+  "bmad_epic_key": "11",
+  "feature_directory": "specs/005-sequential-scan-runner",
+  "execution_level": "expedited-mvp",
+  "stage": "specify",
+  "active_gates": {
+    "spec-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "acceptance-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "quality-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-07-31T14:15:00Z",
+      "completed_at": "2026-07-31T14:15:00Z",
+      "input_commit": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md"
+      ],
+      "failure": null
+    }
+  ],
+  "repository_preflight": {
+    "branch": "story112",
+    "preflight_head": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+    "story_prepared_checkpoint": "d5f91e9c4199826d944a6b20af3039741958cc9b",
+    "story_activated_checkpoint": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+    "predecessor_completed_candidate": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "G:/source/repos/vulgata/.worktrees/story112",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-2-sequential-scan-runner-and-typed-agent-dispatch.json",
+      "specs/005-sequential-scan-runner/spec.md",
+      "specs/005-sequential-scan-runner/checklists/requirements.md",
+      "specs/005-sequential-scan-runner/workflow-state.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-31T14:15:00Z"
+  },
+  "source_artifacts": [
+    {
+      "authority": "BMad development record",
+      "path": "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+      "commit": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+      "sha256": null
+    },
+    {
+      "authority": "SpecKit specification",
+      "path": "specs/005-sequential-scan-runner/spec.md",
+      "commit": null,
+      "sha256": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519"
+    }
+  ],
+  "dispatches": [],
+  "review_iterations": {
+    "spec-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "plan-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "acceptance-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 0,
+      "verdict_paths": []
+    }
+  },
+  "e2e_decision": null,
+  "verification": [],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-11-2-activated-20260731T141500Z-a3c2b1",
+    "scope_key": "story/11-2-sequential-scan-runner-and-typed-agent-dispatch",
+    "stage": "context",
+    "committed_paths": [
+      "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-2-sequential-scan-runner-and-typed-agent-dispatch.json"
+    ],
+    "verification_evidence_ids": [],
+    "commit_sha": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+    "binding_status": "bound"
+  },
+  "planned_change_triggers": [
+    "scan-strategy-dispatch-behavior",
+    "worker-agent-tool-execution-adapter"
+  ],
+  "integration_owner_gated_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Migrations/",
+    "src/dotnet/Vulgata.Infrastructure/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml"
+  ],
+  "expedited_mvp_authority": {
+    "allowlist": "11-1 through 11-5",
+    "lifetime": "2026-08-15T23:59:59+08:00",
+    "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-07-31T14:15:00Z"
+}
