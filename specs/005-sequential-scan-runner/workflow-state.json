@@ -44,6 +44,23 @@
         "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-01T00:00:00Z",
+      "completed_at": "2026-08-01T00:00:00Z",
+      "input_commit": "875a212d6a7956c291d020162dd124391d00bd7d",
+      "input_hashes": {
+        "spec.md": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519",
+        "plan.md": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759",
+        "tasks.md": "75514417a167cfc8709b92bf1c1188cfa0a67490d3afb0008e4f661bba158262"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -85,6 +102,12 @@
       "path": "specs/005-sequential-scan-runner/plan.md",
       "commit": null,
       "sha256": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759"
+    },
+    {
+      "authority": "SpecKit tasks",
+      "path": "specs/005-sequential-scan-runner/tasks.md",
+      "commit": null,
+      "sha256": "75514417a167cfc8709b92bf1c1188cfa0a67490d3afb0008e4f661bba158262"
     }
   ],
   "dispatches": [],
@@ -111,16 +134,15 @@
   "e2e_decision": null,
   "verification": [],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-2-activated-20260731T141500Z-a3c2b1",
+    "checkpoint_id": "bmad-11-2-tasks-20260801T000000Z-t1a2b3",
     "scope_key": "story/11-2-sequential-scan-runner-and-typed-agent-dispatch",
-    "stage": "context",
+    "stage": "tasks",
     "committed_paths": [
-      "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/implementation-artifacts/workflow-activations/11-2-sequential-scan-runner-and-typed-agent-dispatch.json"
+      "specs/005-sequential-scan-runner/tasks.md",
+      "specs/005-sequential-scan-runner/workflow-state.json"
     ],
     "verification_evidence_ids": [],
-    "commit_sha": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+    "commit_sha": null,
     "binding_status": "bound"
   },
   "planned_change_triggers": [
@@ -139,5 +161,5 @@
     "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-31T14:15:00Z"
+  "updated_at": "2026-08-01T00:00:00Z"
 }
