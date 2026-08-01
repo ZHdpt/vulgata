@@ -155,27 +155,27 @@
   "e2e_decision": null,
   "verification": [],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-2-implement-20260801T033655Z-g6-green",
+    "checkpoint_id": "bmad-11-2-polish-20260801T040000Z-polish-green",
     "scope_key": "story/11-2-sequential-scan-runner-and-typed-agent-dispatch",
-    "stage": "implement",
+    "stage": "polish",
     "committed_paths": [
-      "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanExecutionConfiguration.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.Designer.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
       "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs",
       "specs/005-sequential-scan-runner/tasks.md"
     ],
     "verification_evidence_ids": [
-      "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed",
-      "dotnet ef migrations has-pending-model-changes => exit 0 (No changes have been made to the model since the last migration)"
+      "T076 dotnet test (full non-final-image suite) => 744 passed, 0 failed",
+      "T077 dotnet build Vulgata.Web => 0 errors, 9 warnings (pre-existing package-source/EF-version)",
+      "T078 dotnet test --filter FullyQualifiedName~SequentialScanRunner => 62 passed, 0 failed (6 quickstart scenarios)",
+      "T079 negative assertions: only Program.cs references new types; no API/UI/Chat/Pass2/Cross-Repo/Story 11.3 surface",
+      "T080 no failing test committed at 3e299e1"
     ],
-    "commit_sha": "pending",
-    "binding_status": "bound"
+    "commit_sha": "195aedf",
+    "binding_status": "bound",
+    "plan_contradiction_resolved": {
+      "trigger": "T073 asked to register SequentialScanRunner in Program.cs, but the runner depends on IWorkerAgentDispatcher which has no production impl until Story 11.3 (plan.md line 191: 'Story 11.2 ships only a fake/test dispatcher in Tests')",
+      "resolution": "Registered only the three Infrastructure adapters (IApprovedPreScanHandoffSource, ICodeUnitSource, IScanExecutionStore); deferred SequentialScanRunner registration to Story 11.3 alongside its LLM-backed dispatcher. Surface per AGENTS.md rather than silently overriding.",
+      "affected_task": "T073"
+    }
   },
   "planned_change_triggers": [
     "scan-strategy-dispatch-behavior",
@@ -193,5 +193,5 @@
     "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T03:36:55Z"
+  "updated_at": "2026-08-01T04:00:00Z"
 }
