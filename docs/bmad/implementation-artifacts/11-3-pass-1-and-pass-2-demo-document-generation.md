@@ -1,7 +1,7 @@
 ---
 story_key: 11-3-pass-1-and-pass-2-demo-document-generation
 title: "Story 11.3: Pass 1 & Pass 2 Demo Document Generation"
-Status: review
+Status: done
 Epic: 11
 Story: 3
 created: 2026-08-01
@@ -287,14 +287,15 @@ workflow evidence or their completed lifecycle records.
   `docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json`.
 - Proposed SpecKit short name: `demo-document-generation`.
 - SpecKit feature directory: `specs/006-demo-document-generation`.
-- Current workflow stage: `implement` (reviewed candidate).
+- Current workflow stage: `complete`.
 - Latest workflow checkpoint ID:
-  `bmad-11-3-implement-20260801T160718Z-5e73d4`.
+  `bmad-11-3-complete-20260801T175237Z-3c71b8`.
 
 ### Agent Model Used
 
 - Root sprint-loop orchestrator with direct-child `task-author`, sequential
-  `tdd-implementer` groups, and pending combined `quality-reviewer`.
+  `tdd-implementer` corrections, three independent combined quality reviews,
+  and a conditional `e2e-runner`.
 
 ### Debug Log References
 
@@ -312,9 +313,15 @@ workflow evidence or their completed lifecycle records.
   tension by deferring advanced failure policy without marking it complete.
 - The user explicitly authorized the accepted production Worker Agent adapter
   and prepared Pass 2 Scan strategy before task generation.
-- G0-G7 completed with observed transient RED then GREEN evidence. The focused
-  Story 11.3 lane passes 166/166, Web builds with zero errors, and the
-  non-final-image regression lane passes 944/944.
+- G0-G7 and review corrections completed with observed transient RED then
+  GREEN evidence. The focused Story 11.3 lane passes 178/178, Web builds with
+  zero errors, and the non-final-image regression lane passes 956/956.
+- Combined quality review iteration 3 accepted the immutable `07f5073`
+  candidate with no findings and complete AC-1 through AC-6, FR-001 through
+  FR-020, and SC-001 through SC-006 coverage.
+- Conditional E2E passed both the exact relational current-boundary scenario
+  and the post-commit final-progress recovery scenario, providing complete
+  P001/P002 coverage without provider redispatch or duplicate documents.
 - The current-boundary relational scenario proves exact committed source,
   Pass 1 commit-before-progress, one prepared Pass 2, exact `GENERATED_FROM`,
   zero narrative `REFERENCES`, and completion only after the Business Logic

@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/006-demo-document-generation",
   "execution_level": "expedited-mvp",
-  "stage": "implement",
+  "stage": "complete",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -15,12 +15,16 @@
       "completed_at": null
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 2,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "accepted",
+      "iteration": 3,
+      "dispatch_id": "story_11_3_quality_review_r3",
+      "verdict_path": "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json",
+      "input_boundary": {
+        "base_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+        "candidate_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+        "diff_git_hash_object": "0f1d276bc90e2f6a13514d8d0c514833eb8879ed"
+      },
+      "completed_at": "2026-08-01T17:45:00Z"
     }
   },
   "stage_history": [
@@ -246,6 +250,71 @@
         "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
         "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
         "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "accepted",
+      "started_at": "2026-08-01T17:36:00Z",
+      "completed_at": "2026-08-01T17:45:00Z",
+      "input_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "input_hashes": {
+        "candidate_diff_git_hash_object": "0f1d276bc90e2f6a13514d8d0c514833eb8879ed"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "conditional-e2e",
+      "status": "accepted",
+      "started_at": "2026-08-01T17:46:00Z",
+      "completed_at": "2026-08-01T17:48:14Z",
+      "input_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "input_hashes": {
+        "candidate_diff_git_hash_object": "0f1d276bc90e2f6a13514d8d0c514833eb8879ed"
+      },
+      "agent_role": "e2e-runner",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "verify",
+      "status": "accepted",
+      "started_at": "2026-08-01T17:49:00Z",
+      "completed_at": "2026-08-01T17:52:37Z",
+      "input_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "input_hashes": {
+        "candidate_diff_git_hash_object": "0f1d276bc90e2f6a13514d8d0c514833eb8879ed"
+      },
+      "agent_role": "orchestrator-verifier",
+      "evidence_paths": [
+        "tests/Vulgata.Tests",
+        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+        "specs/006-demo-document-generation/workflow-state.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "complete",
+      "status": "accepted",
+      "started_at": "2026-08-01T17:52:37Z",
+      "completed_at": "2026-08-01T17:52:37Z",
+      "input_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "input_hashes": {
+        "candidate_diff_git_hash_object": "0f1d276bc90e2f6a13514d8d0c514833eb8879ed"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml",
+        "specs/006-demo-document-generation/workflow-state.json",
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json"
       ],
       "failure": null
     }
@@ -592,10 +661,11 @@
       "verdict_paths": []
     },
     "quality-review": {
-      "count": 2,
+      "count": 3,
       "verdict_paths": [
         "specs/006-demo-document-generation/reviews/quality-review/quality-review-d48ee3b.json",
-        "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json"
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json",
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json"
       ]
     }
   },
@@ -614,7 +684,9 @@
           "src/dotnet/Vulgata.Web"
         ],
         "affected_behavior": "Worker Agent results cross provider, runner, authorization, and knowledge-store boundaries before Scan progress advances.",
-        "evidence": []
+        "evidence": [
+          "RunCurrentBoundaryAsync_CommittedPreparedRepository_GeneratesExactDocumentsSecurely passed."
+        ]
       },
       {
         "predicate_id": "P002",
@@ -626,17 +698,46 @@
           "src/dotnet/Vulgata.Infrastructure"
         ],
         "affected_behavior": "Pass 1 and the single prepared Pass 2 job commit immutable Document Versions and exact provenance before lifecycle completion.",
-        "evidence": []
+        "evidence": [
+          "RunCurrentBoundaryAsync_CommittedPreparedRepository_GeneratesExactDocumentsSecurely passed.",
+          "RunPreparedPass2Async_FinalProgressFailureAfterCommit_RetryCompletesWithoutRedispatch passed."
+        ]
       }
     ],
-    "coverage_override": null,
-    "rationale": "Persistence and multi-module behavior require current-boundary integration evidence; a later complete coverage override may satisfy the gate. Final two-Repository and Docker verification remain Story 11.5.",
-    "covering_tests": [],
+    "coverage_override": {
+      "test_ids": [
+        "Vulgata.Tests.SequentialScanRunnerDocumentGenerationTests.RunCurrentBoundaryAsync_CommittedPreparedRepository_GeneratesExactDocumentsSecurely",
+        "Vulgata.Tests.SequentialScanRunnerDocumentGenerationTests.RunPreparedPass2Async_FinalProgressFailureAfterCommit_RetryCompletesWithoutRedispatch"
+      ],
+      "covered_predicate_ids": ["P001", "P002"],
+      "source_boundary": {
+        "base_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+        "candidate_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+        "diff_sha256": "0f1d276bc90e2f6a13514d8d0c514833eb8879ed",
+        "artifact_hashes": {},
+        "owned_paths": [
+          "src/dotnet/Vulgata.Core",
+          "src/dotnet/Vulgata.Agents",
+          "src/dotnet/Vulgata.Infrastructure",
+          "src/dotnet/Vulgata.Web",
+          "tests/Vulgata.Tests"
+        ]
+      },
+      "passing_evidence_ids": [
+        "11-3-pass-1-and-pass-2-demo-document-generation/conditional-e2e/1"
+      ],
+      "completeness_rationale": "The exact relational current-boundary scenario covers Git revision binding, encrypted provider assignment, Repository authorization, real Scan and Knowledge repositories, commit-before-progress, exact Pass 1 and Pass 2 persistence and provenance; the supplemental retry scenario covers final-progress failure after durable Pass 2 commit. Story 11.5 owns final PostgreSQL clean-database two-Repository and Docker verification."
+    },
+    "rationale": "Required current-boundary relational E2E passed with complete P001 and P002 coverage. Final clean PostgreSQL two-Repository and Docker verification remain Story 11.5.",
+    "covering_tests": [
+      "Vulgata.Tests.SequentialScanRunnerDocumentGenerationTests.RunCurrentBoundaryAsync_CommittedPreparedRepository_GeneratesExactDocumentsSecurely",
+      "Vulgata.Tests.SequentialScanRunnerDocumentGenerationTests.RunPreparedPass2Async_FinalProgressFailureAfterCommit_RetryCompletesWithoutRedispatch"
+    ],
     "owner": "e2e-runner",
     "source_boundary": {
       "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
-      "candidate_commit": null,
-      "diff_sha256": "0f008d08c8986637920e6580cbdd5e01780ab7aadc8d8a3711f73c00d03c9566",
+      "candidate_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "diff_sha256": "0f1d276bc90e2f6a13514d8d0c514833eb8879ed",
       "artifact_hashes": {
         "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md": "739c874fd81d210693eb3fdf832f5810760fb4e05bcfda25a4ba024854c44446",
         "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
@@ -650,10 +751,76 @@
         "specs/006-demo-document-generation/checklists/requirements.md"
       ]
     },
-    "result": "pending",
-    "evidence_ids": []
+    "result": "passed",
+    "evidence_ids": [
+      "11-3-pass-1-and-pass-2-demo-document-generation/conditional-e2e/1"
+    ]
   },
   "verification": [
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/verify/1",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "artifact_paths": ["tests/Vulgata.Tests"],
+      "command": "dotnet test Vulgata.Tests excluding four PostgreSQL environment tests and one final-image environment test",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:52:00Z",
+      "summary": "Final non-environment-gated regression lane passed 956 of 956 with zero failures or skips.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/verify/2",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "artifact_paths": ["src/dotnet/Vulgata.Web/Vulgata.Web.csproj", "specs/006-demo-document-generation/workflow-state.json"],
+      "command": "dotnet build Vulgata.Web; validate_workflow.py; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:52:37Z",
+      "summary": "Web build passed with zero errors, workflow contracts validated, and diff check passed; existing warnings remain.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/complete/1",
+      "kind": "analysis",
+      "stage": "complete",
+      "source_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "artifact_paths": ["docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md", "docs/bmad/implementation-artifacts/sprint-status.yaml", "specs/006-demo-document-generation/tasks.md"],
+      "command": "Story lifecycle and task coverage audit",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:52:37Z",
+      "summary": "Story and sprint are done, all 56 tasks remain complete, quality and E2E gates accepted, and Story 11.5 retains final PostgreSQL and Docker scope.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/conditional-e2e/1",
+      "kind": "e2e-decision",
+      "stage": "conditional-e2e",
+      "source_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"
+      ],
+      "command": "exact relational current-boundary scenario plus final-progress-failure retry scenario",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:48:14Z",
+      "summary": "PASS: both exact E2E scenarios passed 1 of 1 and provide complete current-boundary coverage for P001 and P002.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/quality-review/3",
+      "kind": "review-verdict",
+      "stage": "quality-review",
+      "source_commit": "07f5073e18f7ae2b8782aa1ea424f16af8d34f26",
+      "artifact_paths": [
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json"
+      ],
+      "command": "independent combined acceptance and quality review iteration 3",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:45:00Z",
+      "summary": "ACCEPT: no findings; all AC, FR, and SC coverage passed and prior F001 through F007 were resolved.",
+      "raw_output_path": "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json"
+    },
     {
       "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/quality-review/2",
       "kind": "review-verdict",
@@ -1092,19 +1259,14 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-3-implement-r3-20260801T173436Z-9a11e0",
+    "checkpoint_id": "bmad-11-3-complete-20260801T175237Z-3c71b8",
     "scope_key": "story/11-3-pass-1-and-pass-2-demo-document-generation",
-    "stage": "implement",
+    "stage": "complete",
     "committed_paths": [
+      "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "specs/006-demo-document-generation/workflow-state.json",
-      "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json",
-      "src/dotnet/Vulgata.Core/DomainServices/IWorkerAgentResultCommitter.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentResultEnvelope.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs",
-      "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
-      "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
-      "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs"
+      "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json"
     ],
     "verification_evidence_ids": [
       "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/1",
@@ -1138,11 +1300,16 @@
       "11-3-pass-1-and-pass-2-demo-document-generation/implement/25",
       "11-3-pass-1-and-pass-2-demo-document-generation/implement/26",
       "11-3-pass-1-and-pass-2-demo-document-generation/implement/27",
-      "11-3-pass-1-and-pass-2-demo-document-generation/implement/28"
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/28",
+      "11-3-pass-1-and-pass-2-demo-document-generation/quality-review/3",
+      "11-3-pass-1-and-pass-2-demo-document-generation/conditional-e2e/1",
+      "11-3-pass-1-and-pass-2-demo-document-generation/verify/1",
+      "11-3-pass-1-and-pass-2-demo-document-generation/verify/2",
+      "11-3-pass-1-and-pass-2-demo-document-generation/complete/1"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T17:34:36Z"
+  "updated_at": "2026-08-01T17:52:37Z"
 }
