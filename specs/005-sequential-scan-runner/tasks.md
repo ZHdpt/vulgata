@@ -176,21 +176,21 @@
 
 ### G5 Tests (RED first)
 
-- [ ] T053 [P] [US4] Write failing test: `SchemaInvalid` result → `Failed` with Chinese `TerminalMessage` naming the failing Repository and `TerminalReasonKind.SchemaInvalid` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T054 [P] [US4] Write failing test: `Error` result → `Failed` with `TerminalReasonKind.Error` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T055 [P] [US4] Write failing test: `Unbounded` result → `Failed` with `TerminalReasonKind.Unbounded` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T056 [P] [US4] Write failing test: on failure, no Document Version is committed (runner never calls `IKnowledgeStoreRepository`) in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T057 [P] [US4] Write failing test: on failure, no partial `ScanExecution` state is visible (atomic transaction) in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T058 [P] [US4] Write failing test: boundary rejection — missing Code Unit → `Failed` with `TerminalReasonKind.MissingCodeUnit` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T059 [P] [US4] Write failing test: boundary rejection — oversized packet → `Failed` with `TerminalReasonKind.OverLimitPacket` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T060 [P] [US4] Write failing test: boundary rejection — forbidden content → `Failed` with `TerminalReasonKind.ForbiddenContent` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
-- [ ] T061 [P] [US4] Write failing test: no Story 11.1 knowledge-store invariant is weakened (negative assertion — Story 11.1 rows untouched) in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T053 [P] [US4] Write failing test: `SchemaInvalid` result → `Failed` with Chinese `TerminalMessage` naming the failing Repository and `TerminalReasonKind.SchemaInvalid` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T054 [P] [US4] Write failing test: `Error` result → `Failed` with `TerminalReasonKind.Error` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T055 [P] [US4] Write failing test: `Unbounded` result → `Failed` with `TerminalReasonKind.Unbounded` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T056 [P] [US4] Write failing test: on failure, no Document Version is committed (runner never calls `IKnowledgeStoreRepository`) in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T057 [P] [US4] Write failing test: on failure, no partial `ScanExecution` state is visible (atomic transaction) in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T058 [P] [US4] Write failing test: boundary rejection — missing Code Unit → `Failed` with `TerminalReasonKind.MissingCodeUnit` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T059 [P] [US4] Write failing test: boundary rejection — oversized packet → `Failed` with `TerminalReasonKind.OverLimitPacket` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T060 [P] [US4] Write failing test: boundary rejection — forbidden content → `Failed` with `TerminalReasonKind.ForbiddenContent` in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
+- [X] T061 [P] [US4] Write failing test: no Story 11.1 knowledge-store invariant is weakened (negative assertion — Story 11.1 rows untouched) in `tests/Vulgata.Tests/SequentialScanRunnerFailureTests.cs`
 
 ### G5 Implementation (GREEN)
 
-- [ ] T062 [US4] Implement `SequentialScanRunner.RecordFailure` path in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — on `SchemaInvalid`/`Error`/`Unbounded`: call `ScanExecution.RecordFailure` (transition to `Failed`, set bounded Chinese `TerminalMessage` naming the failing Repository, set `TerminalReasonKind`, clear `InFlightJobId`), persist atomically, do NOT call `IKnowledgeStoreRepository`, do NOT commit any Document Version. Boundary rejection (missing Code Unit, oversized packet, forbidden content) enforced before dispatch via `WorkerAgentJobPacket.Create` factory; runner records corresponding `TerminalReasonKind` and fails the Scan.
-- [ ] T063 [US4] Verify `ScanExecution.RecordFailure` transition enforces: only from `Pass1Running`, sets terminal fields, clears `InFlightJobId`, terminal phases are immutable in `src/dotnet/Vulgata.Core/Entities/ScanExecution.cs`
-- [ ] T064 [US4] Verify G5 GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerFailureTests` and confirm all G5 tests pass
+- [X] T062 [US4] Implement `SequentialScanRunner.RecordFailure` path in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — on `SchemaInvalid`/`Error`/`Unbounded`: call `ScanExecution.RecordFailure` (transition to `Failed`, set bounded Chinese `TerminalMessage` naming the failing Repository, set `TerminalReasonKind`, clear `InFlightJobId`), persist atomically, do NOT call `IKnowledgeStoreRepository`, do NOT commit any Document Version. Boundary rejection (missing Code Unit, oversized packet, forbidden content) enforced before dispatch via `WorkerAgentJobPacket.Create` factory; runner records corresponding `TerminalReasonKind` and fails the Scan.
+- [X] T063 [US4] Verify `ScanExecution.RecordFailure` transition enforces: only from `Pass1Running`, sets terminal fields, clears `InFlightJobId`, terminal phases are immutable in `src/dotnet/Vulgata.Core/Entities/ScanExecution.cs`
+- [X] T064 [US4] Verify G5 GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerFailureTests` and confirm all G5 tests pass
 
 **Checkpoint**: User Story 4 functional — failure isolation protects the knowledge store and leaves no partial state.
 
