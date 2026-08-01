@@ -1,3 +1,4 @@
+using System.Globalization;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Core.DomainServices;
@@ -101,6 +102,225 @@ public sealed class SequentialScanRunner
         return await _executionStore.ReadStateAsync(scanExecutionId, cancellationToken)
             .ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Advance a Scan execution from <see cref="ScanExecutionPhase.Pass1Planning"/>
+    /// through <see cref="ScanExecutionPhase.Pass1Running"/>, dispatching one
+    /// bounded typed job packet per prepared Code Unit strictly one at a time
+    /// through <see cref="IWorkerAgentDispatcher"/>. On <c>Valid</c> results,
+    /// records progress; on <c>SchemaInvalid</c>/<c>Error</c>/<c>Unbounded</c>,
+    /// records failure and stops. When all jobs return <c>Valid</c>,
+    /// finalizes through <see cref="ScanExecutionPhase.Pass1Completed"/> to
+    /// <see cref="ScanExecutionPhase.Completed"/>. No concurrency, lease,
+    /// replay, failover, or retry.
+    /// </summary>
+    public async Task RunPass1Async(
+        Guid scanExecutionId,
+        CancellationToken cancellationToken = default)
+    {
+        ScanExecution? execution = await _executionStore.GetAsync(
+            scanExecutionId, cancellationToken).ConfigureAwait(false);
+        if (execution is null)
+        {
+            throw new InvalidOperationException(
+                $"找不到标识为 {scanExecutionId} 的扫描执行记录。");
+        }
+
+        IReadOnlyList<CodeUnit> codeUnits = await _codeUnitSource.GetPreparedAsync(
+            execution.ScanRunId, execution.RepositoryId, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (codeUnits.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"仓库 {execution.RepositoryId} 没有已准备好的代码单元,无法启动 Pass 1。");
+        }
+
+        List<CodeUnit> ordered = OrderCodeUnits(codeUnits);
+        execution.Plan(ordered.Count, _timeProvider.GetUtcNow());
+        await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+
+        foreach (CodeUnit unit in ordered)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            WorkerAgentJobPacket packet;
+            try
+            {
+                packet = BuildPacket(execution, unit);
+            }
+            catch (ArgumentException)
+            {
+                ScanExecutionFailureKind kind = ClassifyPacketRejection(unit);
+                execution.RecordBoundaryRejection(
+                    kind,
+                    BuildBoundaryRejectionMessage(kind, execution.RepositoryId),
+                    _timeProvider.GetUtcNow());
+                await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            Guid jobId = packet.JobId;
+            execution.Advance(jobId);
+            await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+
+            DateTimeOffset dispatchedAt = _timeProvider.GetUtcNow();
+            WorkerAgentResultEnvelope result;
+            try
+            {
+                result = await _dispatcher.DispatchAsync(packet, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+
+            DateTimeOffset receivedAt = _timeProvider.GetUtcNow();
+            switch (result.Outcome)
+            {
+                case WorkerAgentResultOutcome.Valid:
+                    execution.RecordValid(jobId);
+                    await _executionStore.PersistAsync(execution, cancellationToken)
+                        .ConfigureAwait(false);
+                    break;
+                case WorkerAgentResultOutcome.SchemaInvalid:
+                    execution.RecordFailure(
+                        jobId,
+                        ScanExecutionFailureKind.SchemaInvalid,
+                        BuildFailureMessage(ScanExecutionFailureKind.SchemaInvalid, execution.RepositoryId),
+                        _timeProvider.GetUtcNow());
+                    await _executionStore.PersistAsync(execution, cancellationToken)
+                        .ConfigureAwait(false);
+                    return;
+                case WorkerAgentResultOutcome.Error:
+                    execution.RecordFailure(
+                        jobId,
+                        ScanExecutionFailureKind.Error,
+                        BuildFailureMessage(ScanExecutionFailureKind.Error, execution.RepositoryId),
+                        _timeProvider.GetUtcNow());
+                    await _executionStore.PersistAsync(execution, cancellationToken)
+                        .ConfigureAwait(false);
+                    return;
+                case WorkerAgentResultOutcome.Unbounded:
+                    execution.RecordFailure(
+                        jobId,
+                        ScanExecutionFailureKind.Unbounded,
+                        BuildFailureMessage(ScanExecutionFailureKind.Unbounded, execution.RepositoryId),
+                        _timeProvider.GetUtcNow());
+                    await _executionStore.PersistAsync(execution, cancellationToken)
+                        .ConfigureAwait(false);
+                    return;
+                default:
+                    execution.RecordFailure(
+                        jobId,
+                        ScanExecutionFailureKind.Error,
+                        BuildFailureMessage(ScanExecutionFailureKind.Error, execution.RepositoryId),
+                        _timeProvider.GetUtcNow());
+                    await _executionStore.PersistAsync(execution, cancellationToken)
+                        .ConfigureAwait(false);
+                    return;
+            }
+        }
+
+        execution.Finalize(
+            BuildSuccessMessage(execution.RepositoryId, ordered.Count),
+            _timeProvider.GetUtcNow());
+        await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static List<CodeUnit> OrderCodeUnits(IReadOnlyList<CodeUnit> codeUnits) =>
+        codeUnits
+            .OrderBy(u => u.FilePath, StringComparer.Ordinal)
+            .ThenBy(u => u.LineStart)
+            .ThenBy(u => u.Id)
+            .ToList();
+
+    private static WorkerAgentJobPacket BuildPacket(ScanExecution execution, CodeUnit unit) =>
+        WorkerAgentJobPacket.Create(
+            jobId: Guid.NewGuid(),
+            kind: WorkerAgentJobKind.Pass1CodeLogicDocument,
+            scanExecutionId: execution.Id,
+            repositoryId: execution.RepositoryId,
+            systemId: execution.SystemId,
+            scanRunId: execution.ScanRunId,
+            codeUnitId: unit.Id,
+            profiledRevision: execution.ProfiledRevision,
+            filePath: unit.FilePath,
+            lineStart: unit.LineStart,
+            lineEnd: unit.LineEnd,
+            symbolName: unit.SymbolName,
+            unitType: unit.UnitType,
+            language: unit.Language,
+            sourceHash: unit.SourceHash,
+            fileIdentityHash: unit.FileIdentityHash);
+
+    private static ScanExecutionFailureKind ClassifyPacketRejection(CodeUnit unit)
+    {
+        // The packet factory rejects forbidden content and oversized packets.
+        // We classify conservatively: a rejection during construction is
+        // treated as ForbiddenContent unless the symbol/path clearly exceeds
+        // limits. The factory enforces both; the runner records a bounded
+        // reason without exposing the rejected value.
+        if (unit.SymbolName.Length > 512 || unit.FilePath.Length > 2_048)
+        {
+            return ScanExecutionFailureKind.OverLimitPacket;
+        }
+
+        return ScanExecutionFailureKind.ForbiddenContent;
+    }
+
+    private static string BuildFailureMessage(ScanExecutionFailureKind kind, Guid repositoryId) =>
+        kind switch
+        {
+            ScanExecutionFailureKind.SchemaInvalid =>
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "仓库 {0} 的 Worker Agent 作业结果未通过架构校验,扫描已失败。",
+                    repositoryId),
+            ScanExecutionFailureKind.Error =>
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "仓库 {0} 的 Worker Agent 作业返回未处理错误,扫描已失败。",
+                    repositoryId),
+            ScanExecutionFailureKind.Unbounded =>
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "仓库 {0} 的 Worker Agent 作业结果超出有限边界,扫描已失败。",
+                    repositoryId),
+            _ =>
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "仓库 {0} 的扫描已失败。",
+                    repositoryId),
+        };
+
+    private static string BuildBoundaryRejectionMessage(ScanExecutionFailureKind kind, Guid repositoryId) =>
+        kind switch
+        {
+            ScanExecutionFailureKind.OverLimitPacket =>
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "仓库 {0} 的类型化作业包超出有限 UTF-8/数量限制,扫描已失败。",
+                    repositoryId),
+            ScanExecutionFailureKind.ForbiddenContent =>
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "仓库 {0} 的类型化作业包包含禁用内容,扫描已失败。",
+                    repositoryId),
+            _ =>
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "仓库 {0} 的类型化作业包被拒绝,扫描已失败。",
+                    repositoryId),
+        };
+
+    private static string BuildSuccessMessage(Guid repositoryId, int jobCount) =>
+        string.Format(
+            CultureInfo.InvariantCulture,
+            "仓库 {0} 的 Pass 1 扫描已完成,共调度 {1} 个 Worker Agent 作业。",
+            repositoryId,
+            jobCount);
 
     private static string BuildRefusalMessage(ScanExecutionFailureKind kind, Guid repositoryId) =>
         kind switch

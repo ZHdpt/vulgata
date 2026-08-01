@@ -102,18 +102,18 @@
 
 ### G3 Dispatch Tests (RED first)
 
-- [ ] T027 [P] [US2] Write failing test: `RunPass1Async` transitions `Pass1Planning` → `Pass1Running` and sets `TotalJobCount` from prepared Code Units in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T028 [P] [US2] Write failing test: one `WorkerAgentJobPacket` is constructed per prepared Code Unit in deterministic order (FilePath ordinal, then LineStart, then CodeUnitId) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T029 [P] [US2] Write failing test: packets are dispatched strictly one at a time through `IWorkerAgentDispatcher` (fake dispatcher records sequence; no `Task.WhenAll`, no concurrency) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T030 [P] [US2] Write failing test: each packet names Worker Agent kind, bounded source slice, exact Code Unit identity, and Profiled Revision; carries no unauthorized Repository, secret, absolute host path, source text, or unbounded diagnostic in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T031 [P] [US2] Write failing test: on `Valid` result, `RecordValid` clears `InFlightJobId` and increments `CompletedJobCount`; `InFlightJobId` is set during dispatch and persisted in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T032 [P] [US2] Write failing test: no concurrency/lease/replay/failover/retry/multi-Repository scheduling is observable (negative assertion) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T027 [P] [US2] Write failing test: `RunPass1Async` transitions `Pass1Planning` → `Pass1Running` and sets `TotalJobCount` from prepared Code Units in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T028 [P] [US2] Write failing test: one `WorkerAgentJobPacket` is constructed per prepared Code Unit in deterministic order (FilePath ordinal, then LineStart, then CodeUnitId) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T029 [P] [US2] Write failing test: packets are dispatched strictly one at a time through `IWorkerAgentDispatcher` (fake dispatcher records sequence; no `Task.WhenAll`, no concurrency) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T030 [P] [US2] Write failing test: each packet names Worker Agent kind, bounded source slice, exact Code Unit identity, and Profiled Revision; carries no unauthorized Repository, secret, absolute host path, source text, or unbounded diagnostic in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T031 [P] [US2] Write failing test: on `Valid` result, `RecordValid` clears `InFlightJobId` and increments `CompletedJobCount`; `InFlightJobId` is set during dispatch and persisted in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T032 [P] [US2] Write failing test: no concurrency/lease/replay/failover/retry/multi-Repository scheduling is observable (negative assertion) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
 
 ### G3 Dispatch Implementation (GREEN)
 
-- [ ] T033 [US2] Implement `SequentialScanRunner.RunPass1Async(scanExecutionId, cancellationToken)` in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — load `ScanExecution`; require `Phase == Pass1Planning`; transition to `Pass1Running` via `ScanExecution.Plan` (sets `TotalJobCount`); load prepared Code Units via `ICodeUnitSource.GetPreparedAsync` in deterministic order; for each: construct `WorkerAgentJobPacket`, `ScanExecution.Advance` (set `InFlightJobId`), persist, dispatch through `IWorkerAgentDispatcher`, on `Valid` call `ScanExecution.RecordValid` and persist. No concurrency/lease/replay/failover/retry.
-- [ ] T034 [US2] Create fake/test `IWorkerAgentDispatcher` recording harness in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs` — records packet sequence; configurable outcome per packet; no LLM call
-- [ ] T035 [US2] Verify G3 dispatch GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerDispatchTests` and confirm all dispatch tests pass
+- [X] T033 [US2] Implement `SequentialScanRunner.RunPass1Async(scanExecutionId, cancellationToken)` in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — load `ScanExecution`; require `Phase == Pass1Planning`; transition to `Pass1Running` via `ScanExecution.Plan` (sets `TotalJobCount`); load prepared Code Units via `ICodeUnitSource.GetPreparedAsync` in deterministic order; for each: construct `WorkerAgentJobPacket`, `ScanExecution.Advance` (set `InFlightJobId`), persist, dispatch through `IWorkerAgentDispatcher`, on `Valid` call `ScanExecution.RecordValid` and persist. No concurrency/lease/replay/failover/retry.
+- [X] T034 [US2] Create fake/test `IWorkerAgentDispatcher` recording harness in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs` — records packet sequence; configurable outcome per packet; no LLM call
+- [X] T035 [US2] Verify G3 dispatch GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerDispatchTests` and confirm all dispatch tests pass
 
 **Checkpoint**: User Story 2 functional — typed jobs dispatched sequentially in deterministic order.
 
@@ -127,15 +127,15 @@
 
 ### G3 Completion Tests (RED first)
 
-- [ ] T036 [P] [US5] Write failing test: when `CompletedJobCount == TotalJobCount`, runner transitions through `Pass1Completed` to `Completed` in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T037 [P] [US5] Write failing test: terminal `TerminalMessage` is bounded Chinese, non-sensitive, and carries the exact count of dispatched jobs in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T038 [P] [US5] Write failing test: `TerminalAt >= StartedAt` and terminal timestamp is set in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
-- [ ] T039 [P] [US5] Write failing test: no deferred Pass 2 flow planning, flow-group clustering, Cross-Repository Resolution, retry, or failover behavior is claimed or executed (negative assertion) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T036 [P] [US5] Write failing test: when `CompletedJobCount == TotalJobCount`, runner transitions through `Pass1Completed` to `Completed` in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T037 [P] [US5] Write failing test: terminal `TerminalMessage` is bounded Chinese, non-sensitive, and carries the exact count of dispatched jobs in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T038 [P] [US5] Write failing test: `TerminalAt >= StartedAt` and terminal timestamp is set in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
+- [X] T039 [P] [US5] Write failing test: no deferred Pass 2 flow planning, flow-group clustering, Cross-Repository Resolution, retry, or failover behavior is claimed or executed (negative assertion) in `tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs`
 
 ### G3 Completion Implementation (GREEN)
 
-- [ ] T040 [US5] Implement `SequentialScanRunner` completion path in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — when `CompletedJobCount == TotalJobCount` after `RecordValid`, call `ScanExecution.Finalize` (transition `Pass1Running` → `Pass1Completed` → `Completed`) with bounded Chinese success message and exact job count; persist atomically
-- [ ] T041 [US5] Verify G3 completion GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerDispatchTests` and confirm all completion tests pass
+- [X] T040 [US5] Implement `SequentialScanRunner` completion path in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — when `CompletedJobCount == TotalJobCount` after `RecordValid`, call `ScanExecution.Finalize` (transition `Pass1Running` → `Pass1Completed` → `Completed`) with bounded Chinese success message and exact job count; persist atomically
+- [X] T041 [US5] Verify G3 completion GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerDispatchTests` and confirm all completion tests pass
 
 **Checkpoint**: User Story 5 functional — deterministic completion closes the sequential dispatch loop.
 
