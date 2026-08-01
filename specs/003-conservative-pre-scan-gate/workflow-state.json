@@ -4,7 +4,7 @@
   "bmad_epic_key": "4",
   "feature_directory": "specs/003-conservative-pre-scan-gate",
   "execution_level": "expedited-mvp",
-  "stage": "complete",
+  "stage": "verify",
   "active_gates": {
     "acceptance-review": {
       "status": "invalidated",
@@ -16,19 +16,21 @@
     },
     "quality-review": {
       "status": "accepted",
-      "iteration": 5,
-      "dispatch_id": "story_4_3_remediation_quality_review",
-      "verdict_path": "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json",
+      "iteration": 6,
+      "dispatch_id": "story43_lease_review",
+      "verdict_path": "specs/003-conservative-pre-scan-gate/reviews/quality-review-6.json",
       "input_boundary": {
-        "base_commit": "4968a0431caf52583d50720951d6a11b294381d8",
+        "base_commit": "7d1c348d7b5049f010769d16fbd48cca290e2103",
         "candidate_commit": null,
-        "worktree_diff_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
-        "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
+        "worktree_diff_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
+        "candidate_bundle_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
         "file_sha256": {
-          "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json": "239b896ac20198ce883c160c996077405f11c992d0af74303ea67cdb0c024807"
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "0ea6fa6984ac8a046484ce0d89a8e69c27dd70fbb142cca86bfd74c5a2846398",
+          "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs": "241aac32e1cf723d0a3c06fe7e2343a0d08b6b7cd01057640cc068f6f1df60dc",
+          "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "139fccf9d56deccee58a79b81202345e12bb80a9c3ba4b9b0a37c80397c8775c"
         }
       },
-      "completed_at": "2026-07-31T11:39:50.5499241Z"
+      "completed_at": "2026-08-01T11:01:14.4791635+08:00"
     }
   },
   "stage_history": [
@@ -1380,22 +1382,27 @@
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-3-remediation-complete-20260731T120412Z",
+    "checkpoint_id": "bmad-4-3-lease-only-correction-20260801T110114",
     "scope_key": "story/4-3-conservative-pre-scan-gate-and-communication-type-detection",
-    "stage": "complete",
+    "stage": "verify",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/003-conservative-pre-scan-gate/workflow-state.json"
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-framework-detector-lease-only.md",
+      "specs/003-conservative-pre-scan-gate/reviews/quality-review-6.json",
+      "specs/003-conservative-pre-scan-gate/tasks.md",
+      "specs/003-conservative-pre-scan-gate/workflow-state.json",
+      "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+      "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
+      "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
     ],
     "verification_evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/quality-review-5-accept",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/e2e-production-composition-green",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/final-verification-green"
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/quality-review-6-accept",
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/precheckpoint-verification-green"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-31T12:04:12.0715146Z"
+  "updated_at": "2026-08-01T11:01:14.4791635+08:00"
 }

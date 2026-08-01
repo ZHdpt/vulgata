@@ -1,7 +1,7 @@
 ---
 story_key: 4-3-conservative-pre-scan-gate-and-communication-type-detection
 title: "Story 4.3: Conservative Pre-Scan Gate and Communication Type Detection"
-Status: done
+Status: in-progress
 Epic: 4
 Story: 3
 created: 2026-07-30
@@ -499,3 +499,8 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   the Web build, the EF no-pending-model gate, and the exact Story 4.3 Docker
   build; assembled the provisional completed-story checkpoint and transitioned
   the story from `review` to `done`.
+- 2026-07-31: A fresh Epic 4 architecture audit found the concrete framework
+  detector still exposed a parallel public string-path/Git snapshot entry
+  point contrary to the accepted lease-only plan. The user approved the narrow
+  correction; Story 4.3 returned to `in-progress` for RED-GREEN implementation,
+  combined review, verification, and a fresh Epic 4 audit.

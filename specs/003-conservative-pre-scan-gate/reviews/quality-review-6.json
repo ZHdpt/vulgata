@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "gate": "combined-quality-review",
+  "execution_level": "expedited-mvp",
+  "verdict": "ACCEPT",
+  "iteration": 6,
+  "source_commit": "7d1c348d7b5049f010769d16fbd48cca290e2103",
+  "candidate_commit": null,
+  "worktree_diff_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
+  "reviewed_paths": [
+    "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+    "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
+    "tests/Vulgata.Tests/FrameworkDetectionTests.cs"
+  ],
+  "acceptance": {
+    "met": [
+      "T019 public-surface contract rejects string-path detector entry points and the former Git snapshot-source constructor.",
+      "T020 affected behavior tests acquire verified committed Repository snapshot leases and invoke IFrameworkEvidenceDetector.",
+      "T021 the alternate snapshot-source state, four public string-path operations, and Git inventory/blob helpers are absent."
+    ],
+    "missing": [],
+    "partial": [],
+    "incorrect": [],
+    "out_of_scope": []
+  },
+  "quality": {
+    "correctness": "PASS: lease identity is verified around reads and failure publishes no evidence.",
+    "security": "PASS: inventory and reads are bounded, containment checked, reparse/device entries fail closed, and no Git command remains.",
+    "edge_cases": "PASS: cancellation, identity mutation, bounds, malformed artifacts, redaction, and deterministic ordering remain covered.",
+    "tests": "PASS: genuine public-surface RED 0/1, focused GREEN 70/70, ordinary suite GREEN 625/625.",
+    "architecture": "PASS: ICommittedRepositorySnapshotLease is the sole detector entry and archive RootPath is never treated as a Git working tree."
+  },
+  "complete_findings": [],
+  "prior_finding": {
+    "id": "epic4-framework-detector-path-entrypoint-bypass",
+    "status": "RESOLVED",
+    "evidence": "The concrete detector exposes no public string-path operation or alternate snapshot-source constructor; affected tests use verified leases."
+  },
+  "verification_assessment": {
+    "boundary_validation": "PASS: all supplied hashes, source commit, and three-file diff hash were revalidated.",
+    "build_and_regression": "PASS: Web build, Story43EndToEndTests, EF no-pending-model, focused 70/70, and ordinary full suite 625/625.",
+    "docker": "PASS: vulgata:epic4-close-lease-only built at sha256:4f87c85ce9e3c59a312e41e52d5d91d7ae5d8b184e4e18cb6ac5304c99072eb6.",
+    "final_image_lane": "NOT CLAIMED: reserved for the required clean-commit verification.",
+    "review_independence": "The direct-child reviewer personally inspected raw pinned inputs; all depth-2 helper output was excluded."
+  },
+  "boundary_refresh": {
+    "iteration": 1,
+    "verdict": "ACCEPT",
+    "proposal_sha256": "4aa5d048fb08c410bdb46cf4e8694a5d16d034c77be788ba51e123591fed85ff",
+    "implementation_diff_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
+    "semantic_change": false,
+    "summary": "Removed only five trailing Markdown hard-break spaces; all other authority and implementation hashes remained unchanged."
+  },
+  "residual_risks": [
+    "Clean-commit final-image verification remains pending.",
+    "A fresh exact-source Epic 4 architecture audit remains required."
+  ],
+  "summary": "ACCEPT. No Critical or High finding remains; the exact correction is safe to checkpoint for clean final verification."
+}

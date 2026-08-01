@@ -1,12 +1,33 @@
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
 
 public sealed class ArchitectureRemediationContractTests
 {
+    [Fact]
+    public void FrameworkEvidenceDetector_PublicSurface_HasNoPathOrSnapshotSourceBypass()
+    {
+        MethodInfo[] pathBasedMethods = typeof(FrameworkEvidenceDetector)
+            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+            .Where(method =>
+                method.GetParameters().FirstOrDefault()?.ParameterType == typeof(string))
+            .ToArray();
+        ConstructorInfo[] snapshotSourceConstructors = typeof(FrameworkEvidenceDetector)
+            .GetConstructors(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .Where(constructor => constructor.GetParameters().Any(parameter =>
+                parameter.ParameterType.FullName ==
+                    "Vulgata.Infrastructure.FrameworkDetection.ICommittedRepositorySnapshotSource"))
+            .ToArray();
+
+        Assert.Empty(pathBasedMethods);
+        Assert.Empty(snapshotSourceConstructors);
+    }
+
     [Fact]
     public void PublicConstructors_AllRequireCommittedSnapshotService()
     {

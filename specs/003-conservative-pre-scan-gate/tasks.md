@@ -147,3 +147,36 @@ The groups have disjoint write ownership. Group A completes before Group B produ
 - The only final profile persistence method accepts `RepositoryProfileCommitDraft`.
 - No migration/model, PRD/spec/plan, catalog-locality, Worker Agent, dispatch, scheduling, retry, provider-failover, Edge, Uncertainty, endpoint, or Cross-Repository Resolution scope is added.
 - Security, redaction, atomicity, idempotency, Profiled Revision binding, focused/full tests, clean-database two-Repository E2E, Docker, and combined review remain mandatory.
+
+---
+
+## Phase 7: Epic-Close Lease-Only Detector Correction
+
+**Purpose**: Clear `epic4-framework-detector-path-entrypoint-bypass` without
+changing the accepted Scan strategy or public lease contract.
+
+- [x] T019 Add an observed RED public-interface contract test in
+  `tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs` proving
+  `FrameworkEvidenceDetector` exposes no public method accepting a Repository
+  path and no alternate public/internal constructor accepting a Git snapshot
+  source.
+- [x] T020 Convert affected tests in
+  `tests/Vulgata.Tests/FrameworkDetectionTests.cs` to acquire and verify an
+  `ICommittedRepositorySnapshotLease`, call `IFrameworkEvidenceDetector`, and
+  retain coverage for committed-byte isolation, bounds, cancellation,
+  fail-closed behavior, redaction, and deterministic evidence.
+- [x] T021 Remove the public string-path overloads, alternate Git snapshot
+  source, and now-unused Git inventory/blob helpers from
+  `src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs`;
+  run T019-T020 to GREEN through the public lease-only interface.
+- [ ] T022 Run migration-neutral verification, focused detector/architecture/
+  profiling tests, the complete test suite, Web build, Story 4.3 production
+  composition regression, and the exact Docker build; record commands and
+  immutable results.
+- [ ] T023 Submit the exact correction boundary to one fresh independent
+  combined quality review. After `ACCEPT`, complete Story 4.3 and rerun the
+  fresh exact-source Epic 4 architecture gate; do not mark Epic 4 `done` until
+  that audit clears every reserved finding.
+
+**Dependency order**: T019 RED -> T020 test conversion -> T021 GREEN -> T022
+verification -> T023 review and Epic-close retry.
