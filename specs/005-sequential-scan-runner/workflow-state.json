@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/005-sequential-scan-runner",
   "execution_level": "expedited-mvp",
-  "stage": "tasks",
+  "stage": "implement",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -61,6 +61,27 @@
         "specs/005-sequential-scan-runner/tasks.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "in_progress",
+      "started_at": "2026-08-01T00:30:00Z",
+      "completed_at": null,
+      "input_commit": "daf5314",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/tasks.md"
+      ],
+      "failure": null,
+      "tdd_groups": {
+        "G1": "complete",
+        "G2": "complete",
+        "G3": "complete",
+        "G4": "pending",
+        "G5": "pending",
+        "G6": "pending"
+      }
     }
   ],
   "repository_preflight": {
@@ -134,15 +155,18 @@
   "e2e_decision": null,
   "verification": [],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-2-tasks-20260801T000000Z-t1a2b3",
+    "checkpoint_id": "bmad-11-2-implement-20260801T003000Z-g3-green",
     "scope_key": "story/11-2-sequential-scan-runner-and-typed-agent-dispatch",
-    "stage": "tasks",
+    "stage": "implement",
     "committed_paths": [
-      "specs/005-sequential-scan-runner/tasks.md",
-      "specs/005-sequential-scan-runner/workflow-state.json"
+      "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs",
+      "tests/Vulgata.Tests/SequentialScanRunnerDispatchTests.cs",
+      "specs/005-sequential-scan-runner/tasks.md"
     ],
-    "verification_evidence_ids": [],
-    "commit_sha": null,
+    "verification_evidence_ids": [
+      "dotnet test --filter FullyQualifiedName~SequentialScanRunner => 44 passed, 0 failed"
+    ],
+    "commit_sha": "daf5314",
     "binding_status": "bound"
   },
   "planned_change_triggers": [
@@ -161,5 +185,5 @@
     "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T00:00:00Z"
+  "updated_at": "2026-08-01T00:30:00Z"
 }
