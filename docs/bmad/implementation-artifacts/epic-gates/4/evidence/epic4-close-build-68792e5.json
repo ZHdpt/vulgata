@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4/verify-build/68792e5",
+  "kind": "command",
+  "stage": "verify-build",
+  "source_commit": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
+  "artifact_paths": [
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-build-68792e5.raw.txt"
+  ],
+  "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+  "exit_code": 0,
+  "observed_at": "2026-08-01T03:23:22.7237331Z",
+  "summary": "Fresh detached-worktree Web build completed with 0 errors and 875 analyzer or package-source warnings; the complete output remains available for inspection.",
+  "raw_output_path": "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-build-68792e5.raw.txt",
+  "raw_output_sha256": "ec31a03d333901cb403327424881802e6f49c2fd5b144d8d30925b59702acac8",
+  "execution_worktree": "C:/Users/13728/.codex/worktrees/epic4-close-verify-68792e5",
+  "execution_worktree_head": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
+  "execution_worktree_git_identity": "G:/source/repos/vulgata/.git/worktrees/epic4-close-verify-68792e5",
+  "boundary_clean": true,
+  "source_equality_validated_at": "2026-08-01T03:23:22.7237331Z",
+  "environment_summary": "Windows PowerShell host; .NET 10 SDK; clean detached Git worktree at the pinned Epic 4 source."
+}

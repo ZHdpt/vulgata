@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "4/verify-test/68792e5",
+  "kind": "command",
+  "stage": "verify-test",
+  "source_commit": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
+  "artifact_paths": [
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-test-68792e5.raw.txt"
+  ],
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+  "exit_code": 0,
+  "observed_at": "2026-08-01T03:29:13.4276879Z",
+  "summary": "The mandatory full suite passed: 626 passed, 0 failed, 0 skipped. The run included the source-bound final-image provider contract.",
+  "raw_output_path": "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-test-68792e5.raw.txt",
+  "raw_output_sha256": "9877b82e6068608b915b38a2f5dafb58992109f401bcdbc07f998b96c3741ed4",
+  "execution_worktree": "C:/Users/13728/.codex/worktrees/epic4-close-verify-68792e5",
+  "execution_worktree_head": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
+  "execution_worktree_git_identity": "G:/source/repos/vulgata/.git/worktrees/epic4-close-verify-68792e5",
+  "boundary_clean": true,
+  "source_equality_validated_at": "2026-08-01T03:29:13.4276879Z",
+  "environment_summary": "Windows PowerShell host; .NET 10 SDK; Docker Desktop Linux builder; clean detached Git worktree at the pinned Epic 4 source. Provider contract used image sha256:c51df28dba562a5b8acf1adb74f7171869e32c5f63d83bff4deb385ebc662707, source tree 49debd47a8224b846770b009ebcd492a6aad61ce, production manifest 3f431741603d07e6bde72a28748977629eecaaf95f733830b64eed235248ec70, and accepted correction dc9ce5c30f6a685b7059fa17a16df2f34e9686d38776a5a963985c944fd050a1."
+}
