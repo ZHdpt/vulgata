@@ -1,0 +1,604 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-3-pass-1-and-pass-2-demo-document-generation",
+  "bmad_epic_key": "11",
+  "feature_directory": "specs/006-demo-document-generation",
+  "execution_level": "expedited-mvp",
+  "stage": "tasks",
+  "active_gates": {
+    "acceptance-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "quality-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-08-01T09:57:10Z",
+      "completed_at": "2026-08-01T10:10:00Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "docs/bmad/epics.md": "f37bd26d60a6fcc22307505e7ba30f854aac8170bf51596ba412690b4babd178",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-august-15-demo-slice.md": "c897877ecf4a00cf6a349ade431aa7ac5feb36d36f8ce17aef5ddda4d558b44f"
+      },
+      "agent_role": "story-context-synthesizer",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-08-01T10:10:00Z",
+      "completed_at": "2026-08-01T10:18:48Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md": "739c874fd81d210693eb3fdf832f5810760fb4e05bcfda25a4ba024854c44446"
+      },
+      "agent_role": "spec-author",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/spec.md",
+        "specs/006-demo-document-generation/checklists/requirements.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "spec-review",
+      "status": "invalidated",
+      "started_at": "2026-08-01T10:18:48Z",
+      "completed_at": "2026-08-01T10:18:48Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37"
+      },
+      "agent_role": "orchestrator-expedited-mvp-omission",
+      "evidence_paths": [],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-08-01T10:18:48Z",
+      "completed_at": "2026-08-01T10:47:01Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
+        "specs/006-demo-document-generation/checklists/requirements.md": "b12c4f47767134f4835e16c9ab5563c87e4a7ec034b20fbda24b58a663830cf0"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/plan.md",
+        "specs/006-demo-document-generation/research.md",
+        "specs/006-demo-document-generation/data-model.md",
+        "specs/006-demo-document-generation/quickstart.md",
+        "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
+        "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
+        "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
+        "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-08-01T10:47:01Z",
+      "completed_at": "2026-08-01T11:04:14Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
+        "specs/006-demo-document-generation/plan.md": "04c86bd9a59857e99e6208c9a1dc3ef4b89a02657de595de854bccb9dd768c38",
+        "specs/006-demo-document-generation/research.md": "7741ab6f65d0c9057f99596892f0cbe7ced736a18917e540eabf62087c84e036",
+        "specs/006-demo-document-generation/data-model.md": "896051384481573805e37f04d7bd1fd8df9cbdce4b00d95bcd2726fc2f16b54b",
+        "specs/006-demo-document-generation/quickstart.md": "b50c26832d73e3ee37a9f1e4cc981b9fde5757d30e99de4a554563b81ea56af1"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-01T11:28:12Z",
+      "completed_at": "2026-08-01T11:42:00Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
+        "specs/006-demo-document-generation/plan.md": "04c86bd9a59857e99e6208c9a1dc3ef4b89a02657de595de854bccb9dd768c38"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-08-01T11:42:00Z",
+      "completed_at": "2026-08-01T11:53:08Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "specs/006-demo-document-generation/spec.md": "e1aa47fd138651a7c9aef254743c46a4ac37d6bddf39fd9ed0b5008ad3a9a356",
+        "specs/006-demo-document-generation/plan.md": "01c5234993a98085ba547d415966b54c5870489867fdb59c8120918af27ae590",
+        "specs/006-demo-document-generation/checklists/requirements.md": "5d72511dd3b8dc900d46796091bbef48a36117de78c49cd3814a7e568d98674e"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-01T11:53:08Z",
+      "completed_at": "2026-08-01T11:53:08Z",
+      "input_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "input_hashes": {
+        "specs/006-demo-document-generation/spec.md": "e1aa47fd138651a7c9aef254743c46a4ac37d6bddf39fd9ed0b5008ad3a9a356",
+        "specs/006-demo-document-generation/plan.md": "01c5234993a98085ba547d415966b54c5870489867fdb59c8120918af27ae590",
+        "specs/006-demo-document-generation/tasks.md": "a84f34879ca4f68dc4e96e7e2b6c083c348d1b410bceb0690f56843faacd1336"
+      },
+      "agent_role": "orchestrator-boundary-rebind",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/tasks.md",
+        "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+      ],
+      "failure": null
+    }
+  ],
+  "repository_preflight": {
+    "branch": "codex/story-11-3",
+    "preflight_head": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/0726/vulgata",
+    "worktree_status": " M .specify/feature.json\n M docs/bmad/implementation-artifacts/sprint-status.yaml\n?? docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md\n?? docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json\n?? specs/006-demo-document-generation/",
+    "owned_paths": [
+      ".specify/feature.json",
+      "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json",
+      "specs/006-demo-document-generation/spec.md",
+      "specs/006-demo-document-generation/checklists/requirements.md",
+      "specs/006-demo-document-generation/workflow-state.json",
+      "specs/006-demo-document-generation/plan.md",
+      "specs/006-demo-document-generation/research.md",
+      "specs/006-demo-document-generation/data-model.md",
+      "specs/006-demo-document-generation/quickstart.md",
+      "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
+      "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
+      "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
+      "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md",
+      "specs/006-demo-document-generation/tasks.md",
+      "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-1.json",
+      "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-08-01T10:47:01Z"
+  },
+  "source_artifacts": [
+    {
+      "authority": "repository-instructions",
+      "path": "AGENTS.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "c7c9e2917a7d9b39970384c8ceda7a3ec9a9c47488986482f461b268df90f561"
+    },
+    {
+      "authority": "constitution",
+      "path": ".specify/memory/constitution.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5"
+    },
+    {
+      "authority": "bmad-story-source",
+      "path": "docs/bmad/epics.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "f37bd26d60a6fcc22307505e7ba30f854aac8170bf51596ba412690b4babd178"
+    },
+    {
+      "authority": "approved-deadline-change",
+      "path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-august-15-demo-slice.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "c897877ecf4a00cf6a349ade431aa7ac5feb36d36f8ce17aef5ddda4d558b44f"
+    },
+    {
+      "authority": "prd",
+      "path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834"
+    },
+    {
+      "authority": "canonical-scan-design",
+      "path": "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "36eacc2371cfe78f1ebac87b371ce22c00c88f2d6e517676776354cb2fa6b13b"
+    },
+    {
+      "authority": "canonical-data-contracts",
+      "path": "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "0252529c3f6aa980a2c3e17b34d4c31a64a3774c9f399092ee6317d362712a01"
+    },
+    {
+      "authority": "expedited-mvp",
+      "path": "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e"
+    },
+    {
+      "authority": "ubiquitous-language",
+      "path": "docs/UBIQUITOUS_LANGUAGE.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54"
+    },
+    {
+      "authority": "story-11-1-accepted-plan",
+      "path": "specs/004-minimal-knowledge-store/plan.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "aadd387dd9dd9f2f9e7e70f960a5a8e82c0faf107879534333f534e18ba80ede"
+    },
+    {
+      "authority": "story-11-2-accepted-plan",
+      "path": "specs/005-sequential-scan-runner/plan.md",
+      "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "sha256": "f5cf25d175c0e3f821b4b1f9f06d48cf1ca2dcee0538a10a8fd0347f32301a96"
+    }
+  ],
+  "dispatches": [
+    {
+      "role": "story-context-synthesizer",
+      "objective": "Produce and validate the bounded Story 11.3 implementation context.",
+      "source_boundary": {
+        "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {},
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+      "returned_evidence": [
+        "source-grounded-context-brief",
+        "independent-story-context-accept"
+      ]
+    },
+    {
+      "role": "spec-author",
+      "objective": "Create the concise Story 11.3 expedited-MVP specification and requirements checklist.",
+      "source_boundary": {
+        "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "candidate_commit": null,
+        "diff_sha256": "783e0cfa6a6e0096972830f84f6d9e25a07b4680f531472adb70d0dc947ef5e9",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md": "739c874fd81d210693eb3fdf832f5810760fb4e05bcfda25a4ba024854c44446"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json"
+        ]
+      },
+      "permitted_writes": [
+        "specs/006-demo-document-generation/spec.md",
+        "specs/006-demo-document-generation/checklists/requirements.md"
+      ],
+      "output_path": "specs/006-demo-document-generation/spec.md",
+      "returned_evidence": [
+        "feature-directory-specs/006-demo-document-generation",
+        "requirements-checklist-16-of-16"
+      ]
+    },
+    {
+      "role": "plan-architect",
+      "objective": "Produce the complete Story 11.3 technical plan set and planned-change authorization inputs.",
+      "source_boundary": {
+        "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "candidate_commit": null,
+        "diff_sha256": "0f008d08c8986637920e6580cbdd5e01780ab7aadc8d8a3711f73c00d03c9566",
+        "artifact_hashes": {
+          "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
+          "specs/006-demo-document-generation/checklists/requirements.md": "b12c4f47767134f4835e16c9ab5563c87e4a7ec034b20fbda24b58a663830cf0"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json",
+          "specs/006-demo-document-generation/spec.md",
+          "specs/006-demo-document-generation/checklists/requirements.md"
+        ]
+      },
+      "permitted_writes": [
+        ".specify/feature.json",
+        "specs/006-demo-document-generation/plan.md",
+        "specs/006-demo-document-generation/research.md",
+        "specs/006-demo-document-generation/data-model.md",
+        "specs/006-demo-document-generation/quickstart.md",
+        "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
+        "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
+        "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
+        "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md"
+      ],
+      "output_path": "specs/006-demo-document-generation/plan.md",
+      "returned_evidence": [
+        "constitution-check-pass",
+        "complete-plan-companion-set",
+        "planned-change-trigger-worker-agent-adapter",
+        "planned-change-trigger-prepared-pass2-scan-strategy"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently judge the complete Story 11.3 plan set for feasibility, compliance, security, and testability.",
+      "source_boundary": {
+        "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "candidate_commit": null,
+        "diff_sha256": "94fa0e4298fcd7949c45a4fcfce5938e25a6b7c71d3efc8270092c686567a44f",
+        "artifact_hashes": {
+          "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
+          "specs/006-demo-document-generation/plan.md": "04c86bd9a59857e99e6208c9a1dc3ef4b89a02657de595de854bccb9dd768c38",
+          "specs/006-demo-document-generation/research.md": "7741ab6f65d0c9057f99596892f0cbe7ced736a18917e540eabf62087c84e036",
+          "specs/006-demo-document-generation/data-model.md": "896051384481573805e37f04d7bd1fd8df9cbdce4b00d95bcd2726fc2f16b54b",
+          "specs/006-demo-document-generation/quickstart.md": "b50c26832d73e3ee37a9f1e4cc981b9fde5757d30e99de4a554563b81ea56af1",
+          "specs/006-demo-document-generation/contracts/worker-agent-unions.md": "9d99e811ff0b6ff8c95247d2b9dfd8255eab46b141db64ab61f974668fe23d43",
+          "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md": "085e47dc5845589a3fe423a4712f2eec1f1155f803cc66556becfe780771895f",
+          "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md": "2637e20d130b707d9d9335f47649f9578257481a91356b90bc114091a798a4ae",
+          "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md": "8faaa0ec388ce3fa402df50ba445e5197dc03d6818f8f24d4278e9e1cb648c13"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+          "specs/006-demo-document-generation/spec.md",
+          "specs/006-demo-document-generation/plan.md",
+          "specs/006-demo-document-generation/research.md",
+          "specs/006-demo-document-generation/data-model.md",
+          "specs/006-demo-document-generation/quickstart.md",
+          "specs/006-demo-document-generation/checklists/requirements.md",
+          "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
+          "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
+          "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
+          "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-1.json",
+      "returned_evidence": [
+        "schema-valid-plan-review-accept",
+        "no-findings",
+        "reviewed-boundary-94fa0e4298fcd7949c45a4fcfce5938e25a6b7c71d3efc8270092c686567a44f"
+      ]
+    },
+    {
+      "role": "task-author",
+      "objective": "Generate the complete dependency-ordered, test-first Story 11.3 task graph after explicit planned-change authorization.",
+      "source_boundary": {
+        "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "candidate_commit": null,
+        "diff_sha256": "94fa0e4298fcd7949c45a4fcfce5938e25a6b7c71d3efc8270092c686567a44f",
+        "artifact_hashes": {
+          "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
+          "specs/006-demo-document-generation/plan.md": "04c86bd9a59857e99e6208c9a1dc3ef4b89a02657de595de854bccb9dd768c38"
+        },
+        "owned_paths": [
+          "specs/006-demo-document-generation/spec.md",
+          "specs/006-demo-document-generation/plan.md",
+          "specs/006-demo-document-generation/research.md",
+          "specs/006-demo-document-generation/data-model.md",
+          "specs/006-demo-document-generation/quickstart.md",
+          "specs/006-demo-document-generation/checklists/requirements.md",
+          "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
+          "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
+          "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
+          "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/006-demo-document-generation/tasks.md"
+      ],
+      "output_path": "specs/006-demo-document-generation/tasks.md",
+      "returned_evidence": [
+        "56-dependency-ordered-tasks",
+        "g0-through-g7-red-before-green",
+        "fr-sc-ac-complete-coverage",
+        "no-migration-stop-rule"
+      ]
+    },
+    {
+      "role": "plan-judge",
+      "objective": "Independently re-pin the accepted Story 11.3 plan boundary after trailing-whitespace normalization and verify no semantic drift.",
+      "source_boundary": {
+        "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "candidate_commit": null,
+        "diff_sha256": "e69b706a82c0498b68587d2ace4a99d430998befc7fefd4fe4842a786f0d9443",
+        "artifact_hashes": {
+          "specs/006-demo-document-generation/spec.md": "e1aa47fd138651a7c9aef254743c46a4ac37d6bddf39fd9ed0b5008ad3a9a356",
+          "specs/006-demo-document-generation/plan.md": "01c5234993a98085ba547d415966b54c5870489867fdb59c8120918af27ae590",
+          "specs/006-demo-document-generation/checklists/requirements.md": "5d72511dd3b8dc900d46796091bbef48a36117de78c49cd3814a7e568d98674e"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+          "specs/006-demo-document-generation/spec.md",
+          "specs/006-demo-document-generation/plan.md",
+          "specs/006-demo-document-generation/research.md",
+          "specs/006-demo-document-generation/data-model.md",
+          "specs/006-demo-document-generation/quickstart.md",
+          "specs/006-demo-document-generation/checklists/requirements.md",
+          "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
+          "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
+          "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
+          "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md"
+        ]
+      },
+      "permitted_writes": [],
+      "output_path": "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json",
+      "returned_evidence": [
+        "schema-valid-plan-review-accept",
+        "formatting-only-no-semantic-drift",
+        "reviewed-boundary-e69b706a82c0498b68587d2ace4a99d430998befc7fefd4fe4842a786f0d9443"
+      ]
+    }
+  ],
+  "review_iterations": {
+    "spec-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "plan-review": {
+      "count": 2,
+      "verdict_paths": [
+        "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-1.json",
+        "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+      ]
+    },
+    "analyze": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "acceptance-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 0,
+      "verdict_paths": []
+    }
+  },
+  "e2e_decision": {
+    "required": true,
+    "predicates": [
+      {
+        "predicate_id": "P001",
+        "change_type": "persistence/multi-module integration",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Core",
+          "src/dotnet/Vulgata.Agents",
+          "src/dotnet/Vulgata.Infrastructure",
+          "src/dotnet/Vulgata.Web"
+        ],
+        "affected_behavior": "Worker Agent results cross provider, runner, authorization, and knowledge-store boundaries before Scan progress advances.",
+        "evidence": []
+      },
+      {
+        "predicate_id": "P002",
+        "change_type": "observable data lifecycle",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Core",
+          "src/dotnet/Vulgata.Infrastructure"
+        ],
+        "affected_behavior": "Pass 1 and the single prepared Pass 2 job commit immutable Document Versions and exact provenance before lifecycle completion.",
+        "evidence": []
+      }
+    ],
+    "coverage_override": null,
+    "rationale": "Persistence and multi-module behavior require current-boundary integration evidence; a later complete coverage override may satisfy the gate. Final two-Repository and Docker verification remain Story 11.5.",
+    "covering_tests": [],
+    "owner": "e2e-runner",
+    "source_boundary": {
+      "base_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "candidate_commit": null,
+      "diff_sha256": "0f008d08c8986637920e6580cbdd5e01780ab7aadc8d8a3711f73c00d03c9566",
+      "artifact_hashes": {
+        "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md": "739c874fd81d210693eb3fdf832f5810760fb4e05bcfda25a4ba024854c44446",
+        "specs/006-demo-document-generation/spec.md": "5a11583465d153fed444bdde372239951be031ec0fced8847d1da272a584aa37",
+        "specs/006-demo-document-generation/checklists/requirements.md": "b12c4f47767134f4835e16c9ab5563c87e4a7ec034b20fbda24b58a663830cf0"
+      },
+      "owned_paths": [
+        "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml",
+        "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json",
+        "specs/006-demo-document-generation/spec.md",
+        "specs/006-demo-document-generation/checklists/requirements.md"
+      ]
+    },
+    "result": "pending",
+    "evidence_ids": []
+  },
+  "verification": [
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/1",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "artifact_paths": [
+        "specs/006-demo-document-generation/plan.md",
+        "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-1.json",
+        "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-01T11:28:12Z",
+      "summary": "User explicitly approved the accepted plan's production Worker Agent execution adapter and prepared Pass 2 Scan strategy for advancement to task generation; later workflow gates remain required.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/2",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+      "artifact_paths": [
+        "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-01T11:53:08Z",
+      "summary": "Independent correction review ACCEPT re-pinned the plan after trailing-whitespace normalization and confirmed no semantic drift; the approved planned changes are unchanged.",
+      "raw_output_path": null
+    }
+  ],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-11-3-context-20260801T100122Z-7c3a91",
+    "scope_key": "story/11-3-pass-1-and-pass-2-demo-document-generation",
+    "stage": "tasks",
+    "committed_paths": [
+      ".specify/feature.json",
+      "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json",
+      "specs/006-demo-document-generation/spec.md",
+      "specs/006-demo-document-generation/checklists/requirements.md",
+      "specs/006-demo-document-generation/workflow-state.json",
+      "specs/006-demo-document-generation/plan.md",
+      "specs/006-demo-document-generation/research.md",
+      "specs/006-demo-document-generation/data-model.md",
+      "specs/006-demo-document-generation/quickstart.md",
+      "specs/006-demo-document-generation/contracts/worker-agent-unions.md",
+      "specs/006-demo-document-generation/contracts/source-and-provider-boundary.md",
+      "specs/006-demo-document-generation/contracts/result-commit-and-lifecycle.md",
+      "specs/006-demo-document-generation/contracts/prepared-pass2-flow.md",
+      "specs/006-demo-document-generation/tasks.md",
+      "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-1.json",
+      "specs/006-demo-document-generation/reviews/plan-review/plan-review-iteration-2.json"
+    ],
+    "verification_evidence_ids": [
+      "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/1",
+      "11-3-pass-1-and-pass-2-demo-document-generation/plan-review/2"
+    ],
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-08-01T11:53:08Z"
+}

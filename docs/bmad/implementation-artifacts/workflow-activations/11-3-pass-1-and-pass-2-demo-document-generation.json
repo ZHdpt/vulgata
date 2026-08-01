@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-3-pass-1-and-pass-2-demo-document-generation",
+  "bmad_epic_key": "11",
+  "story_path": "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+  "proposed_feature_short_name": "demo-document-generation",
+  "stage": "context",
+  "execution_level": "expedited-mvp",
+  "repository_preflight": {
+    "branch": "codex/story-11-3",
+    "preflight_head": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/0726/vulgata",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-3-pass-1-and-pass-2-demo-document-generation.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-08-01T10:01:22Z"
+  },
+  "activation_checkpoint_id": "bmad-11-3-context-20260801T100122Z-7c3a91",
+  "feature_directory": "specs/006-demo-document-generation",
+  "superseded_by_state": "specs/006-demo-document-generation/workflow-state.json",
+  "planned_change_triggers": [
+    "worker-agent-tool-execution-adapter",
+    "scan-strategy-prepared-pass2-dispatch"
+  ],
+  "integration_owner_gated_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
+    "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml"
+  ],
+  "expedited_mvp_authority": {
+    "allowlist": "11-1 through 11-5",
+    "lifetime": "2026-08-15T23:59:59+08:00",
+    "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
+  }
+}
