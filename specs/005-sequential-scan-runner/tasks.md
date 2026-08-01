@@ -227,11 +227,11 @@
 
 **Purpose**: Full regression, Web build, and quickstart validation across all stories.
 
-- [ ] T076 [P] Run full regression: `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests` and confirm all green
-- [ ] T077 [P] Run Web build: `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore` and confirm zero errors (existing package-source/EF-version warnings may remain)
-- [ ] T078 Run all 6 quickstart scenarios from `specs/005-sequential-scan-runner/quickstart.md` and confirm expected outcomes
-- [ ] T079 Verify negative assertions across G1–G5: no public API, UI, Chat Agent tool, Scan parsing strategy, Pass 2 flow planning, flow-group clustering, candidate selection, dispatch-site/endpoint binding, general Cross-Repository Resolution, or Story 11.3 document-generation behavior was introduced
-- [ ] T080 Verify no failing test is committed across the story (SC-006)
+- [X] T076 [P] Run full regression: `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests` and confirm all green
+- [X] T077 [P] Run Web build: `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore` and confirm zero errors (existing package-source/EF-version warnings may remain)
+- [X] T078 Run all 6 quickstart scenarios from `specs/005-sequential-scan-runner/quickstart.md` and confirm expected outcomes
+- [X] T079 Verify negative assertions across G1–G5: no public API, UI, Chat Agent tool, Scan parsing strategy, Pass 2 flow planning, flow-group clustering, candidate selection, dispatch-site/endpoint binding, general Cross-Repository Resolution, or Story 11.3 document-generation behavior was introduced
+- [X] T080 Verify no failing test is committed across the story (SC-006)
 
 ---
 
