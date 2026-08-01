@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "gate": "combined-acceptance-quality-review",
+  "execution_level": "expedited-mvp",
+  "verdict": "REJECT",
+  "reviewed_boundary": {
+    "scope_key": "story/11-3-pass-1-and-pass-2-demo-document-generation",
+    "base_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+    "candidate_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+    "diff_git_hash_object": "d2843eda60a93ab3df05c292b161a12c19449dc8",
+    "files_changed": 41,
+    "insertions": 12295,
+    "deletions": 152,
+    "worktree_clean_after_review": true
+  },
+  "findings": [
+    {
+      "id": "F003",
+      "severity": "HIGH",
+      "category": "correctness-data-integrity",
+      "title": "Pass 2 lacks a post-commit progress-persistence replay barrier",
+      "requirements": ["AC-4", "FR-008", "FR-015", "SC-003"],
+      "evidence": [
+        "SequentialScanRunner commits Pass 2 knowledge and then persists Completed without the Pass 1 replay-and-retry guard.",
+        "If final progress persistence fails, re-entry dispatches again and a new ReceivedAt changes the materialization timestamp.",
+        "Exact durable replay then conflicts and the runner can mark the Scan Failed despite a visible Business Logic Document."
+      ]
+    },
+    {
+      "id": "F005",
+      "severity": "HIGH",
+      "category": "acceptance-test-quality",
+      "title": "Prepared Pass 1 documents may omit all required communication evidence",
+      "requirements": ["AC-1", "AC-3", "FR-001", "FR-005", "SC-001"],
+      "evidence": [
+        "Production supplies a nonempty approved communication-evidence allowlist.",
+        "Result validation and commit validation still permit CommunicationEvidenceIds to be empty.",
+        "The relational scenario returns empty communication evidence and commits successfully."
+      ]
+    }
+  ],
+  "prior_finding_revalidation": {
+    "F001": "RESOLVED",
+    "F002": "RESOLVED",
+    "F003": "PARTIAL",
+    "F004": "RESOLVED",
+    "F005": "PARTIAL",
+    "F006": "RESOLVED",
+    "F007": "RESOLVED"
+  },
+  "acceptance_coverage": {
+    "AC-1": "PARTIAL",
+    "AC-2": "PASS",
+    "AC-3": "PARTIAL",
+    "AC-4": "PARTIAL",
+    "AC-5": "PASS",
+    "AC-6": "PASS"
+  },
+  "evidence": [
+    "Independent focused lane passed 113/113.",
+    "git diff --check passed.",
+    "No migration, model snapshot, API, UI, or Docker drift.",
+    "Review was read-only and left the worktree clean."
+  ],
+  "reviewer_role": "quality-reviewer",
+  "reviewed_at": "2026-08-01T17:23:00Z"
+}

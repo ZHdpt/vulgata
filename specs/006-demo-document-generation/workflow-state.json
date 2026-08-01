@@ -16,7 +16,7 @@
     },
     "quality-review": {
       "status": "pending",
-      "iteration": 1,
+      "iteration": 2,
       "dispatch_id": null,
       "verdict_path": null,
       "input_boundary": null,
@@ -212,6 +212,39 @@
         "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
         "tests/Vulgata.Tests/WorkerAgentDispatcherTests.cs",
         "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "rejected",
+      "started_at": "2026-08-01T17:13:00Z",
+      "completed_at": "2026-08-01T17:23:00Z",
+      "input_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+      "input_hashes": {
+        "candidate_diff_git_hash_object": "d2843eda60a93ab3df05c292b161a12c19449dc8"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json"
+      ],
+      "failure": "Two HIGH findings require post-commit Pass 2 recovery and mandatory prepared communication-evidence coverage."
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-01T17:24:00Z",
+      "completed_at": "2026-08-01T17:34:36Z",
+      "input_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+      "input_hashes": {
+        "quality_review": "d2843eda60a93ab3df05c292b161a12c19449dc8"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json",
+        "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
         "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs"
       ],
       "failure": null
@@ -559,9 +592,10 @@
       "verdict_paths": []
     },
     "quality-review": {
-      "count": 1,
+      "count": 2,
       "verdict_paths": [
-        "specs/006-demo-document-generation/reviews/quality-review/quality-review-d48ee3b.json"
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-d48ee3b.json",
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json"
       ]
     }
   },
@@ -620,6 +654,20 @@
     "evidence_ids": []
   },
   "verification": [
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/quality-review/2",
+      "kind": "review-verdict",
+      "stage": "quality-review",
+      "source_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+      "artifact_paths": [
+        "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json"
+      ],
+      "command": "independent combined acceptance and quality review iteration 2",
+      "exit_code": 1,
+      "observed_at": "2026-08-01T17:23:00Z",
+      "summary": "REJECT: post-commit Pass 2 progress recovery and required prepared communication evidence remain incomplete.",
+      "raw_output_path": "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json"
+    },
     {
       "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/quality-review/1",
       "kind": "review-verdict",
@@ -993,24 +1041,69 @@
       "observed_at": "2026-08-01T17:11:14Z",
       "summary": "Corrected Web build succeeded with zero errors and nine existing package and EF assembly-version warnings.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/25",
+      "kind": "tdd-red-green",
+      "stage": "implement",
+      "source_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+      "artifact_paths": ["src/dotnet/Vulgata.Core/DomainServices/IWorkerAgentResultCommitter.cs", "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs", "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs", "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs"],
+      "command": "focused Pass 2 final-progress-failure retry regression",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:29:00Z",
+      "summary": "F003 observed RED with two provider dispatches then GREEN 1/1: durable committed-result lookup completes progress without redispatch.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/26",
+      "kind": "tdd-red-green",
+      "stage": "implement",
+      "source_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+      "artifact_paths": ["src/dotnet/Vulgata.Core/DomainServices/WorkerAgentResultEnvelope.cs", "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs", "tests/Vulgata.Tests/WorkerAgentContractTests.cs", "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs"],
+      "command": "focused required prepared communication-evidence regression",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:31:00Z",
+      "summary": "F005 observed RED accepting empty evidence then GREEN 1/1: envelope and committer require exact prepared evidence representation.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/27",
+      "kind": "test",
+      "stage": "implement",
+      "source_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+      "artifact_paths": ["tests/Vulgata.Tests"],
+      "command": "dotnet test Vulgata.Tests --filter WorkerAgent|PreparedPass2|SequentialScanRunner",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:33:00Z",
+      "summary": "Iteration-2 corrected Story 11.3 lane passed 178 of 178 with zero failures or skips.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/implement/28",
+      "kind": "build",
+      "stage": "implement",
+      "source_commit": "ac835fa30a9c6651f3fddc2bc82efed26bced66a",
+      "artifact_paths": ["src/dotnet/Vulgata.Web/Vulgata.Web.csproj"],
+      "command": "dotnet build Vulgata.Web --no-restore",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T17:34:36Z",
+      "summary": "Web build succeeded with zero errors and the existing nine warnings; workflow validation and diff check passed.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-3-implement-r2-20260801T171114Z-6f8c2a",
+    "checkpoint_id": "bmad-11-3-implement-r3-20260801T173436Z-9a11e0",
     "scope_key": "story/11-3-pass-1-and-pass-2-demo-document-generation",
     "stage": "implement",
     "committed_paths": [
       "specs/006-demo-document-generation/workflow-state.json",
-      "specs/006-demo-document-generation/reviews/quality-review/quality-review-d48ee3b.json",
-      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentDispatcher.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/PreparedPass2Flow.cs",
+      "specs/006-demo-document-generation/reviews/quality-review/quality-review-ac835fa.json",
+      "src/dotnet/Vulgata.Core/DomainServices/IWorkerAgentResultCommitter.cs",
       "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs",
       "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentResultEnvelope.cs",
       "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs",
       "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
       "tests/Vulgata.Tests/WorkerAgentContractTests.cs",
-      "tests/Vulgata.Tests/WorkerAgentDispatcherTests.cs",
-      "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs",
       "tests/Vulgata.Tests/WorkerAgentResultCommitterTests.cs"
     ],
     "verification_evidence_ids": [
@@ -1040,11 +1133,16 @@
       "11-3-pass-1-and-pass-2-demo-document-generation/implement/21",
       "11-3-pass-1-and-pass-2-demo-document-generation/implement/22",
       "11-3-pass-1-and-pass-2-demo-document-generation/implement/23",
-      "11-3-pass-1-and-pass-2-demo-document-generation/implement/24"
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/24",
+      "11-3-pass-1-and-pass-2-demo-document-generation/quality-review/2",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/25",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/26",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/27",
+      "11-3-pass-1-and-pass-2-demo-document-generation/implement/28"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T17:11:14Z"
+  "updated_at": "2026-08-01T17:34:36Z"
 }

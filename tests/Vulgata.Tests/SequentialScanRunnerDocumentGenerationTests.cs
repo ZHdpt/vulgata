@@ -137,11 +137,20 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             G7Pass1Request request = Assert.Single(
                 loopback.Pass1Requests,
                 value => value.CodeUnitId == member.CodeUnitId);
+            Assert.NotEmpty(request.CommunicationEvidenceIds);
             CurrentKnowledge current = Assert.IsType<CurrentKnowledge>(
                 await knowledgeStore.GetCurrentAsync(
                     member.LogicalDocumentId,
                     scope,
-                    [G7LoopbackHandler.SectionId(member.CodeUnitId)]));
+                    [
+                        G7LoopbackHandler.SectionId(member.CodeUnitId),
+                        .. request.CommunicationEvidenceIds,
+                    ]));
+            Assert.Equal(
+                request.CommunicationEvidenceIds,
+                current.Sections
+                    .Where(section => section.SectionKind == DocumentSectionKind.Evidence)
+                    .Select(section => section.StableSectionId));
             candidates.Add(new(
                 request.JobId,
                 member.CodeUnitId,
@@ -374,6 +383,55 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Equal([durableJobId, durableJobId], dispatcher.JobIds);
         Assert.Equal(ScanExecutionPhase.Completed, execution.Phase);
         Assert.Null(execution.InFlightJobId);
+    }
+
+    [Fact]
+    public async Task RunPreparedPass2Async_FinalProgressFailureAfterCommit_RetryCompletesWithoutRedispatch()
+    {
+        Guid executionId = WorkerAgentTestFixtures.Id(351);
+        Guid repositoryId = WorkerAgentTestFixtures.Id(352);
+        Guid systemId = WorkerAgentTestFixtures.Id(353);
+        Guid scanRunId = WorkerAgentTestFixtures.Id(354);
+        ScanExecution execution = CreatePass1CompletedExecution(
+            executionId,
+            repositoryId,
+            systemId,
+            scanRunId);
+        ResolvedPreparedPass2Flow resolved = CreateResolvedPass2Flow(
+            repositoryId,
+            systemId,
+            scanRunId);
+        var events = new List<string>();
+        var store = new FailFirstPass2CompletionStore(execution);
+        var dispatcher = new ValidPass2Dispatcher(events);
+        var committer = new ReplayConflictPass2Committer();
+        var runner = new SequentialScanRunner(
+            new EmptyHandoffSource(),
+            store,
+            new EmptyCodeUnitSource(),
+            dispatcher,
+            committer,
+            resolved.Flow,
+            new FixedTimeProvider());
+        RepositoryAccessScope scope = new([repositoryId]);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            runner.RunPreparedPass2Async(
+                executionId,
+                resolved,
+                scope,
+                CancellationToken.None));
+
+        await runner.RunPreparedPass2Async(
+            executionId,
+            resolved,
+            scope,
+            CancellationToken.None);
+
+        Assert.Single(dispatcher.Packets);
+        Assert.Equal(1, committer.CommitCount);
+        Assert.Equal(ScanExecutionPhase.Completed, store.Durable.Phase);
+        Assert.Null(store.Durable.InFlightJobId);
     }
 
     [Theory]
@@ -832,6 +890,58 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             CancellationToken cancellationToken = default) => throw new NotSupportedException();
     }
 
+    private sealed class FailFirstPass2CompletionStore(
+        ScanExecution initial) : IScanExecutionStore
+    {
+        private bool _failed;
+        private Guid? _pass2JobId;
+
+        internal ScanExecution Durable { get; private set; } = initial;
+
+        public Task<ScanExecution?> GetAsync(
+            Guid scanExecutionId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanExecution?>(Durable);
+
+        public Task<ScanExecution?> FindActiveAsync(
+            Guid repositoryId,
+            Guid scanRunId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<ScanExecution?>(null);
+
+        public Task PersistAsync(
+            ScanExecution value,
+            CancellationToken cancellationToken = default)
+        {
+            if (value.Phase == ScanExecutionPhase.Pass1Completed &&
+                value.InFlightJobId is Guid pass2JobId)
+            {
+                _pass2JobId = pass2JobId;
+            }
+
+            if (value.Phase == ScanExecutionPhase.Completed && !_failed)
+            {
+                _failed = true;
+                Durable = CreatePass1CompletedExecution(
+                    value.Id,
+                    value.RepositoryId,
+                    value.SystemId,
+                    value.ScanRunId);
+                Durable.BeginPass2(Assert.IsType<Guid>(_pass2JobId));
+                throw new InvalidOperationException(
+                    "Injected final progress persistence failure.");
+            }
+
+            Durable = value;
+            return Task.CompletedTask;
+        }
+
+        public Task<ScanExecutionStateView> ReadStateAsync(
+            Guid scanExecutionId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
     private sealed class ValidDispatcher : IWorkerAgentDispatcher
     {
         internal List<WorkerAgentJobPacket> Packets { get; } = [];
@@ -989,6 +1099,11 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         private readonly TaskCompletionSource<WorkerAgentResultCommitOutcome> _released = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
 
+        public Task<bool> HasCommittedResultAsync(
+            WorkerAgentJobPacket packet,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default) => Task.FromResult(false);
+
         public Task<WorkerAgentResultCommitOutcome> CommitAsync(
             WorkerAgentJobPacket packet,
             WorkerAgentResultEnvelope validResult,
@@ -1015,6 +1130,11 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
 
         public int CallCount { get; private set; }
 
+        public Task<bool> HasCommittedResultAsync(
+            WorkerAgentJobPacket packet,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default) => Task.FromResult(false);
+
         public Task<WorkerAgentResultCommitOutcome> CommitAsync(
             WorkerAgentJobPacket packet,
             WorkerAgentResultEnvelope validResult,
@@ -1038,6 +1158,11 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
     {
         public int CallCount { get; private set; }
 
+        public Task<bool> HasCommittedResultAsync(
+            WorkerAgentJobPacket packet,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default) => Task.FromResult(false);
+
         public Task<WorkerAgentResultCommitOutcome> CommitAsync(
             WorkerAgentJobPacket packet,
             WorkerAgentResultEnvelope validResult,
@@ -1046,6 +1171,29 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         {
             CallCount++;
             return Task.FromResult(outcome);
+        }
+    }
+
+    private sealed class ReplayConflictPass2Committer : IWorkerAgentResultCommitter
+    {
+        internal int CommitCount { get; private set; }
+
+        public Task<bool> HasCommittedResultAsync(
+            WorkerAgentJobPacket packet,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(CommitCount > 0);
+
+        public Task<WorkerAgentResultCommitOutcome> CommitAsync(
+            WorkerAgentJobPacket packet,
+            WorkerAgentResultEnvelope validResult,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default)
+        {
+            CommitCount++;
+            return Task.FromResult(CommitCount == 1
+                ? WorkerAgentResultCommitOutcome.Committed
+                : WorkerAgentResultCommitOutcome.Conflict);
         }
     }
 
@@ -1070,6 +1218,11 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
     {
         internal List<(WorkerAgentJobPacket Packet, WorkerAgentResultEnvelope Result)> Calls { get; } = [];
 
+        public Task<bool> HasCommittedResultAsync(
+            WorkerAgentJobPacket packet,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default) => Task.FromResult(false);
+
         public Task<WorkerAgentResultCommitOutcome> CommitAsync(
             WorkerAgentJobPacket packet,
             WorkerAgentResultEnvelope validResult,
@@ -1092,6 +1245,11 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
     private sealed class CountingCommitter : IWorkerAgentResultCommitter
     {
         public int CallCount { get; private set; }
+
+        public Task<bool> HasCommittedResultAsync(
+            WorkerAgentJobPacket packet,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default) => Task.FromResult(false);
 
         public Task<WorkerAgentResultCommitOutcome> CommitAsync(
             WorkerAgentJobPacket packet,
@@ -1373,6 +1531,12 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         IWorkerAgentResultCommitter inner,
         List<string> events) : IWorkerAgentResultCommitter
     {
+        public Task<bool> HasCommittedResultAsync(
+            WorkerAgentJobPacket packet,
+            RepositoryAccessScope scope,
+            CancellationToken cancellationToken = default) =>
+            inner.HasCommittedResultAsync(packet, scope, cancellationToken);
+
         public async Task<WorkerAgentResultCommitOutcome> CommitAsync(
             WorkerAgentJobPacket packet,
             WorkerAgentResultEnvelope validResult,
@@ -1574,10 +1738,45 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             Guid jobId = root.GetProperty("jobId").GetGuid();
             Guid codeUnitId = root.GetProperty("codeUnitId").GetGuid();
             Guid anchorId = AnchorId(codeUnitId);
+            G7ResponseEvidence[] communicationEvidence = root
+                .GetProperty("approvedCommunicationEvidence")
+                .EnumerateArray()
+                .Select(evidence => new G7ResponseEvidence(
+                    evidence.GetProperty("evidenceId").GetGuid(),
+                    evidence.GetProperty("kind").GetString()!,
+                    evidence.GetProperty("description").GetString()!))
+                .OrderBy(evidence => evidence.Id)
+                .ToArray();
             Pass1Requests.Add(new(
                 jobId,
                 codeUnitId,
-                source.GetProperty("sourceText").GetString()!));
+                source.GetProperty("sourceText").GetString()!,
+                communicationEvidence.Select(evidence => evidence.Id).ToArray()));
+            var sections = new List<object>
+            {
+                new
+                {
+                    stableSectionId = SectionId(codeUnitId),
+                    order = 1,
+                    kind = nameof(DocumentSectionKind.TechnicalDetail),
+                    heading = "处理逻辑",
+                    markdown = "按已提交代码切片生成代码逻辑文档。",
+                    searchText = "提交 切片 代码逻辑",
+                    sourceAnchorIds = new[] { anchorId },
+                    documentVersionIds = Array.Empty<Guid>(),
+                },
+            };
+            sections.AddRange(communicationEvidence.Select((evidence, index) => (object)new
+            {
+                stableSectionId = evidence.Id,
+                order = index + 2,
+                kind = nameof(DocumentSectionKind.Evidence),
+                heading = evidence.Kind,
+                markdown = evidence.Description,
+                searchText = evidence.Description,
+                sourceAnchorIds = new[] { anchorId },
+                documentVersionIds = Array.Empty<Guid>(),
+            }));
             return JsonSerializer.Serialize(new
             {
                 jobId,
@@ -1602,20 +1801,7 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
                     keySymbols = new[] { source.GetProperty("symbolName").GetString() },
                     businessTerms = new[] { "订单" },
                     technicalTerms = new[] { "Worker Agent" },
-                    sections = new[]
-                    {
-                        new
-                        {
-                            stableSectionId = SectionId(codeUnitId),
-                            order = 1,
-                            kind = nameof(DocumentSectionKind.TechnicalDetail),
-                            heading = "处理逻辑",
-                            markdown = "按已提交代码切片生成代码逻辑文档。",
-                            searchText = "提交 切片 代码逻辑",
-                            sourceAnchorIds = new[] { anchorId },
-                            documentVersionIds = Array.Empty<Guid>(),
-                        },
-                    },
+                    sections,
                 },
                 sourceAnchors = new[]
                 {
@@ -1630,7 +1816,9 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
                     },
                 },
                 referenceDocumentVersionIds = Array.Empty<Guid>(),
-                communicationEvidenceIds = Array.Empty<Guid>(),
+                communicationEvidenceIds = communicationEvidence
+                    .Select(evidence => evidence.Id)
+                    .ToArray(),
             });
         }
 
@@ -1735,8 +1923,13 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         }
     }
 
-    private sealed record G7Pass1Request(Guid JobId, Guid CodeUnitId, string SourceText);
+    private sealed record G7Pass1Request(
+        Guid JobId,
+        Guid CodeUnitId,
+        string SourceText,
+        IReadOnlyList<Guid> CommunicationEvidenceIds);
     private sealed record G7Pass2Request(IReadOnlyList<Guid> DocumentVersionIds);
+    private sealed record G7ResponseEvidence(Guid Id, string Kind, string Description);
     private sealed record G7ResponseAnchor(
         Guid Id,
         string RepositoryRelativePath,

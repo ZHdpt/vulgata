@@ -288,6 +288,27 @@ public sealed class WorkerAgentResultCommitterTests
     }
 
     [Fact]
+    public async Task HasCommittedResultAsync_StablePass2Job_RecognizesOnlyDurableBusinessLogicVersion()
+    {
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        var knowledgeStore = new KnowledgeStoreRepository(
+            session.Context,
+            new KnowledgeDocumentMaterializer());
+        Pass2Fixture fixture = await CreatePass2FixtureAsync(session.Context, knowledgeStore);
+        var committer = new WorkerAgentResultCommitter(knowledgeStore, fixture.Flow);
+        RepositoryAccessScope scope = new([fixture.Packet.RepositoryId]);
+
+        Assert.False(await committer.HasCommittedResultAsync(fixture.Packet, scope));
+
+        Assert.Equal(
+            WorkerAgentResultCommitOutcome.Committed,
+            await committer.CommitAsync(fixture.Packet, fixture.Result, scope));
+
+        Assert.True(await committer.HasCommittedResultAsync(fixture.Packet, scope));
+    }
+
+    [Fact]
     public async Task CommitAsync_AlternateAuthoritativeFlow_RejectsSelfConsistentPass2Packet()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -533,6 +554,23 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(0, store.CommitCount);
     }
 
+    [Fact]
+    public async Task CommitAsync_PreparedCommunicationEvidenceIsOmitted_RejectsBeforeStoreCallAsync()
+    {
+        WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
+        var store = new PermissiveKnowledgeStore();
+        var committer = new WorkerAgentResultCommitter(store);
+
+        WorkerAgentResultCommitOutcome outcome = await committer.CommitAsync(
+            packet,
+            CreateOmittedCommunicationEvidenceResult(packet),
+            new RepositoryAccessScope([packet.RepositoryId]));
+
+        Assert.Equal(WorkerAgentResultCommitOutcome.Rejected, outcome);
+        Assert.Equal(0, store.GetCurrentCount);
+        Assert.Equal(0, store.CommitCount);
+    }
+
     private static WorkerAgentResultEnvelope CreateValidResult(
         WorkerAgentJobPacket packet,
         Guid? anchorId = null,
@@ -633,6 +671,35 @@ public sealed class WorkerAgentResultCommitterTests
             dispatchedAt,
             dispatchedAt.AddSeconds(1),
             invalidPayload);
+    }
+
+    private static WorkerAgentResultEnvelope CreateOmittedCommunicationEvidenceResult(
+        WorkerAgentJobPacket packet)
+    {
+        Pass1CodeLogicDocumentResultPayload valid = Assert.IsType<
+            Pass1CodeLogicDocumentResultPayload>(CreateValidResult(packet).Payload);
+        Pass1CodeLogicDocumentResultPayload omitted =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(
+                packet,
+                content: valid.Content with
+                {
+                    Sections = valid.Content.Sections
+                        .Where(section => section.Kind != DocumentSectionKind.Evidence)
+                        .ToArray(),
+                },
+                sourceAnchors: valid.SourceAnchors,
+                referenceDocumentVersionIds: valid.ReferenceDocumentVersionIds,
+                communicationEvidenceIds: []);
+        DateTimeOffset dispatchedAt = new(2026, 8, 1, 12, 0, 0, TimeSpan.Zero);
+        return WorkerAgentResultEnvelope.Create(
+            packet.JobId,
+            packet.ScanExecutionId,
+            packet.Kind,
+            WorkerAgentResultOutcome.Valid,
+            boundedReason: null,
+            dispatchedAt,
+            dispatchedAt.AddSeconds(1),
+            omitted);
     }
 
     private static WorkerAgentResultEnvelope CreatePass2Envelope(

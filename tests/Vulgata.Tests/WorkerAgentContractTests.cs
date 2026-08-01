@@ -174,6 +174,26 @@ public sealed class WorkerAgentContractTests
     }
 
     [Fact]
+    public void Pass1Result_PreparedCommunicationEvidenceIsOmitted_RejectsValue()
+    {
+        WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
+        Pass1CodeLogicDocumentResultPayload omitted =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(
+                packet,
+                communicationEvidenceIds: []);
+        DateTimeOffset now = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
+
+        Assert.Throws<ArgumentException>(() =>
+            WorkerAgentResultEnvelope.CreateForJob(
+                packet,
+                WorkerAgentResultOutcome.Valid,
+                null,
+                now,
+                now,
+                omitted));
+    }
+
+    [Fact]
     public void Pass1Result_ContentIsNotCodeLogic_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();

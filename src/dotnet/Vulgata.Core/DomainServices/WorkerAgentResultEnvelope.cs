@@ -232,16 +232,17 @@ public sealed class WorkerAgentResultEnvelope
                     nameof(payload));
             }
 
-            HashSet<Guid> approvedEvidenceIds =
-                job.ApprovedCommunicationEvidence.Select(item => item.EvidenceId).ToHashSet();
+            Guid[] approvedEvidenceIds = job.ApprovedCommunicationEvidence
+                .Select(item => item.EvidenceId)
+                .ToArray();
             if (pass1.CommunicationEvidenceIds.Count >
                     WorkerAgentContractLimits.MaximumCommunicationEvidenceItems ||
                 pass1.CommunicationEvidenceIds.Any(id => id == Guid.Empty) ||
                 !IsStrictlyAscending(pass1.CommunicationEvidenceIds) ||
-                pass1.CommunicationEvidenceIds.Any(id => !approvedEvidenceIds.Contains(id)))
+                !pass1.CommunicationEvidenceIds.SequenceEqual(approvedEvidenceIds))
             {
                 throw new ArgumentException(
-                    "Pass 1 communication evidence must be bounded, canonical, and allowlisted.",
+                    "Pass 1 communication evidence must exactly represent the prepared evidence set.",
                     nameof(payload));
             }
 

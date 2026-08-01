@@ -25,6 +25,43 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
             throw new ArgumentNullException(nameof(preparedPass2Flow));
     }
 
+    public async Task<bool> HasCommittedResultAsync(
+        WorkerAgentJobPacket packet,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(packet);
+        ArgumentNullException.ThrowIfNull(scope);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (packet.Kind != WorkerAgentJobKind.Pass2BusinessLogicDocument ||
+            packet.Payload is not Pass2BusinessLogicJobPayload job ||
+            !scope.Contains(packet.RepositoryId) ||
+            _preparedPass2Flow is null ||
+            !JobMatchesPreparedFlow(job, _preparedPass2Flow))
+        {
+            return false;
+        }
+
+        Guid logicalDocumentId = CreateStableId(
+            "pass2-logical-document",
+            packet.RepositoryId.ToString("D"),
+            job.FlowId.ToString("D"));
+        Guid documentVersionId = CreateStableId(
+            "pass2-document-version",
+            packet.JobId.ToString("D"));
+        CurrentKnowledge? current = await _knowledgeStore.GetCurrentAsync(
+            logicalDocumentId,
+            scope,
+            [],
+            cancellationToken).ConfigureAwait(false);
+
+        return current?.LogicalDocumentId == logicalDocumentId &&
+            current.DocumentVersionId == documentVersionId &&
+            current.RepositoryId == packet.RepositoryId &&
+            current.DocumentType == DocumentType.BusinessLogic;
+    }
+
     public async Task<WorkerAgentResultCommitOutcome> CommitAsync(
         WorkerAgentJobPacket packet,
         WorkerAgentResultEnvelope validResult,
@@ -648,7 +685,9 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
             !IsStrictlyAscending(result.ReferenceDocumentVersionIds) ||
             result.ReferenceDocumentVersionIds.Any(
                 id => !job.AllowedReferenceDocumentVersionIds.Contains(id)) ||
-            !IsStrictlyAscending(result.CommunicationEvidenceIds))
+            !IsStrictlyAscending(result.CommunicationEvidenceIds) ||
+            !result.CommunicationEvidenceIds.SequenceEqual(
+                job.ApprovedCommunicationEvidence.Select(evidence => evidence.EvidenceId)))
         {
             return false;
         }

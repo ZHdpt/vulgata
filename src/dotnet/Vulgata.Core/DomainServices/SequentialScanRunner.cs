@@ -278,6 +278,18 @@ public sealed class SequentialScanRunner
                 "The durable Pass 2 job does not match the authoritative retry identity.");
         }
 
+        if (await _resultCommitter.HasCommittedResultAsync(
+                packet,
+                scope,
+                cancellationToken).ConfigureAwait(false))
+        {
+            await CompletePass2ProgressAsync(
+                scanExecutionId,
+                packet.JobId,
+                cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         WorkerAgentResultEnvelope result;
         try
         {
@@ -339,6 +351,17 @@ public sealed class SequentialScanRunner
             return;
         }
 
+        await CompletePass2ProgressAsync(
+            scanExecutionId,
+            packet.JobId,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task CompletePass2ProgressAsync(
+        Guid scanExecutionId,
+        Guid pass2JobId,
+        CancellationToken cancellationToken)
+    {
         ScanExecution? progress = await _executionStore.GetAsync(
             scanExecutionId,
             cancellationToken).ConfigureAwait(false);
@@ -354,7 +377,7 @@ public sealed class SequentialScanRunner
         }
 
         progress.CompletePass2(
-            packet.JobId,
+            pass2JobId,
             BuildPass2SuccessMessage(progress.RepositoryId),
             _timeProvider.GetUtcNow());
         await _executionStore.PersistAsync(progress, cancellationToken).ConfigureAwait(false);

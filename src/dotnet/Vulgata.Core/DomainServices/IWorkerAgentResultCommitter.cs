@@ -11,6 +11,11 @@ public enum WorkerAgentResultCommitOutcome
 
 public interface IWorkerAgentResultCommitter
 {
+    Task<bool> HasCommittedResultAsync(
+        WorkerAgentJobPacket packet,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default);
+
     Task<WorkerAgentResultCommitOutcome> CommitAsync(
         WorkerAgentJobPacket packet,
         WorkerAgentResultEnvelope validResult,
