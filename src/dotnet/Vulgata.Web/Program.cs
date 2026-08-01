@@ -114,7 +114,12 @@ builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
 builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
 builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
 builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
-builder.Services.AddScoped<SequentialScanRunner>();
+// SequentialScanRunner itself is NOT registered here: it depends on
+// IWorkerAgentDispatcher, which has no production implementation until
+// Story 11.3. Registering it now would break DI validation in every
+// WebApplicationFactory test. The three adapter registrations above are
+// the only Story 11.2 production DI surface; the runner registration is
+// deferred to Story 11.3 alongside the LLM-backed dispatcher.
 builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
 builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
 builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
