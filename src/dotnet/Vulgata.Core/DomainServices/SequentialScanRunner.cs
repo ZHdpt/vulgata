@@ -93,14 +93,45 @@ public sealed class SequentialScanRunner
     /// execution. On a restart re-read of a <c>Pass1Running</c> row with a
     /// non-null in-flight job, the bounded restart indicator is incremented
     /// and persisted, but the LLM job is not resumed and no result is
-    /// fabricated.
+    /// fabricated. The runner orchestrates the restart-observe step in the
+    /// domain layer; the store is a pure CRUD port.
     /// </summary>
     public async Task<ScanExecutionStateView> ReadStateAsync(
         Guid scanExecutionId,
         CancellationToken cancellationToken = default)
     {
-        return await _executionStore.ReadStateAsync(scanExecutionId, cancellationToken)
-            .ConfigureAwait(false);
+        ScanExecution? execution = await _executionStore.GetAsync(
+            scanExecutionId, cancellationToken).ConfigureAwait(false);
+        if (execution is null)
+        {
+            throw new InvalidOperationException(
+                $"找不到标识为 {scanExecutionId} 的扫描执行记录。");
+        }
+
+        // Observe a restart re-read: if a job is in flight, increment the
+        // bounded indicator and persist. The LLM job is NOT resumed and no
+        // result is fabricated.
+        int indicatorBefore = execution.RestartIndicator;
+        execution.ObserveRestart();
+        if (execution.RestartIndicator != indicatorBefore)
+        {
+            await _executionStore.PersistAsync(execution, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        return new ScanExecutionStateView(
+            execution.Id,
+            execution.RepositoryId,
+            execution.ScanRunId,
+            execution.Phase,
+            execution.InFlightJobId,
+            execution.CompletedJobCount,
+            execution.TotalJobCount,
+            execution.RestartIndicator,
+            execution.TerminalMessage,
+            execution.TerminalReasonKind,
+            execution.StartedAt,
+            execution.TerminalAt);
     }
 
     /// <summary>

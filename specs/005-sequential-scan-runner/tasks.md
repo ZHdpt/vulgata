@@ -149,20 +149,20 @@
 
 ### G4 Tests (RED first)
 
-- [ ] T042 [P] [US3] Write failing test: persisted state reports current phase, in-flight job identity, and completed count after a transition in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
-- [ ] T043 [P] [US3] Write failing test: on restart re-read of a `Pass1Running` row with non-null `InFlightJobId`, `RestartIndicator` increments (bounded 0–32) and persists in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
-- [ ] T044 [P] [US3] Write failing test: restart does NOT silently resume LLM work or fabricate a result in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
-- [ ] T045 [P] [US3] Write failing test: `ReadStateAsync` distinguishes `Pass1Running` from `Completed`, `Failed`, and `Cancelled` using persisted state alone in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
-- [ ] T046 [P] [US3] Write failing test: restart indicator stays bounded across multiple restarts while a job is in flight; never overflows in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
-- [ ] T047 [P] [US3] Write failing test: every phase transition is persisted atomically (SQLite relational integration — serializable transaction, no partial state visible) in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
+- [X] T042 [P] [US3] Write failing test: persisted state reports current phase, in-flight job identity, and completed count after a transition in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
+- [X] T043 [P] [US3] Write failing test: on restart re-read of a `Pass1Running` row with non-null `InFlightJobId`, `RestartIndicator` increments (bounded 0–32) and persists in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
+- [X] T044 [P] [US3] Write failing test: restart does NOT silently resume LLM work or fabricate a result in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
+- [X] T045 [P] [US3] Write failing test: `ReadStateAsync` distinguishes `Pass1Running` from `Completed`, `Failed`, and `Cancelled` using persisted state alone in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
+- [X] T046 [P] [US3] Write failing test: restart indicator stays bounded across multiple restarts while a job is in flight; never overflows in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
+- [X] T047 [P] [US3] Write failing test: every phase transition is persisted atomically (SQLite relational integration — serializable transaction, no partial state visible) in `tests/Vulgata.Tests/SequentialScanRunnerRestartTests.cs`
 
 ### G4 Implementation (GREEN)
 
-- [ ] T048 [US3] Create `ScanExecutionRepository` in `src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs` — implements `IScanExecutionStore` using EF Core against `VulgataDbContext`; persists `ScanExecution` rows in schema `vulgata` table `ScanExecutions`; every phase transition is one atomic transaction (row locked inside transaction before mutation); composite FKs bind `(ScanRunId, RepositoryId)` to `ScanRun` alternate key and `RepositoryId` to `Repository`. For SQLite tests: no `FOR UPDATE`; begin serializable transaction with parameterized no-op update mirroring Story 11.1 pattern.
-- [ ] T049 [US3] Implement `SequentialScanRunner.ReadStateAsync(scanExecutionId, cancellationToken)` in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — return `ScanExecutionStateView` carrying phase, in-flight job, completed count, total count, restart indicator, terminal message. On restart re-read of `Pass1Running` with non-null `InFlightJobId`, increment bounded `RestartIndicator` and persist, but do NOT resume LLM job and do NOT fabricate a result.
-- [ ] T050 [US3] Create `ApprovedPreScanHandoffSource` Infrastructure adapter in `src/dotnet/Vulgata.Infrastructure/Data/ApprovedPreScanHandoffSource.cs` — implements `IApprovedPreScanHandoffSource` by wrapping existing `IScanRunRepository.GetApprovedPreScanHandoffAsync`
-- [ ] T051 [US3] Create `CodeUnitSource` Infrastructure adapter in `src/dotnet/Vulgata.Infrastructure/Data/CodeUnitSource.cs` — implements `ICodeUnitSource.GetPreparedAsync` returning prepared Code Units for the ScanRun/Repository in deterministic order
-- [ ] T052 [US3] Verify G4 GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerRestartTests` and confirm all G4 tests pass
+- [X] T048 [US3] Create `ScanExecutionRepository` in `src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs` — implements `IScanExecutionStore` using EF Core against `VulgataDbContext`; persists `ScanExecution` rows in schema `vulgata` table `ScanExecutions`; every phase transition is one atomic transaction (row locked inside transaction before mutation); composite FKs bind `(ScanRunId, RepositoryId)` to `ScanRun` alternate key and `RepositoryId` to `Repository`. For SQLite tests: no `FOR UPDATE`; begin serializable transaction with parameterized no-op update mirroring Story 11.1 pattern. [NOTE: DbSet declaration and migration deferred to G6; adapter compiles via `Set<ScanExecution>()` and is exercised by G6 integration tests.]
+- [X] T049 [US3] Implement `SequentialScanRunner.ReadStateAsync(scanExecutionId, cancellationToken)` in `src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs` — return `ScanExecutionStateView` carrying phase, in-flight job, completed count, total count, restart indicator, terminal message. On restart re-read of `Pass1Running` with non-null `InFlightJobId`, increment bounded `RestartIndicator` and persist, but do NOT resume LLM job and do NOT fabricate a result.
+- [X] T050 [US3] Create `ApprovedPreScanHandoffSource` Infrastructure adapter in `src/dotnet/Vulgata.Infrastructure/Data/ApprovedPreScanHandoffSource.cs` — implements `IApprovedPreScanHandoffSource` by wrapping existing `IScanRunRepository.GetApprovedPreScanHandoffAsync`
+- [X] T051 [US3] Create `CodeUnitSource` Infrastructure adapter in `src/dotnet/Vulgata.Infrastructure/Data/CodeUnitSource.cs` — implements `ICodeUnitSource.GetPreparedAsync` returning prepared Code Units for the ScanRun/Repository in deterministic order
+- [X] T052 [US3] Verify G4 GREEN: run `dotnet test --filter FullyQualifiedName~SequentialScanRunnerRestartTests` and confirm all G4 tests pass
 
 **Checkpoint**: User Story 3 functional — durable state survives restart without silent LLM resume.
 
