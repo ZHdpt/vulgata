@@ -77,8 +77,14 @@
     {
       "authority": "SpecKit specification",
       "path": "specs/005-sequential-scan-runner/spec.md",
-      "commit": null,
+      "commit": "fb149d18a4a8d7b2e4483192fbcc503d9315dde9",
       "sha256": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519"
+    },
+    {
+      "authority": "SpecKit plan",
+      "path": "specs/005-sequential-scan-runner/plan.md",
+      "commit": null,
+      "sha256": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759"
     }
   ],
   "dispatches": [],
