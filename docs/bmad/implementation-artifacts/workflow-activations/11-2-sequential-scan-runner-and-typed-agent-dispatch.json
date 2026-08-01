@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-2-sequential-scan-runner-and-typed-agent-dispatch",
+  "bmad_epic_key": "11",
+  "story_path": "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+  "proposed_feature_short_name": "sequential-scan-runner",
+  "stage": "context",
+  "execution_level": "expedited-mvp",
+  "repository_preflight": {
+    "branch": "story112",
+    "preflight_head": "d5f91e9c4199826d944a6b20af3039741958cc9b",
+    "story_prepared_checkpoint": "d5f91e9c4199826d944a6b20af3039741958cc9b",
+    "predecessor_completed_candidate": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "G:/source/repos/vulgata/.worktrees/story112",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-2-sequential-scan-runner-and-typed-agent-dispatch.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-31T14:15:00Z"
+  },
+  "activation_checkpoint_id": "bmad-11-2-activated-20260731T141500Z-a3c2b1",
+  "feature_directory": null,
+  "superseded_by_state": null,
+  "planned_change_triggers": [
+    "scan-strategy-dispatch-behavior",
+    "worker-agent-tool-execution-adapter"
+  ],
+  "integration_owner_gated_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Migrations/",
+    "src/dotnet/Vulgata.Infrastructure/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml"
+  ],
+  "expedited_mvp_authority": {
+    "allowlist": "11-1 through 11-5",
+    "lifetime": "2026-08-15T23:59:59+08:00",
+    "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
+  }
+}
