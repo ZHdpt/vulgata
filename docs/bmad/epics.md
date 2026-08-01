@@ -334,6 +334,7 @@ Before any scanning infrastructure is built, validate that the Microsoft Agent F
 **Architecture:** Isolated prototype — instantiate the deterministic Orchestrator harness and a Worker Agent execution adapter, dispatch mock typed jobs, verify tool-call wiring and result collection. Document fallback options (direct OpenAI SDK, LangChain.NET, custom worker adapter) with migration effort estimates.
 
 ### Epic 4: Pre-Scan Profiling
+**Implementation status:** Done — exact-source verification and the Epic architecture gate passed.
 Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, apply a scan filter, and derive deterministic communication-kind hypotheses. For the August 15 demonstration, all profiling outcomes continue conservatively to an automatically approved pre-scan handoff; the LLM question generator and Human-in-the-Loop review lifecycle are deferred.
 **FRs covered:** FR-4.1
 **Architecture:** CodeGraphContextProvider HTTP integration, Code Unit data model (file path, line range, language, framework), scan filter rules, deterministic communication-kind hypotheses, and a persisted automatically approved handoff. Output: a structured pre-scan result ready for the deadline delivery slice; Epic 4 does not implement the Scan Coordinator queue or Worker Agent dispatch.

@@ -16,19 +16,21 @@
     },
     "quality-review": {
       "status": "accepted",
-      "iteration": 5,
-      "dispatch_id": "story_4_3_remediation_quality_review",
-      "verdict_path": "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json",
+      "iteration": 6,
+      "dispatch_id": "story43_lease_review",
+      "verdict_path": "specs/003-conservative-pre-scan-gate/reviews/quality-review-6.json",
       "input_boundary": {
-        "base_commit": "4968a0431caf52583d50720951d6a11b294381d8",
+        "base_commit": "7d1c348d7b5049f010769d16fbd48cca290e2103",
         "candidate_commit": null,
-        "worktree_diff_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
-        "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
+        "worktree_diff_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
+        "candidate_bundle_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
         "file_sha256": {
-          "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json": "239b896ac20198ce883c160c996077405f11c992d0af74303ea67cdb0c024807"
+          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "0ea6fa6984ac8a046484ce0d89a8e69c27dd70fbb142cca86bfd74c5a2846398",
+          "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs": "241aac32e1cf723d0a3c06fe7e2343a0d08b6b7cd01057640cc068f6f1df60dc",
+          "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "139fccf9d56deccee58a79b81202345e12bb80a9c3ba4b9b0a37c80397c8775c"
         }
       },
-      "completed_at": "2026-07-31T11:39:50.5499241Z"
+      "completed_at": "2026-08-01T11:01:14.4791635+08:00"
     }
   },
   "stage_history": [
@@ -1377,25 +1379,42 @@
       "observed_at": "2026-07-30T12:09:57.2211007Z",
       "summary": "The exact final Docker build completed successfully and produced vulgata:story-4-3 at immutable image sha256:851adce25ca8b5a799f2d62553aea9589918aa550ea48e23c6bf6c1159594c7a.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/final-verification-green",
+      "kind": "build-test-runtime",
+      "stage": "verify",
+      "source_commit": "643c8c6dafac4114e789e54e85afa9168a34e3eb",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
+        "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
+        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
+        "docker/Dockerfile"
+      ],
+      "command": "focused detector/architecture tests; dotnet build Vulgata.Web; Story43EndToEndTests; dotnet ef migrations has-pending-model-changes; canonical source-labeled docker build; full dotnet test with final-image provider contract",
+      "exit_code": 0,
+      "observed_at": "2026-08-01T11:18:49.0761748+08:00",
+      "summary": "Focused correction tests passed 70/70; Web build and Story 4.3 production composition passed; EF reported no pending model changes; the source-labeled image sha256:afa0cff88b91a6c2562fbb0db5d9c9b50a25baa7e2c895dcbd725cc8421f9d2e passed the CodeGraphContext final-image contract; the complete clean suite passed 626/626.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-4-3-remediation-complete-20260731T120412Z",
+    "checkpoint_id": "bmad-4-3-lease-only-complete-20260801T111849",
     "scope_key": "story/4-3-conservative-pre-scan-gate-and-communication-type-detection",
     "stage": "complete",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/003-conservative-pre-scan-gate/tasks.md",
       "specs/003-conservative-pre-scan-gate/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/quality-review-5-accept",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/e2e-production-composition-green",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/final-verification-green"
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/quality-review-6-accept",
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/final-verification-green"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-07-31T12:04:12.0715146Z"
+  "updated_at": "2026-08-01T11:18:49.0761748+08:00"
 }

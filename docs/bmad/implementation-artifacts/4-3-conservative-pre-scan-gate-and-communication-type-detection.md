@@ -499,3 +499,15 @@ recorded in `specs/003-conservative-pre-scan-gate/workflow-state.json`.
   the Web build, the EF no-pending-model gate, and the exact Story 4.3 Docker
   build; assembled the provisional completed-story checkpoint and transitioned
   the story from `review` to `done`.
+- 2026-07-31: A fresh Epic 4 architecture audit found the concrete framework
+  detector still exposed a parallel public string-path/Git snapshot entry
+  point contrary to the accepted lease-only plan. The user approved the narrow
+  correction; Story 4.3 returned to `in-progress` for RED-GREEN implementation,
+  combined review, verification, and a fresh Epic 4 audit.
+- 2026-08-01: Completed the lease-only correction with observed public-surface
+  RED, focused GREEN 70/70, independent combined review `ACCEPT`, Web build,
+  Story 4.3 production-composition E2E, EF no-pending-model verification, and
+  clean exact-source full-suite GREEN 626/626. The canonical source-labeled
+  Docker image is `sha256:afa0cff88b91a6c2562fbb0db5d9c9b50a25baa7e2c895dcbd725cc8421f9d2e`;
+  Story 4.3 returned to `done` and the new committed boundary was handed to the
+  fresh Epic 4 architecture gate.

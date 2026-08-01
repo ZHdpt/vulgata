@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "epic_key": "4",
+  "status": "pending-binding",
+  "source_epic_checkpoint": {
+    "id": "bmad-4-complete-20260801T120420+0800-dispatch5",
+    "commit_sha": "dcd0aa69ef3656a910f2f94b9b147d87fcfb680a",
+    "manifest_sha256": "2d1adf87d6c4b45c273af7ebf236cef99ac5cf2572c237ef115510ddfe2b8fc4"
+  },
+  "hooks": [],
+  "write_manifest": [
+    "docs/bmad/implementation-artifacts/epic-4-retro-2026-08-01.md",
+    "docs/bmad/implementation-artifacts/epic-gates/4/retrospective-state.json",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml"
+  ],
+  "approved_manifest_sha256": "78109cc1e7b6bb96b2fd0cbe709079f466250118219d5b7d463c5eeee7a3753e",
+  "evidence_paths": [
+    "docs/bmad/implementation-artifacts/epic-gates/4/architecture-gate.json",
+    "docs/bmad/implementation-artifacts/epic-gates/4/audit-raw/dispatch-5.json",
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-build-68792e5.json",
+    "docs/bmad/implementation-artifacts/epic-gates/4/evidence/epic4-close-test-68792e5.json"
+  ],
+  "failure": null,
+  "checkpoint": {
+    "id": "bmad-4-retrospective-20260801T130000+0800",
+    "expected_parent": "dcd0aa69ef3656a910f2f94b9b147d87fcfb680a"
+  }
+}

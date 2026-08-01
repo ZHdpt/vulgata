@@ -1,5 +1,5 @@
 # generated: 2026-07-10
-# last_updated: 2026-07-30
+# last_updated: 2026-08-01
 # project: vulgata
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-07-10
-last_updated: 2026-07-30
+last_updated: 2026-08-01
 project: vulgata
 project_key: NOKEY
 tracking_system: file-system
@@ -80,11 +80,11 @@ development_status:
   3-2-per-system-llm-provider-override: done
   3-3-database-connection-configuration: done
   epic-3-retrospective: done
-  epic-4: in-progress
+  epic-4: done
   4-1-codegraph-integration-and-code-unit-extraction: done
   4-2-language-and-framework-detection: done
   4-3-conservative-pre-scan-gate-and-communication-type-detection: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
   epic-11: in-progress
   11-1-minimal-knowledge-store-and-retrieval-projection: done
   11-2-sequential-scan-runner-and-typed-agent-dispatch: backlog

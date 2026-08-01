@@ -7,7 +7,10 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.FrameworkDetection;
+using Vulgata.Infrastructure.Git;
+using RepositoryEntity = Vulgata.Core.Entities.Repository;
 
 namespace Vulgata.Tests;
 
@@ -501,11 +504,15 @@ public sealed class FrameworkDetectionTests
             "src/ui/package.json",
             """{ "dependencies": { "not-in-catalog": "1.0.0" } }""");
         repository.CommitAll();
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repository.Path);
         repository.Write(
             "src/ui/package.json",
             """{ "dependencies": { "react": "19.0.0" } }""");
 
-        Assert.Empty(await DetectAsync(repository.Path));
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(snapshot.Lease);
+
+        AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
     [Fact]
@@ -530,6 +537,7 @@ public sealed class FrameworkDetectionTests
             }
             """);
         repository.CommitAll();
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repository.Path);
         repository.Write(
             "src/ui/package-lock.json",
             """
@@ -543,11 +551,14 @@ public sealed class FrameworkDetectionTests
             }
             """);
 
-        Assert.Empty(await DetectAsync(repository.Path));
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(snapshot.Lease);
+
+        AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
     [Fact]
-    public async Task DetectAsync_DirtyDeletionAndReparseSubstitution_PreservesPinnedDirectAndPairedLockFactsAsync()
+    public async Task DetectAsync_DirtyDeletionAndReparseSubstitution_FailsClosedWithoutFactsAsync()
     {
         using var repository = new GitFixture();
         repository.Write(
@@ -587,6 +598,7 @@ public sealed class FrameworkDetectionTests
             }
             """);
         repository.CommitAll();
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repository.Path);
         repository.Delete("direct-deleted/package.json");
         repository.Delete("lock-deleted/package-lock.json");
         repository.Delete("direct-substituted/package.json");
@@ -602,62 +614,30 @@ public sealed class FrameworkDetectionTests
             """{ "lockfileVersion": 3, "packages": {} }""",
             targetOutsideRepository: false);
 
-        DetectedEvidence[] actual =
-        [
-            .. (await DetectAsync(repository.Path))
-                .OrderBy(item => item.ArtifactPath, StringComparer.Ordinal),
-        ];
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(snapshot.Lease);
 
-        DetectedEvidence[] expected =
-        [
-            new(
-                "direct-deleted/package.json",
-                "direct-deleted",
-                "npm",
-                "npm:react",
-                "Direct",
-                "direct-deleted/package.json#json:/dependencies/react"),
-            new(
-                "direct-substituted/package.json",
-                "direct-substituted",
-                "npm",
-                "npm:express",
-                "Direct",
-                "direct-substituted/package.json#json:/dependencies/express"),
-            new(
-                "lock-deleted/package-lock.json",
-                "lock-deleted",
-                "npm",
-                "npm:react",
-                "Transitive",
-                "lock-deleted/package-lock.json#json:/packages/node_modules~1react"),
-            new(
-                "lock-substituted/package-lock.json",
-                "lock-substituted",
-                "npm",
-                "npm:express",
-                "Transitive",
-                "lock-substituted/package-lock.json#json:/packages/node_modules~1express"),
-        ];
-        Assert.Equal(expected, actual);
+        AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
     [Fact]
-    public async Task DetectAsync_HeadChangesAfterInventory_UsesPinnedCommittedSnapshotAsync()
+    public async Task DetectAsync_HeadChangesAfterLease_FailsClosedWithoutSnapshotFactsAsync()
     {
         using var repository = new GitFixture();
         repository.Write(
             "src/ui/package.json",
             """{ "dependencies": { "not-in-catalog": "1.0.0" } }""");
         repository.CommitAll();
-        var snapshotSource = new HeadMutatingSnapshotSource(repository);
-        var detector = new FrameworkEvidenceDetector(
-            (FrameworkCatalog)LoadEmbedded(),
-            FrameworkDetectionLimits.Production,
-            snapshotSource);
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repository.Path);
+        repository.Write(
+            "src/ui/package.json",
+            """{ "dependencies": { "react": "19.0.0" } }""");
+        repository.CommitAll();
 
-        Assert.Empty(await detector.DetectAsync(repository.Path));
-        Assert.True(snapshotSource.Mutated);
+        DetectedGlobalFrameworkResult result =
+            await DetectGlobalDetailedAsync(snapshot.Lease);
+
+        AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
     [Fact]
@@ -1136,11 +1116,12 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
-    public async Task DetectApplicableDetailedAsync_NuGetUnsafeReparseAndOversizeOwners_RejectLockWithOneClosedAuditAsync()
+    public async Task SnapshotLease_NuGetUnsafeReparseAndOversizeOwners_FailClosedBeforeDetectionAsync()
     {
         foreach (string ownerKind in new[] { "unsafe", "reparse", "oversize" })
         {
             using var repository = new GitFixture();
+            repository.Write(".gitignore", ".fixture-targets/\n");
             string ownerPath = $"{ownerKind}/App.csproj";
             if (ownerKind == "oversize")
             {
@@ -1158,23 +1139,18 @@ public sealed class FrameworkDetectionTests
             }
 
             repository.Write($"{ownerKind}/packages.lock.json", NuGetLockJson());
-            repository.Track(ownerPath, $"{ownerKind}/packages.lock.json");
+            repository.Track(
+                ".gitignore",
+                ownerPath,
+                $"{ownerKind}/packages.lock.json");
 
-            DetectedGlobalFrameworkResult result =
-                await DetectApplicableGlobalDetailedAsync(
-                    repository.Path,
-                    $"{ownerKind}/src/Controller.cs",
-                    "c_sharp",
-                    GetProductionLimits());
-
-            AssertInvalidOwnerLockResult(
-                result,
-                ownerKind switch
-                {
-                    "unsafe" => "FrameworkEvidenceUnsafePath",
-                    "reparse" => "FrameworkEvidenceReparsePoint",
-                    _ => "FrameworkEvidenceBoundExceeded",
-                });
+            InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(
+                () => AcquireSnapshotAsync(repository.Path));
+            Assert.DoesNotContain(ownerPath, exception.Message, StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "Microsoft.AspNetCore.Mvc",
+                exception.Message,
+                StringComparison.Ordinal);
         }
     }
 
@@ -1303,7 +1279,7 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
-    public async Task DetectApplicableDetailedAsync_NpmOwnerCandidate_RejectsZeroOutOfRootUnsafeReparseAndOversizeAsync()
+    public async Task DetectApplicableDetailedAsync_NpmOwnerCandidate_FailsClosedAtLeaseOrDetectionAsync()
     {
         foreach (string ownerKind in new[]
                  {
@@ -1341,6 +1317,15 @@ public sealed class FrameworkDetectionTests
             repository.Write($"{lockRoot}/package-lock.json", NpmLockJson());
             repository.TrackAll();
 
+            if (ownerKind is "unsafe" or "reparse" or "oversize")
+            {
+                InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(
+                    () => AcquireSnapshotAsync(repository.Path));
+                Assert.DoesNotContain(ownerPath, exception.Message, StringComparison.Ordinal);
+                Assert.DoesNotContain("left-pad", exception.Message, StringComparison.Ordinal);
+                continue;
+            }
+
             DetectedGlobalFrameworkResult result =
                 await DetectApplicableGlobalDetailedAsync(
                     repository.Path,
@@ -1350,13 +1335,7 @@ public sealed class FrameworkDetectionTests
 
             AssertInvalidOwnerLockResult(
                 result,
-                ownerKind switch
-                {
-                    "unsafe" => "FrameworkEvidenceUnsafePath",
-                    "reparse" => "FrameworkEvidenceReparsePoint",
-                    "oversize" => "FrameworkEvidenceBoundExceeded",
-                    _ => "FrameworkEvidenceUnsupported",
-                });
+                "FrameworkEvidenceUnsupported");
         }
     }
 
@@ -1398,6 +1377,7 @@ public sealed class FrameworkDetectionTests
             ".gitignore",
             """
             ignored/
+            untracked/
             """);
         repository.Write(
             "untracked/package.json",
@@ -2004,14 +1984,8 @@ public sealed class FrameworkDetectionTests
             { "dependencies": { "react": "19.0.0" } }
             """);
         string maximumArtifactPath = ArtifactPathOfLength(2_048);
-        string overlongArtifactPath = ArtifactPathOfLength(2_049);
         repository.Write(
             maximumArtifactPath,
-            """
-            { "dependencies": { "express": "5.0.0" } }
-            """);
-        repository.Write(
-            overlongArtifactPath,
             """
             { "dependencies": { "express": "5.0.0" } }
             """);
@@ -2075,10 +2049,24 @@ public sealed class FrameworkDetectionTests
             arbitraryTargetText,
             string.Join('\n', evidence.Select(item => item.DetectionSource)),
             StringComparison.Ordinal);
+
+        using var overlongRepository = new GitFixture();
+        string overlongArtifactPath = ArtifactPathOfLength(2_049);
+        overlongRepository.Write(
+            overlongArtifactPath,
+            """
+            { "dependencies": { "express": "OVERSIZE-PATH-SECRET" } }
+            """);
+        overlongRepository.TrackAll();
+
+        InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => AcquireSnapshotAsync(overlongRepository.Path));
+        Assert.DoesNotContain(overlongArtifactPath, exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("OVERSIZE-PATH-SECRET", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task DetectDetailedAsync_PerArtifactEightMiBBound_IsolatesOversizeEvidenceAsync()
+    public async Task DetectDetailedAsync_PerArtifactEightMiBBound_AcceptsMaximumAndRejectsOversizeLeaseAsync()
     {
         using var repository = new GitFixture();
         repository.Write(
@@ -2093,13 +2081,6 @@ public sealed class FrameworkDetectionTests
                 { "dependencies": { "express": "MAXIMUM-VALUE" } }
                 """,
                 8 * 1024 * 1024));
-        repository.Write(
-            "oversize/package.json",
-            PadAsciiToLength(
-                """
-                { "dependencies": { "react": "OVERSIZE-SECRET-VALUE" } }
-                """,
-                (8 * 1024 * 1024) + 1));
         repository.TrackAll();
 
         DetectedFrameworkResult result = await DetectDetailedAsync(repository.Path);
@@ -2112,17 +2093,22 @@ public sealed class FrameworkDetectionTests
             result.Evidence,
             item => item.ArtifactPath == "valid/package.json" &&
                 item.PackageCoordinate == "npm:react");
-        Assert.DoesNotContain(
-            result.Evidence,
-            item => item.ArtifactPath == "oversize/package.json");
-        DetectedAuditOutcome audit = Assert.Single(
-            result.AuditOutcomes,
-            item => item.ArtifactPath == "oversize/package.json");
-        Assert.Equal("Errored", audit.Outcome);
-        Assert.Equal("FrameworkEvidenceBoundExceeded", audit.Reason);
-        Assert.Equal("框架证据超出单个文件限制。", audit.Message);
-        Assert.DoesNotContain("oversize/package.json", audit.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain("OVERSIZE-SECRET-VALUE", audit.Message, StringComparison.Ordinal);
+        Assert.Empty(result.AuditOutcomes);
+
+        using var oversizeRepository = new GitFixture();
+        oversizeRepository.Write(
+            "oversize/package.json",
+            PadAsciiToLength(
+                """
+                { "dependencies": { "react": "OVERSIZE-SECRET-VALUE" } }
+                """,
+                (8 * 1024 * 1024) + 1));
+        oversizeRepository.TrackAll();
+
+        InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => AcquireSnapshotAsync(oversizeRepository.Path));
+        Assert.DoesNotContain("oversize/package.json", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("OVERSIZE-SECRET-VALUE", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -2228,9 +2214,10 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
-    public async Task DetectDetailedAsync_EscapeAndReparsePoint_AreRejectedWithoutDisclosureAsync()
+    public async Task SnapshotLease_EscapeAndReparsePoint_FailClosedWithoutDisclosureAsync()
     {
         using var repository = new GitFixture();
+        repository.Write(".gitignore", ".fixture-targets/\n");
         repository.Write(
             "valid/package.json",
             """
@@ -2257,38 +2244,19 @@ public sealed class FrameworkDetectionTests
             System.IO.Path.Combine(repository.Path, "escape", "package.json"))
             .HasFlag(FileAttributes.ReparsePoint));
         repository.Track(
+            ".gitignore",
             "valid/package.json",
             "reparse/package.json",
             "escape/package.json");
 
-        DetectedFrameworkResult result = await DetectDetailedAsync(repository.Path);
+        InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(
+            () => AcquireSnapshotAsync(repository.Path));
 
-        DetectedEvidence fact = Assert.Single(result.Evidence);
-        Assert.Equal("valid/package.json", fact.ArtifactPath);
-        DetectedAuditOutcome reparse = Assert.Single(
-            result.AuditOutcomes,
-            item => item.ArtifactPath == "reparse/package.json");
-        Assert.Equal("Errored", reparse.Outcome);
-        Assert.Equal("FrameworkEvidenceReparsePoint", reparse.Reason);
-        Assert.Equal("框架证据包含重解析点。", reparse.Message);
-        DetectedAuditOutcome escape = Assert.Single(
-            result.AuditOutcomes,
-            item => item.ArtifactPath == "escape/package.json");
-        Assert.Equal("Errored", escape.Outcome);
-        Assert.Equal("FrameworkEvidenceUnsafePath", escape.Reason);
-        Assert.Equal("框架证据路径不安全。", escape.Message);
-
-        string retained = RetainedDetectionText(result);
-        Assert.DoesNotContain(insideTarget, retained, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain(outsideTarget, retained, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("INSIDE-REPARSE-SECRET", retained, StringComparison.Ordinal);
-        Assert.DoesNotContain("OUTSIDE-ESCAPE-SECRET", retained, StringComparison.Ordinal);
-        Assert.All(
-            result.AuditOutcomes,
-            audit => Assert.DoesNotContain(
-                audit.ArtifactPath,
-                audit.Message,
-                StringComparison.Ordinal));
+        Assert.DoesNotContain(insideTarget, exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(outsideTarget, exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("INSIDE-REPARSE-SECRET", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("OUTSIDE-ESCAPE-SECRET", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(repository.Path, exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -2327,7 +2295,7 @@ public sealed class FrameworkDetectionTests
     }
 
     [Fact]
-    public async Task DetectDetailedAsync_HugeIrrelevantPinnedTree_RemainsBoundedAndProducesNoPartialFactsAsync()
+    public async Task DetectDetailedAsync_LargeIrrelevantLease_RemainsBoundedAndHonorsCancellationAsync()
     {
         using var repository = new GitFixture();
         for (var index = 0; index < 300; index++)
@@ -2341,102 +2309,24 @@ public sealed class FrameworkDetectionTests
             "package.json",
             """{ "dependencies": { "react": "19.0.0" } }""");
         repository.Write("nested/requirements.txt", "Django==5.2.4\n");
-        repository.CreateFileSymbolicLink(
-            "linked/package.json",
-            "target.txt",
-            """{ "dependencies": { "express": "5.0.0" } }""",
-            targetOutsideRepository: false);
         repository.TrackAll();
-        string repositoryIdentity =
-            await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
-                repository.Path,
-                CancellationToken.None);
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repository.Path);
 
-        CommittedRepositoryEntry[] entries =
-            await FrameworkEvidenceDetector.InventoryTrackedEntriesAsync(
-                repository.Path,
-                repositoryIdentity,
-                CancellationToken.None);
-
-        Assert.Equal(
-            [
-                "linked/package.json",
-                "nested/requirements.txt",
-                "package.json",
-            ],
-            entries
-                .Select(entry => entry.Path)
-                .OrderBy(path => path, StringComparer.Ordinal));
-        Assert.Equal(
-            "120000",
-            Assert.Single(entries, entry => entry.Path == "linked/package.json").Mode);
-        Assert.All(
-            entries,
-            entry => Assert.Matches(
-                "^[0-9a-f]{40}([0-9a-f]{24})?$",
-                GetProperty<string>(entry, "ObjectId")));
-
-        DetectedGlobalFrameworkResult result =
-            await DetectGlobalDetailedAsync(repository.Path);
+        DetectedGlobalFrameworkResult result = await DetectGlobalDetailedAsync(snapshot.Lease);
         Assert.True(result.Succeeded);
         Assert.Equal(
             ["nested/requirements.txt", "package.json"],
             result.Evidence
                 .Select(item => item.ArtifactPath)
                 .OrderBy(path => path, StringComparer.Ordinal));
-        Assert.Single(
-            result.AuditOutcomes,
-            audit => audit.ArtifactPath == "linked/package.json");
-
-        using var byteOverflow = new GitFixture();
-        byteOverflow.Write(
-            "package.json",
-            """{ "dependencies": { "react": "19.0.0" } }""");
-        byteOverflow.TrackAll();
-        string byteOverflowIdentity =
-            await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
-                byteOverflow.Path,
-                CancellationToken.None);
-        Exception byteException = await Assert.ThrowsAnyAsync<Exception>(() =>
-            InvokeBoundedInventoryAsync(
-                byteOverflow.Path,
-                byteOverflowIdentity,
-                maximumOutputBytes: 8,
-                maximumRecords: 1_000,
-                deadline: TimeSpan.FromSeconds(5),
-                CancellationToken.None));
-        Assert.Equal("FrameworkDetectionLimitExceededException", byteException.GetType().Name);
-
-        using var recordOverflow = new GitFixture();
-        recordOverflow.Write(
-            "package.json",
-            """{ "dependencies": { "react": "19.0.0" } }""");
-        recordOverflow.Write("nested/requirements.txt", "Django==5.2.4\n");
-        recordOverflow.TrackAll();
-        string recordOverflowIdentity =
-            await FrameworkEvidenceDetector.ResolveCommittedRepositoryIdentityAsync(
-                recordOverflow.Path,
-                CancellationToken.None);
-        Exception recordException = await Assert.ThrowsAnyAsync<Exception>(() =>
-            InvokeBoundedInventoryAsync(
-                recordOverflow.Path,
-                recordOverflowIdentity,
-                maximumOutputBytes: 64 * 1024,
-                maximumRecords: 1,
-                deadline: TimeSpan.FromSeconds(5),
-                CancellationToken.None));
-        Assert.Equal("FrameworkDetectionLimitExceededException", recordException.GetType().Name);
+        Assert.Empty(result.AuditOutcomes);
 
         using var cancellation = new CancellationTokenSource();
         await cancellation.CancelAsync();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            InvokeBoundedInventoryAsync(
-                repository.Path,
-                repositoryIdentity,
-                maximumOutputBytes: 64 * 1024,
-                maximumRecords: 1_000,
-                deadline: TimeSpan.FromSeconds(5),
-                cancellation.Token));
+            DetectGlobalDetailedAsync(
+                snapshot.Lease,
+                cancellationToken: cancellation.Token));
     }
 
     [Fact]
@@ -2574,12 +2464,14 @@ public sealed class FrameworkDetectionTests
         Directory.CreateDirectory(directory);
         try
         {
-            DetectedGlobalFrameworkResult? result = null;
-            Exception? exception = await Record.ExceptionAsync(async () =>
-                result = await DetectGlobalDetailedAsync(directory));
+            ICommittedRepositorySnapshotLease lease = new StaticSnapshotLease(
+                System.IO.Path.Combine(directory, "missing"));
+            IFrameworkEvidenceDetector detector = CreateDetector();
+            FrameworkEvidenceDetectionResult detection = await detector.DetectDetailedAsync(
+                lease,
+                CancellationToken.None);
+            DetectedGlobalFrameworkResult result = ReadGlobalResult(detection);
 
-            Assert.Null(exception);
-            Assert.NotNull(result);
             AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
             string retained = RetainedDetectionText(result);
             Assert.DoesNotContain(directory, retained, StringComparison.OrdinalIgnoreCase);
@@ -2788,29 +2680,18 @@ public sealed class FrameworkDetectionTests
 
     private static async Task<IEnumerable<DetectedEvidence>> DetectAsync(string repositoryPath)
     {
-        Type? detectorType = Type.GetType(_detectorTypeName, throwOnError: false);
-        Assert.NotNull(detectorType);
-        object? detector = Activator.CreateInstance(detectorType, LoadEmbedded());
-        Assert.NotNull(detector);
-        MethodInfo? detectAsync = detectorType.GetMethod(
-            "DetectAsync",
-            BindingFlags.Public | BindingFlags.Instance,
-            binder: null,
-            types: [typeof(string), typeof(CancellationToken)],
-            modifiers: null);
-        Assert.NotNull(detectAsync);
-        object? invocation = detectAsync.Invoke(detector, [repositoryPath, CancellationToken.None]);
-        Task task = Assert.IsAssignableFrom<Task>(invocation);
-        await task;
-        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
-        IEnumerable evidence = Assert.IsAssignableFrom<IEnumerable>(result);
-        return evidence.Cast<object>().Select(item => new DetectedEvidence(
-            GetProperty<string>(item, "ArtifactPath"),
-            GetProperty<string>(item, "ScopeRoot"),
-            GetProperty<string>(item, "Ecosystem"),
-            GetProperty<string>(item, "PackageCoordinate"),
-            GetProperty<object>(item, "Relationship").ToString()!,
-            GetProperty<string>(item, "DetectionSource")));
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repositoryPath);
+        return await DetectAsync(snapshot.Lease);
+    }
+
+    private static async Task<IEnumerable<DetectedEvidence>> DetectAsync(
+        ICommittedRepositorySnapshotLease committedSnapshot)
+    {
+        IFrameworkEvidenceDetector detector = CreateDetector();
+        IReadOnlyList<PackageEvidence> evidence = await detector.DetectAsync(
+            committedSnapshot,
+            CancellationToken.None);
+        return evidence.Select(ToDetectedEvidence);
     }
 
     private static async Task<IEnumerable<DetectedEvidence>> DetectApplicableAsync(
@@ -2818,72 +2699,28 @@ public sealed class FrameworkDetectionTests
         string codeUnitPath,
         string parserLanguage)
     {
-        Type? detectorType = Type.GetType(_detectorTypeName, throwOnError: false);
-        Assert.NotNull(detectorType);
-        object? detector = Activator.CreateInstance(detectorType, LoadEmbedded());
-        Assert.NotNull(detector);
-        MethodInfo? detectAsync = detectorType.GetMethod(
-            "DetectApplicableAsync",
-            BindingFlags.Public | BindingFlags.Instance,
-            binder: null,
-            types:
-            [
-                typeof(string),
-                typeof(string),
-                typeof(string),
-                typeof(CancellationToken),
-            ],
-            modifiers: null);
-        Assert.NotNull(detectAsync);
-        object? invocation = detectAsync.Invoke(
-            detector,
-            [repositoryPath, codeUnitPath, parserLanguage, CancellationToken.None]);
-        Task task = Assert.IsAssignableFrom<Task>(invocation);
-        await task;
-        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
-        IEnumerable evidence = Assert.IsAssignableFrom<IEnumerable>(result);
-        return evidence.Cast<object>().Select(item => new DetectedEvidence(
-            GetProperty<string>(item, "ArtifactPath"),
-            GetProperty<string>(item, "ScopeRoot"),
-            GetProperty<string>(item, "Ecosystem"),
-            GetProperty<string>(item, "PackageCoordinate"),
-            GetProperty<object>(item, "Relationship").ToString()!,
-            GetProperty<string>(item, "DetectionSource")));
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repositoryPath);
+        IFrameworkEvidenceDetector detector = CreateDetector();
+        FrameworkEvidenceDetectionResult detection = await detector.DetectDetailedAsync(
+            snapshot.Lease,
+            CancellationToken.None);
+        FrameworkEvidenceDetectionResult result = detector.SelectApplicable(
+            detection,
+            codeUnitPath,
+            parserLanguage);
+        return result.Evidence.Select(ToDetectedEvidence);
     }
 
     private static async Task<DetectedFrameworkResult> DetectDetailedAsync(string repositoryPath)
     {
-        Type? detectorType = Type.GetType(_detectorTypeName, throwOnError: false);
-        Assert.NotNull(detectorType);
-        object? detector = Activator.CreateInstance(detectorType, LoadEmbedded());
-        Assert.NotNull(detector);
-        MethodInfo? detectAsync = detectorType.GetMethod(
-            "DetectDetailedAsync",
-            BindingFlags.Public | BindingFlags.Instance,
-            binder: null,
-            types: [typeof(string), typeof(CancellationToken)],
-            modifiers: null);
-        Assert.NotNull(detectAsync);
-        object? invocation = detectAsync.Invoke(detector, [repositoryPath, CancellationToken.None]);
-        Task task = Assert.IsAssignableFrom<Task>(invocation);
-        await task;
-        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
-        Assert.NotNull(result);
-        IEnumerable evidence = GetProperty<IEnumerable>(result, "Evidence");
-        IEnumerable auditOutcomes = GetProperty<IEnumerable>(result, "AuditOutcomes");
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repositoryPath);
+        IFrameworkEvidenceDetector detector = CreateDetector();
+        FrameworkEvidenceDetectionResult result = await detector.DetectDetailedAsync(
+            snapshot.Lease,
+            CancellationToken.None);
         return new DetectedFrameworkResult(
-            [.. evidence.Cast<object>().Select(item => new DetectedEvidence(
-                GetProperty<string>(item, "ArtifactPath"),
-                GetProperty<string>(item, "ScopeRoot"),
-                GetProperty<string>(item, "Ecosystem"),
-                GetProperty<string>(item, "PackageCoordinate"),
-                GetProperty<object>(item, "Relationship").ToString()!,
-                GetProperty<string>(item, "DetectionSource")))],
-            [.. auditOutcomes.Cast<object>().Select(item => new DetectedAuditOutcome(
-                GetProperty<string>(item, "ArtifactPath"),
-                GetProperty<object>(item, "Outcome").ToString()!,
-                GetProperty<string>(item, "Reason"),
-                GetProperty<string>(item, "Message")))]);
+            [.. result.Evidence.Select(ToDetectedEvidence)],
+            [.. result.AuditOutcomes.Select(ToDetectedAuditOutcome)]);
     }
 
     private static object GetProductionLimits()
@@ -2897,36 +2734,6 @@ public sealed class FrameworkDetectionTests
         object? limits = property.GetValue(null);
         Assert.NotNull(limits);
         return limits;
-    }
-
-    private static async Task<CommittedRepositoryEntry[]> InvokeBoundedInventoryAsync(
-        string repositoryPath,
-        string repositoryIdentity,
-        long maximumOutputBytes,
-        int maximumRecords,
-        TimeSpan deadline,
-        CancellationToken cancellationToken)
-    {
-        MethodInfo? method = typeof(FrameworkEvidenceDetector)
-            .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-            .SingleOrDefault(candidate =>
-                candidate.Name == "InventoryTrackedEntriesAsync" &&
-                candidate.GetParameters().Length == 6);
-        Assert.NotNull(method);
-        object? invocation = method.Invoke(
-            null,
-            [
-                repositoryPath,
-                repositoryIdentity,
-                maximumOutputBytes,
-                maximumRecords,
-                deadline,
-                cancellationToken,
-            ]);
-        Task task = Assert.IsAssignableFrom<Task>(invocation);
-        await task;
-        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
-        return Assert.IsType<CommittedRepositoryEntry[]>(result);
     }
 
     private static object CreateLimits(
@@ -2959,21 +2766,22 @@ public sealed class FrameworkDetectionTests
 
     private static async Task<DetectedGlobalFrameworkResult> DetectGlobalDetailedAsync(
         string repositoryPath,
-        object? limits = null)
+        object? limits = null,
+        CancellationToken cancellationToken = default)
     {
-        object detector = CreateDetector(limits);
-        MethodInfo? method = detector.GetType().GetMethod(
-            "DetectDetailedAsync",
-            BindingFlags.Public | BindingFlags.Instance,
-            binder: null,
-            types: [typeof(string), typeof(CancellationToken)],
-            modifiers: null);
-        Assert.NotNull(method);
-        object? invocation = method.Invoke(detector, [repositoryPath, CancellationToken.None]);
-        Task task = Assert.IsAssignableFrom<Task>(invocation);
-        await task;
-        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
-        Assert.NotNull(result);
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repositoryPath);
+        return await DetectGlobalDetailedAsync(snapshot.Lease, limits, cancellationToken);
+    }
+
+    private static async Task<DetectedGlobalFrameworkResult> DetectGlobalDetailedAsync(
+        ICommittedRepositorySnapshotLease committedSnapshot,
+        object? limits = null,
+        CancellationToken cancellationToken = default)
+    {
+        IFrameworkEvidenceDetector detector = CreateDetector(limits);
+        FrameworkEvidenceDetectionResult result = await detector.DetectDetailedAsync(
+            committedSnapshot,
+            cancellationToken);
         return ReadGlobalResult(result);
     }
 
@@ -2983,76 +2791,125 @@ public sealed class FrameworkDetectionTests
         string parserLanguage,
         object limits)
     {
-        object detector = CreateDetector(limits);
-        MethodInfo? method = detector.GetType().GetMethod(
-            "DetectApplicableDetailedAsync",
-            BindingFlags.Public | BindingFlags.Instance,
-            binder: null,
-            types:
-            [
-                typeof(string),
-                typeof(string),
-                typeof(string),
-                typeof(CancellationToken),
-            ],
-            modifiers: null);
-        Assert.NotNull(method);
-        object? invocation = method.Invoke(
-            detector,
-            [repositoryPath, codeUnitPath, parserLanguage, CancellationToken.None]);
-        Task task = Assert.IsAssignableFrom<Task>(invocation);
-        await task;
-        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
-        Assert.NotNull(result);
-        return ReadGlobalResult(result);
+        await using SnapshotLeaseFixture snapshot = await AcquireSnapshotAsync(repositoryPath);
+        IFrameworkEvidenceDetector detector = CreateDetector(limits);
+        FrameworkEvidenceDetectionResult detection = await detector.DetectDetailedAsync(
+            snapshot.Lease,
+            CancellationToken.None);
+        return ReadGlobalResult(detector.SelectApplicable(
+            detection,
+            codeUnitPath,
+            parserLanguage));
     }
 
-    private static object CreateDetector(object? limits)
+    private static IFrameworkEvidenceDetector CreateDetector(object? limits = null)
     {
-        Type? detectorType = Type.GetType(_detectorTypeName, throwOnError: false);
-        Assert.NotNull(detectorType);
-        object catalog = LoadEmbedded();
-        if (limits is null)
-        {
-            object? detector = Activator.CreateInstance(detectorType, catalog);
-            Assert.NotNull(detector);
-            return detector;
-        }
-
-        ConstructorInfo? constructor = detectorType
-            .GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .SingleOrDefault(candidate =>
-            {
-                ParameterInfo[] parameters = candidate.GetParameters();
-                return parameters.Length == 2 &&
-                    parameters[0].ParameterType.IsInstanceOfType(catalog) &&
-                    parameters[1].ParameterType.IsInstanceOfType(limits);
-            });
-        Assert.NotNull(constructor);
-        return constructor.Invoke([catalog, limits]);
+        var catalog = (FrameworkCatalog)LoadEmbedded();
+        return limits is null
+            ? new FrameworkEvidenceDetector(catalog)
+            : new FrameworkEvidenceDetector(catalog, Assert.IsType<FrameworkDetectionLimits>(limits));
     }
 
-    private static DetectedGlobalFrameworkResult ReadGlobalResult(object result)
+    private static DetectedGlobalFrameworkResult ReadGlobalResult(
+        FrameworkEvidenceDetectionResult result)
     {
-        IEnumerable evidence = GetProperty<IEnumerable>(result, "Evidence");
-        IEnumerable auditOutcomes = GetProperty<IEnumerable>(result, "AuditOutcomes");
         return new DetectedGlobalFrameworkResult(
-            GetProperty<bool>(result, "Succeeded"),
-            [.. evidence.Cast<object>().Select(item => new DetectedEvidence(
-                GetProperty<string>(item, "ArtifactPath"),
-                GetProperty<string>(item, "ScopeRoot"),
-                GetProperty<string>(item, "Ecosystem"),
-                GetProperty<string>(item, "PackageCoordinate"),
-                GetProperty<object>(item, "Relationship").ToString()!,
-                GetProperty<string>(item, "DetectionSource")))],
-            [.. auditOutcomes.Cast<object>().Select(item => new DetectedAuditOutcome(
-                GetProperty<string>(item, "ArtifactPath"),
-                GetProperty<object>(item, "Outcome").ToString()!,
-                GetProperty<string>(item, "Reason"),
-                GetProperty<string>(item, "Message")))],
-            GetProperty<int>(result, "TotalAuditOutcomeCount"),
-            GetProperty<object>(result, "Failure").ToString()!,
-            GetNullableStringProperty(result, "Error"));
+            result.Succeeded,
+            [.. result.Evidence.Select(ToDetectedEvidence)],
+            [.. result.AuditOutcomes.Select(ToDetectedAuditOutcome)],
+            result.TotalAuditOutcomeCount,
+            result.Failure.ToString(),
+            result.Error);
+    }
+
+    private static DetectedEvidence ToDetectedEvidence(PackageEvidence evidence) => new(
+        evidence.ArtifactPath,
+        evidence.ScopeRoot,
+        evidence.Ecosystem,
+        evidence.PackageCoordinate,
+        evidence.Relationship.ToString(),
+        evidence.DetectionSource);
+
+    private static DetectedAuditOutcome ToDetectedAuditOutcome(
+        FrameworkEvidenceAuditOutcome auditOutcome) => new(
+            auditOutcome.ArtifactPath,
+            auditOutcome.Outcome.ToString(),
+            auditOutcome.Reason,
+            auditOutcome.Message);
+
+    private static async Task<SnapshotLeaseFixture> AcquireSnapshotAsync(
+        string repositoryPath)
+    {
+        string storagePath = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(),
+            $"vulgata-framework-snapshot-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(storagePath);
+        try
+        {
+            string profiledRevision = ResolveProfiledRevision(repositoryPath);
+            RepositoryEntity repository = RepositoryEntity.CreateStandalone(
+                "framework-detection-fixture",
+                repositoryPath,
+                null,
+                null,
+                DateTimeOffset.UtcNow);
+            ICommittedRepositorySnapshotService snapshotService =
+                new CommittedRepositorySnapshotService(
+                    new GitWorkingCopyOptions(storagePath));
+            ICommittedRepositorySnapshotLease lease = await snapshotService.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                GitWorkingCopyResult.Success(repositoryPath, profiledRevision),
+                CancellationToken.None);
+            await lease.VerifyIdentityAsync(CancellationToken.None);
+            return new SnapshotLeaseFixture(storagePath, lease);
+        }
+        catch
+        {
+            DeleteDirectory(storagePath);
+            throw;
+        }
+    }
+
+    private static string ResolveProfiledRevision(string repositoryPath)
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo("git")
+            {
+                WorkingDirectory = repositoryPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            },
+        };
+        process.StartInfo.ArgumentList.Add("rev-parse");
+        process.StartInfo.ArgumentList.Add("--verify");
+        process.StartInfo.ArgumentList.Add("HEAD");
+        Assert.True(process.Start());
+        string output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        Assert.True(process.ExitCode == 0, $"git rev-parse failed: {error}");
+        return output.Trim();
+    }
+
+    private static void DeleteDirectory(string path)
+    {
+        try
+        {
+            Directory.Delete(path, recursive: true);
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     private static string? GetNullableStringProperty(object instance, string propertyName)
@@ -3112,26 +2969,37 @@ public sealed class FrameworkDetectionTests
         string Failure,
         string? Error);
 
-    private sealed class HeadMutatingSnapshotSource(GitFixture repository)
-        : ICommittedRepositorySnapshotSource
+    private sealed class SnapshotLeaseFixture(
+        string storagePath,
+        ICommittedRepositorySnapshotLease lease) : IAsyncDisposable
     {
-        public bool Mutated { get; private set; }
+        public ICommittedRepositorySnapshotLease Lease { get; } = lease;
 
-        public async Task<CommittedRepositorySnapshot> CreateAsync(
-            string repositoryRoot,
-            CancellationToken cancellationToken)
+        public async ValueTask DisposeAsync()
         {
-            CommittedRepositorySnapshot snapshot =
-                await GitCommittedRepositorySnapshotSource.Instance.CreateAsync(
-                    repositoryRoot,
-                    cancellationToken);
-            repository.Write(
-                "src/ui/package.json",
-                """{ "dependencies": { "react": "19.0.0" } }""");
-            repository.CommitAll();
-            Mutated = true;
-            return snapshot;
+            await Lease.DisposeAsync();
+            DeleteDirectory(storagePath);
         }
+    }
+
+    private sealed class StaticSnapshotLease(string rootPath)
+        : ICommittedRepositorySnapshotLease
+    {
+        public Guid RepositoryId { get; } = Guid.NewGuid();
+
+        public Guid ScanRunId { get; } = Guid.NewGuid();
+
+        public string ProfiledRevision { get; } = new('a', 40);
+
+        public string RootPath { get; } = rootPath;
+
+        public Task VerifyIdentityAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class GitFixture : IDisposable
