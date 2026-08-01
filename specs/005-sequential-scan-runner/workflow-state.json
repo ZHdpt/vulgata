@@ -23,12 +23,17 @@
       "completed_at": null
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "accepted",
+      "iteration": 1,
+      "dispatch_id": "quality-review-9f1a6fb",
+      "verdict_path": "specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json",
+      "input_boundary": {
+        "candidate_commit": "9f1a6fbbcbf88fac297be81e230c5df302d4111b",
+        "base_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+        "spec_sha": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519",
+        "plan_sha": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759"
+      },
+      "completed_at": "2026-08-01T04:30:00Z"
     }
   },
   "stage_history": [
@@ -148,8 +153,10 @@
       "verdict_paths": []
     },
     "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+      "count": 1,
+      "verdict_paths": [
+        "specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json"
+      ]
     }
   },
   "e2e_decision": null,
@@ -193,5 +200,5 @@
     "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T04:00:00Z"
+  "updated_at": "2026-08-01T04:30:00Z"
 }
