@@ -208,6 +208,7 @@ public sealed class WorkerAgentProductionRegistrationTests
         WorkerAgentJobPacket packet = CreatePass2Packet();
         WorkerAgentResultEnvelope result = await dispatcher.DispatchAsync(
             packet,
+            new RepositoryAccessScope([packet.RepositoryId]),
             CancellationToken.None);
 
         Assert.Equal(WorkerAgentResultOutcome.Error, result.Outcome);

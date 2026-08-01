@@ -235,17 +235,18 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         var store = new RecordingExecutionStore(execution, events);
         var dispatcher = new ValidPass2Dispatcher(events);
         var committer = new GatedPass2Committer(events);
+        ResolvedPreparedPass2Flow resolved = CreateResolvedPass2Flow(
+            repositoryId,
+            systemId,
+            scanRunId);
         var runner = new SequentialScanRunner(
             new EmptyHandoffSource(),
             store,
             new EmptyCodeUnitSource(),
             dispatcher,
             committer,
+            resolved.Flow,
             new FixedTimeProvider());
-        ResolvedPreparedPass2Flow resolved = CreateResolvedPass2Flow(
-            repositoryId,
-            systemId,
-            scanRunId);
 
         Task run = runner.RunPreparedPass2Async(
             executionId,
@@ -278,6 +279,103 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             events.Where(value => value is "pass2-dispatch" or "pass2-commit" or "completed"));
     }
 
+    [Fact]
+    public async Task RunPreparedPass2Async_AlternateSelfConsistentFlow_RejectsBeforeDispatch()
+    {
+        Guid executionId = WorkerAgentTestFixtures.Id(314);
+        Guid repositoryId = WorkerAgentTestFixtures.Id(315);
+        Guid systemId = WorkerAgentTestFixtures.Id(316);
+        Guid scanRunId = WorkerAgentTestFixtures.Id(317);
+        ScanExecution execution = CreatePass1CompletedExecution(
+            executionId,
+            repositoryId,
+            systemId,
+            scanRunId);
+        ResolvedPreparedPass2Flow authoritative = CreateResolvedPass2Flow(
+            repositoryId,
+            systemId,
+            scanRunId);
+        PreparedPass2Flow alternateFlow = PreparedPass2Flow.Create(
+            authoritative.Flow.SchemaIdentity,
+            WorkerAgentTestFixtures.Id(318),
+            WorkerAgentTestFixtures.Id(319),
+            systemId,
+            repositoryId,
+            authoritative.Flow.Members,
+            authoritative.Flow.TraceEvidence);
+        var events = new List<string>();
+        var dispatcher = new ValidPass2Dispatcher(events);
+        var committer = new CountingCommitter();
+        var runner = new SequentialScanRunner(
+            new EmptyHandoffSource(),
+            new RecordingExecutionStore(execution, events),
+            new EmptyCodeUnitSource(),
+            dispatcher,
+            committer,
+            authoritative.Flow,
+            new FixedTimeProvider());
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            runner.RunPreparedPass2Async(
+                executionId,
+                new(alternateFlow, authoritative.CodeLogicDocuments),
+                new RepositoryAccessScope([repositoryId]),
+                CancellationToken.None));
+
+        Assert.Empty(dispatcher.Packets);
+        Assert.Equal(0, committer.CallCount);
+        Assert.Equal(ScanExecutionPhase.Pass1Completed, execution.Phase);
+    }
+
+    [Fact]
+    public async Task RunPreparedPass2Async_CancelledInFlightReentry_ReusesJobAndCompletes()
+    {
+        Guid executionId = WorkerAgentTestFixtures.Id(325);
+        Guid repositoryId = WorkerAgentTestFixtures.Id(326);
+        Guid systemId = WorkerAgentTestFixtures.Id(327);
+        Guid scanRunId = WorkerAgentTestFixtures.Id(328);
+        ScanExecution execution = CreatePass1CompletedExecution(
+            executionId,
+            repositoryId,
+            systemId,
+            scanRunId);
+        ResolvedPreparedPass2Flow resolved = CreateResolvedPass2Flow(
+            repositoryId,
+            systemId,
+            scanRunId);
+        var events = new List<string>();
+        using var cancellation = new CancellationTokenSource();
+        var inner = new ValidPass2Dispatcher(events);
+        var dispatcher = new CancelOncePass2Dispatcher(cancellation, inner);
+        var runner = new SequentialScanRunner(
+            new EmptyHandoffSource(),
+            new RecordingExecutionStore(execution, events),
+            new EmptyCodeUnitSource(),
+            dispatcher,
+            new CountingCommitter(),
+            resolved.Flow,
+            new FixedTimeProvider());
+        RepositoryAccessScope scope = new([repositoryId]);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            runner.RunPreparedPass2Async(
+                executionId,
+                resolved,
+                scope,
+                cancellation.Token));
+        Guid durableJobId = Assert.IsType<Guid>(execution.InFlightJobId);
+
+        await runner.RunPreparedPass2Async(
+            executionId,
+            resolved,
+            scope,
+            CancellationToken.None);
+
+        Assert.Equal([durableJobId, durableJobId], dispatcher.JobIds);
+        Assert.Equal(ScanExecutionPhase.Completed, execution.Phase);
+        Assert.Null(execution.InFlightJobId);
+    }
+
     [Theory]
     [InlineData(WorkerAgentResultCommitOutcome.Conflict)]
     [InlineData(WorkerAgentResultCommitOutcome.Rejected)]
@@ -298,17 +396,22 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         var events = new List<string>();
         var dispatcher = new ValidPass2Dispatcher(events);
         var committer = new FixedOutcomeCommitter(outcome);
+        ResolvedPreparedPass2Flow resolved = CreateResolvedPass2Flow(
+            repositoryId,
+            systemId,
+            scanRunId);
         var runner = new SequentialScanRunner(
             new EmptyHandoffSource(),
             new RecordingExecutionStore(execution, events),
             new EmptyCodeUnitSource(),
             dispatcher,
             committer,
+            resolved.Flow,
             new FixedTimeProvider());
 
         await runner.RunPreparedPass2Async(
             executionId,
-            CreateResolvedPass2Flow(repositoryId, systemId, scanRunId),
+            resolved,
             new RepositoryAccessScope([repositoryId]),
             CancellationToken.None);
 
@@ -337,17 +440,22 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             scanRunId);
         var events = new List<string>();
         var committer = new CountingCommitter();
+        ResolvedPreparedPass2Flow resolved = CreateResolvedPass2Flow(
+            repositoryId,
+            systemId,
+            scanRunId);
         var runner = new SequentialScanRunner(
             new EmptyHandoffSource(),
             new RecordingExecutionStore(execution, events),
             new EmptyCodeUnitSource(),
             new NonValidPass2Dispatcher(outcome),
             committer,
+            resolved.Flow,
             new FixedTimeProvider());
 
         await runner.RunPreparedPass2Async(
             executionId,
-            CreateResolvedPass2Flow(repositoryId, systemId, scanRunId),
+            resolved,
             new RepositoryAccessScope([repositoryId]),
             CancellationToken.None);
 
@@ -371,17 +479,22 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             scanRunId);
         var events = new List<string>();
         var committer = new CountingCommitter();
+        ResolvedPreparedPass2Flow resolved = CreateResolvedPass2Flow(
+            repositoryId,
+            systemId,
+            scanRunId);
         var runner = new SequentialScanRunner(
             new EmptyHandoffSource(),
             new RecordingExecutionStore(execution, events),
             new EmptyCodeUnitSource(),
             new ThrowingDispatcher(new InvalidOperationException("provider diagnostic")),
             committer,
+            resolved.Flow,
             new FixedTimeProvider());
 
         await runner.RunPreparedPass2Async(
             executionId,
-            CreateResolvedPass2Flow(repositoryId, systemId, scanRunId),
+            resolved,
             new RepositoryAccessScope([repositoryId]),
             CancellationToken.None);
 
@@ -448,6 +561,74 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Null(execution.InFlightJobId);
         Assert.Equal(ScanExecutionPhase.Pass1Completed, execution.Phase);
         Assert.Null(execution.TerminalAt);
+    }
+
+    [Fact]
+    public async Task RunPass1Async_AuthoritativePreparedFlow_CarriesClosedAuthorizedContext()
+    {
+        Guid executionId = WorkerAgentTestFixtures.Id(231);
+        Guid repositoryId = WorkerAgentTestFixtures.Id(232);
+        Guid systemId = WorkerAgentTestFixtures.Id(233);
+        Guid scanRunId = WorkerAgentTestFixtures.Id(234);
+        var execution = ScanExecution.Start(
+            executionId,
+            repositoryId,
+            systemId,
+            scanRunId,
+            WorkerAgentTestFixtures.Id(235),
+            WorkerAgentTestFixtures.ProfiledRevision,
+            DateTimeOffset.UnixEpoch);
+        CodeUnit unit = new(
+            scanRunId,
+            repositoryId,
+            WorkerAgentTestFixtures.RepositoryRelativePath,
+            WorkerAgentTestFixtures.FileIdentityHash,
+            WorkerAgentTestFixtures.SourceHash,
+            12,
+            24,
+            "CalculateTotal",
+            CodeUnitType.Method,
+            RangeConfidence.Exact,
+            "csharp");
+        Guid currentJobId = WorkerAgentTestFixtures.Id(236);
+        Guid neighboringJobId = WorkerAgentTestFixtures.Id(237);
+        Guid neighboringCodeUnitId = WorkerAgentTestFixtures.Id(238);
+        PreparedPass2Flow flow = PreparedPass2Flow.Create(
+            PreparedPass2FlowLimits.SupportedSchemaIdentity,
+            WorkerAgentTestFixtures.Id(239),
+            WorkerAgentTestFixtures.Id(240),
+            systemId,
+            repositoryId,
+            [
+                new(1, currentJobId, unit.Id, WorkerAgentTestFixtures.Id(241)),
+                new(2, neighboringJobId, neighboringCodeUnitId, WorkerAgentTestFixtures.Id(242)),
+            ],
+            [
+                new(1, currentJobId, unit.Id, "订单总额计算", "src/Orders/OrderService.cs#L12-L24"),
+                new(2, neighboringJobId, neighboringCodeUnitId, "库存预留", "src/Inventory/InventoryService.cs#L30-L44"),
+            ]);
+        var dispatcher = new ValidDispatcher();
+        var runner = new SequentialScanRunner(
+            new EmptyHandoffSource(),
+            new RecordingExecutionStore(execution, []),
+            new SingleCodeUnitSource(unit),
+            dispatcher,
+            new FixedOutcomeCommitter(WorkerAgentResultCommitOutcome.Committed),
+            flow,
+            new FixedTimeProvider());
+
+        await runner.RunPass1Async(
+            executionId,
+            new RepositoryAccessScope([repositoryId]),
+            CancellationToken.None);
+
+        WorkerAgentJobPacket packet = Assert.Single(dispatcher.Packets);
+        var payload = Assert.IsType<Pass1CodeLogicJobPayload>(packet.Payload);
+        Assert.Contains(
+            payload.NeighboringStructuralContext,
+            context => context.CodeUnitId == neighboringCodeUnitId);
+        Assert.NotEmpty(payload.ApprovedCommunicationEvidence);
+        Assert.Equal([neighboringJobId], payload.AllowedReferenceDocumentVersionIds);
     }
 
     [Fact]
@@ -653,10 +834,13 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
 
     private sealed class ValidDispatcher : IWorkerAgentDispatcher
     {
+        internal List<WorkerAgentJobPacket> Packets { get; } = [];
+
         public Task<WorkerAgentResultEnvelope> DispatchAsync(
             WorkerAgentJobPacket packet,
             CancellationToken cancellationToken = default)
         {
+            Packets.Add(packet);
             var pass1 = Assert.IsType<Pass1CodeLogicJobPayload>(packet.Payload);
             Guid anchorId = WorkerAgentTestFixtures.Id(206);
             CanonicalDocumentContent content = new(
@@ -774,6 +958,27 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
                 dispatchedAt,
                 dispatchedAt.AddSeconds(1),
                 result));
+        }
+    }
+
+    private sealed class CancelOncePass2Dispatcher(
+        CancellationTokenSource cancellation,
+        ValidPass2Dispatcher inner) : IWorkerAgentDispatcher
+    {
+        internal List<Guid> JobIds { get; } = [];
+
+        public Task<WorkerAgentResultEnvelope> DispatchAsync(
+            WorkerAgentJobPacket packet,
+            CancellationToken cancellationToken = default)
+        {
+            JobIds.Add(packet.JobId);
+            if (JobIds.Count == 1)
+            {
+                cancellation.Cancel();
+                return Task.FromCanceled<WorkerAgentResultEnvelope>(cancellation.Token);
+            }
+
+            return inner.DispatchAsync(packet, cancellationToken);
         }
     }
 

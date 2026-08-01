@@ -181,6 +181,12 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
             return WorkerAgentResultCommitOutcome.Rejected;
         }
 
+        if (_preparedPass2Flow is null ||
+            !JobMatchesPreparedFlow(job, _preparedPass2Flow))
+        {
+            return WorkerAgentResultCommitOutcome.Rejected;
+        }
+
         var currentInputs = new CurrentKnowledge[job.CodeLogicDocumentVersions.Count];
         for (int index = 0; index < job.CodeLogicDocumentVersions.Count; index++)
         {
@@ -214,13 +220,6 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
             scope,
             result.Content.Sections.Select(section => section.StableSectionId).ToArray(),
             cancellationToken).ConfigureAwait(false);
-        if (currentBusiness?.DocumentVersionId == documentVersionId)
-        {
-            return CurrentMatchesPass2Replay(currentBusiness, packet, result)
-                ? WorkerAgentResultCommitOutcome.Committed
-                : WorkerAgentResultCommitOutcome.Conflict;
-        }
-
         Dictionary<Guid, CurrentSourceAnchor> inputAnchors = currentInputs
             .SelectMany(current => current.SourceAnchors)
             .ToDictionary(anchor => anchor.Id);
@@ -269,38 +268,70 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
                         projection.SourceAnchors.Any(anchor =>
                             inputAnchors[anchor.Id].CodeUnitId == evidence.CodeUnitId));
                 EdgeDraft edge = edgesByTarget[target.DocumentVersionId];
+                var steps = new List<FlowTraceStepDraft>
+                {
+                    new(
+                        CreateStableId(
+                            "pass2-flow-step-source",
+                            documentVersionId.ToString("D"),
+                            evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                        1,
+                        documentVersionId,
+                        packet.RepositoryId,
+                        packet.ScanRunId,
+                        null,
+                        FlowTraceStepKind.Document,
+                        result.Purpose),
+                    new(
+                        CreateStableId(
+                            "pass2-flow-step-evidence",
+                            documentVersionId.ToString("D"),
+                            evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                        2,
+                        target.DocumentVersionId,
+                        packet.RepositoryId,
+                        packet.ScanRunId,
+                        edge.Id,
+                        FlowTraceStepKind.Relationship,
+                        $"{evidence.Label}: {evidence.Locator}"),
+                };
+                foreach (WorkerAgentBusinessMainStep mainStep in result.MainSteps
+                    .Where(step => step.TraceEvidenceOrders.Contains(evidence.Order)))
+                {
+                    steps.Add(new FlowTraceStepDraft(
+                        CreateStableId(
+                            "pass2-flow-step-main",
+                            documentVersionId.ToString("D"),
+                            evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            mainStep.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                        steps.Count + 1,
+                        documentVersionId,
+                        packet.RepositoryId,
+                        packet.ScanRunId,
+                        null,
+                        FlowTraceStepKind.Document,
+                        mainStep.Description));
+                }
+
+                steps.Add(new FlowTraceStepDraft(
+                    CreateStableId(
+                        "pass2-flow-step-outcome",
+                        documentVersionId.ToString("D"),
+                        evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                    steps.Count + 1,
+                    documentVersionId,
+                    packet.RepositoryId,
+                    packet.ScanRunId,
+                    null,
+                    FlowTraceStepKind.Document,
+                    result.Outcome));
                 return new FlowTraceDraft(
                     CreateStableId(
                         "pass2-flow-trace",
                         documentVersionId.ToString("D"),
                         evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
                     evidence.Order,
-                    [
-                        new FlowTraceStepDraft(
-                            CreateStableId(
-                                "pass2-flow-step-source",
-                                documentVersionId.ToString("D"),
-                                evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                            1,
-                            documentVersionId,
-                            packet.RepositoryId,
-                            packet.ScanRunId,
-                            null,
-                            FlowTraceStepKind.Document,
-                            result.Purpose),
-                        new FlowTraceStepDraft(
-                            CreateStableId(
-                                "pass2-flow-step-evidence",
-                                documentVersionId.ToString("D"),
-                                evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                            2,
-                            target.DocumentVersionId,
-                            packet.RepositoryId,
-                            packet.ScanRunId,
-                            edge.Id,
-                            FlowTraceStepKind.Relationship,
-                            $"{evidence.Label}: {evidence.Locator}"),
-                    ]);
+                    steps);
             })
             .ToArray();
         CanonicalDocumentContent durableContent = result.Content with
@@ -329,7 +360,9 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
         KnowledgeCommit commit = new(
             operationId,
             logicalDocumentId,
-            currentBusiness?.DocumentVersionId,
+            currentBusiness?.DocumentVersionId == documentVersionId
+                ? null
+                : currentBusiness?.DocumentVersionId,
             documentVersionId,
             packet.RepositoryId,
             packet.ScanRunId,
@@ -428,6 +461,21 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
 
         return true;
     }
+
+    private static bool JobMatchesPreparedFlow(
+        Pass2BusinessLogicJobPayload job,
+        PreparedPass2Flow flow) =>
+        StringComparer.Ordinal.Equals(
+            job.PreparedFlowSchemaIdentity,
+            flow.SchemaIdentity) &&
+        job.ManifestId == flow.ManifestId &&
+        job.FlowId == flow.FlowId &&
+        job.SystemId == flow.SystemId &&
+        job.RepositoryId == flow.RepositoryId &&
+        job.TraceEvidence.SequenceEqual(flow.TraceEvidence) &&
+        job.CodeLogicDocumentVersions
+            .Select(document => document.LogicalDocumentId)
+            .SequenceEqual(flow.Members.Select(member => member.LogicalDocumentId));
 
     private static bool SourceAnchorEquals(
         WorkerAgentSourceAnchor left,

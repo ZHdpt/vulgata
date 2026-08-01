@@ -238,6 +238,7 @@ public sealed class WorkerAgentDispatcherTests
 
         WorkerAgentResultEnvelope result = await dispatcher.DispatchAsync(
             packet,
+            new RepositoryAccessScope([packet.RepositoryId]),
             CancellationToken.None);
 
         Pass2BusinessLogicDocumentResultPayload payload = Assert.IsType<
@@ -548,9 +549,40 @@ public sealed class WorkerAgentDispatcherTests
                 CancellationToken.None));
 
         Assert.Equal(
-            "A Repository access scope is required for Pass 1 Worker Agent dispatch.",
+            "A Repository access scope is required for Worker Agent dispatch.",
             exception.Message);
         Assert.Equal(0, source.CallCount);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_Pass2PacketWithoutScope_RejectsBeforeProviderTransmissionAsync()
+    {
+        WorkerAgentJobPacket packet = CreatePass2Packet();
+        var provider = new LlmProvider(
+            "worker-model",
+            "https://worker.invalid/v1",
+            "encrypted-worker",
+            ApiType.ChatCompletions,
+            AgentType.Worker,
+            DateTimeOffset.UtcNow);
+        var capture = new OpenAiCaptureHandler(() => CreateChatResponse(packet));
+        var dispatcher = new WorkerAgentDispatcher(
+            new WorkerAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("must-not-be-decrypted"),
+            capture,
+            TimeProvider.System);
+
+        InvalidOperationException exception = await Assert.ThrowsAsync<
+            InvalidOperationException>(() => dispatcher.DispatchAsync(
+                packet,
+                CancellationToken.None));
+
+        Assert.Equal(
+            "A Repository access scope is required for Worker Agent dispatch.",
+            exception.Message);
+        Assert.Equal(0, capture.CallCount);
     }
 
     [Fact]

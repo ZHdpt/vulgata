@@ -54,6 +54,16 @@ public sealed record PreparedPass2Flow
     public IReadOnlyList<PreparedPass2FlowMember> Members { get; }
     public IReadOnlyList<PreparedPass2TraceEvidence> TraceEvidence { get; }
 
+    public bool IsExactMatch(PreparedPass2Flow? other) =>
+        other is not null &&
+        StringComparer.Ordinal.Equals(SchemaIdentity, other.SchemaIdentity) &&
+        ManifestId == other.ManifestId &&
+        FlowId == other.FlowId &&
+        SystemId == other.SystemId &&
+        RepositoryId == other.RepositoryId &&
+        Members.SequenceEqual(other.Members) &&
+        TraceEvidence.SequenceEqual(other.TraceEvidence);
+
     public static PreparedPass2Flow Create(
         string schemaIdentity,
         Guid manifestId,

@@ -234,7 +234,7 @@ public sealed class WorkerAgentResultCommitterTests
             new KnowledgeDocumentMaterializer());
         Pass2Fixture fixture = await CreatePass2FixtureAsync(session.Context, knowledgeStore);
         var recordingStore = new RecordingKnowledgeStore(knowledgeStore);
-        var committer = new WorkerAgentResultCommitter(recordingStore);
+        var committer = new WorkerAgentResultCommitter(recordingStore, fixture.Flow);
         RepositoryAccessScope scope = new([fixture.Packet.RepositoryId]);
 
         WorkerAgentResultCommitOutcome outcome = await committer.CommitAsync(
@@ -287,6 +287,80 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Contains("库存预留", current.ContentMarkdown);
     }
 
+    [Fact]
+    public async Task CommitAsync_AlternateAuthoritativeFlow_RejectsSelfConsistentPass2Packet()
+    {
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        var knowledgeStore = new KnowledgeStoreRepository(
+            session.Context,
+            new KnowledgeDocumentMaterializer());
+        Pass2Fixture fixture = await CreatePass2FixtureAsync(session.Context, knowledgeStore);
+        PreparedPass2Flow alternate = PreparedPass2Flow.Create(
+            fixture.Flow.SchemaIdentity,
+            WorkerAgentTestFixtures.Id(820),
+            WorkerAgentTestFixtures.Id(821),
+            fixture.Flow.SystemId,
+            fixture.Flow.RepositoryId,
+            fixture.Flow.Members,
+            fixture.Flow.TraceEvidence);
+        var committer = new WorkerAgentResultCommitter(knowledgeStore, alternate);
+
+        WorkerAgentResultCommitOutcome outcome = await committer.CommitAsync(
+            fixture.Packet,
+            fixture.Result,
+            new RepositoryAccessScope([fixture.Packet.RepositoryId]));
+
+        Assert.Equal(WorkerAgentResultCommitOutcome.Rejected, outcome);
+    }
+
+    [Fact]
+    public async Task CommitAsync_AlreadyCommittedPass2HasChangedCanonicalContent_ReturnsConflict()
+    {
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        var knowledgeStore = new KnowledgeStoreRepository(
+            session.Context,
+            new KnowledgeDocumentMaterializer());
+        Pass2Fixture fixture = await CreatePass2FixtureAsync(session.Context, knowledgeStore);
+        var committer = new WorkerAgentResultCommitter(knowledgeStore, fixture.Flow);
+        RepositoryAccessScope scope = new([fixture.Packet.RepositoryId]);
+        Assert.Equal(
+            WorkerAgentResultCommitOutcome.Committed,
+            await committer.CommitAsync(fixture.Packet, fixture.Result, scope));
+        var baseline = Assert.IsType<Pass2BusinessLogicDocumentResultPayload>(
+            fixture.Result.Payload);
+        Pass2BusinessLogicDocumentResultPayload changedPayload =
+            Pass2BusinessLogicDocumentResultPayload.Create(
+                baseline.JobId,
+                baseline.SystemId,
+                baseline.RepositoryId,
+                baseline.ScanRunId,
+                baseline.ProfiledRevision,
+                baseline.FlowId,
+                baseline.Purpose,
+                baseline.MainSteps,
+                baseline.Outcome,
+                baseline.Content with { Summary = "已变更的业务摘要。" },
+                baseline.SourceAnchors,
+                baseline.TraceEvidenceOrders,
+                baseline.GeneratedFromDocumentVersionIds);
+        WorkerAgentResultEnvelope changed = WorkerAgentResultEnvelope.CreateForJob(
+            fixture.Packet,
+            WorkerAgentResultOutcome.Valid,
+            null,
+            fixture.Result.DispatchedAt,
+            fixture.Result.ReceivedAt,
+            changedPayload);
+
+        WorkerAgentResultCommitOutcome replay = await committer.CommitAsync(
+            fixture.Packet,
+            changed,
+            scope);
+
+        Assert.Equal(WorkerAgentResultCommitOutcome.Conflict, replay);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -314,7 +388,8 @@ public sealed class WorkerAgentResultCommitterTests
         int edgesBefore = await session.Context.Set<DocumentEdge>().CountAsync();
 
         WorkerAgentResultCommitOutcome outcome = await new WorkerAgentResultCommitter(
-            knowledgeStore).CommitAsync(
+            knowledgeStore,
+            fixture.Flow).CommitAsync(
                 fixture.Packet,
                 invalid,
                 new RepositoryAccessScope([fixture.Packet.RepositoryId]));
@@ -395,7 +470,8 @@ public sealed class WorkerAgentResultCommitterTests
         int edgesBefore = await session.Context.Set<DocumentEdge>().CountAsync();
 
         WorkerAgentResultCommitOutcome outcome = await new WorkerAgentResultCommitter(
-            knowledgeStore).CommitAsync(
+            knowledgeStore,
+            fixture.Flow).CommitAsync(
                 fixture.Packet,
                 fixture.Result,
                 new RepositoryAccessScope([fixture.Packet.RepositoryId]));
@@ -931,7 +1007,7 @@ public sealed class WorkerAgentResultCommitterTests
             dispatchedAt,
             dispatchedAt.AddSeconds(1),
             resultPayload);
-        return new(packet, result, generatedFromIds, sectionIds);
+        return new(flow, packet, result, generatedFromIds, sectionIds);
     }
 
     private static async Task<Pass2CurrentFixture> SeedPass2CurrentKnowledgeAsync(
@@ -965,6 +1041,7 @@ public sealed class WorkerAgentResultCommitterTests
     }
 
     private sealed record Pass2Fixture(
+        PreparedPass2Flow Flow,
         WorkerAgentJobPacket Packet,
         WorkerAgentResultEnvelope Result,
         IReadOnlyList<Guid> GeneratedFromDocumentVersionIds,

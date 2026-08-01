@@ -216,7 +216,7 @@ public sealed class WorkerAgentResultEnvelope
             }
 
 
-            if (pass1.SourceAnchors.Count > KnowledgeDocumentLimits.MaximumAnchors ||
+            if (pass1.SourceAnchors.Count is < 1 or > KnowledgeDocumentLimits.MaximumAnchors ||
                 !IsStrictlyAscending(pass1.SourceAnchors, anchor => anchor.Id) ||
                 pass1.SourceAnchors.Any(anchor =>
                     !StringComparer.Ordinal.Equals(
@@ -429,6 +429,7 @@ public sealed class WorkerAgentResultEnvelope
                 !Enum.IsDefined(section.Kind) ||
                 section.SourceAnchorIds is null ||
                 section.DocumentVersionIds is null ||
+                section.SourceAnchorIds.Count == 0 ||
                 section.SourceAnchorIds.Any(id => id == Guid.Empty) ||
                 section.DocumentVersionIds.Any(id => id == Guid.Empty) ||
                 !IsStrictlyAscending(section.SourceAnchorIds) ||
@@ -436,7 +437,7 @@ public sealed class WorkerAgentResultEnvelope
                 section.SourceAnchorIds.Any(id => !anchorIds.Contains(id)) ||
                 section.DocumentVersionIds.Any(id => !referenceIds.Contains(id)) ||
                 !IsSafeBoundedText(section.Heading, KnowledgeDocumentLimits.MaximumShortTextBytes) ||
-                !IsSafeBoundedText(
+                !IsSafeBoundedLayoutText(
                     section.Markdown,
                     KnowledgeDocumentLimits.MaximumSectionMarkdownBytes) ||
                 !IsSafeBoundedText(
@@ -504,7 +505,7 @@ public sealed class WorkerAgentResultEnvelope
                 section.SourceAnchorIds.Any(id => !anchorIds.Contains(id)) ||
                 section.DocumentVersionIds.Any(id => !versionIds.Contains(id)) ||
                 !IsSafeBoundedText(section.Heading, KnowledgeDocumentLimits.MaximumShortTextBytes) ||
-                !IsSafeBoundedText(section.Markdown, KnowledgeDocumentLimits.MaximumSectionMarkdownBytes) ||
+                !IsSafeBoundedLayoutText(section.Markdown, KnowledgeDocumentLimits.MaximumSectionMarkdownBytes) ||
                 !IsSafeBoundedText(section.SearchText, KnowledgeDocumentLimits.MaximumSectionSearchTextBytes))
             {
                 return false;
@@ -563,6 +564,22 @@ public sealed class WorkerAgentResultEnvelope
             return true;
         }
         catch (KnowledgeStoreContractException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsSafeBoundedLayoutText(string? value, int maximumUtf8Bytes)
+    {
+        try
+        {
+            _ = WorkerAgentContractText.RequireBoundedSafeLayoutText(
+                value!,
+                maximumUtf8Bytes,
+                nameof(value));
+            return true;
+        }
+        catch (ArgumentException)
         {
             return false;
         }

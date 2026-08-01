@@ -226,6 +226,59 @@ public sealed class WorkerAgentContractTests
     }
 
     [Fact]
+    public void Pass1Result_SectionMarkdownUsesNormalizedLfLayout_AcceptsValue()
+    {
+        WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
+        Pass1CodeLogicDocumentResultPayload baseline =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(packet);
+        CanonicalSection section = baseline.Content.Sections.Single() with
+        {
+            Markdown = "第一行。\n第二行。",
+        };
+        Pass1CodeLogicDocumentResultPayload payload =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(
+                packet,
+                content: baseline.Content with { Sections = [section] });
+        DateTimeOffset now = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
+
+        WorkerAgentResultEnvelope envelope = WorkerAgentResultEnvelope.CreateForJob(
+            packet,
+            WorkerAgentResultOutcome.Valid,
+            null,
+            now,
+            now,
+            payload);
+
+        Assert.Same(payload, envelope.Payload);
+    }
+
+    [Fact]
+    public void Pass1Result_HasNoSourceGrounding_RejectsValue()
+    {
+        WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
+        Pass1CodeLogicDocumentResultPayload baseline =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(packet);
+        CanonicalSection section = baseline.Content.Sections.Single() with
+        {
+            SourceAnchorIds = [],
+        };
+        Pass1CodeLogicDocumentResultPayload payload =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(
+                packet,
+                content: baseline.Content with { Sections = [section] },
+                sourceAnchors: []);
+        DateTimeOffset now = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
+
+        Assert.Throws<ArgumentException>(() => WorkerAgentResultEnvelope.CreateForJob(
+            packet,
+            WorkerAgentResultOutcome.Valid,
+            null,
+            now,
+            now,
+            payload));
+    }
+
+    [Fact]
     public void Pass1JobPayload_ContextContainsHostPathOrSecret_RejectsValue()
     {
         Assert.Throws<ArgumentException>(() =>

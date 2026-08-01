@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Core.DomainServices;
@@ -230,6 +232,13 @@ public sealed class SequentialScanRunner
                 "The Sequential Scan Runner has no result committer configured.");
         }
 
+        if (_preparedPass2Flow is null ||
+            !_preparedPass2Flow.IsExactMatch(resolvedFlow.Flow))
+        {
+            throw new InvalidOperationException(
+                "The resolved Pass 2 flow is not the authoritative prepared flow.");
+        }
+
         ScanExecution? execution = await _executionStore.GetAsync(
             scanExecutionId, cancellationToken).ConfigureAwait(false);
         if (execution is null)
@@ -238,11 +247,17 @@ public sealed class SequentialScanRunner
                 $"找不到标识为 {scanExecutionId} 的扫描执行记录。");
         }
 
+        if (execution.Phase == ScanExecutionPhase.Completed)
+        {
+            return;
+        }
+
         Pass2BusinessLogicJobPayload payload = Pass2BusinessLogicJobPayload.Create(
             resolvedFlow.Flow,
             resolvedFlow.CodeLogicDocuments);
+        Guid pass2JobId = CreatePass2JobId(execution, _preparedPass2Flow);
         WorkerAgentJobPacket packet = WorkerAgentJobPacket.Create(
-            Guid.NewGuid(),
+            pass2JobId,
             WorkerAgentJobKind.Pass2BusinessLogicDocument,
             execution.Id,
             execution.RepositoryId,
@@ -252,8 +267,16 @@ public sealed class SequentialScanRunner
             WorkerAgentContractLimits.SupportedSchemaVersion,
             payload);
 
-        execution.BeginPass2(packet.JobId);
-        await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+        if (execution.InFlightJobId is null)
+        {
+            execution.BeginPass2(packet.JobId);
+            await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+        }
+        else if (execution.InFlightJobId != packet.JobId)
+        {
+            throw new InvalidOperationException(
+                "The durable Pass 2 job does not match the authoritative retry identity.");
+        }
 
         WorkerAgentResultEnvelope result;
         try
@@ -316,11 +339,25 @@ public sealed class SequentialScanRunner
             return;
         }
 
-        execution.CompletePass2(
+        ScanExecution? progress = await _executionStore.GetAsync(
+            scanExecutionId,
+            cancellationToken).ConfigureAwait(false);
+        if (progress is null)
+        {
+            throw new InvalidOperationException(
+                $"找不到标识为 {scanExecutionId} 的扫描执行记录。");
+        }
+
+        if (progress.Phase == ScanExecutionPhase.Completed)
+        {
+            return;
+        }
+
+        progress.CompletePass2(
             packet.JobId,
-            BuildPass2SuccessMessage(execution.RepositoryId),
+            BuildPass2SuccessMessage(progress.RepositoryId),
             _timeProvider.GetUtcNow());
-        await _executionStore.PersistAsync(execution, cancellationToken).ConfigureAwait(false);
+        await _executionStore.PersistAsync(progress, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task RunPass1CoreAsync(
@@ -545,24 +582,80 @@ public sealed class SequentialScanRunner
             .ThenBy(u => u.Id)
             .ToList();
 
-    private WorkerAgentJobPacket BuildPacket(ScanExecution execution, CodeUnit unit) =>
-        WorkerAgentJobPacket.Create(
-            jobId: ResolvePass1JobId(execution, unit),
-            kind: WorkerAgentJobKind.Pass1CodeLogicDocument,
-            scanExecutionId: execution.Id,
-            repositoryId: execution.RepositoryId,
-            systemId: execution.SystemId,
-            scanRunId: execution.ScanRunId,
-            codeUnitId: unit.Id,
-            profiledRevision: execution.ProfiledRevision,
-            filePath: unit.FilePath,
-            lineStart: unit.LineStart,
-            lineEnd: unit.LineEnd,
-            symbolName: unit.SymbolName,
-            unitType: unit.UnitType,
-            language: unit.Language,
-            sourceHash: unit.SourceHash,
-            fileIdentityHash: unit.FileIdentityHash);
+    private WorkerAgentJobPacket BuildPacket(ScanExecution execution, CodeUnit unit)
+    {
+        Guid jobId = ResolvePass1JobId(execution, unit);
+        if (_preparedPass2Flow is null)
+        {
+            return WorkerAgentJobPacket.Create(
+                jobId,
+                WorkerAgentJobKind.Pass1CodeLogicDocument,
+                execution.Id,
+                execution.RepositoryId,
+                execution.SystemId,
+                execution.ScanRunId,
+                unit.Id,
+                execution.ProfiledRevision,
+                unit.FilePath,
+                unit.LineStart,
+                unit.LineEnd,
+                unit.SymbolName,
+                unit.UnitType,
+                unit.Language,
+                unit.SourceHash,
+                unit.FileIdentityHash);
+        }
+
+        WorkerAgentStructuralContext[] structuralContext = _preparedPass2Flow.TraceEvidence
+            .Where(evidence => evidence.CodeUnitId != unit.Id)
+            .GroupBy(evidence => evidence.CodeUnitId)
+            .Select(group => group.OrderBy(evidence => evidence.Order).First())
+            .Select(evidence => WorkerAgentStructuralContext.Create(
+                evidence.CodeUnitId,
+                evidence.Locator.Split('#', 2)[0],
+                evidence.Label))
+            .OrderBy(context => context.CodeUnitId)
+            .ToArray();
+        WorkerAgentCommunicationEvidence[] communicationEvidence =
+            _preparedPass2Flow.TraceEvidence
+                .Select(evidence => WorkerAgentCommunicationEvidence.Create(
+                    CreateStableId(
+                        "pass1-communication-evidence",
+                        _preparedPass2Flow.ManifestId.ToString("D"),
+                        evidence.Order.ToString(CultureInfo.InvariantCulture)),
+                    "PreparedFlow",
+                    $"{evidence.Label}: {evidence.Locator}"))
+                .OrderBy(evidence => evidence.EvidenceId)
+                .ToArray();
+        Guid[] allowedReferences = _preparedPass2Flow.Members
+            .Where(member => member.CodeUnitId != unit.Id)
+            .Select(member => member.JobId)
+            .Order()
+            .ToArray();
+        Pass1CodeLogicJobPayload payload = Pass1CodeLogicJobPayload.Create(
+            unit.Id,
+            unit.FilePath,
+            unit.LineStart,
+            unit.LineEnd,
+            unit.SymbolName,
+            unit.UnitType,
+            unit.Language,
+            unit.SourceHash,
+            unit.FileIdentityHash,
+            structuralContext,
+            communicationEvidence,
+            allowedReferences);
+        return WorkerAgentJobPacket.Create(
+            jobId,
+            WorkerAgentJobKind.Pass1CodeLogicDocument,
+            execution.Id,
+            execution.RepositoryId,
+            execution.SystemId,
+            execution.ScanRunId,
+            execution.ProfiledRevision,
+            WorkerAgentContractLimits.SupportedSchemaVersion,
+            payload);
+    }
 
     private Guid ResolvePass1JobId(ScanExecution execution, CodeUnit unit)
     {
@@ -657,6 +750,29 @@ public sealed class SequentialScanRunner
             CultureInfo.InvariantCulture,
             "仓库 {0} 的准备业务流程已生成,扫描已完成。",
             repositoryId);
+
+    private static Guid CreatePass2JobId(
+        ScanExecution execution,
+        PreparedPass2Flow flow)
+    {
+        string material = string.Join(
+            '\n',
+            "pass2-job",
+            execution.Id.ToString("D"),
+            execution.ScanRunId.ToString("D"),
+            execution.ProfiledRevision,
+            flow.ManifestId.ToString("D"),
+            flow.FlowId.ToString("D"));
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(material));
+        return new Guid(hash.AsSpan(0, 16));
+    }
+
+    private static Guid CreateStableId(params string[] parts)
+    {
+        byte[] hash = SHA256.HashData(
+            Encoding.UTF8.GetBytes(string.Join('\n', parts)));
+        return new Guid(hash.AsSpan(0, 16));
+    }
 
     private static string BuildRefusalMessage(ScanExecutionFailureKind kind, Guid repositoryId) =>
         kind switch

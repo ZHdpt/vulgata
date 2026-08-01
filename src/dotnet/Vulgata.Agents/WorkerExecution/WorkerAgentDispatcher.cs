@@ -61,13 +61,9 @@ public sealed class WorkerAgentDispatcher : IWorkerAgentDispatcher
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(packet);
-        if (packet.Payload is Pass2BusinessLogicJobPayload)
-        {
-            return await DispatchPass2Async(packet, cancellationToken);
-        }
-
+        await Task.CompletedTask;
         throw new InvalidOperationException(
-            "A Repository access scope is required for Pass 1 Worker Agent dispatch.");
+            "A Repository access scope is required for Worker Agent dispatch.");
     }
 
     public async Task<WorkerAgentResultEnvelope> DispatchAsync(

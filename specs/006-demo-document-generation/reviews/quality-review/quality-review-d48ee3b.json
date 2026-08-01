@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "gate": "combined-acceptance-quality-review",
+  "execution_level": "expedited-mvp",
+  "verdict": "REJECT",
+  "reviewed_boundary": {
+    "scope_key": "story/11-3-pass-1-and-pass-2-demo-document-generation",
+    "base_commit": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+    "candidate_commit": "d48ee3b498c6e179cce8bfbbcaa93d2591411813",
+    "candidate_parent": "f4071c81c49b246abc74f274a9d21f0aaf420ccf",
+    "diff_git_hash_object": "3c8f1d15fa75ae12ceb2b79f8fa5ffe585b51fee",
+    "files_changed": 40,
+    "insertions": 11454,
+    "deletions": 131,
+    "worktree_clean_after_review": true
+  },
+  "findings": [
+    {
+      "id": "F001",
+      "severity": "HIGH",
+      "category": "security",
+      "title": "Pass 2 can transmit Repository knowledge without RepositoryAccessScope",
+      "requirements": ["AC-6", "FR-016", "FR-017", "FR-018", "SC-006"],
+      "evidence": [
+        "WorkerAgentDispatcher.cs:59-67 exposes an unscoped compatibility overload that dispatches Pass 2.",
+        "WorkerAgentJsonContext.cs:121 serializes supplied Code Logic Document content.",
+        "WorkerAgentProductionRegistrationTests.cs:209 exercises the unscoped production path."
+      ]
+    },
+    {
+      "id": "F002",
+      "severity": "HIGH",
+      "category": "acceptance",
+      "title": "The embedded prepared flow is not authoritative at runner or commit boundaries",
+      "requirements": ["AC-4", "FR-010", "FR-011", "FR-018", "SC-003"],
+      "evidence": [
+        "SequentialScanRunner.cs:219-255 accepts a caller-created resolved flow and constructs Pass 2 directly.",
+        "WorkerAgentResultCommitter.cs:168-209 checks packet self-consistency but not the injected PreparedPass2Flow identity and members."
+      ]
+    },
+    {
+      "id": "F003",
+      "severity": "HIGH",
+      "category": "correctness",
+      "title": "Pass 2 lacks stable retry identity and can strand a Scan",
+      "requirements": ["FR-008", "FR-015", "SC-003"],
+      "evidence": [
+        "SequentialScanRunner.cs creates Pass 2 JobId with Guid.NewGuid and persists BeginPass2 before dispatch.",
+        "Cancellation is rethrown while the durable in-flight job remains and re-entry creates a different identity.",
+        "Completed persistence lacks the Pass 1 replay barrier."
+      ]
+    },
+    {
+      "id": "F004",
+      "severity": "HIGH",
+      "category": "data-integrity",
+      "title": "A changed Pass 2 payload for a committed job is accepted as an idempotent replay",
+      "requirements": ["AC-5", "FR-008", "FR-013", "SC-003", "SC-005"],
+      "evidence": [
+        "WorkerAgentResultCommitter.cs:491-510 compares shallow metadata and provenance targets only.",
+        "Canonical content, summary, purpose, outcome, step text, sections, anchors, and trace evidence are omitted."
+      ]
+    },
+    {
+      "id": "F005",
+      "severity": "HIGH",
+      "category": "acceptance",
+      "title": "Production Pass 1 packets omit structural context, communication evidence, and permitted reference targets",
+      "requirements": ["AC-1", "AC-3", "FR-001", "FR-005", "SC-001"],
+      "evidence": [
+        "SequentialScanRunner.cs:548-565 uses the compatibility packet factory.",
+        "WorkerAgentJobPacket.cs:264-269 supplies three empty collections."
+      ]
+    },
+    {
+      "id": "F006",
+      "severity": "HIGH",
+      "category": "source-grounding",
+      "title": "Pass 1 accepts and commits a Code Logic Document with zero Source Anchors",
+      "requirements": ["AC-1", "AC-3", "FR-005", "SC-001"],
+      "evidence": [
+        "WorkerAgentResultEnvelope.cs checks only the upper anchor bound.",
+        "WorkerAgentResultCommitter.cs permits empty anchors and empty section SourceAnchorIds."
+      ]
+    },
+    {
+      "id": "F007",
+      "severity": "MEDIUM",
+      "category": "edge-case",
+      "title": "Valid multiline generated Markdown is rejected",
+      "requirements": ["FR-004", "FR-012", "SC-005"],
+      "evidence": [
+        "WorkerAgentResultEnvelope.cs sends section Markdown through a validator that rejects newline.",
+        "WorkerAgentJobPacket.cs has a layout validator that intentionally permits newline."
+      ]
+    }
+  ],
+  "acceptance_coverage": {
+    "AC-1": "FAIL",
+    "AC-2": "PARTIAL",
+    "AC-3": "PARTIAL",
+    "AC-4": "FAIL",
+    "AC-5": "PARTIAL",
+    "AC-6": "FAIL",
+    "FR_pass": ["FR-002", "FR-003", "FR-006", "FR-007", "FR-009", "FR-014", "FR-019", "FR-020"],
+    "FR_partial": ["FR-001", "FR-004", "FR-011", "FR-012", "FR-013", "FR-015", "FR-016", "FR-017"],
+    "FR_fail": ["FR-005", "FR-008", "FR-010", "FR-018"],
+    "SC-001": "FAIL",
+    "SC-002": "PASS",
+    "SC-003": "FAIL",
+    "SC-004": "PASS",
+    "SC-005": "PARTIAL",
+    "SC-006": "FAIL"
+  },
+  "evidence": [
+    "Focused WorkerAgent, PreparedPass2, and SequentialScanRunner lane passed 166/166.",
+    "Web build passed with zero errors and existing warnings.",
+    "git diff --check passed.",
+    "No migration, model snapshot, API, UI, or Docker paths changed.",
+    "Review was read-only and left the worktree clean."
+  ],
+  "reviewer_role": "quality-reviewer",
+  "reviewed_at": "2026-08-01T16:34:00Z"
+}
