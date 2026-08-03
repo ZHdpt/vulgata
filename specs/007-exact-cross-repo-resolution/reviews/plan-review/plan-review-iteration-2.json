@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "verdict": "REVISE",
+  "iteration": 2,
+  "input_boundary": {
+    "source_head": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+    "artifact_hashes": {
+      "specs/007-exact-cross-repo-resolution/plan.md": "124CC5EC2B226E96729E45278ED63476AFBF31E8110097E28DA7DDC27633F757",
+      "specs/007-exact-cross-repo-resolution/research.md": "AD569790FB84D3A0F98295E79BE2AF3B40D2999EF6B574C91EB72F4AE27D3938",
+      "specs/007-exact-cross-repo-resolution/data-model.md": "7F889B0D8705FC9D2481952B4F4456774585967367BAA3FE86D8E0229C8BE780",
+      "specs/007-exact-cross-repo-resolution/quickstart.md": "AACFD086BE56E75040EEEFDBFB5300A60BAF5C472D7DF2D56097A36B4A211F14",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md": "817145AACA3DAC6059918954EE89F81B822AD47610421D4E30843EB810B0C2E0",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json": "B84223C211F90328E62CA3172F3C398D42FB513B228CA0FF490725D6046398DB",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-git-revision-acquisition.md": "9E63B5A8EBBDD964B54D2F96CF810DD2D8375B472F1383D9D370DD46CA3A2460",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md": "2497448D90B3806B0B30FE6C8F71F40D85A2939FF61F79C7DB9BD5BB78C9CC89",
+      "specs/007-exact-cross-repo-resolution/contracts/resolution-persistence-and-retrieval.md": "B7672C3E1D901F3AB831035B60A9B8F4A730BDADB55FFEB88B557F8A3E535032"
+    },
+    "reviewed_plan_set": [
+      "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+      "specs/007-exact-cross-repo-resolution/spec.md",
+      "specs/007-exact-cross-repo-resolution/plan.md",
+      "specs/007-exact-cross-repo-resolution/research.md",
+      "specs/007-exact-cross-repo-resolution/data-model.md",
+      "specs/007-exact-cross-repo-resolution/quickstart.md",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-git-revision-acquisition.md",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md",
+      "specs/007-exact-cross-repo-resolution/contracts/resolution-persistence-and-retrieval.md"
+    ],
+    "reviewed_prior_verdict": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-1.json",
+    "external_git_objects": [
+      {"repository":"mbs_account","path":"G:\\source\\repos\\mbs\\mbs_account","expected_commit":"19c60cd3f3976b7697c487c7bafd96142e3a7625","resolved_tag_commit":"19c60cd3f3976b7697c487c7bafd96142e3a7625","verified_objects":["src/main/java/cn/com/yitong/actions/mobile/UpdateChannelSessionOp.java:45","src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java:66"],"mutation_result":"unchanged; pre-existing modification to .settings/org.eclipse.jdt.apt.core.prefs remained"},
+      {"repository":"mbs_channel","path":"G:\\source\\repos\\mbs\\mbs_channel","expected_commit":"47f6b627a7598f862873610413eec1e1e7bf46bf","resolved_tag_commit":"47f6b627a7598f862873610413eec1e1e7bf46bf","verified_objects":["src/main/resources/disgram/in/cust/updateSession.xml:2","src/main/java/cn/com/yitong/actions/domain/login/UpdateSessionOp.java"],"mutation_result":"unchanged"}
+    ],
+    "write_scope": "none"
+  },
+  "prior_findings_resolution": [
+    {"id":"F-001","status":"RESOLVED","evidence":["The reviewed JSON now pins direction, exact selectors, normalizer, and comparison.","Read-only inspection confirmed the account literal call, channel XML declaration, and provider implementation type.","The observed syntax fits the closed grammars."]},
+    {"id":"F-002","status":"RESOLVED","evidence":["A separate operation-private exact Git service leaves ordinary AcquireAsync unchanged.","Cleanup, concurrency, exact-then-normal acquisition, and checkout non-interference are required tests."]},
+    {"id":"F-003","status":"RESOLVED","evidence":["All revised contracts close Uncertainty sub_status to cross_repo, unknown_target, or ambiguous.","Detailed distinctions use closed reason_code and observation_kind fields."]},
+    {"id":"F-004","status":"RESOLVED","evidence":["The reviewed profile pins the unsupported observation and owner/evidence selectors.","Service, persistence, model, and quickstart require authorized mapping, durable idempotent recording, and zero Edge/evidence rows."]}
+  ],
+  "findings": [
+    {
+      "id": "F-005",
+      "severity": "High",
+      "title": "The security contract simultaneously forbids and requires durable runtime persistence identifiers",
+      "evidence": [
+        "The plan states that runtime GUIDs are never serialized into durable evidence at specs/007-exact-cross-repo-resolution/plan.md:82, and the data model repeats that runtime IDs are never copied into durable evidence at specs/007-exact-cross-repo-resolution/data-model.md:187.",
+        "The required ExactCrossRepositoryEdgeEvidence schema durably stores consumer/provider DocumentVersionId, RepositoryId, ScanRunId, and SourceAnchorId values at specs/007-exact-cross-repo-resolution/data-model.md:51-58.",
+        "The required Uncertainty schema durably stores DocumentVersionId, RepositoryId, ScanRunId, SourceAnchorId, TargetRepositoryId, and a reserved resolved Document Version identity at specs/007-exact-cross-repo-resolution/data-model.md:91-112.",
+        "SC-006 requires zero persistence identifiers across durable evidence, Uncertainties, and returned graph data at specs/007-exact-cross-repo-resolution/spec.md:122, while the owner-safe relational and retrieval designs necessarily depend on those identifiers."
+      ],
+      "required_change": "Reconcile the security requirement before tasks. Explicitly distinguish forbidden profile/log/text payload identifiers from required relational PK/FK identities and update plan, data model, contracts, quickstart, and SC-006 coverage consistently. If persistence identifiers are truly forbidden from the durable rows and authorized read models, redesign the ownership/FK/retrieval model instead of claiming both properties."
+    },
+    {
+      "id": "F-006",
+      "severity": "High",
+      "title": "The unsupported observation is automatically assigned the human-terminal wontfix state",
+      "evidence": [
+        "The resolver automatically persists the reviewed observation as status=wontfix at specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md:77 and specs/007-exact-cross-repo-resolution/plan.md:123.",
+        "The PRD defines wontfix as terminal non-resolution by human decision at docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md:73 and makes it available for human-accepted Dangling Links at line 196.",
+        "The Ubiquitous Language likewise defines wontfix as terminal for human-accepted Dangling Links at docs/UBIQUITOUS_LANGUAGE.md:104.",
+        "The August authority defers file/storage resolution beyond the demo rather than declaring each observed occurrence permanently human-rejected. Automatic terminalization can prevent the later backlog resolver from treating the record as deferred work."
+      ],
+      "required_change": "Use a canonical nonterminal Uncertainty state for an automatically recorded deferred observation, introduce a separate bounded limitation record, or explicitly establish an authoritative human-policy decision and a future reopening/migration rule that preserves the deferred full-V1 obligation. Do not silently reinterpret the canonical human-terminal wontfix state."
+    },
+    {
+      "id": "F-007",
+      "severity": "Medium",
+      "title": "Accepted input artifacts retain stale implementation-time selector placeholders",
+      "evidence": [
+        "The BMad completion note still says field testing will choose the literal/XML pair at docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md:268.",
+        "The specification assumption still says field validation will select the pair and that no endpoint is predetermined at specs/007-exact-cross-repo-resolution/spec.md:131.",
+        "The revised plan and reviewed JSON now correctly pin the observed pair, so these statements no longer describe the reviewed boundary."
+      ],
+      "required_change": "Align the accepted Story/spec assumption text with the reviewed profile so task authors have one selector authority and no apparent implementation-time endpoint choice."
+    }
+  ],
+  "trigger_assessment": [
+    {"trigger":"worker_or_other_agent_tool_change","applies":false,"assessment":"No Worker Agent or Chat Agent tool is added or materially changed."},
+    {"trigger":"scan_strategy_exact_revision_acquisition","applies":true,"assessment":"The isolated exact-ref/full-commit snapshot service changes revision acquisition behavior. Planned-change authorization remains required after plan acceptance."},
+    {"trigger":"scan_strategy_post_pass1_cross_repository_integration","applies":true,"assessment":"The explicit two-execution post-Pass-1 coordinator changes Scan integration behavior. Planned-change authorization remains required after plan acceptance."},
+    {"trigger":"cross_repository_matching_behavior","applies":true,"assessment":"The pinned lexical/XML selectors, direction, normalization, cardinality, and unsupported-observation policy establish graph-truth behavior and require authorization after acceptance."},
+    {"trigger":"authorization_security_boundary","applies":true,"assessment":"Both-endpoint authorization and restricted retrieval materially extend the security boundary. F-005 must be resolved before that boundary is implementable without contradiction."},
+    {"trigger":"migration_invariant","applies":true,"assessment":"Two tables, SourceAnchor alternate key, DbContext/model snapshot changes, rollback/reapply, and no-pending-model checks materially change migration invariants."},
+    {"trigger":"prd_requirement_change_or_weakening","applies":false,"assessment":"No intentional PRD weakening is declared, but F-005 and F-006 currently conflict with accepted security and Uncertainty semantics and must be reconciled before acceptance."}
+  ],
+  "constitution_result": {
+    "status": "FAIL",
+    "violations": [
+      "Principle II is not satisfied while an automatically generated deadline deferral is encoded using the authoritative human-terminal wontfix meaning.",
+      "The plan cannot self-certify a coherent security/data-stewardship boundary while durable runtime identifier exclusion and required owner-safe FK persistence are mutually contradictory."
+    ],
+    "adr_result": "PASS",
+    "adr_evidence": "No docs/adr directory, context-scoped ADR directory, or CONTEXT-MAP.md exists at the pinned boundary."
+  },
+  "coverage_result": {
+    "status": "FAIL",
+    "covered": [
+      "F-001 actual pinned occurrence, direction, selectors, grammar compatibility, and normalization",
+      "F-002 isolated exact Git acquisition, cleanup, concurrency, and ordinary AcquireAsync non-interference",
+      "F-003 canonical Uncertainty sub_status closure",
+      "F-004 deterministic owner-anchored unsupported observation and idempotent zero-Edge path",
+      "Exact revision equality across Git snapshot, ScanRun, ScanExecution, Document Version, and Source Anchor",
+      "Atomic Edge/evidence/Uncertainty persistence design against current EF owner-lock/currentness seams",
+      "Two-endpoint authorization and marker-only restricted relationship retrieval",
+      "Direction-qualified ordinal matching and unique-provider cardinality",
+      "Idempotent exact and diagnostic replay with drift conflict",
+      "Migration clean apply, rollback, reapply, predecessor preservation, and no-pending-model checks",
+      "Story 11.5 ownership of final prepared clean-database two-Repository E2E and Docker verification"
+    ],
+    "not_credibly_covered": [
+      "SC-006 and related security assertions because the plan both prohibits and requires durable persistence identifiers",
+      "Canonical deferred-Uncertainty lifecycle semantics because unsupported evidence is automatically terminalized as human-accepted wontfix",
+      "A placeholder-free accepted input boundary because the Story/spec still describe implementation-time endpoint selection"
+    ]
+  },
+  "rationale": "The four iteration-1 High findings are substantively corrected, and the pinned source evidence, closed grammars, isolated Git design, canonical sub_status vocabulary, unsupported observation, EF seams, authorization model, idempotency, and migration lifecycle are otherwise credible. The revised set still contains two High contradictions: required relational evidence identities are simultaneously forbidden from durable evidence, and an automatic deadline deferral is persisted using the canonical human-terminal wontfix state. These must be reconciled in the raw plan set before task generation; no external authority is unavailable, so the proper verdict is REVISE rather than BLOCKED."
+}

@@ -1,5 +1,5 @@
 # generated: 2026-07-10
-# last_updated: 2026-08-01
+# last_updated: 2026-08-03
 # project: vulgata
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-07-10
-last_updated: 2026-08-01
+last_updated: 2026-08-03
 project: vulgata
 project_key: NOKEY
 tracking_system: file-system
@@ -89,7 +89,7 @@ development_status:
   11-1-minimal-knowledge-store-and-retrieval-projection: done
   11-2-sequential-scan-runner-and-typed-agent-dispatch: done
   11-3-pass-1-and-pass-2-demo-document-generation: done
-  11-4-exact-rpc-http-cross-repository-demo-resolution: backlog
+  11-4-exact-rpc-http-cross-repository-demo-resolution: in-progress
   11-5-demo-chat-citations-and-release-gate: backlog
   epic-11-retrospective: optional
   epic-5: backlog

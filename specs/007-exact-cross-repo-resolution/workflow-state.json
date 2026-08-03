@@ -1,0 +1,182 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-4-exact-rpc-http-cross-repository-demo-resolution",
+  "bmad_epic_key": "11",
+  "feature_directory": "specs/007-exact-cross-repo-resolution",
+  "execution_level": "expedited-mvp",
+  "stage": "implement",
+  "active_gates": {
+    "spec-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null
+    },
+    "acceptance-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "quality-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "plan-review": {
+      "status": "accepted",
+      "iteration": 3,
+      "dispatch_id": "story_11_4_plan_review_3",
+      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-3.json",
+      "completed_at": "2026-08-03T10:40:27Z"
+    },
+    "planned-change-authorization": {
+      "status": "accepted",
+      "authorized_at": "2026-08-03T11:22:49Z",
+      "authority": "user: Approve"
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-08-03T08:24:00Z",
+      "completed_at": "2026-08-03T08:46:58Z",
+      "input_commit": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+      "artifact_paths": [
+        "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+        "docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json"
+      ],
+      "artifact_hashes": {
+        "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md": "76608c89884a9a143f4d75ae72d46a6a770f5107d7820b6d0cb8af68f695e71f"
+      }
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-08-03T08:48:00Z",
+      "completed_at": "2026-08-03T08:54:00Z",
+      "dispatch_id": "story_11_4_spec",
+      "artifact_paths": [
+        "specs/007-exact-cross-repo-resolution/spec.md",
+        "specs/007-exact-cross-repo-resolution/checklists/requirements.md"
+      ],
+      "artifact_hashes": {
+        "specs/007-exact-cross-repo-resolution/spec.md": "bc8f694fedf5c7c54ce57c79acef2007b96e99e3bac8051d92d8062f6be6bf2b",
+        "specs/007-exact-cross-repo-resolution/checklists/requirements.md": "d8d871bf9896b06022f72770ed259955de5d822ef18196bd9e181a050b30985c"
+      },
+      "validation": "16/16 specification checklist items passed; no clarification markers"
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-08-03T08:55:24Z",
+      "completed_at": "2026-08-03T10:40:27Z",
+      "artifact_hashes": {
+        "specs/007-exact-cross-repo-resolution/plan.md": "286e3058f60faafc297d075de9815c357899716c0aa8619c6d385490bf480224",
+        "specs/007-exact-cross-repo-resolution/research.md": "d83c314e04091fac37805fbcb141b3a2e3d79b7393b5ffa29e8580dbb397da9b",
+        "specs/007-exact-cross-repo-resolution/data-model.md": "9c34739cda6dae87cb18ed025d3db74bdd168271ffa5e584439b3c46f1ec452f",
+        "specs/007-exact-cross-repo-resolution/quickstart.md": "d54a918bc8e278b053f41f0f3109bf1c32169e2db82b892bce2ee4e72caba41c"
+      }
+    },
+    {
+      "stage": "plan-review",
+      "status": "revise",
+      "iteration": 1,
+      "dispatch_id": "story_11_4_plan_review_1",
+      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-1.json",
+      "completed_at": "2026-08-03T09:28:00Z",
+      "finding_ids": ["F-001", "F-002", "F-003", "F-004"]
+    },
+    {
+      "stage": "plan-review",
+      "status": "revise",
+      "iteration": 2,
+      "dispatch_id": "story_11_4_plan_review_2",
+      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-2.json",
+      "completed_at": "2026-08-03T10:09:29Z",
+      "finding_ids": ["F-005", "F-006", "F-007"]
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "iteration": 3,
+      "dispatch_id": "story_11_4_plan_review_3",
+      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-3.json",
+      "completed_at": "2026-08-03T10:40:27Z",
+      "finding_ids": []
+    },
+    {
+      "stage": "planned-change-authorization",
+      "status": "accepted",
+      "started_at": "2026-08-03T10:40:27Z",
+      "completed_at": "2026-08-03T11:22:49Z",
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/plan-review/authorization-1"
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-03T11:22:49Z",
+      "completed_at": "2026-08-03T11:39:20Z",
+      "dispatch_id": "story_11_4_tasks",
+      "artifact_paths": [
+        "specs/007-exact-cross-repo-resolution/tasks.md"
+      ],
+      "artifact_hashes": {
+        "specs/007-exact-cross-repo-resolution/tasks.md": "1d3674c0a3c4ae8c4dabd56fddcace041a9286dfb46cc2440cdb4ad91e7728f1"
+      },
+      "validation": "37 sequential tasks, strict format failures 0, placeholders 0, and every production group has an observable preceding RED task"
+    },
+    {
+      "stage": "implement",
+      "status": "active",
+      "started_at": "2026-08-03T11:39:20Z"
+    }
+  ],
+  "verification": [
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/plan-review/authorization-1",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+      "artifact_paths": [
+        "specs/007-exact-cross-repo-resolution/plan.md",
+        "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-3.json",
+        "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-03T11:22:49Z",
+      "summary": "User explicitly approved the accepted plan's exact Profiled Revision acquisition, bounded post-Pass-1 two-Repository integration, exact Cross-Repository matching and unsupported-observation policy, two-endpoint authorization boundary, and additive migration invariants for advancement to task generation; later TDD, combined review, E2E, security, migration, and verification gates remain required.",
+      "raw_output_path": null
+    }
+  ],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-11-4-tasks-20260803T113920Z-35c0",
+    "scope_key": "story/11-4-exact-rpc-http-cross-repository-demo-resolution",
+    "stage": "tasks",
+    "committed_paths": [
+      ".specify/feature.json",
+      "AGENTS.md",
+      "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json",
+      "specs/007-exact-cross-repo-resolution"
+    ],
+    "verification_evidence_ids": [
+      "11-4-exact-rpc-http-cross-repository-demo-resolution/plan-review/authorization-1",
+      "plan-review iteration 3 ACCEPT",
+      "tasks.md SHA-256 1d3674c0a3c4ae8c4dabd56fddcace041a9286dfb46cc2440cdb4ad91e7728f1",
+      "37 sequential tasks; strict format failures 0; placeholders 0"
+    ],
+    "commit_sha": "pending",
+    "binding_status": "pending"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-08-03T11:39:20Z"
+}

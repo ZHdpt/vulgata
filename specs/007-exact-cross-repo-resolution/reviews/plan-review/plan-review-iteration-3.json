@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0",
+  "verdict": "ACCEPT",
+  "iteration": 3,
+  "input_boundary": {
+    "source_head": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+    "source_head_verified": true,
+    "working_tree_state": {
+      "modified": [
+        ".specify/feature.json",
+        "AGENTS.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml"
+      ],
+      "untracked": [
+        "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+        "docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json",
+        "specs/007-exact-cross-repo-resolution/"
+      ],
+      "assessment": "The reviewed raw planning artifacts are uncommitted workspace inputs over the pinned source HEAD. No source implementation file was modified."
+    },
+    "artifact_hashes": {
+      "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md": "76608C89884A9A143F4D75AE72D46A6A770F5107D7820B6D0CB8AF68F695E71F",
+      "specs/007-exact-cross-repo-resolution/spec.md": "BC8F694FEDF5C7C54CE57C79ACEF2007B96E99E3BAC8051D92D8062F6BE6BF2B",
+      "specs/007-exact-cross-repo-resolution/plan.md": "286E3058F60FAAFC297D075DE9815C357899716C0AA8619C6D385490BF480224",
+      "specs/007-exact-cross-repo-resolution/research.md": "D83C314E04091FAC37805FBCB141B3A2E3D79B7393B5FFA29E8580DBB397DA9B",
+      "specs/007-exact-cross-repo-resolution/data-model.md": "9C34739CDA6DAE87CB18ED025D3DB74BDD168271FFA5E584439B3C46F1EC452F",
+      "specs/007-exact-cross-repo-resolution/quickstart.md": "D54A918BC8E278B053F41F0F3109BF1C32169E2DB82B892BCE2EE4E72CABA41C",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md": "F66D874CE6E667980225E1C3A2ED1C688882E6C91F2802A3A62B1AFAAD374DBC",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json": "B84223C211F90328E62CA3172F3C398D42FB513B228CA0FF490725D6046398DB",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-git-revision-acquisition.md": "9E63B5A8EBBDD964B54D2F96CF810DD2D8375B472F1383D9D370DD46CA3A2460",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md": "A8EDF344B3F1FA6C1A90A0C61C700178A5C8AEF19A4F927885A75F533AC45A36",
+      "specs/007-exact-cross-repo-resolution/contracts/resolution-persistence-and-retrieval.md": "54B6FD76FE43835FF8E002EFD95E230F899F7E1AC35034033DD140662A9EA90C",
+      "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-1.json": "7409973A4EE1BA4FFDD1E365C9709F340BA707446B299D7B0C5D260E1917A961",
+      "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-2.json": "C92D02F9D5643B01250B34F225B5A4F4615EEC7B5CA65948A1A2EC67D5D2A827"
+    },
+    "pinned_hash_confirmation": "All nine dispatched plan/research/model/quickstart/profile/contract hashes match exactly.",
+    "reviewed_plan_set": [
+      "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+      "specs/007-exact-cross-repo-resolution/spec.md",
+      "specs/007-exact-cross-repo-resolution/plan.md",
+      "specs/007-exact-cross-repo-resolution/research.md",
+      "specs/007-exact-cross-repo-resolution/data-model.md",
+      "specs/007-exact-cross-repo-resolution/quickstart.md",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-git-revision-acquisition.md",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md",
+      "specs/007-exact-cross-repo-resolution/contracts/resolution-persistence-and-retrieval.md"
+    ],
+    "reviewed_prior_verdicts": [
+      "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-1.json",
+      "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-2.json"
+    ],
+    "reviewed_authorities": [
+      "AGENTS.md",
+      "docs/bmad/epics.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+      "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-august-15-demo-slice.md",
+      "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+      ".specify/memory/constitution.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "specs/004-minimal-knowledge-store/plan.md",
+      "specs/005-sequential-scan-runner/plan.md",
+      "specs/006-demo-document-generation/plan.md"
+    ],
+    "reviewed_existing_seams": [
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IKnowledgeStoreRepository.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs",
+      "src/dotnet/Vulgata.Core/Entities/Repository.cs",
+      "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
+      "src/dotnet/Vulgata.Core/Entities/LogicalDocument.cs",
+      "src/dotnet/Vulgata.Core/Entities/DocumentVersion.cs",
+      "src/dotnet/Vulgata.Core/Entities/SourceAnchor.cs",
+      "src/dotnet/Vulgata.Core/Entities/DocumentEdge.cs",
+      "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+      "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/RepositoryRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/LogicalDocumentConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentVersionConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceAnchorConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentEdgeConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanExecutionConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/KnowledgeStoreDomainTests.cs",
+      "tests/Vulgata.Tests/KnowledgeStorePersistenceTests.cs",
+      "tests/Vulgata.Tests/KnowledgeStoreRetrievalTests.cs",
+      "tests/Vulgata.Tests/KnowledgeStoreMigrationTests.cs",
+      "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs",
+      "tests/Vulgata.Tests/SequentialScanRunnerDocumentGenerationTests.cs",
+      "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs",
+      "tests/Vulgata.Tests/ScanExecutionRepositoryConcurrencyTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs",
+      "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
+    ],
+    "external_git_objects": [
+      {"repository":"mbs_account","path":"G:\\source\\repos\\mbs\\mbs_account","expected_commit":"19c60cd3f3976b7697c487c7bafd96142e3a7625","resolved_tag_commit":"19c60cd3f3976b7697c487c7bafd96142e3a7625","verified_objects":["src/main/java/cn/com/yitong/actions/mobile/UpdateChannelSessionOp.java:45","src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java:66"],"mutation_result":"unchanged; the pre-existing modification to .settings/org.eclipse.jdt.apt.core.prefs remained"},
+      {"repository":"mbs_channel","path":"G:\\source\\repos\\mbs\\mbs_channel","expected_commit":"47f6b627a7598f862873610413eec1e1e7bf46bf","resolved_tag_commit":"47f6b627a7598f862873610413eec1e1e7bf46bf","verified_objects":["src/main/resources/disgram/in/cust/updateSession.xml:2","src/main/java/cn/com/yitong/actions/domain/login/UpdateSessionOp.java"],"mutation_result":"unchanged and clean"}
+    ],
+    "write_scope": "none",
+    "workspace_or_git_mutation": "none"
+  },
+  "prior_findings_resolution": [
+    {"id":"F-001","status":"RESOLVED","evidence":["The reviewed JSON pins the exact direction, files, lines, invocation form, argument index, XML declaration, provider implementation type, normalizer, and ordinal comparison.","Read-only tag peeling independently matched both configured full commits.","Read-only object inspection independently confirmed the literal call at account line 45, provider trans@name at channel XML line 2, and the configured provider implementation type.","The plan, Story, specification, and quickstart consistently make the reviewed JSON the sole selector authority and prohibit implementation-time substitution."]},
+    {"id":"F-002","status":"RESOLVED","evidence":["The exact acquisition port is separate from IGitWorkingCopyService and uses unique operation-private Git and snapshot roots.","The contract forbids mutation in the ordinary managed checkout and defines success, failure, cancellation, concurrent lease, and cleanup behavior.","The verification matrix requires exact-then-normal and concurrent exact/normal tests proving branch, HEAD, origin, index, status, path, and later pull behavior remain intact."]},
+    {"id":"F-003","status":"RESOLVED","evidence":["Every revised model and contract closes Uncertainty sub_status to cross_repo, unknown_target, or ambiguous.","Variable, malformed, unmatched, normalization, multiplicity, and unsupported distinctions use closed reason_code and observation_kind values.","The schema and tests explicitly reject any additional sub_status."]},
+    {"id":"F-004","status":"RESOLVED","evidence":["The JSON profile pins account-file-storage-oss-upload-v1 with owner Repository alias, exact owner Document selector, exact invocation selector, line, ordinal, and safe Evidence Locator.","Runtime mapping must resolve one authorized current Document Version and containing Source Anchor before persistence.","The store and integration matrix require one idempotent limitation Uncertainty and zero Edge/evidence rows; stale, unauthorized, zero, or multiple owner mappings write nothing."]},
+    {"id":"F-005","status":"RESOLVED","evidence":["The specification now explicitly permits internal relational PK/FK persistence solely for ownership, referential integrity, idempotency, and authorized retrieval.","The data model separates typed relational identities from profile bytes and textual evidence, diagnostics, logs, exceptions, and unauthorized output.","Authorized exact retrieval exposes only an opaque relationshipIdentity plus safe metadata; Repository, ScanRun, Document Version, and Source Anchor PK/FKs remain unserialized.","Tests separately assert required relational columns and absence of identifier leakage across forbidden surfaces."]},
+    {"id":"F-006","status":"RESOLVED","evidence":["The automatic unsupported observation now persists status=unresolved, sub_status=unknown_target, reason_code=unsupported_kind, and observation_kind=file_storage.","The plan consistently reserves wontfix for an explicit human-accepted terminal Dangling Link.","The record remains eligible for later full-V1 resolution or reclassification and every unsupported path creates zero Edges."]},
+    {"id":"F-007","status":"RESOLVED","evidence":["The BMad Story states that the reviewed version-controlled demo profile is the sole selector authority.","The specification states that read-only planning selected the real occurrence and exact selectors from the pinned Git objects.","The completion notes state that no endpoint was invented and the exact occurrence is already pinned.","No accepted Story/spec text retains implementation-time selector choice."]}
+  ],
+  "findings": [],
+  "trigger_assessment": [
+    {"trigger":"worker_or_other_agent_tool_change","applies":false,"assessment":"No Worker Agent, Chat Agent, or other agent tool contract is added or materially changed."},
+    {"trigger":"scan_strategy_exact_revision_acquisition","applies":true,"assessment":"The operation-private exact-ref/full-commit acquisition service changes revision-selection behavior while preserving ordinary AcquireAsync. Planned-change authorization remains mandatory before task generation."},
+    {"trigger":"scan_strategy_post_pass1_cross_repository_integration","applies":true,"assessment":"The explicit two-execution coordinator adds a post-Pass-1 Cross-Repository Resolution seam before prepared Pass 2 without adding a scheduler. Planned-change authorization remains mandatory."},
+    {"trigger":"cross_repository_matching_behavior","applies":true,"assessment":"Pinned lexical/XML selectors, provider implementation mapping, direction, normalization, ordinal comparison, unique-provider cardinality, and unsupported-observation policy establish new graph-truth behavior. This is covered by the required planned-change authorization."},
+    {"trigger":"authorization_security_boundary","applies":true,"assessment":"Both-endpoint authorization before Git/source/query/write and marker-only unauthorized retrieval materially extend the reviewed security boundary. The design is coherent and testable."},
+    {"trigger":"migration_invariant","applies":true,"assessment":"Two additive tables, a SourceAnchor alternate key, owner-safe composite FKs, closed checks, indexes, DbContext/model snapshot changes, and rollback/reapply/no-pending-model proof materially change migration invariants."},
+    {"trigger":"prd_requirement_change_or_weakening","applies":false,"assessment":"The plan implements the approved PRD section 5.16 deadline overlay and preserves deferred full-V1 communication, scheduling, uncertainty, E2E, and Docker obligations as backlog."}
+  ],
+  "constitution_result": {
+    "status": "PASS",
+    "violations": [],
+    "assessment": [
+      "Core retains provider-independent entities and specific ports with no EF dependency, annotation, generic repository, IQueryable, or DbSet escape.",
+      "Infrastructure owns Git, deterministic extraction, EF mappings, transactions, migration, and retrieval materialization; Web owns authorization-aware composition.",
+      "Canonical terms and Uncertainty lifecycle values match the Ubiquitous Language and scanning data contracts.",
+      "Profile, source, relational, authorization, migration, concurrency, replay, currentness, and integration behaviors have explicit test-first proof groups.",
+      "Internal relational identities remain inside trusted typed/database boundaries, while evidence and unauthorized surfaces remain bounded and source-isolated."
+    ],
+    "adr_result": "PASS",
+    "adr_evidence": "No docs/adr directory, context-scoped ADR directory, or CONTEXT-MAP.md exists at the reviewed boundary."
+  },
+  "coverage_result": {
+    "status": "PASS",
+    "covered": [
+      "All Story AC-1 through AC-7",
+      "Feature FR-001 through FR-024",
+      "Feature SC-001 through SC-008",
+      "Exact tag/full-commit binding and end-to-end Profiled Revision equality",
+      "Pinned occurrence syntax, closed lexical/XML extraction, provider implementation mapping, normalizer, direction, and unique cardinality",
+      "Isolated Git acquisition with ordinary checkout non-interference, cancellation, concurrency, and cleanup failure coverage",
+      "Atomic Edge plus exact evidence and nonterminal unsupported Uncertainty persistence",
+      "Deterministic IDs, full-row replay verification, drift conflict, currentness locking, and complete-batch rollback",
+      "Canonical Uncertainty sub_status, reason_code, observation_kind, and future-resolution eligibility",
+      "Internal relational PK/FK persistence without profile, text, log, diagnostic, or unauthorized-output leakage",
+      "Both-endpoint authorization before access/write and opaque authorized versus marker-only unauthorized retrieval",
+      "Additive EF model, clean apply, rollback to 20260801033655_AddSequentialScanRunner, reapply, predecessor preservation, and no-pending-model verification",
+      "Current-boundary two-Repository integration and explicit retention of Story 11.5 clean-database, actual prepared Repository, citation, and Docker gates",
+      "Unchanged queued System-context behavior and absence of LLM/System-context match truth",
+      "No Repository-global provider/consumer classification and synthetic reverse-direction contract coverage"
+    ],
+    "not_credibly_covered": []
+  },
+  "rationale": "The final raw plan set is feasible against the pinned codebase and authorities. All seven prior findings are substantively resolved, the external occurrence and commits are independently confirmed, the internal-relational versus serialized-security boundary is coherent, unsupported evidence remains canonical and nonterminal, and the EF, authorization, retrieval, Git, lifecycle, failure, replay, and migration seams are specific enough for test-first implementation. No Critical or High finding, unresolved external authority, PRD weakening, Constitution or ADR conflict, placeholder, or material design ambiguity remains. This ACCEPT completes the independent plan-review gate; the identified planned-change authorization is still required before task generation and is not waived by this verdict."
+}

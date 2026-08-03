@@ -1,1 +1,3 @@
-{"feature_directory":"specs/006-demo-document-generation"}
+{
+  "feature_directory": "specs/007-exact-cross-repo-resolution"
+}

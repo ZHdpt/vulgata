@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-4-exact-rpc-http-cross-repository-demo-resolution",
+  "bmad_epic_key": "11",
+  "story_path": "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+  "proposed_feature_short_name": "exact-cross-repo-resolution",
+  "stage": "tasks",
+  "execution_level": "expedited-mvp",
+  "repository_preflight": {
+    "branch": "",
+    "preflight_head": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/35c0/vulgata",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json"
+    ],
+    "unrelated_paths": []
+  },
+  "observed_at": "2026-08-03T08:46:58Z",
+  "activation_checkpoint_id": "bmad-11-4-tasks-20260803T113920Z-35c0",
+  "feature_directory": "specs/007-exact-cross-repo-resolution",
+  "superseded_by_state": "specs/007-exact-cross-repo-resolution/workflow-state.json",
+  "prepared_repositories": [
+    {
+      "alias": "mbs_account",
+      "expected_ref": "refs/tags/vulgata/August15th-sample",
+      "expected_commit": "19c60cd3f3976b7697c487c7bafd96142e3a7625"
+    },
+    {
+      "alias": "mbs_channel",
+      "expected_ref": "refs/tags/vulgata/August15th-sample",
+      "expected_commit": "47f6b627a7598f862873610413eec1e1e7bf46bf"
+    }
+  ],
+  "planned_change_triggers": [
+    "scan-strategy-cross-repository-resolution",
+    "scan-strategy-profiled-revision-acquisition",
+    "cross-repository-matching-behavior",
+    "migration-invariant"
+  ],
+  "integration_owner_gated_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
+    "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml"
+  ],
+  "expedited_mvp_authority": {
+    "allowlist": "11-1 through 11-5",
+    "lifetime": "2026-08-15T23:59:59+08:00",
+    "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
+  }
+}

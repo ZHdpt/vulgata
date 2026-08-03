@@ -1,0 +1,152 @@
+{
+  "schema_version": "1.0",
+  "verdict": "REVISE",
+  "iteration": 1,
+  "input_boundary": {
+    "source_head": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+    "artifact_hashes": {
+      "specs/007-exact-cross-repo-resolution/plan.md": "07B5292E10BBB26AB6F83F04AD9A2BFCC7E0B022B1DDF3BF8102F29B0882A65A",
+      "specs/007-exact-cross-repo-resolution/research.md": "7F5FD415F1668C4404B0B8C6979B4F01FE959E0B6CB98415AB03D44957BEA816",
+      "specs/007-exact-cross-repo-resolution/data-model.md": "C61405938164579DA84B557183792AA8EDE1B802A39F49DA005252015C469CFF",
+      "specs/007-exact-cross-repo-resolution/quickstart.md": "8925D4149ADC7559B61C338DB3EC3F9F87B12FB85E9062D4B330A11FCB595BCB",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md": "ED9AC12F395E01966A7208E1AAD24C77B3F17D1983C66CA23605F7744BD0C575",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-git-revision-acquisition.md": "3176D5B7784125AD42DD30D65BBAE4B8BDA84047587102CA4EFD6F93CF27D814",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md": "781131CE10F3C0BAF21EC9DF4FFF1F1FA4E1992673E60094AAFB285ACBAFC2D7",
+      "specs/007-exact-cross-repo-resolution/contracts/resolution-persistence-and-retrieval.md": "32667ABE51D949975EF7F4D333F52792CCE814420A9D59B3F1F3C15C1F79D6BA"
+    },
+    "reviewed_plan_set": [
+      "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+      "specs/007-exact-cross-repo-resolution/spec.md",
+      "specs/007-exact-cross-repo-resolution/plan.md",
+      "specs/007-exact-cross-repo-resolution/research.md",
+      "specs/007-exact-cross-repo-resolution/data-model.md",
+      "specs/007-exact-cross-repo-resolution/quickstart.md",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-git-revision-acquisition.md",
+      "specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md",
+      "specs/007-exact-cross-repo-resolution/contracts/resolution-persistence-and-retrieval.md"
+    ],
+    "reviewed_authorities": [
+      "AGENTS.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+      "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-august-15-demo-slice.md",
+      "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+      ".specify/memory/constitution.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "specs/004-minimal-knowledge-store/plan.md",
+      "specs/005-sequential-scan-runner/plan.md",
+      "specs/006-demo-document-generation/plan.md"
+    ],
+    "reviewed_existing_seams": [
+      "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IKnowledgeStoreRepository.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs",
+      "src/dotnet/Vulgata.Core/Entities/Repository.cs",
+      "src/dotnet/Vulgata.Core/Entities/LogicalDocument.cs",
+      "src/dotnet/Vulgata.Core/Entities/DocumentVersion.cs",
+      "src/dotnet/Vulgata.Core/Entities/SourceAnchor.cs",
+      "src/dotnet/Vulgata.Core/Entities/DocumentEdge.cs",
+      "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
+      "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/RepositoryRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/LogicalDocumentConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentVersionConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceAnchorConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentEdgeConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+      "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "src/dotnet/Vulgata.Web/Program.cs"
+    ]
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "High",
+      "title": "The exact demo occurrence is deliberately unresolved at the reviewed plan boundary",
+      "evidence": [
+        "The profile contract requires exact consumer files, call symbols, argument index, provider XML files, and provider implementation Document selector at specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md:38-63.",
+        "The same contract explicitly defers populating those selectors until implementation field validation and requires return to plan review if the pinned syntax is unsupported at specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md:65.",
+        "The plan likewise says implementation must select the endpoint occurrence later at specs/007-exact-cross-repo-resolution/plan.md:51, while research claims all planning unknowns are resolved at specs/007-exact-cross-repo-resolution/research.md:5.",
+        "The accepted story requires the literal/XML pair itself to remain version-controlled configuration at docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md:162-164."
+      ],
+      "required_change": "Before another plan review, inspect the two pinned Git objects read-only and place the exact direction, consumer file/call/argument selector, provider XML file, and provider implementation Document selector into the reviewed profile design or an equally pinned raw planning artifact. Demonstrate that the observed syntax is accepted by the closed extractor without inventing or persisting the endpoint value. If the objects are unavailable or the syntax is outside the grammar, preserve that as an external BLOCKED condition instead of advancing to tasks."
+    },
+    {
+      "id": "F-002",
+      "severity": "High",
+      "title": "Exact acquisition can strand the shared managed working copy in detached HEAD and break existing profiling",
+      "evidence": [
+        "The exact Git contract requires reuse of the Vulgata-owned Repository working-copy directory and force-detachment at the expected commit at specs/007-exact-cross-repo-resolution/contracts/exact-git-revision-acquisition.md:21-26.",
+        "The existing working-copy service uses one stable directory per Repository at src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs:18-20.",
+        "On a later normal acquisition, that service sees the existing clean working copy and executes git pull --ff-only at src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs:23-49. A detached HEAD has no branch upstream for that operation.",
+        "Neither the plan, the Git contract, nor quickstart requires isolation, restoration, or a regression proving AcquireAsync still succeeds after AcquireExactAsync."
+      ],
+      "required_change": "Use an isolated revision-specific worktree/temporary clone or archive the verified object without changing the ordinary managed checkout. If shared-checkout mutation is retained, define locking plus guaranteed restoration of the original branch/HEAD on success, failure, and cancellation. Add a regression that performs exact acquisition followed by ordinary AcquireAsync, and cover cancellation/concurrent cleanup so post-Pass-1 resolution is recoverable."
+    },
+    {
+      "id": "F-003",
+      "severity": "High",
+      "title": "The planned Uncertainty sub-status vocabulary conflicts with canonical language and data contracts",
+      "evidence": [
+        "The plan introduces Uncertainty sub-statuses UnknownTarget, Ambiguous, InexactEvidence, and Deferred at specs/007-exact-cross-repo-resolution/data-model.md:95-108 and uses InexactEvidence and Deferred as durable classifications at specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md:65-70.",
+        "The canonical scanning data contract closes sub_status to cross_repo, unknown_target, and ambiguous at docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md:226-244.",
+        "The Ubiquitous Language defines the same three Uncertainty sub_status values at docs/UBIQUITOUS_LANGUAGE.md:41.",
+        "Constitution Principle II requires authoritative terminology and says absent concepts must be surfaced rather than invented at .specify/memory/constitution.md:83-88, while the plan claims no Constitution violation at specs/007-exact-cross-repo-resolution/plan.md:242-244."
+      ],
+      "required_change": "Keep canonical sub-statuses and encode VariableTarget, NormalizationMismatch, UnsupportedKind, and similar distinctions in the closed reason/status fields, or route an explicit Ubiquitous Language and scanning-data-contract change through the proper authority workflow before plan acceptance. Update the Constitution assessment accordingly."
+    },
+    {
+      "id": "F-004",
+      "severity": "High",
+      "title": "Unsupported communication kinds have no deterministic occurrence input or credible record-producing test path",
+      "evidence": [
+        "FR-022 and SC-007 require every unsupported/deferred fixture to record the limitation and create no relationship at specs/007-exact-cross-repo-resolution/spec.md:98 and specs/007-exact-cross-repo-resolution/spec.md:123.",
+        "The profile contains only a global unsupportedKinds list, while its only occurrence shape is custom-rpc and carries the selectors needed for owner/evidence mapping at specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md:7-15 and specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md:38-61.",
+        "The service promises an anchored Wontfix/Deferred Uncertainty for unsupported kinds at specs/007-exact-cross-repo-resolution/contracts/exact-resolution-service.md:70, but the profile defines no unsupported occurrence, owner Document Version, Source Anchor, or Evidence Locator from which that row can be built.",
+        "The quickstart negative matrix checks only that unsupported kinds create zero Edges at specs/007-exact-cross-repo-resolution/quickstart.md:83-92; it does not require the SC-007 limitation record."
+      ],
+      "required_change": "Define a bounded deterministic unsupported-observation contract with occurrence identity, authorized owner Document Version/Source Anchor, safe locator, and closed kind, then require an idempotent recorded outcome and zero Edge in tests. Alternatively, revise the accepted spec/story through authority so unsupported kinds return a bounded non-durable outcome, and test that exact contract. The current plan cannot claim FR-022/SC-007 coverage."
+    }
+  ],
+  "trigger_assessment": [
+    {"trigger":"worker_or_other_agent_tool_change","applies":false,"assessment":"No Worker Agent or Chat Agent tool is added or materially changed."},
+    {"trigger":"scan_strategy_exact_revision_acquisition","applies":true,"assessment":"AcquireExactAsync changes Git acquisition and revision-selection behavior. Planned-change authorization remains required only after a revised plan is accepted."},
+    {"trigger":"scan_strategy_post_pass1_cross_repository_integration","applies":true,"assessment":"The explicit two-execution post-Pass-1 coordinator changes Scan integration behavior. Planned-change authorization remains required only after a revised plan is accepted."},
+    {"trigger":"cross_repository_matching_behavior","applies":true,"assessment":"Configured XML/literal extraction, direction, normalization, and unique-provider cardinality establish new graph truth behavior and require plan review; they are also encompassed by the Scan-strategy authorization trigger."},
+    {"trigger":"authorization_security_boundary","applies":true,"assessment":"Both-endpoint authorization and marker-only restricted retrieval materially extend the security boundary and therefore require plan review. No weaker policy is intentionally proposed."},
+    {"trigger":"migration_invariant","applies":true,"assessment":"Two tables, a SourceAnchor alternate key, model snapshot, rollback/reapply, and no-pending-model checks materially change migration invariants and require plan review."},
+    {"trigger":"prd_requirement_change_or_weakening","applies":false,"assessment":"No intentional PRD weakening is proposed; however, F-004 must be corrected before the plan can truthfully claim full included-requirement coverage."}
+  ],
+  "constitution_result": {
+    "status": "FAIL",
+    "violations": ["Principle II is violated by introducing durable Uncertainty sub-status terminology outside the authoritative Ubiquitous Language and scanning data contract without surfacing or authorizing the gap."],
+    "adr_result": "PASS",
+    "adr_evidence": "No docs/adr directory, context-scoped ADR, or CONTEXT-MAP.md exists at the pinned boundary."
+  },
+  "coverage_result": {
+    "status": "FAIL",
+    "covered": [
+      "Exact ref/full-commit mismatch failure",
+      "Occurrence-local bidirectional roles",
+      "Deterministic XML and literal extraction design",
+      "Direction-qualified ordinal matching",
+      "Atomic Edge/evidence persistence and replay",
+      "Both-endpoint retrieval redaction",
+      "Migration apply/rollback/reapply/no-pending checks",
+      "Story 11.5 clean-database and Docker ownership"
+    ],
+    "not_credibly_covered": [
+      "FR-002, FR-007 through FR-011, FR-023, AC-2, and SC-001 against the actual pinned occurrence because its selectors and grammar compatibility remain unresolved",
+      "FR-022, AC-7, and SC-007 because unsupported observations have no record-producing input contract",
+      "Non-regression and recoverability of ordinary Git acquisition after exact acquisition",
+      "Constitution-compliant durable Uncertainty classification"
+    ]
+  },
+  "rationale": "The plan has a strong fail-closed matching and persistence direction, but it is not implementation-ready. Four High findings leave the actual occurrence unvalidated, risk breaking the existing managed Git checkout, conflict with canonical Uncertainty language, and leave an accepted unsupported-kind requirement without a realizable durable path. These are plan-correctness issues, not task-detail omissions."
+}
