@@ -139,5 +139,5 @@ Multi-context layout via `CONTEXT-MAP.md`. See `docs/agents/domain.md`.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/007-exact-cross-repo-resolution/plan.md`
+`specs/008-demo-chat-release-gate/plan.md`
 <!-- SPECKIT END -->

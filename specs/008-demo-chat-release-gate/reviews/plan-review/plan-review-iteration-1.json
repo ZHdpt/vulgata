@@ -1,0 +1,90 @@
+{
+  "schema_version": "plan-review-verdict-v1",
+  "verdict": "REVISE",
+  "iteration": 1,
+  "reviewed_boundary": {
+    "story": "11-5-demo-chat-citations-and-release-gate",
+    "feature": "specs/008-demo-chat-release-gate",
+    "source_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+    "head_confirmed_equal": true,
+    "scope": "Complete raw plan set, pinned authorities, and current implementation/test/container seams named in the seven-slot dispatch."
+  },
+  "reviewed_artifact_hashes_sha256": {
+    "specs/008-demo-chat-release-gate/spec.md": "874a1852aea0ec30786227711c8f7107057ace5bda49ee2686ca47a7395ff2cd",
+    "specs/008-demo-chat-release-gate/plan.md": "6ed7d4aedd23855098ce2807667401e1866eed22a782f8ec0862ac033408f756",
+    "specs/008-demo-chat-release-gate/research.md": "50d234c9a952a9c6d08d160600047100fe53da455c0f0c31e458dc9081028e10",
+    "specs/008-demo-chat-release-gate/data-model.md": "1c2f1b3c5f96c1a5cd998fc800955438ad71a3623188baedf74567ac126f07ff",
+    "specs/008-demo-chat-release-gate/quickstart.md": "c56f2329440b9401d375ea804fcee27806d04c8cf158acb8351768619e3da3bf",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "9a1a3169941aff7bd2da907899f036107fa25adbf1a315064b51912561759750",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "afc84bd2ceae0243f7ce27f94d95e2c3d548a4ba0c96fa9184506b87f96d62f9",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "de4a7ac3810f6348a41fd7826717bda8dd593e5fe96a7ddb0fbf50cb9bd9717d",
+    ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+    "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834"
+  },
+  "findings": [
+    {
+      "id": "PLAN-115-SEMANTIC-001",
+      "severity": "High",
+      "location": [
+        "specs/008-demo-chat-release-gate/plan.md:168",
+        "specs/008-demo-chat-release-gate/plan.md:248",
+        "specs/008-demo-chat-release-gate/plan.md:307",
+        "specs/008-demo-chat-release-gate/quickstart.md:50",
+        "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md:103-122"
+      ],
+      "evidence": "The provider may return arbitrary claim text. Validation proves schema, fingerprint, known handles, and available anchors, but not that cited content semantically supports the claim. The plan explicitly admits this limitation and substitutes expected fixture assertions. That cannot prove FR-010, AC-2, and SC-002 for all rendered claims; a fabricated or contradictory claim carrying a valid citation would pass the planned validator.",
+      "exact_correction_outcome": "Define a deterministic support predicate and make it executable. Prefer server-owned candidate Material Claims or exact bounded Document Section spans already bound to current Source Anchors, with the provider returning only opaque selection/order handles and Web rendering server-retained text. Add adversarial tests where a structurally valid citation is semantically unrelated or contradictory and require whole-answer rejection. Free provider-authored factual prose cannot remain renderable unless an equally deterministic, testable support mechanism is specified."
+    },
+    {
+      "id": "PLAN-115-DOCKER-002",
+      "severity": "High",
+      "location": [
+        "specs/008-demo-chat-release-gate/plan.md:286-300",
+        "specs/008-demo-chat-release-gate/quickstart.md:123-142",
+        "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md:8-15",
+        "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md:76-88",
+        "src/dotnet/Vulgata.Web/Program.cs:83-107",
+        "src/dotnet/Vulgata.Web/Program.cs:249-263",
+        "docker/Dockerfile",
+        "docker-compose.yml:17-22"
+      ],
+      "evidence": "The artifacts require authenticated prepared chat from the final container but provide no executable provisioning and driving route. Current startup seeds roles only, not a demo user, prepared scope, knowledge, or providers. Provider keys must be encrypted with a Data Protection key ring usable by the runtime container. No production chat HTTP API is planned, so the interactive Blazor path requires a real circuit-capable driver. The Dockerfile defines no HEALTHCHECK, while the quickstart assumes an image-configured health check; compose invokes wget although the image explicitly installs curl.",
+      "exact_correction_outcome": "Specify one runnable final-slice harness and ownership. It must keep the unique prepared PostgreSQL database alive through Docker proof; provision authorized and negative users, prepared management/knowledge rows, and Chat/Worker providers through product services; share or create provider encryption under the exact runtime Data Protection key ring; start an isolated loopback provider; start the accepted final image; authenticate through the real Identity flow; drive the interactive chat through a circuit-capable client; assert positive claims/citations and missing-equivalent negative behavior; and always clean database/container/network/volume state. Define an actual health command using binaries present in the image, either through Dockerfile HEALTHCHECK or an explicit run/compose override."
+    }
+  ],
+  "constitution_result": {
+    "status": "REVISE",
+    "evidence": "Layering, provider-independent Core contracts, Infrastructure-owned EF retrieval, prompt externalization, no-migration scope, double authorization, immutable current Document use, and source isolation are architecturally compatible. The claimed Principle IV PASS is unsupported until semantic grounding and the final authenticated Docker integration proof are executable and adversarially testable."
+  },
+  "coverage_summary": {
+    "covered": [
+      "Explicit prepared scope and Business/IT presentation",
+      "No migration with pending-model verification",
+      "Authorization before retrieval, live during retrieval, and before render",
+      "Missing-equivalent unauthorized handling",
+      "No Scan or Cross-Repository matching changes",
+      "Bounded provider call, cancellation, timeout, malformed-output failure",
+      "Dependency-ordered RED-GREEN groups and cleanup intent"
+    ],
+    "not_adequately_proven": [
+      "FR-010/AC-2/SC-002 semantic claim-to-evidence support",
+      "FR-016/FR-018/SC-006/SC-007 authenticated provider-backed chat through the final runtime image"
+    ]
+  },
+  "trigger_assessment": {
+    "planned_change_triggered": true,
+    "trigger": "New Chat Agent retrieval tool IChatEvidenceRetriever.RetrieveAsync",
+    "scan_strategy_change": false,
+    "prd_weakening": false,
+    "required_action": "After a revised plan receives independent ACCEPT, explicit planned-change authorization remains mandatory before task generation. Plan acceptance is not that authorization."
+  },
+  "e2e_docker_assessment": {
+    "clean_database_e2e": "Conceptually sound, including exact revisions, ordered predecessor path, authorization-negative proof, finally cleanup, and verified absence.",
+    "docker": "Not executable as currently specified because authenticated user/provider/data provisioning, Data Protection compatibility, interactive chat driving, and the health-check mechanism are unresolved.",
+    "result": "REVISE"
+  },
+  "rationale": "Both defects are correctable within the accepted Story 11.5 authority, so BLOCKED is inappropriate. Each is a High/MUST gap under the expedited quality floor; therefore ACCEPT is prohibited.",
+  "read_only_confirmation": "No files, lifecycle state, index, commits, or Git history were changed."
+}

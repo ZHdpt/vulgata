@@ -1,0 +1,328 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-5-demo-chat-citations-and-release-gate",
+  "bmad_epic_key": "11",
+  "feature_directory": "specs/008-demo-chat-release-gate",
+  "execution_level": "expedited-mvp",
+  "stage": "implement",
+  "active_gates": {
+    "spec-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null
+    },
+    "plan-review": {
+      "status": "accepted",
+      "iteration": 4,
+      "dispatch_id": "story_11_5_plan_review_iteration_4",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json"
+    },
+    "analyze": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null
+    },
+    "acceptance-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "quality-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "planned-change-authorization": {
+      "status": "authorized",
+      "authorized_at": "2026-08-04T12:42:33Z",
+      "authority": "user: Approve"
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-08-04T04:48:00Z",
+      "completed_at": "2026-08-04T09:00:00Z",
+      "input_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+      "agent_role": "story-context-synthesizer",
+      "artifact_paths": [
+        "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+        "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json"
+      ],
+      "artifact_hashes": {
+        "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "f04d1b685b3c92a804b966f5be0fd9d94cdc7c8f7cf809c083c8a4220987d2b8"
+      },
+      "failure": null
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-08-04T09:00:00Z",
+      "completed_at": "2026-08-04T09:20:09Z",
+      "input_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+      "agent_role": "spec-author",
+      "dispatch_id": "story_11_5_spec_retry",
+      "artifact_paths": [
+        "specs/008-demo-chat-release-gate/spec.md",
+        "specs/008-demo-chat-release-gate/checklists/requirements.md"
+      ],
+      "artifact_hashes": {
+        "specs/008-demo-chat-release-gate/spec.md": "874a1852aea0ec30786227711c8f7107057ace5bda49ee2686ca47a7395ff2cd",
+        "specs/008-demo-chat-release-gate/checklists/requirements.md": "ae2697c9120dc4fb2a6fcbb228e5dddba5b63ef19ad25c7b0b563142da3622c5"
+      },
+      "validation": "16/16 specification checklist items passed; zero clarification markers",
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "iteration": 1,
+      "dispatch_id": "story_11_5_plan_review_retry",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
+      "completed_at": "2026-08-04T09:45:00Z",
+      "finding_ids": [
+        "PLAN-115-SEMANTIC-001",
+        "PLAN-115-DOCKER-002"
+      ]
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "iteration": 3,
+      "dispatch_id": "story_11_5_plan_review_iteration_3",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json",
+      "completed_at": "2026-08-04T11:10:52Z",
+      "finding_ids": [
+        "PLAN-115-CURRENTNESS-003"
+      ],
+      "human_gate": "third REVISE outcome requires explicit user direction before any additional correction cycle"
+    },
+    {
+      "stage": "plan-review-exception",
+      "status": "authorized",
+      "authorized_at": "2026-08-04T11:22:07Z",
+      "authority": "user: Approve your correction",
+      "scope": "One fourth bounded correction and fresh independent plan review for PLAN-115-CURRENTNESS-003 only",
+      "does_not_waive": [
+        "planned-change authorization",
+        "task analysis",
+        "transient RED/GREEN TDD",
+        "combined quality review",
+        "clean-database two-Repository E2E",
+        "Docker verification"
+      ]
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "iteration": 4,
+      "dispatch_id": "story_11_5_plan_review_iteration_4",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json",
+      "completed_at": "2026-08-04T11:47:27Z",
+      "finding_ids": [],
+      "authorization_required_before_next_stage": "planned-change-authorization"
+    },
+    {
+      "stage": "planned-change-authorization",
+      "status": "authorized",
+      "authorized_at": "2026-08-04T12:42:33Z",
+      "authority": "user: Approve",
+      "trigger": "New Chat Agent retrieval tool IChatEvidenceRetriever.RetrieveAsync",
+      "approved_approach": "Bounded prepared-scope retrieval plus Infrastructure-owned post-provider currentness validation and final Repository authorization before render",
+      "does_not_waive": [
+        "task validation",
+        "transient RED/GREEN TDD",
+        "combined quality review",
+        "security and migration checks",
+        "clean-database two-Repository E2E",
+        "Docker verification"
+      ]
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-04T12:42:33Z",
+      "completed_at": "2026-08-04T12:53:29Z",
+      "input_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+      "agent_role": "task-author",
+      "dispatch_id": "story_11_5_tasks",
+      "artifact_paths": [
+        "specs/008-demo-chat-release-gate/tasks.md"
+      ],
+      "artifact_hashes": {
+        "specs/008-demo-chat-release-gate/tasks.md": "eea9407c2eaf943206155d57dc06785b17fec0a16bc28b13491aa259a1c3186a"
+      },
+      "validation": "61 continuous tasks; zero malformed checklist items; FR-001 through FR-022 and SC-001 through SC-009 covered; explicit transient RED then GREEN groups; retained security, migration, clean PostgreSQL, Docker, Identity, Playwright, and cleanup gates",
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "iteration": 2,
+      "dispatch_id": "story_11_5_plan_review_iteration_2",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
+      "completed_at": "2026-08-04T10:38:15Z",
+      "finding_ids": [
+        "PLAN-115-SEMANTIC-001",
+        "PLAN-115-DOCKER-002"
+      ]
+    }
+  ],
+  "repository_preflight": {
+    "branch": "codex/run-story-115-sprint-loop",
+    "preflight_head": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/e948/vulgata",
+    "worktree_status": "",
+    "owned_paths": [
+      ".specify/feature.json",
+      "AGENTS.md",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json",
+      "specs/008-demo-chat-release-gate/",
+      "src/dotnet/Vulgata.Agents/",
+      "src/dotnet/Vulgata.Core/DomainServices/",
+      "src/dotnet/Vulgata.Infrastructure/Data/",
+      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor",
+      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css",
+      "src/dotnet/Vulgata.Web/Data/",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/",
+      "docker/Dockerfile",
+      "docker-compose.yml"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-08-04T09:20:09Z"
+  },
+  "source_artifacts": [
+    {
+      "authority": "BMad story",
+      "path": "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+      "sha256": "f04d1b685b3c92a804b966f5be0fd9d94cdc7c8f7cf809c083c8a4220987d2b8"
+    },
+    {
+      "authority": "SpecKit specification",
+      "path": "specs/008-demo-chat-release-gate/spec.md",
+      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+      "sha256": "874a1852aea0ec30786227711c8f7107057ace5bda49ee2686ca47a7395ff2cd"
+    },
+    {
+      "authority": "Accepted SpecKit plan",
+      "path": "specs/008-demo-chat-release-gate/plan.md",
+      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+      "sha256": "80123c7ac60f65775e7a3214e13264bdf16997917c0cb3fbeeb8fe2da6ff262a"
+    },
+    {
+      "authority": "Accepted SpecKit tasks",
+      "path": "specs/008-demo-chat-release-gate/tasks.md",
+      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+      "sha256": "eea9407c2eaf943206155d57dc06785b17fec0a16bc28b13491aa259a1c3186a"
+    }
+  ],
+  "dispatches": [
+    {
+      "dispatch_id": "story_11_5_context",
+      "role": "story-context-synthesizer",
+      "stage": "context",
+      "source_boundary": "c07df7d..c07df7d",
+      "permitted_writes": [],
+      "result": "initial BLOCKED authority conflict resolved by user product-intent decision"
+    },
+    {
+      "dispatch_id": "story_11_5_spec_retry",
+      "role": "spec-author",
+      "stage": "specify",
+      "source_boundary": "c07df7d plus root-owned context artifacts",
+      "permitted_writes": [
+        ".specify/feature.json",
+        "specs/008-demo-chat-release-gate/spec.md",
+        "specs/008-demo-chat-release-gate/checklists/requirements.md"
+      ],
+      "result": "accepted"
+    },
+    {
+      "dispatch_id": "story_11_5_tasks",
+      "role": "task-author",
+      "stage": "tasks",
+      "source_boundary": "c07df7d plus accepted spec/plan/review and planned-change authorization",
+      "permitted_writes": [
+        "specs/008-demo-chat-release-gate/tasks.md"
+      ],
+      "result": "accepted"
+    }
+  ],
+  "review_iterations": {
+    "spec-review": { "count": 0, "verdict_paths": [] },
+    "plan-review": {
+      "count": 4,
+      "verdict_paths": [
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json"
+      ]
+    },
+    "analyze": { "count": 0, "verdict_paths": [] },
+    "acceptance-review": { "count": 0, "verdict_paths": [] },
+    "quality-review": { "count": 0, "verdict_paths": [] }
+  },
+  "e2e_decision": {
+    "required": true,
+    "predicates": [],
+    "coverage_override": null,
+    "rationale": "Story 11.5 owns the mandatory final clean-database two-Repository user-visible, authorization, persistence, migration, and Docker release path.",
+    "covering_tests": [],
+    "owner": "e2e-runner",
+    "source_boundary": null,
+    "result": "pending",
+    "evidence_ids": []
+  },
+  "verification": [],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-11-5-accepted-delivery-definition-20260804T125329Z",
+    "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
+    "stage": "tasks",
+    "committed_paths": [
+      ".specify/feature.json",
+      "AGENTS.md",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json",
+      "specs/008-demo-chat-release-gate/checklists/requirements.md",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+      "specs/008-demo-chat-release-gate/data-model.md",
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json",
+      "specs/008-demo-chat-release-gate/spec.md",
+      "specs/008-demo-chat-release-gate/tasks.md",
+      "specs/008-demo-chat-release-gate/workflow-state.json"
+    ],
+    "verification_evidence_ids": [
+      "11-5-demo-chat-citations-and-release-gate/plan-review/4",
+      "11-5-demo-chat-citations-and-release-gate/planned-change-authorization/1",
+      "11-5-demo-chat-citations-and-release-gate/tasks/1"
+    ],
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-08-04T12:53:29Z"
+}

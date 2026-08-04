@@ -1,0 +1,165 @@
+{
+  "schema_version": "plan-review-verdict-v1",
+  "verdict": "ACCEPT",
+  "iteration": 4,
+  "reviewed_boundary": {
+    "story": "11-5-demo-chat-citations-and-release-gate",
+    "feature": "specs/008-demo-chat-release-gate",
+    "source_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+    "head_confirmed_equal": true,
+    "planning_artifacts_uncommitted": true,
+    "repinned_release_contract": {
+      "expected_sha256": "40a8b2e8adbba3941ece7b4be27296bd9e297fce45e496b773a3ae9485ee09a8",
+      "observed_sha256": "40a8b2e8adbba3941ece7b4be27296bd9e297fce45e496b773a3ae9485ee09a8",
+      "status": "MATCH",
+      "authority": "Root confirmed this as the intended final repin after the authorized currentness-sequence and barrier-check addition."
+    },
+    "scope": "Complete frozen raw specification and corrected plan set; raw plan-review iterations 1-3; Story 11.5 BMad authority; Constitution; AGENTS.md; expedited-MVP exception; PRD; Ubiquitous Language; accepted Story 11.4 profile; and only the pinned current-version, knowledge-store, exact-relationship, authorization, Identity, Data Protection, package, test, Docker, ADR, and context seams required by the seven-slot dispatch.",
+    "excluded": "Unrelated dirty files, tasks, implementation, lifecycle progression, workflow-state mutation, staging, commits, branch changes, and Git history.",
+    "tasks_exist": false,
+    "story_11_5_implementation_exists": false,
+    "git_diff_check": "PASS"
+  },
+  "reviewed_artifact_hashes_sha256": {
+    "specs/008-demo-chat-release-gate/spec.md": "874a1852aea0ec30786227711c8f7107057ace5bda49ee2686ca47a7395ff2cd",
+    "specs/008-demo-chat-release-gate/plan.md": "80123c7ac60f65775e7a3214e13264bdf16997917c0cb3fbeeb8fe2da6ff262a",
+    "specs/008-demo-chat-release-gate/research.md": "85428e46a538183ef3ac9eb5d51f6435d2b990fdb3121028bc92cd520168d6c2",
+    "specs/008-demo-chat-release-gate/data-model.md": "1ad29fc52b86e00634341f224ffa99370f24d0759e55bc83357bdd85c3fdf2f9",
+    "specs/008-demo-chat-release-gate/quickstart.md": "75eac1c541809bfd7320a93cdbc49f9fa9732a494ad2581486788c4cd0fc25f5",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "40a8b2e8adbba3941ece7b4be27296bd9e297fce45e496b773a3ae9485ee09a8",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json": "589a1bec2d79d93b3adc63d6959241f4ecda15fc057808275a734acd33424f38",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json": "0ca020978584bc2fac3c1021834421658e9d4deb25f36ae1e2ac0591bb3b7a01",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json": "5c7cac5229af29e22287324c69903fe15c469645d62ef543f59cb9c90b6e674f",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "de4a7ac3810f6348a41fd7826717bda8dd593e5fe96a7ddb0fbf50cb9bd9717d",
+    ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+    "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834",
+    "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+    "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.md": "50c0bb97d225ffc1a282b90feaeabf8dc3bfea4a0cf7f0a719ac8c73bc448633",
+    "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json": "3a71cfe31bbd2ac32addc1df0fda3cc4e5a0a5b0e4a9f5e6f81f196eb6c2dd55",
+    "src/dotnet/Vulgata.Web/Program.cs": "3b935da9a20b8fa581b9ba8d8e868ef96d6106902de4fca188f20af59e473f8c",
+    "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs": "7672a27f9643c4e5534dd0782fe67d093ebf616044961466c7887b5c97f8e837",
+    "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs": "11403a878f7c7f482812afa16ab2736f3d29f11427a059345168a97ee7099a77",
+    "src/dotnet/Vulgata.Web/Data/RepositoryAuthorizationVerifier.cs": "27c2423b6ca8e6d94e322e924a2d09dfdcfcc2e48cc728dd0d825118330ae96c",
+    "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs": "acab5312b41deef3050a02a246c846999481050ef4aa419588a74725d2a83c06",
+    "docker/Dockerfile": "5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c",
+    "tests/Vulgata.Tests/Vulgata.Tests.csproj": "a253bb18230a53bf0e495d7274dc8270814a483c7d673bd4565c39c75cbd8832",
+    "Directory.Packages.props": "47f376cb4467636610c03439202abce688a7413fcaba42d49e89e8a8e80db894"
+  },
+  "findings": [],
+  "constitution_result": {
+    "status": "PASS",
+    "principle_results": {
+      "I_layered_project_boundaries": "PASS",
+      "II_domain_purity_and_ubiquitous_language": "PASS",
+      "III_validation_and_ui_contract_discipline": "PASS",
+      "IV_test_first_integration_harness": "PASS",
+      "V_security_and_data_stewardship": "PASS"
+    },
+    "evidence": [
+      "Core owns provider-independent retrieval, currentness, and dispatcher interfaces; Infrastructure alone owns relational reads; Agents owns provider selection-only handling; Web owns authorization, ordering, and rendering at plan.md:80 and contracts/chat-agent-contract.md:6-34.",
+      "The currentness operation is a specific repository-style contract rather than a generic repository or exposed IQueryable/DbSet, satisfying Constitution lines 43-64 and 67-83 and AGENTS.md:69.",
+      "Existing immutable Document Version and Version Chain semantics are retained; the plan reads current versions and adds no entity or migration at plan.md:275-285, consistent with Constitution lines 80-82.",
+      "Chinese-only UI, FluentValidation when request validation is extracted, embedded prompts, encrypted provider keys, bounded source transmission, and no provider-authored locators remain explicit at plan.md:80-87, 475 and chat-agent-contract.md:127-181, satisfying Constitution lines 94-112 and 142-159.",
+      "Test-first groups, barrier-controlled relational tests, real Web composition, clean PostgreSQL E2E, real Identity/interactive Blazor proof, regression, health, and cleanup satisfy Constitution lines 118-137 and the expedited floor at august-15-expedited-mvp-exception.md:63-84.",
+      "No system-wide or context-scoped ADR exists at the pinned boundary and root CONTEXT-MAP.md remains absent; the plan introduces no silent ADR override.",
+      "Canonical System, Repository, Document, Logical Document, Document Version, Source Anchor, Edge, REFERENCES Edge, GENERATED_FROM Edge, Profiled Revision, Pass 1, Pass 2, and Cross-Repository Resolution terminology is preserved."
+    ],
+    "complexity_tracking_required": false
+  },
+  "coverage_summary": {
+    "covered": [
+      "Explicit Business/IT mode, one prepared System, and exactly two selected authorized Repositories",
+      "Current database-backed Documents, Document Sections, Source Anchors, flow/provenance, and exact directed Cross-Repository REFERENCES Edge",
+      "Provider selection/order handles only, with no provider-authored factual prose, citation choice, locator, narrative, or diagnostic",
+      "Exact persisted Section spans, immutable hashes/support signatures, server-owned citations, and adversarial foreign/unrelated/contradictory/tampered-handle rejection",
+      "Post-provider database currentness for Logical Document current pointers, Document Versions, Stable Sections, exact spans, Source Anchors, directed relationships, endpoints, and exact-evidence profile",
+      "Authorization before retrieval, live inside retrieval/currentness validation, and again after currentness validation immediately before render",
+      "Whole-answer missing/stale failure with zero claims and citations",
+      "Provider failure, cancellation, timeout, malformed output, and stale-result suppression",
+      "No durable chat state, entity, DbSet, migration, or snapshot change; predecessor migrations and no-pending-model verification remain gates",
+      "No Scan scheduling, filtering, grouping, retry/failover, dispatch, matching, or deferred Epic 5-10 expansion",
+      "Accepted Story 11.4 aliases, refs, full commits, direction, and exact profile boundary",
+      "Unique PostgreSQL 17 database, product-service provisioning, full predecessor path, inaccessible-scope proof, verified drop, and nonce-owned cleanup",
+      "One source-bound accepted image, shared Data Protection key ring/application discriminator, isolated Worker/Chat provider fixture, curl health, real Identity, and interactive-server Blazor Playwright proof"
+    ],
+    "residual_task_level_risks_not_plan_blockers": [
+      "Implement exact Markdown paragraph/list-item span parsing, canonical offsets, Unicode handling, and Business safe-text predicates with precise test vectors.",
+      "Keep the Infrastructure validation query finite and set-exact under one serializable transaction; validate duplicate, extra, and malformed request identities before querying.",
+      "Ensure the coordinator performs no unrelated asynchronous work between currentness validation, final Repository authorization, and atomic answer publication.",
+      "Acquire circuit user identity through AuthenticationStateProvider/UserContext rather than assuming IHttpContextAccessor remains populated during interactive-server execution.",
+      "Keep Source Anchor and relationship support-loss fault injection strictly test-only and outside product DI and the release provisioner.",
+      "Bound Playwright circuit-readiness, Docker health, port allocation, and cleanup polling to avoid harness races.",
+      "Docker, PostgreSQL 17, the pinned Python image, and matching Playwright Chromium remain explicit environment prerequisites."
+    ]
+  },
+  "currentness_finding_closure_assessment": {
+    "finding_id": "PLAN-115-CURRENTNESS-003",
+    "status": "CLOSED",
+    "closure_evidence": [
+      "The provider-independent Core seam now exists unambiguously in the plan contract: IChatEvidenceCurrentnessValidator.ValidateCurrentAsync at contracts/chat-agent-contract.md:14-20; Infrastructure alone implements it at lines 94-126.",
+      "The request carries the exact server-retained scope and support identities needed for executable revalidation: Logical Document/current Document Version pairs, Stable Sections, exact offsets and text hashes, fixed Source Anchors, and directed REFERENCES/GENERATED_FROM plus exact-profile identities at data-model.md:139-157 and chat-agent-contract.md:94-103.",
+      "The Infrastructure predicate is complete and fail-closed: current pointer and non-superseded version, exact Stable Section substring/hash, safe same-version selected-Repository positive-range Source Anchors, and exact current authorized relationship/profile/direction checks at data-model.md:159-179 and chat-agent-contract.md:104-126.",
+      "Web ordering is explicit and single-path: validate selection, call ValidateCurrentAsync once, reauthorize both Repositories, construct fixed citations, and atomically return the complete Grounded Answer at chat-agent-contract.md:198-215 and plan.md:202-205.",
+      "Retrieval finishes before provider dispatch and the currentness transaction starts only after selection validation, so no transaction spans provider latency at plan.md:202-205, research.md:76-85, data-model.md:178-179, and chat-agent-contract.md:123-126.",
+      "Any superseded, missing, changed, unsafe, unauthorized, out-of-scope, extra, or inconsistent support maps to one whole-answer MissingOrStale result with zero claims/citations at data-model.md:171-176 and chat-agent-contract.md:119-123.",
+      "Barrier-controlled tests place mutation in the formerly uncovered window: successor/current-pointer movement, Source Anchor loss, and directed REFERENCES/GENERATED_FROM loss occur after retrieval/provider dispatch but before currentness validation, and must prevent publication at plan.md:261-270, quickstart.md:56-65, chat-agent-contract.md:217-228, and release-verification-contract.md:110-113.",
+      "The contract is feasible against pinned seams: LogicalDocument.CurrentVersionId at LogicalDocument.cs:29 and 60-76; DocumentVersion.SupersededById at DocumentVersion.cs:57 and 114-119; StableSectionId, ContentMarkdown, and SourceAnchorIdsJson at DocumentSection.cs:43-49; Source Anchor line/hash fields at SourceAnchor.cs:45-47; exact relationship evidence through VulgataDbContext.cs:33-34; and the existing serializable authorized current-read pattern at KnowledgeStoreRepository.cs:645-677 and 703-865."
+    ],
+    "failure_behavior": "Any failed validation withholds the entire answer and fixed citations; no repair, partial acceptance, or stale answer restoration is permitted.",
+    "layering": "PASS",
+    "feasibility": "PASS",
+    "testability": "PASS"
+  },
+  "prior_closed_finding_preservation_assessment": {
+    "all_prior_closed_findings_preserved": true,
+    "semantic_grounding": {
+      "id": "PLAN-115-SEMANTIC-001",
+      "status": "CLOSED_NO_REGRESSION",
+      "evidence": "Selection-only output remains consistent across plan.md:475, research.md:106-132, data-model.md:110-136, and chat-agent-contract.md:127-189. Exact server-owned persisted spans and fixed support are rendered; provider-authored factual prose and citation selection remain forbidden."
+    },
+    "docker_release_harness": {
+      "id": "PLAN-115-DOCKER-002",
+      "status": "CLOSED_NO_REGRESSION",
+      "evidence": "Sole harness ownership, product-service provisioning, shared Data Protection, real Identity/circuit proof, runtime curl health, same-database final image, and complete cleanup remain present at plan.md:383-461, quickstart.md:100-229, and release-verification-contract.md:16-148."
+    },
+    "iteration_2_provider_invariant": {
+      "status": "CLOSED_NO_REGRESSION",
+      "evidence": "plan.md:475 and chat-agent-contract.md:181-189 still prohibit provider-authored claim text, citation handles, locators, narrative, and diagnostics."
+    },
+    "iteration_2_network_topology": {
+      "status": "CLOSED_NO_REGRESSION",
+      "evidence": "The fixture listens on 0.0.0.0; equal Worker/Chat host-container ports and app port are published only on host loopback by the provider container; the app joins with --network container:<provider> and no app-side publish at plan.md:420-442, quickstart.md:145-170 and 211-221, and release-verification-contract.md:78-103."
+    },
+    "iteration_2_playwright_build": {
+      "status": "CLOSED_NO_REGRESSION",
+      "evidence": "The test project is explicitly restored and built in Release before invoking its generated Release Playwright installer at quickstart.md:86-96 and release-verification-contract.md:116-120."
+    }
+  },
+  "planned_change_trigger_assessment": {
+    "planned_change_triggered": true,
+    "trigger": "The plan adds IChatEvidenceRetriever.RetrieveAsync as a new Chat Agent retrieval tool. The paired IChatEvidenceCurrentnessValidator is an internal provider-independent safety contract over selected server-retained support.",
+    "scan_strategy_change": false,
+    "prd_weakening_or_conflict": false,
+    "plan_evidence": "plan.md:290-335 and contracts/chat-agent-contract.md:242-247 identify the trigger, bounded approach, authorization effects, implementation intent, and affected PRD material.",
+    "authority_evidence": "AGENTS.md:79-94 requires explicit planned-change authorization after independent ACCEPT and before task generation for a new agent tool.",
+    "required_action": "This ACCEPT advances plan review without duplicate approval for the exceptional correction cycle. It is not the separate planned-change authorization. Before task generation, the root orchestrator must request and record that authorization unless an already-recorded approval explicitly covers this new Chat evidence tool and the cited approach."
+  },
+  "e2e_docker_assessment": {
+    "clean_database_e2e": "PASS at plan level: one uniquely named PostgreSQL 17 database remains alive through migrations, profiling, Pass 1, exact Cross-Repository Resolution, Pass 2, retrieval, selection, currentness validation, final authorization, accepted-image browser proof, and finally cleanup with catalog absence.",
+    "accepted_story_11_4_profile": "PASS: mbs_account and mbs_channel aliases, exact refs, full commits, consumer-to-provider direction, and exact configured profile/fingerprint are pinned consistently.",
+    "product_provisioning": "PASS: real UserManager, role/ownership coordinators, management repositories/coordinators, predecessor production services, provider coordinators, and SecretEncryptionService are required; fixture SQL and DbSet insertion are prohibited.",
+    "provider_app_network": "PASS: the 0.0.0.0 fixture listener, equal host/container provider ports, host-loopback publication, shared provider namespace, no app-side publish, and still-live PostgreSQL network access are executable as specified.",
+    "data_protection": "PASS: provisioner and accepted app image use the same gate-owned key ring and application discriminator; the planned Program.cs branch is optional and leaves defaults unchanged.",
+    "identity_and_blazor": "PASS: final proof requires real Identity form authentication, interactive-server circuit readiness, Fluent control operation, positive claim/citation checks, a second negative Identity context, and post-selection revocation behavior.",
+    "playwright": "PASS: Microsoft.Playwright 1.61.0 plus matching Chromium is test-only and its Release installer is generated before invocation.",
+    "health": "PASS: docker run supplies bounded curl health against /Account/Login, and curl exists in the pinned runtime Dockerfile.",
+    "single_image": "PASS: one clean-candidate image build with source commit/tree/manifest labels is required; predecessor or dirty/mismatched images fail.",
+    "cleanup": "PASS: primary and cleanup failures are retained; database absence and removal of only nonce-owned containers, volume, network, env file, and key directory are mandatory.",
+    "result": "PASS"
+  },
+  "rationale": "The repinned complete raw plan set implements the exact iteration-3 correction without weakening the already closed semantic or Docker contracts. The new Core/Infrastructure/Web seam is layered, bounded, provider-independent, executable against the existing immutable knowledge-store schema, and deterministically testable in the formerly uncovered post-retrieval/provider-latency window. Failure is whole-answer and missing-equivalent. The plan retains every Constitution, authorization, migration, security, regression, clean PostgreSQL two-Repository E2E, accepted-image Docker, Identity, Data Protection, health, and cleanup gate. Remaining concerns are implementation and harness execution risks suitable for test-first tasks and later combined quality/E2E gates, not High/MUST plan defects. No unresolved external-authority conflict justifies BLOCKED and no concrete correctable High defect remains to justify REVISE.",
+  "read_only_confirmation": "No plan, specification, verdict, workflow or lifecycle state, BMad artifact, source, test, dependency, Docker file, Git index, branch, commit, or history was changed. No tasks or code were created. No delegation was performed."
+}

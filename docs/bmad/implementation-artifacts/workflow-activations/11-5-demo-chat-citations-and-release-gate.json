@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-5-demo-chat-citations-and-release-gate",
+  "bmad_epic_key": "11",
+  "story_path": "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+  "proposed_feature_short_name": "demo-chat-release-gate",
+  "stage": "implement",
+  "execution_level": "expedited-mvp",
+  "repository_preflight": {
+    "branch": "codex/run-story-115-sprint-loop",
+    "preflight_head": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/e948/vulgata",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json",
+      "specs/008-demo-chat-release-gate/",
+      "src/dotnet/Vulgata.Agents/",
+      "src/dotnet/Vulgata.Core/DomainServices/",
+      "src/dotnet/Vulgata.Infrastructure/Data/",
+      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor",
+      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css",
+      "src/dotnet/Vulgata.Web/Data/",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/",
+      "docker/Dockerfile",
+      "docker-compose.yml"
+    ],
+    "unrelated_paths": []
+  },
+  "observed_at": "2026-08-04T05:00:00Z",
+  "activation_checkpoint_id": "pending-accepted-delivery-definition",
+  "feature_directory": "specs/008-demo-chat-release-gate",
+  "superseded_by_state": "specs/008-demo-chat-release-gate/workflow-state.json",
+  "planned_change_triggers": [
+    "agent-tool-chat-retrieval",
+    "authorization-security-boundary"
+  ],
+  "integration_owner_gated_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
+    "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml"
+  ],
+  "expedited_mvp_authority": {
+    "allowlist": "11-1 through 11-5",
+    "lifetime": "2026-08-15T23:59:59+08:00",
+    "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
+  },
+  "product_intent_decisions": [
+    {
+      "decision": "Business Mode uses narrative Document citations with source-line ranges in expandable citation detail; IT Mode may show technical locators directly.",
+      "authorized_at": "2026-08-04T05:00:00Z",
+      "authority": "user: Proceed"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "schema_version": "plan-review-verdict-v1",
+  "verdict": "REVISE",
+  "iteration": 3,
+  "reviewed_boundary": {
+    "story": "11-5-demo-chat-citations-and-release-gate",
+    "feature": "specs/008-demo-chat-release-gate",
+    "source_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+    "head_confirmed_equal": true,
+    "planning_artifacts_uncommitted": true,
+    "release_contract_repin": "The root explicitly repinned release-verification-contract.md to cd2441bf482c329574ec3aff5430d10188db224e2feca0767ec4e958718907b9 after an authorized final correction landed immediately after the original dispatch hash capture.",
+    "scope": "Complete corrected raw plan set, accepted specification, raw iteration-1 and iteration-2 verdicts, BMad story, Constitution, AGENTS.md, expedited-MVP exception, PRD, Ubiquitous Language, accepted Story 11.4 profile, and only relevant authorization, knowledge-store, provider, Data Protection, Identity, package, test, Docker, ADR, and context seams named by the seven-slot dispatch.",
+    "excluded": "Unrelated dirty files, implementation, tasks, lifecycle state, staging, commits, and Git history."
+  },
+  "reviewed_artifact_hashes_sha256": {
+    "specs/008-demo-chat-release-gate/spec.md": "874a1852aea0ec30786227711c8f7107057ace5bda49ee2686ca47a7395ff2cd",
+    "specs/008-demo-chat-release-gate/plan.md": "47ca6f2859e05e8d74ffc4fae165a700f1e5f8566db8fbdbac63f8ff816a8817",
+    "specs/008-demo-chat-release-gate/research.md": "ea51a3702c83e1706d617754445f13e6d07e83e25c7ab452804275a972a80636",
+    "specs/008-demo-chat-release-gate/data-model.md": "78f11646a8e794771cb0d88bdd050191a637378510453fc79361ba15e938629d",
+    "specs/008-demo-chat-release-gate/quickstart.md": "fa66af2b778de38e44b3825c7c7ca78b23974f3fef6ce502f0aae028ca9d2cd3",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "bb9bdfe9492e0c42782c04dd29e9766ecb432df97a51012a534588c5e04f939c",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "cd2441bf482c329574ec3aff5430d10188db224e2feca0767ec4e958718907b9",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json": "589a1bec2d79d93b3adc63d6959241f4ecda15fc057808275a734acd33424f38",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json": "0ca020978584bc2fac3c1021834421658e9d4deb25f36ae1e2ac0591bb3b7a01",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "de4a7ac3810f6348a41fd7826717bda8dd593e5fe96a7ddb0fbf50cb9bd9717d",
+    ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+    "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834",
+    "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+    "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json": "3a71cfe31bbd2ac32addc1df0fda3cc4e5a0a5b0e4a9f5e6f81f196eb6c2dd55",
+    "src/dotnet/Vulgata.Web/Program.cs": "3b935da9a20b8fa581b9ba8d8e868ef96d6106902de4fca188f20af59e473f8c",
+    "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs": "7672a27f9643c4e5534dd0782fe67d093ebf616044961466c7887b5c97f8e837",
+    "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs": "11403a878f7c7f482812afa16ab2736f3d29f11427a059345168a97ee7099a77",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentProviderResolver.cs": "324c553e5d84a054dfa14e43dbe8b6b445ac7e88dcb679274312dd425fa451d5",
+    "src/dotnet/Vulgata.Web/Data/SecretEncryptionService.cs": "c5e8cc0df4c4e1f55d75ca57cc901045204a8dfc35965f2568da5deff0f14035",
+    "src/dotnet/Vulgata.Web/Data/RepositoryAuthorizationVerifier.cs": "27c2423b6ca8e6d94e322e924a2d09dfdcfcc2e48cc728dd0d825118330ae96c",
+    "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs": "acab5312b41deef3050a02a246c846999481050ef4aa419588a74725d2a83c06",
+    "src/dotnet/Vulgata.Infrastructure/Data/SystemRepository.cs": "0be2abaa0a73989a81ce0fbeb17bcc19200c8b288b86974e1727f6e72b92a4b7",
+    "src/dotnet/Vulgata.Web/Data/LlmProviderManagementCoordinator.cs": "e833714350527b42a4af4c7f0f0b3374d8ef79b108c96bce96b18b2fa20edb4b",
+    "src/dotnet/Vulgata.Web/Data/SystemLlmProviderOverrideCoordinator.cs": "356f4082c61ccbac57da27f979cab743f14c9cd48c80f0d8d3cee612e00b355f",
+    "src/dotnet/Vulgata.Web/Data/SystemOwnershipCoordinator.cs": "218b3709e6781ffed6fa28e7b3cbef6335b096a4f3afae461bf3e795caa5042c",
+    "src/dotnet/Vulgata.Web/Data/AdministratorRoleCoordinator.cs": "ba0a335c11a4373e6acff7d988d6fc0b62e17d2e3c8a5e1718914746f0d4fef7",
+    "src/dotnet/Vulgata.Web/Data/RoleSeeder.cs": "4dacee426c0ac03945689ba35f3aa42b476f2624601a5efe7f33bc5bb3ad7173",
+    "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor": "42b769f054ee07a892b578a9c5f20cc7c83b4ad42d228b538c738a379653b1b6",
+    "tests/Vulgata.Tests/Vulgata.Tests.csproj": "a253bb18230a53bf0e495d7274dc8270814a483c7d673bd4565c39c75cbd8832",
+    "Directory.Packages.props": "47f376cb4467636610c03439202abce688a7413fcaba42d49e89e8a8e80db894",
+    "docker/Dockerfile": "5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c",
+    "docker-compose.yml": "38f668a82e1b1532d67d5faa5cd4e02aafa188b8e9db5c3cba7c21abb05bb07b"
+  },
+  "findings": [
+    {
+      "id": "PLAN-115-CURRENTNESS-003",
+      "severity": "High",
+      "location": [
+        "specs/008-demo-chat-release-gate/spec.md:125-131",
+        "specs/008-demo-chat-release-gate/spec.md:175-179",
+        "specs/008-demo-chat-release-gate/plan.md:52-54",
+        "specs/008-demo-chat-release-gate/plan.md:169-184",
+        "specs/008-demo-chat-release-gate/plan.md:215-225",
+        "specs/008-demo-chat-release-gate/data-model.md:146-152",
+        "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md:6-12",
+        "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md:150-163",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs:642-689",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs:865-869"
+      ],
+      "evidence": "The accepted specification requires the whole answer to be withheld if a current Document becomes superseded or its Source Anchor support becomes unavailable before rendering. The plan simultaneously requires exactly one bounded evidence read, and the Chat contract exposes and invokes only RetrieveAsync once. It then claims that the server re-reads every retained span and resolves every fixed handle to a current Document immediately before render. Re-reading the request-retained immutable Section text and recomputing its support signature detects tampering but cannot detect that a Logical Document current-version pointer, Source Anchor availability, or required exact relationship changed in PostgreSQL during provider latency. The planned ChatAgentResultValidator belongs to Agents and cannot query Infrastructure under the accepted layering. The existing knowledge-store implementation demonstrates the seam: current-version identity is queried during retrieval, followed only by an authorization recheck before return. No planned Infrastructure-owned post-provider currentness operation closes this time-of-check/time-of-render gap. Consequently the artifacts do not provide an executable proof for the supersession edge case, FR-010, FR-011, FR-012, SC-001, or SC-002.",
+      "exact_correction_outcome": "Add a provider-independent Core currentness-validation contract implemented only by Infrastructure, for example ValidateCurrentAsync over the request ID, Evidence Fingerprint, selected Document Version/Stable Section/span identities, fixed Source Anchor set, and exact relationship support. PreparedChatCoordinator must invoke it after selection-only provider validation and immediately before the final Repository authorization check and render. In one bounded serializable validation read it must prove that each Logical Document still points to the same current Document Version; every Stable Section and exact substring/hash still exists; every fixed Source Anchor remains same-version, selected-Repository, safe, and has an available positive line range; and every required REFERENCES/GENERATED_FROM relationship, profile, and direction remains current and authorized. Any mismatch returns the existing whole-answer missing/stale failure with zero claims or citations. Update the performance and call-order text from exactly one evidence read to one bounded retrieval plus one bounded currentness validation; do not hold a database transaction open across the provider call. Add deterministic barrier-controlled tests that supersede a Document Version and invalidate required support after retrieval/provider dispatch but before validation, requiring whole-answer rejection. Preserve the existing selection-only provider schema, exact-span/support-signature checks, and post-validation Repository authorization recheck."
+    }
+  ],
+  "constitution_result": {
+    "status": "REVISE",
+    "principle_results": {
+      "I_layered_project_boundaries": "PASS",
+      "II_domain_purity_and_ubiquitous_language": "PASS",
+      "III_validation_and_ui_contract_discipline": "PASS",
+      "IV_test_first_integration_harness": "REVISE",
+      "V_security_and_data_stewardship": "REVISE"
+    },
+    "evidence": "Core/Infrastructure/Agents/Web ownership, specific repository boundaries, immutable Document Versions, Chinese UI, embedded prompts, encrypted provider secrets, exact Cross-Repository vocabulary, no-migration intent, and the corrected final-container harness comply. Principle IV remains unmet because the required supersession/support-loss window has no executable production seam or deterministic test. Principle V remains unmet because stale evidence can still pass retained-object validation and reach rendering after its currentness was revoked. No system-wide or context ADR file and no root CONTEXT-MAP.md exists at the pinned boundary, so no ADR conflict was found."
+  },
+  "coverage_summary": {
+    "covered": [
+      "Provider output is selection-only consistently across plan, research, data model, quickstart, and Chat contract",
+      "Exact server-owned persisted Section spans, text hashes, support signatures, fixed citations, and whole-answer adversarial rejection",
+      "Explicit prepared System and exactly two Repository scope",
+      "Authorization before retrieval, live during retrieval, and immediately before rendering",
+      "Missing-equivalent unauthorized and revoked behavior",
+      "Current database-backed Documents, Document Sections, Source Anchors, flow/provenance, and exact directed REFERENCES Edge at retrieval time",
+      "No durable chat state, entity, migration, DbSet, or model-snapshot change",
+      "Predecessor migration lifecycle and no-pending-model check",
+      "Product-service provisioning with shared Data Protection key ring/application discriminator",
+      "Real Identity and interactive-server Blazor Playwright proof",
+      "Concrete provider/app namespace reachable from host-side Scan and final-container Chat using the same stored 127.0.0.1 endpoints",
+      "Worker/Chat/app publications restricted to host loopback, with no app-side publish",
+      "Explicit Release restore/build of tests/Vulgata.Tests before invoking the generated Release Playwright installer",
+      "Runtime curl health command using a binary present in the accepted image",
+      "Positive claim/citation assertions, negative Identity and revocation assertions, and verified cleanup",
+      "Exact Story 11.4 prepared aliases, refs, commits, direction, and profile boundary",
+      "No Scan strategy, matching, retry/failover, scheduler, or deferred Epic 5-10 expansion"
+    ],
+    "not_adequately_proven": [
+      "Current Document Version, Source Anchor availability, and relationship support revalidation after provider latency and immediately before render"
+    ],
+    "residual_task_level_risks_after_required_correction": [
+      "Markdown span parsing, canonical hashing, and Business safe-text predicates need precise test vectors",
+      "Interactive circuit user-context acquisition must follow the existing AuthenticationStateProvider/UserContext pattern rather than assume IHttpContextAccessor remains available",
+      "Playwright circuit readiness and cleanup races need bounded polling",
+      "Docker and Chromium availability remain environment prerequisites"
+    ]
+  },
+  "prior_finding_closure_assessment": {
+    "all_original_high_findings_closed": true,
+    "all_iteration_2_contradictions_closed": true,
+    "iteration_1_findings": [
+      {
+        "id": "PLAN-115-SEMANTIC-001",
+        "status": "CLOSED",
+        "evidence": "plan.md:193-234, research.md:68-93, data-model.md:110-152, and chat-agent-contract.md:66-81 and 109-146 consistently require exact server-owned spans, provider selection/order handles only, fixed citations, immutable support signatures, and whole-answer rejection."
+      },
+      {
+        "id": "PLAN-115-DOCKER-002",
+        "status": "CLOSED",
+        "evidence": "plan.md:338-418, quickstart.md:89-212, and release-verification-contract.md:19-143 assign sole harness ownership; provision real Identity, scope, providers, assignments, and knowledge through product services; share Data Protection; drive interactive Blazor with Playwright; use concrete curl health; and perform complete finally cleanup."
+      }
+    ],
+    "iteration_2_contradictions": [
+      {
+        "id": "PLAN-115-ITER2-PROVIDER-INVARIANT",
+        "status": "CLOSED",
+        "evidence": "plan.md:424-427 now forbids provider-authored claim text, citations, locators, narrative, and diagnostics, matching data-model.md:110-119 and chat-agent-contract.md:109-139."
+      },
+      {
+        "id": "PLAN-115-ITER2-NETWORK-TOPOLOGY",
+        "status": "CLOSED",
+        "evidence": "plan.md:371-395, quickstart.md:130-154 and 184-212, and release-verification-contract.md:71-97 specify a 0.0.0.0 provider listener, equal provider ports published only on host 127.0.0.1, app joining the provider namespace without app-side publish, and shared stored loopback endpoints reachable from both host and app."
+      },
+      {
+        "id": "PLAN-115-ITER2-PLAYWRIGHT-BUILD",
+        "status": "CLOSED",
+        "evidence": "plan.md:405-409, quickstart.md:75-87, and release-verification-contract.md:99-112 explicitly restore and build the Release test project before invoking its generated Release Playwright installer."
+      }
+    ],
+    "new_iteration_3_finding": "PLAN-115-CURRENTNESS-003"
+  },
+  "trigger_assessment": {
+    "planned_change_triggered": true,
+    "trigger": "New Chat Agent retrieval tool IChatEvidenceRetriever.RetrieveAsync",
+    "scan_strategy_change": false,
+    "prd_weakening": false,
+    "required_action": "Do not generate tasks from this REVISE verdict. Because iteration 3 is the maximum plan-review iteration, the root must escalate rather than silently start another correction cycle. If a corrected boundary later receives independent ACCEPT, the root orchestrator must still request and record explicit planned-change authorization before task generation. Plan acceptance is not that authorization."
+  },
+  "e2e_docker_assessment": {
+    "clean_database_e2e": "PASS at the release-harness architecture level: unique PostgreSQL 17 database, exact prepared revisions, product-service provisioning, profiling through Pass 2 and Chat, authorization-negative proof, same-database final-container use, finally cleanup, catalog absence verification, and nonce-owned resource removal are specified.",
+    "provider_app_network": "PASS: the provider binds all interfaces inside the nonce-owned shared namespace; Worker, Chat, and app ports are published only to host loopback by the provider container; the app joins with --network container:<provider> and no app-side publish; host-side Scan and container Chat can use the same stored 127.0.0.1 endpoints.",
+    "playwright": "PASS: the Release test project is explicitly restored and built before its generated Release Playwright installer is invoked, and the final proof requires real Identity plus interactive Blazor control operation.",
+    "data_protection": "PASS: provisioner and accepted app image use the same mounted key ring and application discriminator, with real SecretEncryptionService encryption/decryption.",
+    "health": "PASS: docker run supplies bounded curl health against /Account/Login and curl exists in the runtime image.",
+    "cleanup": "PASS: primary and cleanup failures are retained; database absence and all nonce-owned resource removal are mandatory.",
+    "remaining_release_effect": "The final Chat gate still lacks the required post-provider database currentness check, so a superseded Document Version could be rendered despite the otherwise executable Docker/browser harness.",
+    "result": "REVISE"
+  },
+  "rationale": "The corrected iteration-3 artifacts fully close both original High findings and all three iteration-2 contradictions. The final provider/app topology, Playwright preparation, Data Protection, Identity, health, and cleanup contracts are feasible against the pinned seams. ACCEPT is nevertheless prohibited because the complete plan promises immediate pre-render currentness while structurally allowing only the original retrieval read; immutable retained spans cannot reveal that their Logical Document ceased to be current during provider latency. This is a correctable High/MUST deterministic-grounding and failure-behavior gap, not an unresolvable external-authority conflict, so REVISE rather than BLOCKED is required. As this is the maximum iteration, lifecycle progression requires root escalation.",
+  "read_only_confirmation": "No plan, verdict, workflow or lifecycle state, BMad artifact, source, test, dependency, Docker file, Git index, branch, commit, or history was changed. No delegation was performed."
+}
