@@ -1,7 +1,7 @@
 ---
 story_key: 11-4-exact-rpc-http-cross-repository-demo-resolution
 title: "Story 11.4: Exact RPC/HTTP Cross-Repository Demo Resolution"
-Status: review
+Status: done
 Epic: 11
 Story: 4
 created: 2026-08-03
@@ -256,23 +256,47 @@ user authorizes the triggered Scan-strategy change.
   `docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json`.
 - Proposed SpecKit short name: `exact-cross-repo-resolution`.
 - SpecKit feature directory: `specs/007-exact-cross-repo-resolution`.
-- Current workflow stage: `plan`.
+- Current workflow stage: `complete`.
 
 ### Agent Model Used
 
 - Root sprint-loop orchestrator with direct-child context synthesis,
-  specification, planning, and independent plan review before authorization.
+  specification, planning, TDD implementation/correction, and three independent
+  combined quality-review iterations under `expedited-mvp`.
 
 ### Completion Notes List
 
-- Context synthesis accepted the pinned two-Repository boundary.
-- No business endpoint was invented. Read-only planning inspection pinned the
-  exact literal/XML occurrence and selectors in the reviewed version-controlled
-  demo profile from the two tagged Git objects.
-- Plan review and planned-change authorization remain mandatory before tasks.
+- Context synthesis accepted the pinned two-Repository boundary, and the user
+  authorized the accepted plan's Scan-strategy change before task generation.
+- Implemented a fixed embedded, validated Communication Pattern Profile for
+  exact Java literal consumer and XML provider extraction. LLM, Agent, MCP,
+  scheduler, narrative context, and general discovery cannot create an Edge.
+- Exact Git revision acquisition, runtime Repository/Document Version/Source
+  Anchor binding, deterministic exact resolution, typed unsupported outcomes,
+  atomic Edge/evidence/Uncertainty persistence, replay idempotency, cleanup, and
+  authorization-safe retrieval are complete.
+- Final combined quality review iteration 3 returned `ACCEPT` with AC-1..AC-7,
+  FR-001..FR-024, and SC-001..SC-008 passing and all prior findings closed.
+- Current-boundary evidence passed focused Story 11.4 tests 121/121, Web build
+  with zero errors, PostgreSQL migration lifecycle checks, the source-bound
+  CodeGraph provider gate 1/1, and the remaining regression suite 1081/1081
+  (1082/1082 combined).
+- Conditional E2E is `skipped-covered`: existing current-boundary integration,
+  authorization, persistence, and migration tests completely cover triggered
+  Story 11.4 predicates. Story 11.5 retains the actual prepared-Repositories
+  clean-database complete Pass 1/Pass 2 through retrieval/chat/citations
+  rehearsal and final release Docker verification.
 
 ### File List
 
 - `docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md`
 - `docs/bmad/implementation-artifacts/sprint-status.yaml`
 - `docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json`
+- `specs/007-exact-cross-repo-resolution/`
+- `src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs`
+- `src/dotnet/Vulgata.Infrastructure/CrossRepository/`
+- `src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs`
+- `src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs`
+- `src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs`
+- `tests/Vulgata.Tests/ExactCrossRepository*Tests.cs`
+- `tests/Vulgata.Tests/ExactResolution*Tests.cs`
