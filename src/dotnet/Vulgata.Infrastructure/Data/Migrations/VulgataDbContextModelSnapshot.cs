@@ -523,6 +523,134 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.ExactCrossRepositoryEdgeEvidence", b =>
+                {
+                    b.Property<Guid>("EdgeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Confidence")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)");
+
+                    b.Property<Guid>("ConsumerDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConsumerEvidenceLocator")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<string>("ConsumerRawIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("ConsumerRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConsumerScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConsumerSourceAnchorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EvidenceFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("NormalizedEndpointIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("OccurrenceId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ProfileFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ProfileId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ProfileSchemaVersion")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("ProfileVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Protocol")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("ProviderDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProviderEvidenceLocator")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<string>("ProviderRawIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("ProviderRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProviderScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProviderSourceAnchorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ResolutionKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("EdgeId");
+
+                    b.HasIndex("EvidenceFingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("ConsumerSourceAnchorId", "ConsumerDocumentVersionId", "ConsumerRepositoryId", "ConsumerScanRunId");
+
+                    b.HasIndex("ProviderSourceAnchorId", "ProviderDocumentVersionId", "ProviderRepositoryId", "ProviderScanRunId");
+
+                    b.ToTable("ExactCrossRepositoryEdgeEvidence", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_ExactCrossRepositoryEdgeEvidence_Confidence_Exact", "\"Confidence\" = 1.0000");
+
+                            t.HasCheckConstraint("CK_ExactCrossRepositoryEdgeEvidence_Hashes_Closed", "length(\"ProfileFingerprint\") = 64 AND lower(\"ProfileFingerprint\") = \"ProfileFingerprint\" AND length(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"ProfileFingerprint\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', ''), 'a', ''), 'b', ''), 'c', ''), 'd', ''), 'e', ''), 'f', '')) = 0 AND length(\"EvidenceFingerprint\") = 64 AND lower(\"EvidenceFingerprint\") = \"EvidenceFingerprint\" AND length(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"EvidenceFingerprint\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', ''), 'a', ''), 'b', ''), 'c', ''), 'd', ''), 'e', ''), 'f', '')) = 0");
+
+                            t.HasCheckConstraint("CK_ExactCrossRepositoryEdgeEvidence_Protocol_Closed", "\"Protocol\" = 'CustomRpc'");
+
+                            t.HasCheckConstraint("CK_ExactCrossRepositoryEdgeEvidence_Repositories_Distinct", "\"ConsumerRepositoryId\" <> \"ProviderRepositoryId\"");
+
+                            t.HasCheckConstraint("CK_ExactCrossRepositoryEdgeEvidence_ResolutionKind_Closed", "\"ResolutionKind\" = 'ExactConfigured'");
+
+                            t.HasCheckConstraint("CK_ExactCrossRepositoryEdgeEvidence_SchemaVersion_Closed", "\"ProfileSchemaVersion\" = '1.0'");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1334,6 +1462,143 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("SystemOwnerAssignments", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.Uncertainty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EndpointIdentifier")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("EndpointIdentifierNormalized")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("EvidenceFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("EvidenceLocator")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<string>("ObservationKind")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("OccurrenceId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ProfileFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ProfileId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ProfileSchemaVersion")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("ProfileVersion")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvedByDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceAnchorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("SubStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("TargetRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EvidenceFingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("ResolvedByDocumentVersionId");
+
+                    b.HasIndex("TargetRepositoryId");
+
+                    b.HasIndex("DocumentVersionId", "RepositoryId", "ScanRunId");
+
+                    b.HasIndex("RepositoryId", "Status", "SubStatus");
+
+                    b.HasIndex("SourceAnchorId", "DocumentVersionId", "RepositoryId", "ScanRunId");
+
+                    b.ToTable("Uncertainties", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Uncertainties_EndpointPair_Closed", "(\"EndpointIdentifier\" IS NULL) = (\"EndpointIdentifierNormalized\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_Uncertainties_Hashes_Closed", "length(\"ProfileFingerprint\") = 64 AND lower(\"ProfileFingerprint\") = \"ProfileFingerprint\" AND length(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"ProfileFingerprint\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', ''), 'a', ''), 'b', ''), 'c', ''), 'd', ''), 'e', ''), 'f', '')) = 0 AND length(\"EvidenceFingerprint\") = 64 AND lower(\"EvidenceFingerprint\") = \"EvidenceFingerprint\" AND length(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"EvidenceFingerprint\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', ''), 'a', ''), 'b', ''), 'c', ''), 'd', ''), 'e', ''), 'f', '')) = 0");
+
+                            t.HasCheckConstraint("CK_Uncertainties_ObservationKind_Closed", "\"ObservationKind\" IS NULL OR \"ObservationKind\" = 'file_storage'");
+
+                            t.HasCheckConstraint("CK_Uncertainties_ReasonCode_Closed", "\"ReasonCode\" IN ('variable_target', 'disallowed_invocation', 'malformed_provider', 'provider_out_of_root', 'unmatched', 'multiple_providers', 'normalization_mismatch', 'unsupported_kind')");
+
+                            t.HasCheckConstraint("CK_Uncertainties_Resolution_Closed", "(\"Status\" = 'unresolved' AND \"ResolvedAt\" IS NULL AND \"ResolvedByDocumentVersionId\" IS NULL) OR \"Status\" <> 'unresolved'");
+
+                            t.HasCheckConstraint("CK_Uncertainties_SchemaVersion_Closed", "\"ProfileSchemaVersion\" = '1.0'");
+
+                            t.HasCheckConstraint("CK_Uncertainties_Status_Closed", "\"Status\" IN ('unresolved', 'resolved', 'wontfix')");
+
+                            t.HasCheckConstraint("CK_Uncertainties_SubStatus_Closed", "\"SubStatus\" IN ('cross_repo', 'unknown_target', 'ambiguous')");
+
+                            t.HasCheckConstraint("CK_Uncertainties_Type_Closed", "\"Type\" IN ('cross_repository', 'unsupported_communication')");
+
+                            t.HasCheckConstraint("CK_Uncertainties_UnsupportedCombination_Closed", "(\"ReasonCode\" = 'unsupported_kind' AND \"Type\" = 'unsupported_communication' AND \"ObservationKind\" = 'file_storage') OR (\"ReasonCode\" <> 'unsupported_kind' AND \"Type\" = 'cross_repository' AND \"ObservationKind\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.UnresolvedStructuralRelationshipCandidate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1527,6 +1792,35 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("ScanRun");
 
                     b.Navigation("SupersededBy");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.ExactCrossRepositoryEdgeEvidence", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentEdge", "Edge")
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.ExactCrossRepositoryEdgeEvidence", "EdgeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.SourceAnchor", "ConsumerSourceAnchor")
+                        .WithMany()
+                        .HasForeignKey("ConsumerSourceAnchorId", "ConsumerDocumentVersionId", "ConsumerRepositoryId", "ConsumerScanRunId")
+                        .HasPrincipalKey("Id", "DocumentVersionId", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.SourceAnchor", "ProviderSourceAnchor")
+                        .WithMany()
+                        .HasForeignKey("ProviderSourceAnchorId", "ProviderDocumentVersionId", "ProviderRepositoryId", "ProviderScanRunId")
+                        .HasPrincipalKey("Id", "DocumentVersionId", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ConsumerSourceAnchor");
+
+                    b.Navigation("Edge");
+
+                    b.Navigation("ProviderSourceAnchor");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
@@ -1740,6 +2034,40 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("System");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Uncertainty", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "ResolvedByDocumentVersion")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByDocumentVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.Repository", "TargetRepository")
+                        .WithMany()
+                        .HasForeignKey("TargetRepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", "DocumentVersion")
+                        .WithMany()
+                        .HasForeignKey("DocumentVersionId", "RepositoryId", "ScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.SourceAnchor", "SourceAnchor")
+                        .WithMany()
+                        .HasForeignKey("SourceAnchorId", "DocumentVersionId", "RepositoryId", "ScanRunId")
+                        .HasPrincipalKey("Id", "DocumentVersionId", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("DocumentVersion");
+
+                    b.Navigation("ResolvedByDocumentVersion");
+
+                    b.Navigation("SourceAnchor");
+
+                    b.Navigation("TargetRepository");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.UnresolvedStructuralRelationshipCandidate", b =>

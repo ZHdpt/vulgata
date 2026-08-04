@@ -10,6 +10,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.CommunicationDetection;
+using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
@@ -115,6 +116,15 @@ builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
 builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
 builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
 builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
+builder.Services.AddScoped<IRepositoryAuthorizationVerifier, RepositoryAuthorizationVerifier>();
+builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
+builder.Services.AddScoped<IExactGitRevisionSnapshotService, ExactGitRevisionSnapshotService>();
+builder.Services.AddScoped<ExactCandidateExtractors>();
+builder.Services.AddScoped<IExactCrossRepositoryResolver, ExactCrossRepositoryResolver>();
+builder.Services.AddScoped<
+    IExactCrossRepositoryResolutionStore,
+    ExactCrossRepositoryResolutionStore>();
+builder.Services.AddScoped<ExactCrossRepositoryResolutionCoordinator>();
 PreparedPass2FlowCatalog preparedPass2FlowCatalog =
     PreparedPass2FlowCatalog.Load(typeof(WorkerAgentDispatcher).Assembly);
 builder.Services.AddSingleton(preparedPass2FlowCatalog);

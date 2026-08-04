@@ -14,6 +14,13 @@ internal sealed class SourceAnchorConfiguration : IEntityTypeConfiguration<Sourc
             table.HasCheckConstraint("CK_SourceAnchors_LineEnd_Range", "\"LineEnd\" >= \"LineStart\"");
         });
         builder.HasKey(anchor => anchor.Id);
+        builder.HasAlternateKey(anchor => new
+        {
+            anchor.Id,
+            anchor.DocumentVersionId,
+            anchor.RepositoryId,
+            anchor.ScanRunId,
+        });
         builder.Property(anchor => anchor.Id).ValueGeneratedNever();
         builder.Property(anchor => anchor.ProfiledRevision).HasMaxLength(64);
         builder.Property(anchor => anchor.RepositoryRelativePath).HasMaxLength(2_048);

@@ -30,6 +30,9 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
     public DbSet<SourceAnchor> SourceAnchors => Set<SourceAnchor>();
     public DbSet<DocumentEdge> DocumentEdges => Set<DocumentEdge>();
+    public DbSet<ExactCrossRepositoryEdgeEvidence> ExactCrossRepositoryEdgeEvidence =>
+        Set<ExactCrossRepositoryEdgeEvidence>();
+    public DbSet<Uncertainty> Uncertainties => Set<Uncertainty>();
     public DbSet<FlowGroup> FlowGroups => Set<FlowGroup>();
     public DbSet<FlowTrace> FlowTraces => Set<FlowTrace>();
     public DbSet<FlowTraceStep> FlowTraceSteps => Set<FlowTraceStep>();

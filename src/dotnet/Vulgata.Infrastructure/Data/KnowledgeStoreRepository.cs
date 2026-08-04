@@ -1,4 +1,5 @@
 using System.Data;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
@@ -649,6 +650,17 @@ public sealed class KnowledgeStoreRepository(
             requestedStableSectionIds);
 
         Guid[] authorizedRepositoryIds = scope.AuthorizedRepositoryIds.ToArray();
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+        if (!await scope.HasCurrentAccessAsync(
+                authorizedRepositoryIds,
+                cancellationToken))
+        {
+            return null;
+        }
+
         var source = await _context.Set<LogicalDocument>()
             .AsNoTracking()
             .Where(document =>
@@ -730,16 +742,45 @@ public sealed class KnowledgeStoreRepository(
             .OrderBy(edge => edge.Id)
             .Take(KnowledgeDocumentLimits.MaximumEdges)
             .ToArrayAsync(cancellationToken);
+        Guid[] authorizedExactEdgeIds = edges
+            .Where(edge => scope.Contains(edge.TargetRepositoryId))
+            .Select(edge => edge.Id)
+            .ToArray();
+        Dictionary<Guid, ExactCrossRepositoryEdgeEvidence> exactEvidenceByEdge =
+            authorizedExactEdgeIds.Length == 0
+                ? []
+                : await _context.ExactCrossRepositoryEdgeEvidence
+                    .AsNoTracking()
+                    .Where(evidence => authorizedExactEdgeIds.Contains(evidence.EdgeId))
+                    .ToDictionaryAsync(evidence => evidence.EdgeId, cancellationToken);
         CurrentRelationship[] relationships = edges
             .Select<DocumentEdge, CurrentRelationship>(edge =>
-                scope.Contains(edge.TargetRepositoryId)
-                    ? new AuthorizedRelationship(
+                !scope.Contains(edge.TargetRepositoryId)
+                    ? new RestrictedRelationship()
+                    : exactEvidenceByEdge.TryGetValue(
+                        edge.Id,
+                        out ExactCrossRepositoryEdgeEvidence? evidence)
+                        ? new AuthorizedExactRelationship(
+                            OpaqueRelationshipIdentity(edge.Id),
+                            edge.EdgeType,
+                            new ExactCrossRepositoryEvidenceReadModel(
+                                evidence.ConsumerRawIdentifier,
+                                evidence.ProviderRawIdentifier,
+                                evidence.NormalizedEndpointIdentifier,
+                                evidence.Protocol,
+                                evidence.ProfileId,
+                                evidence.ProfileVersion,
+                                evidence.ProfileFingerprint,
+                                evidence.OccurrenceId,
+                                evidence.Confidence,
+                                evidence.ConsumerEvidenceLocator,
+                                evidence.ProviderEvidenceLocator))
+                        : new AuthorizedRelationship(
                         edge.Id,
                         edge.EdgeType,
                         edge.SourceDocumentVersionId,
                         edge.TargetDocumentVersionId,
-                        edge.TargetRepositoryId)
-                    : new RestrictedRelationship())
+                        edge.TargetRepositoryId))
             .ToArray();
         IReadOnlyList<CurrentFlowGroup> flowGroups = await LoadFlowGroupsAsync(
             version.Id,
@@ -770,7 +811,7 @@ public sealed class KnowledgeStoreRepository(
                 .SelectMany(DeserializeGuids)
                 .Any(id => !authorizedDocumentVersionIdSet.Contains(id));
 
-        return new CurrentKnowledge(
+        var current = new CurrentKnowledge(
             source.Id,
             version.Id,
             source.RepositoryId,
@@ -821,7 +862,77 @@ public sealed class KnowledgeStoreRepository(
                             .ToArray(),
                     hasRestrictedDocumentReference);
             }).ToArray());
+        return await scope.HasCurrentAccessAsync(
+                authorizedRepositoryIds,
+                cancellationToken)
+            ? current
+            : null;
     }
+
+    public async Task<AuthorizedUncertaintyReadModel?> GetUncertaintyAsync(
+        Guid uncertaintyId,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        if (uncertaintyId == Guid.Empty)
+        {
+            return null;
+        }
+
+        Guid[] authorizedRepositoryIds = scope.AuthorizedRepositoryIds.ToArray();
+        await using IDbContextTransaction transaction =
+            await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+        if (!await scope.HasCurrentAccessAsync(
+                authorizedRepositoryIds,
+                cancellationToken))
+        {
+            return null;
+        }
+
+        Uncertainty? uncertainty = await _context.Uncertainties
+            .AsNoTracking()
+            .SingleOrDefaultAsync(value =>
+                value.Id == uncertaintyId &&
+                authorizedRepositoryIds.Contains(value.RepositoryId) &&
+                (value.TargetRepositoryId == null ||
+                    authorizedRepositoryIds.Contains(value.TargetRepositoryId.Value)),
+                cancellationToken);
+        if (uncertainty is null)
+        {
+            return null;
+        }
+
+        Guid[] requiredRepositoryIds = uncertainty.TargetRepositoryId is Guid targetRepositoryId
+            ? [uncertainty.RepositoryId, targetRepositoryId]
+            : [uncertainty.RepositoryId];
+        if (!await scope.HasCurrentAccessAsync(
+                requiredRepositoryIds.Distinct().ToArray(),
+                cancellationToken))
+        {
+            return null;
+        }
+
+        return new AuthorizedUncertaintyReadModel(
+            uncertainty.Type,
+            uncertainty.Status,
+            uncertainty.SubStatus,
+            uncertainty.ReasonCode,
+            uncertainty.ObservationKind,
+            uncertainty.EndpointIdentifier,
+            uncertainty.EndpointIdentifierNormalized,
+            uncertainty.ProfileSchemaVersion,
+            uncertainty.ProfileId,
+            uncertainty.ProfileVersion,
+            uncertainty.ProfileFingerprint,
+            uncertainty.OccurrenceId,
+            uncertainty.EvidenceLocator);
+    }
+
+    private static string OpaqueRelationshipIdentity(Guid edgeId) =>
+        $"relationship-v1:{Convert.ToHexStringLower(SHA256.HashData(edgeId.ToByteArray()))}";
 
     private static IReadOnlyList<CurrentFlowGroup> RedactFlowTextProjection(
         IReadOnlyList<CurrentFlowGroup> flowGroups) =>

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0",
+  "profileId": "august15-exact-cross-repository-v1",
+  "profileVersion": "1.0.0",
+  "repositories": [
+    {
+      "alias": "mbs_account",
+      "stableGitIdentity": "mbs_account",
+      "expectedRef": "refs/tags/vulgata/August15th-sample",
+      "expectedCommit": "19c60cd3f3976b7697c487c7bafd96142e3a7625"
+    },
+    {
+      "alias": "mbs_channel",
+      "stableGitIdentity": "mbs_channel",
+      "expectedRef": "refs/tags/vulgata/August15th-sample",
+      "expectedCommit": "47f6b627a7598f862873610413eec1e1e7bf46bf"
+    }
+  ],
+  "occurrences": [
+    {
+      "occurrenceId": "account-to-channel-cust-update-session-v1",
+      "protocol": "custom-rpc",
+      "consumerAlias": "mbs_account",
+      "providerAlias": "mbs_channel",
+      "consumer": {
+        "files": [
+          "src/main/java/cn/com/yitong/actions/mobile/UpdateChannelSessionOp.java"
+        ],
+        "invocation": {
+          "form": "simple-member-invocation",
+          "receiverSymbol": "netTools",
+          "memberName": "execute",
+          "endpointArgumentIndex": 1,
+          "line": 45,
+          "occurrenceOrdinalOnLine": 0
+        }
+      },
+      "provider": {
+        "root": "src/main/resources/disgram/in",
+        "files": [
+          "src/main/resources/disgram/in/cust/updateSession.xml"
+        ],
+        "declaration": {
+          "elementLocalName": "trans",
+          "endpointAttributeLocalName": "name",
+          "line": 2,
+          "occurrenceOrdinalOnLine": 0
+        },
+        "implementationDocument": {
+          "repositoryRelativePath": "src/main/java/cn/com/yitong/actions/domain/login/UpdateSessionOp.java",
+          "symbolKind": "type",
+          "symbol": "cn.com.yitong.actions.domain.login.UpdateSessionOp"
+        }
+      },
+      "normalization": {
+        "id": "custom-rpc-in-prefix-v1",
+        "consumerRequiredPrefix": "",
+        "providerRequiredPrefix": "in/"
+      },
+      "comparison": "ordinal"
+    }
+  ],
+  "unsupportedObservations": [
+    {
+      "observationId": "account-file-storage-oss-upload-v1",
+      "kind": "file-storage",
+      "ownerAlias": "mbs_account",
+      "ownerDocument": {
+        "repositoryRelativePath": "src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java",
+        "symbolKind": "type",
+        "symbol": "cn.com.yitong.actions.cust.UploadOcrToOssOp"
+      },
+      "selector": {
+        "form": "simple-member-invocation",
+        "receiverSymbol": "ossClientService",
+        "memberName": "simpleUploadToOSSBase64String",
+        "line": 66,
+        "occurrenceOrdinalOnLine": 0
+      },
+      "evidenceLocator": "src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java#line=66;rule=unsupported-member-invocation-v1"
+    }
+  ]
+}

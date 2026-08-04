@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/007-exact-cross-repo-resolution",
   "execution_level": "expedited-mvp",
-  "stage": "implement",
+  "stage": "quality-review",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -21,11 +21,11 @@
       "completed_at": null
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 0,
+      "status": "active",
+      "iteration": 1,
       "dispatch_id": null,
       "verdict_path": null,
-      "input_boundary": null,
+      "input_boundary": "pending reviewed-candidate checkpoint commit",
       "completed_at": null
     },
     "plan-review": {
@@ -134,8 +134,15 @@
     },
     {
       "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-03T11:39:20Z",
+      "completed_at": "2026-08-04T01:54:16Z"
+    },
+    {
+      "stage": "quality-review",
       "status": "active",
-      "started_at": "2026-08-03T11:39:20Z"
+      "started_at": "2026-08-04T01:54:16Z",
+      "iteration": 1
     }
   ],
   "verification": [
@@ -154,29 +161,314 @@
       "observed_at": "2026-08-03T11:22:49Z",
       "summary": "User explicitly approved the accepted plan's exact Profiled Revision acquisition, bounded post-Pass-1 two-Repository integration, exact Cross-Repository matching and unsupported-observation policy, two-endpoint authorization boundary, and additive migration invariants for advancement to task generation; later TDD, combined review, E2E, security, migration, and verification gates remain required.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/1",
+      "kind": "boundary-verification",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "specs/007-exact-cross-repo-resolution/plan.md"
+      ],
+      "command": "git rev-parse HEAD; git rev-parse HEAD^; Get-FileHash plan.md -Algorithm SHA256; git status --short",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T11:43:53Z",
+      "summary": "Accepted-delivery HEAD is f0790d2; its pinned source parent is exactly 67b5eaf45ff3c3348e240e323bed6f80c9e885e0; accepted plan SHA-256 remains 286e3058f60faafc297d075de9815c357899716c0aa8619c6d385490bf480224; no implementation path existed before setup.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/2",
+      "kind": "ownership-assignment",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceAnchorConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+        "src/dotnet/Vulgata.Web/Program.cs"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-03T11:43:53Z",
+      "summary": "The sole root is the integration owner for every shared EF, migration, model snapshot, SourceAnchor configuration, and Program.cs seam; no parallel implementer may edit them without a serialized root dispatch.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/3",
+      "kind": "baseline-test-and-build",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests",
+        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj"
+      ],
+      "command": "predecessor test filter; isolated PostgreSQL filter; local predecessor filter excluding only KnowledgeStorePostgreSqlConcurrencyTests; dotnet build Vulgata.Web",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T11:43:53Z",
+      "summary": "Web build passed with 0 errors. The broad predecessor filter selected four pre-existing PostgreSQL tests that failed only because VULGATA_TEST_POSTGRES was absent; the isolated failure was recorded before source changes. The remaining local predecessor boundary passed 311/311 with zero skips. The required disposable PostgreSQL lane remains mandatory before completion.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/4",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactCrossRepositoryTestFixtures.cs"
+      ],
+      "command": "dotnet build Vulgata.Tests --no-restore; dotnet test Vulgata.Tests --no-restore --filter FullyQualifiedName~ExactCrossRepositoryTestFixtureTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T11:56:20Z",
+      "summary": "Transient RED was CS0246 for the absent ExactCrossRepositoryTestFixture. GREEN build completed with zero errors; the focused disposable two-Repository Git/SQLite fixture smoke passed 1/1 and root rerun passed 1/1. Unique owned-root cleanup, deterministic Pass1 builders, safe capture, authorization scopes, and zero-access counters are present; prepared Repositories were not accessed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/5",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactResolutionProfileTests.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IExactCrossRepositoryResolver.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IExactCrossRepositoryResolutionStore.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactResolutionProfileCatalog.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json",
+        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj"
+      ],
+      "command": "dotnet test Vulgata.Tests --filter FullyQualifiedName~ExactResolutionProfileTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T12:11:39Z",
+      "summary": "Transient RED was the intended absent CrossRepository catalog and ProfileRepository/runtime-binding contract types. GREEN passed 12/12; root rerun passed 12/12. Embedded and accepted profile bytes share SHA-256 b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db. Strict rejection and Core no-EF/IQueryable/DbSet/DataAnnotations checks passed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/6",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactResolutionExtractionTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter FullyQualifiedName~ExactResolutionExtractionTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T12:34:30Z",
+      "summary": "Transient RED was CS0246 for absent ExactCandidateExtractors, followed by the intended missing provider method tracer. GREEN passed 4/4 and root rerun passed 4/4. Reviewed Java line 45 and XML line 2, exact current owner mapping, DTD-disabled parsing, profile-listed-only reads, finite limits, and source/LLM/System-context isolation were verified.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/7",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactGitRevisionAcquisitionTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter FullyQualifiedName~ExactGitRevisionAcquisitionTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T12:40:26Z",
+      "summary": "Transient RED was CS0246 for absent ExactGitRevisionSnapshotService after the parallel compile window was serialized. GREEN passed 3/3 and root rerun passed 3/3. Full-ref peeling, exact commit equality, independent private leases, idempotent cleanup, and ordinary checkout invariants passed. Windows ref-lock length was corrected by shortening only private operation/child names; bounded production failures expose no stderr.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/8",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactCrossRepositoryResolverTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactResolutionProfileTests|ExactCrossRepositoryResolverTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T12:53:24Z",
+      "summary": "Transient RED proved the absent resolver and a G1 prerequisite gap: exact decisions lacked typed identifiers/protocol/confidence evidence. The root-authorized minimal contract correction plus resolver passed G4 4/4 and the combined G1/G4 root rerun 16/16. Form-C/ASCII-edge normalization, one provider in/ removal, ordinal/direction/cardinality, confidence 1.0000, ordering, and no global role or LLM/System-context truth passed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/9",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactCrossRepositoryPersistenceTests.cs",
+        "src/dotnet/Vulgata.Core/Entities/ExactCrossRepositoryEdgeEvidence.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ExactCrossRepositoryEdgeEvidenceConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceAnchorConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter US1 exact aggregate; dotnet test Vulgata.Tests --no-restore --filter KnowledgeStorePersistenceTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T13:15:09Z",
+      "summary": "Transient RED was the absent exact evidence entity/store. Focused persistence passed 4/4; the root US1 aggregate passed 27/27 and predecessor KnowledgeStore persistence passed 23/23. Composite owner FKs, closed checks, atomic Edge/evidence insertion, deterministic replay without timestamp drift, conflict/rollback/currentness and ordered-lock behavior passed. No migration was generated and IKnowledgeStoreRepository remained unchanged.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/10",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactResolutionProfileTests.cs",
+        "tests/Vulgata.Tests/ExactGitRevisionAcquisitionTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactResolutionProfileCatalog.cs",
+        "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactResolutionProfileTests|ExactGitRevisionAcquisitionTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T13:35:24Z",
+      "summary": "Behavioral REDs covered unsafe refs, absent pre-evidence gate, unsafe exact-Git reachability, cleanup-failure invalidation, and cross-assembly gate visibility. GREEN passed 25/25. Invalid binding/provenance/revision cases retain zero access; cancellation/concurrency/cleanup and sanitized diagnostics pass. The public bounded BindForValidation gate exposes no profile path/byte replacement.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/11",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactResolutionExtractionTests.cs",
+        "tests/Vulgata.Tests/ExactCrossRepositoryResolverTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactResolutionExtractionTests|ExactCrossRepositoryResolverTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T13:35:24Z",
+      "summary": "Behavioral REDs covered repeated provider prefix, variable ordinal promotion, and qualified receiver acceptance. GREEN passed 57/57 with 55 negative fixture assertions and zero exact decisions from negative paths. Lexical/XML/path/owner/cardinality/direction matrices and no LLM/System-context or hardcoded Repository truth passed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/12",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactCrossRepositoryPersistenceTests.cs",
+        "src/dotnet/Vulgata.Core/Entities/Uncertainty.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/UncertaintyConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter US1 and US2 exact aggregate",
+      "exit_code": 0,
+      "observed_at": "2026-08-03T13:57:49Z",
+      "summary": "Transient RED was absent Uncertainty and DbSet. Focused persistence passed 9/9; T024 and root rerun passed 91/91. Reviewed file-storage writes one owner-anchored unresolved/unknown_target unsupported_kind/file_storage Uncertainty and zero unsupported Edge/evidence; replay, drift, stale rollback, relational constraints, closed reasons/sub-statuses, authorization-before-DB, no automatic wontfix, and leakage checks passed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/13",
+      "kind": "red-green-test",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactCrossRepositoryAuthorizationTests; dotnet test Vulgata.Tests --no-restore --filter KnowledgeStoreRetrievalTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T01:04:17Z",
+      "summary": "REDs proved absent exact/Uncertainty projections, legacy relationship return, missing live verifier, and revocation leakage. G9 and root GREEN passed authorization 5/5 and predecessor retrieval 17/17. Static plus live two-endpoint checks occur before access, inside transactions and before return/commit; authorized output is opaque/safe, unauthorized is marker-only or indistinguishable null, and internal relational IDs do not serialize.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/14",
+      "kind": "migration-lifecycle",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260803140908_AddExactCrossRepositoryResolution.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260803140908_AddExactCrossRepositoryResolution.Designer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --filter ExactCrossRepositoryMigrationTests; dotnet ef migrations has-pending-model-changes",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T01:04:17Z",
+      "summary": "RED proved migration and two tables absent. Generated migration, SQLite lifecycle and root no-env suite passed 4/4; no pending model changes. A cached PostgreSQL 17 container ran the real unique-child-database apply, rollback to 20260801033655_AddSequentialScanRunner, predecessor preservation, reapply, termination/drop/absence lane at 4/4. The child database and auto-removing container were independently confirmed absent.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/15",
+      "kind": "red-green-integration",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs",
+        "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
+        "src/dotnet/Vulgata.Web/Data/RepositoryAuthorizationVerifier.cs",
+        "src/dotnet/Vulgata.Web/Program.cs"
+      ],
+      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactCrossRepositoryIntegrationTests; dotnet test Vulgata.Tests --no-restore --filter US3 aggregate; dotnet build Vulgata.Web --no-restore",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T01:34:23Z",
+      "summary": "Transient RED was absent coordinator; cancellation also produced an intended RED before bounded handling. Focused and root rerun passed 9/9; US3 aggregate and root rerun passed 18/18; Web build had 0 errors. Integration proves WaitingForPass1/unauthorized zero access, exact+unsupported apply/replay, authorized/restricted traces, reverse/same-name/negative/concurrent ordinary behavior, queued System context unchanged, live verifier DI, and no scheduler/Pass2/Agent/LLM/MCP/API expansion.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/16",
+      "kind": "security-static-inspection",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository",
+        "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs",
+        "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
+        "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs"
+      ],
+      "command": "bounded rg security scans; all focused Story 11.4 tests; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T01:54:16Z",
+      "summary": "Focused Story 11.4 suite passed 110/110. Core EF/IQueryable/DbSet/DataAnnotations scan, production Repository-name/commit conditional scan, placeholder scan, absolute-path/URL/credential/source/diagnostic leakage checks, no scheduler/Agent/API expansion checks, and diff check passed. Reviewed aliases/commits exist only in the immutable embedded profile, as designed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/17",
+      "kind": "candidate-regression",
+      "stage": "implement",
+      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
+      "artifact_paths": [
+        "src/dotnet",
+        "tests/Vulgata.Tests"
+      ],
+      "command": "dotnet build Vulgata.Web --no-restore; dotnet test Vulgata.Tests --no-restore with isolated PostgreSQL 17",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T01:54:16Z",
+      "summary": "Web build passed with 0 errors. Full regression reached 1070/1071 after the PostgreSQL parallel-isolation correction; the sole remaining provider-contract test intentionally requires a clean tracked worktree and is scheduled immediately after this reviewed-candidate commit with the cached accepted image. The PostgreSQL race was reproduced 1/2 RED and corrected 2/2 GREEN without retries; standalone migration remained 4/4 and orphan child DB count was zero.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-4-tasks-20260803T113920Z-35c0",
+    "checkpoint_id": "bmad-11-4-review-20260804T015416Z-35c0",
     "scope_key": "story/11-4-exact-rpc-http-cross-repository-demo-resolution",
-    "stage": "tasks",
+    "stage": "review",
     "committed_paths": [
-      ".specify/feature.json",
-      "AGENTS.md",
       "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json",
-      "specs/007-exact-cross-repo-resolution"
+      "specs/007-exact-cross-repo-resolution/tasks.md",
+      "specs/007-exact-cross-repo-resolution/workflow-state.json",
+      "src/dotnet",
+      "tests/Vulgata.Tests"
     ],
     "verification_evidence_ids": [
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/plan-review/authorization-1",
-      "plan-review iteration 3 ACCEPT",
-      "tasks.md SHA-256 1d3674c0a3c4ae8c4dabd56fddcace041a9286dfb46cc2440cdb4ad91e7728f1",
-      "37 sequential tasks; strict format failures 0; placeholders 0"
+      "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/1 through /17",
+      "focused Story 11.4 110/110",
+      "US1+US2 91/91",
+      "US3 18/18",
+      "Web build 0 errors",
+      "PostgreSQL lifecycle and parallel isolation GREEN"
     ],
     "commit_sha": "pending",
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-03T11:39:20Z"
+  "updated_at": "2026-08-04T01:54:16Z"
 }

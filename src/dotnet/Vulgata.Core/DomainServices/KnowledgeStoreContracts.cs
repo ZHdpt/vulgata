@@ -4,9 +4,20 @@ using Vulgata.Core.Entities;
 
 namespace Vulgata.Core.DomainServices;
 
+public interface IRepositoryAuthorizationVerifier
+{
+    ValueTask<bool> HasCurrentAccessAsync(
+        IReadOnlyCollection<Guid> requiredRepositoryIds,
+        CancellationToken cancellationToken = default);
+}
+
 public sealed record RepositoryAccessScope
 {
-    public RepositoryAccessScope(IReadOnlyCollection<Guid> authorizedRepositoryIds)
+    private readonly IRepositoryAuthorizationVerifier? _authorizationVerifier;
+
+    public RepositoryAccessScope(
+        IReadOnlyCollection<Guid> authorizedRepositoryIds,
+        IRepositoryAuthorizationVerifier? authorizationVerifier = null)
     {
         ArgumentNullException.ThrowIfNull(authorizedRepositoryIds);
         Guid[] ids = authorizedRepositoryIds.ToArray();
@@ -18,11 +29,31 @@ public sealed record RepositoryAccessScope
         }
 
         AuthorizedRepositoryIds = ids;
+        _authorizationVerifier = authorizationVerifier;
     }
 
     public IReadOnlyCollection<Guid> AuthorizedRepositoryIds { get; }
 
     public bool Contains(Guid repositoryId) => AuthorizedRepositoryIds.Contains(repositoryId);
+
+    public async ValueTask<bool> HasCurrentAccessAsync(
+        IReadOnlyCollection<Guid> requiredRepositoryIds,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(requiredRepositoryIds);
+        Guid[] required = requiredRepositoryIds.ToArray();
+        if (required.Length is < 1 or > 256 ||
+            required.Any(id => id == Guid.Empty || !Contains(id)) ||
+            required.Distinct().Count() != required.Length)
+        {
+            return false;
+        }
+
+        return _authorizationVerifier is null ||
+            await _authorizationVerifier.HasCurrentAccessAsync(
+                Array.AsReadOnly(required),
+                cancellationToken);
+    }
 }
 
 public sealed record SourceAnchorDraft
@@ -219,6 +250,26 @@ public sealed record AuthorizedRelationship(
     Guid SourceDocumentVersionId,
     Guid TargetDocumentVersionId,
     Guid TargetRepositoryId) : CurrentRelationship;
+
+public sealed record AuthorizedExactRelationship(
+    string RelationshipIdentity,
+    DocumentEdgeType EdgeType,
+    ExactCrossRepositoryEvidenceReadModel ExactEvidence) : CurrentRelationship;
+
+public sealed record AuthorizedUncertaintyReadModel(
+    string Type,
+    string Status,
+    string SubStatus,
+    string ReasonCode,
+    string? ObservationKind,
+    string? EndpointIdentifier,
+    string? EndpointIdentifierNormalized,
+    string ProfileSchemaVersion,
+    string ProfileId,
+    string ProfileVersion,
+    string ProfileFingerprint,
+    string OccurrenceId,
+    string EvidenceLocator);
 
 public sealed record RestrictedRelationship : CurrentRelationship
 {

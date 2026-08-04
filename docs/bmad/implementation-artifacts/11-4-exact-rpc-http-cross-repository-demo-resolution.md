@@ -1,7 +1,7 @@
 ---
 story_key: 11-4-exact-rpc-http-cross-repository-demo-resolution
 title: "Story 11.4: Exact RPC/HTTP Cross-Repository Demo Resolution"
-Status: in-progress
+Status: review
 Epic: 11
 Story: 4
 created: 2026-08-03
