@@ -157,13 +157,15 @@ public sealed class ExactCrossRepositoryResolverTests
         {
             ProfiledRevision = Commit(profile, occurrence.ProviderAlias),
         };
-        await Assert.ThrowsAsync<InvalidDataException>(() => ResolveAsync(
-            profile,
-            occurrence,
-            consumer,
-            provider,
-            "cust/updateSession",
-            "in/Cust/updateSession"));
+        ExactResolutionNonExactException mismatch =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() => ResolveAsync(
+                profile,
+                occurrence,
+                consumer,
+                provider,
+                "cust/updateSession",
+                "in/Cust/updateSession"));
+        Assert.Equal("normalization_mismatch", mismatch.ReasonCode);
     }
 
     [Fact]
@@ -194,7 +196,8 @@ public sealed class ExactCrossRepositoryResolverTests
             },
             "in/cust/updateSession");
 
-        await Assert.ThrowsAsync<InvalidDataException>(() =>
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
             new ExactCrossRepositoryResolver().ResolveAsync(
                 profile,
                 [consumer],
@@ -202,6 +205,7 @@ public sealed class ExactCrossRepositoryResolverTests
                 [UnsupportedDecision(
                     Assert.Single(profile.UnsupportedObservations).ObservationId,
                     consumerOwner)]));
+        Assert.Equal("multiple_providers", exception.ReasonCode);
     }
 
     [Theory]
@@ -232,14 +236,24 @@ public sealed class ExactCrossRepositoryResolverTests
             "cust/updateSession",
             "consumer.java#line=45;rule=exact-java-direct-literal-v1");
 
-        await Assert.ThrowsAsync<InvalidDataException>(() =>
+        Func<Task<ExactResolutionDecisionBatch>> resolve = () =>
             new ExactCrossRepositoryResolver().ResolveAsync(
                 profile,
                 [consumer],
                 [Provider(occurrence, providerOwner, "in/cust/updateSession")],
                 [UnsupportedDecision(
                     Assert.Single(profile.UnsupportedObservations).ObservationId,
-                    consumerOwner)]));
+                    consumerOwner)]);
+        if (mismatch == "occurrence")
+        {
+            await Assert.ThrowsAsync<InvalidDataException>(resolve);
+        }
+        else
+        {
+            ExactResolutionNonExactException exception =
+                await Assert.ThrowsAsync<ExactResolutionNonExactException>(resolve);
+            Assert.Equal("disallowed_invocation", exception.ReasonCode);
+        }
     }
 
     [Theory]
@@ -299,7 +313,8 @@ public sealed class ExactCrossRepositoryResolverTests
             _ => throw new ArgumentOutOfRangeException(nameof(mode)),
         };
 
-        await Assert.ThrowsAsync<InvalidDataException>(() =>
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
             new ExactCrossRepositoryResolver().ResolveAsync(
                 profile,
                 [Consumer(occurrence, consumerOwner, "cust/updateSession")],
@@ -307,6 +322,9 @@ public sealed class ExactCrossRepositoryResolverTests
                 [UnsupportedDecision(
                     Assert.Single(profile.UnsupportedObservations).ObservationId,
                     consumerOwner)]));
+        Assert.Equal(
+            mode == "unmatched" ? "normalization_mismatch" : "unmatched",
+            exception.ReasonCode);
     }
 
     private static Task<ExactResolutionDecisionBatch> ResolveAsync(

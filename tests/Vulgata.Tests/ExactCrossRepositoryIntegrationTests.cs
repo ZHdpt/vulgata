@@ -361,14 +361,10 @@ public sealed class ExactCrossRepositoryIntegrationTests
     }
 
     [Fact]
-    public async Task ResolveAfterPass1Async_AcceptedNegativeMatrix_NeverReachesStoreAsync()
+    public async Task ResolveAfterPass1Async_ResolverNegativeMatrix_PersistsOneIdempotentOwnerAnchoredUncertaintyAsync()
     {
         string[] reasons =
         [
-            "variable_target",
-            "disallowed_invocation",
-            "malformed_provider",
-            "provider_out_of_root",
             "unmatched",
             "normalization_mismatch",
             "multiple_providers",
@@ -392,7 +388,7 @@ public sealed class ExactCrossRepositoryIntegrationTests
                 consumer,
                 provider,
                 unsupported);
-            var store = new ProbeStore();
+            var store = new ExactCrossRepositoryResolutionStore(context);
             var coordinator = new ExactCrossRepositoryResolutionCoordinator(
                 new ExactResolutionProfileCatalog(),
                 new StubUserContext(),
@@ -409,13 +405,151 @@ public sealed class ExactCrossRepositoryIntegrationTests
             ExactResolutionOutcome outcome = await coordinator.ResolveAfterPass1Async(
                 Request(profile),
                 fixture.Access.AuthorizedScope);
+            ExactResolutionOutcome replay = await coordinator.ResolveAfterPass1Async(
+                Request(profile),
+                fixture.Access.AuthorizedScope);
 
-            Assert.Equal(ExactResolutionOutcomeKind.Refused, outcome.Kind);
-            Assert.Equal(0, store.CallCount);
+            Assert.Equal(ExactResolutionOutcomeKind.Applied, outcome.Kind);
+            Assert.Equal(ExactResolutionOutcomeKind.AlreadyApplied, replay.Kind);
             Assert.Empty(context.DocumentEdges);
             Assert.Empty(context.ExactCrossRepositoryEdgeEvidence);
-            Assert.Empty(context.Uncertainties);
+            Uncertainty[] uncertainties = await context.Uncertainties.AsNoTracking()
+                .ToArrayAsync();
+            Uncertainty diagnostic = Assert.Single(
+                uncertainties,
+                uncertainty => uncertainty.OccurrenceId ==
+                    Assert.Single(profile.Occurrences).OccurrenceId);
+            Assert.Equal(consumer.DocumentVersion.Id, diagnostic.DocumentVersionId);
+            Assert.Equal(consumer.SourceAnchor.Id, diagnostic.SourceAnchorId);
+            Assert.Equal("unresolved", diagnostic.Status);
+            Assert.Equal(
+                reason == "multiple_providers" ? "ambiguous" : "unknown_target",
+                diagnostic.SubStatus);
+            Assert.Equal(reason, diagnostic.ReasonCode);
+            Assert.Null(diagnostic.TargetRepositoryId);
+            Assert.StartsWith("src/main/", diagnostic.EvidenceLocator, StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                fixture.ConsumerRepository.RootPath,
+                diagnostic.EvidenceLocator,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(
+                fixture.ProviderRepository.RootPath,
+                diagnostic.EvidenceLocator,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(2, uncertainties.Length);
         }
+    }
+
+    [Theory]
+    [InlineData("variable_target")]
+    [InlineData("disallowed_invocation")]
+    [InlineData("malformed_provider")]
+    [InlineData("provider_out_of_root")]
+    public async Task ResolveAfterPass1Async_RealEligibleSourceFailure_PersistsOneIdempotentOwnerAnchoredUncertaintyAsync(
+        string reason)
+    {
+        await using ExactCrossRepositoryTestFixture fixture =
+            await ExactCrossRepositoryTestFixture.CreateAsync();
+        ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+        ResolutionOccurrence occurrence = Assert.Single(profile.Occurrences);
+        MutateEligibleSourceFailure(fixture, occurrence, reason);
+        ExactPass1DocumentFixture consumer = fixture.CreatePass1Document(
+            ExactPass1DocumentKind.Consumer,
+            ProfileCommit(profile, "mbs_account"));
+        ExactPass1DocumentFixture provider = fixture.CreatePass1Document(
+            ExactPass1DocumentKind.Provider,
+            ProfileCommit(profile, "mbs_channel"));
+        ExactPass1DocumentFixture unsupported = CreateUnsupportedOnConsumerScanRun(consumer);
+        await using VulgataDbContext context = fixture.Database.CreateContext();
+        await SeedCurrentBoundaryAsync(context, fixture, consumer, provider, unsupported);
+        var coordinator = new ExactCrossRepositoryResolutionCoordinator(
+            new ExactResolutionProfileCatalog(),
+            new StubUserContext(),
+            new SystemRepository(context),
+            new RepositoryRepository(context),
+            new StubScanExecutionStore(consumer.ScanExecution, provider.ScanExecution),
+            new FixedAuthorizationVerifier(true),
+            new FixtureSnapshotService(fixture),
+            new ExactCandidateExtractors(context),
+            new ExactCrossRepositoryResolver(),
+            new ExactCrossRepositoryResolutionStore(context),
+            context);
+
+        ExactResolutionOutcome first = await coordinator.ResolveAfterPass1Async(
+            Request(profile),
+            fixture.Access.AuthorizedScope);
+        ExactResolutionOutcome replay = await coordinator.ResolveAfterPass1Async(
+            Request(profile),
+            fixture.Access.AuthorizedScope);
+
+        Assert.Equal(ExactResolutionOutcomeKind.Applied, first.Kind);
+        Assert.Equal(ExactResolutionOutcomeKind.AlreadyApplied, replay.Kind);
+        Assert.Empty(context.DocumentEdges);
+        Assert.Empty(context.ExactCrossRepositoryEdgeEvidence);
+        Uncertainty[] uncertainties = await context.Uncertainties.AsNoTracking().ToArrayAsync();
+        Uncertainty diagnostic = Assert.Single(
+            uncertainties,
+            uncertainty => uncertainty.OccurrenceId == occurrence.OccurrenceId);
+        Assert.Equal(consumer.DocumentVersion.Id, diagnostic.DocumentVersionId);
+        Assert.Equal(consumer.SourceAnchor.Id, diagnostic.SourceAnchorId);
+        Assert.Equal("unresolved", diagnostic.Status);
+        Assert.Equal("unknown_target", diagnostic.SubStatus);
+        Assert.Equal(reason, diagnostic.ReasonCode);
+        Assert.Null(diagnostic.TargetRepositoryId);
+        Assert.StartsWith("src/main/", diagnostic.EvidenceLocator, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            fixture.ConsumerRepository.RootPath,
+            diagnostic.EvidenceLocator,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(
+            fixture.ProviderRepository.RootPath,
+            diagnostic.EvidenceLocator,
+            StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(2, uncertainties.Length);
+    }
+
+    [Fact]
+    public async Task ResolveAfterPass1Async_OneLeaseCleanupFails_AttemptsEveryLeaseAndReturnsBoundedFailureAsync()
+    {
+        await using ExactCrossRepositoryTestFixture fixture =
+            await ExactCrossRepositoryTestFixture.CreateAsync();
+        ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+        ExactPass1DocumentFixture consumer = fixture.CreatePass1Document(
+            ExactPass1DocumentKind.Consumer,
+            ProfileCommit(profile, "mbs_account"));
+        ExactPass1DocumentFixture provider = fixture.CreatePass1Document(
+            ExactPass1DocumentKind.Provider,
+            ProfileCommit(profile, "mbs_channel"));
+        ExactPass1DocumentFixture unsupported = CreateUnsupportedOnConsumerScanRun(consumer);
+        await using VulgataDbContext context = fixture.Database.CreateContext();
+        await SeedCurrentBoundaryAsync(context, fixture, consumer, provider, unsupported);
+        var snapshotService = new CleanupProbeSnapshotService(fixture);
+        var coordinator = new ExactCrossRepositoryResolutionCoordinator(
+            new ExactResolutionProfileCatalog(),
+            new StubUserContext(),
+            new SystemRepository(context),
+            new RepositoryRepository(context),
+            new StubScanExecutionStore(consumer.ScanExecution, provider.ScanExecution),
+            new FixedAuthorizationVerifier(true),
+            snapshotService,
+            new ExactCandidateExtractors(context),
+            new ExactCrossRepositoryResolver(),
+            new ExactCrossRepositoryResolutionStore(context),
+            context);
+        ExactResolutionOutcome? outcome = null;
+
+        Exception? exception = await Record.ExceptionAsync(async () =>
+        {
+            outcome = await coordinator.ResolveAfterPass1Async(
+                Request(profile),
+                fixture.Access.AuthorizedScope);
+        });
+
+        Assert.Null(exception);
+        Assert.NotNull(outcome);
+        Assert.Equal(ExactResolutionOutcomeKind.Failed, outcome.Kind);
+        Assert.Equal("cleanup_failed", outcome.Code);
+        Assert.Equal(2, snapshotService.DisposeAttempts);
     }
 
     [Fact]
@@ -653,6 +787,50 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Single(profile.Repositories, repository =>
             StringComparer.Ordinal.Equals(repository.Alias, alias)).ExpectedCommit;
 
+    private static void MutateEligibleSourceFailure(
+        ExactCrossRepositoryTestFixture fixture,
+        ResolutionOccurrence occurrence,
+        string reason)
+    {
+        switch (reason)
+        {
+            case "variable_target":
+                fixture.ConsumerRepository.Write(
+                    Assert.Single(occurrence.Consumer.Files),
+                    new string('\n', 44) + "netTools.execute(ctx, transCode);\n");
+                break;
+            case "disallowed_invocation":
+                fixture.ConsumerRepository.Write(
+                    Assert.Single(occurrence.Consumer.Files),
+                    new string('\n', 44) +
+                    "this.netTools.execute(ctx, \"cust/updateSession\");\n");
+                break;
+            case "malformed_provider":
+                fixture.ProviderRepository.Write(
+                    Assert.Single(occurrence.Provider.Files),
+                    "<?xml version=\"1.0\"?>\n<trans name=\"in/cust/updateSession\"");
+                break;
+            case "provider_out_of_root":
+                string providerFile = Assert.Single(occurrence.Provider.Files);
+                string configuredPath = ExactCrossRepositoryCleanup.ResolveRelativePath(
+                    fixture.ProviderRepository.RootPath,
+                    providerFile);
+                string configuredDirectory = Path.GetDirectoryName(configuredPath)!;
+                string outsideDirectory = ExactCrossRepositoryCleanup.ResolveRelativePath(
+                    fixture.ProviderRepository.RootPath,
+                    "outside-provider-root");
+                fixture.ProviderRepository.Write(
+                    "outside-provider-root/updateSession.xml",
+                    "<trans name=\"in/cust/updateSession\"/>\n");
+                File.Delete(configuredPath);
+                Directory.Delete(configuredDirectory);
+                Directory.CreateSymbolicLink(configuredDirectory, outsideDirectory);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(reason));
+        }
+    }
+
     private sealed class StubUserContext : IUserContext
     {
         public string UserId => "system-owner";
@@ -668,7 +846,7 @@ public sealed class ExactCrossRepositoryIntegrationTests
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Assert.Equal(2, requiredRepositoryIds.Count);
+            Assert.InRange(requiredRepositoryIds.Count, 1, 2);
             return ValueTask.FromResult(allowed);
         }
     }
@@ -746,6 +924,35 @@ public sealed class ExactCrossRepositoryIntegrationTests
         }
     }
 
+    private sealed class CleanupProbeSnapshotService(ExactCrossRepositoryTestFixture fixture) :
+        IExactGitRevisionSnapshotService
+    {
+        internal int DisposeAttempts { get; private set; }
+
+        public Task<ICommittedRepositorySnapshotLease> AcquireAsync(
+            RepositoryEntity repository,
+            Guid scanRunId,
+            string expectedRef,
+            string expectedCommit,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string root = repository.Id == ExactCrossRepositoryTestValues.ConsumerRepositoryId
+                ? fixture.ConsumerRepository.RootPath
+                : fixture.ProviderRepository.RootPath;
+            bool cleanupFails =
+                repository.Id == ExactCrossRepositoryTestValues.ProviderRepositoryId;
+            return Task.FromResult<ICommittedRepositorySnapshotLease>(
+                new CleanupProbeSnapshotLease(
+                    repository.Id,
+                    scanRunId,
+                    expectedCommit,
+                    root,
+                    cleanupFails,
+                    () => DisposeAttempts++));
+        }
+    }
+
     private sealed class FixtureSnapshotLease(
         Guid repositoryId,
         Guid scanRunId,
@@ -763,6 +970,35 @@ public sealed class ExactCrossRepositoryIntegrationTests
         }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class CleanupProbeSnapshotLease(
+        Guid repositoryId,
+        Guid scanRunId,
+        string profiledRevision,
+        string rootPath,
+        bool cleanupFails,
+        Action recordDispose) : ICommittedRepositorySnapshotLease
+    {
+        public Guid RepositoryId => repositoryId;
+        public Guid ScanRunId => scanRunId;
+        public string ProfiledRevision => profiledRevision;
+        public string RootPath => rootPath;
+
+        public Task VerifyIdentityAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            recordDispose();
+            return cleanupFails
+                ? ValueTask.FromException(
+                    new InvalidOperationException("fixture cleanup failure"))
+                : ValueTask.CompletedTask;
+        }
     }
 
     private sealed class ProbeResolver : IExactCrossRepositoryResolver
@@ -789,7 +1025,9 @@ public sealed class ExactCrossRepositoryIntegrationTests
             IReadOnlyList<ProviderEndpointCandidate> providerCandidates,
             IReadOnlyList<ExactResolutionDecision> unsupportedDecisions,
             CancellationToken cancellationToken = default) =>
-            throw new InvalidDataException(reason);
+            throw new ExactResolutionNonExactException(
+                Assert.Single(profile.Occurrences).OccurrenceId,
+                reason);
     }
 
     private sealed class ProbeStore : IExactCrossRepositoryResolutionStore

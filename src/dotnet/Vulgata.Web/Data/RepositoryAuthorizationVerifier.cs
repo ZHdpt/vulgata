@@ -7,13 +7,15 @@ public sealed class RepositoryAuthorizationVerifier(
     ISystemRepository systemRepository,
     IRepositoryRepository repositoryRepository) : IRepositoryAuthorizationVerifier
 {
+    private const int MaximumRepositoryCount = 2;
+
     public async ValueTask<bool> HasCurrentAccessAsync(
         IReadOnlyCollection<Guid> requiredRepositoryIds,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(requiredRepositoryIds);
         if (string.IsNullOrWhiteSpace(userContext.UserId) ||
-            requiredRepositoryIds.Count != 2 ||
+            requiredRepositoryIds.Count is < 1 or > MaximumRepositoryCount ||
             requiredRepositoryIds.Any(id => id == Guid.Empty) ||
             requiredRepositoryIds.Distinct().Count() != requiredRepositoryIds.Count)
         {

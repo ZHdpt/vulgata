@@ -94,32 +94,80 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
         ];
         if (eligibleConsumers.Length != 1)
         {
+            ConsumerDispatchCandidate[] anchoredConsumers =
+            [
+                .. consumerCandidates.Where(candidate =>
+                    StringComparer.Ordinal.Equals(
+                        candidate.OccurrenceId,
+                        occurrence.OccurrenceId) &&
+                    StringComparer.Ordinal.Equals(
+                        candidate.Owner.ProfiledRevision,
+                        consumerRepository.ExpectedCommit)),
+            ];
+            if (anchoredConsumers.Length == 1)
+            {
+                throw new ExactResolutionNonExactException(
+                    occurrence.OccurrenceId,
+                    "disallowed_invocation");
+            }
+
             throw new InvalidDataException(
                 "Exact resolution requires one direction-qualified consumer candidate.");
         }
 
         ConsumerDispatchCandidate consumer = eligibleConsumers[0];
-        string normalizedConsumer = NormalizeEndpointIdentifier(
-            consumer.RawIdentifier,
-            occurrence.Normalization.ConsumerRequiredPrefix);
-        ProviderEndpointCandidate[] eligibleProviders =
+        string normalizedConsumer;
+        try
+        {
+            normalizedConsumer = NormalizeEndpointIdentifier(
+                consumer.RawIdentifier,
+                occurrence.Normalization.ConsumerRequiredPrefix);
+        }
+        catch (InvalidDataException)
+        {
+            throw new ExactResolutionNonExactException(
+                occurrence.OccurrenceId,
+                "normalization_mismatch");
+        }
+
+        ProviderEndpointCandidate[] directionQualifiedProviders =
         [
             .. providerCandidates.Where(candidate =>
                 StringComparer.Ordinal.Equals(candidate.OccurrenceId, occurrence.OccurrenceId) &&
                 candidate.Owner.RepositoryId != consumer.Owner.RepositoryId &&
                 StringComparer.Ordinal.Equals(
                     candidate.Owner.ProfiledRevision,
-                    providerRepository.ExpectedCommit) &&
-                StringComparer.Ordinal.Equals(
-                    NormalizeEndpointIdentifier(
-                        candidate.RawIdentifier,
-                        occurrence.Normalization.ProviderRequiredPrefix),
-                    normalizedConsumer)),
+                    providerRepository.ExpectedCommit)),
         ];
+        ProviderEndpointCandidate[] eligibleProviders;
+        try
+        {
+            eligibleProviders =
+            [
+                .. directionQualifiedProviders.Where(candidate =>
+                    StringComparer.Ordinal.Equals(
+                        NormalizeEndpointIdentifier(
+                            candidate.RawIdentifier,
+                            occurrence.Normalization.ProviderRequiredPrefix),
+                        normalizedConsumer)),
+            ];
+        }
+        catch (InvalidDataException)
+        {
+            throw new ExactResolutionNonExactException(
+                occurrence.OccurrenceId,
+                "normalization_mismatch");
+        }
+
         if (eligibleProviders.Length != 1)
         {
-            throw new InvalidDataException(
-                "Exact resolution requires exactly one direction-qualified provider candidate.");
+            throw new ExactResolutionNonExactException(
+                occurrence.OccurrenceId,
+                eligibleProviders.Length > 1
+                    ? "multiple_providers"
+                    : directionQualifiedProviders.Length == 0
+                        ? "unmatched"
+                        : "normalization_mismatch");
         }
 
         ProviderEndpointCandidate provider = eligibleProviders[0];
@@ -129,8 +177,9 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
         if (occurrence.Comparison != ExactResolutionComparison.Ordinal ||
             !StringComparer.Ordinal.Equals(normalizedConsumer, normalizedProvider))
         {
-            throw new InvalidDataException(
-                "The configured endpoint identifiers do not match ordinally.");
+            throw new ExactResolutionNonExactException(
+                occurrence.OccurrenceId,
+                "normalization_mismatch");
         }
 
         var evidence = new ExactResolutionDecisionEvidence(

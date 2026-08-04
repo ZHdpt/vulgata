@@ -5,6 +5,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
 
@@ -268,6 +269,63 @@ public sealed class ExactCrossRepositoryAuthorizationTests
         Assert.Null(missing);
     }
 
+    [Fact]
+    public async Task GetUncertaintyAsync_TargetlessUnknownTarget_ProductionVerifierAllowsAuthorizedOwnerAndHidesUnauthorizedAsync()
+    {
+        await using ExactCrossRepositoryTestFixture fixture =
+            await ExactCrossRepositoryTestFixture.CreateAsync();
+        ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+        ResolutionOccurrence occurrence = Assert.Single(profile.Occurrences);
+        ExactPass1DocumentFixture consumer = fixture.CreatePass1Document(
+            ExactPass1DocumentKind.Consumer,
+            ProfileCommit(profile, occurrence.ConsumerAlias));
+        ExactPass1DocumentFixture provider = fixture.CreatePass1Document(
+            ExactPass1DocumentKind.Provider,
+            ProfileCommit(profile, occurrence.ProviderAlias));
+        await using VulgataDbContext context = fixture.Database.CreateContext();
+        await SeedCurrentDocumentsAsync(context, fixture, consumer, provider);
+        _ = await new ExactCrossRepositoryResolutionStore(context).ApplyAsync(
+            await ExactBatchAsync(profile, occurrence, consumer, provider),
+            fixture.Access.AuthorizedScope);
+        Guid uncertaintyId = await context.Uncertainties.AsNoTracking()
+            .Where(value => value.ReasonCode == "unsupported_kind")
+            .Select(value => value.Id)
+            .SingleAsync();
+        var repository = new KnowledgeStoreRepository(
+            context,
+            new KnowledgeDocumentMaterializer());
+        var authorizedVerifier = new RepositoryAuthorizationVerifier(
+            new ProductionVerifierUserContext("system-owner"),
+            new SystemRepository(context),
+            new RepositoryRepository(context));
+        var unauthorizedVerifier = new RepositoryAuthorizationVerifier(
+            new ProductionVerifierUserContext(string.Empty),
+            new SystemRepository(context),
+            new RepositoryRepository(context));
+        var authorizedScope = new RepositoryAccessScope(
+            [consumer.DocumentVersion.RepositoryId, provider.DocumentVersion.RepositoryId],
+            authorizedVerifier);
+        var unauthorizedScope = new RepositoryAccessScope(
+            [consumer.DocumentVersion.RepositoryId, provider.DocumentVersion.RepositoryId],
+            unauthorizedVerifier);
+
+        AuthorizedUncertaintyReadModel authorized =
+            Assert.IsType<AuthorizedUncertaintyReadModel>(
+                await repository.GetUncertaintyAsync(uncertaintyId, authorizedScope));
+        AuthorizedUncertaintyReadModel? unauthorized =
+            await repository.GetUncertaintyAsync(uncertaintyId, unauthorizedScope);
+        AuthorizedUncertaintyReadModel? missing =
+            await repository.GetUncertaintyAsync(
+                ExactCrossRepositoryTestValues.Id(9997),
+                authorizedScope);
+
+        Assert.Equal("unsupported_communication", authorized.Type);
+        Assert.Equal("unknown_target", authorized.SubStatus);
+        Assert.Equal("unsupported_kind", authorized.ReasonCode);
+        Assert.Null(unauthorized);
+        Assert.Null(missing);
+    }
+
     private static async Task SeedCurrentDocumentsAsync(
         VulgataDbContext context,
         ExactCrossRepositoryTestFixture fixture,
@@ -421,5 +479,12 @@ public sealed class ExactCrossRepositoryAuthorizationTests
             CallCount++;
             return ValueTask.FromResult(_decisions.Count > 0 && _decisions.Dequeue());
         }
+    }
+
+    private sealed class ProductionVerifierUserContext(string userId) : IUserContext
+    {
+        public string UserId => userId;
+        public bool IsAdministrator => true;
+        public SystemOwnerFilter ToSystemOwnerFilter() => SystemOwnerFilter.AllSystems();
     }
 }

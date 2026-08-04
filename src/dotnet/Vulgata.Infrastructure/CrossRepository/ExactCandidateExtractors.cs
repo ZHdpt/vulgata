@@ -35,10 +35,10 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
             }
 
             string source = DecodeUtf8(bytes);
-            string? rawIdentifier = FindConfiguredLiteral(
+            ConsumerInvocationMatch match = FindConfiguredInvocation(
                 source,
                 occurrence.Consumer.Invocation);
-            if (rawIdentifier is null)
+            if (match.Kind == ConsumerInvocationMatchKind.None)
             {
                 continue;
             }
@@ -58,6 +58,19 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                 $"{repositoryRelativePath}#line={occurrence.Consumer.Invocation.Line};" +
                 $"ordinal={occurrence.Consumer.Invocation.OccurrenceOrdinalOnLine};" +
                 "rule=exact-java-direct-literal-v1";
+            if (match.Kind != ConsumerInvocationMatchKind.ExactLiteral)
+            {
+                throw new ExactResolutionNonExactException(
+                    occurrence.OccurrenceId,
+                    match.Kind == ConsumerInvocationMatchKind.VariableTarget
+                        ? "variable_target"
+                        : "disallowed_invocation",
+                    ExactResolutionNonExactSource.Consumer,
+                    owner,
+                    locator);
+            }
+
+            string rawIdentifier = match.RawIdentifier!;
             candidates.Add(new ConsumerDispatchCandidate(
                 occurrence.OccurrenceId,
                 owner,
@@ -92,12 +105,38 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
         long aggregateBytes = 0;
         foreach (string repositoryRelativePath in occurrence.Provider.Files)
         {
+            ExactResolutionOwner? owner = await MapCurrentOwnerAsync(
+                snapshot,
+                occurrence.Provider.ImplementationDocument.RepositoryRelativePath,
+                line: null,
+                occurrence.Provider.ImplementationDocument.Symbol,
+                cancellationToken);
             if (!IsBeneathRoot(repositoryRelativePath, occurrence.Provider.Root))
             {
-                throw new InvalidDataException("A configured provider file is outside its closed root.");
+                throw new ExactResolutionNonExactException(
+                    occurrence.OccurrenceId,
+                    "provider_out_of_root",
+                    ExactResolutionNonExactSource.Provider,
+                    owner,
+                    evidenceLocator: null);
             }
 
-            string fullPath = ResolveListedFile(snapshot.RootPath, repositoryRelativePath);
+            string fullPath;
+            try
+            {
+                fullPath = ResolveListedFile(snapshot.RootPath, repositoryRelativePath);
+            }
+            catch (ConfiguredFileBoundaryException exception)
+            {
+                throw new ExactResolutionNonExactException(
+                    occurrence.OccurrenceId,
+                    "provider_out_of_root",
+                    ExactResolutionNonExactSource.Provider,
+                    owner,
+                    evidenceLocator: null,
+                    exception);
+            }
+
             byte[] bytes = await ReadBoundedAsync(fullPath, cancellationToken);
             aggregateBytes = checked(aggregateBytes + bytes.Length);
             if (aggregateBytes > MaximumAggregateBytes)
@@ -108,18 +147,14 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
             string? rawIdentifier = await ReadProviderIdentifierAsync(
                 bytes,
                 occurrence.Provider.Declaration,
+                occurrence.OccurrenceId,
+                owner,
                 cancellationToken);
             if (rawIdentifier is null)
             {
                 continue;
             }
 
-            ExactResolutionOwner? owner = await MapCurrentOwnerAsync(
-                snapshot,
-                occurrence.Provider.ImplementationDocument.RepositoryRelativePath,
-                line: null,
-                occurrence.Provider.ImplementationDocument.Symbol,
-                cancellationToken);
             if (owner is null)
             {
                 continue;
@@ -187,6 +222,8 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
     private static async Task<string?> ReadProviderIdentifierAsync(
         byte[] bytes,
         ExactProviderDeclarationSelector selector,
+        string occurrenceId,
+        ExactResolutionOwner? owner,
         CancellationToken cancellationToken)
     {
         var settings = new XmlReaderSettings
@@ -247,14 +284,20 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
         }
         catch (XmlException exception)
         {
-            throw new InvalidDataException("A configured provider XML file is malformed.", exception);
+            throw new ExactResolutionNonExactException(
+                occurrenceId,
+                "malformed_provider",
+                ExactResolutionNonExactSource.Provider,
+                owner,
+                evidenceLocator: null,
+                exception);
         }
     }
 
     private static bool IsBeneathRoot(string path, string root) =>
         path.StartsWith(root + '/', StringComparison.Ordinal);
 
-    private static string? FindConfiguredLiteral(
+    private static ConsumerInvocationMatch FindConfiguredInvocation(
         string source,
         ExactConsumerInvocationSelector selector)
     {
@@ -266,8 +309,6 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
             if (start.Line != selector.Line ||
                 start.Kind != JavaTokenKind.Identifier ||
                 !StringComparer.Ordinal.Equals(start.Value, selector.ReceiverSymbol) ||
-                index > 0 && tokens[index - 1] is
-                    { Kind: JavaTokenKind.Punctuation, Value: "." } ||
                 index + 3 >= tokens.Count ||
                 tokens[index + 1] is not { Kind: JavaTokenKind.Punctuation, Value: "." } ||
                 tokens[index + 2] is not { Kind: JavaTokenKind.Identifier } member ||
@@ -278,23 +319,26 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
             }
 
             IReadOnlyList<IReadOnlyList<JavaToken>>? arguments = ReadArguments(tokens, index + 3);
-            if (arguments is null || selector.EndpointArgumentIndex >= arguments.Count)
-            {
-                continue;
-            }
-
-            IReadOnlyList<JavaToken> argument = arguments[selector.EndpointArgumentIndex];
             if (ordinalOnLine++ != selector.OccurrenceOrdinalOnLine)
             {
                 continue;
             }
 
+            if (index > 0 && tokens[index - 1] is
+                    { Kind: JavaTokenKind.Punctuation, Value: "." } ||
+                arguments is null ||
+                selector.EndpointArgumentIndex >= arguments.Count)
+            {
+                return new(ConsumerInvocationMatchKind.DisallowedInvocation, null);
+            }
+
+            IReadOnlyList<JavaToken> argument = arguments[selector.EndpointArgumentIndex];
             return argument.Count == 1 && argument[0].Kind == JavaTokenKind.StringLiteral
-                ? argument[0].Value
-                : null;
+                ? new(ConsumerInvocationMatchKind.ExactLiteral, argument[0].Value)
+                : new(ConsumerInvocationMatchKind.VariableTarget, null);
         }
 
-        return null;
+        return new(ConsumerInvocationMatchKind.None, null);
     }
 
     private static IReadOnlyList<IReadOnlyList<JavaToken>>? ReadArguments(
@@ -506,7 +550,7 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
             : StringComparison.Ordinal;
         if (!fullPath.StartsWith(prefix, pathComparison))
         {
-            throw new InvalidDataException("A configured file escapes the committed snapshot.");
+            throw new ConfiguredFileBoundaryException();
         }
 
         string current = root;
@@ -518,13 +562,27 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                 FileAttributes attributes = File.GetAttributes(current);
                 if ((attributes & FileAttributes.ReparsePoint) != 0)
                 {
-                    throw new InvalidDataException("A configured file traverses a reparse point.");
+                    throw new ConfiguredFileBoundaryException();
                 }
             }
         }
 
         return fullPath;
     }
+
+    private enum ConsumerInvocationMatchKind
+    {
+        None,
+        ExactLiteral,
+        VariableTarget,
+        DisallowedInvocation,
+    }
+
+    private readonly record struct ConsumerInvocationMatch(
+        ConsumerInvocationMatchKind Kind,
+        string? RawIdentifier);
+
+    private sealed class ConfiguredFileBoundaryException : InvalidOperationException;
 
     private static async Task<byte[]> ReadBoundedAsync(
         string fullPath,

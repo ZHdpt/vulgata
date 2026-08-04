@@ -22,8 +22,25 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
     VulgataDbContext context)
 {
     private const int MaximumUnsupportedSourceBytes = 1_048_576;
+    private const string CleanupFailureCode = "cleanup_failed";
 
     public async Task<ExactResolutionOutcome> ResolveAfterPass1Async(
+        ExactResolutionRuntimeRequest request,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await ResolveCoreAsync(request, scope, cancellationToken);
+        }
+        catch (InvalidOperationException exception) when (
+            StringComparer.Ordinal.Equals(exception.Message, CleanupFailureCode))
+        {
+            return new(ExactResolutionOutcomeKind.Failed, CleanupFailureCode);
+        }
+    }
+
+    private async Task<ExactResolutionOutcome> ResolveCoreAsync(
         ExactResolutionRuntimeRequest request,
         RepositoryAccessScope scope,
         CancellationToken cancellationToken = default)
@@ -123,31 +140,55 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
                     expected.ExpectedRef,
                     expected.ExpectedCommit,
                     cancellationToken);
+                leases.Add(expected.Alias, lease);
                 if (lease.RepositoryId != binding.RepositoryId ||
                     lease.ScanRunId != binding.ScanRunId ||
                     !StringComparer.Ordinal.Equals(
                         lease.ProfiledRevision,
                         expected.ExpectedCommit))
                 {
-                    await lease.DisposeAsync();
                     return Refused();
                 }
-
-                leases.Add(expected.Alias, lease);
             }
 
             var consumers = new List<ConsumerDispatchCandidate>();
             var providers = new List<ProviderEndpointCandidate>();
+            ExactResolutionNonExactException? extractionFailure = null;
             foreach (ResolutionOccurrence occurrence in profile.Occurrences)
             {
-                consumers.AddRange(await extractors.ExtractConsumersAsync(
-                    leases[occurrence.ConsumerAlias],
-                    occurrence,
-                    cancellationToken));
-                providers.AddRange(await extractors.ExtractProvidersAsync(
-                    leases[occurrence.ProviderAlias],
-                    occurrence,
-                    cancellationToken));
+                try
+                {
+                    consumers.AddRange(await extractors.ExtractConsumersAsync(
+                        leases[occurrence.ConsumerAlias],
+                        occurrence,
+                        cancellationToken));
+                }
+                catch (ExactResolutionNonExactException exception)
+                {
+                    if (extractionFailure is not null)
+                    {
+                        return Refused();
+                    }
+
+                    extractionFailure = exception;
+                }
+
+                try
+                {
+                    providers.AddRange(await extractors.ExtractProvidersAsync(
+                        leases[occurrence.ProviderAlias],
+                        occurrence,
+                        cancellationToken));
+                }
+                catch (ExactResolutionNonExactException exception)
+                {
+                    if (extractionFailure is not null)
+                    {
+                        return Refused();
+                    }
+
+                    extractionFailure = exception;
+                }
             }
 
             IReadOnlyList<ExactResolutionDecision> unsupported =
@@ -158,7 +199,14 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
             }
 
             ExactResolutionRuntimeBindingEvidence[] evidence =
-                BuildBindingEvidence(request, profile, leases, executions, consumers, providers);
+                BuildBindingEvidence(
+                    request,
+                    profile,
+                    leases,
+                    executions,
+                    consumers,
+                    providers,
+                    extractionFailure);
             _ = ExactResolutionProfileCatalog.BindForValidation(
                 request.SystemId,
                 profile,
@@ -168,12 +216,44 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
                 request.Bindings,
                 evidence);
 
-            ExactResolutionDecisionBatch decisions = await resolver.ResolveAsync(
-                profile,
-                consumers,
-                providers,
-                unsupported,
-                cancellationToken);
+            ExactResolutionDecisionBatch decisions;
+            if (extractionFailure is not null)
+            {
+                if (!TryCreateUncertaintyBatch(
+                        profile,
+                        consumers,
+                        unsupported,
+                        extractionFailure,
+                        out decisions))
+                {
+                    return Refused();
+                }
+            }
+            else
+            {
+                try
+                {
+                    decisions = await resolver.ResolveAsync(
+                        profile,
+                        consumers,
+                        providers,
+                        unsupported,
+                        cancellationToken);
+                }
+                catch (ExactResolutionNonExactException exception)
+                {
+                    if (!TryCreateUncertaintyBatch(
+                            profile,
+                            consumers,
+                            unsupported,
+                            exception,
+                            out decisions))
+                    {
+                        return Refused();
+                    }
+                }
+            }
+
             var liveScope = new RepositoryAccessScope(repositoryIds, authorizationVerifier);
             ExactResolutionBatchOutcome outcome = await store.ApplyAsync(
                 decisions,
@@ -196,9 +276,22 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
         }
         finally
         {
+            bool cleanupFailed = false;
             foreach (ICommittedRepositorySnapshotLease lease in leases.Values.Reverse())
             {
-                await lease.DisposeAsync();
+                try
+                {
+                    await lease.DisposeAsync();
+                }
+                catch (Exception)
+                {
+                    cleanupFailed = true;
+                }
+            }
+
+            if (cleanupFailed)
+            {
+                throw new InvalidOperationException(CleanupFailureCode);
             }
         }
     }
@@ -274,7 +367,8 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
         IReadOnlyDictionary<string, ICommittedRepositorySnapshotLease> leases,
         IReadOnlyDictionary<string, ScanExecution> executions,
         IReadOnlyList<ConsumerDispatchCandidate> consumers,
-        IReadOnlyList<ProviderEndpointCandidate> providers)
+        IReadOnlyList<ProviderEndpointCandidate> providers,
+        ExactResolutionNonExactException? extractionFailure)
     {
         return
         [
@@ -300,6 +394,10 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
                                 candidate.OccurrenceId,
                                 occurrence.OccurrenceId)))
                         .Select(candidate => candidate.Owner))
+                    .Concat(ExtractionOwners(
+                        profile,
+                        binding.Alias,
+                        extractionFailure))
                     .Single();
                 return new ExactResolutionRuntimeBindingEvidence(
                     binding.Alias,
@@ -315,6 +413,31 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
                     owner.ProfiledRevision);
             }),
         ];
+    }
+
+    private static IEnumerable<ExactResolutionOwner> ExtractionOwners(
+        ExactResolutionProfile profile,
+        string alias,
+        ExactResolutionNonExactException? failure)
+    {
+        if (failure?.EvidenceSource is null || failure.Owner is null)
+        {
+            return [];
+        }
+
+        ResolutionOccurrence? occurrence = profile.Occurrences.SingleOrDefault(value =>
+            StringComparer.Ordinal.Equals(value.OccurrenceId, failure.OccurrenceId));
+        if (occurrence is null)
+        {
+            return [];
+        }
+
+        string failureAlias = failure.EvidenceSource == ExactResolutionNonExactSource.Consumer
+            ? occurrence.ConsumerAlias
+            : occurrence.ProviderAlias;
+        return StringComparer.Ordinal.Equals(failureAlias, alias)
+            ? [failure.Owner]
+            : [];
     }
 
     private static async Task<bool> HasConfiguredUnsupportedInvocationAsync(
@@ -384,6 +507,87 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
 
     private static bool IsIdentifierCharacter(char value) =>
         char.IsAsciiLetterOrDigit(value) || value is '_' or '$';
+
+    private static bool TryCreateUncertaintyBatch(
+        ExactResolutionProfile profile,
+        IReadOnlyList<ConsumerDispatchCandidate> consumers,
+        IReadOnlyList<ExactResolutionDecision> unsupported,
+        ExactResolutionNonExactException exception,
+        out ExactResolutionDecisionBatch decisions)
+    {
+        decisions = null!;
+        if (!IsEligibleNonExactReason(exception.ReasonCode))
+        {
+            return false;
+        }
+
+        ResolutionOccurrence? occurrence = profile.Occurrences.SingleOrDefault(value =>
+            StringComparer.Ordinal.Equals(value.OccurrenceId, exception.OccurrenceId));
+        if (occurrence is null)
+        {
+            return false;
+        }
+
+        ProfileRepository consumerRepository = profile.Repositories.Single(repository =>
+            StringComparer.Ordinal.Equals(repository.Alias, occurrence.ConsumerAlias));
+        ConsumerDispatchCandidate[] owners =
+        [
+            .. consumers.Where(candidate =>
+                StringComparer.Ordinal.Equals(
+                    candidate.OccurrenceId,
+                    occurrence.OccurrenceId) &&
+                StringComparer.Ordinal.Equals(
+                    candidate.Owner.ProfiledRevision,
+                    consumerRepository.ExpectedCommit)),
+        ];
+        ExactResolutionOwner owner;
+        string evidenceLocator;
+        if (exception.EvidenceSource == ExactResolutionNonExactSource.Consumer)
+        {
+            if (exception.Owner is null ||
+                string.IsNullOrWhiteSpace(exception.EvidenceLocator) ||
+                !StringComparer.Ordinal.Equals(
+                    exception.Owner.ProfiledRevision,
+                    consumerRepository.ExpectedCommit))
+            {
+                return false;
+            }
+
+            owner = exception.Owner;
+            evidenceLocator = exception.EvidenceLocator;
+        }
+        else if (owners.Length == 1)
+        {
+            owner = owners[0].Owner;
+            evidenceLocator = owners[0].InvocationEvidenceLocator;
+        }
+        else
+        {
+            return false;
+        }
+
+        var uncertainty = new ExactResolutionDecision(
+            occurrence.OccurrenceId,
+            ExactResolutionDecisionKind.Uncertainty,
+            owner,
+            null,
+            exception.ReasonCode,
+            evidenceLocator);
+        decisions = ExactResolutionDecisionBatch.Create(
+            profile,
+            unsupported.Append(uncertainty)
+                .OrderBy(decision => decision.Identity, StringComparer.Ordinal));
+        return true;
+    }
+
+    private static bool IsEligibleNonExactReason(string reasonCode) => reasonCode is
+        "variable_target" or
+        "disallowed_invocation" or
+        "malformed_provider" or
+        "provider_out_of_root" or
+        "unmatched" or
+        "multiple_providers" or
+        "normalization_mismatch";
 
     private static ExactResolutionOutcome Refused() =>
         new(ExactResolutionOutcomeKind.Refused, "refused");

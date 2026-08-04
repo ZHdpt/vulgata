@@ -6,19 +6,19 @@ namespace Vulgata.Tests;
 
 public sealed class ExactResolutionExtractionTests
 {
-    public static TheoryData<string> InexactConsumerStatements => new()
+    public static TheoryData<string, string?> InexactConsumerStatements => new()
     {
-        { "// netTools.execute(ctx, \"cust/updateSession\");" },
-        { "/* netTools.execute(ctx, \"cust/updateSession\"); */" },
-        { "netTools.execute(ctx, transCode);" },
-        { "netTools.execute(ctx, resolveEndpoint());" },
-        { "netTools.execute(ctx, \"cust/\" + \"updateSession\");" },
-        { "netTools.execute(ctx, String.format(\"cust/%s\", session));" },
-        { "netTools.execute(ctx, \"\"\"cust/updateSession\"\"\");" },
-        { "otherTools.execute(ctx, \"cust/updateSession\");" },
-        { "netTools.call(ctx, \"cust/updateSession\");" },
-        { "netTools.execute(\"cust/updateSession\", ctx);" },
-        { "netTools.execute(ctx, \"cust\\q/updateSession\");" },
+        { "// netTools.execute(ctx, \"cust/updateSession\");", null },
+        { "/* netTools.execute(ctx, \"cust/updateSession\"); */", null },
+        { "netTools.execute(ctx, transCode);", "variable_target" },
+        { "netTools.execute(ctx, resolveEndpoint());", "variable_target" },
+        { "netTools.execute(ctx, \"cust/\" + \"updateSession\");", "variable_target" },
+        { "netTools.execute(ctx, String.format(\"cust/%s\", session));", "variable_target" },
+        { "netTools.execute(ctx, \"\"\"cust/updateSession\"\"\");", null },
+        { "otherTools.execute(ctx, \"cust/updateSession\");", null },
+        { "netTools.call(ctx, \"cust/updateSession\");", null },
+        { "netTools.execute(\"cust/updateSession\", ctx);", "variable_target" },
+        { "netTools.execute(ctx, \"cust\\q/updateSession\");", null },
     };
 
     public static TheoryData<string> NonProviderDeclarations => new()
@@ -173,16 +173,19 @@ public sealed class ExactResolutionExtractionTests
             fixture.ProviderRepository.Commit,
             fixture.ProviderRepository.RootPath);
 
-        InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(
             () => new ExactCandidateExtractors(context).ExtractProvidersAsync(
                 snapshot,
                 occurrence));
 
+        Assert.Equal(occurrence.OccurrenceId, exception.OccurrenceId);
+        Assert.Equal("malformed_provider", exception.ReasonCode);
         Assert.IsType<System.Xml.XmlException>(exception.InnerException);
     }
 
     [Fact]
-    public async Task ExtractConsumersAsync_FirstConfiguredInvocationIsVariable_DoesNotPromoteLaterLiteralAsync()
+    public async Task ExtractConsumersAsync_FirstConfiguredInvocationIsVariable_ClassifiesVariableTargetAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
             await ExactCrossRepositoryTestFixture.CreateAsync();
@@ -219,16 +222,18 @@ public sealed class ExactResolutionExtractionTests
             consumer.DocumentVersion.ProfiledRevision,
             fixture.ConsumerRepository.RootPath);
 
-        IReadOnlyList<ConsumerDispatchCandidate> candidates =
-            await new ExactCandidateExtractors(context).ExtractConsumersAsync(
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
+                new ExactCandidateExtractors(context).ExtractConsumersAsync(
                 snapshot,
-                occurrence);
+                occurrence));
 
-        Assert.Empty(candidates);
+        Assert.Equal(occurrence.OccurrenceId, exception.OccurrenceId);
+        Assert.Equal("variable_target", exception.ReasonCode);
     }
 
     [Fact]
-    public async Task ExtractConsumersAsync_QualifiedReceiverMasqueradesAsSimpleMemberInvocation_ProducesNoCandidateAsync()
+    public async Task ExtractConsumersAsync_QualifiedReceiverMasqueradesAsSimpleMemberInvocation_ClassifiesDisallowedInvocationAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
             await ExactCrossRepositoryTestFixture.CreateAsync();
@@ -252,18 +257,21 @@ public sealed class ExactResolutionExtractionTests
             consumer.DocumentVersion.ProfiledRevision,
             fixture.ConsumerRepository.RootPath);
 
-        IReadOnlyList<ConsumerDispatchCandidate> candidates =
-            await new ExactCandidateExtractors(context).ExtractConsumersAsync(
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
+                new ExactCandidateExtractors(context).ExtractConsumersAsync(
                 snapshot,
-                occurrence);
+                occurrence));
 
-        Assert.Empty(candidates);
+        Assert.Equal(occurrence.OccurrenceId, exception.OccurrenceId);
+        Assert.Equal("disallowed_invocation", exception.ReasonCode);
     }
 
     [Theory]
     [MemberData(nameof(InexactConsumerStatements))]
-    public async Task ExtractConsumersAsync_InexactCallForms_ProduceNoCandidateAsync(
-        string statement)
+    public async Task ExtractConsumersAsync_InexactCallForms_ClassifyOnlyConfiguredNonliteralAsync(
+        string statement,
+        string? expectedReason)
     {
         await using ExactCrossRepositoryTestFixture fixture =
             await ExactCrossRepositoryTestFixture.CreateAsync();
@@ -280,12 +288,22 @@ public sealed class ExactResolutionExtractionTests
             SourceAtLine(45, statement));
         await using var snapshot = Snapshot(consumer, fixture.ConsumerRepository.RootPath);
 
-        IReadOnlyList<ConsumerDispatchCandidate> candidates =
-            await new ExactCandidateExtractors(context).ExtractConsumersAsync(
+        if (expectedReason is null)
+        {
+            Assert.Empty(await new ExactCandidateExtractors(context).ExtractConsumersAsync(
                 snapshot,
-                occurrence);
-
-        Assert.Empty(candidates);
+                occurrence));
+        }
+        else
+        {
+            ExactResolutionNonExactException exception =
+                await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
+                    new ExactCandidateExtractors(context).ExtractConsumersAsync(
+                        snapshot,
+                        occurrence));
+            Assert.Equal(expectedReason, exception.ReasonCode);
+            Assert.Equal(ExactResolutionNonExactSource.Consumer, exception.EvidenceSource);
+        }
     }
 
     [Theory]
@@ -332,11 +350,14 @@ public sealed class ExactResolutionExtractionTests
             fixture.ProviderRepository.Commit,
             fixture.ProviderRepository.RootPath);
 
-        InvalidDataException exception = await Assert.ThrowsAsync<InvalidDataException>(
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(
             () => new ExactCandidateExtractors(context).ExtractProvidersAsync(
                 snapshot,
                 occurrence));
 
+        Assert.Equal(occurrence.OccurrenceId, exception.OccurrenceId);
+        Assert.Equal("malformed_provider", exception.ReasonCode);
         Assert.IsType<System.Xml.XmlException>(exception.InnerException);
     }
 
@@ -463,10 +484,14 @@ public sealed class ExactResolutionExtractionTests
             fixture.ProviderRepository.Commit,
             fixture.ProviderRepository.RootPath);
 
-        await Assert.ThrowsAsync<InvalidDataException>(() =>
-            new ExactCandidateExtractors(context).ExtractProvidersAsync(
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
+                new ExactCandidateExtractors(context).ExtractProvidersAsync(
                 snapshot,
                 occurrence));
+
+        Assert.Equal(occurrence.OccurrenceId, exception.OccurrenceId);
+        Assert.Equal("provider_out_of_root", exception.ReasonCode);
     }
 
     [Fact]
