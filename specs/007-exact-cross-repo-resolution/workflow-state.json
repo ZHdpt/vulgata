@@ -22,10 +22,10 @@
     },
     "quality-review": {
       "status": "active",
-      "iteration": 2,
+      "iteration": 3,
       "dispatch_id": null,
       "verdict_path": null,
-      "input_boundary": "pending review-correction checkpoint commit",
+      "input_boundary": "pending final review-correction checkpoint commit",
       "completed_at": null
     },
     "plan-review": {
@@ -154,10 +154,21 @@
     },
     {
       "stage": "quality-review",
-      "status": "active",
+      "status": "revise",
       "started_at": "2026-08-04T03:28:28Z",
+      "completed_at": "2026-08-04T04:03:19Z",
       "iteration": 2,
-      "correction_of": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-3295d64.json"
+      "correction_of": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-3295d64.json",
+      "dispatch_id": "story_11_4_quality_review_2",
+      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json",
+      "finding_ids": ["QR-26F6354-001"]
+    },
+    {
+      "stage": "quality-review",
+      "status": "active",
+      "started_at": "2026-08-04T04:25:23Z",
+      "iteration": 3,
+      "correction_of": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json"
     }
   ],
   "verification": [
@@ -526,10 +537,74 @@
       "observed_at": "2026-08-04T03:28:28Z",
       "summary": "Observed RED for eligible-negative persistence, targetless production-verifier retrieval, all-lease cleanup, eight real extractor classifications, and four real catalog-to-extractor-to-coordinator-to-store cases. Minimal corrections reached extraction 38/38, affected suites 48/48, and focused Story 11.4 116/116. Eligible real source failures now apply/replay one safe owner-anchored reason-specific Uncertainty with zero Edge; authorized owner-only retrieval works and unauthorized remains missing-equivalent; every lease disposal is attempted and cleanup failure is bounded. Root Web build completed with 0 errors, bounded security scans and diff check passed; existing package/analyzer warnings remain unchanged.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/2",
+      "kind": "clean-correction-candidate-regression",
+      "stage": "quality-review",
+      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
+      "artifact_paths": [
+        "src/dotnet",
+        "tests/Vulgata.Tests",
+        "docker/Dockerfile"
+      ],
+      "command": "source-bound Docker build; exact one-shot CodeGraph provider contract; dotnet test Vulgata.Tests excluding only the consumed one-shot provider test against PostgreSQL 17",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T03:37:57Z",
+      "summary": "Fresh correction image sha256:f9d82cefceb1cb0fd10599ba693d9ab5f88d31a08e4ea16513b238f5a97b887b bound candidate commit 26f6354141702e558779e1a47ceac97030f431a0, tree 7e823bbda65863b95f5cf67d98000b2028be63f8, and canonical manifest 207094c425cc55ba9c8c9abeb10900840b86471282ec7c429996ea58221882b2. The exact pinned provider gate passed 1/1 in fresh no-retry namespace 3eb199c09fb86292e0939b26037b6d8df0304469836eae2cb677a3115db8597c. The remaining non-overlapping PostgreSQL 17 suite passed 1076/1076. Combined current correction-candidate coverage is 1077/1077.",
+      "raw_output_path": "TestResults/codegraph-provider-contract/3eb199c09fb86292e0939b26037b6d8df0304469836eae2cb677a3115db8597c/evidence.json"
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/3",
+      "kind": "corrected-quickstart-verification",
+      "stage": "quality-review",
+      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
+      "artifact_paths": [
+        "specs/007-exact-cross-repo-resolution/quickstart.md",
+        "specs/007-exact-cross-repo-resolution/tasks.md"
+      ],
+      "command": "quickstart sections 1-8 corrected evidence audit; git diff --check; bounded placeholder scan; git status --short",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T03:37:57Z",
+      "summary": "Corrected current boundary satisfies quickstart sections 1-8 with focused 116/116, Web build 0 errors, source-bound provider 1/1, remaining regression 1076/1076, prior PostgreSQL migration lifecycle 4/4 and no-pending-model-change evidence, corrected real negative-path integration, authorization retrieval, cleanup, security, placeholder, whitespace, and path-boundary checks. Story 11.5-only actual prepared-Repositories clean-database, complete Pass 1/Pass 2, retrieval/chat/citation, and release deployment remain explicitly unclaimed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/2",
+      "kind": "combined-quality-review",
+      "stage": "quality-review",
+      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
+      "artifact_paths": [
+        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json"
+      ],
+      "command": "independent combined expedited-mvp quality review iteration 2 of f0790d2f412b6ae4489cf6b8f8350b9a229b47a8..26f6354141702e558779e1a47ceac97030f431a0",
+      "exit_code": 1,
+      "observed_at": "2026-08-04T04:03:19Z",
+      "summary": "REVISE with QR-26F6354-001 HIGH. Prior targetless authorization and cleanup findings closed, but well-formed invalid provider declarations and zero/multiple candidate cardinality could still fail in BuildBindingEvidence before real resolver diagnostic conversion, leaving AC-3/FR-014 incomplete.",
+      "raw_output_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json"
+    },
+    {
+      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/4",
+      "kind": "review-correction-red-green",
+      "stage": "quality-review",
+      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs",
+        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs",
+        "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
+        "tests/Vulgata.Tests/ExactResolutionExtractionTests.cs",
+        "tests/Vulgata.Tests/ExactCrossRepositoryResolverTests.cs",
+        "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs"
+      ],
+      "command": "four production-composition negative regressions RED/GREEN; extraction/resolver/owner 59/59; integration 19/19; authorization/persistence 15/15; focused Story 11.4; Web build; security scans; git diff --check",
+      "exit_code": 0,
+      "observed_at": "2026-08-04T04:25:23Z",
+      "summary": "Observed 4/4 RED before the bounded internal validated-profile seam and behavior correction. Same real profile-derived extractor/resolver/coordinator/store cases passed 4/4 GREEN for malformed_provider, unmatched, normalization_mismatch, and multiple_providers with replay-stable owner-anchored Uncertainty and zero Edge. Binding evidence now de-duplicates mapped owners without collapsing candidate cardinality, zero/multiple current owner mapping refuses without writes, structural provider violations are typed after unique owner mapping, and public production DI/catalog composition is unchanged. Root focused Story 11.4 passed 121/121; Web build had 0 errors; security and diff checks passed.",
+      "raw_output_path": null
     }
   ],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-4-review-correction-20260804T032828Z-35c0",
+    "checkpoint_id": "bmad-11-4-review-correction-2-20260804T042523Z-35c0",
     "scope_key": "story/11-4-exact-rpc-http-cross-repository-demo-resolution",
     "stage": "review",
     "committed_paths": [
@@ -544,17 +619,22 @@
       "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/1 through /19",
       "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/1",
       "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/1",
+      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/2",
+      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/3",
+      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/2",
+      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/4",
       "focused Story 11.4 110/110",
       "US1+US2 91/91",
       "US3 18/18",
       "Web build 0 errors",
       "PostgreSQL lifecycle and parallel isolation GREEN",
       "source-bound exact provider contract 1/1",
-      "remaining non-overlapping regression 1070/1070"
+      "remaining non-overlapping regression 1076/1076",
+      "corrected current-candidate total 1077/1077"
     ],
     "commit_sha": "pending",
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-04T03:28:28Z"
+  "updated_at": "2026-08-04T04:25:23Z"
 }

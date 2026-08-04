@@ -165,7 +165,7 @@ public sealed class ExactCrossRepositoryResolverTests
                 provider,
                 "cust/updateSession",
                 "in/Cust/updateSession"));
-        Assert.Equal("normalization_mismatch", mismatch.ReasonCode);
+        Assert.Equal("unmatched", mismatch.ReasonCode);
     }
 
     [Fact]
@@ -323,7 +323,7 @@ public sealed class ExactCrossRepositoryResolverTests
                     Assert.Single(profile.UnsupportedObservations).ObservationId,
                     consumerOwner)]));
         Assert.Equal(
-            mode == "unmatched" ? "normalization_mismatch" : "unmatched",
+            "unmatched",
             exception.ReasonCode);
     }
 

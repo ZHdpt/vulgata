@@ -308,7 +308,7 @@ public sealed class ExactResolutionExtractionTests
 
     [Theory]
     [MemberData(nameof(NonProviderDeclarations))]
-    public async Task ExtractProvidersAsync_MissingWrongOrAmbiguousDeclaration_ProducesNoCandidateAsync(
+    public async Task ExtractProvidersAsync_MissingWrongOrAmbiguousDeclaration_ClassifiesMappedMalformedProviderAsync(
         string xml)
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -324,12 +324,21 @@ public sealed class ExactResolutionExtractionTests
         fixture.ProviderRepository.Write(Assert.Single(occurrence.Provider.Files), xml);
         await using var snapshot = Snapshot(provider, fixture.ProviderRepository.RootPath);
 
-        IReadOnlyList<ProviderEndpointCandidate> candidates =
-            await new ExactCandidateExtractors(context).ExtractProvidersAsync(
+        ExactResolutionNonExactException exception =
+            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
+                new ExactCandidateExtractors(context).ExtractProvidersAsync(
                 snapshot,
-                occurrence);
+                occurrence));
 
-        Assert.Empty(candidates);
+        Assert.Equal(occurrence.OccurrenceId, exception.OccurrenceId);
+        Assert.Equal("malformed_provider", exception.ReasonCode);
+        Assert.Equal(ExactResolutionNonExactSource.Provider, exception.EvidenceSource);
+        Assert.Equal(provider.DocumentVersion.Id, exception.Owner?.DocumentVersionId);
+        Assert.Equal(provider.SourceAnchor.Id, exception.Owner?.SourceAnchorId);
+        Assert.StartsWith(
+            Assert.Single(occurrence.Provider.Files),
+            exception.EvidenceLocator,
+            StringComparison.Ordinal);
     }
 
     [Theory]

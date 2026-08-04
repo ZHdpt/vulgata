@@ -165,9 +165,7 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
                 occurrence.OccurrenceId,
                 eligibleProviders.Length > 1
                     ? "multiple_providers"
-                    : directionQualifiedProviders.Length == 0
-                        ? "unmatched"
-                        : "normalization_mismatch");
+                    : "unmatched");
         }
 
         ProviderEndpointCandidate provider = eligibleProviders[0];

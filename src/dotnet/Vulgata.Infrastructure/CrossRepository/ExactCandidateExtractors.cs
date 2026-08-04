@@ -144,11 +144,16 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                 throw new InvalidDataException("The configured XML input exceeds its aggregate bound.");
             }
 
+            string locator =
+                $"{repositoryRelativePath}#line={occurrence.Provider.Declaration.Line};" +
+                $"ordinal={occurrence.Provider.Declaration.OccurrenceOrdinalOnLine};" +
+                "rule=exact-xml-root-attribute-v1";
             string? rawIdentifier = await ReadProviderIdentifierAsync(
                 bytes,
                 occurrence.Provider.Declaration,
                 occurrence.OccurrenceId,
                 owner,
+                locator,
                 cancellationToken);
             if (rawIdentifier is null)
             {
@@ -160,10 +165,6 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                 continue;
             }
 
-            string locator =
-                $"{repositoryRelativePath}#line={occurrence.Provider.Declaration.Line};" +
-                $"ordinal={occurrence.Provider.Declaration.OccurrenceOrdinalOnLine};" +
-                "rule=exact-xml-root-attribute-v1";
             candidates.Add(new ProviderEndpointCandidate(
                 occurrence.OccurrenceId,
                 owner,
@@ -224,6 +225,7 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
         ExactProviderDeclarationSelector selector,
         string occurrenceId,
         ExactResolutionOwner? owner,
+        string evidenceLocator,
         CancellationToken cancellationToken)
     {
         var settings = new XmlReaderSettings
@@ -261,7 +263,17 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                     reader.NamespaceURI.Length != 0 ||
                     string.IsNullOrWhiteSpace(reader.Value))
                 {
-                    return null;
+                    if (owner is null)
+                    {
+                        return null;
+                    }
+
+                    throw new ExactResolutionNonExactException(
+                        occurrenceId,
+                        "malformed_provider",
+                        ExactResolutionNonExactSource.Provider,
+                        owner,
+                        evidenceLocator);
                 }
 
                 string value = reader.Value.Normalize(NormalizationForm.FormC);
@@ -280,6 +292,16 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                 }
             }
 
+            if (selected is null && owner is not null)
+            {
+                throw new ExactResolutionNonExactException(
+                    occurrenceId,
+                    "malformed_provider",
+                    ExactResolutionNonExactSource.Provider,
+                    owner,
+                    evidenceLocator);
+            }
+
             return selected;
         }
         catch (XmlException exception)
@@ -289,7 +311,7 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                 "malformed_provider",
                 ExactResolutionNonExactSource.Provider,
                 owner,
-                evidenceLocator: null,
+                evidenceLocator,
                 exception);
         }
     }

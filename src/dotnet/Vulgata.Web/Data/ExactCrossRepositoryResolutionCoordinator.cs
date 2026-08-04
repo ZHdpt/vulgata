@@ -23,6 +23,36 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
 {
     private const int MaximumUnsupportedSourceBytes = 1_048_576;
     private const string CleanupFailureCode = "cleanup_failed";
+    private readonly Func<ExactResolutionProfile> _loadProfile = profileCatalog.Load;
+
+    internal ExactCrossRepositoryResolutionCoordinator(
+        ExactResolutionProfileCatalog profileCatalog,
+        IUserContext userContext,
+        ISystemRepository systemRepository,
+        IRepositoryRepository repositoryRepository,
+        IScanExecutionStore scanExecutionStore,
+        IRepositoryAuthorizationVerifier authorizationVerifier,
+        IExactGitRevisionSnapshotService snapshotService,
+        ExactCandidateExtractors extractors,
+        IExactCrossRepositoryResolver resolver,
+        IExactCrossRepositoryResolutionStore store,
+        VulgataDbContext context,
+        Func<ExactResolutionProfile> loadProfile)
+        : this(
+            profileCatalog,
+            userContext,
+            systemRepository,
+            repositoryRepository,
+            scanExecutionStore,
+            authorizationVerifier,
+            snapshotService,
+            extractors,
+            resolver,
+            store,
+            context)
+    {
+        _loadProfile = loadProfile ?? throw new ArgumentNullException(nameof(loadProfile));
+    }
 
     public async Task<ExactResolutionOutcome> ResolveAfterPass1Async(
         ExactResolutionRuntimeRequest request,
@@ -52,7 +82,7 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
             return new(ExactResolutionOutcomeKind.Cancelled, "cancelled");
         }
 
-        ExactResolutionProfile profile = profileCatalog.Load();
+        ExactResolutionProfile profile = _loadProfile();
         if (request.Bindings.Count != 2 ||
             !StringComparer.Ordinal.Equals(request.ProfileId, profile.ProfileId) ||
             !StringComparer.Ordinal.Equals(request.ProfileVersion, profile.ProfileVersion) ||
@@ -376,7 +406,9 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
             {
                 ProfileRepository expected = profile.Repositories.Single(repository =>
                     StringComparer.Ordinal.Equals(repository.Alias, binding.Alias));
-                ExactResolutionOwner owner = profile.Occurrences
+                ExactResolutionOwner[] owners =
+                [
+                    .. profile.Occurrences
                     .Where(occurrence => StringComparer.Ordinal.Equals(
                         occurrence.ConsumerAlias,
                         binding.Alias))
@@ -398,7 +430,16 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
                         profile,
                         binding.Alias,
                         extractionFailure))
-                    .Single();
+                    .Distinct()
+                    .Take(2),
+                ];
+                if (owners.Length != 1)
+                {
+                    throw new InvalidOperationException(
+                        "Runtime binding requires one current mapped owner.");
+                }
+
+                ExactResolutionOwner owner = owners[0];
                 return new ExactResolutionRuntimeBindingEvidence(
                     binding.Alias,
                     binding.StableGitIdentity,
