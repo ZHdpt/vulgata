@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
+  "reviewed_boundary": {
+    "base_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
+    "candidate_commit": null,
+    "diff_sha256": "21a502ae3d5cea39d8f716e5811be26c7febe6e11b9bb3ed664ddb35b9b6503a",
+    "artifact_hashes": {
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-runtime-pass2-binding.md": "2e489385a1d112614c6f01cdde03ab06045a7203fa81a4fd6c2da757edb298a7",
+      "docs/bmad/epics.md": "4ae53468408675c10d4bbabc5cea0ec51016ae4ec161a77c6d1f0218f1eed350",
+      "specs/008-demo-chat-release-gate/spec.md": "d7d2ce6d377a466b74f386ce331fc708abbaba628223e2bcf84fc8dd4e1bc85c",
+      "specs/008-demo-chat-release-gate/plan.md": "e81c578d90275485027d9b4a52e81e1bbdc5928b500737f5a1c78e3ba305c4d6",
+      "specs/008-demo-chat-release-gate/research.md": "1711c4f7aed8067d6077d55601759fbdd028362bbd0da70a009565374623bac1",
+      "specs/008-demo-chat-release-gate/data-model.md": "5106403f6ea41e0e73264099e0e774035fdd4a86e142d2daede90edea96d759a",
+      "specs/008-demo-chat-release-gate/quickstart.md": "84db9d45f21602993b5485cc1bd80e73075ee2eedc141b941b089a105366fc70",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "6c46412027e0c761873582d2971640d804710ef4fa2ddd30b8040cc5a6eb7811",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      "docs/agent-workflow/august-15-expedited-mvp-exception.md": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834",
+      "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+      "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md": "36eacc2371cfe78f1ebac87b371ce22c00c88f2d6e517676776354cb2fa6b13b",
+      "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md": "0252529c3f6aa980a2c3e17b34d4c31a64a3774c9f399092ee6317d362712a01",
+      "docs/bmad/planning-artifacts/architecture/document-graph-decision-log.md": "a65b0b93912abfec95d7b9ceb5410462877b26eba18a67142cfe4a5720e7976a",
+      "docs/bmad/planning-artifacts/architecture/document-graph-anchordb-plus-plan.md": "979822994ac9154f9805b4682e93e87f86ef013aee31db0af556d837284c94d2"
+    },
+    "owned_paths": [
+      "docs/bmad/epics.md",
+      "specs/008-demo-chat-release-gate/spec.md",
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "specs/008-demo-chat-release-gate/data-model.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-runtime-pass2-binding.md",
+    "docs/bmad/epics.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/data-model.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+    "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+    "docs/bmad/planning-artifacts/architecture/document-graph-decision-log.md",
+    "docs/bmad/planning-artifacts/architecture/document-graph-anchordb-plus-plan.md"
+  ],
+  "findings": [
+    {
+      "id": "PLAN-115-RUNTIME-IDENTITY-004",
+      "severity": "HIGH",
+      "category": "feasibility-and-contract-completeness",
+      "artifact": "specs/008-demo-chat-release-gate/plan.md",
+      "location": "Runtime Pass 2 Binding and Exact Dispatch Contract; companion research R11, data-model Exact seven-slot dispatch projection, and release-verification Runtime Pass 2 binding contract",
+      "affected_requirement": "FR-023 and SC-010; Story 11.3 exact single Pass 2 dispatch; exact seven-slot Pass2BusinessLogicJobPayload preservation without embedded or fabricated production identities",
+      "evidence": "The corrected artifacts remove the fixed order/inventory manifest as production authority while retaining mandatory payload slots ManifestId and FlowId with their existing meanings. They define a consumer-owned runtime flow and enumerate the support-fingerprint inputs, but nowhere define the authoritative source or deterministic derivation of ManifestId and FlowId, nor how the runner and committer prove those two values belong to the accepted profile/runtime binding. An implementer must therefore either retain values from the rejected fixed manifest, fabricate new values, or invent an unreviewed derivation, any of which defeats the stated identity-binding and fail-closed contract.",
+      "correction_outcome": "Define in the plan set the authoritative, deterministic derivation and validation rules for PreparedFlowSchemaIdentity, ManifestId, and FlowId from the accepted exact profile and current runtime binding, preserving each existing slot's meaning without the fixed production manifest. Define the canonical encoding/version for the server-only support fingerprint and require RED/GREEN coverage showing stable valid projection plus rejection of fixed-manifest, substituted, drifted, and noncanonical identities before dispatch and before commit. Then rerun independent plan review."
+    }
+  ],
+  "summary": "REVISE. The runtime planner is otherwise bounded, layered, fail-closed, no-migration, testable, and consistent with the approved Story 11.3/11.5 deadline slice. It preserves exactly seven Worker payload slots, keeps general tracing/clustering/scheduling/retry outside scope, retains the clean-database two-Repository/Docker release harness, and correctly requires a new planned-change authorization after eventual plan ACCEPT and before regenerated tasks or production implementation. However, removing the fixed manifest without defining the mandatory ManifestId/FlowId derivation leaves the central runtime dispatch contract non-executable without unreviewed identity invention. tasks.md is intentionally stale and is not a review defect; it must not be regenerated until this finding is corrected, the corrected plan is independently accepted, and the separate planned-change authorization is recorded."
+}

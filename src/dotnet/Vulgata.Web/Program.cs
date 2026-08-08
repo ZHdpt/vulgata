@@ -2,9 +2,11 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
+using Vulgata.Agents.ChatExecution;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.ContextManagement;
@@ -31,7 +33,17 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddProblemDetails();
-builder.Services.AddDataProtection();
+IDataProtectionBuilder dataProtection = builder.Services.AddDataProtection();
+string? dataProtectionKeyRingPath = builder.Configuration["DataProtection:KeyRingPath"];
+string? dataProtectionApplicationName = builder.Configuration["DataProtection:ApplicationName"];
+if (!string.IsNullOrWhiteSpace(dataProtectionKeyRingPath) &&
+    !string.IsNullOrWhiteSpace(dataProtectionApplicationName))
+{
+    dataProtection
+        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeyRingPath.Trim()))
+        .SetApplicationName(dataProtectionApplicationName.Trim());
+}
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext>(sp =>
 {
@@ -117,6 +129,14 @@ builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoff
 builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
 builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
 builder.Services.AddScoped<IRepositoryAuthorizationVerifier, RepositoryAuthorizationVerifier>();
+builder.Services.AddScoped<IChatEvidenceRetriever, ChatEvidenceRetriever>();
+builder.Services.AddScoped<IChatEvidenceCurrentnessValidator, ChatEvidenceCurrentnessValidator>();
+builder.Services.AddScoped<ChatCandidateExtractor>();
+builder.Services.AddScoped<ChatAgentProviderResolver>();
+builder.Services.AddScoped<ChatPromptCatalog>();
+builder.Services.AddScoped<IChatAgentDispatcher, ChatAgentDispatcher>();
+builder.Services.AddScoped<ChatAgentResultValidator>();
+builder.Services.AddScoped<PreparedChatCoordinator>();
 builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
 builder.Services.AddScoped<IExactGitRevisionSnapshotService, ExactGitRevisionSnapshotService>();
 builder.Services.AddScoped<ExactCandidateExtractors>();
@@ -125,10 +145,7 @@ builder.Services.AddScoped<
     IExactCrossRepositoryResolutionStore,
     ExactCrossRepositoryResolutionStore>();
 builder.Services.AddScoped<ExactCrossRepositoryResolutionCoordinator>();
-PreparedPass2FlowCatalog preparedPass2FlowCatalog =
-    PreparedPass2FlowCatalog.Load(typeof(WorkerAgentDispatcher).Assembly);
-builder.Services.AddSingleton(preparedPass2FlowCatalog);
-builder.Services.AddSingleton(preparedPass2FlowCatalog.Flow);
+builder.Services.AddScoped<IPreparedDemoPass2FlowPlanner, PreparedDemoPass2FlowPlanner>();
 builder.Services.AddScoped<RevisionBoundWorkerContextHydrator>();
 builder.Services.AddScoped<
     IWorkerAgentExecutionContextSource,

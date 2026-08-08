@@ -62,6 +62,45 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
             current.DocumentType == DocumentType.BusinessLogic;
     }
 
+    public async Task<bool> HasCommittedResultAsync(
+        WorkerAgentJobPacket packet,
+        RepositoryAccessScope scope,
+        PreparedPass2RuntimeBinding runtimeBinding,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(packet);
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(runtimeBinding);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!await RuntimeSupportMatchesAsync(
+                packet,
+                runtimeBinding,
+                scope,
+                cancellationToken).ConfigureAwait(false))
+        {
+            return false;
+        }
+
+        Pass2BusinessLogicJobPayload job =
+            (Pass2BusinessLogicJobPayload)packet.Payload;
+        Guid logicalDocumentId = CreateStableId(
+            "pass2-logical-document",
+            packet.RepositoryId.ToString("D"),
+            job.FlowId.ToString("D"));
+        Guid documentVersionId = CreateStableId(
+            "pass2-document-version",
+            packet.JobId.ToString("D"));
+        CurrentKnowledge? current = await _knowledgeStore.GetCurrentAsync(
+            logicalDocumentId,
+            scope,
+            [],
+            cancellationToken).ConfigureAwait(false);
+        return current?.LogicalDocumentId == logicalDocumentId &&
+            current.DocumentVersionId == documentVersionId &&
+            current.RepositoryId == packet.RepositoryId &&
+            current.DocumentType == DocumentType.BusinessLogic;
+    }
+
     public async Task<WorkerAgentResultCommitOutcome> CommitAsync(
         WorkerAgentJobPacket packet,
         WorkerAgentResultEnvelope validResult,
@@ -202,11 +241,54 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
         }
     }
 
+    public async Task<WorkerAgentResultCommitOutcome> CommitAsync(
+        WorkerAgentJobPacket packet,
+        WorkerAgentResultEnvelope validResult,
+        RepositoryAccessScope scope,
+        PreparedPass2RuntimeBinding runtimeBinding,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(packet);
+        ArgumentNullException.ThrowIfNull(validResult);
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(runtimeBinding);
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!await RuntimeSupportMatchesAsync(
+                    packet,
+                    runtimeBinding,
+                    scope,
+                    cancellationToken).ConfigureAwait(false))
+            {
+                return WorkerAgentResultCommitOutcome.Rejected;
+            }
+
+            return await CommitPass2Async(
+                packet,
+                validResult,
+                scope,
+                cancellationToken,
+                runtimeBinding.Flow,
+                runtimeBinding).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return WorkerAgentResultCommitOutcome.Cancelled;
+        }
+        catch (Exception)
+        {
+            return WorkerAgentResultCommitOutcome.Failed;
+        }
+    }
+
     private async Task<WorkerAgentResultCommitOutcome> CommitPass2Async(
         WorkerAgentJobPacket packet,
         WorkerAgentResultEnvelope envelope,
         RepositoryAccessScope scope,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        PreparedPass2Flow? authoritativeFlow = null,
+        PreparedPass2RuntimeBinding? runtimeBinding = null)
     {
         if (!TryValidatePass2(
                 packet,
@@ -218,8 +300,9 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
             return WorkerAgentResultCommitOutcome.Rejected;
         }
 
-        if (_preparedPass2Flow is null ||
-            !JobMatchesPreparedFlow(job, _preparedPass2Flow))
+        PreparedPass2Flow? preparedFlow = authoritativeFlow ?? _preparedPass2Flow;
+        if (preparedFlow is null ||
+            !JobMatchesPreparedFlow(job, preparedFlow))
         {
             return WorkerAgentResultCommitOutcome.Rejected;
         }
@@ -234,7 +317,11 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
                 scope,
                 projection.Sections.Select(section => section.StableSectionId).ToArray(),
                 cancellationToken).ConfigureAwait(false);
-            if (current is null || !CurrentMatchesPass2Input(current, packet, projection))
+            Guid expectedRepositoryId = runtimeBinding is null
+                ? packet.RepositoryId
+                : runtimeBinding.Members[index].RepositoryId;
+            if (current is null ||
+                !CurrentMatchesPass2Input(current, expectedRepositoryId, projection))
             {
                 return WorkerAgentResultCommitOutcome.Rejected;
             }
@@ -524,14 +611,73 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
         left.LineEnd == right.LineEnd &&
         StringComparer.Ordinal.Equals(left.SourceHash, right.SourceHash);
 
+    private async Task<bool> RuntimeSupportMatchesAsync(
+        WorkerAgentJobPacket packet,
+        PreparedPass2RuntimeBinding binding,
+        RepositoryAccessScope scope,
+        CancellationToken cancellationToken)
+    {
+        if (packet.Kind != WorkerAgentJobKind.Pass2BusinessLogicDocument ||
+            packet.Payload is not Pass2BusinessLogicJobPayload job ||
+            !binding.IsCanonical() ||
+            !JobMatchesPreparedFlow(job, binding.Flow) ||
+            packet.SystemId != binding.Flow.SystemId ||
+            packet.RepositoryId != binding.Consumer.RepositoryId ||
+            binding.SupportingRepositoryIds.Any(repositoryId => !scope.Contains(repositoryId)) ||
+            job.CodeLogicDocumentVersions.Count != binding.Members.Count)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < binding.Members.Count; index++)
+        {
+            PreparedPass2RuntimeMember member = binding.Members[index];
+            PreparedPass2RuntimeRepositoryBinding repository =
+                member.RepositoryId == binding.Consumer.RepositoryId
+                    ? binding.Consumer
+                    : binding.Provider;
+            OrdinaryPass1JobIdentity identity = OrdinaryPass1JobIdentity.Create(
+                repository.ScanExecutionId,
+                repository.ScanRunId,
+                repository.RepositoryId,
+                member.CodeUnitId,
+                repository.ProfiledRevision);
+            WorkerAgentCodeLogicDocumentVersionProjection projection =
+                job.CodeLogicDocumentVersions[index];
+            if (identity.JobId != member.JobId ||
+                OrdinaryPass1JobIdentity.CreateDocumentVersionId(identity.JobId) !=
+                    member.DocumentVersionId ||
+                projection.LogicalDocumentId != member.LogicalDocumentId ||
+                projection.DocumentVersionId != member.DocumentVersionId ||
+                !projection.SourceAnchors.Select(anchor => anchor.Id)
+                    .SequenceEqual(member.SourceAnchorIds))
+            {
+                return false;
+            }
+
+            CurrentKnowledge? current = await _knowledgeStore.GetCurrentAsync(
+                member.LogicalDocumentId,
+                scope,
+                projection.Sections.Select(section => section.StableSectionId).ToArray(),
+                cancellationToken).ConfigureAwait(false);
+            if (current is null ||
+                !CurrentMatchesPass2Input(current, member.RepositoryId, projection))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static bool CurrentMatchesPass2Input(
         CurrentKnowledge current,
-        WorkerAgentJobPacket packet,
+        Guid expectedRepositoryId,
         WorkerAgentCodeLogicDocumentVersionProjection projection)
     {
         if (current.LogicalDocumentId != projection.LogicalDocumentId ||
             current.DocumentVersionId != projection.DocumentVersionId ||
-            current.RepositoryId != packet.RepositoryId ||
+            current.RepositoryId != expectedRepositoryId ||
             current.DocumentType != DocumentType.CodeLogic ||
             !StringComparer.Ordinal.Equals(current.Title, projection.Title) ||
             !StringComparer.Ordinal.Equals(

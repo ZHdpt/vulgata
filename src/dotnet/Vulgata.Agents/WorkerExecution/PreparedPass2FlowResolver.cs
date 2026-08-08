@@ -5,6 +5,12 @@ namespace Vulgata.Agents.WorkerExecution;
 
 public static class PreparedPass2FlowResolver
 {
+    public static void ValidateRuntime(ResolvedPreparedPass2Flow resolvedFlow)
+    {
+        ArgumentNullException.ThrowIfNull(resolvedFlow);
+        _ = Pass2BusinessLogicJobPayload.Create(resolvedFlow);
+    }
+
     public static ResolvedPreparedPass2Flow Resolve(
         PreparedPass2Flow flow,
         Guid systemId,

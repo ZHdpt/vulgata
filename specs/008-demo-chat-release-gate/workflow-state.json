@@ -14,9 +14,9 @@
     },
     "plan-review": {
       "status": "accepted",
-      "iteration": 4,
-      "dispatch_id": "story_11_5_plan_review_iteration_4",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json"
+      "iteration": 7,
+      "dispatch_id": "story_11_5_plan_review_iteration_7",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json"
     },
     "analyze": {
       "status": "invalidated",
@@ -42,8 +42,8 @@
     },
     "planned-change-authorization": {
       "status": "authorized",
-      "authorized_at": "2026-08-04T12:42:33Z",
-      "authority": "user: Approve"
+      "authorized_at": "2026-08-07T06:50:27Z",
+      "authority": "user: Approve."
     }
   },
   "stage_history": [
@@ -175,6 +175,119 @@
         "PLAN-115-SEMANTIC-001",
         "PLAN-115-DOCKER-002"
       ]
+    },
+    {
+      "stage": "correct-course",
+      "status": "approved",
+      "completed_at": "2026-08-07T03:53:21Z",
+      "authority": "user: Approve",
+      "artifact_path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-runtime-pass2-binding.md",
+      "scope": "Bound actual product-created identities into the bounded prepared Pass 2 flow before dispatch"
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "iteration": 5,
+      "dispatch_id": "story_11_5_plan_review_iteration_5",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-5.json",
+      "completed_at": "2026-08-07T03:53:21Z",
+      "finding_ids": [
+        "PLAN-115-RUNTIME-IDENTITY-004"
+      ]
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "iteration": 6,
+      "dispatch_id": "story_11_5_plan_review_iteration_6",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-6.json",
+      "completed_at": "2026-08-07T03:53:21Z",
+      "finding_ids": [],
+      "authorization_required_before_next_stage": "planned-change-authorization"
+    },
+    {
+      "stage": "planned-change-authorization",
+      "status": "authorized",
+      "authorized_at": "2026-08-07T06:03:14Z",
+      "authority": "user: Approve.",
+      "trigger": "Bounded PreparedDemoPass2FlowPlanner and material change to single Pass 2 preparation and dispatch identity validation",
+      "approved_approach": "Bind accepted exact-profile evidence and current product-created identities into one consumer-owned runtime flow; derive and recompute canonical schema, manifest, flow, and support identities while preserving the exact seven-slot Worker payload",
+      "does_not_waive": [
+        "task validation",
+        "transient RED/GREEN TDD",
+        "combined quality review",
+        "security and migration checks",
+        "clean-database two-Repository E2E",
+        "Docker verification"
+      ]
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-07T06:03:14Z",
+      "completed_at": "2026-08-07T06:12:41Z",
+      "input_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
+      "agent_role": "task-author",
+      "dispatch_id": "story_11_5_corrected_tasks",
+      "artifact_paths": [
+        "specs/008-demo-chat-release-gate/tasks.md"
+      ],
+      "artifact_hashes": {
+        "specs/008-demo-chat-release-gate/tasks.md": "b46830e9bb873e9b379a098c531220c04adc37f8a7482eb83edd047d2212d990"
+      },
+      "validation": "65 continuous tasks; T001-T050 preserved complete; T051-T065 unchecked; FR-001 through FR-023 and SC-001 through SC-010 covered; zero malformed or stale references",
+      "failure": null
+    },
+    {
+      "stage": "correct-course",
+      "status": "approved",
+      "completed_at": "2026-08-07T06:24:13Z",
+      "authority": "user: Approve.",
+      "artifact_path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-pass1-job-identity-amendment.md",
+      "scope": "Derive ordinary Pass 1 Worker job identities deterministically so the runtime Pass 2 planner can recompute the actual historical job identity without a migration"
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "iteration": 7,
+      "dispatch_id": "story_11_5_plan_review_iteration_7",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json",
+      "completed_at": "2026-08-07T06:48:23Z",
+      "finding_ids": [],
+      "authorization_required_before_next_stage": "planned-change-authorization"
+    },
+    {
+      "stage": "planned-change-authorization",
+      "status": "authorized",
+      "authorized_at": "2026-08-07T06:50:27Z",
+      "authority": "user: Approve.",
+      "trigger": "Deterministic ordinary Pass 1 Worker JobId derivation materially changes Scan dispatch identity",
+      "approved_approach": "Derive the actual ordinary Pass 1 JobId from the canonical ScanExecution, ScanRun, Repository, CodeUnit, and ProfiledRevision boundary; independently recompute it in the runtime planner and verify the existing Document Version projection without migration or retry-policy change",
+      "does_not_waive": [
+        "task validation",
+        "transient RED/GREEN TDD",
+        "combined quality review",
+        "security and migration checks",
+        "clean-database two-Repository E2E",
+        "Docker verification"
+      ]
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-07T06:50:27Z",
+      "completed_at": "2026-08-07T06:57:00Z",
+      "input_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
+      "agent_role": "task-author",
+      "dispatch_id": "story_11_5_corrected_tasks_iteration_7",
+      "artifact_paths": [
+        "specs/008-demo-chat-release-gate/tasks.md"
+      ],
+      "artifact_hashes": {
+        "specs/008-demo-chat-release-gate/tasks.md": "23c7ad9086d5cc88652994f8ee93b3586f35cef0d713163aa86a35f7f56f5d40"
+      },
+      "validation": "65 continuous tasks; T001-T050 preserved complete; T051-T065 unchecked; FR-001 through FR-024 and SC-001 through SC-011 covered; zero malformed, stale, or boundary errors",
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -228,7 +341,7 @@
       "authority": "Accepted SpecKit tasks",
       "path": "specs/008-demo-chat-release-gate/tasks.md",
       "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "sha256": "eea9407c2eaf943206155d57dc06785b17fec0a16bc28b13491aa259a1c3186a"
+      "sha256": "23c7ad9086d5cc88652994f8ee93b3586f35cef0d713163aa86a35f7f56f5d40"
     }
   ],
   "dispatches": [
@@ -266,12 +379,15 @@
   "review_iterations": {
     "spec-review": { "count": 0, "verdict_paths": [] },
     "plan-review": {
-      "count": 4,
+      "count": 7,
       "verdict_paths": [
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json"
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-5.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-6.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json"
       ]
     },
     "analyze": { "count": 0, "verdict_paths": [] },
@@ -324,5 +440,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-04T12:53:29Z"
+  "updated_at": "2026-08-07T06:57:00Z"
 }

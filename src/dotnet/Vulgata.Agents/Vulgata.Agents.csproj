@@ -17,6 +17,10 @@
                       LogicalName="Vulgata.Agents.Prompts.pass1-code-logic-worker.v1.md" />
     <EmbeddedResource Include="Prompts\pass2-business-flow-worker.v1.md"
                       LogicalName="Vulgata.Agents.Prompts.pass2-business-flow-worker.v1.md" />
+    <EmbeddedResource Include="Prompts\chat-business.v1.md"
+                      LogicalName="Vulgata.Agents.Prompts.chat-business.v1.md" />
+    <EmbeddedResource Include="Prompts\chat-it.v1.md"
+                      LogicalName="Vulgata.Agents.Prompts.chat-it.v1.md" />
     <EmbeddedResource Include="PreparedFlows\demo-business-flow.v1.json"
                       LogicalName="Vulgata.Agents.PreparedFlows.demo-business-flow.v1.json" />
   </ItemGroup>

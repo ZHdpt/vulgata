@@ -232,8 +232,25 @@ public sealed class SequentialScanRunner
                 "The Sequential Scan Runner has no result committer configured.");
         }
 
-        if (_preparedPass2Flow is null ||
-            !_preparedPass2Flow.IsExactMatch(resolvedFlow.Flow))
+        PreparedPass2RuntimeBinding? runtimeBinding = resolvedFlow.RuntimeBinding;
+        PreparedPass2Flow authoritativeFlow;
+        if (runtimeBinding is not null)
+        {
+            if (!runtimeBinding.IsCanonical() ||
+                !runtimeBinding.Flow.IsExactMatch(resolvedFlow.Flow))
+            {
+                throw new InvalidOperationException(
+                    "The resolved Pass 2 runtime binding is not canonical.");
+            }
+
+            authoritativeFlow = runtimeBinding.Flow;
+        }
+        else if (_preparedPass2Flow is not null &&
+            _preparedPass2Flow.IsExactMatch(resolvedFlow.Flow))
+        {
+            authoritativeFlow = _preparedPass2Flow;
+        }
+        else
         {
             throw new InvalidOperationException(
                 "The resolved Pass 2 flow is not the authoritative prepared flow.");
@@ -252,10 +269,12 @@ public sealed class SequentialScanRunner
             return;
         }
 
-        Pass2BusinessLogicJobPayload payload = Pass2BusinessLogicJobPayload.Create(
-            resolvedFlow.Flow,
-            resolvedFlow.CodeLogicDocuments);
-        Guid pass2JobId = CreatePass2JobId(execution, _preparedPass2Flow);
+        Pass2BusinessLogicJobPayload payload = runtimeBinding is null
+            ? Pass2BusinessLogicJobPayload.Create(
+                resolvedFlow.Flow,
+                resolvedFlow.CodeLogicDocuments)
+            : Pass2BusinessLogicJobPayload.Create(resolvedFlow);
+        Guid pass2JobId = CreatePass2JobId(execution, authoritativeFlow);
         WorkerAgentJobPacket packet = WorkerAgentJobPacket.Create(
             pass2JobId,
             WorkerAgentJobKind.Pass2BusinessLogicDocument,
@@ -278,10 +297,17 @@ public sealed class SequentialScanRunner
                 "The durable Pass 2 job does not match the authoritative retry identity.");
         }
 
-        if (await _resultCommitter.HasCommittedResultAsync(
+        bool alreadyCommitted = runtimeBinding is null
+            ? await _resultCommitter.HasCommittedResultAsync(
                 packet,
                 scope,
-                cancellationToken).ConfigureAwait(false))
+                cancellationToken).ConfigureAwait(false)
+            : await _resultCommitter.HasCommittedResultAsync(
+                packet,
+                scope,
+                runtimeBinding,
+                cancellationToken).ConfigureAwait(false);
+        if (alreadyCommitted)
         {
             await CompletePass2ProgressAsync(
                 scanExecutionId,
@@ -326,11 +352,18 @@ public sealed class SequentialScanRunner
         WorkerAgentResultCommitOutcome commitOutcome;
         try
         {
-            commitOutcome = await _resultCommitter.CommitAsync(
-                packet,
-                result,
-                scope,
-                cancellationToken).ConfigureAwait(false);
+            commitOutcome = runtimeBinding is null
+                ? await _resultCommitter.CommitAsync(
+                    packet,
+                    result,
+                    scope,
+                    cancellationToken).ConfigureAwait(false)
+                : await _resultCommitter.CommitAsync(
+                    packet,
+                    result,
+                    scope,
+                    runtimeBinding,
+                    cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -684,7 +717,12 @@ public sealed class SequentialScanRunner
     {
         if (_preparedPass2Flow is null)
         {
-            return Guid.NewGuid();
+            return OrdinaryPass1JobIdentity.Create(
+                execution.Id,
+                execution.ScanRunId,
+                execution.RepositoryId,
+                unit.Id,
+                execution.ProfiledRevision).JobId;
         }
 
         PreparedPass2FlowMember? member = _preparedPass2Flow.Members

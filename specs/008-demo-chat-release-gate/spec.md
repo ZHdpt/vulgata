@@ -99,9 +99,9 @@ confirm its absence.
 
 1. **Given** the accepted prepared Repository revisions and a uniquely named
    clean database, **When** final verification runs, **Then** the path completes
-   profiling, Pass 1, exact Cross-Repository Resolution, Pass 2, authorized
-   retrieval, and one fully cited Business or IT answer without inferred graph
-   truth.
+   profiling, Pass 1, exact Cross-Repository Resolution, runtime prepared-flow
+   binding, Pass 2, authorized retrieval, and one fully cited Business or IT
+   answer without inferred graph truth.
 2. **Given** the end-to-end path is exercised, **When** inaccessible scope is
    queried, **Then** the result is indistinguishable from missing scope and
    discloses no identity, metadata, citation, source, relationship, or business
@@ -139,6 +139,10 @@ confirm its absence.
   identity nor any related source, citation, or business detail is exposed.
 - Release verification fails before cleanup: the failure remains visible as a
   failed gate, cleanup still occurs, and the feature is not reported complete.
+- A prepared Pass 1 member predates the deterministic identity boundary, or
+  its historical Worker job identity cannot be recomputed canonically from
+  current product records: the path fails closed before Pass 2 dispatch or
+  persistence and generates no Document.
 
 ## Requirements *(mandatory)*
 
@@ -208,6 +212,22 @@ confirm its absence.
   retry/failover policy, general Cross-Repository matching, durable chat
   history, graph/dashboard behavior, live notifications, or any deferred Epic
   5–10 capability.
+- **FR-023**: After the accepted exact Cross-Repository relationship is
+  committed, the final path MUST bind the current authorized Pass 1 evidence
+  and actual product-created identities into one server-owned runtime prepared
+  Pass 2 flow. It MUST fail closed rather than use embedded or fabricated
+  database identities.
+- **FR-024**: Each newly dispatched ordinary Pass 1 Worker job in the prepared
+  path MUST use a deterministic server-owned `JobId` bound to its actual
+  Scan Execution, Scan Run, Repository, Code Unit, and accepted Profiled
+  Revision through one versioned, domain-separated canonical identity rule.
+  The runtime prepared-flow binding MUST independently recompute that same
+  historical identity from current persisted product records and MUST fail
+  closed before Pass 2 dispatch or persistence for unsupported legacy,
+  substituted, drifted, malformed, or noncanonical identity evidence. This
+  requirement MUST preserve the exact seven-slot Pass 2 payload and MUST NOT
+  introduce a data migration or backfill, change retry policy, or expand
+  general Scan scheduling, concurrency, failover, clustering, or matching.
 
 ### Key Entities
 
@@ -224,6 +244,10 @@ confirm its absence.
 - **Evidence Packet**: The finite authorized set of current Documents,
   Document Sections, Source Anchors, flow/provenance evidence, and exact
   `REFERENCES` Edge facts available to ground one answer.
+- **Runtime Prepared Pass 2 Flow**: The single consumer-owned flow bound from
+  current authorized Pass 1 evidence, the accepted exact Cross-Repository
+  relationship, and actual product-created identities, with fixed support from
+  exactly the two accepted Repositories.
 - **Release Verification Run**: The bounded clean-database execution of the
   prepared two-Repository path, release checks, final image verification, and
   verified cleanup.
@@ -257,12 +281,36 @@ confirm its absence.
   from that attempt remain, and the cleanup evidence confirms their absence.
 - **SC-009**: The release report lists 100% of known post-demo limitations
   separately and claims completion for 0 deferred Epic 5–10 capabilities.
+- **SC-010**: The prepared-flow tests and final run resolve exactly one
+  consumer-owned flow supported by exactly the two accepted Repositories; all
+  missing, duplicate, stale, unauthorized, wrong-profile, wrong-direction,
+  wrong-ref, and wrong-commit variants produce zero Pass 2 dispatches and zero
+  generated Documents.
+- **SC-011**: For 100% of prepared-path ordinary Pass 1 jobs, repeating the
+  same Scan Execution, Scan Run, Repository, Code Unit, and accepted Profiled
+  Revision boundary produces the same actual Worker job identity, changing any
+  one bound input produces a different identity, and runtime binding
+  independently reproduces the accepted identity. Every unsupported legacy,
+  substituted, drifted, malformed, or noncanonical case produces zero Pass 2
+  dispatches and zero generated Documents while the Pass 2 payload remains
+  exactly seven slots and no migration, backfill, retry-policy, or general Scan
+  expansion is introduced.
 
 ## Assumptions
 
 - Stories 11.1 through 11.4 provide accepted current knowledge-store,
   sequential Scan, Pass 1, Pass 2, and exact Cross-Repository Resolution
   boundaries for the prepared two-Repository flow.
+- The final path creates the prepared System and both prepared Repositories
+  through product behavior, then binds the resulting identities only from
+  current authorized Pass 1 evidence and the accepted exact relationship.
+- Each required prepared-flow selector is expected to identify exactly one
+  current, authorized match for the accepted profile, direction, refs, and
+  commits; any missing or non-unique match prevents Pass 2 dispatch.
+- Deterministic ordinary Pass 1 Worker job identity applies to newly dispatched
+  work only. Existing persisted Documents are not rewritten or backfilled;
+  prepared members without a canonically recomputable historical identity are
+  unsupported and prevent Pass 2 dispatch.
 - The two prepared Repositories, their accepted revisions, the prepared
   System, and the exact configured relationship are available and controlled
   by the organization before final verification begins.

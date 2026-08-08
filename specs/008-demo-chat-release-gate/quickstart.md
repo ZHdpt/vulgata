@@ -11,8 +11,11 @@ task generation or replace independent plan/quality review.
 - Organization-controlled Repository endpoints and LLM-provider secrets supplied
   through the release environment, never source control or command evidence.
 - A clean immutable candidate. Stop if `git status --short` is non-empty.
-- Explicit planned-change approval for the new Chat evidence tool recorded by
-  the root orchestrator after independent plan acceptance.
+- Explicit planned-change approval for the new Chat evidence tool and the
+  material ordinary Pass 1 identity and runtime Pass 2 preparation/dispatch
+  corrections recorded by the root orchestrator after fresh independent plan
+  acceptance. Approval of either Sprint Change Proposal alone is not this
+  gate.
 
 ## 1. Static scope and contract checks
 
@@ -22,12 +25,17 @@ git diff --check
 $templateTokens = @('NEEDS' + ' CLARIFICATION', '[' + 'FEATURE' + ']', '[' + 'DATE' + ']', 'ACTION' + ' REQUIRED', 'REMOVE' + ' IF UNUSED', 'TO' + 'DO', 'T' + 'BD')
 rg -n ($templateTokens -join '|') specs/008-demo-chat-release-gate
 rg -n "index\.md|automatic scope|file upload|retry|failover|IQueryable|DbSet" src/dotnet/Vulgata.Core src/dotnet/Vulgata.Agents src/dotnet/Vulgata.Web src/dotnet/Vulgata.Infrastructure
+rg -n "PreparedFlowSchemaIdentity|ManifestId|FlowId|SystemId|RepositoryId|TraceEvidence|CodeLogicDocumentVersions" src/dotnet/Vulgata.Core/DomainServices/WorkerAgentJobPacket.cs
+rg -n "prepared-pass2-binding-c14n/1|UUIDv8|RFC-network-order|VULGATA-PREPARED-PASS2-(MANIFEST|FLOW|SUPPORT)" specs/008-demo-chat-release-gate
+rg -n "VULGATA-ORDINARY-PASS1-JOB|6b9362f7-193b-88d9-8d9c-b2a21ecfe2fd|pass1-document-version" specs/008-demo-chat-release-gate
 ```
 
 Expected: clean candidate, no whitespace/template marker, no canonical
 `index.md` retrieval, no automatic/file-upload/retry/failover implementation,
-and no EF/query types crossing Infrastructure. Review findings must distinguish
-existing unrelated uses from Story 11.5 changes.
+no EF/query types crossing Infrastructure, and the Pass 2 Worker payload still
+has exactly the accepted seven top-level slots with no runtime-binding or
+support-fingerprint eighth slot. Review findings must distinguish existing
+unrelated uses from Story 11.5 changes.
 
 ## 2. Test-first focused groups
 
@@ -35,6 +43,7 @@ Run each production group after observing its transient failing test and then
 its GREEN result:
 
 ```pwsh
+dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedDemoPass2FlowPlannerTests|FullyQualifiedName~PreparedPass2RuntimeDispatchTests|FullyQualifiedName~PreparedPass2FlowTests|FullyQualifiedName~SequentialScanRunnerDocumentGenerationTests|FullyQualifiedName~WorkerAgentResultCommitterTests|FullyQualifiedName~WorkerAgentProductionRegistrationTests"
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ChatContractTests
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ChatEvidenceRetrievalTests
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ChatEvidenceCurrentnessTests
@@ -45,6 +54,54 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter Fully
 
 Required outcomes:
 
+- ordinary Pass 1 derives the actual Worker Job ID immediately before dispatch
+  from canonical version-1 TLV bytes for the Scan execution, ScanRun,
+  Repository, Code Unit, and full lowercase Profiled Revision; the distinct
+  `VULGATA-ORDINARY-PASS1-JOB` magic and RFC-network-order UUIDv8-SHA256 rules
+  match [data-model.md](data-model.md);
+- an independent oracle pins all 142 bytes, the full SHA-256 digest, and Job
+  UUID `6b9362f7-193b-88d9-8d9c-b2a21ecfe2fd`; repeated input is equal, each
+  changed input differs, delimiter-ambiguous tuples and other identity domains
+  remain distinct, and malformed/mixed-endian encodings are rejected;
+- the runtime planner accepts no member Job ID, independently recomputes each
+  actual ordinary Pass 1 identity from current product rows, and requires the
+  current Document Version ID to match the existing `pass1-document-version`
+  one-way projection; legacy/random, substituted, collided/duplicate, or
+  drifted identity produces zero Pass 2 dispatches and Documents;
+- deterministic identity adds no retry scheduling or duplicate-commit
+  permission, no legacy backfill or migration, no synthetic member identity,
+  and no eighth Pass 2 slot;
+- after the accepted exact directed relationship, one bounded Infrastructure
+  read binds only current product-created System, two Repository, Scan
+  execution/ScanRun, Worker job, Code Unit, Logical Document, Document Version,
+  Source Anchor, and relationship identities;
+- the exact profile remains sole selector authority; each required selector is
+  unique and authorized with exact direction/ref/full-commit/Profiled Revision;
+  missing, duplicate, stale, unauthorized, wrong-profile, wrong-direction,
+  wrong-ref, or wrong-commit variants produce zero Pass 2 dispatches and zero
+  generated Documents;
+- exactly one consumer-owned runtime flow has exactly the two prepared
+  supporting Repositories, a canonical server-only support fingerprint, and
+  one dispatch/commit; the Worker payload remains exactly the seven accepted
+  slots and `GENERATED_FROM` targets every Code Logic Document Version actually
+  used;
+- the planner creates schema identity exactly as
+  `vulgata.prepared-pass2-flow/1.0`, derives Manifest ID from the accepted
+  profile and Flow ID from that manifest plus the current ordered runtime
+  binding using versioned canonical bytes and UUIDv8-SHA256, and never accepts
+  those values from the caller or fixed fixture;
+- an independently constructed golden vector pins the complete canonical
+  bytes, derived Manifest/Flow UUIDs, and lowercase SHA-256 support
+  fingerprint; UUID bytes use RFC network order, tags/lengths/counts are big-
+  endian, and text is strict UTF-8 already in NFC;
+- runner and committer independently recompute before dispatch and before
+  commit; old fixed-manifest, empty/random/substituted, drifted, uppercase,
+  malformed, reordered, duplicate, unknown-version/tag, non-NFC, and .NET
+  mixed-endian variants fail without normalization, dispatch, or persistence;
+- the fixed order/inventory manifest is not production authority; no fixture
+  SQL, direct `DbSet`, reflection, fabricated identifier, alternate profile,
+  general discovery/clustering, scheduling, concurrency, retry, or multiple
+  Pass 2 job exists;
 - explicit Business/IT + one System + exactly two Repository selection;
 - current bounded database evidence and exact Edge direction;
 - authorization before retrieval, live during retrieval/currentness validation,
@@ -103,6 +160,24 @@ Set the harness's documented environment variables for the PostgreSQL
 administrator connection, prepared Repository endpoints, and encrypted/fixture
 LLM providers. Do not print them. Then run:
 
+The harness accepts exactly this closed environment contract and validates every
+value before reserving a port or creating any PostgreSQL/Docker/browser resource:
+
+| Variable | Secret | Validation | Purpose |
+|---|---:|---|---|
+| `VULGATA_STORY115_RUN_FINAL` | No | Exactly `1` | Explicitly activates the unique Release-only live lane. |
+| `VULGATA_STORY115_POSTGRES_ADMIN_CONNECTION` | Yes | Non-empty PostgreSQL administrator connection containing `Host` and an administrator `Database`; never logged or written to evidence | Supplies the administrator credential boundary used only for the nonce-owned database lifecycle. |
+| `VULGATA_STORY115_ACCOUNT_REPOSITORY_URL` | No | Absolute `https`, `ssh`, or `file` URI | Acquires `mbs_account` at the fixed accepted ref/full commit. |
+| `VULGATA_STORY115_CHANNEL_REPOSITORY_URL` | No | Absolute `https`, `ssh`, or `file` URI | Acquires `mbs_channel` at the fixed accepted ref/full commit. |
+| `VULGATA_STORY115_CANDIDATE_COMMIT` | No | Exactly 40 lowercase hexadecimal characters | Binds the final image source-commit label. |
+| `VULGATA_STORY115_CANDIDATE_TREE` | No | Exactly 40 lowercase hexadecimal characters | Binds the final image source-tree label. |
+| `VULGATA_STORY115_PRODUCTION_MANIFEST_SHA256` | No | Exactly 64 lowercase hexadecimal characters | Binds the canonical production-source-manifest label. |
+
+The accepted Repository refs and full commits, provider image, fixture API key,
+demo-user credentials, resource nonce, Data Protection application name, and
+ports are harness constants or cryptographically generated run-local values;
+they are not additional environment inputs.
+
 ```pwsh
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj -c Release --no-build --no-restore --filter FullyQualifiedName~DemoChatReleaseGatePostgreSqlTests --logger "trx;LogFileName=story-11-5-release-gate.trx"
 ```
@@ -116,10 +191,14 @@ clean migrations
 -> mbs_account @ 19c60cd3f3976b7697c487c7bafd96142e3a7625
 -> mbs_channel @ 47f6b627a7598f862873610413eec1e1e7bf46bf
 -> profiling and accepted Pre-Scan Result
--> Pass 1 for each Repository
+-> derive canonical actual ordinary Pass 1 Worker Job IDs and dispatch Pass 1
+   for each Repository
 -> exact account-to-channel Cross-Repository Resolution
 -> one directed REFERENCES Edge and exact evidence
--> Pass 2 Business Logic Document + GENERATED_FROM provenance
+-> bounded runtime prepared-flow binding from product-created identities
+-> validate one consumer-owned flow + exactly-two-Repository support fingerprint
+-> exactly one unchanged seven-slot Pass 2 Worker dispatch
+-> Pass 2 Business Logic Document + GENERATED_FROM provenance to every used version
 -> bounded authorized retrieval
 -> exact Candidate Claim extraction + selection-only provider result
 -> bounded serializable post-provider currentness validation
@@ -136,7 +215,8 @@ repositories/coordinators, Scan services, provider coordinators, and real
 `SecretEncryptionService`; fixture SQL/`DbSet` insertion is forbidden. The
 provisioner and final container share the exact gate-owned Data Protection ring
 and application discriminator. The test fails on ref/commit drift, guessed
-truth, provider-authored factual prose, invalid support, incomplete citations,
+truth, ambiguous/stale/unauthorized runtime binding, any eighth Pass 2 dispatch
+slot, provider-authored factual prose, invalid support, incomplete citations,
 unauthorized disclosure, noninteractive browser proof, cleanup failure, or a
 remaining database/resource. `finally` always runs.
 
@@ -227,9 +307,13 @@ nonce-owned resources. Do not reuse a predecessor image.
 ## 8. Evidence and limitations
 
 Record sanitized command exits/timestamps/hashes, candidate and image identity,
-positive claim/citation counts, authorization-negative result, database drop
-and absence, and cleanup outcomes. Do not retain credentials, proprietary
-source, raw prompts/responses, absolute private paths, or unauthorized details.
+exact-profile/runtime-support fingerprints, independent ordinary Pass 1
+canonical-byte/digest/Job UUID proof and persisted projection verification,
+derived schema/Manifest/Flow identity validation, proof of the exact seven-slot single Pass 2
+dispatch/commit, positive claim/citation counts,
+authorization-negative result, database drop and absence, and cleanup
+outcomes. Do not retain credentials, proprietary source, raw prompts/responses,
+absolute private paths, internal runtime identities, or unauthorized details.
 
 Report these as limitations, not acceptance claims: automatic scope selection,
 file upload, saved sessions, full iterative retrieval tools, retry/failover,

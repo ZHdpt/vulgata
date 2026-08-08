@@ -900,6 +900,53 @@ public sealed class Pass2BusinessLogicJobPayload : WorkerAgentJobPayload
             Array.AsReadOnly(flow.TraceEvidence.ToArray()),
             Array.AsReadOnly(projections));
     }
+
+    public static Pass2BusinessLogicJobPayload Create(
+        ResolvedPreparedPass2Flow resolvedFlow)
+    {
+        ArgumentNullException.ThrowIfNull(resolvedFlow);
+        PreparedPass2RuntimeBinding binding = resolvedFlow.RuntimeBinding ??
+            throw new PreparedPass2FlowContractException();
+        if (!binding.IsCanonical() ||
+            !binding.Flow.IsExactMatch(resolvedFlow.Flow) ||
+            resolvedFlow.CodeLogicDocuments.Count != binding.Members.Count)
+        {
+            throw new PreparedPass2FlowContractException();
+        }
+
+        var projections = new WorkerAgentCodeLogicDocumentVersionProjection[
+            resolvedFlow.CodeLogicDocuments.Count];
+        for (int index = 0; index < projections.Length; index++)
+        {
+            CurrentKnowledge current = resolvedFlow.CodeLogicDocuments[index];
+            PreparedPass2RuntimeMember member = binding.Members[index];
+            PreparedPass2FlowMember flowMember = binding.Flow.Members[index];
+            if (member.Order != index + 1 ||
+                flowMember.Order != member.Order ||
+                flowMember.JobId != member.JobId ||
+                flowMember.CodeUnitId != member.CodeUnitId ||
+                flowMember.LogicalDocumentId != member.LogicalDocumentId ||
+                current.RepositoryId != member.RepositoryId ||
+                current.LogicalDocumentId != member.LogicalDocumentId ||
+                current.DocumentVersionId != member.DocumentVersionId ||
+                !current.SourceAnchors.Select(anchor => anchor.Id)
+                    .SequenceEqual(member.SourceAnchorIds))
+            {
+                throw new PreparedPass2FlowContractException();
+            }
+
+            projections[index] = WorkerAgentCodeLogicDocumentVersionProjection.Create(current);
+        }
+
+        return new(
+            binding.Flow.SchemaIdentity,
+            binding.Flow.ManifestId,
+            binding.Flow.FlowId,
+            binding.Flow.SystemId,
+            binding.Flow.RepositoryId,
+            Array.AsReadOnly(binding.Flow.TraceEvidence.ToArray()),
+            Array.AsReadOnly(projections));
+    }
 }
 
 public sealed record WorkerAgentStructuralContext

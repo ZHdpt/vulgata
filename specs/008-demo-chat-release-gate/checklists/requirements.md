@@ -31,7 +31,13 @@
 
 ## Notes
 
-- All 16 quality checks passed on the first validation iteration.
+- All 16 quality checks remain passed after the approved runtime Pass 2 binding
+  correction and Pass 1 Job Identity amendment added FR-023 through FR-024,
+  SC-010 through SC-011, and the explicit release-sequence boundary.
+- FR-024 and SC-011 preserve the exact seven-slot Pass 2 dispatch contract,
+  require independent recomputation of the actual ordinary Pass 1 Worker job
+  identity, and fail closed for legacy, substitution, drift, malformed, and
+  noncanonical evidence without migration, retry-policy, or general Scan scope.
 - Zero `[NEEDS CLARIFICATION]` markers remain.
 - The approved Business Mode interpretation is preserved: no inline code
   references in narrative; every material claim has a Chinese Document

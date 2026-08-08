@@ -1,10 +1,134 @@
 @page "/"
 @attribute [Authorize]
+@using Vulgata.Web.Data
+@using Vulgata.Core.DomainServices
+@inject PreparedChatCoordinator ChatCoordinator
+@implements IDisposable
 
 <PageTitle>对话</PageTitle>
 
-<div class="chat-page">
-    <h1 class="display-serif display-serif-lg">你好，想了解什么业务流程？</h1>
-    <p>这是 Vulgata 对话入口页。后续故事将补充模式切换与上下文选择。</p>
-    <FluentButton Appearance="Appearance.Accent">开始对话</FluentButton>
+<div class="chat-page @PageModeClass" data-theme="@ThemeName" data-load-state="@_loadState">
+    <section class="chat-controls" aria-label="准备提问">
+        <fieldset class="mode-selector">
+            <legend>选择对话模式</legend>
+            <FluentButton Appearance="@ModeAppearance(ChatMode.Business)"
+                          Disabled="@_isBusy"
+                          aria-pressed="@ModeAriaPressed(ChatMode.Business)"
+                          @onclick="() => SelectMode(ChatMode.Business)">业务模式</FluentButton>
+            <FluentButton Appearance="@ModeAppearance(ChatMode.It)"
+                          Disabled="@_isBusy"
+                          aria-pressed="@ModeAriaPressed(ChatMode.It)"
+                          @onclick="() => SelectMode(ChatMode.It)">技术模式</FluentButton>
+        </fieldset>
+
+        <div class="scope-selector">
+            <label for="chat-system">系统</label>
+            <select id="chat-system"
+                    value="@(_selectedSystemId?.ToString() ?? string.Empty)"
+                    disabled="@(_loadState != LoadState.Loaded || _isBusy)"
+                    @onchange="OnSystemChanged">
+                <option value="">请选择系统</option>
+                @foreach (var scope in _scopes)
+                {
+                    <option value="@scope.SystemId">@scope.SystemDisplayName</option>
+                }
+            </select>
+
+            <label for="chat-repository-first">仓库一</label>
+            <select id="chat-repository-first"
+                    value="@(_firstRepositoryId?.ToString() ?? string.Empty)"
+                    disabled="@(_selectedSystemId is null || _isBusy)"
+                    @onchange="OnFirstRepositoryChanged">
+                <option value="">请选择第一个仓库</option>
+                @foreach (var repository in SelectedRepositories)
+                {
+                    <option value="@repository.RepositoryId">@repository.DisplayName</option>
+                }
+            </select>
+
+            <label for="chat-repository-second">仓库二</label>
+            <select id="chat-repository-second"
+                    value="@(_secondRepositoryId?.ToString() ?? string.Empty)"
+                    disabled="@(_selectedSystemId is null || _isBusy)"
+                    @onchange="OnSecondRepositoryChanged">
+                <option value="">请选择第二个仓库</option>
+                @foreach (var repository in SelectedRepositories)
+                {
+                    <option value="@repository.RepositoryId">@repository.DisplayName</option>
+                }
+            </select>
+        </div>
+    </section>
+
+    <section class="chat-surface" aria-live="polite" aria-busy="@(_isBusy ? "true" : "false")">
+        @if (_submittedQuestion is not null)
+        {
+            <div class="chat-message chat-message--user">@_submittedQuestion</div>
+        }
+
+        @if (_answer is not null)
+        {
+            <article class="chat-message chat-message--assistant complete-answer" data-answer-state="complete">
+                @foreach (MaterialClaim claim in _answer.MaterialClaims)
+                {
+                    <section class="answer-claim">
+                        <p class="material-claim">@claim.Text</p>
+                        @foreach (DocumentCitation citation in _answer.DocumentCitations.Where(
+                            citation => claim.CitationIds.Contains(citation.CitationId, StringComparer.Ordinal)))
+                        {
+                            <div class="document-citation">
+                                <span class="document-citation__title">文档引用：@citation.DocumentTitle</span>
+                                @if (_answer.Mode == ChatMode.It)
+                                {
+                                    <span class="citation-locator citation-locator--inline">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                }
+                                else
+                                {
+                                    <details class="document-citation__details">
+                                        <summary>查看来源</summary>
+                                        <span class="citation-locator">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                    </details>
+                                }
+                            </div>
+                        }
+                    </section>
+                }
+            </article>
+        }
+        else if (_isBusy)
+        {
+            <p class="chat-status" role="status">@ActiveStatusMessage</p>
+        }
+        else
+        {
+            <div class="chat-welcome">
+                <h1 class="display-serif display-serif-lg">@WelcomeMessage</h1>
+                <p>请选择一个系统及其两个仓库，然后输入问题。</p>
+            </div>
+        }
+
+        @if (_message is not null)
+        {
+            <p class="chat-message chat-message--status" role="alert">@_message</p>
+        }
+    </section>
+
+    <section class="question-composer" aria-label="问题输入">
+        <label for="chat-question">问题</label>
+        <textarea id="chat-question"
+                  value="@_question"
+                  placeholder="@QuestionPlaceholder"
+                  rows="3"
+                  readonly="@_isBusy"
+                  @oninput="OnQuestionInput"
+                  @onkeydown="HandleQuestionKeyDownAsync"></textarea>
+        @if (_isBusy)
+        {
+            <FluentButton Appearance="Appearance.Neutral" @onclick="CancelRequest">取消</FluentButton>
+        }
+        else
+        {
+            <FluentButton Class="primary-button" Appearance="Appearance.Accent" @onclick="SendAsync">发送</FluentButton>
+        }
+    </section>
 </div>

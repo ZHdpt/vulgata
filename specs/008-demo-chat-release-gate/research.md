@@ -233,3 +233,192 @@ boundary. Canonical terms come from `docs/UBIQUITOUS_LANGUAGE.md`.
 
 **Alternatives considered**: None; a discovered conflicting ADR or need for a
 new persistence model would stop planning and require escalation.
+
+## R11. Runtime Pass 2 identity binding and dispatch shape
+
+**Decision**: Add one deadline-only Infrastructure
+`PreparedDemoPass2FlowPlanner` after the accepted exact Cross-Repository
+Resolution outcome. The exact-resolution profile remains the sole selector
+authority. The planner performs one bounded relational read over the two
+product-created Scan executions, current Pass 1 Code Logic Document Versions,
+Source Anchors, Worker jobs, Code Units, Logical Documents, and the accepted
+directed `REFERENCES` Edge/evidence. Every reviewed consumer/provider selector
+must map to exactly one current authorized identity with the accepted profile,
+direction, ref, full commit, and Profiled Revision. The resulting runtime flow
+is owned by the consumer Repository and its support spans exactly the consumer
+and provider Repositories.
+
+The server computes a canonical support fingerprint over the accepted profile
+fingerprint plus the actual System, two Repository, Scan execution/ScanRun,
+Worker job, Code Unit, Logical Document, Document Version, Source Anchor, and
+relationship identities. The runner and committer validate that runtime flow
+and fingerprint before dispatch and persistence. The fingerprint and binding
+details are server-only; the Worker-facing `Pass2BusinessLogicJobPayload`
+remains closed to exactly seven top-level slots:
+
+1. `PreparedFlowSchemaIdentity`;
+2. `ManifestId`;
+3. `FlowId`;
+4. `SystemId`;
+5. consumer `RepositoryId`;
+6. `TraceEvidence`;
+7. `CodeLogicDocumentVersions`.
+
+The three identity slots have one authoritative source and no caller override:
+
+- `PreparedFlowSchemaIdentity` is the only closed mapping from accepted exact-
+  profile schema/version `1.0` to the exact supported-contract literal
+  `vulgata.prepared-pass2-flow/1.0`; other versions are refused;
+- `ManifestId` is deterministic UUIDv8-SHA256 over a versioned,
+  domain-separated canonical envelope of that schema identity plus the
+  accepted profile ID/version and raw accepted profile fingerprint; and
+- `FlowId` is deterministic UUIDv8-SHA256 over a separate canonical envelope
+  of the derived Manifest ID, accepted occurrence/direction, current common
+  System, ordered consumer/provider runtime bindings (including refs, commits,
+  Profiled Revisions, Repository/ScanRun/Scan execution identities, aliases,
+  and stable Git identities), and accepted exact relationship identity.
+
+UUIDv8-SHA256 uses the first 16 SHA-256 digest bytes, sets the version-8 and
+RFC-variant bits, and interprets the result in RFC network byte order. This
+preserves the slots' schema/manifest/flow meanings without retaining or
+fabricating the rejected fixed-manifest GUIDs.
+
+Canonical encoding is the binary TLV codec
+`vulgata.prepared-pass2-binding-c14n/1`: ASCII domain magic, NUL, version byte
+1, then unique strictly increasing `u16be` tags with `u32be` byte lengths.
+UUIDs are RFC-network-order bytes; integers/counts are big-endian; text is
+strict UTF-8 without BOM and must already be NFC; exact lowercase hex is
+decoded to raw bytes; lists have an explicit big-endian count and
+length-delimited items. The support envelope's exact tags and nested record
+orders are normative in [data-model.md](data-model.md). Its SHA-256 is rendered
+as exactly 64 lowercase hex characters. No JSON serialization, UUID text,
+.NET mixed-endian Guid bytes, normalization-on-write, alternate order, or
+unknown field/version is accepted.
+
+Planner tests use an independently constructed, hard-coded golden canonical
+byte sequence with pinned expected Manifest UUID, Flow UUID, and lowercase
+support fingerprint. Runner and committer tests separately recompute from
+current authoritative state and reject the old fixed-manifest IDs, random or
+substituted IDs, changed binding/support/trace fields, uppercase or malformed
+fingerprints, reordered/duplicate list items, non-NFC text, wrong envelope
+version/tag order, and mixed-endian UUID bytes before dispatch and before
+commit.
+
+There is no eighth dispatch slot. `CodeLogicDocumentVersions` contains the
+exact ordered versions actually used across the two authorized supporting
+Repositories; `GENERATED_FROM` targets that same used set. The fixed
+order/inventory manifest is removed as production authority and may remain
+only as an explicit non-production fixture. Runtime database identities are
+never copied into the reviewed profile or fabricated by the harness.
+
+**Rationale**: The final product-service-only path creates new database
+identities and therefore cannot satisfy the existing fixed manifest singleton.
+The accepted exact profile already contains the stable semantic selectors,
+pinned refs/commits, direction, invocation, provider declaration, and
+implementation evidence needed to bind the real current rows without a second
+configuration. Keeping the seven-slot payload unchanged preserves the accepted
+Worker contract, while a server-only fingerprint lets the runner/committer
+detect drift or substitution before one Pass 2 dispatch/commit. The design is
+graph-first because it consumes the already committed exact Edge; it does not
+rediscover, infer, traverse, or cluster graph truth.
+
+**Alternatives considered**:
+
+- Keep the fixed production singleton and force its GUIDs into the clean
+  database: rejected because product constructors create identities and
+  fixture SQL, direct `DbSet`, reflection, or fabricated identifiers violate
+  the release contract.
+- Add an eighth Worker payload field for the support fingerprint or runtime
+  bindings: rejected because the accepted dispatch contract is exactly seven
+  slots and the Worker does not need persistence identities to explain the
+  prepared evidence.
+- Generate new random Manifest/Flow GUIDs per run: rejected because retries,
+  runner validation, and committer validation require independently
+  reproducible identity.
+- Hash JSON, Guid text, or platform-native Guid bytes: rejected because
+  property order, escaping, casing, and .NET mixed-endian layout are not a
+  byte-stable cross-process contract.
+- Add a second `mbs_account`/`mbs_channel` manifest or profile: rejected because
+  the exact-resolution profile is already the reviewed selector authority and
+  duplicate configuration can drift.
+- Implement general entry-point tracing, flow discovery, or clustering:
+  rejected as Epic 5 ownership and unnecessary for the single accepted
+  deadline flow.
+
+## R12. Deterministic actual ordinary Pass 1 Worker Job Identity
+
+**Decision**: Replace random identity creation only for newly dispatched
+ordinary Pass 1 jobs with a Core-owned canonical derivation. The actual
+`WorkerAgentJobPacket.JobId` is UUIDv8-SHA256 over a version-1 envelope with
+ASCII magic `VULGATA-ORDINARY-PASS1-JOB` and exactly five increasing TLV
+fields: Scan execution UUID, ScanRun UUID, Repository UUID, Code Unit UUID,
+and raw decoded full Profiled Revision bytes. The envelope reuses the exact
+binary rules of `vulgata.prepared-pass2-binding-c14n/1`: magic + NUL + version
+byte, `u16be` tag, `u32be` length, RFC-network-order UUIDs, and exact lowercase
+hex decoded to raw bytes. The separate magic is the Pass 1 collision domain;
+the envelope version is the derivation contract version.
+
+Profiled Revision input must already be one full lowercase Git object ID of
+exactly 40 or 64 hexadecimal characters. It is encoded as 20 or 32 raw bytes,
+not text. Empty/abbreviated/odd-length/uppercase/trimmed input, JSON, unknown
+tags or versions, alternative field order, UUID text, and .NET mixed-endian
+UUID bytes are rejected without repair. UUIDv8-SHA256 uses the same first-16-
+digest-byte, version-bit, RFC-variant-bit, and network-order algorithm as the
+prepared runtime Manifest/Flow derivation.
+
+The sequential runner derives the Job ID immediately before building the
+ordinary Pass 1 packet. The runtime prepared-flow planner independently
+reconstructs the five inputs from current authorized product rows and derives
+the same historical ID; it accepts no member Job ID from a caller or fixture.
+Because successful Pass 1 clears `ScanExecution.InFlightJobId`, the planner
+also requires the selected current Code Logic Document Version ID to equal the
+existing ordinary-committer projection
+`CreateStableId("pass1-document-version", derivedJobId.ToString("D"))`. This
+one-way forward check proves the Document Version was committed for that
+actual deterministic job. It neither reverses a hash nor adds persistence.
+
+The independent vector in [data-model.md](data-model.md) fixes 142 canonical
+bytes, SHA-256
+`6b9362f7193b38d94d9cb2a21ecfe2fd5ffe6a3aaaa00bd8c787e8efccdc71da`,
+and UUID `6b9362f7-193b-88d9-8d9c-b2a21ecfe2fd`. Tests construct the
+expected bytes independently of the production codec and prove repeat
+identity, every bound-input mutation, delimiter-ambiguous tuple separation,
+Pass 1-versus-Manifest/Flow domain separation, malformed/mixed-endian
+rejection, and duplicate/same-ID-different-boundary collision refusal.
+
+**Rationale**: The accepted runtime member contract means the actual Pass 1
+Worker job, not a planner-created correlation identity. Ordinary successful
+Pass 1 currently creates a random ID, temporarily records it in
+`InFlightJobId`, clears it after validation, and persists only a one-way
+Document Version projection. A canonical actual dispatch identity plus the
+existing forward projection makes the historical identity independently
+verifiable on a clean run without an EF change. Stable re-derivation also
+makes a restarted attempt at the same logical boundary identifiable, but does
+not add, authorize, or modify retry scheduling or duplicate-commit behavior.
+
+Compatibility is fail-closed: existing random-ID Documents are not rewritten
+or backfilled. An unsupported legacy row whose Document Version projection
+does not match the canonical derived ID cannot enter the prepared Pass 2 flow
+and produces zero Pass 2 dispatches and zero generated Documents. The final
+release rehearsal begins from a clean database, so its ordinary Pass 1 jobs
+all use the amended contract.
+
+**Alternatives considered**:
+
+- Invent a synthetic planner member ID: rejected because `JobId` and
+  `MemberJobId` mean the actual Worker job throughout the runner, resolver,
+  trace evidence, and result contract.
+- Reverse the current Document Version ID: rejected because it is a one-way
+  SHA-256-derived projection; the safe check derives forward from current
+  authoritative inputs.
+- Persist or backfill the old random Job ID: rejected because it requires an
+  EF entity/configuration/migration/snapshot change outside the accepted
+  no-migration boundary.
+- Concatenate strings or hash JSON/platform-native `Guid` bytes: rejected
+  because delimiter ambiguity, text normalization/property order, and .NET
+  mixed-endian layout do not define a cross-process canonical contract.
+- Add the derived identity or fingerprint as an eighth Pass 2 field: rejected
+  because member Job IDs already remain in server-owned runtime support and
+  the Worker-facing Pass 2 payload is exactly seven top-level slots.
+- Treat deterministic identity as a retry policy: rejected; dispatch timing,
+  retry, scheduling, concurrency, and duplicate-commit policy are unchanged.

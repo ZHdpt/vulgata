@@ -1106,10 +1106,13 @@ So that the demonstration produces source-grounded Code Logic Documents and an u
 **Then** it shall return schema-validated Code Logic Document content, source claims, essential local references, and communication evidence
 **And** prompts shall be embedded resources and only the source/context required for the job shall be transmitted
 
-**Given** the prepared Pass 1 Documents and exact flow evidence exist
-**When** the runner dispatches the single prepared Pass 2 flow
-**Then** one schema-validated Business Logic Document shall explain the business process in language suitable for a non-technical reviewer
-**And** it shall persist GENERATED_FROM provenance to the Code Logic Document Versions actually used
+**Given** Pass 1 committed current Code Logic Document Versions for both product-created demo Repositories and exact resolution committed the accepted directed relationship
+**When** the bounded demo Pass 2 planner prepares the single flow
+**Then** it shall bind the actual System, Repository, Scan execution, Worker job, Code Unit, Logical Document, Document Version, Source Anchor, and exact relationship identities into a server-owned `ResolvedPreparedPass2Flow`
+**And** each ordinary Pass 1 Worker job identity shall be derived deterministically by the server from its actual Scan execution, Scan run, Repository, Code Unit, and Profiled Revision boundary so the planner can independently recompute the historical identity without a migration or fabricated member ID
+**And** the flow shall be anchored to the consumer Repository while its fixed authorized support contains exactly the two prepared Repositories
+**And** no embedded demo GUID, fixture SQL, `DbSet`, reflection, or general clustering identity may be used
+**And** the sequential runner shall dispatch exactly one schema-validated Pass 2 job and persist one Business Logic Document with `GENERATED_FROM` provenance to every Code Logic Document Version actually used
 **And** bounded refinement, cross-verification waves, partial-failure continuation, and general flow clustering shall remain deferred
 
 #### Story 11.4: Exact RPC/HTTP Cross-Repository Demo Resolution

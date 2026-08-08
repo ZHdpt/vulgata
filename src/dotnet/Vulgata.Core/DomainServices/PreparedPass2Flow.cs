@@ -206,4 +206,5 @@ public sealed record PreparedPass2CodeLogicCandidate(
 
 public sealed record ResolvedPreparedPass2Flow(
     PreparedPass2Flow Flow,
-    IReadOnlyList<CurrentKnowledge> CodeLogicDocuments);
+    IReadOnlyList<CurrentKnowledge> CodeLogicDocuments,
+    PreparedPass2RuntimeBinding? RuntimeBinding = null);
