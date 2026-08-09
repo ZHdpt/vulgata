@@ -1139,6 +1139,35 @@ public sealed class PreScanCommunicationDetectionTests
     }
 
     [Fact]
+    public async Task AcquireAsync_EmptyCommittedBlob_MaterializesZeroLengthFileAsync()
+    {
+        using var source = new TemporaryGitRepository();
+        source.Write("src/empty.xml", string.Empty);
+        source.CommitAll();
+        using var storage = new TemporaryDirectory();
+        RepositoryEntity repository = CreateRepository(source.Path);
+        var workingCopyService = new GitWorkingCopyService(new GitWorkingCopyOptions(storage.Path));
+        GitWorkingCopyResult workingCopy =
+            await workingCopyService.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                CancellationToken.None);
+        var snapshotService =
+            new CommittedRepositorySnapshotService(new GitWorkingCopyOptions(storage.Path));
+
+        await using ICommittedRepositorySnapshotLease lease = await snapshotService.AcquireAsync(
+            repository,
+            Guid.NewGuid(),
+            workingCopy,
+            CancellationToken.None);
+
+        var snapshotFile = new FileInfo(
+            System.IO.Path.Combine(lease.RootPath, "src", "empty.xml"));
+        Assert.True(snapshotFile.Exists);
+        Assert.Equal(0, snapshotFile.Length);
+    }
+
+    [Fact]
     public async Task AcquireAsync_UnsafeArchiveEntries_RejectsAndPublishesNoLease()
     {
         await AssertRejectedArchiveAsync(CreateTar(("C:/absolute.txt", TarEntryType.RegularFile, "x")));

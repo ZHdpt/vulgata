@@ -175,7 +175,7 @@ as completed acceptance criteria.
 - SpecKit feature directory: `specs/008-demo-chat-release-gate`.
 - Current workflow stage: conditional-e2e.
 - Latest workflow checkpoint ID:
-  `bmad-11-5-full-review-correction-20260809T101059Z` (pending local binding).
+  `bmad-11-5-t064-live-correction-20260809T105719Z` (pending local binding).
 
 ### Agent Model Used
 
@@ -193,6 +193,16 @@ as completed acceptance criteria.
   currentness-validation safety contract on 2026-08-04.
 - Task generation produced 61 continuous test-first tasks with complete
   FR-001-FR-022 and SC-001-SC-009 coverage.
+- The first live T064 reached real Repository profiling and exposed legitimate
+  zero-byte committed blobs plus candidate-local provisioning storage; external
+  nonce resources and the nonce database were cleaned successfully.
+- Regression-first corrections now materialize declared zero-length Git blobs
+  without weakening positive-length corruption checks and bind provisioning
+  checkout/Data Protection storage to the nonce run directory with exact
+  process-configuration restoration.
+- Fresh Full acceptance review iteration 4 and quality review iteration 6 both
+  ACCEPT the corrected boundary with zero findings; the live retry remains
+  pending and T064/T065 are not yet complete.
 
 ### File List
 

@@ -24,45 +24,53 @@
       "dispatch_id": "story_11_5_full_analyze_iteration_1",
       "verdict_path": "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
     },
-    "acceptance-review": {
-      "status": "accepted",
-      "iteration": 3,
-      "dispatch_id": "story_11_5_full_acceptance_review_iteration_3",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json",
-      "input_boundary": {
-        "base_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
-        "candidate_commit": null,
-        "diff_sha256": "1e6d600d505ecbd2ecd0edc01b335f8791535b0b8458d86fa6400ab87c95d5d3",
-        "artifact_hashes": {
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "e4cf07408426298881b0733db5d6aa3126c81b77f0f4c661d6f41810552fe265",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "999151f23a8765f4c136e93e4d91dec5d19600cccd78c916f2e2ca1e8a93eda4"
+      "acceptance-review": {
+        "status": "accepted",
+        "iteration": 4,
+        "dispatch_id": "story_11_5_full_acceptance_review_iteration_4",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-4.json",
+        "input_boundary": {
+          "base_commit": "d35d122b164e82d2991660bbdc77c67a379d020b",
+          "candidate_commit": null,
+          "diff_sha256": "7fe91f06bc158acabfc3a00f5e75c15d6de3159084dfd645a467d5a27863ba4e",
+          "artifact_hashes": {
+            "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "440a50001c37811914124e713b2968192fb2c422aeb0cfbdd94ae93c67d03687",
+            "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "32297bc144d62a96ff14b49b48a4906dfe27721d1ec990b605b4f3ffda1f1f69",
+            "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "d1b64a9cd92c8ee557b8b4672b2e62558c98217c0e91e4885cacb13075fe5560",
+            "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "4b8fc8928634d5f7443f1080dc265db2e846f803b59c0b46ed74eef6b8886931"
+          },
+          "owned_paths": [
+            "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+            "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
+            "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+            "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+          ]
         },
-        "owned_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-        ]
+        "completed_at": "2026-08-09T10:57:19Z"
       },
-      "completed_at": "2026-08-09T10:10:59Z"
-    },
-    "quality-review": {
-      "status": "accepted",
-      "iteration": 5,
-      "dispatch_id": "story_11_5_full_quality_review_iteration_5",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json",
-      "input_boundary": {
-        "base_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
-        "candidate_commit": null,
-        "diff_sha256": "1e6d600d505ecbd2ecd0edc01b335f8791535b0b8458d86fa6400ab87c95d5d3",
-        "artifact_hashes": {
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "e4cf07408426298881b0733db5d6aa3126c81b77f0f4c661d6f41810552fe265",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "999151f23a8765f4c136e93e4d91dec5d19600cccd78c916f2e2ca1e8a93eda4"
+      "quality-review": {
+        "status": "accepted",
+        "iteration": 6,
+        "dispatch_id": "story_11_5_full_quality_review_iteration_6",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-6.json",
+        "input_boundary": {
+          "base_commit": "d35d122b164e82d2991660bbdc77c67a379d020b",
+          "candidate_commit": null,
+          "diff_sha256": "7fe91f06bc158acabfc3a00f5e75c15d6de3159084dfd645a467d5a27863ba4e",
+          "artifact_hashes": {
+            "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "440a50001c37811914124e713b2968192fb2c422aeb0cfbdd94ae93c67d03687",
+            "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "32297bc144d62a96ff14b49b48a4906dfe27721d1ec990b605b4f3ffda1f1f69",
+            "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "d1b64a9cd92c8ee557b8b4672b2e62558c98217c0e91e4885cacb13075fe5560",
+            "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "4b8fc8928634d5f7443f1080dc265db2e846f803b59c0b46ed74eef6b8886931"
+          },
+          "owned_paths": [
+            "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+            "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
+            "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+            "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+          ]
         },
-        "owned_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-        ]
-      },
-      "completed_at": "2026-08-09T10:10:59Z"
+        "completed_at": "2026-08-09T10:57:19Z"
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -500,8 +508,8 @@
       ],
       "failure": null
     },
-    {
-      "stage": "quality-review-exception",
+      {
+        "stage": "quality-review-exception",
       "status": "authorized",
       "authorized_at": "2026-08-09T09:50:00Z",
       "authority": "user: Approve",
@@ -512,9 +520,38 @@
         "fresh Full quality review",
         "sole live T064",
         "nonce database absence and resource cleanup verification",
-        "T065 final verification"
-      ]
-    }
+          "T065 final verification"
+        ]
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "corrected",
+        "started_at": "2026-08-09T10:18:50Z",
+        "completed_at": "2026-08-09T10:57:19Z",
+        "input_commit": "d35d122b164e82d2991660bbdc77c67a379d020b",
+        "agent_role": "tdd-implementer/e2e-runner",
+        "dispatch_id": "story_11_5_t064_empty_blob_and_profiling_residue_correction",
+        "validation": "First live T064 failed on legitimate zero-byte committed blobs; cleanup left no external residue but exposed candidate-local profiling storage. Regression-first corrections passed focused 2/2, non-live release 31/31, root combined Release 90/90, and git diff --check.",
+        "failure": null
+      },
+      {
+        "stage": "acceptance-review",
+        "status": "accepted",
+        "iteration": 4,
+        "dispatch_id": "story_11_5_full_acceptance_review_iteration_4",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-4.json",
+        "completed_at": "2026-08-09T10:57:19Z",
+        "finding_ids": []
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 6,
+        "dispatch_id": "story_11_5_full_quality_review_iteration_6",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-6.json",
+        "completed_at": "2026-08-09T10:57:19Z",
+        "finding_ids": []
+      }
   ],
   "repository_preflight": {
     "branch": "codex/run-story-115-sprint-loop",
@@ -624,22 +661,24 @@
         "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
       ]
     },
-    "acceptance-review": {
-      "count": 3,
-      "verdict_paths": [
+      "acceptance-review": {
+        "count": 4,
+        "verdict_paths": [
         "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json",
         "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-2.json",
-        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json"
-      ]
-    },
-    "quality-review": {
-      "count": 5,
+          "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json",
+          "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-4.json"
+        ]
+      },
+      "quality-review": {
+        "count": 6,
       "verdict_paths": [
         "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json",
         "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
         "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json",
         "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-4.json",
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json"
+          "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json",
+          "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-6.json"
       ]
     }
   },
@@ -650,35 +689,33 @@
     "rationale": "Story 11.5 owns the mandatory final clean-database two-Repository user-visible, authorization, persistence, migration, and Docker release path.",
     "covering_tests": [],
     "owner": "e2e-runner",
-    "source_boundary": "4ce3e4b124444e064abb07bc2cf534a67d18548a + accepted two-file correction diff 1e6d600d505ecbd2ecd0edc01b335f8791535b0b8458d86fa6400ab87c95d5d3",
+      "source_boundary": "d35d122b164e82d2991660bbdc77c67a379d020b + accepted four-file correction diff 7fe91f06bc158acabfc3a00f5e75c15d6de3159084dfd645a467d5a27863ba4e",
     "result": "pending",
     "evidence_ids": []
   },
   "verification": [],
-  "last_checkpoint": {
-    "checkpoint_id": "bmad-11-5-full-review-correction-20260809T101059Z",
+    "last_checkpoint": {
+      "checkpoint_id": "bmad-11-5-t064-live-correction-20260809T105719Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
-    "stage": "quality-review",
-    "committed_paths": [
-      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-      "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json",
-      "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-2.json",
-      "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json",
-      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json",
-      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-4.json",
-      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json",
-      "specs/008-demo-chat-release-gate/workflow-state.json",
-      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-    ],
-    "verification_evidence_ids": [
-      "11-5-demo-chat-citations-and-release-gate/acceptance-review/3",
-      "11-5-demo-chat-citations-and-release-gate/quality-review/5",
-      "11-5-demo-chat-citations-and-release-gate/implement/2"
+      "stage": "quality-review",
+      "committed_paths": [
+        "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-4.json",
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-6.json",
+        "specs/008-demo-chat-release-gate/workflow-state.json",
+        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+      ],
+      "verification_evidence_ids": [
+        "11-5-demo-chat-citations-and-release-gate/acceptance-review/4",
+        "11-5-demo-chat-citations-and-release-gate/quality-review/6",
+        "11-5-demo-chat-citations-and-release-gate/conditional-e2e-correction/1"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-09T10:10:59Z"
+    "updated_at": "2026-08-09T10:57:19Z"
 }

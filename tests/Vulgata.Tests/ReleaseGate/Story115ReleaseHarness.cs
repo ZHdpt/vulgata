@@ -10,15 +10,19 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using Npgsql;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CrossRepository;
+using Vulgata.Infrastructure.Git;
 using Vulgata.Shared.Repositories;
 using Vulgata.Web.Data;
 using Vulgata.Web.Validators;
@@ -52,6 +56,12 @@ internal sealed record Story115FinalRunPlan(
     string AppEnvironmentFile,
     IReadOnlyList<Story115ExternalCommand> Commands,
     Story115PortReservation PortReservation);
+
+internal sealed record Story115ProvisioningConfiguration(
+    string GitWorkingCopyRootPath,
+    string DataProtectionApplicationName,
+    string DataProtectionKeyRingPath,
+    bool ProcessConfigurationAppliedBeforeHostCreation);
 
 internal sealed record Story115ExternalCommand(
     string Name,
@@ -658,6 +668,36 @@ internal sealed class Story115ExecutableFinalRunOperations :
     internal static IReadOnlyList<string> InteractiveWaitStates { get; } =
         Array.AsReadOnly(["Loaded", "Empty", "Error"]);
 
+    internal static Story115ProvisioningConfiguration ResolveProvisioningConfigurationForTests(
+        string runDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(runDirectory);
+        string root = Path.GetFullPath(runDirectory);
+        string keyRingDirectory = Path.Combine(root, "keys");
+        string codeGraphDirectory = Path.Combine(root, "codegraph");
+        Directory.CreateDirectory(root);
+        Directory.CreateDirectory(keyRingDirectory);
+
+        using var environment = new Story115ProvisioningConfigurationEnvironment(
+            keyRingDirectory,
+            codeGraphDirectory);
+        using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
+        IServiceProvider services = factory.Services;
+        string gitWorkingCopyRootPath = services
+            .GetRequiredService<GitWorkingCopyOptions>()
+            .RootPath;
+        var keyRepository = AssertIsFileSystemKeyRepository(services);
+        string applicationName = services
+            .GetRequiredService<IOptions<Microsoft.AspNetCore.DataProtection.DataProtectionOptions>>()
+            .Value
+            .ApplicationDiscriminator;
+        return new(
+            gitWorkingCopyRootPath,
+            applicationName,
+            keyRepository.Directory.FullName,
+            environment.IsApplied);
+    }
+
     public async Task ExecuteAsync(
         Story115FinalRunPlan plan,
         CancellationToken cancellationToken)
@@ -846,11 +886,16 @@ internal sealed class Story115ExecutableFinalRunOperations :
             throw new InvalidOperationException("The nonce-owned target connection is unavailable.");
         }
 
-        _provisioningFactory = new Story115ProvisioningFactory(
-            _targetConnectionString,
+        using (var environment = new Story115ProvisioningConfigurationEnvironment(
             plan.KeyRingDirectory,
-            Path.Combine(plan.RunDirectory, "codegraph"));
-        _ = _provisioningFactory.Services;
+            Path.Combine(plan.RunDirectory, "codegraph")))
+        {
+            _provisioningFactory = new Story115ProvisioningFactory(
+                _targetConnectionString,
+                plan.KeyRingDirectory,
+                Path.Combine(plan.RunDirectory, "codegraph"));
+            _ = _provisioningFactory.Services;
+        }
         return Task.CompletedTask;
     }
 
@@ -1362,6 +1407,120 @@ internal sealed class Story115ExecutableFinalRunOperations :
 
     private static string ImageName(Story115RunIdentity identity) =>
         "vulgata-story115-" + identity.Nonce + "-image";
+
+    private static FileSystemXmlRepository AssertIsFileSystemKeyRepository(IServiceProvider services) =>
+        services
+            .GetRequiredService<IOptions<KeyManagementOptions>>()
+            .Value
+            .XmlRepository as FileSystemXmlRepository ??
+        throw new InvalidOperationException(
+            "The Story 11.5 provisioning host did not use the configured key-ring directory.");
+
+    private sealed class Story115ProvisioningConfigurationEnvironment : IDisposable
+    {
+        private static readonly object EnvironmentGate = new();
+        private IReadOnlyDictionary<string, string?> _originalValues =
+            new Dictionary<string, string?>(StringComparer.Ordinal);
+        private IReadOnlyDictionary<string, string> _values =
+            new Dictionary<string, string>(StringComparer.Ordinal);
+        private bool _disposed;
+
+        public Story115ProvisioningConfigurationEnvironment(
+            string keyRingDirectory,
+            string codeGraphDirectory)
+        {
+            Monitor.Enter(EnvironmentGate);
+            bool constructed = false;
+            try
+            {
+                _values = new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["CodeGraph__DataRootPath"] = codeGraphDirectory,
+                    ["DataProtection__ApplicationName"] = DataProtectionApplicationName,
+                    ["DataProtection__KeyRingPath"] = keyRingDirectory,
+                };
+                _originalValues = _values.ToDictionary(
+                    pair => pair.Key,
+                    pair => Environment.GetEnvironmentVariable(pair.Key),
+                    StringComparer.Ordinal);
+                foreach ((string name, string value) in _values)
+                {
+                    Environment.SetEnvironmentVariable(name, value);
+                }
+                constructed = true;
+            }
+            catch (Exception exception)
+            {
+                Exception? restorationFailure = RestoreOriginalValues();
+                if (restorationFailure is not null)
+                {
+                    throw new AggregateException(
+                        "The Story 11.5 provisioning configuration could not be applied or restored.",
+                        exception,
+                        restorationFailure);
+                }
+
+                throw;
+            }
+            finally
+            {
+                if (!constructed)
+                {
+                    Monitor.Exit(EnvironmentGate);
+                }
+            }
+        }
+
+        public bool IsApplied => _values.All(pair => StringComparer.Ordinal.Equals(
+            Environment.GetEnvironmentVariable(pair.Key), pair.Value));
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            try
+            {
+                Exception? restorationFailure = RestoreOriginalValues();
+                if (restorationFailure is not null)
+                {
+                    throw restorationFailure;
+                }
+            }
+            finally
+            {
+                _disposed = true;
+                Monitor.Exit(EnvironmentGate);
+            }
+        }
+
+        private Exception? RestoreOriginalValues()
+        {
+            var failures = new List<Exception>();
+            foreach ((string name, string? value) in _originalValues)
+            {
+                try
+                {
+                    Environment.SetEnvironmentVariable(name, value);
+                }
+                catch (Exception exception)
+                {
+                    failures.Add(exception);
+                }
+            }
+
+            return failures.Count switch
+            {
+                0 => null,
+                1 => failures[0],
+                _ => new AggregateException(
+                    "The Story 11.5 provisioning configuration could not be fully restored.",
+                    failures),
+            };
+        }
+    }
 
     private sealed class Story115ProvisioningFactory(
         string connectionString,

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "gate": "acceptance-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "d35d122b164e82d2991660bbdc77c67a379d020b",
+  "reviewed_boundary": {
+    "base_commit": "d35d122b164e82d2991660bbdc77c67a379d020b",
+    "candidate_commit": null,
+    "diff_sha256": "7fe91f06bc158acabfc3a00f5e75c15d6de3159084dfd645a467d5a27863ba4e",
+    "artifact_hashes": {
+      "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "440a50001c37811914124e713b2968192fb2c422aeb0cfbdd94ae93c67d03687",
+      "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "32297bc144d62a96ff14b49b48a4906dfe27721d1ec990b605b4f3ffda1f1f69",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "d1b64a9cd92c8ee557b8b4672b2e62558c98217c0e91e4885cacb13075fe5560",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "4b8fc8928634d5f7443f1080dc265db2e846f803b59c0b46ed74eef6b8886931"
+    },
+    "owned_paths": [
+      "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+      "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/architecture.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/agent-catalog.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/agent-workflow/e2e-decision-matrix.md",
+    "docs/agent-workflow/operator-runbook.md",
+    ".agents/skills/run-bmad-sprint-loop/references/dispatch-contract.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/data-model.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
+    "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json",
+    "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json",
+    "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-2.json",
+    "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-4.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
+    "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
+    "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+    "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+    "tests/Vulgata.Tests/LoginLogoutTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. The exact four-file dirty candidate boundary and every supplied hash were independently reproduced. The live failure's committed-snapshot defect is corrected without widening trust: declared zero-length regular Git blobs materialize as zero-length files, while positive-length entries with no data still fail closed and existing path, entry-type, size, containment, and reparse protections remain intact. The provisioning host now applies nonce-owned CodeGraph storage and the gate-owned Data Protection key ring/application discriminator before Program performs its synchronous configuration reads, serializes that process-wide configuration window, restores the exact prior process values, and removes the entire nonce run directory during cleanup; no source-tree profiling residue was created by the fresh checks. These corrections preserve the accepted immutable Profiled Revision, external PostgreSQL non-ownership, exact nonce-database lifecycle, shared Data Protection boundary, exact provider/app topology, seven-slot Pass 2 contract, no-migration rule, and no general Scan expansion. Focused checks passed 2/2 and the complete non-live release-harness filter passed 31/31. T064 remains correctly pending; its pending live evidence is not a defect, and a live retry is acceptance-safe on this boundary."
+}

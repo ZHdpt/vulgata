@@ -3,12 +3,61 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
+using Vulgata.Infrastructure.Git;
 using Vulgata.Tests.ReleaseGate;
 
 namespace Vulgata.Tests;
 
+[Collection(Story115ProvisioningConfigurationCollection.Name)]
 public sealed class DemoChatReleaseGatePostgreSqlTests
 {
+    [Fact]
+    public void ProvisioningHost_BeforeProductProvisioning_UsesOnlyNonceOwnedStorage()
+    {
+        string? originalCodeGraphDataRoot = Environment.GetEnvironmentVariable(
+            "CodeGraph__DataRootPath");
+        string? originalDataProtectionApplicationName = Environment.GetEnvironmentVariable(
+            "DataProtection__ApplicationName");
+        string? originalDataProtectionKeyRingPath = Environment.GetEnvironmentVariable(
+            "DataProtection__KeyRingPath");
+        string runDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story115-provisioning-configuration",
+            Guid.NewGuid().ToString("N"));
+        try
+        {
+            Story115ProvisioningConfiguration configuration =
+                Story115ExecutableFinalRunOperations.ResolveProvisioningConfigurationForTests(
+                    runDirectory);
+            Assert.Equal(
+                Path.Combine(runDirectory, "codegraph", "repositories"),
+                configuration.GitWorkingCopyRootPath);
+            Assert.Equal("Vulgata.Story115.ReleaseGate", configuration.DataProtectionApplicationName);
+            Assert.Equal(Path.Combine(runDirectory, "keys"), configuration.DataProtectionKeyRingPath);
+            Assert.True(configuration.ProcessConfigurationAppliedBeforeHostCreation);
+            Assert.DoesNotContain(
+                Path.Combine("src", "dotnet", "Vulgata.Web", "Data", "profiling"),
+                configuration.GitWorkingCopyRootPath,
+                StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(
+                originalCodeGraphDataRoot,
+                Environment.GetEnvironmentVariable("CodeGraph__DataRootPath"));
+            Assert.Equal(
+                originalDataProtectionApplicationName,
+                Environment.GetEnvironmentVariable("DataProtection__ApplicationName"));
+            Assert.Equal(
+                originalDataProtectionKeyRingPath,
+                Environment.GetEnvironmentVariable("DataProtection__KeyRingPath"));
+        }
+        finally
+        {
+            if (Directory.Exists(runDirectory))
+            {
+                Directory.Delete(runDirectory, recursive: true);
+            }
+        }
+    }
+
     [Fact]
     public void BrowserEvidence_UncitedMaterialClaim_IsRejected()
     {
@@ -782,4 +831,10 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             return Task.CompletedTask;
         }
     }
+}
+
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class Story115ProvisioningConfigurationCollection
+{
+    public const string Name = "Story 11.5 provisioning configuration";
 }
