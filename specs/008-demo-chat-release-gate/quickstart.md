@@ -1,21 +1,30 @@
 # Quickstart: Validate Demo Chat and the Final Release Gate
 
-This guide validates Story 11.5 after implementation. It does not authorize
-task generation or replace independent plan/quality review.
+This guide validates Story 11.5 after implementation. It does not replace the
+fresh Full plan review, read-only analysis, separate acceptance/quality
+reviews, or final verification.
 
 ## Prerequisites
 
-- .NET 10 SDK, Git, Docker, and PostgreSQL 17.
+- .NET 10 SDK, Git, Windows Docker Desktop in Linux-container mode, and the
+  already-running PostgreSQL 17 Alpine
+  administrator endpoint at `localhost:5432` (administrator database
+  `vulgata` at the observed boundary).
 - Accepted prepared refs/commits from
   `specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json`.
 - Organization-controlled Repository endpoints and LLM-provider secrets supplied
   through the release environment, never source control or command evidence.
 - A clean immutable candidate. Stop if `git status --short` is non-empty.
-- Explicit planned-change approval for the new Chat evidence tool and the
-  material ordinary Pass 1 identity and runtime Pass 2 preparation/dispatch
-  corrections recorded by the root orchestrator after fresh independent plan
-  acceptance. Approval of either Sprint Change Proposal alone is not this
-  gate.
+- Existing durable planned-change authorizations: the 2026-08-04 Chat-tool and
+  the two 2026-08-07 Pass 2/Pass 1 Scan entries in `workflow-state.json`, plus
+  the Story development record and plan-review iteration 7. The current user
+  correction dispatch authorizes the Windows Docker Desktop T064 topology.
+  After fresh validated Full plan `ACCEPT`, advance directly to regenerated
+  Full tasks, read-only `speckit-analyze`, T064/T065, separate acceptance and
+  quality reviews, and verification; do not request duplicate approval.
+
+T064 supports this Windows Docker Desktop host only. It does not claim a
+native-Linux-host release proof and defines no fallback topology.
 
 ## 1. Static scope and contract checks
 
@@ -166,7 +175,7 @@ value before reserving a port or creating any PostgreSQL/Docker/browser resource
 | Variable | Secret | Validation | Purpose |
 |---|---:|---|---|
 | `VULGATA_STORY115_RUN_FINAL` | No | Exactly `1` | Explicitly activates the unique Release-only live lane. |
-| `VULGATA_STORY115_POSTGRES_ADMIN_CONNECTION` | Yes | Non-empty PostgreSQL administrator connection containing `Host` and an administrator `Database`; never logged or written to evidence | Supplies the administrator credential boundary used only for the nonce-owned database lifecycle. |
+| `VULGATA_STORY115_POSTGRES_ADMIN_CONNECTION` | Yes | Non-empty PostgreSQL administrator connection containing `Host` and an administrator `Database`; the database must differ from the generated nonce database and the value is never logged or written to evidence | Supplies the existing PostgreSQL 17 administrator endpoint used only to prove absence, create, terminate connections to, drop, and re-prove absence of the harness-owned nonce database. The supplied administrator/development database is never migrated, selected for product use, terminated, or dropped. |
 | `VULGATA_STORY115_ACCOUNT_REPOSITORY_URL` | No | Absolute `https`, `ssh`, or `file` URI | Acquires `mbs_account` at the fixed accepted ref/full commit. |
 | `VULGATA_STORY115_CHANNEL_REPOSITORY_URL` | No | Absolute `https`, `ssh`, or `file` URI | Acquires `mbs_channel` at the fixed accepted ref/full commit. |
 | `VULGATA_STORY115_CANDIDATE_COMMIT` | No | Exactly 40 lowercase hexadecimal characters | Binds the final image source-commit label. |
@@ -182,9 +191,10 @@ they are not additional environment inputs.
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj -c Release --no-build --no-restore --filter FullyQualifiedName~DemoChatReleaseGatePostgreSqlTests --logger "trx;LogFileName=story-11-5-release-gate.trx"
 ```
 
-`Story115ReleaseHarness` is the sole owner. It creates nonce-prefixed
-PostgreSQL 17/container/network/volume/key-ring resources and one isolated
-Worker/Chat provider namespace, then proves this exact observed path:
+`Story115ReleaseHarness` is the sole owner of the generated nonce database and
+nonce-prefixed provider/app image/network/env/key-ring resources. It does not
+own the existing PostgreSQL server or container. It proves this exact observed
+path:
 
 ```text
 clean migrations
@@ -207,7 +217,8 @@ clean migrations
 -> curl health on /Account/Login
 -> real Identity login + interactive Blazor positive claim/citation proof
 -> negative Identity context + post-selection revocation missing-equivalent proof
--> terminate/drop/prove database absence and remove all nonce-owned resources
+-> terminate exact-database connections, drop only that database, prove absence,
+   and remove all other harness-owned nonce resources
 ```
 
 Provisioning must call `UserManager`, role/ownership coordinators, management
@@ -221,14 +232,15 @@ unauthorized disclosure, noninteractive browser proof, cleanup failure, or a
 remaining database/resource. `finally` always runs.
 
 The provider/app topology is part of the harness contract, not a schematic.
-The harness creates an internal nonce-owned network and chooses three distinct
+The harness creates a cryptographically nonce-owned publish-capable network
+(without `--internal`) and chooses three distinct
 available host ports; `workerPort` and `chatPort` are also the provider's
 container ports, and neither may be `8080`. With all names/paths held as
 harness variables, its provider invocation is equivalent to:
 
 ```pwsh
 $pythonFixtureImage = 'python:3.12-bookworm@sha256:9bed8554e926c07c6f908841d5ee88c33e8df9236b191526bbce81a9062ab43a'
-docker network create --internal $gateNetwork
+docker network create $gateNetwork
 docker run --detach --name $providerContainer --network $gateNetwork `
   --publish "127.0.0.1:${workerPort}:${workerPort}" `
   --publish "127.0.0.1:${chatPort}:${chatPort}" `
@@ -238,13 +250,30 @@ docker run --detach --name $providerContainer --network $gateNetwork `
   --host 0.0.0.0 --worker-port $workerPort --chat-port $chatPort
 ```
 
-The PostgreSQL container is attached to `$gateNetwork`. Product-service
-provisioning and host-side profiling/Scan store and call
+The existing PostgreSQL server/container is external infrastructure and is
+not a member of or managed by `$gateNetwork`. Windows Docker Desktop supplies
+`host.docker.internal` as a built-in hostname; no explicit host mapping is
+used. After host-side administrator connectivity and PostgreSQL-major-version
+validation, and before nonce database creation, migrations, or product
+provisioning, preflight resolution and TCP reachability from the provider's
+exact network namespace with the equivalent bounded command:
+
+```pwsh
+docker exec $providerContainer python -c "import socket; socket.getaddrinfo('host.docker.internal', 5432); s=socket.create_connection(('host.docker.internal', 5432), 5); s.close()"
+```
+
+Expected: exit code zero without printing credentials. A name-resolution or
+TCP failure stops before product provisioning and enters cleanup; there is no
+alternate host topology. Product-service provisioning and
+host-side profiling/Scan store and call
 `http://127.0.0.1:${workerPort}/v1`; the Chat assignment stores
 `http://127.0.0.1:${chatPort}/v1`. The fixture listens on `0.0.0.0`, while all
 three published mappings are restricted to host loopback. Equal
 host/container provider port numbers are mandatory so the identical stored
 URLs work after the final app joins this namespace.
+The final app connection string targets only the nonce database and replaces
+the host portion with Docker Desktop's built-in `host.docker.internal` for
+container execution. No new environment variable is introduced.
 
 ## 6. Applicable regression
 
@@ -277,7 +306,8 @@ candidate values. A dirty candidate or mismatched label stops the gate.
 The harness writes a permission-restricted nonce-owned `$gateEnvFile` containing
 exactly `ASPNETCORE_ENVIRONMENT=Production`,
 `ASPNETCORE_URLS=http://+:8080`, the still-live disposable
-`ConnectionStrings__DefaultConnection`,
+`ConnectionStrings__DefaultConnection` targeting the nonce database through
+`host.docker.internal`,
 `DataProtection__KeyRingPath=/var/lib/vulgata-dpkeys`, and the same
 `DataProtection__ApplicationName` used by the provisioner. The file is never
 logged and is removed in `finally`. It starts the image in the provider's
@@ -302,7 +332,9 @@ The provider container already owns
 for the Blazor interactive circuit, uses the Fluent controls, and verifies the
 prepared answer/citations plus missing-equivalent negative path. Compose's
 `wget` check and an image-configured `HEALTHCHECK` are not assumed. Remove only
-nonce-owned resources. Do not reuse a predecessor image.
+the nonce database and harness-owned provider/app/image/network/env/key
+resources. Do not remove or stop the supplied PostgreSQL server/container or
+touch its administrator database. Do not reuse a predecessor image.
 
 ## 8. Evidence and limitations
 

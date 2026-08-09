@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Execution Level**: `expedited-mvp`
+**Execution Level**: `full`
 
 **Input**: Story 11.5 — prepared-scope Business/IT chat, grounded citations,
 and the final August 15 demonstration release gate

@@ -5,7 +5,7 @@ Status: review
 Epic: 11
 Story: 5
 created: 2026-08-04
-execution_level: expedited-mvp
+execution_level: full
 depends_on:
   - 11-1-minimal-knowledge-store-and-retrieval-projection
   - 11-2-sequential-scan-runner-and-typed-agent-dispatch
@@ -168,12 +168,14 @@ as completed acceptance criteria.
 
 - Preparation source commit:
   `c07df7d8789e7b975dc7fb6a121dff564e8549ad`.
-- Execution level: `expedited-mvp`.
+- Execution level: `full` (user-authorized transition for the T064 nonce-database topology correction).
 - Canonical activation:
   `docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json`.
 - Proposed SpecKit short name: `demo-chat-release-gate`.
 - SpecKit feature directory: `specs/008-demo-chat-release-gate`.
-- Current workflow stage: implement.
+- Current workflow stage: acceptance-review.
+- Latest workflow checkpoint ID:
+  `bmad-11-5-full-topology-correction-20260809T054413Z` (pending local binding).
 
 ### Agent Model Used
 

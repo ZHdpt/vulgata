@@ -546,26 +546,26 @@ internal sealed record Story115ReleaseContract(
 internal sealed record Story115RunIdentity(
     string Nonce,
     string DatabaseName,
-    string PostgreSqlContainer,
     string ProviderContainer,
     string AppContainer,
-    string Network,
-    string Volume)
+    string Network)
 {
     internal IReadOnlyList<string> ResourceNames { get; } =
         Array.AsReadOnly(
         [
-            PostgreSqlContainer,
             ProviderContainer,
             AppContainer,
             Network,
-            Volume,
         ]);
 }
 
 internal interface IStory115ReleaseOperations
 {
     Task PrepareInfrastructureAsync(
+        Story115RunIdentity identity,
+        CancellationToken cancellationToken);
+
+    Task PreflightDockerDesktopPostgreSqlAsync(
         Story115RunIdentity identity,
         CancellationToken cancellationToken);
 
@@ -637,7 +637,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
     internal static IReadOnlyList<string> ConcreteStages { get; } =
         Array.AsReadOnly(
         [
-            "postgresql-17-lifecycle",
+            "postgresql-17-administrator-database-lifecycle",
             "production-migrations-and-product-services",
             "isolated-worker-chat-provider",
             "single-source-bound-image",
@@ -685,26 +685,16 @@ internal sealed class Story115ExecutableFinalRunOperations :
         var supplied = new NpgsqlConnectionStringBuilder(
             plan.Environment.PostgreSqlAdministratorConnection);
         RequirePostgreSqlCredentials(supplied);
+        if (StringComparer.Ordinal.Equals(supplied.Database, identity.DatabaseName))
+        {
+            throw new InvalidOperationException(
+                "The supplied PostgreSQL administrator database must be distinct from the nonce-owned database.");
+        }
+
         await ExecuteRequiredAsync(FindCommand(plan, "network-create"), cancellationToken);
         await ExecuteRequiredAsync(
-            FindCommand(plan, "postgres-run"),
-            cancellationToken,
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["POSTGRES_USER"] = supplied.Username,
-                ["POSTGRES_PASSWORD"] = supplied.Password,
-                ["POSTGRES_DB"] = supplied.Database,
-            });
-
-        Story115ProcessResult portResult = await ExecuteRequiredAsync(
-            new(
-                "postgres-port-inspect",
-                "docker",
-                ["port", identity.PostgreSqlContainer, "5432/tcp"]),
+            MakeProviderFixtureAbsolute(FindCommand(plan, "provider-run")),
             cancellationToken);
-        int port = ParsePublishedPort(portResult.StandardOutput);
-        supplied.Host = IPAddress.Loopback.ToString();
-        supplied.Port = port;
         supplied.Pooling = false;
         supplied.Timeout = 5;
         _administratorConnectionString = supplied.ConnectionString;
@@ -728,7 +718,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
             cancellationToken);
         if (!ready)
         {
-            throw new TimeoutException("The nonce-owned PostgreSQL 17 container did not become ready.");
+            throw new TimeoutException("The supplied PostgreSQL 17 administrator endpoint did not become ready.");
         }
 
         var target = new NpgsqlConnectionStringBuilder(_administratorConnectionString)
@@ -736,6 +726,22 @@ internal sealed class Story115ExecutableFinalRunOperations :
             Database = identity.DatabaseName,
         };
         _targetConnectionString = target.ConnectionString;
+    }
+
+    public async Task PreflightDockerDesktopPostgreSqlAsync(
+        Story115RunIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        Story115FinalRunPlan plan = RequirePlan(identity);
+        var supplied = new NpgsqlConnectionStringBuilder(
+            plan.Environment.PostgreSqlAdministratorConnection);
+        RequirePostgreSqlCredentials(supplied);
+        await ExecuteRequiredAsync(
+            Story115ReleaseHarness.CreateDockerDesktopPostgreSqlPreflightCommand(
+                identity,
+                supplied.Port),
+            cancellationToken,
+            timeout: TimeSpan.FromSeconds(15));
     }
 
     public async Task ProveDatabaseAbsentAsync(
@@ -860,12 +866,8 @@ internal sealed class Story115ExecutableFinalRunOperations :
         CancellationToken cancellationToken)
     {
         Story115FinalRunPlan plan = RequirePlan(identity);
-        await RemoveExactContainerAsync(identity.PostgreSqlContainer, cancellationToken);
         await ExecuteCleanupAsync(
             new("image-remove", "docker", ["image", "rm", "--force", ImageName(identity)]),
-            cancellationToken);
-        await ExecuteCleanupAsync(
-            new("volume-remove", "docker", ["volume", "rm", "--force", identity.Volume]),
             cancellationToken);
         await ExecuteCleanupAsync(
             new("network-remove", "docker", ["network", "rm", identity.Network]),
@@ -884,10 +886,6 @@ internal sealed class Story115ExecutableFinalRunOperations :
         Story115ProvisioningFactory factory = _provisioningFactory ??
             throw new InvalidOperationException("Production migrations did not initialize the product host.");
         plan.PortReservation.Release();
-        await ExecuteRequiredAsync(
-            MakeProviderFixtureAbsolute(FindCommand(plan, "provider-run")),
-            cancellationToken);
-
         using (IServiceScope scope = factory.Services.CreateScope())
         {
             _product = await Story115ProductOrchestrator.ExecuteAsync(
@@ -1133,8 +1131,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
     {
         var external = new NpgsqlConnectionStringBuilder(_targetConnectionString)
         {
-            Host = plan.Identity.PostgreSqlContainer,
-            Port = 5432,
+            Host = "host.docker.internal",
             Pooling = true,
         };
         string content = string.Join('\n',
@@ -1594,11 +1591,9 @@ internal static partial class Story115ReleaseHarness
         return new(
             nonce,
             Contract.DatabasePrefix + nonce,
-            ResourcePrefix + nonce + "-postgres",
             ResourcePrefix + nonce + "-provider",
             ResourcePrefix + nonce + "-app",
-            ResourcePrefix + nonce + "-network",
-            ResourcePrefix + nonce + "-volume");
+            ResourcePrefix + nonce + "-network");
     }
 
     internal static Dictionary<string, string> CreateValidEnvironmentForFastTests() =>
@@ -1613,6 +1608,26 @@ internal static partial class Story115ReleaseHarness
             ["VULGATA_STORY115_CANDIDATE_TREE"] = new('b', 40),
             ["VULGATA_STORY115_PRODUCTION_MANIFEST_SHA256"] = new('c', 64),
         };
+
+    internal static Story115ExternalCommand CreateDockerDesktopPostgreSqlPreflightCommand(
+        Story115RunIdentity identity,
+        int port)
+    {
+        RequireOwnedResourceName(identity.ProviderContainer);
+        if (port is < 1 or > 65535)
+        {
+            throw new ArgumentOutOfRangeException(nameof(port));
+        }
+
+        string script =
+            "import socket; host='host.docker.internal'; port=" +
+            port.ToString(System.Globalization.CultureInfo.InvariantCulture) +
+            "; socket.getaddrinfo(host, port); s=socket.create_connection((host, port), 5); s.close()";
+        return new(
+            "provider-docker-desktop-postgres-preflight",
+            "docker",
+            ["exec", identity.ProviderContainer, "python", "-c", script]);
+    }
 
     internal static async Task<bool> RunActivatedFinalAsync(
         IReadOnlyDictionary<string, string> values,
@@ -1697,20 +1712,7 @@ internal static partial class Story115ReleaseHarness
             new(
                 "network-create",
                 "docker",
-                ["network", "create", "--internal", identity.Network]),
-            new(
-                "postgres-run",
-                "docker",
-                [
-                    "run", "--detach", "--name", identity.PostgreSqlContainer,
-                    "--network", identity.Network,
-                    "--mount", $"type=volume,source={identity.Volume},target=/var/lib/postgresql/data",
-                    "--publish", "127.0.0.1::5432",
-                    "--env", "POSTGRES_USER",
-                    "--env", "POSTGRES_PASSWORD",
-                    "--env", "POSTGRES_DB",
-                    "postgres:17",
-                ]),
+                ["network", "create", identity.Network]),
             new(
                 "provider-run",
                 "docker",
@@ -1922,6 +1924,7 @@ internal static partial class Story115ReleaseHarness
         try
         {
             await operations.PrepareInfrastructureAsync(identity, cancellationToken);
+            await operations.PreflightDockerDesktopPostgreSqlAsync(identity, cancellationToken);
             await operations.ProveDatabaseAbsentAsync(
                 identity,
                 afterDrop: false,

@@ -4,7 +4,12 @@
 
 - one clean accepted Vulgata candidate with source commit, tree, and canonical
   `production-source-manifest-v1` hash;
-- PostgreSQL 17 administrator connection supplied outside source control;
+- one Windows Docker Desktop host in Linux-container mode; this T064 contract
+  does not claim native-Linux-host support or define a fallback topology;
+- the existing running PostgreSQL 17 Alpine administrator endpoint, supplied
+  outside source control (observed as `localhost:5432`, administrator database
+  `vulgata`), with the server/container treated as external non-owned
+  infrastructure;
 - prepared `mbs_account` ref `refs/tags/vulgata/August15th-sample` at full
   commit `19c60cd3f3976b7697c487c7bafd96142e3a7625`;
 - prepared `mbs_channel` ref `refs/tags/vulgata/August15th-sample` at full
@@ -19,7 +24,12 @@ acceptance claim.
 ## Database lifecycle
 
 The harness creates `vulgata_story115_<random>` using a cryptographically random
-suffix. It must reject shared/default/production-looking names. The run:
+suffix. It must reject shared/default/production-looking names. Before step 1,
+it validates the host-side PostgreSQL 17 administrator endpoint and preflights
+Docker Desktop's built-in `host.docker.internal` DNS and TCP reachability from
+the provider container's exact network namespace. Failure stops before nonce
+database creation, migrations, or product provisioning and enters bounded
+cleanup. The run:
 
 1. proves the name is absent;
 2. creates the database and applies all Identity/domain migrations;
@@ -28,8 +38,16 @@ suffix. It must reject shared/default/production-looking names. The run:
 5. keeps the database alive through final-container Playwright proof;
 6. in `finally`, removes the app/provider containers, terminates only
    connections to the exact disposable database, drops only that database,
-   queries the catalog to prove absence, then removes its PostgreSQL
-   container/volume, network, key directory, and remaining nonce-owned state.
+   queries the catalog through the supplied administrator database to prove
+   absence, then removes the final image, publish-capable provider/app network,
+   env file, key directory, and remaining harness-owned nonce state.
+
+The harness never creates, stops, removes, reconfigures, or claims ownership of
+the supplied PostgreSQL server/container. It never selects, migrates, uses for
+product data, terminates connections to, or drops the supplied administrator
+database or another development database. Server validation is limited to the
+required PostgreSQL major version and connectivity needed for the nonce
+database lifecycle.
 
 Primary failure and cleanup failure are both retained. Cleanup failure makes the
 release gate fail. No credentials or connection string is written to evidence.
@@ -216,12 +234,15 @@ normalizes, or falls back to the fixture.
 
 ## Provider/app network contract
 
-The harness creates one nonce-owned internal Docker network and chooses three
+The harness creates one cryptographically nonce-owned publish-capable Docker
+network and chooses three
 distinct available ports: `workerPort`, `chatPort`, and `appHostPort`; neither
 provider port is `8080`. The stdlib fixture in the Dockerfile-pinned Python
 image is invoked with `python /fixture/loopback-openai-provider.py --host
 0.0.0.0 --worker-port <workerPort> --chat-port <chatPort>`. The provider
-container has exactly these loopback-host publications:
+container has exactly these loopback-host publications. `--internal` is
+forbidden because Docker Desktop suppresses published-port access on that
+topology:
 
 - `--publish 127.0.0.1:<workerPort>:<workerPort>`;
 - `--publish 127.0.0.1:<chatPort>:<chatPort>`; and
@@ -236,13 +257,30 @@ are mandatory. The final app uses `--network container:<providerContainer>`,
 with no app-side `--publish`. It therefore reaches the identical stored
 provider URLs on shared namespace loopback, while the provider container's
 third mapping exposes app port `8080` only as
-`127.0.0.1:<appHostPort>` for Playwright. The provider container's internal
-network attachment also gives the app access to the still-live PostgreSQL
-container. Binding the fixture only to container `127.0.0.1`, using unequal
+`127.0.0.1:<appHostPort>` for Playwright. Binding the fixture only to container `127.0.0.1`, using unequal
 provider host/container ports, or combining `--publish` with
 `--network container:` fails the gate.
 
+The external PostgreSQL server/container is not a member of this network. The
+final app's connection string retains the nonce database name and credentials
+but uses Windows Docker Desktop's built-in `host.docker.internal` to reach the
+host-published PostgreSQL endpoint. No explicit host mapping is passed to the
+provider or app container. Before product provisioning, the provider
+container runs a bounded Python `socket.getaddrinfo` plus
+`socket.create_connection` probe to `host.docker.internal:5432`; DNS or TCP
+failure fails closed. This topology adds no environment variable and exposes
+every harness-published port only on host `127.0.0.1`.
+
 ## Candidate checks
+
+The Chat tool and both material Scan changes are already covered by the
+durable planned-change authorizations in the Story record and
+`workflow-state.json`; plan-review iteration 7 records advancement without
+duplicate user approval, and the current user correction dispatch authorizes
+this Windows Docker Desktop topology. A fresh validated Full plan `ACCEPT`
+therefore advances directly to regenerated Full tasks, read-only
+`speckit-analyze`, remaining T064/T065 evidence, separate acceptance and
+quality reviews, and verification without another authorization request.
 
 The same candidate must pass:
 
@@ -281,7 +319,9 @@ Exactly one accepted final runtime image is built after all code/test gates:
    `VULGATA_SOURCE_COMMIT`, `VULGATA_SOURCE_TREE`, and
    `VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256` arguments;
 4. record image ID and inspect the three matching labels;
-5. start the image against the still-live prepared PostgreSQL 17 database,
+5. start the image on Windows Docker Desktop against the still-live nonce
+   database on the external PostgreSQL 17 endpoint through the already-
+   preflighted built-in `host.docker.internal`,
    mounted key ring, and isolated provider fixture;
 6. configure `docker run` health as `curl --fail --silent --show-error
    http://127.0.0.1:8080/Account/Login` with bounded polling (`curl` is in the
@@ -292,7 +332,10 @@ Exactly one accepted final runtime image is built after all code/test gates:
 8. use a second real Identity context and a post-selection ownership
    revocation to prove missing-equivalent behavior and zero leaked/stale
    claim/citation content;
-9. remove only nonce-prefixed gate resources and record every cleanup outcome.
+9. remove only the nonce database and harness-owned nonce-prefixed provider/
+   app/image/network/env/key resources, leaving the supplied PostgreSQL
+   server/container and administrator database untouched, and record every
+   cleanup outcome.
 
 A previously built or predecessor image is not acceptable. An unlabelled,
 dirty-source, mismatched-label, unhealthy, or cleanup-failed image fails the

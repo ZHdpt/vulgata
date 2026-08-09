@@ -189,31 +189,67 @@ required. All evidence already exists in the knowledge store.
 
 ## R9. Final E2E and Docker evidence
 
-**Decision**: `Story115ReleaseHarness` is the sole owner. It keeps one unique
-PostgreSQL 17 database alive from migrations through prepared Scan services and
-the final container/browser proof; provisions Identity, scope, providers,
-assignments, and knowledge through product services; shares an explicitly
-configured gate-owned Data Protection ring with the final container; uses an
-isolated deterministic provider fixture that listens on all interfaces in one
-nonce-owned namespace; publishes equal host/container Worker and Chat port
-numbers only to host `127.0.0.1`; pre-publishes that namespace's app port; and
-starts the final app with `--network container:<provider>` so the stored
+**Decision**: `Story115ReleaseHarness` is the sole owner of one
+cryptographically nonce-named database on the existing running PostgreSQL 17
+Alpine administrator endpoint. It proves the name absent, creates the database,
+applies migrations and runs prepared Scan/product services against only that
+database, keeps it alive through the final container/browser proof, terminates
+only its exact connections, drops only it, and proves catalog absence through
+the supplied administrator database. The harness never selects, migrates,
+terminates connections to, drops, stops, removes, or claims ownership of the
+supplied administrator/development database or PostgreSQL server/container.
+
+It provisions Identity, scope, providers, assignments, and knowledge through
+product services; shares an explicitly configured gate-owned Data Protection
+ring with the final container; and uses an isolated deterministic provider
+fixture on a cryptographically nonce-owned publish-capable provider/app Docker
+network. The network is not `--internal`. The fixture listens on all container
+interfaces, publishes equal host/container Worker and Chat ports only to host
+`127.0.0.1`, and pre-publishes the namespace's app port to host loopback. The
+final app starts with `--network container:<provider>` so the stored
 `127.0.0.1` provider URLs work from both host-side Scan and final-container
-Chat. It builds the final image once, supplies a `curl` health command through
+Chat, while its nonce-database connection uses Windows Docker Desktop's
+built-in `host.docker.internal`. No explicit host mapping or alternate route is
+used. Before database creation, migrations, or product provisioning, the
+harness validates the host-side PostgreSQL 17 administrator endpoint and then
+uses Python inside the provider container's exact namespace to prove the
+built-in hostname resolves and the host-published PostgreSQL TCP endpoint is
+reachable. Either failure stops before product provisioning and enters bounded
+cleanup. This reuses the existing closed environment contract and adds no
+environment variable. The
+harness builds the final image once, supplies a `curl` health command through
 `docker run`, and drives real Identity plus the Blazor circuit with test-only
 Microsoft.Playwright 1.61.0/Chromium after an explicit Release test-project
-restore/build. Cleanup drops and proves absence before removing all nonce-owned
+restore/build. Cleanup aggregates primary and cleanup failures, then removes
+only the nonce database and harness-owned provider/app/image/network/env/key
 resources.
 
 **Rationale**: Each predecessor explicitly hands these final gates to Story
 11.5. Story 11.4 fixtures do not substitute for actual prepared Repository
-revisions or final image evidence.
+revisions or final image evidence. The user approved reuse of the running
+instance under the nonce-database lifecycle. Database-level ownership retains
+clean-migration and verified-cleanup evidence without taking ownership of
+shared server infrastructure. A publish-capable network is required because
+Docker Desktop suppresses published-port access from an `--internal` network;
+loopback-only publications retain the host exposure boundary. T064 is
+deliberately limited to a Windows Docker Desktop host; native-Linux-host proof
+is not claimed, so no untested fallback is part of the release contract.
 
 **Alternatives considered**:
 
 - Reuse predecessor integration evidence: rejected by the Story 11.4 handoff.
-- Use a shared development database: rejected because isolation and verified
-  cleanup are acceptance criteria.
+- Select or migrate the supplied administrator/development database directly:
+  rejected because isolation, exact cleanup, and server non-ownership are
+  mandatory.
+- Create a second gate-owned PostgreSQL container/volume: rejected because the
+  approved design reuses the existing PostgreSQL 17 endpoint and owns only the
+  nonce database.
+- Use an `--internal` provider/app network: rejected because Docker Desktop
+  suppresses the required loopback-published provider/app ports.
+- Claim native-Linux-host T064 support or invent an alternate host route:
+  rejected because the time-bounded proof has one authorized, executable
+  Windows Docker Desktop topology and the prior explicit host-mapping command
+  is incompatible with container namespace mode.
 - Use `HttpClient`, SSR markup, or bUnit as final chat evidence: rejected
   because none proves an interactive-server circuit in the accepted image.
 - Rely on compose `wget` or an image healthcheck: rejected because `wget` is
@@ -422,3 +458,37 @@ all use the amended contract.
   the Worker-facing Pass 2 payload is exactly seven top-level slots.
 - Treat deterministic identity as a retry policy: rejected; dispatch timing,
   retry, scheduling, concurrency, and duplicate-commit policy are unchanged.
+
+## R13. Planned-change authority and Full workflow advancement
+
+**Decision**: Do not request another planned-change authorization after the
+corrected Full plan is independently accepted. Durable authorization already
+exists for the bounded Chat retrieval/currentness tool in the Story record and
+the 2026-08-04 `workflow-state.json` history entry; for runtime Pass 2
+preparation/dispatch in the 2026-08-07 workflow history entry; and for
+deterministic ordinary Pass 1 dispatch identity in the later 2026-08-07 entry.
+Plan-review iteration 7 records that the accepted correction advances without
+duplicate user approval. The current user dispatch separately authorizes the
+Windows Docker Desktop/external PostgreSQL nonce-database T064 topology.
+
+After a fresh validated Full plan `ACCEPT`, the root-owned lifecycle path
+aligns execution-level metadata, regenerates Full test-first tasks without
+scope expansion, runs read-only `speckit-analyze`, completes T064/T065 and any
+remaining task evidence, runs separate acceptance and quality reviews, and
+performs final E2E/Docker/cleanup verification.
+
+**Rationale**: The repository state machine advances a validated reviewer
+`ACCEPT` without duplicate human approval. Re-requesting approval would
+contradict both the durable authorization history and the current correction
+dispatch, while skipping Full task/analyze/review/verification gates would
+weaken delivery controls.
+
+**Alternatives considered**:
+
+- Request the same Chat/Scan/topology approvals again after review: rejected
+  as an unauthorized duplicate human gate.
+- Keep `expedited-mvp` sequencing in the plan: rejected because root-owned
+  records are transitioning to `full`; product spec and PRD behavior remain
+  unchanged.
+- Generate tasks from the iteration-8 `REVISE`: rejected; fresh independent
+  Full plan acceptance is required first.

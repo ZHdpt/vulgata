@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+  "reviewed_boundary": {
+    "base_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+    "candidate_commit": null,
+    "diff_sha256": "3ab3227bd41d0ca0ebc5edbbc40bd969dc20c1e64beeee5e3eb804ff391e5359",
+    "artifact_hashes": {
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/plan.md": "429a4cd50a3d65c4dd7dc7950a1313565269f63d435d2d141f74f6230844027c",
+      "specs/008-demo-chat-release-gate/research.md": "d7a2768446d4021a816f32c541f2cd2129c5ff05998398a2156190f24b2d2fa4",
+      "specs/008-demo-chat-release-gate/data-model.md": "928032c3feaed9444c9111c5d2333094199013b8b44742aba82303e7a1758ddb",
+      "specs/008-demo-chat-release-gate/quickstart.md": "2e1ca0e1d5ff356d3408d0a01992c4452582597d608b3bb51852ef7bc0355da1",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "31c3adc89a2a0a09030233826a1ecbfc04bfda022e039fb1abb1d7c3b74981cd",
+      "specs/008-demo-chat-release-gate/tasks.md": "3551422d86e73bef9cc354739c3d6d0bd56f22393232b4980a4b463767d5c0f4"
+    },
+    "owned_paths": [
+      "specs/008-demo-chat-release-gate/spec.md",
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "specs/008-demo-chat-release-gate/data-model.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+      "specs/008-demo-chat-release-gate/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/data-model.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/tasks.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Read-only Full analysis found no Critical, High, Constitution, ambiguity, duplication, or coverage defect. FR-001 through FR-024 and SC-001 through SC-011 are covered 35/35; tasks are continuous T001-T065 with T001-T063 complete and only T064-T065 pending. T064 remains the sole live Windows Docker Desktop release run against external PostgreSQL with harness ownership limited to one nonce database; T065 owns cleanup and final verification."
+}

@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+  "reviewed_boundary": {
+    "base_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+    "candidate_commit": null,
+    "diff_sha256": "706aba463046d84c4f2d721a0be86cbc38a336354a3e592c30b2d5dfbdf7ef16",
+    "diff_hash_contract": "SHA-256 of UTF-8 canonical manifest: base_commit line, candidate_commit=null line, then the six ordinal-sorted dirty path<TAB>content-sha256 lines, final LF",
+    "dirty_paths": [
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+    ],
+    "artifact_hashes": {
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "33658bcabc66a8bbef16c12de62d4d13bf7fca5f5353e9ec2e745cff23561bd8",
+      "specs/008-demo-chat-release-gate/spec.md": "85623ec74d0e06e0f9a8db031bee8607e8e0ea018a3213f6682322b217f69ebf",
+      "specs/008-demo-chat-release-gate/plan.md": "1d3d27eb3019d6c54d4611feec458c2c54d2f55e4e882df484553e345abd2135",
+      "specs/008-demo-chat-release-gate/research.md": "b39ec79a71a6e27770dc320d7d937267369f3ac7a495dbc05a1441eaa19b5c73",
+      "specs/008-demo-chat-release-gate/data-model.md": "928032c3feaed9444c9111c5d2333094199013b8b44742aba82303e7a1758ddb",
+      "specs/008-demo-chat-release-gate/quickstart.md": "c35694396452eeeed0c712d2091824f3587e418dc5dbdcca44709f32e8b4dee7",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "be56b2ab83ba83d3659246ec8182c9a786e2adc8e0eb0c78f6d0f1810d3b2074",
+      "specs/008-demo-chat-release-gate/tasks.md": "7eda5f5fafe31208ac91ebcd65d282cf413432af0a2765d121be15f7c09711ca",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-6.json": "ed20aa61f08fd2b73260d6484a89fb9930d1bb61b54e00a00172a7db5e75f770",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json": "a0db00de6e1380f7e7bcffb926931b6235b9076ee8ffc4023acdec8e82b28b91",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json": "4591063e021598b52dedcc1a4ff15735f5fb865e1c1635eb8096aeca425d2768",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json": "36c1fc4c0c1ff86fcd9e784603a9745282c7c45f713eae8d77582fa10e2831b3",
+      "docs/agent-workflow/august-15-expedited-mvp-exception.md": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "42822ac5ba59fadaed9d764295b318ef55bdd2f7a83ae8ba21d49f051d1971ee",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "94ba41592d30a2ebf7368226a506c129ef8e1e2e84e53634e3bf2240722595a1"
+    }
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/data-model.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-6.json",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+    "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+    "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+    "dispatch authority: user-approved existing PostgreSQL 17 Alpine endpoint with harness ownership limited to a cryptographic nonce database"
+  ],
+  "findings": [
+    {
+      "id": "PLAN-115-TOPOLOGY-008",
+      "severity": "HIGH",
+      "category": "feasibility-cross-platform-docker-networking",
+      "artifact": "specs/008-demo-chat-release-gate/quickstart.md",
+      "location": "lines 299-303; specs/008-demo-chat-release-gate/contracts/release-verification-contract.md lines 247-262; tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs lines 1680-1720",
+      "affected_requirement": "Story 11.5 AC-3; spec FR-015, FR-018, FR-019; plan Target Platform and Release E2E/Docker Boundary; user-approved external PostgreSQL non-ownership topology",
+      "evidence": "The quickstart starts the app with --network container:<provider> and --add-host host.docker.internal:host-gateway, but Docker container network mode does not support --add-host, so the normative command is not executable. The current harness omits app-side --add-host and adds it only to the provider container, leaving the plan's Linux-host fallback unproven while the plan claims Windows/Linux hosts. The release contract also retains the contradictory sentence that the provider network attachment gives the app access to a PostgreSQL container, immediately before declaring that external PostgreSQL is not attached to that network. Windows Docker Desktop can use its built-in host.docker.internal route, but the artifacts do not define one executable native-Linux fallback compatible with container-network mode, external-server non-ownership, and loopback-only host exposure.",
+      "correction_outcome": "Choose and specify one executable topology. Remove the unsupported app-side --add-host and stale attached-PostgreSQL sentence. For Docker Desktop, explicitly rely on and preflight built-in host.docker.internal. For native Linux, define a tested fallback that does not combine --add-host with container mode and does not attach, reconfigure, stop, or remove the external PostgreSQL container; fail before resource acquisition when the external endpoint cannot be reached under the loopback-only policy. Pin the same command shape in plan, research, quickstart, release contract, harness tests, and regenerated T064/T065 tasks."
+    },
+    {
+      "id": "PLAN-115-WORKFLOW-009",
+      "severity": "HIGH",
+      "category": "workflow-authority-and-gate-consistency",
+      "artifact": "specs/008-demo-chat-release-gate/plan.md",
+      "location": "Planned-Change Authorization Gate lines 532-616; quickstart.md lines 13-18; spec.md line 9; docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md line 8",
+      "affected_requirement": "AGENTS.md Planned-change authorization; Full Story Flow and execution-level persistence; exact dispatch completion rule that validated ACCEPT advances without duplicate user approval",
+      "evidence": "The corrected plan declares transition to Full, but spec.md and the BMad development record still identify expedited-mvp. The plan and quickstart also require another post-review planned-change approval even though the Story record and prior accepted plan-review evidence record the Chat-tool and Scan-dispatch approvals, and the current dispatch supplies the user's topology authority and forbids duplicate approval after a validated ACCEPT. These mixed instructions make the next stage ambiguous between direct Full task regeneration and an unauthorized duplicate human gate.",
+      "correction_outcome": "Treat this as workflow metadata/alignment, not a product requirement change: retain the accepted Story 11.5 spec and PRD behavior, align execution-level records to Full through the root-owned lifecycle path, replace the duplicate-approval instruction with citations to the durable existing approvals including the topology authority, and state that a subsequent validated plan ACCEPT advances directly to regenerated Full tasks, read-only speckit-analyze, separate acceptance/quality reviews, T064/T065, and verification. Regenerate tasks without expanding scope."
+    }
+  ],
+  "authority_alignment": {
+    "postgresql_authority": "PASS in ownership intent: only a cryptographically nonce-named database is created/migrated/used/terminated/dropped; the supplied server/container and administrator/development database are non-owned and untouched. Execution topology remains REVISE under PLAN-115-TOPOLOGY-008.",
+    "security_and_cleanup": "PASS at design level: closed environment contract, no new secret input, sanitized evidence, loopback-only planned publications, shared Data Protection, nonce-only cleanup, catalog absence, and primary-plus-all-cleanup failure aggregation remain mandatory.",
+    "product_scope": "PASS: exact ordinary Pass 1 identity, runtime Pass 2 binding, seven-slot payload, prepared Chat/citation/currentness/authorization behavior, Data Protection, no migration/backfill, and no general Scan strategy remain unchanged.",
+    "constitution_adr_ul": "PASS: no Constitution or applicable ADR conflict was identified; layer ownership, FluentValidation, immutable Document Versions, source isolation, and canonical Ubiquitous Language remain preserved.",
+    "spec_prd_change": "No product-specification or PRD requirement change is necessary. Only Full execution-level workflow metadata and approval citations require alignment.",
+    "task_regeneration": "Required after corrected plan acceptance; feasible without scope expansion and must restore Full speckit-analyze plus separate acceptance and quality reviews."
+  },
+  "feasibility_and_testability": {
+    "windows_docker_desktop": "Feasible after removing the invalid app-side --add-host and explicitly preflighting Docker Desktop host.docker.internal resolution plus PostgreSQL 17 connectivity before acquisition.",
+    "cross_platform": "Not fully specified: native Linux fallback is currently absent and must be made executable or the supported-host claim narrowed explicitly.",
+    "database_lifecycle": "Implementable with absence -> create -> migrations/product use -> terminate exact nonce connections -> drop exact nonce database -> catalog absence, with the supplied administrator database never selected for product use or cleanup targeting.",
+    "cleanup": "Current harness structure executes all cleanup stages under CancellationToken.None and aggregates primary plus every cleanup failure; this is testable and retained.",
+    "live_execution": "Not performed; T064/T065 and external resource acquisition remain pending and outside this review."
+  },
+  "required_next_stage": "Return unchanged raw findings PLAN-115-TOPOLOGY-008 and PLAN-115-WORKFLOW-009 to a fresh plan architect. After correction, run a fresh Full plan-review iteration over the new pinned boundary. Do not generate tasks, run speckit-analyze, execute T064/T065, acquire resources, or rerun implementation reviews from this REVISE verdict.",
+  "summary": "REVISE with two High findings. The user-approved database-level ownership model is secure and bounded, and the Pass 1/Pass 2/Chat/citation/Data Protection/no-migration/no-general-Scan design remains feasible. The plan set is not yet executable or workflow-unambiguous: its normative app command combines Docker container network mode with unsupported --add-host, its release contract contradicts external PostgreSQL non-attachment, it lacks a tested native-Linux route while claiming Windows/Linux support, and it mixes Full transition with expedited metadata plus a duplicate approval gate. These are correctable without changing the Story 11.5 product spec or PRD and without expanding regenerated tasks."
+}

@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+  "reviewed_boundary": {
+    "base_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+    "candidate_commit": null,
+    "diff_sha256": "c1d842aeb1bb0c025fbd61a8a533d19516ea5bc73b466f14b44aa62a2a617977",
+    "diff_hash_contract": "SHA-256 of UTF-8 without BOM canonical manifest: base_commit=<sha> line, candidate_commit=null line, then the ten ordinal-sorted dirty path<TAB>content-sha256 lines, final LF; this verdict file is excluded",
+    "dirty_paths": [
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json",
+      "specs/008-demo-chat-release-gate/spec.md",
+      "specs/008-demo-chat-release-gate/workflow-state.json",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+    ],
+    "artifact_hashes": {
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "52351a2d46bf18fd593b0be389fa47ff9e16de235014e373fa6dc2c97ce21b50",
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/plan.md": "429a4cd50a3d65c4dd7dc7950a1313565269f63d435d2d141f74f6230844027c",
+      "specs/008-demo-chat-release-gate/research.md": "d7a2768446d4021a816f32c541f2cd2129c5ff05998398a2156190f24b2d2fa4",
+      "specs/008-demo-chat-release-gate/quickstart.md": "2e1ca0e1d5ff356d3408d0a01992c4452582597d608b3bb51852ef7bc0355da1",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "31c3adc89a2a0a09030233826a1ecbfc04bfda022e039fb1abb1d7c3b74981cd",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json": "c09580408e13651c0129e2b856287730db0dcddaf342a8204b1ef553bdf6b242",
+      "specs/008-demo-chat-release-gate/workflow-state.json": "a68fa1e6faea678eecbabe170e4f7542bb3bef6fe7e81547a459f1118fadef7d",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-runtime-pass2-binding.md": "f7423af6a2963e99993047707f439eb1f3ab81f89852095c5fde2bef01a7247e",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-pass1-job-identity-amendment.md": "33783dd47b2dc804caf53e2fb8d88ee03010a2779baeb9de32b33b8e3db114ce",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "42822ac5ba59fadaed9d764295b318ef55bdd2f7a83ae8ba21d49f051d1971ee",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "94ba41592d30a2ebf7368226a506c129ef8e1e2e84e53634e3bf2240722595a1"
+    }
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json",
+    "specs/008-demo-chat-release-gate/workflow-state.json",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-runtime-pass2-binding.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-pass1-job-identity-amendment.md",
+    "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs (current diff only for feasibility)",
+    "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs (current diff only for feasibility)",
+    "dispatch authority: Windows Docker Desktop-only T064 using built-in host.docker.internal and an existing external PostgreSQL 17 Alpine endpoint, with harness ownership limited to one cryptographic nonce database"
+  ],
+  "prior_finding_dispositions": [
+    {
+      "id": "PLAN-115-TOPOLOGY-008",
+      "disposition": "CLOSED",
+      "evidence": "plan.md lines 79-83 and 729-798, research.md R9, quickstart.md lines 9-27 and 234-276/306-337, and release-verification-contract.md lines 3-53 and 235-272 now define exactly one Windows Docker Desktop Linux-container topology. The provider owns a publish-capable nonce network with loopback-only Worker, Chat, and app publications; the app joins the provider namespace without --publish or any explicit host mapping; the external PostgreSQL server/container is not attached, reconfigured, stopped, or removed. Host-side administrator validation and provider-namespace DNS/TCP preflight of built-in host.docker.internal:5432 occur before nonce database creation, migrations, or product provisioning. Native-Linux-host support and fallback topology are explicitly not claimed. The current harness diff still contains provider --add-host and lacks the preflight, but the accepted plan's normative no-explicit-mapping contract and Full advancement sequence require regenerated tasks to remove that pending implementation mismatch before separate candidate acceptance/quality review and T064 execution; no live T064 claim is made here."
+    },
+    {
+      "id": "PLAN-115-WORKFLOW-009",
+      "disposition": "CLOSED",
+      "evidence": "spec.md, the BMad Story front matter and Dev Agent Record, and workflow-state.json now identify execution_level full; the BMad current stage is plan-review. plan.md lines 548-655, research.md R13, quickstart.md lines 18-24, and release-verification-contract.md lines 274-283 cite the durable 2026-08-04 Chat-tool and 2026-08-07 Pass 2/Pass 1 Scan authorizations plus the current topology authority, forbid duplicate approval, and order direct advancement after ACCEPT to Full task regeneration, read-only speckit-analyze, remaining T064/T065 work, separate acceptance and quality reviews, and verification."
+    }
+  ],
+  "findings": [],
+  "authority_alignment": {
+    "postgresql_authority": "PASS: the supplied PostgreSQL 17 endpoint, server/container, administrator database, and other databases are external non-owned infrastructure. Only a cryptographically nonce-named database is proved absent, created, migrated and used, terminated by exact database name, dropped, and proved absent.",
+    "security_and_cleanup": "PASS: the environment contract remains closed; secrets are not logged or written to sanitized evidence; provider/app ports are loopback-only; provider and app share the nonce namespace and Data Protection ring; primary and every cleanup failure are aggregated; cleanup targets only nonce-owned containers, image, network, env file, key directory, and database.",
+    "product_scope": "PASS: the exact seven-slot Pass 2 payload, deterministic ordinary Pass 1 identity, runtime Pass 2 binding, prepared Chat/citation/currentness/authorization behavior, no migration/backfill, and no general Scan scheduling, retry, clustering, matching, or payload expansion remain unchanged.",
+    "constitution_adr_ul": "PASS: layer ownership, EF isolation, FluentValidation boundary, immutable Document Versions, source isolation, Chinese UI, canonical Cross-Repository terminology, and graph-first use of the accepted REFERENCES Edge are preserved; no applicable ADR conflict is identified.",
+    "execution_level": "PASS: current spec, BMad Story including Dev Agent Record, and workflow state are Full and the review-to-next-stage path is unambiguous.",
+    "planned_change_authorization": "PASS: the current design is covered by durable prior Chat and Scan authorizations plus the current topology authority; this ACCEPT advances without duplicate user approval."
+  },
+  "feasibility_and_testability": {
+    "windows_docker_desktop": "Executable design: create the nonce publish-capable provider network/container, validate the external administrator endpoint on the host, preflight built-in host.docker.internal resolution and TCP reachability from the provider namespace, then and only then create the nonce database and provision product state. The app later joins the same namespace without --add-host or --publish.",
+    "native_linux": "Explicitly outside the T064 proof; no unsupported cross-platform claim or fallback remains.",
+    "database_lifecycle": "Exact lifecycle is absence -> create -> migrations/product use -> keep alive through final image/browser proof -> remove app/provider -> terminate connections only to the exact nonce database -> drop -> catalog absence, with the administrator database used only as the control connection.",
+    "failure_behavior": "DNS/TCP preflight, identity/profile/currentness/authorization, build/health/browser, primary execution, or any cleanup failure fails the gate; no partial acceptance claim is permitted and cleanup runs with bounded ownership.",
+    "tests": "The plan supplies observable command-shape, namespace reachability, database catalog, product-service provisioning, exact-seven-slot, authorization, migration/model, Docker label/health, real Identity/Playwright, and cleanup assertions. Regenerated Full tasks must bring the currently pending harness command shape into conformance before candidate review.",
+    "live_execution": "Not performed. T064/T065 remain pending and this plan verdict makes no release, Docker, database-cleanup, or Story-completion claim."
+  },
+  "required_next_stage": "Validated ACCEPT advances directly, without duplicate user approval, to root-owned Full task regeneration followed by read-only speckit-analyze. Regenerated tasks must remove the current provider --add-host/host-gateway argument, implement and test the provider-namespace built-in host.docker.internal preflight before nonce database creation/product provisioning, and retain all no-ownership, cleanup, security, no-migration, exact-seven-slot, and no-Scan-expansion constraints. After implementation correction, run the separate acceptance and quality reviews, then T064/T065 and final verification under their pinned candidate boundary.",
+  "summary": "ACCEPT. PLAN-115-TOPOLOGY-008 and PLAN-115-WORKFLOW-009 are closed with no new Critical, High, or Constitution-MUST defect. The corrected Full plan narrows T064 to one executable Windows Docker Desktop Linux-container topology, relies only on built-in host.docker.internal after a provider-namespace DNS/TCP preflight, preserves external PostgreSQL non-ownership and the exact nonce-database lifecycle, uses a publish-capable nonce network with loopback-only ports, and retains complete failure/cleanup/security evidence. It makes no native-Linux or live-T064 claim. The exact seven-slot Worker payload, no-migration boundary, product scope, and no general Scan expansion remain intact. Spec, BMad, and workflow metadata are Full; durable Chat/Scan approvals and the current topology authority are cited, so this validated ACCEPT advances directly to Full task regeneration and read-only analysis without duplicate approval. The current harness's provider --add-host and missing namespace preflight are known pending implementation corrections explicitly governed by the accepted normative plan and must be corrected and tested before separate candidate acceptance/quality review and T064 execution."
+}

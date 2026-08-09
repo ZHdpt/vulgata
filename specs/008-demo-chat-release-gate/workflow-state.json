@@ -3,8 +3,8 @@
   "bmad_story_key": "11-5-demo-chat-citations-and-release-gate",
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
-  "execution_level": "expedited-mvp",
-  "stage": "conditional-e2e",
+  "execution_level": "full",
+  "stage": "acceptance-review",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -14,18 +14,18 @@
     },
     "plan-review": {
       "status": "accepted",
-      "iteration": 7,
-      "dispatch_id": "story_11_5_plan_review_iteration_7",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json"
+      "iteration": 9,
+      "dispatch_id": "story_11_5_plan_review_iteration_9",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json"
     },
     "analyze": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null
+      "status": "accepted",
+      "iteration": 1,
+      "dispatch_id": "story_11_5_full_analyze_iteration_1",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
     },
     "acceptance-review": {
-      "status": "invalidated",
+      "status": "pending",
       "iteration": 0,
       "dispatch_id": null,
       "verdict_path": null,
@@ -33,52 +33,12 @@
       "completed_at": null
     },
     "quality-review": {
-      "status": "accepted",
-      "iteration": 2,
-      "dispatch_id": "story_11_5_quality_review_iteration_2",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
-      "input_boundary": {
-        "base_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
-        "candidate_commit": null,
-        "diff_sha256": "5f9d5e0dfc4727c57fd1136e1ad311fab1e08c2de71f22140f3e53beb4454616",
-        "artifact_hashes": {
-          "src/dotnet/Vulgata.Core/DomainServices/IPreparedChatScopeResolver.cs": "df1a9131c05931c6e4e16eef1866b587dcfcfe35bb2f2d6adaa26c3e89f668e9",
-          "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs": "c832ccb357f5f15ecb9157b8fb9d453bb4d2a7a45ff8d2ec4fa126dce3186387",
-          "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs": "4465a6733dfd61f14d8478c1fdb414181506d28a43632ea98f33795fba692927",
-          "src/dotnet/Vulgata.Shared/Chat/PreparedChatQuestionRequest.cs": "8f5ab12679bf8c9a6b62ef94295ab5d62ed1c4cdaafa9a41a72be2bdfbbca689",
-          "src/dotnet/Vulgata.Shared/Validators/Chat/PreparedChatQuestionRequestValidator.cs": "ab621cc88700e7fb8bef370392f3abdb112110272fb3e4815bda9abffbd75918",
-          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor": "3bf1c7ff39784972c2d3296123eef05c0615efd081dd6b6970e2dfbbba503994",
-          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs": "785e875d392e4f11b6954de1405ef265bcdeefbc9e67b3e33135622986d67af9",
-          "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs": "d132d38957cc9eb350cce8264fd9ca29bb5e5c296e1a1845ab7f23ce2d289709",
-          "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs": "b383aa4e15d8f27f097e6223c41d2b323e5cdfbefa290b8854dc0c460979f49e",
-          "src/dotnet/Vulgata.Web/Program.cs": "6654fe29b6bd688c4b86fee5b2c55e75d6012e2fff4a8113dec9ae7aae21b415",
-          "tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs": "e023f5ce17b801985f8fe2357837eb7985634ae5e705a184cf912370837f33f6",
-          "tests/Vulgata.Tests/ChatPageTests.cs": "4580fe3943129945d0d7d4e86bb5e6acec6ad3a207d6565577446324a457c57e",
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "cf902a2b0b5c28e7ca309bec4e5a09231146e2ed5f6f46a99dc45e5c30531b13",
-          "tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs": "b4c751ed549fc515a22b80890814b8a8e4f76b3b396b3d2a27e90b1d03f48241",
-          "tests/Vulgata.Tests/PreparedChatQuestionRequestValidatorTests.cs": "9f55a76cfbe05279d2fa8ad555c5dce8bc9c96aa7819eaacafe620535b2ae426",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "eb86106bd7a5bc3602c75a9fd0f3ada9e81335992dd905c6174300a5728d30c0"
-        },
-        "owned_paths": [
-          "src/dotnet/Vulgata.Core/DomainServices/IPreparedChatScopeResolver.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs",
-          "src/dotnet/Vulgata.Shared/Chat/PreparedChatQuestionRequest.cs",
-          "src/dotnet/Vulgata.Shared/Validators/Chat/PreparedChatQuestionRequestValidator.cs",
-          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor",
-          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs",
-          "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs",
-          "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs",
-          "src/dotnet/Vulgata.Web/Program.cs",
-          "tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs",
-          "tests/Vulgata.Tests/ChatPageTests.cs",
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs",
-          "tests/Vulgata.Tests/PreparedChatQuestionRequestValidatorTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-        ]
-      },
-      "completed_at": "2026-08-09T02:49:37Z"
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -391,15 +351,92 @@
       ],
       "finding_ids": [],
       "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "started_at": "2026-08-09T03:00:00Z",
+      "completed_at": "2026-08-09T04:00:00Z",
+      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json": "c09580408e13651c0129e2b856287730db0dcddaf342a8204b1ef553bdf6b242"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-08-09T04:00:00Z",
+      "completed_at": "2026-08-09T05:00:00Z",
+      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json": "08265020edf4878915318b78a0b40c325f4117c580fa773ebb291bcfb36052d5"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-09T05:00:00Z",
+      "completed_at": "2026-08-09T05:20:00Z",
+      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/tasks.md": "3551422d86e73bef9cc354739c3d6d0bd56f22393232b4980a4b463767d5c0f4"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "accepted",
+      "started_at": "2026-08-09T05:20:00Z",
+      "completed_at": "2026-08-09T05:44:13Z",
+      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json": "d055ce93e16c174a1c382e4e8c8420569f65ba1b54886493c5bdc29e112947bf"
+      },
+      "agent_role": "artifact-analyst",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-09T05:00:00Z",
+      "completed_at": "2026-08-09T05:44:13Z",
+      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "input_hashes": {
+        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "a7d0aa5d86f14bc0470357f28f35d9ac5c914a73c7895b778eb1a43d981a32bb",
+        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "e83e59c849534051b7d862e57477169791fa45317e7ab7f6c0d3b8e7c6ec630f"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "codex/run-story-115-sprint-loop",
-    "preflight_head": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+    "preflight_head": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
     "repository_root": ".",
     "git_common_directory": "G:/source/repos/vulgata/.git",
     "worktree_path": "C:/Users/13728/.codex/worktrees/e948/vulgata",
-    "worktree_status": "",
+    "worktree_status": " M docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md\n M specs/008-demo-chat-release-gate/contracts/release-verification-contract.md\n M specs/008-demo-chat-release-gate/plan.md\n M specs/008-demo-chat-release-gate/quickstart.md\n M specs/008-demo-chat-release-gate/research.md\n M specs/008-demo-chat-release-gate/spec.md\n M specs/008-demo-chat-release-gate/tasks.md\n M specs/008-demo-chat-release-gate/workflow-state.json\n M tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs\n M tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs\n?? specs/008-demo-chat-release-gate/reviews/analyze/\n?? specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json\n?? specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
     "owned_paths": [
       ".specify/feature.json",
       "AGENTS.md",
@@ -419,32 +456,32 @@
       "docker-compose.yml"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-08-04T09:20:09Z"
+    "observed_at": "2026-08-09T05:44:13Z"
   },
   "source_artifacts": [
     {
       "authority": "BMad story",
       "path": "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "sha256": "f04d1b685b3c92a804b966f5be0fd9d94cdc7c8f7cf809c083c8a4220987d2b8"
+      "commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "sha256": "52351a2d46bf18fd593b0be389fa47ff9e16de235014e373fa6dc2c97ce21b50"
     },
     {
       "authority": "SpecKit specification",
       "path": "specs/008-demo-chat-release-gate/spec.md",
-      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "sha256": "874a1852aea0ec30786227711c8f7107057ace5bda49ee2686ca47a7395ff2cd"
+      "commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "sha256": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0"
     },
     {
       "authority": "Accepted SpecKit plan",
       "path": "specs/008-demo-chat-release-gate/plan.md",
-      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "sha256": "80123c7ac60f65775e7a3214e13264bdf16997917c0cb3fbeeb8fe2da6ff262a"
+      "commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "sha256": "429a4cd50a3d65c4dd7dc7950a1313565269f63d435d2d141f74f6230844027c"
     },
     {
       "authority": "Accepted SpecKit tasks",
       "path": "specs/008-demo-chat-release-gate/tasks.md",
-      "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "sha256": "23c7ad9086d5cc88652994f8ee93b3586f35cef0d713163aa86a35f7f56f5d40"
+      "commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+      "sha256": "3551422d86e73bef9cc354739c3d6d0bd56f22393232b4980a4b463767d5c0f4"
     }
   ],
   "dispatches": [
@@ -482,7 +519,7 @@
   "review_iterations": {
     "spec-review": { "count": 0, "verdict_paths": [] },
     "plan-review": {
-      "count": 7,
+      "count": 9,
       "verdict_paths": [
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
@@ -490,10 +527,17 @@
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-5.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-6.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json"
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json"
       ]
     },
-    "analyze": { "count": 0, "verdict_paths": [] },
+    "analyze": {
+      "count": 0,
+      "verdict_paths": [
+        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
+      ]
+    },
     "acceptance-review": { "count": 0, "verdict_paths": [] },
     "quality-review": {
       "count": 2,
@@ -516,39 +560,31 @@
   },
   "verification": [],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-5-review-correction-20260809T024937Z",
+    "checkpoint_id": "bmad-11-5-full-topology-correction-20260809T054413Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
-    "stage": "quality-review",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json",
-      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
+      "specs/008-demo-chat-release-gate/spec.md",
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+      "specs/008-demo-chat-release-gate/tasks.md",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
+      "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json",
       "specs/008-demo-chat-release-gate/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/IPreparedChatScopeResolver.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs",
-      "src/dotnet/Vulgata.Shared/Chat/PreparedChatQuestionRequest.cs",
-      "src/dotnet/Vulgata.Shared/Validators/Chat/PreparedChatQuestionRequestValidator.cs",
-      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor",
-      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs",
-      "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs",
-      "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs",
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs",
-      "tests/Vulgata.Tests/ChatPageTests.cs",
       "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-      "tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs",
-      "tests/Vulgata.Tests/PreparedChatQuestionRequestValidatorTests.cs",
       "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
     ],
     "verification_evidence_ids": [
-      "11-5-demo-chat-citations-and-release-gate/quality-review/1",
-      "11-5-demo-chat-citations-and-release-gate/quality-review/2"
+      "11-5-demo-chat-citations-and-release-gate/analyze/1",
+      "11-5-demo-chat-citations-and-release-gate/implement/1"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-09T02:49:37Z"
+  "updated_at": "2026-08-09T05:44:13Z"
 }

@@ -132,6 +132,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.Equal(
             [
                 "prepare-infrastructure",
+                "provider-docker-desktop-postgres-preflight",
                 "database-absent-before-create",
                 "database-create",
                 "migrate",
@@ -140,9 +141,37 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 "terminate-exact-database",
                 "drop-exact-database",
                 "database-absent-after-drop",
-                "remove-postgres-volume-network-key-state",
+                "remove-owned-image-network-key-state",
             ],
             operations.Events);
+    }
+
+    [Fact]
+    public async Task Lifecycle_PreflightFailure_CleansOnlyOwnedStateBeforeDatabaseCreation()
+    {
+        Story115RunIdentity identity = Story115ReleaseHarness.CreateRunIdentity();
+        var operations = new RecordingReleaseOperations(failDrop: false, failPreflight: true);
+
+        Story115ReleaseGateException exception = await Assert.ThrowsAsync<
+            Story115ReleaseGateException>(() => Story115ReleaseHarness.ExecuteLifecycleAsync(
+                identity,
+                operations,
+                _ => Task.CompletedTask));
+
+        Assert.Equal("provider-preflight-failure", exception.PrimaryFailure?.Message);
+        Assert.Equal(
+            [
+                "prepare-infrastructure",
+                "provider-docker-desktop-postgres-preflight",
+                "remove-app-provider",
+                "terminate-exact-database",
+                "drop-exact-database",
+                "database-absent-after-drop",
+                "remove-owned-image-network-key-state",
+            ],
+            operations.Events);
+        Assert.DoesNotContain("database-create", operations.Events);
+        Assert.DoesNotContain("migrate", operations.Events);
     }
 
     [Fact]
@@ -293,7 +322,6 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.Equal(
             [
                 "network-create",
-                "postgres-run",
                 "provider-run",
                 "source-bound-image-build",
                 "image-label-inspect",
@@ -303,13 +331,32 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             ],
             plan.Commands.Select(command => command.Name));
         Assert.Single(plan.Commands.Where(command => command.Name == "source-bound-image-build"));
+        Assert.DoesNotContain(plan.Commands, command => command.Name == "postgres-run");
+        Assert.DoesNotContain(plan.Identity.ResourceNames, resource =>
+            resource.Contains("postgres", StringComparison.OrdinalIgnoreCase) ||
+            resource.Contains("volume", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(
+            plan.Commands.SelectMany(command => command.Arguments),
+            argument => argument.Contains("postgres", StringComparison.OrdinalIgnoreCase) ||
+            argument.Contains("volume", StringComparison.OrdinalIgnoreCase));
+
+        Story115ExternalCommand network = plan.Commands.Single(command =>
+            command.Name == "network-create");
+        Assert.DoesNotContain("--internal", network.Arguments);
 
         Story115ExternalCommand provider = plan.Commands.Single(command =>
             command.Name == "provider-run");
         Assert.Contains("--host", provider.Arguments);
+        Assert.DoesNotContain("--add-host", provider.Arguments);
+        Assert.DoesNotContain(
+            provider.Arguments,
+            argument => argument.Contains("host-gateway", StringComparison.OrdinalIgnoreCase));
         Assert.Contains("0.0.0.0", provider.Arguments);
         Assert.Contains("127.0.0.1", string.Join(' ', provider.Arguments), StringComparison.Ordinal);
         Assert.Contains($"127.0.0.1:{plan.Ports[2]}:8080", provider.Arguments);
+        Assert.All(
+            provider.Arguments.Where(argument => argument.StartsWith("127.0.0.1:", StringComparison.Ordinal)),
+            publication => Assert.StartsWith("127.0.0.1:", publication, StringComparison.Ordinal));
         Assert.DoesNotContain("--app-port", provider.Arguments);
         Assert.Contains(
             "python:3.12-bookworm@sha256:9bed8554e926c07c6f908841d5ee88c33e8df9236b191526bbce81a9062ab43a",
@@ -331,6 +378,20 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.DoesNotContain(
             plan.Environment.PostgreSqlAdministratorConnection,
             plan.Commands.SelectMany(command => command.Arguments));
+
+        Story115ExternalCommand preflight =
+            Story115ReleaseHarness.CreateDockerDesktopPostgreSqlPreflightCommand(
+                plan.Identity,
+                5432);
+        Assert.Equal("provider-docker-desktop-postgres-preflight", preflight.Name);
+        Assert.Equal("docker", preflight.FileName);
+        Assert.Equal("exec", preflight.Arguments[0]);
+        Assert.Equal(plan.Identity.ProviderContainer, preflight.Arguments[1]);
+        Assert.Contains("host.docker.internal", preflight.Arguments[^1], StringComparison.Ordinal);
+        Assert.Contains("socket.getaddrinfo", preflight.Arguments[^1], StringComparison.Ordinal);
+        Assert.Contains("socket.create_connection", preflight.Arguments[^1], StringComparison.Ordinal);
+        Assert.DoesNotContain("Password", preflight.Arguments[^1], StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("gate", preflight.Arguments[^1], StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -399,7 +460,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.IsAssignableFrom<IStory115ReleaseOperations>(operations);
         Assert.Equal(
             [
-                "postgresql-17-lifecycle",
+                "postgresql-17-administrator-database-lifecycle",
                 "production-migrations-and-product-services",
                 "isolated-worker-chat-provider",
                 "single-source-bound-image",
@@ -453,7 +514,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         throw new InvalidOperationException("Could not locate the Vulgata repository root.");
     }
 
-    private sealed class RecordingReleaseOperations(bool failDrop) : IStory115ReleaseOperations
+    private sealed class RecordingReleaseOperations(bool failDrop, bool failPreflight = false) : IStory115ReleaseOperations
     {
         internal List<string> Events { get; } = [];
 
@@ -463,6 +524,16 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         {
             Events.Add("prepare-infrastructure");
             return Task.CompletedTask;
+        }
+
+        public Task PreflightDockerDesktopPostgreSqlAsync(
+            Story115RunIdentity identity,
+            CancellationToken cancellationToken)
+        {
+            Events.Add("provider-docker-desktop-postgres-preflight");
+            return failPreflight
+                ? Task.FromException(new InvalidOperationException("provider-preflight-failure"))
+                : Task.CompletedTask;
         }
 
         public Task ProveDatabaseAbsentAsync(
@@ -522,7 +593,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             Story115RunIdentity identity,
             CancellationToken cancellationToken)
         {
-            Events.Add("remove-postgres-volume-network-key-state");
+            Events.Add("remove-owned-image-network-key-state");
             return Task.CompletedTask;
         }
     }
