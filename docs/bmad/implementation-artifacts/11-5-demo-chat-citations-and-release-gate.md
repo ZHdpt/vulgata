@@ -173,9 +173,9 @@ as completed acceptance criteria.
   `docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json`.
 - Proposed SpecKit short name: `demo-chat-release-gate`.
 - SpecKit feature directory: `specs/008-demo-chat-release-gate`.
-- Current workflow stage: acceptance-review.
+- Current workflow stage: conditional-e2e.
 - Latest workflow checkpoint ID:
-  `bmad-11-5-full-topology-correction-20260809T054413Z` (pending local binding).
+  `bmad-11-5-full-review-correction-20260809T101059Z` (pending local binding).
 
 ### Agent Model Used
 

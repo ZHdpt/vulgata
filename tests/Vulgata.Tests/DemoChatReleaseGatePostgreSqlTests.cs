@@ -1,5 +1,7 @@
 using Microsoft.Playwright;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 using Vulgata.Tests.ReleaseGate;
 
@@ -146,11 +148,19 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             operations.Events);
     }
 
-    [Fact]
-    public async Task Lifecycle_PreflightFailure_CleansOnlyOwnedStateBeforeDatabaseCreation()
+    [Theory]
+    [InlineData(true, false, "provider-preflight-failure")]
+    [InlineData(false, true, "database-create-ambiguous-failure")]
+    public async Task Lifecycle_BeforeProvenDatabaseOwnership_NeverMutatesNonceDatabase(
+        bool failPreflight,
+        bool failCreate,
+        string expectedFailure)
     {
         Story115RunIdentity identity = Story115ReleaseHarness.CreateRunIdentity();
-        var operations = new RecordingReleaseOperations(failDrop: false, failPreflight: true);
+        var operations = new RecordingReleaseOperations(
+            failDrop: false,
+            failPreflight,
+            failCreate);
 
         Story115ReleaseGateException exception = await Assert.ThrowsAsync<
             Story115ReleaseGateException>(() => Story115ReleaseHarness.ExecuteLifecycleAsync(
@@ -158,20 +168,91 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 operations,
                 _ => Task.CompletedTask));
 
-        Assert.Equal("provider-preflight-failure", exception.PrimaryFailure?.Message);
+        Assert.Equal(expectedFailure, exception.PrimaryFailure?.Message);
+        Assert.DoesNotContain("terminate-exact-database", operations.Events);
+        Assert.DoesNotContain("drop-exact-database", operations.Events);
+        Assert.DoesNotContain("database-absent-after-drop", operations.Events);
+        Assert.DoesNotContain("migrate", operations.Events);
+        Assert.Equal("remove-owned-image-network-key-state", operations.Events[^1]);
+    }
+
+    [Fact]
+    public async Task Lifecycle_AmbiguousCreateCatalogAbsent_VerifiesAbsenceWithoutDatabaseMutation()
+    {
+        Story115RunIdentity identity = Story115ReleaseHarness.CreateRunIdentity();
+        var operations = new RecordingReleaseOperations(
+            failDrop: false,
+            failCreate: true,
+            databaseExistsAfterAmbiguousCreate: false);
+
+        Story115ReleaseGateException exception = await Assert.ThrowsAsync<
+            Story115ReleaseGateException>(() => Story115ReleaseHarness.ExecuteLifecycleAsync(
+                identity,
+                operations,
+                _ => Task.CompletedTask));
+
+        Assert.Equal("database-create-ambiguous-failure", exception.PrimaryFailure?.Message);
+        Assert.Null(exception.CleanupFailure);
+        Assert.Contains("database-exists-after-ambiguous-create", operations.Events);
+        Assert.DoesNotContain("terminate-exact-database", operations.Events);
+        Assert.DoesNotContain("drop-exact-database", operations.Events);
+        Assert.Equal("remove-owned-image-network-key-state", operations.Events[^1]);
+    }
+
+    [Fact]
+    public async Task Lifecycle_AmbiguousCreateCatalogPresent_RemovesExactNonceDatabase()
+    {
+        Story115RunIdentity identity = Story115ReleaseHarness.CreateRunIdentity();
+        var operations = new RecordingReleaseOperations(
+            failDrop: false,
+            failCreate: true,
+            databaseExistsAfterAmbiguousCreate: true);
+
+        Story115ReleaseGateException exception = await Assert.ThrowsAsync<
+            Story115ReleaseGateException>(() => Story115ReleaseHarness.ExecuteLifecycleAsync(
+                identity,
+                operations,
+                _ => Task.CompletedTask));
+
+        Assert.Equal("database-create-ambiguous-failure", exception.PrimaryFailure?.Message);
+        Assert.Null(exception.CleanupFailure);
         Assert.Equal(
             [
                 "prepare-infrastructure",
                 "provider-docker-desktop-postgres-preflight",
+                "database-absent-before-create",
+                "database-create",
                 "remove-app-provider",
+                "database-exists-after-ambiguous-create",
                 "terminate-exact-database",
                 "drop-exact-database",
                 "database-absent-after-drop",
                 "remove-owned-image-network-key-state",
             ],
             operations.Events);
-        Assert.DoesNotContain("database-create", operations.Events);
-        Assert.DoesNotContain("migrate", operations.Events);
+    }
+
+    [Fact]
+    public async Task Lifecycle_AmbiguousCreateCatalogQueryFails_RetainsCleanupFailure()
+    {
+        Story115RunIdentity identity = Story115ReleaseHarness.CreateRunIdentity();
+        var operations = new RecordingReleaseOperations(
+            failDrop: false,
+            failCreate: true,
+            failDatabaseExistsQuery: true);
+
+        Story115ReleaseGateException exception = await Assert.ThrowsAsync<
+            Story115ReleaseGateException>(() => Story115ReleaseHarness.ExecuteLifecycleAsync(
+                identity,
+                operations,
+                _ => Task.CompletedTask));
+
+        Assert.Equal("database-create-ambiguous-failure", exception.PrimaryFailure?.Message);
+        Assert.Equal("database-catalog-query-failure", exception.CleanupFailure?.Message);
+        Assert.Contains("database-exists-after-ambiguous-create", operations.Events);
+        Assert.DoesNotContain("terminate-exact-database", operations.Events);
+        Assert.DoesNotContain("drop-exact-database", operations.Events);
+        Assert.Equal("remove-owned-image-network-key-state", operations.Events[^1]);
     }
 
     [Fact]
@@ -240,6 +321,77 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 _ => Task.FromResult(true),
                 maximumAttempts: 61,
                 delay: TimeSpan.Zero));
+    }
+
+    [Fact]
+    public async Task ProviderStart_ReservedPorts_AreReleasedAtPublishBoundary()
+    {
+        await using Story115PortReservation reservation =
+            Story115ReleaseHarness.ReserveDistinctPorts();
+        var rebound = new List<TcpListener>();
+
+        try
+        {
+            await Story115ReleaseHarness.StartProviderAtReservedPortBoundaryAsync(
+                reservation,
+                _ =>
+                {
+                    foreach (int port in reservation.Ports)
+                    {
+                        var listener = new TcpListener(IPAddress.Loopback, port);
+                        listener.Start();
+                        rebound.Add(listener);
+                    }
+
+                    return Task.CompletedTask;
+                });
+        }
+        finally
+        {
+            foreach (TcpListener listener in rebound)
+            {
+                listener.Stop();
+            }
+        }
+
+        Assert.Equal(reservation.Ports.Count, rebound.Count);
+    }
+
+    [Theory]
+    [InlineData(170000, true)]
+    [InlineData(179999, true)]
+    [InlineData(160999, false)]
+    [InlineData(180000, false)]
+    public void PostgreSqlMajorVersion_Only17IsAccepted(
+        int serverVersionNumber,
+        bool accepted)
+    {
+        Exception? exception = Record.Exception(() =>
+            Story115ReleaseHarness.RequirePostgreSql17ServerVersion(serverVersionNumber));
+
+        Assert.Equal(accepted, exception is null);
+    }
+
+    [Fact]
+    public async Task AppEnvironment_PlaintextFile_IsCurrentUserOnlyAndDeletable()
+    {
+        string path = Path.Combine(
+            Path.GetTempPath(),
+            $"vulgata-story115-{Guid.NewGuid():N}-app.env");
+        try
+        {
+            await Story115ReleaseHarness.WriteCurrentUserOnlyFileAsync(
+                path,
+                "ConnectionStrings__DefaultConnection=secret\n");
+
+            Assert.True(Story115ReleaseHarness.HasCurrentUserOnlyAccess(path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+
+        Assert.False(File.Exists(path));
     }
 
     [Fact]
@@ -514,7 +666,12 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         throw new InvalidOperationException("Could not locate the Vulgata repository root.");
     }
 
-    private sealed class RecordingReleaseOperations(bool failDrop, bool failPreflight = false) : IStory115ReleaseOperations
+    private sealed class RecordingReleaseOperations(
+        bool failDrop,
+        bool failPreflight = false,
+        bool failCreate = false,
+        bool databaseExistsAfterAmbiguousCreate = false,
+        bool failDatabaseExistsQuery = false) : IStory115ReleaseOperations
     {
         internal List<string> Events { get; } = [];
 
@@ -552,7 +709,20 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             CancellationToken cancellationToken)
         {
             Events.Add("database-create");
-            return Task.CompletedTask;
+            return failCreate
+                ? Task.FromException(new InvalidOperationException("database-create-ambiguous-failure"))
+                : Task.CompletedTask;
+        }
+
+        public Task<bool> ReconcileDatabaseExistsAfterAmbiguousCreateAsync(
+            Story115RunIdentity identity,
+            CancellationToken cancellationToken)
+        {
+            Events.Add("database-exists-after-ambiguous-create");
+            return failDatabaseExistsQuery
+                ? Task.FromException<bool>(
+                    new InvalidOperationException("database-catalog-query-failure"))
+                : Task.FromResult(databaseExistsAfterAmbiguousCreate);
         }
 
         public Task MigrateAsync(

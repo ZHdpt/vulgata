@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
   "execution_level": "full",
-  "stage": "acceptance-review",
+  "stage": "conditional-e2e",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -25,20 +25,44 @@
       "verdict_path": "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
     },
     "acceptance-review": {
-      "status": "pending",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "accepted",
+      "iteration": 3,
+      "dispatch_id": "story_11_5_full_acceptance_review_iteration_3",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json",
+      "input_boundary": {
+        "base_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+        "candidate_commit": null,
+        "diff_sha256": "1e6d600d505ecbd2ecd0edc01b335f8791535b0b8458d86fa6400ab87c95d5d3",
+        "artifact_hashes": {
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "e4cf07408426298881b0733db5d6aa3126c81b77f0f4c661d6f41810552fe265",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "999151f23a8765f4c136e93e4d91dec5d19600cccd78c916f2e2ca1e8a93eda4"
+        },
+        "owned_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+        ]
+      },
+      "completed_at": "2026-08-09T10:10:59Z"
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "accepted",
+      "iteration": 5,
+      "dispatch_id": "story_11_5_full_quality_review_iteration_5",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json",
+      "input_boundary": {
+        "base_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+        "candidate_commit": null,
+        "diff_sha256": "1e6d600d505ecbd2ecd0edc01b335f8791535b0b8458d86fa6400ab87c95d5d3",
+        "artifact_hashes": {
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "e4cf07408426298881b0733db5d6aa3126c81b77f0f4c661d6f41810552fe265",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "999151f23a8765f4c136e93e4d91dec5d19600cccd78c916f2e2ca1e8a93eda4"
+        },
+        "owned_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+        ]
+      },
+      "completed_at": "2026-08-09T10:10:59Z"
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -428,6 +452,68 @@
         "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
       ],
       "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "revised",
+      "started_at": "2026-08-09T06:00:00Z",
+      "completed_at": "2026-08-09T08:00:00Z",
+      "input_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json": "af68d9ae0cac01817b6b71f248bc98b8ab9aee500072bf91721d773bd53622ec"
+      },
+      "agent_role": "acceptance-reviewer",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "revised",
+      "started_at": "2026-08-09T06:00:00Z",
+      "completed_at": "2026-08-09T08:00:00Z",
+      "input_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json": "615e33bc7d411efcdf2af5a07ac7727e7b321e1a44b8968251625f53a435a805"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-09T08:00:00Z",
+      "completed_at": "2026-08-09T09:11:58Z",
+      "input_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+      "input_hashes": {
+        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "566aed710e28de6c9a7b8772b863ba638e86354a014212db3ec84457bac685c5",
+        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "a5ee8acd7505064df199ae80055c0f0472b1da485730848f7bca684fb5586348"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review-exception",
+      "status": "authorized",
+      "authorized_at": "2026-08-09T09:50:00Z",
+      "authority": "user: Approve",
+      "scope": "One final bounded ambiguous CREATE reconciliation correction and fresh Full acceptance plus quality review rerun for AR-115-T064-CREATE-003 / QR-4CE3E4B-001 only",
+      "does_not_waive": [
+        "transient RED/GREEN TDD",
+        "fresh Full acceptance review",
+        "fresh Full quality review",
+        "sole live T064",
+        "nonce database absence and resource cleanup verification",
+        "T065 final verification"
+      ]
     }
   ],
   "repository_preflight": {
@@ -538,12 +624,22 @@
         "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
       ]
     },
-    "acceptance-review": { "count": 0, "verdict_paths": [] },
+    "acceptance-review": {
+      "count": 3,
+      "verdict_paths": [
+        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json",
+        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-2.json",
+        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json"
+      ]
+    },
     "quality-review": {
-      "count": 2,
+      "count": 5,
       "verdict_paths": [
         "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json",
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json"
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json",
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-4.json",
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json"
       ]
     }
   },
@@ -554,37 +650,35 @@
     "rationale": "Story 11.5 owns the mandatory final clean-database two-Repository user-visible, authorization, persistence, migration, and Docker release path.",
     "covering_tests": [],
     "owner": "e2e-runner",
-    "source_boundary": "46cadbc3510463300d5a89e39774db0e2d80d57a + accepted correction manifest 5f9d5e0dfc4727c57fd1136e1ad311fab1e08c2de71f22140f3e53beb4454616",
+    "source_boundary": "4ce3e4b124444e064abb07bc2cf534a67d18548a + accepted two-file correction diff 1e6d600d505ecbd2ecd0edc01b335f8791535b0b8458d86fa6400ab87c95d5d3",
     "result": "pending",
     "evidence_ids": []
   },
   "verification": [],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-5-full-topology-correction-20260809T054413Z",
+    "checkpoint_id": "bmad-11-5-full-review-correction-20260809T101059Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
-    "stage": "implement",
+    "stage": "quality-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-      "specs/008-demo-chat-release-gate/spec.md",
-      "specs/008-demo-chat-release-gate/plan.md",
-      "specs/008-demo-chat-release-gate/research.md",
-      "specs/008-demo-chat-release-gate/quickstart.md",
-      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
-      "specs/008-demo-chat-release-gate/tasks.md",
-      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json",
-      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
-      "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json",
+      "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json",
+      "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-2.json",
+      "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-4.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json",
       "specs/008-demo-chat-release-gate/workflow-state.json",
       "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
       "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
     ],
     "verification_evidence_ids": [
-      "11-5-demo-chat-citations-and-release-gate/analyze/1",
-      "11-5-demo-chat-citations-and-release-gate/implement/1"
+      "11-5-demo-chat-citations-and-release-gate/acceptance-review/3",
+      "11-5-demo-chat-citations-and-release-gate/quality-review/5",
+      "11-5-demo-chat-citations-and-release-gate/implement/2"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-09T05:44:13Z"
+  "updated_at": "2026-08-09T10:10:59Z"
 }

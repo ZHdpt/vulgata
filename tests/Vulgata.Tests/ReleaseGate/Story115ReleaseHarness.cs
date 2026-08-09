@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -578,6 +580,10 @@ internal interface IStory115ReleaseOperations
         Story115RunIdentity identity,
         CancellationToken cancellationToken);
 
+    Task<bool> ReconcileDatabaseExistsAfterAmbiguousCreateAsync(
+        Story115RunIdentity identity,
+        CancellationToken cancellationToken);
+
     Task MigrateAsync(
         Story115RunIdentity identity,
         CancellationToken cancellationToken);
@@ -692,8 +698,11 @@ internal sealed class Story115ExecutableFinalRunOperations :
         }
 
         await ExecuteRequiredAsync(FindCommand(plan, "network-create"), cancellationToken);
-        await ExecuteRequiredAsync(
-            MakeProviderFixtureAbsolute(FindCommand(plan, "provider-run")),
+        await Story115ReleaseHarness.StartProviderAtReservedPortBoundaryAsync(
+            plan.PortReservation,
+            token => ExecuteRequiredAsync(
+                MakeProviderFixtureAbsolute(FindCommand(plan, "provider-run")),
+                token),
             cancellationToken);
         supplied.Pooling = false;
         supplied.Timeout = 5;
@@ -706,6 +715,13 @@ internal sealed class Story115ExecutableFinalRunOperations :
                 {
                     await using var connection = new NpgsqlConnection(_administratorConnectionString);
                     await connection.OpenAsync(token);
+                    await using var command = new NpgsqlCommand(
+                        "SELECT current_setting('server_version_num')::integer;",
+                        connection);
+                    int serverVersionNumber = (int)(
+                        await command.ExecuteScalarAsync(token) ?? 0);
+                    Story115ReleaseHarness.RequirePostgreSql17ServerVersion(
+                        serverVersionNumber);
                     return true;
                 }
                 catch (NpgsqlException)
@@ -760,13 +776,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
             throw new InvalidOperationException("PostgreSQL administration was not prepared.");
         }
 
-        await using var connection = new NpgsqlConnection(_administratorConnectionString);
-        await connection.OpenAsync(cancellationToken);
-        await using var command = new NpgsqlCommand(
-            "SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = @name);",
-            connection);
-        command.Parameters.AddWithValue("name", identity.DatabaseName);
-        bool exists = (bool)(await command.ExecuteScalarAsync(cancellationToken) ?? false);
+        bool exists = await DatabaseExistsInCatalogAsync(identity, cancellationToken);
         if (exists)
         {
             throw new InvalidOperationException(
@@ -780,6 +790,39 @@ internal sealed class Story115ExecutableFinalRunOperations :
             _databaseAbsenceObserved = true;
             _cleanup["database-absence-proved"] = true;
         }
+    }
+
+    public async Task<bool> ReconcileDatabaseExistsAfterAmbiguousCreateAsync(
+        Story115RunIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        bool exists = await DatabaseExistsInCatalogAsync(identity, cancellationToken);
+        if (!exists)
+        {
+            _databaseAbsenceObserved = true;
+            _cleanup["database-absence-proved"] = true;
+        }
+
+        return exists;
+    }
+
+    private async Task<bool> DatabaseExistsInCatalogAsync(
+        Story115RunIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        RequirePlan(identity);
+        if (_administratorConnectionString is null)
+        {
+            throw new InvalidOperationException("PostgreSQL administration was not prepared.");
+        }
+
+        await using var connection = new NpgsqlConnection(_administratorConnectionString);
+        await connection.OpenAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(
+            "SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = @name);",
+            connection);
+        command.Parameters.AddWithValue("name", identity.DatabaseName);
+        return (bool)(await command.ExecuteScalarAsync(cancellationToken) ?? false);
     }
 
     public async Task CreateDatabaseAsync(
@@ -885,7 +928,6 @@ internal sealed class Story115ExecutableFinalRunOperations :
         Story115FinalRunPlan plan = _plan!;
         Story115ProvisioningFactory factory = _provisioningFactory ??
             throw new InvalidOperationException("Production migrations did not initialize the product host.");
-        plan.PortReservation.Release();
         using (IServiceScope scope = factory.Services.CreateScope())
         {
             _product = await Story115ProductOrchestrator.ExecuteAsync(
@@ -1142,7 +1184,10 @@ internal sealed class Story115ExecutableFinalRunOperations :
             "DataProtection__KeyRingPath=/var/lib/vulgata-dpkeys",
             "DataProtection__ApplicationName=" + DataProtectionApplicationName,
         ]) + "\n";
-        await File.WriteAllTextAsync(plan.AppEnvironmentFile, content, cancellationToken);
+        await Story115ReleaseHarness.WriteCurrentUserOnlyFileAsync(
+            plan.AppEnvironmentFile,
+            content,
+            cancellationToken);
     }
 
     private void ParseAndVerifyImageInspection(
@@ -1864,6 +1909,111 @@ internal static partial class Story115ReleaseHarness
         }
     }
 
+    internal static Task StartProviderAtReservedPortBoundaryAsync(
+        Story115PortReservation reservation,
+        Func<CancellationToken, Task> startProviderAsync,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(reservation);
+        ArgumentNullException.ThrowIfNull(startProviderAsync);
+        cancellationToken.ThrowIfCancellationRequested();
+        reservation.Release();
+        return startProviderAsync(cancellationToken);
+    }
+
+    internal static void RequirePostgreSql17ServerVersion(int serverVersionNumber)
+    {
+        if (serverVersionNumber / 10_000 != 17)
+        {
+            throw new InvalidOperationException(
+                "The supplied PostgreSQL administrator endpoint must use major version 17.");
+        }
+    }
+
+    internal static async Task WriteCurrentUserOnlyFileAsync(
+        string path,
+        string content,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentNullException.ThrowIfNull(content);
+        if (!OperatingSystem.IsWindows())
+        {
+            throw new PlatformNotSupportedException(
+                "The Story 11.5 final release harness requires Windows ACLs.");
+        }
+
+        string fullPath = Path.GetFullPath(path);
+        await using (FileStream empty = new(
+            fullPath,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None))
+        {
+            await empty.FlushAsync(cancellationToken);
+        }
+
+        try
+        {
+            using WindowsIdentity current = WindowsIdentity.GetCurrent();
+            SecurityIdentifier currentUser = current.User ??
+                throw new InvalidOperationException("The current Windows user SID is unavailable.");
+            var security = new FileSecurity();
+            security.SetOwner(currentUser);
+            security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+            security.AddAccessRule(new FileSystemAccessRule(
+                currentUser,
+                FileSystemRights.FullControl,
+                AccessControlType.Allow));
+            new FileInfo(fullPath).SetAccessControl(security);
+            if (!HasCurrentUserOnlyAccess(fullPath))
+            {
+                throw new UnauthorizedAccessException(
+                    "The Story 11.5 app environment file ACL was not current-user-only.");
+            }
+
+            await File.WriteAllTextAsync(fullPath, content, cancellationToken);
+        }
+        catch
+        {
+            File.Delete(fullPath);
+            throw;
+        }
+    }
+
+    internal static bool HasCurrentUserOnlyAccess(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        if (!OperatingSystem.IsWindows() || !File.Exists(path))
+        {
+            return false;
+        }
+
+        using WindowsIdentity current = WindowsIdentity.GetCurrent();
+        SecurityIdentifier? currentUser = current.User;
+        FileSecurity security = new FileInfo(Path.GetFullPath(path)).GetAccessControl();
+        if (currentUser is null ||
+            !security.AreAccessRulesProtected ||
+            !currentUser.Equals(security.GetOwner(typeof(SecurityIdentifier))))
+        {
+            return false;
+        }
+
+        AuthorizationRuleCollection rules = security.GetAccessRules(
+            includeExplicit: true,
+            includeInherited: true,
+            targetType: typeof(SecurityIdentifier));
+        FileSystemAccessRule[] accessRules =
+            [.. rules.OfType<FileSystemAccessRule>()];
+        return accessRules.Length > 0 &&
+            accessRules.All(rule =>
+                currentUser.Equals(rule.IdentityReference) &&
+                rule.AccessControlType == AccessControlType.Allow) &&
+            accessRules.Any(rule =>
+                (rule.FileSystemRights & (FileSystemRights.Read | FileSystemRights.Write)) ==
+                (FileSystemRights.Read | FileSystemRights.Write));
+    }
+
     internal static async Task<bool> PollAsync(
         Func<CancellationToken, Task<bool>> probeAsync,
         int maximumAttempts,
@@ -1921,6 +2071,9 @@ internal static partial class Story115ReleaseHarness
 
         Exception? primaryFailure = null;
         var cleanupFailures = new List<Exception>();
+        bool databaseAbsenceProvenBeforeCreate = false;
+        bool databaseCreateOutcomeIndeterminate = false;
+        bool databaseOwnershipProven = false;
         try
         {
             await operations.PrepareInfrastructureAsync(identity, cancellationToken);
@@ -1929,7 +2082,11 @@ internal static partial class Story115ReleaseHarness
                 identity,
                 afterDrop: false,
                 cancellationToken);
+            databaseAbsenceProvenBeforeCreate = true;
+            databaseCreateOutcomeIndeterminate = true;
             await operations.CreateDatabaseAsync(identity, cancellationToken);
+            databaseCreateOutcomeIndeterminate = false;
+            databaseOwnershipProven = true;
             await operations.MigrateAsync(identity, cancellationToken);
             await executePrimaryAsync(cancellationToken);
         }
@@ -1942,20 +2099,39 @@ internal static partial class Story115ReleaseHarness
             await CaptureCleanupFailureAsync(
                 () => operations.RemoveAppAndProviderAsync(identity, CancellationToken.None),
                 cleanupFailures);
-            await CaptureCleanupFailureAsync(
-                () => operations.TerminateDatabaseConnectionsAsync(
-                    identity,
-                    CancellationToken.None),
-                cleanupFailures);
-            await CaptureCleanupFailureAsync(
-                () => operations.DropDatabaseAsync(identity, CancellationToken.None),
-                cleanupFailures);
-            await CaptureCleanupFailureAsync(
-                () => operations.ProveDatabaseAbsentAsync(
-                    identity,
-                    afterDrop: true,
-                    CancellationToken.None),
-                cleanupFailures);
+            if (databaseAbsenceProvenBeforeCreate &&
+                databaseCreateOutcomeIndeterminate &&
+                !databaseOwnershipProven)
+            {
+                try
+                {
+                    databaseOwnershipProven = await operations
+                        .ReconcileDatabaseExistsAfterAmbiguousCreateAsync(
+                            identity,
+                            CancellationToken.None);
+                }
+                catch (Exception exception)
+                {
+                    cleanupFailures.Add(exception);
+                }
+            }
+            if (databaseOwnershipProven)
+            {
+                await CaptureCleanupFailureAsync(
+                    () => operations.TerminateDatabaseConnectionsAsync(
+                        identity,
+                        CancellationToken.None),
+                    cleanupFailures);
+                await CaptureCleanupFailureAsync(
+                    () => operations.DropDatabaseAsync(identity, CancellationToken.None),
+                    cleanupFailures);
+                await CaptureCleanupFailureAsync(
+                    () => operations.ProveDatabaseAbsentAsync(
+                        identity,
+                        afterDrop: true,
+                        CancellationToken.None),
+                    cleanupFailures);
+            }
             await CaptureCleanupFailureAsync(
                 () => operations.RemoveRemainingOwnedStateAsync(
                     identity,

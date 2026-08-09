@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+  "reviewed_boundary": {
+    "base_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+    "candidate_commit": null,
+    "diff_sha256": "a240f86b6dc12853e68e9c7c7acb80c57dc506dc88c7c00d3c3e84cf45db10cb",
+    "artifact_hashes": {
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "566aed710e28de6c9a7b8772b863ba638e86354a014212db3ec84457bac685c5",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "a5ee8acd7505064df199ae80055c0f0472b1da485730848f7bca684fb5586348"
+    },
+    "owned_paths": [
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/data-model.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
+    "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json",
+    "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json",
+    "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+    "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+  ],
+  "findings": [
+    {
+      "id": "QR-4CE3E4B-001",
+      "severity": "HIGH",
+      "category": "security-resource-ownership",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+      "location": "ExecuteLifecycleAsync lines 2030-2084; DemoChatReleaseGatePostgreSqlTests.cs Lifecycle_BeforeProvenDatabaseOwnership_NeverMutatesNonceDatabase lines 150-180",
+      "affected_requirement": "FR-019, SC-008, T064, T065, and release-verification-contract.md Database lifecycle require failure-safe cleanup of the harness-created nonce database, catalog absence proof, visible cleanup failure, and no residue on the external PostgreSQL server.",
+      "evidence": "The correction safely avoids terminate/drop after preflight failure, but treats every CreateDatabaseAsync exception as proof that no database was created. A CREATE DATABASE command can succeed server-side and then report an ambiguous transport or timeout failure. Because databaseOwnershipProven is assigned only after CreateDatabaseAsync returns, that path skips termination, DROP DATABASE, and catalog-absence verification while RemoveRemainingOwnedStateAsync still completes. The new failCreate regression explicitly expects this skip and never proves the nonce database absent. This can leave a harness-created database behind while reporting only the primary failure, violating unconditional cleanup and residue rejection.",
+      "correction_outcome": "Represent the post-absence-proof create attempt as an explicit ambiguous ownership state. On a create exception, query the administrator catalog without mutating unrelated databases; if the exact cryptographic nonce database exists, acquire cleanup responsibility and terminate/drop/prove absence, and if its state cannot be determined, retain a cleanup failure that prevents a clean release claim. Add regression coverage for both ambiguous-create outcomes: database absent and database present then removed."
+    }
+  ],
+  "summary": "REVISE. The supplied two-file hashes match the current boundary. The port defect is closed by releasing the reservation immediately at the provider publication boundary, with startup failure remaining fail-closed. PostgreSQL major 17 is queried and enforced before database absence/create/migrations, and the Windows environment file is created empty, protected with a current-user-only non-inherited ACL, verified, and only then populated with plaintext; failure deletes it and lifecycle cleanup removes the nonce directory. The 27/27 non-live result supports these corrections. However, the prior database-ownership finding remains partially open because an ambiguous server-side CREATE success is treated as non-ownership and bypasses database cleanup and catalog-absence proof. Pending live T064 is expected and was not activated."
+}

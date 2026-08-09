@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+  "reviewed_boundary": {
+    "base_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
+    "candidate_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+    "diff_sha256": "a668f1f1ac49ba6e60c14ae9defcb507498b2407bf7fbbe2f5c75694aa2f288f",
+    "artifact_hashes": {
+      "AGENTS.md": "aa2f09f1de345fda985811aff2e2da88dffb9f095544d0ce559a389dadda71c0",
+      ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971",
+      "docs/UBIQUITOUS_LANGUAGE.md": "0ea20ad355f8f1f5e1716d2dc971f3a042eb8a4c1648d5ffc1f1fd86e5fcf9ad",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "80053d723693ad6ff2382e4fe35726b8a2472b1dc952321ba1f938adadafc29b",
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/plan.md": "429a4cd50a3d65c4dd7dc7950a1313565269f63d435d2d141f74f6230844027c",
+      "specs/008-demo-chat-release-gate/tasks.md": "3551422d86e73bef9cc354739c3d6d0bd56f22393232b4980a4b463767d5c0f4",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "31c3adc89a2a0a09030233826a1ecbfc04bfda022e039fb1abb1d7c3b74981cd",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json": "08265020edf4878915318b78a0b40c325f4117c580fa773ebb291bcfb36052d5",
+      "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json": "d055ce93e16c174a1c382e4e8c8420569f65ba1b54886493c5bdc29e112947bf",
+      "specs/008-demo-chat-release-gate/workflow-state.json": "0d3f94276c65c8a77ed71849dbc722181e3bcae027974bb04601838661408454",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "a7d0aa5d86f14bc0470357f28f35d9ac5c914a73c7895b778eb1a43d981a32bb",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "e83e59c849534051b7d862e57477169791fa45317e7ab7f6c0d3b8e7c6ec630f",
+      "tests/Vulgata.Tests/ReleaseGate/loopback-openai-provider.py": "ab90548d6a83b88f442e03f430cc33f975ea22792945171b1585353115000829",
+      "Directory.Packages.props": "41d905012c57a65691db79e5843ecfb5812f91d9f3a611928927f1937f50b4bf"
+    },
+    "owned_paths": [
+      ".dockerignore", "Directory.Packages.props", "src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentDispatcher.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentProviderResolver.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentResultValidator.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatCandidateExtractor.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatPromptCatalog.cs", "src/dotnet/Vulgata.Agents/Prompts/chat-business.v1.md", "src/dotnet/Vulgata.Agents/Prompts/chat-it.v1.md", "src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj", "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass2FlowResolver.cs", "src/dotnet/Vulgata.Core/DomainServices/ChatContracts.cs", "src/dotnet/Vulgata.Core/DomainServices/IChatAgentDispatcher.cs", "src/dotnet/Vulgata.Core/DomainServices/IChatEvidenceCurrentnessValidator.cs", "src/dotnet/Vulgata.Core/DomainServices/IChatEvidenceRetriever.cs", "src/dotnet/Vulgata.Core/DomainServices/IPreparedChatScopeResolver.cs", "src/dotnet/Vulgata.Core/DomainServices/IPreparedDemoPass2FlowPlanner.cs", "src/dotnet/Vulgata.Core/DomainServices/IWorkerAgentResultCommitter.cs", "src/dotnet/Vulgata.Core/DomainServices/PreparedPass2Flow.cs", "src/dotnet/Vulgata.Core/DomainServices/PreparedPass2RuntimeBinding.cs", "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs", "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentJobPacket.cs", "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceCurrentnessValidator.cs", "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs", "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs", "src/dotnet/Vulgata.Infrastructure/Data/PreparedDemoPass2FlowPlanner.cs", "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs", "src/dotnet/Vulgata.Shared/Chat/PreparedChatQuestionRequest.cs", "src/dotnet/Vulgata.Shared/Validators/Chat/PreparedChatQuestionRequestValidator.cs", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css", "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs", "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs", "src/dotnet/Vulgata.Web/Program.cs", "tests/Vulgata.Tests/ChatAgentDispatcherTests.cs", "tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs", "tests/Vulgata.Tests/ChatCandidateExtractorTests.cs", "tests/Vulgata.Tests/ChatContractTests.cs", "tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs", "tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs", "tests/Vulgata.Tests/ChatPageTests.cs", "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/Pass1JobIdentityTests.cs", "tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs", "tests/Vulgata.Tests/PreparedChatIntegrationTests.cs", "tests/Vulgata.Tests/PreparedChatQuestionRequestValidatorTests.cs", "tests/Vulgata.Tests/PreparedDemoPass2FlowPlannerTests.cs", "tests/Vulgata.Tests/PreparedPass2RuntimeDispatchTests.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs", "tests/Vulgata.Tests/ReleaseGate/loopback-openai-provider.py", "tests/Vulgata.Tests/Vulgata.Tests.csproj"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md", ".specify/memory/constitution.md", "docs/UBIQUITOUS_LANGUAGE.md", "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md", "specs/008-demo-chat-release-gate/spec.md", "specs/008-demo-chat-release-gate/plan.md", "specs/008-demo-chat-release-gate/research.md", "specs/008-demo-chat-release-gate/data-model.md", "specs/008-demo-chat-release-gate/quickstart.md", "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md", "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md", "specs/008-demo-chat-release-gate/tasks.md", "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json", "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json", "specs/008-demo-chat-release-gate/workflow-state.json", "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs", "tests/Vulgata.Tests/ReleaseGate/loopback-openai-provider.py", "Directory.Packages.props", ".dockerignore"
+  ],
+  "findings": [
+    {
+      "id": "QR-4CE3E4B-001",
+      "severity": "HIGH",
+      "category": "security-resource-ownership",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+      "location": "ExecuteLifecycleAsync lines 1925-1955; PreflightDockerDesktopPostgreSqlAsync lines 731-745; TerminateDatabaseConnectionsAsync lines 826-844; DropDatabaseAsync lines 847-861",
+      "affected_requirement": "FR-019, SC-008, and release-verification-contract.md lines 26-41 require cleanup to terminate and drop only the harness-created disposable nonce database while leaving every external or other database untouched.",
+      "evidence": "The lifecycle executes Docker/PostgreSQL preflight before proving the nonce database name absent. If preflight fails, the unconditional finally block still calls termination and DROP DATABASE IF EXISTS. Because the administrator connection was already stored, those calls execute even though the name was never proved absent and the harness never created or acquired ownership of that database. DemoChatReleaseGatePostgreSqlTests.cs lines 150-171 currently encode this unsafe behavior by expecting terminate/drop events after preflight failure.",
+      "correction_outcome": "Track database ownership explicitly and invoke termination/drop/catalog-absence cleanup only after successful absence proof and successful creation, with a safe disposition for ambiguous create outcomes. Add a regression test proving preflight failure performs no database termination or drop and cleans only nonce Docker/filesystem resources."
+    },
+    {
+      "id": "QR-4CE3E4B-002",
+      "severity": "HIGH",
+      "category": "release-gate-correctness",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+      "location": "PrepareInfrastructureAsync lines 677-729 and PreflightDockerDesktopPostgreSqlAsync lines 731-745",
+      "affected_requirement": "release-verification-contract.md lines 26-31 and the accepted plan require validation of the external PostgreSQL 17 administrator endpoint before nonce database creation, migrations, or product provisioning.",
+      "evidence": "PrepareInfrastructureAsync proves only that Npgsql can open the supplied endpoint, and the provider-namespace preflight proves only DNS/TCP reachability. No server_version or server_version_num query exists in the harness or its tests. Consequently, T064 could proceed and report the PostgreSQL 17 gate on PostgreSQL 16, 18, or another compatible major version.",
+      "correction_outcome": "Query the administrator endpoint for its server major version before nonce database creation, require exactly major 17, fail closed otherwise, and add fast tests for accepted 17 and rejected non-17 values."
+    },
+    {
+      "id": "QR-4CE3E4B-003",
+      "severity": "MEDIUM",
+      "category": "secret-handling",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+      "location": "WriteAppEnvironmentAsync lines 1128-1145",
+      "affected_requirement": "quickstart.md lines 306-313 requires a permission-restricted nonce-owned environment file containing the disposable database connection and Data Protection configuration.",
+      "evidence": "The harness writes the plaintext connection string, including administrator-derived credentials, with File.WriteAllTextAsync and performs no Windows ACL or equivalent access-mode restriction. The resulting protection depends entirely on inherited temporary-directory permissions, and no test verifies exclusive access before docker consumes the file.",
+      "correction_outcome": "Create the environment file with an explicit current-user-only Windows ACL or equivalent closed secret-delivery mechanism before writing credentials; verify the restriction in a fast test and retain unconditional deletion."
+    }
+  ],
+  "summary": "REVISE. The immutable candidate tree is 88909ee7cc08571119f604fbbbec754095d67dec and status was clean. The boundary digest is SHA-256 over a canonical UTF-8 manifest containing base_commit, candidate_commit, and every ordinal-sorted changed production/test/Docker/package path with its candidate blob SHA-256. The exact seven-slot Pass 2, deterministic identity, Chat authorization/currentness, FluentValidation, citation, and Data Protection seams were retained, but the final release harness has two High defects: it can terminate/drop a database it never proved absent or created after preflight failure, and it never verifies PostgreSQL major version 17. Its plaintext app environment file also lacks the documented explicit permission restriction. The bounded non-live DemoChatReleaseGatePostgreSqlTests run passed 20/20; that suite currently codifies the unsafe preflight cleanup and has no PostgreSQL-major or file-permission assertion. T064/live Docker/PostgreSQL/Playwright was not activated and remains an expected pending post-review gate."
+}

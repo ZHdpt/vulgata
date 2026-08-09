@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "gate": "acceptance-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+  "reviewed_boundary": {
+    "base_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+    "candidate_commit": null,
+    "diff_sha256": "a240f86b6dc12853e68e9c7c7acb80c57dc506dc88c7c00d3c3e84cf45db10cb",
+    "artifact_hashes": {
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "80053d723693ad6ff2382e4fe35726b8a2472b1dc952321ba1f938adadafc29b",
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/plan.md": "429a4cd50a3d65c4dd7dc7950a1313565269f63d435d2d141f74f6230844027c",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "31c3adc89a2a0a09030233826a1ecbfc04bfda022e039fb1abb1d7c3b74981cd",
+      "specs/008-demo-chat-release-gate/tasks.md": "3551422d86e73bef9cc354739c3d6d0bd56f22393232b4980a4b463767d5c0f4",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json": "08265020edf4878915318b78a0b40c325f4117c580fa773ebb291bcfb36052d5",
+      "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json": "d055ce93e16c174a1c382e4e8c8420569f65ba1b54886493c5bdc29e112947bf",
+      "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json": "af68d9ae0cac01817b6b71f248bc98b8ab9aee500072bf91721d773bd53622ec",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json": "615e33bc7d411efcdf2af5a07ac7727e7b321e1a44b8968251625f53a435a805",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "566aed710e28de6c9a7b8772b863ba638e86354a014212db3ec84457bac685c5",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "a5ee8acd7505064df199ae80055c0f0472b1da485730848f7bca684fb5586348"
+    },
+    "owned_paths": [
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md", ".specify/memory/constitution.md", "docs/UBIQUITOUS_LANGUAGE.md", "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md", "specs/008-demo-chat-release-gate/spec.md", "specs/008-demo-chat-release-gate/plan.md", "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md", "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md", "specs/008-demo-chat-release-gate/tasks.md", "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json", "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json", "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json", "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json", "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+  ],
+  "findings": [
+    {
+      "id": "AR-115-T064-CREATE-003",
+      "severity": "HIGH",
+      "category": "partial release-gate cleanup behavior",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+      "location": "ExecuteLifecycleAsync lines 2043-2082; overlapping regression at DemoChatReleaseGatePostgreSqlTests.cs lines 151-180 and fake CreateDatabaseAsync lines 626-633",
+      "affected_requirement": "AC-3; FR-019; SC-008; release-verification-contract Database lifecycle steps 1-6",
+      "evidence": "The harness proves the nonce name absent and then awaits CreateDatabaseAsync, but sets databaseOwnershipProven only after that call returns successfully. If PostgreSQL commits CREATE DATABASE and the client then receives an ambiguous transport/cancellation failure, the catch path leaves databaseOwnershipProven false. The finally block therefore skips exact-name connection termination, DROP DATABASE, and catalog-absence verification. The new regression explicitly labels the create failure ambiguous while asserting that none of those cleanup operations occurs; it does not reconcile whether the database now exists. Thus a failed T064 attempt can leave its disposable nonce database behind and cannot prove zero residue.",
+      "correction_outcome": "After a successful pre-create absence proof, represent an indeterminate CREATE outcome explicitly and reconcile the exact nonce name through the administrator catalog. If the attempted nonce database exists, establish bounded ownership from the immediately preceding absence proof and clean it through exact-name terminate/drop/absence verification; if absent, record that verified outcome without destructive database operations. Add regressions for both ambiguous-create outcomes and retain the preflight-before-absence no-drop protection."
+    }
+  ],
+  "summary": "REVISE. Independent inspection confirms that the ambiguous CREATE cleanup path remains open. The other iteration-1 and overlapping quality findings are closed: reservations are released immediately at the provider publication boundary; the administrator endpoint queries server_version_num and requires exact major 17 before database absence/create; preflight failures no longer terminate or drop an unowned database; and the plaintext app environment file is created empty, restricted to the current Windows user before credentials are written, verified, and deleted with nonce-owned state. The exact two-file correction introduces no Chat, ordinary Pass 1, runtime Pass 2, seven-slot payload, migration, general Scan, external PostgreSQL ownership, or other product-scope expansion. Supplied bounded evidence reports 27/27 non-live tests passing. T064 remains correctly pending and was not activated, but AC-3/FR-019/SC-008 prohibit ACCEPT until ambiguous CREATE is reconciled and final absence can be guaranteed."
+}

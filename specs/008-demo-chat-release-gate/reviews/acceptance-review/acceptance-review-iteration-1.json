@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "gate": "acceptance-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+  "reviewed_boundary": {
+    "base_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+    "candidate_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
+    "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "artifact_hashes": {
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "80053d723693ad6ff2382e4fe35726b8a2472b1dc952321ba1f938adadafc29b",
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/plan.md": "429a4cd50a3d65c4dd7dc7950a1313565269f63d435d2d141f74f6230844027c",
+      "specs/008-demo-chat-release-gate/research.md": "d7a2768446d4021a816f32c541f2cd2129c5ff05998398a2156190f24b2d2fa4",
+      "specs/008-demo-chat-release-gate/data-model.md": "928032c3feaed9444c9111c5d2333094199013b8b44742aba82303e7a1758ddb",
+      "specs/008-demo-chat-release-gate/quickstart.md": "2e1ca0e1d5ff356d3408d0a01992c4452582597d608b3bb51852ef7bc0355da1",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "31c3adc89a2a0a09030233826a1ecbfc04bfda022e039fb1abb1d7c3b74981cd",
+      "specs/008-demo-chat-release-gate/tasks.md": "3551422d86e73bef9cc354739c3d6d0bd56f22393232b4980a4b463767d5c0f4",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json": "08265020edf4878915318b78a0b40c325f4117c580fa773ebb291bcfb36052d5",
+      "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json": "d055ce93e16c174a1c382e4e8c8420569f65ba1b54886493c5bdc29e112947bf",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedPass2RuntimeBinding.cs": "917636f71d0f784ef8b34d32161713f2ce0e5c6e68fdf5349f167157f18c259a",
+      "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs": "e727e1a7add94ad256e7d0ccbafe14e90ff4ff75023e6897a47427f0d341fdf8",
+      "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs": "c832ccb357f5f15ecb9157b8fb9d453bb4d2a7a45ff8d2ec4fa126dce3186387",
+      "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceCurrentnessValidator.cs": "11d9c8a46521f2403ad80078ffa3acce5aafa5bd7f9a280d8a9ac0f9bfab3c59",
+      "src/dotnet/Vulgata.Infrastructure/Data/PreparedDemoPass2FlowPlanner.cs": "f4e97772ad2180d2aba8a8d66adbf51590e15cd83123952b95372ad7e8d26c36",
+      "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs": "b383aa4e15d8f27f097e6223c41d2b323e5cdfbefa290b8854dc0c460979f49e",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "a7d0aa5d86f14bc0470357f28f35d9ac5c914a73c7895b778eb1a43d981a32bb",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "e83e59c849534051b7d862e57477169791fa45317e7ab7f6c0d3b8e7c6ec630f",
+      "docker/Dockerfile": "5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c"
+    },
+    "owned_paths": [
+      ".specify/feature.json", "AGENTS.md", "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md", "docs/bmad/implementation-artifacts/sprint-status.yaml", "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json", "specs/008-demo-chat-release-gate/", "src/dotnet/Vulgata.Agents/", "src/dotnet/Vulgata.Core/DomainServices/", "src/dotnet/Vulgata.Infrastructure/Data/", "src/dotnet/Vulgata.Shared/Chat/", "src/dotnet/Vulgata.Shared/Validators/Chat/", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css", "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs", "src/dotnet/Vulgata.Web/Data/", "src/dotnet/Vulgata.Web/Program.cs", "tests/Vulgata.Tests/", "docker/Dockerfile", "docker-compose.yml"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md", ".specify/memory/constitution.md", "docs/UBIQUITOUS_LANGUAGE.md", "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md", "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md", "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md", "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md", "specs/008-demo-chat-release-gate/spec.md", "specs/008-demo-chat-release-gate/plan.md", "specs/008-demo-chat-release-gate/research.md", "specs/008-demo-chat-release-gate/data-model.md", "specs/008-demo-chat-release-gate/quickstart.md", "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md", "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md", "specs/008-demo-chat-release-gate/tasks.md", "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json", "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json", "src/dotnet/Vulgata.Core/DomainServices/ChatContracts.cs", "src/dotnet/Vulgata.Core/DomainServices/PreparedPass2RuntimeBinding.cs", "src/dotnet/Vulgata.Core/DomainServices/SequentialScanRunner.cs", "src/dotnet/Vulgata.Core/DomainServices/WorkerAgentJobPacket.cs", "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs", "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs", "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceCurrentnessValidator.cs", "src/dotnet/Vulgata.Infrastructure/Data/PreparedDemoPass2FlowPlanner.cs", "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentDispatcher.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentProviderResolver.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentResultValidator.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatCandidateExtractor.cs", "src/dotnet/Vulgata.Agents/ChatExecution/ChatPromptCatalog.cs", "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass2FlowResolver.cs", "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentJsonContext.cs", "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor", "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs", "tests/Vulgata.Tests/Pass1JobIdentityTests.cs", "tests/Vulgata.Tests/PreparedDemoPass2FlowPlannerTests.cs", "tests/Vulgata.Tests/PreparedPass2RuntimeDispatchTests.cs", "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs", "docker/Dockerfile"
+  ],
+  "findings": [
+    {
+      "id": "AR-115-T064-PORT-001",
+      "severity": "HIGH",
+      "category": "incorrect release-gate implementation",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+      "location": "lines 1677-1696, 1717-1731, 1835-1854, 695-697, and 883-889",
+      "affected_requirement": "AC-3; FR-018; SC-007; T064; release-verification-contract Provider/app network contract",
+      "evidence": "RunFinalAsync reserves all three selected host ports with active TcpListener instances and stores that reservation in the plan. PrepareInfrastructureAsync then executes provider-run, whose three Docker --publish arguments use those exact ports, while the listeners remain active. PortReservation.Release is not called until ExecutePrimaryAsync, after provider startup, database creation, and migration initialization. Therefore the live provider publication attempts to bind already-held host ports and the sole T064 topology cannot reliably start. The 19 passing non-live DemoChatReleaseGatePostgreSqlTests inspect command shape but never exercise this bind ordering.",
+      "correction_outcome": "Correct the bounded harness so the reservation listeners are released at the provider-start boundary before Docker publishes the three exact ports, retain collision-safe failure behavior, and add a regression that proves the ports are no longer held when provider startup is invoked. Re-pin the candidate and rerun both Full review axes before T064."
+    },
+    {
+      "id": "AR-115-T064-PG17-002",
+      "severity": "HIGH",
+      "category": "missing infrastructure acceptance validation",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+      "location": "lines 677-728 and 1288-1297",
+      "affected_requirement": "AC-3; FR-015; SC-006; T064; release-verification-contract lines 9-12 and 49-50",
+      "evidence": "The accepted release contract requires validation of the supplied external PostgreSQL 17 endpoint and explicitly limits server validation to the required PostgreSQL major version plus connectivity. PrepareInfrastructureAsync validates credentials and repeatedly opens a connection, but never queries server_version_num, ServerVersion, or an equivalent server property. Repository-wide inspection of the harness finds no PostgreSQL major-version check; the stage label and timeout message merely call the endpoint PostgreSQL 17. Consequently a reachable PostgreSQL 16 or 18 endpoint can pass preflight and proceed to nonce database creation, violating the clean PostgreSQL 17 acceptance boundary.",
+      "correction_outcome": "Before nonce database absence/create/migration, query the external endpoint through the supplied administrator database, require major version 17, fail closed otherwise, and add fast coverage for accepted 17 and rejected non-17 observations without taking ownership of or modifying the external server/container."
+    }
+  ],
+  "summary": "REVISE. Commit 4ce3e4b124444e064abb07bc2cf534a67d18548a, tree 88909ee7cc08571119f604fbbbec754095d67dec, clean status, and canonical production-source-manifest-v1 SHA-256 0d934c7e9eac4378da50ca06fd7becc560f7535a499c83e46454d89c9e876cec were reviewed. The prepared Chat, citations/currentness/authorization flow, deterministic ordinary Pass 1 identity, server-owned runtime binding, exact seven-slot Pass 2 payload, external PostgreSQL non-ownership, nonce-only database lifecycle, no-migration boundary, and no general Scan expansion are otherwise materially evidenced. T064 and T065 remain truthfully pending and their pending live evidence is not itself a defect. However, the sole T064 harness currently tries to publish three listener-reserved ports before releasing them and does not verify the required PostgreSQL 17 major version. These High in-scope defects prevent acceptance. The bounded non-live DemoChatReleaseGatePostgreSqlTests passed 19/19 with activation unset; they do not cover either live defect."
+}
