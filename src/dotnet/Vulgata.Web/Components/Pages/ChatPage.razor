@@ -8,14 +8,18 @@
 <PageTitle>对话</PageTitle>
 
 <div class="chat-page @PageModeClass" data-theme="@ThemeName" data-load-state="@_loadState">
+    <EditForm EditContext="_editContext" OnValidSubmit="SendAsync" OnInvalidSubmit="HandleInvalidSubmit">
+        <FluentValidationValidator />
     <section class="chat-controls" aria-label="准备提问">
         <fieldset class="mode-selector">
             <legend>选择对话模式</legend>
             <FluentButton Appearance="@ModeAppearance(ChatMode.Business)"
+                          Type="ButtonType.Button"
                           Disabled="@_isBusy"
                           aria-pressed="@ModeAriaPressed(ChatMode.Business)"
                           @onclick="() => SelectMode(ChatMode.Business)">业务模式</FluentButton>
             <FluentButton Appearance="@ModeAppearance(ChatMode.It)"
+                          Type="ButtonType.Button"
                           Disabled="@_isBusy"
                           aria-pressed="@ModeAriaPressed(ChatMode.It)"
                           @onclick="() => SelectMode(ChatMode.It)">技术模式</FluentButton>
@@ -76,7 +80,10 @@
                         @foreach (DocumentCitation citation in _answer.DocumentCitations.Where(
                             citation => claim.CitationIds.Contains(citation.CitationId, StringComparer.Ordinal)))
                         {
-                            <div class="document-citation">
+                            <div class="document-citation"
+                                 data-repository-relative-path="@citation.RepositoryRelativePath"
+                                 data-line-start="@citation.LineStart"
+                                 data-line-end="@citation.LineEnd">
                                 <span class="document-citation__title">文档引用：@citation.DocumentTitle</span>
                                 @if (_answer.Mode == ChatMode.It)
                                 {
@@ -128,7 +135,8 @@
         }
         else
         {
-            <FluentButton Class="primary-button" Appearance="Appearance.Accent" @onclick="SendAsync">发送</FluentButton>
+            <FluentButton Class="primary-button" Appearance="Appearance.Accent" Type="ButtonType.Submit">发送</FluentButton>
         }
     </section>
+    </EditForm>
 </div>

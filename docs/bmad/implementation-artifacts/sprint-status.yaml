@@ -90,7 +90,7 @@ development_status:
   11-2-sequential-scan-runner-and-typed-agent-dispatch: done
   11-3-pass-1-and-pass-2-demo-document-generation: done
   11-4-exact-rpc-http-cross-repository-demo-resolution: done
-  11-5-demo-chat-citations-and-release-gate: in-progress
+  11-5-demo-chat-citations-and-release-gate: review
   epic-11-retrospective: optional
   epic-5: backlog
   5-1-document-version-and-source-anchor-store: backlog

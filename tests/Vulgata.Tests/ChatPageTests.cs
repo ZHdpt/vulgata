@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using AngleSharp.Dom;
 using Bunit;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -13,6 +14,8 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Web.Components.Pages;
 using Vulgata.Web.Data;
+using Vulgata.Shared.Validators.Chat;
+using Vulgata.Shared.Chat;
 using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Tests;
@@ -30,6 +33,8 @@ public sealed class ChatPageTests : BunitContext
     public ChatPageTests()
     {
         Services.AddFluentUIComponents();
+        Services.AddSingleton<IValidator<PreparedChatQuestionRequest>,
+            PreparedChatQuestionRequestValidator>();
         JSInterop.Mode = JSRuntimeMode.Loose;
 
         _system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -56,7 +61,9 @@ public sealed class ChatPageTests : BunitContext
             _dispatcher,
             _currentness,
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor)));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator()));
     }
 
     [Fact]
@@ -596,6 +603,22 @@ public sealed class ChatPageTests : BunitContext
             RepositoryAccessScope accessScope,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(Outcome);
+    }
+
+    private sealed class StubPreparedChatScopeResolver : IPreparedChatScopeResolver
+    {
+        public Task<PreparedChatScopeBinding?> ResolveAsync(
+            Guid systemId,
+            IReadOnlyCollection<Guid> repositoryIds,
+            RepositoryAccessScope accessScope,
+            CancellationToken cancellationToken = default)
+        {
+            Guid[] ids = repositoryIds.Distinct().ToArray();
+            return Task.FromResult<PreparedChatScopeBinding?>(
+                ids.Length == 2
+                    ? new PreparedChatScopeBinding(systemId, ids[0], ids[1])
+                    : null);
+        }
     }
 
     private static Guid Id(int value) =>

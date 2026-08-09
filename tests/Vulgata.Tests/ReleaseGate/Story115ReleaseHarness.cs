@@ -952,14 +952,50 @@ internal sealed class Story115ExecutableFinalRunOperations :
             await page.GetByRole(AriaRole.Button, new() { Name = "发送" }).ClickAsync();
             await page.Locator(".complete-answer").WaitForAsync(
                 new() { State = WaitForSelectorState.Visible, Timeout = 120_000 });
-            int claims = await page.Locator(".material-claim").CountAsync();
-            int citations = await page.Locator(".document-citation").CountAsync();
-            if (claims < 1 || citations < 1)
+            ILocator claimLocators = page.Locator(".answer-claim");
+            int claims = await claimLocators.CountAsync();
+            var observedClaims = new List<Story115ObservedClaim>(claims);
+            int citations = 0;
+            for (int claimIndex = 0; claimIndex < claims; claimIndex++)
             {
-                throw new InvalidOperationException(
-                    "The positive Business answer lacked material claims or Document Citations.");
+                ILocator claim = claimLocators.Nth(claimIndex);
+                ILocator citationLocators = claim.Locator(".document-citation");
+                int nestedCitations = await citationLocators.CountAsync();
+                var observedCitations = new List<Story115ObservedCitation>(nestedCitations);
+                for (int citationIndex = 0; citationIndex < nestedCitations; citationIndex++)
+                {
+                    ILocator citation = citationLocators.Nth(citationIndex);
+                    ILocator details = citation.Locator("details.document-citation__details");
+                    ILocator summary = details.Locator("summary");
+                    bool detailsOperated = await details.CountAsync() == 1 &&
+                        await summary.CountAsync() == 1;
+                    if (detailsOperated)
+                    {
+                        await summary.ClickAsync();
+                        detailsOperated = await details.GetAttributeAsync("open") is not null &&
+                            await details.Locator(".citation-locator").IsVisibleAsync();
+                    }
+
+                    string path = await citation.GetAttributeAsync(
+                        "data-repository-relative-path") ?? string.Empty;
+                    bool lineStartParsed = int.TryParse(
+                        await citation.GetAttributeAsync("data-line-start"),
+                        out int lineStart);
+                    bool lineEndParsed = int.TryParse(
+                        await citation.GetAttributeAsync("data-line-end"),
+                        out int lineEnd);
+                    observedCitations.Add(new Story115ObservedCitation(
+                        path,
+                        lineStartParsed ? lineStart : 0,
+                        lineEndParsed ? lineEnd : 0,
+                        detailsOperated));
+                }
+
+                citations += nestedCitations;
+                observedClaims.Add(new Story115ObservedClaim(observedCitations.AsReadOnly()));
             }
 
+            Story115ReleaseHarness.ValidateObservedAnswer(observedClaims);
             _positiveAnswer = new("Business", claims, citations, Validated: true);
         }
 
@@ -1378,6 +1414,15 @@ internal sealed record Story115PositiveAnswerEvidence(
     int CitationCount,
     bool Validated);
 
+internal sealed record Story115ObservedClaim(
+    IReadOnlyList<Story115ObservedCitation> Citations);
+
+internal sealed record Story115ObservedCitation(
+    string RepositoryRelativePath,
+    int LineStart,
+    int LineEnd,
+    bool DetailsOperated);
+
 internal sealed record Story115DatabaseEvidence(
     string Name,
     bool Dropped,
@@ -1425,6 +1470,44 @@ internal sealed class Story115PortReservation : IAsyncDisposable
 internal static partial class Story115ReleaseHarness
 {
     private const string ResourcePrefix = "vulgata-story115-";
+
+    internal static void ValidateObservedAnswer(
+        IReadOnlyCollection<Story115ObservedClaim> claims)
+    {
+        ArgumentNullException.ThrowIfNull(claims);
+        if (claims.Count == 0 || claims.Any(claim => claim.Citations.Count == 0))
+        {
+            throw new InvalidOperationException(
+                "Every observed material claim must contain a nested Document Citation.");
+        }
+
+        foreach (Story115ObservedCitation citation in claims.SelectMany(claim => claim.Citations))
+        {
+            if (!citation.DetailsOperated ||
+                !IsSafeRepositoryRelativePath(citation.RepositoryRelativePath) ||
+                citation.LineStart <= 0 ||
+                citation.LineEnd < citation.LineStart)
+            {
+                throw new InvalidOperationException(
+                    "Every observed citation must expose operated, authorized source details.");
+            }
+        }
+    }
+
+    private static bool IsSafeRepositoryRelativePath(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        string normalized = value.Replace('\\', '/');
+        string[] segments = normalized.Split('/');
+        return !normalized.StartsWith('/') &&
+            !(normalized.Length >= 2 && char.IsAsciiLetter(normalized[0]) && normalized[1] == ':') &&
+            !Uri.TryCreate(normalized, UriKind.Absolute, out _) &&
+            segments.All(segment => segment.Length > 0 && segment is not "." and not "..");
+    }
 
     internal const string ReleaseEvidencePath =
         "tests/Vulgata.Tests/TestResults/story-11-5-release-evidence.json";

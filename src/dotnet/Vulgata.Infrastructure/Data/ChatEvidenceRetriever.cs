@@ -6,12 +6,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CrossRepository;
 
 namespace Vulgata.Infrastructure.Data;
 
-public sealed class ChatEvidenceRetriever(VulgataDbContext context) : IChatEvidenceRetriever
+public sealed class ChatEvidenceRetriever(
+    VulgataDbContext context,
+    ExactResolutionProfileCatalog? profileCatalog = null,
+    IPreparedChatScopeResolver? preparedScopeResolver = null) : IChatEvidenceRetriever
 {
     private readonly VulgataDbContext _context = context;
+    private readonly ExactResolutionProfileCatalog _profileCatalog =
+        profileCatalog ?? new ExactResolutionProfileCatalog();
+    private readonly IPreparedChatScopeResolver _preparedScopeResolver =
+        preparedScopeResolver ?? new PreparedChatScopeResolver(
+            context,
+            profileCatalog ?? new ExactResolutionProfileCatalog());
 
     public async Task<ChatEvidenceResult> RetrieveAsync(
         ChatQuestionRequest request,
@@ -37,6 +47,17 @@ public sealed class ChatEvidenceRetriever(VulgataDbContext context) : IChatEvide
                 cancellationToken);
         try
         {
+            if (await _preparedScopeResolver.ResolveAsync(
+                    request.SystemId,
+                    repositoryIds,
+                    accessScope,
+                    cancellationToken) is null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                _context.ChangeTracker.Clear();
+                return ChatEvidenceResult.IncompleteOrStale();
+            }
+
             ChatEvidenceResult result = await RetrieveInsideTransactionAsync(
                 request,
                 repositoryIds,
@@ -79,6 +100,13 @@ public sealed class ChatEvidenceRetriever(VulgataDbContext context) : IChatEvide
         Guid[] repositoryIds,
         CancellationToken cancellationToken)
     {
+        ExactResolutionProfile profile = _profileCatalog.Load();
+        if (profile.Repositories.Count != 2 || profile.Occurrences.Count != 1)
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
+
+        ResolutionOccurrence occurrence = profile.Occurrences[0];
         Repository[] repositories = await _context.Repositories
             .AsNoTracking()
             .Where(repository => repositoryIds.Contains(repository.Id))
@@ -101,7 +129,12 @@ public sealed class ChatEvidenceRetriever(VulgataDbContext context) : IChatEvide
             where edge.EdgeType == DocumentEdgeType.References &&
                 repositoryIds.Contains(edge.SourceRepositoryId) &&
                 repositoryIds.Contains(edge.TargetRepositoryId) &&
-                edge.SourceRepositoryId != edge.TargetRepositoryId
+                edge.SourceRepositoryId != edge.TargetRepositoryId &&
+                exact.ProfileSchemaVersion == profile.SchemaVersion &&
+                exact.ProfileId == profile.ProfileId &&
+                exact.ProfileVersion == profile.ProfileVersion &&
+                exact.ProfileFingerprint == profile.ProfileFingerprint &&
+                exact.OccurrenceId == occurrence.OccurrenceId
             orderby edge.Id
             select new ExactRelationshipRow(
                 edge.Id,
@@ -115,7 +148,11 @@ public sealed class ChatEvidenceRetriever(VulgataDbContext context) : IChatEvide
                 exact.ProviderSourceAnchorId,
                 exact.ProviderDocumentVersionId,
                 exact.ProviderRepositoryId,
+                exact.ProfileSchemaVersion,
+                exact.ProfileId,
+                exact.ProfileVersion,
                 exact.ProfileFingerprint,
+                exact.OccurrenceId,
                 exact.EvidenceFingerprint))
             .Take(2)
             .ToArrayAsync(cancellationToken);
@@ -125,7 +162,7 @@ public sealed class ChatEvidenceRetriever(VulgataDbContext context) : IChatEvide
         }
 
         ExactRelationshipRow exactRelationship = exactRelationships[0];
-        if (!exactRelationship.MatchesDirection())
+        if (!exactRelationship.MatchesDirection(profile, occurrence))
         {
             return ChatEvidenceResult.IncompleteOrStale();
         }
@@ -462,15 +499,25 @@ public sealed class ChatEvidenceRetriever(VulgataDbContext context) : IChatEvide
         Guid ProviderSourceAnchorId,
         Guid ProviderDocumentVersionId,
         Guid ProviderRepositoryId,
+        string ProfileSchemaVersion,
+        string ProfileId,
+        string ProfileVersion,
         string ProfileFingerprint,
+        string OccurrenceId,
         string EvidenceFingerprint)
     {
-        internal bool MatchesDirection() =>
+        internal bool MatchesDirection(
+            ExactResolutionProfile profile,
+            ResolutionOccurrence occurrence) =>
             SourceDocumentVersionId == ConsumerDocumentVersionId &&
             SourceRepositoryId == ConsumerRepositoryId &&
             TargetDocumentVersionId == ProviderDocumentVersionId &&
             TargetRepositoryId == ProviderRepositoryId &&
-            IsLowerHexSha256(ProfileFingerprint) &&
+            StringComparer.Ordinal.Equals(ProfileSchemaVersion, profile.SchemaVersion) &&
+            StringComparer.Ordinal.Equals(ProfileId, profile.ProfileId) &&
+            StringComparer.Ordinal.Equals(ProfileVersion, profile.ProfileVersion) &&
+            StringComparer.Ordinal.Equals(ProfileFingerprint, profile.ProfileFingerprint) &&
+            StringComparer.Ordinal.Equals(OccurrenceId, occurrence.OccurrenceId) &&
             IsLowerHexSha256(EvidenceFingerprint);
     }
 

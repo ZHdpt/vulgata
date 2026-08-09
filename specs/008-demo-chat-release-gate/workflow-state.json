@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
   "execution_level": "expedited-mvp",
-  "stage": "implement",
+  "stage": "conditional-e2e",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -33,12 +33,52 @@
       "completed_at": null
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "accepted",
+      "iteration": 2,
+      "dispatch_id": "story_11_5_quality_review_iteration_2",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
+      "input_boundary": {
+        "base_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
+        "candidate_commit": null,
+        "diff_sha256": "5f9d5e0dfc4727c57fd1136e1ad311fab1e08c2de71f22140f3e53beb4454616",
+        "artifact_hashes": {
+          "src/dotnet/Vulgata.Core/DomainServices/IPreparedChatScopeResolver.cs": "df1a9131c05931c6e4e16eef1866b587dcfcfe35bb2f2d6adaa26c3e89f668e9",
+          "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs": "c832ccb357f5f15ecb9157b8fb9d453bb4d2a7a45ff8d2ec4fa126dce3186387",
+          "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs": "4465a6733dfd61f14d8478c1fdb414181506d28a43632ea98f33795fba692927",
+          "src/dotnet/Vulgata.Shared/Chat/PreparedChatQuestionRequest.cs": "8f5ab12679bf8c9a6b62ef94295ab5d62ed1c4cdaafa9a41a72be2bdfbbca689",
+          "src/dotnet/Vulgata.Shared/Validators/Chat/PreparedChatQuestionRequestValidator.cs": "ab621cc88700e7fb8bef370392f3abdb112110272fb3e4815bda9abffbd75918",
+          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor": "3bf1c7ff39784972c2d3296123eef05c0615efd081dd6b6970e2dfbbba503994",
+          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs": "785e875d392e4f11b6954de1405ef265bcdeefbc9e67b3e33135622986d67af9",
+          "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs": "d132d38957cc9eb350cce8264fd9ca29bb5e5c296e1a1845ab7f23ce2d289709",
+          "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs": "b383aa4e15d8f27f097e6223c41d2b323e5cdfbefa290b8854dc0c460979f49e",
+          "src/dotnet/Vulgata.Web/Program.cs": "6654fe29b6bd688c4b86fee5b2c55e75d6012e2fff4a8113dec9ae7aae21b415",
+          "tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs": "e023f5ce17b801985f8fe2357837eb7985634ae5e705a184cf912370837f33f6",
+          "tests/Vulgata.Tests/ChatPageTests.cs": "4580fe3943129945d0d7d4e86bb5e6acec6ad3a207d6565577446324a457c57e",
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "cf902a2b0b5c28e7ca309bec4e5a09231146e2ed5f6f46a99dc45e5c30531b13",
+          "tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs": "b4c751ed549fc515a22b80890814b8a8e4f76b3b396b3d2a27e90b1d03f48241",
+          "tests/Vulgata.Tests/PreparedChatQuestionRequestValidatorTests.cs": "9f55a76cfbe05279d2fa8ad555c5dce8bc9c96aa7819eaacafe620535b2ae426",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "eb86106bd7a5bc3602c75a9fd0f3ada9e81335992dd905c6174300a5728d30c0"
+        },
+        "owned_paths": [
+          "src/dotnet/Vulgata.Core/DomainServices/IPreparedChatScopeResolver.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs",
+          "src/dotnet/Vulgata.Shared/Chat/PreparedChatQuestionRequest.cs",
+          "src/dotnet/Vulgata.Shared/Validators/Chat/PreparedChatQuestionRequestValidator.cs",
+          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor",
+          "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs",
+          "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs",
+          "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs",
+          "src/dotnet/Vulgata.Web/Program.cs",
+          "tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs",
+          "tests/Vulgata.Tests/ChatPageTests.cs",
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs",
+          "tests/Vulgata.Tests/PreparedChatQuestionRequestValidatorTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+        ]
+      },
+      "completed_at": "2026-08-09T02:49:37Z"
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -288,6 +328,69 @@
       },
       "validation": "65 continuous tasks; T001-T050 preserved complete; T051-T065 unchecked; FR-001 through FR-024 and SC-001 through SC-011 covered; zero malformed, stale, or boundary errors",
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-07T06:57:00Z",
+      "completed_at": "2026-08-08T00:00:00Z",
+      "input_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
+      "agent_role": "tdd-implementer",
+      "dispatch_id": "story_11_5_implementation_and_trae_resume",
+      "artifact_paths": [
+        "specs/008-demo-chat-release-gate/tasks.md"
+      ],
+      "validation": "T001-T063 verified; reviewed-candidate commit 46cadbc3510463300d5a89e39774db0e2d80d57a; T064-T065 pending",
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "revised",
+      "started_at": "2026-08-08T00:00:00Z",
+      "completed_at": "2026-08-09T00:00:00Z",
+      "input_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json": "4591063e021598b52dedcc1a4ff15735f5fb865e1c1635eb8096aeca425d2768"
+      },
+      "agent_role": "quality-reviewer",
+      "dispatch_id": "story_11_5_quality_review_iteration_1",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json"
+      ],
+      "finding_ids": [
+        "QR-46CADBC-001",
+        "QR-46CADBC-002",
+        "QR-46CADBC-003"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-09T00:00:00Z",
+      "completed_at": "2026-08-09T02:00:00Z",
+      "input_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
+      "agent_role": "tdd-implementer",
+      "dispatch_id": "story_11_5_quality_correction_iteration_1",
+      "validation": "QR-46CADBC-001 through QR-46CADBC-003 corrected with transient RED/GREEN; root independently reproduced 66/66; Web and test builds zero errors",
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "accepted",
+      "started_at": "2026-08-09T02:00:00Z",
+      "completed_at": "2026-08-09T02:49:37Z",
+      "input_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
+      "input_hashes": {
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json": "36c1fc4c0c1ff86fcd9e784603a9745282c7c45f713eae8d77582fa10e2831b3"
+      },
+      "agent_role": "quality-reviewer",
+      "dispatch_id": "story_11_5_quality_review_iteration_2",
+      "evidence_paths": [
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json"
+      ],
+      "finding_ids": [],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -392,7 +495,13 @@
     },
     "analyze": { "count": 0, "verdict_paths": [] },
     "acceptance-review": { "count": 0, "verdict_paths": [] },
-    "quality-review": { "count": 0, "verdict_paths": [] }
+    "quality-review": {
+      "count": 2,
+      "verdict_paths": [
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json",
+        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json"
+      ]
+    }
   },
   "e2e_decision": {
     "required": true,
@@ -401,44 +510,45 @@
     "rationale": "Story 11.5 owns the mandatory final clean-database two-Repository user-visible, authorization, persistence, migration, and Docker release path.",
     "covering_tests": [],
     "owner": "e2e-runner",
-    "source_boundary": null,
+    "source_boundary": "46cadbc3510463300d5a89e39774db0e2d80d57a + accepted correction manifest 5f9d5e0dfc4727c57fd1136e1ad311fab1e08c2de71f22140f3e53beb4454616",
     "result": "pending",
     "evidence_ids": []
   },
   "verification": [],
   "last_checkpoint": {
-    "checkpoint_id": "bmad-11-5-accepted-delivery-definition-20260804T125329Z",
+    "checkpoint_id": "bmad-11-5-review-correction-20260809T024937Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
-    "stage": "tasks",
+    "stage": "quality-review",
     "committed_paths": [
-      ".specify/feature.json",
-      "AGENTS.md",
       "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json",
-      "specs/008-demo-chat-release-gate/checklists/requirements.md",
-      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
-      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
-      "specs/008-demo-chat-release-gate/data-model.md",
-      "specs/008-demo-chat-release-gate/plan.md",
-      "specs/008-demo-chat-release-gate/quickstart.md",
-      "specs/008-demo-chat-release-gate/research.md",
-      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
-      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
-      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json",
-      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json",
-      "specs/008-demo-chat-release-gate/spec.md",
-      "specs/008-demo-chat-release-gate/tasks.md",
-      "specs/008-demo-chat-release-gate/workflow-state.json"
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
+      "specs/008-demo-chat-release-gate/workflow-state.json",
+      "src/dotnet/Vulgata.Core/DomainServices/IPreparedChatScopeResolver.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/PreparedChatScopeResolver.cs",
+      "src/dotnet/Vulgata.Shared/Chat/PreparedChatQuestionRequest.cs",
+      "src/dotnet/Vulgata.Shared/Validators/Chat/PreparedChatQuestionRequestValidator.cs",
+      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor",
+      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs",
+      "src/dotnet/Vulgata.Web/Components/Validation/FluentValidationValidator.cs",
+      "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs",
+      "tests/Vulgata.Tests/ChatPageTests.cs",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs",
+      "tests/Vulgata.Tests/PreparedChatQuestionRequestValidatorTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
     ],
     "verification_evidence_ids": [
-      "11-5-demo-chat-citations-and-release-gate/plan-review/4",
-      "11-5-demo-chat-citations-and-release-gate/planned-change-authorization/1",
-      "11-5-demo-chat-citations-and-release-gate/tasks/1"
+      "11-5-demo-chat-citations-and-release-gate/quality-review/1",
+      "11-5-demo-chat-citations-and-release-gate/quality-review/2"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-07T06:57:00Z"
+  "updated_at": "2026-08-09T02:49:37Z"
 }

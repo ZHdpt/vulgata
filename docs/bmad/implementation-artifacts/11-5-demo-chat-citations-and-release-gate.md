@@ -1,7 +1,7 @@
 ---
 story_key: 11-5-demo-chat-citations-and-release-gate
 title: "Story 11.5: Demo Chat, Citations & Release Gate"
-Status: in-progress
+Status: review
 Epic: 11
 Story: 5
 created: 2026-08-04

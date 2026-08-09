@@ -130,6 +130,7 @@ builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
 builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
 builder.Services.AddScoped<IRepositoryAuthorizationVerifier, RepositoryAuthorizationVerifier>();
 builder.Services.AddScoped<IChatEvidenceRetriever, ChatEvidenceRetriever>();
+builder.Services.AddScoped<IPreparedChatScopeResolver, PreparedChatScopeResolver>();
 builder.Services.AddScoped<IChatEvidenceCurrentnessValidator, ChatEvidenceCurrentnessValidator>();
 builder.Services.AddScoped<ChatCandidateExtractor>();
 builder.Services.AddScoped<ChatAgentProviderResolver>();

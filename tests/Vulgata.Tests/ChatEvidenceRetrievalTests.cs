@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
 
 namespace Vulgata.Tests;
@@ -105,6 +106,76 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(missingEndpoint.Packet);
     }
 
+    [Theory]
+    [InlineData("ProfileId")]
+    [InlineData("ProfileVersion")]
+    [InlineData("ProfileFingerprint")]
+    public async Task RetrieveAsync_AcceptedProfileIdentityDrifts_ReturnsClosedWholePacketFailureAsync(
+        string field)
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.DriftExactProfileAsync(field);
+        var scope = new RepositoryAccessScope(
+            fixture.RepositoryIds,
+            new RecordingAuthorizationVerifier(true, true));
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(fixture.CreateRequest($"wrong-{field}"), scope);
+
+        Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, result.Kind);
+        Assert.Null(result.Packet);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_WrongProfileDecoyEdge_IsIgnoredAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddDecoyExactEdgeAsync(acceptedProfile: false);
+        var scope = new RepositoryAccessScope(
+            fixture.RepositoryIds,
+            new RecordingAuthorizationVerifier(true, true));
+        var retriever = new ChatEvidenceRetriever(fixture.Context);
+
+        ChatEvidenceResult withDecoy = await retriever.RetrieveAsync(
+            fixture.CreateRequest("wrong-profile-decoy"),
+            scope);
+
+        Assert.Equal(ChatEvidenceResultKind.Found, withDecoy.Kind);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_SecondAcceptedPreparedEdge_FailsClosedAsNonUniqueAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddDecoyExactEdgeAsync(acceptedProfile: true);
+        var scope = new RepositoryAccessScope(
+            fixture.RepositoryIds,
+            new RecordingAuthorizationVerifier(true, true));
+
+        ChatEvidenceResult nonUnique = await new ChatEvidenceRetriever(fixture.Context).RetrieveAsync(
+            fixture.CreateRequest("non-unique-accepted"),
+            scope);
+
+        Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, nonUnique.Kind);
+        Assert.Null(nonUnique.Packet);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_CurrentProfiledRevisionDrifts_ReturnsClosedWholePacketFailureAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.DriftConsumerProfiledRevisionAsync();
+        var scope = new RepositoryAccessScope(
+            fixture.RepositoryIds,
+            new RecordingAuthorizationVerifier(true, true));
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(fixture.CreateRequest("stale-profiled-revision"), scope);
+
+        Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, result.Kind);
+        Assert.Null(result.Packet);
+    }
+
     private static async Task AssertClosedFailureAfterMutationAsync(
         Func<PreparedEvidenceFixture, Task> mutateAsync)
     {
@@ -151,8 +222,8 @@ public sealed class ChatEvidenceRetrievalTests
         ExactCrossRepositoryTestFixture exactFixture,
         VulgataDbContext context) : IAsyncDisposable
     {
-        internal const string ProfileFingerprint =
-            "3123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        internal static string ProfileFingerprint =>
+            new ExactResolutionProfileCatalog().Load().ProfileFingerprint;
         private const string EvidenceFingerprint =
             "4123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
         private static readonly Guid _businessLogicalDocumentId = Id(10_001);
@@ -176,6 +247,74 @@ public sealed class ChatEvidenceRetrievalTests
                 ExactCrossRepositoryTestValues.SystemId,
                 RepositoryIds,
                 "客户会话如何跨仓库更新？");
+
+        internal async Task DriftExactProfileAsync(string field)
+        {
+            string wrongValue = field == "ProfileFingerprint"
+                ? "3123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                : $"wrong-{field}";
+            await Context.Database.ExecuteSqlRawAsync(
+                $"UPDATE \"ExactCrossRepositoryEdgeEvidence\" SET \"{field}\" = {{0}} WHERE \"EdgeId\" = {{1}}",
+                wrongValue,
+                _referencesEdgeId);
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task DriftConsumerProfiledRevisionAsync()
+        {
+            const string staleRevision = "0000000000000000000000000000000000000000";
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"ScanRuns\" SET \"ProfiledRevision\" = {staleRevision} WHERE \"Id\" = {ExactCrossRepositoryTestValues.ConsumerScanRunId}");
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task AddDecoyExactEdgeAsync(bool acceptedProfile)
+        {
+            ExactCrossRepositoryEdgeEvidence source = await Context.ExactCrossRepositoryEdgeEvidence
+                .AsNoTracking()
+                .SingleAsync(value => value.EdgeId == _referencesEdgeId);
+            int discriminator = acceptedProfile ? 70_002 : 70_001;
+            Guid edgeId = Id(discriminator);
+            Context.DocumentEdges.Add(new DocumentEdge(
+                edgeId,
+                _businessDocumentVersionId,
+                source.ConsumerRepositoryId,
+                source.ConsumerScanRunId,
+                source.ProviderDocumentVersionId,
+                source.ProviderRepositoryId,
+                source.ProviderScanRunId,
+                DocumentEdgeType.References,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            Context.ExactCrossRepositoryEdgeEvidence.Add(new ExactCrossRepositoryEdgeEvidence(
+                edgeId,
+                _businessSourceAnchorId,
+                _businessDocumentVersionId,
+                source.ConsumerRepositoryId,
+                source.ConsumerScanRunId,
+                source.ProviderSourceAnchorId,
+                source.ProviderDocumentVersionId,
+                source.ProviderRepositoryId,
+                source.ProviderScanRunId,
+                source.ConsumerRawIdentifier,
+                source.ProviderRawIdentifier,
+                source.NormalizedEndpointIdentifier,
+                source.Protocol,
+                source.ResolutionKind,
+                source.Confidence,
+                source.ProfileSchemaVersion,
+                acceptedProfile ? source.ProfileId : "decoy-profile",
+                source.ProfileVersion,
+                source.ProfileFingerprint,
+                source.OccurrenceId,
+                source.ConsumerEvidenceLocator,
+                source.ProviderEvidenceLocator,
+                acceptedProfile
+                    ? "5123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                    : "6123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+        }
 
         internal async Task AddOutOfScopeSectionSupportAsync()
         {
@@ -346,10 +485,16 @@ public sealed class ChatEvidenceRetrievalTests
             try
             {
                 ExactCrossRepositoryManagedFixture managed = exactFixture.CreateManagedRepositories();
+                ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+                ResolutionOccurrence occurrence = profile.Occurrences.Single();
                 ExactPass1DocumentFixture consumer = exactFixture.CreatePass1Document(
-                    ExactPass1DocumentKind.Consumer);
+                    ExactPass1DocumentKind.Consumer,
+                    profile.Repositories.Single(repository =>
+                        repository.Alias == occurrence.ConsumerAlias).ExpectedCommit);
                 ExactPass1DocumentFixture provider = exactFixture.CreatePass1Document(
-                    ExactPass1DocumentKind.Provider);
+                    ExactPass1DocumentKind.Provider,
+                    profile.Repositories.Single(repository =>
+                        repository.Alias == occurrence.ProviderAlias).ExpectedCommit);
                 context.Systems.Add(managed.System);
                 context.ScanRuns.AddRange(consumer.ScanRun, provider.ScanRun);
                 await context.SaveChangesAsync();
@@ -481,11 +626,11 @@ public sealed class ChatEvidenceRetrievalTests
                         ExactResolutionProtocol.CustomRpc,
                         "ExactConfigured",
                         1.0000m,
-                        "1.0",
-                        "august-15-prepared-profile",
-                        "1",
+                        profile.SchemaVersion,
+                        profile.ProfileId,
+                        profile.ProfileVersion,
                         ProfileFingerprint,
-                        "prepared-session-update",
+                        occurrence.OccurrenceId,
                         consumer.SourceAnchor.EvidenceLocator,
                         provider.SourceAnchor.EvidenceLocator,
                         EvidenceFingerprint,

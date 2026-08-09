@@ -8,6 +8,36 @@ namespace Vulgata.Tests;
 public sealed class DemoChatReleaseGatePostgreSqlTests
 {
     [Fact]
+    public void BrowserEvidence_UncitedMaterialClaim_IsRejected()
+    {
+        Story115ObservedClaim[] claims = [new([])];
+
+        Assert.Throws<InvalidOperationException>(() =>
+            Story115ReleaseHarness.ValidateObservedAnswer(claims));
+    }
+
+    [Theory]
+    [InlineData("", 1, 1, true)]
+    [InlineData("../secret.cs", 1, 1, true)]
+    [InlineData("src/Flow.cs", 0, 1, true)]
+    [InlineData("src/Flow.cs", 2, 1, true)]
+    [InlineData("src/Flow.cs", 1, 1, false)]
+    public void BrowserEvidence_EmptyMalformedOrUnoperatedCitationDetails_IsRejected(
+        string path,
+        int lineStart,
+        int lineEnd,
+        bool detailsOperated)
+    {
+        Story115ObservedClaim[] claims =
+        [
+            new([new Story115ObservedCitation(path, lineStart, lineEnd, detailsOperated)]),
+        ];
+
+        Assert.Throws<InvalidOperationException>(() =>
+            Story115ReleaseHarness.ValidateObservedAnswer(claims));
+    }
+
+    [Fact]
     public void ReleaseContract_AcceptedInputsAndFinalPath_AreClosedAndSourceBound()
     {
         Story115ReleaseContract contract = Story115ReleaseHarness.Contract;

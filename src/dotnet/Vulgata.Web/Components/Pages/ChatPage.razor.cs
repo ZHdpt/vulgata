@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
+using Vulgata.Shared.Chat;
 using Vulgata.Web.Data;
 
 namespace Vulgata.Web.Components.Pages;
@@ -13,6 +15,8 @@ public partial class ChatPage : IDisposable
     private const string _unexpectedFailureMessage = "暂时无法生成回答，请稍后重试。";
 
     private IReadOnlyList<PreparedChatScopeOption> _scopes = [];
+    private readonly PreparedChatQuestionRequest _formRequest = new();
+    private EditContext _editContext = null!;
     private Guid? _selectedSystemId;
     private Guid? _firstRepositoryId;
     private Guid? _secondRepositoryId;
@@ -51,6 +55,7 @@ public partial class ChatPage : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        _editContext = new EditContext(_formRequest);
         _loadState = LoadState.Loading;
         try
         {
@@ -69,24 +74,31 @@ public partial class ChatPage : IDisposable
         _selectedSystemId = ParseId(args.Value);
         _firstRepositoryId = null;
         _secondRepositoryId = null;
+        _formRequest.SystemId = _selectedSystemId.GetValueOrDefault();
+        _formRequest.RepositoryIds = [];
         ResetTransientInteraction(clearQuestion: false);
     }
 
     private void OnFirstRepositoryChanged(ChangeEventArgs args)
     {
         _firstRepositoryId = ParseId(args.Value);
+        SyncRepositoryIds();
         ResetTransientInteraction(clearQuestion: false);
     }
 
     private void OnSecondRepositoryChanged(ChangeEventArgs args)
     {
         _secondRepositoryId = ParseId(args.Value);
+        SyncRepositoryIds();
         ResetTransientInteraction(clearQuestion: false);
     }
 
     private void SelectMode(ChatMode mode)
     {
         _selectedMode = mode;
+        _formRequest.Mode = mode == ChatMode.Business
+            ? PreparedChatMode.Business
+            : PreparedChatMode.It;
         ResetTransientInteraction(clearQuestion: true);
     }
 
@@ -100,6 +112,7 @@ public partial class ChatPage : IDisposable
     private void OnQuestionInput(ChangeEventArgs args)
     {
         _question = args.Value?.ToString() ?? string.Empty;
+        _formRequest.Question = _question;
         if (_loadState == LoadState.Error)
         {
             _message = null;
@@ -117,7 +130,14 @@ public partial class ChatPage : IDisposable
 
         if (StringComparer.Ordinal.Equals(args.Key, "Enter") && !args.ShiftKey)
         {
-            await SendAsync();
+            if (_editContext.Validate())
+            {
+                await SendAsync();
+            }
+            else
+            {
+                HandleInvalidSubmit();
+            }
         }
     }
 
@@ -131,12 +151,14 @@ public partial class ChatPage : IDisposable
         _answer = null;
         _submittedQuestion = null;
         _message = null;
-        if (!TryGetValidRequest(out ChatMode mode, out Guid systemId, out Guid[] repositoryIds, out string question))
+        var request = new PreparedChatQuestionRequest
         {
-            _loadState = LoadState.Error;
-            _message = _validationMessage;
-            return;
-        }
+            Mode = _formRequest.Mode,
+            SystemId = _formRequest.SystemId,
+            RepositoryIds = _formRequest.RepositoryIds.ToArray(),
+            Question = _formRequest.Question,
+        };
+        string question = request.NormalizedQuestion;
 
         var cancellation = new CancellationTokenSource();
         _requestCancellation = cancellation;
@@ -144,16 +166,12 @@ public partial class ChatPage : IDisposable
         _loadState = LoadState.Loading;
         _submittedQuestion = question;
         _question = string.Empty;
+        _formRequest.Question = string.Empty;
         await InvokeAsync(StateHasChanged);
 
         try
         {
-            PreparedChatResult result = await ChatCoordinator.AskAsync(
-                mode,
-                systemId,
-                repositoryIds,
-                question,
-                cancellation.Token);
+            PreparedChatResult result = await ChatCoordinator.AskAsync(request, cancellation.Token);
             if (result.Kind == PreparedChatResultKind.Succeeded && result.Answer is not null)
             {
                 _answer = result.Answer;
@@ -193,31 +211,19 @@ public partial class ChatPage : IDisposable
         }
     }
 
-    private bool TryGetValidRequest(
-        out ChatMode mode,
-        out Guid systemId,
-        out Guid[] repositoryIds,
-        out string question)
+    private void HandleInvalidSubmit()
     {
-        question = _question.Trim();
-        mode = _selectedMode.GetValueOrDefault();
-        systemId = _selectedSystemId.GetValueOrDefault();
-        repositoryIds = [];
-        if (_selectedMode is null ||
-            systemId == Guid.Empty ||
-            _firstRepositoryId is not Guid firstRepositoryId ||
-            _secondRepositoryId is not Guid secondRepositoryId ||
-            firstRepositoryId == secondRepositoryId ||
-            question.Length is < 1 or > 2_000 ||
-            !SelectedRepositories.Any(repository => repository.RepositoryId == firstRepositoryId) ||
-            !SelectedRepositories.Any(repository => repository.RepositoryId == secondRepositoryId))
-        {
-            return false;
-        }
-
-        repositoryIds = [firstRepositoryId, secondRepositoryId];
-        return true;
+        _answer = null;
+        _submittedQuestion = null;
+        _loadState = LoadState.Error;
+        _message = _validationMessage;
     }
+
+    private void SyncRepositoryIds() =>
+        _formRequest.RepositoryIds = new[] { _firstRepositoryId, _secondRepositoryId }
+            .Where(repositoryId => repositoryId.HasValue)
+            .Select(repositoryId => repositoryId!.Value)
+            .ToArray();
 
     private void CancelRequest()
     {
@@ -239,6 +245,7 @@ public partial class ChatPage : IDisposable
         if (clearQuestion)
         {
             _question = string.Empty;
+            _formRequest.Question = string.Empty;
         }
     }
 

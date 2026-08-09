@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Shared.Validators.Chat;
 using Vulgata.Web.Data;
 using SystemEntity = Vulgata.Core.Entities.System;
 
@@ -49,7 +50,9 @@ public sealed class PreparedChatCoordinatorTests
             new StubDispatcher(),
             new StubCurrentnessValidator(),
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
 
         IReadOnlyList<PreparedChatScopeOption> scopes = await coordinator.ListScopesAsync();
 
@@ -61,6 +64,44 @@ public sealed class PreparedChatCoordinatorTests
             scope.Repositories.Select(repository => repository.RepositoryId).Order());
         Assert.Contains(scope.Repositories, repository => repository.DisplayName == "账户仓库");
         Assert.Contains(scope.Repositories, repository => repository.DisplayName == "渠道仓库");
+    }
+
+    [Fact]
+    public async Task ListScopesAsync_DecoySystemAndRepositoryPair_OffersOnlyPreparedPair()
+    {
+        var preparedSystem = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository preparedConsumer = preparedSystem.AddRepository(
+            "账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository preparedProvider = preparedSystem.AddRepository(
+            "渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var decoySystem = new SystemEntity("诱饵系统", null, null, DateTimeOffset.UtcNow);
+        Repository decoyConsumer = decoySystem.AddRepository(
+            "诱饵消费仓库", "https://example.test/decoy-consumer.git", null, null, DateTimeOffset.UtcNow);
+        Repository decoyProvider = decoySystem.AddRepository(
+            "诱饵提供仓库", "https://example.test/decoy-provider.git", null, null, DateTimeOffset.UtcNow);
+        var candidateExtractor = new ChatCandidateExtractor();
+        var coordinator = new PreparedChatCoordinator(
+            new FixedAuthenticationStateProvider("owner-1"),
+            new StubSystemRepository([preparedSystem, decoySystem]),
+            new StubRepositoryRepository(
+                [preparedConsumer, preparedProvider, decoyConsumer, decoyProvider]),
+            new StubAuthorizationVerifier(),
+            new StubEvidenceRetriever(),
+            candidateExtractor,
+            new StubDispatcher(),
+            new StubCurrentnessValidator(),
+            TimeProvider.System,
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(preparedSystem.Id),
+            new PreparedChatQuestionRequestValidator());
+
+        IReadOnlyList<PreparedChatScopeOption> scopes = await coordinator.ListScopesAsync();
+
+        PreparedChatScopeOption scope = Assert.Single(scopes);
+        Assert.Equal(preparedSystem.Id, scope.SystemId);
+        Assert.Equal(
+            new[] { preparedConsumer.Id, preparedProvider.Id }.Order(),
+            scope.Repositories.Select(repository => repository.RepositoryId).Order());
     }
 
     [Fact]
@@ -84,7 +125,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher,
             currentness,
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -134,7 +177,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher,
             currentness,
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -174,7 +219,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher,
             currentness,
             new RecordingTimeProvider(trace),
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -354,7 +401,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher,
             currentness,
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
@@ -395,7 +444,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher,
             currentness,
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
         (ChatMode Mode, Guid SystemId, IReadOnlyCollection<Guid> RepositoryIds, string Question)[] invalidRequests =
         [
             ((ChatMode)999, system.Id, [first.Id, second.Id], "客户如何付款？"),
@@ -443,7 +494,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher,
             currentness,
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -481,7 +534,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher,
             new StubCurrentnessValidator(),
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
 
         PreparedChatResult prior = await coordinator.AskAsync(
             ChatMode.Business,
@@ -523,7 +578,9 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher ?? new StubDispatcher(),
             currentness ?? new StubCurrentnessValidator(),
             TimeProvider.System,
-            new ChatAgentResultValidator(candidateExtractor));
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
     }
 
     private sealed class RecordingTimeProvider(List<string> trace) : TimeProvider
@@ -597,6 +654,25 @@ public sealed class PreparedChatCoordinatorTests
             CallCount++;
             Trace?.Add(CallCount == 1 ? "pre-authorization" : "final-authorization");
             return ValueTask.FromResult(Results.TryDequeue(out bool result) ? result : true);
+        }
+    }
+
+    private sealed class StubPreparedChatScopeResolver(Guid? preparedSystemId = null) :
+        IPreparedChatScopeResolver
+    {
+        public Task<PreparedChatScopeBinding?> ResolveAsync(
+            Guid systemId,
+            IReadOnlyCollection<Guid> repositoryIds,
+            RepositoryAccessScope accessScope,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Guid[] ids = repositoryIds.Distinct().ToArray();
+            PreparedChatScopeBinding? binding =
+                ids.Length == 2 && (preparedSystemId is null || preparedSystemId == systemId)
+                    ? new PreparedChatScopeBinding(systemId, ids[0], ids[1])
+                    : null;
+            return Task.FromResult(binding);
         }
     }
 

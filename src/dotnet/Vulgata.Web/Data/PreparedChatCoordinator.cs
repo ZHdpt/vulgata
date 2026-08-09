@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using FluentValidation;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
+using Vulgata.Shared.Chat;
 using Vulgata.Web.RequestPipeline;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
 
@@ -47,7 +49,9 @@ public sealed class PreparedChatCoordinator(
     IChatAgentDispatcher dispatcher,
     IChatEvidenceCurrentnessValidator currentnessValidator,
     TimeProvider timeProvider,
-    ChatAgentResultValidator resultValidator)
+    ChatAgentResultValidator resultValidator,
+    IPreparedChatScopeResolver preparedScopeResolver,
+    IValidator<PreparedChatQuestionRequest> requestValidator)
 {
     private const string _invalidRequestMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
     private const string _missingMessage = "未找到可用的知识范围，或您无权访问。";
@@ -88,7 +92,28 @@ public sealed class PreparedChatCoordinator(
                 continue;
             }
 
+            Guid[] candidateIds = repositories.Select(repository => repository.Id).ToArray();
+            if (candidateIds.Length > 256)
+            {
+                continue;
+            }
+
+            var accessScope = new RepositoryAccessScope(candidateIds, authorizationVerifier);
+            PreparedChatScopeBinding? binding = await preparedScopeResolver.ResolveAsync(
+                system.Id,
+                candidateIds,
+                accessScope,
+                cancellationToken);
+            if (binding is null ||
+                !await accessScope.HasCurrentAccessAsync(
+                    binding.RepositoryIds,
+                    cancellationToken))
+            {
+                continue;
+            }
+
             PreparedChatRepositoryOption[] options = repositories
+                .Where(repository => binding.RepositoryIds.Contains(repository.Id))
                 .OrderBy(repository => repository.Name, StringComparer.Ordinal)
                 .Select(repository => new PreparedChatRepositoryOption(
                     repository.Id,
@@ -110,6 +135,25 @@ public sealed class PreparedChatCoordinator(
         string question,
         CancellationToken cancellationToken = default)
     {
+        var boundaryRequest = new PreparedChatQuestionRequest
+        {
+            Mode = mode switch
+            {
+                ChatMode.Business => PreparedChatMode.Business,
+                ChatMode.It => PreparedChatMode.It,
+                _ => null,
+            },
+            SystemId = systemId,
+            RepositoryIds = repositoryIds,
+            Question = question,
+        };
+        return await AskAsync(boundaryRequest, cancellationToken);
+    }
+
+    public async Task<PreparedChatResult> AskAsync(
+        PreparedChatQuestionRequest boundaryRequest,
+        CancellationToken cancellationToken = default)
+    {
         if (cancellationToken.IsCancellationRequested)
         {
             return Cancelled();
@@ -117,12 +161,22 @@ public sealed class PreparedChatCoordinator(
 
         try
         {
+            FluentValidation.Results.ValidationResult validationResult =
+                await requestValidator.ValidateAsync(boundaryRequest, cancellationToken);
+            if (!validationResult.IsValid)
+            {
+                return InvalidRequest();
+            }
+
+            ChatMode mode = boundaryRequest.Mode == PreparedChatMode.Business
+                ? ChatMode.Business
+                : ChatMode.It;
             ChatQuestionRequest request = ChatQuestionRequest.Create(
                 Guid.NewGuid().ToString("N"),
                 mode,
-                systemId,
-                repositoryIds,
-                question);
+                boundaryRequest.SystemId,
+                boundaryRequest.RepositoryIds,
+                boundaryRequest.NormalizedQuestion);
             UserContext? userContext = await GetCurrentUserContextAsync();
             if (userContext is null ||
                 await systemRepository.GetVisibleByIdAsync(
@@ -148,16 +202,23 @@ public sealed class PreparedChatCoordinator(
                 selectedRepositories.Add(repositoryId, repository);
             }
 
-            if (!await authorizationVerifier.HasCurrentAccessAsync(
-                    request.RepositoryIds,
-                    cancellationToken))
+            var accessScope = new RepositoryAccessScope(
+                request.RepositoryIds,
+                authorizationVerifier);
+            if (!await accessScope.HasCurrentAccessAsync(request.RepositoryIds, cancellationToken))
             {
                 return Missing();
             }
 
-            var accessScope = new RepositoryAccessScope(
-                request.RepositoryIds,
-                authorizationVerifier);
+            if (await preparedScopeResolver.ResolveAsync(
+                    request.SystemId,
+                    request.RepositoryIds,
+                    accessScope,
+                    cancellationToken) is null)
+            {
+                return Missing();
+            }
+
             ChatEvidenceResult evidence = await evidenceRetriever.RetrieveAsync(
                 request,
                 accessScope,
