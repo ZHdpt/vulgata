@@ -33,4 +33,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="ReleaseGate/Provisioner/**/*.cs" />
+  </ItemGroup>
+
 </Project>

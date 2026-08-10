@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
 
 namespace Vulgata.Tests;
@@ -186,8 +187,8 @@ public sealed class ChatEvidenceCurrentnessTests
         ExactCrossRepositoryTestFixture exactFixture,
         VulgataDbContext context) : IAsyncDisposable
     {
-        internal const string ProfileFingerprint =
-            "3123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        internal static string ProfileFingerprint =>
+            new ExactResolutionProfileCatalog().Load().ProfileFingerprint;
         private const string _evidenceFingerprint =
             "4123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
         private static readonly Guid _businessLogicalDocumentId = Id(10_001);
@@ -329,10 +330,16 @@ public sealed class ChatEvidenceCurrentnessTests
             try
             {
                 ExactCrossRepositoryManagedFixture managed = exactFixture.CreateManagedRepositories();
+                ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+                ResolutionOccurrence occurrence = profile.Occurrences.Single();
                 ExactPass1DocumentFixture consumer = exactFixture.CreatePass1Document(
-                    ExactPass1DocumentKind.Consumer);
+                    ExactPass1DocumentKind.Consumer,
+                    profile.Repositories.Single(repository =>
+                        repository.Alias == occurrence.ConsumerAlias).ExpectedCommit);
                 ExactPass1DocumentFixture provider = exactFixture.CreatePass1Document(
-                    ExactPass1DocumentKind.Provider);
+                    ExactPass1DocumentKind.Provider,
+                    profile.Repositories.Single(repository =>
+                        repository.Alias == occurrence.ProviderAlias).ExpectedCommit);
                 context.Systems.Add(managed.System);
                 context.ScanRuns.AddRange(consumer.ScanRun, provider.ScanRun);
                 await context.SaveChangesAsync();
@@ -461,11 +468,11 @@ public sealed class ChatEvidenceCurrentnessTests
                         ExactResolutionProtocol.CustomRpc,
                         "ExactConfigured",
                         1.0000m,
-                        "1.0",
-                        "august-15-prepared-profile",
-                        "1",
+                        profile.SchemaVersion,
+                        profile.ProfileId,
+                        profile.ProfileVersion,
                         ProfileFingerprint,
-                        "prepared-session-update",
+                        occurrence.OccurrenceId,
                         consumer.SourceAnchor.EvidenceLocator,
                         provider.SourceAnchor.EvidenceLocator,
                         _evidenceFingerprint,

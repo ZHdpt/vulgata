@@ -203,6 +203,17 @@ internal sealed record Story115ProductRunState(
     string NegativeEmail,
     string NegativePassword);
 
+internal sealed record Story115ContainerProductState(
+    Guid SystemId,
+    Guid AccountRepositoryId,
+    Guid ChannelRepositoryId,
+    string ProfileFingerprint,
+    string RuntimeSupportFingerprint,
+    string OwnerEmail,
+    string OwnerPassword,
+    string NegativeEmail,
+    string NegativePassword);
+
 internal static class Story115ProductOrchestrator
 {
     internal static IReadOnlyList<string> Pass2PayloadSlots { get; } =
@@ -559,6 +570,7 @@ internal sealed record Story115RunIdentity(
     string Nonce,
     string DatabaseName,
     string ProviderContainer,
+    string ProvisionerContainer,
     string AppContainer,
     string Network)
 {
@@ -566,6 +578,7 @@ internal sealed record Story115RunIdentity(
         Array.AsReadOnly(
         [
             ProviderContainer,
+            ProvisionerContainer,
             AppContainer,
             Network,
         ]);
@@ -595,6 +608,10 @@ internal interface IStory115ReleaseOperations
         CancellationToken cancellationToken);
 
     Task MigrateAsync(
+        Story115RunIdentity identity,
+        CancellationToken cancellationToken);
+
+    Task RemoveProvisionerAsync(
         Story115RunIdentity identity,
         CancellationToken cancellationToken);
 
@@ -629,7 +646,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
     private readonly Dictionary<string, bool> _cleanup = new(StringComparer.Ordinal);
     private Story115FinalRunPlan? _plan;
     private Story115ProvisioningFactory? _provisioningFactory;
-    private Story115ProductRunState? _product;
+    private Story115ContainerProductState? _product;
     private string? _administratorConnectionString;
     private string? _targetConnectionString;
     private string? _imageId;
@@ -638,6 +655,13 @@ internal sealed class Story115ExecutableFinalRunOperations :
     private string? _negativeAuthorizationOutcome;
     private bool _databaseDropped;
     private bool _databaseAbsenceObserved;
+    private string? _administratorEmail;
+    private string? _administratorPassword;
+    private string? _ownerEmail;
+    private string? _ownerPassword;
+    private string? _negativeEmail;
+    private string? _negativePassword;
+    private string? _providerApiKey;
 
     internal Story115ExecutableFinalRunOperations(string repositoryRoot)
     {
@@ -727,6 +751,10 @@ internal sealed class Story115ExecutableFinalRunOperations :
         Story115FinalRunPlan plan = RequirePlan(identity);
         Directory.CreateDirectory(plan.RunDirectory);
         Directory.CreateDirectory(plan.KeyRingDirectory);
+        Directory.CreateDirectory(Path.Combine(plan.RunDirectory, "config"));
+        Directory.CreateDirectory(Path.Combine(plan.RunDirectory, "output"));
+        Directory.CreateDirectory(Path.Combine(plan.RunDirectory, "work"));
+        Directory.CreateDirectory(Path.Combine(plan.RunDirectory, "sources"));
 
         var supplied = new NpgsqlConnectionStringBuilder(
             plan.Environment.PostgreSqlAdministratorConnection);
@@ -737,6 +765,24 @@ internal sealed class Story115ExecutableFinalRunOperations :
                 "The supplied PostgreSQL administrator database must be distinct from the nonce-owned database.");
         }
 
+        await ExecuteRequiredAsync(
+            FindCommand(plan, "source-bound-image-build"),
+            cancellationToken,
+            timeout: TimeSpan.FromMinutes(30));
+        Story115ProcessResult imageInspection = await ExecuteRequiredAsync(
+            FindCommand(plan, "image-label-inspect"),
+            cancellationToken);
+        ParseAndVerifyImageInspection(imageInspection.StandardOutput, plan.Environment);
+        await AcquireRepositoryAsync(
+            plan.Environment.AccountRepositoryUrl,
+            Story115ReleaseHarness.Contract.AccountRepository,
+            Path.Combine(plan.RunDirectory, "sources", "mbs_account"),
+            cancellationToken);
+        await AcquireRepositoryAsync(
+            plan.Environment.ChannelRepositoryUrl,
+            Story115ReleaseHarness.Contract.ChannelRepository,
+            Path.Combine(plan.RunDirectory, "sources", "mbs_channel"),
+            cancellationToken);
         await ExecuteRequiredAsync(FindCommand(plan, "network-create"), cancellationToken);
         await Story115ReleaseHarness.StartProviderAtReservedPortBoundaryAsync(
             plan.PortReservation,
@@ -875,28 +921,45 @@ internal sealed class Story115ExecutableFinalRunOperations :
             cancellationToken);
     }
 
-    public Task MigrateAsync(
+    public async Task MigrateAsync(
         Story115RunIdentity identity,
         CancellationToken cancellationToken)
     {
         Story115FinalRunPlan plan = RequirePlan(identity);
-        cancellationToken.ThrowIfCancellationRequested();
-        if (_targetConnectionString is null)
+        if (_targetConnectionString is null || _imageId is null)
         {
-            throw new InvalidOperationException("The nonce-owned target connection is unavailable.");
+            throw new InvalidOperationException("The nonce database or immutable image is unavailable.");
         }
 
-        using (var environment = new Story115ProvisioningConfigurationEnvironment(
-            plan.KeyRingDirectory,
-            Path.Combine(plan.RunDirectory, "codegraph")))
+        await WriteProvisionerInputAsync(plan, cancellationToken);
+        Story115ExternalCommand provisioner = MakeProvisionerMountsAbsolute(
+            Story115ReleaseHarness.BindImmutableImageId(
+                FindCommand(plan, "provisioner-run"),
+                _imageId));
+        await ExecuteRequiredAsync(
+            provisioner,
+            cancellationToken,
+            timeout: TimeSpan.FromMinutes(30));
+        Story115ProcessResult inspection = await ExecuteRequiredAsync(
+            FindCommand(plan, "provisioner-image-inspect"),
+            cancellationToken);
+        RequireSameImageId(inspection.StandardOutput);
+        _product = await ReadProvisionerResultAsync(plan, cancellationToken);
+        await ExecuteRequiredAsync(FindCommand(plan, "provisioner-remove"), cancellationToken);
+        Story115ProcessResult absence = await ExecuteAsync(
+            FindCommand(plan, "provisioner-absence-inspect"),
+            cancellationToken);
+        if (absence.ExitCode == 0)
         {
-            _provisioningFactory = new Story115ProvisioningFactory(
-                _targetConnectionString,
-                plan.KeyRingDirectory,
-                Path.Combine(plan.RunDirectory, "codegraph"));
-            _ = _provisioningFactory.Services;
+            throw new InvalidOperationException("The provisioner still existed before app start.");
         }
-        return Task.CompletedTask;
+
+        _cleanup["provisioner-removed-before-app"] = true;
+        _provisioningFactory = new Story115ProvisioningFactory(
+            _targetConnectionString,
+            plan.KeyRingDirectory,
+            Path.Combine(plan.RunDirectory, "work"));
+        _ = _provisioningFactory.Services;
     }
 
     public async Task RemoveAppAndProviderAsync(
@@ -909,6 +972,15 @@ internal sealed class Story115ExecutableFinalRunOperations :
         await RemoveExactContainerAsync(identity.AppContainer, cancellationToken);
         await RemoveExactContainerAsync(identity.ProviderContainer, cancellationToken);
         _cleanup["app-and-provider-removed"] = true;
+    }
+
+    public async Task RemoveProvisionerAsync(
+        Story115RunIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        RequirePlan(identity);
+        await RemoveExactContainerAsync(identity.ProvisionerContainer, cancellationToken);
+        _cleanup["provisioner-removed"] = true;
     }
 
     public async Task TerminateDatabaseConnectionsAsync(
@@ -960,10 +1032,9 @@ internal sealed class Story115ExecutableFinalRunOperations :
         await ExecuteCleanupAsync(
             new("network-remove", "docker", ["network", "rm", identity.Network]),
             cancellationToken);
-        if (Directory.Exists(plan.RunDirectory))
-        {
-            Directory.Delete(plan.RunDirectory, recursive: true);
-        }
+        await Story115ReleaseHarness.DeleteOwnedRunDirectoryAsync(
+            plan.RunDirectory,
+            cancellationToken);
 
         _cleanup["remaining-owned-state-removed"] = true;
     }
@@ -972,27 +1043,18 @@ internal sealed class Story115ExecutableFinalRunOperations :
     {
         Story115FinalRunPlan plan = _plan!;
         Story115ProvisioningFactory factory = _provisioningFactory ??
-            throw new InvalidOperationException("Production migrations did not initialize the product host.");
-        using (IServiceScope scope = factory.Services.CreateScope())
-        {
-            _product = await Story115ProductOrchestrator.ExecuteAsync(
-                scope.ServiceProvider,
-                plan.Environment,
-                plan.Identity,
-                plan.Ports,
-                cancellationToken);
-        }
-
-        await ExecuteRequiredAsync(
-            FindCommand(plan, "source-bound-image-build"),
-            cancellationToken,
-            timeout: TimeSpan.FromMinutes(30));
-        Story115ProcessResult imageInspection = await ExecuteRequiredAsync(
-            FindCommand(plan, "image-label-inspect"),
-            cancellationToken);
-        ParseAndVerifyImageInspection(imageInspection.StandardOutput, plan.Environment);
+            throw new InvalidOperationException("The container provisioner did not initialize product access.");
+        _ = _product ?? throw new InvalidOperationException("The sanitized provisioner result is unavailable.");
         await WriteAppEnvironmentAsync(plan, cancellationToken);
-        await ExecuteRequiredAsync(FindCommand(plan, "app-run"), cancellationToken);
+        await ExecuteRequiredAsync(
+            Story115ReleaseHarness.BindImmutableImageId(
+                FindCommand(plan, "app-run"),
+                _imageId!),
+            cancellationToken);
+        Story115ProcessResult appImage = await ExecuteRequiredAsync(
+            FindCommand(plan, "app-image-inspect"),
+            cancellationToken);
+        RequireSameImageId(appImage.StandardOutput);
 
         bool healthy = await Story115ReleaseHarness.PollAsync(
             async token =>
@@ -1020,7 +1082,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
         IServiceProvider services,
         CancellationToken cancellationToken)
     {
-        Story115ProductRunState product = _product ??
+        Story115ContainerProductState product = _product ??
             throw new InvalidOperationException("Product state was not provisioned.");
         using IPlaywright playwright = await Playwright.CreateAsync();
         await using IBrowser browser = await playwright.Chromium.LaunchAsync(
@@ -1153,7 +1215,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
 
     private static async Task SelectPreparedScopeAsync(
         IPage page,
-        Story115ProductRunState product)
+        Story115ContainerProductState product)
     {
         await WaitForLoadStateAsync(page, "Loaded");
         await page.Locator("#chat-system").SelectOptionAsync(product.SystemId.ToString());
@@ -1185,7 +1247,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
                 _imageLabels),
             [Story115ReleaseHarness.Contract.AccountRepository,
                 Story115ReleaseHarness.Contract.ChannelRepository],
-            _product?.PreparedPass2Flow.RuntimeBinding?.ProfileFingerprint,
+            _product?.ProfileFingerprint,
             CreateRuntimePass2Evidence(),
             _commandEvidence.AsReadOnly(),
             _positiveAnswer,
@@ -1201,16 +1263,153 @@ internal sealed class Story115ExecutableFinalRunOperations :
             return null;
         }
 
-        PreparedPass2RuntimeBinding binding = _product.PreparedPass2Flow.RuntimeBinding ??
-            throw new InvalidOperationException("Runtime Pass 2 binding was not retained for evidence.");
         return new(
-            binding.SupportFingerprint,
+            _product.RuntimeSupportFingerprint,
             _product.AccountRepositoryId,
             SupportedRepositoryCount: 2,
             PayloadSlotCount: Story115ProductOrchestrator.Pass2PayloadSlots.Count,
             DispatchCount: 1,
             CommitCount: 1);
     }
+
+    private async Task AcquireRepositoryAsync(
+        Uri source,
+        PreparedRepositoryIdentity expected,
+        string destination,
+        CancellationToken cancellationToken)
+    {
+        Story115ProcessResult clone = await ExecuteRequiredAsync(
+            new(
+                "repository-acquire-" + expected.Alias,
+                "git",
+                ["clone", "--quiet", "--branch", expected.Ref, "--single-branch", source.AbsoluteUri, destination]),
+            cancellationToken,
+            timeout: TimeSpan.FromMinutes(5));
+        _ = clone;
+        Story115ProcessResult head = await ExecuteRequiredAsync(
+            new(
+                "repository-verify-" + expected.Alias,
+                "git",
+                ["-C", destination, "rev-parse", "HEAD"]),
+            cancellationToken);
+        if (!StringComparer.Ordinal.Equals(head.StandardOutput.Trim(), expected.Commit))
+        {
+            throw new InvalidOperationException("A prepared Repository commit drifted.");
+        }
+    }
+
+    private async Task WriteProvisionerInputAsync(
+        Story115FinalRunPlan plan,
+        CancellationToken cancellationToken)
+    {
+        var external = new NpgsqlConnectionStringBuilder(_targetConnectionString)
+        {
+            Host = "host.docker.internal",
+            Pooling = true,
+        };
+        _administratorEmail = $"story115-admin-{plan.Identity.Nonce}@example.invalid";
+        _ownerEmail = $"story115-owner-{plan.Identity.Nonce}@example.invalid";
+        _negativeEmail = $"story115-negative-{plan.Identity.Nonce}@example.invalid";
+        _administratorPassword = CreateGateSecret();
+        _ownerPassword = CreateGateSecret();
+        _negativePassword = CreateGateSecret();
+        _providerApiKey = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
+        string json = JsonSerializer.Serialize(new
+        {
+            SchemaIdentity = "vulgata.story115.provisioner-input/1",
+            RunNonce = plan.Identity.Nonce,
+            ConnectionString = external.ConnectionString,
+            AccountRepositoryUri = new Uri("file:///vulgata/sources/mbs_account"),
+            ChannelRepositoryUri = new Uri("file:///vulgata/sources/mbs_channel"),
+            WorkerEndpoint = $"http://127.0.0.1:{plan.Ports[0]}/v1",
+            ChatEndpoint = $"http://127.0.0.1:{plan.Ports[1]}/v1",
+            ProviderApiKey = _providerApiKey,
+            DataProtectionApplicationName,
+            AdministratorEmail = _administratorEmail,
+            AdministratorPassword = _administratorPassword,
+            OwnerEmail = _ownerEmail,
+            OwnerPassword = _ownerPassword,
+            NegativeEmail = _negativeEmail,
+            NegativePassword = _negativePassword,
+        }, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        await Story115ReleaseHarness.WriteCurrentUserOnlyFileAsync(
+            Path.Combine(plan.RunDirectory, "config", "input.json"),
+            json,
+            cancellationToken);
+    }
+
+    private Story115ExternalCommand MakeProvisionerMountsAbsolute(
+        Story115ExternalCommand command)
+    {
+        string relativeRoot = Path.Combine(
+            "tests", "Vulgata.Tests", "bin", "Release", "net10.0", "story115-provisioner");
+        string absoluteRoot = Path.Combine(_repositoryRoot, relativeRoot);
+        return command with
+        {
+            Arguments = Array.AsReadOnly(
+            [
+                .. command.Arguments.Select(argument => argument.Replace(
+                    "source=" + relativeRoot,
+                    "source=" + absoluteRoot,
+                    StringComparison.Ordinal)),
+            ]),
+        };
+    }
+
+    private async Task<Story115ContainerProductState> ReadProvisionerResultAsync(
+        Story115FinalRunPlan plan,
+        CancellationToken cancellationToken)
+    {
+        string path = Path.Combine(plan.RunDirectory, "output", "result.json");
+        byte[] bytes = await File.ReadAllBytesAsync(path, cancellationToken);
+        if (bytes.Length is <= 0 or > 65_536)
+        {
+            throw new InvalidDataException("The provisioner result size is invalid.");
+        }
+
+        string json = Encoding.UTF8.GetString(bytes);
+        Story115ReleaseHarness.ValidateSanitizedProvisionerResult(json);
+        using JsonDocument document = JsonDocument.Parse(bytes);
+        JsonElement root = document.RootElement;
+        if (!StringComparer.Ordinal.Equals(
+                root.GetProperty("schemaIdentity").GetString(),
+                "vulgata.story115.provisioner-result/1") ||
+            !StringComparer.Ordinal.Equals(root.GetProperty("migrationOutcome").GetString(), "applied") ||
+            !StringComparer.Ordinal.Equals(root.GetProperty("productStageOutcome").GetString(), "completed") ||
+            root.GetProperty("ordinaryPass1DispatchCount").GetInt32() != 2 ||
+            root.GetProperty("pass2DispatchCount").GetInt32() != 1 ||
+            root.GetProperty("pass2CommitCount").GetInt32() != 1 ||
+            !StringComparer.Ordinal.Equals(root.GetProperty("codeGraphContextVersion").GetString(), "0.5.1") ||
+            !StringComparer.Ordinal.Equals(root.GetProperty("accountRef").GetString(), Story115ReleaseHarness.Contract.AccountRepository.Ref) ||
+            !StringComparer.Ordinal.Equals(root.GetProperty("accountCommit").GetString(), Story115ReleaseHarness.Contract.AccountRepository.Commit) ||
+            !StringComparer.Ordinal.Equals(root.GetProperty("channelRef").GetString(), Story115ReleaseHarness.Contract.ChannelRepository.Ref) ||
+            !StringComparer.Ordinal.Equals(root.GetProperty("channelCommit").GetString(), Story115ReleaseHarness.Contract.ChannelRepository.Commit))
+        {
+            throw new InvalidDataException("The provisioner result contract is invalid.");
+        }
+
+        return new(
+            root.GetProperty("systemId").GetGuid(),
+            root.GetProperty("accountRepositoryId").GetGuid(),
+            root.GetProperty("channelRepositoryId").GetGuid(),
+            root.GetProperty("profileFingerprint").GetString()!,
+            root.GetProperty("runtimeSupportFingerprint").GetString()!,
+            _ownerEmail!,
+            _ownerPassword!,
+            _negativeEmail!,
+            _negativePassword!);
+    }
+
+    private void RequireSameImageId(string observed)
+    {
+        if (!StringComparer.Ordinal.Equals(observed.Trim(), _imageId))
+        {
+            throw new InvalidOperationException("A container did not use the inspected immutable image ID.");
+        }
+    }
+
+    private static string CreateGateSecret() =>
+        Convert.ToHexString(RandomNumberGenerator.GetBytes(18)) + "aA1!";
 
     private async Task WriteAppEnvironmentAsync(
         Story115FinalRunPlan plan,
@@ -1243,6 +1442,13 @@ internal sealed class Story115ExecutableFinalRunOperations :
         JsonElement image = document.RootElement.EnumerateArray().Single();
         _imageId = image.GetProperty("Id").GetString() ??
             throw new InvalidOperationException("The source-bound image ID was absent.");
+        if (!Regex.IsMatch(
+                _imageId,
+                "^sha256:[0-9a-f]{64}$",
+                RegexOptions.CultureInvariant))
+        {
+            throw new InvalidOperationException("The source-bound image ID was not immutable sha256.");
+        }
         JsonElement labels = image.GetProperty("Config").GetProperty("Labels");
         var actual = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -1671,6 +1877,7 @@ internal sealed class Story115PortReservation : IAsyncDisposable
 internal static partial class Story115ReleaseHarness
 {
     private const string ResourcePrefix = "vulgata-story115-";
+    internal const string ImmutableImageIdPlaceholder = "{{FINAL_IMAGE_ID}}";
 
     internal static void ValidateObservedAnswer(
         IReadOnlyCollection<Story115ObservedClaim> claims)
@@ -1796,6 +2003,7 @@ internal static partial class Story115ReleaseHarness
             nonce,
             Contract.DatabasePrefix + nonce,
             ResourcePrefix + nonce + "-provider",
+            ResourcePrefix + nonce + "-provisioner",
             ResourcePrefix + nonce + "-app",
             ResourcePrefix + nonce + "-network");
     }
@@ -1831,6 +2039,37 @@ internal static partial class Story115ReleaseHarness
             "provider-docker-desktop-postgres-preflight",
             "docker",
             ["exec", identity.ProviderContainer, "python", "-c", script]);
+    }
+
+    internal static Story115ExternalCommand BindImmutableImageId(
+        Story115ExternalCommand command,
+        string imageId)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        if (!ImmutableImageIdRegex().IsMatch(imageId))
+        {
+            throw new InvalidOperationException(
+                "The final application image must be bound by immutable sha256 ID.");
+        }
+
+        int tokenCount = command.Arguments.Count(argument =>
+            StringComparer.Ordinal.Equals(argument, ImmutableImageIdPlaceholder));
+        if (tokenCount != 1)
+        {
+            throw new InvalidOperationException(
+                "The image-running command must contain exactly one immutable-ID token.");
+        }
+
+        return command with
+        {
+            Arguments = Array.AsReadOnly(
+            [
+                .. command.Arguments.Select(argument =>
+                    StringComparer.Ordinal.Equals(argument, ImmutableImageIdPlaceholder)
+                        ? imageId
+                        : argument),
+            ]),
+        };
     }
 
     internal static async Task<bool> RunActivatedFinalAsync(
@@ -1896,6 +2135,7 @@ internal static partial class Story115ReleaseHarness
                 environment,
                 identity,
                 ports.Ports,
+                runDirectory,
                 keyRingDirectory,
                 appEnvironmentFile),
             ports);
@@ -1906,33 +2146,25 @@ internal static partial class Story115ReleaseHarness
         Story115FinalEnvironment environment,
         Story115RunIdentity identity,
         IReadOnlyList<int> ports,
+        string runDirectory,
         string keyRingDirectory,
         string appEnvironmentFile)
     {
         string imageName = ResourcePrefix + identity.Nonce + "-image";
         string providerFixture = Contract.ProviderFixturePath.Replace('\\', '/');
+        string provisionerRoot = Path.Combine(
+            "tests", "Vulgata.Tests", "bin", "Release", "net10.0", "story115-provisioner");
+        string accountSource = Path.Combine(runDirectory, "sources", "mbs_account");
+        string channelSource = Path.Combine(runDirectory, "sources", "mbs_channel");
+        string configFile = Path.Combine(runDirectory, "config", "input.json");
+        string outputDirectory = Path.Combine(runDirectory, "output");
+        string workDirectory = Path.Combine(runDirectory, "work");
         return Array.AsReadOnly<Story115ExternalCommand>(
         [
             new(
                 "network-create",
                 "docker",
                 ["network", "create", identity.Network]),
-            new(
-                "provider-run",
-                "docker",
-                [
-                    "run", "--detach", "--name", identity.ProviderContainer,
-                    "--network", identity.Network,
-                    "--publish", $"127.0.0.1:{ports[0]}:{ports[0]}",
-                    "--publish", $"127.0.0.1:{ports[1]}:{ports[1]}",
-                    "--publish", $"127.0.0.1:{ports[2]}:8080",
-                    "--mount", $"type=bind,source={providerFixture},target=/fixture/loopback-openai-provider.py,readonly",
-                    "python:3.12-bookworm@sha256:9bed8554e926c07c6f908841d5ee88c33e8df9236b191526bbce81a9062ab43a",
-                    "python", "/fixture/loopback-openai-provider.py",
-                    "--host", "0.0.0.0",
-                    "--worker-port", ports[0].ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    "--chat-port", ports[1].ToString(System.Globalization.CultureInfo.InvariantCulture),
-                ]),
             new(
                 "source-bound-image-build",
                 "docker",
@@ -1950,6 +2182,55 @@ internal static partial class Story115ReleaseHarness
                 "docker",
                 ["image", "inspect", imageName]),
             new(
+                "provider-run",
+                "docker",
+                [
+                    "run", "--detach", "--name", identity.ProviderContainer,
+                    "--network", identity.Network,
+                    "--publish", $"127.0.0.1:{ports[0]}:{ports[0]}",
+                    "--publish", $"127.0.0.1:{ports[1]}:{ports[1]}",
+                    "--publish", $"127.0.0.1:{ports[2]}:8080",
+                    "--mount", $"type=bind,source={providerFixture},target=/fixture/loopback-openai-provider.py,readonly",
+                    "python:3.12-bookworm@sha256:9bed8554e926c07c6f908841d5ee88c33e8df9236b191526bbce81a9062ab43a",
+                    "python", "/fixture/loopback-openai-provider.py",
+                    "--host", "0.0.0.0",
+                    "--worker-port", ports[0].ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    "--chat-port", ports[1].ToString(System.Globalization.CultureInfo.InvariantCulture),
+                ]),
+            new(
+                "provisioner-run",
+                "docker",
+                [
+                    "run", "--name", identity.ProvisionerContainer,
+                    "--network", $"container:{identity.ProviderContainer}",
+                    "--entrypoint", "dotnet",
+                    "--mount", $"type=bind,source={Path.Combine(provisionerRoot, "Vulgata.Story115.Provisioner.dll")},target=/app/Vulgata.Story115.Provisioner.dll,readonly",
+                    "--mount", $"type=bind,source={Path.Combine(provisionerRoot, "Vulgata.Story115.Provisioner.deps.json")},target=/app/Vulgata.Story115.Provisioner.deps.json,readonly",
+                    "--mount", $"type=bind,source={Path.Combine(provisionerRoot, "Vulgata.Story115.Provisioner.runtimeconfig.json")},target=/app/Vulgata.Story115.Provisioner.runtimeconfig.json,readonly",
+                    "--mount", $"type=bind,source={accountSource},target=/vulgata/sources/mbs_account,readonly",
+                    "--mount", $"type=bind,source={channelSource},target=/vulgata/sources/mbs_channel,readonly",
+                    "--mount", $"type=bind,source={configFile},target=/vulgata/run/config/input.json,readonly",
+                    "--mount", $"type=bind,source={outputDirectory},target=/vulgata/run/output",
+                    "--mount", $"type=bind,source={workDirectory},target=/var/lib/vulgata-codegraph",
+                    "--mount", $"type=bind,source={keyRingDirectory},target=/var/lib/vulgata-dpkeys",
+                    ImmutableImageIdPlaceholder,
+                    "/app/Vulgata.Story115.Provisioner.dll",
+                    "--input", "/vulgata/run/config/input.json",
+                    "--output", "/vulgata/run/output/result.json",
+                ]),
+            new(
+                "provisioner-image-inspect",
+                "docker",
+                ["inspect", "--format", "{{.Image}}", identity.ProvisionerContainer]),
+            new(
+                "provisioner-remove",
+                "docker",
+                ["rm", identity.ProvisionerContainer]),
+            new(
+                "provisioner-absence-inspect",
+                "docker",
+                ["container", "inspect", identity.ProvisionerContainer]),
+            new(
                 "app-run",
                 "docker",
                 [
@@ -1962,8 +2243,12 @@ internal static partial class Story115ReleaseHarness
                     "--health-timeout", "5s",
                     "--health-retries", "30",
                     "--health-start-period", "15s",
-                    imageName,
+                    ImmutableImageIdPlaceholder,
                 ]),
+            new(
+                "app-image-inspect",
+                "docker",
+                ["inspect", "--format", "{{.Image}}", identity.AppContainer]),
             new(
                 "curl-health-inspect",
                 "docker",
@@ -2217,6 +2502,64 @@ internal static partial class Story115ReleaseHarness
         }
     }
 
+    internal static async Task DeleteOwnedRunDirectoryAsync(
+        string runDirectory,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(runDirectory);
+        string fullPath = Path.GetFullPath(runDirectory);
+        string temporaryRoot = Path.GetFullPath(Path.GetTempPath())
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+            Path.DirectorySeparatorChar;
+        StringComparison comparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        if (!fullPath.StartsWith(temporaryRoot, comparison) ||
+            !OwnedRunDirectoryNameRegex().IsMatch(Path.GetFileName(fullPath)))
+        {
+            throw new InvalidOperationException(
+                "Refusing to delete a directory outside this Story 11.5 nonce run root.");
+        }
+
+        for (int attempt = 1; attempt <= 5; attempt++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                if (!Directory.Exists(fullPath))
+                {
+                    return;
+                }
+
+                foreach (string file in Directory.EnumerateFiles(
+                    fullPath,
+                    "*",
+                    new EnumerationOptions
+                    {
+                        AttributesToSkip = FileAttributes.ReparsePoint,
+                        IgnoreInaccessible = false,
+                        RecurseSubdirectories = true,
+                    }))
+                {
+                    File.SetAttributes(file, File.GetAttributes(file) & ~FileAttributes.ReadOnly);
+                }
+
+                Directory.Delete(fullPath, recursive: true);
+                return;
+            }
+            catch (Exception exception) when (
+                exception is IOException or UnauthorizedAccessException)
+            {
+                if (attempt < 5)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                }
+            }
+        }
+
+        throw new IOException("The Story 11.5 nonce run directory could not be removed.");
+    }
+
     internal static async Task ExecuteLifecycleAsync(
         Story115RunIdentity identity,
         IStory115ReleaseOperations operations,
@@ -2255,6 +2598,9 @@ internal static partial class Story115ReleaseHarness
         }
         finally
         {
+            await CaptureCleanupFailureAsync(
+                () => operations.RemoveProvisionerAsync(identity, CancellationToken.None),
+                cleanupFailures);
             await CaptureCleanupFailureAsync(
                 () => operations.RemoveAppAndProviderAsync(identity, CancellationToken.None),
                 cleanupFailures);
@@ -2418,14 +2764,23 @@ internal static partial class Story115ReleaseHarness
         }
     }
 
+    internal static void ValidateSanitizedProvisionerResult(string json) =>
+        ValidateSanitizedJson(json);
+
     private static ReadOnlyCollection<string> ReadOnly(params string[] values) =>
         Array.AsReadOnly(values);
 
     [GeneratedRegex("^vulgata_story115_[0-9a-f]{32}$", RegexOptions.CultureInvariant)]
     private static partial Regex OwnedDatabaseNameRegex();
 
+    [GeneratedRegex("^sha256:[0-9a-f]{64}$", RegexOptions.CultureInvariant)]
+    private static partial Regex ImmutableImageIdRegex();
+
     [GeneratedRegex(
-        "^vulgata-story115-[0-9a-f]{32}-(postgres|provider|app|network|volume)$",
+        "^vulgata-story115-[0-9a-f]{32}-(postgres|provider|provisioner|app|network|volume)$",
         RegexOptions.CultureInvariant)]
     private static partial Regex OwnedResourceNameRegex();
+
+    [GeneratedRegex("^vulgata-story115-[0-9a-f]{32}$", RegexOptions.CultureInvariant)]
+    private static partial Regex OwnedRunDirectoryNameRegex();
 }

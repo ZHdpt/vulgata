@@ -158,8 +158,9 @@ as completed acceptance criteria.
       root mechanical validation: SHA-256
       `920d0f93ad148be3813387a434d62add3bdffcc373ce87907b25092b28cfab09`,
       73 continuous tasks, T001-T063 preserved complete, and T064-T073 pending.
-- [ ] Execute pending T064-T071 with transient observed RED then GREEN, obtain
-      the one fresh combined quality review over the pinned candidate, execute
+- [x] Execute T064-T071 with transient observed RED then GREEN and complete
+      the required non-live Option A, migration, model, build, and static checks.
+- [ ] Obtain the one fresh combined quality review over the pinned candidate, execute
       the sole live T072 clean PostgreSQL two-Repository/Docker release run,
       then execute T073 cleanup, absence proofs, and final verification.
 
@@ -187,7 +188,7 @@ as completed acceptance criteria.
   `docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json`.
 - Proposed SpecKit short name: `demo-chat-release-gate`.
 - SpecKit feature directory: `specs/008-demo-chat-release-gate`.
-- Current workflow stage: `implement`.
+- Current workflow stage: `quality-review` (candidate pinning in progress).
 - Expedited-mvp flow: `context -> specify -> plan -> conditional plan-review +
   planned-change authorization -> tasks -> implement -> combined quality-review
   -> conditional-e2e -> verify -> complete`.
@@ -238,11 +239,16 @@ as completed acceptance criteria.
   iteration 6 ACCEPT are historical invalidated evidence; neither is current
   acceptance. The expedited-mvp flow requires one fresh combined quality
   review after implementation.
-- Implementation has not begun for T064-T073. The retained sequence is
-  transient RED/GREEN TDD for T064-T071, one fresh combined quality review over
-  the pinned candidate, the sole live T072 release run, and T073 cleanup,
-  absence proofs, and final verification. No live resource, implementation,
-  review, E2E, cleanup, or completion evidence is presumed.
+- T064-T071 are complete with observed transient RED then GREEN. Root reproduced
+  the focused Option A contract 4/4, the direct Pass 1/Pass 2 surrounding set
+  29/29, and the corrected currentness fixture 3/3. The complete non-live
+  release harness is 44/44, the required combined quickstart filters are
+  137/137, predecessor migration tests are 10/10, both DbContexts report no
+  pending model changes, Release builds and the provisioner publish succeed,
+  and the published provisioner mount allowlist contains exactly three files.
+  No live Docker, PostgreSQL, provider, Repository, CodeGraph, browser, or
+  Playwright resource was acquired. T072-T073 remain pending behind the fresh
+  combined quality review and unchanged-candidate pin.
 
 ### File List
 

@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
   "execution_level": "expedited-mvp",
-  "stage": "implement",
+  "stage": "quality-review",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -31,28 +31,12 @@
         "verdict_path": null
       },
       "quality-review": {
-        "status": "invalidated",
-        "iteration": 6,
-        "dispatch_id": "story_11_5_full_quality_review_iteration_6",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-6.json",
-        "input_boundary": {
-          "base_commit": "d35d122b164e82d2991660bbdc77c67a379d020b",
-          "candidate_commit": null,
-          "diff_sha256": "7fe91f06bc158acabfc3a00f5e75c15d6de3159084dfd645a467d5a27863ba4e",
-          "artifact_hashes": {
-            "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "440a50001c37811914124e713b2968192fb2c422aeb0cfbdd94ae93c67d03687",
-            "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "32297bc144d62a96ff14b49b48a4906dfe27721d1ec990b605b4f3ffda1f1f69",
-            "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "d1b64a9cd92c8ee557b8b4672b2e62558c98217c0e91e4885cacb13075fe5560",
-            "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "4b8fc8928634d5f7443f1080dc265db2e846f803b59c0b46ed74eef6b8886931"
-          },
-          "owned_paths": [
-            "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
-            "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-            "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-            "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-          ]
-        },
-        "completed_at": "2026-08-09T10:57:19Z"
+        "status": "pending",
+        "iteration": 7,
+        "dispatch_id": null,
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-7.json",
+        "input_boundary": null,
+        "completed_at": null
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -631,6 +615,26 @@
         },
         "validation": "expedited-mvp root mechanical validation passed: 73 continuous tasks; T001-T063 preserved complete; T064-T073 pending; FR-001 through FR-024 and SC-001 through SC-011 covered; RED-before-GREEN ordering valid; zero stale active Full gates; no migration/model delta; workflow tests 35/35; git diff --check clean",
         "failure": null
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T02:47:50Z",
+        "completed_at": "2026-08-10T03:55:37Z",
+        "input_commit": "0b83ef16a052999b39c5122ffc0e2cfb91d3035b",
+        "agent_role": "tdd-implementer/root",
+        "dispatch_id": "story_11_5_t064_t071_option_a",
+        "artifact_paths": [
+          "src/dotnet/Vulgata.Web/Program.cs",
+          "tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs",
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Provisioner/",
+          "tests/Vulgata.Tests/Vulgata.Tests.csproj",
+          "specs/008-demo-chat-release-gate/tasks.md"
+        ],
+        "validation": "T064-T071 observed RED then GREEN; Option A focused 4/4; Pass 1/Pass 2 surrounding 29/29; currentness 3/3; complete non-live release harness 44/44; required quickstart filters 137/137; migrations 10/10; both DbContexts no pending model changes; Release builds and exact three-file provisioner publish succeeded; protected-path and git diff checks clean; no live resources acquired",
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -684,7 +688,7 @@
       "authority": "Accepted SpecKit tasks",
       "path": "specs/008-demo-chat-release-gate/tasks.md",
       "commit": null,
-      "sha256": "920d0f93ad148be3813387a434d62add3bdffcc373ce87907b25092b28cfab09"
+      "sha256": "71327e0ce0b0ef1e9fa41aef6ee0be586a040e00da6c92219bbe7f25e1a7f094"
     }
   ],
   "dispatches": [
@@ -777,32 +781,29 @@
   },
   "verification": [],
     "last_checkpoint": {
-      "checkpoint_id": "bmad-11-5-expedited-accepted-delivery-20260810T104750Z",
+      "checkpoint_id": "bmad-11-5-expedited-reviewed-candidate-20260810T115537Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
-      "stage": "tasks",
+      "stage": "quality-review",
       "committed_paths": [
         "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-09-story-11-5-containerized-provisioning.md",
-        "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
-        "specs/008-demo-chat-release-gate/data-model.md",
-        "specs/008-demo-chat-release-gate/plan.md",
-        "specs/008-demo-chat-release-gate/quickstart.md",
-        "specs/008-demo-chat-release-gate/research.md",
-        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-2.json",
-        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-3.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-10.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-11.json",
         "specs/008-demo-chat-release-gate/tasks.md",
-        "specs/008-demo-chat-release-gate/workflow-state.json"
+        "specs/008-demo-chat-release-gate/workflow-state.json",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs",
+        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Provisioner/",
+        "tests/Vulgata.Tests/Vulgata.Tests.csproj"
       ],
       "verification_evidence_ids": [
-        "11-5-demo-chat-citations-and-release-gate/plan-review/11",
-        "11-5-demo-chat-citations-and-release-gate/planned-change-authorization/option-a",
-        "11-5-demo-chat-citations-and-release-gate/tasks/expedited-root-validation"
+        "11-5-demo-chat-citations-and-release-gate/tdd/t064-t071",
+        "11-5-demo-chat-citations-and-release-gate/non-live/44",
+        "11-5-demo-chat-citations-and-release-gate/quickstart/137",
+        "11-5-demo-chat-citations-and-release-gate/migrations/10"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-    "updated_at": "2026-08-10T02:47:50Z"
+    "updated_at": "2026-08-10T03:55:37Z"
 }

@@ -33,170 +33,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddProblemDetails();
-IDataProtectionBuilder dataProtection = builder.Services.AddDataProtection();
-string? dataProtectionKeyRingPath = builder.Configuration["DataProtection:KeyRingPath"];
-string? dataProtectionApplicationName = builder.Configuration["DataProtection:ApplicationName"];
-if (!string.IsNullOrWhiteSpace(dataProtectionKeyRingPath) &&
-    !string.IsNullOrWhiteSpace(dataProtectionApplicationName))
-{
-    dataProtection
-        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeyRingPath.Trim()))
-        .SetApplicationName(dataProtectionApplicationName.Trim());
-}
-
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IUserContext>(sp =>
-{
-    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-    var authorization = sp.GetRequiredService<IAuthorizationService>();
-    var principal = httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
-    return new UserContext(principal, authorization);
-});
-builder.Services.AddHttpClient("LlmProviderConnectionTest", client => { client.Timeout = TimeSpan.FromSeconds(10); });
-builder.Services.AddHttpClient<ICodeGraphProvider, CodeGraphContextProvider>(client =>
-{
-    client.Timeout = Timeout.InfiniteTimeSpan;
-});
-
-builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<IdentityRedirectManager>();
-builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString, npgsqlOptions =>
-    {
-        npgsqlOptions.MigrationsHistoryTable("__IdentityMigrationsHistory", "identity");
-        npgsqlOptions.EnableRetryOnFailure(3);
-    }));
-builder.Services.AddDbContext<VulgataDbContext>(
-    options => options.UseNpgsql(connectionString, npgsqlOptions =>
-    {
-        npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
-        npgsqlOptions.EnableRetryOnFailure(3);
-    }),
-    contextLifetime: ServiceLifetime.Scoped,
-    optionsLifetime: ServiceLifetime.Singleton);
-builder.Services.AddDbContextFactory<VulgataDbContext>(options =>
-    options.UseNpgsql(connectionString, npgsqlOptions =>
-    {
-        npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
-        npgsqlOptions.EnableRetryOnFailure(3);
-    }));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-builder.Services.AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.Configure)
-    .AddRoles<IdentityRole>()
-    .AddErrorDescriber<ChineseIdentityErrorDescriber>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders();
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(AuthorizationPolicyNames.AdministratorOnly, policy =>
-    {
-        policy.RequireAuthenticatedUser();
-        policy.AddRequirements(new AdministratorOnlyRequirement());
-    });
-
-    options.AddPolicy(AuthorizationPolicyNames.ManagementAccess, policy =>
-    {
-        policy.RequireAuthenticatedUser();
-        policy.AddRequirements(new ManagementAccessRequirement());
-    });
-});
-
-builder.Services.AddScoped<IAuthorizationHandler, AdministratorOnlyHandler>();
-builder.Services.AddScoped<IAuthorizationHandler, ManagementAccessHandler>();
-builder.Services.AddScoped<RoleSeeder>();
-builder.Services.AddScoped<IAdministratorRoleCoordinator, AdministratorRoleCoordinator>();
-builder.Services.AddScoped<ISystemOwnershipCoordinator, SystemOwnershipCoordinator>();
-
-builder.Services.AddScoped<ISystemRepository, SystemRepository>();
-builder.Services.AddScoped<IRepositoryRepository, RepositoryRepository>();
-builder.Services.AddScoped<KnowledgeDocumentMaterializer>();
-builder.Services.AddScoped<IKnowledgeStoreRepository, KnowledgeStoreRepository>();
-builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
-builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
-builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
-builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
-builder.Services.AddScoped<IRepositoryAuthorizationVerifier, RepositoryAuthorizationVerifier>();
-builder.Services.AddScoped<IChatEvidenceRetriever, ChatEvidenceRetriever>();
-builder.Services.AddScoped<IPreparedChatScopeResolver, PreparedChatScopeResolver>();
-builder.Services.AddScoped<IChatEvidenceCurrentnessValidator, ChatEvidenceCurrentnessValidator>();
-builder.Services.AddScoped<ChatCandidateExtractor>();
-builder.Services.AddScoped<ChatAgentProviderResolver>();
-builder.Services.AddScoped<ChatPromptCatalog>();
-builder.Services.AddScoped<IChatAgentDispatcher, ChatAgentDispatcher>();
-builder.Services.AddScoped<ChatAgentResultValidator>();
-builder.Services.AddScoped<PreparedChatCoordinator>();
-builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
-builder.Services.AddScoped<IExactGitRevisionSnapshotService, ExactGitRevisionSnapshotService>();
-builder.Services.AddScoped<ExactCandidateExtractors>();
-builder.Services.AddScoped<IExactCrossRepositoryResolver, ExactCrossRepositoryResolver>();
-builder.Services.AddScoped<
-    IExactCrossRepositoryResolutionStore,
-    ExactCrossRepositoryResolutionStore>();
-builder.Services.AddScoped<ExactCrossRepositoryResolutionCoordinator>();
-builder.Services.AddScoped<IPreparedDemoPass2FlowPlanner, PreparedDemoPass2FlowPlanner>();
-builder.Services.AddScoped<RevisionBoundWorkerContextHydrator>();
-builder.Services.AddScoped<
-    IWorkerAgentExecutionContextSource,
-    RevisionBoundWorkerExecutionContextSource>();
-builder.Services.AddScoped<WorkerAgentProviderResolver>();
-builder.Services.AddScoped<IWorkerAgentDispatcher, WorkerAgentDispatcher>();
-builder.Services.AddScoped<IWorkerAgentResultCommitter, WorkerAgentResultCommitter>();
-builder.Services.AddScoped<SequentialScanRunner>();
-builder.Services.AddScoped<HttpMessageHandler, SocketsHttpHandler>();
-builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
-builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
-builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
-builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
-builder.Services.AddScoped<IRepositoryProfilingCoordinator, RepositoryProfilingCoordinator>();
-builder.Services.AddScoped<IPreScanHandoffService, PreScanHandoffService>();
-builder.Services.AddScoped<IRepositoryDatabaseConnectionCoordinator, RepositoryDatabaseConnectionCoordinator>();
-builder.Services.AddScoped<ILlmProviderConnectionTestService, LlmProviderConnectionTestService>();
-builder.Services.AddScoped<IDatabaseConnectionTestService, DatabaseConnectionTestService>();
-builder.Services.AddScoped<ILlmProviderManagementCoordinator, LlmProviderManagementCoordinator>();
-builder.Services.AddScoped<ISystemLlmProviderOverrideCoordinator, SystemLlmProviderOverrideCoordinator>();
-builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
-var frameworkCatalog = FrameworkCatalog.LoadEmbedded();
-builder.Services.AddSingleton(frameworkCatalog);
-builder.Services.AddScoped<IFrameworkEvidenceDetector, FrameworkEvidenceDetector>();
-var communicationEvidenceRuleCatalog = CommunicationEvidenceRuleCatalog.LoadEmbedded();
-builder.Services.AddSingleton(communicationEvidenceRuleCatalog);
-builder.Services.AddScoped<IPreScanCommunicationDetector, CommunicationKindDetector>();
-string profilingDataRoot = builder.Configuration["CodeGraph:DataRootPath"]
-    ?? (OperatingSystem.IsLinux()
-        ? "/var/lib/vulgata-codegraph"
-        : Path.Combine(builder.Environment.ContentRootPath, "data", "profiling"));
-var codeGraphOptions = new CodeGraphOptions(
-    Path.Combine(profilingDataRoot, "codegraph"),
-    builder.Configuration.GetValue("CodeGraph:WholeRepositoryProcessTimeoutSeconds", 1_800));
-builder.Services.AddSingleton(codeGraphOptions);
-builder.Services.AddSingleton(new GitWorkingCopyOptions(Path.Combine(profilingDataRoot, "repositories")));
-builder.Services.AddScoped<IGitWorkingCopyService, GitWorkingCopyService>();
-builder.Services.AddScoped<ICommittedRepositorySnapshotService, CommittedRepositorySnapshotService>();
-builder.Services.AddScoped<IScanCandidateEnumerator, ScanCandidateEnumerator>();
-builder.Services.AddScoped<IScanStateService, NoOpScanStateService>();
-builder.Services.AddScoped<IContextCompositionService, ContextCompositionService>();
-builder.Services.AddScoped<IContextManagementCoordinator, ContextManagementCoordinator>();
-builder.Services.AddSingleton<ISecretEncryptionService, SecretEncryptionService>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateSystemRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<AssignSystemOwnerRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateRepositoryRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateLlmProviderRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpsertSystemLlmProviderOverrideRequestValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<UpsertDatabaseConnectionRequestValidator>();
+FrameworkCatalog frameworkCatalog = VulgataWebComposition.ConfigureServices(builder);
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -226,10 +63,6 @@ builder.Services.ConfigureApplicationCookie(options =>
         return Task.CompletedTask;
     };
 });
-
-builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
-
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
 
@@ -300,3 +133,172 @@ return;
 
 static bool IsApiRequest(HttpRequest request) =>
     request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
+
+public static class VulgataWebComposition
+{
+    public static FrameworkCatalog ConfigureServices(WebApplicationBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        IDataProtectionBuilder dataProtection = builder.Services.AddDataProtection();
+        string? keyRingPath = builder.Configuration["DataProtection:KeyRingPath"];
+        string? applicationName = builder.Configuration["DataProtection:ApplicationName"];
+        if (!string.IsNullOrWhiteSpace(keyRingPath) &&
+            !string.IsNullOrWhiteSpace(applicationName))
+        {
+            dataProtection
+                .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath.Trim()))
+                .SetApplicationName(applicationName.Trim());
+        }
+
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IUserContext>(services =>
+        {
+            IHttpContextAccessor accessor = services.GetRequiredService<IHttpContextAccessor>();
+            IAuthorizationService authorization = services.GetRequiredService<IAuthorizationService>();
+            ClaimsPrincipal principal = accessor.HttpContext?.User ?? new ClaimsPrincipal();
+            return new UserContext(principal, authorization);
+        });
+        builder.Services.AddHttpClient(
+            "LlmProviderConnectionTest",
+            client => client.Timeout = TimeSpan.FromSeconds(10));
+        builder.Services.AddHttpClient<ICodeGraphProvider, CodeGraphContextProvider>(client =>
+            client.Timeout = Timeout.InfiniteTimeSpan);
+        builder.Services.AddCascadingAuthenticationState();
+        builder.Services.AddScoped<IdentityRedirectManager>();
+        builder.Services.AddScoped<
+            AuthenticationStateProvider,
+            IdentityRevalidatingAuthenticationStateProvider>();
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        }).AddIdentityCookies();
+
+        string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
+            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsHistoryTable("__IdentityMigrationsHistory", "identity");
+                npgsqlOptions.EnableRetryOnFailure(3);
+            }));
+        builder.Services.AddDbContext<VulgataDbContext>(
+            options => options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+                npgsqlOptions.EnableRetryOnFailure(3);
+            }),
+            contextLifetime: ServiceLifetime.Scoped,
+            optionsLifetime: ServiceLifetime.Singleton);
+        builder.Services.AddDbContextFactory<VulgataDbContext>(options =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+                npgsqlOptions.EnableRetryOnFailure(3);
+            }));
+        builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+        builder.Services.AddIdentityCore<ApplicationUser>(IdentityOptionsConfiguration.Configure)
+            .AddRoles<IdentityRole>()
+            .AddErrorDescriber<ChineseIdentityErrorDescriber>()
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy(AuthorizationPolicyNames.AdministratorOnly, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new AdministratorOnlyRequirement());
+            });
+            options.AddPolicy(AuthorizationPolicyNames.ManagementAccess, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new ManagementAccessRequirement());
+            });
+        });
+        builder.Services.AddScoped<IAuthorizationHandler, AdministratorOnlyHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, ManagementAccessHandler>();
+        builder.Services.AddScoped<RoleSeeder>();
+        builder.Services.AddScoped<IAdministratorRoleCoordinator, AdministratorRoleCoordinator>();
+        builder.Services.AddScoped<ISystemOwnershipCoordinator, SystemOwnershipCoordinator>();
+        builder.Services.AddScoped<ISystemRepository, SystemRepository>();
+        builder.Services.AddScoped<IRepositoryRepository, RepositoryRepository>();
+        builder.Services.AddScoped<KnowledgeDocumentMaterializer>();
+        builder.Services.AddScoped<IKnowledgeStoreRepository, KnowledgeStoreRepository>();
+        builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
+        builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
+        builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
+        builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
+        builder.Services.AddScoped<IRepositoryAuthorizationVerifier, RepositoryAuthorizationVerifier>();
+        builder.Services.AddScoped<IChatEvidenceRetriever, ChatEvidenceRetriever>();
+        builder.Services.AddScoped<IPreparedChatScopeResolver, PreparedChatScopeResolver>();
+        builder.Services.AddScoped<IChatEvidenceCurrentnessValidator, ChatEvidenceCurrentnessValidator>();
+        builder.Services.AddScoped<ChatCandidateExtractor>();
+        builder.Services.AddScoped<ChatAgentProviderResolver>();
+        builder.Services.AddScoped<ChatPromptCatalog>();
+        builder.Services.AddScoped<IChatAgentDispatcher, ChatAgentDispatcher>();
+        builder.Services.AddScoped<ChatAgentResultValidator>();
+        builder.Services.AddScoped<PreparedChatCoordinator>();
+        builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
+        builder.Services.AddScoped<IExactGitRevisionSnapshotService, ExactGitRevisionSnapshotService>();
+        builder.Services.AddScoped<ExactCandidateExtractors>();
+        builder.Services.AddScoped<IExactCrossRepositoryResolver, ExactCrossRepositoryResolver>();
+        builder.Services.AddScoped<IExactCrossRepositoryResolutionStore, ExactCrossRepositoryResolutionStore>();
+        builder.Services.AddScoped<ExactCrossRepositoryResolutionCoordinator>();
+        builder.Services.AddScoped<IPreparedDemoPass2FlowPlanner, PreparedDemoPass2FlowPlanner>();
+        builder.Services.AddScoped<RevisionBoundWorkerContextHydrator>();
+        builder.Services.AddScoped<IWorkerAgentExecutionContextSource, RevisionBoundWorkerExecutionContextSource>();
+        builder.Services.AddScoped<WorkerAgentProviderResolver>();
+        builder.Services.AddScoped<IWorkerAgentDispatcher, WorkerAgentDispatcher>();
+        builder.Services.AddScoped<IWorkerAgentResultCommitter, WorkerAgentResultCommitter>();
+        builder.Services.AddScoped<SequentialScanRunner>();
+        builder.Services.AddScoped<HttpMessageHandler, SocketsHttpHandler>();
+        builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
+        builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
+        builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
+        builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
+        builder.Services.AddScoped<IRepositoryProfilingCoordinator, RepositoryProfilingCoordinator>();
+        builder.Services.AddScoped<IPreScanHandoffService, PreScanHandoffService>();
+        builder.Services.AddScoped<IRepositoryDatabaseConnectionCoordinator, RepositoryDatabaseConnectionCoordinator>();
+        builder.Services.AddScoped<ILlmProviderConnectionTestService, LlmProviderConnectionTestService>();
+        builder.Services.AddScoped<IDatabaseConnectionTestService, DatabaseConnectionTestService>();
+        builder.Services.AddScoped<ILlmProviderManagementCoordinator, LlmProviderManagementCoordinator>();
+        builder.Services.AddScoped<ISystemLlmProviderOverrideCoordinator, SystemLlmProviderOverrideCoordinator>();
+        builder.Services.AddScoped<IGitRemoteValidationService, GitRemoteValidationService>();
+        FrameworkCatalog frameworkCatalog = FrameworkCatalog.LoadEmbedded();
+        builder.Services.AddSingleton(frameworkCatalog);
+        builder.Services.AddScoped<IFrameworkEvidenceDetector, FrameworkEvidenceDetector>();
+        CommunicationEvidenceRuleCatalog communicationCatalog =
+            CommunicationEvidenceRuleCatalog.LoadEmbedded();
+        builder.Services.AddSingleton(communicationCatalog);
+        builder.Services.AddScoped<IPreScanCommunicationDetector, CommunicationKindDetector>();
+        string profilingDataRoot = builder.Configuration["CodeGraph:DataRootPath"] ??
+            (OperatingSystem.IsLinux()
+                ? "/var/lib/vulgata-codegraph"
+                : Path.Combine(builder.Environment.ContentRootPath, "data", "profiling"));
+        builder.Services.AddSingleton(new CodeGraphOptions(
+            Path.Combine(profilingDataRoot, "codegraph"),
+            builder.Configuration.GetValue(
+                "CodeGraph:WholeRepositoryProcessTimeoutSeconds",
+                1_800)));
+        builder.Services.AddSingleton(new GitWorkingCopyOptions(
+            Path.Combine(profilingDataRoot, "repositories")));
+        builder.Services.AddScoped<IGitWorkingCopyService, GitWorkingCopyService>();
+        builder.Services.AddScoped<ICommittedRepositorySnapshotService, CommittedRepositorySnapshotService>();
+        builder.Services.AddScoped<IScanCandidateEnumerator, ScanCandidateEnumerator>();
+        builder.Services.AddScoped<IScanStateService, NoOpScanStateService>();
+        builder.Services.AddScoped<IContextCompositionService, ContextCompositionService>();
+        builder.Services.AddScoped<IContextManagementCoordinator, ContextManagementCoordinator>();
+        builder.Services.AddSingleton<ISecretEncryptionService, SecretEncryptionService>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateSystemRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<AssignSystemOwnerRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateRepositoryRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateLlmProviderRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<UpsertSystemLlmProviderOverrideRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<UpsertDatabaseConnectionRequestValidator>();
+        builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
+        builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+        return frameworkCatalog;
+    }
+}

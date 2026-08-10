@@ -1,10 +1,15 @@
 using Microsoft.Playwright;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
+using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Tests.ReleaseGate;
+using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
 
@@ -140,6 +145,342 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
     }
 
     [Fact]
+    public void OptionAProvisioner_PublicWebComposition_ResolvesRequiredProductServices()
+    {
+        WebApplicationBuilder builder = WebApplication.CreateBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ConnectionStrings:DefaultConnection"] =
+                "Host=127.0.0.1;Database=not-opened;Username=not-opened;Password=not-opened",
+            ["CodeGraph:DataRootPath"] = "/var/lib/vulgata-codegraph",
+            ["DataProtection:KeyRingPath"] = "/var/lib/vulgata-dpkeys",
+            ["DataProtection:ApplicationName"] = "Vulgata.Story115.ReleaseGate",
+        });
+
+        VulgataWebComposition.ConfigureServices(builder);
+
+        using ServiceProvider provider = builder.Services.BuildServiceProvider(
+            new ServiceProviderOptions { ValidateScopes = true });
+        using IServiceScope scope = provider.CreateScope();
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<RoleSeeder>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IAdministratorRoleCoordinator>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<ISystemOwnershipCoordinator>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IRepositoryManagementCoordinator>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IRepositoryProfilingCoordinator>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<ILlmProviderManagementCoordinator>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<ISystemLlmProviderOverrideCoordinator>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<SequentialScanRunner>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<IPreparedDemoPass2FlowPlanner>());
+    }
+
+    [Fact]
+    public async Task OptionAProvisioner_Publish_ContainsOnlyThreeMountCandidateFilesAsync()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string projectPath = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "Vulgata.Tests",
+            "ReleaseGate",
+            "Provisioner",
+            "Vulgata.Story115.Provisioner.csproj");
+        string outputPath = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story115-provisioner-publish-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var startInfo = new ProcessStartInfo("dotnet")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                WorkingDirectory = repositoryRoot,
+            };
+            foreach (string argument in new[]
+            {
+                "publish",
+                projectPath,
+                "--configuration",
+                "Release",
+                "--no-restore",
+                "--output",
+                outputPath,
+            })
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+
+            using Process process = Process.Start(startInfo) ??
+                throw new InvalidOperationException("Failed to publish the Story 11.5 provisioner.");
+            Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+            string standardOutput = await standardOutputTask;
+            string standardError = await standardErrorTask;
+            Assert.True(process.ExitCode == 0, standardOutput + Environment.NewLine + standardError);
+
+            string[] mountCandidates = Directory.EnumerateFiles(outputPath)
+                .Select(Path.GetFileName)
+                .Where(name => name!.StartsWith("Vulgata.", StringComparison.Ordinal))
+                .Order(StringComparer.Ordinal)
+                .ToArray()!;
+            Assert.Equal(
+                [
+                    "Vulgata.Story115.Provisioner.deps.json",
+                    "Vulgata.Story115.Provisioner.dll",
+                    "Vulgata.Story115.Provisioner.runtimeconfig.json",
+                ],
+                mountCandidates);
+            Assert.DoesNotContain(
+                mountCandidates,
+                name => new[]
+                {
+                    "Vulgata.Core.dll",
+                    "Vulgata.Infrastructure.dll",
+                    "Vulgata.Shared.dll",
+                    "Vulgata.Agents.dll",
+                    "Vulgata.Web.dll",
+                }.Contains(name, StringComparer.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            if (Directory.Exists(outputPath))
+            {
+                Directory.Delete(outputPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task OptionAProvisioner_Contract_IsClosedImageOwnedAndSevenSlotAsync()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string projectPath = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "Vulgata.Tests",
+            "ReleaseGate",
+            "Provisioner",
+            "Vulgata.Story115.Provisioner.csproj");
+        var startInfo = new ProcessStartInfo("dotnet")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            WorkingDirectory = repositoryRoot,
+        };
+        foreach (string argument in new[]
+        {
+            "run",
+            "--project",
+            projectPath,
+            "--configuration",
+            "Release",
+            "--no-build",
+            "--no-restore",
+            "--",
+            "--describe-contract",
+        })
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        using Process process = Process.Start(startInfo) ??
+            throw new InvalidOperationException("Failed to describe the Story 11.5 provisioner contract.");
+        Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
+        Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        string standardOutput = await standardOutputTask;
+        string standardError = await standardErrorTask;
+        Assert.True(process.ExitCode == 0, standardError);
+
+        using JsonDocument document = JsonDocument.Parse(standardOutput);
+        JsonElement root = document.RootElement;
+        Assert.Equal("vulgata.story115.provisioner-contract/1", root.GetProperty("schemaIdentity").GetString());
+        Assert.Equal("/app", root.GetProperty("productAssemblyRoot").GetString());
+        Assert.Equal("0.5.1", root.GetProperty("codeGraphContextVersion").GetString());
+        Assert.Equal(65536, root.GetProperty("maximumInputBytes").GetInt32());
+        Assert.Equal(65536, root.GetProperty("maximumResultBytes").GetInt32());
+        Assert.Equal(
+            [
+                "SchemaIdentity",
+                "RunNonce",
+                "ConnectionString",
+                "AccountRepositoryUri",
+                "ChannelRepositoryUri",
+                "WorkerEndpoint",
+                "ChatEndpoint",
+                "ProviderApiKey",
+                "DataProtectionApplicationName",
+                "AdministratorEmail",
+                "AdministratorPassword",
+                "OwnerEmail",
+                "OwnerPassword",
+                "NegativeEmail",
+                "NegativePassword",
+            ],
+            root.GetProperty("inputProperties")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
+        Assert.Equal("temp-file-atomic-rename-no-overwrite", root.GetProperty("resultPublication").GetString());
+        Assert.Equal(
+            [
+                "SchemaIdentity",
+                "RunNonceHash",
+                "MigrationOutcome",
+                "ProductStageOutcome",
+                "SystemId",
+                "AccountRepositoryId",
+                "ChannelRepositoryId",
+                "AccountScanRunId",
+                "ChannelScanRunId",
+                "AccountScanExecutionId",
+                "ChannelScanExecutionId",
+                "AccountAlias",
+                "AccountRef",
+                "AccountCommit",
+                "ChannelAlias",
+                "ChannelRef",
+                "ChannelCommit",
+                "ProfileFingerprint",
+                "RuntimeSupportFingerprint",
+                "OrdinaryPass1DispatchCount",
+                "Pass2DispatchCount",
+                "Pass2CommitCount",
+                "CodeGraphContextVersion",
+                "CodeGraphRequirementsLockSha256",
+                "CompletedAtUtc",
+                "ContentHash",
+            ],
+            root.GetProperty("resultProperties")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
+        Assert.Equal(
+            [
+                "mbs_account|refs/tags/vulgata/August15th-sample|19c60cd3f3976b7697c487c7bafd96142e3a7625",
+                "mbs_channel|refs/tags/vulgata/August15th-sample|47f6b627a7598f862873610413eec1e1e7bf46bf",
+            ],
+            root.GetProperty("acceptedProfiledRevisions")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
+        Assert.Equal(2, root.GetProperty("ordinaryPass1DispatchCount").GetInt32());
+        Assert.Equal(2, root.GetProperty("runtimeFlowRepositoryCount").GetInt32());
+        Assert.Equal(1, root.GetProperty("pass2DispatchCount").GetInt32());
+        Assert.Equal(1, root.GetProperty("pass2CommitCount").GetInt32());
+        Assert.Equal(
+            [
+                "Vulgata.Story115.Provisioner.dll",
+                "Vulgata.Story115.Provisioner.deps.json",
+                "Vulgata.Story115.Provisioner.runtimeconfig.json",
+            ],
+            root.GetProperty("mountCandidates")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
+        Assert.Equal(
+            [
+                "PreparedFlowSchemaIdentity",
+                "ManifestId",
+                "FlowId",
+                "SystemId",
+                "RepositoryId",
+                "TraceEvidence",
+                "CodeLogicDocumentVersions",
+            ],
+            root.GetProperty("pass2PayloadSlots")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
+        string[] services = root.GetProperty("requiredProductServices")
+            .EnumerateArray()
+            .Select(value => value.GetString()!)
+            .ToArray();
+        Assert.Contains("IRepositoryProfilingCoordinator", services);
+        Assert.Contains("SequentialScanRunner", services);
+        Assert.Contains("IPreparedDemoPass2FlowPlanner", services);
+        Assert.DoesNotContain("DbSet", standardOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain("reflection", standardOutput, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OptionAProvisioner_ClosedInput_RejectsUnknownSecretWithoutDiagnosticLeakAsync()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string projectPath = Path.Combine(
+            repositoryRoot,
+            "tests",
+            "Vulgata.Tests",
+            "ReleaseGate",
+            "Provisioner",
+            "Vulgata.Story115.Provisioner.csproj");
+        string runPath = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story115-provisioner-contract-" + Guid.NewGuid().ToString("N"));
+        string inputPath = Path.Combine(runPath, "input.json");
+        string outputPath = Path.Combine(runPath, "result.json");
+        const string secretSentinel = "must-not-escape-story115-secret";
+        Directory.CreateDirectory(runPath);
+        try
+        {
+            await File.WriteAllTextAsync(
+                inputPath,
+                $$"""
+                {"schemaIdentity":"vulgata.story115.provisioner-input/1","unexpectedSecret":"{{secretSentinel}}"}
+                """);
+            var startInfo = new ProcessStartInfo("dotnet")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                WorkingDirectory = repositoryRoot,
+            };
+            foreach (string argument in new[]
+            {
+                "run",
+                "--project",
+                projectPath,
+                "--configuration",
+                "Release",
+                "--no-build",
+                "--no-restore",
+                "--",
+                "--input",
+                inputPath,
+                "--output",
+                outputPath,
+            })
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+
+            using Process process = Process.Start(startInfo) ??
+                throw new InvalidOperationException("Failed to run the Story 11.5 provisioner input contract.");
+            Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
+            string standardOutput = await standardOutputTask;
+            string standardError = await standardErrorTask;
+
+            Assert.Equal(1, process.ExitCode);
+            Assert.Empty(standardOutput);
+            Assert.Equal("Story 11.5 provisioning failed." + Environment.NewLine, standardError);
+            Assert.DoesNotContain(secretSentinel, standardError, StringComparison.Ordinal);
+            Assert.DoesNotContain(runPath, standardError, StringComparison.OrdinalIgnoreCase);
+            Assert.False(File.Exists(outputPath));
+        }
+        finally
+        {
+            if (Directory.Exists(runPath))
+            {
+                Directory.Delete(runPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void DatabaseOwnership_CryptographicNonceIsExactAndUnsafeNamesAreRejected()
     {
         Story115RunIdentity first = Story115ReleaseHarness.CreateRunIdentity();
@@ -160,6 +501,79 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             },
             name => Assert.False(Story115ReleaseHarness.IsOwnedDatabaseName(name)));
         Assert.All(first.ResourceNames, Story115ReleaseHarness.RequireOwnedResourceName);
+    }
+
+    [Fact]
+    public async Task Cleanup_NonceRunDirectoryWithReadOnlyGitPackIndex_RemovesExactOwnedDirectoryAsync()
+    {
+        string runDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story115-" + Guid.NewGuid().ToString("N"));
+        string packIndex = Path.Combine(runDirectory, ".git", "objects", "pack", "pack-test.idx");
+        Directory.CreateDirectory(Path.GetDirectoryName(packIndex)!);
+        await File.WriteAllTextAsync(packIndex, "test");
+        File.SetAttributes(packIndex, FileAttributes.ReadOnly);
+        FileStream? transientLease = new(
+            packIndex,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.None);
+
+        try
+        {
+            Task cleanup = Story115ReleaseHarness.DeleteOwnedRunDirectoryAsync(runDirectory);
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            transientLease.Dispose();
+            transientLease = null;
+            await cleanup;
+
+            Assert.False(Directory.Exists(runDirectory));
+        }
+        finally
+        {
+            transientLease?.Dispose();
+            if (File.Exists(packIndex))
+            {
+                File.SetAttributes(packIndex, FileAttributes.Normal);
+            }
+
+            if (Directory.Exists(runDirectory))
+            {
+                Directory.Delete(runDirectory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Cleanup_PersistentGitPackIndexLease_ReportsFixedSanitizedFailureAsync()
+    {
+        string runDirectory = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story115-" + Guid.NewGuid().ToString("N"));
+        string packIndex = Path.Combine(runDirectory, ".git", "objects", "pack", "pack-test.idx");
+        Directory.CreateDirectory(Path.GetDirectoryName(packIndex)!);
+        await File.WriteAllTextAsync(packIndex, "test");
+        FileStream persistentLease = new(
+            packIndex,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.None);
+        try
+        {
+            IOException exception = await Assert.ThrowsAsync<IOException>(() =>
+                Story115ReleaseHarness.DeleteOwnedRunDirectoryAsync(runDirectory));
+
+            Assert.Equal("The Story 11.5 nonce run directory could not be removed.", exception.Message);
+            Assert.DoesNotContain(runDirectory, exception.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            persistentLease.Dispose();
+            if (Directory.Exists(runDirectory))
+            {
+                Directory.Delete(runDirectory, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -188,6 +602,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 "database-create",
                 "migrate",
                 "primary",
+                "remove-provisioner",
                 "remove-app-provider",
                 "terminate-exact-database",
                 "drop-exact-database",
@@ -195,6 +610,70 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 "remove-owned-image-network-key-state",
             ],
             operations.Events);
+    }
+
+    [Fact]
+    public async Task OptionALifecycle_AlwaysRemovesProvisionerBeforeAppProviderAndDatabase()
+    {
+        Story115RunIdentity identity = Story115ReleaseHarness.CreateRunIdentity();
+        var operations = new RecordingReleaseOperations(failDrop: false);
+
+        await Story115ReleaseHarness.ExecuteLifecycleAsync(
+            identity,
+            operations,
+            _ => Task.CompletedTask);
+
+        Assert.Equal(
+            [
+                "remove-provisioner",
+                "remove-app-provider",
+                "terminate-exact-database",
+                "drop-exact-database",
+                "database-absent-after-drop",
+                "remove-owned-image-network-key-state",
+            ],
+            operations.Events.SkipWhile(value => value != "remove-provisioner"));
+    }
+
+    [Theory]
+    [InlineData("prepare-infrastructure", false)]
+    [InlineData("provider-docker-desktop-postgres-preflight", false)]
+    [InlineData("database-absent-before-create", false)]
+    [InlineData("migrate", true)]
+    public async Task OptionALifecycle_FailureAfterEachDeterministicAcquisition_CleansOnlyProvenOwnershipAsync(
+        string failurePoint,
+        bool databaseOwnershipProven)
+    {
+        Story115RunIdentity identity = Story115ReleaseHarness.CreateRunIdentity();
+        var operations = new RecordingReleaseOperations(
+            failDrop: false,
+            failAfterEvent: failurePoint);
+
+        Story115ReleaseGateException exception = await Assert.ThrowsAsync<
+            Story115ReleaseGateException>(() => Story115ReleaseHarness.ExecuteLifecycleAsync(
+                identity,
+                operations,
+                _ => Task.CompletedTask));
+
+        Assert.Equal($"failure-after-{failurePoint}", exception.PrimaryFailure?.Message);
+        Assert.Equal(
+            [
+                "remove-provisioner",
+                "remove-app-provider",
+            ],
+            operations.Events
+                .SkipWhile(value => value != "remove-provisioner")
+                .Take(2));
+        Assert.Equal(
+            databaseOwnershipProven,
+            operations.Events.Contains("terminate-exact-database"));
+        Assert.Equal(
+            databaseOwnershipProven,
+            operations.Events.Contains("drop-exact-database"));
+        Assert.Equal(
+            databaseOwnershipProven,
+            operations.Events.Contains("database-absent-after-drop"));
+        Assert.Equal("remove-owned-image-network-key-state", operations.Events[^1]);
     }
 
     [Theory]
@@ -271,6 +750,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 "provider-docker-desktop-postgres-preflight",
                 "database-absent-before-create",
                 "database-create",
+                "remove-provisioner",
                 "remove-app-provider",
                 "database-exists-after-ambiguous-create",
                 "terminate-exact-database",
@@ -523,10 +1003,15 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.Equal(
             [
                 "network-create",
-                "provider-run",
                 "source-bound-image-build",
                 "image-label-inspect",
+                "provider-run",
+                "provisioner-run",
+                "provisioner-image-inspect",
+                "provisioner-remove",
+                "provisioner-absence-inspect",
                 "app-run",
+                "app-image-inspect",
                 "curl-health-inspect",
                 "identity-playwright-circuit",
             ],
@@ -593,6 +1078,105 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.Contains("socket.create_connection", preflight.Arguments[^1], StringComparison.Ordinal);
         Assert.DoesNotContain("Password", preflight.Arguments[^1], StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("gate", preflight.Arguments[^1], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OptionAFinalPlan_UsesOneImmutableImageForProvisionerThenApp()
+    {
+        var operations = new RecordingFinalRunOperations();
+
+        await Story115ReleaseHarness.RunFinalAsync(
+            Story115ReleaseHarness.CreateValidEnvironmentForFastTests(),
+            operations);
+
+        Story115FinalRunPlan plan = Assert.IsType<Story115FinalRunPlan>(operations.Plan);
+        Assert.Equal(
+            [
+                "network-create",
+                "source-bound-image-build",
+                "image-label-inspect",
+                "provider-run",
+                "provisioner-run",
+                "provisioner-image-inspect",
+                "provisioner-remove",
+                "provisioner-absence-inspect",
+                "app-run",
+                "app-image-inspect",
+                "curl-health-inspect",
+                "identity-playwright-circuit",
+            ],
+            plan.Commands.Select(command => command.Name));
+        Assert.Single(plan.Commands.Where(command => command.Name == "source-bound-image-build"));
+
+        Story115ExternalCommand provisioner = plan.Commands.Single(command =>
+            command.Name == "provisioner-run");
+        Story115ExternalCommand app = plan.Commands.Single(command => command.Name == "app-run");
+        Assert.Contains("{{FINAL_IMAGE_ID}}", provisioner.Arguments);
+        Assert.Contains("{{FINAL_IMAGE_ID}}", app.Arguments);
+        Assert.Contains($"container:{plan.Identity.ProviderContainer}", provisioner.Arguments);
+        Assert.Contains($"container:{plan.Identity.ProviderContainer}", app.Arguments);
+        Assert.Equal(9, provisioner.Arguments.Count(argument => argument == "--mount"));
+        Assert.Contains(
+            provisioner.Arguments,
+            argument => argument.Contains(
+                "target=/vulgata/sources/mbs_account,readonly",
+                StringComparison.Ordinal));
+        Assert.Contains(
+            provisioner.Arguments,
+            argument => argument.Contains(
+                "target=/vulgata/sources/mbs_channel,readonly",
+                StringComparison.Ordinal));
+        Assert.Contains(
+            provisioner.Arguments,
+            argument => argument.Contains(
+                "target=/vulgata/run/config/input.json,readonly",
+                StringComparison.Ordinal));
+        Assert.Equal(
+            3,
+            provisioner.Arguments.Count(argument => argument.Contains(
+                "target=/app/Vulgata.Story115.Provisioner.",
+                StringComparison.Ordinal)));
+        Assert.DoesNotContain(
+            provisioner.Arguments,
+            argument => new[]
+            {
+                "Vulgata.Core.dll",
+                "Vulgata.Infrastructure.dll",
+                "Vulgata.Shared.dll",
+                "Vulgata.Agents.dll",
+                "Vulgata.Web.dll",
+            }.Any(name => argument.Contains(name, StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain(
+            plan.Commands.SelectMany(command => command.Arguments),
+            argument => argument is "--add-host" or "host-gateway" or "--internal" ||
+                argument.Contains("pip", StringComparison.OrdinalIgnoreCase) ||
+                argument.Contains("cgc", StringComparison.OrdinalIgnoreCase));
+        List<Story115ExternalCommand> commands = plan.Commands.ToList();
+        Assert.True(
+            commands.FindIndex(command => command.Name == "provisioner-remove") <
+            commands.FindIndex(command => command.Name == "app-run"));
+    }
+
+    [Fact]
+    public void OptionAImmutableImageBinding_RejectsTagsAndReplacesOnlyTheClosedToken()
+    {
+        var command = new Story115ExternalCommand(
+            "app-run",
+            "docker",
+            ["run", "{{FINAL_IMAGE_ID}}"]);
+        string imageId = "sha256:" + new string('a', 64);
+
+        Story115ExternalCommand bound = Story115ReleaseHarness.BindImmutableImageId(
+            command,
+            imageId);
+
+        Assert.Equal(["run", imageId], bound.Arguments);
+        Assert.Throws<InvalidOperationException>(() =>
+            Story115ReleaseHarness.BindImmutableImageId(command, "vulgata-story115-final"));
+        Assert.Throws<InvalidOperationException>(() =>
+            Story115ReleaseHarness.BindImmutableImageId(
+                new Story115ExternalCommand("inspect", "docker", ["inspect"]),
+                imageId));
     }
 
     [Fact]
@@ -720,7 +1304,8 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         bool failPreflight = false,
         bool failCreate = false,
         bool databaseExistsAfterAmbiguousCreate = false,
-        bool failDatabaseExistsQuery = false) : IStory115ReleaseOperations
+        bool failDatabaseExistsQuery = false,
+        string? failAfterEvent = null) : IStory115ReleaseOperations
     {
         internal List<string> Events { get; } = [];
 
@@ -729,7 +1314,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             CancellationToken cancellationToken)
         {
             Events.Add("prepare-infrastructure");
-            return Task.CompletedTask;
+            return FailAfterAsync("prepare-infrastructure");
         }
 
         public Task PreflightDockerDesktopPostgreSqlAsync(
@@ -739,7 +1324,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             Events.Add("provider-docker-desktop-postgres-preflight");
             return failPreflight
                 ? Task.FromException(new InvalidOperationException("provider-preflight-failure"))
-                : Task.CompletedTask;
+                : FailAfterAsync("provider-docker-desktop-postgres-preflight");
         }
 
         public Task ProveDatabaseAbsentAsync(
@@ -747,10 +1332,11 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             bool afterDrop,
             CancellationToken cancellationToken)
         {
-            Events.Add(afterDrop
+            string eventName = afterDrop
                 ? "database-absent-after-drop"
-                : "database-absent-before-create");
-            return Task.CompletedTask;
+                : "database-absent-before-create";
+            Events.Add(eventName);
+            return FailAfterAsync(eventName);
         }
 
         public Task CreateDatabaseAsync(
@@ -779,7 +1365,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             CancellationToken cancellationToken)
         {
             Events.Add("migrate");
-            return Task.CompletedTask;
+            return FailAfterAsync("migrate");
         }
 
         public Task RemoveAppAndProviderAsync(
@@ -787,6 +1373,14 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             CancellationToken cancellationToken)
         {
             Events.Add("remove-app-provider");
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveProvisionerAsync(
+            Story115RunIdentity identity,
+            CancellationToken cancellationToken)
+        {
+            Events.Add("remove-provisioner");
             return Task.CompletedTask;
         }
 
@@ -815,6 +1409,12 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             Events.Add("remove-owned-image-network-key-state");
             return Task.CompletedTask;
         }
+
+        private Task FailAfterAsync(string eventName) =>
+            StringComparer.Ordinal.Equals(failAfterEvent, eventName)
+                ? Task.FromException(
+                    new InvalidOperationException($"failure-after-{eventName}"))
+                : Task.CompletedTask;
     }
 
     private sealed class RecordingFinalRunOperations : IStory115FinalRunOperations
