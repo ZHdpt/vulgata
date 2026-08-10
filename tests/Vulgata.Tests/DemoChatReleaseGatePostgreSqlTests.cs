@@ -301,6 +301,19 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         JsonElement root = document.RootElement;
         Assert.Equal("vulgata.story115.provisioner-contract/1", root.GetProperty("schemaIdentity").GetString());
         Assert.Equal("/app", root.GetProperty("productAssemblyRoot").GetString());
+        Assert.Equal(
+            [
+                "Vulgata.Web",
+                "Vulgata.Core",
+                "Vulgata.Infrastructure",
+                "Vulgata.Agents",
+                "Vulgata.Shared",
+                "Vulgata.Web.ViewModels",
+            ],
+            root.GetProperty("imageProductAssemblyAllowlist")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
         Assert.Equal("0.5.1", root.GetProperty("codeGraphContextVersion").GetString());
         Assert.Equal(65536, root.GetProperty("maximumInputBytes").GetInt32());
         Assert.Equal(65536, root.GetProperty("maximumResultBytes").GetInt32());

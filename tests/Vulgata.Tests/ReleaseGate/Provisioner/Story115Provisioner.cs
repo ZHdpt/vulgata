@@ -42,6 +42,16 @@ public static class Story115Provisioner
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         WriteIndented = false,
     };
+    private static readonly string[] _imageProductAssemblyAllowlist =
+    [
+        "Vulgata.Web",
+        "Vulgata.Core",
+        "Vulgata.Infrastructure",
+        "Vulgata.Agents",
+        "Vulgata.Shared",
+        "Vulgata.Web.ViewModels",
+    ];
+    private static int _imageProductAssemblyResolverInstalled;
 
     public static async Task<int> RunAsync(
         IReadOnlyList<string> arguments,
@@ -60,6 +70,7 @@ public static class Story115Provisioner
         {
             (string inputPath, string outputPath) = ParseArguments(arguments);
             ProvisionerInput input = await ReadInputAsync(inputPath, cancellationToken);
+            InstallImageProductAssemblyResolver();
             failureExitCode = 11;
             RequireImageRuntime();
             ProductRunState state = await ExecuteProductPathAsync(
@@ -87,6 +98,7 @@ public static class Story115Provisioner
     {
         SchemaIdentity = _contractSchema,
         ProductAssemblyRoot = "/app",
+        ImageProductAssemblyAllowlist = _imageProductAssemblyAllowlist,
         CodeGraphContextVersion = _codeGraphVersion,
         MaximumInputBytes,
         MaximumResultBytes,
@@ -284,6 +296,33 @@ public static class Story115Provisioner
         {
             throw new InvalidOperationException("The image CodeGraph runtime identity is invalid.");
         }
+    }
+
+    private static void InstallImageProductAssemblyResolver()
+    {
+        if (!OperatingSystem.IsLinux() ||
+            Interlocked.Exchange(ref _imageProductAssemblyResolverInstalled, 1) != 0)
+        {
+            return;
+        }
+
+        System.Runtime.Loader.AssemblyLoadContext.Default.Resolving +=
+            ResolveImageProductAssembly;
+    }
+
+    private static System.Reflection.Assembly? ResolveImageProductAssembly(
+        System.Runtime.Loader.AssemblyLoadContext context,
+        System.Reflection.AssemblyName assemblyName)
+    {
+        string? name = assemblyName.Name;
+        if (name is null ||
+            !_imageProductAssemblyAllowlist.Contains(name, StringComparer.Ordinal))
+        {
+            return null;
+        }
+
+        string path = Path.Combine("/app", name + ".dll");
+        return File.Exists(path) ? context.LoadFromAssemblyPath(path) : null;
     }
 
     private static async Task<ProductRunState> ExecuteProductPathAsync(

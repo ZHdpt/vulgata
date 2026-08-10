@@ -299,6 +299,19 @@ as completed acceptance criteria.
   topology, migration/model, or T072/T073 acceptance behavior. A focused
   Dockerfile contract observed RED before the mirror change and is GREEN 3/3;
   the changed candidate requires a fresh combined quality review before T072.
+- Quality iteration 15 accepted the mirror candidate with zero findings. The
+  next live T072 attempt built the no-cache image in under five minutes, then
+  failed cleanly at closed provisioner stage 11 before product provisioning.
+  A minimized real-container diagnosis proved the image's `cgc` 0.5.1 and
+  requirements-lock checks pass, but the three-file driver's dependency
+  manifest intentionally omits image-owned `Vulgata.Web`, causing CLR
+  resolution to fail before runtime validation entered. The test-first repair
+  declares and installs an exact six-name `/app` assembly resolver before any
+  typed product reference; unknown names still fail closed, image inventory
+  and collision checks remain authoritative, focused contract GREEN is 1/1,
+  the minimized container now advances beyond stage 11, and the complete
+  non-live harness remains GREEN 50/50. T072-T073 remain pending a fresh
+  combined quality review over the corrected candidate.
 
 ### File List
 

@@ -32,9 +32,9 @@
       },
       "quality-review": {
         "status": "pending",
-        "iteration": 15,
+        "iteration": 16,
         "dispatch_id": null,
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-15.json",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-16.json",
         "input_boundary": null,
         "completed_at": null
     },
@@ -862,6 +862,43 @@
         ],
         "validation": "Observed focused RED because the Dockerfile did not contain the user-authorized Tsinghua Ubuntu and pip mirrors; minimal GREEN retains the official Ubuntu Noble security archive, pip --require-hashes, bounded retries/timeouts, exact package identities, and the accepted one-image topology; focused Debug and Release contract filters 3/3 GREEN and the complete non-live release harness 50/50 GREEN",
         "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 15,
+        "input_commit": "58b47a7d0a6a28cadf1f4a4b8dc4e3889d710c71",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_10",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-15.json",
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "failed",
+        "started_at": "2026-08-10T08:18:00Z",
+        "completed_at": "2026-08-10T08:23:00Z",
+        "input_commit": "58b47a7d0a6a28cadf1f4a4b8dc4e3889d710c71",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_6",
+        "validation": "The mirror-backed no-cache image build completed and the run reached the same-image provisioner; closed stage code 11 localized failure to image-runtime validation before product provisioning, and unconditional cleanup reported no cleanup failure",
+        "failure": "provisioner-run exit 11"
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T08:24:00Z",
+        "completed_at": "2026-08-10T08:44:33Z",
+        "input_commit": "58b47a7d0a6a28cadf1f4a4b8dc4e3889d710c71",
+        "agent_role": "root",
+        "dispatch_id": "story_11_5_t072_image_product_assembly_resolver_correction",
+        "artifact_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
+        ],
+        "validation": "Minimized real-image probes falsified CodeGraph runtime, version, and lock hypotheses and reproduced CLR failure before the first runtime-validation statement because the three-file driver dependency manifest omits image-owned Vulgata.Web; observed RED was a missing closed image-product assembly allowlist contract; minimal GREEN installs an exact six-name /app resolver before typed product references, rejects unknown names, preserves fixed diagnostics, and advances the real container repro from stage 11 to the expected dummy product stage 20; focused contract 1/1, complete non-live harness 50/50, and mirror/source filter 3/3 GREEN",
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -1034,5 +1071,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-    "updated_at": "2026-08-10T08:09:32Z"
+    "updated_at": "2026-08-10T08:44:33Z"
 }
