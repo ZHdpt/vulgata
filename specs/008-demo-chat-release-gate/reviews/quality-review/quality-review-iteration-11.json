@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+  "reviewed_boundary": {
+    "base_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
+    "candidate_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+    "diff_sha256": "a3ffd8de52b2e1d4ec4db2a4735580695fdf386ee2220c970cf40e448f98ef81",
+    "artifact_hashes": {
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json": "cfefcefdedafc10a3241f8e16ac8768cb4283a98e9dfc93c8cba2498122b5e17",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "docs/agent-workflow/august-15-expedited-mvp-exception.md": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e",
+      "docs/agent-workflow/review-and-correction.md": "350124927e574f3418c79e296445983d21c35a6e581829fe424738117ef4d433",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "c64bc0e8aaed1a10a620b689919ebbb720508123d3078258634e111bba4e3a5e",
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/plan.md": "56375f1816dfb3844c71d75d4d39b89cda6f4d75bd9861c6a989671d84b2df3f",
+      "specs/008-demo-chat-release-gate/tasks.md": "71327e0ce0b0ef1e9fa41aef6ee0be586a040e00da6c92219bbe7f25e1a7f094",
+      "specs/008-demo-chat-release-gate/workflow-state.json": "656e706500b5906e6c781ef4467657b2652b222274ce1a91b5e45a94f0bbfe40",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json": "9a37edddcf058174a80476231eaa8112a58dfa08a846fe615fbce4bc92674af3",
+      "tests/Vulgata.Tests/TestResults/story-11-5-candidate/candidate-metadata.json": "f89748063d11ece498bccd59b0cc33ec47e3e501e0a19c4395f8eb32c46a674c",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "0c8b4ea28bc5ec4899e3b62545fc0a78924044ac80b9a80c29b8a34f5579b09d",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "140150ae3f6415b06a55edfb65c2a876a992cbd2f6cc20dd51dd473570ef7c40",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "4476d418b890ed857e1a7b87be71e829e920488d6f0d5bbd5cfc53b564c45ac8",
+      "docker/Dockerfile": "5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c",
+      "docker/codegraph/requirements.lock": "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95"
+    },
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
+      "specs/008-demo-chat-release-gate/workflow-state.json",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json",
+    ".specify/memory/constitution.md",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/workflow-state.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
+    "tests/Vulgata.Tests/TestResults/story-11-5-candidate/candidate-metadata.json",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+    "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+    "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+    "docker/Dockerfile",
+    "docker/codegraph/requirements.lock"
+  ],
+  "findings": [
+    {
+      "id": "QR-115-011-001",
+      "severity": "HIGH",
+      "category": "acceptance-security-candidate-source-binding",
+      "artifact": "tests/Vulgata.Tests/TestResults/story-11-5-candidate/candidate-metadata.json",
+      "location": "sourceCommit, sourceTree, productionSourceManifestSha256, ownedPathManifest, and testEvidence",
+      "affected_requirement": "FR-018, SC-007, T072, release-verification-contract immutable-input and final-Docker proof, and the source-bound same-candidate release claim",
+      "evidence": "The clean reviewed candidate is 298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9 with tree f4ed0c8a6ad0707601d098f94cd4798a7ddd1bd5. The ignored candidate metadata still pins prior candidate b1dc5c84022a1476fb6e812ff24754c68520541f, prior tree e2e4f5cb6081a2c865743fbacfc0000d824821b8, and prior manifest f2a6e7bbba08aa8a3c6da8742929c2a291fa9d44e6023f8482675f7b6b4b1713; its owned hashes also name the pre-correction harness/test/state. An in-memory execution of the repository-authoritative production-source-manifest-v1 algorithm over the current clean worktree's 1,262 included tracked entries produced a6895b2b251ea1d5b6f8c6692fa1bbd583347eab9228107e56c6b2917bb81b0. A T072 retry using the current metadata would therefore not be bound to the reviewed candidate.",
+      "correction_outcome": "Regenerate the ignored candidate metadata from clean candidate 298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9, bind tree f4ed0c8a6ad0707601d098f94cd4798a7ddd1bd5 and canonical manifest a6895b2b251ea1d5b6f8c6692fa1bbd583347eab9228107e56c6b2917bb81b0, refresh every owned/test-evidence hash, independently re-run the authoritative helper equality check, and rerun the combined quality review before live T072. Do not change tracked candidate content during this metadata-only correction."
+    }
+  ],
+  "summary": "REVISE. The raw correction is otherwise accepted: the only behavioral delta is in the test harness and its focused test, raising the hard ProcessExecutor and sole source-bound image-build timeout from 30 to exactly 45 minutes while rejecting one tick more; command construction, ProcessStartInfo.ArgumentList isolation, cancellation, bounded log capture, failure propagation, and cleanup paths are unchanged. The workflow record truthfully reports attempt 2 timing out during the no-cache image build before Story container, network, image, nonce database, or run-directory acquisition; cleanup completed without error and the externally owned PostgreSQL container remained healthy. Observed focused RED, GREEN 1/1, and complete non-live 50/50 evidence are coherent with the raw test/code change. The correction has no migration, EF model, Dockerfile, package, or production-source delta, and git diff --check is clean. Prior iteration-10 findings remain closed in unchanged code. However QR-115-011-001 is an unresolved High source-binding failure: the ignored T072 metadata still identifies the prior candidate and prior production manifest instead of reviewed candidate 298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9/tree f4ed0c8a6ad0707601d098f94cd4798a7ddd1bd5/current canonical manifest a6895b2b251ea1d5b6f8c6692fa1bbd583347eab9228107e56c6b2917bb81b0. T072 is not accepted-safe to retry until that metadata-only correction is independently verified by a fresh combined review. No live resource was activated by this review."
+}

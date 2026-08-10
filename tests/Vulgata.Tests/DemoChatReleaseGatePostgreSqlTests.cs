@@ -467,7 +467,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             string standardOutput = await standardOutputTask;
             string standardError = await standardErrorTask;
 
-            Assert.Equal(1, process.ExitCode);
+            Assert.Equal(10, process.ExitCode);
             Assert.Empty(standardOutput);
             Assert.Equal("Story 11.5 provisioning failed." + Environment.NewLine, standardError);
             Assert.DoesNotContain(secretSentinel, standardError, StringComparison.Ordinal);

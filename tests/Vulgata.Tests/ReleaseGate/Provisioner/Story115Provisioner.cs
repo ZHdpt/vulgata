@@ -55,12 +55,18 @@ public static class Story115Provisioner
             return 0;
         }
 
+        int failureExitCode = 10;
         try
         {
             (string inputPath, string outputPath) = ParseArguments(arguments);
             ProvisionerInput input = await ReadInputAsync(inputPath, cancellationToken);
+            failureExitCode = 11;
             RequireImageRuntime();
-            ProductRunState state = await ExecuteProductPathAsync(input, cancellationToken);
+            ProductRunState state = await ExecuteProductPathAsync(
+                input,
+                code => failureExitCode = code,
+                cancellationToken);
+            failureExitCode = 40;
             await WriteResultAsync(outputPath, input, state, cancellationToken);
             return 0;
         }
@@ -72,7 +78,7 @@ public static class Story115Provisioner
         catch (Exception)
         {
             await Console.Error.WriteLineAsync("Story 11.5 provisioning failed.");
-            return 1;
+            return failureExitCode;
         }
 #pragma warning restore CA1031
     }
@@ -282,8 +288,11 @@ public static class Story115Provisioner
 
     private static async Task<ProductRunState> ExecuteProductPathAsync(
         ProvisionerInput input,
+        Action<int> reportStage,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(reportStage);
+        reportStage(20);
         WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             ApplicationName = typeof(VulgataWebComposition).Assembly.GetName().Name,
@@ -306,6 +315,7 @@ public static class Story115Provisioner
         await services.GetRequiredService<VulgataDbContext>().Database.MigrateAsync(cancellationToken);
         await services.GetRequiredService<RoleSeeder>().SeedAsync();
 
+        reportStage(21);
         UserManager<ApplicationUser> users = services.GetRequiredService<UserManager<ApplicationUser>>();
         IAdministratorRoleCoordinator roles = services.GetRequiredService<IAdministratorRoleCoordinator>();
         ApplicationUser administrator = await CreateUserAsync(
@@ -318,6 +328,7 @@ public static class Story115Provisioner
             users, input.NegativeEmail, input.NegativePassword, cancellationToken);
         RequireIdentity(await roles.AssignInitialRoleAsync(negative, cancellationToken));
 
+        reportStage(22);
         ISystemRepository systemRepository = services.GetRequiredService<ISystemRepository>();
         var system = new SystemEntity(
             $"Story 11.5 {input.RunNonce}",
@@ -334,6 +345,7 @@ public static class Story115Provisioner
             throw new InvalidOperationException("System ownership provisioning failed.");
         }
 
+        reportStage(23);
         var ownerContext = new ProvisionerUserContext(owner.Id, false);
         IRepositoryManagementCoordinator repositories =
             services.GetRequiredService<IRepositoryManagementCoordinator>();
@@ -353,6 +365,7 @@ public static class Story115Provisioner
             throw new InvalidOperationException("Repository provisioning failed.");
         }
 
+        reportStage(24);
         ILlmProviderManagementCoordinator providerCoordinator =
             services.GetRequiredService<ILlmProviderManagementCoordinator>();
         var worker = await providerCoordinator.CreateAsync(
@@ -365,6 +378,7 @@ public static class Story115Provisioner
             throw new InvalidOperationException("Provider provisioning failed.");
         }
 
+        reportStage(25);
         ISystemLlmProviderOverrideCoordinator overrides =
             services.GetRequiredService<ISystemLlmProviderOverrideCoordinator>();
         await RequireOverrideAsync(overrides.UpsertAsync(
@@ -374,6 +388,7 @@ public static class Story115Provisioner
             system.Id, null, OverrideRequest(system.Id, chat.Value.Id, AgentType.Chat),
             ownerContext, cancellationToken));
 
+        reportStage(26);
         IRepositoryProfilingCoordinator profiling =
             services.GetRequiredService<IRepositoryProfilingCoordinator>();
         RepositoryProfilingResult accountProfile = await profiling.StartSystemRepositoryAsync(
@@ -386,6 +401,7 @@ public static class Story115Provisioner
             throw new InvalidOperationException("Repository profiling failed.");
         }
 
+        reportStage(27);
         IApprovedPreScanHandoffSource handoffs =
             services.GetRequiredService<IApprovedPreScanHandoffSource>();
         ApprovedPreScanHandoff accountHandoff = await handoffs.GetAsync(
@@ -400,6 +416,7 @@ public static class Story115Provisioner
             throw new InvalidOperationException("The accepted Profiled Revisions drifted.");
         }
 
+        reportStage(28);
         var verifier = ActivatorUtilities.CreateInstance<RepositoryAuthorizationVerifier>(
             services, ownerContext);
         var access = new RepositoryAccessScope(
@@ -412,6 +429,7 @@ public static class Story115Provisioner
         await runner.RunPass1Async(accountExecution, access, cancellationToken);
         await runner.RunPass1Async(channelExecution, access, cancellationToken);
 
+        reportStage(29);
         ExactResolutionProfile profile = services.GetRequiredService<ExactResolutionProfileCatalog>().Load();
         ExactResolutionRuntimeRequest request = ExactResolutionRuntimeRequest.Create(system.Id, profile,
         [
@@ -432,6 +450,7 @@ public static class Story115Provisioner
             throw new InvalidOperationException("Exact Cross-Repository Resolution failed.");
         }
 
+        reportStage(30);
         ResolvedPreparedPass2Flow resolved = await services
             .GetRequiredService<IPreparedDemoPass2FlowPlanner>()
             .PlanAsync(profile, request, access, cancellationToken) ??
@@ -441,6 +460,7 @@ public static class Story115Provisioner
             throw new InvalidOperationException("The runtime prepared flow is invalid.");
         }
 
+        reportStage(31);
         await runner.RunPreparedPass2Async(accountExecution, resolved, access, cancellationToken);
         return new(system.Id, account.Value.Id, channel.Value.Id,
             accountProfile.Value.Id, channelProfile.Value.Id,

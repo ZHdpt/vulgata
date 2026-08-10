@@ -32,9 +32,9 @@
       },
       "quality-review": {
         "status": "pending",
-        "iteration": 11,
+        "iteration": 14,
         "dispatch_id": null,
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-11.json",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-14.json",
         "input_boundary": null,
         "completed_at": null
     },
@@ -750,6 +750,76 @@
           "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
         ],
         "validation": "Observed focused RED because the executor rejected a 45-minute bound; minimal GREEN raises only the hard executor/source-image-build cap to exactly 45 minutes and rejects any larger value; focused 1/1 and complete non-live release harness 50/50 GREEN; cleanup absence reverified; no live retry performed",
+        "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "revise",
+        "iteration": 11,
+        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_11",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-11.json",
+        "finding_ids": ["QR-115-011-001"],
+        "failure": "Ignored candidate metadata still pinned the predecessor candidate"
+      },
+      {
+        "stage": "quality-review",
+        "status": "invalidated",
+        "iteration": 12,
+        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_12",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-12.json",
+        "finding_ids": [],
+        "failure": "The transcribed canonical manifest omitted its final hexadecimal character and the live parser rejected the 63-character value before acquisition"
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 13,
+        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_13",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-13.json",
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "failed-cleanly",
+        "started_at": "2026-08-10T06:46:05Z",
+        "completed_at": "2026-08-10T07:02:46Z",
+        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_3",
+        "validation": "BuildKit proved the source-bound image build failed only on a transient files.pythonhosted.org SSL/read timeout during the hash-locked CodeGraphContext pip stage; cleanup left no Story container, image, network, nonce database, or run directory and external PostgreSQL remained healthy",
+        "failure": "source-bound-image-build exit 1 from external package download timeout"
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "failed-cleanly",
+        "started_at": "2026-08-10T07:04:00Z",
+        "completed_at": "2026-08-10T07:27:42Z",
+        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_4",
+        "validation": "After package endpoints recovered, the no-cache source image build succeeded and the run reached the temporary same-image provisioner; provisioner-run returned the generic exit code 1 and fixed diagnostic, then unconditional cleanup removed every Story resource and nonce database while leaving external PostgreSQL healthy",
+        "failure": "provisioner-run generic exit 1; bounded raw diagnostic intentionally unavailable"
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T07:28:00Z",
+        "completed_at": "2026-08-10T07:33:41Z",
+        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+        "agent_role": "root",
+        "dispatch_id": "story_11_5_t072_provisioner_stage_code_correction",
+        "artifact_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
+        ],
+        "validation": "Observed RED expected closed input-stage exit 10 but received generic 1; minimal GREEN preserves the exact fixed stderr and empty stdout while assigning closed numeric exit codes 10, 11, 20-31, and 40 to non-secret provisioning stages; focused 1/1 and complete non-live release harness 50/50 GREEN",
         "failure": null
       }
   ],

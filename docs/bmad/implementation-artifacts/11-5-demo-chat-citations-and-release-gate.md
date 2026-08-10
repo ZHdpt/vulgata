@@ -276,6 +276,20 @@ as completed acceptance criteria.
   rejecting any larger bound; focused 1/1 and complete non-live release harness
   50/50 are GREEN. T072-T073 remain pending a fresh combined quality review and
   unchanged-candidate pin before another live retry.
+- Quality iteration 11 correctly rejected stale ignored candidate metadata;
+  iteration 12 was invalidated when its manually transcribed manifest omitted
+  the final hexadecimal character, which the live parser rejected before any
+  acquisition. Iteration 13 independently invoked the repository helper and
+  accepted the corrected 64-character identity. The following build failed
+  cleanly on an external PyPI SSL/read timeout, with BuildKit logs preserving
+  the exact layer and cleanup preserving zero Story residue. A connectivity-
+  healthy retry built the final image and reached the same-image provisioner,
+  which returned generic exit 1; the fixed diagnostic intentionally exposed no
+  cause. A new RED then GREEN correction keeps that fixed stderr byte-for-byte
+  and adds only closed numeric stage exit codes, allowing bounded diagnosis
+  without secrets, paths, source, or raw product diagnostics. Focused 1/1 and
+  the complete non-live release harness 50/50 are GREEN. T072-T073 remain
+  pending quality iteration 14 over the new immutable candidate.
 
 ### File List
 

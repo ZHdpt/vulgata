@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+  "reviewed_boundary": {
+    "base_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
+    "candidate_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+    "diff_sha256": "a3ffd8de52b2e1d4ec4db2a4735580695fdf386ee2220c970cf40e448f98ef81",
+    "artifact_hashes": {
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json": "cfefcefdedafc10a3241f8e16ac8768cb4283a98e9dfc93c8cba2498122b5e17",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "docs/agent-workflow/august-15-expedited-mvp-exception.md": "c5f142b603c22165ac152e30b9c4d8853b56f5a52f6a97c4c26d572a219f518e",
+      "docs/agent-workflow/review-and-correction.md": "350124927e574f3418c79e296445983d21c35a6e581829fe424738117ef4d433",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "c64bc0e8aaed1a10a620b689919ebbb720508123d3078258634e111bba4e3a5e",
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/plan.md": "56375f1816dfb3844c71d75d4d39b89cda6f4d75bd9861c6a989671d84b2df3f",
+      "specs/008-demo-chat-release-gate/tasks.md": "71327e0ce0b0ef1e9fa41aef6ee0be586a040e00da6c92219bbe7f25e1a7f094",
+      "specs/008-demo-chat-release-gate/workflow-state.json": "656e706500b5906e6c781ef4467657b2652b222274ce1a91b5e45a94f0bbfe40",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json": "9a37edddcf058174a80476231eaa8112a58dfa08a846fe615fbce4bc92674af3",
+      "tests/Vulgata.Tests/TestResults/story-11-5-candidate/review-verdict-backup/quality-review-iteration-11.json": "a503f4c76d864df7610ead21af7bf1d2b59671f8139049b53e20532147882e34",
+      "tests/Vulgata.Tests/TestResults/story-11-5-candidate/review-verdict-backup/quality-review-iteration-12.json": "39cf0b42bc5f2ed00f87ab19c5198a5a4c918db4b21305bd858895510c9fa923",
+      "tests/Vulgata.Tests/TestResults/story-11-5-candidate/candidate-metadata.json": "980d5a0fedf42eb027f64f4d2573ddb1117814df1cfd6028e5a9b926d16f2571",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "0c8b4ea28bc5ec4899e3b62545fc0a78924044ac80b9a80c29b8a34f5579b09d",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "140150ae3f6415b06a55edfb65c2a876a992cbd2f6cc20dd51dd473570ef7c40",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "4476d418b890ed857e1a7b87be71e829e920488d6f0d5bbd5cfc53b564c45ac8",
+      "docker/Dockerfile": "5d9346f38539e0ea597151d6fa0b3da873c7c564fa3cc570600a50567a62431c",
+      "docker/codegraph/requirements.lock": "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95"
+    },
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
+      "specs/008-demo-chat-release-gate/workflow-state.json",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json",
+    ".specify/memory/constitution.md",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/workflow-state.json",
+    "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
+    "tests/Vulgata.Tests/TestResults/story-11-5-candidate/review-verdict-backup/quality-review-iteration-11.json",
+    "tests/Vulgata.Tests/TestResults/story-11-5-candidate/review-verdict-backup/quality-review-iteration-12.json",
+    "tests/Vulgata.Tests/TestResults/story-11-5-candidate/candidate-metadata.json",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+    "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+    "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
+    "docker/Dockerfile",
+    "docker/codegraph/requirements.lock"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. A fresh direct reflection invocation of the repository-authoritative CodeGraphProviderContractTests.CreateProductionSourceManifest helper returned SourceCommit 298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9, SourceTree f4ed0c8a6ad0707601d098f94cd4798a7ddd1bd5, and the exact 64-character ManifestSha256 a6895b2b251ea1d5b6f8c6692fa1bbd583347eab9228107e56c6b2917bb81b0f. Machine comparison proved all three values, including length 64, exactly equal the corrected ignored candidate metadata. The tracked candidate and base-to-candidate binary diff SHA-256 a3ffd8de52b2e1d4ec4db2a4735580695fdf386ee2220c970cf40e448f98ef81 remain unchanged and clean. All fourteen ordered owned-path hashes, their compact-array aggregate 116144eb13dc8928834ca5cbe8bc812d16d0e1c57a9ded2f9633c7151d3ed994, all four test-evidence hashes, and the historical accepted iteration-10 verdict binding match. Requirement/task truth remains FR-001 through FR-024 and SC-001 through SC-011 complete for T001-T071, with T072-T073 pending. Iteration 12 is invalid completion evidence because its summary truncated the manifest to 63 characters; the harness rejected that malformed input in 4 ms before acquisition. The current metadata and this verdict use the complete helper-returned value ending b0f. The non-production 45-minute timeout correction remains bounded to exactly 45 minutes with one-tick-over rejection, and the focused RED/GREEN plus complete non-live 50/50 evidence remains valid. QR-115-011-001 and all earlier findings remain closed. No migration, EF model, Dockerfile, package, production-source, command/process-safety, or cleanup boundary changed; git diff --check is clean. Zero Critical/High or other unresolved findings remain. T072 is accepted-safe for one live retry after root validation of this persisted verdict and exact helper-returned manifest. This review activated no external resource."
+}
