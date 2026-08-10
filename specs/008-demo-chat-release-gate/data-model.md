@@ -497,6 +497,59 @@ bytes from current authoritative state. Any old fixed-manifest identity,
 substitution, drift, noncanonical encoding, or fingerprint mismatch takes the
 `Refused` transition without repair.
 
+## Final Image Binding
+
+Test/release evidence concept, not a product entity:
+
+- `BuildCount`: exactly `1`;
+- `ImageId`: immutable Docker content ID in `sha256:<64 lowercase hex>` form;
+- `SourceCommit`, `SourceTree`, `ProductionManifestSha256`: inspected labels;
+- `ProvisionerContainerImageId`: must equal `ImageId`;
+- `AppContainerImageId`: must equal `ImageId`;
+- `ProvisionerRemovedBeforeAppStart`: must be `true`;
+- `ProvisionerImageCreated`: must be `false`.
+
+Any tag-only identity, second build, pull/commit, unequal container image ID,
+or app start while the provisioner exists makes the run `Failed`.
+
+## Provisioner Input and Result
+
+`ProvisionerInput` is a permission-restricted nonce file mounted read-only. It
+contains the nonce database connection, fixed stable container source URIs,
+Worker/Chat loopback endpoints, Data Protection application discriminator,
+and host-retained generated credentials. It is secret operational input, never
+release evidence, and is deleted in cleanup.
+
+`ProvisionerResult` is a closed, size-bounded sanitized record written by atomic
+rename to the nonce output mount:
+
+- schema identity and run nonce hash;
+- migration/product-stage outcomes;
+- product-created System/Repository/Scan identifiers required by the host;
+- accepted refs/commits/profile and runtime-support fingerprints;
+- ordinary Pass 1 and exact-seven-slot Pass 2 counts/outcomes;
+- CodeGraphContext version/requirements-lock identity without process output;
+- result timestamp and content hash.
+
+It contains no credential, connection string, key, source/Document text, raw
+prompt/response/diagnostic, absolute host path, or unauthorized metadata.
+Unknown/duplicate fields, wrong nonce/schema, excess size, non-atomic partial
+files, or forbidden values reject the whole result.
+
+## Release-Owned Resource State
+
+| Resource | Allowed transitions |
+|---|---|
+| Final image | `Absent -> BuiltOnce -> Inspected -> UsedByProvisioner -> UsedByApp -> Removed -> AbsenceProved` |
+| Provisioner | `Absent -> CreatedFromImageId -> Completed -> ResultValidated -> Removed -> AbsenceProved` |
+| App | `Absent -> CreatedFromSameImageId -> Healthy -> BrowserProved -> Removed -> AbsenceProved` |
+| Nonce database | `AbsentProved -> Created -> MigratedAndProvisioned -> AppProofComplete -> ConnectionsTerminated -> Dropped -> AbsenceProved` |
+| Source origins | `AcquiredAtExactCommit -> MountedReadOnly -> Unmounted -> Removed` |
+| Config/output/work/key/env/browser state | `CreatedNonceOwned -> UsedWithDeclaredAccess -> Removed -> AbsenceProved` |
+
+Failure at any state enters cleanup; it never skips a cleanup transition already
+made applicable. Primary and individual cleanup failures remain distinct.
+
 ## Release Verification Run
 
 An evidence concept, not a product entity. Fields recorded outside the product
@@ -510,10 +563,15 @@ database by the test/release harness:
   exact seven-slot dispatch shape, and one Pass 2 dispatch/commit;
 - ordered gate outcomes and sanitized hashes/log references;
 - final image ID and inspected source labels;
+- one-build count, provisioner/app image-ID equality, and proof the provisioner
+  is a removed container instance rather than a second image/artifact;
+- provisioner driver inventory hash, fixed read-only source/driver/config mount
+  identities, provider-namespace/PostgreSQL preflight, and sanitized result hash;
 - Data Protection key-ring/application discriminator hash identity (never keys);
 - Playwright/Chromium versions and interactive-circuit outcome;
 - concrete curl health status;
-- database cleanup attempted/result and absence observation;
+- provisioner/app/provider/image/network/source/config/output/work/key/env/
+  browser cleanup outcomes plus database cleanup/result/absence observation;
 - known post-demo limitations.
 
 Terminal states: `Passed`, `Failed`, `CleanupFailed`. A primary failure does not

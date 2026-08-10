@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "gate": "analyze",
+  "verdict": "REVISE",
+  "reviewed_commit": "d96eb66525b40dd1a3320aa5c0557b82de87827f",
+  "reviewed_boundary": {
+    "base_commit": "d96eb66525b40dd1a3320aa5c0557b82de87827f",
+    "candidate_commit": null,
+    "diff_sha256": "259f80424de070b7f549375c22238963d5e1e709a9502e21d572b70d640cc769",
+    "artifact_hashes": {
+      ".agents/skills/run-bmad-sprint-loop/references/dispatch-contract.md": "0cefd105678a090c12a09623d46e86a44902e8229bdd715b1018b5bcc5ba4c4d",
+      ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json": "cfefcefdedafc10a3241f8e16ac8768cb4283a98e9dfc93c8cba2498122b5e17",
+      ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5",
+      "AGENTS.md": "b417f5feea0a23dae4c48c0960fc230977db4cb5aa456473ce5286555d7b6440",
+      "docs/UBIQUITOUS_LANGUAGE.md": "65154817125cfa8dde3ed252d81dd361136b09e9b7c1c5d4cb74c17305085e54",
+      "docs/agent-workflow/artifact-contracts.md": "9d72b3d2d0f7775b07fec006cfe05c3863e559b0066479286ce65b8376eebe9a",
+      "docs/agent-workflow/review-and-correction.md": "350124927e574f3418c79e296445983d21c35a6e581829fe424738117ef4d433",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "262faab339cbe745b8ccd1a12e7883f411ab57847b8e538da282af2101ff31ec",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-09-story-11-5-containerized-provisioning.md": "7b049c783a7b6a7b7d08628d84ef957435e8cc0eb112f938a0106959454900ba",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md": "13d1d1ce8c96333cabd3c054f8c98648639b411db4bc6027ee983748ce276b19",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "20ec67bfa2f27ab5347b80f165280f28a4dc31dc5f8f8bec773148ec089160b1",
+      "specs/008-demo-chat-release-gate/data-model.md": "95bce74ab7ac07948a0ea66287a7af61009edc3da20857ed59d28369bf5fd48d",
+      "specs/008-demo-chat-release-gate/plan.md": "7e7d37b84b4c470b04bff54f9d9dc994cea5cf83ccb7d79bfcb78892e2aa5573",
+      "specs/008-demo-chat-release-gate/quickstart.md": "8b784c00cd8ea4d87dc42e7d0fb2052663a4f11a58923638f4de8eb3389319e5",
+      "specs/008-demo-chat-release-gate/research.md": "6dcc1c23a0451c51869b743d506ae32f8ef4eb259049a5170597d6b168d0b5a4",
+      "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-10.json": "081c43e1e7896e4fdde7439ff6d408facd51fd6d9f103ced2092837a0005278e",
+      "specs/008-demo-chat-release-gate/spec.md": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0",
+      "specs/008-demo-chat-release-gate/tasks.md": "d407e7c736328ce6d1e807f280daa485813d64d06ce3cf854ab45e8db9bd94ea",
+      "specs/008-demo-chat-release-gate/workflow-state.json": "5793efbad7fd6ac0d6bfb6a9c122696315ab6c80cfddc44f5f626e9c7ac9acfd"
+    },
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "specs/008-demo-chat-release-gate/spec.md",
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "specs/008-demo-chat-release-gate/data-model.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+      "specs/008-demo-chat-release-gate/tasks.md",
+      "specs/008-demo-chat-release-gate/workflow-state.json"
+    ]
+  },
+  "reviewed_artifacts": [
+    ".agents/skills/run-bmad-sprint-loop/references/dispatch-contract.md",
+    ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json",
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-09-story-11-5-containerized-provisioning.md",
+    "specs/008-demo-chat-release-gate/contracts/chat-agent-contract.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/data-model.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-10.json",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/workflow-state.json"
+  ],
+  "findings": [
+    {
+      "id": "ANALYZE-115-AUTH-001",
+      "severity": "HIGH",
+      "category": "Workflow authority and mapping inconsistency",
+      "artifact": "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "location": "lines 151-153, 176-178, 194-205",
+      "affected_requirement": "docs/agent-workflow/artifact-contracts.md:33-42 two-way Story/Feature mapping and current workflow-stage contract",
+      "evidence": "The BMad Story still identifies the current workflow stage as conditional-e2e, says task generation produced 61 tasks and directs execution of T001-T061, and presents the prior Full acceptance/quality verdicts as the live-retry boundary. The canonical workflow-state.json is now at stage tasks with plan-review iteration 10 accepted and analyze/acceptance/quality invalidated, while tasks.md preserves T001-T063 complete and regenerates T064-T073 pending under the 2026-08-10 Option A authorization. These authorities therefore disagree about the active stage, executable task boundary, and current review validity, which can cause resume or implementation to skip the regenerated Option A gates.",
+      "correction_outcome": "After explicit user approval, align only the BMad Story development/task metadata with the current iteration-10 workflow-state.json and tasks.md: record stage tasks, T001-T063 as completed history, T064-T073 as pending, and the prior acceptance/quality verdicts as invalidated historical evidence. Preserve the accepted Story scope and acceptance criteria, re-pin any mapping hashes required by the workflow contract, and rerun read-only analysis on the resulting exact boundary before implementation."
+    }
+  ],
+  "summary": "REVISE. The SpecKit artifact set is internally complete: FR-001 through FR-024 and SC-001 through SC-011 are covered 35/35 (100%); T001-T073 are continuous with T001-T063 complete and T064-T073 pending; T064/T065 and T068/T069 precede their GREEN implementation groups; T072 remains gated on non-live GREEN, fresh analysis/reviews, and a clean candidate; and T073 owns independent cleanup/final verification. Constitution, exact seven-slot Pass 2, deterministic Pass 1, single-image Option A, external PostgreSQL non-ownership, authorization/currentness/citation, no-migration, and Windows Docker Desktop boundaries are otherwise aligned. One High workflow-authority inconsistency blocks advancement: the BMad Story development record still describes the superseded pre-Option A stage, 61-task boundary, and review state. No live resource was acquired and no artifact was changed except this raw verdict report."
+}

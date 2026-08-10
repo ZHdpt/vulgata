@@ -1,17 +1,15 @@
 # Implementation Plan: Demo Chat, Citations, and Release Gate
 
-**Branch**: `codex/run-story-115-sprint-loop` | **Date**: 2026-08-09 | **Spec**: [spec.md](spec.md)
+**Branch**: `codex/run-story-115-sprint-loop` | **Date**: 2026-08-10 | **Spec**: [spec.md](spec.md)
 
 **Input**: Story 11.5 at source boundary
-`c07df7d8789e7b975dc7fb6a121dff564e8549ad`, execution level `full` through
-the root-owned lifecycle alignment after the expedited correction allowance
-was exhausted, plus the user-approved
+`c07df7d8789e7b975dc7fb6a121dff564e8549ad`, execution level
+`expedited-mvp` under the user-approved August 15 exception and the explicit
+2026-08-10 level change, plus the user-approved
 [runtime Pass 2 binding correction](../../docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-runtime-pass2-binding.md)
 and [ordinary Pass 1 Job Identity amendment](../../docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-pass1-job-identity-amendment.md).
-This late correction also incorporates the user's approved T064 infrastructure
-choice: run the release proof on Windows Docker Desktop, use its built-in
-`host.docker.internal` route to the already-running PostgreSQL 17 Alpine
-endpoint, and own only a fresh cryptographically nonce-named database.
+This correction incorporates the user's approved
+[Option A containerized-provisioning topology](../../docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-09-story-11-5-containerized-provisioning.md): build one source-bound final image exactly once, use its immutable image ID first for a temporary provisioner container and then for the final app container, and run every migration/profiling/Scan step inside that qualified Linux image. The sole live T072 host remains Windows Docker Desktop, uses its built-in `host.docker.internal` route to the already-running PostgreSQL 17 Alpine endpoint, and owns only a fresh cryptographically nonce-named database.
 
 ## Summary
 
@@ -51,9 +49,17 @@ rule, graph truth, retry/failover policy, general flow discovery/clustering, or
 general V1 retrieval suite. Story 11.5 also owns the final uniquely named
 PostgreSQL 17 clean-database two-Repository rehearsal against the existing
 administrator endpoint and the single source-bound Docker build/start/health
-proof inherited from Stories 11.1-11.4. The harness owns only its nonce database
-and nonce provider/app resources; it never owns or mutates the supplied server,
-container, administrator database, or any development database.
+proof inherited from Stories 11.1-11.4. The one image is inspected to an
+immutable ID before provisioning. A test-owned, prebuilt framework-dependent
+.NET entry is mounted read-only into `/app` and run with `--entrypoint dotnet`
+inside a temporary container from that ID; it composes the image's product
+assemblies and services, uses the image's exact CodeGraphContext 0.5.1 runtime,
+emits only a sanitized result, and is removed before the final app is started
+from the same ID. It is a test driver, not a second image, production artifact,
+or durable service. The harness owns only its nonce database and nonce
+provider/provisioner/app/source/config/output/key/work resources; it never owns
+or mutates the supplied server, container, administrator database, or any
+development database.
 
 ## Technical Context
 
@@ -71,16 +77,16 @@ evidence, Scan execution, Worker job, Code Unit, flow/provenance, System,
 Repository, and LLM-provider rows only
 
 **Testing**: xUnit, bUnit, `WebApplicationFactory<Program>`, SQLite relational
-integration overrides, an external PostgreSQL 17 administrator-endpoint release-gate fixture, isolated
-OpenAI-compatible provider fixture, Docker CLI, and test-only
+integration overrides, an external PostgreSQL 17 administrator-endpoint release-gate fixture, a prebuilt test-owned framework-dependent .NET provisioner entry, isolated OpenAI-compatible provider fixture, Docker CLI, and test-only
 `Microsoft.Playwright` 1.61.0 plus matching Chromium for real Identity and the
 interactive-server Blazor circuit
 
 **Target Platform**: Linux application/provider containers hosted by Windows
-Docker Desktop in Linux-container mode. T064 release proof does not claim or
+Docker Desktop in Linux-container mode. T072 release proof does not claim or
 define native-Linux-host support. The Windows host supplies .NET 10, Git,
 Docker Desktop, and administrator access to the existing PostgreSQL 17 Alpine
-service.
+service. It supplies no `cgc`, Python package, or CodeGraph fallback; profiling
+executes only inside the qualified final image.
 
 **Project Type**: Multi-project .NET Blazor web application
 
@@ -100,7 +106,10 @@ exact seven-slot Pass 2 dispatch payload with no extension; maximum five Chat
 Documents; exact current `REFERENCES` Edge direction; closed JSON; all Material
 Claims cited; Business Mode narrative contains no inline code locator; no
 absolute path, credential, embedded/fabricated database identity, raw provider
-diagnostic, or unauthorized identity; cancellation/timeout fail closed
+diagnostic, or unauthorized identity; cancellation/timeout fail closed; one
+application image build and one immutable image ID used by both provisioner and
+app; read-only stable Linux source mounts; no mounted duplicate `Vulgata.*`
+product assembly; sanitized provisioner output; unconditional nonce cleanup
 
 **Scale/Scope**: One prepared System, two accepted Repositories, one known
 RPC/HTTP Cross-Repository flow, one transient interaction at a time, at most
@@ -116,23 +125,43 @@ T051 preflight then proved ordinary successful Pass 1 loses the random actual
 Worker Job ID required for independent runtime binding. The approved
 deterministic ordinary Pass 1 Job Identity amendment below resolves that
 implementation-blocking gap. Iteration 8 returned
-`PLAN-115-TOPOLOGY-008` and `PLAN-115-WORKFLOW-009`; this correction narrows
-T064 to one executable Windows Docker Desktop host topology and restores the
-already-authorized Full gate sequence without changing product behavior. The
-approved T064 infrastructure correction is a release-harness platform,
-ownership, and topology correction only. Post-design remains pending a fresh
-independent Full plan review.*
+`PLAN-115-TOPOLOGY-008` and `PLAN-115-WORKFLOW-009`; iteration 9 accepted that
+host topology. The later historical live T064 attempt then disproved host-side profiling:
+the exact CodeGraphContext 0.5.1 runtime exists only in the qualified Linux
+image. The user-approved Option A correction builds that image once and runs
+the entire product provisioning/Scan path in a temporary container from the
+same immutable ID later used by the app. It changes release execution location,
+not product behavior. Plan-review iteration 10 is historical acceptance of the
+unchanged topology, and the later Option A planned-change authorization remains
+durable authority for that exact design. This execution-level/task-lane
+correction requires a fresh conditional `expedited-mvp` plan review before task
+regeneration; it does not require duplicate authorization.*
 
 | Principle / gate | Pre-design | Post-design evidence |
 |---|---|---|
 | I. Clean Architecture and explicit dependencies | PASS | Core owns provider-independent chat/runtime Pass 2 binding contracts and the canonical ordinary Pass 1 Job Identity derivation; Infrastructure alone performs the bounded planner and Chat EF reads; Agents keeps the existing exact seven-slot Worker payload and owns Chat dispatch/prompts/selection-only JSON validation; Web owns user authorization, call ordering, and Razor. No EF type, `DbSet`, or `IQueryable` crosses Infrastructure. |
 | II. Domain model and persistence discipline | PASS | Canonical terms are preserved. The planner reads existing immutable current Code Logic Document Versions, Source Anchors, Scan/Worker/Code Unit identities, and the accepted exact directed `REFERENCES` Edge. Consumer Repository ownership and exactly-two-Repository support are fixed without adding an entity, table, or migration. |
 | III. Validation and API/UI discipline | PASS | Request and model-output contracts enforce closed bounds; the UI and errors are Simplified Chinese. No new HTTP API is required. If input validation is extracted from the component, it uses FluentValidation rather than data annotations. |
-| IV. Test-first integration harness | PASS | Ordinary Pass 1 Job Identity RED tests pin independently constructed canonical bytes and UUIDv8, same-boundary repeat identity, each-input substitution, tuple-framing/collision-domain separation, and malformed/mixed-endian rejection. Runtime planner/runner/committer RED tests prove the persisted Document Version projection, reject legacy/random/substituted/drifted Job IDs, and retain the existing independent Manifest/Flow/support vectors and fail-closed cases before dispatch and commit. Exact-span/support Chat RED tests retain their adversarial and barrier-controlled cases. `Story115ReleaseHarness` owns the still-live nonce database on the supplied administrator endpoint, product-service provisioning, shared key ring, isolated providers, one final image, curl health, real Identity/Playwright Blazor circuit, negative revocation, and verified database/resource cleanup; it does not own the PostgreSQL server or container. |
+| IV. Test-first integration harness | PASS | Ordinary Pass 1 Job Identity RED tests pin independently constructed canonical bytes and UUIDv8, same-boundary repeat identity, each-input substitution, tuple-framing/collision-domain separation, and malformed/mixed-endian rejection. Runtime planner/runner/committer RED tests prove the persisted Document Version projection, reject legacy/random/substituted/drifted Job IDs, and retain the existing independent Manifest/Flow/support vectors and fail-closed cases before dispatch and commit. Exact-span/support Chat RED tests retain their adversarial and barrier-controlled cases. Release-harness RED tests pin one build, one immutable image ID, a test-owned prebuilt provisioner entry, read-only driver/source/config mounts, provider-namespace sharing, container PostgreSQL reachability, sanitized output, and unconditional cleanup. `Story115ReleaseHarness` owns the still-live nonce database and all nonce resources; it does not own the PostgreSQL server or container. |
 | V. Security and data stewardship | PASS | Runtime binding authorizes both Repositories before reading support and serializes no internal binding identity beyond the accepted seven dispatch slots. Encrypted Chat provider selection is reused; the provider receives only bounded authorized evidence; authorization occurs before retrieval and before rendering; citations are server-derived; source is Repository-relative; failures expose bounded Chinese states. |
-| Fixed stack and source isolation | PASS | Existing .NET 10/Blazor/PostgreSQL/OpenAI-compatible stack and self-hosted-provider boundary are retained. |
+| Fixed stack and source isolation | PASS | Existing .NET 10/Blazor/PostgreSQL/OpenAI-compatible stack and self-hosted-provider boundary are retained. Both product-running containers use the same source-labelled immutable image ID. Profiling uses only the image's hash-locked Linux CodeGraphContext 0.5.1 runtime; the Windows host has no `cgc` installation or fallback. Accepted source origins are mounted read-only at fixed Linux paths and cloned only into nonce-owned writable storage. |
 | ADR, architecture, and ubiquitous-language gate | PASS | No repository ADR or context-specific ADR applicable to this feature was found at the pinned boundary. The bounded planner follows the graph-first rule by consuming the already committed exact `REFERENCES` Edge and never rediscovering graph truth; Epic 5 retains general tracing and clustering. `docs/UBIQUITOUS_LANGUAGE.md` terms are used verbatim. The absent root `CONTEXT-MAP.md` is an existing repository condition, not changed here. |
-| Full retained gates | PASS | Fresh independent plan review, regenerated tasks as required by the root, read-only consistency analysis, transient RED/GREEN, separate acceptance and quality reviews, security and migration checks, final clean-database two-Repository E2E, and final Docker verification remain required. This plan correction does not itself advance lifecycle state. |
+| Expedited retained gates | PASS | Fresh conditional independent plan review remains mandatory for the Scan topology; the already granted Option A planned-change authorization remains applicable because the topology and product scope are unchanged. Regenerated tasks, root mechanical requirement/task/security/migration coverage validation, transient RED/GREEN, one fresh combined acceptance-and-quality review, security and migration checks, final clean-database two-Repository E2E, cleanup, and final Docker verification remain required. `spec-review`, active `speckit-analyze`, and the separate `acceptance-review` are omitted at iteration zero. This plan correction does not itself advance lifecycle state. |
+
+The exact active workflow is:
+
+```text
+context -> specify -> plan
+-> conditional plan-review + already granted planned-change authorization
+-> tasks -> root mechanical coverage validation -> implement
+-> combined quality-review -> conditional/final-slice E2E
+-> verify -> complete
+```
+
+The reduced judgment shape does not reduce the quality floor: transient
+RED/GREEN/REFACTOR, security and authorization, migration/no-model-delta,
+clean-database two-Repository E2E, one final Docker image, cleanup/absence,
+included regression, Web build, and final verification all remain mandatory.
 
 No Constitution violation requires Complexity Tracking.
 
@@ -201,6 +230,8 @@ tests/Vulgata.Tests/
 ├── DemoChatReleaseGatePostgreSqlTests.cs
 └── ReleaseGate/
     ├── Story115ReleaseHarness.cs             # sole clean-DB/Docker/browser owner
+    ├── Provisioner/
+    │   └── Story115Provisioner.*              # prebuilt test-owned .NET entry/result contract
     └── loopback-openai-provider.py           # test-only deterministic fixture
 ```
 
@@ -213,6 +244,18 @@ is a separate specific repository/tool rather than a generic repository or a
 public query surface. The runtime planner is likewise a specific deadline-only
 Infrastructure read, not a generic repository, graph query API, scheduler, or
 flow-clustering service.
+
+The provisioner entry is a test-only framework-dependent driver, not another
+production deployment. It is compiled before live resource acquisition and
+mounted as unique read-only driver files directly under the image's `/app`.
+An allowlist/inventory check rejects any mounted `Vulgata.Core`,
+`Vulgata.Infrastructure`, `Vulgata.Shared`, `Vulgata.Agents`, or `Vulgata.Web`
+assembly, any filename collision with the image publish, or any executable not
+bound to the candidate. Consequently dependency resolution loads every product
+assembly from the one inspected image. The driver invokes a reusable Web
+composition seam and only public product services; it adds no fixture SQL,
+`DbSet`, reflection, fabricated identity, production command mode, Dockerfile
+layer, or shipped file.
 
 ## Runtime Pass 2 Binding and Exact Dispatch Contract
 
@@ -545,7 +588,7 @@ Verification still runs the predecessor migration lifecycle and
 that requires durable chat state or a new persisted field invalidates this
 plan and must return to plan review with an additive migration justification.
 
-## Planned-Change Authorization Record and Full Advancement
+## Planned-Change Authorization Record and Expedited Advancement
 
 **Trigger 1 — Chat Agent tool**: this plan adds a Chat Agent retrieval tool,
 `IChatEvidenceRetriever.RetrieveAsync`, and its Infrastructure implementation.
@@ -574,12 +617,21 @@ deterministic ordinary Pass 1 Worker Job ID entry. Plan-review iteration 7
 then recorded that the validated correction advances without duplicate user
 approval.
 
-**Trigger 3 — T064 proof topology**: the current user dispatch authorizes the
-Windows Docker Desktop release host, the built-in `host.docker.internal`
-route, and reuse of the already-running PostgreSQL 17 Alpine endpoint with
-ownership restricted to one nonce database. This is release-test-platform and
-harness topology authority; it does not add or change a Worker tool, Scan
-strategy, product requirement, or PRD behavior.
+**Trigger 3 — Option A release Scan location**: the user approved the
+2026-08-09 correct-course proposal to build the final image first and relocate
+Repository profiling, ordinary Pass 1, exact Cross-Repository Resolution, and
+runtime Pass 2 from the Windows host into a temporary container from that
+image. This preserves every product algorithm and payload but materially
+changes where the accepted Scan strategy executes during the sole live T072
+run. Under `AGENTS.md`, this topology required independent plan review and a
+separate explicit planned-change authorization before task generation.
+Plan-review iteration 10 accepted the exact Option A topology, and the user
+then granted the distinct Option A plan-to-tasks authorization recorded at
+`2026-08-10T01:12:29Z` in `workflow-state.json`. The subsequent execution-level
+change does not alter the authorized topology or waive any retained gate. This
+corrected plan still requires a fresh conditional plan review because the Scan
+topology remains a planned-change trigger; it does not re-request the already
+granted Option A authorization.
 
 **Proposed approach and effect**: bind the accepted exact profile and current
 product-created identities into one consumer-owned runtime flow, fail closed on
@@ -605,13 +657,21 @@ incomplete scope is missing-equivalent. The model never authors paths or line ra
 the server resolves each selected Candidate Claim's fixed support handles from
 the authorized packet and creates every citation itself.
 
-**Implementation intent under the recorded approvals**: after a fresh validated
-Full plan `ACCEPT`, regenerate the dependency-ordered Full tasks without scope
-expansion, run read-only `speckit-analyze`, complete remaining work including
-T064/T065 under transient RED/GREEN evidence, run separate acceptance and
-quality reviews, and complete E2E/Docker/cleanup verification. Do not request
-another planned-change authorization for these already-authorized Chat, Scan,
-or T064 topology decisions. Do not add persistence, backfill, a synthetic
+**Implementation intent**: obtain a fresh conditional `expedited-mvp` plan
+`ACCEPT` for this corrected task/gate mapping, then verify the already granted
+Option A planned-change authorization still names the unchanged topology. The
+root may then regenerate dependency-ordered expedited tasks without scope
+expansion and mechanically validate requirement, task, test-first, security,
+migration, and unresolved-placeholder coverage. T064-T071 are non-live
+provisioner/harness RED/GREEN and non-live verification; after they are GREEN,
+one fresh combined acceptance-and-quality review must accept the pinned
+candidate. T072 alone may acquire live Windows Docker Desktop, PostgreSQL,
+provider, Repository, and Playwright resources for the same-image release run.
+T073 independently proves cleanup/absence and performs final verification.
+`spec-review`, active `speckit-analyze`, and the separate `acceptance-review`
+remain omitted at iteration zero. The prior Chat, runtime-Pass-2, and
+deterministic-Pass-1 approvals are not re-requested. Do not
+add persistence, backfill, a synthetic
 member identity, an eighth dispatch field, general Scan strategy, matching
 truth, clustering, retry/failover, durable history, or any deferred retrieval
 tool.
@@ -620,13 +680,14 @@ tool.
 
 - This plan: `plan.md` sections **Design and Execution Flow**, **No-Migration
   Decision**, **Ordinary Pass 1 Worker Job Identity**, **Runtime Pass 2 Binding
-  and Exact Dispatch Contract**, **Planned-Change Authorization Record and Full
+  and Exact Dispatch Contract**, **Planned-Change Authorization Record and Expedited
   Advancement**, and **Release E2E and Docker Boundary**.
-- Durable approval and advancement evidence:
+- Durable prior approval evidence:
   `docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md`,
   `specs/008-demo-chat-release-gate/workflow-state.json`,
   `specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json`,
-  and the current user topology dispatch.
+  plus the approved 2026-08-09 Option A proposal. The latter still requires the
+  repository-defined post-plan authorization before tasks.
 - PRD `docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md`
   section 5.16 accepts one sequential deterministic dispatch path, exact
   prepared Cross-Repository matching, at least one Business Logic Document,
@@ -647,12 +708,13 @@ tool.
 - PRD lines 340-345 retain encrypted secrets, source isolation, and read-only
   database-tool requirements.
 
-A fresh validated Full plan `ACCEPT` completes this correction gate and
-advances directly through the root-owned lifecycle path to Full task
-regeneration and the sequence above. No duplicate human authorization gate is
-inserted. Root ownership remains responsible for aligning the SpecKit, BMad,
-and workflow execution-level metadata to `full`; this planning correction does
-not edit or advance those lifecycle records.
+A fresh validated conditional plan `ACCEPT` completes the current planning
+judgment. The distinct Option A planned-change authorization is already durable
+and remains applicable only because this correction preserves its exact
+topology and effects. Root ownership remains responsible for task regeneration,
+mechanical coverage validation, and lifecycle advancement under
+`expedited-mvp`; this planning correction does not edit or advance those
+lifecycle records.
 
 ## Requirement Traceability
 
@@ -664,10 +726,21 @@ not edit or advance those lifecycle records.
 | FR-007-010 | Mode-specific exact-span extraction, selection-only provider result, immutable support predicate, database currentness proof, whole-answer rejection, Business detail expansion/IT inline allowance | `ChatCandidateExtractorTests`, adversarial `ChatAgentResultValidatorTests`, barrier-controlled `ChatEvidenceCurrentnessTests`, `ChatPageTests` |
 | FR-012-014 | Whole-result selection and database-currentness validation before publication; atomic render; cancellation/timeout/provider/malformed fail closed | `ChatAgentDispatcherTests`, `ChatEvidenceCurrentnessTests`, `PreparedChatCoordinatorTests` |
 | FR-015-016, FR-023-024, SC-006, SC-010-011 | Unique clean DB; deterministic actual ordinary Pass 1 Job IDs independently recomputed from product-created execution boundaries and verified through the existing Document Version projection; exact profile/evidence bound into one consumer-owned runtime flow; unchanged exact seven-slot Pass 2 payload; exactly-two-Repository support; one Pass 2 dispatch/commit before Chat; legacy/random/substituted/drifted evidence fails closed | `Pass1JobIdentityTests`, `PreparedDemoPass2FlowPlannerTests`, `PreparedPass2RuntimeDispatchTests`, `DemoChatReleaseGatePostgreSqlTests` |
-| FR-017-021 | Authorization-negative proof, same-candidate green checks, cleanup, truthful limitations | `DemoChatReleaseGatePostgreSqlTests`, release evidence bundle, Docker inspection |
+| FR-017-021 | Authorization-negative proof; one source-bound build; same immutable image ID for temporary provisioner and app; containerized product-service profiling/Scan with in-image CodeGraphContext 0.5.1; same-candidate green checks; cleanup; truthful limitations | `DemoChatReleaseGatePostgreSqlTests`, release evidence bundle, Docker inspection |
 | FR-022 | Explicit negative static/behavioral boundary: no scheduler, retry, durable session, graph/dashboard/SignalR | static inspection, diff review, no-pending-model check |
 
 ## Test-First Work Groups
+
+The corrected unfinished-task and gate mapping is normative for task
+regeneration and execution:
+
+| Boundary | Meaning |
+|---|---|
+| T064-T071 | Non-live Option A provisioner and harness RED/GREEN plus focused, build, security, migration/no-model-delta, static, and applicable regression verification. These tasks acquire no live Docker, PostgreSQL, provider, Repository, or Playwright resource. |
+| Root coverage gate | After task regeneration and before implementation, mechanically validate complete requirement/task/test-first/security/migration coverage. No active `speckit-analyze` verdict is created under `expedited-mvp`. |
+| Combined quality gate | After T064-T071 are GREEN and the candidate boundary is pinned, one fresh `quality-reviewer` performs the combined acceptance-and-quality judgment over every included criterion, security boundary, migration check, regression risk, test, and known limitation. |
+| T072 | Sole live same-image provisioner/app run on Windows Docker Desktop with the external PostgreSQL 17 nonce database, real provider, exact Repository revisions, curl/Identity/interactive Playwright proof, and sanitized evidence. |
+| T073 | Root/orchestrator independently verifies exact database/resource cleanup and absence, retained checks, unchanged reviewed boundary, final verification, and completion eligibility. |
 
 1. **Ordinary Pass 1 identity and runtime Pass 2 binding RED -> GREEN**:
    canonical version-1 Pass 1 bytes and deterministic actual UUIDv8 Worker Job
@@ -706,16 +779,25 @@ not edit or advance those lifecycle records.
 6. **Razor UI RED -> GREEN**: Chinese states, mode-locked theme, inline
    selectors, keyboard send/cancel, Business expandable citation detail, IT
    source locator display, no file upload or automatic scope.
-7. **Composition RED -> GREEN**: real Web/Core/Infrastructure/Agents
-   registration with relational storage and the shared-namespace provider.
-8. **Final gate**: sole `Story115ReleaseHarness` ownership of focused checks,
-   migration/no-pending checks, Web build, regression, the unique PostgreSQL
-   rehearsal, one source-bound Docker build, curl health, real
-   Identity/interactive Blazor Playwright proof, and complete cleanup.
+7. **Containerized provisioner RED -> GREEN**: candidate-bound prebuilt driver;
+   no mounted product assembly; one build/immutable ID; exact read-only source,
+   driver, and config mounts; writable output/work/key mounts; provider
+   namespace and built-in PostgreSQL route; in-image CodeGraphContext 0.5.1;
+   product-service-only migrations/profiling/Scan; closed sanitized result;
+   provisioner removal before same-ID app start; failure-injection cleanup.
+8. **Final gate**: T064-T071 complete all non-live RED/GREEN and verification;
+   the fresh combined quality review accepts one pinned candidate; T072 gives
+   sole `Story115ReleaseHarness` ownership of the unique PostgreSQL rehearsal,
+   one source-bound Docker build, same-ID provisioner/app inspection, curl
+   health, and real Identity/interactive Blazor Playwright proof; T073
+   independently verifies complete per-resource cleanup/absence and the final
+   retained checks.
 
 Every production behavior first has a transient failing test; no RED test is
-committed or accepted. The Full transition restores separate consistency,
-acceptance, and quality gates without removing any test or release gate.
+committed or accepted. The `expedited-mvp` transition omits active
+`speckit-analyze` and the separate acceptance axis, but retains root mechanical
+coverage validation and one fresh combined acceptance-and-quality gate without
+removing any test, security, migration, E2E, Docker, or cleanup requirement.
 
 ## Release E2E and Docker Boundary
 
@@ -726,36 +808,60 @@ The final PostgreSQL fixture owns the accepted profile facts:
 - `mbs_channel`, `refs/tags/vulgata/August15th-sample`,
   `47f6b627a7598f862873610413eec1e1e7bf46bf`.
 
-The T064 host is Windows Docker Desktop in Linux-container mode. Before nonce
-database creation, migrations, or any product provisioning, the harness
-validates the host-side administrator connection and PostgreSQL major version,
-then preflights from the provider container's exact network namespace that
-Docker Desktop's built-in `host.docker.internal` resolves and that the
-host-published PostgreSQL TCP endpoint is reachable. It supplies no explicit
-host mapping or alternate topology. DNS or endpoint failure stops before
-product provisioning and enters bounded cleanup; native-Linux-host execution
-is outside this T064 proof.
+The sole live T072 host is Windows Docker Desktop in Linux-container mode. Before live
+resource acquisition, the harness validates the clean candidate, canonical
+production-source manifest, accepted Repository refs/commits, prebuilt
+provisioner inventory, Docker Desktop Linux mode, host administrator connection,
+and PostgreSQL 17 major version. It then builds `docker/Dockerfile` exactly once,
+inspects the source labels, records the immutable `sha256:` image ID, and uses
+that ID—not a tag—for every application-image container command. A second
+application build, pull, commit, or provisioner image is forbidden.
 
-After that preflight, it connects to the supplied administrator database on
-the already-running PostgreSQL 17 Alpine endpoint, proves a cryptographically
-random database name absent, and creates only that nonce database. The supplied administrator
-database is never selected for migration, product use, termination, or drop.
-The harness also creates a gate-owned Data Protection key directory,
-publish-capable nonce Docker network, provider fixture, provider/app container
-names, and host ports. It applies all migrations to the nonce database, provisions actual users,
-scope, providers, assignments, and knowledge through product services, runs
-profiling -> canonical actual ordinary Pass 1 Job ID derivation and Pass 1 for
-each Repository -> exact Cross-Repository Resolution ->
-runtime prepared-flow binding -> exact seven-slot Pass 2 dispatch/commit ->
-bounded retrieval -> one fully cited Business or IT answer, then runs
-the inaccessible-scope check. The database stays alive for Docker proof. In
-`finally`, the harness removes app/provider containers, terminates connections
-only to the exact nonce database, drops only that database, proves catalog
-absence through the supplied administrator database, then removes its final
-image, publish-capable network, env file, and key directory. The external
-PostgreSQL server/container remains running and untouched.
+The harness creates a publish-capable nonce network and provider fixture, then
+preflights from the provider container's exact network namespace that Docker
+Desktop's built-in `host.docker.internal` resolves and reaches the host-published
+PostgreSQL endpoint. It supplies no explicit host mapping or alternate topology.
+Only after that preflight does it prove a cryptographically random database name
+absent and create that database. The supplied administrator database is never
+selected for migration, product use, termination, or drop.
 
-Users are created with `UserManager<ApplicationUser>`, roles with
+The harness acquires each accepted ref/full commit into a nonce-owned source
+origin, proves exact HEAD/clean state, and mounts the origins read-only at
+`/vulgata/sources/mbs_account` and `/vulgata/sources/mbs_channel`. Product
+Repository rows use those stable container `file://` origins; production Git
+services clone them into a nonce-owned writable work mount. It creates
+permission-restricted nonce config, sanitized output, Data Protection key-ring,
+and work directories. The provisioner input contains the nonce DB connection,
+fixed container source URIs, provider endpoints, application discriminator,
+and host-retained generated credentials; it is never evidence.
+
+One temporary provisioner container is started from the exact immutable image
+ID with `--network container:<providerContainer>` and `--entrypoint dotnet`.
+Only the prebuilt driver's unique files are mounted read-only into `/app`; an
+inventory check rejects product-assembly duplicates or filename collisions.
+The config and source mounts are read-only; output/work/key-ring mounts are
+nonce-owned writable paths. Inside the container, the driver reuses the image's
+product composition, so startup applies both migration sets and product services
+provision users, roles, scope, encrypted providers, Repository profiling,
+canonical ordinary Pass 1, exact Cross-Repository Resolution, runtime prepared
+Pass 2 binding, and one exact seven-slot Pass 2 dispatch/commit. The local
+`CodeGraphContextProvider` resolves only the image's hash-pinned 0.5.1 `cgc`.
+No host `cgc`/Python/pip fallback exists.
+
+The driver writes one closed sanitized result by atomic rename into the output
+mount. It contains outcome/identity hashes and product-created IDs needed for
+verification, but no credentials, connection string, provider key, source text,
+raw diagnostic, or absolute host path. The host validates it, inspects the
+provisioner container's `.Image` equal to the recorded ID, then stops and removes
+that container before starting the app container from the identical ID. The
+database and key ring stay alive for final retrieval/Identity/Playwright proof.
+In `finally`, cleanup independently attempts provisioner, app, provider,
+database connections/drop/absence, image, network, driver/config/output/work/
+source/key/env/browser state, and nonce-root removal. Primary and every cleanup
+failure remain separately visible. The external PostgreSQL server/container
+remains running and untouched.
+
+Inside the provisioner, users are created with `UserManager<ApplicationUser>`, roles with
 `RoleSeeder`/`IAdministratorRoleCoordinator`, ownership with
 `ISystemOwnershipCoordinator`, management rows with existing repositories and
 coordinators, knowledge with the accepted profiling/Sequential Scan Runner/
@@ -780,10 +886,10 @@ provider port equal to app port `8080`. The fixture is invoked as
 its namespace. Its container is created with exact mappings
 `--publish 127.0.0.1:<workerPort>:<workerPort>`,
 `--publish 127.0.0.1:<chatPort>:<chatPort>`, and
-`--publish 127.0.0.1:<appHostPort>:8080`. Product-service provisioning and the
-host-side profiling/Scan path use stored endpoints
-`http://127.0.0.1:<workerPort>/v1` and
-`http://127.0.0.1:<chatPort>/v1` through the first two mappings.
+`--publish 127.0.0.1:<appHostPort>:8080`. The provisioner joins the provider's
+network namespace and stores/calls `http://127.0.0.1:<workerPort>/v1` and
+`http://127.0.0.1:<chatPort>/v1` directly on shared loopback; no host-side Scan
+call or published-port dependency is permitted.
 
 The final app is started with `--network container:<providerContainer>`, no
 explicit host mapping, and no app-side `--publish`; it shares the provider namespace, so those same stored
@@ -797,9 +903,11 @@ built-in `host.docker.internal`, and uses an
 container's `127.0.0.1`, a remapped provider port with unequal host/container
 numbers, or `--publish` combined with `--network container:` is invalid.
 
-The Docker gate uses the canonical production-source manifest, builds the final
-runtime image exactly once, inspects its source labels/image ID, and starts it
-against the still-live database with the key ring mounted read-only. `docker
+The Docker gate uses the canonical production-source manifest and the already
+recorded single-build immutable image ID. Both provisioner and app commands name
+that ID, and `docker inspect` must report it for both container instances. The
+final app starts only after the provisioner is removed, against the still-live
+database with the key ring mounted read-only. `docker
 run` supplies the actual health command `curl --fail --silent --show-error
 http://127.0.0.1:8080/Account/Login` with bounded interval, timeout, retries,
 and start period; `curl` is installed in `docker/Dockerfile`, so no absent
@@ -820,6 +928,61 @@ product coordinator and requires submit to show the fixed missing-equivalent
 Chinese state with no stale answer. Static HTML, `HttpClient`, bUnit, or direct
 coordinator invocation cannot substitute for this final circuit proof.
 
+## Option A Lifecycle and Resource Ownership
+
+Normative lifecycle (a later phase never starts if its predecessor fails):
+
+1. validate the closed environment, candidate commit/tree/manifest, clean Git
+   boundary, accepted Repository refs/full commits, provisioner build/inventory,
+   Docker Desktop Linux mode, and host PostgreSQL 17 administrator endpoint;
+2. materialize the two nonce source origins, pin exact clean HEADs, create
+   permission-restricted config/output/work/key/env paths, and build the one
+   source-bound final image exactly once;
+3. inspect labels and immutable image ID; create the nonce network/provider and
+   preflight built-in `host.docker.internal` from that namespace;
+4. prove the nonce database absent, create it, then run the temporary
+   provisioner from the immutable ID in the provider namespace with the exact
+   read-only/writable mounts defined below;
+5. inside the provisioner, apply migrations and execute product provisioning,
+   Repository profiling, ordinary Pass 1 for both Repositories, exact
+   Cross-Repository Resolution, runtime prepared-flow binding, and the one
+   exact seven-slot Pass 2 dispatch/commit; atomically write sanitized output;
+6. inspect the provisioner's `.Image` equal to the recorded ID, remove it, and
+   refuse app start until absence is observed;
+7. start the app from the same ID, inspect `.Image` equality, run curl health,
+   real Identity/Playwright positive citation, inaccessible-scope, and
+   post-selection revocation proofs;
+8. always execute dependency-ordered cleanup and final absence checks while
+   retaining primary and each cleanup failure separately.
+
+| Resource | Owner / access | Lifetime and cleanup proof |
+|---|---|---|
+| External PostgreSQL 17 server/container + administrator DB | External; read/control connection only | Never stopped, removed, migrated, selected for product data, terminated, or dropped. |
+| Nonce database | Harness only | Absent -> create -> provisioner/app use -> terminate exact connections -> drop -> catalog absence. |
+| Final application image ID | Harness, one build | Built once; both container `.Image` values equal it; remove after both containers are absent. |
+| Provider container/network/ports | Harness | Provider survives provisioner-to-app handoff; remove provider then network; publications are host-loopback only. |
+| Provisioner container | Harness; ephemeral | Same final image ID; no restart/durable service; remove and prove absent before app start and again in `finally`. |
+| App container | Harness | Same final image ID; remove before DB termination/drop. |
+| Driver files | Test-owned, read-only individual mounts into `/app` | Candidate-bound hashes; no `Vulgata.*` duplicate/collision; unmount with provisioner and delete nonce staging. |
+| Two source origins | Harness, read-only container mounts at fixed paths | Exact ref/full commit/clean proof; product clones only to writable work; delete origins during nonce-root cleanup. |
+| Provisioner config / app env | Harness, permission-restricted, read-only in consumers | Secrets never logged/evidenced; delete in `finally`. |
+| Sanitized output | Harness, provisioner-write/host-read | Closed schema + size bound + atomic rename; validate, hash evidence, delete in `finally`. |
+| Work + CodeGraph state | Harness, provisioner-write | Contains only nonce clones/output; delete with bounded read-only/leased-pack retry. |
+| Data Protection key ring | Harness, provisioner-write then app-read-only | Same application discriminator; delete after app removal. |
+| Browser state / nonce run root | Harness | Close browser, clear attributes with bounded retry, delete exact nonce root, prove absence. |
+
+Release-harness TDD pins command order and shape, exactly one build command,
+exact ID arguments and inspect equality, driver collision rejection, read-only
+source/config/driver mounts, writable output/work/key mounts, provider namespace,
+built-in PostgreSQL preflight, sanitized output rejection cases, provisioner
+removal-before-app ordering, and cleanup after failure at every phase. Focused
+product tests continue to pin ordinary Pass 1 identity, exact seven-slot Pass 2,
+authorization/currentness/citations, no pending model changes, and no general
+Scan expansion. No live Docker, PostgreSQL, provider, or Playwright resource is
+acquired during T064-T071 implementation or combined review; only the final
+T072 lane may execute this lifecycle. T073 then independently verifies exact
+cleanup/absence and the unchanged reviewed candidate before completion.
+
 ## Risks and Mitigations
 
 | Risk | Mitigation / stop condition |
@@ -837,6 +1000,11 @@ coordinator invocation cannot substitute for this final circuit proof.
 | Derived runtime identities drift across processes or platforms | Use the versioned binary TLV codec, strict UTF-8/NFC validation, raw lowercase-hex decoding, RFC-network-order UUID bytes, UUIDv8-SHA256 derivation, and independent hard-coded golden byte/UUID/fingerprint vectors. Runner and committer recompute rather than trust supplied slots. |
 | Runtime correction silently expands the Worker contract | Keep `Pass2BusinessLogicJobPayload` at exactly seven top-level slots; assert the closed slot set and production composition statically and behaviorally. Support fingerprint and validation identities never become an eighth slot. |
 | Docker build is not the tested source | Require a clean immutable candidate and existing source commit/tree/production-manifest labels; inspect labels before startup. |
+| Provisioner silently runs a different product build | Mount only candidate-bound driver files into `/app`; reject every duplicate/colliding `Vulgata.*` assembly; require product assembly paths under image `/app`; inspect provisioner and app `.Image` equal to the one recorded immutable ID. |
+| Provisioner becomes a second artifact or durable service | Never build/commit/push a provisioner image. Override the entrypoint of the one final image, remove the temporary container before app start, and exclude the driver from shipped image/source manifest. |
+| Read-only source origins cannot support profiling | Store fixed container `file://` origins read-only and let production Git services clone them into the nonce writable work mount; validate exact ref/full commit/clean state before DB creation. |
+| Host CodeGraph runtime is accidentally reused | No host profiling or `cgc` probe is allowed; command-shape tests and provisioner evidence pin in-image `cgc version`/requirements-lock identity before Repository profiling. |
+| Provisioner output leaks secrets or host paths | Use a closed, size-bounded result schema, atomic output rename, forbidden-field/value scanning, and host-generated credentials retained outside the result. |
 | Browser/container proof degrades to static HTTP | Pin Playwright/Chromium, wait for the Blazor circuit, require actual control interaction plus claim/citation assertions, and fail rather than fall back. |
 | Provisioner/container Data Protection differs | Supply the exact optional key path and application discriminator to both, mount the same ring, and prove real Worker/Chat decryption. |
 | Cleanup failure masks the test result | Preserve primary and cleanup failures, terminate/drop only the exact nonce database, remove only nonce-prefixed provider/app/image/network/key/env resources in dependency order, and fail until the database and all harness-owned resources are absent. Never stop or remove the supplied PostgreSQL server/container. |

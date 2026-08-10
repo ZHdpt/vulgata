@@ -4,7 +4,7 @@
 
 - one clean accepted Vulgata candidate with source commit, tree, and canonical
   `production-source-manifest-v1` hash;
-- one Windows Docker Desktop host in Linux-container mode; this T064 contract
+- one Windows Docker Desktop host in Linux-container mode; this T072 contract
   does not claim native-Linux-host support or define a fallback topology;
 - the existing running PostgreSQL 17 Alpine administrator endpoint, supplied
   outside source control (observed as `localhost:5432`, administrator database
@@ -16,6 +16,8 @@
   commit `47f6b627a7598f862873610413eec1e1e7bf46bf`;
 - one gate-owned Data Protection key directory/application discriminator and
   deterministic isolated Worker/Chat provider namespace;
+- one prebuilt candidate-bound test-owned .NET provisioner entry whose mounted
+  inventory contains no duplicate/colliding `Vulgata.*` product assembly;
 - one authorized demo user and one authorization-negative user/scope.
 
 Any ref/commit, source identity, provider, or profile mismatch fails before an
@@ -28,19 +30,25 @@ suffix. It must reject shared/default/production-looking names. Before step 1,
 it validates the host-side PostgreSQL 17 administrator endpoint and preflights
 Docker Desktop's built-in `host.docker.internal` DNS and TCP reachability from
 the provider container's exact network namespace. Failure stops before nonce
-database creation, migrations, or product provisioning and enters bounded
+database creation or product provisioning and enters bounded
 cleanup. The run:
 
 1. proves the name is absent;
-2. creates the database and applies all Identity/domain migrations;
-3. runs migration/no-pending-model checks;
-4. executes feature gates;
-5. keeps the database alive through final-container Playwright proof;
-6. in `finally`, removes the app/provider containers, terminates only
+2. before product provisioning, builds the final application image exactly
+   once, inspects its source labels, and records its immutable image ID;
+3. creates the database, then starts a temporary provisioner container from
+   that image ID in the provider network namespace;
+4. inside the provisioner applies all Identity/domain migrations, runs
+   migration/model checks and the complete prepared product path, writes a
+   closed sanitized result, and exits;
+5. verifies the provisioner `.Image`, removes it and proves absence, then starts
+   the app from the identical image ID;
+6. keeps the database alive through final-container Playwright proof;
+7. in `finally`, removes the provisioner/app/provider containers, terminates only
    connections to the exact disposable database, drops only that database,
    queries the catalog through the supplied administrator database to prove
    absence, then removes the final image, publish-capable provider/app network,
-   env file, key directory, and remaining harness-owned nonce state.
+   source/config/output/work/env/key/browser state, and exact nonce root.
 
 The harness never creates, stops, removes, reconfigures, or claims ownership of
 the supplied PostgreSQL server/container. It never selects, migrates, uses for
@@ -54,7 +62,7 @@ release gate fail. No credentials or connection string is written to evidence.
 
 ## Prepared vertical slice
 
-The observed order is:
+The observed order inside the temporary provisioner is:
 
 ```text
 users/roles + prepared management + authorization + encrypted providers
@@ -95,6 +103,12 @@ exact resolver/Pass 2 services, `ILlmProviderManagementCoordinator`, and
 is prohibited. Real `SecretEncryptionService` uses the gate key ring. The
 provisioner and runtime must receive identical optional
 `DataProtection:KeyRingPath` and `DataProtection:ApplicationName` values.
+Repository origins are exact accepted ref/full-commit clean checkouts mounted
+read-only at `/vulgata/sources/mbs_account` and
+`/vulgata/sources/mbs_channel`; product Git services clone them into the
+provisioner's writable nonce work mount. Profiling MUST resolve the final
+image's hash-pinned Linux CodeGraphContext 0.5.1 runtime. Host `cgc`, host
+Python/pip, and fallback resolution are prohibited.
 
 ### Ordinary Pass 1 Job Identity contract
 
@@ -248,7 +262,7 @@ topology:
 - `--publish 127.0.0.1:<chatPort>:<chatPort>`; and
 - `--publish 127.0.0.1:<appHostPort>:8080`.
 
-The host-side profiling/Scan path and provisioner store and call
+The provisioner joins `--network container:<providerContainer>` and stores/calls
 `http://127.0.0.1:<workerPort>/v1`; Chat stores
 `http://127.0.0.1:<chatPort>/v1`. Equal host/container provider port numbers
 are mandatory. The final app uses `--network container:<providerContainer>`,
@@ -262,28 +276,74 @@ provider host/container ports, or combining `--publish` with
 `--network container:` fails the gate.
 
 The external PostgreSQL server/container is not a member of this network. The
-final app's connection string retains the nonce database name and credentials
+provisioner and final-app connection strings retain the nonce database name and credentials
 but uses Windows Docker Desktop's built-in `host.docker.internal` to reach the
 host-published PostgreSQL endpoint. No explicit host mapping is passed to the
-provider or app container. Before product provisioning, the provider
+provider, provisioner, or app container. Before database creation/product provisioning, the provider
 container runs a bounded Python `socket.getaddrinfo` plus
 `socket.create_connection` probe to `host.docker.internal:5432`; DNS or TCP
 failure fails closed. This topology adds no environment variable and exposes
 every harness-published port only on host `127.0.0.1`.
 
+## Provisioner container contract
+
+The provisioner command names the recorded immutable image ID and overrides
+only the entrypoint to `dotnet /app/Vulgata.Story115.Provisioner.dll`. Exactly
+three unique candidate-bound driver files (`.dll`, `.deps.json`,
+`.runtimeconfig.json`) are individually mounted read-only into `/app`. Before
+container creation, compare their names against the inspected `/app` inventory;
+reject collisions and any mounted `Vulgata.Core`, `Vulgata.Infrastructure`,
+`Vulgata.Shared`, `Vulgata.Agents`, or `Vulgata.Web` assembly. Product
+assemblies and the `cgc` runtime must resolve from the image only.
+
+Required mounts:
+
+- accepted `mbs_account` and `mbs_channel` origins read-only at the fixed
+  `/vulgata/sources/<alias>` paths;
+- permission-restricted input read-only at `/vulgata/run/config/input.json`;
+- nonce output writable at `/vulgata/run/output`;
+- nonce Git/CodeGraph work writable at `/var/lib/vulgata-codegraph`;
+- nonce Data Protection ring writable at `/var/lib/vulgata-dpkeys` during
+  provisioning and mounted read-only for the later app.
+
+The input contains secrets and is never evidence. The result is atomically
+renamed to `result.json`, closed-schema and size-bounded, and rejects unknown
+fields, wrong nonce/schema, credentials, connection strings, provider keys,
+source/Document text, raw prompts/responses/diagnostics, absolute host paths,
+or unauthorized metadata. The provisioner is a temporary container instance,
+not an image/deployment artifact, and must be removed/proved absent before app
+creation.
+
 ## Candidate checks
 
-The Chat tool and both material Scan changes are already covered by the
+The Chat tool and both prior material Scan changes are already covered by the
 durable planned-change authorizations in the Story record and
-`workflow-state.json`; plan-review iteration 7 records advancement without
-duplicate user approval, and the current user correction dispatch authorizes
-this Windows Docker Desktop topology. A fresh validated Full plan `ACCEPT`
-therefore advances directly to regenerated Full tasks, read-only
-`speckit-analyze`, remaining T064/T065 evidence, separate acceptance and
-quality reviews, and verification without another authorization request.
+`workflow-state.json`. Plan-review iteration 10 accepted the exact Option A
+topology, and the user then granted the distinct Option A plan-to-tasks
+authorization at `2026-08-10T01:12:29Z`. Relocation of the release Scan remains
+a conditional plan-review trigger, so this corrected `expedited-mvp` plan MUST
+receive a fresh independent plan `ACCEPT` before task regeneration; the
+unchanged Option A authorization is not requested again.
+
+The active gate/task sequence is closed: the root regenerates expedited tasks
+and mechanically validates requirement/task/test-first/security/migration
+coverage; T064-T071 perform only non-live Option A RED/GREEN and verification;
+one fresh combined acceptance-and-quality review accepts the pinned candidate;
+T072 alone runs the live same-image Windows Docker Desktop/PostgreSQL/provider/
+Repository/Playwright proof; and T073 independently verifies database/resource
+cleanup, absence, retained checks, unchanged boundary, and final completion
+eligibility. `spec-review`, active `speckit-analyze`, and separate
+`acceptance-review` are omitted at iteration zero. The prior Chat/Pass 1/Pass 2
+approvals are not duplicated, and no retained TDD, security, migration,
+clean-database E2E, Docker, cleanup, or verification gate is weakened.
 
 The same candidate must pass:
 
+- release-harness command/lifecycle tests proving one build, immutable-ID use
+  and equality for provisioner/app, driver collision rejection, exact mount
+  access, provider namespace, built-in PostgreSQL preflight, source ref/commit
+  continuity, sanitized result rejection cases, provisioner removal before app,
+  and unconditional cleanup after failure at every acquired-resource phase;
 - Story 11.5 contract, retrieval, agent, coordinator, UI, and integration tests;
 - ordinary Pass 1 Job Identity tests proving independent canonical bytes and
   the pinned UUIDv8 vector, same-boundary repeat identity, mutation of every
@@ -311,38 +371,46 @@ The same candidate must pass:
 
 ## Final Docker proof
 
-Exactly one accepted final runtime image is built after all code/test gates:
+In T072, exactly one accepted final runtime image is built after T064-T071,
+root coverage validation, candidate pinning, and the fresh combined quality
+`ACCEPT`, and before nonce database creation/product provisioning:
 
 1. require clean immutable Git status;
 2. create/validate the existing canonical production-source manifest;
 3. build `docker/Dockerfile` with exact
    `VULGATA_SOURCE_COMMIT`, `VULGATA_SOURCE_TREE`, and
    `VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256` arguments;
-4. record image ID and inspect the three matching labels;
-5. start the image on Windows Docker Desktop against the still-live nonce
-   database on the external PostgreSQL 17 endpoint through the already-
-   preflighted built-in `host.docker.internal`,
-   mounted key ring, and isolated provider fixture;
-6. configure `docker run` health as `curl --fail --silent --show-error
+4. record immutable image ID and inspect the three matching labels;
+5. start a temporary provisioner with `--entrypoint dotnet` from that exact ID,
+   in the provider namespace, with only candidate-bound driver/source/config
+   read-only mounts and nonce output/work/key writable mounts;
+6. require migrations/product profiling/Scan to complete inside it, validate
+   its closed sanitized output, inspect `.Image` equal to the recorded ID, then
+   remove/prove absence before app start;
+7. start the app from the same ID against the still-live nonce database through
+   preflighted built-in `host.docker.internal`, the same key ring, and provider;
+8. inspect app `.Image` equal to the recorded ID and configure health as `curl --fail --silent --show-error
    http://127.0.0.1:8080/Account/Login` with bounded polling (`curl` is in the
    runtime image);
-7. use Microsoft.Playwright 1.61.0 with matching Chromium to authenticate via
+9. use Microsoft.Playwright 1.61.0 with matching Chromium to authenticate via
    the real Identity form, wait for the interactive Blazor circuit, operate
    selectors/send/citation controls, and assert positive claims/citations;
-8. use a second real Identity context and a post-selection ownership
+10. use a second real Identity context and a post-selection ownership
    revocation to prove missing-equivalent behavior and zero leaked/stale
    claim/citation content;
-9. remove only the nonce database and harness-owned nonce-prefixed provider/
-   app/image/network/env/key resources, leaving the supplied PostgreSQL
+11. remove only the nonce database and harness-owned nonce-prefixed provider/
+   provisioner/app/image/network/source/config/output/work/env/key/browser
+   resources, leaving the supplied PostgreSQL
    server/container and administrator database untouched, and record every
    cleanup outcome.
 
-A previously built or predecessor image is not acceptable. An unlabelled,
+A second application/provisioner image, previously built or predecessor image
+is not acceptable. An unlabelled,
 dirty-source, mismatched-label, unhealthy, or cleanup-failed image fails the
 gate.
 
 Static SSR markup, `HttpClient`, direct service calls, or bUnit do not satisfy
-steps 7-8. The provider fixture must be isolated from external providers and
+steps 9-10. The provider fixture must be isolated from external providers and
 return Worker content plus Chat candidate selections only.
 
 ## Evidence output
@@ -350,6 +418,11 @@ return Worker content plus Chat candidate selections only.
 The release evidence bundle records only sanitized facts and hashes:
 
 - candidate commit/tree/manifest and image ID/labels;
+- exactly-one-build count, provisioner/app `.Image` equality, proof the
+  provisioner was removed before app start, and absence of a provisioner image;
+- candidate-bound driver inventory, fixed source/config/output/work/key mount
+  identities, provider-namespace/PostgreSQL preflight, in-image
+  CodeGraphContext 0.5.1 identity, and sanitized provisioner-result hash;
 - prepared aliases/refs/commits and exact profile fingerprint;
 - runtime Pass 2 support fingerprint plus sanitized proof of consumer
   ownership, exactly-two-Repository support, exact seven-slot dispatch, and one
@@ -360,7 +433,7 @@ The release evidence bundle records only sanitized facts and hashes:
   without proprietary answer/source text;
 - negative authorization outcome;
 - disposable database name, drop result, and absence observation;
-- cleanup outcomes and truthful known post-demo limitations.
+- per-resource cleanup/absence outcomes and truthful known post-demo limitations.
 
 The bundle never contains credentials, plaintext provider key, absolute private
 Repository paths, proprietary source, raw model prompt/response, or
