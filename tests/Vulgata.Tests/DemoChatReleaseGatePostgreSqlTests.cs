@@ -5,7 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Tests.ReleaseGate;
@@ -481,6 +484,107 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
     }
 
     [Fact]
+    public void ProvisionerResult_HostValidator_RejectsUnknownAndDuplicateFields()
+    {
+        const string nonce = "0123456789abcdef0123456789abcdef";
+        string valid = CreateValidProvisionerResultJson(nonce);
+        string unknown = valid.Insert(valid.Length - 1, ",\"unexpected\":true");
+        string duplicate = valid.Replace(
+            "\"schemaIdentity\":\"vulgata.story115.provisioner-result/1\"",
+            "\"schemaIdentity\":\"vulgata.story115.provisioner-result/1\",\"schemaIdentity\":\"vulgata.story115.provisioner-result/1\"",
+            StringComparison.Ordinal);
+
+        Assert.Throws<InvalidDataException>(() =>
+            Story115ReleaseHarness.ValidateProvisionerResult(unknown, nonce));
+        Assert.Throws<InvalidDataException>(() =>
+            Story115ReleaseHarness.ValidateProvisionerResult(duplicate, nonce));
+    }
+
+    [Fact]
+    public void ProvisionerResult_HostValidator_BindsNonceContentLockAndEveryRequiredValue()
+    {
+        const string nonce = "0123456789abcdef0123456789abcdef";
+        string valid = CreateValidProvisionerResultJson(nonce);
+
+        Story115ReleaseHarness.ValidateProvisionerResult(valid, nonce);
+        Assert.All(
+            new[]
+            {
+                CreateValidProvisionerResultJson("fedcba9876543210fedcba9876543210"),
+                MutateProvisionerResult(valid, result =>
+                    result["migrationOutcome"] = "tampered", resign: false),
+                MutateProvisionerResult(valid, result =>
+                    result["codeGraphRequirementsLockSha256"] = new string('a', 64)),
+                MutateProvisionerResult(valid, result =>
+                    result.Remove("completedAtUtc")),
+                MutateProvisionerResult(valid, result =>
+                    result["schemaIdentity"] = "vulgata.story115.provisioner-result/2"),
+                MutateProvisionerResult(valid, result =>
+                    result["profileFingerprint"] = "not-a-hash"),
+                MutateProvisionerResult(valid, result =>
+                    result["systemId"] = Guid.Empty.ToString()),
+                MutateProvisionerResult(valid, result =>
+                    result["completedAtUtc"] = "not-a-timestamp"),
+            },
+            invalid => Assert.Throws<InvalidDataException>(() =>
+                Story115ReleaseHarness.ValidateProvisionerResult(invalid, nonce)));
+    }
+
+    [Fact]
+    public async Task ProvisionerDriverBinding_ReplacedCollisionOrMissingAttestation_FailsBeforeProvisionerCreationAsync()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story115-driver-binding-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            foreach (string name in Story115ReleaseHarness.ProvisionerDriverFileNames)
+            {
+                await File.WriteAllTextAsync(Path.Combine(root, name), "candidate:" + name);
+            }
+
+            string candidate = new string('a', 40);
+            string[] imageInventory = ["Vulgata.Core.dll", "Vulgata.Web.dll"];
+            Story115ProvisionerDriverAttestation attestation =
+                Story115ReleaseHarness.CreateProvisionerDriverAttestation(
+                    root,
+                    candidate,
+                    imageInventory);
+
+            Story115ReleaseHarness.ValidateProvisionerDriverAttestation(
+                root,
+                candidate,
+                imageInventory,
+                attestation);
+            await File.WriteAllTextAsync(
+                Path.Combine(root, Story115ReleaseHarness.ProvisionerDriverFileNames[0]),
+                "replaced");
+            Assert.Throws<InvalidDataException>(() =>
+                Story115ReleaseHarness.ValidateProvisionerDriverAttestation(
+                    root,
+                    candidate,
+                    imageInventory,
+                    attestation));
+            Assert.Throws<InvalidDataException>(() =>
+                Story115ReleaseHarness.CreateProvisionerDriverAttestation(
+                    root,
+                    candidate,
+                    [.. imageInventory, Story115ReleaseHarness.ProvisionerDriverFileNames[0]]));
+            Assert.Throws<InvalidDataException>(() =>
+                Story115ReleaseHarness.ValidateProvisionerDriverAttestation(
+                    root,
+                    candidate,
+                    imageInventory,
+                    attestation: null));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void DatabaseOwnership_CryptographicNonceIsExactAndUnsafeNamesAreRejected()
     {
         Story115RunIdentity first = Story115ReleaseHarness.CreateRunIdentity();
@@ -799,6 +903,7 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             [
                 "schemaVersion",
                 "candidate",
+                "provisioner",
                 "preparedRepositories",
                 "profileFingerprint",
                 "runtimePass2",
@@ -810,6 +915,22 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 "knownLimitations",
             ],
             document.RootElement.EnumerateObject().Select(property => property.Name));
+        Assert.Equal(
+            [
+                "buildCount",
+                "provisionerImageId",
+                "appImageId",
+                "provisionerRemovedBeforeAppStart",
+                "provisionerImageCreated",
+                "driverInventorySha256",
+                "imageAppInventorySha256",
+                "driverFiles",
+                "mountIdentities",
+                "resultSha256",
+            ],
+            document.RootElement.GetProperty("provisioner")
+                .EnumerateObject()
+                .Select(property => property.Name));
         Assert.DoesNotContain("password", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("connectionstring", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("apikey", json, StringComparison.OrdinalIgnoreCase);
@@ -1002,9 +1123,16 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.Contains(plan.Identity.Nonce, plan.AppEnvironmentFile, StringComparison.Ordinal);
         Assert.Equal(
             [
-                "network-create",
+                "candidate-commit-inspect",
+                "candidate-tree-inspect",
+                "candidate-driver-diff-inspect",
+                "candidate-untracked-driver-inspect",
+                "candidate-worktree-inspect",
+                "provisioner-driver-publish",
                 "source-bound-image-build",
                 "image-label-inspect",
+                "image-app-inventory-inspect",
+                "network-create",
                 "provider-run",
                 "provisioner-run",
                 "provisioner-image-inspect",
@@ -1081,6 +1209,47 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
     }
 
     [Fact]
+    public async Task FinalPlan_DriverPublishAndInventoryBinding_PrecedeProvisionerCreationAsync()
+    {
+        var operations = new RecordingFinalRunOperations();
+
+        await Story115ReleaseHarness.RunFinalAsync(
+            Story115ReleaseHarness.CreateValidEnvironmentForFastTests(),
+            operations);
+
+        Story115FinalRunPlan plan = Assert.IsType<Story115FinalRunPlan>(operations.Plan);
+        Assert.Equal(
+            [
+                "candidate-commit-inspect",
+                "candidate-tree-inspect",
+                "candidate-driver-diff-inspect",
+                "candidate-untracked-driver-inspect",
+                "candidate-worktree-inspect",
+                "provisioner-driver-publish",
+                "source-bound-image-build",
+                "image-label-inspect",
+                "image-app-inventory-inspect",
+            ],
+            plan.Commands.Take(9).Select(command => command.Name));
+        Story115ExternalCommand publish = plan.Commands.Single(command =>
+            command.Name == "provisioner-driver-publish");
+        string driverRoot = Path.Combine(plan.RunDirectory, "driver");
+        Assert.Contains(driverRoot, publish.Arguments);
+        Story115ExternalCommand inventory = plan.Commands.Single(command =>
+            command.Name == "image-app-inventory-inspect");
+        Assert.Contains(Story115ReleaseHarness.ImmutableImageIdPlaceholder, inventory.Arguments);
+        Story115ExternalCommand provisioner = plan.Commands.Single(command =>
+            command.Name == "provisioner-run");
+        Assert.Equal(
+            3,
+            provisioner.Arguments.Count(argument =>
+                argument.Contains("source=" + driverRoot, StringComparison.Ordinal) &&
+                argument.EndsWith(",readonly", StringComparison.Ordinal)));
+        List<Story115ExternalCommand> commands = plan.Commands.ToList();
+        Assert.True(commands.IndexOf(inventory) < commands.IndexOf(provisioner));
+    }
+
+    [Fact]
     public async Task OptionAFinalPlan_UsesOneImmutableImageForProvisionerThenApp()
     {
         var operations = new RecordingFinalRunOperations();
@@ -1092,9 +1261,16 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Story115FinalRunPlan plan = Assert.IsType<Story115FinalRunPlan>(operations.Plan);
         Assert.Equal(
             [
-                "network-create",
+                "candidate-commit-inspect",
+                "candidate-tree-inspect",
+                "candidate-driver-diff-inspect",
+                "candidate-untracked-driver-inspect",
+                "candidate-worktree-inspect",
+                "provisioner-driver-publish",
                 "source-bound-image-build",
                 "image-label-inspect",
+                "image-app-inventory-inspect",
+                "network-create",
                 "provider-run",
                 "provisioner-run",
                 "provisioner-image-inspect",
@@ -1298,6 +1474,71 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
 
         throw new InvalidOperationException("Could not locate the Vulgata repository root.");
     }
+
+    private static string CreateValidProvisionerResultJson(string nonce)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+        var unsigned = new Story115ProvisionerResult(
+            "vulgata.story115.provisioner-result/1",
+            Sha256(nonce),
+            "applied",
+            "completed",
+            Guid.Parse("11111111-1111-4111-8111-111111111111"),
+            Guid.Parse("22222222-2222-4222-8222-222222222222"),
+            Guid.Parse("33333333-3333-4333-8333-333333333333"),
+            Guid.Parse("44444444-4444-4444-8444-444444444444"),
+            Guid.Parse("55555555-5555-4555-8555-555555555555"),
+            Guid.Parse("66666666-6666-4666-8666-666666666666"),
+            Guid.Parse("77777777-7777-4777-8777-777777777777"),
+            "mbs_account",
+            "refs/tags/vulgata/August15th-sample",
+            "19c60cd3f3976b7697c487c7bafd96142e3a7625",
+            "mbs_channel",
+            "refs/tags/vulgata/August15th-sample",
+            "47f6b627a7598f862873610413eec1e1e7bf46bf",
+            new string('8', 64),
+            new string('9', 64),
+            2,
+            1,
+            1,
+            "0.5.1",
+            "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95",
+            new DateTimeOffset(2026, 8, 10, 0, 0, 0, TimeSpan.Zero),
+            string.Empty);
+        string unsignedJson = JsonSerializer.Serialize(unsigned, options);
+        return JsonSerializer.Serialize(
+            unsigned with { ContentHash = Sha256(unsignedJson) },
+            options);
+    }
+
+    private static string MutateProvisionerResult(
+        string json,
+        Action<JsonObject> mutate,
+        bool resign = true)
+    {
+        JsonObject result = JsonNode.Parse(json)?.AsObject() ??
+            throw new InvalidOperationException("The result test fixture was malformed.");
+        mutate(result);
+        result["contentHash"] = string.Empty;
+        string unsignedJson = result.ToJsonString();
+        if (resign)
+        {
+            result["contentHash"] = Sha256(unsignedJson);
+        }
+        else
+        {
+            using JsonDocument original = JsonDocument.Parse(json);
+            result["contentHash"] = original.RootElement.GetProperty("contentHash").GetString();
+        }
+
+        return result.ToJsonString();
+    }
+
+    private static string Sha256(string value) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     private sealed class RecordingReleaseOperations(
         bool failDrop,

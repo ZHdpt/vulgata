@@ -32,9 +32,9 @@
       },
       "quality-review": {
         "status": "pending",
-        "iteration": 7,
+        "iteration": 8,
         "dispatch_id": null,
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-7.json",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-8.json",
         "input_boundary": null,
         "completed_at": null
     },
@@ -635,6 +635,37 @@
         ],
         "validation": "T064-T071 observed RED then GREEN; Option A focused 4/4; Pass 1/Pass 2 surrounding 29/29; currentness 3/3; complete non-live release harness 44/44; required quickstart filters 137/137; migrations 10/10; both DbContexts no pending model changes; Release builds and exact three-file provisioner publish succeeded; protected-path and git diff checks clean; no live resources acquired",
         "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "revised",
+        "iteration": 7,
+        "started_at": "2026-08-10T03:55:37Z",
+        "completed_at": "2026-08-10T04:20:00Z",
+        "input_commit": "981a96ed7f332d4917fcfc4c286e6b078a6c8106",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_7",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-7.json",
+        "finding_ids": [
+          "QR-115-007-001",
+          "QR-115-007-002"
+        ],
+        "failure": null
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T04:20:00Z",
+        "completed_at": "2026-08-10T04:41:36Z",
+        "input_commit": "981a96ed7f332d4917fcfc4c286e6b078a6c8106",
+        "agent_role": "tdd-implementer/root",
+        "dispatch_id": "story_11_5_quality_correction_iteration_7",
+        "artifact_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+        ],
+        "validation": "QR-115-007-001 and QR-115-007-002 corrected with observed RED then GREEN; closed nonce/content/CodeGraph-lock result validation; exact candidate-bound three-file driver attestation and evidence; focused 2/2 + 1/1 + 4/4; complete non-live release harness 48/48; quickstart 137/137; currentness 3/3; migrations 10/10; both no-pending-model checks and Release builds green; no live resources",
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -781,7 +812,7 @@
   },
   "verification": [],
     "last_checkpoint": {
-      "checkpoint_id": "bmad-11-5-expedited-reviewed-candidate-20260810T115537Z",
+      "checkpoint_id": "bmad-11-5-expedited-recovery-candidate-20260810T124136Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
       "stage": "quality-review",
       "committed_paths": [
@@ -796,8 +827,9 @@
         "tests/Vulgata.Tests/Vulgata.Tests.csproj"
       ],
       "verification_evidence_ids": [
-        "11-5-demo-chat-citations-and-release-gate/tdd/t064-t071",
-        "11-5-demo-chat-citations-and-release-gate/non-live/44",
+        "11-5-demo-chat-citations-and-release-gate/quality-review/7",
+        "11-5-demo-chat-citations-and-release-gate/correction/qr-115-007-001-002",
+        "11-5-demo-chat-citations-and-release-gate/non-live/48",
         "11-5-demo-chat-citations-and-release-gate/quickstart/137",
         "11-5-demo-chat-citations-and-release-gate/migrations/10"
     ],
@@ -805,5 +837,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-    "updated_at": "2026-08-10T03:55:37Z"
+    "updated_at": "2026-08-10T04:41:36Z"
 }

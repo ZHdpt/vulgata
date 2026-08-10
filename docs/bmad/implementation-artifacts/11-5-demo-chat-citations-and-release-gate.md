@@ -249,6 +249,13 @@ as completed acceptance criteria.
   No live Docker, PostgreSQL, provider, Repository, CodeGraph, browser, or
   Playwright resource was acquired. T072-T073 remain pending behind the fresh
   combined quality review and unchanged-candidate pin.
+- Combined quality review iteration 7 returned `REVISE` with
+  `QR-115-007-001` and `QR-115-007-002`: the host parser did not fully close
+  and nonce/hash-bind provisioner output, and the three mounted provisioner
+  files were not byte-bound to the reviewed candidate/evidence. Both findings
+  were corrected test-first without live activation. Root reproduced the
+  corrected complete non-live release harness at 48/48; a fresh combined
+  quality review over the recovery candidate is required before T072.
 
 ### File List
 

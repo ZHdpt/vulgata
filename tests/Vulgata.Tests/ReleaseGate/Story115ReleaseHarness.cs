@@ -662,6 +662,9 @@ internal sealed class Story115ExecutableFinalRunOperations :
     private string? _negativeEmail;
     private string? _negativePassword;
     private string? _providerApiKey;
+    private string? _provisionerResultSha256;
+    private Story115ProvisionerDriverAttestation? _driverAttestation;
+    private IReadOnlyList<string>? _imageAppInventory;
 
     internal Story115ExecutableFinalRunOperations(string repositoryRoot)
     {
@@ -765,6 +768,44 @@ internal sealed class Story115ExecutableFinalRunOperations :
                 "The supplied PostgreSQL administrator database must be distinct from the nonce-owned database.");
         }
 
+        Story115ProcessResult candidateCommit = await ExecuteRequiredAsync(
+            FindCommand(plan, "candidate-commit-inspect"),
+            cancellationToken);
+        Story115ProcessResult candidateTree = await ExecuteRequiredAsync(
+            FindCommand(plan, "candidate-tree-inspect"),
+            cancellationToken);
+        if (!StringComparer.Ordinal.Equals(
+                candidateCommit.StandardOutput.Trim(),
+                plan.Environment.CandidateCommit) ||
+            !StringComparer.Ordinal.Equals(
+                candidateTree.StandardOutput.Trim(),
+                plan.Environment.CandidateTree))
+        {
+            throw new InvalidDataException("The reviewed candidate identity drifted.");
+        }
+
+        await ExecuteRequiredAsync(
+            FindCommand(plan, "candidate-driver-diff-inspect"),
+            cancellationToken);
+        Story115ProcessResult untrackedDriver = await ExecuteRequiredAsync(
+            FindCommand(plan, "candidate-untracked-driver-inspect"),
+            cancellationToken);
+        if (!string.IsNullOrWhiteSpace(untrackedDriver.StandardOutput))
+        {
+            throw new InvalidDataException("The provisioner driver source contains unreviewed files.");
+        }
+        Story115ProcessResult worktree = await ExecuteRequiredAsync(
+            FindCommand(plan, "candidate-worktree-inspect"),
+            cancellationToken);
+        if (!string.IsNullOrWhiteSpace(worktree.StandardOutput))
+        {
+            throw new InvalidDataException("The reviewed candidate worktree is not clean.");
+        }
+
+        await ExecuteRequiredAsync(
+            FindCommand(plan, "provisioner-driver-publish"),
+            cancellationToken,
+            timeout: TimeSpan.FromMinutes(10));
         await ExecuteRequiredAsync(
             FindCommand(plan, "source-bound-image-build"),
             cancellationToken,
@@ -773,6 +814,21 @@ internal sealed class Story115ExecutableFinalRunOperations :
             FindCommand(plan, "image-label-inspect"),
             cancellationToken);
         ParseAndVerifyImageInspection(imageInspection.StandardOutput, plan.Environment);
+        Story115ProcessResult imageInventory = await ExecuteRequiredAsync(
+            Story115ReleaseHarness.BindImmutableImageId(
+                FindCommand(plan, "image-app-inventory-inspect"),
+                _imageId!),
+            cancellationToken);
+        _imageAppInventory = Array.AsReadOnly(
+        [
+            .. imageInventory.StandardOutput
+                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(name => name.Trim()),
+        ]);
+        _driverAttestation = Story115ReleaseHarness.CreateProvisionerDriverAttestation(
+            Path.Combine(plan.RunDirectory, "driver"),
+            plan.Environment.CandidateCommit,
+            _imageAppInventory);
         await AcquireRepositoryAsync(
             plan.Environment.AccountRepositoryUrl,
             Story115ReleaseHarness.Contract.AccountRepository,
@@ -931,11 +987,17 @@ internal sealed class Story115ExecutableFinalRunOperations :
             throw new InvalidOperationException("The nonce database or immutable image is unavailable.");
         }
 
+        Story115ReleaseHarness.ValidateProvisionerDriverAttestation(
+            Path.Combine(plan.RunDirectory, "driver"),
+            plan.Environment.CandidateCommit,
+            _imageAppInventory ?? throw new InvalidDataException(
+                "The image inventory attestation is missing."),
+            _driverAttestation);
+
         await WriteProvisionerInputAsync(plan, cancellationToken);
-        Story115ExternalCommand provisioner = MakeProvisionerMountsAbsolute(
-            Story115ReleaseHarness.BindImmutableImageId(
-                FindCommand(plan, "provisioner-run"),
-                _imageId));
+        Story115ExternalCommand provisioner = Story115ReleaseHarness.BindImmutableImageId(
+            FindCommand(plan, "provisioner-run"),
+            _imageId);
         await ExecuteRequiredAsync(
             provisioner,
             cancellationToken,
@@ -1245,6 +1307,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
                 plan.Environment.ProductionManifestSha256,
                 _imageId,
                 _imageLabels),
+            CreateProvisionerEvidence(),
             [Story115ReleaseHarness.Contract.AccountRepository,
                 Story115ReleaseHarness.Contract.ChannelRepository],
             _product?.ProfileFingerprint,
@@ -1255,6 +1318,35 @@ internal sealed class Story115ExecutableFinalRunOperations :
             new(plan.Identity.DatabaseName, _databaseDropped, _databaseAbsenceObserved),
             new ReadOnlyDictionary<string, bool>(_cleanup),
             Story115ReleaseHarness.KnownLimitations);
+
+    private Story115ProvisionerReleaseEvidence? CreateProvisionerEvidence()
+    {
+        if (_driverAttestation is null)
+        {
+            return null;
+        }
+
+        return new(
+            BuildCount: 1,
+            ProvisionerImageId: _imageId,
+            AppImageId: _imageId,
+            ProvisionerRemovedBeforeAppStart: _cleanup.GetValueOrDefault(
+                "provisioner-removed-before-app"),
+            ProvisionerImageCreated: false,
+            _driverAttestation.DriverInventorySha256,
+            _driverAttestation.ImageAppInventorySha256,
+            _driverAttestation.Files,
+            [
+                .. _driverAttestation.Files.Select(file => file.MountIdentity),
+                "source/mbs_account->/vulgata/sources/mbs_account:readonly",
+                "source/mbs_channel->/vulgata/sources/mbs_channel:readonly",
+                "config/input.json->/vulgata/run/config/input.json:readonly",
+                "output->/vulgata/run/output:writable",
+                "work->/var/lib/vulgata-codegraph:writable",
+                "key-ring->/var/lib/vulgata-dpkeys:provisioner-writable-app-readonly",
+            ],
+            _provisionerResultSha256);
+    }
 
     private Story115RuntimePass2Evidence? CreateRuntimePass2Evidence()
     {
@@ -1338,24 +1430,6 @@ internal sealed class Story115ExecutableFinalRunOperations :
             cancellationToken);
     }
 
-    private Story115ExternalCommand MakeProvisionerMountsAbsolute(
-        Story115ExternalCommand command)
-    {
-        string relativeRoot = Path.Combine(
-            "tests", "Vulgata.Tests", "bin", "Release", "net10.0", "story115-provisioner");
-        string absoluteRoot = Path.Combine(_repositoryRoot, relativeRoot);
-        return command with
-        {
-            Arguments = Array.AsReadOnly(
-            [
-                .. command.Arguments.Select(argument => argument.Replace(
-                    "source=" + relativeRoot,
-                    "source=" + absoluteRoot,
-                    StringComparison.Ordinal)),
-            ]),
-        };
-    }
-
     private async Task<Story115ContainerProductState> ReadProvisionerResultAsync(
         Story115FinalRunPlan plan,
         CancellationToken cancellationToken)
@@ -1368,32 +1442,17 @@ internal sealed class Story115ExecutableFinalRunOperations :
         }
 
         string json = Encoding.UTF8.GetString(bytes);
-        Story115ReleaseHarness.ValidateSanitizedProvisionerResult(json);
-        using JsonDocument document = JsonDocument.Parse(bytes);
-        JsonElement root = document.RootElement;
-        if (!StringComparer.Ordinal.Equals(
-                root.GetProperty("schemaIdentity").GetString(),
-                "vulgata.story115.provisioner-result/1") ||
-            !StringComparer.Ordinal.Equals(root.GetProperty("migrationOutcome").GetString(), "applied") ||
-            !StringComparer.Ordinal.Equals(root.GetProperty("productStageOutcome").GetString(), "completed") ||
-            root.GetProperty("ordinaryPass1DispatchCount").GetInt32() != 2 ||
-            root.GetProperty("pass2DispatchCount").GetInt32() != 1 ||
-            root.GetProperty("pass2CommitCount").GetInt32() != 1 ||
-            !StringComparer.Ordinal.Equals(root.GetProperty("codeGraphContextVersion").GetString(), "0.5.1") ||
-            !StringComparer.Ordinal.Equals(root.GetProperty("accountRef").GetString(), Story115ReleaseHarness.Contract.AccountRepository.Ref) ||
-            !StringComparer.Ordinal.Equals(root.GetProperty("accountCommit").GetString(), Story115ReleaseHarness.Contract.AccountRepository.Commit) ||
-            !StringComparer.Ordinal.Equals(root.GetProperty("channelRef").GetString(), Story115ReleaseHarness.Contract.ChannelRepository.Ref) ||
-            !StringComparer.Ordinal.Equals(root.GetProperty("channelCommit").GetString(), Story115ReleaseHarness.Contract.ChannelRepository.Commit))
-        {
-            throw new InvalidDataException("The provisioner result contract is invalid.");
-        }
+        Story115ProvisionerResult result = Story115ReleaseHarness.ValidateProvisionerResult(
+            json,
+            plan.Identity.Nonce);
+        _provisionerResultSha256 = Convert.ToHexStringLower(SHA256.HashData(bytes));
 
         return new(
-            root.GetProperty("systemId").GetGuid(),
-            root.GetProperty("accountRepositoryId").GetGuid(),
-            root.GetProperty("channelRepositoryId").GetGuid(),
-            root.GetProperty("profileFingerprint").GetString()!,
-            root.GetProperty("runtimeSupportFingerprint").GetString()!,
+            result.SystemId,
+            result.AccountRepositoryId,
+            result.ChannelRepositoryId,
+            result.ProfileFingerprint,
+            result.RuntimeSupportFingerprint,
             _ownerEmail!,
             _ownerPassword!,
             _negativeEmail!,
@@ -1765,6 +1824,7 @@ internal sealed class Story115ReleaseGateException(
 internal sealed record Story115ReleaseEvidence(
     string SchemaVersion,
     Story115CandidateEvidence Candidate,
+    Story115ProvisionerReleaseEvidence? Provisioner,
     IReadOnlyList<PreparedRepositoryIdentity> PreparedRepositories,
     string? ProfileFingerprint,
     Story115RuntimePass2Evidence? RuntimePass2,
@@ -1781,6 +1841,23 @@ internal sealed record Story115ReleaseEvidence(
         new(
             "story-11-5-release-evidence-v1",
             new(sourceCommit, new string('0', 40), new string('0', 64), null, null),
+            new(
+                1,
+                "sha256:" + new string('1', 64),
+                "sha256:" + new string('1', 64),
+                true,
+                false,
+                new string('2', 64),
+                new string('3', 64),
+                [
+                    .. Story115ReleaseHarness.ProvisionerDriverFileNames.Select(name =>
+                        new Story115ProvisionerDriverFileAttestation(
+                            name,
+                            new string('4', 64),
+                            $"driver/{name}->/app/{name}:readonly")),
+                ],
+                ["config/input.json->/vulgata/run/config/input.json:readonly"],
+                new string('5', 64)),
             [Story115ReleaseHarness.Contract.AccountRepository,
                 Story115ReleaseHarness.Contract.ChannelRepository],
             null,
@@ -1792,6 +1869,18 @@ internal sealed record Story115ReleaseEvidence(
             new ReadOnlyDictionary<string, bool>(new Dictionary<string, bool>()),
             Story115ReleaseHarness.KnownLimitations);
 }
+
+internal sealed record Story115ProvisionerReleaseEvidence(
+    int BuildCount,
+    string? ProvisionerImageId,
+    string? AppImageId,
+    bool ProvisionerRemovedBeforeAppStart,
+    bool ProvisionerImageCreated,
+    string DriverInventorySha256,
+    string ImageAppInventorySha256,
+    IReadOnlyList<Story115ProvisionerDriverFileAttestation> DriverFiles,
+    IReadOnlyList<string> MountIdentities,
+    string? ResultSha256);
 
 internal sealed record Story115CandidateEvidence(
     string Commit,
@@ -1834,6 +1923,45 @@ internal sealed record Story115DatabaseEvidence(
     string Name,
     bool Dropped,
     bool AbsenceObserved);
+
+internal sealed record Story115ProvisionerResult(
+    string SchemaIdentity,
+    string RunNonceHash,
+    string MigrationOutcome,
+    string ProductStageOutcome,
+    Guid SystemId,
+    Guid AccountRepositoryId,
+    Guid ChannelRepositoryId,
+    Guid AccountScanRunId,
+    Guid ChannelScanRunId,
+    Guid AccountScanExecutionId,
+    Guid ChannelScanExecutionId,
+    string AccountAlias,
+    string AccountRef,
+    string AccountCommit,
+    string ChannelAlias,
+    string ChannelRef,
+    string ChannelCommit,
+    string ProfileFingerprint,
+    string RuntimeSupportFingerprint,
+    int OrdinaryPass1DispatchCount,
+    int Pass2DispatchCount,
+    int Pass2CommitCount,
+    string CodeGraphContextVersion,
+    string CodeGraphRequirementsLockSha256,
+    DateTimeOffset CompletedAtUtc,
+    string ContentHash);
+
+internal sealed record Story115ProvisionerDriverFileAttestation(
+    string Name,
+    string Sha256,
+    string MountIdentity);
+
+internal sealed record Story115ProvisionerDriverAttestation(
+    string CandidateCommit,
+    string DriverInventorySha256,
+    string ImageAppInventorySha256,
+    IReadOnlyList<Story115ProvisionerDriverFileAttestation> Files);
 
 internal sealed class Story115PortReservation : IAsyncDisposable
 {
@@ -1878,6 +2006,13 @@ internal static partial class Story115ReleaseHarness
 {
     private const string ResourcePrefix = "vulgata-story115-";
     internal const string ImmutableImageIdPlaceholder = "{{FINAL_IMAGE_ID}}";
+    internal static IReadOnlyList<string> ProvisionerDriverFileNames { get; } =
+        Array.AsReadOnly(
+        [
+            "Vulgata.Story115.Provisioner.dll",
+            "Vulgata.Story115.Provisioner.deps.json",
+            "Vulgata.Story115.Provisioner.runtimeconfig.json",
+        ]);
 
     internal static void ValidateObservedAnswer(
         IReadOnlyCollection<Story115ObservedClaim> claims)
@@ -1925,6 +2060,12 @@ internal static partial class Story115ReleaseHarness
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+    };
+    private static readonly JsonSerializerOptions _provisionerResultJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        WriteIndented = false,
     };
 
     internal static IReadOnlyList<Story115EnvironmentVariable> EnvironmentContract { get; } =
@@ -2152,8 +2293,12 @@ internal static partial class Story115ReleaseHarness
     {
         string imageName = ResourcePrefix + identity.Nonce + "-image";
         string providerFixture = Contract.ProviderFixturePath.Replace('\\', '/');
-        string provisionerRoot = Path.Combine(
-            "tests", "Vulgata.Tests", "bin", "Release", "net10.0", "story115-provisioner");
+        string provisionerRoot = Path.Combine(runDirectory, "driver");
+        string provisionerProject = Path.Combine(
+            "tests", "Vulgata.Tests", "ReleaseGate", "Provisioner",
+            "Vulgata.Story115.Provisioner.csproj");
+        string provisionerSourceRoot = Path.Combine(
+            "tests", "Vulgata.Tests", "ReleaseGate", "Provisioner");
         string accountSource = Path.Combine(runDirectory, "sources", "mbs_account");
         string channelSource = Path.Combine(runDirectory, "sources", "mbs_channel");
         string configFile = Path.Combine(runDirectory, "config", "input.json");
@@ -2162,9 +2307,34 @@ internal static partial class Story115ReleaseHarness
         return Array.AsReadOnly<Story115ExternalCommand>(
         [
             new(
-                "network-create",
-                "docker",
-                ["network", "create", identity.Network]),
+                "candidate-commit-inspect",
+                "git",
+                ["rev-parse", "HEAD"]),
+            new(
+                "candidate-tree-inspect",
+                "git",
+                ["rev-parse", "HEAD^{tree}"]),
+            new(
+                "candidate-driver-diff-inspect",
+                "git",
+                ["diff", "--quiet", environment.CandidateCommit, "--", provisionerSourceRoot]),
+            new(
+                "candidate-untracked-driver-inspect",
+                "git",
+                ["ls-files", "--others", "--exclude-standard", "--", provisionerSourceRoot]),
+            new(
+                "candidate-worktree-inspect",
+                "git",
+                ["status", "--porcelain=v1", "--untracked-files=all"]),
+            new(
+                "provisioner-driver-publish",
+                "dotnet",
+                [
+                    "publish", provisionerProject,
+                    "--configuration", "Release",
+                    "--no-restore",
+                    "--output", provisionerRoot,
+                ]),
             new(
                 "source-bound-image-build",
                 "docker",
@@ -2181,6 +2351,18 @@ internal static partial class Story115ReleaseHarness
                 "image-label-inspect",
                 "docker",
                 ["image", "inspect", imageName]),
+            new(
+                "image-app-inventory-inspect",
+                "docker",
+                [
+                    "run", "--rm", "--entrypoint", "/bin/sh",
+                    ImmutableImageIdPlaceholder,
+                    "-c", "find /app -maxdepth 1 -type f -printf '%f\\n' | LC_ALL=C sort",
+                ]),
+            new(
+                "network-create",
+                "docker",
+                ["network", "create", identity.Network]),
             new(
                 "provider-run",
                 "docker",
@@ -2766,6 +2948,284 @@ internal static partial class Story115ReleaseHarness
 
     internal static void ValidateSanitizedProvisionerResult(string json) =>
         ValidateSanitizedJson(json);
+
+    internal static Story115ProvisionerResult ValidateProvisionerResult(
+        string json,
+        string runNonce)
+    {
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(runNonce);
+        if (Encoding.UTF8.GetByteCount(json) is <= 0 or > 65_536)
+        {
+            throw new InvalidDataException("The provisioner result contract is invalid.");
+        }
+
+        ValidateSanitizedProvisionerResult(json);
+        JsonDocument document;
+        try
+        {
+            document = JsonDocument.Parse(json);
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException(
+                "The provisioner result contract is invalid.",
+                exception);
+        }
+
+        using (document)
+        {
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                throw new InvalidDataException("The provisioner result contract is invalid.");
+            }
+
+        string[] expectedProperties =
+        [
+            "schemaIdentity",
+            "runNonceHash",
+            "migrationOutcome",
+            "productStageOutcome",
+            "systemId",
+            "accountRepositoryId",
+            "channelRepositoryId",
+            "accountScanRunId",
+            "channelScanRunId",
+            "accountScanExecutionId",
+            "channelScanExecutionId",
+            "accountAlias",
+            "accountRef",
+            "accountCommit",
+            "channelAlias",
+            "channelRef",
+            "channelCommit",
+            "profileFingerprint",
+            "runtimeSupportFingerprint",
+            "ordinaryPass1DispatchCount",
+            "pass2DispatchCount",
+            "pass2CommitCount",
+            "codeGraphContextVersion",
+            "codeGraphRequirementsLockSha256",
+            "completedAtUtc",
+            "contentHash",
+        ];
+        string[] actualProperties = document.RootElement
+            .EnumerateObject()
+            .Select(property => property.Name)
+            .ToArray();
+        if (actualProperties.Length != expectedProperties.Length ||
+            actualProperties.Distinct(StringComparer.Ordinal).Count() != actualProperties.Length ||
+                !actualProperties.All(expectedProperties.Contains))
+            {
+                throw new InvalidDataException("The provisioner result contract is invalid.");
+            }
+        }
+
+        Story115ProvisionerResult result;
+        try
+        {
+            result = JsonSerializer.Deserialize<Story115ProvisionerResult>(
+                json,
+                _provisionerResultJsonOptions) ??
+                throw new InvalidDataException("The provisioner result contract is invalid.");
+        }
+        catch (JsonException exception)
+        {
+            throw new InvalidDataException(
+                "The provisioner result contract is invalid.",
+                exception);
+        }
+
+        Guid[] identities =
+        [
+            result.SystemId,
+            result.AccountRepositoryId,
+            result.ChannelRepositoryId,
+            result.AccountScanRunId,
+            result.ChannelScanRunId,
+            result.AccountScanExecutionId,
+            result.ChannelScanExecutionId,
+        ];
+        string expectedNonceHash = HashText(runNonce);
+        if (!StringComparer.Ordinal.Equals(
+                result.SchemaIdentity,
+                "vulgata.story115.provisioner-result/1") ||
+            !FixedTimeHexEquals(result.RunNonceHash, expectedNonceHash) ||
+            !StringComparer.Ordinal.Equals(result.MigrationOutcome, "applied") ||
+            !StringComparer.Ordinal.Equals(result.ProductStageOutcome, "completed") ||
+            identities.Any(identity => identity == Guid.Empty) ||
+            identities.Distinct().Count() != identities.Length ||
+            !StringComparer.Ordinal.Equals(result.AccountAlias, Contract.AccountRepository.Alias) ||
+            !StringComparer.Ordinal.Equals(result.AccountRef, Contract.AccountRepository.Ref) ||
+            !StringComparer.Ordinal.Equals(result.AccountCommit, Contract.AccountRepository.Commit) ||
+            !StringComparer.Ordinal.Equals(result.ChannelAlias, Contract.ChannelRepository.Alias) ||
+            !StringComparer.Ordinal.Equals(result.ChannelRef, Contract.ChannelRepository.Ref) ||
+            !StringComparer.Ordinal.Equals(result.ChannelCommit, Contract.ChannelRepository.Commit) ||
+            !IsLowerHex(result.ProfileFingerprint, 64) ||
+            !IsLowerHex(result.RuntimeSupportFingerprint, 64) ||
+            result.OrdinaryPass1DispatchCount != 2 ||
+            result.Pass2DispatchCount != 1 ||
+            result.Pass2CommitCount != 1 ||
+            !StringComparer.Ordinal.Equals(result.CodeGraphContextVersion, "0.5.1") ||
+            !StringComparer.Ordinal.Equals(
+                result.CodeGraphRequirementsLockSha256,
+                "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95") ||
+            result.CompletedAtUtc == default ||
+            result.CompletedAtUtc.Offset != TimeSpan.Zero ||
+            !IsLowerHex(result.ContentHash, 64))
+        {
+            throw new InvalidDataException("The provisioner result contract is invalid.");
+        }
+
+        string expectedContentHash = HashText(JsonSerializer.Serialize(
+            result with { ContentHash = string.Empty },
+            _provisionerResultJsonOptions));
+        if (!FixedTimeHexEquals(result.ContentHash, expectedContentHash))
+        {
+            throw new InvalidDataException("The provisioner result contract is invalid.");
+        }
+
+        return result;
+    }
+
+    internal static Story115ProvisionerDriverAttestation CreateProvisionerDriverAttestation(
+        string driverRoot,
+        string candidateCommit,
+        IReadOnlyCollection<string> imageAppInventory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(driverRoot);
+        ArgumentNullException.ThrowIfNull(imageAppInventory);
+        if (!IsLowerHex(candidateCommit, 40))
+        {
+            throw new InvalidDataException("The provisioner driver candidate is invalid.");
+        }
+
+        string[] imageNames = ValidateImageAppInventory(imageAppInventory);
+        if (ProvisionerDriverFileNames.Any(name => imageNames.Contains(name, StringComparer.Ordinal)))
+        {
+            throw new InvalidDataException("The provisioner driver collides with the image inventory.");
+        }
+
+        string root = Path.GetFullPath(driverRoot);
+        string[] unexpectedVulgataFiles = Directory.EnumerateFiles(root)
+            .Select(Path.GetFileName)
+            .Where(name => name is not null &&
+                name.StartsWith("Vulgata.", StringComparison.Ordinal) &&
+                !ProvisionerDriverFileNames.Contains(name, StringComparer.Ordinal))
+            .ToArray()!;
+        if (unexpectedVulgataFiles.Length != 0)
+        {
+            throw new InvalidDataException("The provisioner driver inventory is not closed.");
+        }
+
+        var files = new List<Story115ProvisionerDriverFileAttestation>(3);
+        foreach (string name in ProvisionerDriverFileNames)
+        {
+            string path = Path.Combine(root, name);
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length is <= 0 or > 16 * 1024 * 1024 ||
+                info.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                throw new InvalidDataException("The provisioner driver inventory is invalid.");
+            }
+
+            string sha256 = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path)));
+            files.Add(new(
+                name,
+                sha256,
+                $"driver/{name}->/app/{name}:readonly"));
+        }
+
+        string imageInventorySha256 = HashClosedStringInventory(
+            "VULGATA-STORY115-IMAGE-APP-INVENTORY",
+            imageNames);
+        using IncrementalHash inventory = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        inventory.AppendData(Encoding.ASCII.GetBytes("VULGATA-STORY115-PROVISIONER-DRIVERS\0\x01"));
+        inventory.AppendData(Convert.FromHexString(candidateCommit));
+        foreach (Story115ProvisionerDriverFileAttestation file in files)
+        {
+            inventory.AppendData(Convert.FromHexString(file.Sha256));
+        }
+        inventory.AppendData(Convert.FromHexString(imageInventorySha256));
+        return new(
+            candidateCommit,
+            Convert.ToHexStringLower(inventory.GetHashAndReset()),
+            imageInventorySha256,
+            files.AsReadOnly());
+    }
+
+    internal static void ValidateProvisionerDriverAttestation(
+        string driverRoot,
+        string candidateCommit,
+        IReadOnlyCollection<string> imageAppInventory,
+        Story115ProvisionerDriverAttestation? attestation)
+    {
+        if (attestation is null)
+        {
+            throw new InvalidDataException("The provisioner driver attestation is missing.");
+        }
+
+        Story115ProvisionerDriverAttestation current = CreateProvisionerDriverAttestation(
+            driverRoot,
+            candidateCommit,
+            imageAppInventory);
+        if (!StringComparer.Ordinal.Equals(attestation.CandidateCommit, current.CandidateCommit) ||
+            !FixedTimeHexEquals(attestation.DriverInventorySha256, current.DriverInventorySha256) ||
+            !FixedTimeHexEquals(
+                attestation.ImageAppInventorySha256,
+                current.ImageAppInventorySha256) ||
+            attestation.Files.Count != current.Files.Count ||
+            !attestation.Files.SequenceEqual(current.Files))
+        {
+            throw new InvalidDataException("The provisioner driver attestation is stale.");
+        }
+    }
+
+    private static string[] ValidateImageAppInventory(
+        IReadOnlyCollection<string> imageAppInventory)
+    {
+        string[] names = imageAppInventory.Order(StringComparer.Ordinal).ToArray();
+        if (names.Length == 0 ||
+            names.Distinct(StringComparer.Ordinal).Count() != names.Length ||
+            names.Any(name => string.IsNullOrWhiteSpace(name) ||
+                Path.GetFileName(name) != name ||
+                name.Contains('/') ||
+                name.Contains('\\')))
+        {
+            throw new InvalidDataException("The image /app inventory is invalid.");
+        }
+
+        return names;
+    }
+
+    private static string HashClosedStringInventory(string domain, IReadOnlyList<string> values)
+    {
+        using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        hash.AppendData(Encoding.ASCII.GetBytes(domain + "\0\x01"));
+        Span<byte> length = stackalloc byte[4];
+        foreach (string value in values)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(value);
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(length, bytes.Length);
+            hash.AppendData(length);
+            hash.AppendData(bytes);
+        }
+
+        return Convert.ToHexStringLower(hash.GetHashAndReset());
+    }
+
+    private static bool IsLowerHex(string? value, int length) =>
+        value is not null && value.Length == length && value.All(character =>
+            character is (>= '0' and <= '9') or (>= 'a' and <= 'f'));
+
+    private static bool FixedTimeHexEquals(string actual, string expected) =>
+        IsLowerHex(actual, expected.Length) &&
+        CryptographicOperations.FixedTimeEquals(
+            Convert.FromHexString(actual),
+            Convert.FromHexString(expected));
+
+    private static string HashText(string value) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     private static ReadOnlyCollection<string> ReadOnly(params string[] values) =>
         Array.AsReadOnly(values);
