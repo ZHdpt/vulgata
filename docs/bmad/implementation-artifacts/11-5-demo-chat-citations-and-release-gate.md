@@ -327,6 +327,18 @@ as completed acceptance criteria.
   harness 50/50, and Dockerfile contracts 3/3 are GREEN. Cleanup left no Story
   image/container/network/database/run-root residue. T072-T073 remain pending
   a fresh combined quality review over the corrected candidate.
+- Quality iteration 17 accepted the exact mounted-Repository safety correction
+  with zero findings. The following live T072 attempt passed Repository
+  validation and remained CPU-active in product profiling, but the provisioner
+  hit its unchanged 30-minute outer timeout before Worker/provider traffic.
+  Cleanup again left no Story image, container, network, nonce database, or
+  nonce run-root residue, and the external PostgreSQL 17 Alpine instance stayed
+  healthy. Diagnosis found a structural budget mismatch: each whole-Repository
+  CodeGraph profile independently permits 1,800 seconds, while the outer
+  provisioner permits only 1,800 seconds total for two sequential profiles plus
+  Pass 1, exact Cross-Repository Resolution, runtime Pass 2, and result
+  publication. T072-T073 remain pending a reviewed course decision; no timeout
+  extension, Scan filtering, or additional live retry has been inferred.
 
 ### File List
 

@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
   "execution_level": "expedited-mvp",
-  "stage": "quality-review",
+  "stage": "conditional-e2e",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -31,12 +31,12 @@
         "verdict_path": null
       },
       "quality-review": {
-        "status": "pending",
+        "status": "accepted",
         "iteration": 17,
-        "dispatch_id": null,
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_17",
         "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-17.json",
-        "input_boundary": null,
-        "completed_at": null
+        "input_boundary": "36e02caf9d960bcc2f147cc00a8e0cf7d61b52d1",
+        "completed_at": "2026-08-10T09:20:00Z"
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -936,6 +936,28 @@
         ],
         "validation": "A same-image read-only probe reproduced Git dubious-ownership rejection for the two Windows bind-mounted Repository working trees; observed contract RED was missing mountedRepositorySafeDirectories; minimal GREEN configures only the two fixed /vulgata/sources/<alias>/.git paths in the ephemeral provisioner user's Git protected configuration before product validation. The exact probe then resolved both accepted tags/commits; focused contract 1/1, complete non-live release harness 50/50, and Dockerfile contract 3/3 GREEN; no wildcard trust, source mutation, migration/model/package, or topology change",
         "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 17,
+        "input_commit": "36e02caf9d960bcc2f147cc00a8e0cf7d61b52d1",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_17",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-17.json",
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "failed",
+        "started_at": "2026-08-10T09:21:00Z",
+        "completed_at": "2026-08-10T09:55:00Z",
+        "input_commit": "36e02caf9d960bcc2f147cc00a8e0cf7d61b52d1",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_8",
+        "validation": "The recovery candidate passed the prior Repository validation point and remained CPU-active in product profiling, but provisioner-run reached the unchanged 30-minute bounded timeout before any Worker/provider traffic; cleanup completed with no failure and left no Story image/container/network/nonce database/run-root residue",
+        "failure": "provisioner-run bounded timeout during sequential Repository profiling"
       }
   ],
   "repository_preflight": {
@@ -1107,6 +1129,11 @@
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
-    "updated_at": "2026-08-10T09:13:22Z"
+  "recoverable_failure": {
+    "stage": "conditional-e2e",
+    "classification": "accepted-timeout-boundary mismatch",
+    "evidence": "CodeGraphOptions permits 1800 seconds for each whole-Repository profile while the outer provisioner command permits only 1800 seconds total for two sequential profiles plus Pass 1, exact Cross-Repository Resolution, runtime Pass 2, and result publication. Attempt 8 remained CPU-active in the first profiling phase until the outer timeout; provider network traffic remained at pre-agent levels.",
+    "required_decision": "Choose a reviewed timeout-budget correction or explicitly authorize a material Scan filtering/optimization correction before another live retry."
+  },
+    "updated_at": "2026-08-10T09:59:16Z"
 }
