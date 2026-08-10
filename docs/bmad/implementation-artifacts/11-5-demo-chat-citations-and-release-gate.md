@@ -368,6 +368,15 @@ as completed acceptance criteria.
   `tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt`.
   T072 remains blocked until a new clean candidate, refreshed metadata, and a
   fresh combined quality ACCEPT.
+- Quality iteration 19 closed the stale-metadata and whitespace findings but
+  retained one High evidence-schema finding: nonnumeric workflow evidence IDs
+  and temporary RED boundaries without immutable content identities. The four
+  IDs now use the canonical Story/stage/positive-sequence form. Each fresh RED
+  record also pins the exact test and temporarily restored implementation file
+  SHA-256 values plus a documented canonical binary-diff SHA-256. The
+  repository-authoritative workflow validator now passes. T072 remains blocked
+  until the resulting clean candidate metadata and fresh combined review both
+  accept this correction.
 
 ### File List
 
