@@ -256,6 +256,15 @@ as completed acceptance criteria.
   were corrected test-first without live activation. Root reproduced the
   corrected complete non-live release harness at 48/48; a fresh combined
   quality review over the recovery candidate is required before T072.
+- Combined quality review iteration 9 accepted the recovery candidate with zero
+  findings after iteration 8 corrected the canonical source-manifest metadata.
+  The first live T072 execution then failed before database creation at the
+  first Repository clone because `git clone --branch` rejected the accepted
+  full `refs/tags/...` name. Cleanup proved no Story image/container/database
+  residue. A focused RED then GREEN correction now maps only the clone selector
+  to the short tag while retaining full-ref/full-commit verification; the real
+  disposable clone reaches the exact accepted commit and the complete non-live
+  release harness is 49/49. T072 remains pending a fresh combined review.
 
 ### File List
 

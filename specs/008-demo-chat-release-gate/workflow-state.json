@@ -32,9 +32,9 @@
       },
       "quality-review": {
         "status": "pending",
-        "iteration": 8,
+        "iteration": 10,
         "dispatch_id": null,
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-8.json",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
         "input_boundary": null,
         "completed_at": null
     },
@@ -666,6 +666,54 @@
         ],
         "validation": "QR-115-007-001 and QR-115-007-002 corrected with observed RED then GREEN; closed nonce/content/CodeGraph-lock result validation; exact candidate-bound three-file driver attestation and evidence; focused 2/2 + 1/1 + 4/4; complete non-live release harness 48/48; quickstart 137/137; currentness 3/3; migrations 10/10; both no-pending-model checks and Release builds green; no live resources",
         "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "revised",
+        "iteration": 8,
+        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_8",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-8.json",
+        "finding_ids": ["QR-115-008-001"],
+        "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 9,
+        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_9",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-9.json",
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "failed-cleanly",
+        "started_at": "2026-08-10T04:55:00Z",
+        "completed_at": "2026-08-10T05:21:00Z",
+        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_1",
+        "validation": "The sole live entry failed before database creation at repository-acquire-mbs_account because git clone --branch rejected the full refs/tags name; cleanup left no Story container, image, or nonce database residue",
+        "failure": "repository-acquire-mbs_account exit 128"
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T05:21:00Z",
+        "completed_at": "2026-08-10T05:37:24Z",
+        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
+        "agent_role": "root",
+        "dispatch_id": "story_11_5_t072_git_tag_clone_correction",
+        "artifact_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+        ],
+        "validation": "Observed compile RED for absent clone-command seam; GREEN 1/1; exact disposable local clone reached the accepted commit; complete non-live release harness 49/49; full-ref/full-commit post-clone verification retained; no live Story residue",
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -812,7 +860,7 @@
   },
   "verification": [],
     "last_checkpoint": {
-      "checkpoint_id": "bmad-11-5-expedited-recovery-candidate-20260810T124136Z",
+      "checkpoint_id": "bmad-11-5-expedited-t072-recovery-candidate-20260810T133724Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
       "stage": "quality-review",
       "committed_paths": [
@@ -827,9 +875,10 @@
         "tests/Vulgata.Tests/Vulgata.Tests.csproj"
       ],
       "verification_evidence_ids": [
-        "11-5-demo-chat-citations-and-release-gate/quality-review/7",
-        "11-5-demo-chat-citations-and-release-gate/correction/qr-115-007-001-002",
-        "11-5-demo-chat-citations-and-release-gate/non-live/48",
+        "11-5-demo-chat-citations-and-release-gate/quality-review/9",
+        "11-5-demo-chat-citations-and-release-gate/t072/attempt-1-clean-failure",
+        "11-5-demo-chat-citations-and-release-gate/t072/git-tag-clone-correction",
+        "11-5-demo-chat-citations-and-release-gate/non-live/49",
         "11-5-demo-chat-citations-and-release-gate/quickstart/137",
         "11-5-demo-chat-citations-and-release-gate/migrations/10"
     ],
@@ -837,5 +886,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-    "updated_at": "2026-08-10T04:41:36Z"
+    "updated_at": "2026-08-10T05:37:24Z"
 }

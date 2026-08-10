@@ -1371,10 +1371,10 @@ internal sealed class Story115ExecutableFinalRunOperations :
         CancellationToken cancellationToken)
     {
         Story115ProcessResult clone = await ExecuteRequiredAsync(
-            new(
-                "repository-acquire-" + expected.Alias,
-                "git",
-                ["clone", "--quiet", "--branch", expected.Ref, "--single-branch", source.AbsoluteUri, destination]),
+            Story115ReleaseHarness.CreateRepositoryAcquisitionCommand(
+                source,
+                expected,
+                destination),
             cancellationToken,
             timeout: TimeSpan.FromMinutes(5));
         _ = clone;
@@ -2004,6 +2004,30 @@ internal sealed class Story115PortReservation : IAsyncDisposable
 
 internal static partial class Story115ReleaseHarness
 {
+    internal static Story115ExternalCommand CreateRepositoryAcquisitionCommand(
+        Uri source,
+        PreparedRepositoryIdentity expected,
+        string destination)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destination);
+        const string tagPrefix = "refs/tags/";
+        string branch = expected.Ref.StartsWith(tagPrefix, StringComparison.Ordinal)
+            ? expected.Ref[tagPrefix.Length..]
+            : expected.Ref;
+        if (string.IsNullOrWhiteSpace(branch))
+        {
+            throw new InvalidDataException(
+                "The prepared Repository ref cannot select a Git branch or tag.");
+        }
+
+        return new(
+            "repository-acquire-" + expected.Alias,
+            "git",
+            ["clone", "--quiet", "--branch", branch, "--single-branch", source.AbsoluteUri, destination]);
+    }
+
     private const string ResourcePrefix = "vulgata-story115-";
     internal const string ImmutableImageIdPlaceholder = "{{FINAL_IMAGE_ID}}";
     internal static IReadOnlyList<string> ProvisionerDriverFileNames { get; } =

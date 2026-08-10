@@ -1449,6 +1449,28 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
     }
 
     [Fact]
+    public void RepositoryAcquisition_ExactTagRef_UsesCloneCompatibleShortTag()
+    {
+        Story115ExternalCommand command = Story115ReleaseHarness.CreateRepositoryAcquisitionCommand(
+            new Uri("file:///G:/source/repos/mbs/mbs_account"),
+            Story115ReleaseHarness.Contract.AccountRepository,
+            "C:/temp/story115-account");
+
+        Assert.Equal("git", command.FileName);
+        Assert.Equal(
+            [
+                "clone",
+                "--quiet",
+                "--branch",
+                "vulgata/August15th-sample",
+                "--single-branch",
+                "file:///G:/source/repos/mbs/mbs_account",
+                "C:/temp/story115-account",
+            ],
+            command.Arguments);
+    }
+
+    [Fact]
     public async Task FinalEntry_ProcessEnvironment_ProvidesTheSoleT064ExecutionPathAsync()
     {
         bool expected = StringComparer.Ordinal.Equals(
