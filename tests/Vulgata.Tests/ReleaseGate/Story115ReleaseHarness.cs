@@ -94,7 +94,12 @@ internal sealed class Story115ProcessExecutor
         ArgumentNullException.ThrowIfNull(command);
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
         ArgumentNullException.ThrowIfNull(environment);
-        if (timeout <= TimeSpan.Zero || timeout > TimeSpan.FromMinutes(45))
+        TimeSpan maximumTimeout = StringComparer.Ordinal.Equals(
+            command.Name,
+            "provisioner-run")
+            ? Story115ReleaseHarness.ProvisionerProcessTimeout
+            : TimeSpan.FromMinutes(45);
+        if (timeout <= TimeSpan.Zero || timeout > maximumTimeout)
         {
             throw new ArgumentOutOfRangeException(nameof(timeout));
         }
@@ -1001,7 +1006,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
         await ExecuteRequiredAsync(
             provisioner,
             cancellationToken,
-            timeout: TimeSpan.FromMinutes(30));
+            timeout: Story115ReleaseHarness.ProvisionerProcessTimeout);
         Story115ProcessResult inspection = await ExecuteRequiredAsync(
             FindCommand(plan, "provisioner-image-inspect"),
             cancellationToken);
@@ -2004,6 +2009,8 @@ internal sealed class Story115PortReservation : IAsyncDisposable
 
 internal static partial class Story115ReleaseHarness
 {
+    internal static TimeSpan ProvisionerProcessTimeout { get; } = TimeSpan.FromMinutes(510);
+
     internal static Story115ExternalCommand CreateRepositoryAcquisitionCommand(
         Uri source,
         PreparedRepositoryIdentity expected,

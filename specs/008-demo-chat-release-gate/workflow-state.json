@@ -1130,10 +1130,10 @@
     "binding_status": "pending"
   },
   "recoverable_failure": {
-    "stage": "conditional-e2e",
-    "classification": "accepted-timeout-boundary mismatch",
-    "evidence": "CodeGraphOptions permits 1800 seconds for each whole-Repository profile while the outer provisioner command permits only 1800 seconds total for two sequential profiles plus Pass 1, exact Cross-Repository Resolution, runtime Pass 2, and result publication. Attempt 8 remained CPU-active in the first profiling phase until the outer timeout; provider network traffic remained at pre-agent levels.",
-    "required_decision": "Choose a reviewed timeout-budget correction or explicitly authorize a material Scan filtering/optimization correction before another live retry."
+    "stage": "quality-review",
+    "classification": "timeout-only correction awaiting fresh combined review",
+    "evidence": "The user approved a timeout-only correction after current web research. No official CodeGraphContext 0.5.1 average exists; low-confidence public reports span tens of minutes to hours. Exact samples contain 2556 and 6771 tracked files, and Attempt 8 remained CPU-active in first-Repository profiling at 30 minutes. TDD now pins 14400 seconds per Repository, 510 minutes only for provisioner-run, and the unchanged 45-minute ceiling for every other command; the non-live release harness passes 51/51.",
+    "required_decision": "Pin and checkpoint the corrected candidate, obtain one fresh expedited combined quality ACCEPT over the identical boundary, then retry sole-live T072 without Scan filtering or other strategy change."
   },
-    "updated_at": "2026-08-10T09:59:16Z"
+    "updated_at": "2026-08-10T10:30:18Z"
 }

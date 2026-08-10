@@ -324,3 +324,13 @@ T035: tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs
   This invalidates and reruns the candidate review/E2E boundary only; it does
   not reopen T064-T071 behavior, change dependencies or package identities, or
   mark T072/T073 complete.
+- The first same-image provisioner attempt remained CPU-active in initial
+  Repository profiling until the old 30-minute outer deadline. After current
+  web research found no official CodeGraphContext 0.5.1 average and showed
+  public first-index reports spanning tens of minutes to hours, the user
+  authorized a timeout-only correction on 2026-08-10. T072 now uses 14,400
+  seconds per Repository and a command-specific 510-minute provisioner ceiling;
+  every other process remains capped at 45 minutes. No `.cgcignore`, Scan
+  filtering, scheduling, retry, dispatch, migration/model, topology, provider,
+  or package change is authorized. The research record is
+  `docs/bmad/planning-artifacts/research/technical-codegraphcontext-indexing-time-research-2026-08-10.md`.

@@ -339,6 +339,20 @@ as completed acceptance criteria.
   Pass 1, exact Cross-Repository Resolution, runtime Pass 2, and result
   publication. T072-T073 remain pending a reviewed course decision; no timeout
   extension, Scan filtering, or additional live retry has been inferred.
+- The user approved the timeout-only recovery and requested current web
+  research before another retry. The resulting 2026-08-10 technical report
+  found no official CodeGraphContext 0.5.1 average, classified public timings
+  as low-confidence evidence spanning tens of minutes to hours, and combined
+  them with exact 2,556/6,771-file sample measurements plus the observed
+  30-minute still-active profile. The bounded correction sets 14,400 seconds
+  per Repository and 510 minutes only for `provisioner-run`; every other
+  subprocess retains the 45-minute maximum. Contract RED was 0/1 on the absent
+  timeout field and executor RED failed to compile on the absent provisioner
+  ceiling; both tracer bullets are GREEN and the complete non-live release
+  harness is 51/51. No `.cgcignore`, filtering, parsing, scheduling, grouping,
+  retry, dispatch, migration/model, topology, provider, or package change was
+  made. T072-T073 remain pending a fresh combined quality review and immutable
+  candidate pin before the next live attempt.
 
 ### File List
 

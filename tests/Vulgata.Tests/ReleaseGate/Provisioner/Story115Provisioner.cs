@@ -25,6 +25,7 @@ public static class Story115Provisioner
 {
     public const int MaximumInputBytes = 65_536;
     public const int MaximumResultBytes = 65_536;
+    public const int WholeRepositoryProcessTimeoutSeconds = 14_400;
     private const string _inputSchema = "vulgata.story115.provisioner-input/1";
     private const string _resultSchema = "vulgata.story115.provisioner-result/1";
     private const string _contractSchema = "vulgata.story115.provisioner-contract/1";
@@ -107,6 +108,7 @@ public static class Story115Provisioner
         ImageProductAssemblyAllowlist = _imageProductAssemblyAllowlist,
         MountedRepositorySafeDirectories = _mountedRepositorySafeDirectories,
         CodeGraphContextVersion = _codeGraphVersion,
+        WholeRepositoryProcessTimeoutSeconds,
         MaximumInputBytes,
         MaximumResultBytes,
         InputSchemaIdentity = _inputSchema,
@@ -381,6 +383,9 @@ public static class Story115Provisioner
         {
             ["ConnectionStrings:DefaultConnection"] = input.ConnectionString,
             ["CodeGraph:DataRootPath"] = "/var/lib/vulgata-codegraph",
+            ["CodeGraph:WholeRepositoryProcessTimeoutSeconds"] =
+                WholeRepositoryProcessTimeoutSeconds.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture),
             ["DataProtection:KeyRingPath"] = "/var/lib/vulgata-dpkeys",
             ["DataProtection:ApplicationName"] = input.DataProtectionApplicationName,
         });

@@ -314,6 +314,15 @@ or unauthorized metadata. The provisioner is a temporary container instance,
 not an image/deployment artifact, and must be removed/proved absent before app
 creation.
 
+The provisioner MUST configure the existing product Scan with
+`CodeGraph:WholeRepositoryProcessTimeoutSeconds=14400`. The harness MUST allow
+exactly 510 minutes for the closed `provisioner-run` command and MUST retain the
+45-minute maximum for every other external command. One tick above either
+applicable ceiling MUST be rejected before process creation. This timeout-only
+correction MUST NOT add or alter filtering, parsing, scheduling, grouping,
+retry, dispatch, the exact seven-slot Pass 2 payload, migrations, model state,
+Docker topology, provider identity, or package identity.
+
 ## Candidate checks
 
 The Chat tool and both prior material Scan changes are already covered by the

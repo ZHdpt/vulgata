@@ -378,6 +378,16 @@ Expected: exit zero; the inspected image equals `$finalImageId`; the closed
 sanitized result passes nonce/schema/forbidden-value checks; the provisioner is
 absent before app start. No provisioner image or host `cgc` is used.
 
+The final-run provisioner configures the unchanged product Scan with
+`CodeGraph:WholeRepositoryProcessTimeoutSeconds=14400` (240 minutes per
+Repository). The host permits 510 minutes only for the closed `provisioner-run`
+command, covering two sequential Repository profiles plus the remaining Pass 1,
+Exact Cross-Repository Resolution, runtime prepared-flow binding, Pass 2, and
+atomic result work. Other subprocesses retain the 45-minute maximum. These are
+failure ceilings, not waits after successful completion. The evidence and
+rationale are recorded in
+`docs/bmad/planning-artifacts/research/technical-codegraphcontext-indexing-time-research-2026-08-10.md`.
+
 The harness writes a permission-restricted nonce-owned `$gateEnvFile` containing
 exactly `ASPNETCORE_ENVIRONMENT=Production`,
 `ASPNETCORE_URLS=http://+:8080`, the still-live disposable

@@ -324,6 +324,9 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 .Select(value => value.GetString())
                 .ToArray());
         Assert.Equal("0.5.1", root.GetProperty("codeGraphContextVersion").GetString());
+        Assert.Equal(
+            14_400,
+            root.GetProperty("wholeRepositoryProcessTimeoutSeconds").GetInt32());
         Assert.Equal(65536, root.GetProperty("maximumInputBytes").GetInt32());
         Assert.Equal(65536, root.GetProperty("maximumResultBytes").GetInt32());
         Assert.Equal(
@@ -1420,6 +1423,40 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
             executor.ExecuteAsync(
                 command,
+                FindRepositoryRoot(),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                TimeSpan.FromMinutes(45) + TimeSpan.FromTicks(1)));
+    }
+
+    [Fact]
+    public async Task ProcessExecutor_ProvisionerBound_AllowsResearchBackedEnvelopeOnlyForProvisioner()
+    {
+        var executor = new Story115ProcessExecutor();
+        var provisioner = new Story115ExternalCommand(
+            "provisioner-run",
+            "dotnet",
+            ["--version"]);
+        var unrelated = provisioner with { Name = "unrelated-run" };
+
+        Assert.Equal(
+            TimeSpan.FromMinutes(510),
+            Story115ReleaseHarness.ProvisionerProcessTimeout);
+        Story115ProcessResult result = await executor.ExecuteAsync(
+            provisioner,
+            FindRepositoryRoot(),
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            Story115ReleaseHarness.ProvisionerProcessTimeout);
+
+        Assert.Equal(0, result.ExitCode);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            executor.ExecuteAsync(
+                provisioner,
+                FindRepositoryRoot(),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                Story115ReleaseHarness.ProvisionerProcessTimeout + TimeSpan.FromTicks(1)));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            executor.ExecuteAsync(
+                unrelated,
                 FindRepositoryRoot(),
                 new Dictionary<string, string>(StringComparer.Ordinal),
                 TimeSpan.FromMinutes(45) + TimeSpan.FromTicks(1)));
