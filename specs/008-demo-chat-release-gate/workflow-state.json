@@ -1102,7 +1102,56 @@
     "result": "pending",
     "evidence_ids": []
   },
-  "verification": [],
+  "verification": [
+    {
+      "evidence_id": "11-5-demo-chat-citations-and-release-gate/timeout-correction/red-contract",
+      "kind": "command",
+      "stage": "implement",
+      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
+      "artifact_paths": ["tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~OptionAProvisioner_Contract_IsClosedImageOwnedAndSevenSlotAsync --logger console;verbosity=minimal -p:WarningLevel=0",
+      "exit_code": 1,
+      "observed_at": "2026-08-10T10:48:01.4782716Z",
+      "summary": "Fresh observed RED against the temporarily restored pre-correction provisioner: 0/1; KeyNotFoundException for absent wholeRepositoryProcessTimeoutSeconds.",
+      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt"
+    },
+    {
+      "evidence_id": "11-5-demo-chat-citations-and-release-gate/timeout-correction/red-outer-bound",
+      "kind": "command",
+      "stage": "implement",
+      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
+      "artifact_paths": ["tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ProcessExecutor_ProvisionerBound_AllowsResearchBackedEnvelopeOnlyForProvisioner --logger console;verbosity=minimal -p:WarningLevel=0",
+      "exit_code": 1,
+      "observed_at": "2026-08-10T10:48:36.5858057Z",
+      "summary": "Fresh observed RED against the temporarily restored pre-correction harness: compile failed with CS0117 because ProvisionerProcessTimeout was absent.",
+      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt"
+    },
+    {
+      "evidence_id": "11-5-demo-chat-citations-and-release-gate/timeout-correction/green-focused",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
+      "artifact_paths": ["tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~OptionAProvisioner_Contract_IsClosedImageOwnedAndSevenSlotAsync|FullyQualifiedName~ProcessExecutor_ProvisionerBound_AllowsResearchBackedEnvelopeOnlyForProvisioner --logger console;verbosity=minimal -p:WarningLevel=0",
+      "exit_code": 0,
+      "observed_at": "2026-08-10T10:49:17.3023537Z",
+      "summary": "Focused timeout correction passed 2/2 after the exact implementation was restored.",
+      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt"
+    },
+    {
+      "evidence_id": "11-5-demo-chat-citations-and-release-gate/timeout-correction/green-non-live",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
+      "artifact_paths": ["tests/Vulgata.Tests"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --filter FullyQualifiedName~DemoChatReleaseGatePostgreSqlTests --logger console;verbosity=minimal -p:WarningLevel=0",
+      "exit_code": 0,
+      "observed_at": "2026-08-10T10:49:26.2445769Z",
+      "summary": "Complete non-live Story 11.5 release harness passed 51/51 in 5 seconds with no live resource acquisition.",
+      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-timeout-correction/summary.txt"
+    }
+  ],
     "last_checkpoint": {
       "checkpoint_id": "bmad-11-5-expedited-t072-recovery-candidate-20260810T133724Z",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
@@ -1135,5 +1184,5 @@
     "evidence": "The user approved a timeout-only correction after current web research. No official CodeGraphContext 0.5.1 average exists; low-confidence public reports span tens of minutes to hours. Exact samples contain 2556 and 6771 tracked files, and Attempt 8 remained CPU-active in first-Repository profiling at 30 minutes. TDD now pins 14400 seconds per Repository, 510 minutes only for provisioner-run, and the unchanged 45-minute ceiling for every other command; the non-live release harness passes 51/51.",
     "required_decision": "Pin and checkpoint the corrected candidate, obtain one fresh expedited combined quality ACCEPT over the identical boundary, then retry sole-live T072 without Scan filtering or other strategy change."
   },
-    "updated_at": "2026-08-10T10:30:18Z"
+    "updated_at": "2026-08-10T10:49:26Z"
 }

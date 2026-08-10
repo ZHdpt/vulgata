@@ -193,7 +193,7 @@ evidence.
 
 ---
 
-**Research completion date:** 2026-08-10  
+**Research completion date:** 2026-08-10
 **Source confidence:** high for official behavior and local measurements; low for
 community duration estimates; moderate-high for the selected safety bounds when
 combined with the observed failed run.

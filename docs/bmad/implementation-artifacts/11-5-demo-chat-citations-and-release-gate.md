@@ -353,6 +353,21 @@ as completed acceptance criteria.
   retry, dispatch, migration/model, topology, provider, or package change was
   made. T072-T073 remain pending a fresh combined quality review and immutable
   candidate pin before the next live attempt.
+- Quality iteration 18 returned REVISE on stale ignored candidate metadata,
+  one trailing-whitespace defect, and insufficiently durable timeout TDD
+  evidence; it found no timeout-design or Scan-boundary defect. The whitespace
+  was removed. Rather than reconstruct historical evidence, the root freshly
+  restored each old timeout behavior while retaining its new test: contract
+  RED at `2026-08-10T10:48:01.4782716Z` exited 1 with 0/1 and the missing
+  `wholeRepositoryProcessTimeoutSeconds`; executor RED at
+  `2026-08-10T10:48:36.5858057Z` exited 1 with CS0117 for the missing closed
+  provisioner ceiling. After restoring the exact correction, focused GREEN at
+  `2026-08-10T10:49:17.3023537Z` passed 2/2 and complete non-live GREEN at
+  `2026-08-10T10:49:26.2445769Z` passed 51/51. Exact commands, boundaries, exit
+  codes, and results are persisted in
+  `tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt`.
+  T072 remains blocked until a new clean candidate, refreshed metadata, and a
+  fresh combined quality ACCEPT.
 
 ### File List
 
