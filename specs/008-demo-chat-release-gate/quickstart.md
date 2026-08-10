@@ -330,6 +330,17 @@ docker build --no-cache --progress=plain --file docker/Dockerfile --tag vulgata-
 docker image inspect vulgata-story115-final
 ```
 
+Every T072 image build uses the user-authorized package-source policy already
+encoded in `docker/Dockerfile`: ordinary Ubuntu Noble, updates, and backports
+come from `https://mirrors4.tuna.tsinghua.edu.cn/ubuntu/`; Noble security
+updates remain on `http://security.ubuntu.com/ubuntu/`; and the hash-locked
+CodeGraphContext install uses
+`https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/`. The pip invocation
+must retain `--require-hashes`, bounded retries, and a bounded timeout. This is
+a package-transport correction only: it does not permit a second image, host
+`cgc`, changed package identities, or a changed production-source manifest
+algorithm.
+
 Expected: the image ID is recorded and labels
 `org.vulgata.source-commit`, `org.vulgata.source-tree`, and
 `org.vulgata.production-source-manifest-sha256` exactly equal the verified

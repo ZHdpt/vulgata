@@ -9,7 +9,8 @@ FROM python:3.12-bookworm@sha256:9bed8554e926c07c6f908841d5ee88c33e8df9236b19152
 WORKDIR /opt/codegraph
 
 COPY docker/codegraph/requirements.lock ./requirements.lock
-RUN python -m pip install --no-cache-dir --require-hashes --requirement requirements.lock \
+ENV PIP_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/
+RUN python -m pip install --no-cache-dir --index-url "$PIP_INDEX_URL" --retries 10 --timeout 60 --require-hashes --requirement requirements.lock \
     && python --version \
     && cgc version
 
@@ -34,6 +35,21 @@ LABEL org.vulgata.source-commit=${VULGATA_SOURCE_COMMIT} \
 
 # Install the application runtime dependency. CodeGraphContext is copied from
 # the exact, hash-verified build stage above; no runtime resolver is invoked.
+# Use the user-approved Tsinghua mirror for the ordinary Noble archives while
+# retaining Ubuntu's official security archive.
+RUN printf '%s\n' \
+    'Types: deb' \
+    'URIs: https://mirrors4.tuna.tsinghua.edu.cn/ubuntu/' \
+    'Suites: noble noble-updates noble-backports' \
+    'Components: main restricted universe multiverse' \
+    'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+    '' \
+    'Types: deb' \
+    'URIs: http://security.ubuntu.com/ubuntu/' \
+    'Suites: noble-security' \
+    'Components: main restricted universe multiverse' \
+    'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+    > /etc/apt/sources.list.d/ubuntu.sources
 RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update \
     && apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y --no-install-recommends git ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*

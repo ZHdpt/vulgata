@@ -379,7 +379,11 @@ root coverage validation, candidate pinning, and the fresh combined quality
 2. create/validate the existing canonical production-source manifest;
 3. build `docker/Dockerfile` with exact
    `VULGATA_SOURCE_COMMIT`, `VULGATA_SOURCE_TREE`, and
-   `VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256` arguments;
+   `VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256` arguments; the Dockerfile MUST
+   use the user-authorized Tsinghua mirror for ordinary Ubuntu Noble,
+   Noble updates/backports, and the hash-locked pip index, MUST retain the
+   official Ubuntu Noble security archive, and MUST retain pip
+   `--require-hashes` plus bounded retry/timeout behavior;
 4. record immutable image ID and inspect the three matching labels;
 5. start a temporary provisioner with `--entrypoint dotnet` from that exact ID,
    in the provider namespace, with only candidate-bound driver/source/config

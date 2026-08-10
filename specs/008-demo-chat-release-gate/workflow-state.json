@@ -32,9 +32,9 @@
       },
       "quality-review": {
         "status": "pending",
-        "iteration": 14,
+        "iteration": 15,
         "dispatch_id": null,
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-14.json",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-15.json",
         "input_boundary": null,
         "completed_at": null
     },
@@ -821,6 +821,47 @@
         ],
         "validation": "Observed RED expected closed input-stage exit 10 but received generic 1; minimal GREEN preserves the exact fixed stderr and empty stdout while assigning closed numeric exit codes 10, 11, 20-31, and 40 to non-secret provisioning stages; focused 1/1 and complete non-live release harness 50/50 GREEN",
         "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 14,
+        "input_commit": "bfaf12ef354b05affabf16005e400bf356622e20",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_10",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-14.json",
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "invalidated",
+        "started_at": "2026-08-10T07:45:00Z",
+        "completed_at": "2026-08-10T07:50:00Z",
+        "input_commit": "bfaf12ef354b05affabf16005e400bf356622e20",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_5",
+        "validation": "The diagnostic retry was explicitly interrupted before Story resource acquisition when the user authorized package mirrors for subsequent Docker builds; the exact orphaned test process tree was terminated and the external PostgreSQL container remained untouched",
+        "failure": null
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T07:51:00Z",
+        "completed_at": "2026-08-10T08:09:32Z",
+        "input_commit": "bfaf12ef354b05affabf16005e400bf356622e20",
+        "agent_role": "root",
+        "dispatch_id": "story_11_5_t072_package_mirror_correction",
+        "artifact_paths": [
+          "docker/Dockerfile",
+          "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+          "specs/008-demo-chat-release-gate/quickstart.md",
+          "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+          "specs/008-demo-chat-release-gate/tasks.md",
+          "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md"
+        ],
+        "validation": "Observed focused RED because the Dockerfile did not contain the user-authorized Tsinghua Ubuntu and pip mirrors; minimal GREEN retains the official Ubuntu Noble security archive, pip --require-hashes, bounded retries/timeouts, exact package identities, and the accepted one-image topology; focused Debug and Release contract filters 3/3 GREEN and the complete non-live release harness 50/50 GREEN",
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -993,5 +1034,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-    "updated_at": "2026-08-10T05:37:24Z"
+    "updated_at": "2026-08-10T08:09:32Z"
 }

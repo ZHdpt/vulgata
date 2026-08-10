@@ -312,5 +312,15 @@ T035: tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs
 
 - `.specify/extensions.yml` contains no `hooks.before_tasks` or `hooks.after_tasks`; no task hook applies.
 - Execution level is `expedited-mvp`: root mechanical requirement/task/test-first/security/migration coverage validation and one fresh combined acceptance-and-quality review are mandatory; `spec-review`, active `speckit-analyze`, and the separate `acceptance-review` remain unused at iteration zero.
-- T001-T063 are preserved completed history. T064-T073 are all unchecked and presume no Option A implementation, analysis, review, live-run, cleanup, or completion evidence.
+- T001-T063 are preserved completed history. T064-T071 are completed with
+  observed RED/GREEN and non-live verification; T072-T073 remain unchecked and
+  presume no successful live run, cleanup verification, or completion evidence.
 - `tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs` is the sole authority for the nonce database and nonce-owned Docker/browser resources; it never owns the external PostgreSQL server/container or administrator/other databases. Root/orchestrator alone owns final candidate pinning, lifecycle advancement, staging, and commit.
+- T071 truthfully completed against its then-current boundary with no
+  `docker/Dockerfile` delta. After repeated live build latency and a transient
+  PyPI timeout, the user explicitly authorized a mirror-only correction on
+  2026-08-10: Tsinghua serves ordinary Ubuntu Noble archives and the hash-locked
+  pip index, while Ubuntu's official Noble security archive remains authoritative.
+  This invalidates and reruns the candidate review/E2E boundary only; it does
+  not reopen T064-T071 behavior, change dependencies or package identities, or
+  mark T072/T073 complete.

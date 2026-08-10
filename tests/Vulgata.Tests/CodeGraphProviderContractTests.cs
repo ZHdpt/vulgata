@@ -892,6 +892,27 @@ public sealed class CodeGraphProviderContractTests
     }
 
     [Fact]
+    public void RuntimeDockerfile_ChinaMirrors_AreExplicitAndHashLocked()
+    {
+        string dockerfile = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "docker", "Dockerfile"));
+
+        Assert.Contains(
+            "https://mirrors4.tuna.tsinghua.edu.cn/ubuntu/",
+            dockerfile,
+            StringComparison.Ordinal);
+        Assert.Contains("noble noble-updates noble-backports", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("http://security.ubuntu.com/ubuntu/", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("noble-security", dockerfile, StringComparison.Ordinal);
+        Assert.Contains(
+            "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/",
+            dockerfile,
+            StringComparison.Ordinal);
+        Assert.Contains("--require-hashes", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("--retries 10", dockerfile, StringComparison.Ordinal);
+        Assert.Contains("--timeout 60", dockerfile, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task RunnerSourceBindingPreflight_ClaimMismatch_IsExecutableWithoutProvider()
     {
         string runnerPath = Path.Combine(

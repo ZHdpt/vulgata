@@ -290,6 +290,15 @@ as completed acceptance criteria.
   without secrets, paths, source, or raw product diagnostics. Focused 1/1 and
   the complete non-live release harness 50/50 are GREEN. T072-T073 remain
   pending quality iteration 14 over the new immutable candidate.
+- Quality iteration 14 accepted the closed stage-code recovery candidate with
+  zero findings. Its diagnostic live retry was interrupted before Story
+  resource acquisition when the user authorized faster package transport for
+  subsequent Docker builds. The correction uses Tsinghua for ordinary Ubuntu
+  Noble archives and the hash-locked pip index, retains Ubuntu's official Noble
+  security archive and pip `--require-hashes`, and changes no package identity,
+  topology, migration/model, or T072/T073 acceptance behavior. A focused
+  Dockerfile contract observed RED before the mirror change and is GREEN 3/3;
+  the changed candidate requires a fresh combined quality review before T072.
 
 ### File List
 
