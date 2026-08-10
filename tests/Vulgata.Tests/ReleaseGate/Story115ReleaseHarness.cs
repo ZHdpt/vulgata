@@ -94,7 +94,7 @@ internal sealed class Story115ProcessExecutor
         ArgumentNullException.ThrowIfNull(command);
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
         ArgumentNullException.ThrowIfNull(environment);
-        if (timeout <= TimeSpan.Zero || timeout > TimeSpan.FromMinutes(30))
+        if (timeout <= TimeSpan.Zero || timeout > TimeSpan.FromMinutes(45))
         {
             throw new ArgumentOutOfRangeException(nameof(timeout));
         }
@@ -809,7 +809,7 @@ internal sealed class Story115ExecutableFinalRunOperations :
         await ExecuteRequiredAsync(
             FindCommand(plan, "source-bound-image-build"),
             cancellationToken,
-            timeout: TimeSpan.FromMinutes(30));
+            timeout: TimeSpan.FromMinutes(45));
         Story115ProcessResult imageInspection = await ExecuteRequiredAsync(
             FindCommand(plan, "image-label-inspect"),
             cancellationToken);

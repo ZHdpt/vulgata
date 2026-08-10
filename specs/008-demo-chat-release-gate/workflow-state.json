@@ -32,9 +32,9 @@
       },
       "quality-review": {
         "status": "pending",
-        "iteration": 10,
+        "iteration": 11,
         "dispatch_id": null,
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-11.json",
         "input_boundary": null,
         "completed_at": null
     },
@@ -713,6 +713,43 @@
           "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
         ],
         "validation": "Observed compile RED for absent clone-command seam; GREEN 1/1; exact disposable local clone reached the accepted commit; complete non-live release harness 49/49; full-ref/full-commit post-clone verification retained; no live Story residue",
+        "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 10,
+        "input_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_10",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "failed-cleanly",
+        "started_at": "2026-08-10T05:50:18Z",
+        "completed_at": "2026-08-10T06:20:32Z",
+        "input_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_2",
+        "validation": "The source-bound no-cache image build exceeded the reviewed 30-minute subprocess cap before any Story container, network, image, nonce database, or nonce run directory was acquired; cleanup completed without error and the external PostgreSQL 17 Alpine container remained healthy",
+        "failure": "source-bound-image-build bounded timeout at 30 minutes"
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T06:20:32Z",
+        "completed_at": "2026-08-10T06:28:59Z",
+        "input_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
+        "agent_role": "root",
+        "dispatch_id": "story_11_5_t072_image_build_timeout_correction",
+        "artifact_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
+        ],
+        "validation": "Observed focused RED because the executor rejected a 45-minute bound; minimal GREEN raises only the hard executor/source-image-build cap to exactly 45 minutes and rejects any larger value; focused 1/1 and complete non-live release harness 50/50 GREEN; cleanup absence reverified; no live retry performed",
         "failure": null
       }
   ],

@@ -265,6 +265,17 @@ as completed acceptance criteria.
   to the short tag while retaining full-ref/full-commit verification; the real
   disposable clone reaches the exact accepted commit and the complete non-live
   release harness is 49/49. T072 remains pending a fresh combined review.
+- Combined quality review iteration 10 accepted the tag-clone correction with
+  zero findings. The second live T072 attempt then failed cleanly before any
+  Story resource acquisition because the mandatory no-cache source image build
+  exceeded the harness's 30-minute subprocess limit; cleanup had no error, no
+  Story container/image/network/nonce database/run directory remained, and the
+  external PostgreSQL 17 Alpine container remained healthy. A focused test
+  first reproduced that a 45-minute bound was rejected. The minimal harness-only
+  correction permits exactly 45 minutes for the source image build while still
+  rejecting any larger bound; focused 1/1 and complete non-live release harness
+  50/50 are GREEN. T072-T073 remain pending a fresh combined quality review and
+  unchanged-candidate pin before another live retry.
 
 ### File List
 

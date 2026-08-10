@@ -1380,6 +1380,30 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
     }
 
     [Fact]
+    public async Task ProcessExecutor_SourceImageBuildBound_AllowsFortyFiveMinutesButRejectsLonger()
+    {
+        var executor = new Story115ProcessExecutor();
+        var command = new Story115ExternalCommand(
+            "dotnet-version-build-bound",
+            "dotnet",
+            ["--version"]);
+
+        Story115ProcessResult result = await executor.ExecuteAsync(
+            command,
+            FindRepositoryRoot(),
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            TimeSpan.FromMinutes(45));
+
+        Assert.Equal(0, result.ExitCode);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            executor.ExecuteAsync(
+                command,
+                FindRepositoryRoot(),
+                new Dictionary<string, string>(StringComparer.Ordinal),
+                TimeSpan.FromMinutes(45) + TimeSpan.FromTicks(1)));
+    }
+
+    [Fact]
     public void ProductOrchestrator_CallGraph_IsClosedToAcceptedServicesAndSevenSlotPass2()
     {
         Assert.Equal(
