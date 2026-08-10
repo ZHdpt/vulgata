@@ -32,11 +32,11 @@
       },
       "quality-review": {
         "status": "accepted",
-        "iteration": 17,
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_17",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-17.json",
-        "input_boundary": "36e02caf9d960bcc2f147cc00a8e0cf7d61b52d1",
-        "completed_at": "2026-08-10T09:20:00Z"
+        "iteration": 20,
+        "dispatch_id": "story_11_5_timeout_quality_review_20",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-20.json",
+        "input_boundary": "b354224f27ff8b802679beacbbbb0cbe7faa89ed",
+        "completed_at": "2026-08-10T11:20:13Z"
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -1179,10 +1179,10 @@
     "binding_status": "pending"
   },
   "recoverable_failure": {
-    "stage": "quality-review",
-    "classification": "timeout-only correction awaiting fresh combined review",
-    "evidence": "The user approved a timeout-only correction after current web research. No official CodeGraphContext 0.5.1 average exists; low-confidence public reports span tens of minutes to hours. Exact samples contain 2556 and 6771 tracked files, and Attempt 8 remained CPU-active in first-Repository profiling at 30 minutes. TDD now pins 14400 seconds per Repository, 510 minutes only for provisioner-run, and the unchanged 45-minute ceiling for every other command; the non-live release harness passes 51/51.",
-    "required_decision": "Pin and checkpoint the corrected candidate, obtain one fresh expedited combined quality ACCEPT over the identical boundary, then retry sole-live T072 without Scan filtering or other strategy change."
+    "stage": "conditional-e2e",
+    "classification": "resolved timeout-boundary correction",
+    "evidence": "Quality iteration 20 ACCEPT closes QR-115-018-001/002/003 and QR-115-019-001 on candidate b354224f27ff8b802679beacbbbb0cbe7faa89ed. The authoritative workflow validator, candidate metadata and evidence hashes, both fresh RED boundaries, focused 2/2, and complete non-live 51/51 all pass. The correction remains 14400 seconds per Repository, 510 minutes only for provisioner-run, and 45 minutes for every other command.",
+    "required_decision": "Execute one unchanged-candidate sole-live T072 retry, then independently perform T073 cleanup and final verification."
   },
-    "updated_at": "2026-08-10T11:06:53Z"
+    "updated_at": "2026-08-10T11:20:13Z"
 }
