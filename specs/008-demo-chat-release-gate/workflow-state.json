@@ -32,9 +32,9 @@
       },
       "quality-review": {
         "status": "pending",
-        "iteration": 16,
+        "iteration": 17,
         "dispatch_id": null,
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-16.json",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-17.json",
         "input_boundary": null,
         "completed_at": null
     },
@@ -899,6 +899,43 @@
         ],
         "validation": "Minimized real-image probes falsified CodeGraph runtime, version, and lock hypotheses and reproduced CLR failure before the first runtime-validation statement because the three-file driver dependency manifest omits image-owned Vulgata.Web; observed RED was a missing closed image-product assembly allowlist contract; minimal GREEN installs an exact six-name /app resolver before typed product references, rejects unknown names, preserves fixed diagnostics, and advances the real container repro from stage 11 to the expected dummy product stage 20; focused contract 1/1, complete non-live harness 50/50, and mirror/source filter 3/3 GREEN",
         "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "accepted",
+        "iteration": 16,
+        "input_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_expedited_quality_review_iteration_16",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-16.json",
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "conditional-e2e",
+        "status": "failed",
+        "started_at": "2026-08-10T08:55:00Z",
+        "completed_at": "2026-08-10T09:02:00Z",
+        "input_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
+        "agent_role": "e2e-runner/root",
+        "dispatch_id": "story_11_5_t072_live_attempt_7",
+        "validation": "The Tsinghua-mirror no-cache build completed in about 3m40s and the same-image provisioner reached Repository creation; closed stage code 23 localized failure to Repository validation and unconditional cleanup reported no cleanup failure or Story resource residue",
+        "failure": "provisioner-run exit 23"
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-10T09:03:00Z",
+        "completed_at": "2026-08-10T09:13:22Z",
+        "input_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
+        "agent_role": "root",
+        "dispatch_id": "story_11_5_t072_repository_safe_directory_correction",
+        "artifact_paths": [
+          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+          "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
+        ],
+        "validation": "A same-image read-only probe reproduced Git dubious-ownership rejection for the two Windows bind-mounted Repository working trees; observed contract RED was missing mountedRepositorySafeDirectories; minimal GREEN configures only the two fixed /vulgata/sources/<alias>/.git paths in the ephemeral provisioner user's Git protected configuration before product validation. The exact probe then resolved both accepted tags/commits; focused contract 1/1, complete non-live release harness 50/50, and Dockerfile contract 3/3 GREEN; no wildcard trust, source mutation, migration/model/package, or topology change",
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -1071,5 +1108,5 @@
     "binding_status": "pending"
   },
   "recoverable_failure": null,
-    "updated_at": "2026-08-10T08:44:33Z"
+    "updated_at": "2026-08-10T09:13:22Z"
 }

@@ -312,6 +312,21 @@ as completed acceptance criteria.
   the minimized container now advances beyond stage 11, and the complete
   non-live harness remains GREEN 50/50. T072-T073 remain pending a fresh
   combined quality review over the corrected candidate.
+- Quality iteration 16 accepted the image-owned assembly-resolver candidate
+  with zero findings. The next live T072 attempt completed its mirror-backed
+  no-cache build in about 3m40s and reached provisioner stage 23, where product
+  Repository validation failed closed. A minimized same-image read-only probe
+  reproduced Git's dubious-ownership rejection for each Windows bind-mounted
+  Repository working tree. The regression-first correction publishes and
+  configures only `/vulgata/sources/mbs_account/.git` and
+  `/vulgata/sources/mbs_channel/.git` as safe directories in the ephemeral
+  provisioner user's Git protected configuration before product validation;
+  it uses no wildcard, does not mutate either read-only source, and preserves
+  the exact three driver mounts and one-image boundary. The probe then resolved
+  both accepted tags and full commits; focused contract 1/1, complete non-live
+  harness 50/50, and Dockerfile contracts 3/3 are GREEN. Cleanup left no Story
+  image/container/network/database/run-root residue. T072-T073 remain pending
+  a fresh combined quality review over the corrected candidate.
 
 ### File List
 

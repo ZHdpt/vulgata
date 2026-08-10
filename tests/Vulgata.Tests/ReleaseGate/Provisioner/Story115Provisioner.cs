@@ -51,6 +51,11 @@ public static class Story115Provisioner
         "Vulgata.Shared",
         "Vulgata.Web.ViewModels",
     ];
+    private static readonly string[] _mountedRepositorySafeDirectories =
+    [
+        "/vulgata/sources/mbs_account/.git",
+        "/vulgata/sources/mbs_channel/.git",
+    ];
     private static int _imageProductAssemblyResolverInstalled;
 
     public static async Task<int> RunAsync(
@@ -73,6 +78,7 @@ public static class Story115Provisioner
             InstallImageProductAssemblyResolver();
             failureExitCode = 11;
             RequireImageRuntime();
+            ConfigureMountedRepositorySafety();
             ProductRunState state = await ExecuteProductPathAsync(
                 input,
                 code => failureExitCode = code,
@@ -99,6 +105,7 @@ public static class Story115Provisioner
         SchemaIdentity = _contractSchema,
         ProductAssemblyRoot = "/app",
         ImageProductAssemblyAllowlist = _imageProductAssemblyAllowlist,
+        MountedRepositorySafeDirectories = _mountedRepositorySafeDirectories,
         CodeGraphContextVersion = _codeGraphVersion,
         MaximumInputBytes,
         MaximumResultBytes,
@@ -295,6 +302,38 @@ public static class Story115Provisioner
             !(output + error).Contains(_codeGraphVersion, StringComparison.Ordinal))
         {
             throw new InvalidOperationException("The image CodeGraph runtime identity is invalid.");
+        }
+    }
+
+    private static void ConfigureMountedRepositorySafety()
+    {
+        foreach (string directory in _mountedRepositorySafeDirectories)
+        {
+            var startInfo = new ProcessStartInfo("git")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+            };
+            startInfo.ArgumentList.Add("config");
+            startInfo.ArgumentList.Add("--global");
+            startInfo.ArgumentList.Add("--add");
+            startInfo.ArgumentList.Add("safe.directory");
+            startInfo.ArgumentList.Add(directory);
+            using Process process = Process.Start(startInfo) ??
+                throw new InvalidOperationException("The image Git runtime is unavailable.");
+            if (!process.WaitForExit(5_000))
+            {
+                process.Kill(entireProcessTree: true);
+                throw new InvalidOperationException("The image Git safety configuration timed out.");
+            }
+
+            _ = process.StandardOutput.ReadToEnd();
+            _ = process.StandardError.ReadToEnd();
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException("The image Git safety configuration failed.");
+            }
         }
     }
 

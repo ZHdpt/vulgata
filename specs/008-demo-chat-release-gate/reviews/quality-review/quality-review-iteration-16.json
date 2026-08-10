@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
+  "reviewed_boundary": {
+    "base_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
+    "candidate_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
+    "diff_sha256": "0ffd085a68cfc378bd2aa390bd48c4be3fdc9d30068a34ef99a56b843542d73d",
+    "artifact_hashes": {
+      "tests/Vulgata.Tests/TestResults/story-11-5-candidate/candidate-metadata.json": "3487a9e122e990d5e4bfc296f1ffb37ed2d9add1cfb814bad7deaeeca07bc6a8",
+      "docker/Dockerfile": "3018b2ba26c45351890f7805872df58dd67283f2e969f915b635b807d0d5a807",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "f2e44dfa5ca320d2bb3758df9fa788dd48ed8cbb6bc3349093b6e3590791a774",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "bc2c0aee839c4ed741839ac8eb4ea6b596877a41697dc17e32b688d01cffc5c9",
+      "specs/008-demo-chat-release-gate/quickstart.md": "272d69ccc9f78ef57b4668d873779bf0a870b682a4ab2465f5b777a29d539081",
+      "specs/008-demo-chat-release-gate/tasks.md": "f2aa5e2ca3fc1d40af7acd1dd1eae44c16eebd6bad53ac07a3f7b75127f23f17",
+      "specs/008-demo-chat-release-gate/workflow-state.json": "49611a918833fa372fb0168a6101b2d5143801b1e7f0a98e34459a11951e31c0",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs": "a46c31237b3dbe8ed6e39d8390fe27d694c3377972daf464a692069fe9ee81c2",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "329dd66151c48e1a80763c7cb6e57638eb043701473ae94d5030e23ed2bffd3b",
+      "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs": "59208602fe526baaa9770f6fa4d1b7cefa6fae34f83d74b5def94a95c3bcf546"
+    },
+    "owned_paths": [
+      "docker/Dockerfile",
+      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-11.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-12.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-13.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-14.json",
+      "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-15.json",
+      "specs/008-demo-chat-release-gate/tasks.md",
+      "specs/008-demo-chat-release-gate/workflow-state.json",
+      "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+      "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "tests/Vulgata.Tests/TestResults/story-11-5-candidate/candidate-metadata.json",
+    "docker/Dockerfile",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/workflow-state.json",
+    "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
+    "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+    "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. The independent expedited combined quality review found zero Critical, High, or Constitution-MUST findings on candidate e18736bc8d3cc6b7561a452c5eb9aa4d543d139f, tree d05453f2379501f8273afcfff8011365239ca9df. The repository-authoritative production manifest is 53cdb2e681aad10046a82c26cdd39dac3c9809eadc4c7b1f29d1a14c32bd2b87; candidate metadata and its 14-entry aggregate matched with zero entry mismatches. The six-name ordinal image-owned assembly resolver is installed before typed product execution, resolves only fixed /app product assemblies, and rejects unknown names while preserving the exact three mounted driver files, collision checks, immutable same-image binding, seven-slot Pass 2, currentness, authorization, and unchanged migration/model/package boundaries. Existing bounded results remain 50/50 non-live harness and 3/3 Dockerfile mirror contracts. No live resource was acquired by this review. One unchanged-candidate T072 retry is accepted-safe."
+}

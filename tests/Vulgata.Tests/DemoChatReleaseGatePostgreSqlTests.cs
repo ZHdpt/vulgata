@@ -314,6 +314,15 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 .EnumerateArray()
                 .Select(value => value.GetString())
                 .ToArray());
+        Assert.Equal(
+            [
+                "/vulgata/sources/mbs_account/.git",
+                "/vulgata/sources/mbs_channel/.git",
+            ],
+            root.GetProperty("mountedRepositorySafeDirectories")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
         Assert.Equal("0.5.1", root.GetProperty("codeGraphContextVersion").GetString());
         Assert.Equal(65536, root.GetProperty("maximumInputBytes").GetInt32());
         Assert.Equal(65536, root.GetProperty("maximumResultBytes").GetInt32());
