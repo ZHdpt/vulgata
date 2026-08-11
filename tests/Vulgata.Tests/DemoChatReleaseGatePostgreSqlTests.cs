@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Tests.ReleaseGate;
 using Vulgata.Web.Data;
@@ -1479,6 +1480,43 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             FindRepositoryRoot(),
             new Dictionary<string, string>(StringComparer.Ordinal),
             TimeSpan.FromMilliseconds(200)));
+    }
+
+    [Fact]
+    public async Task CodeGraphProvider_ExitedCgcWithInheritedOutputHandle_StillHonorsProfileDeadlineAsync()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-cgc-timeout-{Guid.NewGuid():N}");
+        string snapshot = Path.Combine(root, "snapshot");
+        string state = Path.Combine(root, "state");
+        Directory.CreateDirectory(snapshot);
+        try
+        {
+            using var httpClient = new HttpClient();
+            var provider = new CodeGraphContextProvider(
+                httpClient,
+                new CodeGraphOptions(state)
+                {
+                    ExecutablePath = OperatingSystem.IsWindows() ? "python" : "python3",
+                    ExecutablePrefix =
+                    [
+                        "-c",
+                        "import subprocess,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(2)'])",
+                    ],
+                });
+            var stopwatch = Stopwatch.StartNew();
+
+            CodeGraphProviderResult result = await provider.ProfileAsync(
+                snapshot,
+                TimeSpan.FromMilliseconds(200));
+
+            Assert.False(result.Succeeded);
+            Assert.Equal("CodeGraph 执行超时。", result.Error);
+            Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(1.5));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

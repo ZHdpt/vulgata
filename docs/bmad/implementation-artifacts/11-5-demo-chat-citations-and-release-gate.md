@@ -391,11 +391,15 @@ as completed acceptance criteria.
   instance healthy. A focused inherited-handle regression observed RED 0/1
   after two seconds because no timeout was thrown. The minimal correction binds
   stdout/stderr draining to the same deadline in both the release executor and
-  production `CodeGraphContextProvider`; focused executor plus profiling GREEN
-  is 81/81, complete non-live release GREEN is 52/52, the Release Web build has
-  zero errors, and `git diff --check` is clean. T072 remains incomplete pending
-  a fresh combined quality review over this correction; T073 cleanup for the
-  failed attempt is independently satisfied but does not complete the Story.
+  production `CodeGraphContextProvider`. Quality iteration 21 required direct
+  production-provider coverage; a closed internal executable-prefix test seam
+  (production remains fixed to `cgc`) then reproduced RED 0/1 because the fake
+  exited `cgc` retained output for two seconds beyond a 200 ms profile deadline.
+  With cancellation restored, both inherited-handle regressions plus profiling
+  are GREEN 81/81, complete non-live release GREEN is 52/52, the Release Web
+  build has zero errors, and `git diff --check` is clean. T072 remains incomplete
+  pending a fresh combined quality review over this correction; T073 cleanup for
+  the failed attempt is independently satisfied but does not complete the Story.
 
 ### File List
 

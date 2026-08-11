@@ -9,7 +9,11 @@ using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.CodeGraph;
 
-public sealed record CodeGraphOptions(string StateRootPath, int WholeRepositoryProcessTimeoutSeconds = 1_800);
+public sealed record CodeGraphOptions(string StateRootPath, int WholeRepositoryProcessTimeoutSeconds = 1_800)
+{
+    internal string ExecutablePath { get; init; } = "cgc";
+    internal IReadOnlyList<string> ExecutablePrefix { get; init; } = [];
+}
 
 public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOptions options) : ICodeGraphProvider
 {
@@ -133,7 +137,7 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
             cancellationToken);
     }
 
-    private static GatewayProcess StartGateway(string homePath, int port)
+    private GatewayProcess StartGateway(string homePath, int port)
     {
         ProcessStartInfo startInfo = CreateGatewayStartInfo(homePath, port);
         var process = new Process { StartInfo = startInfo };
@@ -144,7 +148,7 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
             DrainAsync(process.StandardError));
     }
 
-    private static ProcessStartInfo CreateGatewayStartInfo(string homePath, int port)
+    private ProcessStartInfo CreateGatewayStartInfo(string homePath, int port)
     {
         ProcessStartInfo startInfo = CreateStartInfo(homePath);
         startInfo.Environment["TOOL_RESULT_LIMITS"] = """{"execute_cypher_query":250001}""";
@@ -190,7 +194,7 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
         throw new TimeoutException("CodeGraph API 就绪超时。");
     }
 
-    private static async Task<ProcessCommandResult> RunAsync(
+    private async Task<ProcessCommandResult> RunAsync(
         string homePath,
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken,
@@ -247,9 +251,9 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
         }
     }
 
-    private static ProcessStartInfo CreateStartInfo(string homePath, bool redirectStandardInput = false)
+    private ProcessStartInfo CreateStartInfo(string homePath, bool redirectStandardInput = false)
     {
-        var startInfo = new ProcessStartInfo("cgc")
+        var startInfo = new ProcessStartInfo(options.ExecutablePath)
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -258,6 +262,10 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
             CreateNoWindow = true,
         };
         startInfo.Environment["HOME"] = homePath;
+        foreach (string argument in options.ExecutablePrefix)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
         return startInfo;
     }
 
