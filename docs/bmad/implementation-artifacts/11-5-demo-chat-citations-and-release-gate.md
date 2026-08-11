@@ -442,6 +442,14 @@ as completed acceptance criteria.
   No product correction is required. The raw REVISE is persisted and T072
   remains blocked while root refreshes the clean candidate manifest and obtains
   a fresh combined review.
+- Root regenerated the ignored candidate metadata from clean commit
+  `5ca1bec9e45c59d1d15a9126617edec739a57189`, tree
+  `2dbca82a968ef4a34368785c86f782d3a60bfab8`, and canonical production
+  manifest `764edaf7fce9805dbf7733b4f03fa7d045b58034bafaa056272ba3765f7214c5`;
+  all 26 owned-path entries and correction evidence hashes matched. Combined
+  quality iteration 25 then returned ACCEPT with zero findings and closed
+  `QR-115-024-001`. Exactly one live T072 retry is accepted-safe after root
+  persists this verdict and refreshes the final checkpoint identity inputs.
 
 ### File List
 
