@@ -2369,6 +2369,10 @@ internal static partial class Story115ReleaseHarness
                     "publish", provisionerProject,
                     "--configuration", "Release",
                     "--no-restore",
+                    "--disable-build-servers",
+                    "--maxcpucount:1",
+                    "-nodeReuse:false",
+                    "-p:UseSharedCompilation=false",
                     "--output", provisionerRoot,
                 ]),
             new(

@@ -207,6 +207,10 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 "--configuration",
                 "Release",
                 "--no-restore",
+                "--disable-build-servers",
+                "--maxcpucount:1",
+                "-nodeReuse:false",
+                "-p:UseSharedCompilation=false",
                 "--output",
                 outputPath,
             })
@@ -1261,6 +1265,10 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             command.Name == "provisioner-driver-publish");
         string driverRoot = Path.Combine(plan.RunDirectory, "driver");
         Assert.Contains(driverRoot, publish.Arguments);
+        Assert.Contains("--disable-build-servers", publish.Arguments);
+        Assert.Contains("--maxcpucount:1", publish.Arguments);
+        Assert.Contains("-nodeReuse:false", publish.Arguments);
+        Assert.Contains("-p:UseSharedCompilation=false", publish.Arguments);
         Story115ExternalCommand inventory = plan.Commands.Single(command =>
             command.Name == "image-app-inventory-inspect");
         Assert.Contains(Story115ReleaseHarness.ImmutableImageIdPlaceholder, inventory.Arguments);

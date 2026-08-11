@@ -334,3 +334,13 @@ T035: tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs
   filtering, scheduling, retry, dispatch, migration/model, topology, provider,
   or package change is authorized. The research record is
   `docs/bmad/planning-artifacts/research/technical-codegraphcontext-indexing-time-research-2026-08-10.md`.
+- The first post-stream-correction T072 retry failed before Docker acquisition:
+  the nested provisioner `dotnet publish` parent exited but reusable MSBuild
+  nodes retained redirected output handles until the new ten-minute bound.
+  The bounded correction disables build servers, node reuse, parallel MSBuild,
+  and shared compilation for that publish and its direct non-live inventory
+  regression. Focused plan and publish tests pass 1/1 each, the isolated publish
+  completes with zero retained build-server processes, and the complete
+  non-live release harness passes 53/53. This correction changes no product,
+  Scan, Docker, database, migration/model, provider, or package behavior and
+  does not mark T072/T073 complete.
