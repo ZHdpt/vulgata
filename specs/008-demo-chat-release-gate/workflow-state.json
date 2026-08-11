@@ -31,12 +31,12 @@
         "verdict_path": null
       },
       "quality-review": {
-        "status": "pending",
+        "status": "revised",
         "iteration": 24,
-        "dispatch_id": null,
-        "verdict_path": null,
-        "input_boundary": null,
-        "completed_at": null
+        "dispatch_id": "story_11_5_absolute_path_quality_review_24",
+        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-24.json",
+        "input_boundary": "e634ff2e2d4f6fe1c66bb551094bd428dfb847a5",
+        "completed_at": "2026-08-11T16:35:00+08:00"
     },
     "planned-change-authorization": {
       "status": "authorized",
@@ -1001,6 +1001,23 @@
         ],
         "validation": "Observed absolute-path RED 0/1 and channel-first contract RED 0/1; GREEN parser 61/61, Pass1/relationship/runtime 58/58, profiling 79/79, non-live release 52/52, migrations 10/10, Release builds zero errors, both DbContexts no pending model changes, and no prohibited delta",
         "failure": null
+      },
+      {
+        "stage": "quality-review",
+        "status": "revised",
+        "iteration": 24,
+        "started_at": "2026-08-11T16:20:00+08:00",
+        "completed_at": "2026-08-11T16:35:00+08:00",
+        "input_commit": "e634ff2e2d4f6fe1c66bb551094bd428dfb847a5",
+        "agent_role": "quality-reviewer",
+        "dispatch_id": "story_11_5_absolute_path_quality_review_24",
+        "evidence_paths": [
+          "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-24.json"
+        ],
+        "finding_ids": [
+          "QR-115-024-001"
+        ],
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -1256,9 +1273,9 @@
   },
   "recoverable_failure": {
     "stage": "quality-review",
-    "classification": "resolved CodeGraphContext absolute-path adapter correction awaiting combined review",
-    "evidence": "The live T072 provisioner reached both Repository profiling stages, but CodeGraphContext 0.5.1 emitted exact snapshot-rooted absolute paths and the adapter rejected them before Code Unit and relationship reconciliation, producing zero usable structure and stage 26 failure. The user authorized a bounded parser correction. Plan review iteration 12 ACCEPTED it; TDD observed the expected RED and now passes parser 61/61, surrounding profiling/Pass1/runtime/release filters, migrations, builds, and no-pending-model checks. The final run is reordered mbs_channel first solely to fail fast; mbs_account remains mandatory in the same fresh nonce database.",
-    "required_decision": "Pin the clean correction candidate, obtain combined quality-review iteration 24 ACCEPT, then execute the sole live T072 run followed by T073 cleanup/final verification."
+    "classification": "quality iteration 24 metadata-only correction in progress",
+    "evidence": "Quality iteration 24 found no parser or execution-order defect. Its sole High finding QR-115-024-001 is stale ignored candidate metadata that still pins the pre-correction commit/tree/manifest and iteration 23 evidence. The rejected raw verdict is persisted; the tracked candidate behavior remains unchanged while root refreshes the canonical production manifest, owned-path hashes, and correction evidence for a fresh combined review.",
+    "required_decision": "Refresh candidate-metadata.json from the clean post-verdict candidate, then obtain a fresh combined ACCEPT before any T072 live acquisition."
   },
-    "updated_at": "2026-08-11T16:18:54.5800715+08:00"
+    "updated_at": "2026-08-11T16:35:00+08:00"
 }

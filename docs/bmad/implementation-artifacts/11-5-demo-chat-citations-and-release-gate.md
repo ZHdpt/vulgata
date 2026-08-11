@@ -435,6 +435,13 @@ as completed acceptance criteria.
   `mbs_account` in the same fresh nonce database before Resolution, Pass 2, or
   Chat. T072/T073 remain incomplete pending combined quality iteration 24 and
   the sole live retry.
+- Combined quality iteration 24 found the parser correction and actual awaited
+  channel-first/account-mandatory execution order sound. Its sole High finding,
+  `QR-115-024-001`, is release-trust metadata: the ignored candidate metadata
+  still pins the pre-correction commit/tree/manifest and iteration 23 evidence.
+  No product correction is required. The raw REVISE is persisted and T072
+  remains blocked while root refreshes the clean candidate manifest and obtains
+  a fresh combined review.
 
 ### File List
 
