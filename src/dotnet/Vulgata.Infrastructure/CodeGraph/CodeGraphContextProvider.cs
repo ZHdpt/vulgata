@@ -217,11 +217,15 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
             return new ProcessCommandResult(-2, string.Empty, "CodeGraph CLI not found");
         }
 
-        Task<string> stdout = ReadAndDiscardAsync(process.StandardOutput, CancellationToken.None);
-        Task<string> stderr = ReadAndDiscardAsync(process.StandardError, CancellationToken.None);
+        Task<string> stdout = ReadAndDiscardAsync(process.StandardOutput, cancellationToken);
+        Task<string> stderr = ReadAndDiscardAsync(process.StandardError, cancellationToken);
         try
         {
             await process.WaitForExitAsync(cancellationToken);
+            return new ProcessCommandResult(
+                process.ExitCode,
+                await stdout,
+                await stderr);
         }
         catch (OperationCanceledException)
         {
@@ -231,11 +235,16 @@ public sealed class CodeGraphContextProvider(HttpClient httpClient, CodeGraphOpt
             }
 
             await process.WaitForExitAsync(CancellationToken.None);
-            await Task.WhenAll(stdout, stderr);
+            try
+            {
+                await Task.WhenAll(stdout, stderr);
+            }
+            catch (OperationCanceledException)
+            {
+                // Preserve the caller's timeout/cancellation as the authoritative failure.
+            }
             throw;
         }
-
-        return new ProcessCommandResult(process.ExitCode, await stdout, await stderr);
     }
 
     private static ProcessStartInfo CreateStartInfo(string homePath, bool redirectStandardInput = false)

@@ -1463,6 +1463,25 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
     }
 
     [Fact]
+    public async Task ProcessExecutor_ExitedParentWithInheritedOutputHandle_StillHonorsTimeoutAsync()
+    {
+        var executor = new Story115ProcessExecutor();
+        var command = new Story115ExternalCommand(
+            "inherited-output-handle",
+            "python",
+            [
+                "-c",
+                "import subprocess,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(2)'])",
+            ]);
+
+        await Assert.ThrowsAsync<TimeoutException>(() => executor.ExecuteAsync(
+            command,
+            FindRepositoryRoot(),
+            new Dictionary<string, string>(StringComparer.Ordinal),
+            TimeSpan.FromMilliseconds(200)));
+    }
+
+    [Fact]
     public void ProductOrchestrator_CallGraph_IsClosedToAcceptedServicesAndSevenSlotPass2()
     {
         Assert.Equal(

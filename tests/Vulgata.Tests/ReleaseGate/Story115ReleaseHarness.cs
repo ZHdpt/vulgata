@@ -124,15 +124,30 @@ internal sealed class Story115ProcessExecutor
 
         using Process process = Process.Start(startInfo) ??
             throw new InvalidOperationException($"Failed to start {command.Name}.");
-        Task<string> standardOutputTask = ReadBoundedAsync(process.StandardOutput);
-        Task<string> standardErrorTask = ReadBoundedAsync(process.StandardError);
         using var timeoutSource = new CancellationTokenSource(timeout);
         using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             timeoutSource.Token);
+        Task<string> standardOutputTask = ReadBoundedAsync(
+            process.StandardOutput,
+            linkedSource.Token);
+        Task<string> standardErrorTask = ReadBoundedAsync(
+            process.StandardError,
+            linkedSource.Token);
         try
         {
             await process.WaitForExitAsync(linkedSource.Token);
+            string standardOutput = await standardOutputTask;
+            string standardError = await standardErrorTask;
+            string logSha256 = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+                standardOutput + "\n" + standardError))).ToLowerInvariant();
+            return new(
+                command,
+                process.ExitCode,
+                standardOutput,
+                standardError,
+                DateTimeOffset.UtcNow,
+                logSha256);
         }
         catch (OperationCanceledException) when (
             timeoutSource.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
@@ -146,26 +161,16 @@ internal sealed class Story115ProcessExecutor
             TryKillProcessTree(process);
             throw;
         }
-
-        string standardOutput = await standardOutputTask;
-        string standardError = await standardErrorTask;
-        string logSha256 = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-            standardOutput + "\n" + standardError))).ToLowerInvariant();
-        return new(
-            command,
-            process.ExitCode,
-            standardOutput,
-            standardError,
-            DateTimeOffset.UtcNow,
-            logSha256);
     }
 
-    private static async Task<string> ReadBoundedAsync(StreamReader reader)
+    private static async Task<string> ReadBoundedAsync(
+        StreamReader reader,
+        CancellationToken cancellationToken)
     {
         var retained = new StringBuilder(RetainedCharacterLimit);
         var buffer = new char[4096];
         int read;
-        while ((read = await reader.ReadAsync(buffer)) > 0)
+        while ((read = await reader.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
         {
             int remaining = RetainedCharacterLimit - retained.Length;
             if (remaining > 0)

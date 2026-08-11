@@ -377,6 +377,25 @@ as completed acceptance criteria.
   repository-authoritative workflow validator now passes. T072 remains blocked
   until the resulting clean candidate metadata and fresh combined review both
   accept this correction.
+- Quality iteration 20 accepted the timeout-recovery candidate with zero
+  findings. The authorized live T072 attempt built and attested one immutable
+  image, prepared the nonce database, completed the first Repository profile
+  after about 104 minutes, and prepared the second Repository. It then remained
+  alive overnight beyond both declared bounds because `cgc`/`dotnet publish`
+  parent processes could exit while descendants retained redirected output
+  handles: both process wrappers timed only `WaitForExitAsync` and awaited pipe
+  EOF without cancellation. The root force-removed only the exact nonce
+  provisioner to release the waiting Docker CLI; harness cleanup then removed
+  the provider, network, image, run root, and nonce database. Independent T073
+  checks found zero owned residue and left the external PostgreSQL 17 Alpine
+  instance healthy. A focused inherited-handle regression observed RED 0/1
+  after two seconds because no timeout was thrown. The minimal correction binds
+  stdout/stderr draining to the same deadline in both the release executor and
+  production `CodeGraphContextProvider`; focused executor plus profiling GREEN
+  is 81/81, complete non-live release GREEN is 52/52, the Release Web build has
+  zero errors, and `git diff --check` is clean. T072 remains incomplete pending
+  a fresh combined quality review over this correction; T073 cleanup for the
+  failed attempt is independently satisfied but does not complete the Story.
 
 ### File List
 
