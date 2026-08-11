@@ -59,6 +59,7 @@ its GREEN result:
 
 ```pwsh
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedDemoPass2FlowPlannerTests|FullyQualifiedName~PreparedPass2RuntimeDispatchTests|FullyQualifiedName~PreparedPass2FlowTests|FullyQualifiedName~SequentialScanRunnerDocumentGenerationTests|FullyQualifiedName~WorkerAgentResultCommitterTests|FullyQualifiedName~WorkerAgentProductionRegistrationTests"
+dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~CodeGraphContextProviderTests
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ChatContractTests
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ChatEvidenceRetrievalTests
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ChatEvidenceCurrentnessTests
@@ -69,6 +70,11 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter Fully
 
 Required outcomes:
 
+- relative paths remain safe; exact-under-root absolute paths become the same
+  Repository-relative `/` identity before Code Unit/language/relationship
+  reconciliation; root-only, outside/sibling/alternate-root, traversal,
+  malformed, case/platform-ambiguous, non-round-trip, and conflicting inputs
+  fail closed; raw absolute input is absent from warnings/results;
 - ordinary Pass 1 derives the actual Worker Job ID immediately before dispatch
   from canonical version-1 TLV bytes for the Scan execution, ScanRun,
   Repository, Code Unit, and full lowercase Profiled Revision; the distinct
@@ -224,11 +230,10 @@ clean candidate + exact source/driver inventories
 -> prove nonce DB absent and create it
 -> start temporary provisioner from that image ID in the provider namespace
 -> apply clean migrations inside the provisioner
--> mbs_account @ 19c60cd3f3976b7697c487c7bafd96142e3a7625
 -> mbs_channel @ 47f6b627a7598f862873610413eec1e1e7bf46bf
--> profiling and accepted Pre-Scan Result
--> derive canonical actual ordinary Pass 1 Worker Job IDs and dispatch Pass 1
-   for each Repository
+-> mbs_channel profiling + accepted Pre-Scan Result + ordinary Pass 1
+-> mbs_account @ 19c60cd3f3976b7697c487c7bafd96142e3a7625
+-> mbs_account profiling + accepted Pre-Scan Result + ordinary Pass 1
 -> exact account-to-channel Cross-Repository Resolution
 -> one directed REFERENCES Edge and exact evidence
 -> bounded runtime prepared-flow binding from product-created identities
@@ -248,6 +253,11 @@ clean candidate + exact source/driver inventories
 -> terminate exact-database connections, drop only that database, prove absence,
    and remove all other harness-owned nonce resources
 ```
+
+This order is mandatory for fail-fast economics. A channel failure proves
+account did not start; a channel success still requires account in the same
+fresh nonce database. Do not begin exact Resolution, Pass 2, or Chat proof and
+do not claim T072 until both profiles and both Pass 1 results exist.
 
 Provisioning inside the temporary container must call `UserManager`, role/ownership coordinators, management
 repositories/coordinators, Scan services, provider coordinators, and real
@@ -387,6 +397,9 @@ atomic result work. Other subprocesses retain the 45-minute maximum. These are
 failure ceilings, not waits after successful completion. The evidence and
 rationale are recorded in
 `docs/bmad/planning-artifacts/research/technical-codegraphcontext-indexing-time-research-2026-08-10.md`.
+The provisioner uses that ceiling with channel profile/Pass 1 first and account
+profile/Pass 1 second. This is harness ordering only; it changes no product
+filtering, scheduling, grouping, retry, or dispatch behavior.
 
 The harness writes a permission-restricted nonce-owned `$gateEnvFile` containing
 exactly `ASPNETCORE_ENVIRONMENT=Production`,
@@ -436,6 +449,8 @@ dispatch/commit, positive claim/citation counts,
 authorization-negative result, database drop and absence, and cleanup
 outcomes. Do not retain credentials, proprietary source, raw prompts/responses,
 absolute private paths, internal runtime identities, or unauthorized details.
+Record sanitized same-database channel-then-account outcomes with neither
+Repository omitted.
 
 Report these as limitations, not acceptance claims: automatic scope selection,
 file upload, saved sessions, full iterative retrieval tools, retry/failover,

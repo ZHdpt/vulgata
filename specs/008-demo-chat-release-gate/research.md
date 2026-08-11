@@ -506,3 +506,37 @@ it is the repository-mandated gate for a newly accepted release Scan topology.
   the retained quality floor remains unchanged.
 - Generate tasks from the iteration-8 `REVISE`: rejected; fresh independent
   conditional plan acceptance is required first.
+
+## R14. Absolute provider paths and fail-fast Repository order
+
+**Decision**: In the CodeGraphContext adapter only, use the exact committed
+`workingCopyPath` as root; apply `Path.GetFullPath` containment, strict
+root-plus-separator and same-root checks, reject case-fold-only ambiguity,
+derive `Path.GetRelativePath`, normalize to `/`, revalidate with
+`SafeProviderPath`, and require an exact full-path round trip. Perform this
+before Code Unit and relationship endpoint identity/reconciliation. Safe
+relative input remains accepted. Root-only, outside/sibling/alternate-root,
+traversal, malformed, platform/case-ambiguous, conflicting, or non-round-trip
+input fails closed, and raw absolute input is never retained.
+
+T072 runs `mbs_channel` profile/Pass 1 before `mbs_account` for fail-fast
+economics. Both remain mandatory in the same fresh nonce database before exact
+Resolution, Pass 2, or Chat proof.
+
+**Rationale**: Live 0.5.1 indexing succeeded for `mbs_channel` but emitted
+exact snapshot-rooted absolute paths; the existing Repository-relative guard
+then yielded zero Code Units/relationships and failed provisioner stage 26.
+Adapter-local normalization restores compatibility without weakening the
+domain path contract or changing Scan behavior. Channel-first ordering avoids
+the approximately two-hour account profile when that seam still fails.
+
+**Alternatives considered**:
+
+- Relax `SafeProviderPath` globally or strip a textual prefix: rejected as
+  unsafe and platform-dependent.
+- Normalize only Code Units or after identity: rejected because relationship
+  and language reconciliation would split one endpoint.
+- Add `.cgcignore`, filtering, retry, scheduling, dispatch, or another root:
+  rejected as scope expansion.
+- Omit `mbs_account`: rejected because the final gate requires both
+  Repositories, both Pass 1 results, exact Resolution, Pass 2, and Chat proof.

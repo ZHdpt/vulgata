@@ -67,9 +67,8 @@ The observed order inside the temporary provisioner is:
 ```text
 users/roles + prepared management + authorization + encrypted providers
 -> exact Git ref/full-commit acquisition for both Repositories
--> deterministic profiling and accepted Pre-Scan Result
--> Sequential Scan Runner derives and dispatches canonical actual ordinary
-   Pass 1 Worker Job IDs for both Repositories
+-> mbs_channel profiling, accepted Pre-Scan Result, and ordinary Pass 1 result
+-> mbs_account profiling, accepted Pre-Scan Result, and ordinary Pass 1 result
 -> exact configured Cross-Repository Resolution
 -> one directed cross-Repository REFERENCES Edge + accepted evidence
 -> bounded runtime prepared-flow binding from current product-created identities
@@ -82,6 +81,11 @@ users/roles + prepared management + authorization + encrypted providers
 -> final Repository authorization recheck
 -> fully cited rendered Grounded Answer
 ```
+
+Channel-first/account-second is a fail-fast harness order only. Channel failure
+stops before account starts; channel success cannot omit account. Both exact
+profiles and Pass 1 results must come from this same fresh nonce database before
+Resolution, Pass 2, retrieval, or Chat acceptance.
 
 Assertions include exact Profiled Revision continuity, immutable/current
 Document Versions, available Source Anchors, exact Edge direction, zero guessed
@@ -109,6 +113,23 @@ read-only at `/vulgata/sources/mbs_account` and
 provisioner's writable nonce work mount. Profiling MUST resolve the final
 image's hash-pinned Linux CodeGraphContext 0.5.1 runtime. Host `cgc`, host
 Python/pip, and fallback resolution are prohibited.
+
+### CodeGraphContext provider path contract
+
+Before Code Unit or relationship endpoint identity/reconciliation, the adapter
+uses the exact committed `workingCopyPath` root and `Path.GetFullPath`
+containment. Safe relative input is preserved. A rooted input is accepted only
+as a strict same-root descendant with an ordinally identical root prefix, a
+safe `Path.GetRelativePath` result normalized to `/`, and an exact full-path
+round trip. Root-only, outside/sibling/alternate-root, traversal, malformed,
+case/platform-ambiguous, non-round-trip, and conflicting inputs fail closed.
+Equivalent relative/absolute facts yield one identity; conflicting duplicates
+never use first/last wins. Raw absolute input is absent from Code Units,
+relationships, warnings, provisioner results, and evidence.
+
+This adapter seam does not relax `SafeProviderPath` or change `.cgcignore`,
+queries/filtering, scheduling, grouping, retry, dispatch, migrations/model,
+Docker/package/provider identity, or the exact seven-slot payload.
 
 ### Ordinary Pass 1 Job Identity contract
 
@@ -353,6 +374,9 @@ The same candidate must pass:
   access, provider namespace, built-in PostgreSQL preflight, source ref/commit
   continuity, sanitized result rejection cases, provisioner removal before app,
   and unconditional cleanup after failure at every acquired-resource phase;
+- focused provider tests covering relative preservation, under-root absolute
+  normalization, Code Unit/relationship identity equivalence, every unsafe or
+  ambiguous path class, duplicate conflicts, and raw-path redaction;
 - Story 11.5 contract, retrieval, agent, coordinator, UI, and integration tests;
 - ordinary Pass 1 Job Identity tests proving independent canonical bytes and
   the pinned UUIDv8 vector, same-boundary repeat identity, mutation of every
@@ -397,8 +421,9 @@ root coverage validation, candidate pinning, and the fresh combined quality
 5. start a temporary provisioner with `--entrypoint dotnet` from that exact ID,
    in the provider namespace, with only candidate-bound driver/source/config
    read-only mounts and nonce output/work/key writable mounts;
-6. require migrations/product profiling/Scan to complete inside it, validate
-   its closed sanitized output, inspect `.Image` equal to the recorded ID, then
+6. require migrations, channel-first then mandatory account-second
+   profiling/Pass 1, and the remaining product Scan to complete inside it;
+   validate its closed sanitized output, inspect `.Image` equal to the recorded ID, then
    remove/prove absence before app start;
 7. start the app from the same ID against the still-live nonce database through
    preflighted built-in `host.docker.internal`, the same key ring, and provider;
@@ -437,6 +462,8 @@ The release evidence bundle records only sanitized facts and hashes:
   identities, provider-namespace/PostgreSQL preflight, in-image
   CodeGraphContext 0.5.1 identity, and sanitized provisioner-result hash;
 - prepared aliases/refs/commits and exact profile fingerprint;
+- same-database channel-first/account-second profile and Pass 1 outcomes, with
+  neither Repository omitted;
 - runtime Pass 2 support fingerprint plus sanitized proof of consumer
   ownership, exactly-two-Repository support, exact seven-slot dispatch, and one
   Pass 2 dispatch/commit;

@@ -257,6 +257,41 @@ composition seam and only public product services; it adds no fixture SQL,
 `DbSet`, reflection, fabricated identity, production command mode, Dockerfile
 layer, or shipped file.
 
+## Bounded CodeGraphContext Path Compatibility
+
+The user-approved correction is confined to the CodeGraphContext 0.5.1
+Infrastructure adapter. The exact committed `workingCopyPath` supplied to
+indexing is the sole snapshot root. Before Code Unit identity, parser-language
+reconciliation, or relationship source/target endpoint identity, the adapter:
+
+1. computes the root and candidate with `Path.GetFullPath`;
+2. preserves input already accepted as a safe relative path, after proving its
+   full path is a strict descendant of that root;
+3. accepts a rooted provider path only when it has the same platform root, is
+   a strict `root + separator` descendant, matches the root prefix ordinally
+   (a case-fold-only match is ambiguous and rejected), and
+   `Path.GetRelativePath` yields a non-empty safe relative value that
+   round-trips to the same full candidate;
+4. emits only the deterministic Repository-relative `/` form validated by
+   `SafeProviderPath` and never retains the raw absolute value.
+
+Root-only, outside/sibling-prefix, alternate drive/share/device/root,
+traversal, malformed/control/over-bound, URI-like, case/platform-ambiguous, and
+non-round-tripping input remains a malformed provider record. Relative and
+exact-under-root absolute spellings of one endpoint must produce the same
+identity. Duplicate-equivalent facts may deduplicate; duplicate/conflicting
+path, kind, name, range, parser-language, or relationship endpoint facts fail
+closed rather than use first/last wins. Apply the same normalization to Code
+Units and both relationship endpoints before all identity/reconciliation.
+
+Required RED/GREEN coverage includes relative/native-separator preservation;
+absolute-under-root normalization; representation-equivalent File, Module,
+Class, Function, language, and relationship identities; every rejection class
+above; conflicting duplicates; and raw-absolute-path redaction from warnings
+and serialized results. `SafeProviderPath` is not relaxed globally. No
+`.cgcignore`, filter/query, scheduling, grouping, retry, dispatch, migration,
+model, Docker/package/provider, or seven-slot change is permitted.
+
 ## Runtime Pass 2 Binding and Exact Dispatch Contract
 
 The exact-resolution profile and its persisted evidence are the sole semantic
@@ -633,6 +668,15 @@ corrected plan still requires a fresh conditional plan review because the Scan
 topology remains a planned-change trigger; it does not re-request the already
 granted Option A authorization.
 
+**Trigger 4 — CodeGraphContext path acceptance**: the qualified 0.5.1 runtime
+returned exact snapshot-rooted absolute paths, and the current adapter rejected
+them before Code Unit/relationship reconciliation. The user approved this
+bounded adapter correction in the current thread. Because it changes parser
+acceptance at a Scan seam, a fresh conditional `expedited-mvp` plan review is
+required before task regeneration; the approval does not authorize any path,
+parser, filter, scheduling, retry, dispatch, or product behavior beyond the
+closed normalization contract above.
+
 **Proposed approach and effect**: bind the accepted exact profile and current
 product-created identities into one consumer-owned runtime flow, fail closed on
 all ambiguity or drift, and dispatch only the unchanged seven-slot payload.
@@ -808,6 +852,14 @@ The final PostgreSQL fixture owns the accepted profile facts:
 - `mbs_channel`, `refs/tags/vulgata/August15th-sample`,
   `47f6b627a7598f862873610413eec1e1e7bf46bf`.
 
+T072 profiles and completes ordinary Pass 1 for `mbs_channel` first, then does
+the same for `mbs_account`, solely to fail fast at the previously observed
+channel adapter seam before paying the approximately two-hour account cost.
+A channel failure stops before account starts; channel success never permits
+account omission. Both profiles and both Pass 1 results must exist in the same
+fresh nonce database before exact account-to-channel Cross-Repository
+Resolution, Pass 2, and Chat proof. No result may be reused from another run.
+
 The sole live T072 host is Windows Docker Desktop in Linux-container mode. Before live
 resource acquisition, the harness validates the clean candidate, canonical
 production-source manifest, accepted Repository refs/commits, prebuilt
@@ -944,7 +996,8 @@ Normative lifecycle (a later phase never starts if its predecessor fails):
    provisioner from the immutable ID in the provider namespace with the exact
    read-only/writable mounts defined below;
 5. inside the provisioner, apply migrations and execute product provisioning,
-   Repository profiling, ordinary Pass 1 for both Repositories, exact
+   `mbs_channel` profiling/Pass 1 first and mandatory `mbs_account`
+   profiling/Pass 1 second, then exact
    Cross-Repository Resolution, runtime prepared-flow binding, and the one
    exact seven-slot Pass 2 dispatch/commit; atomically write sanitized output;
 6. inspect the provisioner's `.Image` equal to the recorded ID, remove it, and
@@ -994,6 +1047,8 @@ cleanup/absence and the unchanged reviewed candidate before completion.
 | Provider output leaks locators or diagnostics | Closed JSON permits only schema/request/mode/fingerprint echoes and unique ordered Candidate Claim handles; it permits no provider-authored claim text, citation handle, locator, narrative, or diagnostic. Business locator safety is applied to server-extracted Candidate Claim text before dispatch and revalidated before render; display locators come only from fixed server evidence; failures use fixed Chinese messages. |
 | Provider exceeds 30 seconds | Linked timeout/cancellation; one call, no retry/failover, no partial result. |
 | Prepared Repository/profile drift | Require full accepted refs/commits and exact profile fingerprint before runtime binding and the final run; mismatch produces zero Pass 2 dispatches and fails the release gate. |
+| CodeGraphContext returns snapshot-rooted absolute paths | Canonicalize only strict under-root values before Code Unit and relationship identity; reject outside, ambiguous, malformed, or conflicting representations and redact raw absolute input. |
+| Account profiling consumes hours before the known channel seam fails | Run channel profile/Pass 1 first; account remains mandatory after channel succeeds and before any downstream acceptance step. |
 | Successful ordinary Pass 1 no longer retains `InFlightJobId` | Derive the actual Job ID canonically before dispatch and have the planner recompute it from the persisted execution boundary, then require the current Document Version ID to equal the existing one-way projection of that derived job. No new persisted field or reverse-hash assumption is used. |
 | Legacy/random or colliding member identity is mistaken for current evidence | Fail closed unless every current member has canonical inputs, a matching deterministic Document Version projection, and a unique derived Job ID. Pin an independent golden vector plus repeat, each-input-change, tuple-framing, domain-separation, duplicate/collision, substitution, and drift tests. The clean final database has no legacy rows. |
 | Runtime identities cannot satisfy the accepted prepared flow | Infrastructure requires unique current authorized mappings for every selector and the directed relationship, computes a canonical server-only support fingerprint, and fails before dispatch. The fixed manifest, fabricated IDs, reflection, fixture SQL, and direct `DbSet` insertion are forbidden. |

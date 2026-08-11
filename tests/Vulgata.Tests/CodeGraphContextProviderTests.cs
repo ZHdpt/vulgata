@@ -17,12 +17,16 @@ public sealed class CodeGraphContextProviderTests
         string? globalBefore = Environment.GetEnvironmentVariable("TOOL_RESULT_LIMITS");
         MethodInfo? createStartInfo = typeof(CodeGraphContextProvider).GetMethod(
             "CreateGatewayStartInfo",
-            BindingFlags.NonPublic | BindingFlags.Static,
+            BindingFlags.NonPublic | BindingFlags.Instance,
             [typeof(string), typeof(int)]);
         Assert.NotNull(createStartInfo);
 
+        using var httpClient = new HttpClient();
+        var provider = new CodeGraphContextProvider(
+            httpClient,
+            new CodeGraphOptions(Path.GetTempPath()));
         var startInfo = Assert.IsType<ProcessStartInfo>(
-            createStartInfo!.Invoke(null, [Path.GetTempPath(), 12_345]));
+            createStartInfo!.Invoke(provider, [Path.GetTempPath(), 12_345]));
 
         Assert.True(startInfo.Environment.TryGetValue("TOOL_RESULT_LIMITS", out string? raw));
         using JsonDocument limits = JsonDocument.Parse(raw!);
@@ -209,6 +213,157 @@ public sealed class CodeGraphContextProviderTests
 
             Assert.Equal(2, result.CodeUnits.Count);
             Assert.All(result.CodeUnits, unit => Assert.Equal("c_sharp", unit.Language));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseProjectionA_AbsolutePathUnderWorkingCopy_ReturnsRepositoryRelativePath()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-absolute-path-{Guid.NewGuid():N}");
+        string absolutePath = Path.Combine(root, "src", "A.cs");
+        Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
+        try
+        {
+            CodeGraphProviderResult result = ParseCodeUnits(
+            [
+                CreateCodeUnitRow("Class", absolutePath, "A", 1, 1, "c_sharp"),
+            ],
+            root);
+
+            ProviderCodeUnit unit = Assert.Single(result.CodeUnits);
+            Assert.Equal("src/A.cs", unit.RelativePath);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseProjectionA_NonRoundTrippingRootedPath_RedactsAndRejects()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-non-round-trip-{Guid.NewGuid():N}");
+        string rawPath = Path.Combine(root, "src", "..", "Secret.cs");
+        Directory.CreateDirectory(Path.Combine(root, "src"));
+        try
+        {
+            CodeGraphProviderResult result = ParseCodeUnits(
+            [
+                CreateCodeUnitRow("Class", rawPath, "Secret", 1, 1, "c_sharp"),
+            ],
+            root);
+
+            Assert.Empty(result.CodeUnits);
+            ProviderCandidateOutcome outcome = Assert.Single(result.CandidateOutcomes);
+            Assert.Equal("(unknown)", outcome.RelativePath.Value);
+            Assert.DoesNotContain(rawPath, JsonSerializer.Serialize(result), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseProjections_EquivalentRelativeAndAbsoluteFacts_NormalizeAllKindsLanguageAndRelationships()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-absolute-equivalence-{Guid.NewGuid():N}");
+        string relativePath = string.Join(Path.DirectorySeparatorChar, "src", "A.cs");
+        string absolutePath = Path.GetFullPath(Path.Combine(root, relativePath));
+        Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
+        File.WriteAllText(absolutePath, "class A { void Run() { } }");
+        try
+        {
+            object?[] codeUnitRows =
+            [
+                CreateCodeUnitRow("File", relativePath, null, null, null, null),
+                CreateCodeUnitRow("File", absolutePath, null, null, null, null),
+                CreateCodeUnitRow("Module", relativePath, "Demo", 1, 1, "c_sharp"),
+                CreateCodeUnitRow("Module", absolutePath, "Demo", 1, 1, "C_SHARP"),
+                CreateCodeUnitRow("Class", relativePath, "A", 1, 1, "c_sharp"),
+                CreateCodeUnitRow("Class", absolutePath, "A", 1, 1, "C_SHARP"),
+                CreateCodeUnitRow("Function", relativePath, "Run", 1, 1, "c_sharp"),
+                CreateCodeUnitRow("Function", absolutePath, "Run", 1, 1, "C_SHARP"),
+            ];
+            object?[] relationshipRows =
+            [
+                CreateRelationshipRow(
+                    "CONTAINS", "Class", absolutePath, "A", 1, 1,
+                    "Function", relativePath, "Run", 1, 1),
+                CreateRelationshipRow(
+                    "CONTAINS", "Class", relativePath, "A", 1, 1,
+                    "Function", absolutePath, "Run", 1, 1),
+            ];
+
+            CodeGraphProviderResult result = CodeGraphHttpProjectionParser.Parse(
+                CreateEnvelopeWithRawDataSuffix(
+                    CodeGraphContextProviderQueries.CodeUnits,
+                    codeUnitRows,
+                    string.Empty),
+                CreateEnvelopeWithRawDataSuffix(
+                    CodeGraphContextProviderQueries.Relationships,
+                    relationshipRows,
+                    string.Empty),
+                root,
+                TimeSpan.Zero);
+
+            Assert.Equal(4, result.CodeUnits.Count);
+            Assert.All(result.CodeUnits, unit =>
+            {
+                Assert.Equal("src/A.cs", unit.RelativePath);
+                Assert.Equal("c_sharp", unit.Language);
+            });
+            Assert.Single(result.Relationships);
+            Assert.Empty(result.CandidateOutcomes);
+            Assert.DoesNotContain(absolutePath, JsonSerializer.Serialize(result), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void ParseProjectionA_UnsafeRootedPathClasses_RedactAndReject()
+    {
+        string root = Path.Combine(Path.GetTempPath(), $"vulgata-root-boundary-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        string parent = Path.GetDirectoryName(root)!;
+        string caseAmbiguous = SwapAsciiCase(root) + Path.DirectorySeparatorChar + "Case.cs";
+        string alternateRoot = OperatingSystem.IsWindows()
+            ? @"Z:\alternate\Secret.cs"
+            : "/alternate/Secret.cs";
+        string[] rawPaths =
+        [
+            root,
+            Path.Combine(parent, "outside", "Secret.cs"),
+            root + "-sibling" + Path.DirectorySeparatorChar + "Secret.cs",
+            alternateRoot,
+            @"\\server\share\Secret.cs",
+            @"\\?\C:\device\Secret.cs",
+            caseAmbiguous,
+            new Uri(Path.Combine(root, "Uri.cs")).AbsoluteUri,
+            Path.Combine(root, new string('x', 2_049) + ".cs"),
+        ];
+        try
+        {
+            foreach (string rawPath in rawPaths)
+            {
+                CodeGraphProviderResult result = ParseCodeUnits(
+                [
+                    CreateCodeUnitRow("Class", rawPath, "Secret", 1, 1, "c_sharp"),
+                ],
+                root);
+
+                Assert.Empty(result.CodeUnits);
+                ProviderCandidateOutcome outcome = Assert.Single(result.CandidateOutcomes);
+                Assert.Equal("(unknown)", outcome.RelativePath.Value);
+                Assert.DoesNotContain(rawPath, JsonSerializer.Serialize(result), StringComparison.Ordinal);
+            }
         }
         finally
         {
@@ -506,6 +661,15 @@ public sealed class CodeGraphContextProviderTests
 
         return count;
     }
+
+    private static string SwapAsciiCase(string value) => new(value
+        .Select(character => character switch
+        {
+            >= 'a' and <= 'z' => char.ToUpperInvariant(character),
+            >= 'A' and <= 'Z' => char.ToLowerInvariant(character),
+            _ => character,
+        })
+        .ToArray());
 
     public static TheoryData<string, string, bool> UnsafeProviderPathCases
     {

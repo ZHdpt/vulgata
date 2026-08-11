@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+  "reviewed_boundary": {
+    "base_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+    "candidate_commit": null,
+    "diff_sha256": "842d1ac579ec64192e33c80c131bb34ad11a3938e7eaae523ee14625ff7b8a53",
+    "artifact_hashes": {
+      "specs/008-demo-chat-release-gate/plan.md": "ef26b92fb439ac36eb705658f2a8dbc78ea8e96c49666eb6b0515c1b1990dff0",
+      "specs/008-demo-chat-release-gate/research.md": "9e4d0ce6b8243d045005adc119fc3dd7ad47579277c208858011848f1974fbf8",
+      "specs/008-demo-chat-release-gate/data-model.md": "05c338d4a3fa91dfa83012b42d44ee4a86946335889006eca1fd754bd8f1e4b6",
+      "specs/008-demo-chat-release-gate/quickstart.md": "3fcadc5d85f49dfa512bee3466dc8a2a740e0d21f7165eb55de51e05364c26ff",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md": "f9814c9b2f6c74f239f12f704210915dadbb7ce38f4ba833f23bb4c7eebcd360"
+    },
+    "owned_paths": [
+      "specs/008-demo-chat-release-gate/plan.md",
+      "specs/008-demo-chat-release-gate/research.md",
+      "specs/008-demo-chat-release-gate/data-model.md",
+      "specs/008-demo-chat-release-gate/quickstart.md",
+      "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/research.md",
+    "specs/008-demo-chat-release-gate/data-model.md",
+    "specs/008-demo-chat-release-gate/quickstart.md",
+    "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/tasks.md",
+    "specs/008-demo-chat-release-gate/workflow-state.json",
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/agent-workflow/august-15-expedited-mvp-exception.md",
+    "docs/agent-workflow/architecture.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/agent-catalog.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/agent-workflow/e2e-decision-matrix.md",
+    "docs/agent-workflow/operator-runbook.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    ".agents/skills/run-bmad-sprint-loop/references/dispatch-contract.md",
+    ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json",
+    ".codex/agents/plan-judge.toml",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+    "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT with zero findings. The bounded correction is feasible at the current CodeGraphContext 0.5.1 adapter seam: the parser already receives the exact committed workingCopyPath and currently normalizes Code Unit and relationship endpoint paths before identity, so one adapter-local canonicalization operation can apply Path.GetFullPath, same-root and strict descendant containment, ordinal root-prefix equality, Path.GetRelativePath, exact round-trip validation, and final SafeProviderPath revalidation before Code Unit identity, parser-language reconciliation, and both relationship endpoint identities. The plan preserves already-safe relative input, converges equivalent relative and absolute spellings to one Repository-relative identity, rejects root-only, outside, sibling-prefix, alternate-root, traversal, malformed, control, over-bound, URI-like, case/platform-ambiguous, non-round-tripping, and conflicting representations, and prevents raw absolute values from persisting or appearing in warnings, results, provisioner output, or evidence. SafeProviderPath remains closed globally. Focused RED/GREEN coverage is explicit for File, Module, Class, Function, language reconciliation, relationship endpoints, duplicate equivalence/conflict, rejection classes, cross-platform/case behavior, and redaction. The five-artifact diff adds no .cgcignore, query/filtering, scheduling, grouping, retry, dispatch, migration/model, Docker/package/provider, or payload change; the Worker-facing Pass 2 contract remains exactly seven slots. T072 is channel-first only for fail-fast economics: a channel failure stops before account work, but channel success cannot omit mbs_account; both Repository profiles and both ordinary Pass 1 results must be created in the same fresh nonce database before exact account-to-channel Cross-Repository Resolution, Pass 2, retrieval, or Chat proof, with no reused result. The correction is bounded by the user's explicit Scan-parsing authorization, aligns with Story 11.5, PRD FR-4.1/FR-4.9 and section 5.16, the Constitution, AGENTS.md, the August 15 expedited-mvp exception, and the Ubiquitous Language; no applicable ADR exists in the pinned repository. No Critical or High blocker remains. After this raw verdict is schema-validated and persisted, task regeneration and implementation may proceed without duplicate user approval; later TDD, combined quality review, T072 clean-database two-Repository E2E, Docker, cleanup, and final verification gates remain mandatory."
+}

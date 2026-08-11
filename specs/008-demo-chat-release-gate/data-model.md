@@ -512,6 +512,22 @@ Test/release evidence concept, not a product entity:
 Any tag-only identity, second build, pull/commit, unequal container image ID,
 or app start while the provisioner exists makes the run `Failed`.
 
+## Provider Path Canonicalization Result
+
+Operation-local adapter value, never persisted:
+
+- `SnapshotRoot`: `Path.GetFullPath` of the exact committed working copy;
+- `RepositoryRelativePath`: safe non-empty `/` form;
+- `Disposition`: `AcceptedRelative`, `NormalizedAbsolute`, or
+  `RejectedMalformed`.
+
+Relative and exact-under-root absolute representations must yield one
+Repository-relative identity before Code Unit, language, and relationship
+reconciliation. Root-only, outside/sibling/alternate-root, traversal,
+malformed, case/platform-ambiguous, non-round-trip, or conflicting values are
+rejected. Equivalent duplicates may deduplicate; conflicting duplicates do
+not select a winner. Absolute provider input is never stored or emitted.
+
 ## Provisioner Input and Result
 
 `ProvisionerInput` is a permission-restricted nonce file mounted read-only. It
@@ -558,6 +574,8 @@ database by the test/release harness:
 - candidate commit/tree/production manifest hashes;
 - random disposable database name (no credentials);
 - accepted prepared aliases, refs, and commits;
+- ordered same-database evidence for `mbs_channel` profile/Pass 1 first and
+  mandatory `mbs_account` profile/Pass 1 second;
 - accepted exact-profile fingerprint and runtime Pass 2 support fingerprint;
 - proof of one consumer-owned flow, exactly two supporting Repositories, the
   exact seven-slot dispatch shape, and one Pass 2 dispatch/commit;
@@ -576,3 +594,5 @@ database by the test/release harness:
 
 Terminal states: `Passed`, `Failed`, `CleanupFailed`. A primary failure does not
 skip cleanup; cleanup failure prevents acceptance even if feature checks passed.
+Channel failure stops before account work; channel success alone cannot pass.
+Resolution, Pass 2, and Chat are unreachable until both Repository stages pass.

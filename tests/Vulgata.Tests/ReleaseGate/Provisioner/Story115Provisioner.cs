@@ -57,6 +57,14 @@ public static class Story115Provisioner
         "/vulgata/sources/mbs_account/.git",
         "/vulgata/sources/mbs_channel/.git",
     ];
+    private static readonly string[] _repositoryExecutionOrder =
+    [
+        "profile-mbs_channel",
+        "pass1-mbs_channel",
+        "profile-mbs_account",
+        "pass1-mbs_account",
+        "exact-cross-repository-resolution",
+    ];
     private static int _imageProductAssemblyResolverInstalled;
 
     public static async Task<int> RunAsync(
@@ -166,6 +174,7 @@ public static class Story115Provisioner
             $"{_accountAlias}|{_acceptedRef}|{_accountCommit}",
             $"{_channelAlias}|{_acceptedRef}|{_channelCommit}",
         },
+        RepositoryExecutionOrder = _repositoryExecutionOrder,
         CodeGraphRequirementsLockSha256 = _codeGraphLockSha256,
         OrdinaryPass1DispatchCount = 2,
         RuntimeFlowRepositoryCount = 2,
@@ -474,43 +483,52 @@ public static class Story115Provisioner
         reportStage(26);
         IRepositoryProfilingCoordinator profiling =
             services.GetRequiredService<IRepositoryProfilingCoordinator>();
-        RepositoryProfilingResult accountProfile = await profiling.StartSystemRepositoryAsync(
-            system.Id, account.Value.Id, ownerContext, cancellationToken);
         RepositoryProfilingResult channelProfile = await profiling.StartSystemRepositoryAsync(
             system.Id, channel.Value.Id, ownerContext, cancellationToken);
-        if (accountProfile.Outcome != RepositoryProfilingOutcome.Success || accountProfile.Value is null ||
-            channelProfile.Outcome != RepositoryProfilingOutcome.Success || channelProfile.Value is null)
+        if (channelProfile.Outcome != RepositoryProfilingOutcome.Success || channelProfile.Value is null)
         {
             throw new InvalidOperationException("Repository profiling failed.");
         }
 
-        reportStage(27);
         IApprovedPreScanHandoffSource handoffs =
             services.GetRequiredService<IApprovedPreScanHandoffSource>();
-        ApprovedPreScanHandoff accountHandoff = await handoffs.GetAsync(
-            account.Value.Id, accountProfile.Value.Id, cancellationToken) ??
-            throw new InvalidOperationException("The account Profiled Revision is unavailable.");
         ApprovedPreScanHandoff channelHandoff = await handoffs.GetAsync(
             channel.Value.Id, channelProfile.Value.Id, cancellationToken) ??
             throw new InvalidOperationException("The channel Profiled Revision is unavailable.");
-        if (!StringComparer.Ordinal.Equals(accountHandoff.ProfiledRevision, _accountCommit) ||
-            !StringComparer.Ordinal.Equals(channelHandoff.ProfiledRevision, _channelCommit))
+        if (!StringComparer.Ordinal.Equals(channelHandoff.ProfiledRevision, _channelCommit))
         {
             throw new InvalidOperationException("The accepted Profiled Revisions drifted.");
         }
 
-        reportStage(28);
         var verifier = ActivatorUtilities.CreateInstance<RepositoryAuthorizationVerifier>(
             services, ownerContext);
         var access = new RepositoryAccessScope(
             [account.Value.Id, channel.Value.Id], verifier);
         SequentialScanRunner runner = services.GetRequiredService<SequentialScanRunner>();
-        Guid accountExecution = await runner.StartAsync(
-            account.Value.Id, accountProfile.Value.Id, system.Id, cancellationToken);
         Guid channelExecution = await runner.StartAsync(
             channel.Value.Id, channelProfile.Value.Id, system.Id, cancellationToken);
-        await runner.RunPass1Async(accountExecution, access, cancellationToken);
         await runner.RunPass1Async(channelExecution, access, cancellationToken);
+
+        reportStage(27);
+        RepositoryProfilingResult accountProfile = await profiling.StartSystemRepositoryAsync(
+            system.Id, account.Value.Id, ownerContext, cancellationToken);
+        if (accountProfile.Outcome != RepositoryProfilingOutcome.Success || accountProfile.Value is null)
+        {
+            throw new InvalidOperationException("Repository profiling failed.");
+        }
+
+        ApprovedPreScanHandoff accountHandoff = await handoffs.GetAsync(
+            account.Value.Id, accountProfile.Value.Id, cancellationToken) ??
+            throw new InvalidOperationException("The account Profiled Revision is unavailable.");
+        if (!StringComparer.Ordinal.Equals(accountHandoff.ProfiledRevision, _accountCommit))
+        {
+            throw new InvalidOperationException("The accepted Profiled Revisions drifted.");
+        }
+
+        reportStage(28);
+        Guid accountExecution = await runner.StartAsync(
+            account.Value.Id, accountProfile.Value.Id, system.Id, cancellationToken);
+        await runner.RunPass1Async(accountExecution, access, cancellationToken);
 
         reportStage(29);
         ExactResolutionProfile profile = services.GetRequiredService<ExactResolutionProfileCatalog>().Load();

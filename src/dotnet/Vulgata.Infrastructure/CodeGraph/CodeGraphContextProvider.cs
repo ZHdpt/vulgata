@@ -433,6 +433,7 @@ internal static class CodeGraphHttpProjectionParser
         string workingCopyPath,
         TimeSpan duration)
     {
+        string workingCopyRoot = Path.GetFullPath(workingCopyPath);
         using JsonDocument codeUnitDocument = ParseEnvelope(
             codeUnitsUtf8Json,
             CodeGraphContextProviderQueries.CodeUnits,
@@ -470,9 +471,10 @@ internal static class CodeGraphHttpProjectionParser
                     ReadNullableString(row, "path"),
                     ReadNullableString(row, "name"),
                     ReadNullablePositiveInt(row, "start_line"),
-                    ReadNullablePositiveInt(row, "end_line"));
+                    ReadNullablePositiveInt(row, "end_line"),
+                    workingCopyRoot);
                 RegisterEndpoint(endpointTuples, endpoint);
-                ProviderCodeUnit? unit = MapCodeUnit(endpoint, workingCopyPath);
+                ProviderCodeUnit? unit = MapCodeUnit(endpoint, workingCopyRoot);
                 if (unit is not null && units.TryAdd(endpoint.Identity, unit))
                 {
                     parsedPaths.Add(unit.RelativePath);
@@ -547,13 +549,15 @@ internal static class CodeGraphHttpProjectionParser
                     ReadNullableString(row, "source_path"),
                     ReadNullableString(row, "source_name"),
                     ReadNullablePositiveInt(row, "source_start_line"),
-                    ReadNullablePositiveInt(row, "source_end_line"));
+                    ReadNullablePositiveInt(row, "source_end_line"),
+                    workingCopyRoot);
                 EndpointTuple target = ParseEndpoint(
                     RequireString(row, "target_provider_kind"),
                     ReadNullableString(row, "target_path"),
                     ReadNullableString(row, "target_name"),
                     ReadNullablePositiveInt(row, "target_start_line"),
-                    ReadNullablePositiveInt(row, "target_end_line"));
+                    ReadNullablePositiveInt(row, "target_end_line"),
+                    workingCopyRoot);
                 RegisterEndpoint(endpointTuples, source);
                 RegisterEndpoint(endpointTuples, target);
                 relationships.Add(new ProviderStructuralRelationship(
@@ -727,14 +731,15 @@ internal static class CodeGraphHttpProjectionParser
         string? path,
         string? name,
         int? startLine,
-        int? endLine)
+        int? endLine,
+        string workingCopyRoot)
     {
         string normalizedKind = kind switch
         {
             "File" or "Module" or "Class" or "Function" => kind,
             _ => throw new InvalidDataException("CodeGraph 节点类型无效。"),
         };
-        string normalizedPath = path is null ? string.Empty : NormalizePath(path);
+        string normalizedPath = path is null ? string.Empty : NormalizePath(path, workingCopyRoot);
         string normalizedName = name?.Trim() ?? string.Empty;
         if (normalizedName.Length > 512 ||
             normalizedKind == "File" && normalizedPath.Length == 0 ||
@@ -767,7 +772,7 @@ internal static class CodeGraphHttpProjectionParser
             identity);
     }
 
-    private static ProviderCodeUnit? MapCodeUnit(EndpointTuple endpoint, string workingCopyPath)
+    private static ProviderCodeUnit? MapCodeUnit(EndpointTuple endpoint, string workingCopyRoot)
     {
         if (endpoint.Kind == "Module" &&
             (endpoint.Path.Length == 0 || endpoint.StartLine is null || endpoint.EndLine is null))
@@ -792,7 +797,7 @@ internal static class CodeGraphHttpProjectionParser
         {
             name = name.Length == 0 ? Path.GetFileName(path) : name;
             start = 1;
-            end = CountLocalLines(workingCopyPath, path);
+            end = CountLocalLines(workingCopyRoot, path);
         }
         else if (endpoint.Kind == "Module")
         {
@@ -802,11 +807,12 @@ internal static class CodeGraphHttpProjectionParser
         return new ProviderCodeUnit(path, name, type, start, end, endpoint.Identity, confidence);
     }
 
-    private static int CountLocalLines(string workingCopyPath, string relativePath)
+    private static int CountLocalLines(string workingCopyRoot, string relativePath)
     {
-        string root = Path.GetFullPath(workingCopyPath);
-        string fullPath = Path.GetFullPath(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar)));
-        if (!fullPath.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        string fullPath = Path.GetFullPath(Path.Combine(
+            workingCopyRoot,
+            relativePath.Replace('/', Path.DirectorySeparatorChar)));
+        if (!IsStrictDescendant(workingCopyRoot, fullPath))
         {
             throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
         }
@@ -957,15 +963,77 @@ internal static class CodeGraphHttpProjectionParser
         languagesByPath[path] = parserLanguage;
     }
 
-    private static string NormalizePath(string path)
+    private static string NormalizePath(string path, string workingCopyRoot)
     {
-        SafeProviderPath safePath = SafeProviderPath.FromProviderScalar(path);
-        if (!safePath.IsKnown)
+        if (string.IsNullOrWhiteSpace(path) ||
+            path.Length > 2_048 ||
+            path.Length != path.Trim().Length ||
+            path.Any(char.IsControl))
         {
             throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
         }
 
-        return safePath.Value;
+        SafeProviderPath safePath = SafeProviderPath.FromProviderScalar(path);
+        string fullPath;
+        if (safePath.IsKnown)
+        {
+            fullPath = Path.GetFullPath(Path.Combine(
+                workingCopyRoot,
+                safePath.Value.Replace('/', Path.DirectorySeparatorChar)));
+        }
+        else if (Path.IsPathFullyQualified(path))
+        {
+            fullPath = Path.GetFullPath(path);
+            if (!StringComparer.Ordinal.Equals(path, fullPath))
+            {
+                throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
+            }
+        }
+        else
+        {
+            throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
+        }
+
+        string? rootName = Path.GetPathRoot(workingCopyRoot);
+        string? candidateRootName = Path.GetPathRoot(fullPath);
+        if (rootName is null ||
+            candidateRootName is null ||
+            !StringComparer.Ordinal.Equals(rootName, candidateRootName) ||
+            !IsStrictDescendant(workingCopyRoot, fullPath))
+        {
+            throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
+        }
+
+        SafeProviderPath relativePath = SafeProviderPath.FromProviderScalar(
+            Path.GetRelativePath(workingCopyRoot, fullPath).Replace(Path.DirectorySeparatorChar, '/'));
+        if (!relativePath.IsKnown)
+        {
+            throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
+        }
+
+        string roundTrip = Path.GetFullPath(Path.Combine(
+            workingCopyRoot,
+            relativePath.Value.Replace('/', Path.DirectorySeparatorChar)));
+        if (!StringComparer.Ordinal.Equals(fullPath, roundTrip))
+        {
+            throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
+        }
+
+        SafeProviderPath revalidated = SafeProviderPath.Revalidate(relativePath);
+        if (!revalidated.IsKnown)
+        {
+            throw new InvalidDataException("CodeGraph 返回了非仓库相对路径。");
+        }
+
+        return revalidated.Value;
+    }
+
+    private static bool IsStrictDescendant(string root, string path)
+    {
+        string rootPrefix = Path.EndsInDirectorySeparator(root)
+            ? root
+            : root + Path.DirectorySeparatorChar;
+        return path.StartsWith(rootPrefix, StringComparison.Ordinal);
     }
 
     private static SafeProviderPath ReadSafeProviderPath(JsonElement row, string property)

@@ -188,7 +188,7 @@ as completed acceptance criteria.
   `docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json`.
 - Proposed SpecKit short name: `demo-chat-release-gate`.
 - SpecKit feature directory: `specs/008-demo-chat-release-gate`.
-- Current workflow stage: `quality-review` (candidate pinning in progress).
+- Current workflow stage: `quality-review` (absolute-path parser correction candidate pinning in progress).
 - Expedited-mvp flow: `context -> specify -> plan -> conditional plan-review +
   planned-change authorization -> tasks -> implement -> combined quality-review
   -> conditional-e2e -> verify -> complete`.
@@ -414,6 +414,27 @@ as completed acceptance criteria.
   GREEN 53/53, and Release Tests build with zero errors. Quality iteration 23
   accepted the immutable correction candidate with zero findings. T072/T073
   remain incomplete; exactly one unchanged-candidate live retry is accepted-safe.
+- The accepted live retry later proved that CodeGraphContext 0.5.1 emits exact
+  snapshot-rooted absolute paths for the prepared Repositories. Indexing itself
+  completed, but the Infrastructure adapter rejected every such path as
+  non-Repository-relative, leaving zero Code Units/relationships and failing
+  the provisioner at stage 26. Cleanup removed the nonce database and every
+  Story-owned Docker/run resource while leaving the external PostgreSQL 17
+  Alpine instance healthy. The user authorized an adapter-local correction:
+  strict descendants of the exact committed working-copy root normalize to a
+  deterministic Repository-relative path before Code Unit, language, and both
+  relationship endpoint identities; outside, ambiguous, malformed, or
+  conflicting inputs still fail closed and `SafeProviderPath` remains closed.
+  Plan review iteration 12 accepted this correction with zero findings.
+- TDD observed the expected rooted-path RED 0/1 and channel-first contract RED
+  0/1. The minimal GREEN passes `CodeGraphContextProviderTests` 61/61,
+  Pass1/relationship/runtime 58/58, Repository profiling 79/79, non-live
+  release 52/52, and migrations 10/10; Release builds have zero errors and both
+  DbContexts report no pending model changes. The final provisioner now runs
+  `mbs_channel` profile/Pass 1 first only to fail fast, then mandatorily runs
+  `mbs_account` in the same fresh nonce database before Resolution, Pass 2, or
+  Chat. T072/T073 remain incomplete pending combined quality iteration 24 and
+  the sole live retry.
 
 ### File List
 

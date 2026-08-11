@@ -4,7 +4,7 @@
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
   "execution_level": "expedited-mvp",
-  "stage": "conditional-e2e",
+  "stage": "quality-review",
   "active_gates": {
     "spec-review": {
       "status": "invalidated",
@@ -14,9 +14,9 @@
     },
     "plan-review": {
       "status": "accepted",
-      "iteration": 11,
-      "dispatch_id": "story_11_5_expedited_plan_review_11",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-11.json"
+      "iteration": 12,
+      "dispatch_id": "story_11_5_absolute_path_plan_review_12",
+      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-12.json"
     },
     "analyze": {
       "status": "invalidated",
@@ -31,24 +31,23 @@
         "verdict_path": null
       },
       "quality-review": {
-        "status": "accepted",
-        "iteration": 23,
-        "dispatch_id": "story_11_5_timeout_quality_review_20",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-23.json",
-        "input_boundary": "6a7666065e0e5ac09f5e003e07a5e0f88eb4d258",
-        "completed_at": "2026-08-11T02:20:00Z"
+        "status": "pending",
+        "iteration": 24,
+        "dispatch_id": null,
+        "verdict_path": null,
+        "input_boundary": null,
+        "completed_at": null
     },
     "planned-change-authorization": {
       "status": "authorized",
-      "authorized_at": "2026-08-10T01:12:29Z",
+      "authorized_at": "2026-08-11T15:36:00+08:00",
       "authority": "user: Approve",
-      "trigger": "Option A materially relocates the accepted Repository profiling and Scan execution path from the Windows host into a temporary same-image provisioner container",
-      "approved_approach": "Build the source-bound final image exactly once; run migrations, product provisioning, Repository profiling, deterministic ordinary Pass 1, exact Cross-Repository Resolution, runtime prepared-flow binding, and exact seven-slot Pass 2 in a temporary provisioner container from that immutable image ID; remove it; then run the final app and Playwright proof from the identical image ID",
+      "trigger": "CodeGraphContext 0.5.1 returns exact snapshot-rooted absolute paths, requiring a bounded change to the Scan parser acceptance seam",
+      "approved_approach": "Canonicalize only strict descendants of the exact committed working-copy root into deterministic Repository-relative paths before Code Unit, language, and relationship endpoint identity; preserve safe relative paths and reject every outside, ambiguous, malformed, or conflicting representation. Run mbs_channel first only for fail-fast economics, while retaining mandatory mbs_account and both Pass 1 results in the same fresh nonce database",
       "does_not_waive": [
         "task validation",
-        "Full read-only analysis",
         "transient RED/GREEN TDD",
-        "separate Full acceptance and quality reviews",
+        "combined expedited-mvp quality review",
         "security and migration checks",
         "clean-database two-Repository E2E",
         "Docker and cleanup verification"
@@ -958,6 +957,50 @@
         "dispatch_id": "story_11_5_t072_live_attempt_8",
         "validation": "The recovery candidate passed the prior Repository validation point and remained CPU-active in product profiling, but provisioner-run reached the unchanged 30-minute bounded timeout before any Worker/provider traffic; cleanup completed with no failure and left no Story image/container/network/nonce database/run-root residue",
         "failure": "provisioner-run bounded timeout during sequential Repository profiling"
+      },
+      {
+        "stage": "plan-review",
+        "status": "accepted",
+        "iteration": 12,
+        "started_at": "2026-08-11T15:36:00+08:00",
+        "completed_at": "2026-08-11T15:58:00+08:00",
+        "input_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+        "agent_role": "plan-judge",
+        "dispatch_id": "story_11_5_absolute_path_plan_review_12",
+        "evidence_paths": [
+          "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-12.json"
+        ],
+        "finding_ids": [],
+        "failure": null
+      },
+      {
+        "stage": "tasks",
+        "status": "accepted",
+        "started_at": "2026-08-11T15:58:00+08:00",
+        "completed_at": "2026-08-11T16:03:00+08:00",
+        "input_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+        "agent_role": "task-author",
+        "dispatch_id": "story_11_5_absolute_path_tasks",
+        "evidence_paths": [
+          "specs/008-demo-chat-release-gate/tasks.md"
+        ],
+        "validation": "T001-T071 preserved complete; T072 orders parser RED/GREEN, non-live verification, combined review, then the sole channel-first/account-mandatory live run; T073 retains cleanup and final verification",
+        "failure": null
+      },
+      {
+        "stage": "implement",
+        "status": "accepted",
+        "started_at": "2026-08-11T16:03:00+08:00",
+        "completed_at": "2026-08-11T16:18:54.5800715+08:00",
+        "input_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+        "agent_role": "tdd-implementer",
+        "dispatch_id": "story_11_5_absolute_path_tdd",
+        "evidence_paths": [
+          "tests/Vulgata.Tests/TestResults/story-11-5-red/codegraph-absolute-path-parser.txt",
+          "tests/Vulgata.Tests/TestResults/story-11-5-absolute-path-non-live/"
+        ],
+        "validation": "Observed absolute-path RED 0/1 and channel-first contract RED 0/1; GREEN parser 61/61, Pass1/relationship/runtime 58/58, profiling 79/79, non-live release 52/52, migrations 10/10, Release builds zero errors, both DbContexts no pending model changes, and no prohibited delta",
+        "failure": null
       }
   ],
   "repository_preflight": {
@@ -1049,7 +1092,7 @@
   "review_iterations": {
     "spec-review": { "count": 0, "verdict_paths": [] },
     "plan-review": {
-      "count": 11,
+      "count": 12,
       "verdict_paths": [
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
@@ -1061,7 +1104,8 @@
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
         "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-10.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-11.json"
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-11.json",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-12.json"
       ]
     },
     "analyze": {
@@ -1150,43 +1194,71 @@
       "observed_at": "2026-08-10T10:49:26.2445769Z",
       "summary": "Complete non-live Story 11.5 release harness passed 51/51 in 5 seconds with no live resource acquisition.",
       "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-timeout-correction/summary.txt"
+    },
+    {
+      "evidence_id": "11-5-demo-chat-citations-and-release-gate/implement/3",
+      "kind": "command",
+      "stage": "implement",
+      "source_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~CodeGraphContextProviderTests.ParseProjectionA_AbsolutePathUnderWorkingCopy_ReturnsRepositoryRelativePath --logger console;verbosity=normal",
+      "exit_code": 1,
+      "observed_at": "2026-08-11T16:06:00+08:00",
+      "summary": "Observed RED 0/1: the exact under-working-copy rooted CodeGraphContext path was rejected and the expected Code Unit collection was empty.",
+      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/codegraph-absolute-path-parser.txt"
+    },
+    {
+      "evidence_id": "11-5-demo-chat-citations-and-release-gate/verify/3",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
+        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
+      ],
+      "command": "bounded Story 11.5 absolute-path non-live verification set",
+      "exit_code": 0,
+      "observed_at": "2026-08-11T16:18:54.5800715+08:00",
+      "summary": "GREEN: parser 61/61, Pass1/relationship/runtime 58/58, profiling 79/79, non-live release 52/52, migrations 10/10, Release builds zero errors, both DbContexts no pending changes, and no prohibited delta.",
+      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-absolute-path-non-live/"
     }
   ],
     "last_checkpoint": {
-      "checkpoint_id": "bmad-11-5-expedited-t072-stream-bound-candidate-20260811T014500Z",
+      "checkpoint_id": "bmad-11-5-expedited-absolute-path-correction-20260811T161900+0800",
     "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
       "stage": "quality-review",
       "committed_paths": [
         "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+        "specs/008-demo-chat-release-gate/plan.md",
+        "specs/008-demo-chat-release-gate/research.md",
+        "specs/008-demo-chat-release-gate/data-model.md",
+        "specs/008-demo-chat-release-gate/quickstart.md",
+        "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
         "specs/008-demo-chat-release-gate/tasks.md",
         "specs/008-demo-chat-release-gate/workflow-state.json",
-        "src/dotnet/Vulgata.Web/Program.cs",
-        "tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs",
+        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-12.json",
+        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
+        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
         "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
-        "tests/Vulgata.Tests/ReleaseGate/Provisioner/",
-        "tests/Vulgata.Tests/Vulgata.Tests.csproj"
+        "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
       ],
       "verification_evidence_ids": [
-        "11-5-demo-chat-citations-and-release-gate/quality-review/23",
-        "11-5-demo-chat-citations-and-release-gate/t072/publish-build-server-isolation",
-        "11-5-demo-chat-citations-and-release-gate/quality-review/22",
-        "11-5-demo-chat-citations-and-release-gate/t072/inherited-stream-cleanup",
-        "11-5-demo-chat-citations-and-release-gate/quality-review/9",
-        "11-5-demo-chat-citations-and-release-gate/t072/attempt-1-clean-failure",
-        "11-5-demo-chat-citations-and-release-gate/t072/git-tag-clone-correction",
-        "11-5-demo-chat-citations-and-release-gate/non-live/49",
-        "11-5-demo-chat-citations-and-release-gate/quickstart/137",
-        "11-5-demo-chat-citations-and-release-gate/migrations/10"
+        "11-5-demo-chat-citations-and-release-gate/implement/3",
+        "11-5-demo-chat-citations-and-release-gate/verify/3"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": {
-    "stage": "conditional-e2e",
-    "classification": "resolved provisioner publish build-server isolation correction",
-    "evidence": "Quality iteration 23 ACCEPT covers candidate 6a7666065e0e5ac09f5e003e07a5e0f88eb4d258. The post-stream-correction live retry failed before Docker/PostgreSQL acquisition because reusable MSBuild nodes retained redirected handles after nested provisioner publish parent exit. Focused plan RED 0/1 and a direct publish hang preceded the minimal build-server-isolated GREEN. Focused plan and direct publish pass 1/1 each, complete non-live release passes 53/53, Release Tests build with zero errors, and no new MSBuild/compiler server survives the isolated publish.",
-    "required_decision": "Execute one unchanged-candidate sole-live T072 retry, then independently perform T073 cleanup and final verification."
+    "stage": "quality-review",
+    "classification": "resolved CodeGraphContext absolute-path adapter correction awaiting combined review",
+    "evidence": "The live T072 provisioner reached both Repository profiling stages, but CodeGraphContext 0.5.1 emitted exact snapshot-rooted absolute paths and the adapter rejected them before Code Unit and relationship reconciliation, producing zero usable structure and stage 26 failure. The user authorized a bounded parser correction. Plan review iteration 12 ACCEPTED it; TDD observed the expected RED and now passes parser 61/61, surrounding profiling/Pass1/runtime/release filters, migrations, builds, and no-pending-model checks. The final run is reordered mbs_channel first solely to fail fast; mbs_account remains mandatory in the same fresh nonce database.",
+    "required_decision": "Pin the clean correction candidate, obtain combined quality-review iteration 24 ACCEPT, then execute the sole live T072 run followed by T073 cleanup/final verification."
   },
-    "updated_at": "2026-08-11T02:20:00Z"
+    "updated_at": "2026-08-11T16:18:54.5800715+08:00"
 }

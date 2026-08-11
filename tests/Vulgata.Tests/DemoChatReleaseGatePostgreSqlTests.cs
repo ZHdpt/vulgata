@@ -399,6 +399,18 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 .EnumerateArray()
                 .Select(value => value.GetString())
                 .ToArray());
+        Assert.Equal(
+            [
+                "profile-mbs_channel",
+                "pass1-mbs_channel",
+                "profile-mbs_account",
+                "pass1-mbs_account",
+                "exact-cross-repository-resolution",
+            ],
+            root.GetProperty("repositoryExecutionOrder")
+                .EnumerateArray()
+                .Select(value => value.GetString())
+                .ToArray());
         Assert.Equal(2, root.GetProperty("ordinaryPass1DispatchCount").GetInt32());
         Assert.Equal(2, root.GetProperty("runtimeFlowRepositoryCount").GetInt32());
         Assert.Equal(1, root.GetProperty("pass2DispatchCount").GetInt32());
