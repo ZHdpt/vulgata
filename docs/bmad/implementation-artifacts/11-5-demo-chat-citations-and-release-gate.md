@@ -400,6 +400,20 @@ as completed acceptance criteria.
   build has zero errors, and `git diff --check` is clean. T072 remains incomplete
   pending a fresh combined quality review over this correction; T073 cleanup for
   the failed attempt is independently satisfied but does not complete the Story.
+- Quality iteration 22 accepted the inherited-stream correction with zero
+  findings. Its unchanged-candidate T072 retry then failed before Docker or
+  PostgreSQL acquisition: the nested provisioner `dotnet publish` parent exited,
+  but reusable MSBuild nodes retained redirected output handles until the new
+  ten-minute bound. A focused plan regression observed RED 0/1 because the
+  publish command lacked build-server isolation; the direct publish inventory
+  test independently reproduced the retained-handle hang. The minimal
+  harness-only correction adds `--disable-build-servers`, single-node MSBuild,
+  disabled node reuse, and disabled shared compilation to both invocations.
+  Focused plan and publish tests pass 1/1 each, the isolated publish completes
+  with no newly retained build/compiler server, complete non-live release is
+  GREEN 53/53, and Release Tests build with zero errors. Quality iteration 23
+  accepted the immutable correction candidate with zero findings. T072/T073
+  remain incomplete; exactly one unchanged-candidate live retry is accepted-safe.
 
 ### File List
 
