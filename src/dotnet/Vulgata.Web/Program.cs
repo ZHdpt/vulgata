@@ -10,9 +10,9 @@ using Vulgata.Agents.ChatExecution;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.BackupB;
-using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.CommunicationDetection;
+using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.FrameworkDetection;
@@ -177,7 +177,7 @@ public static class VulgataWebComposition
         }).AddIdentityCookies();
 
         string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+                                  throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOptions =>
             {
@@ -277,9 +277,9 @@ public static class VulgataWebComposition
         builder.Services.AddSingleton(communicationCatalog);
         builder.Services.AddScoped<IPreScanCommunicationDetector, CommunicationKindDetector>();
         string profilingDataRoot = builder.Configuration["CodeGraph:DataRootPath"] ??
-            (OperatingSystem.IsLinux()
-                ? "/var/lib/vulgata-codegraph"
-                : Path.Combine(builder.Environment.ContentRootPath, "data", "profiling"));
+                                   (OperatingSystem.IsLinux()
+                                       ? "/var/lib/vulgata-codegraph"
+                                       : Path.Combine(builder.Environment.ContentRootPath, "data", "profiling"));
         builder.Services.AddSingleton(new CodeGraphOptions(
             Path.Combine(profilingDataRoot, "codegraph"),
             builder.Configuration.GetValue(

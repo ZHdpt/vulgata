@@ -24,7 +24,10 @@ public sealed class UserContext : IUserContext
         _principal = principal;
         _authorization = authorization;
         _userIdLazy = new Lazy<string>(() => _principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty);
-        _isAdministratorLazy = new Lazy<Task<bool>>(IsAdministratorCoreAsync);
+        // IsAdministrator is part of a synchronous domain boundary. Run the live
+        // authorization check away from Blazor's renderer synchronization context,
+        // otherwise blocking below deadlocks when an async handler resumes after I/O.
+        _isAdministratorLazy = new Lazy<Task<bool>>(() => Task.Run(IsAdministratorCoreAsync));
     }
 
     /// <summary>
@@ -43,9 +46,7 @@ public sealed class UserContext : IUserContext
 
     public string UserId => _userIdLazy.Value;
 
-    public bool IsAdministrator => _isAdministratorLazy.Value.IsCompleted
-        ? _isAdministratorLazy.Value.Result
-        : _isAdministratorLazy.Value.GetAwaiter().GetResult();
+    public bool IsAdministrator => _isAdministratorLazy.Value.GetAwaiter().GetResult();
 
     public SystemOwnerFilter ToSystemOwnerFilter() => IsAdministrator
         ? SystemOwnerFilter.AllSystems()

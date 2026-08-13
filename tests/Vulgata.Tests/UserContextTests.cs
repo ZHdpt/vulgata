@@ -83,6 +83,43 @@ public sealed class UserContextTests
         await Task.CompletedTask;
     }
 
+    [Fact]
+    public void UserContext_AsyncAuthorizationUnderRendererContext_DoesNotDeadlock()
+    {
+        using var completed = new ManualResetEventSlim();
+        Exception? failure = null;
+        bool isAdministrator = false;
+        var thread = new Thread(() =>
+        {
+            SynchronizationContext.SetSynchronizationContext(new NonPumpingSynchronizationContext());
+            try
+            {
+                var principal = BuildPrincipal(_testUserId, authenticated: true);
+                IUserContext userContext = new UserContext(
+                    principal,
+                    new YieldingAuthorizationService());
+                isAdministrator = userContext.IsAdministrator;
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+            }
+            finally
+            {
+                completed.Set();
+            }
+        })
+        {
+            IsBackground = true,
+        };
+
+        thread.Start();
+
+        Assert.True(completed.Wait(TimeSpan.FromSeconds(5)));
+        Assert.Null(failure);
+        Assert.True(isAdministrator);
+    }
+
     private static ClaimsPrincipal BuildPrincipal(string userId, bool authenticated)
     {
         Claim[] claims =
@@ -110,5 +147,33 @@ public sealed class UserContextTests
 
         public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
             => Task.FromResult(AuthorizationResult.Failed());
+    }
+
+    private sealed class YieldingAuthorizationService : IAuthorizationService
+    {
+        public async Task<AuthorizationResult> AuthorizeAsync(
+            ClaimsPrincipal user,
+            object? resource,
+            IEnumerable<IAuthorizationRequirement> requirements)
+        {
+            await Task.Yield();
+            return AuthorizationResult.Success();
+        }
+
+        public async Task<AuthorizationResult> AuthorizeAsync(
+            ClaimsPrincipal user,
+            object? resource,
+            string policyName)
+        {
+            await Task.Yield();
+            return AuthorizationResult.Success();
+        }
+    }
+
+    private sealed class NonPumpingSynchronizationContext : SynchronizationContext
+    {
+        public override void Post(SendOrPostCallback callback, object? state)
+        {
+        }
     }
 }

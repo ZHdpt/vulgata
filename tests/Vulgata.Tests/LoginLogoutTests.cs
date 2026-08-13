@@ -55,6 +55,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Contains("form-floating", content, StringComparison.Ordinal);
         Assert.Contains("form-control", content, StringComparison.Ordinal);
         Assert.DoesNotContain("<FluentTextField", content, StringComparison.Ordinal);
+        Assert.Contains("<button type=\"submit\"", content, StringComparison.Ordinal);
+        Assert.DoesNotContain("<FluentButton", content, StringComparison.Ordinal);
     }
 
     [Fact]
