@@ -124,8 +124,8 @@ T072 or whole-Repository CGC success.
 
 ## Acceptance Criteria
 - [x] No CGC process or CodeGraph provider call occurs
-- [ ] At least one real LLM Pass 1 dispatch succeeds for each Repository
-- [ ] At least one real LLM Pass 2 dispatch succeeds
+- [x] At least one real LLM Pass 1 dispatch succeeds for each Repository
+- [x] At least one real LLM Pass 2 dispatch succeeds
 - [x] Code Logic Documents are persisted through normal result committer in the
   deterministic E2E
 - [x] Business Logic Document is persisted through normal result committer in the
@@ -135,26 +135,34 @@ T072 or whole-Repository CGC success.
 - [ ] Chat retrieves persisted Documents
 - [ ] Chat renders Document citations and source-code citations
 - [ ] Screenshot database survives process/container cleanup
-- [ ] Evidence labels run as "prepared-scope LLM demonstration"
-- [ ] Evidence does not claim T072 or whole-Repository CGC success
-- [ ] All committed tests pass
+- [x] Evidence labels run as "prepared-scope LLM demonstration"
+- [x] Evidence does not claim T072 or whole-Repository CGC success
+- [x] All committed tests pass
 
 ## Verification Checkpoint — 2026-08-13
 
 - Demo build: passed with zero errors.
 - Focused regression filter
   `FullyQualifiedName~SequentialScanRunner|WorkerAgent|BackupB|ExactResolution`:
-  **240 passed, 0 failed**.
+  **243 passed, 0 failed**.
 - Fresh deterministic dedicated-database E2E: **6 Code Logic Documents, 1 Business
   Logic Document, 1 REFERENCES Edge, and 2 GENERATED_FROM Edges**, exit code 0.
 - Cross-Repository Pass 2 regression verifies that GENERATED_FROM ownership and
   relationship trace steps retain each Repository and Scan Run while the Business
   Logic Document persists only consumer-owned Source Anchors.
-- The captured DeepSeek failure was diagnosed as non-ordinal ordering in canonical
-  string collections. Pass 1 and Pass 2 prompts now require ordinal, case-sensitive
-  ordering and focused contract tests cover the rule.
+- Fresh real DeepSeek dedicated-database E2E: both Repository Pass 1 executions
+  reached `Pass1Completed`, Pass 2 reached `Completed`, and the run persisted
+  **6 Code Logic Documents, 1 Business Logic Document, 1 REFERENCES Edge, and
+  2 GENERATED_FROM Edges**, exit code 0 in **250.7 seconds**.
+- The first real Pass 2 response passed schema validation but persistence rejected
+  provider-owned Source Anchors attached directly to consumer-owned Business Logic
+  sections. Pass 2 projections now carry Repository ownership, the prompt requires
+  consumer-owned section evidence, and the domain envelope enforces the same rule.
+- Backup B real-provider composition retries only `SchemaInvalid` and `Error`, with
+  a closed ceiling of three total attempts. `Valid`, `Unbounded`, and cancellation
+  are never retried; production composition remains unchanged.
 - Temporary diagnostic logging has been removed.
-- A new real DeepSeek run remains required. The run is intentionally blocked when
+- Real-provider execution remains intentionally blocked when
   `VULGATA_BACKUP_B_WORKER_MODEL`, `VULGATA_BACKUP_B_WORKER_ENDPOINT`, and
   `VULGATA_BACKUP_B_WORKER_API_KEY` are absent; deterministic mode requires the
   explicit `VULGATA_BACKUP_B_FORCE_DETERMINISTIC=1` flag.

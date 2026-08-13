@@ -32,6 +32,8 @@ await using ServiceProvider serviceProvider = CreateServiceProvider(repositoryRo
 var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("BackupBDemo");
 
 logger.LogInformation("=== Backup B Demo - Starting ===");
+logger.LogInformation(
+    "Evidence label: prepared-scope LLM demonstration; this run does not claim T072 or whole-Repository CGC success.");
 
 await MigrateAndSeedAsync(serviceProvider, logger);
 
@@ -148,11 +150,21 @@ static ServiceProvider CreateServiceProvider(string repositoryRoot)
 
     _ = VulgataWebComposition.ConfigureServices(builder);
     builder.Services.AddSingleton<HttpMessageHandler, DeterministicWorkerAgentLoopbackHandler>();
-    if (StringComparer.OrdinalIgnoreCase.Equals(
+    bool forceDeterministic = StringComparer.OrdinalIgnoreCase.Equals(
             Environment.GetEnvironmentVariable("VULGATA_BACKUP_B_FORCE_DETERMINISTIC"),
-            "1"))
+            "1");
+    if (forceDeterministic)
     {
-        builder.Services.AddScoped<IWorkerAgentDispatcher, DeterministicWorkerAgentDispatcher>();
+        builder.Services.Replace(
+            ServiceDescriptor.Scoped<IWorkerAgentDispatcher, DeterministicWorkerAgentDispatcher>());
+    }
+    else
+    {
+        builder.Services.AddScoped<WorkerAgentDispatcher>();
+        builder.Services.Replace(ServiceDescriptor.Scoped<IWorkerAgentDispatcher>(
+            services => new BoundedRetryWorkerAgentDispatcher(
+                services.GetRequiredService<WorkerAgentDispatcher>(),
+                maximumAttempts: 3)));
     }
 
     // Replace the production GitWorkingCopyService with a demo-specific
@@ -517,6 +529,18 @@ static async Task RunPipelineAsync(
 
         await runner.RunPass1Async(executionId, accessScope, cancellationToken);
         executionIds[repository.Alias] = executionId;
+
+        ScanExecutionStateView pass1State = await runner.ReadStateAsync(
+            executionId,
+            cancellationToken);
+        if (pass1State.Phase != ScanExecutionPhase.Pass1Completed)
+        {
+            throw new InvalidOperationException(
+                $"Pass 1 did not complete for {repository.Alias}: " +
+                $"phase={pass1State.Phase}, " +
+                $"terminalReason={pass1State.TerminalReasonKind}, " +
+                $"message={pass1State.TerminalMessage ?? "(null)"}");
+        }
 
         logger.LogInformation(
             "Pass 1 completed for {RepositoryAlias} ({RepositoryId}) with execution {ExecutionId}.",
@@ -908,9 +932,11 @@ file sealed class DeterministicWorkerAgentLoopbackHandler : HttpMessageHandler
         Guid[] documentVersionIds = documents
             .Select(document => document.GetProperty("documentVersionId").GetGuid())
             .ToArray();
-        Guid[] consumerAnchorIds = documents[0]
-            .GetProperty("sourceAnchors")
-            .EnumerateArray()
+        Guid consumerRepositoryId = root.GetProperty("repositoryId").GetGuid();
+        Guid[] consumerAnchorIds = documents
+            .Where(document =>
+                document.GetProperty("repositoryId").GetGuid() == consumerRepositoryId)
+            .SelectMany(document => document.GetProperty("sourceAnchors").EnumerateArray())
             .Select(anchor => anchor.GetProperty("id").GetGuid())
             .Order()
             .ToArray();
@@ -1141,8 +1167,9 @@ file sealed class DeterministicWorkerAgentDispatcher(
             .SelectMany(document => document.SourceAnchors)
             .OrderBy(anchor => anchor.Id)
             .ToArray();
-        Guid[] consumerAnchorIds = pass2.CodeLogicDocumentVersions[0]
-            .SourceAnchors
+        Guid[] consumerAnchorIds = pass2.CodeLogicDocumentVersions
+            .Where(document => document.RepositoryId == packet.RepositoryId)
+            .SelectMany(document => document.SourceAnchors)
             .Select(anchor => anchor.Id)
             .Order()
             .ToArray();

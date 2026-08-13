@@ -700,6 +700,7 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
                     member.DocumentVersionId ||
                 projection.LogicalDocumentId != member.LogicalDocumentId ||
                 projection.DocumentVersionId != member.DocumentVersionId ||
+                projection.RepositoryId != member.RepositoryId ||
                 !projection.SourceAnchors.Select(anchor => anchor.Id)
                     .SequenceEqual(member.SourceAnchorIds))
             {

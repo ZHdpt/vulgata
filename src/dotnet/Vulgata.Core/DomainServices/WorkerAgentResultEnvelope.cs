@@ -347,6 +347,20 @@ public sealed class WorkerAgentResultEnvelope
                 nameof(payload));
         }
 
+        HashSet<Guid> consumerAnchorIds = job.CodeLogicDocumentVersions
+            .Where(document => document.RepositoryId == packet.RepositoryId)
+            .SelectMany(document => document.SourceAnchors)
+            .Select(anchor => anchor.Id)
+            .ToHashSet();
+        if (consumerAnchorIds.Count == 0 ||
+            pass2.Content.Sections.Any(section =>
+                section.SourceAnchorIds.Any(id => !consumerAnchorIds.Contains(id))))
+        {
+            throw new ArgumentException(
+                "Pass 2 Business Logic sections may reference only consumer-owned Source Anchors.",
+                nameof(payload));
+        }
+
         if (!StringComparer.Ordinal.Equals(
                 pass2.Content.SchemaIdentity,
                 KnowledgeDocumentLimits.SchemaIdentity) ||

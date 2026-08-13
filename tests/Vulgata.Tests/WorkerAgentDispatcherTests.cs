@@ -293,7 +293,13 @@ public sealed class WorkerAgentDispatcherTests
             contextRoot.GetProperty("codeLogicDocumentVersions")
                 .EnumerateArray()
                 .Select(item => item.GetProperty("documentVersionId").GetGuid()));
+        Assert.Equal(
+            [packet.RepositoryId, packet.RepositoryId],
+            contextRoot.GetProperty("codeLogicDocumentVersions")
+                .EnumerateArray()
+                .Select(item => item.GetProperty("repositoryId").GetGuid()));
         Assert.Contains("Pass 2 Business Logic Document Worker Agent", prompt, StringComparison.Ordinal);
+        Assert.Contains("Consumer-owned section evidence", prompt, StringComparison.Ordinal);
         Assert.Equal(
             "json_object",
             requestDocument.RootElement

@@ -24,6 +24,9 @@ public sealed class PreparedPass2RuntimeDispatchTests
             resolved.CodeLogicDocuments.Select(document => document.DocumentVersionId),
             payload.CodeLogicDocumentVersions.Select(document => document.DocumentVersionId));
         Assert.Equal(
+            resolved.CodeLogicDocuments.Select(document => document.RepositoryId),
+            payload.CodeLogicDocumentVersions.Select(document => document.RepositoryId));
+        Assert.Equal(
             [
                 nameof(Pass2BusinessLogicJobPayload.PreparedFlowSchemaIdentity),
                 nameof(Pass2BusinessLogicJobPayload.ManifestId),
@@ -57,6 +60,113 @@ public sealed class PreparedPass2RuntimeDispatchTests
 
         Assert.Throws<PreparedPass2FlowContractException>(() =>
             PreparedPass2FlowResolver.ValidateRuntime(substituted));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ValidatePass2_SectionAnchorOwnership_EnforcesConsumerOnly(bool providerOwned)
+    {
+        ResolvedPreparedPass2Flow resolved = CreateResolved();
+        Pass2BusinessLogicJobPayload payload = Pass2BusinessLogicJobPayload.Create(resolved);
+        WorkerAgentJobPacket packet = WorkerAgentJobPacket.Create(
+            Id(30),
+            WorkerAgentJobKind.Pass2BusinessLogicDocument,
+            resolved.RuntimeBinding.Consumer.ScanExecutionId,
+            resolved.Flow.RepositoryId,
+            resolved.Flow.SystemId,
+            resolved.RuntimeBinding.Consumer.ScanRunId,
+            resolved.RuntimeBinding.Consumer.ProfiledRevision,
+            WorkerAgentContractLimits.SupportedSchemaVersion,
+            payload);
+        WorkerAgentCodeLogicDocumentVersionProjection selectedDocument =
+            payload.CodeLogicDocumentVersions.Single(document =>
+                document.RepositoryId == (providerOwned
+                    ? resolved.RuntimeBinding.Provider.RepositoryId
+                    : resolved.RuntimeBinding.Consumer.RepositoryId));
+        WorkerAgentSourceAnchor selectedAnchor = selectedDocument.SourceAnchors.Single();
+        WorkerAgentSourceAnchorDto[] anchors = payload.CodeLogicDocumentVersions
+            .SelectMany(document => document.SourceAnchors)
+            .OrderBy(anchor => anchor.Id)
+            .Select(anchor => new WorkerAgentSourceAnchorDto
+            {
+                Id = anchor.Id,
+                RepositoryRelativePath = anchor.RepositoryRelativePath,
+                EvidenceLocator = anchor.EvidenceLocator,
+                LineStart = anchor.LineStart,
+                LineEnd = anchor.LineEnd,
+                SourceHash = anchor.SourceHash,
+            })
+            .ToArray();
+        var response = new WorkerAgentPass2ResponseDto
+        {
+            JobId = packet.JobId,
+            SystemId = packet.SystemId,
+            RepositoryId = packet.RepositoryId,
+            ScanRunId = packet.ScanRunId,
+            ProfiledRevision = packet.ProfiledRevision,
+            FlowId = payload.FlowId,
+            Purpose = "Explain the prepared flow.",
+            MainSteps =
+            [
+                new WorkerAgentBusinessMainStepDto
+                {
+                    Order = 1,
+                    Description = "Call the provider.",
+                    TraceEvidenceOrders = [1, 2],
+                },
+            ],
+            Outcome = "The provider completes the request.",
+            Content = new WorkerAgentCanonicalContentDto
+            {
+                SchemaIdentity = KnowledgeDocumentLimits.SchemaIdentity,
+                DocumentType = DocumentType.BusinessLogic,
+                StableKey = "consumer-provider-flow",
+                Title = "Consumer provider flow",
+                RepositoryRelativePath = "flows/consumer-provider",
+                Summary = "A prepared cross-repository flow.",
+                KeySymbols = [],
+                BusinessTerms = [],
+                TechnicalTerms = [],
+                Sections =
+                [
+                    new WorkerAgentSectionDto
+                    {
+                        StableSectionId = Id(31),
+                        Order = 1,
+                        Kind = DocumentSectionKind.ProcessStep,
+                        Heading = "Provider step",
+                        Markdown = "The provider handles the request.",
+                        SearchText = "provider request",
+                        SourceAnchorIds = [selectedAnchor.Id],
+                        DocumentVersionIds = [selectedDocument.DocumentVersionId],
+                    },
+                ],
+            },
+            SourceAnchors = anchors,
+            TraceEvidenceOrders = [1, 2],
+            GeneratedFromDocumentVersionIds = payload.CodeLogicDocumentVersions
+                .Select(document => document.DocumentVersionId)
+                .ToArray(),
+        };
+
+        if (providerOwned)
+        {
+            Assert.Throws<ArgumentException>(() => WorkerAgentResultValidator.ValidatePass2(
+                packet,
+                response,
+                DateTimeOffset.Parse("2026-08-13T00:00:00Z"),
+                DateTimeOffset.Parse("2026-08-13T00:00:01Z")));
+        }
+        else
+        {
+            WorkerAgentResultEnvelope result = WorkerAgentResultValidator.ValidatePass2(
+                packet,
+                response,
+                DateTimeOffset.Parse("2026-08-13T00:00:00Z"),
+                DateTimeOffset.Parse("2026-08-13T00:00:01Z"));
+            Assert.Equal(WorkerAgentResultOutcome.Valid, result.Outcome);
+        }
     }
 
     [Fact]

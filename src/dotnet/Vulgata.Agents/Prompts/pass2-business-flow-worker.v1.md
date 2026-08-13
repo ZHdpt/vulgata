@@ -84,7 +84,15 @@ missing properties, no markdown fences, no trailing text.
   `codeLogicDocumentVersions[].sourceAnchors` — the union of every member's
   anchors, ordered by `id` ascending, with every field copied exactly
   (`id`, `repositoryRelativePath`, `evidenceLocator`, `lineStart`, `lineEnd`,
-  `sourceHash`). Do not create, drop, or alter anchors.
+  `sourceHash`). Each Code Logic Document Version projection includes its exact
+  `repositoryId`. Do not create, drop, or alter anchors.
+- **Consumer-owned section evidence**: Business Logic Documents are owned by
+  the request `repositoryId`. Every `content.sections[].sourceAnchorIds` entry
+  must therefore reference an anchor from a `codeLogicDocumentVersions[]`
+  projection whose `repositoryId` equals the request `repositoryId`. Keep
+  provider projections and anchors in the exact replay above, and keep their
+  Document Version identifiers in `generatedFromDocumentVersionIds`, but do
+  not attach provider-owned Source Anchors directly to Business Logic sections.
 - **Main steps**: at least one main step; `order` must be contiguous starting
   at 1; the combined `traceEvidenceOrders` across all main steps must cover
   every request trace evidence order exactly once (distinct and ascending).

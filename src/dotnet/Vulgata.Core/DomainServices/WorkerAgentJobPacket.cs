@@ -758,6 +758,7 @@ public sealed class WorkerAgentCodeLogicDocumentVersionProjection
     private WorkerAgentCodeLogicDocumentVersionProjection(
         Guid logicalDocumentId,
         Guid documentVersionId,
+        Guid repositoryId,
         string title,
         string repositoryRelativePath,
         string contentMarkdown,
@@ -766,6 +767,7 @@ public sealed class WorkerAgentCodeLogicDocumentVersionProjection
     {
         LogicalDocumentId = logicalDocumentId;
         DocumentVersionId = documentVersionId;
+        RepositoryId = repositoryId;
         Title = title;
         RepositoryRelativePath = repositoryRelativePath;
         ContentMarkdown = contentMarkdown;
@@ -775,6 +777,7 @@ public sealed class WorkerAgentCodeLogicDocumentVersionProjection
 
     public Guid LogicalDocumentId { get; }
     public Guid DocumentVersionId { get; }
+    public Guid RepositoryId { get; }
     public string Title { get; }
     public string RepositoryRelativePath { get; }
     public string ContentMarkdown { get; }
@@ -787,6 +790,7 @@ public sealed class WorkerAgentCodeLogicDocumentVersionProjection
         ArgumentNullException.ThrowIfNull(current);
         if (current.LogicalDocumentId == Guid.Empty ||
             current.DocumentVersionId == Guid.Empty ||
+            current.RepositoryId == Guid.Empty ||
             current.DocumentType != DocumentType.CodeLogic ||
             current.SourceAnchors is null ||
             current.Sections is null ||
@@ -859,6 +863,7 @@ public sealed class WorkerAgentCodeLogicDocumentVersionProjection
         return new(
             current.LogicalDocumentId,
             current.DocumentVersionId,
+            current.RepositoryId,
             title,
             path,
             markdown,

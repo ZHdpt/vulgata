@@ -125,6 +125,7 @@ internal sealed record WorkerAgentPass2RequestDto(
                 new WorkerAgentCodeLogicDocumentVersionDto(
                     document.LogicalDocumentId,
                     document.DocumentVersionId,
+                    document.RepositoryId,
                     document.Title,
                     document.RepositoryRelativePath,
                     document.ContentMarkdown,
@@ -162,6 +163,7 @@ internal sealed record WorkerAgentPass2TraceEvidenceDto(
 internal sealed record WorkerAgentCodeLogicDocumentVersionDto(
     Guid LogicalDocumentId,
     Guid DocumentVersionId,
+    Guid RepositoryId,
     string Title,
     string RepositoryRelativePath,
     string ContentMarkdown,
