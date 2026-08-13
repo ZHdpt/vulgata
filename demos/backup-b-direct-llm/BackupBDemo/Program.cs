@@ -37,6 +37,14 @@ logger.LogInformation(
 
 await MigrateAndSeedAsync(serviceProvider, logger);
 
+if (StringComparer.OrdinalIgnoreCase.Equals(
+        Environment.GetEnvironmentVariable("VULGATA_BACKUP_B_REPAIR_CHAT_PROVIDER"),
+        "1"))
+{
+    await RepairChatProviderAsync(serviceProvider, logger, CancellationToken.None);
+    return;
+}
+
 BackupBProvisioningRequest request = await LoadProvisioningRequestAsync(
     repositoryRoot,
     logger,
@@ -88,6 +96,11 @@ if (StringComparer.OrdinalIgnoreCase.Equals(
 
 await RunPipelineAsync(serviceProvider, provisioningResult, logger, CancellationToken.None);
 await LogPipelineEvidenceAsync(serviceProvider, logger, CancellationToken.None);
+await TransitionWorkerProviderToChatAsync(
+    serviceProvider,
+    provisioningResult.SystemId,
+    logger,
+    CancellationToken.None);
 
 logger.LogInformation("=== Backup B Demo - Complete ===");
 
@@ -484,6 +497,157 @@ static async Task UpsertWorkerProviderOverrideAsync(
         throw new InvalidOperationException(
             $"The configured Backup B Worker Agent provider failed the connection test: {testResult.Message}");
     }
+}
+
+static async Task TransitionWorkerProviderToChatAsync(
+    IServiceProvider services,
+    Guid systemId,
+    ILogger logger,
+    CancellationToken cancellationToken)
+{
+    ILlmProviderManagementCoordinator providerCoordinator =
+        services.GetRequiredService<ILlmProviderManagementCoordinator>();
+    ILlmProviderRepository providerRepository =
+        services.GetRequiredService<ILlmProviderRepository>();
+    ISecretEncryptionService encryptionService =
+        services.GetRequiredService<ISecretEncryptionService>();
+    ISystemLlmProviderOverrideCoordinator overrideCoordinator =
+        services.GetRequiredService<ISystemLlmProviderOverrideCoordinator>();
+    IUserContext automationUser = CreateAutomationUser();
+
+    SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>
+        existingOverrides = await overrideCoordinator.ListAsync(
+            systemId,
+            automationUser,
+            cancellationToken);
+    SystemLlmProviderOverrideSummaryDto workerOverride = existingOverrides.Value?
+        .SingleOrDefault(value => value.AgentType == (int)AgentType.Worker) ??
+        throw new InvalidOperationException(
+            "The Backup B Worker Agent provider override was not found after generation.");
+    LlmProviderSummaryDto provider = (await providerCoordinator.ListAsync(cancellationToken))
+        .Single(value => value.Id == workerOverride.LlmProviderId);
+    LlmProvider persistedProvider = await providerRepository.GetByIdAsync(
+        provider.Id,
+        cancellationToken) ?? throw new InvalidOperationException(
+            "The Backup B Worker Agent provider was not found after generation.");
+    string apiKey = await encryptionService.DecryptAsync(
+        SecretPurposes.LlmApiKey,
+        persistedProvider.EncryptedApiKey,
+        cancellationToken);
+    LlmProviderMutationResult<LlmProviderSummaryDto> updatedProvider =
+        await providerCoordinator.UpdateAsync(
+            provider.Id,
+            new UpdateLlmProviderRequest
+            {
+                Name = provider.Name,
+                BaseEndpointUrl = provider.BaseEndpointUrl,
+                ApiKey = apiKey,
+                SupportedApiTypes = ApiType.ChatCompletions,
+                DefaultAgentType = AgentType.Chat,
+            },
+            cancellationToken);
+    if (updatedProvider.Outcome != LlmProviderMutationOutcome.Success)
+    {
+        throw new InvalidOperationException(
+            "Failed to prepare the Backup B provider for Chat mode.");
+    }
+
+    SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto> updatedOverride =
+        await overrideCoordinator.UpsertAsync(
+            systemId,
+            workerOverride.Id,
+            new UpsertSystemLlmProviderOverrideRequest
+            {
+                SystemId = systemId,
+                LlmProviderId = provider.Id,
+                AgentType = AgentType.Chat,
+            },
+            automationUser,
+            cancellationToken);
+    if (updatedOverride.Outcome != SystemLlmProviderOverrideMutationOutcome.Success)
+    {
+        throw new InvalidOperationException(
+            "Failed to assign the Backup B provider to the Chat Agent.");
+    }
+
+    logger.LogInformation(
+        "Transitioned Backup B provider {ProviderName} from Worker generation to Chat mode.",
+        provider.Name);
+}
+
+static async Task RepairChatProviderAsync(
+    IServiceProvider services,
+    ILogger logger,
+    CancellationToken cancellationToken)
+{
+    using IServiceScope scope = services.CreateScope();
+    IServiceProvider scopedServices = scope.ServiceProvider;
+    VulgataDbContext context = scopedServices.GetRequiredService<VulgataDbContext>();
+    Guid systemId = await context.Systems
+        .AsNoTracking()
+        .Where(system => system.Name == "DemoBank")
+        .Select(system => system.Id)
+        .SingleAsync(cancellationToken);
+    string model = Environment.GetEnvironmentVariable("VULGATA_BACKUP_B_WORKER_MODEL")?.Trim() ??
+        throw new InvalidOperationException("VULGATA_BACKUP_B_WORKER_MODEL is required.");
+    string endpoint = Environment.GetEnvironmentVariable("VULGATA_BACKUP_B_WORKER_ENDPOINT")?.Trim() ??
+        throw new InvalidOperationException("VULGATA_BACKUP_B_WORKER_ENDPOINT is required.");
+    string apiKey = Environment.GetEnvironmentVariable("VULGATA_BACKUP_B_WORKER_API_KEY")?.Trim() ??
+        throw new InvalidOperationException("VULGATA_BACKUP_B_WORKER_API_KEY is required.");
+
+    ILlmProviderManagementCoordinator providerCoordinator =
+        scopedServices.GetRequiredService<ILlmProviderManagementCoordinator>();
+    ISystemLlmProviderOverrideCoordinator overrideCoordinator =
+        scopedServices.GetRequiredService<ISystemLlmProviderOverrideCoordinator>();
+    IUserContext automationUser = CreateAutomationUser();
+    LlmProviderSummaryDto provider = (await providerCoordinator.ListAsync(cancellationToken))
+        .Single(value => StringComparer.Ordinal.Equals(value.Name, model));
+    SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>
+        existingOverrides = await overrideCoordinator.ListAsync(
+            systemId,
+            automationUser,
+            cancellationToken);
+    SystemLlmProviderOverrideSummaryDto existingOverride = existingOverrides.Value?
+        .Single(value => value.LlmProviderId == provider.Id) ??
+        throw new InvalidOperationException("The Backup B provider override was not found.");
+
+    LlmProviderMutationResult<LlmProviderSummaryDto> updatedProvider =
+        await providerCoordinator.UpdateAsync(
+            provider.Id,
+            new UpdateLlmProviderRequest
+            {
+                Name = model,
+                BaseEndpointUrl = NormalizeWorkerProviderEndpoint(endpoint),
+                ApiKey = apiKey,
+                SupportedApiTypes = ApiType.ChatCompletions,
+                DefaultAgentType = AgentType.Chat,
+            },
+            cancellationToken);
+    if (updatedProvider.Outcome != LlmProviderMutationOutcome.Success)
+    {
+        throw new InvalidOperationException("Failed to re-encrypt the Backup B Chat provider.");
+    }
+
+    SystemLlmProviderOverrideMutationResult<SystemLlmProviderOverrideSummaryDto> updatedOverride =
+        await overrideCoordinator.UpsertAsync(
+            systemId,
+            existingOverride.Id,
+            new UpsertSystemLlmProviderOverrideRequest
+            {
+                SystemId = systemId,
+                LlmProviderId = provider.Id,
+                AgentType = AgentType.Chat,
+            },
+            automationUser,
+            cancellationToken);
+    if (updatedOverride.Outcome != SystemLlmProviderOverrideMutationOutcome.Success)
+    {
+        throw new InvalidOperationException("Failed to repair the Backup B Chat override.");
+    }
+
+    logger.LogInformation(
+        "Re-encrypted Backup B provider {ProviderName} and assigned it to Chat mode.",
+        provider.Name);
 }
 
 static IUserContext CreateAutomationUser()

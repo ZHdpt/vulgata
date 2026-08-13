@@ -31,16 +31,19 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             return ChatCurrentnessValidationOutcome.MissingOrStale;
         }
 
-        await using IDbContextTransaction transaction =
-            await _context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-        try
+        IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            Guid[] logicalDocumentIds = request.Documents
-                .Select(document => document.LogicalDocumentId)
-                .ToArray();
-            CurrentDocumentRow[] documents = await (
+            await using IDbContextTransaction transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
+            try
+            {
+                Guid[] logicalDocumentIds = request.Documents
+                    .Select(document => document.LogicalDocumentId)
+                    .ToArray();
+                CurrentDocumentRow[] documents = await (
                 from logical in _context.LogicalDocuments.AsNoTracking()
                 join version in _context.DocumentVersions.AsNoTracking()
                     on logical.CurrentVersionId equals version.Id
@@ -53,34 +56,35 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                     version.Id))
                 .Take(6)
                 .ToArrayAsync(cancellationToken);
-            bool documentsAreCurrent = documents.Length == request.Documents.Count &&
-                request.Documents.All(expected => documents.Any(actual =>
+                bool documentsAreCurrent = documents.Length == request.Documents.Count &&
+                    request.Documents.All(expected => documents.Any(actual =>
                     actual.LogicalDocumentId == expected.LogicalDocumentId &&
                     actual.DocumentVersionId == expected.ExpectedCurrentDocumentVersionId));
-            bool sectionsAreCurrent = documentsAreCurrent &&
-                await ValidateSectionsAsync(request, cancellationToken);
-            bool anchorsAreCurrent = sectionsAreCurrent &&
-                await ValidateAnchorsAsync(request, repositoryIds, cancellationToken);
-            bool relationshipsAreCurrent = anchorsAreCurrent &&
-                await ValidateRelationshipsAsync(request, repositoryIds, cancellationToken);
-            if (!relationshipsAreCurrent ||
-                !await accessScope.HasCurrentAccessAsync(repositoryIds, cancellationToken))
+                bool sectionsAreCurrent = documentsAreCurrent &&
+                    await ValidateSectionsAsync(request, cancellationToken);
+                bool anchorsAreCurrent = sectionsAreCurrent &&
+                    await ValidateAnchorsAsync(request, repositoryIds, cancellationToken);
+                bool relationshipsAreCurrent = anchorsAreCurrent &&
+                    await ValidateRelationshipsAsync(request, repositoryIds, cancellationToken);
+                if (!relationshipsAreCurrent ||
+                    !await accessScope.HasCurrentAccessAsync(repositoryIds, cancellationToken))
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    _context.ChangeTracker.Clear();
+                    return ChatCurrentnessValidationOutcome.MissingOrStale;
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                _context.ChangeTracker.Clear();
+                return ChatCurrentnessValidationOutcome.Current;
+            }
+            catch
             {
                 await transaction.RollbackAsync(CancellationToken.None);
                 _context.ChangeTracker.Clear();
-                return ChatCurrentnessValidationOutcome.MissingOrStale;
+                throw;
             }
-
-            await transaction.CommitAsync(cancellationToken);
-            _context.ChangeTracker.Clear();
-            return ChatCurrentnessValidationOutcome.Current;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(CancellationToken.None);
-            _context.ChangeTracker.Clear();
-            throw;
-        }
+        });
     }
 
     private async Task<bool> ValidateSectionsAsync(

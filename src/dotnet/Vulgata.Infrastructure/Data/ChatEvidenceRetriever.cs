@@ -41,58 +41,62 @@ public sealed class ChatEvidenceRetriever(
             return ChatEvidenceResult.NotFoundOrUnauthorized();
         }
 
-        await using IDbContextTransaction transaction =
-            await _context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-        try
+        IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            if (await _preparedScopeResolver.ResolveAsync(
-                    request.SystemId,
-                    repositoryIds,
-                    accessScope,
-                    cancellationToken) is null)
+            await using IDbContextTransaction transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
+            try
             {
-                await transaction.RollbackAsync(cancellationToken);
-                _context.ChangeTracker.Clear();
-                return ChatEvidenceResult.IncompleteOrStale();
-            }
+                if (await _preparedScopeResolver.ResolveAsync(
+                        request.SystemId,
+                        repositoryIds,
+                        accessScope,
+                        cancellationToken) is null)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    _context.ChangeTracker.Clear();
+                    return ChatEvidenceResult.IncompleteOrStale();
+                }
 
-            ChatEvidenceResult result = await RetrieveInsideTransactionAsync(
-                request,
-                repositoryIds,
-                cancellationToken);
-            if (result.Kind != ChatEvidenceResultKind.Found)
-            {
-                await transaction.RollbackAsync(cancellationToken);
+                ChatEvidenceResult result = await RetrieveInsideTransactionAsync(
+                    request,
+                    repositoryIds,
+                    cancellationToken);
+                if (result.Kind != ChatEvidenceResultKind.Found)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    _context.ChangeTracker.Clear();
+                    return result;
+                }
+
+                if (!await accessScope.HasCurrentAccessAsync(repositoryIds, cancellationToken))
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    _context.ChangeTracker.Clear();
+                    return ChatEvidenceResult.NotFoundOrUnauthorized();
+                }
+
+                await transaction.CommitAsync(cancellationToken);
                 _context.ChangeTracker.Clear();
                 return result;
             }
-
-            if (!await accessScope.HasCurrentAccessAsync(repositoryIds, cancellationToken))
+            catch (Exception exception) when (
+                exception is ChatContractException or KnowledgeStoreContractException)
             {
-                await transaction.RollbackAsync(cancellationToken);
+                await transaction.RollbackAsync(CancellationToken.None);
                 _context.ChangeTracker.Clear();
-                return ChatEvidenceResult.NotFoundOrUnauthorized();
+                return ChatEvidenceResult.IncompleteOrStale();
             }
-
-            await transaction.CommitAsync(cancellationToken);
-            _context.ChangeTracker.Clear();
-            return result;
-        }
-        catch (Exception exception) when (
-            exception is ChatContractException or KnowledgeStoreContractException)
-        {
-            await transaction.RollbackAsync(CancellationToken.None);
-            _context.ChangeTracker.Clear();
-            return ChatEvidenceResult.IncompleteOrStale();
-        }
-        catch
-        {
-            await transaction.RollbackAsync(CancellationToken.None);
-            _context.ChangeTracker.Clear();
-            throw;
-        }
+            catch
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                _context.ChangeTracker.Clear();
+                throw;
+            }
+        });
     }
 
     private async Task<ChatEvidenceResult> RetrieveInsideTransactionAsync(

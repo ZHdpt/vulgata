@@ -148,7 +148,8 @@ public static class VulgataWebComposition
             !string.IsNullOrWhiteSpace(applicationName))
         {
             dataProtection
-                .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath.Trim()))
+                .PersistKeysToFileSystem(new DirectoryInfo(
+                    Environment.ExpandEnvironmentVariables(keyRingPath.Trim())))
                 .SetApplicationName(applicationName.Trim());
         }
 
