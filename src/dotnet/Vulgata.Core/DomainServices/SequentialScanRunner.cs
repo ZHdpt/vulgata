@@ -641,39 +641,48 @@ public sealed class SequentialScanRunner
     private WorkerAgentJobPacket BuildPacket(ScanExecution execution, CodeUnit unit)
     {
         Guid jobId = ResolvePass1JobId(execution, unit);
-        if (_preparedPass2Flow is null)
-        {
-            return WorkerAgentJobPacket.Create(
-                jobId,
-                WorkerAgentJobKind.Pass1CodeLogicDocument,
-                execution.Id,
-                execution.RepositoryId,
-                execution.SystemId,
-                execution.ScanRunId,
-                unit.Id,
-                execution.ProfiledRevision,
+
+        // Every Pass 1 packet carries one server-generated Source Anchor
+        // identifier the worker must echo verbatim. The identifier is seeded
+        // with the Repository identifier so it cannot collide across
+        // repositories even when no prepared Pass 2 flow is bound (the real
+        // web composition path). Prepared-flow runs keep their Manifest-scoped
+        // seed below; both are deterministic and collision-safe.
+        WorkerAgentPreparedSourceAnchor[] preparedAnchors =
+        [
+            new WorkerAgentPreparedSourceAnchor(
+                CreateStableId(
+                    "pass1-prepared-anchor",
+                    execution.RepositoryId.ToString("D"),
+                    unit.Id.ToString("D")),
                 unit.FilePath,
                 unit.LineStart,
                 unit.LineEnd,
-                unit.SymbolName,
-                unit.UnitType,
-                unit.Language,
-                unit.SourceHash,
-                unit.FileIdentityHash);
-        }
+                unit.SourceHash),
+        ];
 
-        WorkerAgentStructuralContext[] structuralContext = _preparedPass2Flow.TraceEvidence
-            .Where(evidence => evidence.CodeUnitId != unit.Id)
-            .GroupBy(evidence => evidence.CodeUnitId)
-            .Select(group => group.OrderBy(evidence => evidence.Order).First())
-            .Select(evidence => WorkerAgentStructuralContext.Create(
-                evidence.CodeUnitId,
-                evidence.Locator.Split('#', 2)[0],
-                evidence.Label))
-            .OrderBy(context => context.CodeUnitId)
-            .ToArray();
-        WorkerAgentCommunicationEvidence[] communicationEvidence =
-            _preparedPass2Flow.TraceEvidence
+        WorkerAgentStructuralContext[] structuralContext;
+        WorkerAgentCommunicationEvidence[] communicationEvidence;
+        Guid[] allowedReferences;
+        if (_preparedPass2Flow is null)
+        {
+            structuralContext = [];
+            communicationEvidence = [];
+            allowedReferences = [];
+        }
+        else
+        {
+            structuralContext = _preparedPass2Flow.TraceEvidence
+                .Where(evidence => evidence.CodeUnitId != unit.Id)
+                .GroupBy(evidence => evidence.CodeUnitId)
+                .Select(group => group.OrderBy(evidence => evidence.Order).First())
+                .Select(evidence => WorkerAgentStructuralContext.Create(
+                    evidence.CodeUnitId,
+                    evidence.Locator.Split('#', 2)[0],
+                    evidence.Label))
+                .OrderBy(context => context.CodeUnitId)
+                .ToArray();
+            communicationEvidence = _preparedPass2Flow.TraceEvidence
                 .Select(evidence => WorkerAgentCommunicationEvidence.Create(
                     CreateStableId(
                         "pass1-communication-evidence",
@@ -683,11 +692,13 @@ public sealed class SequentialScanRunner
                     $"{evidence.Label}: {evidence.Locator}"))
                 .OrderBy(evidence => evidence.EvidenceId)
                 .ToArray();
-        Guid[] allowedReferences = _preparedPass2Flow.Members
-            .Where(member => member.CodeUnitId != unit.Id)
-            .Select(member => member.JobId)
-            .Order()
-            .ToArray();
+            allowedReferences = _preparedPass2Flow.Members
+                .Where(member => member.CodeUnitId != unit.Id)
+                .Select(member => member.JobId)
+                .Order()
+                .ToArray();
+        }
+
         Pass1CodeLogicJobPayload payload = Pass1CodeLogicJobPayload.Create(
             unit.Id,
             unit.FilePath,
@@ -700,7 +711,8 @@ public sealed class SequentialScanRunner
             unit.FileIdentityHash,
             structuralContext,
             communicationEvidence,
-            allowedReferences);
+            allowedReferences,
+            preparedAnchors);
         return WorkerAgentJobPacket.Create(
             jobId,
             WorkerAgentJobKind.Pass1CodeLogicDocument,

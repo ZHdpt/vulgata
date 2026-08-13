@@ -125,13 +125,12 @@ public sealed class WorkerAgentDispatcher : IWorkerAgentDispatcher
             throw new InvalidDataException("Worker Agent request exceeds its finite byte bound.");
         }
 
-        using JsonDocument schema = JsonDocument.Parse(
-            WorkerAgentJsonContext.Pass1ResponseSchemaJson);
+        // DeepSeek and other OpenAI-compatible endpoints reject the
+        // json_schema response format with HTTP 400; the response contract is
+        // enforced after the call by WorkerAgentJsonPreflight and the strict
+        // result parser, so json_object mode is the compatible wire format.
         Microsoft.Extensions.AI.ChatResponseFormat responseFormat =
-            Microsoft.Extensions.AI.ChatResponseFormat.ForJsonSchema(
-            schema.RootElement,
-            "pass1_code_logic_document",
-            "Closed Pass 1 Code Logic Document result.");
+            Microsoft.Extensions.AI.ChatResponseFormat.Json;
         DateTimeOffset dispatchedAt = _timeProvider.GetUtcNow();
 
         // The plaintext is obtained only after all pre-call validation and is
@@ -259,13 +258,10 @@ public sealed class WorkerAgentDispatcher : IWorkerAgentDispatcher
             throw new InvalidDataException("Worker Agent request exceeds its finite byte bound.");
         }
 
-        using JsonDocument schema = JsonDocument.Parse(
-            WorkerAgentJsonContext.Pass2ResponseSchemaJson);
+        // See the Pass 1 dispatch comment: json_object is the compatible wire
+        // format; the Pass 2 contract is enforced post-call.
         Microsoft.Extensions.AI.ChatResponseFormat responseFormat =
-            Microsoft.Extensions.AI.ChatResponseFormat.ForJsonSchema(
-                schema.RootElement,
-                "pass2_business_logic_document",
-                "Closed Pass 2 Business Logic Document result.");
+            Microsoft.Extensions.AI.ChatResponseFormat.Json;
         DateTimeOffset dispatchedAt = _timeProvider.GetUtcNow();
         string apiKey = await _encryptionService.DecryptAsync(
             SecretPurposes.LlmApiKey,
@@ -463,6 +459,7 @@ public sealed class WorkerAgentDispatcher : IWorkerAgentDispatcher
 
         return prompt;
     }
+
 }
 
 internal sealed record WorkerAgentPromptResource(

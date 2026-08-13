@@ -266,6 +266,7 @@ public sealed class WorkerAgentJobPacket
                 slice,
                 [],
                 [],
+                [],
                 []));
     }
 
@@ -530,6 +531,35 @@ public abstract class WorkerAgentJobPayload
 }
 
 /// <summary>
+/// One server-generated Source Anchor identity issued to a Pass 1 worker.
+/// The model must echo these identifiers verbatim so that anchor IDs stay
+/// globally unique across documents. Carries no Evidence Locator because
+/// prepared anchors are issued before any model-authored evidence exists.
+/// </summary>
+public sealed record WorkerAgentPreparedSourceAnchor
+{
+    public Guid Id { get; }
+    public string RepositoryRelativePath { get; }
+    public int LineStart { get; }
+    public int LineEnd { get; }
+    public string SourceHash { get; }
+
+    public WorkerAgentPreparedSourceAnchor(
+        Guid id,
+        string repositoryRelativePath,
+        int lineStart,
+        int lineEnd,
+        string sourceHash)
+    {
+        Id = id;
+        RepositoryRelativePath = repositoryRelativePath;
+        LineStart = lineStart;
+        LineEnd = lineEnd;
+        SourceHash = sourceHash;
+    }
+}
+
+/// <summary>
 /// Exact source identity and server-built allowlists for one Pass 1 Code Unit.
 /// No source bytes are carried by this contract.
 /// </summary>
@@ -540,13 +570,15 @@ public sealed class Pass1CodeLogicJobPayload : WorkerAgentJobPayload
         WorkerAgentJobPacket.BoundedSourceSlice sourceSlice,
         IReadOnlyList<WorkerAgentStructuralContext> neighboringStructuralContext,
         IReadOnlyList<WorkerAgentCommunicationEvidence> approvedCommunicationEvidence,
-        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds)
+        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds,
+        IReadOnlyList<WorkerAgentPreparedSourceAnchor> preparedSourceAnchors)
     {
         CodeUnitId = codeUnitId;
         SourceSlice = sourceSlice;
         NeighboringStructuralContext = neighboringStructuralContext;
         ApprovedCommunicationEvidence = approvedCommunicationEvidence;
         AllowedReferenceDocumentVersionIds = allowedReferenceDocumentVersionIds;
+        PreparedSourceAnchors = preparedSourceAnchors;
     }
 
     public override WorkerAgentJobKind Kind => WorkerAgentJobKind.Pass1CodeLogicDocument;
@@ -561,6 +593,13 @@ public sealed class Pass1CodeLogicJobPayload : WorkerAgentJobPayload
     public IReadOnlyList<WorkerAgentCommunicationEvidence> ApprovedCommunicationEvidence { get; }
     public IReadOnlyList<Guid> AllowedReferenceDocumentVersionIds { get; }
 
+    /// <summary>
+    /// Server-generated Source Anchor identities the model must echo verbatim.
+    /// Guarantees globally unique anchor identifiers across documents and
+    /// prevents the model from synthesizing colliding identifiers.
+    /// </summary>
+    public IReadOnlyList<WorkerAgentPreparedSourceAnchor> PreparedSourceAnchors { get; }
+
     public static Pass1CodeLogicJobPayload Create(
         Guid codeUnitId,
         string repositoryRelativePath,
@@ -573,7 +612,8 @@ public sealed class Pass1CodeLogicJobPayload : WorkerAgentJobPayload
         string fileIdentityHash,
         IReadOnlyList<WorkerAgentStructuralContext> neighboringStructuralContext,
         IReadOnlyList<WorkerAgentCommunicationEvidence> approvedCommunicationEvidence,
-        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds)
+        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds,
+        IReadOnlyList<WorkerAgentPreparedSourceAnchor>? preparedSourceAnchors = null)
     {
         if (codeUnitId == Guid.Empty)
         {
@@ -598,7 +638,8 @@ public sealed class Pass1CodeLogicJobPayload : WorkerAgentJobPayload
             sourceSlice,
             neighboringStructuralContext,
             approvedCommunicationEvidence,
-            allowedReferenceDocumentVersionIds);
+            allowedReferenceDocumentVersionIds,
+            preparedSourceAnchors ?? []);
     }
 
     internal static Pass1CodeLogicJobPayload CreateValidated(
@@ -606,11 +647,13 @@ public sealed class Pass1CodeLogicJobPayload : WorkerAgentJobPayload
         WorkerAgentJobPacket.BoundedSourceSlice sourceSlice,
         IReadOnlyList<WorkerAgentStructuralContext> neighboringStructuralContext,
         IReadOnlyList<WorkerAgentCommunicationEvidence> approvedCommunicationEvidence,
-        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds)
+        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds,
+        IReadOnlyList<WorkerAgentPreparedSourceAnchor> preparedSourceAnchors)
     {
         ArgumentNullException.ThrowIfNull(neighboringStructuralContext);
         ArgumentNullException.ThrowIfNull(approvedCommunicationEvidence);
         ArgumentNullException.ThrowIfNull(allowedReferenceDocumentVersionIds);
+        ArgumentNullException.ThrowIfNull(preparedSourceAnchors);
         if (neighboringStructuralContext.Count >
                 WorkerAgentContractLimits.MaximumStructuralContextItems ||
             !IsStrictlyAscending(
@@ -643,12 +686,29 @@ public sealed class Pass1CodeLogicJobPayload : WorkerAgentJobPayload
                 nameof(allowedReferenceDocumentVersionIds));
         }
 
+        if (preparedSourceAnchors.Count > KnowledgeDocumentLimits.MaximumAnchors ||
+            preparedSourceAnchors.Any(anchor =>
+                !StringComparer.Ordinal.Equals(
+                    anchor.RepositoryRelativePath,
+                    sourceSlice.FilePath) ||
+                anchor.LineStart < sourceSlice.LineStart ||
+                anchor.LineEnd > sourceSlice.LineEnd ||
+                anchor.LineEnd < anchor.LineStart ||
+                !StringComparer.Ordinal.Equals(anchor.SourceHash, sourceSlice.SourceHash)) ||
+            !IsStrictlyAscending(preparedSourceAnchors, anchor => anchor.Id))
+        {
+            throw new ArgumentException(
+                "Prepared Source Anchors must be bounded, canonical, and inside the exact source slice.",
+                nameof(preparedSourceAnchors));
+        }
+
         return new(
             codeUnitId,
             sourceSlice,
             Array.AsReadOnly(neighboringStructuralContext.ToArray()),
             Array.AsReadOnly(approvedCommunicationEvidence.ToArray()),
-            Array.AsReadOnly(allowedReferenceDocumentVersionIds.ToArray()));
+            Array.AsReadOnly(allowedReferenceDocumentVersionIds.ToArray()),
+            Array.AsReadOnly(preparedSourceAnchors.ToArray()));
     }
 
     private static bool IsStrictlyAscending(IReadOnlyList<Guid> values)

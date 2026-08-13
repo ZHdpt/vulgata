@@ -53,6 +53,7 @@ public sealed class ScanExecutionRepository(VulgataDbContext dbContext) : IScanE
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(execution);
+        dbContext.ChangeTracker.Clear();
 
         bool isSqlite = StringComparer.Ordinal.Equals(
             dbContext.Database.ProviderName,
@@ -60,56 +61,60 @@ public sealed class ScanExecutionRepository(VulgataDbContext dbContext) : IScanE
         bool isPostgreSql = StringComparer.Ordinal.Equals(
             dbContext.Database.ProviderName,
             "Npgsql.EntityFrameworkCore.PostgreSQL");
-        await using IDbContextTransaction transaction = await dbContext.Database
-            .BeginTransactionAsync(
-                isSqlite ? IsolationLevel.Serializable : IsolationLevel.ReadCommitted,
-                cancellationToken)
-            .ConfigureAwait(false);
-        try
+        IExecutionStrategy strategy = dbContext.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
-            if (isSqlite)
+            await using IDbContextTransaction transaction = await dbContext.Database
+                .BeginTransactionAsync(
+                    isSqlite ? IsolationLevel.Serializable : IsolationLevel.ReadCommitted,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            try
             {
-                await dbContext.Database.ExecuteSqlInterpolatedAsync(
-                    $"UPDATE \"Repositories\" SET \"Id\" = \"Id\" WHERE \"Id\" = {execution.RepositoryId}",
-                    cancellationToken).ConfigureAwait(false);
-            }
-            else if (isPostgreSql)
-            {
-                await dbContext.Repositories
-                    .FromSqlInterpolated(
-                        $"SELECT * FROM \"vulgata\".\"Repositories\" WHERE \"Id\" = {execution.RepositoryId} FOR UPDATE")
-                    .AsNoTracking()
+                if (isSqlite)
+                {
+                    await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"Repositories\" SET \"Id\" = \"Id\" WHERE \"Id\" = {execution.RepositoryId}",
+                        cancellationToken).ConfigureAwait(false);
+                }
+                else if (isPostgreSql)
+                {
+                    await dbContext.Repositories
+                        .FromSqlInterpolated(
+                            $"SELECT * FROM \"vulgata\".\"Repositories\" WHERE \"Id\" = {execution.RepositoryId} FOR UPDATE")
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                }
+
+                IQueryable<ScanExecution> durableQuery = isPostgreSql
+                    ? dbContext.ScanExecutions.FromSqlInterpolated(
+                        $"SELECT * FROM \"vulgata\".\"ScanExecutions\" WHERE \"Id\" = {execution.Id} FOR UPDATE")
+                    : dbContext.ScanExecutions.Where(item => item.Id == execution.Id);
+                ScanExecution? durable = await durableQuery
                     .SingleOrDefaultAsync(cancellationToken)
                     .ConfigureAwait(false);
+
+                if (durable is null)
+                {
+                    await dbContext.ScanExecutions.AddAsync(execution, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    ApplyRequestedTransition(durable, execution);
+                }
+
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             }
-
-            IQueryable<ScanExecution> durableQuery = isPostgreSql
-                ? dbContext.ScanExecutions.FromSqlInterpolated(
-                    $"SELECT * FROM \"vulgata\".\"ScanExecutions\" WHERE \"Id\" = {execution.Id} FOR UPDATE")
-                : dbContext.ScanExecutions.Where(item => item.Id == execution.Id);
-            ScanExecution? durable = await durableQuery
-                .SingleOrDefaultAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            if (durable is null)
+            catch
             {
-                await dbContext.ScanExecutions.AddAsync(execution, cancellationToken)
-                    .ConfigureAwait(false);
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                dbContext.ChangeTracker.Clear();
+                throw;
             }
-            else
-            {
-                ApplyRequestedTransition(durable, execution);
-            }
-
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+        }).ConfigureAwait(false);
     }
 
     private static void ApplyRequestedTransition(

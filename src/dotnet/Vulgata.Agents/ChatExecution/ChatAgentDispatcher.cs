@@ -14,33 +14,6 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
 {
     internal static readonly TimeSpan ProviderTimeout = TimeSpan.FromSeconds(30);
     private const string _requestSchemaVersion = "prepared-chat-selection-request-v1";
-    private const string _responseSchemaJson = """
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["schemaVersion", "requestId", "mode", "evidenceFingerprint", "selections"],
-          "properties": {
-            "schemaVersion": { "type": "string", "const": "prepared-chat-answer-v1" },
-            "requestId": { "type": "string", "minLength": 1 },
-            "mode": { "type": "string", "enum": ["business", "it"] },
-            "evidenceFingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-            "selections": {
-              "type": "array",
-              "minItems": 1,
-              "maxItems": 12,
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["candidateHandle", "order"],
-                "properties": {
-                  "candidateHandle": { "type": "string", "minLength": 1, "maxLength": 64 },
-                  "order": { "type": "integer", "minimum": 1, "maximum": 12 }
-                }
-              }
-            }
-          }
-        }
-        """;
     private readonly ChatAgentProviderResolver _providerResolver;
     private readonly ISecretEncryptionService _encryptionService;
     private readonly ChatPromptCatalog _promptCatalog;
@@ -119,12 +92,11 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
             ChatClientAgent agent = chatClient.AsAIAgent(
                 instructions: prompt,
                 name: "prepared-chat-selection");
-            using JsonDocument schema = JsonDocument.Parse(_responseSchemaJson);
+            // DeepSeek and other OpenAI-compatible endpoints reject the
+            // json_schema response format; ChatAgentResultValidator enforces
+            // the selection contract after the call.
             Microsoft.Extensions.AI.ChatResponseFormat responseFormat =
-                Microsoft.Extensions.AI.ChatResponseFormat.ForJsonSchema(
-                    schema.RootElement,
-                    "prepared_chat_answer",
-                    "Closed prepared Chat selection result.");
+                Microsoft.Extensions.AI.ChatResponseFormat.Json;
             var runOptions = new ChatClientAgentRunOptions(
                 new ChatOptions { ResponseFormat = responseFormat });
             using var timeout = new CancellationTokenSource(ProviderTimeout, _timeProvider);

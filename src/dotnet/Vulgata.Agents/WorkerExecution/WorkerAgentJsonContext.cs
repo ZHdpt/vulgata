@@ -16,7 +16,8 @@ internal sealed record WorkerAgentPass1RequestDto(
     WorkerAgentPass1SourceDto Source,
     IReadOnlyList<WorkerAgentStructuralContextDto> NeighboringStructuralContext,
     IReadOnlyList<WorkerAgentCommunicationEvidenceDto> ApprovedCommunicationEvidence,
-    IReadOnlyList<Guid> AllowedReferenceDocumentVersionIds)
+    IReadOnlyList<Guid> AllowedReferenceDocumentVersionIds,
+    IReadOnlyList<WorkerAgentPreparedSourceAnchorDto> PreparedSourceAnchors)
 {
     internal static WorkerAgentPass1RequestDto From(WorkerAgentExecutionContext context)
     {
@@ -53,7 +54,15 @@ internal sealed record WorkerAgentPass1RequestDto(
                     item.Kind,
                     item.Description))
                 .ToArray(),
-            context.AllowedReferenceDocumentVersionIds);
+            context.AllowedReferenceDocumentVersionIds,
+            context.PreparedSourceAnchors
+                .Select(anchor => new WorkerAgentPreparedSourceAnchorDto(
+                    anchor.Id,
+                    anchor.RepositoryRelativePath,
+                    anchor.LineStart,
+                    anchor.LineEnd,
+                    anchor.SourceHash))
+                .ToArray());
     }
 }
 
@@ -248,6 +257,13 @@ internal sealed class WorkerAgentSourceAnchorDto
     public required string SourceHash { get; init; }
 }
 
+internal sealed record WorkerAgentPreparedSourceAnchorDto(
+    Guid Id,
+    string RepositoryRelativePath,
+    int LineStart,
+    int LineEnd,
+    string SourceHash);
+
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     PropertyNameCaseInsensitive = false,
@@ -260,161 +276,4 @@ internal sealed class WorkerAgentSourceAnchorDto
 [JsonSerializable(typeof(WorkerAgentPass2ResponseDto))]
 internal sealed partial class WorkerAgentJsonContext : JsonSerializerContext
 {
-    internal static string Pass1ResponseSchemaJson =>
-        """
-        {
-          "type":"object",
-          "additionalProperties":false,
-          "properties":{
-            "jobId":{"type":"string","format":"uuid"},
-            "systemId":{"type":"string","format":"uuid"},
-            "repositoryId":{"type":"string","format":"uuid"},
-            "scanRunId":{"type":"string","format":"uuid"},
-            "codeUnitId":{"type":"string","format":"uuid"},
-            "profiledRevision":{"type":"string"},
-            "repositoryRelativePath":{"type":"string"},
-            "lineStart":{"type":"integer"},
-            "lineEnd":{"type":"integer"},
-            "sourceHash":{"type":"string"},
-            "fileIdentityHash":{"type":"string"},
-            "content":{
-              "type":"object",
-              "additionalProperties":false,
-              "properties":{
-                "schemaIdentity":{"type":"string"},
-                "documentType":{"type":"string","enum":["CodeLogic"]},
-                "stableKey":{"type":"string"},
-                "title":{"type":"string"},
-                "repositoryRelativePath":{"type":"string"},
-                "summary":{"type":"string"},
-                "keySymbols":{"type":"array","items":{"type":"string"}},
-                "businessTerms":{"type":"array","items":{"type":"string"}},
-                "technicalTerms":{"type":"array","items":{"type":"string"}},
-                "sections":{
-                  "type":"array",
-                  "items":{
-                    "type":"object",
-                    "additionalProperties":false,
-                    "properties":{
-                      "stableSectionId":{"type":"string","format":"uuid"},
-                      "order":{"type":"integer"},
-                      "kind":{"type":"string","enum":["Overview","BusinessRule","ProcessStep","TechnicalDetail","Evidence","Other"]},
-                      "heading":{"type":"string"},
-                      "markdown":{"type":"string"},
-                      "searchText":{"type":"string"},
-                      "sourceAnchorIds":{"type":"array","items":{"type":"string","format":"uuid"}},
-                      "documentVersionIds":{"type":"array","items":{"type":"string","format":"uuid"}}
-                    },
-                    "required":["stableSectionId","order","kind","heading","markdown","searchText","sourceAnchorIds","documentVersionIds"]
-                  }
-                }
-              },
-              "required":["schemaIdentity","documentType","stableKey","title","repositoryRelativePath","summary","keySymbols","businessTerms","technicalTerms","sections"]
-            },
-            "sourceAnchors":{
-              "type":"array",
-              "items":{
-                "type":"object",
-                "additionalProperties":false,
-                "properties":{
-                  "id":{"type":"string","format":"uuid"},
-                  "repositoryRelativePath":{"type":"string"},
-                  "evidenceLocator":{"type":"string"},
-                  "lineStart":{"type":"integer"},
-                  "lineEnd":{"type":"integer"},
-                  "sourceHash":{"type":"string"}
-                },
-                "required":["id","repositoryRelativePath","evidenceLocator","lineStart","lineEnd","sourceHash"]
-              }
-            },
-            "referenceDocumentVersionIds":{"type":"array","items":{"type":"string","format":"uuid"}},
-            "communicationEvidenceIds":{"type":"array","items":{"type":"string","format":"uuid"}}
-          },
-          "required":["jobId","systemId","repositoryId","scanRunId","codeUnitId","profiledRevision","repositoryRelativePath","lineStart","lineEnd","sourceHash","fileIdentityHash","content","sourceAnchors","referenceDocumentVersionIds","communicationEvidenceIds"]
-        }
-        """;
-
-    internal static string Pass2ResponseSchemaJson =>
-        """
-        {
-          "type":"object",
-          "additionalProperties":false,
-          "properties":{
-            "jobId":{"type":"string","format":"uuid"},
-            "systemId":{"type":"string","format":"uuid"},
-            "repositoryId":{"type":"string","format":"uuid"},
-            "scanRunId":{"type":"string","format":"uuid"},
-            "profiledRevision":{"type":"string"},
-            "flowId":{"type":"string","format":"uuid"},
-            "purpose":{"type":"string"},
-            "mainSteps":{
-              "type":"array",
-              "items":{
-                "type":"object",
-                "additionalProperties":false,
-                "properties":{
-                  "order":{"type":"integer"},
-                  "description":{"type":"string"},
-                  "traceEvidenceOrders":{"type":"array","items":{"type":"integer"}}
-                },
-                "required":["order","description","traceEvidenceOrders"]
-              }
-            },
-            "outcome":{"type":"string"},
-            "content":{
-              "type":"object",
-              "additionalProperties":false,
-              "properties":{
-                "schemaIdentity":{"type":"string"},
-                "documentType":{"type":"string","enum":["BusinessLogic"]},
-                "stableKey":{"type":"string"},
-                "title":{"type":"string"},
-                "repositoryRelativePath":{"type":"string"},
-                "summary":{"type":"string"},
-                "keySymbols":{"type":"array","items":{"type":"string"}},
-                "businessTerms":{"type":"array","items":{"type":"string"}},
-                "technicalTerms":{"type":"array","items":{"type":"string"}},
-                "sections":{
-                  "type":"array",
-                  "items":{
-                    "type":"object",
-                    "additionalProperties":false,
-                    "properties":{
-                      "stableSectionId":{"type":"string","format":"uuid"},
-                      "order":{"type":"integer"},
-                      "kind":{"type":"string","enum":["Overview","BusinessRule","ProcessStep","TechnicalDetail","Evidence","Other"]},
-                      "heading":{"type":"string"},
-                      "markdown":{"type":"string"},
-                      "searchText":{"type":"string"},
-                      "sourceAnchorIds":{"type":"array","items":{"type":"string","format":"uuid"}},
-                      "documentVersionIds":{"type":"array","items":{"type":"string","format":"uuid"}}
-                    },
-                    "required":["stableSectionId","order","kind","heading","markdown","searchText","sourceAnchorIds","documentVersionIds"]
-                  }
-                }
-              },
-              "required":["schemaIdentity","documentType","stableKey","title","repositoryRelativePath","summary","keySymbols","businessTerms","technicalTerms","sections"]
-            },
-            "sourceAnchors":{
-              "type":"array",
-              "items":{
-                "type":"object",
-                "additionalProperties":false,
-                "properties":{
-                  "id":{"type":"string","format":"uuid"},
-                  "repositoryRelativePath":{"type":"string"},
-                  "evidenceLocator":{"type":"string"},
-                  "lineStart":{"type":"integer"},
-                  "lineEnd":{"type":"integer"},
-                  "sourceHash":{"type":"string"}
-                },
-                "required":["id","repositoryRelativePath","evidenceLocator","lineStart","lineEnd","sourceHash"]
-              }
-            },
-            "traceEvidenceOrders":{"type":"array","items":{"type":"integer"}},
-            "generatedFromDocumentVersionIds":{"type":"array","items":{"type":"string","format":"uuid"}}
-          },
-          "required":["jobId","systemId","repositoryId","scanRunId","profiledRevision","flowId","purpose","mainSteps","outcome","content","sourceAnchors","traceEvidenceOrders","generatedFromDocumentVersionIds"]
-        }
-        """;
 }

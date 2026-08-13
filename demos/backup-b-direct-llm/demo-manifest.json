@@ -1,0 +1,94 @@
+{
+  "SystemName": "DemoBank",
+  "SystemDescription": "演示银行系统 - 账户到通道的跨仓库调用",
+  "Repositories": {
+    "mbs_account": {
+      "Name": "mbs_account",
+      "Description": "账户服务 - 调用通道服务更新会话",
+      "CloneUrl": "https://github.com/example/mbs_account.git",
+      "LocalGitPath": "demo-seed-repos\\mbs_account",
+      "ExpectedCommit": "451b3a99b179b711ae66260651eb6b12db482e0b",
+      "ManifestEntries": [
+        {
+          "RepositoryAlias": "mbs_account",
+          "ExactCommit": "451b3a99b179b711ae66260651eb6b12db482e0b",
+          "FilePath": "src/main/java/cn/com/yitong/actions/mobile/UpdateChannelSessionOp.java",
+                    "CodeUnits": [
+                      {
+                        "SymbolName": "execute",
+                        "UnitType": "Method",
+                        "Language": "java",
+                        "LineStart": 28,
+                        "LineEnd": 49
+                      }
+                    ]
+              },
+              {
+                "RepositoryAlias": "mbs_account",
+                "ExactCommit": "451b3a99b179b711ae66260651eb6b12db482e0b",
+                "FilePath": "src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java",
+                "CodeUnits": [
+                  {
+                    "SymbolName": "cn.com.yitong.actions.cust.UploadOcrToOssOp",
+                    "UnitType": "Class",
+                    "Language": "java",
+                    "LineStart": 19,
+                    "LineEnd": 85
+                  },
+                  {
+                    "SymbolName": "execute",
+                    "UnitType": "Method",
+                    "Language": "java",
+                    "LineStart": 36,
+                    "LineEnd": 75
+                  }
+                ]
+              }
+            ]
+    },
+    "mbs_channel": {
+      "Name": "mbs_channel",
+      "Description": "通道服务 - 提供会话更新接口",
+      "CloneUrl": "https://github.com/example/mbs_channel.git",
+      "LocalGitPath": "demo-seed-repos\\mbs_channel",
+      "ExpectedCommit": "d2e11bacd157195c421065292674ab0c29260081",
+      "ManifestEntries": [
+        {
+          "RepositoryAlias": "mbs_channel",
+          "ExactCommit": "d2e11bacd157195c421065292674ab0c29260081",
+          "FilePath": "src/main/java/cn/com/yitong/actions/domain/login/UpdateSessionOp.java",
+          "CodeUnits": [
+            {
+              "SymbolName": "cn.com.yitong.actions.domain.login.UpdateSessionOp",
+              "UnitType": "Class",
+              "Language": "java",
+              "LineStart": 1,
+              "LineEnd": 11
+            },
+            {
+              "SymbolName": "updateSession",
+              "UnitType": "Method",
+              "Language": "java",
+              "LineStart": 5,
+              "LineEnd": 10
+            }
+          ]
+        },
+        {
+          "RepositoryAlias": "mbs_channel",
+          "ExactCommit": "d2e11bacd157195c421065292674ab0c29260081",
+          "FilePath": "src/main/resources/disgram/in/cust/updateSession.xml",
+          "CodeUnits": [
+            {
+              "SymbolName": "updateSession",
+              "UnitType": "Function",
+              "Language": "xml",
+              "LineStart": 1,
+              "LineEnd": 11
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

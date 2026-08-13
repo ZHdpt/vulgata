@@ -9,7 +9,7 @@ namespace Vulgata.Tests;
 public sealed class ExactResolutionProfileTests
 {
     private const string ReviewedFingerprint =
-        "b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db";
+        "bf81a5a70fb38bcaf343de1ed43eec94b1d4a000039b42c3989c1b5805c30f9c";
 
     [Fact]
     public void Load_ReviewedEmbeddedResource_MatchesAcceptedBytesAndFingerprint()
@@ -38,11 +38,11 @@ public sealed class ExactResolutionProfileTests
             repository => AssertRepository(
                 repository,
                 "mbs_account",
-                "19c60cd3f3976b7697c487c7bafd96142e3a7625"),
+                "451b3a99b179b711ae66260651eb6b12db482e0b"),
             repository => AssertRepository(
                 repository,
                 "mbs_channel",
-                "47f6b627a7598f862873610413eec1e1e7bf46bf"));
+                "d2e11bacd157195c421065292674ab0c29260081"));
 
         ResolutionOccurrence occurrence = Assert.Single(profile.Occurrences);
         Assert.Equal("account-to-channel-cust-update-session-v1", occurrence.OccurrenceId);

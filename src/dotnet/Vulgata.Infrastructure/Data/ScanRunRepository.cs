@@ -77,59 +77,63 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         EnsureCompleteLanguageProfile(profile);
         EnsureCompositeIdentity(profile, result);
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
+        var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
         {
-            PreScanResult? existing = await dbContext.PreScanResults
-                .AsNoTracking()
-                .Include(persisted => persisted.Classifications)
-                .SingleOrDefaultAsync(
-                    persisted => persisted.ScanRunId == profile.ScanRun.Id,
-                    cancellationToken);
-            if (existing is not null)
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            try
             {
-                EnsureReplayMatches(profile, result, existing);
+                PreScanResult? existing = await dbContext.PreScanResults
+                    .AsNoTracking()
+                    .Include(persisted => persisted.Classifications)
+                    .SingleOrDefaultAsync(
+                        persisted => persisted.ScanRunId == profile.ScanRun.Id,
+                        cancellationToken);
+                if (existing is not null)
+                {
+                    EnsureReplayMatches(profile, result, existing);
+                    await transaction.CommitAsync(cancellationToken);
+                    return existing;
+                }
+
+                ScanRun durableRun = await dbContext.ScanRuns
+                    .AsNoTracking()
+                    .SingleAsync(
+                        persisted =>
+                            persisted.RepositoryId == profile.ScanRun.RepositoryId &&
+                            persisted.Id == profile.ScanRun.Id,
+                        cancellationToken);
+                if (durableRun.Status != ScanRunStatus.Profiling)
+                {
+                    throw new InvalidOperationException(
+                        "A new Pre-Scan Result requires one durable Profiling ScanRun.");
+                }
+
+                if (dbContext.Entry(profile.ScanRun).State == EntityState.Detached)
+                {
+                    dbContext.Attach(profile.ScanRun);
+                    dbContext.Entry(profile.ScanRun).State = EntityState.Modified;
+                }
+
+                dbContext.CodeUnits.AddRange(profile.CodeUnits);
+                dbContext.CodeUnitEdges.AddRange(profile.CodeUnitEdges);
+                dbContext.UnresolvedStructuralRelationshipCandidates.AddRange(
+                    profile.UnresolvedRelationships);
+                dbContext.CodeUnitFrameworks.AddRange(profile.CodeUnitFrameworks);
+                dbContext.ScanRunLanguageSummaries.AddRange(profile.LanguageSummaries);
+                dbContext.ScanCandidateOutcomes.AddRange(profile.CandidateOutcomes);
+                await dbContext.PreScanResults.AddAsync(result, cancellationToken);
+                await dbContext.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
-                return existing;
+                return result;
             }
-
-            ScanRun durableRun = await dbContext.ScanRuns
-                .AsNoTracking()
-                .SingleAsync(
-                    persisted =>
-                        persisted.RepositoryId == profile.ScanRun.RepositoryId &&
-                        persisted.Id == profile.ScanRun.Id,
-                    cancellationToken);
-            if (durableRun.Status != ScanRunStatus.Profiling)
+            catch
             {
-                throw new InvalidOperationException(
-                    "A new Pre-Scan Result requires one durable Profiling ScanRun.");
+                await transaction.RollbackAsync(CancellationToken.None);
+                dbContext.ChangeTracker.Clear();
+                throw;
             }
-
-            if (dbContext.Entry(profile.ScanRun).State == EntityState.Detached)
-            {
-                dbContext.Attach(profile.ScanRun);
-                dbContext.Entry(profile.ScanRun).State = EntityState.Modified;
-            }
-
-            dbContext.CodeUnits.AddRange(profile.CodeUnits);
-            dbContext.CodeUnitEdges.AddRange(profile.CodeUnitEdges);
-            dbContext.UnresolvedStructuralRelationshipCandidates.AddRange(
-                profile.UnresolvedRelationships);
-            dbContext.CodeUnitFrameworks.AddRange(profile.CodeUnitFrameworks);
-            dbContext.ScanRunLanguageSummaries.AddRange(profile.LanguageSummaries);
-            dbContext.ScanCandidateOutcomes.AddRange(profile.CandidateOutcomes);
-            await dbContext.PreScanResults.AddAsync(result, cancellationToken);
-            await dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return result;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(CancellationToken.None);
-            dbContext.ChangeTracker.Clear();
-            throw;
-        }
+        });
     }
 
     public async Task RecoverFailedFinalCommitAsync(

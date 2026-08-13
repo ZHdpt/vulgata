@@ -78,7 +78,7 @@ As a SystemOwner, I want each Repository to act as provider or consumer only for
 - **FR-002**: The version-controlled, schema-versioned demo configuration MUST identify Repository aliases, stable Git identity, expected refs and full commits, evidence selectors, normalization rules, comparison policy, permitted Repository direction, and configuration identity/version.
 - **FR-003**: Configuration MUST NOT contain persistence identifiers, working-copy roots, absolute host or WSL paths, environment-specific external Repository locations, or credentials.
 - **FR-004**: At runtime, each configured alias MUST bind through authorized Repository management to exactly one permitted Repository in the same authorized System scope.
-- **FR-005**: `mbs_account` MUST be verified at full commit `19c60cd3f3976b7697c487c7bafd96142e3a7625` and `mbs_channel` at full commit `47f6b627a7598f862873610413eec1e1e7bf46bf`, each selected by the configured `vulgata/August15th-sample` ref; any mismatch MUST fail closed.
+- **FR-005**: `mbs_account` MUST be verified at full commit `451b3a99b179b711ae66260651eb6b12db482e0b` and `mbs_channel` at full commit `d2e11bacd157195c421065292674ab0c29260081`, each selected by the configured `vulgata/August15th-sample` ref; any mismatch MUST fail closed.
 - **FR-006**: Missing, duplicate, inaccessible, or revision-mismatched Repository binding MUST fail before source evidence is inspected or graph state is written.
 - **FR-007**: Eligible provider candidates MUST come only from configured declarations beneath `src/main/resources/disgram/in/**`, with `trans@name` as the candidate endpoint identifier.
 - **FR-008**: Eligible consumer candidates MUST come only from configured `netTools*` invocation forms containing a statically exact literal endpoint; symbols, variables, computed values, and LLM interpretations MUST NOT constitute exact endpoint evidence.
@@ -127,7 +127,7 @@ As a SystemOwner, I want each Repository to act as provider or consumer only for
 
 - Stories 11.1 through 11.3 provide the accepted knowledge-store, sequential Scan, Pass 1, Document Version, Source Anchor, and retrieval boundaries required by this feature.
 - The two prepared Repositories are organization-controlled and available through Repository management; deployment-specific acquisition locations remain outside the version-controlled resolution configuration.
-- The immutable planning inputs are `mbs_account` commit `19c60cd3f3976b7697c487c7bafd96142e3a7625` and `mbs_channel` commit `47f6b627a7598f862873610413eec1e1e7bf46bf`, both selected by `vulgata/August15th-sample`.
+- The immutable planning inputs are `mbs_account` commit `451b3a99b179b711ae66260651eb6b12db482e0b` and `mbs_channel` commit `d2e11bacd157195c421065292674ab0c29260081`, both selected by `vulgata/August15th-sample`.
 - Read-only planning inspection selected one real literal/`trans@name` occurrence and its exact source selectors from those pinned Git objects in the reviewed version-controlled demo profile; the endpoint was observed from source rather than invented by this specification.
 - This `expedited-mvp` feature covers one configured custom-RPC path only. General HTTP/RPC discovery, other communication kinds, general multi-Repository scheduling, advanced uncertainty resolution, and post-demo Cross-Repository behavior remain backlog.
 - System context is advisory and continues to follow the existing queued-application rule during an active Scan.

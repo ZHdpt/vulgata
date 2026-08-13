@@ -201,7 +201,7 @@ public sealed class WorkerAgentDispatcherTests
                 contextRoot.GetProperty("source").GetProperty("sourceText").GetString());
             Assert.Contains("Pass 1 Code Logic Document Worker Agent", prompt, StringComparison.Ordinal);
             Assert.Contains("response_format", capture.Body, StringComparison.Ordinal);
-            Assert.Contains("json_schema", capture.Body, StringComparison.Ordinal);
+            Assert.Contains("json_object", capture.Body, StringComparison.Ordinal);
             Assert.DoesNotContain("loopback-secret", capture.Body, StringComparison.Ordinal);
             Assert.DoesNotContain("unrelated source", capture.Body, StringComparison.Ordinal);
             Assert.DoesNotContain(root, capture.Body, StringComparison.OrdinalIgnoreCase);
@@ -294,14 +294,12 @@ public sealed class WorkerAgentDispatcherTests
                 .EnumerateArray()
                 .Select(item => item.GetProperty("documentVersionId").GetGuid()));
         Assert.Contains("Pass 2 Business Logic Document Worker Agent", prompt, StringComparison.Ordinal);
-        JsonElement responseSchema = requestDocument.RootElement
-            .GetProperty("response_format")
-            .GetProperty("json_schema")
-            .GetProperty("schema");
-        Assert.False(responseSchema.GetProperty("additionalProperties").GetBoolean());
-        Assert.False(responseSchema.GetProperty("properties").TryGetProperty(
-            "referenceDocumentVersionIds",
-            out _));
+        Assert.Equal(
+            "json_object",
+            requestDocument.RootElement
+                .GetProperty("response_format")
+                .GetProperty("type")
+                .GetString());
         Assert.Equal(
             JsonUnmappedMemberHandling.Disallow,
             WorkerAgentJsonContext.Default.Options.UnmappedMemberHandling);

@@ -21,8 +21,8 @@ The reviewed repository facts are:
 
 | Alias / stable label | Expected full ref | Expected full commit |
 | --- | --- | --- |
-| `mbs_account` | `refs/tags/vulgata/August15th-sample` | `19c60cd3f3976b7697c487c7bafd96142e3a7625` |
-| `mbs_channel` | `refs/tags/vulgata/August15th-sample` | `47f6b627a7598f862873610413eec1e1e7bf46bf` |
+| `mbs_account` | `refs/tags/vulgata/August15th-sample` | `451b3a99b179b711ae66260651eb6b12db482e0b` |
+| `mbs_channel` | `refs/tags/vulgata/August15th-sample` | `d2e11bacd157195c421065292674ab0c29260081` |
 
 Aliases/stable labels are profile data and never production code branches. Forbidden profile values include persistence IDs, Git URLs, filesystem paths other than safe Repository-relative selectors, credentials, mutable branches, and Repository names used as matching conditionals.
 
@@ -33,11 +33,11 @@ Read-only `rev-parse`, `grep`, `show`, and `ls-tree` against the two tagged obje
 | Field | Pinned value |
 | --- | --- |
 | Occurrence / direction | `account-to-channel-cust-update-session-v1`; consumer `mbs_account` -> provider `mbs_channel` |
-| Consumer commit | `19c60cd3f3976b7697c487c7bafd96142e3a7625` |
+| Consumer commit | `451b3a99b179b711ae66260651eb6b12db482e0b` |
 | Consumer source | `src/main/java/cn/com/yitong/actions/mobile/UpdateChannelSessionOp.java`, line 45 |
 | Accepted call | simple member invocation `netTools.execute`; receiver `netTools`, member `execute`, direct ordinary string literal at zero-based argument index `1`, ordinal `0` on the line |
 | Observed consumer identifier | `cust/updateSession` |
-| Provider commit | `47f6b627a7598f862873610413eec1e1e7bf46bf` |
+| Provider commit | `d2e11bacd157195c421065292674ab0c29260081` |
 | Provider XML | `src/main/resources/disgram/in/cust/updateSession.xml`, root `trans`, attribute `name`, line 2, ordinal `0` |
 | Observed provider identifier | `in/cust/updateSession` |
 | Provider implementation Document selector | `src/main/java/cn/com/yitong/actions/domain/login/UpdateSessionOp.java`; exact type symbol `cn.com.yitong.actions.domain.login.UpdateSessionOp` |
@@ -85,7 +85,7 @@ The same read-only account object contains the bounded file/storage observation 
 | Field | Pinned value |
 | --- | --- |
 | Observation identity / kind | `account-file-storage-oss-upload-v1`; `file-storage` |
-| Owner Repository | `mbs_account` at `19c60cd3f3976b7697c487c7bafd96142e3a7625` |
+| Owner Repository | `mbs_account` at `451b3a99b179b711ae66260651eb6b12db482e0b` |
 | Authorized owner Document selector | `src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java`; exact type symbol `cn.com.yitong.actions.cust.UploadOcrToOssOp` |
 | Observation selector | simple member invocation; receiver `ossClientService`; member `simpleUploadToOSSBase64String`; line 66; ordinal 0 |
 | Safe locator | `src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java#line=66;rule=unsupported-member-invocation-v1` |

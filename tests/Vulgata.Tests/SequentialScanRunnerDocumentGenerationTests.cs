@@ -952,7 +952,9 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         {
             Packets.Add(packet);
             var pass1 = Assert.IsType<Pass1CodeLogicJobPayload>(packet.Payload);
-            Guid anchorId = WorkerAgentTestFixtures.Id(206);
+            Guid anchorId = pass1.PreparedSourceAnchors.Count > 0
+                ? pass1.PreparedSourceAnchors[0].Id
+                : WorkerAgentTestFixtures.Id(206);
             CanonicalDocumentContent content = new(
                 KnowledgeDocumentLimits.SchemaIdentity,
                 DocumentType.CodeLogic,
@@ -1737,7 +1739,10 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             JsonElement source = root.GetProperty("source");
             Guid jobId = root.GetProperty("jobId").GetGuid();
             Guid codeUnitId = root.GetProperty("codeUnitId").GetGuid();
-            Guid anchorId = AnchorId(codeUnitId);
+            Guid anchorId = root.TryGetProperty("preparedSourceAnchors", out JsonElement prepared) &&
+                prepared.EnumerateArray().Any()
+                    ? prepared.EnumerateArray().First().GetProperty("id").GetGuid()
+                    : AnchorId(codeUnitId);
             G7ResponseEvidence[] communicationEvidence = root
                 .GetProperty("approvedCommunicationEvidence")
                 .EnumerateArray()

@@ -347,14 +347,41 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
         Dictionary<Guid, CurrentSourceAnchor> inputAnchors = currentInputs
             .SelectMany(current => current.SourceAnchors)
             .ToDictionary(anchor => anchor.Id);
+        HashSet<Guid> consumerAnchorIds = [];
+        for (int index = 0; index < currentInputs.Length; index++)
+        {
+            Guid memberRepositoryId = runtimeBinding is null
+                ? packet.RepositoryId
+                : runtimeBinding.Members[index].RepositoryId;
+            if (memberRepositoryId != packet.RepositoryId)
+            {
+                continue;
+            }
+
+            foreach (CurrentSourceAnchor inputAnchor in currentInputs[index].SourceAnchors)
+            {
+                consumerAnchorIds.Add(inputAnchor.Id);
+            }
+        }
+
         Dictionary<Guid, Guid> durableAnchorIds = result.SourceAnchors
+            .Where(anchor => consumerAnchorIds.Contains(anchor.Id))
             .ToDictionary(
                 anchor => anchor.Id,
                 anchor => CreateStableId(
                     "pass2-source-anchor",
                     documentVersionId.ToString("D"),
                     anchor.Id.ToString("D")));
+        Dictionary<Guid, Guid> scanRunByRepositoryId =
+            runtimeBinding is null
+                ? []
+                : new Dictionary<Guid, Guid>
+                {
+                    [runtimeBinding.Consumer.RepositoryId] = runtimeBinding.Consumer.ScanRunId,
+                    [runtimeBinding.Provider.RepositoryId] = runtimeBinding.Provider.ScanRunId,
+                };
         SourceAnchorDraft[] anchors = result.SourceAnchors
+            .Where(anchor => consumerAnchorIds.Contains(anchor.Id))
             .Select(anchor => new SourceAnchorDraft(
                 durableAnchorIds[anchor.Id],
                 documentVersionId,
@@ -369,18 +396,27 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
                 anchor.SourceHash))
             .ToArray();
         EdgeDraft[] edges = result.GeneratedFromDocumentVersionIds
-            .Select(targetDocumentVersionId => new EdgeDraft(
-                CreateStableId(
-                    "pass2-generated-from-edge",
-                    documentVersionId.ToString("D"),
-                    targetDocumentVersionId.ToString("D")),
-                documentVersionId,
-                packet.RepositoryId,
-                packet.ScanRunId,
-                targetDocumentVersionId,
-                packet.RepositoryId,
-                packet.ScanRunId,
-                DocumentEdgeType.GeneratedFrom))
+            .Select((targetDocumentVersionId, index) =>
+            {
+                Guid targetRepositoryId = runtimeBinding is null
+                    ? packet.RepositoryId
+                    : runtimeBinding.Members[index].RepositoryId;
+                Guid targetScanRunId = runtimeBinding is null
+                    ? packet.ScanRunId
+                    : scanRunByRepositoryId[targetRepositoryId];
+                return new EdgeDraft(
+                    CreateStableId(
+                        "pass2-generated-from-edge",
+                        documentVersionId.ToString("D"),
+                        targetDocumentVersionId.ToString("D")),
+                    documentVersionId,
+                    packet.RepositoryId,
+                    packet.ScanRunId,
+                    targetDocumentVersionId,
+                    targetRepositoryId,
+                    targetScanRunId,
+                    DocumentEdgeType.GeneratedFrom);
+            })
             .ToArray();
         Dictionary<Guid, EdgeDraft> edgesByTarget =
             edges.ToDictionary(edge => edge.TargetDocumentVersionId);
@@ -392,6 +428,13 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
                         projection.SourceAnchors.Any(anchor =>
                             inputAnchors[anchor.Id].CodeUnitId == evidence.CodeUnitId));
                 EdgeDraft edge = edgesByTarget[target.DocumentVersionId];
+                Guid targetRepositoryId = runtimeBinding is null
+                    ? packet.RepositoryId
+                    : runtimeBinding.Members.Single(member =>
+                        member.DocumentVersionId == target.DocumentVersionId).RepositoryId;
+                Guid targetScanRunId = runtimeBinding is null
+                    ? packet.ScanRunId
+                    : scanRunByRepositoryId[targetRepositoryId];
                 var steps = new List<FlowTraceStepDraft>
                 {
                     new(
@@ -413,8 +456,8 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
                             evidence.Order.ToString(System.Globalization.CultureInfo.InvariantCulture)),
                         2,
                         target.DocumentVersionId,
-                        packet.RepositoryId,
-                        packet.ScanRunId,
+                        targetRepositoryId,
+                        targetScanRunId,
                         edge.Id,
                         FlowTraceStepKind.Relationship,
                         $"{evidence.Label}: {evidence.Locator}"),
@@ -458,6 +501,14 @@ public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
                     steps);
             })
             .ToArray();
+        foreach (CanonicalSection section in result.Content.Sections)
+        {
+            if (section.SourceAnchorIds.Any(id => !durableAnchorIds.ContainsKey(id)))
+            {
+                return WorkerAgentResultCommitOutcome.Rejected;
+            }
+        }
+
         CanonicalDocumentContent durableContent = result.Content with
         {
             Sections = result.Content.Sections

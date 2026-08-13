@@ -2121,11 +2121,11 @@ internal static partial class Story115ReleaseHarness
         AccountRepository: new(
             "mbs_account",
             "refs/tags/vulgata/August15th-sample",
-            "19c60cd3f3976b7697c487c7bafd96142e3a7625"),
+            "451b3a99b179b711ae66260651eb6b12db482e0b"),
         ChannelRepository: new(
             "mbs_channel",
             "refs/tags/vulgata/August15th-sample",
-            "47f6b627a7598f862873610413eec1e1e7bf46bf"),
+            "d2e11bacd157195c421065292674ab0c29260081"),
         OrderedFinalPath: ReadOnly(
             "migrate",
             "product-provision",

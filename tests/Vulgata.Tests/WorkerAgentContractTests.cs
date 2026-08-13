@@ -194,6 +194,121 @@ public sealed class WorkerAgentContractTests
     }
 
     [Fact]
+    public void Pass1JobPayload_NonCanonicalPreparedAnchors_RejectsValue()
+    {
+        WorkerAgentPreparedSourceAnchor[] duplicate =
+        [
+            new WorkerAgentPreparedSourceAnchor(
+                WorkerAgentTestFixtures.Id(21),
+                WorkerAgentTestFixtures.RepositoryRelativePath,
+                12,
+                24,
+                WorkerAgentTestFixtures.SourceHash),
+            new WorkerAgentPreparedSourceAnchor(
+                WorkerAgentTestFixtures.Id(21),
+                WorkerAgentTestFixtures.RepositoryRelativePath,
+                12,
+                24,
+                WorkerAgentTestFixtures.SourceHash),
+        ];
+        Assert.Throws<ArgumentException>(() =>
+            WorkerAgentTestFixtures.CreatePass1JobPayload(
+                preparedSourceAnchors: duplicate));
+
+        WorkerAgentPreparedSourceAnchor outsideSlice =
+            new WorkerAgentPreparedSourceAnchor(
+                WorkerAgentTestFixtures.Id(22),
+                WorkerAgentTestFixtures.RepositoryRelativePath,
+                1,
+                2,
+                WorkerAgentTestFixtures.SourceHash);
+        Assert.Throws<ArgumentException>(() =>
+            WorkerAgentTestFixtures.CreatePass1JobPayload(
+                preparedSourceAnchors: [outsideSlice]));
+    }
+
+    [Fact]
+    public void Pass1Result_AnchorIdIsNotEchoedFromPreparedAnchors_RejectsValue()
+    {
+        WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet(
+            WorkerAgentTestFixtures.CreatePass1JobPayload(
+                preparedSourceAnchors:
+                [
+                    new WorkerAgentPreparedSourceAnchor(
+                        WorkerAgentTestFixtures.Id(21),
+                        WorkerAgentTestFixtures.RepositoryRelativePath,
+                        12,
+                        24,
+                        WorkerAgentTestFixtures.SourceHash),
+                ]));
+        var pass1 = Assert.IsType<Pass1CodeLogicJobPayload>(packet.Payload);
+        DateTimeOffset now = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
+        Pass1CodeLogicDocumentResultPayload inventedId =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(
+                packet,
+                sourceAnchors:
+                [
+                    WorkerAgentSourceAnchor.Create(
+                        WorkerAgentTestFixtures.Id(99),
+                        pass1.RepositoryRelativePath,
+                        "OrderService.CalculateTotal",
+                        pass1.LineStart,
+                        pass1.LineEnd,
+                        pass1.SourceHash),
+                ]);
+
+        Assert.Throws<ArgumentException>(() =>
+            WorkerAgentResultEnvelope.CreateForJob(
+                packet,
+                WorkerAgentResultOutcome.Valid,
+                null,
+                now,
+                now,
+                inventedId));
+    }
+
+    [Fact]
+    public void Pass1Result_AnchorIsEchoedFromPreparedAnchors_AcceptsValue()
+    {
+        WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet(
+            WorkerAgentTestFixtures.CreatePass1JobPayload(
+                preparedSourceAnchors:
+                [
+                    new WorkerAgentPreparedSourceAnchor(
+                        WorkerAgentTestFixtures.Id(21),
+                        WorkerAgentTestFixtures.RepositoryRelativePath,
+                        12,
+                        24,
+                        WorkerAgentTestFixtures.SourceHash),
+                ]));
+        var pass1 = Assert.IsType<Pass1CodeLogicJobPayload>(packet.Payload);
+        DateTimeOffset now = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
+        Pass1CodeLogicDocumentResultPayload echoed =
+            WorkerAgentTestFixtures.CreatePass1ResultPayload(
+                packet,
+                sourceAnchors:
+                [
+                    WorkerAgentSourceAnchor.Create(
+                        WorkerAgentTestFixtures.Id(21),
+                        pass1.RepositoryRelativePath,
+                        "OrderService.CalculateTotal",
+                        pass1.LineStart,
+                        pass1.LineEnd,
+                        pass1.SourceHash),
+                ]);
+
+        WorkerAgentResultEnvelope envelope = WorkerAgentResultEnvelope.CreateForJob(
+            packet,
+            WorkerAgentResultOutcome.Valid,
+            null,
+            now,
+            now,
+            echoed);
+
+        Assert.Equal(WorkerAgentResultOutcome.Valid, envelope.Outcome);
+    }
+
+    [Fact]
     public void Pass1Result_ContentIsNotCodeLogic_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();

@@ -1006,6 +1006,17 @@ Generated_Code/
 # because we have git ;-)
 _UpgradeReport_Files/
 Backup*/
+!src/dotnet/**/BackupB/
+!tests/**/BackupB/
+!specs/**/backup-b*/
+!demos/backup-b-direct-llm/
+!demos/backup-b-direct-llm/**/
+!demos/backup-b-direct-llm/**
+demos/backup-b-direct-llm/**/bin/
+demos/backup-b-direct-llm/**/obj/
+demo-seed-repos/
+demo-migration.sql
+identity-migration.sql
 UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/

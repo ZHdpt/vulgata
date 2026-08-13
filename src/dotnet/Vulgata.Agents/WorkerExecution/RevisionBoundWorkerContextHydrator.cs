@@ -68,9 +68,9 @@ public sealed class RevisionBoundWorkerContextHydrator(
         {
             throw;
         }
-        catch (Exception)
+                catch (Exception exception)
         {
-            throw new InvalidDataException("Worker Agent 源上下文校验失败。");
+                    throw new InvalidDataException("Worker Agent 源上下文校验失败。", exception);
         }
     }
 

@@ -19,7 +19,8 @@ public sealed class WorkerAgentExecutionContext
         int requestUtf8ByteCount,
         IReadOnlyList<WorkerAgentStructuralContext> neighboringStructuralContext,
         IReadOnlyList<WorkerAgentCommunicationEvidence> approvedCommunicationEvidence,
-        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds)
+        IReadOnlyList<Guid> allowedReferenceDocumentVersionIds,
+        IReadOnlyList<WorkerAgentPreparedSourceAnchor> preparedSourceAnchors)
     {
         Packet = packet;
         SourceText = sourceText;
@@ -29,6 +30,7 @@ public sealed class WorkerAgentExecutionContext
         NeighboringStructuralContext = neighboringStructuralContext;
         ApprovedCommunicationEvidence = approvedCommunicationEvidence;
         AllowedReferenceDocumentVersionIds = allowedReferenceDocumentVersionIds;
+        PreparedSourceAnchors = preparedSourceAnchors;
     }
 
     public WorkerAgentJobPacket Packet { get; }
@@ -39,6 +41,11 @@ public sealed class WorkerAgentExecutionContext
     public IReadOnlyList<WorkerAgentStructuralContext> NeighboringStructuralContext { get; }
     public IReadOnlyList<WorkerAgentCommunicationEvidence> ApprovedCommunicationEvidence { get; }
     public IReadOnlyList<Guid> AllowedReferenceDocumentVersionIds { get; }
+
+    /// <summary>
+    /// Server-generated Source Anchor identities the model must echo verbatim.
+    /// </summary>
+    public IReadOnlyList<WorkerAgentPreparedSourceAnchor> PreparedSourceAnchors { get; }
 
     internal static WorkerAgentExecutionContext Create(
         WorkerAgentJobPacket packet,
@@ -83,6 +90,13 @@ public sealed class WorkerAgentExecutionContext
         }
 
         requestBytes += 36L * pass1.AllowedReferenceDocumentVersionIds.Count;
+        foreach (WorkerAgentPreparedSourceAnchor anchor in pass1.PreparedSourceAnchors)
+        {
+            requestBytes += 36;
+            requestBytes += CountUtf8Bytes(anchor.RepositoryRelativePath);
+            requestBytes += 64;
+        }
+
         if (requestBytes > WorkerAgentContractLimits.MaximumProviderRequestUtf8Bytes)
         {
             throw new InvalidDataException("Hydrated Worker Agent request exceeds its finite bound.");
@@ -96,7 +110,8 @@ public sealed class WorkerAgentExecutionContext
             checked((int)requestBytes),
             Array.AsReadOnly(pass1.NeighboringStructuralContext.ToArray()),
             Array.AsReadOnly(pass1.ApprovedCommunicationEvidence.ToArray()),
-            Array.AsReadOnly(pass1.AllowedReferenceDocumentVersionIds.ToArray()));
+            Array.AsReadOnly(pass1.AllowedReferenceDocumentVersionIds.ToArray()),
+            Array.AsReadOnly(pass1.PreparedSourceAnchors.ToArray()));
     }
 
     public override string ToString() =>

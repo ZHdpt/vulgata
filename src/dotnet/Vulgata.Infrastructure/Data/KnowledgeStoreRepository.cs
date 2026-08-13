@@ -649,224 +649,228 @@ public sealed class KnowledgeStoreRepository(
         KnowledgeStoreContractValidator.ValidateRequestedStableSectionIds(
             requestedStableSectionIds);
 
-        Guid[] authorizedRepositoryIds = scope.AuthorizedRepositoryIds.ToArray();
-        await using IDbContextTransaction transaction =
-            await _context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-        if (!await scope.HasCurrentAccessAsync(
-                authorizedRepositoryIds,
-                cancellationToken))
+        IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            return null;
-        }
-
-        var source = await _context.Set<LogicalDocument>()
-            .AsNoTracking()
-            .Where(document =>
-                document.Id == logicalDocumentId &&
-                authorizedRepositoryIds.Contains(document.RepositoryId))
-            .Select(document => new
+            Guid[] authorizedRepositoryIds = scope.AuthorizedRepositoryIds.ToArray();
+            await using IDbContextTransaction transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
+            if (!await scope.HasCurrentAccessAsync(
+                    authorizedRepositoryIds,
+                    cancellationToken))
             {
-                document.Id,
-                document.RepositoryId,
-                document.DocumentType,
-                document.CurrentVersionId,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-        if (source?.CurrentVersionId is not Guid currentVersionId)
-        {
-            return null;
-        }
+                return null;
+            }
 
-        DocumentVersion? version = await _context.Set<DocumentVersion>()
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                candidate =>
-                    candidate.Id == currentVersionId &&
-                    candidate.LogicalDocumentId == source.Id &&
-                    candidate.RepositoryId == source.RepositoryId,
-                cancellationToken);
-        if (version is null)
-        {
-            return null;
-        }
-
-        IndexEntry index = await _context.Set<IndexEntry>()
-            .AsNoTracking()
-            .SingleAsync(
-                entry =>
-                    entry.DocumentVersionId == version.Id &&
-                    entry.LogicalDocumentId == source.Id &&
-                    entry.RepositoryId == source.RepositoryId,
-                cancellationToken);
-        Guid[] requestedIds = requestedStableSectionIds.ToArray();
-        DocumentSection[] sections = await _context.Set<DocumentSection>()
-            .AsNoTracking()
-            .Where(section =>
-                section.DocumentVersionId == version.Id &&
-                section.LogicalDocumentId == source.Id &&
-                section.RepositoryId == source.RepositoryId &&
-                requestedIds.Contains(section.StableSectionId))
-            .OrderBy(section => section.SectionOrder)
-            .ToArrayAsync(cancellationToken);
-        string[] allSectionDocumentReferences = await _context.Set<DocumentSection>()
-            .AsNoTracking()
-            .Where(section =>
-                section.DocumentVersionId == version.Id &&
-                section.LogicalDocumentId == source.Id &&
-                section.RepositoryId == source.RepositoryId)
-            .Select(section => section.DocumentVersionIdsJson)
-            .ToArrayAsync(cancellationToken);
-        CurrentSourceAnchor[] anchors = await _context.Set<SourceAnchor>()
-            .AsNoTracking()
-            .Where(anchor =>
-                anchor.DocumentVersionId == version.Id &&
-                anchor.RepositoryId == source.RepositoryId)
-            .OrderBy(anchor => anchor.Id)
-            .Select(anchor => new CurrentSourceAnchor(
-                anchor.Id,
-                anchor.CodeUnitId,
-                anchor.RepositoryRelativePath,
-                anchor.EvidenceLocator,
-                anchor.LineStart,
-                anchor.LineEnd,
-                anchor.SourceHash))
-            .Take(KnowledgeDocumentLimits.MaximumAnchors)
-            .ToArrayAsync(cancellationToken);
-        DocumentEdge[] edges = await _context.Set<DocumentEdge>()
-            .AsNoTracking()
-            .Where(edge =>
-                edge.SourceDocumentVersionId == version.Id &&
-                edge.SourceRepositoryId == source.RepositoryId)
-            .OrderBy(edge => edge.Id)
-            .Take(KnowledgeDocumentLimits.MaximumEdges)
-            .ToArrayAsync(cancellationToken);
-        Guid[] authorizedExactEdgeIds = edges
-            .Where(edge => scope.Contains(edge.TargetRepositoryId))
-            .Select(edge => edge.Id)
-            .ToArray();
-        Dictionary<Guid, ExactCrossRepositoryEdgeEvidence> exactEvidenceByEdge =
-            authorizedExactEdgeIds.Length == 0
-                ? []
-                : await _context.ExactCrossRepositoryEdgeEvidence
-                    .AsNoTracking()
-                    .Where(evidence => authorizedExactEdgeIds.Contains(evidence.EdgeId))
-                    .ToDictionaryAsync(evidence => evidence.EdgeId, cancellationToken);
-        CurrentRelationship[] relationships = edges
-            .Select<DocumentEdge, CurrentRelationship>(edge =>
-                !scope.Contains(edge.TargetRepositoryId)
-                    ? new RestrictedRelationship()
-                    : exactEvidenceByEdge.TryGetValue(
-                        edge.Id,
-                        out ExactCrossRepositoryEdgeEvidence? evidence)
-                        ? new AuthorizedExactRelationship(
-                            OpaqueRelationshipIdentity(edge.Id),
-                            edge.EdgeType,
-                            new ExactCrossRepositoryEvidenceReadModel(
-                                evidence.ConsumerRawIdentifier,
-                                evidence.ProviderRawIdentifier,
-                                evidence.NormalizedEndpointIdentifier,
-                                evidence.Protocol,
-                                evidence.ProfileId,
-                                evidence.ProfileVersion,
-                                evidence.ProfileFingerprint,
-                                evidence.OccurrenceId,
-                                evidence.Confidence,
-                                evidence.ConsumerEvidenceLocator,
-                                evidence.ProviderEvidenceLocator))
-                        : new AuthorizedRelationship(
-                        edge.Id,
-                        edge.EdgeType,
-                        edge.SourceDocumentVersionId,
-                        edge.TargetDocumentVersionId,
-                        edge.TargetRepositoryId))
-            .ToArray();
-        IReadOnlyList<CurrentFlowGroup> flowGroups = await LoadFlowGroupsAsync(
-            version.Id,
-            source.RepositoryId,
-            scope,
-            cancellationToken);
-        Guid[] referencedDocumentVersionIds = allSectionDocumentReferences
-            .SelectMany(DeserializeGuids)
-            .Distinct()
-            .ToArray();
-        Guid[] authorizedDocumentVersionIds = referencedDocumentVersionIds.Length == 0
-            ? []
-            : await _context.Set<DocumentVersion>()
+            var source = await _context.Set<LogicalDocument>()
                 .AsNoTracking()
-                .Where(candidate =>
-                    referencedDocumentVersionIds.Contains(candidate.Id) &&
-                    authorizedRepositoryIds.Contains(candidate.RepositoryId))
-                .Select(candidate => candidate.Id)
-                .ToArrayAsync(cancellationToken);
-        var authorizedDocumentVersionIdSet = authorizedDocumentVersionIds.ToHashSet();
-        bool hasRestrictedTextProjection =
-            edges.Any(edge => !scope.Contains(edge.TargetRepositoryId)) ||
-            flowGroups
-                .SelectMany(group => group.Traces)
-                .SelectMany(trace => trace.Steps)
-                .Any(step => step.IsRestrictedRelationship) ||
-            allSectionDocumentReferences
-                .SelectMany(DeserializeGuids)
-                .Any(id => !authorizedDocumentVersionIdSet.Contains(id));
-
-        var current = new CurrentKnowledge(
-            source.Id,
-            version.Id,
-            source.RepositoryId,
-            source.DocumentType,
-            hasRestrictedTextProjection ? string.Empty : version.Title,
-            version.RepositoryRelativePath,
-            hasRestrictedTextProjection
-                ? string.Empty
-                : RedactDocumentReferences(
-                    version.ContentJson,
-                    authorizedDocumentVersionIdSet),
-            hasRestrictedTextProjection ? string.Empty : version.ContentMarkdown,
-            anchors,
-            relationships,
-            hasRestrictedTextProjection
-                ? RedactFlowTextProjection(flowGroups)
-                : flowGroups,
-            hasRestrictedTextProjection
-                ? new CurrentIndexEntry(string.Empty, [], [], [], string.Empty)
-                : new CurrentIndexEntry(
-                    index.Summary,
-                    DeserializeStrings(index.KeySymbolsJson),
-                    DeserializeStrings(index.BusinessTermsJson),
-                    DeserializeStrings(index.TechnicalTermsJson),
-                    index.SearchText),
-            sections.Select(section =>
+                .Where(document =>
+                    document.Id == logicalDocumentId &&
+                    authorizedRepositoryIds.Contains(document.RepositoryId))
+                .Select(document => new
+                {
+                    document.Id,
+                    document.RepositoryId,
+                    document.DocumentType,
+                    document.CurrentVersionId,
+                })
+                .SingleOrDefaultAsync(cancellationToken);
+            if (source?.CurrentVersionId is not Guid currentVersionId)
             {
-                IReadOnlyList<Guid> documentVersionIds =
-                    DeserializeGuids(section.DocumentVersionIdsJson);
-                bool hasRestrictedDocumentReference = documentVersionIds.Any(id =>
-                    !authorizedDocumentVersionIdSet.Contains(id));
-                bool redactTextProjection =
-                    hasRestrictedTextProjection || hasRestrictedDocumentReference;
-                return new CurrentDocumentSection(
-                    section.StableSectionId,
-                    section.SectionOrder,
-                    section.SectionKind,
-                    redactTextProjection ? string.Empty : section.Heading,
-                    redactTextProjection ? string.Empty : section.ContentMarkdown,
-                    redactTextProjection ? string.Empty : section.SearchText,
-                    hasRestrictedDocumentReference
-                        ? []
-                        : DeserializeGuids(section.SourceAnchorIdsJson),
-                    hasRestrictedDocumentReference
-                        ? []
-                        : documentVersionIds
-                            .Where(authorizedDocumentVersionIdSet.Contains)
-                            .ToArray(),
-                    hasRestrictedDocumentReference);
-            }).ToArray());
-        return await scope.HasCurrentAccessAsync(
-                authorizedRepositoryIds,
-                cancellationToken)
-            ? current
-            : null;
+                return null;
+            }
+
+            DocumentVersion? version = await _context.Set<DocumentVersion>()
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    candidate =>
+                        candidate.Id == currentVersionId &&
+                        candidate.LogicalDocumentId == source.Id &&
+                        candidate.RepositoryId == source.RepositoryId,
+                    cancellationToken);
+            if (version is null)
+            {
+                return null;
+            }
+
+            IndexEntry index = await _context.Set<IndexEntry>()
+                .AsNoTracking()
+                .SingleAsync(
+                    entry =>
+                        entry.DocumentVersionId == version.Id &&
+                        entry.LogicalDocumentId == source.Id &&
+                        entry.RepositoryId == source.RepositoryId,
+                    cancellationToken);
+            Guid[] requestedIds = requestedStableSectionIds.ToArray();
+            DocumentSection[] sections = await _context.Set<DocumentSection>()
+                .AsNoTracking()
+                .Where(section =>
+                    section.DocumentVersionId == version.Id &&
+                    section.LogicalDocumentId == source.Id &&
+                    section.RepositoryId == source.RepositoryId &&
+                    requestedIds.Contains(section.StableSectionId))
+                .OrderBy(section => section.SectionOrder)
+                .ToArrayAsync(cancellationToken);
+            string[] allSectionDocumentReferences = await _context.Set<DocumentSection>()
+                .AsNoTracking()
+                .Where(section =>
+                    section.DocumentVersionId == version.Id &&
+                    section.LogicalDocumentId == source.Id &&
+                    section.RepositoryId == source.RepositoryId)
+                .Select(section => section.DocumentVersionIdsJson)
+                .ToArrayAsync(cancellationToken);
+            CurrentSourceAnchor[] anchors = await _context.Set<SourceAnchor>()
+                .AsNoTracking()
+                .Where(anchor =>
+                    anchor.DocumentVersionId == version.Id &&
+                    anchor.RepositoryId == source.RepositoryId)
+                .OrderBy(anchor => anchor.Id)
+                .Select(anchor => new CurrentSourceAnchor(
+                    anchor.Id,
+                    anchor.CodeUnitId,
+                    anchor.RepositoryRelativePath,
+                    anchor.EvidenceLocator,
+                    anchor.LineStart,
+                    anchor.LineEnd,
+                    anchor.SourceHash))
+                .Take(KnowledgeDocumentLimits.MaximumAnchors)
+                .ToArrayAsync(cancellationToken);
+            DocumentEdge[] edges = await _context.Set<DocumentEdge>()
+                .AsNoTracking()
+                .Where(edge =>
+                    edge.SourceDocumentVersionId == version.Id &&
+                    edge.SourceRepositoryId == source.RepositoryId)
+                .OrderBy(edge => edge.Id)
+                .Take(KnowledgeDocumentLimits.MaximumEdges)
+                .ToArrayAsync(cancellationToken);
+            Guid[] authorizedExactEdgeIds = edges
+                .Where(edge => scope.Contains(edge.TargetRepositoryId))
+                .Select(edge => edge.Id)
+                .ToArray();
+            Dictionary<Guid, ExactCrossRepositoryEdgeEvidence> exactEvidenceByEdge =
+                authorizedExactEdgeIds.Length == 0
+                    ? []
+                    : await _context.ExactCrossRepositoryEdgeEvidence
+                        .AsNoTracking()
+                        .Where(evidence => authorizedExactEdgeIds.Contains(evidence.EdgeId))
+                        .ToDictionaryAsync(evidence => evidence.EdgeId, cancellationToken);
+            CurrentRelationship[] relationships = edges
+                .Select<DocumentEdge, CurrentRelationship>(edge =>
+                    !scope.Contains(edge.TargetRepositoryId)
+                        ? new RestrictedRelationship()
+                        : exactEvidenceByEdge.TryGetValue(
+                            edge.Id,
+                            out ExactCrossRepositoryEdgeEvidence? evidence)
+                            ? new AuthorizedExactRelationship(
+                                OpaqueRelationshipIdentity(edge.Id),
+                                edge.EdgeType,
+                                new ExactCrossRepositoryEvidenceReadModel(
+                                    evidence.ConsumerRawIdentifier,
+                                    evidence.ProviderRawIdentifier,
+                                    evidence.NormalizedEndpointIdentifier,
+                                    evidence.Protocol,
+                                    evidence.ProfileId,
+                                    evidence.ProfileVersion,
+                                    evidence.ProfileFingerprint,
+                                    evidence.OccurrenceId,
+                                    evidence.Confidence,
+                                    evidence.ConsumerEvidenceLocator,
+                                    evidence.ProviderEvidenceLocator))
+                            : new AuthorizedRelationship(
+                            edge.Id,
+                            edge.EdgeType,
+                            edge.SourceDocumentVersionId,
+                            edge.TargetDocumentVersionId,
+                            edge.TargetRepositoryId))
+                .ToArray();
+            IReadOnlyList<CurrentFlowGroup> flowGroups = await LoadFlowGroupsAsync(
+                version.Id,
+                source.RepositoryId,
+                scope,
+                cancellationToken);
+            Guid[] referencedDocumentVersionIds = allSectionDocumentReferences
+                .SelectMany(DeserializeGuids)
+                .Distinct()
+                .ToArray();
+            Guid[] authorizedDocumentVersionIds = referencedDocumentVersionIds.Length == 0
+                ? []
+                : await _context.Set<DocumentVersion>()
+                    .AsNoTracking()
+                    .Where(candidate =>
+                        referencedDocumentVersionIds.Contains(candidate.Id) &&
+                        authorizedRepositoryIds.Contains(candidate.RepositoryId))
+                    .Select(candidate => candidate.Id)
+                    .ToArrayAsync(cancellationToken);
+            var authorizedDocumentVersionIdSet = authorizedDocumentVersionIds.ToHashSet();
+            bool hasRestrictedTextProjection =
+                edges.Any(edge => !scope.Contains(edge.TargetRepositoryId)) ||
+                flowGroups
+                    .SelectMany(group => group.Traces)
+                    .SelectMany(trace => trace.Steps)
+                    .Any(step => step.IsRestrictedRelationship) ||
+                allSectionDocumentReferences
+                    .SelectMany(DeserializeGuids)
+                    .Any(id => !authorizedDocumentVersionIdSet.Contains(id));
+
+            var current = new CurrentKnowledge(
+                source.Id,
+                version.Id,
+                source.RepositoryId,
+                source.DocumentType,
+                hasRestrictedTextProjection ? string.Empty : version.Title,
+                version.RepositoryRelativePath,
+                hasRestrictedTextProjection
+                    ? string.Empty
+                    : RedactDocumentReferences(
+                        version.ContentJson,
+                        authorizedDocumentVersionIdSet),
+                hasRestrictedTextProjection ? string.Empty : version.ContentMarkdown,
+                anchors,
+                relationships,
+                hasRestrictedTextProjection
+                    ? RedactFlowTextProjection(flowGroups)
+                    : flowGroups,
+                hasRestrictedTextProjection
+                    ? new CurrentIndexEntry(string.Empty, [], [], [], string.Empty)
+                    : new CurrentIndexEntry(
+                        index.Summary,
+                        DeserializeStrings(index.KeySymbolsJson),
+                        DeserializeStrings(index.BusinessTermsJson),
+                        DeserializeStrings(index.TechnicalTermsJson),
+                        index.SearchText),
+                sections.Select(section =>
+                {
+                    IReadOnlyList<Guid> documentVersionIds =
+                        DeserializeGuids(section.DocumentVersionIdsJson);
+                    bool hasRestrictedDocumentReference = documentVersionIds.Any(id =>
+                        !authorizedDocumentVersionIdSet.Contains(id));
+                    bool redactTextProjection =
+                        hasRestrictedTextProjection || hasRestrictedDocumentReference;
+                    return new CurrentDocumentSection(
+                        section.StableSectionId,
+                        section.SectionOrder,
+                        section.SectionKind,
+                        redactTextProjection ? string.Empty : section.Heading,
+                        redactTextProjection ? string.Empty : section.ContentMarkdown,
+                        redactTextProjection ? string.Empty : section.SearchText,
+                        hasRestrictedDocumentReference
+                            ? []
+                            : DeserializeGuids(section.SourceAnchorIdsJson),
+                        hasRestrictedDocumentReference
+                            ? []
+                            : documentVersionIds
+                                .Where(authorizedDocumentVersionIdSet.Contains)
+                                .ToArray(),
+                        hasRestrictedDocumentReference);
+                }).ToArray());
+            return await scope.HasCurrentAccessAsync(
+                    authorizedRepositoryIds,
+                    cancellationToken)
+                ? current
+                : null;
+        });
     }
 
     public async Task<AuthorizedUncertaintyReadModel?> GetUncertaintyAsync(
@@ -880,55 +884,59 @@ public sealed class KnowledgeStoreRepository(
             return null;
         }
 
-        Guid[] authorizedRepositoryIds = scope.AuthorizedRepositoryIds.ToArray();
-        await using IDbContextTransaction transaction =
-            await _context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-        if (!await scope.HasCurrentAccessAsync(
-                authorizedRepositoryIds,
-                cancellationToken))
+        IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            return null;
-        }
+            Guid[] authorizedRepositoryIds = scope.AuthorizedRepositoryIds.ToArray();
+            await using IDbContextTransaction transaction =
+                await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
+            if (!await scope.HasCurrentAccessAsync(
+                    authorizedRepositoryIds,
+                    cancellationToken))
+            {
+                return null;
+            }
 
-        Uncertainty? uncertainty = await _context.Uncertainties
-            .AsNoTracking()
-            .SingleOrDefaultAsync(value =>
-                value.Id == uncertaintyId &&
-                authorizedRepositoryIds.Contains(value.RepositoryId) &&
-                (value.TargetRepositoryId == null ||
-                    authorizedRepositoryIds.Contains(value.TargetRepositoryId.Value)),
-                cancellationToken);
-        if (uncertainty is null)
-        {
-            return null;
-        }
+            Uncertainty? uncertainty = await _context.Uncertainties
+                .AsNoTracking()
+                .SingleOrDefaultAsync(value =>
+                    value.Id == uncertaintyId &&
+                    authorizedRepositoryIds.Contains(value.RepositoryId) &&
+                    (value.TargetRepositoryId == null ||
+                        authorizedRepositoryIds.Contains(value.TargetRepositoryId.Value)),
+                    cancellationToken);
+            if (uncertainty is null)
+            {
+                return null;
+            }
 
-        Guid[] requiredRepositoryIds = uncertainty.TargetRepositoryId is Guid targetRepositoryId
-            ? [uncertainty.RepositoryId, targetRepositoryId]
-            : [uncertainty.RepositoryId];
-        if (!await scope.HasCurrentAccessAsync(
-                requiredRepositoryIds.Distinct().ToArray(),
-                cancellationToken))
-        {
-            return null;
-        }
+            Guid[] requiredRepositoryIds = uncertainty.TargetRepositoryId is Guid targetRepositoryId
+                ? [uncertainty.RepositoryId, targetRepositoryId]
+                : [uncertainty.RepositoryId];
+            if (!await scope.HasCurrentAccessAsync(
+                    requiredRepositoryIds.Distinct().ToArray(),
+                    cancellationToken))
+            {
+                return null;
+            }
 
-        return new AuthorizedUncertaintyReadModel(
-            uncertainty.Type,
-            uncertainty.Status,
-            uncertainty.SubStatus,
-            uncertainty.ReasonCode,
-            uncertainty.ObservationKind,
-            uncertainty.EndpointIdentifier,
-            uncertainty.EndpointIdentifierNormalized,
-            uncertainty.ProfileSchemaVersion,
-            uncertainty.ProfileId,
-            uncertainty.ProfileVersion,
-            uncertainty.ProfileFingerprint,
-            uncertainty.OccurrenceId,
-            uncertainty.EvidenceLocator);
+            return new AuthorizedUncertaintyReadModel(
+                uncertainty.Type,
+                uncertainty.Status,
+                uncertainty.SubStatus,
+                uncertainty.ReasonCode,
+                uncertainty.ObservationKind,
+                uncertainty.EndpointIdentifier,
+                uncertainty.EndpointIdentifierNormalized,
+                uncertainty.ProfileSchemaVersion,
+                uncertainty.ProfileId,
+                uncertainty.ProfileVersion,
+                uncertainty.ProfileFingerprint,
+                uncertainty.OccurrenceId,
+                uncertainty.EvidenceLocator);
+        });
     }
 
     private static string OpaqueRelationshipIdentity(Guid edgeId) =>

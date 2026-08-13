@@ -232,6 +232,14 @@ public sealed class WorkerAgentResultEnvelope
                     nameof(payload));
             }
 
+            if (job.PreparedSourceAnchors.Count > 0 &&
+                pass1.SourceAnchors.Any(anchor => !MatchesPreparedAnchor(anchor, job.PreparedSourceAnchors)))
+            {
+                throw new ArgumentException(
+                    "Pass 1 Source Anchor identifiers must be echoed verbatim from the prepared anchor set.",
+                    nameof(payload));
+            }
+
             Guid[] approvedEvidenceIds = job.ApprovedCommunicationEvidence
                 .Select(item => item.EvidenceId)
                 .ToArray();
@@ -362,6 +370,18 @@ public sealed class WorkerAgentResultEnvelope
         left.LineStart == right.LineStart &&
         left.LineEnd == right.LineEnd &&
         StringComparer.Ordinal.Equals(left.SourceHash, right.SourceHash);
+
+    private static bool MatchesPreparedAnchor(
+        WorkerAgentSourceAnchor anchor,
+        IReadOnlyList<WorkerAgentPreparedSourceAnchor> preparedAnchors) =>
+        preparedAnchors.Any(prepared =>
+            anchor.Id == prepared.Id &&
+            StringComparer.Ordinal.Equals(
+                anchor.RepositoryRelativePath,
+                prepared.RepositoryRelativePath) &&
+            anchor.LineStart == prepared.LineStart &&
+            anchor.LineEnd == prepared.LineEnd &&
+            StringComparer.Ordinal.Equals(anchor.SourceHash, prepared.SourceHash));
 
     private static bool IsStrictlyAscending(IReadOnlyList<Guid> values)
     {

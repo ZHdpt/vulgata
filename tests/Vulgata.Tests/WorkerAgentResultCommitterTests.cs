@@ -288,6 +288,81 @@ public sealed class WorkerAgentResultCommitterTests
     }
 
     [Fact]
+    public async Task CommitAsync_CrossRepositoryPass2_PreservesGeneratedFromOwnershipAndConsumerAnchors()
+    {
+        await using SqliteKnowledgeStoreSession session =
+            await KnowledgeStoreTestHarness.CreateSqliteSessionAsync();
+        var knowledgeStore = new KnowledgeStoreRepository(
+            session.Context,
+            new KnowledgeDocumentMaterializer());
+        CrossRepositoryPass2Fixture fixture = await CreateCrossRepositoryPass2FixtureAsync(
+            session.Context,
+            knowledgeStore);
+        var committer = new WorkerAgentResultCommitter(knowledgeStore);
+        RepositoryAccessScope scope = new(
+            [fixture.ConsumerRepositoryId, fixture.ProviderRepositoryId]);
+
+        WorkerAgentResultCommitOutcome outcome = await committer.CommitAsync(
+            fixture.Packet,
+            fixture.Result,
+            scope,
+            fixture.Binding,
+            CancellationToken.None);
+
+        Assert.Equal(WorkerAgentResultCommitOutcome.Committed, outcome);
+        DocumentEdge[] edges = await session.Context.Set<DocumentEdge>()
+            .AsNoTracking()
+            .Where(edge => edge.EdgeType == DocumentEdgeType.GeneratedFrom)
+            .OrderBy(edge => edge.TargetDocumentVersionId)
+            .ToArrayAsync();
+        Assert.Collection(
+            edges,
+            consumer =>
+            {
+                Assert.Equal(fixture.ConsumerDocumentVersionId, consumer.TargetDocumentVersionId);
+                Assert.Equal(fixture.ConsumerRepositoryId, consumer.TargetRepositoryId);
+                Assert.Equal(fixture.ConsumerScanRunId, consumer.TargetScanRunId);
+            },
+            provider =>
+            {
+                Assert.Equal(fixture.ProviderDocumentVersionId, provider.TargetDocumentVersionId);
+                Assert.Equal(fixture.ProviderRepositoryId, provider.TargetRepositoryId);
+                Assert.Equal(fixture.ProviderScanRunId, provider.TargetScanRunId);
+            });
+
+        Guid businessLogicalDocumentId = await session.Context.Set<LogicalDocument>()
+            .AsNoTracking()
+            .Where(document => document.DocumentType == DocumentType.BusinessLogic)
+            .Select(document => document.Id)
+            .SingleAsync();
+        DocumentVersion businessVersion = await session.Context.Set<DocumentVersion>()
+            .AsNoTracking()
+            .SingleAsync(version => version.LogicalDocumentId == businessLogicalDocumentId);
+        SourceAnchor anchor = await session.Context.Set<SourceAnchor>()
+            .AsNoTracking()
+            .SingleAsync(value => value.DocumentVersionId == businessVersion.Id);
+        Assert.Equal(fixture.ConsumerRepositoryId, anchor.RepositoryId);
+        Assert.Equal(fixture.ConsumerScanRunId, anchor.ScanRunId);
+        Assert.DoesNotContain(
+            await session.Context.Set<SourceAnchor>()
+                .AsNoTracking()
+                .Where(value => value.DocumentVersionId == businessVersion.Id)
+                .ToArrayAsync(),
+            value => value.RepositoryId == fixture.ProviderRepositoryId);
+
+        FlowTraceStep[] relationshipSteps = await session.Context.Set<FlowTraceStep>()
+            .AsNoTracking()
+            .Where(step => step.StepKind == FlowTraceStepKind.Relationship)
+            .OrderBy(step => step.DocumentVersionId)
+            .ToArrayAsync();
+        Assert.Contains(
+            relationshipSteps,
+            step => step.DocumentVersionId == fixture.ProviderDocumentVersionId &&
+                step.DocumentRepositoryId == fixture.ProviderRepositoryId &&
+                step.DocumentScanRunId == fixture.ProviderScanRunId);
+    }
+
+    [Fact]
     public async Task HasCommittedResultAsync_StablePass2Job_RecognizesOnlyDurableBusinessLogicVersion()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -1077,6 +1152,325 @@ public sealed class WorkerAgentResultCommitterTests
         return new(flow, packet, result, generatedFromIds, sectionIds);
     }
 
+    private static async Task<CrossRepositoryPass2Fixture> CreateCrossRepositoryPass2FixtureAsync(
+        VulgataDbContext context,
+        IKnowledgeStoreRepository knowledgeStore)
+    {
+        Guid systemId = WorkerAgentTestFixtures.Id(1_000);
+        Guid consumerRepositoryId = WorkerAgentTestFixtures.Id(1_001);
+        Guid providerRepositoryId = WorkerAgentTestFixtures.Id(1_002);
+        Guid consumerScanRunId = WorkerAgentTestFixtures.Id(1_003);
+        Guid providerScanRunId = WorkerAgentTestFixtures.Id(1_004);
+        Guid consumerExecutionId = WorkerAgentTestFixtures.Id(1_005);
+        Guid providerExecutionId = WorkerAgentTestFixtures.Id(1_006);
+        Guid consumerCodeUnitId = WorkerAgentTestFixtures.Id(1_007);
+        Guid providerCodeUnitId = WorkerAgentTestFixtures.Id(1_008);
+        Guid consumerLogicalDocumentId = WorkerAgentTestFixtures.Id(1_009);
+        Guid providerLogicalDocumentId = WorkerAgentTestFixtures.Id(1_010);
+        Guid consumerAnchorId = WorkerAgentTestFixtures.Id(1_011);
+        Guid providerAnchorId = WorkerAgentTestFixtures.Id(1_012);
+        string consumerRevision = new('a', 40);
+        string providerRevision = new('b', 40);
+        OrdinaryPass1JobIdentity consumerJob = OrdinaryPass1JobIdentity.Create(
+            consumerExecutionId,
+            consumerScanRunId,
+            consumerRepositoryId,
+            consumerCodeUnitId,
+            consumerRevision);
+        OrdinaryPass1JobIdentity providerJob = OrdinaryPass1JobIdentity.Create(
+            providerExecutionId,
+            providerScanRunId,
+            providerRepositoryId,
+            providerCodeUnitId,
+            providerRevision);
+        Guid consumerDocumentVersionId =
+            OrdinaryPass1JobIdentity.CreateDocumentVersionId(consumerJob.JobId);
+        Guid providerDocumentVersionId =
+            OrdinaryPass1JobIdentity.CreateDocumentVersionId(providerJob.JobId);
+
+        Repository consumerRepository = Repository.CreateStandalone(
+            "consumer",
+            "https://example.invalid/consumer.git",
+            null,
+            null,
+            KnowledgeStoreTestFixtures.CreatedAt);
+        Repository providerRepository = Repository.CreateStandalone(
+            "provider",
+            "https://example.invalid/provider.git",
+            null,
+            null,
+            KnowledgeStoreTestFixtures.CreatedAt);
+        SetId(consumerRepository, consumerRepositoryId);
+        SetId(providerRepository, providerRepositoryId);
+        context.Repositories.AddRange(consumerRepository, providerRepository);
+        context.ScanRuns.AddRange(
+            CompletedScanRun(consumerScanRunId, consumerRepositoryId, consumerRevision),
+            CompletedScanRun(providerScanRunId, providerRepositoryId, providerRevision));
+        context.CodeUnits.AddRange(
+            CodeUnit(consumerCodeUnitId, consumerScanRunId, consumerRepositoryId,
+                "src/Consumer.cs", "Consumer", 1, 10),
+            CodeUnit(providerCodeUnitId, providerScanRunId, providerRepositoryId,
+                "src/Provider.cs", "Provider", 20, 30));
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        RepositoryAccessScope supportScope =
+            new([consumerRepositoryId, providerRepositoryId]);
+        CurrentKnowledge consumer = await CommitCodeLogicAsync(
+            knowledgeStore,
+            supportScope,
+            WorkerAgentTestFixtures.Id(1_020),
+            consumerLogicalDocumentId,
+            consumerDocumentVersionId,
+            consumerRepositoryId,
+            consumerScanRunId,
+            consumerRevision,
+            consumerCodeUnitId,
+            consumerAnchorId,
+            WorkerAgentTestFixtures.Id(1_013),
+            "src/Consumer.cs",
+            "Consumer",
+            1,
+            10);
+        CurrentKnowledge provider = await CommitCodeLogicAsync(
+            knowledgeStore,
+            supportScope,
+            WorkerAgentTestFixtures.Id(1_021),
+            providerLogicalDocumentId,
+            providerDocumentVersionId,
+            providerRepositoryId,
+            providerScanRunId,
+            providerRevision,
+            providerCodeUnitId,
+            providerAnchorId,
+            WorkerAgentTestFixtures.Id(1_014),
+            "src/Provider.cs",
+            "Provider",
+            20,
+            30);
+
+        var consumerBinding = new PreparedPass2RuntimeRepositoryBinding(
+            "consumer", "git-consumer", consumerRepositoryId, consumerScanRunId,
+            consumerExecutionId, "refs/tags/consumer", consumerRevision, consumerRevision);
+        var providerBinding = new PreparedPass2RuntimeRepositoryBinding(
+            "provider", "git-provider", providerRepositoryId, providerScanRunId,
+            providerExecutionId, "refs/tags/provider", providerRevision, providerRevision);
+        PreparedPass2RuntimeMember[] members =
+        [
+            new(1, consumerJob.JobId, consumerCodeUnitId, consumerLogicalDocumentId,
+                consumerRepositoryId, consumerDocumentVersionId, [consumerAnchorId]),
+            new(2, providerJob.JobId, providerCodeUnitId, providerLogicalDocumentId,
+                providerRepositoryId, providerDocumentVersionId, [providerAnchorId]),
+        ];
+        PreparedPass2RuntimeBinding binding = PreparedPass2RuntimeBinding.Create(
+            "1.0",
+            "cross-repository-test",
+            "1.0.0",
+            new string('1', 64),
+            "rpc-test",
+            systemId,
+            consumerBinding,
+            providerBinding,
+            WorkerAgentTestFixtures.Id(1_015),
+            [WorkerAgentTestFixtures.Id(1_016)],
+            members,
+            [
+                new(1, consumerJob.JobId, consumerCodeUnitId,
+                    "Consumer invocation", "src/Consumer.cs#L1-L10"),
+                new(2, providerJob.JobId, providerCodeUnitId,
+                    "Provider implementation", "src/Provider.cs#L20-L30"),
+            ]);
+        ResolvedPreparedPass2Flow resolved = new(binding.Flow, [consumer, provider], binding);
+        Pass2BusinessLogicJobPayload job = Pass2BusinessLogicJobPayload.Create(resolved);
+        WorkerAgentJobPacket packet = WorkerAgentJobPacket.Create(
+            WorkerAgentTestFixtures.Id(1_017),
+            WorkerAgentJobKind.Pass2BusinessLogicDocument,
+            consumerExecutionId,
+            consumerRepositoryId,
+            systemId,
+            consumerScanRunId,
+            consumerRevision,
+            WorkerAgentContractLimits.SupportedSchemaVersion,
+            job);
+        Guid sectionId = WorkerAgentTestFixtures.Id(1_018);
+        CanonicalDocumentContent content = new(
+            KnowledgeDocumentLimits.SchemaIdentity,
+            DocumentType.BusinessLogic,
+            "consumer-to-provider",
+            "Consumer to Provider",
+            "flows/consumer-to-provider",
+            "The consumer invokes the provider.",
+            [],
+            [],
+            [],
+            [
+                new CanonicalSection(
+                    sectionId,
+                    1,
+                    DocumentSectionKind.ProcessStep,
+                    "Flow",
+                    "The consumer invokes the provider.",
+                    "consumer provider",
+                    [consumerAnchorId],
+                    [consumerDocumentVersionId, providerDocumentVersionId]),
+            ]);
+        WorkerAgentSourceAnchor[] anchors = new[] { consumer, provider }
+            .SelectMany(document => document.SourceAnchors)
+            .OrderBy(anchor => anchor.Id)
+            .Select(anchor => WorkerAgentSourceAnchor.Create(
+                anchor.Id,
+                anchor.RepositoryRelativePath,
+                anchor.EvidenceLocator,
+                anchor.LineStart,
+                anchor.LineEnd,
+                anchor.SourceHash))
+            .ToArray();
+        Pass2BusinessLogicDocumentResultPayload resultPayload =
+            Pass2BusinessLogicDocumentResultPayload.Create(
+                packet.JobId,
+                packet.SystemId,
+                packet.RepositoryId,
+                packet.ScanRunId,
+                packet.ProfiledRevision,
+                binding.Flow.FlowId,
+                "Explain the consumer-to-provider flow.",
+                [
+                    WorkerAgentBusinessMainStep.Create(1, "Invoke the provider.", [1]),
+                    WorkerAgentBusinessMainStep.Create(2, "Process the request.", [2]),
+                ],
+                "The provider processes the request.",
+                content,
+                anchors,
+                [1, 2],
+                [consumerDocumentVersionId, providerDocumentVersionId]);
+        DateTimeOffset dispatchedAt = new(2026, 8, 13, 0, 0, 0, TimeSpan.Zero);
+        WorkerAgentResultEnvelope result = WorkerAgentResultEnvelope.CreateForJob(
+            packet,
+            WorkerAgentResultOutcome.Valid,
+            null,
+            dispatchedAt,
+            dispatchedAt.AddSeconds(1),
+            resultPayload);
+        return new(
+            binding,
+            packet,
+            result,
+            consumerRepositoryId,
+            providerRepositoryId,
+            consumerScanRunId,
+            providerScanRunId,
+            consumerDocumentVersionId,
+            providerDocumentVersionId);
+    }
+
+    private static ScanRun CompletedScanRun(Guid id, Guid repositoryId, string revision)
+    {
+        ScanRun scanRun = ScanRun.Start(repositoryId, 1_800, KnowledgeStoreTestFixtures.CreatedAt);
+        SetId(scanRun, id);
+        scanRun.BindProfiledRevision(revision);
+        scanRun.SetCandidateCount(1);
+        scanRun.Complete(1, 1, KnowledgeStoreTestFixtures.CreatedAt.AddSeconds(1));
+        return scanRun;
+    }
+
+    private static CodeUnit CodeUnit(
+        Guid id,
+        Guid scanRunId,
+        Guid repositoryId,
+        string path,
+        string symbol,
+        int lineStart,
+        int lineEnd)
+    {
+        var codeUnit = new CodeUnit(
+            scanRunId,
+            repositoryId,
+            path,
+            WorkerAgentTestFixtures.FileIdentityHash,
+            WorkerAgentTestFixtures.SourceHash,
+            lineStart,
+            lineEnd,
+            symbol,
+            CodeUnitType.Class,
+            RangeConfidence.Exact,
+            "csharp");
+        SetId(codeUnit, id);
+        return codeUnit;
+    }
+
+    private static async Task<CurrentKnowledge> CommitCodeLogicAsync(
+        IKnowledgeStoreRepository knowledgeStore,
+        RepositoryAccessScope scope,
+        Guid operationId,
+        Guid logicalDocumentId,
+        Guid documentVersionId,
+        Guid repositoryId,
+        Guid scanRunId,
+        string revision,
+        Guid codeUnitId,
+        Guid anchorId,
+        Guid sectionId,
+        string path,
+        string title,
+        int lineStart,
+        int lineEnd)
+    {
+        CanonicalDocumentContent content = new(
+            KnowledgeDocumentLimits.SchemaIdentity,
+            DocumentType.CodeLogic,
+            title.ToLowerInvariant(),
+            title,
+            path,
+            $"{title} summary.",
+            [],
+            [],
+            [],
+            [
+                new CanonicalSection(
+                    sectionId,
+                    1,
+                    DocumentSectionKind.Overview,
+                    "Overview",
+                    $"{title} summary.",
+                    title,
+                    [anchorId],
+                    []),
+            ]);
+        KnowledgeCommitResult committed = await knowledgeStore.CommitAsync(
+            new KnowledgeCommit(
+                operationId,
+                logicalDocumentId,
+                null,
+                documentVersionId,
+                repositoryId,
+                scanRunId,
+                revision,
+                content,
+                [
+                    new SourceAnchorDraft(
+                        anchorId,
+                        documentVersionId,
+                        repositoryId,
+                        scanRunId,
+                        codeUnitId,
+                        revision,
+                        path,
+                        title,
+                        lineStart,
+                        lineEnd,
+                        WorkerAgentTestFixtures.SourceHash),
+                ],
+                [],
+                [],
+                KnowledgeStoreTestFixtures.CreatedAt),
+            scope);
+        Assert.Equal(KnowledgeCommitStatus.Committed, committed.Status);
+        return Assert.IsType<CurrentKnowledge>(await knowledgeStore.GetCurrentAsync(
+            logicalDocumentId,
+            scope,
+            [sectionId]));
+    }
+
     private static async Task<Pass2CurrentFixture> SeedPass2CurrentKnowledgeAsync(
         VulgataDbContext context,
         IKnowledgeStoreRepository knowledgeStore)
@@ -1117,6 +1511,17 @@ public sealed class WorkerAgentResultCommitterTests
     private sealed record Pass2CurrentFixture(
         PreparedPass2Flow Flow,
         IReadOnlyList<CurrentKnowledge> CurrentDocuments);
+
+    private sealed record CrossRepositoryPass2Fixture(
+        PreparedPass2RuntimeBinding Binding,
+        WorkerAgentJobPacket Packet,
+        WorkerAgentResultEnvelope Result,
+        Guid ConsumerRepositoryId,
+        Guid ProviderRepositoryId,
+        Guid ConsumerScanRunId,
+        Guid ProviderScanRunId,
+        Guid ConsumerDocumentVersionId,
+        Guid ProviderDocumentVersionId);
 
     private static void SetId<T>(T entity, Guid id)
     {

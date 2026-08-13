@@ -32,8 +32,8 @@ public static class Story115Provisioner
     private const string _accountAlias = "mbs_account";
     private const string _channelAlias = "mbs_channel";
     private const string _acceptedRef = "refs/tags/vulgata/August15th-sample";
-    private const string _accountCommit = "19c60cd3f3976b7697c487c7bafd96142e3a7625";
-    private const string _channelCommit = "47f6b627a7598f862873610413eec1e1e7bf46bf";
+    private const string _accountCommit = "451b3a99b179b711ae66260651eb6b12db482e0b";
+    private const string _channelCommit = "d2e11bacd157195c421065292674ab0c29260081";
     private const string _codeGraphVersion = "0.5.1";
     private const string _codeGraphLockSha256 =
         "10f09b78b02c886688c726bb93030380cfe54afc23798db24f6f4fc4cc4c7d95";

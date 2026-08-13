@@ -94,7 +94,7 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
         Guid[] repositoryIds =
         [
             .. request.Bindings.Select(binding => binding.RepositoryId).Order(),
-        ];
+                ];
         if (repositoryIds.Length != 2 ||
             repositoryIds.Distinct().Count() != 2 ||
             repositoryIds.Any(repositoryId => !scope.Contains(repositoryId)) ||
@@ -435,9 +435,9 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
                 ];
                 if (owners.Length != 1)
                 {
-                    throw new InvalidOperationException(
-                        "Runtime binding requires one current mapped owner.");
-                }
+                                    throw new InvalidOperationException(
+                                        "Runtime binding requires one current mapped owner.");
+                                }
 
                 ExactResolutionOwner owner = owners[0];
                 return new ExactResolutionRuntimeBindingEvidence(
@@ -524,8 +524,11 @@ public sealed class ExactCrossRepositoryResolutionCoordinator(
         int count = 0;
         for (int index = 0; index <= line.Length - expected.Length; index++)
         {
-            if (!line.AsSpan(index).StartsWith(expected, StringComparison.Ordinal) ||
-                index > 0 && IsIdentifierCharacter(line[index - 1]))
+            if (!line.AsSpan(index).StartsWith(expected, StringComparison.Ordinal))
+            {
+                continue;
+            }
+            if (index > 0 && IsIdentifierCharacter(line[index - 1]))
             {
                 continue;
             }

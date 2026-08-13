@@ -16,7 +16,8 @@ internal static class WorkerAgentTestFixtures
     internal static Pass1CodeLogicJobPayload CreatePass1JobPayload(
         IReadOnlyList<WorkerAgentStructuralContext>? neighboringStructuralContext = null,
         IReadOnlyList<WorkerAgentCommunicationEvidence>? approvedCommunicationEvidence = null,
-        IReadOnlyList<Guid>? allowedReferenceDocumentVersionIds = null) =>
+        IReadOnlyList<Guid>? allowedReferenceDocumentVersionIds = null,
+        IReadOnlyList<WorkerAgentPreparedSourceAnchor>? preparedSourceAnchors = null) =>
         Pass1CodeLogicJobPayload.Create(
             codeUnitId: Id(6),
             repositoryRelativePath: RepositoryRelativePath,
@@ -42,9 +43,11 @@ internal static class WorkerAgentTestFixtures
                     "订单服务调用库存接口。"),
             ],
             allowedReferenceDocumentVersionIds:
-                allowedReferenceDocumentVersionIds ?? [Id(9)]);
+                allowedReferenceDocumentVersionIds ?? [Id(9)],
+            preparedSourceAnchors: preparedSourceAnchors);
 
-    internal static WorkerAgentJobPacket CreatePass1Packet() =>
+    internal static WorkerAgentJobPacket CreatePass1Packet(
+        Pass1CodeLogicJobPayload? payload = null) =>
         WorkerAgentJobPacket.Create(
             jobId: Id(1),
             kind: WorkerAgentJobKind.Pass1CodeLogicDocument,
@@ -54,7 +57,7 @@ internal static class WorkerAgentTestFixtures
             scanRunId: Id(5),
             profiledRevision: ProfiledRevision,
             schemaVersion: WorkerAgentContractLimits.SupportedSchemaVersion,
-            payload: CreatePass1JobPayload());
+            payload: payload ?? CreatePass1JobPayload());
 
     internal static Pass1CodeLogicDocumentResultPayload CreatePass1ResultPayload(
         WorkerAgentJobPacket packet,
@@ -75,6 +78,9 @@ internal static class WorkerAgentTestFixtures
         IReadOnlyList<Guid>? communicationEvidenceIds = null)
     {
         var pass1 = Assert.IsType<Pass1CodeLogicJobPayload>(packet.Payload);
+        Guid defaultAnchorId = pass1.PreparedSourceAnchors.Count > 0
+            ? pass1.PreparedSourceAnchors[0].Id
+            : Id(11);
         CanonicalDocumentContent defaultContent = new(
             KnowledgeDocumentLimits.SchemaIdentity,
             DocumentType.CodeLogic,
@@ -93,7 +99,7 @@ internal static class WorkerAgentTestFixtures
                     "计算逻辑",
                     "汇总订单行金额。",
                     "订单 总额 计算",
-                    [Id(11)],
+                    [defaultAnchorId],
                     [Id(9)]),
             ]);
 
@@ -113,7 +119,7 @@ internal static class WorkerAgentTestFixtures
             sourceAnchors: sourceAnchors ??
             [
                 WorkerAgentSourceAnchor.Create(
-                    Id(11),
+                    defaultAnchorId,
                     pass1.RepositoryRelativePath,
                     "OrderService.CalculateTotal",
                     pass1.LineStart,
