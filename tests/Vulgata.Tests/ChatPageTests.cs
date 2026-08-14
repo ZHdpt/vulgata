@@ -319,7 +319,7 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public async Task ChatPage_NewRequest_ReplacesAnswerOnlyAfterCompleteResult()
+    public async Task ChatPage_SecondRequest_RetainsFirstTurnWhilePendingAndAfterCompletion()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
         cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
@@ -335,34 +335,37 @@ public sealed class ChatPageTests : BunitContext
         await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
         cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loading");
 
-        Assert.DoesNotContain("第一份完整回答。", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("第一个问题", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("第一份完整回答。", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("第二个问题", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("第二份完整回答。", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("complete-answer", cut.Markup, StringComparison.Ordinal);
-        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Single(cut.FindAll(".complete-answer"));
+        Assert.Single(cut.FindAll(".document-citation"));
 
         _dispatcher.ReleaseBlockedCall();
         await sendTask;
 
-        Assert.DoesNotContain("第一份完整回答。", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("第一份完整回答。", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("第二份完整回答。", cut.Markup, StringComparison.Ordinal);
-        Assert.Single(cut.FindAll(".complete-answer"));
+        Assert.Equal(2, cut.FindAll(".complete-answer").Count);
+        Assert.Equal(2, cut.FindAll(".document-citation").Count);
     }
 
     [Fact]
-    public async Task ChatPage_ModeScopeAndFailureChanges_ClearPriorTransientAnswer()
+    public async Task ChatPage_ModeScopeAndFailureChanges_RetainPriorCompletedTurns()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
         cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
         PrepareValidSelection(cut, ChatMode.Business);
-        _retriever.ClaimText = "不应保留的旧回答。";
+        _retriever.ClaimText = "应保留的旧回答。";
         await SendQuestionAsync(cut, "第一个问题");
-        Assert.Contains("不应保留的旧回答。", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("应保留的旧回答。", cut.Markup, StringComparison.Ordinal);
 
         FindButton(cut, "技术模式").Click();
 
-        Assert.DoesNotContain("不应保留的旧回答。", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("应保留的旧回答。", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(string.Empty, cut.Find("#chat-question").GetAttribute("value"));
-        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Single(cut.FindAll(".document-citation"));
 
         _retriever.ClaimText = "技术模式回答。";
         await SendQuestionAsync(cut, "第二个问题");
@@ -370,9 +373,9 @@ public sealed class ChatPageTests : BunitContext
 
         cut.Find("#chat-system").Change(string.Empty);
 
-        Assert.DoesNotContain("技术模式回答。", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("complete-answer", cut.Markup, StringComparison.Ordinal);
-        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(2, cut.FindAll(".complete-answer").Count);
+        Assert.Equal(2, cut.FindAll(".document-citation").Count);
 
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "失败前回答。";
@@ -382,13 +385,13 @@ public sealed class ChatPageTests : BunitContext
 
         Assert.Equal("Error", cut.Find(".chat-page").GetAttribute("data-load-state"));
         Assert.Contains("暂时无法生成回答，请稍后重试。", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("失败前回答。", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("complete-answer", cut.Markup, StringComparison.Ordinal);
-        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Contains("失败前回答。", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(3, cut.FindAll(".complete-answer").Count);
+        Assert.Equal(3, cut.FindAll(".document-citation").Count);
     }
 
     [Fact]
-    public async Task ChatPage_StaleRevokedAndInvalidRequests_ClearAllPriorClaimsAndCitationsAsync()
+    public async Task ChatPage_StaleRevokedAndInvalidRequests_RetainPriorClaimsAndCitationsAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
         cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
@@ -404,31 +407,48 @@ public sealed class ChatPageTests : BunitContext
 
         IElement surface = cut.Find(".chat-surface");
         Assert.Contains("当前知识证据不可用或已更新，请稍后重试。", surface.TextContent, StringComparison.Ordinal);
-        Assert.Empty(cut.FindAll(".complete-answer"));
-        Assert.Empty(cut.FindAll(".material-claim"));
-        Assert.Empty(cut.FindAll(".document-citation"));
-        Assert.DoesNotContain("客户提交付款后，系统完成校验。", surface.TextContent, StringComparison.Ordinal);
-        Assert.DoesNotContain("src/PaymentFlow.cs", surface.TextContent, StringComparison.Ordinal);
+        Assert.Single(cut.FindAll(".complete-answer"));
+        Assert.Single(cut.FindAll(".material-claim"));
+        Assert.Single(cut.FindAll(".document-citation"));
+        Assert.Contains("客户提交付款后，系统完成校验。", surface.TextContent, StringComparison.Ordinal);
+        Assert.Contains("src/PaymentFlow.cs", surface.TextContent, StringComparison.Ordinal);
 
         _currentness.Outcome = ChatCurrentnessValidationOutcome.Current;
         await SendQuestionAsync(cut, "第二问");
-        Assert.Single(cut.FindAll(".document-citation"));
+        Assert.Equal(2, cut.FindAll(".document-citation").Count);
         _authorization.DenyOnCall = _authorization.CallCount + 2;
         await SendQuestionAsync(cut, "权限是否仍然有效？");
 
         Assert.Contains("未找到可用的知识范围，或您无权访问。", surface.TextContent, StringComparison.Ordinal);
-        Assert.Empty(cut.FindAll(".complete-answer"));
-        Assert.Empty(cut.FindAll(".material-claim"));
-        Assert.Empty(cut.FindAll(".document-citation"));
-        Assert.DoesNotContain("src/PaymentFlow.cs", surface.TextContent, StringComparison.Ordinal);
+        Assert.Equal(2, cut.FindAll(".complete-answer").Count);
+        Assert.Equal(2, cut.FindAll(".material-claim").Count);
+        Assert.Equal(2, cut.FindAll(".document-citation").Count);
+        Assert.Contains("src/PaymentFlow.cs", surface.TextContent, StringComparison.Ordinal);
 
         cut.Find("#chat-question").Input(string.Empty);
         await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
 
         Assert.Contains("请选择业务模式、系统和两个不同的仓库", surface.TextContent, StringComparison.Ordinal);
-        Assert.Empty(cut.FindAll(".complete-answer"));
-        Assert.Empty(cut.FindAll(".material-claim"));
-        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Equal(2, cut.FindAll(".complete-answer").Count);
+        Assert.Equal(2, cut.FindAll(".material-claim").Count);
+        Assert.Equal(2, cut.FindAll(".document-citation").Count);
+    }
+
+    [Fact]
+    public async Task ChatPage_RetainedTimeline_DoesNotBecomeBackendConversationContext()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        await SendQuestionAsync(cut, "第一条独立问题");
+        await SendQuestionAsync(cut, "第二条独立问题");
+
+        Assert.Equal(2, _retriever.Requests.Count);
+        Assert.Equal("第一条独立问题", _retriever.Requests[0].Question);
+        Assert.Equal("第二条独立问题", _retriever.Requests[1].Question);
+        Assert.DoesNotContain("第一条独立问题", _retriever.Requests[1].Question, StringComparison.Ordinal);
+        Assert.Equal(2, cut.FindAll("[data-chat-turn]").Count);
     }
 
     [Fact]
@@ -542,6 +562,7 @@ public sealed class ChatPageTests : BunitContext
     {
         public int CallCount { get; private set; }
         public string ClaimText { get; set; } = "客户提交付款后，系统完成校验。";
+        public List<ChatQuestionRequest> Requests { get; } = [];
 
         public Task<ChatEvidenceResult> RetrieveAsync(
             ChatQuestionRequest request,
@@ -549,6 +570,7 @@ public sealed class ChatPageTests : BunitContext
             CancellationToken cancellationToken = default)
         {
             CallCount++;
+            Requests.Add(request);
             Guid firstRepositoryId = request.RepositoryIds[0];
             Guid secondRepositoryId = request.RepositoryIds[1];
             EvidenceDocument primaryDocument = new(

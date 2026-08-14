@@ -32,6 +32,8 @@
 - Modify `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor`: render every retained turn, pending state, revealed claims, and completed citations.
 - Modify `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css`: timeline/reveal styles, fade-in keyframes, and reduced-motion override.
 - Create `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.js`: one `matchMedia('(prefers-reduced-motion: reduce)')` query.
+- Create `src/dotnet/Vulgata.Web/Components/Pages/ChatRevealDelay.cs`: production 25 ms presentation-delay boundary.
+- Modify `src/dotnet/Vulgata.Web/Program.cs`: register the scoped presentation-delay implementation.
 - Modify `src/dotnet/Vulgata.Web/Vulgata.Web.csproj`: expose Web internals to `Vulgata.Tests` so the small presentation state can be unit-tested without making it a public product API.
 - Create `tests/Vulgata.Tests/ChatTurnTests.cs`: exact Unicode reveal-state tests.
 - Modify `tests/Vulgata.Tests/ChatPageTests.cs`: timeline retention, isolated requests, reset, progressive reveal, reduced motion, cancellation, and accessibility assertions.
@@ -480,11 +482,13 @@ git commit -m "feat(chat): add unicode-safe answer reveal state"
 - Modify: `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor`
 - Modify: `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css`
 - Create: `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.js`
+- Create: `src/dotnet/Vulgata.Web/Components/Pages/ChatRevealDelay.cs`
+- Modify: `src/dotnet/Vulgata.Web/Program.cs`
 - Modify: `tests/Vulgata.Tests/ChatPageTests.cs`
 
 **Interfaces:**
 - Consumes: Task 2's `ChatTurn.BeginReveal`, `ChatClaimReveal.RevealNext`, `ChatClaimReveal.IsComplete`, and `ChatTurn.CompleteReveal`.
-- Produces: `RevealAnswerAsync(ChatTurn, GroundedAnswer, int, CancellationToken)`, collocated JavaScript `prefersReducedMotion()`, and DOM states `data-answer-state="revealing|complete"`.
+- Produces: `IChatRevealDelay.DelayAsync(CancellationToken)`, `RevealAnswerAsync(ChatTurn, GroundedAnswer, int, CancellationToken)`, collocated JavaScript `prefersReducedMotion()`, and DOM states `data-answer-state="revealing|complete"`.
 
 - [ ] **Step 1: Add failing progressive-reveal component tests**
 
@@ -495,15 +499,15 @@ var module = JSInterop.SetupModule("./Components/Pages/ChatPage.razor.js");
 module.Setup<bool>("prefersReducedMotion").SetResult(false);
 ```
 
-Add a controllable `ManualRevealDelay` test double to the page through a component parameter named `RevealDelayOverride` of type
-`Func<TimeSpan, CancellationToken, Task>?`. Render with:
+Register a controllable `ManualRevealDelay` test double for the production
+`IChatRevealDelay` boundary before constructing the coordinator. Render normally:
 
 ```csharp
 private readonly ManualRevealDelay _revealDelay = new();
 
-private IRenderedComponent<ChatPage> RenderChatPage() =>
-    Render<ChatPage>(parameters => parameters
-        .Add(component => component.RevealDelayOverride, _revealDelay.DelayAsync));
+Services.AddSingleton<IChatRevealDelay>(_revealDelay);
+
+private IRenderedComponent<ChatPage> RenderChatPage() => Render<ChatPage>();
 ```
 
 Replace `Render<ChatPage>()` in this test class with `RenderChatPage()`. The override is internal presentation-test plumbing and must not be registered in production DI.
@@ -550,9 +554,8 @@ private sealed class ManualRevealDelay
     private bool _releaseImmediately;
     public int CallCount { get; private set; }
 
-    public Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken)
+    public Task DelayAsync(CancellationToken cancellationToken)
     {
-        Assert.Equal(TimeSpan.FromMilliseconds(25), delay);
         CallCount++;
         if (_releaseImmediately)
         {
@@ -586,7 +589,7 @@ Make `BeginQuestionAsync` return the outstanding keydown task rather than awaiti
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~ChatPageTests" --verbosity quiet
 ```
 
-Expected: compilation fails because `RevealDelayOverride`, revealing DOM state, and the collocated module do not exist.
+Expected: compilation fails because `IChatRevealDelay`, revealing DOM state, and the collocated module do not exist.
 
 - [ ] **Step 3: Add the reduced-motion JavaScript query**
 
@@ -617,19 +620,28 @@ If JavaScript is temporarily unavailable, fail to the non-reduced reveal path; d
 
 - [ ] **Step 4: Implement the reveal loop after atomic success**
 
-Add to `ChatPage.razor.cs`:
+Create `ChatRevealDelay.cs`:
 
 ```csharp
-private static readonly TimeSpan _revealInterval = TimeSpan.FromMilliseconds(25);
-private CancellationTokenSource? _revealCancellation;
+namespace Vulgata.Web.Components.Pages;
 
-[Parameter]
-public Func<TimeSpan, CancellationToken, Task>? RevealDelayOverride { get; set; }
+internal interface IChatRevealDelay
+{
+    Task DelayAsync(CancellationToken cancellationToken);
+}
 
-private Task DelayRevealAsync(CancellationToken cancellationToken) =>
-    RevealDelayOverride?.Invoke(_revealInterval, cancellationToken) ??
-    Task.Delay(_revealInterval, cancellationToken);
+internal sealed class ChatRevealDelay : IChatRevealDelay
+{
+    private static readonly TimeSpan _interval = TimeSpan.FromMilliseconds(25);
+
+    public Task DelayAsync(CancellationToken cancellationToken) =>
+        Task.Delay(_interval, cancellationToken);
+}
 ```
+
+Register `IChatRevealDelay` as scoped in `Program.cs`, inject it into
+`ChatPage.razor`, and add `private CancellationTokenSource? _revealCancellation;`
+to the code-behind.
 
 On successful coordinator return, call:
 
@@ -668,7 +680,7 @@ private async Task RevealAnswerAsync(
 
             while (!claim.IsComplete)
             {
-                await DelayRevealAsync(linked.Token);
+                await RevealDelay.DelayAsync(linked.Token);
                 linked.Token.ThrowIfCancellationRequested();
                 if (conversationVersion != _conversationVersion)
                 {
@@ -765,7 +777,7 @@ Expected: build exits 0 and `git diff --check` reports no errors. Existing packa
 - [ ] **Step 9: Commit the integrated presentation slice**
 
 ```powershell
-git add src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.js tests/Vulgata.Tests/ChatPageTests.cs
+git add src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.js src/dotnet/Vulgata.Web/Components/Pages/ChatRevealDelay.cs src/dotnet/Vulgata.Web/Program.cs tests/Vulgata.Tests/ChatPageTests.cs
 git commit -m "feat(chat): progressively reveal validated answers"
 ```
 

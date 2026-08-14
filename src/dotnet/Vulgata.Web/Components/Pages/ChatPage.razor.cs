@@ -26,10 +26,9 @@ public partial class ChatPage : IDisposable
     private Guid? _secondRepositoryId;
     private ChatMode? _selectedMode = ChatMode.Business;
     private string _question = string.Empty;
-    private string? _submittedQuestion;
     private string? _message;
     private string? _conversationNotice;
-    private GroundedAnswer? _answer;
+    private readonly List<ChatTurn> _turns = [];
     private CancellationTokenSource? _requestCancellation;
     private bool _isBusy;
     private bool _isStartingNewConversation;
@@ -126,7 +125,7 @@ public partial class ChatPage : IDisposable
 
         await Task.Delay(TimeSpan.FromMilliseconds(180));
 
-        ClearPublishedInteraction();
+        _turns.Clear();
         _question = string.Empty;
         _formRequest.Question = string.Empty;
         _loadState = ReadyState;
@@ -182,8 +181,6 @@ public partial class ChatPage : IDisposable
             return;
         }
 
-        _answer = null;
-        _submittedQuestion = null;
         _message = null;
         _conversationNotice = null;
         var request = new PreparedChatQuestionRequest
@@ -194,13 +191,14 @@ public partial class ChatPage : IDisposable
             Question = _formRequest.Question,
         };
         string question = request.NormalizedQuestion;
+        ChatTurn turn = ChatTurn.CreatePending(question, _selectedMode!.Value);
 
         var cancellation = new CancellationTokenSource();
         int conversationVersion = _conversationVersion;
         _requestCancellation = cancellation;
         _isBusy = true;
         _loadState = LoadState.Loading;
-        _submittedQuestion = question;
+        _turns.Add(turn);
         _question = string.Empty;
         _formRequest.Question = string.Empty;
         await InvokeAsync(StateHasChanged);
@@ -215,20 +213,19 @@ public partial class ChatPage : IDisposable
 
             if (result.Kind == PreparedChatResultKind.Succeeded && result.Answer is not null)
             {
-                _answer = result.Answer;
-                _message = null;
+                turn.Complete(result.Answer);
                 _loadState = LoadState.Loaded;
             }
             else if (result.Kind == PreparedChatResultKind.Unsupported)
             {
-                _answer = null;
-                _message = result.Message ?? _unexpectedFailureMessage;
+                turn.Finish(ChatTurnState.Unsupported, result.Message ?? _unexpectedFailureMessage);
                 _loadState = LoadState.Empty;
             }
             else
             {
-                ClearPublishedInteraction();
-                _message = result.Message ?? _unexpectedFailureMessage;
+                turn.Finish(
+                    result.Kind == PreparedChatResultKind.Cancelled ? ChatTurnState.Cancelled : ChatTurnState.Error,
+                    result.Message ?? _unexpectedFailureMessage);
                 _loadState = result.Kind == PreparedChatResultKind.Cancelled ?
                     ReadyState :
                     LoadState.Error;
@@ -241,8 +238,7 @@ public partial class ChatPage : IDisposable
                 return;
             }
 
-            ClearPublishedInteraction();
-            _message = "已取消本次提问。";
+            turn.Finish(ChatTurnState.Cancelled, "已取消本次提问。");
             _loadState = ReadyState;
         }
         catch (Exception)
@@ -252,8 +248,7 @@ public partial class ChatPage : IDisposable
                 return;
             }
 
-            ClearPublishedInteraction();
-            _message = _unexpectedFailureMessage;
+            turn.Finish(ChatTurnState.Error, _unexpectedFailureMessage);
             _loadState = LoadState.Error;
         }
         finally
@@ -274,8 +269,6 @@ public partial class ChatPage : IDisposable
 
     private void HandleInvalidSubmit()
     {
-        _answer = null;
-        _submittedQuestion = null;
         _loadState = LoadState.Error;
         _message = _validationMessage;
     }
@@ -300,7 +293,6 @@ public partial class ChatPage : IDisposable
 
     private void ResetTransientInteraction(bool clearQuestion)
     {
-        ClearPublishedInteraction();
         _message = null;
         _conversationNotice = null;
         _loadState = ReadyState;
@@ -309,12 +301,6 @@ public partial class ChatPage : IDisposable
             _question = string.Empty;
             _formRequest.Question = string.Empty;
         }
-    }
-
-    private void ClearPublishedInteraction()
-    {
-        _answer = null;
-        _submittedQuestion = null;
     }
 
     private LoadState ReadyState => _scopes.Count == 0 ? LoadState.Empty : LoadState.Loaded;

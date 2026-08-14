@@ -73,55 +73,62 @@
     </section>
 
     <section class="chat-surface" aria-live="polite" aria-busy="@(_isBusy ? "true" : "false")">
-        @if (_submittedQuestion is not null)
+        @foreach (ChatTurn turn in _turns)
         {
-            <div class="chat-message chat-message--user">@_submittedQuestion</div>
-        }
+            <div data-chat-turn="@turn.Id">
+                <div class="chat-message chat-message--user">@turn.Question</div>
 
-        @if (_answer is not null)
-        {
-            <article class="chat-message chat-message--assistant complete-answer" data-answer-state="complete">
-                @foreach (MaterialClaim claim in _answer.MaterialClaims)
+                @if (turn.State == ChatTurnState.Complete && turn.Answer is not null)
                 {
-                    <section class="answer-claim">
-                        <p class="material-claim">@claim.Text</p>
-                        @foreach (DocumentCitation citation in _answer.DocumentCitations.Where(
-                            citation => claim.CitationIds.Contains(citation.CitationId, StringComparer.Ordinal)))
+                    <article class="chat-message chat-message--assistant complete-answer" data-answer-state="complete">
+                        @foreach (MaterialClaim claim in turn.Answer.MaterialClaims)
                         {
-                            <div class="document-citation"
-                                 data-repository-relative-path="@citation.RepositoryRelativePath"
-                                 data-line-start="@citation.LineStart"
-                                 data-line-end="@citation.LineEnd">
-                                <span class="document-citation__title">文档引用：@citation.DocumentTitle</span>
-                                @if (_answer.Mode == ChatMode.It)
+                            <section class="answer-claim">
+                                <p class="material-claim">@claim.Text</p>
+                                @foreach (DocumentCitation citation in turn.Answer.DocumentCitations.Where(
+                                    citation => claim.CitationIds.Contains(citation.CitationId, StringComparer.Ordinal)))
                                 {
-                                    <span class="citation-locator citation-locator--inline">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                    <div class="document-citation"
+                                         data-repository-relative-path="@citation.RepositoryRelativePath"
+                                         data-line-start="@citation.LineStart"
+                                         data-line-end="@citation.LineEnd">
+                                        <span class="document-citation__title">文档引用：@citation.DocumentTitle</span>
+                                        @if (turn.Answer.Mode == ChatMode.It)
+                                        {
+                                            <span class="citation-locator citation-locator--inline">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                        }
+                                        else
+                                        {
+                                            <details class="document-citation__details">
+                                                <summary><span>查看来源</span><span class="citation-chevron" aria-hidden="true">⌄</span></summary>
+                                                <span class="citation-locator">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
+                                            </details>
+                                        }
+                                    </div>
                                 }
-                                else
-                                {
-                                    <details class="document-citation__details">
-                                        <summary><span>查看来源</span><span class="citation-chevron" aria-hidden="true">⌄</span></summary>
-                                        <span class="citation-locator">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
-                                    </details>
-                                }
-                            </div>
+                            </section>
                         }
-                    </section>
+                    </article>
                 }
-            </article>
-        }
-        else if (_isBusy)
-        {
-            <div class="chat-thinking" role="status">
-                <span class="chat-thinking__spark" aria-hidden="true">✦</span>
-                <span class="chat-thinking__copy">
-                    <span>@ActiveStatusMessage</span>
-                    <small>AI 正在分析跨仓库上下文</small>
-                </span>
-                <span class="chat-thinking__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                else if (turn.State == ChatTurnState.Pending)
+                {
+                    <div class="chat-thinking" role="status">
+                        <span class="chat-thinking__spark" aria-hidden="true">✦</span>
+                        <span class="chat-thinking__copy">
+                            <span>@ActiveStatusMessage</span>
+                            <small>AI 正在分析跨仓库上下文</small>
+                        </span>
+                        <span class="chat-thinking__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    </div>
+                }
+                else if (turn.Message is not null)
+                {
+                    <p class="chat-message chat-message--assistant" data-answer-state="unsupported">@turn.Message</p>
+                }
             </div>
         }
-        else if (_submittedQuestion is null)
+
+        @if (_turns.Count == 0)
         {
             <div class="chat-welcome">
                 <h1 class="display-serif display-serif-lg">@WelcomeMessage</h1>
