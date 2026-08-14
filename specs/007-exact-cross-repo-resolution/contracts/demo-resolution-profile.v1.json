@@ -7,13 +7,13 @@
       "alias": "mbs_account",
       "stableGitIdentity": "mbs_account",
       "expectedRef": "refs/tags/vulgata/August15th-sample",
-      "expectedCommit": "451b3a99b179b711ae66260651eb6b12db482e0b"
+      "expectedCommit": "19c60cd3f3976b7697c487c7bafd96142e3a7625"
     },
     {
       "alias": "mbs_channel",
       "stableGitIdentity": "mbs_channel",
       "expectedRef": "refs/tags/vulgata/August15th-sample",
-      "expectedCommit": "d2e11bacd157195c421065292674ab0c29260081"
+      "expectedCommit": "47f6b627a7598f862873610413eec1e1e7bf46bf"
     }
   ],
   "occurrences": [

@@ -11,9 +11,9 @@
   `vulgata`), with the server/container treated as external non-owned
   infrastructure;
 - prepared `mbs_account` ref `refs/tags/vulgata/August15th-sample` at full
-  commit `451b3a99b179b711ae66260651eb6b12db482e0b`;
+  commit `19c60cd3f3976b7697c487c7bafd96142e3a7625`;
 - prepared `mbs_channel` ref `refs/tags/vulgata/August15th-sample` at full
-  commit `d2e11bacd157195c421065292674ab0c29260081`;
+  commit `47f6b627a7598f862873610413eec1e1e7bf46bf`;
 - one gate-owned Data Protection key directory/application discriminator and
   deterministic isolated Worker/Chat provider namespace;
 - one prebuilt candidate-bound test-owned .NET provisioner entry whose mounted

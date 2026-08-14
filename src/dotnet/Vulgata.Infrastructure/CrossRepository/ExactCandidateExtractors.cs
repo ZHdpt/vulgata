@@ -255,13 +255,7 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
 
                 if (!StringComparer.Ordinal.Equals(reader.LocalName, selector.ElementLocalName) ||
                     reader.NamespaceURI.Length != 0 ||
-                    reader.AttributeCount != 1 ||
-                    !reader.MoveToFirstAttribute() ||
-                    !StringComparer.Ordinal.Equals(
-                        reader.LocalName,
-                        selector.EndpointAttributeLocalName) ||
-                    reader.NamespaceURI.Length != 0 ||
-                    string.IsNullOrWhiteSpace(reader.Value))
+                    !TryReadProviderEndpointAttribute(reader, selector, out string? value))
                 {
                     if (owner is null)
                     {
@@ -276,8 +270,6 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                         evidenceLocator);
                 }
 
-                string value = reader.Value.Normalize(NormalizationForm.FormC);
-                reader.MoveToElement();
                 int line = reader is IXmlLineInfo lineInfo && lineInfo.HasLineInfo()
                     ? lineInfo.LineNumber
                     : 0;
@@ -314,6 +306,40 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
                 evidenceLocator,
                 exception);
         }
+    }
+
+    private static bool TryReadProviderEndpointAttribute(
+        XmlReader reader,
+        ExactProviderDeclarationSelector selector,
+        out string? value)
+    {
+        value = null;
+        int endpointAttributeCount = 0;
+        if (!reader.MoveToFirstAttribute())
+        {
+            return false;
+        }
+
+        do
+        {
+            if (reader.NamespaceURI.Length != 0)
+            {
+                reader.MoveToElement();
+                return false;
+            }
+
+            if (StringComparer.Ordinal.Equals(
+                    reader.LocalName,
+                    selector.EndpointAttributeLocalName))
+            {
+                endpointAttributeCount++;
+                value = reader.Value.Normalize(NormalizationForm.FormC);
+            }
+        }
+        while (reader.MoveToNextAttribute());
+
+        reader.MoveToElement();
+        return endpointAttributeCount == 1 && !string.IsNullOrWhiteSpace(value);
     }
 
     private static bool IsBeneathRoot(string path, string root) =>

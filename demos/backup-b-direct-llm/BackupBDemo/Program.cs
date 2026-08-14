@@ -505,14 +505,16 @@ static async Task TransitionWorkerProviderToChatAsync(
     ILogger logger,
     CancellationToken cancellationToken)
 {
+    using IServiceScope scope = services.CreateScope();
+    IServiceProvider scopedServices = scope.ServiceProvider;
     ILlmProviderManagementCoordinator providerCoordinator =
-        services.GetRequiredService<ILlmProviderManagementCoordinator>();
+        scopedServices.GetRequiredService<ILlmProviderManagementCoordinator>();
     ILlmProviderRepository providerRepository =
-        services.GetRequiredService<ILlmProviderRepository>();
+        scopedServices.GetRequiredService<ILlmProviderRepository>();
     ISecretEncryptionService encryptionService =
-        services.GetRequiredService<ISecretEncryptionService>();
+        scopedServices.GetRequiredService<ISecretEncryptionService>();
     ISystemLlmProviderOverrideCoordinator overrideCoordinator =
-        services.GetRequiredService<ISystemLlmProviderOverrideCoordinator>();
+        scopedServices.GetRequiredService<ISystemLlmProviderOverrideCoordinator>();
     IUserContext automationUser = CreateAutomationUser();
 
     SystemLlmProviderOverrideMutationResult<IReadOnlyList<SystemLlmProviderOverrideSummaryDto>>

@@ -14,8 +14,8 @@ This is the implementation validation guide for Story 11.4. It does not run the 
 The reviewed profile artifact [contracts/demo-resolution-profile.v1.json](contracts/demo-resolution-profile.v1.json) contains these immutable ref/commit facts and the observed exact/unsupported selectors:
 
 ```text
-mbs_account  refs/tags/vulgata/August15th-sample  451b3a99b179b711ae66260651eb6b12db482e0b
-mbs_channel  refs/tags/vulgata/August15th-sample  d2e11bacd157195c421065292674ab0c29260081
+mbs_account  refs/tags/vulgata/August15th-sample  19c60cd3f3976b7697c487c7bafd96142e3a7625
+mbs_channel  refs/tags/vulgata/August15th-sample  47f6b627a7598f862873610413eec1e1e7bf46bf
 
 exact occurrence:
   mbs_account -> mbs_channel
@@ -39,7 +39,7 @@ The reviewed JSON is the sole selector authority. Do not substitute implementati
 git diff --check
 git diff -- specs/007-exact-cross-repo-resolution AGENTS.md
 rg -n "mbs_account|mbs_channel" src/dotnet
-rg -n "451b3a99b179b711ae66260651eb6b12db482e0b|d2e11bacd157195c421065292674ab0c29260081" src/dotnet
+rg -n "19c60cd3f3976b7697c487c7bafd96142e3a7625|47f6b627a7598f862873610413eec1e1e7bf46bf" src/dotnet
 rg -n "IQueryable|DbSet" src/dotnet/Vulgata.Core
 ```
 

@@ -70,6 +70,12 @@ missing properties, no markdown fences, no trailing text.
   the request. A single mismatch invalidates the result.
 - **Content**: `schemaIdentity` must be exactly `vulgata.knowledge-document/1.0`
   and `documentType` must be exactly the string `CodeLogic`.
+- **Language**: write all provider-authored, user-facing explanatory prose in
+  Simplified Chinese. This includes the title, summary, authored section
+  headings, markdown, search text, and business terms. Preserve source identifiers,
+  symbol names, paths, protocol and schema literals, and technical terms in their
+  original form; do not translate or alter fields that another rule requires you
+  to copy exactly from the request.
 - **Sections**: `order` must be contiguous starting at 1. `stableSectionId`
   must be unique. Each `sourceAnchorIds` entry must appear in your
   `sourceAnchors`; each `documentVersionIds` entry must appear in your

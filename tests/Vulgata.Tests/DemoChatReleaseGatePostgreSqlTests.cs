@@ -106,12 +106,12 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
         Assert.Equal("mbs_account", contract.AccountRepository.Alias);
         Assert.Equal("refs/tags/vulgata/August15th-sample", contract.AccountRepository.Ref);
         Assert.Equal(
-            "451b3a99b179b711ae66260651eb6b12db482e0b",
+            "19c60cd3f3976b7697c487c7bafd96142e3a7625",
             contract.AccountRepository.Commit);
         Assert.Equal("mbs_channel", contract.ChannelRepository.Alias);
         Assert.Equal("refs/tags/vulgata/August15th-sample", contract.ChannelRepository.Ref);
         Assert.Equal(
-            "d2e11bacd157195c421065292674ab0c29260081",
+            "47f6b627a7598f862873610413eec1e1e7bf46bf",
             contract.ChannelRepository.Commit);
         Assert.Equal(
             [
@@ -392,8 +392,8 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
                 .ToArray());
         Assert.Equal(
             [
-                "mbs_account|refs/tags/vulgata/August15th-sample|451b3a99b179b711ae66260651eb6b12db482e0b",
-                "mbs_channel|refs/tags/vulgata/August15th-sample|d2e11bacd157195c421065292674ab0c29260081",
+                "mbs_account|refs/tags/vulgata/August15th-sample|19c60cd3f3976b7697c487c7bafd96142e3a7625",
+                "mbs_channel|refs/tags/vulgata/August15th-sample|47f6b627a7598f862873610413eec1e1e7bf46bf",
             ],
             root.GetProperty("acceptedProfiledRevisions")
                 .EnumerateArray()
@@ -1677,10 +1677,10 @@ public sealed class DemoChatReleaseGatePostgreSqlTests
             Guid.Parse("77777777-7777-4777-8777-777777777777"),
             "mbs_account",
             "refs/tags/vulgata/August15th-sample",
-            "451b3a99b179b711ae66260651eb6b12db482e0b",
+            "19c60cd3f3976b7697c487c7bafd96142e3a7625",
             "mbs_channel",
             "refs/tags/vulgata/August15th-sample",
-            "d2e11bacd157195c421065292674ab0c29260081",
+            "47f6b627a7598f862873610413eec1e1e7bf46bf",
             new string('8', 64),
             new string('9', 64),
             2,

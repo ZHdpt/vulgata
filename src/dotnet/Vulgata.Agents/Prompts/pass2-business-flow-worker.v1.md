@@ -75,6 +75,12 @@ missing properties, no markdown fences, no trailing text.
   request. A single mismatch invalidates the result.
 - **Content**: `schemaIdentity` must be exactly `vulgata.knowledge-document/1.0`
   and `documentType` must be exactly the string `BusinessLogic`.
+- **Language**: write all provider-authored, user-facing explanatory prose in
+  Simplified Chinese. This includes purpose, main-step descriptions, outcome,
+  title, summary, section headings, markdown, search text, and business terms.
+  Preserve source identifiers, symbol names, paths, protocol and schema literals,
+  key symbols, and technical terms in their original form; do not translate or
+  alter fields that another rule requires you to copy exactly from the request.
 - **Generated-from targets**: `generatedFromDocumentVersionIds` must be the
   exact `codeLogicDocumentVersions[].documentVersionId` list from the request,
   in the same sequence, without additions or omissions.

@@ -200,6 +200,8 @@ public sealed class WorkerAgentDispatcherTests
                 source,
                 contextRoot.GetProperty("source").GetProperty("sourceText").GetString());
             Assert.Contains("Pass 1 Code Logic Document Worker Agent", prompt, StringComparison.Ordinal);
+            Assert.Contains("Simplified Chinese", prompt, StringComparison.Ordinal);
+            Assert.Contains("preserve source identifiers", prompt, StringComparison.OrdinalIgnoreCase);
             Assert.Contains("response_format", capture.Body, StringComparison.Ordinal);
             Assert.Contains("json_object", capture.Body, StringComparison.Ordinal);
             Assert.DoesNotContain("loopback-secret", capture.Body, StringComparison.Ordinal);
@@ -300,6 +302,8 @@ public sealed class WorkerAgentDispatcherTests
                 .Select(item => item.GetProperty("repositoryId").GetGuid()));
         Assert.Contains("Pass 2 Business Logic Document Worker Agent", prompt, StringComparison.Ordinal);
         Assert.Contains("Consumer-owned section evidence", prompt, StringComparison.Ordinal);
+        Assert.Contains("Simplified Chinese", prompt, StringComparison.Ordinal);
+        Assert.Contains("preserve source identifiers", prompt, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(
             "json_object",
             requestDocument.RootElement

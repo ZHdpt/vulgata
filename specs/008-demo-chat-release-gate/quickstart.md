@@ -230,9 +230,9 @@ clean candidate + exact source/driver inventories
 -> prove nonce DB absent and create it
 -> start temporary provisioner from that image ID in the provider namespace
 -> apply clean migrations inside the provisioner
--> mbs_channel @ d2e11bacd157195c421065292674ab0c29260081
+-> mbs_channel @ 47f6b627a7598f862873610413eec1e1e7bf46bf
 -> mbs_channel profiling + accepted Pre-Scan Result + ordinary Pass 1
--> mbs_account @ 451b3a99b179b711ae66260651eb6b12db482e0b
+-> mbs_account @ 19c60cd3f3976b7697c487c7bafd96142e3a7625
 -> mbs_account profiling + accepted Pre-Scan Result + ordinary Pass 1
 -> exact account-to-channel Cross-Repository Resolution
 -> one directed REFERENCES Edge and exact evidence

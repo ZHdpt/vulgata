@@ -26,7 +26,6 @@ public sealed class ExactResolutionExtractionTests
         { "<?xml version=\"1.0\"?>\n<trans/>" },
         { "<?xml version=\"1.0\"?>\n<trans name=\" \"/>" },
         { "<?xml version=\"1.0\"?>\n<trans endpoint=\"in/cust/updateSession\"/>" },
-        { "<?xml version=\"1.0\"?>\n<trans name=\"in/cust/updateSession\" extra=\"value\"/>" },
         { "<?xml version=\"1.0\"?>\n<other name=\"in/cust/updateSession\"/>" },
         { "<?xml version=\"1.0\"?>\n<trans xmlns=\"urn:not-configured\" name=\"in/cust/updateSession\"/>" },
         { "<?xml version=\"1.0\"?>\n<wrapper><trans name=\"in/cust/updateSession\"/></wrapper>" },
@@ -96,7 +95,7 @@ public sealed class ExactResolutionExtractionTests
     }
 
     [Fact]
-    public async Task ExtractProvidersAsync_ReviewedLine2RootTransName_MapsExactImplementationOwnerAsync()
+    public async Task ExtractProvidersAsync_ReviewedLine2RootTransNameWithDescription_MapsExactImplementationOwnerAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
             await ExactCrossRepositoryTestFixture.CreateAsync();
@@ -132,6 +131,9 @@ public sealed class ExactResolutionExtractionTests
         fixture.ProviderRepository.Write(
             "src/main/resources/disgram/in/cust/not-listed.xml",
             "<!DOCTYPE trans [<!ENTITY forbidden 'must-not-be-read'>]><trans name=\"&forbidden;\"/>");
+        fixture.ProviderRepository.Write(
+            Assert.Single(occurrence.Provider.Files),
+            "<?xml version=\"1.0\"?>\n<trans name=\"in/cust/updateSession\" desc=\"修改手机号后更新会话\"/>");
         await using var snapshot = new TestSnapshotLease(
             provider.ScanRun.RepositoryId,
             provider.ScanRun.Id,
