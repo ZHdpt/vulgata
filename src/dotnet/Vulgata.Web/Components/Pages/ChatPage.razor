@@ -7,23 +7,31 @@
 
 <PageTitle>对话</PageTitle>
 
-<div class="chat-page @PageModeClass" data-theme="@ThemeName" data-load-state="@_loadState">
+<div class="chat-page @PageModeClass @ConversationStateClass" data-theme="@ThemeName" data-load-state="@_loadState">
     <EditForm EditContext="_editContext" OnValidSubmit="SendAsync" OnInvalidSubmit="HandleInvalidSubmit">
         <FluentValidationValidator />
     <section class="chat-controls" aria-label="准备提问">
-        <fieldset class="mode-selector">
-            <legend>选择对话模式</legend>
-            <FluentButton Appearance="@ModeAppearance(ChatMode.Business)"
+        <div class="chat-controls__topbar">
+            <fieldset class="mode-selector">
+                <legend class="visually-hidden">选择对话模式</legend>
+                <FluentButton Appearance="@ModeAppearance(ChatMode.Business)"
+                              Type="ButtonType.Button"
+                              Disabled="@_isBusy"
+                              aria-pressed="@ModeAriaPressed(ChatMode.Business)"
+                              @onclick="() => SelectMode(ChatMode.Business)">业务模式</FluentButton>
+                <FluentButton Appearance="@ModeAppearance(ChatMode.It)"
+                              Type="ButtonType.Button"
+                              Disabled="@_isBusy"
+                              aria-pressed="@ModeAriaPressed(ChatMode.It)"
+                              @onclick="() => SelectMode(ChatMode.It)">技术模式</FluentButton>
+            </fieldset>
+
+            <FluentButton Class="new-conversation-button"
+                          Appearance="Appearance.Stealth"
                           Type="ButtonType.Button"
-                          Disabled="@_isBusy"
-                          aria-pressed="@ModeAriaPressed(ChatMode.Business)"
-                          @onclick="() => SelectMode(ChatMode.Business)">业务模式</FluentButton>
-            <FluentButton Appearance="@ModeAppearance(ChatMode.It)"
-                          Type="ButtonType.Button"
-                          Disabled="@_isBusy"
-                          aria-pressed="@ModeAriaPressed(ChatMode.It)"
-                          @onclick="() => SelectMode(ChatMode.It)">技术模式</FluentButton>
-        </fieldset>
+                          aria-label="开始新对话"
+                          @onclick="StartNewConversationAsync"><span aria-hidden="true">＋</span> 新对话</FluentButton>
+        </div>
 
         <div class="scope-selector">
             <label for="chat-system">系统</label>
@@ -92,7 +100,7 @@
                                 else
                                 {
                                     <details class="document-citation__details">
-                                        <summary>查看来源</summary>
+                                        <summary><span>查看来源</span><span class="citation-chevron" aria-hidden="true">⌄</span></summary>
                                         <span class="citation-locator">@citation.RepositoryDisplayName · @citation.RepositoryRelativePath · 第 @citation.LineStart–@citation.LineEnd 行</span>
                                     </details>
                                 }
@@ -104,7 +112,14 @@
         }
         else if (_isBusy)
         {
-            <p class="chat-status" role="status">@ActiveStatusMessage</p>
+            <div class="chat-thinking" role="status">
+                <span class="chat-thinking__spark" aria-hidden="true">✦</span>
+                <span class="chat-thinking__copy">
+                    <span>@ActiveStatusMessage</span>
+                    <small>AI 正在分析跨仓库上下文</small>
+                </span>
+                <span class="chat-thinking__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
         }
         else
         {
@@ -118,24 +133,32 @@
         {
             <p class="chat-message chat-message--status" role="alert">@_message</p>
         }
+
+        @if (_conversationNotice is not null)
+        {
+            <p class="conversation-notice" role="status">@_conversationNotice</p>
+        }
     </section>
 
     <section class="question-composer" aria-label="问题输入">
-        <label for="chat-question">问题</label>
+        <label class="visually-hidden" for="chat-question">问题</label>
         <textarea id="chat-question"
+                  @ref="_questionElement"
                   value="@_question"
                   placeholder="@QuestionPlaceholder"
+                  aria-label="@QuestionPlaceholder"
+                  autocomplete="off"
                   rows="3"
                   readonly="@_isBusy"
                   @oninput="OnQuestionInput"
                   @onkeydown="HandleQuestionKeyDownAsync"></textarea>
         @if (_isBusy)
         {
-            <FluentButton Appearance="Appearance.Neutral" @onclick="CancelRequest">取消</FluentButton>
+            <FluentButton Class="composer-action composer-action--cancel" Appearance="Appearance.Neutral" @onclick="CancelRequest">取消</FluentButton>
         }
         else
         {
-            <FluentButton Class="primary-button" Appearance="Appearance.Accent" Type="ButtonType.Submit">发送</FluentButton>
+            <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent" Type="ButtonType.Submit">发送 <span aria-hidden="true">↗</span></FluentButton>
         }
     </section>
     </EditForm>

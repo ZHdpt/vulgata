@@ -15,18 +15,25 @@ public partial class ChatPage : IDisposable
     private const string _unexpectedFailureMessage = "暂时无法生成回答，请稍后重试。";
 
     private IReadOnlyList<PreparedChatScopeOption> _scopes = [];
-    private readonly PreparedChatQuestionRequest _formRequest = new();
+    private readonly PreparedChatQuestionRequest _formRequest = new()
+    {
+        Mode = PreparedChatMode.Business,
+    };
     private EditContext _editContext = null!;
+    private ElementReference _questionElement;
     private Guid? _selectedSystemId;
     private Guid? _firstRepositoryId;
     private Guid? _secondRepositoryId;
-    private ChatMode? _selectedMode;
+    private ChatMode? _selectedMode = ChatMode.Business;
     private string _question = string.Empty;
     private string? _submittedQuestion;
     private string? _message;
+    private string? _conversationNotice;
     private GroundedAnswer? _answer;
     private CancellationTokenSource? _requestCancellation;
     private bool _isBusy;
+    private bool _isStartingNewConversation;
+    private int _conversationVersion;
     private LoadState _loadState = LoadState.Idle;
 
     private string PageModeClass => _selectedMode switch
@@ -37,6 +44,10 @@ public partial class ChatPage : IDisposable
     };
 
     private string ThemeName => _selectedMode == ChatMode.It ? "dark" : "light";
+
+    private string ConversationStateClass => _isStartingNewConversation ?
+        "chat-page--starting-conversation" :
+        string.Empty;
 
     private string WelcomeMessage => _selectedMode == ChatMode.It ?
         "你好，需要追踪哪段逻辑？" :
@@ -102,6 +113,29 @@ public partial class ChatPage : IDisposable
         ResetTransientInteraction(clearQuestion: true);
     }
 
+    private async Task StartNewConversationAsync()
+    {
+        _conversationVersion++;
+        _requestCancellation?.Cancel();
+        _requestCancellation = null;
+        _isBusy = false;
+        _isStartingNewConversation = true;
+        _conversationNotice = null;
+        _message = null;
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(180));
+
+        ClearPublishedInteraction();
+        _question = string.Empty;
+        _formRequest.Question = string.Empty;
+        _loadState = ReadyState;
+        _isStartingNewConversation = false;
+        _conversationNotice = "新对话已开始";
+        await InvokeAsync(StateHasChanged);
+        await _questionElement.FocusAsync();
+    }
+
     private bool IsModeSelected(ChatMode mode) => _selectedMode == mode;
 
     private string ModeAriaPressed(ChatMode mode) => IsModeSelected(mode) ? "true" : "false";
@@ -151,6 +185,7 @@ public partial class ChatPage : IDisposable
         _answer = null;
         _submittedQuestion = null;
         _message = null;
+        _conversationNotice = null;
         var request = new PreparedChatQuestionRequest
         {
             Mode = _formRequest.Mode,
@@ -161,6 +196,7 @@ public partial class ChatPage : IDisposable
         string question = request.NormalizedQuestion;
 
         var cancellation = new CancellationTokenSource();
+        int conversationVersion = _conversationVersion;
         _requestCancellation = cancellation;
         _isBusy = true;
         _loadState = LoadState.Loading;
@@ -172,6 +208,11 @@ public partial class ChatPage : IDisposable
         try
         {
             PreparedChatResult result = await ChatCoordinator.AskAsync(request, cancellation.Token);
+            if (conversationVersion != _conversationVersion)
+            {
+                return;
+            }
+
             if (result.Kind == PreparedChatResultKind.Succeeded && result.Answer is not null)
             {
                 _answer = result.Answer;
@@ -189,19 +230,33 @@ public partial class ChatPage : IDisposable
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
+            if (conversationVersion != _conversationVersion)
+            {
+                return;
+            }
+
             ClearPublishedInteraction();
             _message = "已取消本次提问。";
             _loadState = ReadyState;
         }
         catch (Exception)
         {
+            if (conversationVersion != _conversationVersion)
+            {
+                return;
+            }
+
             ClearPublishedInteraction();
             _message = _unexpectedFailureMessage;
             _loadState = LoadState.Error;
         }
         finally
         {
-            _isBusy = false;
+            if (conversationVersion == _conversationVersion)
+            {
+                _isBusy = false;
+            }
+
             if (ReferenceEquals(_requestCancellation, cancellation))
             {
                 _requestCancellation = null;
@@ -241,6 +296,7 @@ public partial class ChatPage : IDisposable
     {
         ClearPublishedInteraction();
         _message = null;
+        _conversationNotice = null;
         _loadState = ReadyState;
         if (clearQuestion)
         {

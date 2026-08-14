@@ -67,7 +67,7 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public void ChatPage_InitialRender_RequiresExplicitPreparedSelectionsAndExcludesDeferredControls()
+    public void ChatPage_InitialRender_DefaultsToBusinessLightThemeAndExcludesDeferredControls()
     {
         Assert.NotNull(typeof(ChatPage).GetCustomAttribute<AuthorizeAttribute>());
 
@@ -75,8 +75,11 @@ public sealed class ChatPageTests : BunitContext
 
         Assert.Contains("业务模式", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("技术模式", cut.Markup, StringComparison.Ordinal);
-        Assert.Equal("false", FindButton(cut, "业务模式").GetAttribute("aria-pressed"));
+        Assert.Equal("true", FindButton(cut, "业务模式").GetAttribute("aria-pressed"));
         Assert.Equal("false", FindButton(cut, "技术模式").GetAttribute("aria-pressed"));
+        Assert.Equal("light", cut.Find(".chat-page").GetAttribute("data-theme"));
+        Assert.Contains("chat-page--business", cut.Find(".chat-page").ClassList);
+        Assert.Contains("你好，想了解什么业务流程？", cut.Markup, StringComparison.Ordinal);
         Assert.NotNull(cut.Find("#chat-system"));
         Assert.NotNull(cut.Find("#chat-repository-first"));
         Assert.NotNull(cut.Find("#chat-repository-second"));
@@ -87,6 +90,57 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("对话历史", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("知识图谱", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("实时通知", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ChatPage_NewConversation_ClearsTransientStateAndPreservesPreparedContextAsync()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        PrepareValidSelection(cut, ChatMode.Business);
+        await SendQuestionAsync(cut, "客户如何完成付款？");
+        cut.Find("#chat-question").Input("尚未发送的追问");
+
+        await FindButton(cut, "新对话").ClickAsync(new MouseEventArgs());
+
+        Assert.DoesNotContain("客户如何完成付款？", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("客户提交付款后，系统完成校验。", cut.Markup, StringComparison.Ordinal);
+        Assert.Empty(cut.FindAll(".complete-answer"));
+        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Equal(string.Empty, cut.Find("#chat-question").GetAttribute("value"));
+        Assert.Equal(_system.Id.ToString(), cut.Find("#chat-system").GetAttribute("value"));
+        Assert.Equal(_firstRepository.Id.ToString(), cut.Find("#chat-repository-first").GetAttribute("value"));
+        Assert.Equal(_secondRepository.Id.ToString(), cut.Find("#chat-repository-second").GetAttribute("value"));
+        Assert.Equal("true", FindButton(cut, "业务模式").GetAttribute("aria-pressed"));
+        Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("你好，想了解什么业务流程？", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(
+            JSInterop.Invocations,
+            invocation => invocation.Identifier.Contains("focus", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task ChatPage_NewConversationDuringRequest_PreventsLateAnswerFromReappearingAsync()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        PrepareValidSelection(cut, ChatMode.Business);
+        _dispatcher.BlockNextCall();
+
+        cut.Find("#chat-question").Input("这个问题仍在处理中");
+        Task sendTask = cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
+        await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+
+        await FindButton(cut, "新对话").ClickAsync(new MouseEventArgs());
+        _dispatcher.ReleaseBlockedCall();
+        await sendTask;
+
+        Assert.DoesNotContain("这个问题仍在处理中", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("客户提交付款后，系统完成校验。", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("已取消本次提问。", cut.Markup, StringComparison.Ordinal);
+        Assert.Empty(cut.FindAll(".complete-answer"));
+        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

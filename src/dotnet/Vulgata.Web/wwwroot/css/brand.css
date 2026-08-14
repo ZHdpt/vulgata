@@ -53,3 +53,31 @@
     background: var(--vulgata-accent);
     color: var(--vulgata-accent-foreground);
 }
+
+body:has(.chat-page[data-theme="light"]) {
+    color-scheme: light;
+    --vulgata-primary: #445E7A;
+    --vulgata-primary-foreground: #FFFFFF;
+    --vulgata-accent: #B98B6B;
+    --vulgata-accent-foreground: #FFFFFF;
+    --vulgata-bg: #F6F4F0;
+    --vulgata-fg: #1D2026;
+    --vulgata-surface: #FFFFFF;
+    --vulgata-muted: #EDE9E3;
+    --vulgata-muted-fg: #686A70;
+    --vulgata-border: #D9D3CA;
+}
+
+body:has(.chat-page[data-theme="dark"]) {
+    color-scheme: dark;
+    --vulgata-primary: #6A83A2;
+    --vulgata-primary-foreground: #FFFFFF;
+    --vulgata-accent: #D4A88C;
+    --vulgata-accent-foreground: #1D2026;
+    --vulgata-bg: #171A21;
+    --vulgata-fg: #F6F4F0;
+    --vulgata-surface: #22262F;
+    --vulgata-muted: #292E38;
+    --vulgata-muted-fg: #A8ADB7;
+    --vulgata-border: #3B414D;
+}
