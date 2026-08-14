@@ -146,9 +146,8 @@ public partial class ChatPage : IAsyncDisposable
     private Appearance ModeAppearance(ChatMode mode) =>
         IsModeSelected(mode) ? Appearance.Accent : Appearance.Neutral;
 
-    private void OnQuestionInput(ChangeEventArgs args)
+    private void OnQuestionChanged()
     {
-        _question = args.Value?.ToString() ?? string.Empty;
         _formRequest.Question = _question;
         if (_loadState == LoadState.Error)
         {

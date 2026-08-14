@@ -10,7 +10,7 @@
 <PageTitle>对话</PageTitle>
 
 <div class="chat-page @PageModeClass @ConversationStateClass" data-theme="@ThemeName" data-load-state="@_loadState">
-    <EditForm EditContext="_editContext" OnValidSubmit="SendAsync" OnInvalidSubmit="HandleInvalidSubmit">
+    <EditForm class="chat-page__form" EditContext="_editContext" OnValidSubmit="SendAsync" OnInvalidSubmit="HandleInvalidSubmit">
         <FluentValidationValidator />
     <section class="chat-controls" aria-label="准备提问">
         <div class="chat-controls__topbar">
@@ -74,7 +74,11 @@
         </div>
     </section>
 
-    <section class="chat-surface" aria-live="polite" aria-busy="@(_isBusy ? "true" : "false")">
+    <section class="chat-surface"
+             aria-label="对话记录"
+             aria-live="polite"
+             aria-busy="@(_isBusy ? "true" : "false")"
+             tabindex="0">
         @foreach (ChatTurn turn in _turns)
         {
             <div class="chat-turn" data-chat-turn="@turn.Id">
@@ -89,7 +93,13 @@
                         {
                             <section class="answer-claim" data-claim-complete="@claim.IsComplete.ToString().ToLowerInvariant()">
                                 <p class="material-claim" aria-label="@claim.Claim.Text">
-                                    <span class="material-claim__revealed" aria-hidden="true" @key="claim.VisibleText">@claim.VisibleText</span>
+                                    <span class="material-claim__revealed" aria-hidden="true">
+                                        @for (int elementIndex = 0; elementIndex < claim.VisibleTextElements.Count; elementIndex++)
+                                        {
+                                            string textElement = claim.VisibleTextElements[elementIndex];
+                                            <span class="material-claim__element" @key="elementIndex">@textElement</span>
+                                        }
+                                    </span>
                                 </p>
                                 @if (claim.IsComplete)
                                 {
@@ -167,13 +177,14 @@
         <label class="visually-hidden" for="chat-question">问题</label>
         <textarea id="chat-question"
                   @ref="_questionElement"
-                  value="@_question"
+                  @bind="_question"
+                  @bind:event="oninput"
+                  @bind:after="OnQuestionChanged"
                   placeholder="@QuestionPlaceholder"
                   aria-label="@QuestionPlaceholder"
                   autocomplete="off"
                   rows="3"
                   readonly="@_isBusy"
-                  @oninput="OnQuestionInput"
                   @onkeydown="HandleQuestionKeyDownAsync"></textarea>
         @if (_isBusy)
         {

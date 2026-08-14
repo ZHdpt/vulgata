@@ -11,6 +11,24 @@ body {
     overflow-x: hidden;
 }
 
+body:has(.chat-page) {
+    overflow: hidden;
+}
+
+body:has(.chat-page) .app-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+body:has(.chat-page) .page-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
 fluent-button.new-conversation-button::part(control),
 fluent-button.icon-button::part(control) {
     background: transparent;

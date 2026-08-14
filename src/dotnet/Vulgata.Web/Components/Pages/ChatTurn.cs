@@ -108,6 +108,9 @@ internal sealed class ChatClaimReveal
 
     public string VisibleText => string.Concat(_textElements.AsSpan(0, _visibleCount));
 
+    public ArraySegment<string> VisibleTextElements =>
+        new ArraySegment<string>(_textElements, 0, _visibleCount);
+
     public bool IsComplete => _visibleCount == _textElements.Length;
 
     public bool RevealNext()

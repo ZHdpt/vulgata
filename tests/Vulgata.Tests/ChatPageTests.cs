@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Reflection;
 using System.Text.Json;
 using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
 using Bunit;
 using Bunit.JSInterop;
 using FluentValidation;
@@ -96,6 +97,18 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("对话历史", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("知识图谱", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("实时通知", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ChatPage_Render_ExposesDedicatedAccessibleConversationScrollRegion()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+
+        IElement form = cut.Find("form");
+        IElement surface = cut.Find(".chat-surface");
+        Assert.Contains("chat-page__form", form.ClassList);
+        Assert.Equal("对话记录", surface.GetAttribute("aria-label"));
+        Assert.Equal("0", surface.GetAttribute("tabindex"));
     }
 
     [Fact]
@@ -486,6 +499,23 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_ValidPendingRequest_ClearsComposerImmediately()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        PrepareValidSelection(cut, ChatMode.Business);
+        _dispatcher.BlockNextCall();
+
+        Task sendTask = BeginQuestionAsync(cut, "提交后应立即清空");
+        await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Equal(string.Empty, ((IHtmlTextAreaElement)cut.Find("#chat-question")).Value);
+
+        _dispatcher.ReleaseBlockedCall();
+        await sendTask;
+    }
+
+    [Fact]
     public async Task ChatPage_NewConversationDuringReveal_PreventsLateTextAndCitationFromReappearingAsync()
     {
         _revealDelay.Pause();
@@ -517,9 +547,13 @@ public sealed class ChatPageTests : BunitContext
         Task sendTask = BeginQuestionAsync(cut, "Unicode 测试");
         cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing']").Count == 1);
         Assert.Equal("e\u0301", cut.Find(".material-claim__revealed").TextContent);
+        Assert.Equal(["e\u0301"], cut.FindAll(".material-claim__element").Select(element => element.TextContent));
 
         _revealDelay.ReleaseNext();
         cut.WaitForState(() => cut.Find(".material-claim__revealed").TextContent == "e\u0301👨‍👩‍👧‍👦");
+        Assert.Equal(
+            ["e\u0301", "👨‍👩‍👧‍👦"],
+            cut.FindAll(".material-claim__element").Select(element => element.TextContent));
 
         _revealDelay.ReleaseAll();
         await sendTask;
