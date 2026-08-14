@@ -1,0 +1,28 @@
+.login-layout {
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    background: #f6f4f0;
+}
+
+#blazor-error-ui {
+    position: fixed;
+    z-index: 1000;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    display: none;
+    border: 1px solid #e7b94d;
+    border-radius: 10px;
+    background: #fff6cf;
+    color: #302b1d;
+    padding: 0.75rem 2.75rem 0.75rem 1rem;
+    box-shadow: 0 1rem 2.5rem rgb(27 31 38 / 18%);
+}
+
+#blazor-error-ui .dismiss {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.8rem;
+    cursor: pointer;
+}

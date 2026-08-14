@@ -60,6 +60,32 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
     }
 
     [Fact]
+    public async Task LoginPage_DemoPresentation_RendersStandaloneShowcaseAsync()
+    {
+        using var client = CreateClient();
+
+        string html = WebUtility.HtmlDecode(await client.GetStringAsync("/Account/Login"));
+
+        Assert.Contains("class=\"login-layout\"", html, StringComparison.Ordinal);
+        Assert.Contains("业务模式", html, StringComparison.Ordinal);
+        Assert.Contains("技术模式", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("class=\"top-nav\"", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task LoginPage_DemoPresentation_HidesSelfServiceAccountLinksAsync()
+    {
+        using var client = CreateClient();
+
+        string html = WebUtility.HtmlDecode(await client.GetStringAsync("/Account/Login"));
+
+        Assert.DoesNotContain("Account/ForgotPassword", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Account/Register", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("忘记密码", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("注册新用户", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ProtectedPages_SourceDeclareRequiredAuthorization()
     {
         Assert.Contains("@attribute [Authorize]", ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Pages", "ChatPage.razor"), StringComparison.Ordinal);

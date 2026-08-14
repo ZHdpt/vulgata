@@ -2,56 +2,77 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using Vulgata.Web.Data
+@layout LoginLayout
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
-@inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
 <PageTitle>登录</PageTitle>
 
-<h1>登录</h1>
-<section>
-    <StatusMessage Message="@errorMessage" />
-    <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
-        <DataAnnotationsValidator />
-        <h2>使用本地账户登录</h2>
-        <hr />
-        <ValidationSummary class="text-danger" role="alert" />
-        <div class="form-floating mb-3">
-            <InputText type="email" @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn"
-                       aria-required="true" placeholder="name@example.com" />
-            <label for="Input.Email">邮箱</label>
-            <ValidationMessage For="() => Input.Email" class="text-danger" />
-        </div>
-        <div class="form-floating mb-3">
-            <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
-                       autocomplete="current-password" aria-required="true" placeholder="密码" />
-            <label for="Input.Password">密码</label>
-            <ValidationMessage For="() => Input.Password" class="text-danger" />
-        </div>
+<div class="login-experience">
+    <div class="login-ambient" aria-hidden="true">
+        <span class="login-grid"></span>
+        <span class="login-orb login-orb--one"></span>
+        <span class="login-orb login-orb--two"></span>
+        <span class="login-orb login-orb--three"></span>
+        <span class="login-vignette"></span>
+    </div>
 
-        <div>
-            <label>
-                <InputCheckbox @bind-Value="Input.RememberMe" />
-                记住我
-            </label>
-        </div>
-        <div>
-            <button type="submit" class="btn btn-primary w-100">登录</button>
-        </div>
-        <hr />
-        <div>
-            <p>
-                <a href="Account/ForgotPassword">忘记密码？</a>
-            </p>
-            <p>
-                <a
-                href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">注册新用户</a>
-            </p>
-        </div>
-    </EditForm>
-</section>
+    <div class="login-content">
+        <header class="mode-showcase">
+            <span class="visually-hidden">业务模式与技术模式，统一理解跨仓库知识。</span>
+            <div class="mode-showcase__slider" aria-hidden="true">
+                <span class="mode-showcase__text mode-showcase__text--business">业务模式</span>
+                <span class="mode-showcase__text mode-showcase__text--technical">技术模式</span>
+            </div>
+            <p>业务洞察 × 技术深度，无缝切换对话视角</p>
+        </header>
+
+        <section class="login-card" aria-labelledby="login-title">
+            <header class="login-brand">
+                <span class="login-brand__mark" aria-hidden="true"></span>
+                <h1 id="login-title">Vulgata</h1>
+                <p>文档对话 · DOCUMENT CHAT</p>
+            </header>
+
+            <div class="login-status">
+                <StatusMessage Message="@errorMessage" />
+            </div>
+
+            <EditForm class="login-form" EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="login-validation text-danger" role="alert" />
+
+                <div class="form-floating login-field">
+                    <InputText type="email" @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn"
+                               aria-required="true" placeholder="your.name@vulgata.com" />
+                    <label for="Input.Email">邮箱</label>
+                    <ValidationMessage For="() => Input.Email" class="login-field__validation text-danger" />
+                </div>
+
+                <div class="form-floating login-field">
+                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
+                               autocomplete="current-password" aria-required="true" placeholder="密码" />
+                    <label for="Input.Password">密码</label>
+                    <ValidationMessage For="() => Input.Password" class="login-field__validation text-danger" />
+                </div>
+
+                <label class="remember-control">
+                    <InputCheckbox @bind-Value="Input.RememberMe" />
+                    <span>记住我</span>
+                </label>
+
+                <button type="submit" class="btn btn-primary w-100 login-button">
+                    <span>登录</span>
+                    <span aria-hidden="true">↗</span>
+                </button>
+            </EditForm>
+        </section>
+    </div>
+
+    <footer class="login-footnote">© VULGATA · SECURE SESSION</footer>
+</div>
 
 @code {
     private string? errorMessage;
