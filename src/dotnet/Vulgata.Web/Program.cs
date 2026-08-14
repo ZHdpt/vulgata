@@ -24,6 +24,7 @@ using Vulgata.Shared.Validators.Systems;
 using Vulgata.Web.Api;
 using Vulgata.Web.Components;
 using Vulgata.Web.Components.Account;
+using Vulgata.Web.Components.Pages;
 using Vulgata.Web.Data;
 using Vulgata.Web.RequestPipeline;
 using Vulgata.Web.Validators;
@@ -242,6 +243,7 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IChatAgentDispatcher, ChatAgentDispatcher>();
         builder.Services.AddScoped<ChatAgentResultValidator>();
         builder.Services.AddScoped<PreparedChatCoordinator>();
+        builder.Services.AddScoped<IChatRevealDelay, ChatRevealDelay>();
         builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
         builder.Services.AddScoped<IExactGitRevisionSnapshotService, ExactGitRevisionSnapshotService>();
         builder.Services.AddScoped<ExactCandidateExtractors>();

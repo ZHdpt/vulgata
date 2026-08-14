@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.FluentUI.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Shared.Chat;
@@ -9,7 +10,7 @@ using Vulgata.Web.Data;
 
 namespace Vulgata.Web.Components.Pages;
 
-public partial class ChatPage : IDisposable
+public partial class ChatPage : IAsyncDisposable
 {
     private const string _validationMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
     private const string _unexpectedFailureMessage = "暂时无法生成回答，请稍后重试。";
@@ -30,6 +31,8 @@ public partial class ChatPage : IDisposable
     private string? _conversationNotice;
     private readonly List<ChatTurn> _turns = [];
     private CancellationTokenSource? _requestCancellation;
+    private CancellationTokenSource? _revealCancellation;
+    private IJSObjectReference? _chatModule;
     private bool _isBusy;
     private bool _isStartingNewConversation;
     private int _conversationVersion;
@@ -116,6 +119,7 @@ public partial class ChatPage : IDisposable
     {
         _conversationVersion++;
         _requestCancellation?.Cancel();
+        _revealCancellation?.Cancel();
         _requestCancellation = null;
         _isBusy = false;
         _isStartingNewConversation = true;
@@ -213,7 +217,7 @@ public partial class ChatPage : IDisposable
 
             if (result.Kind == PreparedChatResultKind.Succeeded && result.Answer is not null)
             {
-                turn.Complete(result.Answer);
+                await RevealAnswerAsync(turn, result.Answer, conversationVersion, cancellation.Token);
                 _loadState = LoadState.Loaded;
             }
             else if (result.Kind == PreparedChatResultKind.Unsupported)
@@ -288,6 +292,7 @@ public partial class ChatPage : IDisposable
 
         _loadState = LoadState.Cancelling;
         _message = null;
+        _revealCancellation?.Cancel();
         _requestCancellation.Cancel();
     }
 
@@ -305,10 +310,94 @@ public partial class ChatPage : IDisposable
 
     private LoadState ReadyState => _scopes.Count == 0 ? LoadState.Empty : LoadState.Loaded;
 
-    public void Dispose()
+    private async Task RevealAnswerAsync(
+        ChatTurn turn,
+        GroundedAnswer answer,
+        int conversationVersion,
+        CancellationToken requestCancellation)
     {
-        _requestCancellation?.Cancel();
-        _requestCancellation?.Dispose();
+        turn.BeginReveal(answer);
+        bool reducedMotion = await PrefersReducedMotionAsync(requestCancellation);
+        if (reducedMotion)
+        {
+            turn.CompleteReveal();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(requestCancellation);
+        _revealCancellation = linked;
+        try
+        {
+            foreach (ChatClaimReveal claim in turn.Claims)
+            {
+                if (claim.RevealNext())
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+
+                while (!claim.IsComplete)
+                {
+                    await RevealDelay.DelayAsync(linked.Token);
+                    linked.Token.ThrowIfCancellationRequested();
+                    if (conversationVersion != _conversationVersion)
+                    {
+                        return;
+                    }
+
+                    claim.RevealNext();
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+
+            turn.CompleteReveal();
+            await InvokeAsync(StateHasChanged);
+        }
+        finally
+        {
+            if (ReferenceEquals(_revealCancellation, linked))
+            {
+                _revealCancellation = null;
+            }
+        }
+    }
+
+    private async ValueTask<bool> PrefersReducedMotionAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _chatModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>(
+                "import",
+                cancellationToken,
+                "./Components/Pages/ChatPage.razor.js");
+            return await _chatModule.InvokeAsync<bool>("prefersReducedMotion", cancellationToken);
+        }
+        catch (Exception exception) when (exception is JSException or InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        CancellationTokenSource? reveal = Interlocked.Exchange(ref _revealCancellation, null);
+        reveal?.Cancel();
+        reveal?.Dispose();
+
+        CancellationTokenSource? request = Interlocked.Exchange(ref _requestCancellation, null);
+        request?.Cancel();
+        request?.Dispose();
+
+        if (_chatModule is not null)
+        {
+            try
+            {
+                await _chatModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
     }
 
     private static Guid? ParseId(object? value) =>
