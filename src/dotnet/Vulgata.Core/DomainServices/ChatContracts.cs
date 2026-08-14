@@ -70,12 +70,7 @@ public sealed record ChatQuestionRequest
     {
         if (string.IsNullOrWhiteSpace(requestId) ||
             repositoryIds is null ||
-            !Enum.IsDefined(mode))
-        {
-            throw new ChatContractException(ChatContractFailureCode.InvalidRequest);
-        }
-
-        if (systemId == Guid.Empty)
+            !Enum.IsDefined(mode) || systemId == Guid.Empty)
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidRequest);
         }
@@ -109,6 +104,7 @@ public sealed record ChatQuestionRequest
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidRequest);
         }
+
         string normalized = question.Normalize(NormalizationForm.FormC);
         var builder = new StringBuilder(normalized.Length);
         bool whitespacePending = false;
@@ -287,8 +283,7 @@ public sealed record EvidencePacket
         EvidenceRelationship[] canonicalRelationships = relationships?.OrderBy(
             relationship => relationship.RelationshipHandle,
             StringComparer.Ordinal).ToArray() ?? [];
-        EvidenceFlowStep[] canonicalFlow = flowEvidence?.OrderBy(
-            step => step.StepOrder).ToArray() ?? [];
+        EvidenceFlowStep[] canonicalFlow = flowEvidence?.OrderBy(step => step.StepOrder).ToArray() ?? [];
         if (string.IsNullOrWhiteSpace(requestId) ||
             !Enum.IsDefined(mode) ||
             systemId == Guid.Empty ||
@@ -414,12 +409,12 @@ public sealed record EvidencePacket
                 !documentMap.ContainsKey(relationship.TargetDocumentHandle) ||
                 relationship.SourceDocumentHandle == relationship.TargetDocumentHandle ||
                 relationship.ProfileFingerprint is not null &&
-                    !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)) ||
+                !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)) ||
             flow.Select((step, index) => (step, index)).Any(item =>
                 item.step.StepOrder != item.index + 1 ||
                 !documentMap.ContainsKey(item.step.DocumentHandle) ||
                 item.step.RelationshipHandle is not null &&
-                    !relationshipHandles.Contains(item.step.RelationshipHandle) ||
+                !relationshipHandles.Contains(item.step.RelationshipHandle) ||
                 string.IsNullOrWhiteSpace(item.step.Description)))
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
@@ -977,12 +972,9 @@ public sealed record ChatCurrentnessValidationRequest
             throw new ChatContractException(ChatContractFailureCode.InvalidCurrentness);
         }
 
-        ChatCurrentDocument[] canonicalDocuments = documents?.OrderBy(
-            document => document.LogicalDocumentId).ToArray() ?? [];
-        ChatCurrentSection[] canonicalSections = sections?.OrderBy(
-            section => section.StableSectionId).ToArray() ?? [];
-        ChatCurrentSourceAnchor[] canonicalAnchors = sourceAnchors?.OrderBy(
-            anchor => anchor.AnchorId).ToArray() ?? [];
+        ChatCurrentDocument[] canonicalDocuments = documents?.OrderBy(document => document.LogicalDocumentId).ToArray() ?? [];
+        ChatCurrentSection[] canonicalSections = sections?.OrderBy(section => section.StableSectionId).ToArray() ?? [];
+        ChatCurrentSourceAnchor[] canonicalAnchors = sourceAnchors?.OrderBy(anchor => anchor.AnchorId).ToArray() ?? [];
         ChatCurrentRelationship[] canonicalRelationships = relationships?.OrderBy(
             relationship => relationship.RelationshipIdentity,
             StringComparer.Ordinal).ToArray() ?? [];
@@ -1024,7 +1016,7 @@ public sealed record ChatCurrentnessValidationRequest
                 !canonicalRepositories.Contains(relationship.SourceRepositoryId) ||
                 !canonicalRepositories.Contains(relationship.TargetRepositoryId) ||
                 relationship.ProfileFingerprint is not null &&
-                    !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)))
+                !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)))
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidCurrentness);
         }
@@ -1101,8 +1093,8 @@ internal static class ChatContractGuard
         string normalized = value.Replace('\\', '/');
         string[] segments = normalized.Split('/');
         return !normalized.StartsWith('/') &&
-            !(normalized.Length >= 2 && char.IsAsciiLetter(normalized[0]) && normalized[1] == ':') &&
-            !Uri.TryCreate(normalized, UriKind.Absolute, out _) &&
-            segments.All(segment => segment.Length > 0 && segment is not "." and not "..");
+               !(normalized.Length >= 2 && char.IsAsciiLetter(normalized[0]) && normalized[1] == ':') &&
+               !Uri.TryCreate(normalized, UriKind.Absolute, out _) &&
+               segments.All(segment => segment.Length > 0 && segment is not "." and not "..");
     }
 }
