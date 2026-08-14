@@ -52,7 +52,7 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain("PasskeyInputModel", content, StringComparison.Ordinal);
         Assert.DoesNotContain("ExternalLoginPicker", content, StringComparison.Ordinal);
         Assert.DoesNotContain("ResendEmailConfirmation", content, StringComparison.Ordinal);
-        Assert.Contains("form-floating", content, StringComparison.Ordinal);
+        Assert.DoesNotContain("form-floating", content, StringComparison.Ordinal);
         Assert.Contains("form-control", content, StringComparison.Ordinal);
         Assert.DoesNotContain("<FluentTextField", content, StringComparison.Ordinal);
         Assert.Contains("<button type=\"submit\"", content, StringComparison.Ordinal);
@@ -83,6 +83,19 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain("Account/Register", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("忘记密码", html, StringComparison.Ordinal);
         Assert.DoesNotContain("注册新用户", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task LoginPage_Inputs_RenderAsStaticLeftAlignedFieldsAsync()
+    {
+        using var client = CreateClient();
+
+        string html = WebUtility.HtmlDecode(await client.GetStringAsync("/Account/Login"));
+
+        Assert.DoesNotContain("form-floating", html, StringComparison.Ordinal);
+        Assert.Equal(2, Regex.Matches(html, "class=\"login-field\"").Count);
+        Assert.Matches("<input\\b(?=[^>]*id=\"Input\\.Email\")(?=[^>]*dir=\"ltr\")[^>]*>", html);
+        Assert.Matches("<input\\b(?=[^>]*id=\"Input\\.Password\")(?=[^>]*dir=\"ltr\")[^>]*>", html);
     }
 
     [Fact]

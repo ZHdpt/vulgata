@@ -44,16 +44,16 @@
                 <DataAnnotationsValidator />
                 <ValidationSummary class="login-validation text-danger" role="alert" />
 
-                <div class="form-floating login-field">
+                <div class="login-field">
                     <InputText type="email" @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn"
-                               aria-required="true" placeholder="your.name@vulgata.com" />
+                               aria-required="true" dir="ltr" placeholder="your.name@vulgata.com" />
                     <label for="Input.Email">邮箱</label>
                     <ValidationMessage For="() => Input.Email" class="login-field__validation text-danger" />
                 </div>
 
-                <div class="form-floating login-field">
+                <div class="login-field">
                     <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control"
-                               autocomplete="current-password" aria-required="true" placeholder="密码" />
+                               autocomplete="current-password" aria-required="true" dir="ltr" placeholder="密码" />
                     <label for="Input.Password">密码</label>
                     <ValidationMessage For="() => Input.Password" class="login-field__validation text-danger" />
                 </div>
@@ -65,7 +65,6 @@
 
                 <button type="submit" class="btn btn-primary w-100 login-button">
                     <span>登录</span>
-                    <span aria-hidden="true">↗</span>
                 </button>
             </EditForm>
         </section>
