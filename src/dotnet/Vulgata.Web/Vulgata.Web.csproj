@@ -28,4 +28,8 @@
     <ProjectReference Include="..\Vulgata.Web.ViewModels\Vulgata.Web.ViewModels.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Vulgata.Tests" />
+  </ItemGroup>
+
 </Project>
