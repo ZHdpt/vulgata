@@ -24,7 +24,7 @@
         }
         else
         {
-            <section>
+            <section class="management-dialog-section">
                 <h3>当前系统所有者</h3>
                 @if (_owners.Count == 0)
                 {
@@ -46,10 +46,10 @@
                             {
                                 <tr>
                                     <td>@owner.DisplayName</td>
-                                    <td>@owner.Email</td>
+                                    <td><span class="admin-code">@owner.Email</span></td>
                                     <td>@owner.AssignedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
                                     <td>
-                                        <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
+                                        <FluentButton Appearance="Appearance.Neutral" Class="admin-danger-button" Size="Size.Small"
                                                       Disabled="@_isSubmitting"
                                                       OnClick="@(() => RemoveOwnerAsync(owner))">移除</FluentButton>
                                     </td>
@@ -60,21 +60,21 @@
                 }
             </section>
 
-            <section style="margin-top:1rem">
+            <section class="management-dialog-section management-subsection">
                 <h3>添加系统所有者</h3>
                 <FluentTextField @bind-Value="_keyword" Label="搜索候选用户（邮箱或用户名）" />
-                <div style="margin-top:0.5rem">
+                <div class="admin-form-actions">
                     <FluentButton Appearance="Appearance.Neutral" Disabled="@_isSubmitting"
                                   OnClick="SearchCandidatesAsync">搜索</FluentButton>
                 </div>
 
                 @if (_candidates.Count == 0)
                 {
-                    <p style="margin-top:0.75rem">未找到可分配用户。</p>
+                    <p class="admin-spaced-content">未找到可分配用户。</p>
                 }
                 else
                 {
-                    <table class="table" aria-label="可分配用户列表" style="margin-top:0.75rem">
+                    <table class="table admin-spaced-content" aria-label="可分配用户列表">
                         <thead>
                             <tr>
                                 <th scope="col">显示名称</th>
@@ -87,7 +87,7 @@
                             {
                                 <tr>
                                     <td>@candidate.DisplayName</td>
-                                    <td>@candidate.Email</td>
+                                    <td><span class="admin-code">@candidate.Email</span></td>
                                     <td>
                                         <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
                                                       Disabled="@_isSubmitting"

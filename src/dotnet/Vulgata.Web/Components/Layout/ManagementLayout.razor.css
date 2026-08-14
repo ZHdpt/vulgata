@@ -1,109 +1,163 @@
 .management-shell {
+    --admin-bg: oklch(97.5% 0.002 70);
+    --admin-surface: oklch(100% 0 0);
+    --admin-fg: oklch(22% 0.02 240);
+    --admin-muted: oklch(50% 0.018 240);
+    --admin-border: oklch(90% 0.005 240);
+    --admin-accent: oklch(45% 0.14 255);
+    --admin-accent-hover: oklch(40% 0.14 255);
+    --admin-danger: oklch(55% 0.2 25);
+    --admin-row-hover: oklch(98.5% 0.003 240);
+    --admin-status-bg: oklch(92% 0.003 240);
+    --admin-segment-bg: oklch(96% 0.004 240);
+    --admin-font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+    --admin-font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
     min-height: 100vh;
-    background: var(--vulgata-bg);
-    color: var(--vulgata-fg);
+    background: var(--admin-bg);
+    color: var(--admin-fg);
+    font-family: var(--admin-font-body);
+    font-variant-numeric: tabular-nums;
 }
 
 .management-top {
+    position: sticky;
+    z-index: 100;
+    top: 0;
     display: flex;
+    height: 52px;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    border-bottom: 1px solid var(--vulgata-border);
-    background: var(--vulgata-surface);
-    padding: 0.75rem 1rem;
+    gap: 1.5rem;
+    border-bottom: 1px solid var(--admin-border);
+    background: var(--admin-surface);
+    padding: 0 24px;
+}
+
+.management-top__primary,
+.actions,
+.top-nav-links,
+.management-user {
+    display: flex;
+    align-items: center;
+}
+
+.management-top__primary {
+    gap: 20px;
 }
 
 .brand {
-    color: var(--vulgata-primary);
-    font-weight: 700;
+    color: var(--admin-fg);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
     text-decoration: none;
 }
 
 .top-nav-links {
-    display: flex;
-    gap: 0.75rem;
+    gap: 4px;
 }
 
 .top-nav-links a {
-    color: var(--vulgata-fg);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--admin-muted);
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
     text-decoration: none;
-    padding: 0.3rem 0.75rem;
-    border-radius: 4px;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+.top-nav-links a:hover {
+    background: transparent;
+    color: var(--admin-fg);
 }
 
 .top-nav-links .active-link {
-    background: var(--vulgata-primary);
-    color: var(--vulgata-primary-foreground);
-}
-
-.management-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--vulgata-border);
-    background: var(--vulgata-surface);
-    padding: 0.65rem 1rem;
-}
-
-.management-tabs ::deep a {
-    color: var(--vulgata-fg);
-    text-decoration: none;
-    padding: 0.35rem 0.75rem;
-    border-radius: 4px;
-}
-
-.management-tabs ::deep a.active {
-    background: var(--vulgata-primary);
-    color: var(--vulgata-primary-foreground);
-}
-
-.holy-grail {
-    display: grid;
-    grid-template-columns: minmax(220px, 280px) 1fr;
-    min-height: calc(100vh - 126px);
-}
-
-.left-sidebar {
-    border-right: 1px solid var(--vulgata-border);
-    background: var(--vulgata-muted);
-    padding: 1rem;
-}
-
-.main-content {
-    padding: 1rem;
+    background: var(--admin-accent);
+    color: white;
 }
 
 .actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    gap: 16px;
+}
+
+.actions ::deep fluent-button.icon-button::part(control) {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--admin-muted);
+    padding: 0;
+}
+
+.actions ::deep fluent-button.icon-button:hover::part(control) {
+    background: transparent;
+    color: var(--admin-fg);
+}
+
+.icon-button ::deep svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.5;
 }
 
 .avatar-menu {
     position: relative;
 }
 
-.avatar-menu summary {
+.management-user {
+    gap: 8px;
     list-style: none;
+    color: var(--admin-muted);
     cursor: pointer;
+    font-family: var(--admin-font-mono);
+    font-size: 12px;
 }
 
-.avatar-menu summary::-webkit-details-marker {
+.management-user::-webkit-details-marker {
     display: none;
 }
 
+.management-user__avatar {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 50%;
+    background: oklch(92% 0.006 240);
+    color: var(--admin-fg);
+    font-family: var(--admin-font-mono);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.management-user__identity {
+    max-width: 18rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .avatar-dropdown {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
     position: absolute;
     right: 0;
+    display: flex;
+    min-width: 9rem;
+    flex-direction: column;
+    gap: 0.5rem;
     margin-top: 0.5rem;
-    min-width: 8.5rem;
-    border: 1px solid var(--vulgata-border);
+    border: 1px solid var(--admin-border);
     border-radius: 8px;
-    background: var(--vulgata-surface);
+    background: var(--admin-surface);
     padding: 0.65rem;
 }
 
@@ -111,27 +165,461 @@
     margin: 0;
 }
 
-.avatar-dropdown button {
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    color: var(--vulgata-fg);
-    padding: 0;
-    text-align: left;
-}
-
+.avatar-dropdown button,
 .avatar-dropdown a {
-    color: var(--vulgata-fg);
+    border: 0;
+    background: transparent;
+    color: var(--admin-fg);
+    padding: 0;
+    font: inherit;
+    text-align: left;
     text-decoration: none;
 }
 
-@media (max-width: 900px) {
+.avatar-dropdown button {
+    cursor: pointer;
+}
+
+.management-tabs {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 2px;
+    margin: 14px 24px;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    background: var(--admin-segment-bg);
+    padding: 3px;
+}
+
+.management-tabs ::deep a {
+    border-radius: 6px;
+    background: transparent;
+    color: var(--admin-muted);
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 150ms ease, background-color 150ms ease;
+}
+
+.management-tabs ::deep a:hover {
+    background: transparent;
+    color: var(--admin-fg);
+}
+
+.management-tabs ::deep a.active {
+    background: var(--admin-surface);
+    color: var(--admin-fg);
+    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.06);
+}
+
+.holy-grail {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    min-height: calc(100vh - 101px);
+}
+
+.left-sidebar {
+    border-right: 1px solid var(--admin-border);
+    background: transparent;
+    padding: 24px 20px;
+}
+
+.left-sidebar h3 {
+    margin: 0 0 6px;
+    color: var(--admin-fg);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.left-sidebar p {
+    margin: 0;
+    color: var(--admin-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.main-content {
+    width: 100%;
+    max-width: 960px;
+    padding: 32px 40px 48px;
+}
+
+.main-content ::deep .management-page-header {
+    margin-bottom: 20px;
+}
+
+.main-content ::deep .management-page-header > :last-child {
+    margin-bottom: 0;
+}
+
+.main-content ::deep .management-section {
+    margin: 0 0 48px;
+}
+
+.main-content ::deep .management-subsection {
+    margin-top: 44px;
+}
+
+.main-content ::deep .management-section-actions,
+.main-content ::deep .admin-form-actions,
+.main-content ::deep .admin-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.main-content ::deep .management-section-actions {
+    margin-bottom: 16px;
+}
+
+.main-content ::deep .admin-form-actions {
+    margin-top: 16px;
+}
+
+.main-content ::deep h1,
+.main-content ::deep h2,
+.main-content ::deep h3 {
+    color: var(--admin-fg);
+    font-family: var(--admin-font-body);
+    font-weight: 500;
+}
+
+.main-content ::deep h1 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+}
+
+.main-content ::deep h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+}
+
+.main-content ::deep h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+}
+
+.main-content ::deep p {
+    color: var(--admin-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.main-content ::deep h1 + p,
+.main-content ::deep h2 + p,
+.main-content ::deep h3 + p {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.main-content ::deep hr {
+    margin: 48px 0;
+    border: 0;
+    border-top: 1px solid var(--admin-border);
+    opacity: 1;
+}
+
+.main-content ::deep .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--admin-fg);
+    width: 100%;
+    margin-bottom: 20px;
+    border-collapse: collapse;
+    color: var(--admin-fg);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.main-content ::deep .table > thead > tr > th {
+    border: 0;
+    border-bottom: 1px solid var(--admin-border);
+    background: transparent;
+    color: var(--admin-muted);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-align: left;
+    text-transform: none;
+}
+
+.main-content ::deep .table > tbody > tr > td {
+    border: 0;
+    border-bottom: 1px solid var(--admin-border);
+    background: transparent;
+    color: var(--admin-fg);
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.main-content ::deep .table > tbody > tr:last-child > td {
+    border-bottom: 0;
+}
+
+.main-content ::deep .table > tbody > tr:hover > td {
+    background: var(--admin-row-hover);
+}
+
+.main-content ::deep fluent-data-grid {
+    width: 100%;
+    margin-bottom: 20px;
+    background: transparent;
+    color: var(--admin-fg);
+    font-family: var(--admin-font-body);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.main-content ::deep fluent-data-grid-row {
+    border-bottom: 1px solid var(--admin-border);
+    background: transparent;
+}
+
+.main-content ::deep fluent-data-grid-row:hover:not([row-type="header"]) {
+    background: var(--admin-row-hover);
+}
+
+.main-content ::deep fluent-data-grid-cell {
+    border: 0;
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.main-content ::deep fluent-data-grid-row[row-type="header"] fluent-data-grid-cell {
+    background: transparent;
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.main-content ::deep .admin-code {
+    font-family: var(--admin-font-mono);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.main-content ::deep .admin-status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: var(--admin-status-bg);
+    color: var(--admin-muted);
+    padding: 3px 10px;
+    font-family: var(--admin-font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: normal;
+}
+
+.main-content ::deep fluent-button::part(control) {
+    min-height: auto;
+    border-radius: 999px;
+    box-shadow: none;
+    padding: 7px 16px;
+    font-family: var(--admin-font-body);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.main-content ::deep fluent-button[size="small"]::part(control) {
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+.main-content ::deep fluent-button[appearance="accent"]::part(control) {
+    border: 1px solid var(--admin-accent);
+    background: var(--admin-accent);
+    color: white;
+}
+
+.main-content ::deep fluent-button[appearance="accent"]:hover::part(control) {
+    border-color: var(--admin-accent-hover);
+    background: var(--admin-accent-hover);
+    box-shadow: none;
+}
+
+.main-content ::deep fluent-button[appearance="neutral"]::part(control),
+.main-content ::deep fluent-button[appearance="stealth"]::part(control) {
+    border: 1px solid var(--admin-border);
+    background: transparent;
+    color: var(--admin-muted);
+}
+
+.main-content ::deep fluent-button[appearance="neutral"]:hover::part(control),
+.main-content ::deep fluent-button[appearance="stealth"]:hover::part(control) {
+    border-color: var(--admin-border);
+    background: transparent;
+    color: var(--admin-fg);
+    box-shadow: none;
+}
+
+.main-content ::deep fluent-button.admin-danger-button::part(control) {
+    border: 1px solid color-mix(in oklch, var(--admin-danger) 45%, var(--admin-border));
+    background: transparent;
+    color: var(--admin-danger);
+}
+
+.main-content ::deep fluent-button.admin-danger-button:hover::part(control) {
+    border-color: var(--admin-danger);
+    background: var(--admin-danger);
+    color: white;
+}
+
+.main-content ::deep .form-select,
+.main-content ::deep input,
+.main-content ::deep textarea,
+.main-content ::deep select {
+    border-color: var(--admin-border);
+    border-radius: 8px;
+    box-shadow: none;
+    font-family: var(--admin-font-body);
+}
+
+.main-content ::deep fieldset {
+    border-color: var(--admin-border) !important;
+    border-radius: 8px;
+}
+
+.main-content ::deep .management-section-actions,
+.main-content ::deep .admin-form-actions,
+.main-content ::deep .admin-inline-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.main-content ::deep .management-section-actions {
+    margin-bottom: 20px;
+}
+
+.main-content ::deep .management-section-actions--end {
+    justify-content: flex-end;
+}
+
+.main-content ::deep .admin-form-actions {
+    margin-top: 12px;
+}
+
+.main-content ::deep .admin-dialog-form {
+    display: grid;
+    gap: 16px;
+}
+
+.main-content ::deep .admin-fieldset {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--admin-border);
+}
+
+.main-content ::deep .admin-fieldset legend {
+    margin: 0 8px;
+    padding: 0 4px;
+    color: var(--admin-fg);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.main-content ::deep .admin-checkbox-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.main-content ::deep .admin-field-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.main-content ::deep .admin-summary-block {
+    padding-top: 16px;
+    border-top: 1px solid var(--admin-border);
+}
+
+.main-content ::deep .admin-summary-block > div {
+    margin-top: 6px;
+    color: var(--admin-muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.main-content ::deep .admin-spaced-content {
+    margin-top: 12px;
+}
+
+.main-content ::deep .management-dialog-section + .management-dialog-section {
+    margin-top: 28px;
+}
+
+@media (max-width: 768px) {
+    .management-top {
+        padding: 0 16px;
+    }
+
+    .management-user__identity {
+        display: none;
+    }
+
+    .management-tabs {
+        max-width: calc(100% - 32px);
+        margin-inline: 16px;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
     .holy-grail {
         grid-template-columns: 1fr;
+        min-height: 0;
     }
 
     .left-sidebar {
-        border-right: none;
-        border-bottom: 1px solid var(--vulgata-border);
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+    .main-content {
+        max-width: none;
+        padding: 24px 20px 40px;
+    }
+
+    .main-content ::deep .table,
+    .main-content ::deep fluent-data-grid,
+    .main-content ::deep fluent-data-grid-cell {
+        font-size: 12px;
+    }
+
+    .main-content ::deep .table > thead > tr > th,
+    .main-content ::deep .table > tbody > tr > td,
+    .main-content ::deep fluent-data-grid-cell {
+        padding: 8px 10px;
+    }
+}
+
+@media (max-width: 520px) {
+    .management-top__primary {
+        gap: 10px;
+    }
+
+    .top-nav-links a {
+        padding-inline: 10px;
+    }
+
+    .actions {
+        gap: 6px;
     }
 }

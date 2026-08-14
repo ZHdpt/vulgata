@@ -21,8 +21,10 @@
 
 <PageTitle>系统管理</PageTitle>
 
-<h1 class="display-serif display-serif-sm">系统管理</h1>
-<p>在仓库详情中可维护数据库连接并执行测试连接。</p>
+<header class="management-page-header">
+    <h1>系统管理</h1>
+    <p>在仓库详情中可维护数据库连接并执行测试连接。</p>
+</header>
 
 @if (_loadError is not null)
 {
@@ -53,7 +55,7 @@ else
 
     @if (_isAdministrator)
     {
-        <FluentButton Appearance="Appearance.Accent" OnClick="StartCreateSystem" Style="margin-top:1rem">+ 新建系统</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="StartCreateSystem">+ 新建系统</FluentButton>
     }
 }
 
@@ -67,6 +69,7 @@ else
 
 @if (_showForm)
 {
+    <section class="management-section management-form-section">
     <hr />
     <h2>@(_editingSystem is null ? "新建系统" : "编辑系统")</h2>
 
@@ -87,11 +90,12 @@ else
             <FluentMessageBar Severity="MessageSeverity.Error">@_saveError</FluentMessageBar>
         }
 
-        <div style="margin-top:1rem">
+        <div class="admin-form-actions">
             <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Disabled="@_isSaving">保存</FluentButton>
             <FluentButton Appearance="Appearance.Neutral" OnClick="CancelForm">取消</FluentButton>
         </div>
     </EditForm>
+    </section>
 }
 
 @if (_showRepositoryForm)

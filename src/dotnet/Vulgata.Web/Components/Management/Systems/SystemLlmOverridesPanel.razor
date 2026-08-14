@@ -1,7 +1,7 @@
 @using Vulgata.Core.Entities
 @using Vulgata.Web.Data
-<section style="margin-bottom:1rem">
-    <h3 style="margin-top:0.75rem">LLM Provider 覆盖</h3>
+<section class="management-subsection">
+    <h3>LLM Provider 覆盖</h3>
     <table class="table" aria-label="@SystemName LLM Provider 覆盖列表">
         <thead>
             <tr>
@@ -15,7 +15,16 @@
                 var overrideItem = GetOverride(agentType);
                 <tr>
                     <td>@GetAgentTypeDisplayName(agentType)</td>
-                    <td>@(overrideItem?.ProviderName ?? "使用全局默认提供商")</td>
+                    <td>
+                        @if (overrideItem is null)
+                        {
+                            <span>使用全局默认提供商</span>
+                        }
+                        else
+                        {
+                            <span class="admin-code">@overrideItem.ProviderName</span>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>

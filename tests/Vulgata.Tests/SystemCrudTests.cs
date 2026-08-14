@@ -42,6 +42,28 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
     }
 
     [Fact]
+    public async Task Administrator_SystemManagementPage_RendersTechUtilityShell()
+    {
+        await EnsureApplicationStartedAsync();
+        await ResetDomainStateAsync();
+        const string email = "story21.admin.shell@example.com";
+        await CreateUserWithRolesAsync(email, "Valid1!Pass", RoleNames.Administrator);
+
+        using var client = CreateClient();
+        await LoginAsync(client, email, "Valid1!Pass");
+
+        var response = await client.GetAsync("/management");
+        string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("aria-label=\"通知\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"management-user\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"management-user__avatar\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"management-user__identity\"", html, StringComparison.Ordinal);
+        Assert.Contains(email, html, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Administrator_CanCreateSystem_AndSeeItInListAndManagementPage()
     {
         await EnsureApplicationStartedAsync();

@@ -1,6 +1,6 @@
 @using Vulgata.Shared.Repositories
-<section style="margin-bottom:1.5rem">
-    <h2 style="margin-top:1.5rem">独立仓库</h2>
+<section class="management-section">
+    <h2>独立仓库</h2>
     <p>不归属于任何系统，所有具备管理权限的用户都可见。</p>
 
     <table class="table" aria-label="独立仓库列表">
@@ -19,8 +19,8 @@
                 @foreach (var repository in Repositories)
                 {
                     <tr>
-                        <td>@repository.Name</td>
-                        <td>@repository.ScanStatus</td>
+                        <td><span class="admin-code">@repository.Name</span></td>
+                        <td><span class="admin-status-pill">@repository.ScanStatus</span></td>
                         <td>@(repository.LastScannedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                         <td>@repository.DocumentCount</td>
                         <td>
@@ -39,8 +39,7 @@
         </tbody>
     </table>
 
-    <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="OnCreateRequested"
-                  Style="margin-bottom:0.5rem">+ 新建独立仓库</FluentButton>
+    <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="OnCreateRequested">+ 新建独立仓库</FluentButton>
 </section>
 
 @code {

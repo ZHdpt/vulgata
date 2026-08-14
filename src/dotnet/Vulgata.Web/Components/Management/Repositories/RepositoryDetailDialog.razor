@@ -6,7 +6,7 @@
 {
     <FluentDialog Visible="Visible" VisibleChanged="OnVisibleChanged" Title="仓库详情" PrimaryActionText="保存" SecondaryActionText="关闭"
                   PrimaryAction="@(async () => await SaveAsync())" SecondaryAction="CloseAsync">
-        <div style="display:grid;gap:0.75rem">
+        <div class="admin-dialog-form">
             <div><strong>仓库名称：</strong>@Model.Name</div>
             <div>
                 <FluentButton Appearance="Appearance.Accent" Disabled="@_isProfiling" OnClick="StartProfilingAsync">

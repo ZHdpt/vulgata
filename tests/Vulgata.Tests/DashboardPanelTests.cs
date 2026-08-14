@@ -77,6 +77,9 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("+ 新建独立仓库", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("共享组件库", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("团队工具库", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("management-section", cut.Find("section").ClassList);
+        Assert.Equal(2, cut.FindAll(".admin-code").Count);
+        Assert.Equal(2, cut.FindAll(".admin-status-pill").Count);
 
         // Empty state path
         var empty = Render<StandaloneReposPanel>(parameters => parameters
@@ -183,6 +186,11 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("编辑", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("管理所有者", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("删除", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(
+            "admin-danger-button",
+            cut.FindAll("button, fluent-button")
+                .Single(button => button.TextContent.Contains("删除", StringComparison.Ordinal))
+                .ClassList);
     }
 
     [Fact]

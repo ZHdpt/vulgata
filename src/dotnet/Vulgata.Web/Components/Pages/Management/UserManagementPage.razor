@@ -15,8 +15,10 @@
 
 <PageTitle>用户管理</PageTitle>
 
-<h1 class="display-serif display-serif-sm">用户管理</h1>
-<p>管理员可以在此授予或移除管理员权限。</p>
+<header class="management-page-header">
+    <h1>用户管理</h1>
+    <p>管理员可以在此授予或移除管理员权限。</p>
+</header>
 
 <StatusMessage />
 
@@ -46,7 +48,7 @@ else
         @foreach (var row in _rows)
             {
                 <tr>
-                    <td>@row.Email</td>
+                    <td><span class="admin-code">@row.Email</span></td>
                     <td>@string.Join(", ", row.Roles)</td>
                     <td>
                         @if (row.IsAdministrator)
@@ -58,7 +60,7 @@ else
                                     <AntiforgeryToken />
                                     <input type="hidden" name="Action" value="remove" />
                                     <input type="hidden" name="UserId" value="@row.UserId" />
-                                    <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Neutral">移除管理员</FluentButton>
+                                    <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Neutral" Class="admin-danger-button">移除管理员</FluentButton>
                                 </form>
                             }
                             else

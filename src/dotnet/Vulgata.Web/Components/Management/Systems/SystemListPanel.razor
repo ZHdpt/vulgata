@@ -10,19 +10,20 @@ else
 {
     @foreach (var system in Systems)
     {
-        <h2 style="margin-top:1.5rem">@system.Name</h2>
+        <section class="management-section management-subsection">
+        <h2>@system.Name</h2>
         @if (!string.IsNullOrWhiteSpace(system.Description))
         {
             <p>@system.Description</p>
         }
         @if (IsAdministrator)
         {
-            <div style="margin-bottom:0.5rem">
+            <div class="management-section-actions">
                 <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" OnClick="@(() => OnEditRequested.InvokeAsync(system))">编辑
                 </FluentButton>
                 <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" OnClick="@(() => OnManageOwnersRequested.InvokeAsync(system))">管理所有者
                 </FluentButton>
-                <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="@(() => OnDeleteRequested.InvokeAsync(system))">删除
+                <FluentButton Class="admin-danger-button" Appearance="Appearance.Neutral" Size="Size.Small" OnClick="@(() => OnDeleteRequested.InvokeAsync(system))">删除
                 </FluentButton>
             </div>
         }
@@ -43,8 +44,8 @@ else
                     @foreach (var repository in repositories)
                     {
                         <tr>
-                            <td>@repository.Name</td>
-                            <td>@repository.ScanStatus</td>
+                            <td><span class="admin-code">@repository.Name</span></td>
+                            <td><span class="admin-status-pill">@repository.ScanStatus</span></td>
                             <td>@(repository.LastScannedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                             <td>@repository.DocumentCount</td>
                             <td>
@@ -63,14 +64,14 @@ else
             </tbody>
         </table>
 
-        <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="@(() => OnCreateRepositoryRequested.InvokeAsync(system))"
-                      Style="margin-bottom:0.5rem">+ 新建仓库</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" Size="Size.Small" OnClick="@(() => OnCreateRepositoryRequested.InvokeAsync(system))">+ 新建仓库</FluentButton>
 
         <SystemLlmOverridesPanel SystemId="system.Id"
                                  SystemName="system.Name"
                                  Overrides="@GetOverrides(system.Id)"
                                  OnOverrideAdded="@(() => OnLlmOverrideAdded.InvokeAsync(system.Id))"
                                  OnOverrideRemoved="@(overrideId => OnLlmOverrideRemoved.InvokeAsync((system.Id, overrideId)))" />
+        </section>
     }
 }
 

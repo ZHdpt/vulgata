@@ -4,8 +4,8 @@
 @using Vulgata.Shared.Repositories
 @using Vulgata.Web.Data
 @using Vulgata.Web.Validators
-<section style="padding:0.5rem 0;border-top:1px solid #d6d6d6">
-    <h3 style="margin:0 0 0.5rem 0">数据库连接</h3>
+<section class="management-subsection admin-summary-block">
+    <h3>数据库连接</h3>
     <div><strong>状态：</strong>@(Model?.IsConfigured == true ? "已配置" : "未配置")</div>
     <div><strong>数据库类型：</strong>@GetDatabaseTypeDisplayName(Model?.DatabaseType)</div>
     <div><strong>连接字符串：</strong>@(Model?.HasConnectionString == true ? "已配置" : "未配置")</div>
@@ -26,7 +26,7 @@
 }
 
 <div>
-    <label for="database-type" style="display:block;margin-bottom:0.5rem">数据库类型</label>
+    <label for="database-type" class="admin-field-label">数据库类型</label>
     <InputSelect id="database-type" @bind-Value="_form.DatabaseType" class="form-select">
         <option value="@DatabaseType.PostgreSql">PostgreSQL</option>
         <option value="@DatabaseType.SqlServer">SqlServer</option>
@@ -41,8 +41,8 @@
 <FluentTextField @bind-Value="_form.Username" Label="用户名（留空则保留现有值）" />
 <FluentTextField @bind-Value="_form.Password" Label="密码（留空则保留现有值）" type="password" />
 
-<div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-    <FluentButton Appearance="Appearance.Neutral" Size="Size.Small" Disabled="@_isBusy"
+<div class="admin-inline-actions">
+    <FluentButton Appearance="Appearance.Neutral" Class="admin-danger-button" Size="Size.Small" Disabled="@_isBusy"
                   OnClick="TestConnectionAsync">测试连接</FluentButton>
     <FluentButton Appearance="Appearance.Accent" Size="Size.Small" Disabled="@_isBusy"
                   OnClick="SaveAsync">保存</FluentButton>
