@@ -133,6 +133,7 @@ public sealed class ChatAgentResultValidatorTests
                 fixture.Packet.RequestId,
                 fixture.Packet.Mode,
                 fixture.Packet.SystemId,
+                "如何处理请求？",
                 fixture.Packet.Fingerprint,
                 [tampered]);
             ChatAgentResultValidation result = validator.Validate(
@@ -175,6 +176,7 @@ public sealed class ChatAgentResultValidatorTests
                 packet.RequestId,
                 packet.Mode,
                 packet.SystemId,
+                "如何处理请求？",
                 packet.Fingerprint,
                 [forged]);
 
@@ -252,6 +254,7 @@ public sealed class ChatAgentResultValidatorTests
             packet.RequestId,
             packet.Mode,
             packet.SystemId,
+            "如何处理请求？",
             packet.Fingerprint,
             candidates);
         return new ValidationFixture(packet, request);
@@ -294,6 +297,7 @@ public sealed class ChatAgentResultValidatorTests
             requestId = request.RequestId,
             mode = request.Mode == ChatMode.Business ? "business" : "it",
             evidenceFingerprint = request.EvidenceFingerprint,
+            answerability = "supported",
             selections = selections.Select(selection => new
             {
                 candidateHandle = selection.Handle,

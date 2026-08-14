@@ -19,6 +19,7 @@ public sealed record PreparedChatScopeOption(
 public enum PreparedChatResultKind
 {
     Succeeded,
+    Unsupported,
     InvalidRequest,
     MissingOrUnauthorized,
     EvidenceUnavailable,
@@ -56,6 +57,7 @@ public sealed class PreparedChatCoordinator(
     private const string _invalidRequestMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
     private const string _missingMessage = "未找到可用的知识范围，或您无权访问。";
     private const string _evidenceUnavailableMessage = "当前知识证据不可用或已更新，请稍后重试。";
+    private const string _unsupportedMessage = "当前知识库中没有足够信息回答该问题。";
     private const string _providerUnavailableMessage = "暂时无法生成回答，请稍后重试。";
     private const string _timedOutMessage = "回答超时，请重试。";
     private const string _cancelledMessage = "已取消本次提问。";
@@ -245,6 +247,7 @@ public sealed class PreparedChatCoordinator(
                 request.RequestId,
                 request.Mode,
                 request.SystemId,
+                request.Question,
                 packet.Fingerprint,
                 candidates);
             ChatSynthesisOutcome synthesis = await dispatcher.GenerateAsync(
@@ -262,6 +265,15 @@ public sealed class PreparedChatCoordinator(
             if (!validation.IsValid)
             {
                 return EvidenceUnavailable();
+            }
+
+            if (!validation.IsAnswerable)
+            {
+                return await authorizationVerifier.HasCurrentAccessAsync(
+                    request.RepositoryIds,
+                    cancellationToken)
+                        ? Unsupported()
+                        : Missing();
             }
 
             IReadOnlyList<CandidateClaim> selectedCandidates = validation.SelectedCandidates;
@@ -495,6 +507,9 @@ public sealed class PreparedChatCoordinator(
 
     private static PreparedChatResult EvidenceUnavailable() =>
         PreparedChatResult.Failed(PreparedChatResultKind.EvidenceUnavailable, _evidenceUnavailableMessage);
+
+    private static PreparedChatResult Unsupported() =>
+        PreparedChatResult.Failed(PreparedChatResultKind.Unsupported, _unsupportedMessage);
 
     private static PreparedChatResult ProviderUnavailable() =>
         PreparedChatResult.Failed(PreparedChatResultKind.ProviderUnavailable, _providerUnavailableMessage);

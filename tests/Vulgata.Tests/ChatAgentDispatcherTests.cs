@@ -227,8 +227,9 @@ public sealed class ChatAgentDispatcherTests
         using JsonDocument selectionDocument = JsonDocument.Parse(requestJson);
         JsonElement selectionRoot = selectionDocument.RootElement;
         Assert.Equal(
-            ["schemaVersion", "requestId", "mode", "evidenceFingerprint", "candidates"],
+            ["schemaVersion", "requestId", "mode", "question", "evidenceFingerprint", "candidates"],
             selectionRoot.EnumerateObject().Select(property => property.Name));
+        Assert.Equal("客户如何完成付款？", selectionRoot.GetProperty("question").GetString());
         JsonElement candidate = Assert.Single(selectionRoot.GetProperty("candidates").EnumerateArray());
         Assert.Equal(
             ["candidateHandle", "text"],
@@ -242,6 +243,43 @@ public sealed class ChatAgentDispatcherTests
         Assert.DoesNotContain("r1", requestJson, StringComparison.Ordinal);
         Assert.DoesNotContain("encrypted-chat-key", capture.Body, StringComparison.Ordinal);
         Assert.DoesNotContain("plaintext-chat-key", capture.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_UnsupportedQuestion_AcceptsExplicitEmptySelection()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        string rawSelectionJson = $$"""
+            {
+              "schemaVersion": "{{ChatSynthesisResult.SupportedSchemaVersion}}",
+              "requestId": "{{request.RequestId}}",
+              "mode": "business",
+              "evidenceFingerprint": "{{request.EvidenceFingerprint}}",
+              "answerability": "unsupported",
+              "selections": []
+            }
+            """;
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var dispatcher = new ChatAgentDispatcher(
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => CreateChatResponse(rawSelectionJson)),
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        ChatSynthesisResult result = Assert.IsType<ChatSynthesisResult>(outcome.Result);
+        Assert.Empty(result.Selections);
+        Assert.Null(outcome.FailureCode);
     }
 
     [Fact]
@@ -390,6 +428,7 @@ public sealed class ChatAgentDispatcherTests
             "request-1",
             mode,
             Guid.NewGuid(),
+            "客户如何完成付款？",
             fingerprint,
             [candidate]);
     }
@@ -399,6 +438,7 @@ public sealed class ChatAgentDispatcherTests
           "selections": [ { "order": 1, "candidateHandle": "k1" } ],
           "evidenceFingerprint": "{{request.EvidenceFingerprint}}",
           "mode": "{{(request.Mode == ChatMode.Business ? "business" : "it")}}",
+          "answerability": "supported",
           "requestId": "{{request.RequestId}}",
           "schemaVersion": "{{ChatSynthesisResult.SupportedSchemaVersion}}"
         }

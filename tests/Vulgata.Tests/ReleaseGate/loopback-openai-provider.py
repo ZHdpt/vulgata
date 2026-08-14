@@ -18,6 +18,7 @@ def _chat_selection(request):
         "requestId": payload.get("requestId", "request"),
         "mode": payload.get("mode", "business"),
         "evidenceFingerprint": payload.get("evidenceFingerprint", "0" * 64),
+        "answerability": "supported",
         "selections": [{"candidateHandle": handle, "order": 1}],
     }
 
@@ -241,6 +242,7 @@ def _self_test_payload():
     })}]}
     chat_request = {"messages": [{"role": "user", "content": json.dumps({
         "requestId": value, "mode": "business", "evidenceFingerprint": "d" * 64,
+        "question": "账户与渠道如何协作？",
         "candidates": [{"candidateHandle": "k1"}],
     })}]}
     return {"pass1": pass1, "pass2": _pass2(pass2_request), "chat": _chat_selection(chat_request)}

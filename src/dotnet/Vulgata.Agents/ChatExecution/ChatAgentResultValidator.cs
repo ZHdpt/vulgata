@@ -8,11 +8,13 @@ public sealed class ChatAgentResultValidation
     private ChatAgentResultValidation(
         bool isValid,
         IReadOnlyList<MaterialClaim> materialClaims,
-        IReadOnlyList<CandidateClaim> selectedCandidates)
+        IReadOnlyList<CandidateClaim> selectedCandidates,
+        bool isAnswerable)
     {
         IsValid = isValid;
         MaterialClaims = materialClaims;
         SelectedCandidates = selectedCandidates;
+        IsAnswerable = isAnswerable;
     }
 
     public bool IsValid { get; }
@@ -21,13 +23,18 @@ public sealed class ChatAgentResultValidation
 
     public IReadOnlyList<CandidateClaim> SelectedCandidates { get; }
 
+    public bool IsAnswerable { get; }
+
     internal static ChatAgentResultValidation Valid(
         IReadOnlyList<MaterialClaim> materialClaims,
         IReadOnlyList<CandidateClaim> selectedCandidates) =>
-        new(true, materialClaims, selectedCandidates);
+        new(true, materialClaims, selectedCandidates, true);
+
+    internal static ChatAgentResultValidation Unsupported() =>
+        new(true, [], [], false);
 
     internal static ChatAgentResultValidation Invalid() =>
-        new(false, [], []);
+        new(false, [], [], false);
 }
 
 public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExtractor)
@@ -58,6 +65,7 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
                     "requestId",
                     "mode",
                     "evidenceFingerprint",
+                    "answerability",
                     "selections") ||
                 root.GetProperty("schemaVersion").ValueKind != JsonValueKind.String ||
                 !string.Equals(
@@ -73,11 +81,28 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
                     root.GetProperty("evidenceFingerprint").GetString(),
                     request.EvidenceFingerprint,
                     StringComparison.Ordinal) ||
+                root.GetProperty("answerability").ValueKind != JsonValueKind.String ||
                 root.GetProperty("selections").ValueKind != JsonValueKind.Array ||
                 packet.RequestId != request.RequestId ||
                 packet.Mode != request.Mode ||
                 packet.SystemId != request.SystemId ||
                 !string.Equals(packet.Fingerprint, request.EvidenceFingerprint, StringComparison.Ordinal))
+            {
+                return ChatAgentResultValidation.Invalid();
+            }
+
+            string? answerability = root.GetProperty("answerability").GetString();
+            int selectionCount = root.GetProperty("selections").GetArrayLength();
+            if (string.Equals(answerability, "unsupported", StringComparison.Ordinal))
+            {
+                return selectionCount == 0 &&
+                    outcome.Result?.Answerability == ChatAnswerability.Unsupported
+                        ? ChatAgentResultValidation.Unsupported()
+                        : ChatAgentResultValidation.Invalid();
+            }
+
+            if (!string.Equals(answerability, "supported", StringComparison.Ordinal) ||
+                outcome.Result?.Answerability != ChatAnswerability.Supported)
             {
                 return ChatAgentResultValidation.Invalid();
             }

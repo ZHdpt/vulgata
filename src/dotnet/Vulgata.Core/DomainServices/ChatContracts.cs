@@ -537,12 +537,14 @@ public sealed record ChatSynthesisRequest
         string requestId,
         ChatMode mode,
         Guid systemId,
+        string question,
         string evidenceFingerprint,
         IReadOnlyList<CandidateClaim> candidateClaims)
     {
         RequestId = requestId;
         Mode = mode;
         SystemId = systemId;
+        Question = question;
         EvidenceFingerprint = evidenceFingerprint;
         CandidateClaims = candidateClaims;
     }
@@ -550,6 +552,7 @@ public sealed record ChatSynthesisRequest
     public string RequestId { get; }
     public ChatMode Mode { get; }
     public Guid SystemId { get; }
+    public string Question { get; }
     public string EvidenceFingerprint { get; }
     public IReadOnlyList<CandidateClaim> CandidateClaims { get; }
 
@@ -557,15 +560,18 @@ public sealed record ChatSynthesisRequest
         string requestId,
         ChatMode mode,
         Guid systemId,
+        string question,
         string evidenceFingerprint,
         IReadOnlyCollection<CandidateClaim> candidateClaims)
     {
+        string normalizedQuestion = question?.Normalize(NormalizationForm.FormC).Trim() ?? string.Empty;
         CandidateClaim[] canonicalClaims = candidateClaims?.OrderBy(
             claim => claim.CandidateHandle,
             StringComparer.Ordinal).ToArray() ?? [];
         if (string.IsNullOrWhiteSpace(requestId) ||
             !Enum.IsDefined(mode) ||
             systemId == Guid.Empty ||
+            normalizedQuestion.EnumerateRunes().Count() is < 1 or > 2_000 ||
             !ChatContractGuard.IsSha256(evidenceFingerprint) ||
             canonicalClaims.Length < 1 ||
             canonicalClaims.Select(claim => claim.CandidateHandle).Distinct(StringComparer.Ordinal).Count() != canonicalClaims.Length ||
@@ -580,9 +586,16 @@ public sealed record ChatSynthesisRequest
             requestId.Trim(),
             mode,
             systemId,
+            normalizedQuestion,
             evidenceFingerprint,
             Array.AsReadOnly(canonicalClaims));
     }
+}
+
+public enum ChatAnswerability
+{
+    Supported,
+    Unsupported,
 }
 
 public sealed record ChatSynthesisResult
@@ -593,12 +606,14 @@ public sealed record ChatSynthesisResult
         string requestId,
         ChatMode mode,
         string evidenceFingerprint,
+        ChatAnswerability answerability,
         IReadOnlyList<ChatSynthesisSelection> selections)
     {
         SchemaVersion = SupportedSchemaVersion;
         RequestId = requestId;
         Mode = mode;
         EvidenceFingerprint = evidenceFingerprint;
+        Answerability = answerability;
         Selections = selections;
     }
 
@@ -606,6 +621,7 @@ public sealed record ChatSynthesisResult
     public string RequestId { get; }
     public ChatMode Mode { get; }
     public string EvidenceFingerprint { get; }
+    public ChatAnswerability Answerability { get; }
     public IReadOnlyList<ChatSynthesisSelection> Selections { get; }
 
     public static ChatSynthesisResult Create(
@@ -613,12 +629,27 @@ public sealed record ChatSynthesisResult
         ChatMode mode,
         string evidenceFingerprint,
         IReadOnlyCollection<ChatSynthesisSelection> selections)
+        => Create(
+            requestId,
+            mode,
+            evidenceFingerprint,
+            ChatAnswerability.Supported,
+            selections);
+
+    public static ChatSynthesisResult Create(
+        string requestId,
+        ChatMode mode,
+        string evidenceFingerprint,
+        ChatAnswerability answerability,
+        IReadOnlyCollection<ChatSynthesisSelection> selections)
     {
         ChatSynthesisSelection[] values = selections?.ToArray() ?? [];
         if (string.IsNullOrWhiteSpace(requestId) ||
             !Enum.IsDefined(mode) ||
+            !Enum.IsDefined(answerability) ||
             !ChatContractGuard.IsSha256(evidenceFingerprint) ||
-            values.Length is < 1 or > 12 ||
+            (answerability == ChatAnswerability.Supported && values.Length is < 1 or > 12) ||
+            (answerability == ChatAnswerability.Unsupported && values.Length != 0) ||
             values.Select(selection => selection.CandidateHandle).Distinct(StringComparer.Ordinal).Count() != values.Length ||
             values.Select((selection, index) => (selection, index)).Any(item =>
                 !ChatContractGuard.IsHandle(item.selection.CandidateHandle) ||
@@ -631,6 +662,7 @@ public sealed record ChatSynthesisResult
             requestId.Trim(),
             mode,
             evidenceFingerprint,
+            answerability,
             Array.AsReadOnly(values));
     }
 }

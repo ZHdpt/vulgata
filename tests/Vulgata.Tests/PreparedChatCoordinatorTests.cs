@@ -198,6 +198,43 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
+    public async Task AskAsync_UnrelatedQuestion_ReturnsChineseUnsupportedResponseWithoutCitations()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var authorization = new StubAuthorizationVerifier();
+        var dispatcher = new StubDispatcher { Answerability = ChatAnswerability.Unsupported };
+        var currentness = new StubCurrentnessValidator();
+        var candidateExtractor = new ChatCandidateExtractor();
+        var coordinator = new PreparedChatCoordinator(
+            new FixedAuthenticationStateProvider("owner-1"),
+            new StubSystemRepository([system]),
+            new StubRepositoryRepository([first, second]),
+            authorization,
+            new StubEvidenceRetriever(),
+            candidateExtractor,
+            dispatcher,
+            currentness,
+            TimeProvider.System,
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "北京天气怎么样？");
+
+        Assert.Equal(PreparedChatResultKind.Unsupported, result.Kind);
+        Assert.Equal("当前知识库中没有足够信息回答该问题。", result.Message);
+        Assert.Null(result.Answer);
+        Assert.Equal("北京天气怎么样？", dispatcher.LastRequest?.Question);
+        Assert.Equal(0, currentness.CallCount);
+    }
+
+    [Fact]
     public async Task AskAsync_ValidSelection_UsesExactSecurityOrderAndPublishesCompleteFixedCitations()
     {
         var trace = new List<string>();
@@ -759,6 +796,7 @@ public sealed class PreparedChatCoordinatorTests
     {
         public int CallCount { get; private set; }
         public ChatContractFailureCode? FailureCode { get; set; }
+        public ChatAnswerability Answerability { get; set; } = ChatAnswerability.Supported;
         public ChatSynthesisRequest? LastRequest { get; private set; }
         public string? RawSelectionJsonOverride { get; set; }
         public List<string>? Trace { get; set; }
@@ -777,21 +815,20 @@ public sealed class PreparedChatCoordinatorTests
                 request.RequestId,
                 request.Mode,
                 request.EvidenceFingerprint,
-                [new ChatSynthesisSelection("k1", 1)]);
+                Answerability,
+                Answerability == ChatAnswerability.Supported
+                    ? [new ChatSynthesisSelection("k1", 1)]
+                    : []);
             string rawSelectionJson = RawSelectionJsonOverride ?? JsonSerializer.Serialize(new
             {
                 schemaVersion = ChatSynthesisResult.SupportedSchemaVersion,
                 requestId = request.RequestId,
                 mode = request.Mode == ChatMode.Business ? "business" : "it",
                 evidenceFingerprint = request.EvidenceFingerprint,
-                selections = new[]
-                {
-                    new
-                    {
-                        candidateHandle = "k1",
-                        order = 1,
-                    },
-                },
+                answerability = Answerability == ChatAnswerability.Supported ? "supported" : "unsupported",
+                selections = Answerability == ChatAnswerability.Supported
+                    ? new object[] { new { candidateHandle = "k1", order = 1 } }
+                    : Array.Empty<object>(),
             });
             return Task.FromResult(ChatSynthesisOutcome.Generated(result, rawSelectionJson));
         }

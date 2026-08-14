@@ -55,6 +55,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 schemaVersion = _requestSchemaVersion,
                 requestId = request.RequestId,
                 mode = ToProviderMode(request.Mode),
+                question = request.Question,
                 evidenceFingerprint = request.EvidenceFingerprint,
                 candidates = request.CandidateClaims.Select(candidate => new
                 {
@@ -152,6 +153,12 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 _ => throw new JsonException("Unsupported Chat mode."),
             };
             string fingerprint = root.GetProperty("evidenceFingerprint").GetString() ?? string.Empty;
+            ChatAnswerability answerability = root.GetProperty("answerability").GetString() switch
+            {
+                "supported" => ChatAnswerability.Supported,
+                "unsupported" => ChatAnswerability.Unsupported,
+                _ => throw new JsonException("Unsupported answerability value."),
+            };
             if (!StringComparer.Ordinal.Equals(
                     root.GetProperty("schemaVersion").GetString(),
                     ChatSynthesisResult.SupportedSchemaVersion))
@@ -169,6 +176,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 requestId,
                 mode,
                 fingerprint,
+                answerability,
                 selections), responseText);
         }
         catch (Exception exception) when (

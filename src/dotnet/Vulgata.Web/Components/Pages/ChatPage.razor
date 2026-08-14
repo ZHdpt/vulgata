@@ -121,7 +121,7 @@
                 <span class="chat-thinking__dots" aria-hidden="true"><i></i><i></i><i></i></span>
             </div>
         }
-        else
+        else if (_submittedQuestion is null)
         {
             <div class="chat-welcome">
                 <h1 class="display-serif display-serif-lg">@WelcomeMessage</h1>
@@ -131,7 +131,14 @@
 
         @if (_message is not null)
         {
-            <p class="chat-message chat-message--status" role="alert">@_message</p>
+            @if (_loadState == LoadState.Empty)
+            {
+                <p class="chat-message chat-message--assistant" data-answer-state="unsupported">@_message</p>
+            }
+            else
+            {
+                <p class="chat-message chat-message--status" role="alert">@_message</p>
+            }
         }
 
         @if (_conversationNotice is not null)

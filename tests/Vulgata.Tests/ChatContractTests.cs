@@ -223,13 +223,13 @@ public sealed class ChatContractTests
             "处理订单请求。", ["a1"], ["r1"]);
 
         ChatSynthesisRequest request = ChatSynthesisRequest.Create(
-            "request-1", ChatMode.Business, systemId, fingerprint, [candidate]);
+            "request-1", ChatMode.Business, systemId, "如何处理订单？", fingerprint, [candidate]);
 
         Assert.Equal(systemId, request.SystemId);
 
         ChatContractException emptySystem = Assert.Throws<ChatContractException>(() =>
             ChatSynthesisRequest.Create(
-                "request-1", ChatMode.Business, Guid.Empty, fingerprint, [candidate]));
+                "request-1", ChatMode.Business, Guid.Empty, "如何处理订单？", fingerprint, [candidate]));
         Assert.Equal(ChatContractFailureCode.InvalidSelection, emptySystem.FailureCode);
     }
 

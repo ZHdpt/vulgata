@@ -219,6 +219,12 @@ public partial class ChatPage : IDisposable
                 _message = null;
                 _loadState = LoadState.Loaded;
             }
+            else if (result.Kind == PreparedChatResultKind.Unsupported)
+            {
+                _answer = null;
+                _message = result.Message ?? _unexpectedFailureMessage;
+                _loadState = LoadState.Empty;
+            }
             else
             {
                 ClearPublishedInteraction();

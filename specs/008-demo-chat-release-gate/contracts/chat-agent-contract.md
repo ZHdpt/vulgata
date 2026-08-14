@@ -85,7 +85,8 @@ predicate immediately before render.
 Each candidate has an immutable support signature over mode, current Document
 Version, stable Section, offsets, exact-text hash, canonical Source Anchor
 handles, and required authorized relationship handles. Provider view includes
-candidate handle and exact text for relevance selection. Server backing retains
+the normalized question plus candidate handle and exact text for relevance
+selection. Server backing retains
 all identity/locator/support data. The provider cannot author factual text or
 choose citations.
 
@@ -146,10 +147,12 @@ Two versioned embedded resources are required:
 - `Vulgata.Agents.Prompts.chat-business.v1.md`;
 - `Vulgata.Agents.Prompts.chat-it.v1.md`.
 
-Both require selection/order of supplied handles only, uncertainty preservation,
-and zero invented graph truth. Business and IT receive only their mode-eligible
-candidates. Prompt absence, duplicate resource, malformed resource, or wrong
-mode mapping fails before provider use.
+Both receive the normalized question and mode-eligible candidates, require an
+explicit supported/unsupported relevance decision, preserve uncertainty, and
+permit selection/order of supplied handles only. Nonsense, unrelated, and
+unsupported questions return `unsupported` with zero selections. Prompt
+absence, duplicate resource, malformed resource, or wrong mode mapping fails
+before provider use.
 
 ## Closed provider JSON
 
@@ -159,6 +162,7 @@ mode mapping fails before provider use.
   "requestId": "request-local-id",
   "mode": "business",
   "evidenceFingerprint": "64-lowercase-hex",
+  "answerability": "supported",
   "selections": [
     {
       "candidateHandle": "k1",
@@ -168,16 +172,22 @@ mode mapping fails before provider use.
 }
 ```
 
+An unsupported question returns the same echoes with
+`"answerability": "unsupported"` and an empty `selections` array.
+
 Validation rejects unknown/missing/duplicate properties; wrong version,
 request, mode, or fingerprint; non-contiguous order; zero or more than twelve
-selections; duplicate, foreign, unrelated, contradictory-decoy, stale, or
+supported selections; any unsupported result with a selection; duplicate,
+foreign, unrelated, contradictory-decoy, stale, or
 out-of-allowlist handles; changed retained span hash/support signature;
 restricted packet evidence; or a Business candidate that no longer passes the
 retained mode/safe-text predicate. Post-provider database currentness is owned
 by the separate Infrastructure validator, not this Agents validator.
 
-The provider schema permits only the schema/request/mode/fingerprint echoes and
-unique ordered Candidate Claim handles shown above. It contains no
+The provider request contains the normalized question plus candidate handles
+and exact text. The result schema permits only the
+schema/request/mode/fingerprint echoes, answerability, and unique ordered
+Candidate Claim handles shown above. It contains no
 provider-authored claim text, citation handle or selection, locator, narrative,
 diagnostic, or extension field. The ordered selection list is the complete
 provider result; the server materializes every Material Claim from retained
@@ -201,19 +211,22 @@ identity, not model-rated semantic similarity.
    `RepositoryAccessScope`;
 4. extract the closed mode-appropriate Candidate Claim allowlist, applying the
    Business safe-text/no-code-locator predicate before dispatch;
-5. call the Chat dispatcher once with candidate handles/exact text;
+5. call the Chat dispatcher once with the normalized question and candidate
+   handles/exact text;
 6. validate the entire selection-only result against the retained packet,
    recompute retained hashes, and revalidate Business safe-text/no-code-locator
    eligibility without querying EF;
-7. call `ValidateCurrentAsync` once so Infrastructure performs the bounded
+7. for an unsupported result, reverify Repository access and return the bounded
+   Chinese no-information response with no claims/citations;
+8. for a supported result, call `ValidateCurrentAsync` once so Infrastructure performs the bounded
    serializable current Document Version/Stable Section/exact span/Source
    Anchor/relationship support proof;
-8. reverify access to the same two Repositories immediately after currentness
+9. reverify access to the same two Repositories immediately after currentness
    validation;
-9. map each candidate's fixed support to server-created citations;
-10. atomically return the complete Grounded Answer.
+10. map each candidate's fixed support to server-created citations;
+11. atomically return the complete Grounded Answer.
 
-Any failure from steps 2-9 returns one bounded Chinese state and no answer.
+Any failure from steps 2-10 returns one bounded Chinese state and no answer.
 Cancellation clears pending state and publishes no provider partial. The page
 never retains a prior answer while a new request is in progress or failed.
 

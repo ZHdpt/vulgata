@@ -220,6 +220,23 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_UnrelatedQuestion_RendersUnsupportedAssistantResponse()
+    {
+        _dispatcher.Answerability = ChatAnswerability.Unsupported;
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        await SendQuestionAsync(cut, "北京天气怎么样？");
+
+        IElement response = cut.Find("[data-answer-state='unsupported']");
+        Assert.Equal("当前知识库中没有足够信息回答该问题。", response.TextContent);
+        Assert.Contains("北京天气怎么样？", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal("Empty", cut.Find(".chat-page").GetAttribute("data-load-state"));
+        Assert.Empty(cut.FindAll(".document-citation"));
+    }
+
+    [Fact]
     public async Task ChatPage_BusinessAnswer_RendersChineseDocumentCitationWithExpandableAuthorizedLocatorAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -595,6 +612,7 @@ public sealed class ChatPageTests : BunitContext
 
         public int CallCount { get; private set; }
         public ChatContractFailureCode? FailureCode { get; set; }
+        public ChatAnswerability Answerability { get; set; } = ChatAnswerability.Supported;
         public Task Entered => _entered?.Task ?? Task.CompletedTask;
 
         public void BlockNextCall()
@@ -628,21 +646,27 @@ public sealed class ChatPageTests : BunitContext
                 request.RequestId,
                 request.Mode,
                 request.EvidenceFingerprint,
-                [new ChatSynthesisSelection(request.CandidateClaims[0].CandidateHandle, 1)]);
+                Answerability,
+                Answerability == ChatAnswerability.Supported
+                    ? [new ChatSynthesisSelection(request.CandidateClaims[0].CandidateHandle, 1)]
+                    : []);
             string rawSelectionJson = JsonSerializer.Serialize(new
             {
                 schemaVersion = ChatSynthesisResult.SupportedSchemaVersion,
                 requestId = request.RequestId,
                 mode = request.Mode == ChatMode.Business ? "business" : "it",
                 evidenceFingerprint = request.EvidenceFingerprint,
-                selections = new[]
-                {
-                    new
+                answerability = Answerability == ChatAnswerability.Supported ? "supported" : "unsupported",
+                selections = Answerability == ChatAnswerability.Supported
+                    ? new object[]
                     {
-                        candidateHandle = request.CandidateClaims[0].CandidateHandle,
-                        order = 1,
-                    },
-                },
+                        new
+                        {
+                            candidateHandle = request.CandidateClaims[0].CandidateHandle,
+                            order = 1,
+                        },
+                    }
+                    : Array.Empty<object>(),
             });
             return ChatSynthesisOutcome.Generated(result, rawSelectionJson);
         }
