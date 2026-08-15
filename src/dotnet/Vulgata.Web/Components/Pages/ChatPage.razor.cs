@@ -39,8 +39,8 @@ public partial class ChatPage : IAsyncDisposable
     };
     private EditContext _editContext = null!;
     private ElementReference _questionElement;
-    private readonly HashSet<string> _selectedUiRepositories =
-        new(["mbs_account", "mbs_channel"], StringComparer.Ordinal);
+    private ElementReference _conversationElement;
+    private readonly HashSet<string> _selectedUiRepositories = new(StringComparer.Ordinal);
     private string _activeRepositorySystemId = "demobank";
     private bool _isRepositoryPickerOpen;
     private ChatMode? _selectedMode = ChatMode.Business;
@@ -257,6 +257,7 @@ public partial class ChatPage : IAsyncDisposable
         _question = string.Empty;
         _formRequest.Question = string.Empty;
         await InvokeAsync(StateHasChanged);
+        await ScrollConversationToEndAsync();
 
         try
         {
@@ -438,16 +439,34 @@ public partial class ChatPage : IAsyncDisposable
     {
         try
         {
-            _chatModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>(
-                "import",
-                cancellationToken,
-                "./Components/Pages/ChatPage.razor.js");
-            return await _chatModule.InvokeAsync<bool>("prefersReducedMotion", cancellationToken);
+            IJSObjectReference module = await GetChatModuleAsync(cancellationToken);
+            return await module.InvokeAsync<bool>("prefersReducedMotion", cancellationToken);
         }
         catch (Exception exception) when (exception is JSException or InvalidOperationException)
         {
             return false;
         }
+    }
+
+    private async Task ScrollConversationToEndAsync()
+    {
+        try
+        {
+            IJSObjectReference module = await GetChatModuleAsync(CancellationToken.None);
+            await module.InvokeVoidAsync("scrollConversationToEnd", _conversationElement);
+        }
+        catch (Exception exception) when (exception is JSException or InvalidOperationException)
+        {
+        }
+    }
+
+    private async ValueTask<IJSObjectReference> GetChatModuleAsync(CancellationToken cancellationToken)
+    {
+        _chatModule ??= await JsRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            cancellationToken,
+            "./Components/Pages/ChatPage.razor.js");
+        return _chatModule;
     }
 
     public async ValueTask DisposeAsync()

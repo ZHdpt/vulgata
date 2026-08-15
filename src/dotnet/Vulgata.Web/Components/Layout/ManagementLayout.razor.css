@@ -1,15 +1,15 @@
 .management-shell {
-    --admin-bg: oklch(97.5% 0.002 70);
-    --admin-surface: oklch(100% 0 0);
-    --admin-fg: oklch(22% 0.02 240);
-    --admin-muted: oklch(50% 0.018 240);
-    --admin-border: oklch(90% 0.005 240);
-    --admin-accent: oklch(45% 0.14 255);
-    --admin-accent-hover: oklch(40% 0.14 255);
+    --admin-bg: var(--vulgata-bg);
+    --admin-surface: var(--vulgata-surface);
+    --admin-fg: var(--vulgata-fg);
+    --admin-muted: var(--vulgata-muted-fg);
+    --admin-border: var(--vulgata-border);
+    --admin-accent: var(--vulgata-primary);
+    --admin-accent-hover: color-mix(in srgb, var(--vulgata-primary) 88%, black);
     --admin-danger: oklch(55% 0.2 25);
-    --admin-row-hover: oklch(98.5% 0.003 240);
-    --admin-status-bg: oklch(92% 0.003 240);
-    --admin-segment-bg: oklch(96% 0.004 240);
+    --admin-row-hover: color-mix(in srgb, var(--vulgata-primary) 7%, transparent);
+    --admin-status-bg: var(--vulgata-muted);
+    --admin-segment-bg: var(--vulgata-muted);
     --admin-font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
     --admin-font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
     min-height: 100vh;
@@ -17,167 +17,6 @@
     color: var(--admin-fg);
     font-family: var(--admin-font-body);
     font-variant-numeric: tabular-nums;
-}
-
-.management-top {
-    position: sticky;
-    z-index: 100;
-    top: 0;
-    display: flex;
-    height: 52px;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    border-bottom: 1px solid var(--admin-border);
-    background: var(--admin-surface);
-    padding: 0 24px;
-}
-
-.management-top__primary,
-.actions,
-.top-nav-links,
-.management-user {
-    display: flex;
-    align-items: center;
-}
-
-.management-top__primary {
-    gap: 20px;
-}
-
-.brand {
-    color: var(--admin-fg);
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-}
-
-.top-nav-links {
-    gap: 4px;
-}
-
-.top-nav-links a {
-    border-radius: 999px;
-    background: transparent;
-    color: var(--admin-muted);
-    padding: 6px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: color 150ms ease, background-color 150ms ease;
-}
-
-.top-nav-links a:hover {
-    background: transparent;
-    color: var(--admin-fg);
-}
-
-.top-nav-links .active-link {
-    background: var(--admin-accent);
-    color: white;
-}
-
-.actions {
-    gap: 16px;
-}
-
-.actions ::deep fluent-button.icon-button::part(control) {
-    width: 32px;
-    min-width: 32px;
-    height: 32px;
-    min-height: 32px;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    box-shadow: none;
-    color: var(--admin-muted);
-    padding: 0;
-}
-
-.actions ::deep fluent-button.icon-button:hover::part(control) {
-    background: transparent;
-    color: var(--admin-fg);
-}
-
-.icon-button ::deep svg {
-    width: 18px;
-    height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 1.5;
-}
-
-.avatar-menu {
-    position: relative;
-}
-
-.management-user {
-    gap: 8px;
-    list-style: none;
-    color: var(--admin-muted);
-    cursor: pointer;
-    font-family: var(--admin-font-mono);
-    font-size: 12px;
-}
-
-.management-user::-webkit-details-marker {
-    display: none;
-}
-
-.management-user__avatar {
-    display: grid;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    border-radius: 50%;
-    background: oklch(92% 0.006 240);
-    color: var(--admin-fg);
-    font-family: var(--admin-font-mono);
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.management-user__identity {
-    max-width: 18rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.avatar-dropdown {
-    position: absolute;
-    right: 0;
-    display: flex;
-    min-width: 9rem;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    border: 1px solid var(--admin-border);
-    border-radius: 8px;
-    background: var(--admin-surface);
-    padding: 0.65rem;
-}
-
-.avatar-dropdown form {
-    margin: 0;
-}
-
-.avatar-dropdown button,
-.avatar-dropdown a {
-    border: 0;
-    background: transparent;
-    color: var(--admin-fg);
-    padding: 0;
-    font: inherit;
-    text-align: left;
-    text-decoration: none;
-}
-
-.avatar-dropdown button {
-    cursor: pointer;
 }
 
 .management-tabs {
@@ -217,7 +56,7 @@
 .holy-grail {
     display: grid;
     grid-template-columns: 220px minmax(0, 1fr);
-    min-height: calc(100vh - 101px);
+    min-height: calc(100vh - 8rem);
 }
 
 .left-sidebar {
@@ -566,14 +405,6 @@
 }
 
 @media (max-width: 768px) {
-    .management-top {
-        padding: 0 16px;
-    }
-
-    .management-user__identity {
-        display: none;
-    }
-
     .management-tabs {
         max-width: calc(100% - 32px);
         margin-inline: 16px;
@@ -607,19 +438,5 @@
     .main-content ::deep .table > tbody > tr > td,
     .main-content ::deep fluent-data-grid-cell {
         padding: 8px 10px;
-    }
-}
-
-@media (max-width: 520px) {
-    .management-top__primary {
-        gap: 10px;
-    }
-
-    .top-nav-links a {
-        padding-inline: 10px;
-    }
-
-    .actions {
-        gap: 6px;
     }
 }

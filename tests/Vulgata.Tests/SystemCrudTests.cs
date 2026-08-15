@@ -42,7 +42,7 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
     }
 
     [Fact]
-    public async Task Administrator_SystemManagementPage_RendersTechUtilityShell()
+    public async Task Administrator_SystemManagementPage_UsesSharedChatNavigationShell()
     {
         await EnsureApplicationStartedAsync();
         await ResetDomainStateAsync();
@@ -56,10 +56,10 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         string html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("aria-label=\"通知\"", html, StringComparison.Ordinal);
-        Assert.Contains("class=\"management-user\"", html, StringComparison.Ordinal);
-        Assert.Contains("class=\"management-user__avatar\"", html, StringComparison.Ordinal);
-        Assert.Contains("class=\"management-user__identity\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"top-nav\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"primary-nav\"", html, StringComparison.Ordinal);
+        Assert.Contains("class=\"management-tabs\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("class=\"management-top\"", html, StringComparison.Ordinal);
         Assert.Contains(email, html, StringComparison.OrdinalIgnoreCase);
     }
 

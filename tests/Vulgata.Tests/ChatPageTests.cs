@@ -74,7 +74,7 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public void ChatPage_InitialRender_DefaultsToBusinessLightThemeAndComposerRepositoryContext()
+    public void ChatPage_InitialRender_DefaultsToBusinessLightThemeAndHidesRepositorySelection()
     {
         Assert.NotNull(typeof(ChatPage).GetCustomAttribute<AuthorizeAttribute>());
 
@@ -93,9 +93,11 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal("选择仓库", cut.Find(".repository-picker__trigger").GetAttribute("aria-label"));
         Assert.Equal("false", cut.Find(".repository-picker__trigger").GetAttribute("aria-expanded"));
         Assert.Equal("BUTTON", cut.Find(".repository-picker__trigger").TagName);
-        Assert.Equal(
-            ["mbs_account", "mbs_channel"],
-            cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
+        Assert.Empty(cut.FindAll(".repository-chip"));
+        IElement repositoryIcon = cut.Find(".repository-picker__trigger svg");
+        Assert.Equal("0 0 1024 1024", repositoryIcon.GetAttribute("viewBox"));
+        Assert.Equal("true", repositoryIcon.GetAttribute("aria-hidden"));
+        Assert.Equal(2, repositoryIcon.QuerySelectorAll("path").Length);
         Assert.NotNull(cut.Find("#chat-question"));
         Assert.DoesNotContain("type=\"file\"", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("自动选择", cut.Markup, StringComparison.Ordinal);
@@ -132,9 +134,7 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(cut.FindAll(".complete-answer"));
         Assert.Empty(cut.FindAll(".document-citation"));
         Assert.Equal(string.Empty, cut.Find("#chat-question").GetAttribute("value"));
-        Assert.Equal(
-            ["mbs_account", "mbs_channel"],
-            cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
+        Assert.Empty(cut.FindAll(".repository-chip"));
         Assert.Equal("true", FindButton(cut, "业务模式").GetAttribute("aria-pressed"));
         Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("你好，想了解什么业务流程？", cut.Markup, StringComparison.Ordinal);
@@ -199,15 +199,15 @@ public sealed class ChatPageTests : BunitContext
             cut.FindAll(".repository-menu__repository").Select(repository => repository.TextContent.Trim().TrimStart('✓').Trim()).ToArray());
 
         IElement accountRepository = cut.Find(".repository-menu__repository[data-repository-name='mbs_account']");
-        Assert.Equal("true", accountRepository.GetAttribute("aria-checked"));
+        Assert.Equal("false", accountRepository.GetAttribute("aria-checked"));
 
         accountRepository.Click();
-        Assert.Equal("false", cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").GetAttribute("aria-checked"));
-        Assert.Empty(cut.FindAll(".repository-chip[data-repository-name='mbs_account']"));
-
-        cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").Click();
         Assert.Equal("true", cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").GetAttribute("aria-checked"));
         Assert.NotNull(cut.Find(".repository-chip[data-repository-name='mbs_account']"));
+
+        cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").Click();
+        Assert.Equal("false", cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").GetAttribute("aria-checked"));
+        Assert.Empty(cut.FindAll(".repository-chip[data-repository-name='mbs_account']"));
     }
 
     [Fact]
@@ -237,11 +237,7 @@ public sealed class ChatPageTests : BunitContext
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
         cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
 
-        cut.Find(".repository-chip[data-repository-name='mbs_account'] .repository-chip__remove").Click();
-
-        Assert.Equal(
-            ["mbs_channel"],
-            cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
+        Assert.Empty(cut.FindAll(".repository-chip"));
 
         await SendQuestionAsync(cut, "付款仓库如何工作？");
 
@@ -250,9 +246,6 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(
             new[] { _firstRepository.Id, _secondRepository.Id }.Order(),
             firstRequest.RepositoryIds.Order());
-
-        cut.Find(".repository-chip[data-repository-name='mbs_channel'] .repository-chip__remove").Click();
-        Assert.Empty(cut.FindAll(".repository-chip"));
 
         await SendQuestionAsync(cut, "没有可见标签时仍可提问吗？");
 
@@ -469,6 +462,8 @@ public sealed class ChatPageTests : BunitContext
         await SendQuestionAsync(cut, "第二个问题");
         Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
 
+        cut.Find(".repository-picker__trigger").Click();
+        cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").Click();
         cut.Find(".repository-chip[data-repository-name='mbs_account'] .repository-chip__remove").Click();
 
         Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
@@ -588,6 +583,26 @@ public sealed class ChatPageTests : BunitContext
         await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal(string.Empty, ((IHtmlTextAreaElement)cut.Find("#chat-question")).Value);
+
+        _dispatcher.ReleaseBlockedCall();
+        await sendTask;
+    }
+
+    [Fact]
+    public async Task ChatPage_SubmittedUserMessage_ScrollsConversationToLatestTurn()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+        _dispatcher.BlockNextCall();
+
+        Task sendTask = BeginQuestionAsync(cut, "提交后应显示最新消息");
+        await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Contains("提交后应显示最新消息", cut.Find(".chat-surface").TextContent, StringComparison.Ordinal);
+        Assert.Contains(
+            JSInterop.Invocations,
+            invocation => StringComparer.Ordinal.Equals(invocation.Identifier, "scrollConversationToEnd"));
 
         _dispatcher.ReleaseBlockedCall();
         await sendTask;

@@ -1,53 +1,7 @@
-@implements IDisposable
-@inject NavigationManager NavigationManager
-
+@layout MainLayout
 @inherits LayoutComponentBase
 
 <div class="management-shell">
-    <header class="management-top">
-        <div class="management-top__primary">
-            <a class="brand" href="/">Vulgata</a>
-
-            <nav class="top-nav-links" aria-label="主导航">
-                <a href="/">对话</a>
-                <a class="active-link" href="/management" aria-current="page">管理后台</a>
-            </nav>
-        </div>
-
-        <div class="actions">
-            <FluentButton Class="icon-button" Appearance="Appearance.Stealth" Title="通知" aria-label="通知">
-                <svg aria-hidden="true" viewBox="0 0 24 24">
-                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-            </FluentButton>
-            <details class="avatar-menu">
-                <AuthorizeView>
-                    <Authorized>
-                        <summary class="management-user">
-                            <span class="management-user__avatar" aria-hidden="true">@GetAvatarLabel(context.User.Identity?.Name)</span>
-                            <span class="management-user__identity">@(context.User.Identity?.Name ?? "用户")</span>
-                        </summary>
-                    </Authorized>
-                    <NotAuthorized>
-                        <summary class="management-user">
-                            <span class="management-user__avatar" aria-hidden="true">用</span>
-                            <span class="management-user__identity">用户</span>
-                        </summary>
-                    </NotAuthorized>
-                </AuthorizeView>
-                <div class="avatar-dropdown">
-                    <a href="/Account/Manage">个人资料</a>
-                    <form action="/Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
-                        <button type="submit">退出登录</button>
-                    </form>
-                </div>
-            </details>
-        </div>
-    </header>
-
     <nav class="management-tabs" aria-label="管理后台导航">
         <NavLink href="/management" Match="NavLinkMatch.All">系统管理</NavLink>
         <NavLink href="/management/graph">图谱</NavLink>
@@ -67,36 +21,3 @@
         </main>
     </div>
 </div>
-
-@code {
-    private string? _currentUrl;
-
-    protected override void OnInitialized()
-    {
-        _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        _currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }
-
-    private static string GetAvatarLabel(string? identity)
-    {
-        if (string.IsNullOrWhiteSpace(identity))
-        {
-            return "用";
-        }
-
-        string localPart = identity.Split('@', 2)[0];
-        int length = Math.Min(2, localPart.Length);
-        return localPart[..length].ToUpperInvariant();
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
-}

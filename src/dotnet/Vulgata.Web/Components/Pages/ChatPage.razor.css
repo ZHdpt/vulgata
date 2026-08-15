@@ -585,6 +585,13 @@
     transform: scale(1.04);
 }
 
+.repository-picker__icon {
+    display: block;
+    width: 1.35rem;
+    height: 1.35rem;
+    flex: 0 0 auto;
+}
+
 .repository-chips {
     display: flex;
     flex: 1 1 auto;
