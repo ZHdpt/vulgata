@@ -124,6 +124,80 @@ public sealed class DashboardPanelTests : TestContext
     }
 
     [Fact]
+    public void StandaloneReposPanel_DemoSnapshot_RendersFakeValuesAndFiresScanRequest()
+    {
+        var repositoryId = Guid.NewGuid();
+        Guid? startedId = null;
+        IReadOnlyList<RepositorySummaryDto> repositories =
+        [
+            new()
+            {
+                Id = repositoryId,
+                Name = "mbs_account",
+                ScanStatus = "真实状态不应显示",
+                DocumentCount = 1,
+            },
+        ];
+        IReadOnlyDictionary<Guid, DemoRepositoryScanSnapshot> scanStates =
+            new Dictionary<Guid, DemoRepositoryScanSnapshot>
+            {
+                [repositoryId] = new(
+                    DemoRepositoryScanPhase.Ready,
+                    new DateTimeOffset(2026, 8, 12, 9, 35, 0, TimeSpan.FromHours(8)),
+                    186),
+            };
+
+        var cut = Render<StandaloneReposPanel>(parameters => parameters
+            .Add(p => p.Repositories, repositories)
+            .Add(p => p.DemoScanStates, scanStates)
+            .Add(p => p.OnScanRequested, EventCallback.Factory.Create<Guid>(this, id => startedId = id)));
+
+        Assert.Contains("待扫描", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("2026-08-12 09:35", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(">186<", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("真实状态不应显示", cut.Markup, StringComparison.Ordinal);
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("开始扫描", StringComparison.Ordinal))
+            .Click();
+
+        Assert.Equal(repositoryId, startedId);
+    }
+
+    [Fact]
+    public void StandaloneReposPanel_ScanningRepository_ViewFiresProgressRequest()
+    {
+        var repositoryId = Guid.NewGuid();
+        Guid? detailId = null;
+        Guid? progressId = null;
+        IReadOnlyList<RepositorySummaryDto> repositories =
+        [
+            new() { Id = repositoryId, Name = "mbs_account" },
+        ];
+        IReadOnlyDictionary<Guid, DemoRepositoryScanSnapshot> scanStates =
+            new Dictionary<Guid, DemoRepositoryScanSnapshot>
+            {
+                [repositoryId] = new(
+                    DemoRepositoryScanPhase.Scanning,
+                    DateTimeOffset.UtcNow,
+                    186),
+            };
+
+        var cut = Render<StandaloneReposPanel>(parameters => parameters
+            .Add(p => p.Repositories, repositories)
+            .Add(p => p.DemoScanStates, scanStates)
+            .Add(p => p.OnRepositorySelected, EventCallback.Factory.Create<Guid>(this, id => detailId = id))
+            .Add(p => p.OnScanProgressSelected, EventCallback.Factory.Create<Guid>(this, id => progressId = id)));
+
+        cut.FindAll("button, fluent-button")
+            .Single(button => button.TextContent.Contains("查看", StringComparison.Ordinal))
+            .Click();
+
+        Assert.Null(detailId);
+        Assert.Equal(repositoryId, progressId);
+    }
+
+    [Fact]
     public void SystemListPanel_RendersSystems_AndRepositoriesPerSystem()
     {
         var alphaId = Guid.NewGuid();
@@ -160,6 +234,38 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("+ 新建仓库", cut.Markup, StringComparison.Ordinal);
         // Non-admin path: edit / manage owners / delete buttons must NOT render
         Assert.DoesNotContain("管理所有者", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SystemListPanel_DemoSnapshot_RendersScanControls()
+    {
+        var systemId = Guid.NewGuid();
+        var repositoryId = Guid.NewGuid();
+        SystemEntity system = new("账户系统", null, null, DateTimeOffset.UtcNow);
+        typeof(SystemEntity).GetProperty(nameof(SystemEntity.Id))!.SetValue(system, systemId);
+        IReadOnlyDictionary<Guid, IReadOnlyList<RepositorySummaryDto>> repositories =
+            new Dictionary<Guid, IReadOnlyList<RepositorySummaryDto>>
+            {
+                [systemId] = [new() { Id = repositoryId, Name = "mbs_account" }],
+            };
+        IReadOnlyDictionary<Guid, DemoRepositoryScanSnapshot> scanStates =
+            new Dictionary<Guid, DemoRepositoryScanSnapshot>
+            {
+                [repositoryId] = new(
+                    DemoRepositoryScanPhase.Completed,
+                    new DateTimeOffset(2026, 8, 15, 11, 3, 0, TimeSpan.FromHours(8)),
+                    327),
+            };
+
+        var cut = Render<SystemListPanel>(parameters => parameters
+            .Add(p => p.Systems, [system])
+            .Add(p => p.RepositoriesBySystem, repositories)
+            .Add(p => p.DemoScanStates, scanStates));
+
+        Assert.Contains("扫描完成", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("2026-08-15 11:03", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(">327<", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("开始扫描", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

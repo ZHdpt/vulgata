@@ -20,6 +20,7 @@ public sealed partial class DashboardPage
     private Dictionary<Guid, IReadOnlyList<RepositorySummaryDto>> _repositories = [];
     private Dictionary<Guid, IReadOnlyList<SystemLlmProviderOverrideSummaryDto>> _systemLlmOverrides = [];
     private List<RepositorySummaryDto> _standaloneRepositories = [];
+    private Dictionary<Guid, DemoRepositoryScanSnapshot> _demoScanStates = [];
     private string? _loadError;
     private string? _saveError;
     private string? _repoError;
@@ -93,6 +94,8 @@ public sealed partial class DashboardPage
                         ? overridesResult.Value.ToList()
                         : [];
             }
+
+            RefreshDemoScanStates();
         }
         catch (Exception ex)
         {
@@ -101,6 +104,7 @@ public sealed partial class DashboardPage
             _standaloneRepositories = [];
             _repositories = [];
             _systemLlmOverrides = [];
+            _demoScanStates = [];
         }
     }
 
@@ -199,6 +203,26 @@ public sealed partial class DashboardPage
         _selectedRepository = match;
         _showRepositoryDetail = true;
         return Task.CompletedTask;
+    }
+
+    private void StartDemoScan(Guid repositoryId)
+    {
+        DemoScanUiState.Start(repositoryId);
+        _demoScanStates[repositoryId] = DemoScanUiState.GetSnapshot(repositoryId);
+    }
+
+    private void OpenDemoScanProgress(Guid repositoryId)
+    {
+        NavigationManager.NavigateTo($"/management/demo-scan/{repositoryId}");
+    }
+
+    private void RefreshDemoScanStates()
+    {
+        _demoScanStates = _standaloneRepositories
+            .Concat(_repositories.Values.SelectMany(static repositories => repositories))
+            .ToDictionary(
+                static repository => repository.Id,
+                repository => DemoScanUiState.GetSnapshot(repository.Id));
     }
 
     private RepositorySummaryDto? FindRepositoryById(Guid repositoryId)

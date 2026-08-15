@@ -1,4 +1,5 @@
 @using Vulgata.Shared.Repositories
+@using Vulgata.Web.Data
 <section class="management-section">
     <h2>独立仓库</h2>
     <p>不归属于任何系统，所有具备管理权限的用户都可见。</p>
@@ -8,8 +9,9 @@
             <tr>
                 <th scope="col">仓库名称</th>
                 <th scope="col">扫描状态</th>
-                <th scope="col">最近扫描时间</th>
+                <th scope="col">最后扫描时间</th>
                 <th scope="col">文档数量</th>
+                <th scope="col">扫描操作</th>
                 <th scope="col">查看</th>
             </tr>
         </thead>
@@ -18,14 +20,22 @@
             {
                 @foreach (var repository in Repositories)
                 {
+                    var demoState = GetDemoState(repository.Id);
                     <tr>
                         <td><span class="admin-code">@repository.Name</span></td>
-                        <td><span class="admin-status-pill">@repository.ScanStatus</span></td>
-                        <td>@(repository.LastScannedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
-                        <td>@repository.DocumentCount</td>
+                        <td><span class="admin-status-pill">@GetScanStatus(repository, demoState)</span></td>
+                        <td>@GetLastScannedAt(repository, demoState)</td>
+                        <td>@(demoState?.DocumentCount ?? repository.DocumentCount)</td>
+                        <td>
+                            <FluentButton Appearance="Appearance.Accent" Size="Size.Small"
+                                          Disabled="@(demoState?.Phase == DemoRepositoryScanPhase.Scanning)"
+                                          OnClick="@(() => OnScanRequested.InvokeAsync(repository.Id))">
+                                @(demoState?.Phase == DemoRepositoryScanPhase.Scanning ? "扫描中" : "开始扫描")
+                            </FluentButton>
+                        </td>
                         <td>
                             <FluentButton Appearance="Appearance.Neutral" Size="Size.Small"
-                                          OnClick="@(() => OnRepositorySelected.InvokeAsync(repository.Id))">查看</FluentButton>
+                                          OnClick="@(() => OnViewAsync(repository.Id, demoState))">查看</FluentButton>
                         </td>
                     </tr>
                 }
@@ -33,7 +43,7 @@
             else
             {
                 <tr>
-                    <td colspan="5">暂无独立仓库</td>
+                    <td colspan="6">暂无独立仓库</td>
                 </tr>
             }
         </tbody>
@@ -47,11 +57,44 @@
     public IReadOnlyList<RepositorySummaryDto> Repositories { get; set; } = [];
 
     [Parameter]
+    public IReadOnlyDictionary<Guid, DemoRepositoryScanSnapshot> DemoScanStates { get; set; }
+        = new Dictionary<Guid, DemoRepositoryScanSnapshot>();
+
+    [Parameter]
     public EventCallback<Guid> OnRepositorySelected { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnScanRequested { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnScanProgressSelected { get; set; }
 
     [Parameter]
     public EventCallback OnCreateRequested { get; set; }
 
     [Parameter]
     public EventCallback<Guid> OnAssignRequested { get; set; }
+
+    private DemoRepositoryScanSnapshot? GetDemoState(Guid repositoryId) =>
+        DemoScanStates.TryGetValue(repositoryId, out var state) ? state : null;
+
+    private static string GetScanStatus(
+        RepositorySummaryDto repository,
+        DemoRepositoryScanSnapshot? state) => state?.Phase switch
+        {
+            DemoRepositoryScanPhase.Ready => "待扫描",
+            DemoRepositoryScanPhase.Scanning => "扫描中",
+            DemoRepositoryScanPhase.Completed => "扫描完成",
+            _ => repository.ScanStatus,
+        };
+
+    private static string GetLastScannedAt(
+        RepositorySummaryDto repository,
+        DemoRepositoryScanSnapshot? state) =>
+        (state?.LastScannedAt ?? repository.LastScannedAt)?.ToString("yyyy-MM-dd HH:mm") ?? "-";
+
+    private Task OnViewAsync(Guid repositoryId, DemoRepositoryScanSnapshot? state) =>
+        state?.Phase == DemoRepositoryScanPhase.Scanning
+            ? OnScanProgressSelected.InvokeAsync(repositoryId)
+            : OnRepositorySelected.InvokeAsync(repositoryId);
 }

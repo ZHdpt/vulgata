@@ -244,6 +244,7 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<ChatAgentResultValidator>();
         builder.Services.AddScoped<PreparedChatCoordinator>();
         builder.Services.AddScoped<IChatRevealDelay, ChatRevealDelay>();
+        builder.Services.AddScoped<DemoScanUiState>();
         builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
         builder.Services.AddScoped<IExactGitRevisionSnapshotService, ExactGitRevisionSnapshotService>();
         builder.Services.AddScoped<ExactCandidateExtractors>();

@@ -18,6 +18,8 @@
 @inject IValidator<UpsertDatabaseConnectionRequest> DatabaseConnectionValidator
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IServiceScopeFactory ScopeFactory
+@inject DemoScanUiState DemoScanUiState
+@inject NavigationManager NavigationManager
 
 <PageTitle>系统管理</PageTitle>
 
@@ -38,14 +40,20 @@
 else
 {
     <StandaloneReposPanel Repositories="_standaloneRepositories"
+                          DemoScanStates="_demoScanStates"
                           OnRepositorySelected="OnRepositorySelectedAsync"
+                          OnScanRequested="StartDemoScan"
+                          OnScanProgressSelected="OpenDemoScanProgress"
                           OnCreateRequested="StartCreateStandaloneRepository" />
 
     <SystemListPanel Systems="_systems"
                      RepositoriesBySystem="_repositories"
+                     DemoScanStates="_demoScanStates"
                      LlmOverridesBySystem="_systemLlmOverrides"
                      IsAdministrator="_isAdministrator"
                      OnRepositorySelected="OnRepositorySelectedAsync"
+                     OnScanRequested="StartDemoScan"
+                     OnScanProgressSelected="OpenDemoScanProgress"
                      OnEditRequested="StartEditSystem"
                      OnManageOwnersRequested="OpenOwnerManagement"
                      OnDeleteRequested="DeleteSystemAsync"

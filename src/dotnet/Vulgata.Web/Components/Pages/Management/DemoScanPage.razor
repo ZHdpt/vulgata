@@ -1,0 +1,24 @@
+@page "/management/demo-scan/{RepositoryId:guid}"
+@using Vulgata.Web.Components.Layout
+@using Vulgata.Web.Data
+@layout DemoScanLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
+@rendermode InteractiveServer
+@inject DemoScanUiState DemoScanUiState
+
+<PageTitle>仓库扫描</PageTitle>
+
+<div class="demo-scan-page">
+    <a class="demo-scan-back" href="/management">返回管理后台</a>
+    <iframe src="/demo/vulgata-scanning.html" title="仓库扫描进度动画"></iframe>
+</div>
+
+@code {
+    [Parameter]
+    public Guid RepositoryId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        DemoScanUiState.Complete(RepositoryId);
+    }
+}
