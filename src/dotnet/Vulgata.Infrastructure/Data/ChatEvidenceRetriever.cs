@@ -248,6 +248,7 @@ public sealed class ChatEvidenceRetriever(
                     version.SystemId == request.SystemId &&
                     version.SupersededById == null &&
                     (section.SectionKind == DocumentSectionKind.Overview ||
+                        section.SectionKind == DocumentSectionKind.BusinessRule ||
                         section.SectionKind == DocumentSectionKind.ProcessStep)
                 orderby version.Id, section.SectionOrder, section.StableSectionId
                 select new SupplementaryChatSectionCandidate(

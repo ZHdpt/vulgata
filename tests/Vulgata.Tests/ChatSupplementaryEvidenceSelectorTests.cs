@@ -36,6 +36,22 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Empty(ChatSupplementaryEvidenceSelector.Select("北京明天天气怎么样？", candidates, 2));
     }
 
+    [Fact]
+    public void Select_PasswordFailureQuestion_PrefersRuleFromRelevantDocument()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            Candidate(1, 11, "校验登录密码操作类 CheckLoginPwdOp", "概述", "该操作负责完成登录密码校验。"),
+            Candidate(1, 12, "校验登录密码操作类 CheckLoginPwdOp", "校验规则", "客户密码不匹配时校验失败，结果设置为零。"),
+            Candidate(2, 13, "登录密码认证流程", "处理步骤", "进入登录密码认证总流程。"),
+        ];
+
+        SupplementaryChatSectionCandidate selected = Assert.Single(
+            ChatSupplementaryEvidenceSelector.Select("登录密码校验失败后会怎样？", candidates, 1));
+
+        Assert.Equal(Id(12), selected.StableSectionId);
+    }
+
     private static SupplementaryChatSectionCandidate Candidate(
         int document,
         int section,

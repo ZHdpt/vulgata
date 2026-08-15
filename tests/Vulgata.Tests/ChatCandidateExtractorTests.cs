@@ -135,6 +135,46 @@ public sealed class ChatCandidateExtractorTests
     }
 
     [Fact]
+    public void Extract_BusinessCodeLogicFallback_AllowsInlineCodeMarkupForNarrativeRewrite()
+    {
+        const string markdown = "`CheckLoginPwdOp` 负责完成登录密码校验，并写入 `checkResult` 表示校验结果。";
+        EvidencePacket packet = CreatePacket(
+            ChatMode.Business,
+            [
+                Document("d1", 1, DocumentType.CodeLogic),
+                Document("d2", 2, DocumentType.CodeLogic, Repository2),
+            ],
+            [Section("s1", "d1", 11, 1, DocumentSectionKind.Overview, markdown, ["a1"])],
+            [Anchor("a1", 21, "d1", 1)],
+            [Relationship("r1", "d1", "d2", ChatRelationshipType.References)]);
+
+        CandidateClaim candidate = Assert.Single(_extractor.Extract(packet));
+
+        Assert.Equal(markdown, candidate.Text);
+        Assert.True(candidate.AllowsBusinessNarrative);
+    }
+
+    [Fact]
+    public void Extract_BusinessCodeLogicFallback_IncludesBusinessRuleEvidence()
+    {
+        const string markdown = "密码不匹配时设置 `checkResult` 为 `\"0\"`。";
+        EvidencePacket packet = CreatePacket(
+            ChatMode.Business,
+            [
+                Document("d1", 1, DocumentType.CodeLogic),
+                Document("d2", 2, DocumentType.CodeLogic, Repository2),
+            ],
+            [Section("s1", "d1", 11, 1, DocumentSectionKind.BusinessRule, markdown, ["a1"])],
+            [Anchor("a1", 21, "d1", 1)],
+            [Relationship("r1", "d1", "d2", ChatRelationshipType.References)]);
+
+        CandidateClaim candidate = Assert.Single(_extractor.Extract(packet));
+
+        Assert.Equal(markdown, candidate.Text);
+        Assert.True(candidate.AllowsBusinessNarrative);
+    }
+
+    [Fact]
     public void Extract_NonPlainMarkdown_ExcludesFencesTablesHtmlAndLinks()
     {
         const string markdown = "保留的普通段落。\n\n```csharp\nCall();\n```\n\n| 列一 | 列二 |\n| --- | --- |\n| 值一 | 值二 |\n\n<div>原始 HTML</div>\n\n[链接](https://example.test)\n\nhttps://example.test/raw";

@@ -31,7 +31,12 @@ public sealed class ChatCandidateExtractor
                 continue;
             }
 
-            foreach (TextSpan span in ExtractTextSpans(section.ContentMarkdown, packet.Mode))
+            bool allowsBusinessNarrative = packet.Mode == ChatMode.Business &&
+                document.DocumentType == DocumentType.CodeLogic;
+            foreach (TextSpan span in ExtractTextSpans(
+                section.ContentMarkdown,
+                packet.Mode,
+                allowsBusinessNarrative))
             {
                 extracted.Add(new ExtractedCandidate(document, section, span, support));
             }
@@ -59,8 +64,12 @@ public sealed class ChatCandidateExtractor
         mode switch
         {
             ChatMode.Business =>
-                documentType is DocumentType.BusinessLogic or DocumentType.CodeLogic &&
-                sectionKind is DocumentSectionKind.Overview or DocumentSectionKind.ProcessStep,
+                (documentType == DocumentType.BusinessLogic &&
+                    sectionKind is DocumentSectionKind.Overview or DocumentSectionKind.ProcessStep) ||
+                (documentType == DocumentType.CodeLogic &&
+                    sectionKind is DocumentSectionKind.Overview or
+                        DocumentSectionKind.BusinessRule or
+                        DocumentSectionKind.ProcessStep),
             ChatMode.It =>
                 documentType == DocumentType.CodeLogic &&
                 sectionKind is DocumentSectionKind.Overview or
@@ -133,7 +142,10 @@ public sealed class ChatCandidateExtractor
         (relationship.ProfileFingerprint is { Length: 64 } fingerprint &&
             fingerprint.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f'));
 
-    private static IEnumerable<TextSpan> ExtractTextSpans(string markdown, ChatMode mode)
+    private static IEnumerable<TextSpan> ExtractTextSpans(
+        string markdown,
+        ChatMode mode,
+        bool allowInlineCodeMarkup)
     {
         char fenceMarker = '\0';
         int fenceLength = 0;
@@ -160,7 +172,12 @@ public sealed class ChatCandidateExtractor
                 }
             }
             else if (fenceMarker == '\0' &&
-                TryGetCandidateSpan(line, position, mode, out TextSpan candidateSpan))
+                TryGetCandidateSpan(
+                    line,
+                    position,
+                    mode,
+                    allowInlineCodeMarkup,
+                    out TextSpan candidateSpan))
             {
                 bool isListItem = IsListItem(line);
                 int candidateEnd = candidateSpan.Start + candidateSpan.Length;
@@ -190,7 +207,8 @@ public sealed class ChatCandidateExtractor
                     candidateEnd - candidateSpan.Start);
                 if (candidate.Length <= _maximumCandidateLength &&
                     IsSafeText(candidate) &&
-                    (mode != ChatMode.Business || IsBusinessSafeText(candidate)))
+                    (mode != ChatMode.Business ||
+                        IsBusinessSafeText(candidate, allowInlineCodeMarkup)))
                 {
                     yield return new TextSpan(candidateSpan.Start, candidate.Length);
                 }
@@ -253,6 +271,7 @@ public sealed class ChatCandidateExtractor
         ReadOnlySpan<char> line,
         int lineStart,
         ChatMode mode,
+        bool allowInlineCodeMarkup,
         out TextSpan candidateSpan)
     {
         if (TryGetBody(line, out int bodyOffset, out int bodyLength))
@@ -260,7 +279,8 @@ public sealed class ChatCandidateExtractor
             ReadOnlySpan<char> body = line.Slice(bodyOffset, bodyLength);
             if (bodyLength <= _maximumCandidateLength &&
                 IsSafeText(body) &&
-                (mode != ChatMode.Business || IsBusinessSafeText(body)))
+                (mode != ChatMode.Business ||
+                    IsBusinessSafeText(body, allowInlineCodeMarkup)))
             {
                 candidateSpan = new TextSpan(lineStart + bodyOffset, bodyLength);
                 return true;
@@ -400,9 +420,11 @@ public sealed class ChatCandidateExtractor
         return true;
     }
 
-    private static bool IsBusinessSafeText(ReadOnlySpan<char> body)
+    private static bool IsBusinessSafeText(
+        ReadOnlySpan<char> body,
+        bool allowInlineCodeMarkup)
     {
-        if (body.Contains('`') ||
+        if ((!allowInlineCodeMarkup && body.Contains('`')) ||
             body.Contains('/') ||
             body.Contains('\\') ||
             ContainsCodeFileExtension(body) ||

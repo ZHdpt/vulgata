@@ -25,8 +25,7 @@ public static class ChatCandidateRanker
             .Select(candidate => new
             {
                 Candidate = candidate,
-                Score = terms.Count(term =>
-                    candidate.Text.Contains(term, StringComparison.OrdinalIgnoreCase)),
+                Score = ScoreCandidate(question, terms, candidate.Text),
             })
             .ToArray();
         var relevant = scored.Where(item => item.Score > 0);
@@ -38,18 +37,19 @@ public static class ChatCandidateRanker
             var relevantCodeLogic = relevant
                 .Where(item => item.Candidate.AllowsBusinessNarrative)
                 .ToArray();
-            if (relevantBusiness.Length > 0 &&
-                (relevantCodeLogic.Length == 0 ||
-                 relevantBusiness.Max(item => item.Score) >=
-                 relevantCodeLogic.Max(item => item.Score)))
+            if (relevantBusiness.Length > 0)
             {
-                relevant = relevantBusiness;
+                var strongCodeLogic = relevantCodeLogic.Where(item =>
+                    item.Score >= _minimumStrongCjkScore ||
+                    HasIdentifierMatch(terms, item.Candidate.Text));
+                relevant = relevantBusiness.Concat(strongCodeLogic);
             }
         }
 
         var ranked = relevant.Any()
             ? relevant
                 .OrderByDescending(item => item.Score)
+                .ThenBy(item => item.Candidate.AllowsBusinessNarrative)
                 .ThenBy(item => item.Candidate.CandidateHandle, StringComparer.Ordinal)
                 .Take(_maximumCandidates)
                 .Select(item => item.Candidate)
@@ -67,12 +67,8 @@ public static class ChatCandidateRanker
             .Select(candidate => new
             {
                 Candidate = candidate,
-                Score = terms.Count(term =>
-                    candidate.Text.Contains(term, StringComparison.OrdinalIgnoreCase)),
-                HasIdentifierMatch = terms.Any(term =>
-                    term.Length >= _minimumIdentifierLength &&
-                    term.All(character => char.IsAsciiLetterOrDigit(character) || character == '_') &&
-                    candidate.Text.Contains(term, StringComparison.OrdinalIgnoreCase)),
+                Score = ScoreCandidate(question, terms, candidate.Text),
+                HasIdentifierMatch = HasIdentifierMatch(terms, candidate.Text),
             })
             .Where(item => item.HasIdentifierMatch || item.Score >= _minimumStrongCjkScore)
             .OrderByDescending(item => item.Score)
@@ -83,6 +79,33 @@ public static class ChatCandidateRanker
             .ToArray();
         return Array.AsReadOnly(selected);
     }
+
+    private static int ScoreCandidate(
+        string question,
+        IReadOnlyCollection<string> terms,
+        string candidateText)
+    {
+        int score = terms.Count(term =>
+            candidateText.Contains(term, StringComparison.OrdinalIgnoreCase));
+        if (question.Contains("失败", StringComparison.Ordinal) &&
+            (candidateText.Contains("否则", StringComparison.Ordinal) ||
+                candidateText.Contains("不匹配", StringComparison.Ordinal) ||
+                candidateText.Contains("未通过", StringComparison.Ordinal) ||
+                candidateText.Contains("不通过", StringComparison.Ordinal)))
+        {
+            score += _minimumStrongCjkScore;
+        }
+
+        return score;
+    }
+
+    private static bool HasIdentifierMatch(
+        IReadOnlyCollection<string> terms,
+        string candidateText) =>
+        terms.Any(term =>
+            term.Length >= _minimumIdentifierLength &&
+            term.All(character => char.IsAsciiLetterOrDigit(character) || character == '_') &&
+            candidateText.Contains(term, StringComparison.OrdinalIgnoreCase));
 
     private static IEnumerable<string> ExtractTerms(string value)
     {

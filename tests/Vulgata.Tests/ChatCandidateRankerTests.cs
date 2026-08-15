@@ -30,7 +30,7 @@ public sealed class ChatCandidateRankerTests
             ChatMode.Business,
             [code, business]);
 
-        Assert.Equal(["k1"], ranked.Select(candidate => candidate.CandidateHandle));
+        Assert.Equal(["k1", "k2"], ranked.Select(candidate => candidate.CandidateHandle));
     }
 
     [Fact]
@@ -49,6 +49,46 @@ public sealed class ChatCandidateRankerTests
 
         Assert.Equal("k2", ranked[0].CandidateHandle);
         Assert.Contains(ranked, candidate => candidate.CandidateHandle == "k1");
+    }
+
+    [Fact]
+    public void Rank_BusinessQuestionWithStrongCodeLogicEvidence_PreservesCodeLogicFallback()
+    {
+        CandidateClaim business = Candidate(
+            "k1",
+            "用户登录密码校验失败后进入风险上报流程。",
+            false);
+        CandidateClaim code = Candidate(
+            "k2",
+            "CheckLoginPwdOp 校验登录密码，失败时将 checkResult 设置为 0。",
+            true);
+
+        IReadOnlyList<CandidateClaim> ranked = ChatCandidateRanker.Rank(
+            "登录密码校验失败后会怎样？",
+            ChatMode.Business,
+            [code, business]);
+
+        Assert.Equal(["k1", "k2"], ranked.Select(candidate => candidate.CandidateHandle));
+    }
+
+    [Fact]
+    public void Rank_FailureOutcomeQuestion_PrioritizesConsequenceOverSubjectOverlap()
+    {
+        CandidateClaim workflowEntry = Candidate(
+            "k1",
+            "登录密码登录名判断通过后进入认证总流程。",
+            true);
+        CandidateClaim failureRule = Candidate(
+            "k2",
+            "若客户密码不匹配，则校验不通过，并将 checkResult 设置为 0。",
+            true);
+
+        IReadOnlyList<CandidateClaim> ranked = ChatCandidateRanker.Rank(
+            "登录密码校验失败后会怎样？",
+            ChatMode.Business,
+            [workflowEntry, failureRule]);
+
+        Assert.Equal("k2", ranked[0].CandidateHandle);
     }
 
     [Theory]
