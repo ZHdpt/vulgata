@@ -92,6 +92,7 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(cut.FindAll("#chat-system, #chat-repository-first, #chat-repository-second"));
         Assert.Equal("选择仓库", cut.Find(".repository-picker__trigger").GetAttribute("aria-label"));
         Assert.Equal("false", cut.Find(".repository-picker__trigger").GetAttribute("aria-expanded"));
+        Assert.Equal("BUTTON", cut.Find(".repository-picker__trigger").TagName);
         Assert.Equal(
             ["mbs_account", "mbs_channel"],
             cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
@@ -181,7 +182,7 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public void ChatPage_RepositoryPicker_OpensNestedCatalogAndSynchronizesCheckmarksWithChips()
+    public void ChatPage_RepositoryPicker_OpensDemoBankCatalogAndSynchronizesCheckmarksWithChips()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
 
@@ -191,18 +192,22 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal("Loaded", cut.Find(".chat-page").GetAttribute("data-load-state"));
         Assert.Equal("true", cut.Find(".repository-picker__trigger").GetAttribute("aria-expanded"));
         Assert.Equal(
-            ["DemoBank", "CoreBank", "Payment"],
+            ["DemoBank"],
             cut.FindAll(".repository-menu__system").Select(system => system.TextContent.Trim().TrimEnd('›').Trim()).ToArray());
+        Assert.Equal(
+            ["mbs_account", "mbs_channel"],
+            cut.FindAll(".repository-menu__repository").Select(repository => repository.TextContent.Trim().TrimStart('✓').Trim()).ToArray());
 
-        IElement payment = cut.Find(".repository-menu__system[data-system-id='payment']");
-        payment.Click();
-        IElement payRepository = cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']");
-        Assert.Equal("false", payRepository.GetAttribute("aria-checked"));
+        IElement accountRepository = cut.Find(".repository-menu__repository[data-repository-name='mbs_account']");
+        Assert.Equal("true", accountRepository.GetAttribute("aria-checked"));
 
-        payRepository.Click();
+        accountRepository.Click();
+        Assert.Equal("false", cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").GetAttribute("aria-checked"));
+        Assert.Empty(cut.FindAll(".repository-chip[data-repository-name='mbs_account']"));
 
-        Assert.Equal("true", cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']").GetAttribute("aria-checked"));
-        Assert.NotNull(cut.Find(".repository-chip[data-repository-name='mbs_pay']"));
+        cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").Click();
+        Assert.Equal("true", cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").GetAttribute("aria-checked"));
+        Assert.NotNull(cut.Find(".repository-chip[data-repository-name='mbs_account']"));
     }
 
     [Fact]
@@ -212,13 +217,11 @@ public sealed class ChatPageTests : BunitContext
         cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
         cut.Find(".repository-picker__trigger").Click();
 
-        IElement coreBank = cut.Find(".repository-menu__system[data-system-id='corebank']");
-        await coreBank.TriggerEventAsync("onmouseenter", new MouseEventArgs());
-        Assert.NotNull(cut.Find(".repository-menu__repository[data-repository-name='mbs_core']"));
-
-        IElement payment = cut.Find(".repository-menu__system[data-system-id='payment']");
-        await payment.TriggerEventAsync("onfocus", EventArgs.Empty);
-        Assert.NotNull(cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']"));
+        IElement demoBank = cut.Find(".repository-menu__system[data-system-id='demobank']");
+        await demoBank.TriggerEventAsync("onmouseenter", new MouseEventArgs());
+        await demoBank.TriggerEventAsync("onfocus", EventArgs.Empty);
+        Assert.Equal("BUTTON", demoBank.TagName);
+        Assert.Equal("BUTTON", cut.Find(".repository-menu__repository[data-repository-name='mbs_account']").TagName);
 
         await cut.Find(".repository-picker").KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
         Assert.Empty(cut.FindAll(".repository-menu"));
@@ -234,14 +237,10 @@ public sealed class ChatPageTests : BunitContext
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
         cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
 
-        cut.Find(".repository-picker__trigger").Click();
-        cut.Find(".repository-menu__system[data-system-id='payment']").Click();
-        cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']").Click();
         cut.Find(".repository-chip[data-repository-name='mbs_account'] .repository-chip__remove").Click();
-        cut.Find(".repository-chip[data-repository-name='mbs_channel'] .repository-chip__remove").Click();
 
         Assert.Equal(
-            ["mbs_pay"],
+            ["mbs_channel"],
             cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
 
         await SendQuestionAsync(cut, "付款仓库如何工作？");
@@ -252,7 +251,7 @@ public sealed class ChatPageTests : BunitContext
             new[] { _firstRepository.Id, _secondRepository.Id }.Order(),
             firstRequest.RepositoryIds.Order());
 
-        cut.Find(".repository-chip[data-repository-name='mbs_pay'] .repository-chip__remove").Click();
+        cut.Find(".repository-chip[data-repository-name='mbs_channel'] .repository-chip__remove").Click();
         Assert.Empty(cut.FindAll(".repository-chip"));
 
         await SendQuestionAsync(cut, "没有可见标签时仍可提问吗？");
@@ -467,9 +466,7 @@ public sealed class ChatPageTests : BunitContext
         await SendQuestionAsync(cut, "第二个问题");
         Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
 
-        cut.Find(".repository-picker__trigger").Click();
-        cut.Find(".repository-menu__system[data-system-id='payment']").Click();
-        cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']").Click();
+        cut.Find(".repository-chip[data-repository-name='mbs_account'] .repository-chip__remove").Click();
 
         Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(2, cut.FindAll(".complete-answer").Count);

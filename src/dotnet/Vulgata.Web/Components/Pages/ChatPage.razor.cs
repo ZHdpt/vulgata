@@ -30,8 +30,6 @@ public partial class ChatPage : IAsyncDisposable
     private static readonly IReadOnlyList<DemoRepositorySystem> DemoRepositoryCatalog =
     [
         new("demobank", "DemoBank", ["mbs_account", "mbs_channel"]),
-        new("corebank", "CoreBank", ["mbs_core", "mbs_auth", "mbs_customer"]),
-        new("payment", "Payment", ["mbs_pay", "mbs_settle", "mbs_refund"]),
     ];
 
     private IReadOnlyList<PreparedChatScopeOption> _scopes = [];

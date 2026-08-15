@@ -465,7 +465,7 @@
     width: 100%;
     min-height: 6.5rem;
     max-height: 15rem;
-    resize: vertical;
+    resize: none;
     border: 0;
     border-radius: 14px;
     outline: 0;
@@ -523,13 +523,20 @@
     min-width: 0;
 }
 
-.repository-picker ::deep .repository-picker__trigger {
+.repository-picker__trigger {
     position: relative;
     z-index: 12;
-    flex: 0 0 auto;
-    min-width: 2.05rem;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 2.05rem;
     width: 2.05rem;
     height: 2.05rem;
+    min-width: 2.05rem;
+    min-height: 2.05rem;
+    max-width: 2.05rem;
+    max-height: 2.05rem;
+    box-sizing: border-box;
+    appearance: none;
     padding: 0;
     border: 1px solid color-mix(in srgb, var(--vulgata-primary) 42%, var(--vulgata-border));
     border-radius: 50%;
@@ -546,28 +553,28 @@
         transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.repository-picker ::deep .repository-picker__trigger:hover {
+.repository-picker__trigger:hover {
     border-color: var(--vulgata-primary);
     background: color-mix(in srgb, var(--vulgata-primary) 15%, var(--vulgata-surface));
     box-shadow: 0 0 1rem -0.45rem var(--vulgata-primary);
     transform: scale(1.05);
 }
 
-.repository-picker ::deep .repository-picker__trigger:focus-visible {
+.repository-picker__trigger:focus-visible {
     outline: 2px solid color-mix(in srgb, var(--vulgata-primary) 72%, white);
     outline-offset: 2px;
 }
 
-.repository-picker ::deep .repository-picker__trigger:active {
+.repository-picker__trigger:active {
     transform: scale(0.96);
 }
 
-.repository-picker ::deep .repository-picker__trigger--open {
+.repository-picker__trigger--open {
     border-color: var(--vulgata-primary);
     background: var(--vulgata-primary);
     color: var(--vulgata-primary-foreground);
     box-shadow: 0 0 1.15rem -0.4rem var(--vulgata-primary);
-    transform: rotate(45deg) scale(1.04);
+    transform: scale(1.04);
 }
 
 .repository-chips {
@@ -694,26 +701,36 @@
     animation: repository-submenu-in 145ms ease-out both;
 }
 
-.repository-menu ::deep .repository-menu__system,
-.repository-menu ::deep .repository-menu__repository {
+.repository-menu__system,
+.repository-menu__repository {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
     width: 100%;
     min-height: 2.25rem;
     justify-content: flex-start;
+    border: 0;
     border-radius: 9px;
+    appearance: none;
+    background: transparent;
     color: var(--vulgata-fg);
+    padding: 0.45rem 0.65rem;
+    font-family: inherit;
     font-size: 0.83rem;
+    text-align: left;
+    cursor: pointer;
     transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
 }
 
-.repository-menu ::deep .repository-menu__system {
+.repository-menu__system {
     justify-content: space-between;
 }
 
-.repository-menu ::deep .repository-menu__system[aria-expanded="true"],
-.repository-menu ::deep .repository-menu__system:hover,
-.repository-menu ::deep .repository-menu__system:focus-visible,
-.repository-menu ::deep .repository-menu__repository:hover,
-.repository-menu ::deep .repository-menu__repository:focus-visible {
+.repository-menu__system[aria-expanded="true"],
+.repository-menu__system:hover,
+.repository-menu__system:focus-visible,
+.repository-menu__repository:hover,
+.repository-menu__repository:focus-visible {
     background: color-mix(in srgb, var(--vulgata-primary) 13%, transparent);
     color: var(--vulgata-primary);
 }
@@ -724,9 +741,9 @@
     transition: color 140ms ease, transform 140ms ease;
 }
 
-.repository-menu ::deep .repository-menu__system:hover .repository-menu__chevron,
-.repository-menu ::deep .repository-menu__system:focus-visible .repository-menu__chevron,
-.repository-menu ::deep .repository-menu__system[aria-expanded="true"] .repository-menu__chevron {
+.repository-menu__system:hover .repository-menu__chevron,
+.repository-menu__system:focus-visible .repository-menu__chevron,
+.repository-menu__system[aria-expanded="true"] .repository-menu__chevron {
     color: var(--vulgata-primary);
     transform: translateX(3px);
 }
@@ -739,11 +756,11 @@
     transition: opacity 130ms ease, transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.repository-menu ::deep .repository-menu__repository[aria-checked="true"] {
+.repository-menu__repository[aria-checked="true"] {
     background: color-mix(in srgb, var(--vulgata-primary) 13%, transparent);
 }
 
-.repository-menu ::deep .repository-menu__repository[aria-checked="true"] .repository-menu__check {
+.repository-menu__repository[aria-checked="true"] .repository-menu__check {
     opacity: 1;
     transform: scale(1);
 }
@@ -924,11 +941,11 @@
     .citation-chevron,
     .question-composer,
     .question-composer ::deep .composer-action,
-    .repository-picker ::deep .repository-picker__trigger,
+    .repository-picker__trigger,
     .repository-chip,
     .repository-chip__remove,
-    .repository-menu ::deep .repository-menu__system,
-    .repository-menu ::deep .repository-menu__repository,
+    .repository-menu__system,
+    .repository-menu__repository,
     .repository-menu__chevron,
     .repository-menu__check {
         transition-duration: 1ms;
@@ -939,7 +956,7 @@
     .question-composer:focus-within,
     .question-composer ::deep .composer-action:hover,
     .question-composer ::deep .composer-action:active,
-    .repository-picker ::deep .repository-picker__trigger,
+    .repository-picker__trigger,
     .repository-chip:hover,
     .repository-menu__chevron {
         transform: none;
