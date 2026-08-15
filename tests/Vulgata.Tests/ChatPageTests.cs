@@ -589,7 +589,7 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public async Task ChatPage_SubmittedUserMessage_ScrollsConversationToLatestTurn()
+    public async Task ChatPage_NewMessages_KeepConversationPinnedToLatestContent()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
         WaitForLoaded(cut);
@@ -606,6 +606,8 @@ public sealed class ChatPageTests : BunitContext
 
         _dispatcher.ReleaseBlockedCall();
         await sendTask;
+
+        cut.WaitForAssertion(() => Assert.True(CountConversationScrolls() >= 2));
     }
 
     [Fact]
@@ -711,6 +713,9 @@ public sealed class ChatPageTests : BunitContext
         cut.Find("#chat-question").Input(question);
         return cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
     }
+
+    private int CountConversationScrolls() => JSInterop.Invocations.Count(
+        invocation => StringComparer.Ordinal.Equals(invocation.Identifier, "scrollConversationToEnd"));
 
     private static IElement FindButton(IRenderedComponent<ChatPage> cut, string text) =>
         cut.FindAll("button, fluent-button")

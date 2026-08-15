@@ -51,6 +51,7 @@ public partial class ChatPage : IAsyncDisposable
     private CancellationTokenSource? _requestCancellation;
     private CancellationTokenSource? _revealCancellation;
     private IJSObjectReference? _chatModule;
+    private bool _scrollConversationAfterRender;
     private bool _isBusy;
     private bool _isStartingNewConversation;
     private int _conversationVersion;
@@ -256,8 +257,7 @@ public partial class ChatPage : IAsyncDisposable
         _turns.Add(turn);
         _question = string.Empty;
         _formRequest.Question = string.Empty;
-        await InvokeAsync(StateHasChanged);
-        await ScrollConversationToEndAsync();
+        await RenderConversationAtEndAsync();
 
         try
         {
@@ -312,6 +312,7 @@ public partial class ChatPage : IAsyncDisposable
             if (conversationVersion == _conversationVersion)
             {
                 _isBusy = false;
+                _scrollConversationAfterRender = true;
             }
 
             if (ReferenceEquals(_requestCancellation, cancellation))
@@ -394,7 +395,7 @@ public partial class ChatPage : IAsyncDisposable
         if (reducedMotion)
         {
             turn.CompleteReveal();
-            await InvokeAsync(StateHasChanged);
+            await RenderConversationAtEndAsync();
             return;
         }
 
@@ -406,7 +407,7 @@ public partial class ChatPage : IAsyncDisposable
             {
                 if (claim.RevealNext())
                 {
-                    await InvokeAsync(StateHasChanged);
+                    await RenderConversationAtEndAsync();
                 }
 
                 while (!claim.IsComplete)
@@ -419,12 +420,12 @@ public partial class ChatPage : IAsyncDisposable
                     }
 
                     claim.RevealNext();
-                    await InvokeAsync(StateHasChanged);
+                    await RenderConversationAtEndAsync();
                 }
             }
 
             turn.CompleteReveal();
-            await InvokeAsync(StateHasChanged);
+            await RenderConversationAtEndAsync();
         }
         finally
         {
@@ -458,6 +459,23 @@ public partial class ChatPage : IAsyncDisposable
         catch (Exception exception) when (exception is JSException or InvalidOperationException)
         {
         }
+    }
+
+    private async Task RenderConversationAtEndAsync()
+    {
+        _scrollConversationAfterRender = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scrollConversationAfterRender)
+        {
+            return;
+        }
+
+        _scrollConversationAfterRender = false;
+        await ScrollConversationToEndAsync();
     }
 
     private async ValueTask<IJSObjectReference> GetChatModuleAsync(CancellationToken cancellationToken)
