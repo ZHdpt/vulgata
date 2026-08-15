@@ -349,6 +349,9 @@ public sealed class ChatPageTests : BunitContext
         Assert.Contains("文档引用", citation.TextContent, StringComparison.Ordinal);
         Assert.Contains("业务流程", citation.TextContent, StringComparison.Ordinal);
         Assert.Contains("查看来源", citation.QuerySelector("summary")?.TextContent, StringComparison.Ordinal);
+        IElement chevron = citation.QuerySelector(".citation-chevron")!;
+        Assert.Equal(string.Empty, chevron.TextContent);
+        Assert.Equal("true", chevron.GetAttribute("aria-hidden"));
         IElement expandableLocator = citation.QuerySelector(".citation-locator")!;
         Assert.NotNull(expandableLocator);
         Assert.True(

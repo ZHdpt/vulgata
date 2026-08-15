@@ -334,11 +334,19 @@
 
 .citation-chevron {
     display: inline-block;
+    flex: 0 0 0.55rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    box-sizing: border-box;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+    transform-origin: 50% 50%;
     transition: transform var(--chat-fast-transition);
 }
 
 .document-citation__details[open] .citation-chevron {
-    transform: rotate(180deg);
+    transform: rotate(225deg);
 }
 
 .citation-locator {
