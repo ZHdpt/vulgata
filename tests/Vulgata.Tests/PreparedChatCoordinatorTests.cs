@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -15,7 +16,7 @@ public sealed class PreparedChatCoordinatorTests
     [Fact]
     public void Constructor_ChatAgentResultValidator_IsRequiredDependency()
     {
-        System.Reflection.ParameterInfo parameter = Assert.Single(
+        ParameterInfo parameter = Assert.Single(
             Assert.Single(typeof(PreparedChatCoordinator).GetConstructors())
                 .GetParameters()
                 .Where(parameter => parameter.ParameterType == typeof(ChatAgentResultValidator)));
@@ -193,6 +194,106 @@ public sealed class PreparedChatCoordinatorTests
         GroundedAnswer answer = Assert.IsType<GroundedAnswer>(result.Answer);
         Assert.Equal("系统接收客户请求后更新并保存登录会话。", Assert.Single(answer.MaterialClaims).Text);
         Assert.Equal(DocumentType.CodeLogic, Assert.Single(answer.DocumentCitations).DocumentType);
+    }
+
+    [Fact]
+    public async Task AskAsync_ProviderTimeoutWithStrongIdentifierMatch_ReturnsGroundedCandidate()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var authorization = new StubAuthorizationVerifier();
+        var retriever = new StubEvidenceRetriever
+        {
+            PrimaryContent = "UpdateSessionOp 构造 Redis key、写入 token 并提交会话。",
+        };
+        var dispatcher = new StubDispatcher { FailureCode = ChatContractFailureCode.TimedOut };
+        var currentness = new StubCurrentnessValidator();
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            authorization,
+            retriever,
+            dispatcher,
+            currentness);
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.It,
+            system.Id,
+            [first.Id, second.Id],
+            "UpdateSessionOp 如何构造 Redis key、写入 token 并提交会话？");
+
+        GroundedAnswer answer = Assert.IsType<GroundedAnswer>(result.Answer);
+        Assert.Equal(PreparedChatResultKind.Succeeded, result.Kind);
+        Assert.Equal(retriever.PrimaryContent, Assert.Single(answer.MaterialClaims).Text);
+        Assert.Single(answer.DocumentCitations);
+        Assert.Equal(1, currentness.CallCount);
+        Assert.Equal(2, authorization.CallCount);
+    }
+
+    [Fact]
+    public async Task AskAsync_StrongGroundedCandidateWithoutRelationship_StillValidatesCurrentness()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var retriever = new StubEvidenceRetriever
+        {
+            IncludeRelationshipSupport = false,
+            PrimaryContent = "AuthTimesCheckOp 检查登录认证错误次数是否超过允许上限。",
+        };
+        var dispatcher = new StubDispatcher { FailureCode = ChatContractFailureCode.TimedOut };
+        var currentness = new StubCurrentnessValidator();
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            dispatcher: dispatcher,
+            currentness: currentness);
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "认证错误次数检查操作类 AuthTimesCheckOp 负责什么？");
+
+        Assert.Equal(PreparedChatResultKind.Succeeded, result.Kind);
+        Assert.IsType<GroundedAnswer>(result.Answer);
+        Assert.Equal(1, currentness.CallCount);
+        Assert.Empty(Assert.IsType<ChatCurrentnessValidationRequest>(
+            currentness.LastRequest).Relationships);
+    }
+
+    [Fact]
+    public async Task AskAsync_ProviderUnsupportedWithStrongChineseMatch_ReturnsGroundedCandidate()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var retriever = new StubEvidenceRetriever
+        {
+            PrimaryContent = "认证错误次数检查操作类负责检查登录认证错误次数是否超过上限。",
+        };
+        var dispatcher = new StubDispatcher { Answerability = ChatAnswerability.Unsupported };
+        var currentness = new StubCurrentnessValidator();
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            dispatcher: dispatcher,
+            currentness: currentness);
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "认证错误次数检查操作类负责什么？");
+
+        GroundedAnswer answer = Assert.IsType<GroundedAnswer>(result.Answer);
+        Assert.Equal(PreparedChatResultKind.Succeeded, result.Kind);
+        Assert.Equal(retriever.PrimaryContent, Assert.Single(answer.MaterialClaims).Text);
+        Assert.Single(answer.DocumentCitations);
+        Assert.Equal(1, currentness.CallCount);
     }
 
     [Fact]
@@ -696,7 +797,10 @@ public sealed class PreparedChatCoordinatorTests
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<SystemDeleteResult> DeleteIfNoDependenciesAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<SystemDependencyCounts> GetDependencyCountsAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public Task<SystemOwnerAssignmentWriteResult> AssignOwnerAsync(Guid systemId, string userId, DateTimeOffset now, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<SystemOwnerAssignmentWriteResult> AssignOwnerAsync(Guid systemId, string userId, DateTimeOffset now, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<bool> RemoveOwnerAsync(Guid systemId, string userId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<IReadOnlyList<SystemOwnerAssignmentSummary>> ListOwnersAsync(Guid systemId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<int> CountOwnerAssignmentsByUserAsync(string userId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -715,8 +819,13 @@ public sealed class PreparedChatCoordinatorTests
 
         public Task<IReadOnlyList<Repository>> ListStandaloneAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<Repository?> GetStandaloneByIdAsync(Guid repositoryId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public Task<bool> NameExistsAsync(Guid systemId, string name, Guid? excludeRepositoryId = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public Task<bool> StandaloneNameExistsAsync(string name, Guid? excludeRepositoryId = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<bool> NameExistsAsync(Guid systemId, string name, Guid? excludeRepositoryId = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<bool> StandaloneNameExistsAsync(string name, Guid? excludeRepositoryId = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Repository> AddAsync(Repository repository, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public void Remove(Repository repository) => throw new NotSupportedException();
         public Task SaveChangesAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -763,6 +872,7 @@ public sealed class PreparedChatCoordinatorTests
         public ChatEvidenceResultKind? ForcedResultKind { get; set; }
         public DocumentType? PrimaryDocumentTypeOverride { get; set; }
         public string PrimaryContent { get; set; } = "客户提交付款后，系统完成校验。";
+        public bool IncludeRelationshipSupport { get; set; } = true;
 
         public Task<ChatEvidenceResult> RetrieveAsync(ChatQuestionRequest request, RepositoryAccessScope accessScope, CancellationToken cancellationToken = default)
         {
@@ -788,7 +898,7 @@ public sealed class PreparedChatCoordinatorTests
                 Id(201),
                 firstRepositoryId,
                 PrimaryDocumentTypeOverride ??
-                    (request.Mode == ChatMode.Business ? DocumentType.BusinessLogic : DocumentType.CodeLogic),
+                (request.Mode == ChatMode.Business ? DocumentType.BusinessLogic : DocumentType.CodeLogic),
                 request.Mode == ChatMode.Business ? "业务流程" : "技术流程",
                 new string('a', 40));
             EvidenceDocument codeDocument = new(
@@ -805,33 +915,42 @@ public sealed class PreparedChatCoordinatorTests
                 request.SystemId,
                 request.RepositoryIds,
                 [businessDocument, codeDocument],
-                [new EvidenceSection(
-                    "s1",
-                    "d1",
-                    Id(301),
-                    1,
-                    DocumentSectionKind.Overview,
-                    "业务概览",
-                    PrimaryContent,
-                    ["a1"],
-                    ["d2"])],
-                [new EvidenceAnchor(
-                    "a1",
-                    Id(401),
-                    "d1",
-                    businessDocument.DocumentVersionId,
-                    firstRepositoryId,
-                    "src/PaymentFlow.cs",
-                    20,
-                    24,
-                    new string('c', 64))],
-                [new EvidenceRelationship(
-                    "r1",
-                    "edge-r1",
-                    ChatRelationshipType.References,
-                    "d1",
-                    "d2",
-                    new string('d', 64))],
+                [
+                    new EvidenceSection(
+                        "s1",
+                        "d1",
+                        Id(301),
+                        1,
+                        DocumentSectionKind.Overview,
+                        "业务概览",
+                        PrimaryContent,
+                        ["a1"],
+                        IncludeRelationshipSupport ? ["d2"] : [])
+                ],
+                [
+                    new EvidenceAnchor(
+                        "a1",
+                        Id(401),
+                        "d1",
+                        businessDocument.DocumentVersionId,
+                        firstRepositoryId,
+                        "src/PaymentFlow.cs",
+                        20,
+                        24,
+                        new string('c', 64))
+                ],
+                IncludeRelationshipSupport
+                    ?
+                    [
+                        new EvidenceRelationship(
+                            "r1",
+                            "edge-r1",
+                            ChatRelationshipType.References,
+                            "d1",
+                            "d2",
+                            new string('d', 64))
+                    ]
+                    : [],
                 [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }
@@ -889,7 +1008,8 @@ public sealed class PreparedChatCoordinatorTests
         public ChatCurrentnessValidationRequest? LastRequest { get; private set; }
         public List<string>? Trace { get; set; }
 
-        public Task<ChatCurrentnessValidationOutcome> ValidateCurrentAsync(ChatCurrentnessValidationRequest request, RepositoryAccessScope accessScope, CancellationToken cancellationToken = default)
+        public Task<ChatCurrentnessValidationOutcome> ValidateCurrentAsync(ChatCurrentnessValidationRequest request, RepositoryAccessScope accessScope,
+            CancellationToken cancellationToken = default)
         {
             CallCount++;
             Trace?.Add("currentness");

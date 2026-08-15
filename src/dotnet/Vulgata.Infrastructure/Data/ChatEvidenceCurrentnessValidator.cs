@@ -44,28 +44,28 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                     .Select(document => document.LogicalDocumentId)
                     .ToArray();
                 CurrentDocumentRow[] documents = await (
-                from logical in _context.LogicalDocuments.AsNoTracking()
-                join version in _context.DocumentVersions.AsNoTracking()
-                    on logical.CurrentVersionId equals version.Id
-                where logicalDocumentIds.Contains(logical.Id) &&
-                    repositoryIds.Contains(logical.RepositoryId) &&
-                    version.SystemId == request.SystemId &&
-                    version.SupersededById == null
-                select new CurrentDocumentRow(
-                    logical.Id,
-                    version.Id))
-                .Take(6)
-                .ToArrayAsync(cancellationToken);
+                        from logical in _context.LogicalDocuments.AsNoTracking()
+                        join version in _context.DocumentVersions.AsNoTracking()
+                            on logical.CurrentVersionId equals version.Id
+                        where logicalDocumentIds.Contains(logical.Id) &&
+                              repositoryIds.Contains(logical.RepositoryId) &&
+                              version.SystemId == request.SystemId &&
+                              version.SupersededById == null
+                        select new CurrentDocumentRow(
+                            logical.Id,
+                            version.Id))
+                    .Take(6)
+                    .ToArrayAsync(cancellationToken);
                 bool documentsAreCurrent = documents.Length == request.Documents.Count &&
-                    request.Documents.All(expected => documents.Any(actual =>
-                    actual.LogicalDocumentId == expected.LogicalDocumentId &&
-                    actual.DocumentVersionId == expected.ExpectedCurrentDocumentVersionId));
+                                           request.Documents.All(expected => documents.Any(actual =>
+                                               actual.LogicalDocumentId == expected.LogicalDocumentId &&
+                                               actual.DocumentVersionId == expected.ExpectedCurrentDocumentVersionId));
                 bool sectionsAreCurrent = documentsAreCurrent &&
-                    await ValidateSectionsAsync(request, cancellationToken);
+                                          await ValidateSectionsAsync(request, cancellationToken);
                 bool anchorsAreCurrent = sectionsAreCurrent &&
-                    await ValidateAnchorsAsync(request, repositoryIds, cancellationToken);
+                                         await ValidateAnchorsAsync(request, repositoryIds, cancellationToken);
                 bool relationshipsAreCurrent = anchorsAreCurrent &&
-                    await ValidateRelationshipsAsync(request, repositoryIds, cancellationToken);
+                                               await ValidateRelationshipsAsync(request, repositoryIds, cancellationToken);
                 if (!relationshipsAreCurrent ||
                     !await accessScope.HasCurrentAccessAsync(repositoryIds, cancellationToken))
                 {
@@ -93,6 +93,7 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
     {
         Guid[] stableSectionIds = request.Sections
             .Select(section => section.StableSectionId)
+            .Distinct()
             .ToArray();
         CurrentSectionRow[] sections = await _context.DocumentSections
             .AsNoTracking()
@@ -103,11 +104,15 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                 section.ContentMarkdown))
             .Take(21)
             .ToArrayAsync(cancellationToken);
-        return sections.Length == request.Sections.Count &&
-            request.Sections.All(expected => sections.Any(actual =>
-                actual.StableSectionId == expected.StableSectionId &&
-                actual.DocumentVersionId == expected.DocumentVersionId &&
-                SpanMatches(actual.ContentMarkdown, expected)));
+        int requestedSectionCount = request.Sections
+            .Select(section => (section.StableSectionId, section.DocumentVersionId))
+            .Distinct()
+            .Count();
+        return sections.Length == requestedSectionCount &&
+               request.Sections.All(expected => sections.Any(actual =>
+                   actual.StableSectionId == expected.StableSectionId &&
+                   actual.DocumentVersionId == expected.DocumentVersionId &&
+                   SpanMatches(actual.ContentMarkdown, expected)));
     }
 
     private async Task<bool> ValidateAnchorsAsync(
@@ -132,22 +137,22 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             .Take(33)
             .ToArrayAsync(cancellationToken);
         return anchors.Length == request.SourceAnchors.Count &&
-            request.SourceAnchors.All(expected => anchors.Any(actual =>
-                actual.AnchorId == expected.AnchorId &&
-                actual.DocumentVersionId == expected.DocumentVersionId &&
-                actual.RepositoryId == expected.RepositoryId &&
-                repositoryIds.Contains(actual.RepositoryId) &&
-                string.Equals(
-                    NormalizePath(actual.RepositoryRelativePath),
-                    expected.RepositoryRelativePath,
-                    StringComparison.Ordinal) &&
-                IsSafeRepositoryRelativePath(actual.RepositoryRelativePath) &&
-                actual.LineStart > 0 &&
-                actual.LineEnd >= actual.LineStart &&
-                actual.LineStart == expected.LineStart &&
-                actual.LineEnd == expected.LineEnd &&
-                string.Equals(actual.SourceHash, expected.SourceHash, StringComparison.Ordinal) &&
-                IsLowerHexSha256(actual.SourceHash)));
+               request.SourceAnchors.All(expected => anchors.Any(actual =>
+                   actual.AnchorId == expected.AnchorId &&
+                   actual.DocumentVersionId == expected.DocumentVersionId &&
+                   actual.RepositoryId == expected.RepositoryId &&
+                   repositoryIds.Contains(actual.RepositoryId) &&
+                   string.Equals(
+                       NormalizePath(actual.RepositoryRelativePath),
+                       expected.RepositoryRelativePath,
+                       StringComparison.Ordinal) &&
+                   IsSafeRepositoryRelativePath(actual.RepositoryRelativePath) &&
+                   actual.LineStart > 0 &&
+                   actual.LineEnd >= actual.LineStart &&
+                   actual.LineStart == expected.LineStart &&
+                   actual.LineEnd == expected.LineEnd &&
+                   string.Equals(actual.SourceHash, expected.SourceHash, StringComparison.Ordinal) &&
+                   IsLowerHexSha256(actual.SourceHash)));
     }
 
     private async Task<bool> ValidateRelationshipsAsync(
@@ -223,10 +228,10 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
     {
         long spanEnd = (long)expected.SpanStart + expected.SpanLength;
         return spanEnd <= contentMarkdown.Length &&
-            string.Equals(
-                Sha256(contentMarkdown.Substring(expected.SpanStart, expected.SpanLength)),
-                expected.TextSha256,
-                StringComparison.Ordinal);
+               string.Equals(
+                   Sha256(contentMarkdown.Substring(expected.SpanStart, expected.SpanLength)),
+                   expected.TextSha256,
+                   StringComparison.Ordinal);
     }
 
     private static bool MatchesEndpoints(
@@ -262,9 +267,9 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         string normalized = NormalizePath(value);
         string[] segments = normalized.Split('/');
         return !normalized.StartsWith('/') &&
-            !(normalized.Length >= 2 && char.IsAsciiLetter(normalized[0]) && normalized[1] == ':') &&
-            !Uri.TryCreate(normalized, UriKind.Absolute, out _) &&
-            segments.All(segment => segment.Length > 0 && segment is not "." and not "..");
+               !(normalized.Length >= 2 && char.IsAsciiLetter(normalized[0]) && normalized[1] == ':') &&
+               !Uri.TryCreate(normalized, UriKind.Absolute, out _) &&
+               segments.All(segment => segment.Length > 0 && segment is not "." and not "..");
     }
 
     private sealed record CurrentDocumentRow(

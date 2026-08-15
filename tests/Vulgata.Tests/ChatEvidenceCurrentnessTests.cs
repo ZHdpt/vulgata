@@ -1,7 +1,7 @@
+using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Vulgata.Core.DomainServices;
@@ -32,24 +32,53 @@ public sealed class ChatEvidenceCurrentnessTests
     }
 
     [Fact]
+    public async Task ValidateCurrentAsync_TwoDistinctClaimSpansInSameSection_ReturnsCurrentAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        ChatCurrentnessValidationRequest original =
+            CurrentnessFixture.CreateValidationRequest(packet);
+        ChatCurrentSection first = original.Sections[0];
+        string content = packet.Sections.Single(section => section.StableSectionId == first.StableSectionId).ContentMarkdown;
+        int secondSpanLength = Math.Min(5, content.Length);
+        var secondSpan = new ChatCurrentSection(
+            first.StableSectionId,
+            first.DocumentVersionId,
+            0,
+            secondSpanLength,
+            CurrentnessFixture.Hash(content[..secondSpanLength]));
+        ChatCurrentnessValidationRequest request = ChatCurrentnessValidationRequest.Create(
+            original.RequestId,
+            original.EvidenceFingerprint,
+            original.SystemId,
+            original.RepositoryIds,
+            original.Documents,
+            [.. original.Sections, secondSpan],
+            original.SourceAnchors,
+            original.Relationships);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    request,
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.Current, outcome);
+    }
+
+    [Fact]
     public async Task ValidateCurrentAsync_CommittedSupportMutationAfterRetrieval_ReturnsMissingOrStaleAsync()
     {
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitSuccessorAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitSectionTextChangeAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitAnchorLossAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitAnchorRangeChangeAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitGeneratedFromLossAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitReferencesEvidenceLossAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitReferencesProfileChangeAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(
-            fixture => fixture.CommitReferencesDirectionChangeAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitSuccessorAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitSectionTextChangeAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitAnchorLossAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitAnchorRangeChangeAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitGeneratedFromLossAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesEvidenceLossAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesProfileChangeAsync());
+        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesDirectionChangeAsync());
     }
 
     [Fact]
@@ -85,12 +114,11 @@ public sealed class ChatEvidenceCurrentnessTests
         await using VulgataDbContext failingContext = fixture.CreateContext(
             new ThrowingReadInterceptor());
         var databaseFailure = new ChatEvidenceCurrentnessValidator(failingContext);
-        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => databaseFailure.ValidateCurrentAsync(
-                request,
-                new RepositoryAccessScope(
-                    fixture.RepositoryIds,
-                    new RecordingAuthorizationVerifier(true, true))));
+        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(() => databaseFailure.ValidateCurrentAsync(
+            request,
+            new RepositoryAccessScope(
+                fixture.RepositoryIds,
+                new RecordingAuthorizationVerifier(true, true))));
 
         Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, denied);
         Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, revoked);
@@ -131,8 +159,10 @@ public sealed class ChatEvidenceCurrentnessTests
     {
         private readonly TaskCompletionSource _providerStarted =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         private readonly TaskCompletionSource _providerReleased =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         private bool _mutationCommitted;
 
         internal Task ProviderStarted => _providerStarted.Task;
@@ -189,8 +219,10 @@ public sealed class ChatEvidenceCurrentnessTests
     {
         internal static string ProfileFingerprint =>
             new ExactResolutionProfileCatalog().Load().ProfileFingerprint;
+
         private const string _evidenceFingerprint =
             "4123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
         private static readonly Guid _businessLogicalDocumentId = Id(10_001);
         private static readonly Guid _businessDocumentVersionId = Id(10_002);
         private static readonly Guid _businessSourceAnchorId = Id(10_003);
@@ -566,6 +598,8 @@ public sealed class ChatEvidenceCurrentnessTests
             Guid documentVersionId) =>
             await context.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {documentVersionId} WHERE \"Id\" = {logicalDocumentId}");
+
+        internal static string Hash(string value) => Sha256(value);
 
         private static string Sha256(string value) =>
             Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));

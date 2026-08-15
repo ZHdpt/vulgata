@@ -6,6 +6,10 @@ namespace Vulgata.Agents.ChatExecution;
 public static class ChatCandidateRanker
 {
     private const int _maximumCandidates = 12;
+    private const int _maximumGroundedFallbackCandidates = 2;
+    private const int _minimumStrongCjkScore = 3;
+    private const int _minimumIdentifierLength = 8;
+
     private static readonly HashSet<string> _ignoredTerms = new(StringComparer.OrdinalIgnoreCase)
     {
         "如何", "哪些", "什么", "主要", "完整", "流程", "系统", "客户", "用户", "进行", "可以", "需要", "之后",
@@ -28,10 +32,19 @@ public static class ChatCandidateRanker
         var relevant = scored.Where(item => item.Score > 0);
         if (mode == ChatMode.Business)
         {
-            var relevantBusiness = relevant.Where(item => !item.Candidate.AllowsBusinessNarrative);
-            relevant = relevantBusiness.Any()
-                ? relevantBusiness
-                : relevant.Where(item => item.Candidate.AllowsBusinessNarrative);
+            var relevantBusiness = relevant
+                .Where(item => !item.Candidate.AllowsBusinessNarrative)
+                .ToArray();
+            var relevantCodeLogic = relevant
+                .Where(item => item.Candidate.AllowsBusinessNarrative)
+                .ToArray();
+            if (relevantBusiness.Length > 0 &&
+                (relevantCodeLogic.Length == 0 ||
+                 relevantBusiness.Max(item => item.Score) >=
+                 relevantCodeLogic.Max(item => item.Score)))
+            {
+                relevant = relevantBusiness;
+            }
         }
 
         var ranked = relevant.Any()
@@ -43,6 +56,32 @@ public static class ChatCandidateRanker
                 .ToArray()
             : candidates.Take(_maximumCandidates).ToArray();
         return Array.AsReadOnly(ranked);
+    }
+
+    public static IReadOnlyList<CandidateClaim> SelectStrongGroundedMatches(
+        string question,
+        IReadOnlyCollection<CandidateClaim> candidates)
+    {
+        string[] terms = ExtractTerms(question).ToArray();
+        CandidateClaim[] selected = candidates
+            .Select(candidate => new
+            {
+                Candidate = candidate,
+                Score = terms.Count(term =>
+                    candidate.Text.Contains(term, StringComparison.OrdinalIgnoreCase)),
+                HasIdentifierMatch = terms.Any(term =>
+                    term.Length >= _minimumIdentifierLength &&
+                    term.All(character => char.IsAsciiLetterOrDigit(character) || character == '_') &&
+                    candidate.Text.Contains(term, StringComparison.OrdinalIgnoreCase)),
+            })
+            .Where(item => item.HasIdentifierMatch || item.Score >= _minimumStrongCjkScore)
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => item.Candidate.AllowsBusinessNarrative)
+            .ThenBy(item => item.Candidate.CandidateHandle, StringComparer.Ordinal)
+            .Take(_maximumGroundedFallbackCandidates)
+            .Select(item => item.Candidate)
+            .ToArray();
+        return Array.AsReadOnly(selected);
     }
 
     private static IEnumerable<string> ExtractTerms(string value)

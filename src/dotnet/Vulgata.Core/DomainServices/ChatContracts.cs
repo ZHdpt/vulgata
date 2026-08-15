@@ -290,7 +290,7 @@ public sealed record EvidencePacket
             canonicalDocuments.Length is < 1 or > 5 ||
             canonicalSections.Length is < 1 or > 20 ||
             canonicalAnchors.Length is < 1 or > 32 ||
-            canonicalRelationships.Length is < 1 or > 32 ||
+            canonicalRelationships.Length > 32 ||
             canonicalFlow.Length is < 1 or > 12)
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
@@ -610,6 +610,7 @@ public enum ChatAnswerability
 public sealed record ChatSynthesisResult
 {
     public const string SupportedSchemaVersion = "prepared-chat-answer-v1";
+
     public const string CompatibleProviderEchoSchemaVersion =
         "prepared-chat-selection-request-v1";
 
@@ -989,7 +990,13 @@ public sealed record ChatCurrentnessValidationRequest
         }
 
         ChatCurrentDocument[] canonicalDocuments = documents?.OrderBy(document => document.LogicalDocumentId).ToArray() ?? [];
-        ChatCurrentSection[] canonicalSections = sections?.OrderBy(section => section.StableSectionId).ToArray() ?? [];
+        ChatCurrentSection[] canonicalSections = sections?
+            .OrderBy(section => section.StableSectionId)
+            .ThenBy(section => section.DocumentVersionId)
+            .ThenBy(section => section.SpanStart)
+            .ThenBy(section => section.SpanLength)
+            .ThenBy(section => section.TextSha256, StringComparer.Ordinal)
+            .ToArray() ?? [];
         ChatCurrentSourceAnchor[] canonicalAnchors = sourceAnchors?.OrderBy(anchor => anchor.AnchorId).ToArray() ?? [];
         ChatCurrentRelationship[] canonicalRelationships = relationships?.OrderBy(
             relationship => relationship.RelationshipIdentity,
@@ -1001,9 +1008,20 @@ public sealed record ChatCurrentnessValidationRequest
             canonicalDocuments.Length is < 1 or > 5 ||
             canonicalSections.Length is < 1 or > 20 ||
             canonicalAnchors.Length is < 1 or > 32 ||
-            canonicalRelationships.Length is < 1 or > 32 ||
+            canonicalRelationships.Length > 32 ||
             canonicalDocuments.Select(document => document.LogicalDocumentId).Distinct().Count() != canonicalDocuments.Length ||
-            canonicalSections.Select(section => section.StableSectionId).Distinct().Count() != canonicalSections.Length ||
+            canonicalSections
+                .Select(section => (
+                    section.StableSectionId,
+                    section.DocumentVersionId,
+                    section.SpanStart,
+                    section.SpanLength,
+                    section.TextSha256))
+                .Distinct()
+                .Count() != canonicalSections.Length ||
+            canonicalSections
+                .GroupBy(section => section.StableSectionId)
+                .Any(group => group.Select(section => section.DocumentVersionId).Distinct().Count() != 1) ||
             canonicalAnchors.Select(anchor => anchor.AnchorId).Distinct().Count() != canonicalAnchors.Length ||
             canonicalRelationships.Select(relationship => relationship.RelationshipIdentity).Distinct(StringComparer.Ordinal).Count() != canonicalRelationships.Length ||
             canonicalDocuments.Any(document =>

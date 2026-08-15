@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Components.Authorization;
 using FluentValidation;
+using FluentValidation.Results;
+using Microsoft.AspNetCore.Components.Authorization;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
@@ -52,7 +53,8 @@ public sealed class PreparedChatCoordinator(
     TimeProvider timeProvider,
     ChatAgentResultValidator resultValidator,
     IPreparedChatScopeResolver preparedScopeResolver,
-    IValidator<PreparedChatQuestionRequest> requestValidator)
+    IValidator<PreparedChatQuestionRequest> requestValidator,
+    ILogger<PreparedChatCoordinator>? logger = null)
 {
     private const string _invalidRequestMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
     private const string _missingMessage = "未找到可用的知识范围，或您无权访问。";
@@ -163,7 +165,7 @@ public sealed class PreparedChatCoordinator(
 
         try
         {
-            FluentValidation.Results.ValidationResult validationResult =
+            ValidationResult validationResult =
                 await requestValidator.ValidateAsync(boundaryRequest, cancellationToken);
             if (!validationResult.IsValid)
             {
@@ -252,8 +254,8 @@ public sealed class PreparedChatCoordinator(
                 return await authorizationVerifier.HasCurrentAccessAsync(
                     request.RepositoryIds,
                     cancellationToken)
-                        ? Unsupported()
-                        : Missing();
+                    ? Unsupported()
+                    : Missing();
             }
 
             ChatSynthesisRequest synthesisRequest = ChatSynthesisRequest.Create(
@@ -268,6 +270,33 @@ public sealed class PreparedChatCoordinator(
                 cancellationToken);
             if (synthesis.Result is null)
             {
+                IReadOnlyList<CandidateClaim> fallbackCandidates =
+                    synthesis.FailureCode is ChatContractFailureCode.ProviderFailure or
+                        ChatContractFailureCode.TimedOut
+                        ? ChatCandidateRanker.SelectStrongGroundedMatches(
+                            request.Question,
+                            candidates)
+                        : [];
+                if (fallbackCandidates.Count > 0)
+                {
+                    logger?.LogInformation(
+                        "Prepared Chat used grounded rescue after synthesis failure {FailureCode} in {Mode} mode.",
+                        synthesis.FailureCode,
+                        request.Mode);
+                    return await CompleteGroundedAnswerAsync(
+                        request,
+                        packet,
+                        fallbackCandidates,
+                        CreateGroundedFallbackClaims(fallbackCandidates),
+                        selectedRepositories,
+                        accessScope,
+                        cancellationToken);
+                }
+
+                logger?.LogWarning(
+                    "Prepared Chat synthesis failed with {FailureCode}; no strong grounded rescue was available in {Mode} mode.",
+                    synthesis.FailureCode,
+                    request.Mode);
                 return MapSynthesisFailure(synthesis.FailureCode);
             }
 
@@ -277,48 +306,51 @@ public sealed class PreparedChatCoordinator(
                 synthesis);
             if (!validation.IsValid)
             {
+                logger?.LogWarning(
+                    "Prepared Chat provider selection failed validation in {Mode} mode.",
+                    request.Mode);
                 return EvidenceUnavailable();
             }
 
             if (!validation.IsAnswerable)
             {
+                IReadOnlyList<CandidateClaim> fallbackCandidates =
+                    ChatCandidateRanker.SelectStrongGroundedMatches(
+                        request.Question,
+                        candidates);
+                if (fallbackCandidates.Count > 0)
+                {
+                    logger?.LogInformation(
+                        "Prepared Chat used grounded rescue after an unsupported provider decision in {Mode} mode.",
+                        request.Mode);
+                    return await CompleteGroundedAnswerAsync(
+                        request,
+                        packet,
+                        fallbackCandidates,
+                        CreateGroundedFallbackClaims(fallbackCandidates),
+                        selectedRepositories,
+                        accessScope,
+                        cancellationToken);
+                }
+
+                logger?.LogInformation(
+                    "Prepared Chat provider returned unsupported with no strong grounded rescue in {Mode} mode.",
+                    request.Mode);
                 return await authorizationVerifier.HasCurrentAccessAsync(
                     request.RepositoryIds,
                     cancellationToken)
-                        ? Unsupported()
-                        : Missing();
+                    ? Unsupported()
+                    : Missing();
             }
 
-            IReadOnlyList<CandidateClaim> selectedCandidates = validation.SelectedCandidates;
-
-            ChatCurrentnessValidationRequest currentnessRequest = BuildCurrentnessRequest(
+            return await CompleteGroundedAnswerAsync(
                 request,
                 packet,
-                selectedCandidates);
-            ChatCurrentnessValidationOutcome currentness = await currentnessValidator.ValidateCurrentAsync(
-                currentnessRequest,
-                accessScope,
-                cancellationToken);
-            if (currentness != ChatCurrentnessValidationOutcome.Current)
-            {
-                return EvidenceUnavailable();
-            }
-
-            if (!await authorizationVerifier.HasCurrentAccessAsync(
-                    request.RepositoryIds,
-                    cancellationToken))
-            {
-                return Missing();
-            }
-
-            GroundedAnswer answer = BuildAnswer(
-                request.Mode,
-                packet,
-                selectedCandidates,
+                validation.SelectedCandidates,
                 validation.MaterialClaims,
                 selectedRepositories,
-                timeProvider.GetUtcNow());
-            return PreparedChatResult.Succeeded(answer);
+                accessScope,
+                cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -329,15 +361,74 @@ public sealed class PreparedChatCoordinator(
         {
             return InvalidRequest();
         }
-        catch (ChatContractException)
+        catch (ChatContractException exception)
         {
+            logger?.LogWarning(
+                "Prepared Chat rejected contract {FailureCode}.",
+                exception.FailureCode);
             return EvidenceUnavailable();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            logger?.LogWarning(
+                "Prepared Chat failed at an unclassified stage with {ErrorType}.",
+                exception.GetType().Name);
             return ProviderUnavailable();
         }
     }
+
+    private async Task<PreparedChatResult> CompleteGroundedAnswerAsync(
+        ChatQuestionRequest request,
+        EvidencePacket packet,
+        IReadOnlyList<CandidateClaim> selectedCandidates,
+        IReadOnlyList<MaterialClaim> materialClaims,
+        Dictionary<Guid, RepositoryEntity> selectedRepositories,
+        RepositoryAccessScope accessScope,
+        CancellationToken cancellationToken)
+    {
+        ChatCurrentnessValidationRequest currentnessRequest = BuildCurrentnessRequest(
+            request,
+            packet,
+            selectedCandidates);
+        ChatCurrentnessValidationOutcome currentness = await currentnessValidator.ValidateCurrentAsync(
+            currentnessRequest,
+            accessScope,
+            cancellationToken);
+        if (currentness != ChatCurrentnessValidationOutcome.Current)
+        {
+            logger?.LogWarning(
+                "Prepared Chat currentness validation returned {Currentness} in {Mode} mode.",
+                currentness,
+                request.Mode);
+            return EvidenceUnavailable();
+        }
+
+        if (!await authorizationVerifier.HasCurrentAccessAsync(
+                request.RepositoryIds,
+                cancellationToken))
+        {
+            return Missing();
+        }
+
+        GroundedAnswer answer = BuildAnswer(
+            request.Mode,
+            packet,
+            selectedCandidates,
+            materialClaims,
+            selectedRepositories,
+            timeProvider.GetUtcNow());
+        return PreparedChatResult.Succeeded(answer);
+    }
+
+    private static IReadOnlyList<MaterialClaim> CreateGroundedFallbackClaims(
+        IReadOnlyList<CandidateClaim> candidates) =>
+        Array.AsReadOnly(candidates
+            .Select((candidate, index) => MaterialClaim.Create(
+                $"claim{index + 1}",
+                index + 1,
+                candidate.Text,
+                candidate.AnchorHandles))
+            .ToArray());
 
     private async Task<UserContext?> GetCurrentUserContextAsync()
     {
@@ -370,8 +461,7 @@ public sealed class PreparedChatCoordinator(
         Dictionary<string, EvidenceDocument> documents = packet.Documents.ToDictionary(
             document => document.DocumentHandle,
             StringComparer.Ordinal);
-        Dictionary<Guid, EvidenceDocument> documentsByVersion = packet.Documents.ToDictionary(
-            document => document.DocumentVersionId);
+        Dictionary<Guid, EvidenceDocument> documentsByVersion = packet.Documents.ToDictionary(document => document.DocumentVersionId);
         Dictionary<string, EvidenceAnchor> anchors = packet.SourceAnchors.ToDictionary(
             anchor => anchor.AnchorHandle,
             StringComparer.Ordinal);
@@ -384,9 +474,9 @@ public sealed class PreparedChatCoordinator(
         EvidenceRelationship[] selectedRelationships =
         [
             .. candidates
-            .SelectMany(candidate => candidate.RelationshipHandles)
-            .Distinct(StringComparer.Ordinal)
-            .Select(handle => relationships[handle]),
+                .SelectMany(candidate => candidate.RelationshipHandles)
+                .Distinct(StringComparer.Ordinal)
+                .Select(handle => relationships[handle]),
         ];
         foreach (EvidenceRelationship relationship in selectedRelationships)
         {
@@ -397,52 +487,52 @@ public sealed class PreparedChatCoordinator(
         ChatCurrentDocument[] currentDocuments =
         [
             .. documentVersionIds
-            .Select(versionId => documentsByVersion[versionId])
-            .Select(document => new ChatCurrentDocument(
-                document.LogicalDocumentId,
-                document.DocumentVersionId)),
+                .Select(versionId => documentsByVersion[versionId])
+                .Select(document => new ChatCurrentDocument(
+                    document.LogicalDocumentId,
+                    document.DocumentVersionId)),
         ];
         ChatCurrentSection[] currentSections =
         [
             .. candidates
-            .Select(candidate => new ChatCurrentSection(
-                candidate.StableSectionId,
-                candidate.DocumentVersionId,
-                candidate.SpanStart,
-                candidate.SpanLength,
-                candidate.TextSha256)),
+                .Select(candidate => new ChatCurrentSection(
+                    candidate.StableSectionId,
+                    candidate.DocumentVersionId,
+                    candidate.SpanStart,
+                    candidate.SpanLength,
+                    candidate.TextSha256)),
         ];
         ChatCurrentSourceAnchor[] currentAnchors =
         [
             .. candidates
-            .SelectMany(candidate => candidate.AnchorHandles)
-            .Distinct(StringComparer.Ordinal)
-            .Select(handle => anchors[handle])
-            .Select(anchor => new ChatCurrentSourceAnchor(
-                anchor.AnchorId,
-                anchor.DocumentVersionId,
-                anchor.RepositoryId,
-                anchor.RepositoryRelativePath,
-                anchor.LineStart,
-                anchor.LineEnd,
-                anchor.SourceHash)),
+                .SelectMany(candidate => candidate.AnchorHandles)
+                .Distinct(StringComparer.Ordinal)
+                .Select(handle => anchors[handle])
+                .Select(anchor => new ChatCurrentSourceAnchor(
+                    anchor.AnchorId,
+                    anchor.DocumentVersionId,
+                    anchor.RepositoryId,
+                    anchor.RepositoryRelativePath,
+                    anchor.LineStart,
+                    anchor.LineEnd,
+                    anchor.SourceHash)),
         ];
         ChatCurrentRelationship[] currentRelationships =
         [
             .. selectedRelationships
-            .Select(relationship =>
-            {
-                EvidenceDocument source = documents[relationship.SourceDocumentHandle];
-                EvidenceDocument target = documents[relationship.TargetDocumentHandle];
-                return new ChatCurrentRelationship(
-                    relationship.RelationshipIdentity,
-                    relationship.RelationshipType,
-                    source.DocumentVersionId,
-                    target.DocumentVersionId,
-                    source.RepositoryId,
-                    target.RepositoryId,
-                    relationship.ProfileFingerprint);
-            }),
+                .Select(relationship =>
+                {
+                    EvidenceDocument source = documents[relationship.SourceDocumentHandle];
+                    EvidenceDocument target = documents[relationship.TargetDocumentHandle];
+                    return new ChatCurrentRelationship(
+                        relationship.RelationshipIdentity,
+                        relationship.RelationshipType,
+                        source.DocumentVersionId,
+                        target.DocumentVersionId,
+                        source.RepositoryId,
+                        target.RepositoryId,
+                        relationship.ProfileFingerprint);
+                }),
         ];
         return ChatCurrentnessValidationRequest.Create(
             request.RequestId,
@@ -463,13 +553,11 @@ public sealed class PreparedChatCoordinator(
         Dictionary<Guid, RepositoryEntity> repositories,
         DateTimeOffset generatedAt)
     {
-        Dictionary<Guid, EvidenceDocument> documents = packet.Documents.ToDictionary(
-            document => document.DocumentVersionId);
+        Dictionary<Guid, EvidenceDocument> documents = packet.Documents.ToDictionary(document => document.DocumentVersionId);
         Dictionary<string, EvidenceAnchor> anchors = packet.SourceAnchors.ToDictionary(
             anchor => anchor.AnchorHandle,
             StringComparer.Ordinal);
-        Dictionary<Guid, EvidenceSection> sections = packet.Sections.ToDictionary(
-            section => section.StableSectionId);
+        Dictionary<Guid, EvidenceSection> sections = packet.Sections.ToDictionary(section => section.StableSectionId);
         if (validatedClaims.Count != candidates.Count)
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidSelection);

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -253,6 +254,12 @@ public sealed class ChatContractTests
         Assert.Equal([repository1, repository2], request.RepositoryIds);
         Assert.Equal(ChatCurrentnessValidationOutcome.Current, ChatCurrentnessValidationOutcome.Current);
 
+        ChatCurrentnessValidationRequest requestWithoutRelationships =
+            ChatCurrentnessValidationRequest.Create(
+                "request-2", new string('a', 64), Id(10), [repository1, repository2],
+                [document], [section], [anchor], []);
+        Assert.Empty(requestWithoutRelationships.Relationships);
+
         ChatContractException unsafeAnchor = Assert.Throws<ChatContractException>(() =>
             ChatCurrentnessValidationRequest.Create(
                 "request-1", new string('a', 64), Id(10), [repository1, repository2],
@@ -297,7 +304,7 @@ public sealed class ChatContractTests
         Type returnType,
         params Type[] parameterTypes)
     {
-        System.Reflection.MethodInfo? method = serviceType.GetMethod(methodName);
+        MethodInfo? method = serviceType.GetMethod(methodName);
 
         Assert.NotNull(method);
         Assert.Equal(returnType, method.ReturnType);
