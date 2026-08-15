@@ -12,8 +12,27 @@ namespace Vulgata.Web.Components.Pages;
 
 public partial class ChatPage : IAsyncDisposable
 {
-    private const string _validationMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
+    private const string _validationMessage = "请选择业务模式，并输入 1 至 2000 个字符的问题。";
     private const string _unexpectedFailureMessage = "暂时无法生成回答，请稍后重试。";
+
+    // DEMO ONLY:
+    // The repository picker currently controls presentation state only.
+    // Backend analysis is intentionally fixed to mbs_account + mbs_channel
+    // for the competition demo.
+    // TODO: Replace these fixed repositories with the repositories selected
+    // in the UI when dynamic repository selection is connected to the backend.
+    private static readonly IReadOnlyList<string> DemoBackendRepositoryNames =
+        ["mbs_account", "mbs_channel"];
+
+    // DEMO UI DATA:
+    // Temporary repository catalog used by the competition prototype.
+    // Replace with repository/system metadata from the real backend.
+    private static readonly IReadOnlyList<DemoRepositorySystem> DemoRepositoryCatalog =
+    [
+        new("demobank", "DemoBank", ["mbs_account", "mbs_channel"]),
+        new("corebank", "CoreBank", ["mbs_core", "mbs_auth", "mbs_customer"]),
+        new("payment", "Payment", ["mbs_pay", "mbs_settle", "mbs_refund"]),
+    ];
 
     private IReadOnlyList<PreparedChatScopeOption> _scopes = [];
     private readonly PreparedChatQuestionRequest _formRequest = new()
@@ -22,9 +41,10 @@ public partial class ChatPage : IAsyncDisposable
     };
     private EditContext _editContext = null!;
     private ElementReference _questionElement;
-    private Guid? _selectedSystemId;
-    private Guid? _firstRepositoryId;
-    private Guid? _secondRepositoryId;
+    private readonly HashSet<string> _selectedUiRepositories =
+        new(["mbs_account", "mbs_channel"], StringComparer.Ordinal);
+    private string _activeRepositorySystemId = "demobank";
+    private bool _isRepositoryPickerOpen;
     private ChatMode? _selectedMode = ChatMode.Business;
     private string _question = string.Empty;
     private string? _message;
@@ -63,8 +83,12 @@ public partial class ChatPage : IAsyncDisposable
         "正在取消本次提问…" :
         "正在查找相关文档…";
 
-    private IReadOnlyList<PreparedChatRepositoryOption> SelectedRepositories =>
-        _scopes.SingleOrDefault(scope => scope.SystemId == _selectedSystemId)?.Repositories ?? [];
+    private DemoRepositorySystem? ActiveRepositorySystem =>
+        DemoRepositoryCatalog.SingleOrDefault(system => system.Id == _activeRepositorySystemId);
+
+    private string RepositoryPickerTriggerClass => _isRepositoryPickerOpen
+        ? "repository-picker__trigger repository-picker__trigger--open"
+        : "repository-picker__trigger";
 
     protected override async Task OnInitializedAsync()
     {
@@ -73,7 +97,17 @@ public partial class ChatPage : IAsyncDisposable
         try
         {
             _scopes = await ChatCoordinator.ListScopesAsync();
-            _loadState = _scopes.Count == 0 ? LoadState.Empty : LoadState.Loaded;
+            DemoBackendScope? effectiveScope = GetEffectiveRepositoriesForRequest();
+            if (effectiveScope is null)
+            {
+                _loadState = _scopes.Count == 0 ? LoadState.Empty : LoadState.Error;
+                _message = _scopes.Count == 0 ? null : "演示所需的固定仓库范围不可用。";
+                return;
+            }
+
+            _formRequest.SystemId = effectiveScope.SystemId;
+            _formRequest.RepositoryIds = effectiveScope.RepositoryIds;
+            _loadState = LoadState.Loaded;
         }
         catch (Exception)
         {
@@ -82,28 +116,40 @@ public partial class ChatPage : IAsyncDisposable
         }
     }
 
-    private void OnSystemChanged(ChangeEventArgs args)
+    private void ToggleRepositoryPicker()
     {
-        _selectedSystemId = ParseId(args.Value);
-        _firstRepositoryId = null;
-        _secondRepositoryId = null;
-        _formRequest.SystemId = _selectedSystemId.GetValueOrDefault();
-        _formRequest.RepositoryIds = [];
-        ResetTransientInteraction(clearQuestion: false);
+        _isRepositoryPickerOpen = !_isRepositoryPickerOpen;
     }
 
-    private void OnFirstRepositoryChanged(ChangeEventArgs args)
+    private void CloseRepositoryPicker()
     {
-        _firstRepositoryId = ParseId(args.Value);
-        SyncRepositoryIds();
-        ResetTransientInteraction(clearQuestion: false);
+        _isRepositoryPickerOpen = false;
     }
 
-    private void OnSecondRepositoryChanged(ChangeEventArgs args)
+    private void ActivateRepositorySystem(string systemId)
     {
-        _secondRepositoryId = ParseId(args.Value);
-        SyncRepositoryIds();
-        ResetTransientInteraction(clearQuestion: false);
+        _activeRepositorySystemId = systemId;
+    }
+
+    private void ToggleUiRepository(string repositoryName)
+    {
+        if (!_selectedUiRepositories.Add(repositoryName))
+        {
+            _ = _selectedUiRepositories.Remove(repositoryName);
+        }
+    }
+
+    private void RemoveUiRepository(string repositoryName)
+    {
+        _ = _selectedUiRepositories.Remove(repositoryName);
+    }
+
+    private void HandleRepositoryPickerKeyDown(KeyboardEventArgs args)
+    {
+        if (StringComparer.Ordinal.Equals(args.Key, "Escape"))
+        {
+            CloseRepositoryPicker();
+        }
     }
 
     private void SelectMode(ChatMode mode)
@@ -186,11 +232,19 @@ public partial class ChatPage : IAsyncDisposable
 
         _message = null;
         _conversationNotice = null;
+        DemoBackendScope? effectiveScope = GetEffectiveRepositoriesForRequest();
+        if (effectiveScope is null)
+        {
+            _loadState = LoadState.Error;
+            _message = "演示所需的固定仓库范围不可用。";
+            return;
+        }
+
         var request = new PreparedChatQuestionRequest
         {
             Mode = _formRequest.Mode,
-            SystemId = _formRequest.SystemId,
-            RepositoryIds = _formRequest.RepositoryIds.ToArray(),
+            SystemId = effectiveScope.SystemId,
+            RepositoryIds = effectiveScope.RepositoryIds,
             Question = _formRequest.Question,
         };
         string question = request.NormalizedQuestion;
@@ -276,12 +330,6 @@ public partial class ChatPage : IAsyncDisposable
         _message = _validationMessage;
     }
 
-    private void SyncRepositoryIds() =>
-        _formRequest.RepositoryIds = new[] { _firstRepositoryId, _secondRepositoryId }
-            .Where(repositoryId => repositoryId.HasValue)
-            .Select(repositoryId => repositoryId!.Value)
-            .ToArray();
-
     private void CancelRequest()
     {
         if (!_isBusy || _requestCancellation is null)
@@ -308,6 +356,33 @@ public partial class ChatPage : IAsyncDisposable
     }
 
     private LoadState ReadyState => _scopes.Count == 0 ? LoadState.Empty : LoadState.Loaded;
+
+    private DemoBackendScope? GetEffectiveRepositoriesForRequest()
+    {
+        foreach (PreparedChatScopeOption scope in _scopes)
+        {
+            var repositoryIds = new List<Guid>(DemoBackendRepositoryNames.Count);
+            foreach (string repositoryName in DemoBackendRepositoryNames)
+            {
+                PreparedChatRepositoryOption? repository = scope.Repositories.SingleOrDefault(
+                    option => StringComparer.Ordinal.Equals(option.DisplayName, repositoryName));
+                if (repository is null)
+                {
+                    repositoryIds.Clear();
+                    break;
+                }
+
+                repositoryIds.Add(repository.RepositoryId);
+            }
+
+            if (repositoryIds.Count == DemoBackendRepositoryNames.Count)
+            {
+                return new DemoBackendScope(scope.SystemId, repositoryIds);
+            }
+        }
+
+        return null;
+    }
 
     private async Task RevealAnswerAsync(
         ChatTurn turn,
@@ -399,6 +474,12 @@ public partial class ChatPage : IAsyncDisposable
         }
     }
 
-    private static Guid? ParseId(object? value) =>
-        Guid.TryParse(value?.ToString(), out Guid id) && id != Guid.Empty ? id : null;
+    private sealed record DemoRepositorySystem(
+        string Id,
+        string Name,
+        IReadOnlyList<string> Repositories);
+
+    private sealed record DemoBackendScope(
+        Guid SystemId,
+        IReadOnlyCollection<Guid> RepositoryIds);
 }

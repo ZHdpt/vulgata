@@ -44,15 +44,15 @@ public sealed class ChatPageTests : BunitContext
         _chatModule = JSInterop.SetupModule("./Components/Pages/ChatPage.razor.js");
         _chatModule.Setup<bool>("prefersReducedMotion").SetResult(false);
 
-        _system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        _system = new SystemEntity("DemoBank", null, null, DateTimeOffset.UtcNow);
         _firstRepository = _system.AddRepository(
-            "账户仓库",
+            "mbs_account",
             "https://example.test/account.git",
             null,
             null,
             DateTimeOffset.UtcNow);
         _secondRepository = _system.AddRepository(
-            "渠道仓库",
+            "mbs_channel",
             "https://example.test/channel.git",
             null,
             null,
@@ -74,7 +74,7 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public void ChatPage_InitialRender_DefaultsToBusinessLightThemeAndExcludesDeferredControls()
+    public void ChatPage_InitialRender_DefaultsToBusinessLightThemeAndComposerRepositoryContext()
     {
         Assert.NotNull(typeof(ChatPage).GetCustomAttribute<AuthorizeAttribute>());
 
@@ -87,10 +87,14 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal("light", cut.Find(".chat-page").GetAttribute("data-theme"));
         Assert.Contains("chat-page--business", cut.Find(".chat-page").ClassList);
         Assert.Contains("你好，想了解什么业务流程？", cut.Markup, StringComparison.Ordinal);
-        Assert.NotNull(cut.Find("#chat-system"));
-        Assert.NotNull(cut.Find("#chat-repository-first"));
-        Assert.NotNull(cut.Find("#chat-repository-second"));
-        Assert.Equal(2, cut.FindAll("select[id^='chat-repository-']").Count);
+        cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
+        Assert.Empty(cut.FindAll(".scope-selector"));
+        Assert.Empty(cut.FindAll("#chat-system, #chat-repository-first, #chat-repository-second"));
+        Assert.Equal("选择仓库", cut.Find(".repository-picker__trigger").GetAttribute("aria-label"));
+        Assert.Equal("false", cut.Find(".repository-picker__trigger").GetAttribute("aria-expanded"));
+        Assert.Equal(
+            ["mbs_account", "mbs_channel"],
+            cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
         Assert.NotNull(cut.Find("#chat-question"));
         Assert.DoesNotContain("type=\"file\"", cut.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("自动选择", cut.Markup, StringComparison.Ordinal);
@@ -115,7 +119,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_NewConversation_ClearsTransientStateAndPreservesPreparedContextAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
         PrepareValidSelection(cut, ChatMode.Business);
         await SendQuestionAsync(cut, "客户如何完成付款？");
         cut.Find("#chat-question").Input("尚未发送的追问");
@@ -127,9 +131,9 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(cut.FindAll(".complete-answer"));
         Assert.Empty(cut.FindAll(".document-citation"));
         Assert.Equal(string.Empty, cut.Find("#chat-question").GetAttribute("value"));
-        Assert.Equal(_system.Id.ToString(), cut.Find("#chat-system").GetAttribute("value"));
-        Assert.Equal(_firstRepository.Id.ToString(), cut.Find("#chat-repository-first").GetAttribute("value"));
-        Assert.Equal(_secondRepository.Id.ToString(), cut.Find("#chat-repository-second").GetAttribute("value"));
+        Assert.Equal(
+            ["mbs_account", "mbs_channel"],
+            cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
         Assert.Equal("true", FindButton(cut, "业务模式").GetAttribute("aria-pressed"));
         Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("你好，想了解什么业务流程？", cut.Markup, StringComparison.Ordinal);
@@ -142,7 +146,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_NewConversationDuringRequest_PreventsLateAnswerFromReappearingAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _dispatcher.BlockNextCall();
 
@@ -177,25 +181,97 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public void ChatPage_LoadedPreparedScopes_RendersSystemAndRepositoryOptions()
+    public void ChatPage_RepositoryPicker_OpensNestedCatalogAndSynchronizesCheckmarksWithChips()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
 
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
-        cut.Find("#chat-system").Change(_system.Id.ToString());
+        cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
+        cut.Find(".repository-picker__trigger").Click();
 
         Assert.Equal("Loaded", cut.Find(".chat-page").GetAttribute("data-load-state"));
-        Assert.Contains("账户仓库", cut.Find("#chat-repository-first").TextContent, StringComparison.Ordinal);
-        Assert.Contains("渠道仓库", cut.Find("#chat-repository-first").TextContent, StringComparison.Ordinal);
-        Assert.Contains("账户仓库", cut.Find("#chat-repository-second").TextContent, StringComparison.Ordinal);
-        Assert.Contains("渠道仓库", cut.Find("#chat-repository-second").TextContent, StringComparison.Ordinal);
+        Assert.Equal("true", cut.Find(".repository-picker__trigger").GetAttribute("aria-expanded"));
+        Assert.Equal(
+            ["DemoBank", "CoreBank", "Payment"],
+            cut.FindAll(".repository-menu__system").Select(system => system.TextContent.Trim().TrimEnd('›').Trim()).ToArray());
+
+        IElement payment = cut.Find(".repository-menu__system[data-system-id='payment']");
+        payment.Click();
+        IElement payRepository = cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']");
+        Assert.Equal("false", payRepository.GetAttribute("aria-checked"));
+
+        payRepository.Click();
+
+        Assert.Equal("true", cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']").GetAttribute("aria-checked"));
+        Assert.NotNull(cut.Find(".repository-chip[data-repository-name='mbs_pay']"));
+    }
+
+    [Fact]
+    public async Task ChatPage_RepositoryPicker_HoverFocusEscapeAndOutsideDismissRemainAccessibleAsync()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
+        cut.Find(".repository-picker__trigger").Click();
+
+        IElement coreBank = cut.Find(".repository-menu__system[data-system-id='corebank']");
+        await coreBank.TriggerEventAsync("onmouseenter", new MouseEventArgs());
+        Assert.NotNull(cut.Find(".repository-menu__repository[data-repository-name='mbs_core']"));
+
+        IElement payment = cut.Find(".repository-menu__system[data-system-id='payment']");
+        await payment.TriggerEventAsync("onfocus", EventArgs.Empty);
+        Assert.NotNull(cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']"));
+
+        await cut.Find(".repository-picker").KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+        Assert.Empty(cut.FindAll(".repository-menu"));
+
+        cut.Find(".repository-picker__trigger").Click();
+        cut.Find(".repository-picker__dismiss").Click();
+        Assert.Empty(cut.FindAll(".repository-menu"));
+    }
+
+    [Fact]
+    public async Task ChatPage_RepositoryPresentationState_NeverChangesFixedDemoBackendScopeAsync()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
+
+        cut.Find(".repository-picker__trigger").Click();
+        cut.Find(".repository-menu__system[data-system-id='payment']").Click();
+        cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']").Click();
+        cut.Find(".repository-chip[data-repository-name='mbs_account'] .repository-chip__remove").Click();
+        cut.Find(".repository-chip[data-repository-name='mbs_channel'] .repository-chip__remove").Click();
+
+        Assert.Equal(
+            ["mbs_pay"],
+            cut.FindAll(".repository-chip").Select(chip => chip.GetAttribute("data-repository-name")).ToArray());
+
+        await SendQuestionAsync(cut, "付款仓库如何工作？");
+
+        ChatQuestionRequest firstRequest = Assert.Single(_retriever.Requests);
+        Assert.Equal(_system.Id, firstRequest.SystemId);
+        Assert.Equal(
+            new[] { _firstRepository.Id, _secondRepository.Id }.Order(),
+            firstRequest.RepositoryIds.Order());
+
+        cut.Find(".repository-chip[data-repository-name='mbs_pay'] .repository-chip__remove").Click();
+        Assert.Empty(cut.FindAll(".repository-chip"));
+
+        await SendQuestionAsync(cut, "没有可见标签时仍可提问吗？");
+
+        Assert.Equal(2, _retriever.Requests.Count);
+        Assert.All(_retriever.Requests, request =>
+        {
+            Assert.Equal(_system.Id, request.SystemId);
+            Assert.Equal(
+                new[] { _firstRepository.Id, _secondRepository.Id }.Order(),
+                request.RepositoryIds.Order());
+        });
     }
 
     [Fact]
     public void ChatPage_ModeSelection_LocksThemeAndStartsFreshTransientQuestion()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         IElement question = cut.Find("#chat-question");
         question.Input("尚未发送的问题");
 
@@ -218,12 +294,12 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_EnterWithExplicitValidRequest_DispatchesAndRendersChineseAnswer()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
 
         await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
 
         Assert.Contains(
-            "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。",
+            "请选择业务模式，并输入 1 至 2000 个字符的问题。",
             cut.Markup,
             StringComparison.Ordinal);
         Assert.Equal(0, _dispatcher.CallCount);
@@ -244,7 +320,7 @@ public sealed class ChatPageTests : BunitContext
     {
         _dispatcher.Answerability = ChatAnswerability.Unsupported;
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
 
         await SendQuestionAsync(cut, "北京天气怎么样？");
@@ -260,7 +336,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_BusinessAnswer_RendersChineseDocumentCitationWithExpandableAuthorizedLocatorAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
 
         await SendQuestionAsync(cut, "客户如何完成付款？");
@@ -277,8 +353,8 @@ public sealed class ChatPageTests : BunitContext
         IElement expandableLocator = citation.QuerySelector(".citation-locator")!;
         Assert.NotNull(expandableLocator);
         Assert.True(
-            expandableLocator.TextContent.Contains("账户仓库", StringComparison.Ordinal) ||
-            expandableLocator.TextContent.Contains("渠道仓库", StringComparison.Ordinal));
+            expandableLocator.TextContent.Contains("mbs_account", StringComparison.Ordinal) ||
+            expandableLocator.TextContent.Contains("mbs_channel", StringComparison.Ordinal));
         Assert.Contains("src/PaymentFlow.cs", expandableLocator.TextContent, StringComparison.Ordinal);
         Assert.Contains("第 20–24 行", expandableLocator.TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain(_firstRepository.Id.ToString(), citation.TextContent, StringComparison.OrdinalIgnoreCase);
@@ -289,7 +365,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_ItAnswer_RendersChineseDocumentCitationAndAuthorizedLocatorInlineAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.It);
 
         await SendQuestionAsync(cut, "付款流程如何实现？");
@@ -300,8 +376,8 @@ public sealed class ChatPageTests : BunitContext
         IElement inlineLocator = citation.QuerySelector(".citation-locator--inline")!;
         Assert.NotNull(inlineLocator);
         Assert.True(
-            inlineLocator.TextContent.Contains("账户仓库", StringComparison.Ordinal) ||
-            inlineLocator.TextContent.Contains("渠道仓库", StringComparison.Ordinal));
+            inlineLocator.TextContent.Contains("mbs_account", StringComparison.Ordinal) ||
+            inlineLocator.TextContent.Contains("mbs_channel", StringComparison.Ordinal));
         Assert.Contains("src/PaymentFlow.cs", inlineLocator.TextContent, StringComparison.Ordinal);
         Assert.Contains("第 20–24 行", inlineLocator.TextContent, StringComparison.Ordinal);
         Assert.DoesNotContain(_firstRepository.Id.ToString(), citation.TextContent, StringComparison.OrdinalIgnoreCase);
@@ -312,7 +388,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_EscapeDuringPendingRequest_CancelsWithoutPartialAnswer()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         cut.Find("#chat-question").Input("客户如何完成付款？");
         _dispatcher.BlockNextCall();
@@ -342,7 +418,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_SecondRequest_RetainsFirstTurnWhilePendingAndAfterCompletion()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "第一份完整回答。";
         await SendQuestionAsync(cut, "第一个问题");
@@ -375,7 +451,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_ModeScopeAndFailureChanges_RetainPriorCompletedTurns()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "应保留的旧回答。";
         await SendQuestionAsync(cut, "第一个问题");
@@ -391,7 +467,9 @@ public sealed class ChatPageTests : BunitContext
         await SendQuestionAsync(cut, "第二个问题");
         Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
 
-        cut.Find("#chat-system").Change(string.Empty);
+        cut.Find(".repository-picker__trigger").Click();
+        cut.Find(".repository-menu__system[data-system-id='payment']").Click();
+        cut.Find(".repository-menu__repository[data-repository-name='mbs_pay']").Click();
 
         Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
         Assert.Equal(2, cut.FindAll(".complete-answer").Count);
@@ -414,7 +492,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_StaleRevokedAndInvalidRequests_RetainPriorClaimsAndCitationsAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
 
         await SendQuestionAsync(cut, "第一问");
@@ -448,7 +526,7 @@ public sealed class ChatPageTests : BunitContext
         cut.Find("#chat-question").Input(string.Empty);
         await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
 
-        Assert.Contains("请选择业务模式、系统和两个不同的仓库", surface.TextContent, StringComparison.Ordinal);
+        Assert.Contains("请选择业务模式，并输入 1 至 2000 个字符的问题。", surface.TextContent, StringComparison.Ordinal);
         Assert.Equal(2, cut.FindAll(".complete-answer").Count);
         Assert.Equal(2, cut.FindAll(".material-claim").Count);
         Assert.Equal(2, cut.FindAll(".document-citation").Count);
@@ -458,7 +536,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_RetainedTimeline_DoesNotBecomeBackendConversationContext()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
 
         await SendQuestionAsync(cut, "第一条独立问题");
@@ -476,7 +554,7 @@ public sealed class ChatPageTests : BunitContext
     {
         _revealDelay.Pause();
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "账户完成。";
 
@@ -502,7 +580,7 @@ public sealed class ChatPageTests : BunitContext
     public async Task ChatPage_ValidPendingRequest_ClearsComposerImmediately()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _dispatcher.BlockNextCall();
 
@@ -520,7 +598,7 @@ public sealed class ChatPageTests : BunitContext
     {
         _revealDelay.Pause();
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "不会重新出现。";
 
@@ -540,7 +618,7 @@ public sealed class ChatPageTests : BunitContext
     {
         _revealDelay.Pause();
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "e\u0301👨‍👩‍👧‍👦完成";
 
@@ -567,7 +645,7 @@ public sealed class ChatPageTests : BunitContext
         _revealDelay.Pause();
         int delayCalls = _revealDelay.CallCount;
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "立即完成。";
 
@@ -579,23 +657,16 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
-    public async Task ChatPage_InvalidQuestionOrDuplicateScope_DoesNotDispatch()
+    public async Task ChatPage_InvalidQuestionAndShiftEnter_DoNotDispatch()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
-        cut.WaitForState(() => cut.Markup.Contains("支付系统", StringComparison.Ordinal));
+        WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         cut.Find("#chat-question").Input(new string('问', 2001));
         await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
 
         Assert.Equal(0, _dispatcher.CallCount);
         Assert.Contains("1 至 2000 个字符", cut.Markup, StringComparison.Ordinal);
-
-        cut.Find("#chat-repository-second").Change(_firstRepository.Id.ToString());
-        cut.Find("#chat-question").Input("范围重复");
-        await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
-
-        Assert.Equal(0, _dispatcher.CallCount);
-        Assert.Contains("两个不同的仓库", cut.Markup, StringComparison.Ordinal);
 
         cut.Find("#chat-question").Input("保留换行");
         await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter", ShiftKey = true });
@@ -607,9 +678,11 @@ public sealed class ChatPageTests : BunitContext
     private void PrepareValidSelection(IRenderedComponent<ChatPage> cut, ChatMode mode)
     {
         FindButton(cut, mode == ChatMode.Business ? "业务模式" : "技术模式").Click();
-        cut.Find("#chat-system").Change(_system.Id.ToString());
-        cut.Find("#chat-repository-first").Change(_firstRepository.Id.ToString());
-        cut.Find("#chat-repository-second").Change(_secondRepository.Id.ToString());
+    }
+
+    private static void WaitForLoaded(IRenderedComponent<ChatPage> cut)
+    {
+        cut.WaitForState(() => cut.Find(".chat-page").GetAttribute("data-load-state") == "Loaded");
     }
 
     private static async Task SendQuestionAsync(IRenderedComponent<ChatPage> cut, string question)

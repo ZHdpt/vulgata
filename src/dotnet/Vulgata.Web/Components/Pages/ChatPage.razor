@@ -35,43 +35,6 @@
                           @onclick="StartNewConversationAsync"><span aria-hidden="true">＋</span> 新对话</FluentButton>
         </div>
 
-        <div class="scope-selector">
-            <label for="chat-system">系统</label>
-            <select id="chat-system"
-                    value="@(_selectedSystemId?.ToString() ?? string.Empty)"
-                    disabled="@(_loadState != LoadState.Loaded || _isBusy)"
-                    @onchange="OnSystemChanged">
-                <option value="">请选择系统</option>
-                @foreach (var scope in _scopes)
-                {
-                    <option value="@scope.SystemId">@scope.SystemDisplayName</option>
-                }
-            </select>
-
-            <label for="chat-repository-first">仓库一</label>
-            <select id="chat-repository-first"
-                    value="@(_firstRepositoryId?.ToString() ?? string.Empty)"
-                    disabled="@(_selectedSystemId is null || _isBusy)"
-                    @onchange="OnFirstRepositoryChanged">
-                <option value="">请选择第一个仓库</option>
-                @foreach (var repository in SelectedRepositories)
-                {
-                    <option value="@repository.RepositoryId">@repository.DisplayName</option>
-                }
-            </select>
-
-            <label for="chat-repository-second">仓库二</label>
-            <select id="chat-repository-second"
-                    value="@(_secondRepositoryId?.ToString() ?? string.Empty)"
-                    disabled="@(_selectedSystemId is null || _isBusy)"
-                    @onchange="OnSecondRepositoryChanged">
-                <option value="">请选择第二个仓库</option>
-                @foreach (var repository in SelectedRepositories)
-                {
-                    <option value="@repository.RepositoryId">@repository.DisplayName</option>
-                }
-            </select>
-        </div>
     </section>
 
     <section class="chat-surface"
@@ -151,7 +114,7 @@
         {
             <div class="chat-welcome">
                 <h1 class="display-serif display-serif-lg">@WelcomeMessage</h1>
-                <p>请选择一个系统及其两个仓库，然后输入问题。</p>
+                <p>选择相关仓库，然后输入你想了解的问题。</p>
             </div>
         }
 
@@ -186,14 +149,82 @@
                   rows="3"
                   readonly="@_isBusy"
                   @onkeydown="HandleQuestionKeyDownAsync"></textarea>
-        @if (_isBusy)
-        {
-            <FluentButton Class="composer-action composer-action--cancel" Appearance="Appearance.Neutral" @onclick="CancelRequest">取消</FluentButton>
-        }
-        else
-        {
-            <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent" Type="ButtonType.Submit">发送</FluentButton>
-        }
+        <div class="composer-context-row">
+            <div class="repository-picker" @onkeydown="HandleRepositoryPickerKeyDown">
+                <FluentButton Class="@RepositoryPickerTriggerClass"
+                              Appearance="Appearance.Stealth"
+                              Type="ButtonType.Button"
+                              aria-label="选择仓库"
+                              aria-haspopup="menu"
+                              aria-expanded="@(_isRepositoryPickerOpen ? "true" : "false")"
+                              @onclick="ToggleRepositoryPicker"><span aria-hidden="true">＋</span></FluentButton>
+
+                <div class="repository-chips" aria-label="已选择的仓库">
+                    @foreach (string repositoryName in _selectedUiRepositories)
+                    {
+                        <span class="repository-chip" data-repository-name="@repositoryName" @key="repositoryName">
+                            <span class="repository-chip__status" aria-hidden="true"></span>
+                            <span class="repository-chip__name">@repositoryName</span>
+                            <button class="repository-chip__remove"
+                                    type="button"
+                                    aria-label="移除 @repositoryName"
+                                    @onclick="() => RemoveUiRepository(repositoryName)">×</button>
+                        </span>
+                    }
+                </div>
+
+                @if (_isRepositoryPickerOpen)
+                {
+                    <button class="repository-picker__dismiss" type="button" aria-label="关闭仓库选择器" @onclick="CloseRepositoryPicker"></button>
+                    <div class="repository-menu" role="menu" aria-label="选择仓库">
+                        <div class="repository-menu__systems">
+                            @foreach (DemoRepositorySystem system in DemoRepositoryCatalog)
+                            {
+                                <FluentButton Class="repository-menu__system"
+                                              Appearance="Appearance.Stealth"
+                                              Type="ButtonType.Button"
+                                              data-system-id="@system.Id"
+                                              aria-expanded="@(system.Id == _activeRepositorySystemId ? "true" : "false")"
+                                              @onmouseenter="() => ActivateRepositorySystem(system.Id)"
+                                              @onfocus="() => ActivateRepositorySystem(system.Id)"
+                                              @onclick="() => ActivateRepositorySystem(system.Id)">
+                                    <span>@system.Name</span><span class="repository-menu__chevron" aria-hidden="true">›</span>
+                                </FluentButton>
+                            }
+                        </div>
+
+                        @if (ActiveRepositorySystem is not null)
+                        {
+                            <div class="repository-menu__repositories" role="group" aria-label="@($"{ActiveRepositorySystem.Name} 仓库")">
+                                @foreach (string repositoryName in ActiveRepositorySystem.Repositories)
+                                {
+                                    bool isSelected = _selectedUiRepositories.Contains(repositoryName);
+                                    <FluentButton Class="repository-menu__repository"
+                                                  Appearance="Appearance.Stealth"
+                                                  Type="ButtonType.Button"
+                                                  data-repository-name="@repositoryName"
+                                                  role="menuitemcheckbox"
+                                                  aria-checked="@(isSelected ? "true" : "false")"
+                                                  @onclick="() => ToggleUiRepository(repositoryName)">
+                                        <span class="repository-menu__check" aria-hidden="true">✓</span>
+                                        <span>@repositoryName</span>
+                                    </FluentButton>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @if (_isBusy)
+            {
+                <FluentButton Class="composer-action composer-action--cancel" Appearance="Appearance.Neutral" @onclick="CancelRequest">取消</FluentButton>
+            }
+            else
+            {
+                <FluentButton Class="primary-button composer-action" Appearance="Appearance.Accent" Type="ButtonType.Submit">发送</FluentButton>
+            }
+        </div>
     </section>
     </EditForm>
 </div>
