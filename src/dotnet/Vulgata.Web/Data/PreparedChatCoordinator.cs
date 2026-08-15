@@ -237,10 +237,23 @@ public sealed class PreparedChatCoordinator(
                 return EvidenceUnavailable();
             }
 
-            IReadOnlyList<CandidateClaim> candidates = candidateExtractor.Extract(packet);
-            if (candidates.Count == 0)
+            IReadOnlyList<CandidateClaim> extractedCandidates = candidateExtractor.Extract(packet);
+            if (extractedCandidates.Count == 0)
             {
                 return EvidenceUnavailable();
+            }
+
+            IReadOnlyList<CandidateClaim> candidates = ChatCandidateRanker.Rank(
+                request.Question,
+                request.Mode,
+                extractedCandidates);
+            if (ChatQuestionRelevanceGate.IsDefinitelyUnrelated(request.Question))
+            {
+                return await authorizationVerifier.HasCurrentAccessAsync(
+                    request.RepositoryIds,
+                    cancellationToken)
+                        ? Unsupported()
+                        : Missing();
             }
 
             ChatSynthesisRequest synthesisRequest = ChatSynthesisRequest.Create(
@@ -302,6 +315,7 @@ public sealed class PreparedChatCoordinator(
                 request.Mode,
                 packet,
                 selectedCandidates,
+                validation.MaterialClaims,
                 selectedRepositories,
                 timeProvider.GetUtcNow());
             return PreparedChatResult.Succeeded(answer);
@@ -445,6 +459,7 @@ public sealed class PreparedChatCoordinator(
         ChatMode mode,
         EvidencePacket packet,
         IReadOnlyList<CandidateClaim> candidates,
+        IReadOnlyList<MaterialClaim> validatedClaims,
         Dictionary<Guid, RepositoryEntity> repositories,
         DateTimeOffset generatedAt)
     {
@@ -455,6 +470,11 @@ public sealed class PreparedChatCoordinator(
             StringComparer.Ordinal);
         Dictionary<Guid, EvidenceSection> sections = packet.Sections.ToDictionary(
             section => section.StableSectionId);
+        if (validatedClaims.Count != candidates.Count)
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidSelection);
+        }
+
         var claims = new List<MaterialClaim>(candidates.Count);
         var citations = new List<DocumentCitation>();
         for (int claimIndex = 0; claimIndex < candidates.Count; claimIndex++)
@@ -483,7 +503,7 @@ public sealed class PreparedChatCoordinator(
             claims.Add(MaterialClaim.Create(
                 claimId,
                 claimIndex + 1,
-                candidate.Text,
+                validatedClaims[claimIndex].Text,
                 citationIds));
         }
 

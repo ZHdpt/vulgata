@@ -68,10 +68,7 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
                     "answerability",
                     "selections") ||
                 root.GetProperty("schemaVersion").ValueKind != JsonValueKind.String ||
-                !string.Equals(
-                    root.GetProperty("schemaVersion").GetString(),
-                    ChatSynthesisResult.SupportedSchemaVersion,
-                    StringComparison.Ordinal) ||
+                !IsCompatibleSchemaVersion(root.GetProperty("schemaVersion").GetString()) ||
                 root.GetProperty("requestId").ValueKind != JsonValueKind.String ||
                 !string.Equals(root.GetProperty("requestId").GetString(), request.RequestId, StringComparison.Ordinal) ||
                 root.GetProperty("mode").ValueKind != JsonValueKind.String ||
@@ -121,10 +118,14 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
             var selectedHandles = new HashSet<string>(StringComparer.Ordinal);
             foreach (JsonElement selection in selections)
             {
+                bool hasNarrative = selection.TryGetProperty("narrativeText", out JsonElement narrativeElement);
                 if (expectedOrder > 12 ||
-                    !HasExactProperties(selection, "candidateHandle", "order") ||
+                    !(HasExactProperties(selection, "candidateHandle", "order") ||
+                        HasExactProperties(selection, "candidateHandle", "order", "narrativeText")) ||
                     selection.GetProperty("candidateHandle").ValueKind != JsonValueKind.String ||
                     selection.GetProperty("order").ValueKind != JsonValueKind.Number ||
+                    (hasNarrative && narrativeElement.ValueKind is not (
+                        JsonValueKind.String or JsonValueKind.Null)) ||
                     !selection.GetProperty("order").TryGetInt32(out int order) ||
                     order != expectedOrder)
                 {
@@ -141,7 +142,14 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
                 }
 
                 selected.Add(candidate);
-                claims.Add(MaterialClaim.Create($"claim{order}", order, candidate.Text, candidate.AnchorHandles));
+                string displayText = hasNarrative &&
+                    candidate.AllowsBusinessNarrative &&
+                    BusinessNarrativeSafety.IsSafeRewrite(
+                        narrativeElement.GetString(),
+                        candidate.Text)
+                            ? narrativeElement.GetString()!
+                            : candidate.Text;
+                claims.Add(MaterialClaim.Create($"claim{order}", order, displayText, candidate.AnchorHandles));
                 expectedOrder++;
             }
 
@@ -194,7 +202,18 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
         string.Equals(retained.TextSha256, dispatched.TextSha256, StringComparison.Ordinal) &&
         retained.AnchorHandles.SequenceEqual(dispatched.AnchorHandles, StringComparer.Ordinal) &&
         retained.RelationshipHandles.SequenceEqual(dispatched.RelationshipHandles, StringComparer.Ordinal) &&
+        retained.AllowsBusinessNarrative == dispatched.AllowsBusinessNarrative &&
         string.Equals(retained.SupportSignature, dispatched.SupportSignature, StringComparison.Ordinal);
+
+    private static bool IsCompatibleSchemaVersion(string? value) =>
+        string.Equals(
+            value,
+            ChatSynthesisResult.SupportedSchemaVersion,
+            StringComparison.Ordinal) ||
+        string.Equals(
+            value,
+            ChatSynthesisResult.CompatibleProviderEchoSchemaVersion,
+            StringComparison.Ordinal);
 
     private static string ToProviderMode(ChatMode mode) => mode switch
     {
@@ -202,4 +221,84 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
         ChatMode.It => "it",
         _ => string.Empty,
     };
+}
+
+internal static class BusinessNarrativeSafety
+{
+    private const int _maximumLength = 500;
+
+    public static bool IsSafeRewrite(string? narrative, string source)
+    {
+        if (string.IsNullOrWhiteSpace(narrative) ||
+            narrative.Length > _maximumLength ||
+            narrative.Contains('`') ||
+            narrative.Contains('/') ||
+            narrative.Contains('\\') ||
+            narrative.Contains("http://", StringComparison.OrdinalIgnoreCase) ||
+            narrative.Contains("https://", StringComparison.OrdinalIgnoreCase) ||
+            narrative.Contains(" line ", StringComparison.OrdinalIgnoreCase) ||
+            ContainsDottedIdentifier(narrative) ||
+            ContainsUnknownAsciiOrNumericToken(narrative, source))
+        {
+            return false;
+        }
+
+        return !narrative.Any(character =>
+            char.IsControl(character) && character is not ('\r' or '\n'));
+    }
+
+    private static bool ContainsDottedIdentifier(string value)
+    {
+        for (int index = 1; index < value.Length - 1; index++)
+        {
+            if (value[index] == '.' &&
+                IsIdentifierPart(value[index - 1]) &&
+                IsIdentifierStart(value[index + 1]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool ContainsUnknownAsciiOrNumericToken(string narrative, string source)
+    {
+        foreach (string token in ExtractAsciiOrNumericTokens(narrative))
+        {
+            if (!source.Contains(token, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static IEnumerable<string> ExtractAsciiOrNumericTokens(string value)
+    {
+        int index = 0;
+        while (index < value.Length)
+        {
+            if (!IsIdentifierStart(value[index]) && !char.IsAsciiDigit(value[index]))
+            {
+                index++;
+                continue;
+            }
+
+            int start = index++;
+            while (index < value.Length && IsIdentifierPart(value[index]))
+            {
+                index++;
+            }
+
+            yield return value[start..index];
+        }
+    }
+
+    private static bool IsIdentifierPart(char value) =>
+        IsIdentifierStart(value) || char.IsAsciiDigit(value);
+
+    private static bool IsIdentifierStart(char value) =>
+        char.IsAsciiLetter(value) || value == '_';
 }

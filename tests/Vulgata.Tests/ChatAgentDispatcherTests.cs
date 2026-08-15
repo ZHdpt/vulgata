@@ -232,10 +232,11 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal("客户如何完成付款？", selectionRoot.GetProperty("question").GetString());
         JsonElement candidate = Assert.Single(selectionRoot.GetProperty("candidates").EnumerateArray());
         Assert.Equal(
-            ["candidateHandle", "text"],
+            ["candidateHandle", "text", "narrativeAllowed"],
             candidate.EnumerateObject().Select(property => property.Name));
         Assert.Equal("k1", candidate.GetProperty("candidateHandle").GetString());
         Assert.Equal("客户提交订单后，系统校验并处理请求。", candidate.GetProperty("text").GetString());
+        Assert.False(candidate.GetProperty("narrativeAllowed").GetBoolean());
         Assert.DoesNotContain(request.SystemId.ToString(), requestJson, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(request.CandidateClaims[0].DocumentVersionId.ToString(), requestJson, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(request.CandidateClaims[0].StableSectionId.ToString(), requestJson, StringComparison.OrdinalIgnoreCase);
@@ -279,6 +280,37 @@ public sealed class ChatAgentDispatcherTests
 
         ChatSynthesisResult result = Assert.IsType<ChatSynthesisResult>(outcome.Result);
         Assert.Empty(result.Selections);
+        Assert.Null(outcome.FailureCode);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_JsonFenceAndKnownSchemaEcho_NormalizesClosedSelection()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        string rawSelectionJson = CreateRawSelectionJson(request).Replace(
+            ChatSynthesisResult.SupportedSchemaVersion,
+            ChatSynthesisResult.CompatibleProviderEchoSchemaVersion,
+            StringComparison.Ordinal);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var dispatcher = new ChatAgentDispatcher(
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => CreateChatResponse($"```json\n{rawSelectionJson}\n```")),
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.IsType<ChatSynthesisResult>(outcome.Result);
+        Assert.Equal(rawSelectionJson, outcome.RawSelectionJson);
         Assert.Null(outcome.FailureCode);
     }
 

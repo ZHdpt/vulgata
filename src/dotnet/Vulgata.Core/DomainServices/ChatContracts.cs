@@ -435,6 +435,7 @@ public sealed record CandidateClaim
         string textSha256,
         IReadOnlyList<string> anchorHandles,
         IReadOnlyList<string> relationshipHandles,
+        bool allowsBusinessNarrative,
         string supportSignature)
     {
         CandidateHandle = candidateHandle;
@@ -448,6 +449,7 @@ public sealed record CandidateClaim
         TextSha256 = textSha256;
         AnchorHandles = anchorHandles;
         RelationshipHandles = relationshipHandles;
+        AllowsBusinessNarrative = allowsBusinessNarrative;
         SupportSignature = supportSignature;
     }
 
@@ -462,6 +464,7 @@ public sealed record CandidateClaim
     public string TextSha256 { get; }
     public IReadOnlyList<string> AnchorHandles { get; }
     public IReadOnlyList<string> RelationshipHandles { get; }
+    public bool AllowsBusinessNarrative { get; }
     public string SupportSignature { get; }
 
     public static CandidateClaim Create(
@@ -473,7 +476,8 @@ public sealed record CandidateClaim
         int spanStart,
         string text,
         IReadOnlyCollection<string> anchorHandles,
-        IReadOnlyCollection<string> relationshipHandles)
+        IReadOnlyCollection<string> relationshipHandles,
+        bool allowsBusinessNarrative = false)
     {
         string[] canonicalAnchors = ChatContractGuard.CanonicalHandles(
             anchorHandles,
@@ -497,6 +501,11 @@ public sealed record CandidateClaim
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
         }
 
+        if (allowsBusinessNarrative && mode != ChatMode.Business)
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
+        }
+
         string textSha256 = ChatContractGuard.Sha256(text);
         string supportMaterial = string.Join(
             '\u001f',
@@ -508,7 +517,8 @@ public sealed record CandidateClaim
             text.Length.ToString(CultureInfo.InvariantCulture),
             textSha256,
             string.Join(',', canonicalAnchors),
-            string.Join(',', canonicalRelationships));
+            string.Join(',', canonicalRelationships),
+            allowsBusinessNarrative.ToString(CultureInfo.InvariantCulture));
         return new CandidateClaim(
             candidateHandle,
             evidenceFingerprint,
@@ -520,11 +530,15 @@ public sealed record CandidateClaim
             textSha256,
             Array.AsReadOnly(canonicalAnchors),
             Array.AsReadOnly(canonicalRelationships),
+            allowsBusinessNarrative,
             ChatContractGuard.Sha256(supportMaterial));
     }
 }
 
-public sealed record ChatSynthesisSelection(string CandidateHandle, int Order);
+public sealed record ChatSynthesisSelection(
+    string CandidateHandle,
+    int Order,
+    string? NarrativeText = null);
 
 public sealed record ChatSynthesisRequest
 {
@@ -596,6 +610,8 @@ public enum ChatAnswerability
 public sealed record ChatSynthesisResult
 {
     public const string SupportedSchemaVersion = "prepared-chat-answer-v1";
+    public const string CompatibleProviderEchoSchemaVersion =
+        "prepared-chat-selection-request-v1";
 
     private ChatSynthesisResult(
         string requestId,

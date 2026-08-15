@@ -8,6 +8,43 @@ namespace Vulgata.Tests;
 public sealed class ChatAgentResultValidatorTests
 {
     [Fact]
+    public void Validate_NullBusinessCodeLogicNarrative_TreatsRewriteAsOmitted()
+    {
+        const string original = "系统调用会话服务并保存客户会话。";
+        ValidationFixture fixture = CreateFixture(
+            ChatMode.Business,
+            original,
+            DocumentType.CodeLogic);
+        string rawJson = JsonSerializer.Serialize(new
+        {
+            schemaVersion = ChatSynthesisResult.SupportedSchemaVersion,
+            requestId = fixture.Request.RequestId,
+            mode = "business",
+            evidenceFingerprint = fixture.Request.EvidenceFingerprint,
+            answerability = "supported",
+            selections = new[]
+            {
+                new { candidateHandle = "k1", order = 1, narrativeText = (string?)null },
+            },
+        });
+        var validator = new ChatAgentResultValidator(new ChatCandidateExtractor());
+
+        ChatAgentResultValidation result = validator.Validate(
+            fixture.Packet,
+            fixture.Request,
+            ChatSynthesisOutcome.Generated(
+                ChatSynthesisResult.Create(
+                    fixture.Request.RequestId,
+                    fixture.Request.Mode,
+                    fixture.Request.EvidenceFingerprint,
+                    [new ChatSynthesisSelection("k1", 1)]),
+                rawJson));
+
+        Assert.True(result.IsValid);
+        Assert.Equal(original, Assert.Single(result.MaterialClaims).Text);
+    }
+
+    [Fact]
     public void Validate_ExactSelection_MaterializesRetainedTextAndFixedSupport()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "服务器保留的技术事实。");
@@ -35,6 +72,31 @@ public sealed class ChatAgentResultValidatorTests
         CandidateClaim retained = Assert.Single(result.SelectedCandidates);
         Assert.Equal("k1", retained.CandidateHandle);
         Assert.Equal(fixture.Request.CandidateClaims[0].SupportSignature, retained.SupportSignature);
+    }
+
+    [Fact]
+    public void Validate_KnownProviderRequestSchemaEcho_AcceptsOtherwiseClosedSelection()
+    {
+        ValidationFixture fixture = CreateFixture(ChatMode.It, "服务器保留的技术事实。");
+        string rawJson = CreateRawJson(fixture.Request, [("k1", 1)]).Replace(
+            ChatSynthesisResult.SupportedSchemaVersion,
+            "prepared-chat-selection-request-v1",
+            StringComparison.Ordinal);
+        var validator = new ChatAgentResultValidator(new ChatCandidateExtractor());
+
+        ChatAgentResultValidation result = validator.Validate(
+            fixture.Packet,
+            fixture.Request,
+            ChatSynthesisOutcome.Generated(
+                ChatSynthesisResult.Create(
+                    fixture.Request.RequestId,
+                    fixture.Request.Mode,
+                    fixture.Request.EvidenceFingerprint,
+                    [new ChatSynthesisSelection("k1", 1)]),
+                rawJson));
+
+        Assert.True(result.IsValid);
+        Assert.Equal("服务器保留的技术事实。", Assert.Single(result.MaterialClaims).Text);
     }
 
     [Fact]
@@ -234,7 +296,10 @@ public sealed class ChatAgentResultValidatorTests
         Assert.Equal(["k2", "k1"], result.SelectedCandidates.Select(candidate => candidate.CandidateHandle));
     }
 
-    private static ValidationFixture CreateFixture(ChatMode mode, string markdown)
+    private static ValidationFixture CreateFixture(
+        ChatMode mode,
+        string markdown,
+        DocumentType? primaryDocumentType = null)
     {
         EvidencePacket packet = EvidencePacket.Create(
             "request-1",
@@ -242,7 +307,11 @@ public sealed class ChatAgentResultValidatorTests
             SystemId,
             [Repository2, Repository1],
             [
-                Document("d1", 1, mode == ChatMode.Business ? DocumentType.BusinessLogic : DocumentType.CodeLogic),
+                Document(
+                    "d1",
+                    1,
+                    primaryDocumentType ??
+                        (mode == ChatMode.Business ? DocumentType.BusinessLogic : DocumentType.CodeLogic)),
                 Document("d2", 2, DocumentType.CodeLogic, Repository2),
             ],
             [new EvidenceSection("s1", "d1", Id(11), 1, DocumentSectionKind.Overview, "章节", markdown, ["a1"], [])],

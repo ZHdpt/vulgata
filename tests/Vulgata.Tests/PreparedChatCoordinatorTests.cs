@@ -155,6 +155,47 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
+    public async Task AskAsync_BusinessCodeLogicFallback_PublishesSafeNarrativeWithOriginalCitation()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var retriever = new StubEvidenceRetriever
+        {
+            PrimaryDocumentTypeOverride = DocumentType.CodeLogic,
+            PrimaryContent = "系统调用会话服务并保存客户会话。",
+        };
+        var dispatcher = new StubDispatcher
+        {
+            NarrativeText = "系统接收客户请求后更新并保存登录会话。",
+        };
+        var candidateExtractor = new ChatCandidateExtractor();
+        var coordinator = new PreparedChatCoordinator(
+            new FixedAuthenticationStateProvider("owner-1"),
+            new StubSystemRepository([system]),
+            new StubRepositoryRepository([first, second]),
+            new StubAuthorizationVerifier(),
+            retriever,
+            candidateExtractor,
+            dispatcher,
+            new StubCurrentnessValidator(),
+            TimeProvider.System,
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户登录会话如何更新？");
+
+        GroundedAnswer answer = Assert.IsType<GroundedAnswer>(result.Answer);
+        Assert.Equal("系统接收客户请求后更新并保存登录会话。", Assert.Single(answer.MaterialClaims).Text);
+        Assert.Equal(DocumentType.CodeLogic, Assert.Single(answer.DocumentCitations).DocumentType);
+    }
+
+    [Fact]
     public async Task AskAsync_MalformedProviderSelection_FailsBeforeCurrentnessAndFinalAuthorizationWithoutLeak()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -230,7 +271,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(PreparedChatResultKind.Unsupported, result.Kind);
         Assert.Equal("当前知识库中没有足够信息回答该问题。", result.Message);
         Assert.Null(result.Answer);
-        Assert.Equal("北京天气怎么样？", dispatcher.LastRequest?.Question);
+        Assert.Equal(0, dispatcher.CallCount);
+        Assert.Equal(2, authorization.CallCount);
         Assert.Equal(0, currentness.CallCount);
     }
 
@@ -719,6 +761,8 @@ public sealed class PreparedChatCoordinatorTests
         public ChatQuestionRequest? LastRequest { get; private set; }
         public List<string>? Trace { get; set; }
         public ChatEvidenceResultKind? ForcedResultKind { get; set; }
+        public DocumentType? PrimaryDocumentTypeOverride { get; set; }
+        public string PrimaryContent { get; set; } = "客户提交付款后，系统完成校验。";
 
         public Task<ChatEvidenceResult> RetrieveAsync(ChatQuestionRequest request, RepositoryAccessScope accessScope, CancellationToken cancellationToken = default)
         {
@@ -743,7 +787,8 @@ public sealed class PreparedChatCoordinatorTests
                 Id(101),
                 Id(201),
                 firstRepositoryId,
-                request.Mode == ChatMode.Business ? DocumentType.BusinessLogic : DocumentType.CodeLogic,
+                PrimaryDocumentTypeOverride ??
+                    (request.Mode == ChatMode.Business ? DocumentType.BusinessLogic : DocumentType.CodeLogic),
                 request.Mode == ChatMode.Business ? "业务流程" : "技术流程",
                 new string('a', 40));
             EvidenceDocument codeDocument = new(
@@ -767,7 +812,7 @@ public sealed class PreparedChatCoordinatorTests
                     1,
                     DocumentSectionKind.Overview,
                     "业务概览",
-                    "客户提交付款后，系统完成校验。",
+                    PrimaryContent,
                     ["a1"],
                     ["d2"])],
                 [new EvidenceAnchor(
@@ -799,6 +844,7 @@ public sealed class PreparedChatCoordinatorTests
         public ChatAnswerability Answerability { get; set; } = ChatAnswerability.Supported;
         public ChatSynthesisRequest? LastRequest { get; private set; }
         public string? RawSelectionJsonOverride { get; set; }
+        public string? NarrativeText { get; set; }
         public List<string>? Trace { get; set; }
 
         public Task<ChatSynthesisOutcome> GenerateAsync(ChatSynthesisRequest request, CancellationToken cancellationToken = default)
@@ -817,7 +863,7 @@ public sealed class PreparedChatCoordinatorTests
                 request.EvidenceFingerprint,
                 Answerability,
                 Answerability == ChatAnswerability.Supported
-                    ? [new ChatSynthesisSelection("k1", 1)]
+                    ? [new ChatSynthesisSelection("k1", 1, NarrativeText)]
                     : []);
             string rawSelectionJson = RawSelectionJsonOverride ?? JsonSerializer.Serialize(new
             {
@@ -827,7 +873,9 @@ public sealed class PreparedChatCoordinatorTests
                 evidenceFingerprint = request.EvidenceFingerprint,
                 answerability = Answerability == ChatAnswerability.Supported ? "supported" : "unsupported",
                 selections = Answerability == ChatAnswerability.Supported
-                    ? new object[] { new { candidateHandle = "k1", order = 1 } }
+                    ? NarrativeText is null
+                        ? new object[] { new { candidateHandle = "k1", order = 1 } }
+                        : [new { candidateHandle = "k1", order = 1, narrativeText = NarrativeText }]
                     : Array.Empty<object>(),
             });
             return Task.FromResult(ChatSynthesisOutcome.Generated(result, rawSelectionJson));

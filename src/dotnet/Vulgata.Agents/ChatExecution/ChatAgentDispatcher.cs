@@ -3,6 +3,7 @@ using System.ClientModel.Primitives;
 using System.Text.Json;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Chat;
 using Vulgata.Core.DomainServices;
@@ -19,19 +20,22 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
     private readonly ChatPromptCatalog _promptCatalog;
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly TimeProvider _timeProvider;
+    private readonly ILogger<ChatAgentDispatcher>? _logger;
 
     public ChatAgentDispatcher(
         ChatAgentProviderResolver providerResolver,
         ISecretEncryptionService encryptionService,
         ChatPromptCatalog promptCatalog,
         HttpMessageHandler httpMessageHandler,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ILogger<ChatAgentDispatcher>? logger = null)
     {
         _providerResolver = providerResolver;
         _encryptionService = encryptionService;
         _promptCatalog = promptCatalog;
         _httpMessageHandler = httpMessageHandler;
         _timeProvider = timeProvider;
+        _logger = logger;
     }
 
     public async Task<ChatSynthesisOutcome> GenerateAsync(
@@ -61,6 +65,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 {
                     candidateHandle = candidate.CandidateHandle,
                     text = candidate.Text,
+                    narrativeAllowed = candidate.AllowsBusinessNarrative,
                 }),
             });
             string apiKey = await _encryptionService.DecryptAsync(
@@ -139,11 +144,12 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
         }
     }
 
-    private static ChatSynthesisOutcome ParseResult(string responseText)
+    private ChatSynthesisOutcome ParseResult(string responseText)
     {
         try
         {
-            using JsonDocument document = JsonDocument.Parse(responseText);
+            string responseJson = UnwrapJsonCodeFence(responseText);
+            using JsonDocument document = JsonDocument.Parse(responseJson);
             JsonElement root = document.RootElement;
             string requestId = root.GetProperty("requestId").GetString() ?? string.Empty;
             ChatMode mode = root.GetProperty("mode").GetString() switch
@@ -159,9 +165,13 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 "unsupported" => ChatAnswerability.Unsupported,
                 _ => throw new JsonException("Unsupported answerability value."),
             };
+            string? schemaVersion = root.GetProperty("schemaVersion").GetString();
             if (!StringComparer.Ordinal.Equals(
-                    root.GetProperty("schemaVersion").GetString(),
-                    ChatSynthesisResult.SupportedSchemaVersion))
+                    schemaVersion,
+                    ChatSynthesisResult.SupportedSchemaVersion) &&
+                !StringComparer.Ordinal.Equals(
+                    schemaVersion,
+                    ChatSynthesisResult.CompatibleProviderEchoSchemaVersion))
             {
                 throw new JsonException("Unsupported Chat result schema.");
             }
@@ -170,20 +180,47 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 .EnumerateArray()
                 .Select(selection => new ChatSynthesisSelection(
                     selection.GetProperty("candidateHandle").GetString() ?? string.Empty,
-                    selection.GetProperty("order").GetInt32()))
+                    selection.GetProperty("order").GetInt32(),
+                    selection.TryGetProperty("narrativeText", out JsonElement narrative) &&
+                        narrative.ValueKind == JsonValueKind.String
+                            ? narrative.GetString()
+                            : null))
                 .ToArray();
             return ChatSynthesisOutcome.Generated(ChatSynthesisResult.Create(
                 requestId,
                 mode,
                 fingerprint,
                 answerability,
-                selections), responseText);
+                selections), responseJson);
         }
         catch (Exception exception) when (
             exception is JsonException or InvalidOperationException or ChatContractException)
         {
+            _logger?.LogWarning(
+                "Prepared Chat provider result parsing failed with {ErrorType}: {ErrorMessage}",
+                exception.GetType().Name,
+                exception.Message);
             return ChatSynthesisOutcome.Failed(ChatContractFailureCode.InvalidSelection);
         }
+    }
+
+    private static string UnwrapJsonCodeFence(string responseText)
+    {
+        string trimmed = responseText.Trim();
+        const string jsonFence = "```json";
+        const string plainFence = "```";
+        string openingFence = trimmed.StartsWith(jsonFence, StringComparison.OrdinalIgnoreCase)
+            ? trimmed[..jsonFence.Length]
+            : trimmed.StartsWith(plainFence, StringComparison.Ordinal)
+                ? plainFence
+                : string.Empty;
+        if (openingFence.Length == 0 ||
+            !trimmed.EndsWith(plainFence, StringComparison.Ordinal))
+        {
+            return responseText;
+        }
+
+        return trimmed[openingFence.Length..^plainFence.Length].Trim();
     }
 
     private static string ToProviderMode(ChatMode mode) => mode switch

@@ -14,13 +14,17 @@ text and greetings with no codebase question are also `unsupported`. Use
 `unsupported` whenever no candidate has a meaningful semantic relationship to
 the question. Preserve
 uncertainty exactly as supplied and never invent, strengthen, or infer graph
-truth. The candidate text is immutable server-owned evidence; do not rewrite,
-translate, complete, summarize, or add factual narrative.
+truth. The candidate text is immutable server-owned evidence. When and only
+when a selected candidate has `narrativeAllowed: true`, you may add a concise
+`narrativeText` that restates exactly the same claim in natural, non-technical
+Simplified Chinese. Do not add facts, identifiers, numbers, paths, line
+locations, URLs, or implementation details. For every other candidate, omit
+`narrativeText`.
 
 Return exactly one JSON object for schema `prepared-chat-answer-v1`. Echo only
 the supplied requestId, mode, and evidenceFingerprint. Set `answerability` to
-`supported` and return 1–12 unique selections with only `candidateHandle` and
-contiguous `order` beginning at 1, or set `answerability` to `unsupported` and
-return an empty selections array. Never select evidence merely because it is the
-only evidence available.
+`supported` and return 1–12 unique selections with `candidateHandle`, contiguous
+`order` beginning at 1, and optional `narrativeText` only as allowed above; or
+set `answerability` to `unsupported` and return an empty selections array. Never
+select evidence merely because it is the only evidence available.
 Do not return any other property or prose.

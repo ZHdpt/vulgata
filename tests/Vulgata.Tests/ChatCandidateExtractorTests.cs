@@ -111,8 +111,11 @@ public sealed class ChatCandidateExtractorTests
             [relationship]);
 
         Assert.Equal(
-            ["业务概览。", "业务步骤。"],
+            ["业务概览。", "业务步骤。", "技术概览。", "技术步骤。"],
             _extractor.Extract(businessPacket).Select(candidate => candidate.Text));
+        Assert.Equal(
+            [false, false, true, true],
+            _extractor.Extract(businessPacket).Select(candidate => candidate.AllowsBusinessNarrative));
         Assert.Equal(
             ["技术概览。", "技术步骤。", "技术细节。", "技术证据。"],
             _extractor.Extract(itPacket).Select(candidate => candidate.Text));

@@ -46,7 +46,9 @@ public sealed class ChatCandidateExtractor
             candidate.Span.Start,
             candidate.Section.ContentMarkdown.Substring(candidate.Span.Start, candidate.Span.Length),
             candidate.Support.AnchorHandles,
-            candidate.Support.RelationshipHandles)).ToArray();
+            candidate.Support.RelationshipHandles,
+            packet.Mode == ChatMode.Business &&
+                candidate.Document.DocumentType == DocumentType.CodeLogic)).ToArray();
         return Array.AsReadOnly(candidates);
     }
 
@@ -57,7 +59,7 @@ public sealed class ChatCandidateExtractor
         mode switch
         {
             ChatMode.Business =>
-                documentType == DocumentType.BusinessLogic &&
+                documentType is DocumentType.BusinessLogic or DocumentType.CodeLogic &&
                 sectionKind is DocumentSectionKind.Overview or DocumentSectionKind.ProcessStep,
             ChatMode.It =>
                 documentType == DocumentType.CodeLogic &&

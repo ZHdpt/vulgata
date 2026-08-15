@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CrossRepository;
@@ -13,7 +14,8 @@ namespace Vulgata.Infrastructure.Data;
 public sealed class ChatEvidenceRetriever(
     VulgataDbContext context,
     ExactResolutionProfileCatalog? profileCatalog = null,
-    IPreparedChatScopeResolver? preparedScopeResolver = null) : IChatEvidenceRetriever
+    IPreparedChatScopeResolver? preparedScopeResolver = null,
+    ILogger<ChatEvidenceRetriever>? logger = null) : IChatEvidenceRetriever
 {
     private readonly VulgataDbContext _context = context;
     private readonly ExactResolutionProfileCatalog _profileCatalog =
@@ -22,6 +24,7 @@ public sealed class ChatEvidenceRetriever(
         preparedScopeResolver ?? new PreparedChatScopeResolver(
             context,
             profileCatalog ?? new ExactResolutionProfileCatalog());
+    private readonly ILogger<ChatEvidenceRetriever>? _logger = logger;
 
     public async Task<ChatEvidenceResult> RetrieveAsync(
         ChatQuestionRequest request,
@@ -198,7 +201,7 @@ public sealed class ChatEvidenceRetriever(
             return ChatEvidenceResult.IncompleteOrStale();
         }
 
-        Guid[] documentVersionIds = provenance
+        Guid[] baseDocumentVersionIds = provenance
             .SelectMany(relationship => new[]
             {
                 relationship.SourceDocumentVersionId,
@@ -208,10 +211,77 @@ public sealed class ChatEvidenceRetriever(
             .Append(exactRelationship.TargetDocumentVersionId)
             .Distinct()
             .ToArray();
-        if (documentVersionIds.Length is < 1 or > 5)
+        if (baseDocumentVersionIds.Length is < 1 or > 5)
         {
             return ChatEvidenceResult.IncompleteOrStale();
         }
+
+        DocumentSection[] baseSections = await _context.DocumentSections
+            .AsNoTracking()
+            .Where(section => baseDocumentVersionIds.Contains(section.DocumentVersionId))
+            .OrderBy(section => section.DocumentVersionId)
+            .ThenBy(section => section.SectionOrder)
+            .ThenBy(section => section.StableSectionId)
+            .Take(21)
+            .ToArrayAsync(cancellationToken);
+        if (baseSections.Length is < 1 or > 20 ||
+            baseDocumentVersionIds.Any(documentVersionId =>
+                baseSections.All(section => section.DocumentVersionId != documentVersionId)))
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
+
+        int supplementaryLimit = Math.Min(
+            2,
+            Math.Min(5 - baseDocumentVersionIds.Length, 20 - baseSections.Length));
+        SupplementaryChatSectionCandidate[] supplementaryCandidates = supplementaryLimit == 0
+            ? []
+            : await (
+                from logical in _context.LogicalDocuments.AsNoTracking()
+                join version in _context.DocumentVersions.AsNoTracking()
+                    on logical.CurrentVersionId equals version.Id
+                join section in _context.DocumentSections.AsNoTracking()
+                    on version.Id equals section.DocumentVersionId
+                where logical.DocumentType == DocumentType.CodeLogic &&
+                    !baseDocumentVersionIds.Contains(version.Id) &&
+                    repositoryIds.Contains(version.RepositoryId) &&
+                    version.SystemId == request.SystemId &&
+                    version.SupersededById == null &&
+                    (section.SectionKind == DocumentSectionKind.Overview ||
+                        section.SectionKind == DocumentSectionKind.ProcessStep)
+                orderby version.Id, section.SectionOrder, section.StableSectionId
+                select new SupplementaryChatSectionCandidate(
+                    version.Id,
+                    section.StableSectionId,
+                    version.Title,
+                    section.Heading,
+                    section.ContentMarkdown))
+                .Take(256)
+                .ToArrayAsync(cancellationToken);
+        IReadOnlyList<SupplementaryChatSectionCandidate> selectedSupplementary =
+            ChatSupplementaryEvidenceSelector.Select(
+                request.Question,
+                supplementaryCandidates,
+                supplementaryLimit);
+        Guid[] supplementarySectionIds = selectedSupplementary
+            .Select(item => item.StableSectionId)
+            .ToArray();
+        DocumentSection[] supplementarySections = supplementarySectionIds.Length == 0
+            ? []
+            : await _context.DocumentSections
+                .AsNoTracking()
+                .Where(section => supplementarySectionIds.Contains(section.StableSectionId))
+                .ToArrayAsync(cancellationToken);
+        if (supplementarySections.Length != supplementarySectionIds.Length)
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
+
+        DocumentSection[] sections = [.. baseSections, .. supplementarySections];
+        Guid[] documentVersionIds = baseDocumentVersionIds
+            .Concat(selectedSupplementary.Select(item => item.DocumentVersionId))
+            .Distinct()
+            .ToArray();
 
         CurrentDocumentRow[] documents = await (
             from logical in _context.LogicalDocuments.AsNoTracking()
@@ -246,21 +316,6 @@ public sealed class ChatEvidenceRetriever(
             .Select((document, index) => (document.DocumentVersionId, Handle: $"d{index + 1}"))
             .ToDictionary(item => item.DocumentVersionId, item => item.Handle);
 
-        DocumentSection[] sections = await _context.DocumentSections
-            .AsNoTracking()
-            .Where(section => documentVersionIds.Contains(section.DocumentVersionId))
-            .OrderBy(section => section.DocumentVersionId)
-            .ThenBy(section => section.SectionOrder)
-            .ThenBy(section => section.StableSectionId)
-            .Take(21)
-            .ToArrayAsync(cancellationToken);
-        if (sections.Length is < 1 or > 20 ||
-            documentVersionIds.Any(documentVersionId =>
-                sections.All(section => section.DocumentVersionId != documentVersionId)))
-        {
-            return ChatEvidenceResult.IncompleteOrStale();
-        }
-
         ParsedSection[] parsedSections = sections.Select(ParseSection).ToArray();
         if (parsedSections.Any(section =>
                 section.SupportedDocumentVersionIds.Any(documentVersionId =>
@@ -283,17 +338,27 @@ public sealed class ChatEvidenceRetriever(
             .Where(anchor => anchorIds.Contains(anchor.Id))
             .Take(33)
             .ToArrayAsync(cancellationToken);
-        if (anchors.Length != anchorIds.Length ||
-            anchors.Any(anchor =>
+        bool hasInvalidAnchor = anchors.Any(anchor =>
                 !documentHandles.ContainsKey(anchor.DocumentVersionId) ||
                 !repositoryIds.Contains(anchor.RepositoryId) ||
                 !IsSafeRepositoryRelativePath(anchor.RepositoryRelativePath) ||
                 anchor.LineStart < 1 ||
                 anchor.LineEnd < anchor.LineStart ||
-                !IsLowerHexSha256(anchor.SourceHash)) ||
-            !anchorIds.Contains(exactRelationship.ConsumerSourceAnchorId) ||
-            !anchorIds.Contains(exactRelationship.ProviderSourceAnchorId))
+                !IsLowerHexSha256(anchor.SourceHash));
+        bool isMissingConsumerAnchor = !anchorIds.Contains(exactRelationship.ConsumerSourceAnchorId);
+        bool isMissingProviderAnchor = !anchorIds.Contains(exactRelationship.ProviderSourceAnchorId);
+        if (anchors.Length != anchorIds.Length ||
+            hasInvalidAnchor ||
+            isMissingConsumerAnchor ||
+            isMissingProviderAnchor)
         {
+            _logger?.LogWarning(
+                "Prepared Chat source-anchor validation failed. Expected {ExpectedAnchorCount}, loaded {LoadedAnchorCount}, invalid {HasInvalidAnchor}, missing consumer {MissingConsumerAnchor}, missing provider {MissingProviderAnchor}.",
+                anchorIds.Length,
+                anchors.Length,
+                hasInvalidAnchor,
+                isMissingConsumerAnchor,
+                isMissingProviderAnchor);
             return ChatEvidenceResult.IncompleteOrStale();
         }
 
