@@ -18,6 +18,7 @@
 | **Communication Kind Classification** | A conservative classification of an observed prepared communication kind as Confirmed, Hint, or Warning. It identifies only the kind of communication and does not resolve providers, consumers, endpoints, or Cross-Repository relationships. | Communication Type Detection, Endpoint Detection |
 | **Evidence Locator** | A bounded Repository-relative source location plus rule and provenance metadata supporting a Communication Kind Classification. It never contains source content or an absolute path. | Evidence Record, Source Snippet |
 | **Pre-Scan Handoff** | The versioned, authorized view of an approved Pre-Scan Result supplied to a downstream scan runner. It is bound to the Profiled Revision and grants no dispatch authority by itself. | Typed Pre-Scan Handoff, Dispatch Handoff |
+| **Two-Repository Scan Coordination** | A lightweight persisted operational record that binds exactly two independent Repository Scan lifecycles within one System to one bounded release outcome. It is not a Scan, does not duplicate per-file job state, and does not replace the Scan Coordinator. | System-level Scan, Multi-Repository Scan, Paired Scan |
 
 ## Graph & Relationships
 
@@ -60,6 +61,7 @@
 
 - A **System** contains one or more **Repositories** (organizational grouping only — no detection significance).
 - A **Scan** targets exactly one **Repository**.
+- A **Two-Repository Scan Coordination** binds exactly two independent Repository Scan lifecycles within one **System** without changing either Scan's Repository scope.
 - An **Orchestrator** manages one **Scan** and dispatches N **Worker Agents**.
 - A **ScanRun** profiles exactly one **Profiled Revision** and produces at most one **Pre-Scan Result** for that revision.
 - A **Pre-Scan Result** contains zero or more **Communication Kind Classifications**, each supported by bounded **Evidence Locators**.

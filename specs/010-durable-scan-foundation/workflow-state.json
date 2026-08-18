@@ -1,0 +1,972 @@
+{
+  "schema_version": "2.0",
+  "bmad_story_key": "12-1-durable-scan-foundation-and-analysis-runtime",
+  "bmad_epic_key": "12",
+  "feature_directory": "specs/010-durable-scan-foundation",
+  "execution_level": "unified",
+  "stage": "implement",
+  "active_gates": {
+    "definition-review": {
+      "status": "accepted",
+      "iteration": 3,
+      "dispatch_id": "story_12_1_definition_review_3",
+      "verdict_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json",
+      "input_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md": "d66587841572b9ac83c08f21d6ba258e59965192268bcb3895b11a0ec7ec7cab",
+          "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
+          "specs/010-durable-scan-foundation/checklists/requirements.md": "496a9e6b957a7ced7b53fff1520da34333a8e9affa4809b708b93bc0dc0b3238",
+          "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
+          "specs/010-durable-scan-foundation/research.md": "ff7f9ddc26642605570849119c66c9a33e8ff1a85e269d96d7e9b240d8cdaa59",
+          "specs/010-durable-scan-foundation/data-model.md": "3c74d62093f11385bd2dee575cb6dde2fe682325e50194f2ec06ed47f4481436",
+          "specs/010-durable-scan-foundation/quickstart.md": "86f7d8fe684efcdadf710eacec85cb0fd9193eee9dd15be747965574492c20ea",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md": "aeca90f4925d0d54cbd6914ebead2f1b130609907aa86eff13a600023ad352f8",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md": "53b7adeaf7ae54c0880c0423173034445178a330170287e0ee82f1c842465ab8",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md": "02fe8bec2158d05f3c2cca0fc6dd93dc008d14a06867e89084fb82d444d69533",
+          "specs/010-durable-scan-foundation/tasks.md": "bf6101c8b82c13768847a39aac9a6019c9eaae6aca2b5ef9e8c99589a3fea002",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json": "2b455c823becd2a470cca7529732186a09caf780897755d2c24b7d5aae4e60a5",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json": "18d70c6f98eaf1ec2b69a4c7ecf8e6c4b043ee4a5d2182468d2e4f4bd423820a"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+          "specs/010-durable-scan-foundation/spec.md",
+          "specs/010-durable-scan-foundation/checklists/requirements.md",
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/research.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/quickstart.md",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
+          "specs/010-durable-scan-foundation/tasks.md",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"
+        ]
+      },
+      "completed_at": "2026-08-18T09:27:47Z"
+    },
+    "quality-review": {
+      "status": "pending",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-08-18T07:36:10Z",
+      "completed_at": "2026-08-18T07:51:05Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md": "32CA9DB10BE296DB4141DE36E5A5A1F7E0C94243E81B1D8AD0BAFE84761EE8E2",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md": "448181916E046024ADC0BA9582CE4B673D21CE7C386B20EC0988C874812C809D"
+      },
+      "agent_role": "story-context-synthesizer",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-08-18T07:36:10Z",
+      "completed_at": "2026-08-18T07:51:05Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md": "32CA9DB10BE296DB4141DE36E5A5A1F7E0C94243E81B1D8AD0BAFE84761EE8E2",
+        "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md": "32BBBC0DC8F4EB6BCCBC7B7BC6419F499F059E712797A819C6B4DE965DFA136D",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md": "448181916E046024ADC0BA9582CE4B673D21CE7C386B20EC0988C874812C809D"
+      },
+      "agent_role": "spec-author",
+      "evidence_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/checklists/requirements.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-08-18T07:51:05Z",
+      "completed_at": "2026-08-18T08:12:24Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/checklists/requirements.md": "496A9E6B957A7CED7B53FFF1520DA34333A8E9AFFA4809B708B93BC0DC0B3238"
+      },
+      "agent_role": "plan-architect-high",
+      "evidence_paths": [
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/research.md",
+        "specs/010-durable-scan-foundation/data-model.md",
+        "specs/010-durable-scan-foundation/quickstart.md",
+        "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "revised",
+      "started_at": "2026-08-18T08:12:24Z",
+      "completed_at": "2026-08-18T08:25:34Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/plan.md": "B1A12E7BEF2DDA1B06BCC5C53DC8F2C858BD3059C0AC8A5EBA61EC85996DF352",
+        "specs/010-durable-scan-foundation/research.md": "FF7F9DDC26642605570849119C66C9A33E8FF1A85E269D96D7E9B240D8CDAA59",
+        "specs/010-durable-scan-foundation/data-model.md": "13746FDEA01555875B57329DB82D68354E90078601D5EFEFBD16DE8B8D0C3806",
+        "specs/010-durable-scan-foundation/quickstart.md": "86F7D8FE684EFCDADF710EACEC85CB0FD9193EEE9DD15BE747965574492C20EA",
+        "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md": "AECA90F4925D0D54CBD6914EBEAD2F1B130609907AA86EFF13A600023AD352F8",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md": "90333B8F81F71E787B1C390F9E69D83A05B678121710453270D1FC2E7A0B12D3",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md": "936528C03A702E88C6A745900150C4DCD0F78F13EEF7E3C1903E8853088AEAC8"
+      },
+      "agent_role": "definition-reviewer-plan-only",
+      "evidence_paths": [
+        "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-08-18T08:29:24Z",
+      "completed_at": "2026-08-18T08:35:06Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json": "C5C4644DF238DE7D18E64BD8EA0D4D2F8B160A93EBD0427923F19269817D5B47",
+        "specs/010-durable-scan-foundation/plan.md": "B1A12E7BEF2DDA1B06BCC5C53DC8F2C858BD3059C0AC8A5EBA61EC85996DF352"
+      },
+      "agent_role": "plan-architect-high",
+      "evidence_paths": [
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/data-model.md",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
+        "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-08-18T08:35:06Z",
+      "completed_at": "2026-08-18T08:40:32Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+        "specs/010-durable-scan-foundation/data-model.md": "3C74D62093F11385BD2DEE575CB6DDE2FE682325E50194F2EC06ED47F4481436",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md": "53B7ADEAF7AE54C0880C0423173034445178A330170287E0EE82F1C842465AB8",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md": "02FE8BEC2158D05F3C2CCA0FC6DD93DC008D14A06867E89084FB82D444D69533"
+      },
+      "agent_role": "definition-reviewer-plan-only",
+      "evidence_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "failed",
+      "started_at": "2026-08-18T08:43:37Z",
+      "completed_at": "2026-08-18T08:45:23Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [],
+      "failure": {"retryable": true, "reason": "Agent inspected a substitute checkout instead of the assigned absolute G:/source/repos/vulgata boundary and wrote nothing."}
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-18T08:45:23Z",
+      "completed_at": "2026-08-18T08:51:02Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+        "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json": "3AE47D678C33B2C5585275F4B70F36FAB339A874CEB573FC3059BB4C8981676B"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": ["specs/010-durable-scan-foundation/tasks.md"],
+      "failure": null
+    },
+    {
+      "stage": "definition-review",
+      "status": "accepted",
+      "started_at": "2026-08-18T09:20:45Z",
+      "completed_at": "2026-08-18T09:27:47Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+        "specs/010-durable-scan-foundation/tasks.md": "BF6101C8B82C13768847A39AAC9A6019C9EAAE6ACA2B5EF9E8C99589A3FEA002"
+      },
+      "agent_role": "definition-reviewer",
+      "evidence_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"],
+      "failure": null
+    },
+    {
+      "stage": "definition-review",
+      "status": "revised",
+      "started_at": "2026-08-18T08:51:02Z",
+      "completed_at": "2026-08-18T08:59:42Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+        "specs/010-durable-scan-foundation/tasks.md": "687E9AFF926DF22FDFFA49A6D4C29BAC6F54C5B54DFFBFE086F2D48EDD513271"
+      },
+      "agent_role": "definition-reviewer",
+      "evidence_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-18T09:01:22Z",
+      "completed_at": "2026-08-18T09:01:22Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json": "2B455C823BECD2A470CCA7529732186A09CAF780897755D2C24B7D5AAE4E60A5"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-18T09:01:22Z",
+      "completed_at": "2026-08-18T09:08:57Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+        "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json": "2B455C823BECD2A470CCA7529732186A09CAF780897755D2C24B7D5AAE4E60A5"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": ["specs/010-durable-scan-foundation/tasks.md"],
+      "failure": null
+    },
+    {
+      "stage": "definition-review",
+      "status": "revised",
+      "started_at": "2026-08-18T09:08:57Z",
+      "completed_at": "2026-08-18T09:15:10Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+        "specs/010-durable-scan-foundation/tasks.md": "8B1C035055F2EB54CD0246129AC58B17A45801872E90BA67E3B5E554E59570DD"
+      },
+      "agent_role": "definition-reviewer",
+      "evidence_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-18T09:18:10Z",
+      "completed_at": "2026-08-18T09:18:10Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json": "18D70C6F98EAF1EC2B69A4C7ECF8E6C4B043EE4A5D2182468D2E4F4BD423820A"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-18T09:18:10Z",
+      "completed_at": "2026-08-18T09:20:45Z",
+      "input_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "input_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+        "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+        "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json": "18D70C6F98EAF1EC2B69A4C7ECF8E6C4B043EE4A5D2182468D2E4F4BD423820A"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": ["specs/010-durable-scan-foundation/tasks.md"],
+      "failure": null
+    }
+  ],
+  "repository_preflight": {
+    "branch": "demo0831/main",
+    "preflight_head": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "G:/source/repos/vulgata",
+    "worktree_status": " M .specify/feature.json\n M AGENTS.md\n M docs/UBIQUITOUS_LANGUAGE.md\n M docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md\n M docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json\n?? specs/010-durable-scan-foundation/",
+    "owned_paths": [
+      ".specify/feature.json",
+      "AGENTS.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json",
+      "specs/010-durable-scan-foundation/checklists/requirements.md",
+      "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+      "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+      "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
+      "specs/010-durable-scan-foundation/data-model.md",
+      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json",
+      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json",
+      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json",
+      "specs/010-durable-scan-foundation/plan.md",
+      "specs/010-durable-scan-foundation/quickstart.md",
+      "specs/010-durable-scan-foundation/research.md",
+      "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json",
+      "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json",
+      "specs/010-durable-scan-foundation/spec.md",
+      "specs/010-durable-scan-foundation/tasks.md",
+      "specs/010-durable-scan-foundation/workflow-state.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-08-18T09:27:47Z"
+  },
+  "source_artifacts": [
+    {"authority":"approved August 30 bounded scanning proposal","path":"docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"9AA3A9098A3B69E36E15A04EA42FD49CF2F910ECE9D69785948FE62DEB90EA47"},
+    {"authority":"approved August 18 host runtime correction","path":"docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"448181916E046024ADC0BA9582CE4B673D21CE7C386B20EC0988C874812C809D"},
+    {"authority":"dated Epic 12 design","path":"docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"32BBBC0DC8F4EB6BCCBC7B7BC6419F499F059E712797A819C6B4DE965DFA136D"},
+    {"authority":"PRD with dated overlay","path":"docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"7C420E84BA1928F40E720BA8BF4B0B1ACCC844F8C6FC669F9201F37A5A3959B0"},
+    {"authority":"canonical architecture","path":"docs/bmad/planning-artifacts/architecture.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"7BC1219DDA8EE35E1035B8016AA3C9826F94D652C667F6058C3E2E238C0B8E2D"},
+    {"authority":"Epic 12 queue and story","path":"docs/bmad/epics.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"1F5E54A57A7768F123AE7495667973CB682D041F49AB6E73694B66B277FC1BE6"},
+    {"authority":"canonical terminology before Story 12.1 addition","path":"docs/UBIQUITOUS_LANGUAGE.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"65154817125CFA8DDE3ED252D81DD361136B09E9B7C1C5D4CB74C17305085E54"},
+    {"authority":"repository instructions","path":"AGENTS.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"8420AF42282EDDFC081B5DF4690293AB4AAF250293C2B31C2CE779CA0BF781BE"},
+    {"authority":"project Constitution","path":".specify/memory/constitution.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"1C5E7319A6FA6EF6576E92A97F65DB74057BAA2226CA4BF28B45D884E7BD8971"},
+    {"authority":"activated Story 12.1 record","path":"docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md","commit":"dd3111bebbe295aa43a01e95be7bbdb97d3eecff","sha256":"32CA9DB10BE296DB4141DE36E5A5A1F7E0C94243E81B1D8AD0BAFE84761EE8E2"}
+  ],
+  "dispatches": [
+    {
+      "role": "story-context-synthesizer",
+      "objective": "Produce a source-grounded bounded Story 12.1 context brief and classify authority conflicts.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md": "32CA9DB10BE296DB4141DE36E5A5A1F7E0C94243E81B1D8AD0BAFE84761EE8E2",
+          "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md": "448181916E046024ADC0BA9582CE4B673D21CE7C386B20EC0988C874812C809D"
+        },
+        "owned_paths": []
+      },
+      "permitted_writes": [],
+      "output_path": "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "returned_evidence": ["READY_FOR_SPEC", "No unresolved authority contradiction", "JDT archive checksum retained as readiness prerequisite"]
+    },
+    {
+      "role": "spec-author",
+      "objective": "Run speckit-specify and self-review the bounded Story 12.1 specification.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md": "32CA9DB10BE296DB4141DE36E5A5A1F7E0C94243E81B1D8AD0BAFE84761EE8E2",
+          "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md": "32BBBC0DC8F4EB6BCCBC7B7BC6419F499F059E712797A819C6B4DE965DFA136D",
+          "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md": "448181916E046024ADC0BA9582CE4B673D21CE7C386B20EC0988C874812C809D"
+        },
+        "owned_paths": [
+          "specs/010-durable-scan-foundation/checklists/requirements.md",
+          "specs/010-durable-scan-foundation/spec.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/010-durable-scan-foundation/checklists/requirements.md",
+        "specs/010-durable-scan-foundation/spec.md"
+      ],
+      "output_path": "specs/010-durable-scan-foundation/spec.md",
+      "returned_evidence": ["PASS", "16/16 checklist items", "No clarification markers or placeholders", "Two-Repository Scan Coordination selected"]
+    },
+    {
+      "role": "plan-architect-high",
+      "objective": "Run speckit-plan, make the required Story 12.1 architecture decisions, and self-review the complete plan set.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/checklists/requirements.md": "496A9E6B957A7CED7B53FFF1520DA34333A8E9AFFA4809B708B93BC0DC0B3238"
+        },
+        "owned_paths": [
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/research.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/quickstart.md",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/research.md",
+        "specs/010-durable-scan-foundation/data-model.md",
+        "specs/010-durable-scan-foundation/quickstart.md",
+        "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+      ],
+      "output_path": "specs/010-durable-scan-foundation/plan.md",
+      "returned_evidence": ["PASS", "Architecture decisions AD-1 through AD-10", "No unresolved placeholders", "JDT archive checksum retained fail-closed"]
+    },
+    {
+      "role": "definition-reviewer-plan-only",
+      "objective": "Independently review the raw Story, specification, and complete plan set before planned-change authorization.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md": "8555B345FEF51244D488D15E34CA993143B6C0ED952E3791A6DE4DD5E88D5826",
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "B1A12E7BEF2DDA1B06BCC5C53DC8F2C858BD3059C0AC8A5EBA61EC85996DF352",
+          "specs/010-durable-scan-foundation/research.md": "FF7F9DDC26642605570849119C66C9A33E8FF1A85E269D96D7E9B240D8CDAA59",
+          "specs/010-durable-scan-foundation/data-model.md": "13746FDEA01555875B57329DB82D68354E90078601D5EFEFBD16DE8B8D0C3806",
+          "specs/010-durable-scan-foundation/quickstart.md": "86F7D8FE684EFCDADF710EACEC85CB0FD9193EEE9DD15BE747965574492C20EA",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md": "AECA90F4925D0D54CBD6914EBEAD2F1B130609907AA86EFF13A600023AD352F8",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md": "90333B8F81F71E787B1C390F9E69D83A05B678121710453270D1FC2E7A0B12D3",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md": "936528C03A702E88C6A745900150C4DCD0F78F13EEF7E3C1903E8853088AEAC8"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+          "specs/010-durable-scan-foundation/spec.md",
+          "specs/010-durable-scan-foundation/checklists/requirements.md",
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/research.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/quickstart.md",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+        ]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json"],
+      "output_path": "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json",
+      "returned_evidence": ["REVISE", "Two High plan findings", "One Medium plan finding", "100% spec-to-plan coverage"]
+    },
+    {
+      "role": "plan-architect-high",
+      "objective": "Remediate unchanged plan-review findings PR-001, PR-002, and PR-003 after explicit user approval, then rerun author self-review.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json": "C5C4644DF238DE7D18E64BD8EA0D4D2F8B160A93EBD0427923F19269817D5B47",
+          "specs/010-durable-scan-foundation/plan.md": "B1A12E7BEF2DDA1B06BCC5C53DC8F2C858BD3059C0AC8A5EBA61EC85996DF352"
+        },
+        "owned_paths": [
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+        ]
+      },
+      "permitted_writes": [
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/data-model.md",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+      ],
+      "output_path": "specs/010-durable-scan-foundation/plan.md",
+      "returned_evidence": ["PASS", "PR-001 corrected", "PR-002 corrected", "PR-003 corrected", "No scope expansion"]
+    },
+    {
+      "role": "definition-reviewer-plan-only",
+      "objective": "Freshly review the corrected Story 12.1 plan boundary and independently verify closure of PR-001, PR-002, and PR-003.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md": "612D776B3385A0CD56807E227DCA5EC2F075EC80751AFBDA1A17B0469C6469E7",
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+          "specs/010-durable-scan-foundation/research.md": "FF7F9DDC26642605570849119C66C9A33E8FF1A85E269D96D7E9B240D8CDAA59",
+          "specs/010-durable-scan-foundation/data-model.md": "3C74D62093F11385BD2DEE575CB6DDE2FE682325E50194F2EC06ED47F4481436",
+          "specs/010-durable-scan-foundation/quickstart.md": "86F7D8FE684EFCDADF710EACEC85CB0FD9193EEE9DD15BE747965574492C20EA",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md": "AECA90F4925D0D54CBD6914EBEAD2F1B130609907AA86EFF13A600023AD352F8",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md": "53B7ADEAF7AE54C0880C0423173034445178A330170287E0EE82F1C842465AB8",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md": "02FE8BEC2158D05F3C2CCA0FC6DD93DC008D14A06867E89084FB82D444D69533",
+          "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json": "C5C4644DF238DE7D18E64BD8EA0D4D2F8B160A93EBD0427923F19269817D5B47"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+          "specs/010-durable-scan-foundation/spec.md",
+          "specs/010-durable-scan-foundation/checklists/requirements.md",
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/research.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/quickstart.md",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+        ]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"],
+      "output_path": "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json",
+      "returned_evidence": ["ACCEPT", "No findings", "PR-001 closed", "PR-002 closed", "PR-003 closed", "Safe for planned-change authorization"]
+    },
+    {
+      "role": "task-author",
+      "objective": "Generate dependency-ordered test-first Story 12.1 tasks from the accepted plan after planned-change authorization.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+          "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json": "3AE47D678C33B2C5585275F4B70F36FAB339A874CEB573FC3059BB4C8981676B"
+        },
+        "owned_paths": ["specs/010-durable-scan-foundation/tasks.md"]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/tasks.md"],
+      "output_path": "specs/010-durable-scan-foundation/tasks.md",
+      "returned_evidence": ["Initial substitute-checkout attempt wrote nothing", "Retry PASS at assigned G: boundary", "54 tasks", "Full FR-001..FR-032 and SC-001..SC-009 coverage", "No placeholders"]
+    },
+    {
+      "role": "definition-reviewer",
+      "objective": "Independently review the raw Story 12.1 specification, accepted plan set, and generated tasks using read-only speckit-analyze checks.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+          "specs/010-durable-scan-foundation/tasks.md": "687E9AFF926DF22FDFFA49A6D4C29BAC6F54C5B54DFFBFE086F2D48EDD513271"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+          "specs/010-durable-scan-foundation/spec.md",
+          "specs/010-durable-scan-foundation/checklists/requirements.md",
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/research.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/quickstart.md",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
+          "specs/010-durable-scan-foundation/tasks.md"
+        ]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"],
+      "output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json",
+      "returned_evidence": ["REVISE", "Five High task-owned findings", "Two Medium task-owned findings", "Spec and accepted plan unchanged"]
+    },
+    {
+      "role": "task-author",
+      "objective": "Regenerate tasks.md after user-approved remediation of unchanged findings DR-001 through DR-007 and repeat the full author self-review.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+          "specs/010-durable-scan-foundation/tasks.md": "687E9AFF926DF22FDFFA49A6D4C29BAC6F54C5B54DFFBFE086F2D48EDD513271",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json": "2B455C823BECD2A470CCA7529732186A09CAF780897755D2C24B7D5AAE4E60A5"
+        },
+        "owned_paths": ["specs/010-durable-scan-foundation/tasks.md"]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/tasks.md"],
+      "output_path": "specs/010-durable-scan-foundation/tasks.md",
+      "returned_evidence": ["PASS", "54 tasks", "DR-001 through DR-007 closed", "FR-001..FR-032 and SC-001..SC-009 covered", "No placeholders", "No fabricated RED evidence"]
+    },
+    {
+      "role": "definition-reviewer",
+      "objective": "Freshly review the remediated Story 12.1 definition and verify closure of DR-001 through DR-007.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+          "specs/010-durable-scan-foundation/tasks.md": "8B1C035055F2EB54CD0246129AC58B17A45801872E90BA67E3B5E554E59570DD",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json": "2B455C823BECD2A470CCA7529732186A09CAF780897755D2C24B7D5AAE4E60A5"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+          "specs/010-durable-scan-foundation/spec.md",
+          "specs/010-durable-scan-foundation/checklists/requirements.md",
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/research.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/quickstart.md",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
+          "specs/010-durable-scan-foundation/tasks.md",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"
+        ]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"],
+      "output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json",
+      "returned_evidence": ["REVISE", "Two High task-owned findings", "41/41 FR/SC coverage", "DR-001 and DR-004 through DR-007 closed", "DR-002 substantial but T005 composition ordering invalid", "DR-003 shared-file handoff still invalid"]
+    },
+    {
+      "role": "task-author",
+      "objective": "Correct user-approved findings DR2-001 and DR2-002 in tasks.md and repeat the complete author self-review.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+          "specs/010-durable-scan-foundation/tasks.md": "8B1C035055F2EB54CD0246129AC58B17A45801872E90BA67E3B5E554E59570DD",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json": "18D70C6F98EAF1EC2B69A4C7ECF8E6C4B043EE4A5D2182468D2E4F4BD423820A"
+        },
+        "owned_paths": ["specs/010-durable-scan-foundation/tasks.md"]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/tasks.md"],
+      "output_path": "specs/010-durable-scan-foundation/tasks.md",
+      "returned_evidence": ["PASS", "54 tasks", "DR2-001 closed", "DR2-002 closed", "Prior DR-001 through DR-007 closures preserved", "No placeholders", "No implementation"]
+    },
+    {
+      "role": "definition-reviewer",
+      "objective": "Perform the fresh third and final permitted full-definition review of Story 12.1 and independently verify every prior finding is closed.",
+      "source_boundary": {
+        "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637",
+          "specs/010-durable-scan-foundation/tasks.md": "BF6101C8B82C13768847A39AAC9A6019C9EAAE6ACA2B5EF9E8C99589A3FEA002",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json": "2B455C823BECD2A470CCA7529732186A09CAF780897755D2C24B7D5AAE4E60A5",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json": "18D70C6F98EAF1EC2B69A4C7ECF8E6C4B043EE4A5D2182468D2E4F4BD423820A"
+        },
+        "owned_paths": [
+          "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+          "specs/010-durable-scan-foundation/spec.md",
+          "specs/010-durable-scan-foundation/checklists/requirements.md",
+          "specs/010-durable-scan-foundation/plan.md",
+          "specs/010-durable-scan-foundation/research.md",
+          "specs/010-durable-scan-foundation/data-model.md",
+          "specs/010-durable-scan-foundation/quickstart.md",
+          "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+          "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
+          "specs/010-durable-scan-foundation/tasks.md",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json",
+          "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"
+        ]
+      },
+      "permitted_writes": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"],
+      "output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json",
+      "returned_evidence": ["ACCEPT", "No findings", "41/41 FR/SC coverage", "Four scenarios", "54 tasks", "All prior findings closed", "Missing JDT archive/checksum retained fail-closed"]
+    }
+  ],
+  "review_iterations": {
+    "plan-review": {"count": 2, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json", "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"]},
+    "definition-review": {"count": 3, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"]},
+    "converge": {"count": 0, "verdict_paths": []},
+    "quality-review": {"count": 0, "verdict_paths": []}
+  },
+  "e2e_decision": {
+    "required": true,
+    "predicates": [],
+    "coverage_override": null,
+    "rationale": "Real CodeGraph/JDT-LS process boundaries, PostgreSQL migration/restart, and host composition make later E2E evidence mandatory; final predicates are classified after implementation planning.",
+    "covering_tests": [],
+    "owner": "e2e-runner",
+    "source_boundary": {
+      "base_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "candidate_commit": null,
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifact_hashes": {
+        "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2"
+      },
+      "owned_paths": ["specs/010-durable-scan-foundation/spec.md"]
+    },
+    "result": "pending",
+    "evidence_ids": []
+  },
+  "verification": [
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/context/1",
+      "kind": "analysis",
+      "stage": "context",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T07:51:05Z",
+      "summary": "Fresh context synthesis returned READY_FOR_SPEC with no authority contradiction and retained the missing JDT archive checksum as a readiness prerequisite.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/specify/1",
+      "kind": "self-review",
+      "stage": "specify",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/checklists/requirements.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T07:51:05Z",
+      "summary": "Specification self-review passed bounded intent, measurable acceptance, canonical terminology, authority alignment, source-reference coverage, and placeholder checks.",
+      "raw_output_path": "specs/010-durable-scan-foundation/checklists/requirements.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/plan/1",
+      "kind": "self-review",
+      "stage": "plan",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/research.md",
+        "specs/010-durable-scan-foundation/data-model.md",
+        "specs/010-durable-scan-foundation/quickstart.md",
+        "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:12:24Z",
+      "summary": "High-reasoning plan self-review passed feasibility, repository fit, failure behavior, test seams, migration compatibility, scope, and Constitution alignment.",
+      "raw_output_path": "specs/010-durable-scan-foundation/plan.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/plan-review/1",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:25:34Z",
+      "summary": "Independent plan-only review returned REVISE with two High plan findings and one Medium plan finding; remediation requires explicit user approval before edits.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/plan/2",
+      "kind": "human-approval",
+      "stage": "plan",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:29:24Z",
+      "summary": "User explicitly approved remediation of plan-review findings PR-001, PR-002, and PR-003. This approval permits plan artifact correction and fresh plan-only review only.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/plan/3",
+      "kind": "self-review",
+      "stage": "plan",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/data-model.md",
+        "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+        "specs/010-durable-scan-foundation/contracts/manual-resume-api.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:35:06Z",
+      "summary": "Approved remediation corrected PR-001 completed replay ordering, PR-002 authorization privacy mapping, and PR-003 snapshot timestamp ordering; full plan self-review passed.",
+      "raw_output_path": "specs/010-durable-scan-foundation/plan.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/plan-review/2",
+      "kind": "review",
+      "stage": "plan-review",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:40:32Z",
+      "summary": "Fresh independent plan-only review iteration 2 returned ACCEPT with no findings and confirmed PR-001, PR-002, and PR-003 closed. The corrected plan is safe to present for planned-change authorization.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/plan-review/3",
+      "kind": "human-approval",
+      "stage": "plan-review",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:43:37Z",
+      "summary": "User explicitly authorized progression from the independently accepted Story 12.1 plan to task generation. Approval does not waive TDD, definition review, convergence, quality review, E2E, security, migration, or verification gates.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/tasks/1",
+      "kind": "failure",
+      "stage": "tasks",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:45:23Z",
+      "summary": "Task author inspected the wrong local checkout, found the accepted plan absent there, and correctly wrote nothing; root revalidated the assigned G: boundary and retried.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/tasks/2",
+      "kind": "self-review",
+      "stage": "tasks",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/tasks.md"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:51:02Z",
+      "summary": "Task author retry produced 54 dependency-ordered tasks with complete FR/SC traceability, explicit behavioral RED-to-GREEN ownership, one integration owner, real PostgreSQL/tool/security/migration evidence, and no placeholders.",
+      "raw_output_path": "specs/010-durable-scan-foundation/tasks.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/definition-review/1",
+      "kind": "review",
+      "stage": "definition-review",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T08:59:42Z",
+      "summary": "Independent full-definition review iteration 1 returned REVISE with five High and two Medium task-owned findings; explicit user approval is required before task remediation.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/tasks/3",
+      "kind": "human-approval",
+      "stage": "tasks",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T09:01:22Z",
+      "summary": "User explicitly approved remediation of definition-review findings DR-001 through DR-007. Approval permits tasks.md regeneration and fresh independent definition review only; it does not authorize production implementation.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/tasks/4",
+      "kind": "self-review",
+      "stage": "tasks",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/tasks.md"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T09:08:57Z",
+      "summary": "Task remediation self-review passed with 54 valid tasks, complete FR/SC coverage, explicit DR-001 through DR-007 closure, dependency-safe migration and package ordering, serialized integration ownership, and truthful qualification evidence.",
+      "raw_output_path": "specs/010-durable-scan-foundation/tasks.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/definition-review/2",
+      "kind": "review",
+      "stage": "definition-review",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T09:15:10Z",
+      "summary": "Independent full-definition review iteration 2 returned REVISE with two High task-owned findings: pre-RED docker-compose mutation and an undefined circular AnalysisRuntimeContracts shared-file handoff. A new explicit user approval is required before remediation.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/tasks/5",
+      "kind": "human-approval",
+      "stage": "tasks",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T09:18:10Z",
+      "summary": "User explicitly approved remediation of DR2-001 and DR2-002. Approval permits tasks.md correction, author self-review, and a third independent definition review only; it does not authorize production implementation.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/tasks/6",
+      "kind": "self-review",
+      "stage": "tasks",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/tasks.md"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T09:20:45Z",
+      "summary": "Second task remediation self-review passed: T005 is package-only, T036-to-T037 is the sole test-first composition transition, T017 is identity-only, and T019 is the sole AnalysisRuntimeContracts writer after T018 RED. All prior findings remain closed across 54 valid tasks.",
+      "raw_output_path": "specs/010-durable-scan-foundation/tasks.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/definition-review/3",
+      "kind": "review",
+      "stage": "definition-review",
+      "source_commit": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T09:27:47Z",
+      "summary": "Fresh independent full-definition review iteration 3 returned ACCEPT with no findings, full 41/41 FR/SC and four-scenario coverage, 54 executable tasks, and every prior finding independently closed.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"
+    }
+  ],
+  "convergence": {
+    "status": "pending",
+    "iteration": 0,
+    "outcome": "pending",
+    "findings_count": 0,
+    "appended_task_ids": [],
+    "artifact_hashes": {},
+    "completed_at": null
+  },
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-definition-review-20260818T092747Z-d6367a",
+    "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
+    "stage": "definition-review",
+    "committed_paths": [
+      ".specify/feature.json",
+      "AGENTS.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json",
+      "specs/010-durable-scan-foundation/checklists/requirements.md",
+      "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
+      "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+      "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
+      "specs/010-durable-scan-foundation/data-model.md",
+      "specs/010-durable-scan-foundation/plan.md",
+      "specs/010-durable-scan-foundation/quickstart.md",
+      "specs/010-durable-scan-foundation/research.md",
+      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json",
+      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json",
+      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json",
+      "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json",
+      "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json",
+      "specs/010-durable-scan-foundation/spec.md",
+      "specs/010-durable-scan-foundation/tasks.md",
+      "specs/010-durable-scan-foundation/workflow-state.json"
+    ],
+    "verification_evidence_ids": ["12-1-durable-scan-foundation-and-analysis-runtime/definition-review/3"],
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "recoverable_failure": null,
+  "legacy_migration": null,
+  "updated_at": "2026-08-18T09:27:47Z"
+}

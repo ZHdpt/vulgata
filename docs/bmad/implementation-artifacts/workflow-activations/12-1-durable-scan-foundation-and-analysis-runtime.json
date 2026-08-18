@@ -5,7 +5,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
   "proposed_feature_short_name": "durable-scan-foundation",
-  "stage": "context",
+  "stage": "specify",
   "repository_preflight": {
     "branch": "demo0831/main",
     "preflight_head": "f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d",
@@ -38,8 +38,8 @@
     "binding_status": "pending"
   },
   "activation_checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-context-20260818T073610Z-a4d9e2",
-  "feature_directory": null,
-  "superseded_by_state": null,
+  "feature_directory": "specs/010-durable-scan-foundation",
+  "superseded_by_state": "specs/010-durable-scan-foundation/workflow-state.json",
   "superseded_history": [
     {
       "commit": "d91772004cf6ad56d4fcd38b37917958733f693e",

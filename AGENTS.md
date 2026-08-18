@@ -129,5 +129,5 @@ Multi-context layout via `CONTEXT-MAP.md`. See `docs/agents/domain.md`.
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/008-demo-chat-release-gate/plan.md`
+`specs/010-durable-scan-foundation/plan.md`
 <!-- SPECKIT END -->

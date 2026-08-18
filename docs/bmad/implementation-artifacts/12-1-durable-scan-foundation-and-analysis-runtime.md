@@ -179,15 +179,117 @@ UI state, and unrelated files remain excluded.
 - Canonical activation:
   `docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json`
 - Proposed SpecKit short name: `durable-scan-foundation`.
-- Proposed feature directory: `specs/010-durable-scan-foundation`; final mapping
-  is written atomically after `speckit-specify` returns the actual directory.
+- Allocated feature directory: `specs/010-durable-scan-foundation`.
 - Workflow schema/execution: `2.0` / `unified`.
-- Current workflow stage: `context`.
+- Current workflow stage: `implement` (accepted definition checkpoint pending; implementation not started).
 - Authority source commit:
   `f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d`.
 
-### Context synthesis status
+### Context synthesis outcome
 
-Pending fresh synthesis against the current authority commit. The earlier
-non-ancestral context/spec/plan work is superseded and cannot advance this
-activation.
+Fresh synthesis at activation commit
+`dd3111bebbe295aa43a01e95be7bbdb97d3eecff` returned `READY_FOR_SPEC` with no
+unresolved authority contradiction. The current CGC composition is
+implementation drift from the approved Epic 12 overlay. The absent JDT LS
+distribution archive checksum remains a hard runtime-readiness prerequisite,
+not a definition blocker; the observed core JAR hash is not a substitute.
+
+### Specification outcome
+
+`speckit-specify` allocated `specs/010-durable-scan-foundation`. The author
+self-review passed bounded intent, measurable acceptance, terminology,
+authority alignment, source-reference coverage, and placeholder checks. The
+specification selected **Two-Repository Scan Coordination** as the canonical
+term and the root added it to the Ubiquitous Language glossary. Planning is the
+next owner; task generation and implementation remain unauthorized.
+
+### Planning outcome
+
+`plan-architect-high` completed `speckit-plan` with a passing author
+self-review. The plan makes the required persistence, migration, atomic commit,
+lease/concurrency, recovery, runtime-identity, closed-port, JDT-LS lifecycle,
+and host-composition decisions. The current stage is `plan-review`; task
+generation remains prohibited pending an independent plan-only `ACCEPT` and
+explicit planned-change authorization.
+
+### Plan-only review outcome
+
+Independent review iteration 1 returned `REVISE`: two High plan findings cover
+the unreachable completed-job replay path and ambiguous 403/404 ownership
+mapping; one Medium finding corrects the Scan Context Snapshot timestamp
+invariant. All findings name `plan` as earliest owner. The raw verdict is
+preserved at
+`specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json`.
+Under the unified workflow, High analysis remediation requires explicit user
+approval before the plan author edits artifacts.
+
+The user approved remediation of `PR-001`, `PR-002`, and `PR-003` on
+2026-08-18. This approval is limited to plan correction and fresh plan-only
+review; it is not the planned-change authorization required before tasks.
+
+The plan author corrected all three findings and repeated the full self-review
+with a passing result. The corrected plan now evaluates exact already-completed
+replay before new-commit lease/version checks, makes 401/403/404 behavior
+deterministic and privacy-preserving, and validates snapshot capture between
+the bound Scan Run and associated new-path Scan Execution start timestamps.
+
+Fresh independent plan-only review iteration 2 returned `ACCEPT` with no
+findings and confirmed all three corrections closed. The accepted plan is now
+paused at the explicit planned-change authorization checkpoint. Tasks and
+implementation remain prohibited until that separate authorization is granted.
+
+The user granted the separate planned-change authorization on 2026-08-18. It
+permits progression to task generation only and does not waive TDD, independent
+definition review, convergence, quality review, E2E, security, migration, or
+final verification gates.
+
+`speckit-tasks` produced 54 dependency-ordered tasks with complete FR/SC
+traceability and explicit behavioral RED-to-GREEN ownership. An initial worker
+attempt inspected a substitute checkout and wrote nothing; the retry was pinned
+to the assigned G: checkout and passed author self-review. A fresh independent
+full-definition review returned `REVISE` with five High and two Medium findings,
+all owned by `tasks`. The raw verdict is preserved at
+`specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json`.
+The user approved remediation of `DR-001` through `DR-007` on 2026-08-18. This
+approval permits regeneration of `tasks.md`, author self-review, and a fresh
+independent definition review only; production implementation remains prohibited.
+
+The task author regenerated only `tasks.md` and passed self-review with all 54
+entries valid. The corrected task boundary explicitly carries PR-003 temporal
+transaction behavior, pins StreamJsonRpc before the JDT adapter, serializes the
+single integration owner, orders the migration before restart/concurrency work,
+separates qualification from honest RED evidence, executes startup readiness and
+fail-closed Worker dispatch gating, and hands the frozen definition to convergence
+without a duplicate post-implementation definition review. Independent full
+definition review iteration 2 is now pending; implementation remains prohibited.
+
+Independent full-definition review iteration 2 returned `REVISE`. Coverage remains
+complete at 32/32 functional requirements, 9/9 buildable success criteria, four
+user scenarios, and 54 tasks, and the first review's temporal, migration-order,
+qualification, startup-readiness, and workflow-handoff findings are closed. Two
+High task-owned defects remain: T005 changes `docker-compose.yml` before T036's
+behavioral RED and duplicates T037, while T017/T019 retain an undefined circular
+handoff for `AnalysisRuntimeContracts.cs`. The raw verdict is preserved at
+`specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json`.
+The unified workflow requires new explicit user approval before these task edits;
+production implementation remains prohibited.
+
+The user approved remediation of `DR2-001` and `DR2-002` on 2026-08-18. This
+approval is limited to correcting `tasks.md`, author self-review, and the third
+independent full-definition review. It does not authorize production implementation.
+
+The task author corrected only `tasks.md` and passed self-review. T005 is now
+package-only; T036 RED to T037 GREEN is the sole production-composition change.
+T017 is identity-file-only, and T019 is the sole shared
+`AnalysisRuntimeContracts.cs` writer after T018 RED. All earlier findings remain
+closed across 54 valid tasks. Independent definition-review iteration 3 is pending;
+under the unified workflow, another `REVISE` would stop the gate.
+
+Fresh independent definition-review iteration 3 returned `ACCEPT` with no
+findings. It verified all 32 Functional Requirements, all 9 buildable Success
+Criteria, four scenarios, and 54 executable tasks, and independently confirmed
+every prior plan and definition finding closed. The missing JDT distribution
+archive/checksum remains fail-closed and required for later real qualification.
+The accepted-definition recovery checkpoint is now pending. Production
+implementation has not started and is not authorized by the latest remediation
+approval.
