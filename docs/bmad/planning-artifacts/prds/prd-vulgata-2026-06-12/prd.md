@@ -2,7 +2,7 @@
 title: "PRD: Vulgata"
 status: draft
 created: 2026-06-12
-updated: 2026-08-17
+updated: 2026-08-18
 ---
 
 # PRD: Vulgata
@@ -18,11 +18,12 @@ failed to establish a reliable general scanning path. The approved correction
 is defined by:
 
 - [Sprint Change Proposal: August 30 Bounded Scanning Recovery](../../sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md)
+- [Sprint Change Proposal: August Demo Host Runtime and JDT-LS Pin](../../sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md)
 - [August 30 Bounded Scanning and LLM-Wiki Design](../../architecture/august-30-bounded-scanning-design.md)
 
 For the August 30 release boundary, those documents supersede conflicting V1
 details in FR-4.1 through FR-4.5, FR-4.9, FR-4.12, FR-5.8, FR-6.1/6.2,
-FR-11.6, and NFR-1.1. The complete long-term V1 requirements remain in this
+FR-11.6, NFR-1.1, and NFR-4.1. The complete long-term V1 requirements remain in this
 PRD as post-deadline backlog and are not deleted or falsely marked complete.
 
 The dated release shall prove:
@@ -36,6 +37,8 @@ The dated release shall prove:
   honest Uncertainties for unsupported or ambiguous evidence;
 - durable bounded Worker scheduling, provider backoff, pause, restart, and
   manual resume;
+- a Windows-hosted Vulgata, CodeGraph, Java 21, and Eclipse JDT LS runtime with
+  PostgreSQL 17 as the only required Docker service;
 - database-backed non-vector section retrieval and one-hop persisted
   relationship expansion; and
 - Business/IT Chat synthesis in under 30 seconds with every accepted material
@@ -393,6 +396,13 @@ build, and the final demonstration path must be green.
 ### 6.4 Deployability
 
 - **NFR-4.1:** Vulgata shall deploy as a single Docker container. Specific deployment plan, database selection, and infrastructure decisions are deferred to architecture discussion.
+
+**August 30 exception:** NFR-4.1 remains post-deadline V1 work and is not a
+blocking competition-release condition. The dated release runs Vulgata,
+CodeGraph, Java 21, and Eclipse JDT LS on the documented Windows host while
+PostgreSQL 17 runs in Docker. Application-process restart against the same
+database replaces application-container restart proof. A final application
+image build is optional, non-blocking evidence.
 
 ### 6.5 Usability
 

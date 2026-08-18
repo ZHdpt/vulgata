@@ -16,7 +16,7 @@ date: '2026-06-18'
 lastStep: 8
 status: 'complete'
 completedAt: '2026-06-18'
-updated: '2026-08-17'
+updated: '2026-08-18'
 ---
 
 # Architecture Decision Document
@@ -30,6 +30,7 @@ the competition release:
 
 - [August 30 Bounded Scanning and LLM-Wiki Design](architecture/august-30-bounded-scanning-design.md)
 - [Sprint Change Proposal: August 30 Bounded Scanning Recovery](sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md)
+- [Sprint Change Proposal: August Demo Host Runtime and JDT-LS Pin](sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md)
 
 Where those artifacts conflict with this document or the July scanning
 supplements, the August 30 design supersedes the older scanning, orchestration,
@@ -42,6 +43,13 @@ safe catalog-driven XML parsing, File Code Units, deterministic bounded Worker
 scheduling, durable pause/resume, endpoint-centered Pass2 grouping, and
 non-vector database-backed LLM-Wiki retrieval. Epics 5–10 retain the broader V1
 architecture as post-deadline backlog.
+
+For the August 30 demonstration only, Vulgata.Web, CodeGraph, Java 21, and
+Eclipse JDT LS run directly on the documented Windows host; PostgreSQL 17 is
+the sole required Docker service. Application-process restart against the same
+database replaces application-container restart proof. NFR-4.1 and the older
+application-image topology remain post-deadline V1 work rather than completed
+release acceptance.
 
 ## July 2026 Scanning Update
 

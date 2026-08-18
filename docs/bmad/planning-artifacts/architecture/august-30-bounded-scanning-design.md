@@ -1,12 +1,16 @@
 # August 30 Bounded Scanning and LLM-Wiki Design
 
-**Date:** 2026-08-17  
-**Status:** Approved by Sprint Change Proposal on 2026-08-17  
+**Date:** 2026-08-18
+**Status:** Approved by Sprint Change Proposals on 2026-08-17 and 2026-08-18
 **Target:** August 30 competition release  
 **Authority:** This document is the approved correction to the current PRD,
 canonical architecture, Epic 4/Epic 11 implementation, and the broader Epics
 5–10 plan for the August 30 delivery boundary. Story planning remains subject
 to independent plan review and planned-change authorization.
+
+The 2026-08-18 host-runtime correction supersedes only this document's Docker
+application-image, container-restart, and floating JDT-LS selection details.
+The scanning, evidence, persistence, authorization, and quality gates remain.
 
 ## 1. Outcome and Defensible Claim
 
@@ -71,6 +75,18 @@ The replacement shall not imitate CGC's monolithic query protocol:
 
 No adapter may expose raw shell, raw LSP messages, raw CodeGraph database
 access, arbitrary graph queries, or unrestricted filesystem reads to an Agent.
+
+### 3.1 August demonstration runtime topology
+
+Vulgata.Web, CodeGraph, Java 21, and Eclipse JDT LS run directly on the
+documented Windows demonstration host. PostgreSQL 17 is the only required
+Docker service. Application and tool installation paths are machine
+configuration and never enter domain identity, prompts, or generated evidence.
+
+The application Docker image remains a post-deadline NFR-4.1 deliverable. An
+image build may be captured as optional evidence, but its failure does not fail
+the August 30 release candidate. Application-process restart against the same
+PostgreSQL database replaces application-container restart proof.
 
 ## 4. Complete Lightweight PreScan
 
@@ -175,11 +191,29 @@ Typed adapter operations are limited to:
 | Java LSP | document symbols, definition, references, implementations |
 | Source reader | exact revision-bound ranges and bounded excerpts |
 
-The implementation shall pin the latest stable Eclipse JDT LS available when
-implementation begins, including its exact archive checksum, and use a Java 21
-runtime. CodeGraph is likewise version- and checksum-pinned. Each Repository
-revision receives an isolated JDT LS workspace. Docker verification checks
-both tools without building an index during ordinary application startup.
+CodeGraph means the MIT-licensed npm package
+`@colbymchenry/codegraph@1.5.0`, published from
+`https://github.com/colbymchenry/codegraph`, invoked by command `codegraph`,
+with Windows x64 bundle `@colbymchenry/codegraph-win32-x64@1.5.0`. The qualified
+installation must match these SHA-256 values: `npm-shim.js`
+`80419260F06862D7A422D13EF69E3B24C7A21DBEF4309BCE41DB02AD642B1877`, platform
+`node.exe` `B3094D0B49F9AD602262A9921551737BB97637C05DD357A06AE98188D7290AA3`, and
+platform `lib/dist/bin/codegraph.js`
+`03E4C791CC0DD91ED264278461BF9A56C0278AA0670D5942FC4732311C66DE03`.
+
+The implementation shall pin Eclipse JDT LS to
+`jdt-language-server-1.61.0-202608141332`, record and verify its exact installed
+archive checksum, and use a Java 21 runtime. CodeGraph is likewise version- and
+checksum-pinned. Each Repository revision receives an isolated JDT LS
+workspace. Host-runtime verification checks both tools without building an
+index during ordinary application startup.
+
+The Java LSP adapter uses StreamJsonRpc `2.25.29` over JDT-LS stdio. The
+Vulgata-owned adapter—not Worker or Core code—owns LSP header framing,
+initialization and required notifications, cancellation, bounded timeouts,
+sanitized stderr, graceful shutdown, and forced process cleanup. It is a closed
+JDT-LS adapter rather than a general LSP client and exposes only the operations
+listed above.
 
 ## 6. Worker Navigation
 
@@ -452,7 +486,8 @@ manual resume, and duplicate-prevention proof.
 
 ### Tier 3: final real-LLM release evidence
 
-- production Docker image and clean database;
+- host-run Vulgata and analysis tools with a clean PostgreSQL database;
+- PostgreSQL 17 as the only required Docker service;
 - two real sample Repositories;
 - real CodeGraph, JDT LS, and configured LLM;
 - at least 50 and at most 150 automatically selected File Code Units;
@@ -462,7 +497,8 @@ manual resume, and duplicate-prevention proof.
 - at least three Business Logic Documents, including one Cross-Repository flow;
 - 12-20 Chat questions, at least 80% useful, 100% accepted technical claims
   cited, zero unauthorized evidence, and each answer under 30 seconds;
-- Docker restart and successful access to the persisted wiki and Chat; and
+- Vulgata application-process restart and successful access to the persisted
+  wiki and Chat through the same PostgreSQL database; and
 - recorded revisions, counts, timings, prompt/schema versions, and evidence
   fingerprints.
 
@@ -485,7 +521,7 @@ Cut in this order if schedule pressure returns:
 Do not cut revision/hash binding, Source Anchors, citation validation, real
 CodeGraph/JDT-LS Java PreScan, real Pass1/Pass2 generation, deterministic
 Cross-Repository Resolution, authorization, durable job recovery,
-clean-database migration verification, or one real Docker two-Repository run.
+clean-database migration verification, or one real host-run two-Repository run.
 
 ## 16. Explicit Deferrals
 

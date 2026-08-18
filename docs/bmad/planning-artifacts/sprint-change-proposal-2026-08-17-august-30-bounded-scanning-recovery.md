@@ -8,11 +8,17 @@ too narrow, and Chat quality is insufficient for the competition evidence.
 **New deadline:** 2026-08-30  
 **Mode:** Batch  
 **Scope classification:** Major MVP course correction  
-**Artifact status:** Approved  
+**Artifact status:** Approved; deployment details partially superseded on
+2026-08-18
 **Approval:** Approved by the user on 2026-08-17, with an explicit pause before
 Sprint Loop planning.  
 **Design authority:**
 `docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md`
+
+The later [August Demo Host Runtime and JDT-LS Pin proposal](sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md)
+supersedes this proposal's application-image, application-container restart,
+and floating JDT-LS selection details only. All scanning and evidence scope
+remains authoritative.
 
 ## 1. Issue Summary
 

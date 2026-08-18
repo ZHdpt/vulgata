@@ -319,6 +319,9 @@ NFR-3.1–3.3. It supersedes conflicting Epic 4/Epic 11 release-path behavior
 without marking the broader Epics 5–10 requirements complete. The authoritative
 boundary is
 `docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md`.
+For the dated release, NFR-4.1 is deferred: Vulgata and analysis tools run on
+the Windows host, PostgreSQL 17 is the only required Docker service, and
+application-process restart replaces application-container restart proof.
 
 ## Epic List
 
@@ -366,7 +369,8 @@ communication; and answers grounded Business/IT questions through non-vector
 database-backed LLM-Wiki retrieval.
 **FRs covered for the dated release:** bounded overlay of FR-4.1–4.5, FR-4.7,
 FR-4.9/4.10, FR-5.1–5.5/5.8, FR-6.1/6.2, FR-11.1–11.4/11.6/11.7,
-NFR-1.1/1.2, NFR-2.3, NFR-3.1–3.3, NFR-4.1, and NFR-6.1/6.2.
+NFR-1.1/1.2, NFR-2.3, NFR-3.1–3.3, and NFR-6.1/6.2. NFR-4.1 remains
+post-deadline V1 work under the approved host-runtime exception.
 **Architecture:** the approved August 30 Bounded Scanning and LLM-Wiki Design;
 revision-bound CodeGraph/JDT-LS adapters, File Code Units, safe XML catalog,
 durable bounded dispatch and pause/resume, exact endpoint matching,
@@ -1217,10 +1221,18 @@ verification shall pass
 
 **Given** production composition starts
 **When** analysis dependencies are verified
-**Then** the latest stable approved CodeGraph CLI and Eclipse JDT LS shall be
-pinned to exact versions and checksums
+**Then** CodeGraph shall mean npm package `@colbymchenry/codegraph@1.5.0` from
+`https://github.com/colbymchenry/codegraph`, command `codegraph`, with its
+approved Windows x64 platform bundle and recorded installed-file SHA-256 values
+**And** Eclipse JDT LS
+`jdt-language-server-1.61.0-202608141332` shall be pinned to exact versions and
+checksums
 **And** JDT LS shall run on Java 21 with an isolated workspace per Repository
 revision
+**And** the Java LSP adapter shall use centrally pinned StreamJsonRpc `2.25.29`
+over stdio while keeping installation paths machine-configurable
+**And** Vulgata, CodeGraph, Java 21, and JDT LS shall run on the documented
+Windows host while PostgreSQL 17 remains the only required Docker service
 **And** CodeGraphContext, its Python runtime, and its qualification harness
 shall not be required by production startup or the release gate
 
@@ -1417,8 +1429,8 @@ bounded failure summary, and `继续扫描` action
 
 **Given** the August 30 release candidate is verified
 **When** Tier 1, Tier 2, and Tier 3 gates run
-**Then** the final real-LLM Docker path shall use a clean database, two real
-sample Repositories, real CodeGraph/JDT LS/LLM, and 50–150 automatically
+**Then** the final real-LLM host path shall use a clean PostgreSQL database, two
+real sample Repositories, real CodeGraph/JDT LS/LLM, and 50–150 automatically
 selected File Code Units
 **And** every seed shall succeed, ordinary failures shall stay within budget,
 at least one exact Cross-Repository Edge, one honest Uncertainty, and three
@@ -1426,7 +1438,8 @@ Business Logic Documents shall exist
 **And** 12–20 Chat questions shall achieve at least 80% useful answers, 100% of
 accepted material technical claims cited, zero unauthorized evidence, and
 answers under 30 seconds
-**And** Docker restart shall preserve wiki/Chat access and evidence shall record
+**And** Vulgata application-process restart against the same PostgreSQL database
+shall preserve wiki/Chat access and evidence shall record
 revisions, counts, durations, schema/prompt/tool versions, and fingerprints
 
 ---
