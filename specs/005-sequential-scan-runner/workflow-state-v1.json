@@ -1,0 +1,422 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-2-sequential-scan-runner-and-typed-agent-dispatch",
+  "bmad_epic_key": "11",
+  "feature_directory": "specs/005-sequential-scan-runner",
+  "execution_level": "expedited-mvp",
+  "stage": "complete",
+  "active_gates": {
+    "spec-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "acceptance-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "quality-review": {
+      "status": "accepted",
+      "iteration": 1,
+      "dispatch_id": "quality-review-9f1a6fb",
+      "verdict_path": "specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json",
+      "input_boundary": {
+        "candidate_commit": "9f1a6fbbcbf88fac297be81e230c5df302d4111b",
+        "base_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+        "spec_sha": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519",
+        "plan_sha": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759"
+      },
+      "completed_at": "2026-08-01T04:30:00Z"
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-07-31T14:15:00Z",
+      "completed_at": "2026-07-31T14:15:00Z",
+      "input_commit": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-08-01T00:00:00Z",
+      "completed_at": "2026-08-01T00:00:00Z",
+      "input_commit": "875a212d6a7956c291d020162dd124391d00bd7d",
+      "input_hashes": {
+        "spec.md": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519",
+        "plan.md": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759",
+        "tasks.md": "75514417a167cfc8709b92bf1c1188cfa0a67490d3afb0008e4f661bba158262"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "complete",
+      "started_at": "2026-08-01T00:30:00Z",
+      "completed_at": "2026-08-01T04:35:00Z",
+      "input_commit": "daf5314",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/tasks.md"
+      ],
+      "failure": null,
+      "tdd_groups": {
+        "G1": "complete",
+        "G2": "complete",
+        "G3": "complete",
+        "G4": "complete",
+        "G5": "complete",
+        "G6": "complete"
+      }
+    },
+    {
+      "stage": "polish",
+      "status": "complete",
+      "started_at": "2026-08-01T03:36:55Z",
+      "completed_at": "2026-08-01T04:00:00Z",
+      "input_commit": "b4f34df",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "complete",
+      "started_at": "2026-08-01T04:00:00Z",
+      "completed_at": "2026-08-01T04:30:00Z",
+      "input_commit": "9f1a6fb",
+      "input_hashes": {},
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json"
+      ],
+      "failure": null,
+      "verdict": "ACCEPT"
+    },
+    {
+      "stage": "e2e",
+      "status": "complete",
+      "started_at": "2026-08-01T04:30:00Z",
+      "completed_at": "2026-08-01T04:35:00Z",
+      "input_commit": "9f1a6fb",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/workflow-state.json"
+      ],
+      "failure": null,
+      "result": "skipped-covered"
+    },
+    {
+      "stage": "verify",
+      "status": "complete",
+      "started_at": "2026-08-01T04:35:00Z",
+      "completed_at": "2026-08-01T04:40:00Z",
+      "input_commit": "c7b6672",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/005-sequential-scan-runner/workflow-state.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "complete",
+      "status": "complete",
+      "started_at": "2026-08-01T04:40:00Z",
+      "completed_at": "2026-08-01T04:45:00Z",
+      "input_commit": "c7b6672",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/sprint-status.yaml"
+      ],
+      "failure": null
+    }
+  ],
+  "repository_preflight": {
+    "branch": "story112",
+    "preflight_head": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+    "story_prepared_checkpoint": "d5f91e9c4199826d944a6b20af3039741958cc9b",
+    "story_activated_checkpoint": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+    "predecessor_completed_candidate": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "G:/source/repos/vulgata/.worktrees/story112",
+    "worktree_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-2-sequential-scan-runner-and-typed-agent-dispatch.json",
+      "specs/005-sequential-scan-runner/spec.md",
+      "specs/005-sequential-scan-runner/checklists/requirements.md",
+      "specs/005-sequential-scan-runner/workflow-state.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-31T14:15:00Z"
+  },
+  "source_artifacts": [
+    {
+      "authority": "BMad development record",
+      "path": "docs/bmad/implementation-artifacts/11-2-sequential-scan-runner-and-typed-agent-dispatch.md",
+      "commit": "5be5e6a066b234212e2c4a26e972e59a8711423c",
+      "sha256": null
+    },
+    {
+      "authority": "SpecKit specification",
+      "path": "specs/005-sequential-scan-runner/spec.md",
+      "commit": "fb149d18a4a8d7b2e4483192fbcc503d9315dde9",
+      "sha256": "94124a400cd45fa24525ebffa22193721e9e3c3a282bfeb0f1a77671f9b14519"
+    },
+    {
+      "authority": "SpecKit plan",
+      "path": "specs/005-sequential-scan-runner/plan.md",
+      "commit": null,
+      "sha256": "b0deaa62a2a9ad98cabfc5720913b5db564d1b427d3258f26df068495410c759"
+    },
+    {
+      "authority": "SpecKit tasks",
+      "path": "specs/005-sequential-scan-runner/tasks.md",
+      "commit": null,
+      "sha256": "75514417a167cfc8709b92bf1c1188cfa0a67490d3afb0008e4f661bba158262"
+    }
+  ],
+  "dispatches": [],
+  "review_iterations": {
+    "spec-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "plan-review": {
+      "count": 1,
+      "verdict_paths": [
+        "specs/005-sequential-scan-runner/reviews/plan-review/plan-review-20e6c83.json"
+      ]
+    },
+    "acceptance-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 1,
+      "verdict_paths": [
+        "specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json"
+      ]
+    }
+  },
+  "e2e_decision": {
+    "required": false,
+    "result": "skipped-covered",
+    "owner": "orchestrator",
+    "decided_at": "2026-08-01T04:35:00Z",
+    "source_boundary": {
+      "base_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "candidate_commit": "9f1a6fbbcbf88fac297be81e230c5df302d4111b"
+    },
+    "predicates": [
+      {
+        "predicate_id": "P001",
+        "change_type": "User-visible workflow",
+        "gate": "required",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "No UI/API/Razor/SignalR surface added. Only Program.cs adapter DI registrations with no caller. T079 negative assertions confirmed.",
+        "evidence": [
+          "T079: only Program.cs references new types; no API endpoint, UI, Razor component, Chat Agent tool, or SignalR hub introduced"
+        ]
+      },
+      {
+        "predicate_id": "P002",
+        "change_type": "Authentication/authorization",
+        "gate": "required",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "No auth changes. No new policies, roles, or authorization requirements.",
+        "evidence": []
+      },
+      {
+        "predicate_id": "P003",
+        "change_type": "API/SignalR/persistence/multi-module integration",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/ScanExecutionRepository.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/ApprovedPreScanHandoffSource.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/CodeUnitSource.cs",
+          "src/dotnet/Vulgata.Web/Program.cs"
+        ],
+        "affected_behavior": "New ScanExecutionRepository and 3 Infrastructure adapters registered in DI. However, SequentialScanRunner is NOT registered (deferred to Story 11.3 per plan-contradiction resolution), so no production code path reaches the repository. The EF Core mapping (entity -> table -> columns -> constraints) is exercised by G6 migration tests.",
+        "evidence": [
+          "G6 migration tests prove EF Core mapping: ApplyRollbackAndReapply_PreservesStory111Schema, Operations_AreAdditiveCompleteAndReversible, Model_ChecksAndIndexes_MatchAcceptedSchema",
+          "workflow-state.last_checkpoint.plan_contradiction_resolved: SequentialScanRunner DI registration deferred to Story 11.3 because IWorkerAgentDispatcher has no production implementation in Story 11.2",
+          "T079: no API endpoint or SignalR hub introduced"
+        ]
+      },
+      {
+        "predicate_id": "P004",
+        "change_type": "EF migration or observable data lifecycle",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260801033655_AddSequentialScanRunner.Designer.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanExecutionConfiguration.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs"
+        ],
+        "affected_behavior": "Additive CreateTable migration for ScanExecutions with PK, 2 alternate keys, 3 CHECK constraints (closed-enum Phase, closed-enum TerminalReasonKind, bound RestartIndicator), 2 Restrict FKs (Repository simple, ScanRun composite), 3 indexes. Story 11.1 migration history untouched.",
+        "evidence": [
+          "SequentialScanRunnerMigrationTests.AddSequentialScanRunner_ApplyRollbackAndReapply_PreservesStory111Schema: apply from clean baseline, rollback to 20260731041654_AddMinimalKnowledgeStore with Story 11.1 tables intact, reapply with all 3 CHECK constraints present",
+          "SequentialScanRunnerMigrationTests.AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible: operation allowlist (CreateTable+CreateIndex+AddForeignKey only), Restrict FKs, composite FK to ScanRun alternate key, alternate keys present, CHECK constraint SQL matches, Down only drops",
+          "SequentialScanRunnerMigrationTests.AddSequentialScanRunner_Model_ChecksAndIndexes_MatchAcceptedSchema: model snapshot matches accepted schema, alternate keys, Restrict FKs, CHECK constraints mirrored, indexes by Repository/ScanRun/Phase, DbSet declared",
+          "dotnet ef migrations has-pending-model-changes => exit 0"
+        ]
+      },
+      {
+        "predicate_id": "P005",
+        "change_type": "Container/runtime behavior",
+        "gate": "may-skip",
+        "triggered": false,
+        "affected_paths": [],
+        "affected_behavior": "No Dockerfile, docker-compose, or middleware change. Docker E2E belongs to Story 11.5.",
+        "evidence": [
+          "git diff f23f6ee..9f1a6fb -- docker/ shows no changes",
+          "git diff f23f6ee..9f1a6fb -- src/dotnet/Vulgata.Web/Program.cs shows only DI registrations, no middleware/pipeline change"
+        ]
+      }
+    ],
+    "coverage_override": {
+      "test_ids": [
+        "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible",
+        "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Model_ChecksAndIndexes_MatchAcceptedSchema",
+        "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_ApplyRollbackAndReapply_PreservesStory111Schema"
+      ],
+      "covered_predicate_ids": ["P003", "P004"],
+      "source_boundary": {
+        "base_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+        "candidate_commit": "9f1a6fbbcbf88fac297be81e230c5df302d4111b"
+      },
+      "passing_evidence_ids": [
+        "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb",
+        "dotnet ef migrations has-pending-model-changes => exit 0 at 9f1a6fb"
+      ],
+      "completeness_rationale": "The G6 migration tests exercise the full changed migration behavior across every triggered observable boundary: additive operation allowlist (CreateTable+CreateIndex+AddForeignKey only), closed-enum CHECK constraints (Phase, TerminalReasonKind), bound CHECK constraint (RestartIndicator 0-32), Restrict FKs (Repository simple + ScanRun composite via alternate key), alternate keys (Id,RepositoryId and ScanRunId,RepositoryId), indexes (Repository, ScanRun, Phase), model snapshot matches accepted schema, DbSet declared, apply from clean baseline, rollback to Story 11.1 baseline 20260731041654_AddMinimalKnowledgeStore with Story 11.1 tables intact, reapply with all constraints present, and has-pending-model-changes exits 0. For the persistence predicate (P003), the EF Core mapping is proven by the same migration tests; the repository's transaction semantics are not 'changed behavior' in Story 11.2 because ScanExecutionRepository is not registered in DI (deferred to Story 11.3 per plan-contradiction resolution) and no production code path reaches it. The 3 adapter DI registrations (IApprovedPreScanHandoffSource, ICodeUnitSource, IScanExecutionStore) wire up but have no caller until Story 11.3 registers SequentialScanRunner. Quality-review F003 recorded the latent SQLite-safe no-op write-reservation gap as a Story 11.3 precondition."
+    },
+    "rationale": "Story 11.2 adds an additive EF migration and persistence infrastructure that is not reachable in production (SequentialScanRunner DI registration deferred to Story 11.3). The G6 migration tests provide complete current-boundary coverage of the full migration behavior (apply/rollback/reapply, operation allowlist, CHECK constraints, FKs, alternate keys, indexes, model snapshot, no pending changes). No user-visible workflow, auth, API, SignalR, or container/runtime behavior changed. Docker E2E belongs to Story 11.5. The clean-database two-Repository demonstration is also deferred to Story 11.5.",
+    "covering_tests": [
+      {
+        "test_id": "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible",
+        "covers": ["P004: operation allowlist, Restrict FKs, alternate keys, CHECK constraint SQL, Down reversibility"],
+        "passing_evidence": "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb"
+      },
+      {
+        "test_id": "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_Model_ChecksAndIndexes_MatchAcceptedSchema",
+        "covers": ["P004: model snapshot matches accepted schema, alternate keys, Restrict FKs, CHECK constraints mirrored, indexes, DbSet declared"],
+        "passing_evidence": "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb"
+      },
+      {
+        "test_id": "tests/Vulgata.Tests/SequentialScanRunnerMigrationTests.cs:AddSequentialScanRunner_ApplyRollbackAndReapply_PreservesStory111Schema",
+        "covers": ["P003: EF Core mapping works", "P004: apply from clean baseline, rollback to Story 11.1 baseline with tables intact, reapply with CHECK constraints present"],
+        "passing_evidence": "dotnet test --filter FullyQualifiedName~SequentialScanRunnerMigrationTests => 3 passed, 0 failed at 9f1a6fb"
+      }
+    ]
+  },
+  "verification": [
+    {
+      "id": "V001",
+      "stage": "verify",
+      "completed_at": "2026-08-01T04:40:00Z",
+      "commit": "c7b6672",
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --nologo --verbosity quiet",
+      "result": "0 errors, 9 warnings (pre-existing package-source/EF-version)",
+      "exit_code": 0
+    },
+    {
+      "id": "V002",
+      "stage": "verify",
+      "completed_at": "2026-08-01T04:40:00Z",
+      "commit": "c7b6672",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests\" --nologo --verbosity quiet",
+      "result": "Passed! - Failed: 0, Passed: 744, Skipped: 0, Total: 744, Duration: 52s",
+      "exit_code": 0,
+      "excluded": [
+        "CodeGraphProviderContractTests (requires running Code Graph service)",
+        "KnowledgeStorePostgreSqlConcurrencyTests (requires PostgreSQL + concurrency fixture)"
+      ]
+    }
+  ],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-11-2-complete-20260801T044500Z",
+    "scope_key": "story/11-2-sequential-scan-runner-and-typed-agent-dispatch",
+    "stage": "complete",
+    "committed_paths": [
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/005-sequential-scan-runner/workflow-state.json"
+    ],
+    "verification_evidence_ids": [
+      "V001 dotnet build Vulgata.Web at c7b6672 => 0 errors, 9 warnings (pre-existing)",
+      "V002 dotnet test full non-final-image suite at c7b6672 => 744 passed, 0 failed",
+      "quality-review ACCEPT at 9f1a6fb (verdict: specs/005-sequential-scan-runner/reviews/quality-review/quality-review-9f1a6fb.json)",
+      "e2e skipped-covered at 9f1a6fb (G6 migration tests cover full migration behavior)",
+      "sprint-status.yaml story 11-2 status flipped to done"
+    ],
+    "commit_sha": "pending",
+    "binding_status": "bound",
+    "plan_contradiction_resolved": {
+      "trigger": "T073 asked to register SequentialScanRunner in Program.cs, but the runner depends on IWorkerAgentDispatcher which has no production impl until Story 11.3 (plan.md line 191: 'Story 11.2 ships only a fake/test dispatcher in Tests')",
+      "resolution": "Registered only the three Infrastructure adapters (IApprovedPreScanHandoffSource, ICodeUnitSource, IScanExecutionStore); deferred SequentialScanRunner registration to Story 11.3 alongside its LLM-backed dispatcher. Surface per AGENTS.md rather than silently overriding.",
+      "affected_task": "T073"
+    },
+    "deferred_to_story_11_3": [
+      "SequentialScanRunner DI registration (depends on IWorkerAgentDispatcher production impl)",
+      "LLM-backed Worker Agent dispatcher",
+      "ScanExecutionRepository SQLite-safe no-op write-reservation pattern (quality-review F003)",
+      "MissingCodeUnit/OverLimitPacket reason kind test coverage (quality-review F001)",
+      "RecordingDispatcher placeholder envelope identity match (quality-review F004)",
+      "IScanExecutionStore.ReadStateAsync XML doc correction (quality-review F005)"
+    ],
+    "deferred_to_story_11_5": [
+      "Clean-database two-Repository demonstration E2E",
+      "Docker release verification"
+    ]
+  },
+  "planned_change_triggers": [
+    "scan-strategy-dispatch-behavior",
+    "worker-agent-tool-execution-adapter"
+  ],
+  "integration_owner_gated_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Migrations/",
+    "src/dotnet/Vulgata.Infrastructure/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml"
+  ],
+  "expedited_mvp_authority": {
+    "allowlist": "11-1 through 11-5",
+    "lifetime": "2026-08-15T23:59:59+08:00",
+    "source": "docs/agent-workflow/august-15-expedited-mvp-exception.md"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-08-01T04:45:00Z"
+}

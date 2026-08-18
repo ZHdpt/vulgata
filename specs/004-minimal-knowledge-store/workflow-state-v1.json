@@ -1,0 +1,579 @@
+{
+  "schema_version": "1.0",
+  "bmad_story_key": "11-1-minimal-knowledge-store-and-retrieval-projection",
+  "bmad_epic_key": "11",
+  "feature_directory": "specs/004-minimal-knowledge-store",
+  "execution_level": "expedited-mvp",
+  "stage": "complete",
+  "active_gates": {
+    "acceptance-review": {
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
+    },
+    "quality-review": {
+      "status": "accepted",
+      "iteration": 3,
+      "dispatch_id": "story111-recovered-quality",
+      "verdict_path": "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json",
+      "input_boundary": {
+        "base_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+        "candidate_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+        "diff_sha256": "228ba301b9752490acd495bdeeba665fce8ac5b188594aeb0cf044c0c1344d9a",
+        "artifact_hashes": {
+          "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json": "1a06f945e244f16b9fab68b8d7d0a0af5b354167638c3afaabbc6cd72fd5b2f1"
+        },
+        "owned_paths": [
+          "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json"
+        ]
+      },
+      "completed_at": "2026-07-31T09:02:55Z"
+    }
+  },
+  "stage_history": [
+    {
+      "stage": "context",
+      "status": "accepted",
+      "started_at": "2026-07-30T13:01:38Z",
+      "completed_at": "2026-07-30T13:01:38Z",
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {},
+      "agent_role": "story-context-synthesizer",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "specify",
+      "status": "accepted",
+      "started_at": "2026-07-30T13:01:38Z",
+      "completed_at": "2026-07-30T13:09:43Z",
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {
+        "specs/004-minimal-knowledge-store/spec.md": "c7a36a49663eef0a556d5488a4d832ef5c9bf8aa12bb01ecedc87e4a23e5843d"
+      },
+      "agent_role": "spec-author",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/spec.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "spec-review",
+      "status": "invalidated",
+      "started_at": "2026-07-30T13:09:43Z",
+      "completed_at": "2026-07-30T13:09:43Z",
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [],
+      "failure": null
+    },
+    {
+      "stage": "plan",
+      "status": "accepted",
+      "started_at": "2026-07-30T13:10:37Z",
+      "completed_at": "2026-07-31T01:02:00Z",
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {
+        "specs/004-minimal-knowledge-store/plan.md": "3b1ff499ef67d7a2d072813631a01f993648e27e90e5379735fcaf2de97d7184"
+      },
+      "agent_role": "plan-architect",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/plan.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "plan-review",
+      "status": "accepted",
+      "started_at": "2026-07-30T23:00:00Z",
+      "completed_at": "2026-07-31T01:02:00Z",
+      "input_commit": "b851ba165d6ebe560227bfdc3b206a814280e9b2",
+      "input_hashes": {
+        "specs/004-minimal-knowledge-store/plan.md": "3b1ff499ef67d7a2d072813631a01f993648e27e90e5379735fcaf2de97d7184"
+      },
+      "agent_role": "plan-judge",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/plan.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "tasks",
+      "status": "accepted",
+      "started_at": "2026-07-31T00:45:00Z",
+      "completed_at": "2026-07-31T01:02:00Z",
+      "input_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "input_hashes": {
+        "specs/004-minimal-knowledge-store/tasks.md": "4d3786fc9c444c95f630984d5efb55f24cfd415452d73a97eab9b38b15de0b2c"
+      },
+      "agent_role": "task-author",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/tasks.md"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "analyze",
+      "status": "invalidated",
+      "started_at": "2026-07-31T01:02:00Z",
+      "completed_at": "2026-07-31T01:02:00Z",
+      "input_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [],
+      "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-07-31T01:02:00Z",
+      "completed_at": "2026-07-31T07:05:20Z",
+      "input_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "input_hashes": {
+        "specs/004-minimal-knowledge-store/tasks.md": "4d3786fc9c444c95f630984d5efb55f24cfd415452d73a97eab9b38b15de0b2c"
+      },
+      "agent_role": "tdd-implementer",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreDomainTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePersistenceTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreRetrievalTests.cs"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "acceptance-review",
+      "status": "invalidated",
+      "started_at": "2026-07-31T07:05:20Z",
+      "completed_at": "2026-07-31T07:05:20Z",
+      "input_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [],
+      "failure": null
+    },
+    {
+      "stage": "quality-review",
+      "status": "accepted",
+      "started_at": "2026-07-31T08:18:47Z",
+      "completed_at": "2026-07-31T09:02:55Z",
+      "input_commit": "4b84e0dedfee5a11520894bf9e2d755e2e687c6c",
+      "input_hashes": {
+        "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md": "16ca49ecbbee5fcbc207bd5eca4ec49dd631f25521e82798117a62dfec6044d0"
+      },
+      "agent_role": "quality-reviewer",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "conditional-e2e",
+      "status": "accepted",
+      "started_at": "2026-07-31T08:30:00Z",
+      "completed_at": "2026-07-31T09:02:55Z",
+      "input_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "input_hashes": {},
+      "agent_role": "e2e-runner",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "verify",
+      "status": "accepted",
+      "started_at": "2026-07-31T09:00:00Z",
+      "completed_at": "2026-07-31T09:02:55Z",
+      "input_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt"
+      ],
+      "failure": null
+    },
+    {
+      "stage": "complete",
+      "status": "accepted",
+      "started_at": "2026-07-31T09:02:55Z",
+      "completed_at": "2026-07-31T09:02:55Z",
+      "input_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "input_hashes": {},
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+        "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt"
+      ],
+      "failure": null
+    }
+  ],
+  "repository_preflight": {
+    "branch": "codex/story-11-1-knowledge-store",
+    "preflight_head": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+    "repository_root": ".",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/32ea/vulgata",
+    "worktree_status": "?? specs/004-minimal-knowledge-store/reviews/",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/11-1-minimal-knowledge-store-and-retrieval-projection.json",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt",
+      "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json",
+      "specs/004-minimal-knowledge-store/tasks.md",
+      "specs/004-minimal-knowledge-store/workflow-state.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-07-31T09:02:55Z"
+  },
+  "source_artifacts": [
+    {
+      "authority": "BMad development record",
+      "path": "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+      "commit": "bf130ca7e5aa662dda1a86e5bbca9c7a8c370d88",
+      "sha256": "16ca49ecbbee5fcbc207bd5eca4ec49dd631f25521e82798117a62dfec6044d0"
+    },
+    {
+      "authority": "SpecKit specification",
+      "path": "specs/004-minimal-knowledge-store/spec.md",
+      "commit": "bf130ca7e5aa662dda1a86e5bbca9c7a8c370d88",
+      "sha256": "c7a36a49663eef0a556d5488a4d832ef5c9bf8aa12bb01ecedc87e4a23e5843d"
+    },
+    {
+      "authority": "SpecKit plan",
+      "path": "specs/004-minimal-knowledge-store/plan.md",
+      "commit": "bf130ca7e5aa662dda1a86e5bbca9c7a8c370d88",
+      "sha256": "3b1ff499ef67d7a2d072813631a01f993648e27e90e5379735fcaf2de97d7184"
+    },
+    {
+      "authority": "SpecKit tasks",
+      "path": "specs/004-minimal-knowledge-store/tasks.md",
+      "commit": "bf130ca7e5aa662dda1a86e5bbca9c7a8c370d88",
+      "sha256": "4d3786fc9c444c95f630984d5efb55f24cfd415452d73a97eab9b38b15de0b2c"
+    }
+  ],
+  "dispatches": [
+    {
+      "role": "quality-reviewer",
+      "objective": "Perform the independent combined expedited quality review over the recovered Story 11.1 boundary.",
+      "source_boundary": {
+        "base_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+        "candidate_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+        "diff_sha256": "228ba301b9752490acd495bdeeba665fce8ac5b188594aeb0cf044c0c1344d9a",
+        "artifact_hashes": {},
+        "owned_paths": []
+      },
+      "permitted_writes": [
+        "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json"
+      ],
+      "output_path": "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json",
+      "returned_evidence": [
+        "ACCEPT with zero findings"
+      ]
+    },
+    {
+      "role": "e2e-runner",
+      "objective": "Run required PostgreSQL concurrency and migration lifecycle verification on an isolated disposable database.",
+      "source_boundary": {
+        "base_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+        "candidate_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+        "diff_sha256": "228ba301b9752490acd495bdeeba665fce8ac5b188594aeb0cf044c0c1344d9a",
+        "artifact_hashes": {},
+        "owned_paths": []
+      },
+      "permitted_writes": [],
+      "output_path": "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt",
+      "returned_evidence": [
+        "PASS: PostgreSQL concurrency 4/4; migration tests 3/3; clean apply, rollback, reapply; model current; isolated database removed"
+      ]
+    }
+  ],
+  "review_iterations": {
+    "spec-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "plan-review": {
+      "count": 1,
+      "verdict_paths": []
+    },
+    "analyze": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "acceptance-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 3,
+      "verdict_paths": [
+        "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json"
+      ]
+    }
+  },
+  "e2e_decision": {
+    "required": true,
+    "predicates": [
+      {
+        "predicate_id": "persistence-multi-module",
+        "change_type": "Persistence and multi-module integration",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Core/DomainServices/IKnowledgeStoreRepository.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+          "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs"
+        ],
+        "affected_behavior": "Core-to-Infrastructure immutable knowledge-store persistence and Repository-scoped retrieval execute against PostgreSQL.",
+        "evidence": [
+          "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/1"
+        ]
+      },
+      {
+        "predicate_id": "migration-data-lifecycle",
+        "change_type": "EF migration and observable data lifecycle",
+        "gate": "required",
+        "triggered": true,
+        "affected_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731041654_AddMinimalKnowledgeStore.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+          "tests/Vulgata.Tests/KnowledgeStoreMigrationTests.cs"
+        ],
+        "affected_behavior": "The nine-table knowledge-store migration applies, rolls back to the Story 4.3 baseline, reapplies, and matches the EF model.",
+        "evidence": [
+          "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/2"
+        ]
+      }
+    ],
+    "coverage_override": null,
+    "rationale": "Story 11.1 changes persistence, PostgreSQL integration, an EF migration, and observable immutable-version lifecycle behavior. A fresh E2E runner passed the required concurrency and clean apply, rollback, reapply lifecycle on the reviewed boundary. Final two-Repository demonstration and Docker release verification remain Story 11.5 responsibilities because Story 11.1 changed no container/runtime behavior.",
+    "covering_tests": [
+      "KnowledgeStorePersistenceTests",
+      "KnowledgeStoreRetrievalTests",
+      "KnowledgeStoreMigrationTests",
+      "KnowledgeStorePostgreSqlConcurrencyTests"
+    ],
+    "owner": "e2e-runner",
+    "source_boundary": {
+      "base_commit": "3fe347c5a9bdcd15a3f24b3e4fb2b2c4a277a427",
+      "candidate_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "diff_sha256": "228ba301b9752490acd495bdeeba665fce8ac5b188594aeb0cf044c0c1344d9a",
+      "artifact_hashes": {
+        "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md": "16ca49ecbbee5fcbc207bd5eca4ec49dd631f25521e82798117a62dfec6044d0",
+        "specs/004-minimal-knowledge-store/plan.md": "3b1ff499ef67d7a2d072813631a01f993648e27e90e5379735fcaf2de97d7184",
+        "specs/004-minimal-knowledge-store/spec.md": "c7a36a49663eef0a556d5488a4d832ef5c9bf8aa12bb01ecedc87e4a23e5843d",
+        "specs/004-minimal-knowledge-store/tasks.md": "4d3786fc9c444c95f630984d5efb55f24cfd415452d73a97eab9b38b15de0b2c"
+      },
+      "owned_paths": [
+        "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml",
+        "specs/004-minimal-knowledge-store/contracts/canonical-document-content.md",
+        "specs/004-minimal-knowledge-store/contracts/knowledge-retrieval-projection.md",
+        "specs/004-minimal-knowledge-store/contracts/knowledge-store-repository.md",
+        "specs/004-minimal-knowledge-store/data-model.md",
+        "specs/004-minimal-knowledge-store/plan.md",
+        "specs/004-minimal-knowledge-store/quickstart.md",
+        "specs/004-minimal-knowledge-store/research.md",
+        "specs/004-minimal-knowledge-store/tasks.md",
+        "src/dotnet/Vulgata.Core/DomainServices/IKnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs",
+        "src/dotnet/Vulgata.Core/Entities/DocumentEdge.cs",
+        "src/dotnet/Vulgata.Core/Entities/DocumentSection.cs",
+        "src/dotnet/Vulgata.Core/Entities/DocumentVersion.cs",
+        "src/dotnet/Vulgata.Core/Entities/FlowGroup.cs",
+        "src/dotnet/Vulgata.Core/Entities/FlowTrace.cs",
+        "src/dotnet/Vulgata.Core/Entities/FlowTraceStep.cs",
+        "src/dotnet/Vulgata.Core/Entities/IndexEntry.cs",
+        "src/dotnet/Vulgata.Core/Entities/KnowledgeDocumentTypes.cs",
+        "src/dotnet/Vulgata.Core/Entities/LogicalDocument.cs",
+        "src/dotnet/Vulgata.Core/Entities/SourceAnchor.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentEdgeConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentSectionConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentVersionConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/FlowGroupConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/FlowTraceConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/FlowTraceStepConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/IndexEntryConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/LogicalDocumentConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceAnchorConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeDocumentMaterializer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731041654_AddMinimalKnowledgeStore.Designer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731041654_AddMinimalKnowledgeStore.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreDomainTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreMigrationTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePersistenceTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreRetrievalTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreTestFixtures.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreTestHarness.cs"
+      ]
+    },
+    "result": "passed",
+    "evidence_ids": [
+      "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/1",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/2",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/3"
+    ]
+  },
+  "verification": [
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/implement/1",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/KnowledgeStoreDomainTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStorePersistenceTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreRetrievalTests.cs"
+      ],
+      "command": "Transient RED-GREEN corrections followed by the combined focused Story 11.1 and protected migration selection",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T07:05:20Z",
+      "summary": "All three user-approved product corrections observed RED then GREEN; the combined focused Story 11.1 and protected migration selection passed 155 of 155.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/1",
+      "kind": "test-green",
+      "stage": "conditional-e2e",
+      "source_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~KnowledgeStorePostgreSqlConcurrencyTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T07:05:20Z",
+      "summary": "Disposable PostgreSQL 17 verification passed 4 of 4 against the corrected replay boundary; the isolated container was removed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/2",
+      "kind": "test-green",
+      "stage": "conditional-e2e",
+      "source_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731041654_AddMinimalKnowledgeStore.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260731041654_AddMinimalKnowledgeStore.Designer.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreMigrationTests.cs"
+      ],
+      "command": "Migration lifecycle tests plus dotnet ef migrations has-pending-model-changes for VulgataDbContext",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T07:05:20Z",
+      "summary": "The current Story 11.1 migration and protected Story 4.3 lifecycle tests passed 6 of 6; prior migration hashes were unchanged and no EF model changes were pending.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/verify/1",
+      "kind": "test-green",
+      "stage": "verify",
+      "source_commit": "5329504b5f7cfaf5bde2dd8de006b9243f6076b5",
+      "artifact_paths": [
+        "tests/Vulgata.Tests"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T07:05:20Z",
+      "summary": "Current-boundary non-provider, non-PostgreSQL regression passed 671 of 671; PostgreSQL was verified separately.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/quality-review/1",
+      "kind": "command",
+      "stage": "quality-review",
+      "source_commit": "4b84e0dedfee5a11520894bf9e2d755e2e687c6c",
+      "artifact_paths": [
+        ".agents/skills/run-bmad-sprint-loop/references/workflow-state.schema.json",
+        ".agents/skills/run-bmad-sprint-loop/scripts/tests/test_validate_workflow.py",
+        ".agents/skills/run-bmad-sprint-loop/scripts/validate_workflow.py",
+        "docs/agent-workflow/artifact-contracts.md",
+        "docs/agent-workflow/august-15-expedited-mvp-exception.md"
+      ],
+      "command": "python -m unittest tests.test_validate_workflow; python validate_workflow.py --repo <repository-root>",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T08:18:47Z",
+      "summary": "The repaired workflow contract passed 35 of 35 validator tests and repository contract validation.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/quality-review/2",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "artifact_paths": [
+        "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-07-31T09:02:55Z",
+      "summary": "The fresh independent combined expedited quality review accepted the complete recovered boundary with zero findings.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/3",
+      "kind": "test-green",
+      "stage": "conditional-e2e",
+      "source_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/KnowledgeStorePostgreSqlConcurrencyTests.cs",
+        "tests/Vulgata.Tests/KnowledgeStoreMigrationTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
+      ],
+      "command": "PostgreSQL concurrency tests; migration tests; clean apply, rollback to 20260730083207_AddConservativePreScanGate, reapply; dotnet ef migrations has-pending-model-changes",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T09:02:55Z",
+      "summary": "The fresh E2E runner passed concurrency 4 of 4 and migration tests 3 of 3; observed table counts 0/2 after rollback and 9/2 after reapply; EF model was current and the isolated database was removed.",
+      "raw_output_path": "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt"
+    },
+    {
+      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/verify/2",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "f23f6ee38d1dc6602dde43d4e2a1b4aa54e03b4d",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+        "tests/Vulgata.Tests"
+      ],
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName!~CodeGraphProviderContractTests&FullyQualifiedName!~KnowledgeStorePostgreSqlConcurrencyTests",
+      "exit_code": 0,
+      "observed_at": "2026-07-31T09:02:55Z",
+      "summary": "The Web build completed with zero errors and the final regression suite passed 671 of 671. Existing package-source and EF-version warnings remain.",
+      "raw_output_path": "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt"
+    }
+  ],
+  "last_checkpoint": {
+    "checkpoint_id": "bmad-11-1-complete-20260731T090255Z-c7e441",
+    "scope_key": "story/11-1-minimal-knowledge-store-and-retrieval-projection",
+    "stage": "complete",
+    "committed_paths": [
+      "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt",
+      "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json",
+      "specs/004-minimal-knowledge-store/tasks.md",
+      "specs/004-minimal-knowledge-store/workflow-state.json"
+    ],
+    "verification_evidence_ids": [
+      "11-1-minimal-knowledge-store-and-retrieval-projection/quality-review/2",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/conditional-e2e/3",
+      "11-1-minimal-knowledge-store-and-retrieval-projection/verify/2"
+    ],
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "recoverable_failure": null,
+  "updated_at": "2026-07-31T09:02:55Z"
+}

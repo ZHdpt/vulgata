@@ -1678,6 +1678,12 @@ def validate_repository(repo: Path) -> list[str]:
         errors.append(f"{legacy_schema_path}: missing archived v1 migration schema")
     elif _schema_at(legacy_schema, "properties", "schema_version", "const") != "1.0":
         errors.append(f"{legacy_schema_path}: archived schema version must equal 1.0")
+
+    for state_path in sorted(repo.glob("specs/*/workflow-state.json")):
+        state = _load_json(state_path, errors)
+        if state is None:
+            continue
+        errors.extend(f"{state_path}: {error}" for error in validate_workflow_state(state))
     return errors
 
 

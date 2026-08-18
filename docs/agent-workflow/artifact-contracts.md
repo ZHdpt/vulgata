@@ -30,7 +30,7 @@ Accepted/revised/blocked gate records require a raw verdict path, pinned input b
 
 ## Legacy State
 
-The archived `workflow-state-v1.schema.json` validates historical evidence only. A v1 state cannot authorize mutation. Migration follows state-machine.md and creates a v2 state with `legacy_migration`; it never rewrites the historical file in place or treats expired expedited authority as current.
+The archived `workflow-state-v1.schema.json` validates historical evidence only. A v1 state cannot authorize mutation. Migration follows state-machine.md, preserves the exact v1 bytes under `workflow-state-v1.json`, records schema drift instead of silently repairing it, and creates a v2 state with `legacy_migration`. A terminal compatibility record additionally cites the ancestral completion-state binding and BMad `done` transition. Expired expedited authority is never current authority.
 
 ## Story/Feature Mapping and Activation
 

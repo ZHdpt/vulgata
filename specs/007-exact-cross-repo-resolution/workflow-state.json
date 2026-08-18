@@ -1,18 +1,12 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "bmad_story_key": "11-4-exact-rpc-http-cross-repository-demo-resolution",
   "bmad_epic_key": "11",
   "feature_directory": "specs/007-exact-cross-repo-resolution",
-  "execution_level": "expedited-mvp",
+  "execution_level": "unified",
   "stage": "complete",
   "active_gates": {
-    "spec-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null
-    },
-    "acceptance-review": {
+    "definition-review": {
       "status": "invalidated",
       "iteration": 0,
       "dispatch_id": null,
@@ -21,919 +15,147 @@
       "completed_at": null
     },
     "quality-review": {
-      "status": "accepted",
-      "iteration": 3,
-      "dispatch_id": "story_11_4_quality_review_3",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json",
-      "input_boundary": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8..05faffe86e0fe274a93a8741215ee3625da0baff",
-      "completed_at": "2026-08-04T04:47:58Z"
-    },
-    "plan-review": {
-      "status": "accepted",
-      "iteration": 3,
-      "dispatch_id": "story_11_4_plan_review_3",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-3.json",
-      "completed_at": "2026-08-03T10:40:27Z"
-    },
-    "planned-change-authorization": {
-      "status": "accepted",
-      "authorized_at": "2026-08-03T11:22:49Z",
-      "authority": "user: Approve"
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
     }
   },
   "stage_history": [
     {
-      "stage": "context",
-      "status": "accepted",
-      "started_at": "2026-08-03T08:24:00Z",
-      "completed_at": "2026-08-03T08:46:58Z",
-      "input_commit": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
-      "artifact_paths": [
-        "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
-        "docs/bmad/implementation-artifacts/workflow-activations/11-4-exact-rpc-http-cross-repository-demo-resolution.json"
-      ],
-      "artifact_hashes": {
-        "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md": "76608c89884a9a143f4d75ae72d46a6a770f5107d7820b6d0cb8af68f695e71f"
-      }
-    },
-    {
-      "stage": "specify",
-      "status": "accepted",
-      "started_at": "2026-08-03T08:48:00Z",
-      "completed_at": "2026-08-03T08:54:00Z",
-      "dispatch_id": "story_11_4_spec",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/spec.md",
-        "specs/007-exact-cross-repo-resolution/checklists/requirements.md"
-      ],
-      "artifact_hashes": {
-        "specs/007-exact-cross-repo-resolution/spec.md": "bc8f694fedf5c7c54ce57c79acef2007b96e99e3bac8051d92d8062f6be6bf2b",
-        "specs/007-exact-cross-repo-resolution/checklists/requirements.md": "d8d871bf9896b06022f72770ed259955de5d822ef18196bd9e181a050b30985c"
-      },
-      "validation": "16/16 specification checklist items passed; no clarification markers"
-    },
-    {
-      "stage": "plan",
-      "status": "accepted",
-      "started_at": "2026-08-03T08:55:24Z",
-      "completed_at": "2026-08-03T10:40:27Z",
-      "artifact_hashes": {
-        "specs/007-exact-cross-repo-resolution/plan.md": "286e3058f60faafc297d075de9815c357899716c0aa8619c6d385490bf480224",
-        "specs/007-exact-cross-repo-resolution/research.md": "d83c314e04091fac37805fbcb141b3a2e3d79b7393b5ffa29e8580dbb397da9b",
-        "specs/007-exact-cross-repo-resolution/data-model.md": "9c34739cda6dae87cb18ed025d3db74bdd168271ffa5e584439b3c46f1ec452f",
-        "specs/007-exact-cross-repo-resolution/quickstart.md": "d54a918bc8e278b053f41f0f3109bf1c32169e2db82b892bce2ee4e72caba41c"
-      }
-    },
-    {
-      "stage": "plan-review",
-      "status": "revise",
-      "iteration": 1,
-      "dispatch_id": "story_11_4_plan_review_1",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-1.json",
-      "completed_at": "2026-08-03T09:28:00Z",
-      "finding_ids": ["F-001", "F-002", "F-003", "F-004"]
-    },
-    {
-      "stage": "plan-review",
-      "status": "revise",
-      "iteration": 2,
-      "dispatch_id": "story_11_4_plan_review_2",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-2.json",
-      "completed_at": "2026-08-03T10:09:29Z",
-      "finding_ids": ["F-005", "F-006", "F-007"]
-    },
-    {
-      "stage": "plan-review",
-      "status": "accepted",
-      "iteration": 3,
-      "dispatch_id": "story_11_4_plan_review_3",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-3.json",
-      "completed_at": "2026-08-03T10:40:27Z",
-      "finding_ids": []
-    },
-    {
-      "stage": "planned-change-authorization",
-      "status": "accepted",
-      "started_at": "2026-08-03T10:40:27Z",
-      "completed_at": "2026-08-03T11:22:49Z",
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/plan-review/authorization-1"
-    },
-    {
-      "stage": "tasks",
-      "status": "accepted",
-      "started_at": "2026-08-03T11:22:49Z",
-      "completed_at": "2026-08-03T11:39:20Z",
-      "dispatch_id": "story_11_4_tasks",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/tasks.md"
-      ],
-      "artifact_hashes": {
-        "specs/007-exact-cross-repo-resolution/tasks.md": "1d3674c0a3c4ae8c4dabd56fddcace041a9286dfb46cc2440cdb4ad91e7728f1"
-      },
-      "validation": "37 sequential tasks, strict format failures 0, placeholders 0, and every production group has an observable preceding RED task"
-    },
-    {
-      "stage": "implement",
-      "status": "accepted",
-      "started_at": "2026-08-03T11:39:20Z",
-      "completed_at": "2026-08-04T01:54:16Z"
-    },
-    {
-      "stage": "quality-review",
-      "status": "revise",
-      "started_at": "2026-08-04T01:54:16Z",
-      "completed_at": "2026-08-04T02:41:00Z",
-      "iteration": 1,
-      "dispatch_id": "story_11_4_quality_review",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-3295d64.json",
-      "finding_ids": [
-        "QR-3295D64-001",
-        "QR-3295D64-002",
-        "QR-3295D64-003"
-      ]
-    },
-    {
-      "stage": "quality-review",
-      "status": "revise",
-      "started_at": "2026-08-04T03:28:28Z",
-      "completed_at": "2026-08-04T04:03:19Z",
-      "iteration": 2,
-      "correction_of": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-3295d64.json",
-      "dispatch_id": "story_11_4_quality_review_2",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json",
-      "finding_ids": ["QR-26F6354-001"]
-    },
-    {
-      "stage": "quality-review",
-      "status": "accepted",
-      "started_at": "2026-08-04T04:25:23Z",
-      "completed_at": "2026-08-04T04:47:58Z",
-      "iteration": 3,
-      "correction_of": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json",
-      "dispatch_id": "story_11_4_quality_review_3",
-      "verdict_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json",
-      "finding_ids": []
-    },
-    {
-      "stage": "conditional-e2e",
-      "status": "accepted",
-      "started_at": "2026-08-04T04:47:58Z",
-      "completed_at": "2026-08-04T04:47:58Z",
-      "input_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "input_hashes": {
-        "candidate_diff_git_hash_object": "10814b350b6396c1d8617b014f85ae98f397f64990d05b221b4e566bf0cbc5e8"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryPersistenceTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "verify",
-      "status": "accepted",
-      "started_at": "2026-08-04T04:47:58Z",
-      "completed_at": "2026-08-04T04:47:58Z",
-      "input_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "input_hashes": {
-        "candidate_diff_git_hash_object": "10814b350b6396c1d8617b014f85ae98f397f64990d05b221b4e566bf0cbc5e8"
-      },
-      "agent_role": "orchestrator-verifier",
-      "evidence_paths": [
-        "specs/007-exact-cross-repo-resolution/tasks.md",
-        "specs/007-exact-cross-repo-resolution/workflow-state.json",
-        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json"
-      ],
-      "failure": null
-    },
-    {
       "stage": "complete",
       "status": "accepted",
-      "started_at": "2026-08-04T04:47:58Z",
-      "completed_at": "2026-08-04T04:47:58Z",
-      "input_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
+      "started_at": "2026-08-18T03:21:52Z",
+      "completed_at": "2026-08-18T03:21:52Z",
+      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
       "input_hashes": {
-        "candidate_diff_git_hash_object": "10814b350b6396c1d8617b014f85ae98f397f64990d05b221b4e566bf0cbc5e8"
+        "specs/007-exact-cross-repo-resolution/workflow-state.json": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037"
       },
       "agent_role": "bmad-sprint-orchestrator",
       "evidence_paths": [
-        "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
-        "docs/bmad/implementation-artifacts/sprint-status.yaml",
-        "specs/007-exact-cross-repo-resolution/tasks.md",
-        "specs/007-exact-cross-repo-resolution/workflow-state.json",
-        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json"
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
       ],
       "failure": null
     }
   ],
+  "repository_preflight": {
+    "branch": "demo0831/main",
+    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
+    "repository_root": ".",
+    "git_common_directory": ".git",
+    "worktree_path": ".",
+    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
+    "owned_paths": [
+      "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
+      "specs/007-exact-cross-repo-resolution/workflow-state.json",
+      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-08-18T03:21:52Z"
+  },
+  "source_artifacts": [],
+  "dispatches": [],
+  "review_iterations": {
+    "plan-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "definition-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "converge": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 0,
+      "verdict_paths": []
+    }
+  },
+  "convergence": {
+    "status": "accepted",
+    "iteration": 0,
+    "outcome": "converged",
+    "findings_count": 0,
+    "appended_task_ids": [],
+    "artifact_hashes": {
+      "specs/007-exact-cross-repo-resolution/workflow-state-v1.json": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037"
+    },
+    "completed_at": "2026-08-18T03:21:52Z"
+  },
   "e2e_decision": {
     "required": false,
-    "predicates": [
-      {
-        "predicate_id": "P001",
-        "change_type": "User-visible workflow",
-        "gate": "required",
-        "triggered": false,
-        "affected_paths": [],
-        "affected_behavior": "No UI, API endpoint, Razor component, SignalR hub, or chat surface was added or changed by Story 11.4.",
-        "evidence": [
-          "Accepted quality review confirmed Program.cs only composes specific services and Story 11.4 adds no user-visible entry point."
-        ]
-      },
-      {
-        "predicate_id": "P002",
-        "change_type": "Authentication/authorization",
-        "gate": "required",
-        "triggered": true,
-        "affected_paths": [
-          "src/dotnet/Vulgata.Web/Data/RepositoryAuthorizationVerifier.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs"
-        ],
-        "affected_behavior": "Resolution rechecks live Repository authorization before source access and persistence; retrieval requires authorized ownership and both endpoints when a target exists.",
-        "evidence": [
-          "ExactCrossRepositoryAuthorizationTests passed in the source-bound 1082/1082 current-candidate suite.",
-          "Accepted quality review closed QR-3295D64-002 and confirmed fail-closed targetless and target-bearing retrieval."
-        ]
-      },
-      {
-        "predicate_id": "P003",
-        "change_type": "API/SignalR/persistence/multi-module integration",
-        "gate": "required",
-        "triggered": true,
-        "affected_paths": [
-          "src/dotnet/Vulgata.Core",
-          "src/dotnet/Vulgata.Infrastructure",
-          "src/dotnet/Vulgata.Web"
-        ],
-        "affected_behavior": "Exact Git acquisition, extraction, runtime binding, resolution, authorization, and atomic knowledge-store persistence cross Core, Infrastructure, and Web composition boundaries.",
-        "evidence": [
-          "ExactCrossRepositoryIntegrationTests real production-composition positive and negative scenarios passed at 05faffe.",
-          "ExactCrossRepositoryPersistenceTests atomic and replay behavior passed at 05faffe."
-        ]
-      },
-      {
-        "predicate_id": "P004",
-        "change_type": "EF migration or observable data lifecycle",
-        "gate": "required",
-        "triggered": true,
-        "affected_paths": [
-          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260803140908_AddExactCrossRepositoryResolution.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260803140908_AddExactCrossRepositoryResolution.Designer.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ExactCrossRepositoryEdgeEvidenceConfiguration.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/Configurations/UncertaintyConfiguration.cs"
-        ],
-        "affected_behavior": "The additive migration introduces exact Edge evidence and typed Uncertainty persistence with constrained ownership, idempotency, and reversible lifecycle behavior.",
-        "evidence": [
-          "ExactCrossRepositoryMigrationTests PostgreSQL 17 apply, rollback, reapply, predecessor-preservation, cleanup, and no-pending-model-change checks passed 4/4.",
-          "ExactCrossRepositoryPersistenceTests passed atomic and idempotent lifecycle behavior."
-        ]
-      },
-      {
-        "predicate_id": "P005",
-        "change_type": "Existing integration test proves full changed behavior",
-        "gate": "may-skip",
-        "triggered": true,
-        "affected_paths": [
-          "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs",
-          "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs",
-          "tests/Vulgata.Tests/ExactCrossRepositoryPersistenceTests.cs",
-          "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs"
-        ],
-        "affected_behavior": "Current-boundary integration, authorization, persistence, and migration tests exercise every triggered Story 11.4 observable boundary.",
-        "evidence": [
-          "Focused Story 11.4 passed 121/121 and source-bound total regression passed 1082/1082 at 05faffe.",
-          "Independent quality-review iteration 3 accepted the complete immutable boundary with no findings."
-        ]
-      }
-    ],
-    "coverage_override": {
-      "test_ids": [
-        "Vulgata.Tests.ExactCrossRepositoryIntegrationTests.ResolveAfterPass1Async_ReviewedBoundary_AppliesExactAndUnsupportedOnceAsync",
-        "Vulgata.Tests.ExactCrossRepositoryIntegrationTests.ResolveAfterPass1Async_RealProviderNegativeMatrix_PersistsOneReplayStableOwnerAnchoredUncertaintyAsync",
-        "Vulgata.Tests.ExactCrossRepositoryIntegrationTests.ResolveAfterPass1Async_StructurallyInvalidProviderWithoutUniqueCurrentOwner_RefusesWithoutWriteAsync",
-        "Vulgata.Tests.ExactCrossRepositoryAuthorizationTests.GetUncertaintyAsync_TargetlessUnknownTarget_ProductionVerifierAllowsAuthorizedOwnerAndHidesUnauthorizedAsync",
-        "Vulgata.Tests.ExactCrossRepositoryPersistenceTests.ApplyAsync_ExactDecision_AtomicallyPersistsEdgeAndEvidenceAsync",
-        "Vulgata.Tests.ExactCrossRepositoryMigrationTests.AddExactCrossRepositoryResolution_PostgreSqlLifecycle_UsesDisposableDatabase"
-      ],
-      "covered_predicate_ids": ["P002", "P003", "P004"],
-      "source_boundary": {
-        "base_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-        "candidate_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-        "diff_sha256": "10814b350b6396c1d8617b014f85ae98f397f64990d05b221b4e566bf0cbc5e8",
-        "artifact_hashes": {
-          "specs/007-exact-cross-repo-resolution/spec.md": "bc8f694fedf5c7c54ce57c79acef2007b96e99e3bac8051d92d8062f6be6bf2b",
-          "specs/007-exact-cross-repo-resolution/plan.md": "286e3058f60faafc297d075de9815c357899716c0aa8619c6d385490bf480224",
-          "specs/007-exact-cross-repo-resolution/quickstart.md": "d54a918bc8e278b053f41f0f3109bf1c32169e2db82b892bce2ee4e72caba41c"
-        },
-        "owned_paths": [
-          "src/dotnet/Vulgata.Core",
-          "src/dotnet/Vulgata.Infrastructure",
-          "src/dotnet/Vulgata.Web",
-          "tests/Vulgata.Tests"
-        ]
-      },
-      "passing_evidence_ids": [
-        "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/5",
-        "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/6",
-        "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/3"
-      ],
-      "completeness_rationale": "The cited real-composition tests cover the exact positive Edge/evidence path; malformed_provider, unmatched, normalization_mismatch, and multiple_providers conversion to replay-stable owner-anchored Uncertainty; zero/multiple owner refusal without writes; fail-closed authorization and redacted retrieval; atomic/idempotent persistence; and clean PostgreSQL 17 apply/rollback/reapply with predecessor preservation and no pending model change. Together they cover every triggered Story 11.4 observable boundary at the accepted 05faffe candidate. Story 11.5 owns the broader actual prepared-Repositories and release deployment rehearsal."
-    },
-    "rationale": "No user-visible workflow changed. Existing current-boundary integration tests fully cover the triggered authorization, cross-module persistence, and migration/data-lifecycle behavior, so the matrix permits skipped-covered. The actual prepared-Repositories clean-database complete Pass 1/Pass 2 through retrieval/chat/citations rehearsal and final release Docker verification remain Story 11.5.",
-    "covering_tests": [
-      "Vulgata.Tests.ExactCrossRepositoryIntegrationTests.ResolveAfterPass1Async_ReviewedBoundary_AppliesExactAndUnsupportedOnceAsync",
-      "Vulgata.Tests.ExactCrossRepositoryIntegrationTests.ResolveAfterPass1Async_RealProviderNegativeMatrix_PersistsOneReplayStableOwnerAnchoredUncertaintyAsync",
-      "Vulgata.Tests.ExactCrossRepositoryIntegrationTests.ResolveAfterPass1Async_StructurallyInvalidProviderWithoutUniqueCurrentOwner_RefusesWithoutWriteAsync",
-      "Vulgata.Tests.ExactCrossRepositoryAuthorizationTests.GetUncertaintyAsync_TargetlessUnknownTarget_ProductionVerifierAllowsAuthorizedOwnerAndHidesUnauthorizedAsync",
-      "Vulgata.Tests.ExactCrossRepositoryPersistenceTests.ApplyAsync_ExactDecision_AtomicallyPersistsEdgeAndEvidenceAsync",
-      "Vulgata.Tests.ExactCrossRepositoryMigrationTests.AddExactCrossRepositoryResolution_PostgreSqlLifecycle_UsesDisposableDatabase"
-    ],
+    "predicates": [],
+    "coverage_override": null,
+    "rationale": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
+    "covering_tests": [],
     "owner": "orchestrator",
     "source_boundary": {
-      "base_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "candidate_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "diff_sha256": "10814b350b6396c1d8617b014f85ae98f397f64990d05b221b4e566bf0cbc5e8",
+      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
+      "candidate_commit": null,
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "artifact_hashes": {
-        "specs/007-exact-cross-repo-resolution/spec.md": "bc8f694fedf5c7c54ce57c79acef2007b96e99e3bac8051d92d8062f6be6bf2b",
-        "specs/007-exact-cross-repo-resolution/plan.md": "286e3058f60faafc297d075de9815c357899716c0aa8619c6d385490bf480224",
-        "specs/007-exact-cross-repo-resolution/quickstart.md": "d54a918bc8e278b053f41f0f3109bf1c32169e2db82b892bce2ee4e72caba41c"
+        "specs/007-exact-cross-repo-resolution/workflow-state.json": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037"
       },
       "owned_paths": [
-        "src/dotnet/Vulgata.Core",
-        "src/dotnet/Vulgata.Infrastructure",
-        "src/dotnet/Vulgata.Web",
-        "tests/Vulgata.Tests"
+        "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
+        "specs/007-exact-cross-repo-resolution/workflow-state.json",
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
       ]
     },
-    "result": "skipped-covered",
+    "result": "passed",
     "evidence_ids": [
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/5",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/6",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/3",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/conditional-e2e/1"
+      "11-4-exact-rpc-http-cross-repository-demo-resolution/complete/1"
     ]
   },
   "verification": [
     {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/plan-review/authorization-1",
-      "kind": "human-approval",
-      "stage": "plan-review",
-      "source_commit": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/plan.md",
-        "specs/007-exact-cross-repo-resolution/reviews/plan-review/plan-review-iteration-3.json",
-        "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
-      ],
-      "command": null,
-      "exit_code": null,
-      "observed_at": "2026-08-03T11:22:49Z",
-      "summary": "User explicitly approved the accepted plan's exact Profiled Revision acquisition, bounded post-Pass-1 two-Repository integration, exact Cross-Repository matching and unsupported-observation policy, two-endpoint authorization boundary, and additive migration invariants for advancement to task generation; later TDD, combined review, E2E, security, migration, and verification gates remain required.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/1",
-      "kind": "boundary-verification",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/plan.md"
-      ],
-      "command": "git rev-parse HEAD; git rev-parse HEAD^; Get-FileHash plan.md -Algorithm SHA256; git status --short",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T11:43:53Z",
-      "summary": "Accepted-delivery HEAD is f0790d2; its pinned source parent is exactly 67b5eaf45ff3c3348e240e323bed6f80c9e885e0; accepted plan SHA-256 remains 286e3058f60faafc297d075de9815c357899716c0aa8619c6d385490bf480224; no implementation path existed before setup.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/2",
-      "kind": "ownership-assignment",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceAnchorConfiguration.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
-        "src/dotnet/Vulgata.Web/Program.cs"
-      ],
-      "command": null,
-      "exit_code": null,
-      "observed_at": "2026-08-03T11:43:53Z",
-      "summary": "The sole root is the integration owner for every shared EF, migration, model snapshot, SourceAnchor configuration, and Program.cs seam; no parallel implementer may edit them without a serialized root dispatch.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/3",
-      "kind": "baseline-test-and-build",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests",
-        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj"
-      ],
-      "command": "predecessor test filter; isolated PostgreSQL filter; local predecessor filter excluding only KnowledgeStorePostgreSqlConcurrencyTests; dotnet build Vulgata.Web",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T11:43:53Z",
-      "summary": "Web build passed with 0 errors. The broad predecessor filter selected four pre-existing PostgreSQL tests that failed only because VULGATA_TEST_POSTGRES was absent; the isolated failure was recorded before source changes. The remaining local predecessor boundary passed 311/311 with zero skips. The required disposable PostgreSQL lane remains mandatory before completion.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/4",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryTestFixtures.cs"
-      ],
-      "command": "dotnet build Vulgata.Tests --no-restore; dotnet test Vulgata.Tests --no-restore --filter FullyQualifiedName~ExactCrossRepositoryTestFixtureTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T11:56:20Z",
-      "summary": "Transient RED was CS0246 for the absent ExactCrossRepositoryTestFixture. GREEN build completed with zero errors; the focused disposable two-Repository Git/SQLite fixture smoke passed 1/1 and root rerun passed 1/1. Unique owned-root cleanup, deterministic Pass1 builders, safe capture, authorization scopes, and zero-access counters are present; prepared Repositories were not accessed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/5",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactResolutionProfileTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/IExactCrossRepositoryResolver.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/IExactCrossRepositoryResolutionStore.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactResolutionProfileCatalog.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json",
-        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj"
-      ],
-      "command": "dotnet test Vulgata.Tests --filter FullyQualifiedName~ExactResolutionProfileTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T12:11:39Z",
-      "summary": "Transient RED was the intended absent CrossRepository catalog and ProfileRepository/runtime-binding contract types. GREEN passed 12/12; root rerun passed 12/12. Embedded and accepted profile bytes share SHA-256 b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db. Strict rejection and Core no-EF/IQueryable/DbSet/DataAnnotations checks passed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/6",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactResolutionExtractionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter FullyQualifiedName~ExactResolutionExtractionTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T12:34:30Z",
-      "summary": "Transient RED was CS0246 for absent ExactCandidateExtractors, followed by the intended missing provider method tracer. GREEN passed 4/4 and root rerun passed 4/4. Reviewed Java line 45 and XML line 2, exact current owner mapping, DTD-disabled parsing, profile-listed-only reads, finite limits, and source/LLM/System-context isolation were verified.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/7",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactGitRevisionAcquisitionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter FullyQualifiedName~ExactGitRevisionAcquisitionTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T12:40:26Z",
-      "summary": "Transient RED was CS0246 for absent ExactGitRevisionSnapshotService after the parallel compile window was serialized. GREEN passed 3/3 and root rerun passed 3/3. Full-ref peeling, exact commit equality, independent private leases, idempotent cleanup, and ordinary checkout invariants passed. Windows ref-lock length was corrected by shortening only private operation/child names; bounded production failures expose no stderr.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/8",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryResolverTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactResolutionProfileTests|ExactCrossRepositoryResolverTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T12:53:24Z",
-      "summary": "Transient RED proved the absent resolver and a G1 prerequisite gap: exact decisions lacked typed identifiers/protocol/confidence evidence. The root-authorized minimal contract correction plus resolver passed G4 4/4 and the combined G1/G4 root rerun 16/16. Form-C/ASCII-edge normalization, one provider in/ removal, ordinal/direction/cardinality, confidence 1.0000, ordering, and no global role or LLM/System-context truth passed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/9",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryPersistenceTests.cs",
-        "src/dotnet/Vulgata.Core/Entities/ExactCrossRepositoryEdgeEvidence.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ExactCrossRepositoryEdgeEvidenceConfiguration.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceAnchorConfiguration.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter US1 exact aggregate; dotnet test Vulgata.Tests --no-restore --filter KnowledgeStorePersistenceTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T13:15:09Z",
-      "summary": "Transient RED was the absent exact evidence entity/store. Focused persistence passed 4/4; the root US1 aggregate passed 27/27 and predecessor KnowledgeStore persistence passed 23/23. Composite owner FKs, closed checks, atomic Edge/evidence insertion, deterministic replay without timestamp drift, conflict/rollback/currentness and ordered-lock behavior passed. No migration was generated and IKnowledgeStoreRepository remained unchanged.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/10",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactResolutionProfileTests.cs",
-        "tests/Vulgata.Tests/ExactGitRevisionAcquisitionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactResolutionProfileCatalog.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactResolutionProfileTests|ExactGitRevisionAcquisitionTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T13:35:24Z",
-      "summary": "Behavioral REDs covered unsafe refs, absent pre-evidence gate, unsafe exact-Git reachability, cleanup-failure invalidation, and cross-assembly gate visibility. GREEN passed 25/25. Invalid binding/provenance/revision cases retain zero access; cancellation/concurrency/cleanup and sanitized diagnostics pass. The public bounded BindForValidation gate exposes no profile path/byte replacement.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/11",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactResolutionExtractionTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryResolverTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactResolutionExtractionTests|ExactCrossRepositoryResolverTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T13:35:24Z",
-      "summary": "Behavioral REDs covered repeated provider prefix, variable ordinal promotion, and qualified receiver acceptance. GREEN passed 57/57 with 55 negative fixture assertions and zero exact decisions from negative paths. Lexical/XML/path/owner/cardinality/direction matrices and no LLM/System-context or hardcoded Repository truth passed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/12",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryPersistenceTests.cs",
-        "src/dotnet/Vulgata.Core/Entities/Uncertainty.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/UncertaintyConfiguration.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter US1 and US2 exact aggregate",
-      "exit_code": 0,
-      "observed_at": "2026-08-03T13:57:49Z",
-      "summary": "Transient RED was absent Uncertainty and DbSet. Focused persistence passed 9/9; T024 and root rerun passed 91/91. Reviewed file-storage writes one owner-anchored unresolved/unknown_target unsupported_kind/file_storage Uncertainty and zero unsupported Edge/evidence; replay, drift, stale rollback, relational constraints, closed reasons/sub-statuses, authorization-before-DB, no automatic wontfix, and leakage checks passed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/13",
-      "kind": "red-green-test",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/KnowledgeStoreContracts.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactCrossRepositoryAuthorizationTests; dotnet test Vulgata.Tests --no-restore --filter KnowledgeStoreRetrievalTests",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T01:04:17Z",
-      "summary": "REDs proved absent exact/Uncertainty projections, legacy relationship return, missing live verifier, and revocation leakage. G9 and root GREEN passed authorization 5/5 and predecessor retrieval 17/17. Static plus live two-endpoint checks occur before access, inside transactions and before return/commit; authorized output is opaque/safe, unauthorized is marker-only or indistinguishable null, and internal relational IDs do not serialize.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/14",
-      "kind": "migration-lifecycle",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260803140908_AddExactCrossRepositoryResolution.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260803140908_AddExactCrossRepositoryResolution.Designer.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --filter ExactCrossRepositoryMigrationTests; dotnet ef migrations has-pending-model-changes",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T01:04:17Z",
-      "summary": "RED proved migration and two tables absent. Generated migration, SQLite lifecycle and root no-env suite passed 4/4; no pending model changes. A cached PostgreSQL 17 container ran the real unique-child-database apply, rollback to 20260801033655_AddSequentialScanRunner, predecessor preservation, reapply, termination/drop/absence lane at 4/4. The child database and auto-removing container were independently confirmed absent.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/15",
-      "kind": "red-green-integration",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs",
-        "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryAuthorizationVerifier.cs",
-        "src/dotnet/Vulgata.Web/Program.cs"
-      ],
-      "command": "dotnet test Vulgata.Tests --no-restore --filter ExactCrossRepositoryIntegrationTests; dotnet test Vulgata.Tests --no-restore --filter US3 aggregate; dotnet build Vulgata.Web --no-restore",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T01:34:23Z",
-      "summary": "Transient RED was absent coordinator; cancellation also produced an intended RED before bounded handling. Focused and root rerun passed 9/9; US3 aggregate and root rerun passed 18/18; Web build had 0 errors. Integration proves WaitingForPass1/unauthorized zero access, exact+unsupported apply/replay, authorized/restricted traces, reverse/same-name/negative/concurrent ordinary behavior, queued System context unchanged, live verifier DI, and no scheduler/Pass2/Agent/LLM/MCP/API expansion.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/16",
-      "kind": "security-static-inspection",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Core",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository",
-        "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs",
-        "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs"
-      ],
-      "command": "bounded rg security scans; all focused Story 11.4 tests; git diff --check",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T01:54:16Z",
-      "summary": "Focused Story 11.4 suite passed 110/110. Core EF/IQueryable/DbSet/DataAnnotations scan, production Repository-name/commit conditional scan, placeholder scan, absolute-path/URL/credential/source/diagnostic leakage checks, no scheduler/Agent/API expansion checks, and diff check passed. Reviewed aliases/commits exist only in the immutable embedded profile, as designed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/17",
-      "kind": "candidate-regression",
-      "stage": "implement",
-      "source_commit": "f0790d2f412b6ae4489cf6b8f8350b9a229b47a8",
-      "artifact_paths": [
-        "src/dotnet",
-        "tests/Vulgata.Tests"
-      ],
-      "command": "dotnet build Vulgata.Web --no-restore; dotnet test Vulgata.Tests --no-restore with isolated PostgreSQL 17",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T01:54:16Z",
-      "summary": "Web build passed with 0 errors. Full regression reached 1070/1071 after the PostgreSQL parallel-isolation correction; the sole remaining provider-contract test intentionally requires a clean tracked worktree and is scheduled immediately after this reviewed-candidate commit with the cached accepted image. The PostgreSQL race was reproduced 1/2 RED and corrected 2/2 GREEN without retries; standalone migration remained 4/4 and orphan child DB count was zero.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/18",
-      "kind": "clean-candidate-regression",
-      "stage": "implement",
-      "source_commit": "3295d64d3920d88810cbf74074ed5d9e528f55c4",
-      "artifact_paths": [
-        "src/dotnet",
-        "tests/Vulgata.Tests",
-        "docker/Dockerfile"
-      ],
-      "command": "source-bound Docker build; exact one-shot CodeGraph provider contract; dotnet test Vulgata.Tests excluding only the consumed one-shot provider test",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T02:13:36Z",
-      "summary": "The fresh image sha256:a0996cba45e1083e4dd7ee36a0bce3145edcea95a45afa564c018091bfaf9757 was bound to candidate commit 3295d64d3920d88810cbf74074ed5d9e528f55c4, tree be7915ad0cf16a6cbd6100d483fe287121fc54dd, and canonical 1173-entry production-source manifest d39bbb06f6a18f72e7ec18b07636bfc6671d1cab5b9a1c12fbd084654b7e9f19. The exact pinned 0.5.1 provider gate passed 1/1 and consumed its no-retry namespace. The non-overlapping remaining suite then passed 1070/1070 against PostgreSQL 17, including the previously transient disposable-Git case. Combined current-candidate coverage is 1071/1071 without violating the provider gate's one-shot contract.",
-      "raw_output_path": "TestResults/codegraph-provider-contract/044e49d5c61ab8dc2619b88a91684a2700ceca85ee3b4b6f220ba6b11357d0cd/evidence.json"
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/19",
-      "kind": "quickstart-verification",
-      "stage": "implement",
-      "source_commit": "3295d64d3920d88810cbf74074ed5d9e528f55c4",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/quickstart.md",
-        "specs/007-exact-cross-repo-resolution/tasks.md"
-      ],
-      "command": "quickstart sections 1-8 evidence audit; git diff --check; bounded placeholder scan; git status --short",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T02:13:36Z",
-      "summary": "Quickstart sections 1-8 are covered by the focused 110/110, PostgreSQL apply/rollback/reapply 4/4, no-pending-model-change, integration 9/9, Web build, security/static scans, source-bound Docker build, exact provider 1/1, and remaining regression 1070/1070 evidence. No unresolved placeholder or whitespace error remains. Actual prepared-Repositories clean-database rehearsal, complete Pass 1/Pass 2, and release deployment remain explicitly owned by Story 11.5.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/1",
-      "kind": "combined-quality-review",
-      "stage": "quality-review",
-      "source_commit": "3295d64d3920d88810cbf74074ed5d9e528f55c4",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-3295d64.json"
-      ],
-      "command": "independent combined expedited-mvp quality review of f0790d2f412b6ae4489cf6b8f8350b9a229b47a8..3295d64d3920d88810cbf74074ed5d9e528f55c4",
-      "exit_code": 1,
-      "observed_at": "2026-08-04T02:41:00Z",
-      "summary": "REVISE with QR-3295D64-001 and QR-3295D64-002 HIGH plus QR-3295D64-003 MEDIUM: eligible negative source cases lacked durable Uncertainty, production verifier rejected authorized targetless Uncertainty retrieval, and one lease cleanup failure prevented remaining disposal attempts.",
-      "raw_output_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-3295d64.json"
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/1",
-      "kind": "review-correction-red-green",
-      "stage": "quality-review",
-      "source_commit": "3295d64d3920d88810cbf74074ed5d9e528f55c4",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Core/DomainServices/IExactCrossRepositoryResolver.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs",
-        "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryAuthorizationVerifier.cs",
-        "tests/Vulgata.Tests/ExactResolutionExtractionTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryResolverTests.cs"
-      ],
-      "command": "regression RED/GREEN per QR finding; extraction 38/38; affected suites 48/48; focused Story 11.4; Web build; security/static scans; git diff --check",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T03:28:28Z",
-      "summary": "Observed RED for eligible-negative persistence, targetless production-verifier retrieval, all-lease cleanup, eight real extractor classifications, and four real catalog-to-extractor-to-coordinator-to-store cases. Minimal corrections reached extraction 38/38, affected suites 48/48, and focused Story 11.4 116/116. Eligible real source failures now apply/replay one safe owner-anchored reason-specific Uncertainty with zero Edge; authorized owner-only retrieval works and unauthorized remains missing-equivalent; every lease disposal is attempted and cleanup failure is bounded. Root Web build completed with 0 errors, bounded security scans and diff check passed; existing package/analyzer warnings remain unchanged.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/2",
-      "kind": "clean-correction-candidate-regression",
-      "stage": "quality-review",
-      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
-      "artifact_paths": [
-        "src/dotnet",
-        "tests/Vulgata.Tests",
-        "docker/Dockerfile"
-      ],
-      "command": "source-bound Docker build; exact one-shot CodeGraph provider contract; dotnet test Vulgata.Tests excluding only the consumed one-shot provider test against PostgreSQL 17",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T03:37:57Z",
-      "summary": "Fresh correction image sha256:f9d82cefceb1cb0fd10599ba693d9ab5f88d31a08e4ea16513b238f5a97b887b bound candidate commit 26f6354141702e558779e1a47ceac97030f431a0, tree 7e823bbda65863b95f5cf67d98000b2028be63f8, and canonical manifest 207094c425cc55ba9c8c9abeb10900840b86471282ec7c429996ea58221882b2. The exact pinned provider gate passed 1/1 in fresh no-retry namespace 3eb199c09fb86292e0939b26037b6d8df0304469836eae2cb677a3115db8597c. The remaining non-overlapping PostgreSQL 17 suite passed 1076/1076. Combined current correction-candidate coverage is 1077/1077.",
-      "raw_output_path": "TestResults/codegraph-provider-contract/3eb199c09fb86292e0939b26037b6d8df0304469836eae2cb677a3115db8597c/evidence.json"
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/3",
-      "kind": "corrected-quickstart-verification",
-      "stage": "quality-review",
-      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/quickstart.md",
-        "specs/007-exact-cross-repo-resolution/tasks.md"
-      ],
-      "command": "quickstart sections 1-8 corrected evidence audit; git diff --check; bounded placeholder scan; git status --short",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T03:37:57Z",
-      "summary": "Corrected current boundary satisfies quickstart sections 1-8 with focused 116/116, Web build 0 errors, source-bound provider 1/1, remaining regression 1076/1076, prior PostgreSQL migration lifecycle 4/4 and no-pending-model-change evidence, corrected real negative-path integration, authorization retrieval, cleanup, security, placeholder, whitespace, and path-boundary checks. Story 11.5-only actual prepared-Repositories clean-database, complete Pass 1/Pass 2, retrieval/chat/citation, and release deployment remain explicitly unclaimed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/2",
-      "kind": "combined-quality-review",
-      "stage": "quality-review",
-      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json"
-      ],
-      "command": "independent combined expedited-mvp quality review iteration 2 of f0790d2f412b6ae4489cf6b8f8350b9a229b47a8..26f6354141702e558779e1a47ceac97030f431a0",
-      "exit_code": 1,
-      "observed_at": "2026-08-04T04:03:19Z",
-      "summary": "REVISE with QR-26F6354-001 HIGH. Prior targetless authorization and cleanup findings closed, but well-formed invalid provider declarations and zero/multiple candidate cardinality could still fail in BuildBindingEvidence before real resolver diagnostic conversion, leaving AC-3/FR-014 incomplete.",
-      "raw_output_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-26f6354.json"
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/4",
-      "kind": "review-correction-red-green",
-      "stage": "quality-review",
-      "source_commit": "26f6354141702e558779e1a47ceac97030f431a0",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs",
-        "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs",
-        "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
-        "tests/Vulgata.Tests/ExactResolutionExtractionTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryResolverTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs"
-      ],
-      "command": "four production-composition negative regressions RED/GREEN; extraction/resolver/owner 59/59; integration 19/19; authorization/persistence 15/15; focused Story 11.4; Web build; security scans; git diff --check",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T04:25:23Z",
-      "summary": "Observed 4/4 RED before the bounded internal validated-profile seam and behavior correction. Same real profile-derived extractor/resolver/coordinator/store cases passed 4/4 GREEN for malformed_provider, unmatched, normalization_mismatch, and multiple_providers with replay-stable owner-anchored Uncertainty and zero Edge. Binding evidence now de-duplicates mapped owners without collapsing candidate cardinality, zero/multiple current owner mapping refuses without writes, structural provider violations are typed after unique owner mapping, and public production DI/catalog composition is unchanged. Root focused Story 11.4 passed 121/121; Web build had 0 errors; security and diff checks passed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/5",
-      "kind": "clean-final-candidate-regression",
-      "stage": "quality-review",
-      "source_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "artifact_paths": [
-        "src/dotnet",
-        "tests/Vulgata.Tests",
-        "docker/Dockerfile"
-      ],
-      "command": "source-bound Docker build; exact one-shot CodeGraph provider contract; dotnet test Vulgata.Tests excluding only consumed one-shot provider test against PostgreSQL 17",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T04:32:42Z",
-      "summary": "Fresh final-correction image sha256:a43fdf029e22ae3f83ec1626b66604c1e96d296365f7c05bc002d1a3967d4bfc bound candidate commit 05faffe86e0fe274a93a8741215ee3625da0baff, tree f1790dd5f77fb7810df3490e6e15df495ee868ad, and canonical manifest 6bec2bece5e36055a3a0f3012d795d927b00f7e51678ba7b2b911699638dd4db. Exact provider gate passed 1/1 in fresh no-retry namespace 7a59049171ea7d8c4e41bdf2ce74035c80437cf66709e712212bd7d636585c70; remaining PostgreSQL 17 suite passed 1081/1081. Combined current-candidate coverage is 1082/1082.",
-      "raw_output_path": "TestResults/codegraph-provider-contract/7a59049171ea7d8c4e41bdf2ce74035c80437cf66709e712212bd7d636585c70/evidence.json"
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/6",
-      "kind": "final-quickstart-verification",
-      "stage": "quality-review",
-      "source_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/quickstart.md",
-        "specs/007-exact-cross-repo-resolution/tasks.md"
-      ],
-      "command": "quickstart sections 1-8 final evidence audit; git diff --check; bounded placeholder scan; git status --short",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T04:32:42Z",
-      "summary": "Final automatic correction boundary satisfies quickstart sections 1-8 with focused 121/121, Web build 0 errors, source-bound provider 1/1, remaining regression 1081/1081, prior PostgreSQL migration lifecycle 4/4 and no-pending-model-change, all real negative composition/authorization/cleanup/security/placeholder/whitespace checks. Story 11.5-only actual prepared-Repositories clean-database, complete Pass 1/Pass 2, retrieval/chat/citation, and release deployment remain explicitly unclaimed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/3",
-      "kind": "review-verdict",
-      "stage": "quality-review",
-      "source_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json"
-      ],
-      "command": "independent combined acceptance and quality review iteration 3",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T04:47:58Z",
-      "summary": "ACCEPT with no findings: AC-1 through AC-7, FR-001 through FR-024, and SC-001 through SC-008 passed; QR-3295D64-001/002/003 and QR-26F6354-001 are closed.",
-      "raw_output_path": "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json"
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/conditional-e2e/1",
-      "kind": "e2e-decision",
-      "stage": "conditional-e2e",
-      "source_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/ExactCrossRepositoryIntegrationTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryAuthorizationTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryPersistenceTests.cs",
-        "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs"
-      ],
-      "command": "E2E decision matrix coverage audit against accepted boundary f0790d2..05faffe",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T04:47:58Z",
-      "summary": "SKIPPED-COVERED: current-boundary integration tests completely cover triggered authorization, multi-module persistence, and migration/data-lifecycle predicates. No user-visible workflow changed; Story 11.5 retains actual prepared-Repositories and release Docker E2E.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/verify/1",
-      "kind": "command",
-      "stage": "verify",
-      "source_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/tasks.md",
-        "specs/007-exact-cross-repo-resolution/workflow-state.json",
-        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json"
-      ],
-      "command": "workflow validator; verdict JSON parse; task/status audit; git diff --check; placeholder scan",
-      "exit_code": 0,
-      "observed_at": "2026-08-04T04:47:58Z",
-      "summary": "Completion artifacts are structurally valid, all 37 tasks are complete, story and sprint are done, the accepted verdict is preserved, and whitespace/placeholder/status checks pass.",
-      "raw_output_path": null
-    },
-    {
       "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/complete/1",
       "kind": "analysis",
       "stage": "complete",
-      "source_commit": "05faffe86e0fe274a93a8741215ee3625da0baff",
+      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
       "artifact_paths": [
-        "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
-        "docs/bmad/implementation-artifacts/sprint-status.yaml",
-        "specs/007-exact-cross-repo-resolution/tasks.md",
-        "specs/007-exact-cross-repo-resolution/workflow-state.json",
-        "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json"
+        "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
       ],
-      "command": "Story lifecycle, task coverage, accepted-review, and Story 11.5 ownership audit",
+      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
       "exit_code": 0,
-      "observed_at": "2026-08-04T04:47:58Z",
-      "summary": "Story 11.4 is complete under expedited-mvp with all tasks done, combined quality review accepted, conditional E2E covered, and broader prepared-Repositories/release Docker scope truthfully retained by Story 11.5.",
-      "raw_output_path": null
+      "observed_at": "2026-08-18T03:21:52Z",
+      "summary": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
+      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
     }
   ],
   "last_checkpoint": {
     "checkpoint_id": "bmad-11-4-complete-20260804T044758Z-35c0",
-    "scope_key": "story/11-4-exact-rpc-http-cross-repository-demo-resolution",
+    "scope_key": "11-4-exact-rpc-http-cross-repository-demo-resolution",
     "stage": "complete",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json",
       "specs/007-exact-cross-repo-resolution/tasks.md",
-      "specs/007-exact-cross-repo-resolution/workflow-state.json",
-      "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json"
+      "specs/007-exact-cross-repo-resolution/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/implement/1 through /19",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/1",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/1",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/2",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/3",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/2",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/4",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/5",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review-correction/6",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/quality-review/3",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/conditional-e2e/1",
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/verify/1",
       "11-4-exact-rpc-http-cross-repository-demo-resolution/complete/1"
     ],
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+    "binding_status": "bound"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-04T04:47:58Z"
+  "legacy_migration": {
+    "source_state_path": "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
+    "source_state_sha256": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037",
+    "source_execution_level": "expedited-mvp",
+    "source_stage": "complete",
+    "mapped_stage": "complete",
+    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+    "migrated_at": "2026-08-18T03:21:52Z"
+  },
+  "updated_at": "2026-08-18T03:21:52Z"
 }

@@ -503,6 +503,20 @@ class WorkflowValidationTests(unittest.TestCase):
             errors = validate_repository(root)
             self.assertTrue(any("verdict.schema.json: invalid JSON" in error for error in errors))
 
+    def test_repository_validation_discovers_story_workflow_states(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_path = root / "specs" / "001-example" / "workflow-state.json"
+            state_path.parent.mkdir(parents=True)
+            state = valid_state()
+            state["execution_level"] = "full"
+            state_path.write_text(json.dumps(state), encoding="utf-8")
+            errors = validate_repository(root)
+            self.assertTrue(any(
+                str(state_path) in error and "execution_level must equal unified" in error
+                for error in errors
+            ), errors)
+
     def test_repository_validation_rejects_schema_semantic_corruption(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

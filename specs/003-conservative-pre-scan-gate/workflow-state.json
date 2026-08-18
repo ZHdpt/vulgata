@@ -1,12 +1,12 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "bmad_story_key": "4-3-conservative-pre-scan-gate-and-communication-type-detection",
   "bmad_epic_key": "4",
   "feature_directory": "specs/003-conservative-pre-scan-gate",
-  "execution_level": "expedited-mvp",
+  "execution_level": "unified",
   "stage": "complete",
   "active_gates": {
-    "acceptance-review": {
+    "definition-review": {
       "status": "invalidated",
       "iteration": 0,
       "dispatch_id": null,
@@ -15,1392 +15,124 @@
       "completed_at": null
     },
     "quality-review": {
-      "status": "accepted",
-      "iteration": 6,
-      "dispatch_id": "story43_lease_review",
-      "verdict_path": "specs/003-conservative-pre-scan-gate/reviews/quality-review-6.json",
-      "input_boundary": {
-        "base_commit": "7d1c348d7b5049f010769d16fbd48cca290e2103",
-        "candidate_commit": null,
-        "worktree_diff_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
-        "candidate_bundle_sha256": "e799b775579ec0267c996cc838870578b403133a055c869846d72f315b12a333",
-        "file_sha256": {
-          "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs": "0ea6fa6984ac8a046484ce0d89a8e69c27dd70fbb142cca86bfd74c5a2846398",
-          "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs": "241aac32e1cf723d0a3c06fe7e2343a0d08b6b7cd01057640cc068f6f1df60dc",
-          "tests/Vulgata.Tests/FrameworkDetectionTests.cs": "139fccf9d56deccee58a79b81202345e12bb80a9c3ba4b9b0a37c80397c8775c"
-        }
-      },
-      "completed_at": "2026-08-01T11:01:14.4791635+08:00"
+      "status": "invalidated",
+      "iteration": 0,
+      "dispatch_id": null,
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
     }
   },
   "stage_history": [
     {
-      "stage": "context",
-      "status": "accepted",
-      "started_at": "2026-07-30T02:40:54.9612425Z",
-      "completed_at": "2026-07-30T02:40:54.9612425Z",
-      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "input_hashes": {
-        "docs/bmad/epics.md": "12de4cebad3af356f0a4a2ef8f6755183c354a6a45967c534bdb0496a267c634",
-        "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834"
-      },
-      "agent_role": "story-context-synthesizer",
-      "evidence_paths": [
-        "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "specify",
-      "status": "accepted",
-      "started_at": "2026-07-30T02:40:54.9612425Z",
-      "completed_at": "2026-07-30T02:48:42.5923332Z",
-      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "input_hashes": {
-        "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md": "7c7c3b8198aa2ce70b5399a81fbbfb1d2322f59255c73ecba3ae07ef33bc9b9b",
-        "specs/003-conservative-pre-scan-gate/spec.md": "ed81307515ec3f3ab7867e350eb92329bf2dc16e4832daac2b27a3784ad8b1cb"
-      },
-      "agent_role": "spec-author",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/spec.md",
-        "specs/003-conservative-pre-scan-gate/checklists/requirements.md"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "plan",
-      "status": "accepted",
-      "started_at": "2026-07-30T02:48:42.5923332Z",
-      "completed_at": "2026-07-30T04:03:48.8622966Z",
-      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/spec.md": "ed81307515ec3f3ab7867e350eb92329bf2dc16e4832daac2b27a3784ad8b1cb",
-        ".specify/memory/constitution.md": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5"
-      },
-      "agent_role": "plan-architect",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/plan.md",
-        "specs/003-conservative-pre-scan-gate/research.md",
-        "specs/003-conservative-pre-scan-gate/data-model.md",
-        "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
-        "specs/003-conservative-pre-scan-gate/contracts/pre-scan-handoff.md",
-        "specs/003-conservative-pre-scan-gate/quickstart.md"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "plan-review",
-      "status": "accepted",
-      "started_at": "2026-07-30T02:48:42.5923332Z",
-      "completed_at": "2026-07-30T04:03:48.8622966Z",
-      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/plan.md": "7c956c827f58d67ae42ab6808d4bb8a5e5798356e9e4cc3a37819f2ff1ca475b",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json": "eaee228d42fe149a7d52548bb0d5ee86076cfe94be47fcc53f0373446c9bb9eb"
-      },
-      "agent_role": "plan-judge",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-1.json",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-2.json",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "tasks",
-      "status": "accepted",
-      "started_at": "2026-07-30T04:20:43.9150140Z",
-      "completed_at": "2026-07-30T04:40:37Z",
-      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json": "eaee228d42fe149a7d52548bb0d5ee86076cfe94be47fcc53f0373446c9bb9eb",
-        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json": "5024e082868ee49503b367c6684e457c8b312226bb9b4aacdb70bc4a4cdf85ed"
-      },
-      "agent_role": "task-author",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json",
-        "specs/003-conservative-pre-scan-gate/tasks.md"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "analyze",
-      "status": "accepted",
-      "started_at": "2026-07-30T04:20:43.9150140Z",
-      "completed_at": "2026-07-30T04:40:37Z",
-      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/tasks.md": "7357a816a0385ab0a85b68a433bb993b7d6a71ebcbc8ffe7c1d50578f30c88a1",
-        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json": "5024e082868ee49503b367c6684e457c8b312226bb9b4aacdb70bc4a4cdf85ed"
-      },
-      "agent_role": "artifact-analyst",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "implement",
-      "status": "accepted",
-      "started_at": "2026-07-30T04:40:37Z",
-      "completed_at": "2026-07-30T09:29:42.7038536Z",
-      "input_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json": "f8151100028597acca11e4265a8a8dbbda00d22c830a33d537125421c7f8a96e"
-      },
-      "agent_role": "tdd-implementer",
-      "evidence_paths": [],
-      "failure": null
-    },
-    {
-      "stage": "review",
-      "status": "accepted",
-      "started_at": "2026-07-30T09:29:42.7038536Z",
-      "completed_at": "2026-07-30T11:43:31.9586063Z",
-      "input_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json": "f8151100028597acca11e4265a8a8dbbda00d22c830a33d537125421c7f8a96e"
-      },
-      "agent_role": "quality-reviewer",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-1.json",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-2.json",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-3.json",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-4.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "conditional-e2e",
-      "status": "accepted",
-      "started_at": "2026-07-30T11:20:05.1467016Z",
-      "completed_at": "2026-07-30T11:43:31.9586063Z",
-      "input_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-4.json": "33909e990295d1dba8de0213fe0be43112cb901bf369bbc7de1916116bafd4f9"
-      },
-      "agent_role": "e2e-runner",
-      "evidence_paths": [
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "verify",
-      "status": "accepted",
-      "started_at": "2026-07-30T11:43:31.9586063Z",
-      "completed_at": "2026-07-30T12:09:57.2211007Z",
-      "input_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "input_hashes": {
-        "candidate_bundle_sha256": "f7f81ca46fbce77f3042a7306716450f8384122fbc2ce5159340fbc27f81790e"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/workflow-state.json"
-      ],
-      "failure": null
-    },
-    {
       "stage": "complete",
-      "status": "invalidated",
-      "started_at": "2026-07-30T12:09:57.2211007Z",
-      "completed_at": "2026-07-31T09:22:00.2580528Z",
-      "input_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
+      "status": "accepted",
+      "started_at": "2026-08-18T03:21:52Z",
+      "completed_at": "2026-08-18T03:21:52Z",
+      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
       "input_hashes": {
-        "candidate_bundle_sha256": "f7f81ca46fbce77f3042a7306716450f8384122fbc2ce5159340fbc27f81790e"
+        "specs/003-conservative-pre-scan-gate/workflow-state.json": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd"
       },
       "agent_role": "bmad-sprint-orchestrator",
       "evidence_paths": [
-        "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
-        "docs/bmad/implementation-artifacts/sprint-status.yaml",
-        "specs/003-conservative-pre-scan-gate/workflow-state.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "plan",
-      "status": "accepted",
-      "started_at": "2026-07-31T09:00:00Z",
-      "completed_at": "2026-07-31T09:08:42.3851147Z",
-      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/plan.md": "f70eb515835046dde4252b50c08a3e3c52e4edf43197c30f63ef08ddb5a288e3",
-        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md": "beec11ae88baa819640e3f00975c98b506d27fd60bd82282566141009de93c71"
-      },
-      "agent_role": "plan-architect",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/plan.md",
-        "specs/003-conservative-pre-scan-gate/research.md",
-        "specs/003-conservative-pre-scan-gate/data-model.md",
-        "specs/003-conservative-pre-scan-gate/contracts/communication-detection.md",
-        "specs/003-conservative-pre-scan-gate/contracts/repository-profiling-composition.md",
-        "specs/003-conservative-pre-scan-gate/quickstart.md"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "plan-review",
-      "status": "accepted",
-      "started_at": "2026-07-31T09:00:00Z",
-      "completed_at": "2026-07-31T09:08:42.3851147Z",
-      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/plan.md": "f70eb515835046dde4252b50c08a3e3c52e4edf43197c30f63ef08ddb5a288e3",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json": "55a8225d989f0d1d05681c540d5cea6e0e5475e1a9780327de5813b3e2984e13"
-      },
-      "agent_role": "plan-judge",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "tasks",
-      "status": "accepted",
-      "started_at": "2026-07-31T09:08:42.3851147Z",
-      "completed_at": "2026-07-31T09:22:00.2580528Z",
-      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json": "5d5a1f549066b75963b993d9bfc7f29d43d31ab5f9a7b9900ae6068dd76eb52e",
-        "specs/003-conservative-pre-scan-gate/tasks.md": "36aa14315f8aee481e46bb042f9e7922e3711265cb675d1273d902433b7e3bd1"
-      },
-      "agent_role": "task-author",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json",
-        "specs/003-conservative-pre-scan-gate/tasks.md"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "implement",
-      "status": "accepted",
-      "started_at": "2026-07-31T09:22:00.2580528Z",
-      "completed_at": "2026-07-31T11:39:50.5499241Z",
-      "input_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/tasks.md": "36aa14315f8aee481e46bb042f9e7922e3711265cb675d1273d902433b7e3bd1"
-      },
-      "agent_role": "tdd-implementer",
-      "evidence_paths": [],
-      "failure": null
-    },
-    {
-      "stage": "review",
-      "status": "accepted",
-      "started_at": "2026-07-31T11:00:00Z",
-      "completed_at": "2026-07-31T11:39:50.5499241Z",
-      "input_commit": "4968a0431caf52583d50720951d6a11b294381d8",
-      "input_hashes": {
-        "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json": "239b896ac20198ce883c160c996077405f11c992d0af74303ea67cdb0c024807"
-      },
-      "agent_role": "quality-reviewer",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "conditional-e2e",
-      "status": "accepted",
-      "started_at": "2026-07-31T11:39:50.5499241Z",
-      "completed_at": "2026-07-31T11:39:50.5499241Z",
-      "input_commit": "4968a0431caf52583d50720951d6a11b294381d8",
-      "input_hashes": {
-        "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e"
-      },
-      "agent_role": "e2e-runner",
-      "evidence_paths": [
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "verify",
-      "status": "accepted",
-      "started_at": "2026-07-31T11:39:50.5499241Z",
-      "completed_at": "2026-07-31T12:04:12.0715146Z",
-      "input_commit": "4968a0431caf52583d50720951d6a11b294381d8",
-      "input_hashes": {
-        "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json",
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "complete",
-      "status": "active",
-      "started_at": "2026-07-31T12:04:12.0715146Z",
-      "completed_at": null,
-      "input_commit": "f8f8253d19f0776dea1b24cefd20b9dc4de30d80",
-      "input_hashes": {
-        "candidate_bundle_sha256": "6522bfc62bdb56c6a81969548a799a5262d5d336dae5becfc218ffd41316656e",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json": "239b896ac20198ce883c160c996077405f11c992d0af74303ea67cdb0c024807"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
-        "docs/bmad/implementation-artifacts/sprint-status.yaml",
-        "specs/003-conservative-pre-scan-gate/workflow-state.json"
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
       ],
       "failure": null
     }
   ],
   "repository_preflight": {
-    "branch": "dev",
-    "preflight_head": "1b9c98bb4999e254ab19704643477732f92c842c",
+    "branch": "demo0831/main",
+    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
     "repository_root": ".",
     "git_common_directory": ".git",
     "worktree_path": ".",
-    "worktree_status": "Accepted July 31 Story 4.3 architecture remediation active on dev; planning and failed Epic 4 gate evidence are owned by the root orchestrator.",
+    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
     "owned_paths": [
-      ".specify/feature.json",
-      "AGENTS.md",
-      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/implementation-artifacts/workflow-activations/4-3-conservative-pre-scan-gate-and-communication-type-detection.json",
-      "specs/003-conservative-pre-scan-gate"
+      "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
+      "specs/003-conservative-pre-scan-gate/workflow-state.json",
+      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-07-31T09:22:00.2580528Z"
+    "observed_at": "2026-08-18T03:21:52Z"
   },
-  "source_artifacts": [
-    {
-      "authority": "bmad-story",
-      "path": "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
-      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "sha256": "852049fcdd436c9c3c1d45616bc5832be67bf1b342faa88ae0487075c9aff9e5"
-    },
-    {
-      "authority": "speckit-specification",
-      "path": "specs/003-conservative-pre-scan-gate/spec.md",
-      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "sha256": "b099383dfd7f66c483c080bad474a931233d5a09e47f7bca37b1ea1ecf6ecd68"
-    },
-    {
-      "authority": "bmad-epics",
-      "path": "docs/bmad/epics.md",
-      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "sha256": "12de4cebad3af356f0a4a2ef8f6755183c354a6a45967c534bdb0496a267c634"
-    },
-    {
-      "authority": "prd",
-      "path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
-      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "sha256": "af4794d91efcc280a01c7e380e3434e9ea969f5978963fb7eee08ba2d8e88834"
-    },
-    {
-      "authority": "constitution",
-      "path": ".specify/memory/constitution.md",
-      "commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "sha256": "1b6c1c1bf13d0a398a4c1dc5a3572defd350e8470766bb1fb6c111ecb534c1e5"
-    }
-  ],
-  "dispatches": [
-    {
-      "dispatch_id": "story43_context",
-      "role": "story-context-synthesizer",
-      "objective": "Synthesize the bounded Story 4.3 context from raw repository authorities.",
-      "source_boundary": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "permitted_writes": [],
-      "output_path": "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
-      "returned_evidence": [
-        "source-grounded context brief"
-      ]
-    },
-    {
-      "dispatch_id": "story43_spec",
-      "role": "spec-author",
-      "objective": "Create and validate one concise expedited-mvp Story 4.3 specification.",
-      "source_boundary": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "permitted_writes": [
-        ".specify/feature.json",
-        "specs/003-conservative-pre-scan-gate/spec.md",
-        "specs/003-conservative-pre-scan-gate/checklists/requirements.md"
-      ],
-      "output_path": "specs/003-conservative-pre-scan-gate/spec.md",
-      "returned_evidence": [
-        "specs/003-conservative-pre-scan-gate/spec.md",
-        "specs/003-conservative-pre-scan-gate/checklists/requirements.md"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t004_t006",
-      "role": "tdd-implementer",
-      "objective": "Implement and harden the exact committed-tree snapshot boundary with observed RED-GREEN evidence.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed missing-contract RED",
-        "observed cleanup-lock RED",
-        "focused committed-snapshot GREEN 12/12",
-        "profiling regression GREEN 62/62"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t007_t009",
-      "role": "tdd-implementer",
-      "objective": "Bind every profiling reader and final persistence to one verified committed snapshot lease.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
-        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-        "src/dotnet/Vulgata.Web/Program.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed five-case missing-snapshot-service RED",
-        "observed cleanup-denial RED",
-        "profiling GREEN 66/66",
-        "snapshot and candidate regression GREEN 15/15",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t010_t012",
-      "role": "tdd-implementer",
-      "objective": "Create the non-circular profile-to-approved-result domain lifecycle and closed classification invariants.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Core/Entities/PreScanResult.cs",
-        "src/dotnet/Vulgata.Core/Entities/CommunicationKindClassification.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/IPreScanCommunicationDetector.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed missing-domain-type RED",
-        "domain lifecycle GREEN 33/33",
-        "profiling and candidate regression GREEN 69/69",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t013_t016",
-      "role": "tdd-implementer",
-      "objective": "Implement the embedded closed RPC/HTTP rule catalog and bounded snapshot-only communication classifier.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/Catalog/communication-evidence-rules.v1.json",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationEvidenceRuleCatalog.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed missing-namespace RED",
-        "observed unsafe-catalog-token RED",
-        "observed direct-token false-positive RED",
-        "observed unbounded-catalog-read RED",
-        "closed classification GREEN 49/49",
-        "profiling and candidate regression GREEN 69/69",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t017_t019",
-      "role": "tdd-implementer",
-      "objective": "Preserve complete authoritative communication truth while retaining a deterministic bounded evidence sample.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed over-100 result-construction RED",
-        "adversarial sampling and fingerprint GREEN 50/50",
-        "profiling and candidate regression GREEN 69/69",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t020_t023_retry",
-      "role": "tdd-implementer",
-      "objective": "Atomically persist one completed Repository Profile with its approved revision-bound Pre-Scan Result and classifications.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "tests/Vulgata.Tests/RepositoryApiTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-        "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
-        "src/dotnet/Vulgata.Core/Entities/PreScanResult.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanRunConfiguration.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/PreScanResultConfiguration.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CommunicationKindClassificationConfiguration.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-        "src/dotnet/Vulgata.Web/Program.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "initial implementer interrupted before production mutation",
-        "observed missing composite repository contract RED",
-        "observed EF child materialization and early revision persistence RED",
-        "observed explicit composite contract RED",
-        "observed missing closed classification checks RED",
-        "observed Repository-unbound result foreign-key RED",
-        "atomic persistence GREEN 7/7",
-        "profiling regression GREEN 74/74",
-        "communication detection GREEN 50/50",
-        "repository API GREEN 16/16",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t024_t026",
-      "role": "tdd-implementer",
-      "objective": "Generate and prove one additive reversible AddConservativePreScanGate migration.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/MigrationTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.Designer.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed missing migration and pending-model RED",
-        "shared test-project compile RED serialized behind handoff lane",
-        "migration generated without network access",
-        "PreScanMigrationTests GREEN 3/3",
-        "no pending EF model changes"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t027_t030",
-      "role": "tdd-implementer",
-      "objective": "Expose one authorized revision-bound Approved Pre-Scan Handoff through existing ScanRun GET routes.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs",
-        "tests/Vulgata.Tests/RepositoryApiTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/ApprovedPreScanHandoff.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-        "src/dotnet/Vulgata.Shared/Repositories/ApprovedPreScanHandoffDto.cs",
-        "src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs",
-        "src/dotnet/Vulgata.Web/Program.cs",
-        "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed missing handoff types and service RED",
-        "PreScanHandoffTests GREEN 5/5",
-        "RepositoryApiTests GREEN 18/18",
-        "authorization and non-disclosure selection GREEN 11/11",
-        "communication detection regression GREEN 50/50",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_t031_t033",
-      "role": "tdd-implementer",
-      "objective": "Persist the exact closed Chinese approval outcome and emit bounded identifier/count-only observability.",
-      "source_boundary": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs",
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-        "src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "observed missing closed ScanRun approval recorder RED",
-        "observed null durable ScanRun message RED",
-        "focused observability GREEN 6/6",
-        "handoff, profiling, and detector regressions GREEN 135/135",
-        "no pending EF model changes",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_review_correction1",
-      "role": "tdd-implementer",
-      "objective": "Correct quality-review iteration 1 High findings for annotation-string decoys and committed configuration-only evidence.",
-      "source_boundary": "64930fce2af96767c95abb848807eadd0419ad3f",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "focused reviewer-defect RED 0/2",
-        "focused reviewer-defect GREEN 2/2",
-        "communication detection GREEN 52/52",
-        "profiling regression GREEN 78/78",
-        "root combined rebuild GREEN 130/130",
-        "Web build 0 errors"
-      ]
-    },
-    {
-      "dispatch_id": "story43_review_correction2",
-      "role": "tdd-implementer",
-      "objective": "Correct quality-review iteration 2 High findings for pre-materialization archive entry bounds and language/lexical-context-safe direct annotation detection.",
-      "source_boundary": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "permitted_writes": [
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "entry-bound focused RED 0/1",
-        "lexical/language focused RED 0/3",
-        "entry-bound focused GREEN 1/1",
-        "lexical/language plus valid-annotation GREEN 5/5",
-        "root detector/profiling rebuild GREEN 136/136",
-        "root non-final-image regression GREEN 612/612",
-        "Web build 0 errors",
-        "Medium QR2-003/004/005 untouched"
-      ]
-    },
-    {
-      "dispatch_id": "story43_e2e",
-      "role": "e2e-runner",
-      "objective": "Execute the required Story 4.3 prepared-configuration, persistence, replay, and authorized-handoff E2E boundary.",
-      "source_boundary": "f501103657c67325be304a3b92ca779c75c74bbe plus accepted correction diff 5d504730573a51643950915ede14bccf35c6274f5708999fc23cc3902c45c2bd",
-      "permitted_writes": [
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs"
-      ],
-      "output_path": null,
-      "returned_evidence": [
-        "existing 164-test relevant boundary GREEN but incomplete for three configuration filenames",
-        "initial failures classified and corrected as test-fixture defects",
-        "new prepared committed configuration E2E GREEN 1/1",
-        "combined E2E-relevant boundary GREEN 165/165",
-        "properties, yml, and yaml flattened syntax exercised",
-        "atomic persistence, replay, exact revision, and schema 1.0 handoff exercised",
-        "quality-review-3 invalidated by tracked test addition",
-        "no product hash drift"
-      ]
-    }
-  ],
+  "source_artifacts": [],
+  "dispatches": [],
   "review_iterations": {
-    "spec-review": {
+    "plan-review": {
       "count": 0,
       "verdict_paths": []
     },
-    "plan-review": {
-      "count": 4,
-      "verdict_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-1.json",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-2.json",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json"
-      ]
+    "definition-review": {
+      "count": 0,
+      "verdict_paths": []
     },
-    "analyze": {
-      "count": 1,
-      "verdict_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json"
-      ]
-    },
-    "acceptance-review": {
+    "converge": {
       "count": 0,
       "verdict_paths": []
     },
     "quality-review": {
-      "count": 5,
-      "verdict_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-1.json",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-2.json",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-3.json",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-4.json",
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json"
-      ]
+      "count": 0,
+      "verdict_paths": []
     }
   },
+  "convergence": {
+    "status": "accepted",
+    "iteration": 0,
+    "outcome": "converged",
+    "findings_count": 0,
+    "appended_task_ids": [],
+    "artifact_hashes": {
+      "specs/003-conservative-pre-scan-gate/workflow-state-v1.json": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd"
+    },
+    "completed_at": "2026-08-18T03:21:52Z"
+  },
   "e2e_decision": {
-    "triggered_predicates": [
-      {
-        "predicate_id": "user-visible-workflow",
-        "change_type": "User-visible workflow",
-        "gate": "required",
-        "triggered": true,
-        "affected_paths": [
-          "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-          "src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs"
-        ],
-        "affected_behavior": "Exact Simplified-Chinese approval outcome and authorized Pre-Scan Handoff.",
-        "evidence": [
-          "4-3-conservative-pre-scan-gate-and-communication-type-detection/e2e/prepared-config-persistence-handoff-green"
-        ]
-      },
-      {
-        "predicate_id": "authorization",
-        "change_type": "Authentication/authorization",
-        "gate": "required",
-        "triggered": true,
-        "affected_paths": [
-          "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
-          "src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs"
-        ],
-        "affected_behavior": "ManagementAccess handoff visibility and post-materialization revocation non-disclosure.",
-        "evidence": [
-          "4-3-conservative-pre-scan-gate-and-communication-type-detection/e2e/prepared-config-persistence-handoff-green"
-        ]
-      },
-      {
-        "predicate_id": "api-persistence-multimodule",
-        "change_type": "API/persistence/multi-module integration",
-        "gate": "required",
-        "triggered": true,
-        "affected_paths": [
-          "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-          "src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs"
-        ],
-        "affected_behavior": "Committed configuration detection through atomic persistence, replay, and schema 1.0 handoff.",
-        "evidence": [
-          "4-3-conservative-pre-scan-gate-and-communication-type-detection/e2e/prepared-config-persistence-handoff-green"
-        ]
-      },
-      {
-        "predicate_id": "migration-data-lifecycle",
-        "change_type": "EF migration or observable data lifecycle",
-        "gate": "required",
-        "triggered": true,
-        "affected_paths": [
-          "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.cs",
-          "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs"
-        ],
-        "affected_behavior": "One logical Pre-Scan Result across atomic commit and same-fingerprint replay.",
-        "evidence": [
-          "4-3-conservative-pre-scan-gate-and-communication-type-detection/e2e/prepared-config-persistence-handoff-green",
-          "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t035-postgresql-green"
-        ]
-      }
-    ],
-    "complete_coverage_override": null,
-    "required": true,
-    "rationale": "A fresh independent clean-database two-Repository production-composition E2E passed after accepted quality review 5, using real production services except the external CodeGraph provider.",
-    "covering_tests": [
-      "Story43EndToEndTests.PreparedCommittedConfigurations_ThreeFlattenedSyntaxes_DetectPersistReplayAndMaterializeApprovedHandoffAsync",
-      "PreScanCommunicationDetectionTests",
-      "RepositoryProfilingTests",
-      "PreScanHandoffTests",
-      "RepositoryApiTests",
-      "PreScanMigrationTests"
-    ],
-    "owner": "e2e-runner",
-    "result": "passed",
+    "required": false,
+    "predicates": [],
+    "coverage_override": null,
+    "rationale": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
+    "covering_tests": [],
+    "owner": "orchestrator",
     "source_boundary": {
-      "base_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
+      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
       "candidate_commit": null,
-      "diff_sha256": "f7f81ca46fbce77f3042a7306716450f8384122fbc2ce5159340fbc27f81790e",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "artifact_hashes": {
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs": "93584a35d47a281d74251474a122a89cdaf1c2b297f7b1667a12739dd864ae74",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs": "0f532d534b92b165649c7d1dfb45ecbb117ca034b76027de18d568da902b4aaf",
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs": "ebcd4f99c4711c38904e73379ed09897f2cddfc1f06286f5cff1d32eb19c3a4b",
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs": "87a8bef3c95cf78dbf1c430424462eaa588e7b96b5b99764b56fa416ba4eacea"
+        "specs/003-conservative-pre-scan-gate/workflow-state.json": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd"
       },
       "owned_paths": [
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs"
+        "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
+        "specs/003-conservative-pre-scan-gate/workflow-state.json",
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
       ]
     },
+    "result": "passed",
     "evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/e2e-production-composition-green"
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/complete/1"
     ]
   },
   "verification": [
     {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/quality-review-5-accept",
-      "kind": "review",
-      "stage": "review",
-      "source_commit": "4968a0431caf52583d50720951d6a11b294381d8",
-      "artifact_paths": [
-        "specs/003-conservative-pre-scan-gate/reviews/quality-review-5.json"
-      ],
-      "command": null,
-      "exit_code": 0,
-      "observed_at": "2026-07-31T11:39:50.5499241Z",
-      "summary": "Independent combined quality review accepted the exact 13-file candidate with no unresolved Critical/High; one nonblocking Medium legacy concrete-overload test-surface debt remains.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/e2e-production-composition-green",
-      "kind": "e2e",
-      "stage": "conditional-e2e",
-      "source_commit": "4968a0431caf52583d50720951d6a11b294381d8",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Story43EndToEndTests.ProductionComposition_; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Story43EndToEndTests",
-      "exit_code": 0,
-      "observed_at": "2026-07-31T11:39:50.5499241Z",
-      "summary": "Independent E2E passed production composition 1/1 and the complete Story 4.3 E2E class 2/2 with two exact-revision Repositories, atomic approvals, no dispatch artifacts, and no boundary drift.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/final-verification-green",
-      "kind": "verification",
-      "stage": "verify",
-      "source_commit": "4968a0431caf52583d50720951d6a11b294381d8",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
-        "docker/Dockerfile",
-        "tests/Vulgata.Tests/Vulgata.Tests.csproj"
-      ],
-      "command": "dotnet ef migrations has-pending-model-changes --context VulgataDbContext; focused tests; dotnet build Vulgata.Web; repeatable full suite excluding only the environment-bound CodeGraph final-image lane; docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3-architecture-remediation .",
-      "exit_code": 0,
-      "observed_at": "2026-07-31T11:39:50.5499241Z",
-      "summary": "No pending model change; migration tests 3/3; focused remediation 179/179; Web build zero errors; repeatable full suite 624/624; Docker build succeeded. The literal unfiltered suite additionally passed 624 tests and failed only because the separate final-image environment variable was absent.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/remediation/planned-change-authorization-2",
-      "kind": "human-approval",
-      "stage": "plan-review",
-      "source_commit": "1b9c98bb4999e254ab19704643477732f92c842c",
-      "artifact_paths": [
-        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-31-epic-4-architecture-remediation.md",
-        "specs/003-conservative-pre-scan-gate/plan.md",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-4.json",
-        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-2.json",
-        "specs/003-conservative-pre-scan-gate/tasks.md"
-      ],
-      "command": null,
-      "exit_code": null,
-      "observed_at": "2026-07-31T09:08:42.3851147Z",
-      "summary": "User explicitly approved the accepted correction to the Story 4.3 Scan strategy for task generation; all implementation, review, clean-database E2E, migration-neutrality, and Docker gates remain required.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/plan-review/4",
-      "kind": "human-approval",
-      "stage": "plan-review",
-      "source_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
-      "artifact_paths": [
-        "specs/003-conservative-pre-scan-gate/plan.md",
-        "specs/003-conservative-pre-scan-gate/reviews/plan-review-3.json",
-        "specs/003-conservative-pre-scan-gate/evidence/planned-change-authorization-1.json"
-      ],
-      "command": null,
-      "exit_code": null,
-      "observed_at": "2026-07-30T04:20:43.9150140Z",
-      "summary": "User explicitly approved the accepted Story 4.3 Scan strategy for progression to task generation only; all later workflow gates remain required.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/analyze/1",
+      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/complete/1",
       "kind": "analysis",
-      "stage": "analyze",
-      "source_commit": "e7597082bf6acd4e7dfa05a56d393deae787a3d4",
+      "stage": "complete",
+      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
       "artifact_paths": [
-        "specs/003-conservative-pre-scan-gate/tasks.md",
-        "specs/003-conservative-pre-scan-gate/reviews/analyze-1.json"
+        "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
       ],
-      "command": null,
-      "exit_code": null,
-      "observed_at": "2026-07-30T04:40:37Z",
-      "summary": "Read-only analysis accepted with FR 19/19, SC 7/7, scenarios 12/12, Story ACs 6/6, edge cases 6/6, and all nine RED-to-GREEN groups covered; no findings.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t004-t006-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PreScanCommunicationDetectionTests",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T05:09:50.7753605Z",
-      "summary": "Initial RED proved the committed-snapshot contract was absent; the hardening RED then produced 11 passed and 1 failed, reproducing cleanup exception masking and a repository semaphore that could not be reacquired.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t004-t006-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/GitWorkingCopyService.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PreScanCommunicationDetectionTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ScanCandidateEnumeratorTests|FullyQualifiedName~RepositoryProfilingTests",
+      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
       "exit_code": 0,
-      "observed_at": "2026-07-30T05:09:50.7753605Z",
-      "summary": "Root independently verified committed-snapshot GREEN 12/12 and existing candidate/profiling regressions GREEN 62/62. Existing NU1507 and EF assembly-version conflict warnings remain outside this group.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t007-t009-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RepositoryProfilingTests",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T05:40:33.4306643Z",
-      "summary": "The first RED ran 64 tests with 59 passing and five new cases failing because the coordinator had no committed-snapshot service dependency. A review hardening RED later ran 66 tests with one cleanup-denial failure because DisposeAsync leaked IOException.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t007-t009-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs",
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
-        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
-        "src/dotnet/Vulgata.Web/Program.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RepositoryProfilingTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreScanCommunicationDetectionTests|FullyQualifiedName~ScanCandidateEnumeratorTests; dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T05:40:33.4306643Z",
-      "summary": "Root independently verified profiling GREEN 66/66, snapshot/candidate regression GREEN 15/15, and Web build success with 0 errors. All readers use one verified snapshot root; five late-mutation modes fail before final profile persistence; cleanup denial neither escapes nor strands the Repository lock. The build reports nine existing NU1507 and EF assembly-version conflict warnings.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t010-t012-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PreScanCommunicationDetectionTests",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T06:19:39.0799172Z",
-      "summary": "Compile RED observed CS0246 and CS0103 for the absent Pre-Scan Result, Communication Kind Classification, closed values, and lifecycle drafts before any T010-T012 production type existed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t010-t012-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Core/Entities/PreScanResult.cs",
-        "src/dotnet/Vulgata.Core/Entities/CommunicationKindClassification.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/IPreScanCommunicationDetector.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/RepositoryProfilingContracts.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreScanCommunicationDetectionTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~ScanCandidateEnumeratorTests",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T06:19:39.0799172Z",
-      "summary": "Root independently verified domain lifecycle GREEN 33/33 and profiling/candidate regressions GREEN 69/69. RepositoryProfileDraft remains profile-only; Core production paths contain no EF or Infrastructure dependency and no intermediate durable state.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t013-t016-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PreScanCommunicationDetectionTests",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T07:01:07.8321543Z",
-      "summary": "Initial compile RED proved the CommunicationDetection Infrastructure boundary was absent. Subsequent review REDs proved unsafe catalog vocabulary, comment/string/import/code false confirmations, and an unbounded non-seekable catalog read before each correction.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t013-t016-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/Catalog/communication-evidence-rules.v1.json",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationEvidenceRuleCatalog.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreScanCommunicationDetectionTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~ScanCandidateEnumeratorTests",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T07:01:07.8321543Z",
-      "summary": "Root independently verified closed classification GREEN 49/49 and profiling/candidate regressions GREEN 69/69. Catalog reading stops at 64 KiB plus one probe, only approved exact vocabulary loads, false lexical tokens do not confirm, and retained locators contain no source, secret, or host root.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t017-t019-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PreScanCommunicationDetectionTests.DetectAsync_OverOneHundredBothKindsAndPermutation_RetainsAuthoritativeDeterministicSample",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T07:22:53.9185798Z",
-      "summary": "The adversarial RED threw ArgumentOutOfRangeException because the detector attempted to construct a Pre-Scan Result with more than 100 retained classifications.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t017-t019-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreScanCommunicationDetectionTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~ScanCandidateEnumeratorTests",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T07:22:53.9185798Z",
-      "summary": "Root independently verified adversarial communication detection GREEN 50/50 and profiling/candidate regressions GREEN 69/69. Full normalized evidence determines Rpc and Http truth, totals, and streaming fingerprint before deterministic 100-row sampling reserves both kinds and the truncation warning.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t020-t023-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~PreScanPersistence",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T08:14:54.5018016Z",
-      "summary": "Initial compile RED proved the composite repository method was absent. Runtime and root-review REDs then exposed fixed-size EF child materialization, early durable revision binding, a non-abstract profile-only fallback, missing closed classification constraints, and a Repository-unbound result foreign key.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t020-t023-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "tests/Vulgata.Tests/RepositoryApiTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/IScanRunRepository.cs",
-        "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/PreScanResultConfiguration.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CommunicationKindClassificationConfiguration.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RepositoryProfilingTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreScanCommunicationDetectionTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RepositoryApiTests",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T08:14:54.5018016Z",
-      "summary": "Root independently verified profiling and atomic persistence GREEN 74/74, communication detection GREEN 50/50, and repository API regressions GREEN 16/16. Composite persistence is explicit, transactional, Repository- and revision-bound, idempotent only for the same fingerprint, and rollback-safe with closed database classification constraints.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t024-t026",
-      "kind": "migration",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/MigrationTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.Designer.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreScanMigrationTests; dotnet ef migrations has-pending-model-changes --context VulgataDbContext --project src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj --startup-project src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-build",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T08:41:36.6194544Z",
-      "summary": "Root independently verified migration tests GREEN 3/3 and no pending model changes. The additive migration creates only the approved result/classification tables plus nullable ScanRun.ProfiledRevision, enforces closed ownership and compatibility constraints, and rolls back to the prior baseline.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t027-t030-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs",
-        "tests/Vulgata.Tests/RepositoryApiTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~PreScanHandoffTests|FullyQualifiedName~ManagementScanRunGetRoutes_ApprovedPreScanHandoff|FullyQualifiedName~RepositoryEndpoints_PreScanHandoff",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T08:41:36.6194544Z",
-      "summary": "Compile RED observed missing Approved Pre-Scan Handoff domain, DTO, and service types before production implementation.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t027-t030-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs",
-        "tests/Vulgata.Tests/RepositoryApiTests.cs",
-        "src/dotnet/Vulgata.Core/DomainServices/ApprovedPreScanHandoff.cs",
-        "src/dotnet/Vulgata.Shared/Repositories/ApprovedPreScanHandoffDto.cs",
-        "src/dotnet/Vulgata.Web/Data/PreScanHandoffService.cs",
-        "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreScanHandoffTests|FullyQualifiedName~RepositoryApiTests",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T08:41:36.6194544Z",
-      "summary": "Root independently verified handoff and Repository API GREEN 23/23. The schema 1.0 projection is bounded, flag-derived, revision-bound, redacted, pre/post visibility checked, composed only into existing ManagementAccess GET routes, and grants no dispatch authority.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t031-t033-red",
-      "kind": "tdd-red",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~StartStandaloneRepository_ApprovedPreScanOutcome_PersistsExactMessageAndEmitsBoundedStructuredLog",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T08:59:06.0118962Z",
-      "summary": "Both exact-message rows failed because completed ScanRuns had no closed approval recorder and durable TerminalMessage remained null.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t031-t033-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs",
-        "src/dotnet/Vulgata.Core/Entities/ScanRun.cs",
-        "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~PreScanHandoffTests|FullyQualifiedName~PreScanCommunicationDetectionTests; dotnet ef migrations has-pending-model-changes --context VulgataDbContext --project src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj --startup-project src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-build",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T08:59:06.0118962Z",
-      "summary": "Root independently verified final profiling/handoff/detector GREEN 135/135 and no pending model changes. Both closed Chinese outcomes persist on ScanRun; captured approval logs contain only bounded identifiers, closed state/schema, counts, truncation, and rule-set version, while revoked reads disclose nothing.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t034-partial-green",
-      "kind": "test",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
-        "specs/002-language-framework-detection/reviews/plan-review-10.json"
-      ],
-      "command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName!~CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T09:18:14.2839697Z",
-      "summary": "Root traced both checkout-byte failures to machine-level core.autocrlf=true, pinned the Git fixture to canonical LF behavior, restored the accepted Story 4.2 binding artifacts as byte-identical LF working files, and verified the complete non-final-image suite GREEN 604/604. The environment-bound final-image test is not included in this claim.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t035-postgresql-green",
-      "kind": "migration",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260730083207_AddConservativePreScanGate.cs",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
-        "tests/Vulgata.Tests/MigrationTests.cs",
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs"
-      ],
-      "command": "PostgreSQL 17 isolated database: dotnet ef database update; rollback to 20260720060442_FrameworkEvidenceAuditCount; reapply; dotnet ef migrations has-pending-model-changes",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T09:18:14.2839697Z",
-      "summary": "Clean PostgreSQL 17 apply through AddConservativePreScanGate, rollback, reapply, and no-pending-model check all exited 0; current-boundary profiling, persistence, migration, and authorized handoff coverage was already GREEN.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t036-docker-network-failure",
-      "kind": "runtime",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "docker/Dockerfile",
-        "src/dotnet/Vulgata.Web/Program.cs"
-      ],
-      "command": "docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3 .",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T09:18:14.2839697Z",
-      "summary": "Recoverable container-network failure: http://archive.ubuntu.com/ubuntu/dists/noble/InRelease returned HTTP 502 from 91.189.91.83:80 after five configured retries. Cached pinned base and CodeGraph layers were available; no Dockerfile workaround was made.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/implement/t036-docker-green",
-      "kind": "runtime",
-      "stage": "implement",
-      "source_commit": "d47a9f1ad56b2a5981e73e33552b8e8a5c624f1d",
-      "artifact_paths": [
-        "docker/Dockerfile",
-        "src/dotnet/Vulgata.Web/Program.cs"
-      ],
-      "command": "docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3 .",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T09:27:19.6235927Z",
-      "summary": "The unchanged retry completed successfully and produced vulgata:story-4-3 at immutable image sha256:63cce7a38d827de131a30e5c401d0aecede30e54992ff6bd9e2778dbbc2edc28. The prior Ubuntu mirror failure was transient; no Dockerfile or proxy workaround was committed.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/review/quality-review-1-correction-red",
-      "kind": "tdd-red",
-      "stage": "review",
-      "source_commit": "64930fce2af96767c95abb848807eadd0419ad3f",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~DetectAsync_AnnotationLeadingStringArgumentDecoys_DoNotCreateConfirmedEvidence|FullyQualifiedName~DetectAsync_ConfigOnlyCommittedArtifacts_ReturnsConfirmedRpcAndHttp",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T10:06:25.1773517Z",
-      "summary": "Observed focused RED 0/2: annotation-string decoys were incorrectly promoted to Rpc and Http, while the committed configuration-only snapshot produced neither kind.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/review/quality-review-1-correction-green",
-      "kind": "test",
-      "stage": "review",
-      "source_commit": "64930fce2af96767c95abb848807eadd0419ad3f",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~PreScanCommunicationDetectionTests|FullyQualifiedName~RepositoryProfilingTests; dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T10:06:25.1773517Z",
-      "summary": "Root independently rebuilt and verified detector/profiling GREEN 130/130 and Web build 0 errors. Exact leading Java/.NET invocation parsing rejects string-argument decoys, while bounded deterministic scanning of committed application.properties/yml/yaml artifacts confirms prepared RPC/HTTP configuration evidence.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/review/quality-review-2-correction-red",
-      "kind": "tdd-red",
-      "stage": "review",
-      "source_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~AcquireAsync_EntryBoundExceeded_RejectsBeforeCreatingExcessDestinationAndCleansPartialSnapshot; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~DetectAsync_JavaMultilineLexicalDecoys_DoNotCreateConfirmedEvidence|FullyQualifiedName~DetectAsync_CSharpMultilineLexicalDecoys_DoNotCreateConfirmedEvidence|FullyQualifiedName~DetectAsync_ForeignLanguageAnnotationTokens_DoNotCreateConfirmedEvidence",
-      "exit_code": 1,
-      "observed_at": "2026-07-30T11:20:05.1467016Z",
-      "summary": "Observed entry-bound RED 0/1 because the first excess destination existed before cleanup, and lexical/language RED 0/3 because Java and C# multiline decoys plus a Python Code Unit produced false Confirmed Rpc/Http evidence.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/review/quality-review-2-correction-green",
-      "kind": "test",
-      "stage": "review",
-      "source_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Infrastructure/Git/CommittedRepositorySnapshotService.cs",
-        "src/dotnet/Vulgata.Infrastructure/CommunicationDetection/CommunicationKindDetector.cs",
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Vulgata.Tests.PreScanCommunicationDetectionTests|FullyQualifiedName~Vulgata.Tests.RepositoryProfilingTests; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName!~CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract; dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T11:20:05.1467016Z",
-      "summary": "Root independently rebuilt and verified detector/profiling GREEN 136/136, complete non-final-image regression GREEN 612/612, and Web build 0 errors. MaximumEntries rejects before resolving or creating the first excess destination; Java/C# lexical masking and language gating reject multiline and foreign-language decoys while preserving parameterized supported annotations.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/e2e/prepared-config-persistence-handoff-green",
-      "kind": "e2e",
-      "stage": "conditional-e2e",
-      "source_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs",
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "tests/Vulgata.Tests/RepositoryProfilingTests.cs",
-        "tests/Vulgata.Tests/PreScanHandoffTests.cs",
-        "tests/Vulgata.Tests/RepositoryApiTests.cs",
-        "tests/Vulgata.Tests/MigrationTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Story43EndToEndTests|FullyQualifiedName~PreScanCommunicationDetectionTests|FullyQualifiedName~RepositoryProfilingTests|FullyQualifiedName~PreScanHandoffTests|FullyQualifiedName~RepositoryApiTests|FullyQualifiedName~PreScanMigrationTests",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T11:43:31.9586063Z",
-      "summary": "Root independently rebuilt and verified the required E2E-relevant boundary GREEN 165/165. A temporary committed Git Repository exercised flattened application.properties, application.yml, and application.yaml evidence through private snapshot detection, atomic persistence, same-fingerprint replay, exact Profiled Revision, and schema 1.0 Approved Pre-Scan Handoff; existing tests cover mismatch failure, visibility revocation, authorization, migration, zero dispatch, and deferred-family absence.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/verify/final-non-final-image-suite",
-      "kind": "test",
-      "stage": "verify",
-      "source_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "artifact_paths": [
-        "tests/Vulgata.Tests/Vulgata.Tests.csproj",
-        "tests/Vulgata.Tests/PreScanCommunicationDetectionTests.cs",
-        "tests/Vulgata.Tests/Story43EndToEndTests.cs"
-      ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName!~CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T12:09:57.2211007Z",
-      "summary": "The complete current non-final-image regression suite passed 613/613 with zero failed or skipped tests. The only excluded lane remains the truthful Story 4.2 immutable final-image CodeGraph provider qualification.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/verify/final-build-model",
-      "kind": "build-migration",
-      "stage": "verify",
-      "source_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs"
-      ],
-      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore; dotnet ef migrations has-pending-model-changes --context VulgataDbContext --project src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj --startup-project src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-build",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T12:09:57.2211007Z",
-      "summary": "The Web project built with zero errors and EF reported no pending VulgataDbContext model changes. Existing package-source, EF-version, and analyzer warnings remain nonblocking.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/verify/final-docker",
-      "kind": "runtime",
-      "stage": "verify",
-      "source_commit": "f501103657c67325be304a3b92ca779c75c74bbe",
-      "artifact_paths": [
-        "docker/Dockerfile"
-      ],
-      "command": "docker build --progress=plain -f docker/Dockerfile -t vulgata:story-4-3 .",
-      "exit_code": 0,
-      "observed_at": "2026-07-30T12:09:57.2211007Z",
-      "summary": "The exact final Docker build completed successfully and produced vulgata:story-4-3 at immutable image sha256:851adce25ca8b5a799f2d62553aea9589918aa550ea48e23c6bf6c1159594c7a.",
-      "raw_output_path": null
-    },
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/final-verification-green",
-      "kind": "build-test-runtime",
-      "stage": "verify",
-      "source_commit": "643c8c6dafac4114e789e54e85afa9168a34e3eb",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Infrastructure/FrameworkDetection/FrameworkEvidenceDetector.cs",
-        "tests/Vulgata.Tests/ArchitectureRemediationContractTests.cs",
-        "tests/Vulgata.Tests/FrameworkDetectionTests.cs",
-        "docker/Dockerfile"
-      ],
-      "command": "focused detector/architecture tests; dotnet build Vulgata.Web; Story43EndToEndTests; dotnet ef migrations has-pending-model-changes; canonical source-labeled docker build; full dotnet test with final-image provider contract",
-      "exit_code": 0,
-      "observed_at": "2026-08-01T11:18:49.0761748+08:00",
-      "summary": "Focused correction tests passed 70/70; Web build and Story 4.3 production composition passed; EF reported no pending model changes; the source-labeled image sha256:afa0cff88b91a6c2562fbb0db5d9c9b50a25baa7e2c895dcbd725cc8421f9d2e passed the CodeGraphContext final-image contract; the complete clean suite passed 626/626.",
-      "raw_output_path": null
+      "observed_at": "2026-08-18T03:21:52Z",
+      "summary": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
+      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
     }
   ],
   "last_checkpoint": {
     "checkpoint_id": "bmad-4-3-lease-only-complete-20260801T111849",
-    "scope_key": "story/4-3-conservative-pre-scan-gate-and-communication-type-detection",
+    "scope_key": "4-3-conservative-pre-scan-gate-and-communication-type-detection",
     "stage": "complete",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
@@ -1409,12 +141,20 @@
       "specs/003-conservative-pre-scan-gate/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/quality-review-6-accept",
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/lease-only/final-verification-green"
+      "4-3-conservative-pre-scan-gate-and-communication-type-detection/complete/1"
     ],
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
+    "binding_status": "bound"
   },
   "recoverable_failure": null,
-  "updated_at": "2026-08-01T11:18:49.0761748+08:00"
+  "legacy_migration": {
+    "source_state_path": "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
+    "source_state_sha256": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd",
+    "source_execution_level": "expedited-mvp",
+    "source_stage": "complete",
+    "mapped_stage": "complete",
+    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+    "migrated_at": "2026-08-18T03:21:52Z"
+  },
+  "updated_at": "2026-08-18T03:21:52Z"
 }

@@ -78,11 +78,13 @@ Existing schema-1.0 states remain readable evidence. They cannot resume mutation
    - implement -> implement;
    - acceptance/quality review -> converge;
    - conditional-e2e/verify -> quality-review;
-   - complete -> no migration when its completion binding remains valid.
+   - complete -> terminal v2 normalization only when the original bytes, current BMad `done` status, ancestral completion-state binding, and ancestral `done` transition are all proven; otherwise return to `quality-review`.
 4. Write a schema-2.0 state that preserves v1 state/evidence paths as superseded history and records the migration decision.
 5. Revalidate before any mutation.
 
 The expired `expedited-mvp` value is historical evidence only and grants no authority.
+
+A legacy completion may bind state and `done` in one commit or in two separately proven ancestral commits. The migration report is the compatibility bridge; it preserves the old state hash, both commit proofs, and whether the legacy trailer vocabulary differs from v2. This normalization does not rerun delivery or convert malformed legacy fields into current evidence.
 
 ## Resume and Failure
 

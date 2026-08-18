@@ -1,0 +1,222 @@
+{
+  "schema_version": "1.0",
+  "migration": "workflow-state-v1-to-v2",
+  "migration_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
+  "archived_validator_source_commit": "7e411dddc32237c1cb72f88206182f43022a692a",
+  "archived_schema_path": ".agents/skills/run-bmad-sprint-loop/references/workflow-state-v1.schema.json",
+  "branch": "demo0831/main",
+  "migrated_at": "2026-08-18T03:21:52Z",
+  "source_count": 8,
+  "policy": {
+    "original_bytes_preserved": true,
+    "legacy_schema_drift_is_not_silently_repaired": true,
+    "complete_requires_bmad_done_and_ancestral_binding_commit": true,
+    "nonterminal_quality_review_maps_to": "converge"
+  },
+  "states": [
+    {
+      "story": "4-1-codegraph-integration-and-code-unit-extraction",
+      "feature_directory": "specs/001-codegraph-extraction",
+      "source_state_path": "specs/001-codegraph-extraction/workflow-state-v1.json",
+      "source_sha256": "fb112c24c0a0bb4a0f02dba7fcdf4c6d76a62760370ca43bb3dccd02ced23c7c",
+      "source_execution_level": "full",
+      "source_stage": "complete",
+      "archived_v1_validator_error_count": 10,
+      "archived_v1_validator_result": "legacy-schema-drift-preserved",
+      "mapped_stage": "complete",
+      "completion_proof": {
+        "commit": "4a6527d20e86fb13d6812939fae22b58dd886841",
+        "checkpoint_id": "bmad-4-1-complete-20260730T135257Z-9f03a1",
+        "binding_format": "modern",
+        "committed_paths": [
+          "docs/bmad/implementation-artifacts/4-1-codegraph-integration-and-code-unit-extraction.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/001-codegraph-extraction/workflow-state.json"
+        ],
+        "ancestral_to_migration_head": true,
+        "bmad_status": "done",
+        "bmad_status_transition_commit": "4a6527d20e86fb13d6812939fae22b58dd886841",
+        "bmad_status_co_committed": true
+      },
+      "decision": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge."
+    },
+    {
+      "story": "4-2-language-and-framework-detection",
+      "feature_directory": "specs/002-language-framework-detection",
+      "source_state_path": "specs/002-language-framework-detection/workflow-state-v1.json",
+      "source_sha256": "41cece90b232e51b8698aa3687437d509b24254131c224b3e4f1c5cc0c49c4c3",
+      "source_execution_level": "full",
+      "source_stage": "complete",
+      "archived_v1_validator_error_count": 2,
+      "archived_v1_validator_result": "legacy-schema-drift-preserved",
+      "mapped_stage": "complete",
+      "completion_proof": {
+        "commit": "1b9c98bb4999e254ab19704643477732f92c842c",
+        "checkpoint_id": "bmad-4-2-lf-binding-complete-20260731T005500Z-75e21c",
+        "binding_format": "modern",
+        "committed_paths": [
+          "docs/bmad/implementation-artifacts/4-2-language-and-framework-detection.md",
+          "docs/bmad/implementation-artifacts/epic-gates/4/evidence/raw/dotnet-test.txt",
+          "docs/bmad/planning-artifacts/sprint-change-proposal-2026-07-30-epic-4-close-lf-binding.md",
+          "specs/002-language-framework-detection/reviews/acceptance-review-12.json",
+          "specs/002-language-framework-detection/reviews/quality-review-12.json",
+          "specs/002-language-framework-detection/workflow-state.json"
+        ],
+        "ancestral_to_migration_head": true,
+        "bmad_status": "done",
+        "bmad_status_transition_commit": "985117e3833badf20c487d27fd48f042cfa72ae5",
+        "bmad_status_co_committed": false
+      },
+      "decision": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge."
+    },
+    {
+      "story": "4-3-conservative-pre-scan-gate-and-communication-type-detection",
+      "feature_directory": "specs/003-conservative-pre-scan-gate",
+      "source_state_path": "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
+      "source_sha256": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd",
+      "source_execution_level": "expedited-mvp",
+      "source_stage": "complete",
+      "archived_v1_validator_error_count": 133,
+      "archived_v1_validator_result": "legacy-schema-drift-preserved",
+      "mapped_stage": "complete",
+      "completion_proof": {
+        "commit": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
+        "checkpoint_id": "bmad-4-3-lease-only-complete-20260801T111849",
+        "binding_format": "modern",
+        "committed_paths": [
+          "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/003-conservative-pre-scan-gate/tasks.md",
+          "specs/003-conservative-pre-scan-gate/workflow-state.json"
+        ],
+        "ancestral_to_migration_head": true,
+        "bmad_status": "done",
+        "bmad_status_transition_commit": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
+        "bmad_status_co_committed": true
+      },
+      "decision": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge."
+    },
+    {
+      "story": "11-1-minimal-knowledge-store-and-retrieval-projection",
+      "feature_directory": "specs/004-minimal-knowledge-store",
+      "source_state_path": "specs/004-minimal-knowledge-store/workflow-state-v1.json",
+      "source_sha256": "afbbdaadfa2c91fefc05dfccd951caa8ed0421f072ae819f4b8a8c67a9d88188",
+      "source_execution_level": "expedited-mvp",
+      "source_stage": "complete",
+      "archived_v1_validator_error_count": 0,
+      "archived_v1_validator_result": "valid",
+      "mapped_stage": "complete",
+      "completion_proof": {
+        "commit": "96ba064ca321427d7f8bd5aa914a6026536608b5",
+        "checkpoint_id": "bmad-11-1-complete-20260731T090255Z-c7e441",
+        "binding_format": "modern",
+        "committed_paths": [
+          "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt",
+          "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json",
+          "specs/004-minimal-knowledge-store/tasks.md",
+          "specs/004-minimal-knowledge-store/workflow-state.json"
+        ],
+        "ancestral_to_migration_head": true,
+        "bmad_status": "done",
+        "bmad_status_transition_commit": "96ba064ca321427d7f8bd5aa914a6026536608b5",
+        "bmad_status_co_committed": true
+      },
+      "decision": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge."
+    },
+    {
+      "story": "11-2-sequential-scan-runner-and-typed-agent-dispatch",
+      "feature_directory": "specs/005-sequential-scan-runner",
+      "source_state_path": "specs/005-sequential-scan-runner/workflow-state-v1.json",
+      "source_sha256": "f26245acd4b5791dae747c0f3704d0997b22a31204ab62a6ca659f3f41dc9dd9",
+      "source_execution_level": "expedited-mvp",
+      "source_stage": "complete",
+      "archived_v1_validator_error_count": 93,
+      "archived_v1_validator_result": "legacy-schema-drift-preserved",
+      "mapped_stage": "complete",
+      "completion_proof": {
+        "commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "checkpoint_id": "bmad-11-2-complete-20260801T044500Z",
+        "binding_format": "legacy-bmad-bridge",
+        "committed_paths": [
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/005-sequential-scan-runner/workflow-state.json"
+        ],
+        "ancestral_to_migration_head": true,
+        "bmad_status": "done",
+        "bmad_status_transition_commit": "c59171b2e5fb726f0ca40e15dcdeea2749744d01",
+        "bmad_status_co_committed": true
+      },
+      "decision": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge."
+    },
+    {
+      "story": "11-3-pass-1-and-pass-2-demo-document-generation",
+      "feature_directory": "specs/006-demo-document-generation",
+      "source_state_path": "specs/006-demo-document-generation/workflow-state-v1.json",
+      "source_sha256": "17b7961a436fde2257361b2044b7c9e4853902cfb9f59f6a977c56fbbe38e893",
+      "source_execution_level": "expedited-mvp",
+      "source_stage": "complete",
+      "archived_v1_validator_error_count": 38,
+      "archived_v1_validator_result": "legacy-schema-drift-preserved",
+      "mapped_stage": "complete",
+      "completion_proof": {
+        "commit": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+        "checkpoint_id": "bmad-11-3-complete-20260801T175237Z-3c71b8",
+        "binding_format": "modern",
+        "committed_paths": [
+          "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json",
+          "specs/006-demo-document-generation/workflow-state.json"
+        ],
+        "ancestral_to_migration_head": true,
+        "bmad_status": "done",
+        "bmad_status_transition_commit": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
+        "bmad_status_co_committed": true
+      },
+      "decision": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge."
+    },
+    {
+      "story": "11-4-exact-rpc-http-cross-repository-demo-resolution",
+      "feature_directory": "specs/007-exact-cross-repo-resolution",
+      "source_state_path": "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
+      "source_sha256": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037",
+      "source_execution_level": "expedited-mvp",
+      "source_stage": "complete",
+      "archived_v1_validator_error_count": 210,
+      "archived_v1_validator_result": "legacy-schema-drift-preserved",
+      "mapped_stage": "complete",
+      "completion_proof": {
+        "commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+        "checkpoint_id": "bmad-11-4-complete-20260804T044758Z-35c0",
+        "binding_format": "modern",
+        "committed_paths": [
+          "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
+          "docs/bmad/implementation-artifacts/sprint-status.yaml",
+          "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json",
+          "specs/007-exact-cross-repo-resolution/tasks.md",
+          "specs/007-exact-cross-repo-resolution/workflow-state.json"
+        ],
+        "ancestral_to_migration_head": true,
+        "bmad_status": "done",
+        "bmad_status_transition_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
+        "bmad_status_co_committed": true
+      },
+      "decision": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge."
+    },
+    {
+      "story": "11-5-demo-chat-citations-and-release-gate",
+      "feature_directory": "specs/008-demo-chat-release-gate",
+      "source_state_path": "specs/008-demo-chat-release-gate/workflow-state-v1.json",
+      "source_sha256": "3ab3a86a634d0265a501bb1fdcf7e946730fa67f998112b61721335399796e17",
+      "source_execution_level": "expedited-mvp",
+      "source_stage": "quality-review",
+      "archived_v1_validator_error_count": 780,
+      "archived_v1_validator_result": "legacy-schema-drift-preserved",
+      "mapped_stage": "converge",
+      "completion_proof": null,
+      "decision": "Legacy quality-review state conservatively mapped to converge; no legacy review is treated as v2 acceptance."
+    }
+  ]
+}

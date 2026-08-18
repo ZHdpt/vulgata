@@ -1,1286 +1,141 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "bmad_story_key": "11-5-demo-chat-citations-and-release-gate",
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
-  "execution_level": "expedited-mvp",
-  "stage": "quality-review",
+  "execution_level": "unified",
+  "stage": "converge",
   "active_gates": {
-    "spec-review": {
+    "definition-review": {
       "status": "invalidated",
       "iteration": 0,
       "dispatch_id": null,
-      "verdict_path": null
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
     },
-    "plan-review": {
-      "status": "accepted",
-      "iteration": 12,
-      "dispatch_id": "story_11_5_absolute_path_plan_review_12",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-12.json"
-    },
-    "analyze": {
+    "quality-review": {
       "status": "invalidated",
       "iteration": 0,
       "dispatch_id": null,
-      "verdict_path": null
-    },
-      "acceptance-review": {
-        "status": "invalidated",
-        "iteration": 0,
-        "dispatch_id": null,
-        "verdict_path": null
-      },
-      "quality-review": {
-        "status": "accepted",
-        "iteration": 25,
-        "dispatch_id": "story_11_5_absolute_path_quality_review_25",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-25.json",
-        "input_boundary": "5ca1bec9e45c59d1d15a9126617edec739a57189",
-        "completed_at": "2026-08-11T16:50:00+08:00"
-    },
-    "planned-change-authorization": {
-      "status": "authorized",
-      "authorized_at": "2026-08-11T15:36:00+08:00",
-      "authority": "user: Approve",
-      "trigger": "CodeGraphContext 0.5.1 returns exact snapshot-rooted absolute paths, requiring a bounded change to the Scan parser acceptance seam",
-      "approved_approach": "Canonicalize only strict descendants of the exact committed working-copy root into deterministic Repository-relative paths before Code Unit, language, and relationship endpoint identity; preserve safe relative paths and reject every outside, ambiguous, malformed, or conflicting representation. Run mbs_channel first only for fail-fast economics, while retaining mandatory mbs_account and both Pass 1 results in the same fresh nonce database",
-      "does_not_waive": [
-        "task validation",
-        "transient RED/GREEN TDD",
-        "combined expedited-mvp quality review",
-        "security and migration checks",
-        "clean-database two-Repository E2E",
-        "Docker and cleanup verification"
-      ]
+      "verdict_path": null,
+      "input_boundary": null,
+      "completed_at": null
     }
   },
   "stage_history": [
     {
-      "stage": "context",
-      "status": "accepted",
-      "started_at": "2026-08-04T04:48:00Z",
-      "completed_at": "2026-08-04T09:00:00Z",
-      "input_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "agent_role": "story-context-synthesizer",
-      "artifact_paths": [
-        "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-        "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json"
-      ],
-      "artifact_hashes": {
-        "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md": "f04d1b685b3c92a804b966f5be0fd9d94cdc7c8f7cf809c083c8a4220987d2b8"
-      },
-      "failure": null
-    },
-    {
-      "stage": "specify",
-      "status": "accepted",
-      "started_at": "2026-08-04T09:00:00Z",
-      "completed_at": "2026-08-04T09:20:09Z",
-      "input_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "agent_role": "spec-author",
-      "dispatch_id": "story_11_5_spec_retry",
-      "artifact_paths": [
-        "specs/008-demo-chat-release-gate/spec.md",
-        "specs/008-demo-chat-release-gate/checklists/requirements.md"
-      ],
-      "artifact_hashes": {
-        "specs/008-demo-chat-release-gate/spec.md": "874a1852aea0ec30786227711c8f7107057ace5bda49ee2686ca47a7395ff2cd",
-        "specs/008-demo-chat-release-gate/checklists/requirements.md": "ae2697c9120dc4fb2a6fcbb228e5dddba5b63ef19ad25c7b0b563142da3622c5"
-      },
-      "validation": "16/16 specification checklist items passed; zero clarification markers",
-      "failure": null
-    },
-    {
-      "stage": "plan-review",
-      "status": "revised",
-      "iteration": 1,
-      "dispatch_id": "story_11_5_plan_review_retry",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
-      "completed_at": "2026-08-04T09:45:00Z",
-      "finding_ids": [
-        "PLAN-115-SEMANTIC-001",
-        "PLAN-115-DOCKER-002"
-      ]
-    },
-    {
-      "stage": "plan-review",
-      "status": "revised",
-      "iteration": 3,
-      "dispatch_id": "story_11_5_plan_review_iteration_3",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json",
-      "completed_at": "2026-08-04T11:10:52Z",
-      "finding_ids": [
-        "PLAN-115-CURRENTNESS-003"
-      ],
-      "human_gate": "third REVISE outcome requires explicit user direction before any additional correction cycle"
-    },
-    {
-      "stage": "plan-review-exception",
-      "status": "authorized",
-      "authorized_at": "2026-08-04T11:22:07Z",
-      "authority": "user: Approve your correction",
-      "scope": "One fourth bounded correction and fresh independent plan review for PLAN-115-CURRENTNESS-003 only",
-      "does_not_waive": [
-        "planned-change authorization",
-        "task analysis",
-        "transient RED/GREEN TDD",
-        "combined quality review",
-        "clean-database two-Repository E2E",
-        "Docker verification"
-      ]
-    },
-    {
-      "stage": "plan-review",
-      "status": "accepted",
-      "iteration": 4,
-      "dispatch_id": "story_11_5_plan_review_iteration_4",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json",
-      "completed_at": "2026-08-04T11:47:27Z",
-      "finding_ids": [],
-      "authorization_required_before_next_stage": "planned-change-authorization"
-    },
-    {
-      "stage": "planned-change-authorization",
-      "status": "authorized",
-      "authorized_at": "2026-08-04T12:42:33Z",
-      "authority": "user: Approve",
-      "trigger": "New Chat Agent retrieval tool IChatEvidenceRetriever.RetrieveAsync",
-      "approved_approach": "Bounded prepared-scope retrieval plus Infrastructure-owned post-provider currentness validation and final Repository authorization before render",
-      "does_not_waive": [
-        "task validation",
-        "transient RED/GREEN TDD",
-        "combined quality review",
-        "security and migration checks",
-        "clean-database two-Repository E2E",
-        "Docker verification"
-      ]
-    },
-    {
-      "stage": "tasks",
-      "status": "accepted",
-      "started_at": "2026-08-04T12:42:33Z",
-      "completed_at": "2026-08-04T12:53:29Z",
-      "input_commit": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
-      "agent_role": "task-author",
-      "dispatch_id": "story_11_5_tasks",
-      "artifact_paths": [
-        "specs/008-demo-chat-release-gate/tasks.md"
-      ],
-      "artifact_hashes": {
-        "specs/008-demo-chat-release-gate/tasks.md": "eea9407c2eaf943206155d57dc06785b17fec0a16bc28b13491aa259a1c3186a"
-      },
-      "validation": "61 continuous tasks; zero malformed checklist items; FR-001 through FR-022 and SC-001 through SC-009 covered; explicit transient RED then GREEN groups; retained security, migration, clean PostgreSQL, Docker, Identity, Playwright, and cleanup gates",
-      "failure": null
-    },
-    {
-      "stage": "plan-review",
-      "status": "revised",
-      "iteration": 2,
-      "dispatch_id": "story_11_5_plan_review_iteration_2",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
-      "completed_at": "2026-08-04T10:38:15Z",
-      "finding_ids": [
-        "PLAN-115-SEMANTIC-001",
-        "PLAN-115-DOCKER-002"
-      ]
-    },
-    {
-      "stage": "correct-course",
-      "status": "approved",
-      "completed_at": "2026-08-07T03:53:21Z",
-      "authority": "user: Approve",
-      "artifact_path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-runtime-pass2-binding.md",
-      "scope": "Bound actual product-created identities into the bounded prepared Pass 2 flow before dispatch"
-    },
-    {
-      "stage": "plan-review",
-      "status": "revised",
-      "iteration": 5,
-      "dispatch_id": "story_11_5_plan_review_iteration_5",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-5.json",
-      "completed_at": "2026-08-07T03:53:21Z",
-      "finding_ids": [
-        "PLAN-115-RUNTIME-IDENTITY-004"
-      ]
-    },
-    {
-      "stage": "plan-review",
-      "status": "accepted",
-      "iteration": 6,
-      "dispatch_id": "story_11_5_plan_review_iteration_6",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-6.json",
-      "completed_at": "2026-08-07T03:53:21Z",
-      "finding_ids": [],
-      "authorization_required_before_next_stage": "planned-change-authorization"
-    },
-    {
-      "stage": "planned-change-authorization",
-      "status": "authorized",
-      "authorized_at": "2026-08-07T06:03:14Z",
-      "authority": "user: Approve.",
-      "trigger": "Bounded PreparedDemoPass2FlowPlanner and material change to single Pass 2 preparation and dispatch identity validation",
-      "approved_approach": "Bind accepted exact-profile evidence and current product-created identities into one consumer-owned runtime flow; derive and recompute canonical schema, manifest, flow, and support identities while preserving the exact seven-slot Worker payload",
-      "does_not_waive": [
-        "task validation",
-        "transient RED/GREEN TDD",
-        "combined quality review",
-        "security and migration checks",
-        "clean-database two-Repository E2E",
-        "Docker verification"
-      ]
-    },
-    {
-      "stage": "tasks",
-      "status": "accepted",
-      "started_at": "2026-08-07T06:03:14Z",
-      "completed_at": "2026-08-07T06:12:41Z",
-      "input_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
-      "agent_role": "task-author",
-      "dispatch_id": "story_11_5_corrected_tasks",
-      "artifact_paths": [
-        "specs/008-demo-chat-release-gate/tasks.md"
-      ],
-      "artifact_hashes": {
-        "specs/008-demo-chat-release-gate/tasks.md": "b46830e9bb873e9b379a098c531220c04adc37f8a7482eb83edd047d2212d990"
-      },
-      "validation": "65 continuous tasks; T001-T050 preserved complete; T051-T065 unchecked; FR-001 through FR-023 and SC-001 through SC-010 covered; zero malformed or stale references",
-      "failure": null
-    },
-    {
-      "stage": "correct-course",
-      "status": "approved",
-      "completed_at": "2026-08-07T06:24:13Z",
-      "authority": "user: Approve.",
-      "artifact_path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-07-story-11-5-pass1-job-identity-amendment.md",
-      "scope": "Derive ordinary Pass 1 Worker job identities deterministically so the runtime Pass 2 planner can recompute the actual historical job identity without a migration"
-    },
-    {
-      "stage": "plan-review",
-      "status": "accepted",
-      "iteration": 7,
-      "dispatch_id": "story_11_5_plan_review_iteration_7",
-      "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json",
-      "completed_at": "2026-08-07T06:48:23Z",
-      "finding_ids": [],
-      "authorization_required_before_next_stage": "planned-change-authorization"
-    },
-    {
-      "stage": "planned-change-authorization",
-      "status": "authorized",
-      "authorized_at": "2026-08-07T06:50:27Z",
-      "authority": "user: Approve.",
-      "trigger": "Deterministic ordinary Pass 1 Worker JobId derivation materially changes Scan dispatch identity",
-      "approved_approach": "Derive the actual ordinary Pass 1 JobId from the canonical ScanExecution, ScanRun, Repository, CodeUnit, and ProfiledRevision boundary; independently recompute it in the runtime planner and verify the existing Document Version projection without migration or retry-policy change",
-      "does_not_waive": [
-        "task validation",
-        "transient RED/GREEN TDD",
-        "combined quality review",
-        "security and migration checks",
-        "clean-database two-Repository E2E",
-        "Docker verification"
-      ]
-    },
-    {
-      "stage": "tasks",
-      "status": "accepted",
-      "started_at": "2026-08-07T06:50:27Z",
-      "completed_at": "2026-08-07T06:57:00Z",
-      "input_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
-      "agent_role": "task-author",
-      "dispatch_id": "story_11_5_corrected_tasks_iteration_7",
-      "artifact_paths": [
-        "specs/008-demo-chat-release-gate/tasks.md"
-      ],
-      "artifact_hashes": {
-        "specs/008-demo-chat-release-gate/tasks.md": "23c7ad9086d5cc88652994f8ee93b3586f35cef0d713163aa86a35f7f56f5d40"
-      },
-      "validation": "65 continuous tasks; T001-T050 preserved complete; T051-T065 unchecked; FR-001 through FR-024 and SC-001 through SC-011 covered; zero malformed, stale, or boundary errors",
-      "failure": null
-    },
-    {
-      "stage": "implement",
-      "status": "accepted",
-      "started_at": "2026-08-07T06:57:00Z",
-      "completed_at": "2026-08-08T00:00:00Z",
-      "input_commit": "4aeed1862c7058bff06598bc75666a7475d5c41b",
-      "agent_role": "tdd-implementer",
-      "dispatch_id": "story_11_5_implementation_and_trae_resume",
-      "artifact_paths": [
-        "specs/008-demo-chat-release-gate/tasks.md"
-      ],
-      "validation": "T001-T063 verified; reviewed-candidate commit 46cadbc3510463300d5a89e39774db0e2d80d57a; T064-T065 pending",
-      "failure": null
-    },
-    {
-      "stage": "quality-review",
-      "status": "revised",
-      "started_at": "2026-08-08T00:00:00Z",
-      "completed_at": "2026-08-09T00:00:00Z",
-      "input_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
+      "stage": "converge",
+      "status": "active",
+      "started_at": "2026-08-18T03:21:52Z",
+      "completed_at": null,
+      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
       "input_hashes": {
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json": "4591063e021598b52dedcc1a4ff15735f5fb865e1c1635eb8096aeca425d2768"
+        "specs/008-demo-chat-release-gate/workflow-state.json": "3ab3a86a634d0265a501bb1fdcf7e946730fa67f998112b61721335399796e17"
       },
-      "agent_role": "quality-reviewer",
-      "dispatch_id": "story_11_5_quality_review_iteration_1",
+      "agent_role": "bmad-sprint-orchestrator",
       "evidence_paths": [
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json"
-      ],
-      "finding_ids": [
-        "QR-46CADBC-001",
-        "QR-46CADBC-002",
-        "QR-46CADBC-003"
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
       ],
       "failure": null
-    },
-    {
-      "stage": "implement",
-      "status": "accepted",
-      "started_at": "2026-08-09T00:00:00Z",
-      "completed_at": "2026-08-09T02:00:00Z",
-      "input_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
-      "agent_role": "tdd-implementer",
-      "dispatch_id": "story_11_5_quality_correction_iteration_1",
-      "validation": "QR-46CADBC-001 through QR-46CADBC-003 corrected with transient RED/GREEN; root independently reproduced 66/66; Web and test builds zero errors",
-      "failure": null
-    },
-    {
-      "stage": "quality-review",
-      "status": "accepted",
-      "started_at": "2026-08-09T02:00:00Z",
-      "completed_at": "2026-08-09T02:49:37Z",
-      "input_commit": "46cadbc3510463300d5a89e39774db0e2d80d57a",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json": "36c1fc4c0c1ff86fcd9e784603a9745282c7c45f713eae8d77582fa10e2831b3"
-      },
-      "agent_role": "quality-reviewer",
-      "dispatch_id": "story_11_5_quality_review_iteration_2",
-      "evidence_paths": [
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json"
-      ],
-      "finding_ids": [],
-      "failure": null
-    },
-    {
-      "stage": "plan-review",
-      "status": "revised",
-      "started_at": "2026-08-09T03:00:00Z",
-      "completed_at": "2026-08-09T04:00:00Z",
-      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json": "c09580408e13651c0129e2b856287730db0dcddaf342a8204b1ef553bdf6b242"
-      },
-      "agent_role": "plan-judge",
-      "evidence_paths": [
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "plan-review",
-      "status": "accepted",
-      "started_at": "2026-08-09T04:00:00Z",
-      "completed_at": "2026-08-09T05:00:00Z",
-      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json": "08265020edf4878915318b78a0b40c325f4117c580fa773ebb291bcfb36052d5"
-      },
-      "agent_role": "plan-judge",
-      "evidence_paths": [
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "tasks",
-      "status": "accepted",
-      "started_at": "2026-08-09T05:00:00Z",
-      "completed_at": "2026-08-09T05:20:00Z",
-      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/tasks.md": "3551422d86e73bef9cc354739c3d6d0bd56f22393232b4980a4b463767d5c0f4"
-      },
-      "agent_role": "task-author",
-      "evidence_paths": [
-        "specs/008-demo-chat-release-gate/tasks.md"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "analyze",
-      "status": "accepted",
-      "started_at": "2026-08-09T05:20:00Z",
-      "completed_at": "2026-08-09T05:44:13Z",
-      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json": "d055ce93e16c174a1c382e4e8c8420569f65ba1b54886493c5bdc29e112947bf"
-      },
-      "agent_role": "artifact-analyst",
-      "evidence_paths": [
-        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "implement",
-      "status": "accepted",
-      "started_at": "2026-08-09T05:00:00Z",
-      "completed_at": "2026-08-09T05:44:13Z",
-      "input_commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
-      "input_hashes": {
-        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "a7d0aa5d86f14bc0470357f28f35d9ac5c914a73c7895b778eb1a43d981a32bb",
-        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "e83e59c849534051b7d862e57477169791fa45317e7ab7f6c0d3b8e7c6ec630f"
-      },
-      "agent_role": "tdd-implementer",
-      "evidence_paths": [
-        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "acceptance-review",
-      "status": "revised",
-      "started_at": "2026-08-09T06:00:00Z",
-      "completed_at": "2026-08-09T08:00:00Z",
-      "input_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json": "af68d9ae0cac01817b6b71f248bc98b8ab9aee500072bf91721d773bd53622ec"
-      },
-      "agent_role": "acceptance-reviewer",
-      "evidence_paths": [
-        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "quality-review",
-      "status": "revised",
-      "started_at": "2026-08-09T06:00:00Z",
-      "completed_at": "2026-08-09T08:00:00Z",
-      "input_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json": "615e33bc7d411efcdf2af5a07ac7727e7b321e1a44b8968251625f53a435a805"
-      },
-      "agent_role": "quality-reviewer",
-      "evidence_paths": [
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json"
-      ],
-      "failure": null
-    },
-    {
-      "stage": "implement",
-      "status": "accepted",
-      "started_at": "2026-08-09T08:00:00Z",
-      "completed_at": "2026-08-09T09:11:58Z",
-      "input_commit": "4ce3e4b124444e064abb07bc2cf534a67d18548a",
-      "input_hashes": {
-        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs": "566aed710e28de6c9a7b8772b863ba638e86354a014212db3ec84457bac685c5",
-        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs": "a5ee8acd7505064df199ae80055c0f0472b1da485730848f7bca684fb5586348"
-      },
-      "agent_role": "tdd-implementer",
-      "evidence_paths": [
-        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-        "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-      ],
-      "failure": null
-    },
-      {
-        "stage": "quality-review-exception",
-      "status": "authorized",
-      "authorized_at": "2026-08-09T09:50:00Z",
-      "authority": "user: Approve",
-      "scope": "One final bounded ambiguous CREATE reconciliation correction and fresh Full acceptance plus quality review rerun for AR-115-T064-CREATE-003 / QR-4CE3E4B-001 only",
-      "does_not_waive": [
-        "transient RED/GREEN TDD",
-        "fresh Full acceptance review",
-        "fresh Full quality review",
-        "sole live T064",
-        "nonce database absence and resource cleanup verification",
-          "T065 final verification"
-        ]
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "corrected",
-        "started_at": "2026-08-09T10:18:50Z",
-        "completed_at": "2026-08-09T10:57:19Z",
-        "input_commit": "d35d122b164e82d2991660bbdc77c67a379d020b",
-        "agent_role": "tdd-implementer/e2e-runner",
-        "dispatch_id": "story_11_5_t064_empty_blob_and_profiling_residue_correction",
-        "validation": "First live T064 failed on legitimate zero-byte committed blobs; cleanup left no external residue but exposed candidate-local profiling storage. Regression-first corrections passed focused 2/2, non-live release 31/31, root combined Release 90/90, and git diff --check.",
-        "failure": null
-      },
-      {
-        "stage": "acceptance-review",
-        "status": "accepted",
-        "iteration": 4,
-        "dispatch_id": "story_11_5_full_acceptance_review_iteration_4",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-4.json",
-        "completed_at": "2026-08-09T10:57:19Z",
-        "finding_ids": []
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 6,
-        "dispatch_id": "story_11_5_full_quality_review_iteration_6",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-6.json",
-        "completed_at": "2026-08-09T10:57:19Z",
-        "finding_ids": []
-      },
-      {
-        "stage": "correct-course",
-        "status": "approved",
-        "completed_at": "2026-08-09T16:00:00Z",
-        "authority": "user: Approve option A",
-        "artifact_path": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-09-story-11-5-containerized-provisioning.md",
-        "scope": "Use one immutable source-bound final image for a temporary provisioner container and the final app so the release proof executes profiling and Scan with the image-qualified CodeGraphContext runtime"
-      },
-      {
-        "stage": "plan-review",
-        "status": "accepted",
-        "iteration": 10,
-        "dispatch_id": "story_11_5_option_a_plan_review_10",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-10.json",
-        "completed_at": "2026-08-09T17:00:00Z",
-        "finding_ids": [],
-        "authorization_required_before_next_stage": "planned-change-authorization"
-      },
-      {
-        "stage": "planned-change-authorization",
-        "status": "authorized",
-        "authorized_at": "2026-08-10T01:12:29Z",
-        "authority": "user: Approve",
-        "trigger": "Option A materially relocates Repository profiling and Scan execution into a temporary same-image provisioner container",
-        "approved_approach": "One source-bound image build and immutable image ID shared sequentially by the temporary provisioner and final app, with no host cgc, second image, product-scope change, migration, or Worker payload change",
-        "does_not_waive": [
-          "task validation",
-          "Full read-only analysis",
-          "transient RED/GREEN TDD",
-          "separate Full acceptance and quality reviews",
-          "security and migration checks",
-          "clean-database two-Repository E2E",
-          "Docker and cleanup verification"
-        ]
-      },
-      {
-        "stage": "execution-level-change",
-        "status": "authorized",
-        "authorized_at": "2026-08-10T02:08:01Z",
-        "authority": "user: Can you switch to expedited-mvp if not, we are in a hurry",
-        "from": "full",
-        "to": "expedited-mvp",
-        "scope": "Story 11.5 only under the August 15 expedited MVP exception",
-        "earliest_invalid_stage": "plan",
-        "retained_gates": [
-          "conditional plan review",
-          "planned-change authorization",
-          "transient RED/GREEN TDD",
-          "combined quality review",
-          "security and migration checks",
-          "clean-database two-Repository E2E",
-          "single final Docker image and cleanup verification"
-        ],
-        "omitted_active_gates": [
-          "spec-review",
-          "speckit-analyze",
-          "separate acceptance-review"
-        ]
-      },
-      {
-        "stage": "plan-review",
-        "status": "accepted",
-        "iteration": 11,
-        "dispatch_id": "story_11_5_expedited_plan_review_11",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-11.json",
-        "completed_at": "2026-08-10T02:36:53Z",
-        "finding_ids": [],
-        "execution_level": "expedited-mvp",
-        "planned_change_authorization": "retained from 2026-08-10T01:12:29Z; no duplicate approval required"
-      },
-      {
-        "stage": "tasks",
-        "status": "accepted",
-        "started_at": "2026-08-10T02:36:53Z",
-        "completed_at": "2026-08-10T02:47:50Z",
-        "input_commit": "d96eb66525b40dd1a3320aa5c0557b82de87827f",
-        "agent_role": "task-author",
-        "dispatch_id": "story_11_5_expedited_tasks",
-        "artifact_paths": [
-          "specs/008-demo-chat-release-gate/tasks.md"
-        ],
-        "artifact_hashes": {
-          "specs/008-demo-chat-release-gate/tasks.md": "920d0f93ad148be3813387a434d62add3bdffcc373ce87907b25092b28cfab09"
-        },
-        "validation": "expedited-mvp root mechanical validation passed: 73 continuous tasks; T001-T063 preserved complete; T064-T073 pending; FR-001 through FR-024 and SC-001 through SC-011 covered; RED-before-GREEN ordering valid; zero stale active Full gates; no migration/model delta; workflow tests 35/35; git diff --check clean",
-        "failure": null
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T02:47:50Z",
-        "completed_at": "2026-08-10T03:55:37Z",
-        "input_commit": "0b83ef16a052999b39c5122ffc0e2cfb91d3035b",
-        "agent_role": "tdd-implementer/root",
-        "dispatch_id": "story_11_5_t064_t071_option_a",
-        "artifact_paths": [
-          "src/dotnet/Vulgata.Web/Program.cs",
-          "tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs",
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Provisioner/",
-          "tests/Vulgata.Tests/Vulgata.Tests.csproj",
-          "specs/008-demo-chat-release-gate/tasks.md"
-        ],
-        "validation": "T064-T071 observed RED then GREEN; Option A focused 4/4; Pass 1/Pass 2 surrounding 29/29; currentness 3/3; complete non-live release harness 44/44; required quickstart filters 137/137; migrations 10/10; both DbContexts no pending model changes; Release builds and exact three-file provisioner publish succeeded; protected-path and git diff checks clean; no live resources acquired",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "revised",
-        "iteration": 7,
-        "started_at": "2026-08-10T03:55:37Z",
-        "completed_at": "2026-08-10T04:20:00Z",
-        "input_commit": "981a96ed7f332d4917fcfc4c286e6b078a6c8106",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_7",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-7.json",
-        "finding_ids": [
-          "QR-115-007-001",
-          "QR-115-007-002"
-        ],
-        "failure": null
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T04:20:00Z",
-        "completed_at": "2026-08-10T04:41:36Z",
-        "input_commit": "981a96ed7f332d4917fcfc4c286e6b078a6c8106",
-        "agent_role": "tdd-implementer/root",
-        "dispatch_id": "story_11_5_quality_correction_iteration_7",
-        "artifact_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-        ],
-        "validation": "QR-115-007-001 and QR-115-007-002 corrected with observed RED then GREEN; closed nonce/content/CodeGraph-lock result validation; exact candidate-bound three-file driver attestation and evidence; focused 2/2 + 1/1 + 4/4; complete non-live release harness 48/48; quickstart 137/137; currentness 3/3; migrations 10/10; both no-pending-model checks and Release builds green; no live resources",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "revised",
-        "iteration": 8,
-        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_8",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-8.json",
-        "finding_ids": ["QR-115-008-001"],
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 9,
-        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_9",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-9.json",
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "failed-cleanly",
-        "started_at": "2026-08-10T04:55:00Z",
-        "completed_at": "2026-08-10T05:21:00Z",
-        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_1",
-        "validation": "The sole live entry failed before database creation at repository-acquire-mbs_account because git clone --branch rejected the full refs/tags name; cleanup left no Story container, image, or nonce database residue",
-        "failure": "repository-acquire-mbs_account exit 128"
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T05:21:00Z",
-        "completed_at": "2026-08-10T05:37:24Z",
-        "input_commit": "1a0c40985cf1074ec3bb137d3a7538d7e5e94322",
-        "agent_role": "root",
-        "dispatch_id": "story_11_5_t072_git_tag_clone_correction",
-        "artifact_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-        ],
-        "validation": "Observed compile RED for absent clone-command seam; GREEN 1/1; exact disposable local clone reached the accepted commit; complete non-live release harness 49/49; full-ref/full-commit post-clone verification retained; no live Story residue",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 10,
-        "input_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_10",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-10.json",
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "failed-cleanly",
-        "started_at": "2026-08-10T05:50:18Z",
-        "completed_at": "2026-08-10T06:20:32Z",
-        "input_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_2",
-        "validation": "The source-bound no-cache image build exceeded the reviewed 30-minute subprocess cap before any Story container, network, image, nonce database, or nonce run directory was acquired; cleanup completed without error and the external PostgreSQL 17 Alpine container remained healthy",
-        "failure": "source-bound-image-build bounded timeout at 30 minutes"
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T06:20:32Z",
-        "completed_at": "2026-08-10T06:28:59Z",
-        "input_commit": "b1dc5c84022a1476fb6e812ff24754c68520541f",
-        "agent_role": "root",
-        "dispatch_id": "story_11_5_t072_image_build_timeout_correction",
-        "artifact_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"
-        ],
-        "validation": "Observed focused RED because the executor rejected a 45-minute bound; minimal GREEN raises only the hard executor/source-image-build cap to exactly 45 minutes and rejects any larger value; focused 1/1 and complete non-live release harness 50/50 GREEN; cleanup absence reverified; no live retry performed",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "revise",
-        "iteration": 11,
-        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_11",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-11.json",
-        "finding_ids": ["QR-115-011-001"],
-        "failure": "Ignored candidate metadata still pinned the predecessor candidate"
-      },
-      {
-        "stage": "quality-review",
-        "status": "invalidated",
-        "iteration": 12,
-        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_12",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-12.json",
-        "finding_ids": [],
-        "failure": "The transcribed canonical manifest omitted its final hexadecimal character and the live parser rejected the 63-character value before acquisition"
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 13,
-        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_13",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-13.json",
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "failed-cleanly",
-        "started_at": "2026-08-10T06:46:05Z",
-        "completed_at": "2026-08-10T07:02:46Z",
-        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_3",
-        "validation": "BuildKit proved the source-bound image build failed only on a transient files.pythonhosted.org SSL/read timeout during the hash-locked CodeGraphContext pip stage; cleanup left no Story container, image, network, nonce database, or run directory and external PostgreSQL remained healthy",
-        "failure": "source-bound-image-build exit 1 from external package download timeout"
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "failed-cleanly",
-        "started_at": "2026-08-10T07:04:00Z",
-        "completed_at": "2026-08-10T07:27:42Z",
-        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_4",
-        "validation": "After package endpoints recovered, the no-cache source image build succeeded and the run reached the temporary same-image provisioner; provisioner-run returned the generic exit code 1 and fixed diagnostic, then unconditional cleanup removed every Story resource and nonce database while leaving external PostgreSQL healthy",
-        "failure": "provisioner-run generic exit 1; bounded raw diagnostic intentionally unavailable"
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T07:28:00Z",
-        "completed_at": "2026-08-10T07:33:41Z",
-        "input_commit": "298749a9e4d578aebd4d19efb0ebbfb9ceafa1b9",
-        "agent_role": "root",
-        "dispatch_id": "story_11_5_t072_provisioner_stage_code_correction",
-        "artifact_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
-        ],
-        "validation": "Observed RED expected closed input-stage exit 10 but received generic 1; minimal GREEN preserves the exact fixed stderr and empty stdout while assigning closed numeric exit codes 10, 11, 20-31, and 40 to non-secret provisioning stages; focused 1/1 and complete non-live release harness 50/50 GREEN",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 14,
-        "input_commit": "bfaf12ef354b05affabf16005e400bf356622e20",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_10",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-14.json",
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "invalidated",
-        "started_at": "2026-08-10T07:45:00Z",
-        "completed_at": "2026-08-10T07:50:00Z",
-        "input_commit": "bfaf12ef354b05affabf16005e400bf356622e20",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_5",
-        "validation": "The diagnostic retry was explicitly interrupted before Story resource acquisition when the user authorized package mirrors for subsequent Docker builds; the exact orphaned test process tree was terminated and the external PostgreSQL container remained untouched",
-        "failure": null
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T07:51:00Z",
-        "completed_at": "2026-08-10T08:09:32Z",
-        "input_commit": "bfaf12ef354b05affabf16005e400bf356622e20",
-        "agent_role": "root",
-        "dispatch_id": "story_11_5_t072_package_mirror_correction",
-        "artifact_paths": [
-          "docker/Dockerfile",
-          "tests/Vulgata.Tests/CodeGraphProviderContractTests.cs",
-          "specs/008-demo-chat-release-gate/quickstart.md",
-          "specs/008-demo-chat-release-gate/contracts/release-verification-contract.md",
-          "specs/008-demo-chat-release-gate/tasks.md",
-          "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md"
-        ],
-        "validation": "Observed focused RED because the Dockerfile did not contain the user-authorized Tsinghua Ubuntu and pip mirrors; minimal GREEN retains the official Ubuntu Noble security archive, pip --require-hashes, bounded retries/timeouts, exact package identities, and the accepted one-image topology; focused Debug and Release contract filters 3/3 GREEN and the complete non-live release harness 50/50 GREEN",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 15,
-        "input_commit": "58b47a7d0a6a28cadf1f4a4b8dc4e3889d710c71",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_10",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-15.json",
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "failed",
-        "started_at": "2026-08-10T08:18:00Z",
-        "completed_at": "2026-08-10T08:23:00Z",
-        "input_commit": "58b47a7d0a6a28cadf1f4a4b8dc4e3889d710c71",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_6",
-        "validation": "The mirror-backed no-cache image build completed and the run reached the same-image provisioner; closed stage code 11 localized failure to image-runtime validation before product provisioning, and unconditional cleanup reported no cleanup failure",
-        "failure": "provisioner-run exit 11"
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T08:24:00Z",
-        "completed_at": "2026-08-10T08:44:33Z",
-        "input_commit": "58b47a7d0a6a28cadf1f4a4b8dc4e3889d710c71",
-        "agent_role": "root",
-        "dispatch_id": "story_11_5_t072_image_product_assembly_resolver_correction",
-        "artifact_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
-        ],
-        "validation": "Minimized real-image probes falsified CodeGraph runtime, version, and lock hypotheses and reproduced CLR failure before the first runtime-validation statement because the three-file driver dependency manifest omits image-owned Vulgata.Web; observed RED was a missing closed image-product assembly allowlist contract; minimal GREEN installs an exact six-name /app resolver before typed product references, rejects unknown names, preserves fixed diagnostics, and advances the real container repro from stage 11 to the expected dummy product stage 20; focused contract 1/1, complete non-live harness 50/50, and mirror/source filter 3/3 GREEN",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 16,
-        "input_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_16",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-16.json",
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "failed",
-        "started_at": "2026-08-10T08:55:00Z",
-        "completed_at": "2026-08-10T09:02:00Z",
-        "input_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_7",
-        "validation": "The Tsinghua-mirror no-cache build completed in about 3m40s and the same-image provisioner reached Repository creation; closed stage code 23 localized failure to Repository validation and unconditional cleanup reported no cleanup failure or Story resource residue",
-        "failure": "provisioner-run exit 23"
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-10T09:03:00Z",
-        "completed_at": "2026-08-10T09:13:22Z",
-        "input_commit": "e18736bc8d3cc6b7561a452c5eb9aa4d543d139f",
-        "agent_role": "root",
-        "dispatch_id": "story_11_5_t072_repository_safe_directory_correction",
-        "artifact_paths": [
-          "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-          "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
-        ],
-        "validation": "A same-image read-only probe reproduced Git dubious-ownership rejection for the two Windows bind-mounted Repository working trees; observed contract RED was missing mountedRepositorySafeDirectories; minimal GREEN configures only the two fixed /vulgata/sources/<alias>/.git paths in the ephemeral provisioner user's Git protected configuration before product validation. The exact probe then resolved both accepted tags/commits; focused contract 1/1, complete non-live release harness 50/50, and Dockerfile contract 3/3 GREEN; no wildcard trust, source mutation, migration/model/package, or topology change",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 17,
-        "input_commit": "36e02caf9d960bcc2f147cc00a8e0cf7d61b52d1",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_expedited_quality_review_iteration_17",
-        "verdict_path": "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-17.json",
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "conditional-e2e",
-        "status": "failed",
-        "started_at": "2026-08-10T09:21:00Z",
-        "completed_at": "2026-08-10T09:55:00Z",
-        "input_commit": "36e02caf9d960bcc2f147cc00a8e0cf7d61b52d1",
-        "agent_role": "e2e-runner/root",
-        "dispatch_id": "story_11_5_t072_live_attempt_8",
-        "validation": "The recovery candidate passed the prior Repository validation point and remained CPU-active in product profiling, but provisioner-run reached the unchanged 30-minute bounded timeout before any Worker/provider traffic; cleanup completed with no failure and left no Story image/container/network/nonce database/run-root residue",
-        "failure": "provisioner-run bounded timeout during sequential Repository profiling"
-      },
-      {
-        "stage": "plan-review",
-        "status": "accepted",
-        "iteration": 12,
-        "started_at": "2026-08-11T15:36:00+08:00",
-        "completed_at": "2026-08-11T15:58:00+08:00",
-        "input_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
-        "agent_role": "plan-judge",
-        "dispatch_id": "story_11_5_absolute_path_plan_review_12",
-        "evidence_paths": [
-          "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-12.json"
-        ],
-        "finding_ids": [],
-        "failure": null
-      },
-      {
-        "stage": "tasks",
-        "status": "accepted",
-        "started_at": "2026-08-11T15:58:00+08:00",
-        "completed_at": "2026-08-11T16:03:00+08:00",
-        "input_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
-        "agent_role": "task-author",
-        "dispatch_id": "story_11_5_absolute_path_tasks",
-        "evidence_paths": [
-          "specs/008-demo-chat-release-gate/tasks.md"
-        ],
-        "validation": "T001-T071 preserved complete; T072 orders parser RED/GREEN, non-live verification, combined review, then the sole channel-first/account-mandatory live run; T073 retains cleanup and final verification",
-        "failure": null
-      },
-      {
-        "stage": "implement",
-        "status": "accepted",
-        "started_at": "2026-08-11T16:03:00+08:00",
-        "completed_at": "2026-08-11T16:18:54.5800715+08:00",
-        "input_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
-        "agent_role": "tdd-implementer",
-        "dispatch_id": "story_11_5_absolute_path_tdd",
-        "evidence_paths": [
-          "tests/Vulgata.Tests/TestResults/story-11-5-red/codegraph-absolute-path-parser.txt",
-          "tests/Vulgata.Tests/TestResults/story-11-5-absolute-path-non-live/"
-        ],
-        "validation": "Observed absolute-path RED 0/1 and channel-first contract RED 0/1; GREEN parser 61/61, Pass1/relationship/runtime 58/58, profiling 79/79, non-live release 52/52, migrations 10/10, Release builds zero errors, both DbContexts no pending model changes, and no prohibited delta",
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "revised",
-        "iteration": 24,
-        "started_at": "2026-08-11T16:20:00+08:00",
-        "completed_at": "2026-08-11T16:35:00+08:00",
-        "input_commit": "e634ff2e2d4f6fe1c66bb551094bd428dfb847a5",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_absolute_path_quality_review_24",
-        "evidence_paths": [
-          "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-24.json"
-        ],
-        "finding_ids": [
-          "QR-115-024-001"
-        ],
-        "failure": null
-      },
-      {
-        "stage": "quality-review",
-        "status": "accepted",
-        "iteration": 25,
-        "started_at": "2026-08-11T16:40:00+08:00",
-        "completed_at": "2026-08-11T16:50:00+08:00",
-        "input_commit": "5ca1bec9e45c59d1d15a9126617edec739a57189",
-        "agent_role": "quality-reviewer",
-        "dispatch_id": "story_11_5_absolute_path_quality_review_25",
-        "evidence_paths": [
-          "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-25.json"
-        ],
-        "finding_ids": [],
-        "failure": null
-      }
+    }
   ],
   "repository_preflight": {
-    "branch": "codex/run-story-115-sprint-loop",
-    "preflight_head": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
+    "branch": "demo0831/main",
+    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
     "repository_root": ".",
-    "git_common_directory": "G:/source/repos/vulgata/.git",
-    "worktree_path": "C:/Users/13728/.codex/worktrees/e948/vulgata",
-    "worktree_status": " M docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md\n M specs/008-demo-chat-release-gate/contracts/release-verification-contract.md\n M specs/008-demo-chat-release-gate/plan.md\n M specs/008-demo-chat-release-gate/quickstart.md\n M specs/008-demo-chat-release-gate/research.md\n M specs/008-demo-chat-release-gate/spec.md\n M specs/008-demo-chat-release-gate/tasks.md\n M specs/008-demo-chat-release-gate/workflow-state.json\n M tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs\n M tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs\n?? specs/008-demo-chat-release-gate/reviews/analyze/\n?? specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json\n?? specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
+    "git_common_directory": ".git",
+    "worktree_path": ".",
+    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
     "owned_paths": [
-      ".specify/feature.json",
-      "AGENTS.md",
-      "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json",
-      "specs/008-demo-chat-release-gate/",
-      "src/dotnet/Vulgata.Agents/",
-      "src/dotnet/Vulgata.Core/DomainServices/",
-      "src/dotnet/Vulgata.Infrastructure/Data/",
-      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor",
-      "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.css",
-      "src/dotnet/Vulgata.Web/Data/",
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests/",
-      "docker/Dockerfile",
-      "docker-compose.yml"
+      "specs/008-demo-chat-release-gate/workflow-state-v1.json",
+      "specs/008-demo-chat-release-gate/workflow-state.json",
+      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-08-09T05:44:13Z"
+    "observed_at": "2026-08-18T03:21:52Z"
   },
-  "source_artifacts": [
-    {
-      "authority": "BMad story",
-      "path": "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-      "commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
-      "sha256": "52351a2d46bf18fd593b0be389fa47ff9e16de235014e373fa6dc2c97ce21b50"
-    },
-    {
-      "authority": "SpecKit specification",
-      "path": "specs/008-demo-chat-release-gate/spec.md",
-      "commit": "b7be38050b2b3be7dcc9c14adc73c84a4ccf1468",
-      "sha256": "8af86b17497f9c724f27970c3e80f288b8841475c2b1c1694aaff814b4b40ae0"
-    },
-    {
-      "authority": "Accepted SpecKit plan",
-      "path": "specs/008-demo-chat-release-gate/plan.md",
-      "commit": null,
-      "sha256": "56375f1816dfb3844c71d75d4d39b89cda6f4d75bd9861c6a989671d84b2df3f"
-    },
-    {
-      "authority": "Accepted SpecKit tasks",
-      "path": "specs/008-demo-chat-release-gate/tasks.md",
-      "commit": null,
-      "sha256": "71327e0ce0b0ef1e9fa41aef6ee0be586a040e00da6c92219bbe7f25e1a7f094"
-    }
-  ],
-  "dispatches": [
-    {
-      "dispatch_id": "story_11_5_context",
-      "role": "story-context-synthesizer",
-      "stage": "context",
-      "source_boundary": "c07df7d..c07df7d",
-      "permitted_writes": [],
-      "result": "initial BLOCKED authority conflict resolved by user product-intent decision"
-    },
-    {
-      "dispatch_id": "story_11_5_spec_retry",
-      "role": "spec-author",
-      "stage": "specify",
-      "source_boundary": "c07df7d plus root-owned context artifacts",
-      "permitted_writes": [
-        ".specify/feature.json",
-        "specs/008-demo-chat-release-gate/spec.md",
-        "specs/008-demo-chat-release-gate/checklists/requirements.md"
-      ],
-      "result": "accepted"
-    },
-    {
-      "dispatch_id": "story_11_5_tasks",
-      "role": "task-author",
-      "stage": "tasks",
-      "source_boundary": "c07df7d plus accepted spec/plan/review and planned-change authorization",
-      "permitted_writes": [
-        "specs/008-demo-chat-release-gate/tasks.md"
-      ],
-      "result": "accepted"
-    }
-  ],
+  "source_artifacts": [],
+  "dispatches": [],
   "review_iterations": {
-    "spec-review": { "count": 0, "verdict_paths": [] },
     "plan-review": {
-      "count": 12,
-      "verdict_paths": [
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-1.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-2.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-3.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-4.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-5.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-6.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-7.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-8.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-9.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-10.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-11.json",
-        "specs/008-demo-chat-release-gate/reviews/plan-review/plan-review-iteration-12.json"
-      ]
-    },
-    "analyze": {
       "count": 0,
-      "verdict_paths": [
-        "specs/008-demo-chat-release-gate/reviews/analyze/analyze-iteration-1.json"
-      ]
+      "verdict_paths": []
     },
-      "acceptance-review": {
-        "count": 4,
-        "verdict_paths": [
-        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-1.json",
-        "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-2.json",
-          "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-3.json",
-          "specs/008-demo-chat-release-gate/reviews/acceptance-review/acceptance-review-iteration-4.json"
-        ]
-      },
-      "quality-review": {
-        "count": 6,
-      "verdict_paths": [
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-1.json",
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-2.json",
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-3.json",
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-4.json",
-          "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-5.json",
-          "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-6.json"
-      ]
+    "definition-review": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "converge": {
+      "count": 0,
+      "verdict_paths": []
+    },
+    "quality-review": {
+      "count": 0,
+      "verdict_paths": []
     }
+  },
+  "convergence": {
+    "status": "pending",
+    "iteration": 0,
+    "outcome": "pending",
+    "findings_count": 0,
+    "appended_task_ids": [],
+    "artifact_hashes": {},
+    "completed_at": null
   },
   "e2e_decision": {
-    "required": true,
+    "required": false,
     "predicates": [],
     "coverage_override": null,
-    "rationale": "Story 11.5 owns the mandatory final clean-database two-Repository user-visible, authorization, persistence, migration, and Docker release path.",
+    "rationale": "Re-evaluate after v2 convergence.",
     "covering_tests": [],
-    "owner": "e2e-runner",
-      "source_boundary": "d35d122b164e82d2991660bbdc77c67a379d020b + accepted four-file correction diff 7fe91f06bc158acabfc3a00f5e75c15d6de3159084dfd645a467d5a27863ba4e",
+    "owner": "orchestrator",
+    "source_boundary": {
+      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
+      "candidate_commit": null,
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifact_hashes": {
+        "specs/008-demo-chat-release-gate/workflow-state.json": "3ab3a86a634d0265a501bb1fdcf7e946730fa67f998112b61721335399796e17"
+      },
+      "owned_paths": [
+        "specs/008-demo-chat-release-gate/workflow-state-v1.json",
+        "specs/008-demo-chat-release-gate/workflow-state.json",
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
+      ]
+    },
     "result": "pending",
     "evidence_ids": []
   },
   "verification": [
     {
-      "evidence_id": "11-5-demo-chat-citations-and-release-gate/implement/1",
-      "kind": "command",
-      "stage": "implement",
-      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
-      "artifact_paths": ["tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~OptionAProvisioner_Contract_IsClosedImageOwnedAndSevenSlotAsync --logger console;verbosity=minimal -p:WarningLevel=0",
-      "exit_code": 1,
-      "observed_at": "2026-08-10T10:48:01.4782716Z",
-      "summary": "Fresh observed RED against the temporarily restored pre-correction provisioner: 0/1; KeyNotFoundException for absent wholeRepositoryProcessTimeoutSeconds. Raw evidence pins the exact two artifact SHA-256 values and canonical binary-diff SHA-256 334f1e5b084fd463c1f8887bd464df0ea88686a75d2f7361bc24d2123f74d9a6.",
-      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt"
-    },
-    {
-      "evidence_id": "11-5-demo-chat-citations-and-release-gate/implement/2",
-      "kind": "command",
-      "stage": "implement",
-      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
-      "artifact_paths": ["tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ProcessExecutor_ProvisionerBound_AllowsResearchBackedEnvelopeOnlyForProvisioner --logger console;verbosity=minimal -p:WarningLevel=0",
-      "exit_code": 1,
-      "observed_at": "2026-08-10T10:48:36.5858057Z",
-      "summary": "Fresh observed RED against the temporarily restored pre-correction harness: compile failed with CS0117 because ProvisionerProcessTimeout was absent. Raw evidence pins the exact two artifact SHA-256 values and canonical binary-diff SHA-256 48b33f918dbbd8c5c775c6dbe467f50f38636a5bf71435a7ea03e5089f36608d.",
-      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt"
-    },
-    {
-      "evidence_id": "11-5-demo-chat-citations-and-release-gate/verify/1",
-      "kind": "command",
-      "stage": "verify",
-      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
-      "artifact_paths": ["tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs", "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs", "tests/Vulgata.Tests/ReleaseGate/Story115ReleaseHarness.cs"],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~OptionAProvisioner_Contract_IsClosedImageOwnedAndSevenSlotAsync|FullyQualifiedName~ProcessExecutor_ProvisionerBound_AllowsResearchBackedEnvelopeOnlyForProvisioner --logger console;verbosity=minimal -p:WarningLevel=0",
-      "exit_code": 0,
-      "observed_at": "2026-08-10T10:49:17.3023537Z",
-      "summary": "Focused timeout correction passed 2/2 after the exact implementation was restored.",
-      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/timeout-budget-red-green.txt"
-    },
-    {
-      "evidence_id": "11-5-demo-chat-citations-and-release-gate/verify/2",
-      "kind": "command",
-      "stage": "verify",
-      "source_commit": "1d81bbc8aaa79c676c15180eb33a547ee370a345",
-      "artifact_paths": ["tests/Vulgata.Tests"],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --filter FullyQualifiedName~DemoChatReleaseGatePostgreSqlTests --logger console;verbosity=minimal -p:WarningLevel=0",
-      "exit_code": 0,
-      "observed_at": "2026-08-10T10:49:26.2445769Z",
-      "summary": "Complete non-live Story 11.5 release harness passed 51/51 in 5 seconds with no live resource acquisition.",
-      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-timeout-correction/summary.txt"
-    },
-    {
-      "evidence_id": "11-5-demo-chat-citations-and-release-gate/implement/3",
-      "kind": "command",
-      "stage": "implement",
-      "source_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
+      "evidence_id": "11-5-demo-chat-citations-and-release-gate/converge/1",
+      "kind": "analysis",
+      "stage": "converge",
+      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
       "artifact_paths": [
-        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
-        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs"
+        "specs/008-demo-chat-release-gate/workflow-state-v1.json",
+        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
       ],
-      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~CodeGraphContextProviderTests.ParseProjectionA_AbsolutePathUnderWorkingCopy_ReturnsRepositoryRelativePath --logger console;verbosity=normal",
-      "exit_code": 1,
-      "observed_at": "2026-08-11T16:06:00+08:00",
-      "summary": "Observed RED 0/1: the exact under-working-copy rooted CodeGraphContext path was rejected and the expected Code Unit collection was empty.",
-      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-red/codegraph-absolute-path-parser.txt"
-    },
-    {
-      "evidence_id": "11-5-demo-chat-citations-and-release-gate/verify/3",
-      "kind": "command",
-      "stage": "verify",
-      "source_commit": "102add9e3b3d7572ea573757a1aab9e3ee7b5616",
-      "artifact_paths": [
-        "src/dotnet/Vulgata.Infrastructure/CodeGraph/CodeGraphContextProvider.cs",
-        "tests/Vulgata.Tests/CodeGraphContextProviderTests.cs",
-        "tests/Vulgata.Tests/DemoChatReleaseGatePostgreSqlTests.cs",
-        "tests/Vulgata.Tests/ReleaseGate/Provisioner/Story115Provisioner.cs"
-      ],
-      "command": "bounded Story 11.5 absolute-path non-live verification set",
+      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
       "exit_code": 0,
-      "observed_at": "2026-08-11T16:18:54.5800715+08:00",
-      "summary": "GREEN: parser 61/61, Pass1/relationship/runtime 58/58, profiling 79/79, non-live release 52/52, migrations 10/10, Release builds zero errors, both DbContexts no pending changes, and no prohibited delta.",
-      "raw_output_path": "tests/Vulgata.Tests/TestResults/story-11-5-absolute-path-non-live/"
+      "observed_at": "2026-08-18T03:21:52Z",
+      "summary": "Legacy quality-review state conservatively mapped to converge; no legacy review is treated as v2 acceptance.",
+      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
     }
   ],
-    "last_checkpoint": {
-      "checkpoint_id": "bmad-11-5-expedited-parser-reviewed-candidate-20260811T165000+0800",
-    "scope_key": "story/11-5-demo-chat-citations-and-release-gate",
-      "stage": "quality-review",
-      "committed_paths": [
-        "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
-        "specs/008-demo-chat-release-gate/workflow-state.json",
-        "specs/008-demo-chat-release-gate/reviews/quality-review/quality-review-iteration-25.json"
-      ],
-      "verification_evidence_ids": [
-        "11-5-demo-chat-citations-and-release-gate/verify/3",
-        "11-5-demo-chat-citations-and-release-gate/quality-review/25"
-    ],
-    "commit_sha": null,
-    "binding_status": "pending"
+  "last_checkpoint": null,
+  "recoverable_failure": null,
+  "legacy_migration": {
+    "source_state_path": "specs/008-demo-chat-release-gate/workflow-state-v1.json",
+    "source_state_sha256": "3ab3a86a634d0265a501bb1fdcf7e946730fa67f998112b61721335399796e17",
+    "source_execution_level": "expedited-mvp",
+    "source_stage": "quality-review",
+    "mapped_stage": "converge",
+    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
+    "migrated_at": "2026-08-18T03:21:52Z"
   },
-  "recoverable_failure": {
-    "stage": "quality-review",
-    "classification": "resolved parser correction accepted for one live T072 retry",
-    "evidence": "Quality iteration 25 ACCEPTED the unchanged parser correction candidate with zero findings and closed QR-115-024-001 after independent commit/tree/production-manifest and all owned/evidence hash checks. The parser accepts only exact under-snapshot-root absolute paths and preserves fail-closed path security. The actual provisioner runs channel profile/Pass1 before mandatory account profile/Pass1 and blocks Resolution until both complete.",
-    "required_decision": "Execute exactly one source-bound live T072 retry, then perform independent T073 cleanup and final verification."
-  },
-    "updated_at": "2026-08-11T16:50:00+08:00"
+  "updated_at": "2026-08-18T03:21:52Z"
 }
