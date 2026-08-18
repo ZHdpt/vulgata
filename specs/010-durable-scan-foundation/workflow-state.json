@@ -519,6 +519,35 @@
         "specs/010-durable-scan-foundation/tasks.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T12:31:00Z",
+      "completed_at": "2026-08-18T13:03:23Z",
+      "input_commit": "eff08925d8b7b014719a546541a442c26d33add1",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs": "C58B7D64AC5F81DAE8FC09B1AE114CF782C7048231630CB2830DA9451A38D32A",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "85A44702F6FAFA715FFEBBDF7A01477D2025AB7471A69CD2C5967CF85655DAD1",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.cs": "643CA1899BACEC2CADB8F08313D208BA86A046CBB1A5073D3E359E823C6B2CF4",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.Designer.cs": "7C33A77B75D2D8476C44E78907E245D5400BBA37F34453D0AA7C398FB8FD9D6B",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs": "5A9199363A9F4C234F2765807B74B2A710EAE5B082808435F85FC304255692F5",
+        "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs": "12E08813C6DF8D115F104D4D474896F305EB4FC60A2FB91D8951E2C5F70A5840",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs": "24C18E535C77A7F4F64F3032B645AAEC4736C4ACCDD42ABCE9195AF91A6BEC59",
+        "tests/Vulgata.Tests/Migrations/DurableScanModelTests.cs": "398ECCD872ADBF7153F0165B5726177CBD7C08C8F2A27C36A9894CC1536DF45D",
+        "specs/010-durable-scan-foundation/tasks.md": "EF06EBC8777E5C5214443EEA0AEED31827BAC062BF8BE0ED29132833E0E00F28"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanModelTests.cs",
+        "specs/010-durable-scan-foundation/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1527,6 +1556,41 @@
       "observed_at": "2026-08-18T12:30:33Z",
       "summary": "Root combined verification passed 24/24 setup tests for contained fixture paths, deterministic helpers, and exact-name PostgreSQL lifecycle safety. Live PostgreSQL smoke remains deferred pending configured PostgreSQL 17 access.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/24",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "eff08925d8b7b014719a546541a442c26d33add1",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanModelTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter ScanContextSnapshotTests|DurableScanStoreTests|DurableScanModelTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T12:42:00Z",
+      "summary": "Combined pre-migration RED compiled against the pinned boundary and failed for the absent ScanContextSnapshots DbSet and DurableScanRepository; T045 metadata execution awaited the same shared compile seam.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/25",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "eff08925d8b7b014719a546541a442c26d33add1",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanModelTests.cs"
+      ],
+      "command": "dotnet test ... --filter ScanContextSnapshotTests|DurableScanStoreTests|DurableScanModelTests --no-build --no-restore; dotnet build Vulgata.Infrastructure; dotnet ef migrations has-pending-model-changes --context VulgataDbContext",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T13:03:23Z",
+      "summary": "Root verification passed 18/18 combined tests, a 0-error Infrastructure build, and explicit-context no-pending-model-changes validation after fixture-only ownership corrections. T006/T020/T021/T045/T046 are complete; live PostgreSQL qualification remains T047.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1539,38 +1603,34 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T123033Z-752002",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T130323Z-643ca1",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeFixtureTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/BoundedSanitizedDiagnostics.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/InMemoryFileSystemDouble.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/RecordingProcessLauncherDouble.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/Story121TestHelperTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/Utf8CanonicalHash.cs",
-      "tests/Vulgata.Tests/DurableScanning/DeterministicTestIds.cs",
-      "tests/Vulgata.Tests/DurableScanning/FixedTestClock.cs",
-      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/.gitattributes",
-      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/fixture-manifest.json",
-      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/pom.xml",
-      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/DefaultGreetingFormatter.java",
-      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/FixtureApplication.java",
-      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/GreetingFormatter.java",
-      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/GreetingService.java",
-      "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabase.cs",
-      "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabaseTests.cs"
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanContextSnapshotConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanExecutionConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanJobExecutionConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/TwoRepositoryScanCoordinationConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.Designer.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+      "tests/Vulgata.Tests/Migrations/DurableScanModelTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/23"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/24",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/25"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T12:30:33Z"
+  "updated_at": "2026-08-18T13:03:23Z"
 }

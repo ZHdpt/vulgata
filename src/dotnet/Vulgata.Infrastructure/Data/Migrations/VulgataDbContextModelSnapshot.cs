@@ -1149,16 +1149,103 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("ScanCandidateOutcomes", "vulgata");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanContextSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CapturedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("GlobalContext")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RepositoryContext")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("SystemContext")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("RepositoryId");
+
+                    b.HasIndex("ScanRunId", "RepositoryId")
+                        .IsUnique();
+
+                    b.ToTable("ScanContextSnapshots", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_ScanContextSnapshots_ContentHash_Length", "length(\"ContentHash\") = 64");
+
+                            t.HasCheckConstraint("CK_ScanContextSnapshots_SchemaIdentity_Closed", "\"SchemaIdentity\" = 'scan-context-snapshot/1.0'");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.ScanExecution", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AnalysisRuntimeIdentityHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("AnalysisRuntimeIdentityJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<int>("CompletedJobCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("DocumentSchemaIdentity")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("FailureCategory")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<Guid?>("InFlightJobId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("PauseCategory")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("PauseCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("Phase")
                         .IsRequired()
@@ -1173,6 +1260,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("PromptIdentity")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<Guid>("RepositoryId")
                         .HasColumnType("uuid");
 
@@ -1184,6 +1275,12 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
 
                     b.Property<Guid>("SystemId")
                         .HasColumnType("uuid");
@@ -1202,9 +1299,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<int>("TotalJobCount")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.HasAlternateKey("Id", "RepositoryId");
+                    b.HasKey("Id");
 
                     b.HasAlternateKey("ScanRunId", "RepositoryId");
 
@@ -1216,11 +1314,108 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("ScanExecutions", "vulgata", t =>
                         {
-                            t.HasCheckConstraint("CK_ScanExecutions_Phase_Closed", "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled')");
+                            t.HasCheckConstraint("CK_ScanExecutions_NewPathBinding_Shape", "(\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Failed') AND \"PromptIdentity\" IS NULL AND \"DocumentSchemaIdentity\" IS NULL AND \"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND \"UpdatedAt\" IS NULL) OR (\"Phase\" IN ('Prepared', 'Running', 'PausedProviderUnavailable', 'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity') AND \"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND \"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND \"UpdatedAt\" IS NOT NULL) OR (\"Phase\" IN ('Completed', 'Cancelled') AND ((\"PromptIdentity\" IS NULL AND \"DocumentSchemaIdentity\" IS NULL AND \"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND \"UpdatedAt\" IS NULL) OR (\"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND \"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND \"UpdatedAt\" IS NOT NULL)))");
+
+                            t.HasCheckConstraint("CK_ScanExecutions_PauseFailure_Shape", "(\"Phase\" = 'PausedProviderUnavailable' AND \"PauseCategory\" = 'ProviderUnavailable' AND \"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'PausedOperatorCorrection' AND \"PauseCategory\" = 'OperatorCorrection' AND \"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'FailedIntegrity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND \"FailureCategory\" = 'Integrity' AND \"FailureCode\" IS NOT NULL) OR (\"Phase\" = 'FailedSecurity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND \"FailureCategory\" = 'Security' AND \"FailureCode\" IS NOT NULL) OR (\"Phase\" NOT IN ('PausedProviderUnavailable', 'PausedOperatorCorrection', 'FailedIntegrity', 'FailedSecurity') AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND ((\"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'Cancelled' AND \"FailureCategory\" = 'Cancellation' AND \"FailureCode\" IS NOT NULL)))");
+
+                            t.HasCheckConstraint("CK_ScanExecutions_Phase_Closed", "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled', 'Prepared', 'Running', 'PausedProviderUnavailable', 'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity')");
 
                             t.HasCheckConstraint("CK_ScanExecutions_RestartIndicator_Bound", "0 <= \"RestartIndicator\" AND \"RestartIndicator\" <= 32");
 
+                            t.HasCheckConstraint("CK_ScanExecutions_StateVersion_Bound", "\"StateVersion\" >= 0");
+
                             t.HasCheckConstraint("CK_ScanExecutions_TerminalReasonKind_Closed", "\"TerminalReasonKind\" IS NULL OR \"TerminalReasonKind\" IN ('SchemaInvalid', 'Error', 'Unbounded', 'MissingPrerequisite', 'DuplicateActiveScan', 'MissingCodeUnit', 'ForbiddenContent', 'OverLimitPacket')");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanJobExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("CommittedDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FailureCategory")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("FileCodeUnitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ManifestOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("StateChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommittedDocumentVersionId")
+                        .IsUnique()
+                        .HasFilter("\"CommittedDocumentVersionId\" IS NOT NULL");
+
+                    b.HasIndex("RepositoryId");
+
+                    b.HasIndex("ScanExecutionId", "FileCodeUnitId")
+                        .IsUnique();
+
+                    b.HasIndex("ScanExecutionId", "ManifestOrdinal")
+                        .IsUnique();
+
+                    b.HasIndex("ScanExecutionId", "RepositoryId");
+
+                    b.HasIndex("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("CommittedDocumentVersionId", "RepositoryId", "ScanRunId");
+
+                    b.HasIndex("FileCodeUnitId", "ScanRunId", "RepositoryId");
+
+                    b.ToTable("ScanJobExecutions", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_ScanJobExecutions_FailureCategory_Closed", "\"FailureCategory\" IS NULL OR \"FailureCategory\" IN ('ProviderTransient', 'ProviderConfiguration', 'JobTransient', 'JobPermanent', 'Integrity', 'Security', 'Cancellation', 'Unclassified')");
+
+                            t.HasCheckConstraint("CK_ScanJobExecutions_Failure_Shape", "(\"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"FailureCategory\" IS NOT NULL AND \"FailureCode\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_ScanJobExecutions_LeaseRetryCompletion_Shape", "(\"State\" = 'Running' AND \"LeaseToken\" IS NOT NULL AND \"LeaseExpiresAt\" IS NOT NULL AND \"LeaseExpiresAt\" > \"StateChangedAt\" AND \"NextAttemptAt\" IS NULL AND \"CommittedDocumentVersionId\" IS NULL) OR (\"State\" = 'RetryScheduled' AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NOT NULL AND \"CommittedDocumentVersionId\" IS NULL) OR (\"State\" = 'Completed' AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NULL AND \"CommittedDocumentVersionId\" IS NOT NULL) OR (\"State\" IN ('Pending', 'Failed', 'Cancelled') AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NULL AND \"CommittedDocumentVersionId\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_ScanJobExecutions_OrdinalAttemptVersion_Bounds", "\"ManifestOrdinal\" > 0 AND \"AttemptCount\" >= 0 AND \"StateVersion\" >= 0");
+
+                            t.HasCheckConstraint("CK_ScanJobExecutions_State_Closed", "\"State\" IN ('Pending', 'Running', 'RetryScheduled', 'Completed', 'Failed', 'Cancelled')");
                         });
                 });
 
@@ -1460,6 +1655,98 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("SystemOwnerAssignments", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.TwoRepositoryScanCoordination", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Phase")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ProfiledRevisionOne")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ProfiledRevisionTwo")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ReasonCategory")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryOneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RepositoryTwoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanExecutionOneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanExecutionTwoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunOneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunTwoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("SystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("TerminalAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RepositoryOneId");
+
+                    b.HasIndex("RepositoryTwoId");
+
+                    b.HasIndex("SystemId");
+
+                    b.HasIndex("ScanExecutionOneId", "RepositoryOneId");
+
+                    b.HasIndex("ScanExecutionTwoId", "RepositoryTwoId");
+
+                    b.HasIndex("ScanRunOneId", "RepositoryOneId");
+
+                    b.HasIndex("ScanRunTwoId", "RepositoryTwoId");
+
+                    b.ToTable("TwoRepositoryScanCoordinations", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_Phase_Closed", "\"Phase\" IN ('Preparing', 'Pass1', 'Resolving', 'Pass2', 'Paused', 'Completed', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'Cancelled')");
+
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_ReasonCategory_Closed", "\"ReasonCategory\" IS NULL OR \"ReasonCategory\" IN ('ProviderUnavailable', 'OperatorCorrection', 'Integrity', 'Security', 'Cancellation', 'Unclassified')");
+
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_Repositories_Distinct", "\"RepositoryOneId\" <> \"RepositoryTwoId\"");
+
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_StateVersion_Bound", "\"StateVersion\" >= 0");
+
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_TerminalReason_Shape", "(\"Phase\" IN ('Completed', 'CompletedWithWarnings') AND \"TerminalAt\" IS NOT NULL AND \"ReasonCategory\" IS NULL AND \"ReasonCode\" IS NULL) OR (\"Phase\" IN ('FailedIntegrity', 'FailedSecurity', 'Cancelled') AND \"TerminalAt\" IS NOT NULL AND \"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR (\"Phase\" = 'Paused' AND \"TerminalAt\" IS NULL AND \"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR (\"Phase\" IN ('Preparing', 'Pass1', 'Resolving', 'Pass2') AND \"TerminalAt\" IS NULL AND \"ReasonCategory\" IS NULL AND \"ReasonCode\" IS NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Uncertainty", b =>
@@ -1937,6 +2224,22 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("ScanRun");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanContextSnapshot", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", null)
+                        .WithMany()
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.ScanExecution", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.Repository", null)
@@ -1949,6 +2252,42 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("ScanRunId", "RepositoryId")
                         .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.ScanJobExecution", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanExecution", null)
+                        .WithMany()
+                        .HasForeignKey("ScanExecutionId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", null)
+                        .WithMany()
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", null)
+                        .WithMany()
+                        .HasForeignKey("CommittedDocumentVersionId", "RepositoryId", "ScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.CodeUnit", null)
+                        .WithMany()
+                        .HasForeignKey("FileCodeUnitId", "ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "ScanRunId", "RepositoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -2034,6 +2373,56 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("System");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.TwoRepositoryScanCoordination", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryOneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryTwoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.System", null)
+                        .WithMany()
+                        .HasForeignKey("SystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanExecution", null)
+                        .WithMany()
+                        .HasForeignKey("ScanExecutionOneId", "RepositoryOneId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanExecution", null)
+                        .WithMany()
+                        .HasForeignKey("ScanExecutionTwoId", "RepositoryTwoId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_TwoRepositoryScanCoordinations_ScanExecutions_ScanExecutio~1");
+
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", null)
+                        .WithMany()
+                        .HasForeignKey("ScanRunOneId", "RepositoryOneId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", null)
+                        .WithMany()
+                        .HasForeignKey("ScanRunTwoId", "RepositoryTwoId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Uncertainty", b =>

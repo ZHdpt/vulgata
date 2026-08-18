@@ -448,3 +448,21 @@ Root combined verification passed 24/24 tests after avoiding a known concurrent
 MVC manifest file lock with `--no-build`. Live PostgreSQL create/drop remains
 deferred because no `VULGATA_TEST_POSTGRES_ADMIN` is configured and Docker is
 unavailable; later PostgreSQL gates still require live evidence.
+
+### Implementation group 12
+
+The required pre-migration RED boundary combined the remaining T006 temporal
+persistence cases, T020 store behavior, and T045 EF metadata. Honest compilation
+failed for the absent Snapshot DbSet and Durable Scan Repository. The serialized
+T046 owner then added three entity configurations, evolved Scan Execution mapping,
+DbSets, symmetric PR-003 validation, and one additive migration/designer/snapshot;
+T021 added the concrete durable/coordination repository in one separate file.
+Initial execution exposed test-fixture defects: incomplete ownership principal
+graphs and runtime-model check-constraint inspection. Test owners corrected only
+their fixtures/harnesses, preserving the production invariants. Root verification
+passed 18/18 combined tests, a 0-error Infrastructure build, and explicit-context
+EF pending-model validation (`No changes have been made`). The migration creates
+only the three Story 12.1 tables, additive Scan Execution columns/constraints and
+their indexes/FKs; Down removes only those structures and restores the previous
+phase check. T006, T020, T021, T045, and T046 are complete. Live PostgreSQL 17
+apply/rollback/reapply remains T047 and is not claimed here.
