@@ -311,3 +311,12 @@ The first Scan Context Snapshot tracer bullet observed an honest compile RED
 Independent verification passed 1/1 focused and 119/119 surrounding Core/domain
 tests. T007 is complete. T006 remains open for the symmetric persistence ordering,
 upper timestamp bound, and no-partial-insert cases owned by T045-T046.
+
+### Implementation group 2
+
+The first Scan Job Execution tracer bullet observed an honest missing-type compile
+RED, then reached minimal GREEN through public `Create` and `AcquireLease` seams.
+Independent verification passed 1/1 focused and 10/10 surrounding tests. The
+aggregate now has deterministic identity, a valid Pending initial shape, and one
+monotonic Pending-to-Running lease transition. T008 and T009 remain open for retry,
+completion, failure, cancellation, and contradiction behavior.

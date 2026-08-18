@@ -320,6 +320,23 @@
         "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T10:29:00Z",
+      "completed_at": "2026-08-18T10:39:02Z",
+      "input_commit": "b6302e3c8312a41b5f68cef63966650d0aba075b",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs": "D70D2FB13FEE1DF0723A5F5023FFDBCED9CDBBD443DE671E203D8A0018E8AF25",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs": "8762DB2112850CE1F89A4B99D2020DA8466A851D40260FBF83450BC9DA76DC63"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -724,6 +741,39 @@
       "permitted_writes": ["src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs"],
       "output_path": "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs",
       "returned_evidence": ["Minimal GREEN", "Focused 1/1 passed", "No EF or persistence behavior", "No test writes"]
+    },
+    {
+      "role": "tdd-test-author",
+      "objective": "Write and observe a Scan Job Execution deterministic creation and valid lease-acquisition RED, then independently verify GREEN.",
+      "source_boundary": {
+        "base_commit": "b6302e3c8312a41b5f68cef63966650d0aba075b",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637"
+        },
+        "owned_paths": ["tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"]
+      },
+      "permitted_writes": ["tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"],
+      "output_path": "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs",
+      "returned_evidence": ["RED CS0246/CS0103", "GREEN 1/1 focused", "GREEN 10/10 surrounding", "No verification writes"]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Implement minimal deterministic ScanJobExecution creation and Pending-to-Running lease behavior.",
+      "source_boundary": {
+        "base_commit": "b6302e3c8312a41b5f68cef63966650d0aba075b",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs": "8762DB2112850CE1F89A4B99D2020DA8466A851D40260FBF83450BC9DA76DC63"
+        },
+        "owned_paths": ["src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs"]
+      },
+      "permitted_writes": ["src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs"],
+      "output_path": "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+      "returned_evidence": ["Minimal GREEN", "Focused 1/1 passed", "Remaining transitions intentionally open", "No test writes"]
     }
   ],
   "review_iterations": {
@@ -1031,6 +1081,33 @@
       "observed_at": "2026-08-18T10:28:53Z",
       "summary": "Independent verification passed 1/1 focused and 119/119 surrounding tests; upper temporal and persistence transaction behavior remains explicitly open under T006/T045-T046.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/5",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "b6302e3c8312a41b5f68cef63966650d0aba075b",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ScanJobExecutionTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T10:33:00Z",
+      "summary": "Honest compile RED: ScanJobExecution and ScanJobExecutionState were absent at the confirmed public aggregate seam.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/6",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "b6302e3c8312a41b5f68cef63966650d0aba075b",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ScanJobExecutionTests --no-restore; surrounding domain filter",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T10:39:02Z",
+      "summary": "Independent verification passed 1/1 focused and 10/10 surrounding tests for deterministic creation and one valid lease transition; T008/T009 remain open for all other lifecycle cases.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1043,28 +1120,23 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T102853Z-9c9508",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T103902Z-f0145c",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
-      "Directory.Packages.props",
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/README.md",
-      "specs/010-durable-scan-foundation/tasks.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs",
-      "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
-      "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"
+      "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+      "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/2",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/3",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/4"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/5",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/6"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T10:28:53Z"
+  "updated_at": "2026-08-18T10:39:02Z"
 }
