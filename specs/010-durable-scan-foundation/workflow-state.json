@@ -1678,6 +1678,35 @@
       "observed_at": "2026-08-18T14:21:36Z",
       "summary": "Original test-author verification passed 18/18 bounded recovery-view tests; adjacent durable regressions passed 42/42 and Infrastructure built with zero errors. First-change and replay views are truthful and no dispatch/scheduling mechanism was added.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/32",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "c0a7be75e40a940a2dde87522aa46e8087172c22",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.ManualResumeApiTests --no-restore --verbosity quiet -clp:ErrorsOnly",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T14:54:53Z",
+      "summary": "After fixture and truthful recovery-view corrections, T026 executed 13 tests: one passed and twelve failed only because the production POST route was absent and returned 405 MethodNotAllowed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/33",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "c0a7be75e40a940a2dde87522aa46e8087172c22",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Shared/Scans/ManualResumeContracts.cs",
+        "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs",
+        "src/dotnet/Vulgata.Web/Api/ApiEndpointRegistrationExtensions.cs",
+        "tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ManualResumeApiTests --no-restore; GrantSystemOwnershipTests; dotnet build Vulgata.Web",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T14:54:53Z",
+      "summary": "Independent verification passed 13/13 manual-resume API tests, 6/6 ownership authorization tests, and a zero-error Web build. T026/T027 are complete; production service registration remains T029/T037.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1690,25 +1719,26 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T142136Z-recovery-view",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T145453Z-manual-resume-api",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
-      "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
+      "specs/010-durable-scan-foundation/tasks.md",
+      "src/dotnet/Vulgata.Shared/Scans/ManualResumeContracts.cs",
+      "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs",
+      "src/dotnet/Vulgata.Web/Api/ApiEndpointRegistrationExtensions.cs",
+      "tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/30",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/31"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/32",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/33"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T14:21:36Z"
+  "updated_at": "2026-08-18T14:54:53Z"
 }

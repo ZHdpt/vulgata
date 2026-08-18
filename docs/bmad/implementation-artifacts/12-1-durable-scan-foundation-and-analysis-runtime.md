@@ -517,3 +517,19 @@ idempotent replay. Original test-author verification passed 18/18 focused tests;
 adjacent durable regressions passed 42/42 and Infrastructure built with zero
 errors. No dispatch, scheduling, timer, retry policy, or endpoint behavior was
 added in this remediation.
+
+### Implementation group 16
+
+After explicit user authorization for the disclosed state-changing endpoint,
+the manual-resume HTTP slice progressed from an endpoint-only 12-failure RED to
+GREEN. The bounded Shared contract and validator accept no caller-controlled
+phase, lease, retry, revision, path, provider, executable, or runtime state. The
+Web endpoint evaluates authentication and `ManagementAccess` before ownership,
+derives the caller's visible Systems, performs only the durable ownership-filtered
+prelookup, returns indistinguishable missing/hidden 404 responses, and invokes
+recovery once only for a visible execution. It maps the truthful recovery view
+to the bounded response and emits sanitized Chinese ProblemDetails for exact
+400/401/403/404/409/422/503 outcomes. It initializes no analysis runtime and
+dispatches no Worker Agent. Independent verification passed 13/13 focused API
+tests, 6/6 ownership tests, and a zero-error Web build. T026 and T027 are
+complete. Production DI remains intentionally deferred to T029/T037.

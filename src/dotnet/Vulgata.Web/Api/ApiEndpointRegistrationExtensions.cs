@@ -1,6 +1,7 @@
 using Vulgata.Web.Api.Context;
 using Vulgata.Web.Api.LlmProviders;
 using Vulgata.Web.Api.Repositories;
+using Vulgata.Web.Api.Scans;
 using Vulgata.Web.Api.Systems;
 
 namespace Vulgata.Web.Api;
@@ -14,5 +15,6 @@ internal static class ApiEndpointRegistrationExtensions
         app.MapRepositoryApiEndpoints();
         app.MapLlmProviderApiEndpoints();
         app.MapContextApiEndpoints();
+        app.MapManualResumeApiEndpoints();
     }
 }
