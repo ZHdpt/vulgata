@@ -400,3 +400,19 @@ general N-Repository, retry-window, attempt-budget, concurrency, ordering, or
 Worker-dispatch policy types. Independent verification passed 1/1 focused and
 23/23 Durable Scanning Core/domain tests. T014 and T015 are complete; concrete
 store, atomic commit, and recovery implementations remain later tasks.
+
+### Implementation group 9
+
+The Analysis Runtime Identity slice observed an honest missing-type RED, then
+reached an initial GREEN in the T017 single-file boundary. Independent verification
+found four accepted-design gaps: non-explicit field sorting, a `version` rather
+than `clientVersion` key, an unversioned CodeGraph platform package, and an
+incomplete health observation model. Added RED assertions drove the remediation.
+Final GREEN provides recursively ordinal-sorted canonical JSON, the exact
+versioned CodeGraph bundle and three hashes, JDT LS/Java/StreamJsonRpc values,
+Repository/Profiled Revision binding, host-path non-identity, immutable ordered
+component checks, bounded machine failure codes, UTC observations, and required
+JDT archive/checksum non-substitution. Verification passed 7/7 focused and 30/30
+Analysis Runtime/Durable Scanning tests. T016 and T017 are complete. Real JDT-LS
+qualification remains separately fail-closed until the retained distribution
+archive and approved checksum are supplied.
