@@ -8,6 +8,12 @@ public enum ScanJobExecutionState
 {
     Pending,
     Running,
+    RetryScheduled,
+}
+
+public enum ScanJobFailureCategory
+{
+    ProviderTransient,
 }
 
 public sealed class ScanJobExecution
@@ -48,6 +54,9 @@ public sealed class ScanJobExecution
     public long StateVersion { get; private set; }
     public Guid? LeaseToken { get; private set; }
     public DateTimeOffset? LeaseExpiresAt { get; private set; }
+    public DateTimeOffset? NextAttemptAt { get; private set; }
+    public ScanJobFailureCategory? FailureCategory { get; private set; }
+    public string? FailureCode { get; private set; }
     public DateTimeOffset StateChangedAt { get; private set; }
 
     public static ScanJobExecution Create(
@@ -116,6 +125,46 @@ public sealed class ScanJobExecution
         StateChangedAt = stateChangedAt;
     }
 
+    public void ScheduleRetry(
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        DateTimeOffset nextAttemptAt,
+        ScanJobFailureCategory failureCategory,
+        string failureCode,
+        DateTimeOffset stateChangedAt)
+    {
+        if (State != ScanJobExecutionState.Running ||
+            StateVersion != expectedStateVersion ||
+            LeaseToken != expectedLeaseToken)
+        {
+            throw new InvalidOperationException(
+                "Retry scheduling requires the current Running lease and state version.");
+        }
+
+        ThrowIfNotUtc(nextAttemptAt, nameof(nextAttemptAt));
+        ThrowIfNotUtc(stateChangedAt, nameof(stateChangedAt));
+        if (stateChangedAt < StateChangedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stateChangedAt));
+        }
+
+        if (nextAttemptAt <= stateChangedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(nextAttemptAt));
+        }
+
+        string normalizedFailureCode = NormalizeFailureCode(failureCode);
+
+        State = ScanJobExecutionState.RetryScheduled;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = nextAttemptAt;
+        FailureCategory = failureCategory;
+        FailureCode = normalizedFailureCode;
+        StateChangedAt = stateChangedAt;
+    }
+
     private static void ThrowIfEmpty(Guid value, string parameterName)
     {
         if (value == Guid.Empty)
@@ -130,5 +179,21 @@ public sealed class ScanJobExecution
         {
             throw new ArgumentException("Timestamp must use the UTC offset.", parameterName);
         }
+    }
+
+    private static string NormalizeFailureCode(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        string normalized = value.Trim().Normalize(NormalizationForm.FormC).ToLowerInvariant();
+        if (normalized.Length is < 1 or > 64 ||
+            normalized.Any(character =>
+                !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_' and not '.'))
+        {
+            throw new ArgumentException(
+                "Failure code must be a bounded machine-readable value.",
+                nameof(value));
+        }
+
+        return normalized;
     }
 }

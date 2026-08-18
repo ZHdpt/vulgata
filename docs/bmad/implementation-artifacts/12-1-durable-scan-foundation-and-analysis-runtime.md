@@ -320,3 +320,15 @@ Independent verification passed 1/1 focused and 10/10 surrounding tests. The
 aggregate now has deterministic identity, a valid Pending initial shape, and one
 monotonic Pending-to-Running lease transition. T008 and T009 remain open for retry,
 completion, failure, cancellation, and contradiction behavior.
+
+### Implementation group 3
+
+The retry-scheduling tracer bullet observed an honest compile RED for the missing
+retry state, failure category, transition, and retry metadata. Minimal GREEN adds
+the Running-to-Retry Scheduled transition with exact lease-token and state-version
+guards evaluated before mutation, bounded normalized failure metadata, lease
+clearing, preserved attempt count, and one state-version increment. Independent
+verification passed 2/2 focused and 12/12 surrounding durable/domain tests. T008
+and T009 remain open for completion, terminal failure, cancellation, retry
+reacquisition, expired-lease recovery, completion linkage, and the remaining
+failure categories.

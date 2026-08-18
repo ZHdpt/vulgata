@@ -337,6 +337,23 @@
         "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T10:40:00Z",
+      "completed_at": "2026-08-18T10:45:05Z",
+      "input_commit": "03e934241aa4c94d9e02907f1c0fafc6df05455b",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs": "921B4D72F8BFA5EDAEB089941E7A102BDD1FD8BE118AB10C7BCABE5DE20F73AE",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs": "53BFDC115415802550D0C2DAA50C5CD9642FE5B372BC238BFE65490A3C15A4D0"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1108,6 +1125,33 @@
       "observed_at": "2026-08-18T10:39:02Z",
       "summary": "Independent verification passed 1/1 focused and 10/10 surrounding tests for deterministic creation and one valid lease transition; T008/T009 remain open for all other lifecycle cases.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/7",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "03e934241aa4c94d9e02907f1c0fafc6df05455b",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ScanJobExecutionTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T10:40:00Z",
+      "summary": "Honest compile RED for the missing RetryScheduled state, ProviderTransient failure category, ScheduleRetry transition, and retry metadata.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/8",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "03e934241aa4c94d9e02907f1c0fafc6df05455b",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.ScanJobExecutionTests --no-restore; surrounding durable/domain filter",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T10:45:05Z",
+      "summary": "Independent verification passed 2/2 focused and 12/12 surrounding tests; stale version and wrong lease rejection are mutation-free. Remaining T008/T009 lifecycle scope stays open.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1120,7 +1164,7 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T103902Z-f0145c",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T104505Z-921b4d",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
@@ -1130,13 +1174,13 @@
       "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/5",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/6"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/7",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/8"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T10:39:02Z"
+  "updated_at": "2026-08-18T10:45:05Z"
 }

@@ -64,4 +64,55 @@ public sealed class ScanJobExecutionTests
         Assert.Equal(leaseExpiresAt, first.LeaseExpiresAt);
         Assert.Equal(_createdAt.AddSeconds(1), first.StateChangedAt);
     }
+
+    [Fact]
+    public void ScheduleRetry_WithCurrentLeaseAndVersion_ClearsLeaseAndAdvancesRetryStateWithoutAcceptingContradictions()
+    {
+        ScanJobExecution job = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 7,
+            stateChangedAt: _createdAt);
+        Guid leaseToken = Guid.Parse("50000000-0000-4000-8000-000000000005");
+        job.AcquireLease(leaseToken, _createdAt.AddMinutes(5), _createdAt.AddSeconds(1));
+
+        DateTimeOffset retryAt = _createdAt.AddMinutes(10);
+        DateTimeOffset retriedAt = _createdAt.AddSeconds(2);
+        Guid wrongLeaseToken = Guid.Parse("60000000-0000-4000-8000-000000000006");
+
+        Assert.Throws<InvalidOperationException>(() => job.ScheduleRetry(
+            expectedStateVersion: 0,
+            expectedLeaseToken: leaseToken,
+            nextAttemptAt: retryAt,
+            failureCategory: ScanJobFailureCategory.ProviderTransient,
+            failureCode: "provider-timeout",
+            stateChangedAt: retriedAt));
+        Assert.Throws<InvalidOperationException>(() => job.ScheduleRetry(
+            expectedStateVersion: 1,
+            expectedLeaseToken: wrongLeaseToken,
+            nextAttemptAt: retryAt,
+            failureCategory: ScanJobFailureCategory.ProviderTransient,
+            failureCode: "provider-timeout",
+            stateChangedAt: retriedAt));
+
+        job.ScheduleRetry(
+            expectedStateVersion: 1,
+            expectedLeaseToken: leaseToken,
+            nextAttemptAt: retryAt,
+            failureCategory: ScanJobFailureCategory.ProviderTransient,
+            failureCode: "provider-timeout",
+            stateChangedAt: retriedAt);
+
+        Assert.Equal(ScanJobExecutionState.RetryScheduled, job.State);
+        Assert.Equal(1, job.AttemptCount);
+        Assert.Equal(2, job.StateVersion);
+        Assert.Null(job.LeaseToken);
+        Assert.Null(job.LeaseExpiresAt);
+        Assert.Equal(retryAt, job.NextAttemptAt);
+        Assert.Equal(ScanJobFailureCategory.ProviderTransient, job.FailureCategory);
+        Assert.Equal("provider-timeout", job.FailureCode);
+        Assert.Equal(retriedAt, job.StateChangedAt);
+    }
 }
