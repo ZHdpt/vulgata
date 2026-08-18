@@ -1649,6 +1649,35 @@
       "observed_at": "2026-08-18T13:52:54Z",
       "summary": "Original test-author verification passed 16/16 recovery tests; implementer verification passed 39/39 adjacent durable/atomic regressions and a 0-error Infrastructure build. T024/T025 are complete with no automatic dispatch, scheduling, loop, timer, or retry policy.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/30",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "8fd1e78bf62a98963e2c2f29675eeddc32b93266",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RecoveryCoordinatorTests --no-restore -clp:ErrorsOnly",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T14:21:36Z",
+      "summary": "The accepted manual-resume response contract exposed a narrow recovery-result gap: ScanRecoveryView, result View, replay semantics, and eligible paused-to-Prepared behavior were absent.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/31",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "8fd1e78bf62a98963e2c2f29675eeddc32b93266",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
+        "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RecoveryCoordinatorTests --no-restore; adjacent durable regressions; dotnet build Vulgata.Infrastructure",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T14:21:36Z",
+      "summary": "Original test-author verification passed 18/18 bounded recovery-view tests; adjacent durable regressions passed 42/42 and Infrastructure built with zero errors. First-change and replay views are truthful and no dispatch/scheduling mechanism was added.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1661,27 +1690,25 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T135254Z-recovery",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T142136Z-recovery-view",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
-      "specs/010-durable-scan-foundation/tasks.md",
       "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryRevalidator.cs",
       "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
       "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
       "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/28",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/29"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/30",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/31"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T13:52:54Z"
+  "updated_at": "2026-08-18T14:21:36Z"
 }

@@ -69,7 +69,8 @@ public sealed record ScanRecoverySnapshot(
     Guid SystemId,
     Guid RepositoryId,
     long StateVersion,
-    IReadOnlyList<ScanRecoveryJobSnapshot> Jobs);
+    IReadOnlyList<ScanRecoveryJobSnapshot> Jobs,
+    ScanExecutionPhase Phase = ScanExecutionPhase.Pass1Planning);
 
 public sealed record ScanRecoverySnapshotResult(
     DurableScanStoreOutcome Outcome,
@@ -80,10 +81,27 @@ public sealed record ScanRecoveryRevalidationResult(
     bool IsValid,
     DurableScanReason Reason);
 
+public sealed record ScanRecoveryView(
+    Guid ScanExecutionId,
+    ScanExecutionPhase Phase,
+    int TotalJobCount,
+    int CompletedJobCount,
+    int PendingJobCount,
+    int RunningJobCount,
+    int RetryScheduledJobCount,
+    int FailedJobCount,
+    int CancelledJobCount,
+    int RecoveredExpiredLeaseCount,
+    int ReleasedDueRetryCount,
+    bool StateChanged,
+    DurableScanReason Reason);
+
 public sealed record ScanRecoveryResult(
     DurableScanStoreOutcome Outcome,
     DurableScanReason Reason,
-    long? StateVersion);
+    long? StateVersion,
+    ScanRecoveryView? View = null,
+    bool IsReplay = false);
 
 public sealed record TwoRepositoryScanCoordinationResult(
     DurableScanStoreOutcome Outcome,

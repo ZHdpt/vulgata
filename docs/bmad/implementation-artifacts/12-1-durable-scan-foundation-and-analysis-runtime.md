@@ -503,3 +503,17 @@ dispatch. Original test-author verification passed 16/16 focused tests; adjacent
 durable/atomic regressions passed 39/39 and Infrastructure built with zero
 errors. T024 and T025 are complete. Concrete host adapter composition remains in
 the later accepted runtime/integration task boundaries.
+
+### Implementation group 15
+
+The manual-resume API RED exposed that the first recovery result shape could not
+truthfully produce the already accepted bounded HTTP response. A narrow T024/
+T025 remediation added an immutable recovery view carrying the exact execution,
+phase, total and six state counts, recovered-expired and released-due counts,
+state-change flag, and bounded reason. Valid recovery now moves an eligible
+provider/operator pause to `Prepared`, rereads durable progress after conditional
+job transitions, and distinguishes the first changed result from a mutation-free
+idempotent replay. Original test-author verification passed 18/18 focused tests;
+adjacent durable regressions passed 42/42 and Infrastructure built with zero
+errors. No dispatch, scheduling, timer, retry policy, or endpoint behavior was
+added in this remediation.

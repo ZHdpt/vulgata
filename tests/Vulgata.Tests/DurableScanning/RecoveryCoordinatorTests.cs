@@ -23,6 +23,84 @@ public sealed class RecoveryCoordinatorTests
     private const string _runtimeHash =
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
+    // T024 remediation RED: the accepted manual-resume contract proposes
+    // this immutable Core seam (not a test-local projection):
+    // ScanRecoveryView(
+    //   ScanExecutionId, Phase, TotalJobCount, CompletedJobCount,
+    //   PendingJobCount, RunningJobCount, RetryScheduledJobCount,
+    //   FailedJobCount, CancelledJobCount, RecoveredExpiredLeaseCount,
+    //   ReleasedDueRetryCount, StateChanged, Reason), carried by
+    // ScanRecoveryResult.View with ScanRecoveryResult.IsReplay.
+
+    [Fact]
+    public async Task ResumeAsync_ValidPausedExecutionWithMixedJobs_ReturnsPreparedBoundedViewAndTransitionCounts()
+    {
+        await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
+        await fixture.PauseProviderExecutionAsync();
+        await fixture.AddRunningJobAsync(1, _start.AddMinutes(5));
+        await fixture.AddRetryScheduledJobAsync(2, _start.AddMinutes(6));
+        await fixture.AddPendingJobAsync(3);
+        await fixture.AddRetryScheduledJobAsync(4, _start.AddMinutes(20));
+        await fixture.AddFailedJobAsync(5);
+        await fixture.AddCancelledJobAsync(6);
+        fixture.Clock.SetUtcNow(_start.AddMinutes(10));
+
+        ScanRecoveryResult result = await fixture.ResumeAsync();
+
+        Assert.Equal(DurableScanStoreOutcome.Applied, result.Outcome);
+        Assert.False(result.IsReplay);
+        ScanRecoveryView view = Assert.IsType<ScanRecoveryView>(result.View);
+        Assert.Equal(fixture.ExecutionId, view.ScanExecutionId);
+        Assert.Equal(ScanExecutionPhase.Prepared, view.Phase);
+        Assert.Equal(6, view.TotalJobCount);
+        Assert.Equal(0, view.CompletedJobCount);
+        Assert.Equal(3, view.PendingJobCount);
+        Assert.Equal(0, view.RunningJobCount);
+        Assert.Equal(1, view.RetryScheduledJobCount);
+        Assert.Equal(1, view.FailedJobCount);
+        Assert.Equal(1, view.CancelledJobCount);
+        Assert.Equal(1, view.RecoveredExpiredLeaseCount);
+        Assert.Equal(1, view.ReleasedDueRetryCount);
+        Assert.True(view.StateChanged);
+        Assert.Equal(DurableScanReason.None, view.Reason);
+    }
+
+    [Fact]
+    public async Task ResumeAsync_ValidPausedExecution_ReplayReturnsSameBoundedViewWithoutAnotherVersionChange()
+    {
+        await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
+        await fixture.PauseProviderExecutionAsync();
+        await fixture.AddRunningJobAsync(1, _start.AddMinutes(5));
+        await fixture.AddRetryScheduledJobAsync(2, _start.AddMinutes(6));
+        fixture.Clock.SetUtcNow(_start.AddMinutes(10));
+
+        ScanRecoveryResult first = await fixture.ResumeAsync();
+        long versionAfterFirst = await fixture.ExecutionVersionAsync();
+        ScanRecoveryResult replay = await fixture.ResumeAsync();
+
+        ScanRecoveryView firstView = Assert.IsType<ScanRecoveryView>(first.View);
+        ScanRecoveryView replayView = Assert.IsType<ScanRecoveryView>(replay.View);
+        Assert.Equal(firstView.ScanExecutionId, replayView.ScanExecutionId);
+        Assert.Equal(firstView.Phase, replayView.Phase);
+        Assert.Equal(firstView.TotalJobCount, replayView.TotalJobCount);
+        Assert.Equal(firstView.CompletedJobCount, replayView.CompletedJobCount);
+        Assert.Equal(firstView.PendingJobCount, replayView.PendingJobCount);
+        Assert.Equal(firstView.RunningJobCount, replayView.RunningJobCount);
+        Assert.Equal(firstView.RetryScheduledJobCount, replayView.RetryScheduledJobCount);
+        Assert.Equal(firstView.FailedJobCount, replayView.FailedJobCount);
+        Assert.Equal(firstView.CancelledJobCount, replayView.CancelledJobCount);
+        Assert.Equal(1, firstView.RecoveredExpiredLeaseCount);
+        Assert.Equal(1, firstView.ReleasedDueRetryCount);
+        Assert.Equal(0, replayView.RecoveredExpiredLeaseCount);
+        Assert.Equal(0, replayView.ReleasedDueRetryCount);
+        Assert.True(firstView.StateChanged);
+        Assert.False(first.IsReplay);
+        Assert.False(replayView.StateChanged);
+        Assert.True(replay.IsReplay);
+        Assert.Equal(firstView.Reason, replayView.Reason);
+        Assert.Equal(versionAfterFirst, await fixture.ExecutionVersionAsync());
+    }
+
     [Fact]
     public async Task ResumeAsync_RepeatedInvocation_IsIdempotentAndDoesNotDispatchOrScheduleWork()
     {
@@ -250,6 +328,7 @@ public sealed class RecoveryCoordinatorTests
         private ScanRun ScanRun { get; }
         private ScanExecution Execution { get; }
         internal DurableScanAuthorizationScope Scope { get; }
+        internal Guid ExecutionId => Execution.Id;
         internal FixedTestClock Clock { get; }
         internal IDurableScanStore Store { get; private set; }
         internal FakeRecoveryRevalidator Revalidator { get; }
@@ -471,6 +550,13 @@ public sealed class RecoveryCoordinatorTests
             });
 
         internal Task<int> DocumentCountAsync() => Context.DocumentVersions.CountAsync();
+
+        internal async Task PauseProviderExecutionAsync()
+        {
+            Execution.BeginRunning(0, _start.AddMinutes(3));
+            Execution.PauseProviderUnavailable(1, "provider-unavailable", _start.AddMinutes(4));
+            await Context.SaveChangesAsync();
+        }
 
         internal async Task PauseProviderAsync()
         {

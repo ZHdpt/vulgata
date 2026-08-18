@@ -44,6 +44,9 @@ public sealed class DurableScanRecoveryCoordinator(
             }
 
             DateTimeOffset observedAt = timeProvider.GetUtcNow();
+            int recoveredExpiredLeaseCount = 0;
+            int releasedDueRetryCount = 0;
+            bool stateChanged = false;
             foreach (ScanRecoveryJobSnapshot job in snapshot.Jobs)
             {
                 if (job.State == ScanJobExecutionState.Completed)
@@ -91,12 +94,63 @@ public sealed class DurableScanRecoveryCoordinator(
                 {
                     return new(applied.Outcome, applied.Reason, applied.StateVersion);
                 }
+
+                if (applied.Outcome == DurableScanStoreOutcome.Applied)
+                {
+                    stateChanged = true;
+                    if (transition == ScanRecoveryTransitionKind.ExpiredLeaseToPending)
+                    {
+                        recoveredExpiredLeaseCount++;
+                    }
+                    else
+                    {
+                        releasedDueRetryCount++;
+                    }
+                }
             }
 
+            if (snapshot.Phase is ScanExecutionPhase.PausedProviderUnavailable or
+                ScanExecutionPhase.PausedOperatorCorrection)
+            {
+                DurableScanStoreResult resumed = await store.ApplyRecoveryTransitionAsync(
+                    authorizationScope,
+                    new ScanRecoveryTransitionCommand(
+                        snapshot.ScanExecutionId,
+                        snapshot.StateVersion,
+                        null,
+                        null,
+                        ScanRecoveryTransitionKind.PausedToPrepared,
+                        observedAt),
+                    cancellationToken);
+                if (resumed.Outcome is not DurableScanStoreOutcome.Applied and
+                    not DurableScanStoreOutcome.Replay)
+                {
+                    return new(resumed.Outcome, resumed.Reason, resumed.StateVersion);
+                }
+
+                stateChanged |= resumed.Outcome == DurableScanStoreOutcome.Applied;
+            }
+
+            ScanRecoverySnapshotResult reread = await store.ReadRecoverySnapshotAsync(
+                authorizationScope,
+                scanExecutionId,
+                cancellationToken);
+            if (reread.Snapshot is not ScanRecoverySnapshot durable)
+            {
+                return new(reread.Outcome, reread.Reason, null);
+            }
+
+            ScanRecoveryView view = CreateView(
+                durable,
+                recoveredExpiredLeaseCount,
+                releasedDueRetryCount,
+                stateChanged);
             return new(
                 DurableScanStoreOutcome.Applied,
                 DurableScanReason.None,
-                snapshot.StateVersion);
+                durable.StateVersion,
+                view,
+                IsReplay: !stateChanged);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -127,6 +181,29 @@ public sealed class DurableScanRecoveryCoordinator(
 
     private static bool IsAcceptedRevalidation(ScanRecoveryRevalidationResult result) =>
         result.IsValid && result.Reason == DurableScanReason.None;
+
+    private static ScanRecoveryView CreateView(
+        ScanRecoverySnapshot snapshot,
+        int recoveredExpiredLeaseCount,
+        int releasedDueRetryCount,
+        bool stateChanged)
+    {
+        IReadOnlyList<ScanRecoveryJobSnapshot> jobs = snapshot.Jobs;
+        return new ScanRecoveryView(
+            snapshot.ScanExecutionId,
+            snapshot.Phase,
+            jobs.Count,
+            jobs.Count(job => job.State == ScanJobExecutionState.Completed),
+            jobs.Count(job => job.State == ScanJobExecutionState.Pending),
+            jobs.Count(job => job.State == ScanJobExecutionState.Running),
+            jobs.Count(job => job.State == ScanJobExecutionState.RetryScheduled),
+            jobs.Count(job => job.State == ScanJobExecutionState.Failed),
+            jobs.Count(job => job.State == ScanJobExecutionState.Cancelled),
+            recoveredExpiredLeaseCount,
+            releasedDueRetryCount,
+            stateChanged,
+            DurableScanReason.None);
+    }
 
     private static bool IsBoundedStopReason(DurableScanReason reason) =>
         reason is DurableScanReason.Unauthorized or

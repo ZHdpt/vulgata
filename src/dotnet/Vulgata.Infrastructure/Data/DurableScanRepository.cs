@@ -219,7 +219,8 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
                 execution.SystemId,
                 execution.RepositoryId,
                 execution.StateVersion,
-                jobs));
+                jobs,
+                execution.Phase));
     }
 
     public async Task<DurableScanStoreResult> ApplyRecoveryTransitionAsync(
