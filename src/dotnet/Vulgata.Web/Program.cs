@@ -229,6 +229,16 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IRepositoryRepository, RepositoryRepository>();
         builder.Services.AddScoped<KnowledgeDocumentMaterializer>();
         builder.Services.AddScoped<IKnowledgeStoreRepository, KnowledgeStoreRepository>();
+        builder.Services.AddScoped<DurableScanRepository>();
+        builder.Services.AddScoped<IDurableScanStore>(services =>
+            services.GetRequiredService<DurableScanRepository>());
+        builder.Services.AddScoped<ITwoRepositoryScanCoordinationStore>(services =>
+            services.GetRequiredService<DurableScanRepository>());
+        builder.Services.AddScoped<IScanRecoveryCoordinator>(services =>
+            new DurableScanRecoveryCoordinator(
+                services.GetRequiredService<IDurableScanStore>(),
+                services.GetRequiredService<IScanRecoveryRevalidator>(),
+                services.GetRequiredService<TimeProvider>()));
         builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
         builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
         builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
@@ -256,7 +266,11 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IWorkerAgentExecutionContextSource, RevisionBoundWorkerExecutionContextSource>();
         builder.Services.AddScoped<WorkerAgentProviderResolver>();
         builder.Services.AddScoped<IWorkerAgentDispatcher, WorkerAgentDispatcher>();
-        builder.Services.AddScoped<IWorkerAgentResultCommitter, WorkerAgentResultCommitter>();
+        builder.Services.AddScoped<WorkerAgentResultCommitter>();
+        builder.Services.AddScoped<IWorkerAgentResultCommitter>(services =>
+            services.GetRequiredService<WorkerAgentResultCommitter>());
+        builder.Services.AddScoped<IScanJobResultCommitter>(services =>
+            services.GetRequiredService<WorkerAgentResultCommitter>());
         builder.Services.AddScoped<SequentialScanRunner>();
         builder.Services.AddScoped<IBackupBDirectProvisioner, BackupBDirectProvisioner>();
         builder.Services.AddScoped<HttpMessageHandler, SocketsHttpHandler>();

@@ -548,3 +548,22 @@ already-open connections/PostgreSQL NULL `to_regclass` results correctly. The
 focused real-PostgreSQL test passed 1/1, and a final catalog query proved no
 `vulgata_story121_%` database remained. T047 is complete; no production,
 migration, model, container, volume, or composition file changed.
+
+### Implementation group 18
+
+T028 and T029 completed the durable restart and production-composition slice.
+The behavioral RED boots fresh production `Program` hosts over one disposable
+PostgreSQL 17 database, reconstructs mixed Pending, Running, RetryScheduled,
+Completed, Failed, and Cancelled Scan Job Execution state, repeats manual resume,
+competes stale lease claims from separate hosts, and verifies the committed
+Document Version remains atomically visible. The honest RED was the missing
+`IDurableScanStore` production registration. T029 now shares one scoped
+`DurableScanRepository` across both durable store interfaces, one scoped
+`WorkerAgentResultCommitter` across the legacy and durable commit interfaces,
+and registers the recovery coordinator without adding runtime-health behavior.
+The test factory overrides only the fixed clock and the later T037 runtime-backed
+revalidation prerequisite. Real PostgreSQL verification passed 1/1, the complete
+DurableScanning slice passed 84/84, adjacent composition/recovery/API checks
+passed 34/34, Web built with zero errors, and catalog cleanup found no remaining
+`vulgata_story121_%` database. T028 and T029 are complete; runtime integrity and
+readiness composition remains fail-closed and owned by T036-T037.

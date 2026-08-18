@@ -1719,6 +1719,33 @@
       "observed_at": "2026-08-18T15:19:30Z",
       "summary": "Real PostgreSQL 17 apply/rollback/reapply qualification passed 1/1 with protected and legacy row readability, no pending model changes, and final catalog proof that no generated vulgata_story121_ database remained. T047 is complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/35",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "850e88e1eb21fd674bfe6596802b00f89175ef73",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs"],
+      "command": "VULGATA_TEST_POSTGRES_ADMIN=<local-pg17> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~DurableScanRestartPostgreSqlTests --no-restore -p:GenerateMvcTestManifest=false",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T15:52:11Z",
+      "summary": "After test-only host binding defects were corrected, the real PostgreSQL 17 restart test reached an honest production-composition RED because IDurableScanStore was not registered. The owned disposable database was removed and catalog cleanup count was zero.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/36",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "850e88e1eb21fd674bfe6596802b00f89175ef73",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs"
+      ],
+      "command": "VULGATA_TEST_POSTGRES_ADMIN=<local-pg17> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~DurableScanRestartPostgreSqlTests --no-restore -p:GenerateMvcTestManifest=false; dotnet test ... --filter FullyQualifiedName~Vulgata.Tests.DurableScanning --no-build; dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T15:52:11Z",
+      "summary": "Real PostgreSQL 17 restart/composition verification passed 1/1; independent verification passed 84/84 DurableScanning tests, adjacent composition/recovery/manual-resume checks passed 34/34, and Web built with zero errors. Fresh production hosts share the same disposable database, repeated resume is idempotent, competing stale claims yield one applied and one conflict, committed Documents remain visible, and cleanup count is zero. T028/T029 are complete; runtime-backed revalidation remains T037.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1731,22 +1758,24 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T151930Z-pg-migration",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T155211Z-c74160",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs"
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/34"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/35",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/36"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T15:19:30Z"
+  "updated_at": "2026-08-18T15:52:11Z"
 }
