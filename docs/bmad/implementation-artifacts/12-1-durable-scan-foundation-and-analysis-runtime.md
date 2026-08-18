@@ -387,3 +387,16 @@ invalid child outcome blocks success while both child outcomes and all bindings
 remain unchanged. Final verification passed 4/4 focused and 21/21 combined domain
 tests. T012 and T013 are complete; store authorization/locking and migration remain
 later tasks.
+
+### Implementation group 8
+
+The durable Core contract slice observed an honest missing-type compile RED in
+the root-verified G: checkout. Minimal GREEN adds four specific asynchronous
+ports and immutable closed models for authorization, recovery snapshots,
+progress, coordination, conditional state-version/lease commands, atomic result
+commit, and already-Completed replay representation. Reflection tests prove the
+surface exposes no EF, IQueryable, DbSet, process, network, stream, raw-source,
+general N-Repository, retry-window, attempt-budget, concurrency, ordering, or
+Worker-dispatch policy types. Independent verification passed 1/1 focused and
+23/23 Durable Scanning Core/domain tests. T014 and T015 are complete; concrete
+store, atomic commit, and recovery implementations remain later tasks.

@@ -430,6 +430,33 @@
         "specs/010-durable-scan-foundation/tasks.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T11:31:00Z",
+      "completed_at": "2026-08-18T11:41:22Z",
+      "input_commit": "bfa04608c8a75804256220661b755187e57db965",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "376E5C6EC192DC78D57DDBEE1A9B70C9F3C7830C7469E1D85B2983CA3A1AD6EA",
+        "src/dotnet/Vulgata.Core/DomainServices/IDurableScanStore.cs": "B1286EE43994D244320C64AB571FBBCCCCE8516D588ED467D1284213360980C9",
+        "src/dotnet/Vulgata.Core/DomainServices/ITwoRepositoryScanCoordinationStore.cs": "D9AE5165444AC3B6CC5CEE419EACEB24FDA697C3F246C5D406D98C15F4AD008E",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryCoordinator.cs": "C6665CFEE80263024B5FE0CDE086D09D9786B3193CE18CBE1DA20F539F9CC904",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanJobResultCommitter.cs": "4D4DE76F6C0E6432F9FCA21A8D205A4D78779C0E2980D3BC283EDEE50D71CEC2",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs": "7B4C00696698D8BEE454BFE53E3FB839402617B7285C1EEC12295B62343C45C1",
+        "specs/010-durable-scan-foundation/tasks.md": "AA96465711C907DD9C63E5A692D6CD7976DF9E20D47E2A1B2CA8A10427C50DF0"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IDurableScanStore.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/ITwoRepositoryScanCoordinationStore.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryCoordinator.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanJobResultCommitter.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs",
+        "specs/010-durable-scan-foundation/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1337,6 +1364,37 @@
       "observed_at": "2026-08-18T11:30:31Z",
       "summary": "After correcting invalid-child coverage to exercise Pass2, independent verification passed 4/4 focused and 21/21 combined tests; T012/T013 are complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/17",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "bfa04608c8a75804256220661b755187e57db965",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.DurableScanContractTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T11:36:00Z",
+      "summary": "Root re-observation in G: confirmed honest compile RED for the absent durable Core ports, results, commands, snapshots, and closed outcomes; stale child-checkout hash evidence was excluded.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/18",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "bfa04608c8a75804256220661b755187e57db965",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IDurableScanStore.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/ITwoRepositoryScanCoordinationStore.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryCoordinator.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanJobResultCommitter.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~DurableScanContractTests --no-restore; full DurableScanning Core/domain filter",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T11:41:22Z",
+      "summary": "Independent verification passed 1/1 focused and 23/23 Durable Scanning Core/domain tests; reflection confirmed the closed Core contract and excluded policy/framework leakage. T014/T015 are complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1349,24 +1407,28 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T113031Z-ff6a1a",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T114122Z-376e5c",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Core/Entities/TwoRepositoryScanCoordination.cs",
-      "tests/Vulgata.Tests/DurableScanning/TwoRepositoryScanCoordinationTests.cs"
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IDurableScanStore.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/ITwoRepositoryScanCoordinationStore.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryCoordinator.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IScanJobResultCommitter.cs",
+      "tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/15",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/16"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/17",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/18"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T11:30:31Z"
+  "updated_at": "2026-08-18T11:41:22Z"
 }
