@@ -390,7 +390,7 @@ public sealed class SourceExcerptResult
         RelativePath = AnalysisContractGuard.RequireRelativePath(relativePath);
         Range = range ?? throw new ArgumentNullException(nameof(range));
         SourceSha256 = AnalysisContractGuard.RequireSha256(sourceSha256, nameof(sourceSha256));
-        Excerpt = AnalysisContractGuard.RequireText(excerpt, 1_048_576, nameof(excerpt));
+        Excerpt = AnalysisContractGuard.RequireExcerpt(excerpt, 1_048_576, nameof(excerpt));
         ByteCount = AnalysisContractGuard.RequireLimit(byteCount, 1_048_576, nameof(byteCount));
         Failure = failure;
     }
@@ -483,7 +483,7 @@ public interface IJavaAnalysisSessionFactory
         CancellationToken cancellationToken);
 }
 
-public interface IJavaAnalysisSession
+public interface IJavaAnalysisSession : IAsyncDisposable
 {
     Task<JavaNavigationResult> GetDocumentSymbolsAsync(
         AnalysisScope scope,
@@ -589,6 +589,22 @@ internal static class AnalysisContractGuard
         return normalized;
     }
 
+    public static string RequireExcerpt(string value, int maximumLength, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("A value is required.", parameterName);
+        }
+
+        if (value.Length > maximumLength ||
+            value.Any(character => char.IsControl(character) && character != '\n'))
+        {
+            throw new ArgumentException("The value is outside its bounded contract.", parameterName);
+        }
+
+        return value;
+    }
+
     public static string SanitizeDiagnostic(string value)
     {
         string diagnostic = RequireText(value, 256, nameof(value));
@@ -597,9 +613,27 @@ internal static class AnalysisContractGuard
             .Where(token =>
                 !token.Contains('/') &&
                 !token.Contains('\\') &&
-                !token.Contains("stderr", StringComparison.OrdinalIgnoreCase))
+                !token.Contains("stderr", StringComparison.OrdinalIgnoreCase) &&
+                !IsSensitiveDiagnosticToken(token))
             .ToArray();
         return safe.Length == 0 ? "analysis_failed" : string.Join(' ', safe);
+    }
+
+    private static bool IsSensitiveDiagnosticToken(string token)
+    {
+        int separatorIndex = token.IndexOf('=');
+        if (separatorIndex <= 0)
+        {
+            return false;
+        }
+
+        ReadOnlySpan<char> key = token.AsSpan(0, separatorIndex);
+        return key.Equals("token", StringComparison.OrdinalIgnoreCase) ||
+            key.Equals("secret", StringComparison.OrdinalIgnoreCase) ||
+            key.Equals("password", StringComparison.OrdinalIgnoreCase) ||
+            key.Equals("api_key", StringComparison.OrdinalIgnoreCase) ||
+            key.Equals("apikey", StringComparison.OrdinalIgnoreCase) ||
+            key.Equals("access_key", StringComparison.OrdinalIgnoreCase);
     }
 
     public static int RequireLimit(int value, int maximum, string parameterName)

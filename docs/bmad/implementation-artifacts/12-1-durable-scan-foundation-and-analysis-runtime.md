@@ -567,3 +567,31 @@ DurableScanning slice passed 84/84, adjacent composition/recovery/API checks
 passed 34/34, Web built with zero errors, and catalog cleanup found no remaining
 `vulgata_story121_%` database. T028 and T029 are complete; runtime integrity and
 readiness composition remains fail-closed and owned by T036-T037.
+
+### Implementation group 19
+
+T034 and T035 completed the bounded revision-contained Source reader. The RED
+covered exact ranges, UTF-8 byte bounds, Repository, Scan Run, Profiled Revision,
+snapshot identity, traversal, root containment, reparse points, stale and
+cross-Repository requests, cancellation, and sanitized failures. The GREEN
+exposes only bounded typed excerpts through the Core port; no absolute path,
+file handle, shell, network, unrestricted filesystem capability, or unrelated
+source crosses that boundary. Independent verification passed 2/2 focused tests
+and the combined Analysis Runtime suite passed 27/27.
+
+T048 also completed real PostgreSQL 17 concurrency and atomicity qualification:
+competing Pending claims and Running transitions each produced exactly one
+Applied and one Conflict result, while injected commit failures at each tested
+save boundary left no partial Document, Document Version, Source Anchor,
+Section, or index rows and preserved the Scan Job Execution in Running. The
+focused qualification passed 4/4 and final catalog inspection found no owned
+temporary database.
+
+CodeGraph and JDT LS work remains deliberately partial. The CodeGraph integrity
+probe verified the supplied 1.5.0 installation and all three approved hashes
+without launching or indexing, and the public adapter is characterized as
+fail-closed when no trusted snapshot/process binding exists. The first JDT LS
+tracer verified the required async-disposal seam and the absent retained archive
+and checksum remain fail-closed despite the supplied Java 21 and JDT LS install.
+T030-T033 remain open until the allowed-operation success path and complete JDT
+stdio/workspace/cancellation/shutdown lifecycle are implemented and verified.

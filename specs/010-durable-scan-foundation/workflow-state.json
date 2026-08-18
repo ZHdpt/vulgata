@@ -1746,6 +1746,101 @@
       "observed_at": "2026-08-18T15:52:11Z",
       "summary": "Real PostgreSQL 17 restart/composition verification passed 1/1; independent verification passed 84/84 DurableScanning tests, adjacent composition/recovery/manual-resume checks passed 34/34, and Web built with zero errors. Fresh production hosts share the same disposable database, repeated resume is idempotent, competing stale claims yield one applied and one conflict, committed Documents remain visible, and cleanup count is zero. T028/T029 are complete; runtime-backed revalidation remains T037.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/37",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "cc7467cbfde818d10c9051772124649e83558cd3",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphAdapterTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T16:23:38Z",
+      "summary": "The first T030 tracer reached an honest RED because the Infrastructure CodeGraph adapter and integrity probe were absent; a subsequent diagnostic assertion exposed credential-token leakage in the shared bounded sanitizer.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/38",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "cc7467cbfde818d10c9051772124649e83558cd3",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphAdapterTests --no-restore; surrounding AnalysisRuntime tests; dotnet build Vulgata.Core",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T16:23:38Z",
+      "summary": "The supplied CodeGraph 1.5.0 installation and three approved component hashes passed a read-only no-index integrity probe, credential diagnostics are sanitized, and the unbound public adapter is characterized fail-closed. T030/T031 remain open because allowed-operation success behavior and its trusted process/snapshot seam are not yet implemented.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/39",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "cc7467cbfde818d10c9051772124649e83558cd3",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~JdtLsAdapterTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T16:23:38Z",
+      "summary": "The first T032 lifecycle tracer reached an honest RED because IJavaAnalysisSession did not expose the accepted asynchronous disposal contract; retained JDT distribution archive and checksum qualification remained fail-closed.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/40",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "cc7467cbfde818d10c9051772124649e83558cd3",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~JdtLsAdapterTests --no-build --no-restore; surrounding AnalysisRuntime tests",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T16:23:38Z",
+      "summary": "Independent verification passed 2/2 first-tracer JDT tests after adding asynchronous disposal to the public session seam. T032/T033 remain open pending the complete StreamJsonRpc stdio, exclusive workspace, cancellation, shutdown, and forced-cleanup lifecycle.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/41",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "cc7467cbfde818d10c9051772124649e83558cd3",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/RevisionBoundSourceReaderTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RevisionBoundSourceReaderTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T16:23:38Z",
+      "summary": "T034 reached an honest RED because the bounded revision-contained Source reader was absent; the first implementation run then exposed that the shared text validator incorrectly rejected required multiline excerpts.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/42",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "cc7467cbfde818d10c9051772124649e83558cd3",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/RevisionBoundSourceReaderTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RevisionBoundSourceReaderTests --no-restore; dotnet test ... --filter FullyQualifiedName~Vulgata.Tests.AnalysisRuntime --no-build --no-restore",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T16:23:38Z",
+      "summary": "Independent verification passed 2/2 focused Source-reader tests and the compact root verification passed 27/27 Analysis Runtime tests. T034/T035 are complete with bounded typed excerpts and fail-closed repository/revision/path/range/hash checks.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/43",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "cc7467cbfde818d10c9051772124649e83558cd3",
+      "artifact_paths": ["tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"],
+      "command": "VULGATA_TEST_POSTGRES_ADMIN=<local-pg17> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~DurableScanConcurrencyPostgreSqlTests --no-restore",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T16:23:38Z",
+      "summary": "Real PostgreSQL 17 qualification passed 4/4 concurrent transition and atomic failure-injection cases, with exactly one applied transition per race, no partial document graph rows, preserved Running jobs after failed commits, and zero owned databases after cleanup. T048 is complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1758,24 +1853,34 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T155211Z-c74160",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T162338Z-a8f219",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs"
+      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/RevisionBoundSourceReaderTests.cs",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/35",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/36"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/37",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/38",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/39",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/40",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/41",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/42",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/43"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T15:52:11Z"
+  "updated_at": "2026-08-18T16:23:38Z"
 }
