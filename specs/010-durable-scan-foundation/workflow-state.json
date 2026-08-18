@@ -411,6 +411,25 @@
         "specs/010-durable-scan-foundation/tasks.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T11:12:00Z",
+      "completed_at": "2026-08-18T11:30:31Z",
+      "input_commit": "1198d35bcf5932b140c37750e9db3881670cf19f",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Core/Entities/TwoRepositoryScanCoordination.cs": "FF6A1A3143EEBCD2B898365A83B914F93989197CDF263469D723B9C044BBC93E",
+        "tests/Vulgata.Tests/DurableScanning/TwoRepositoryScanCoordinationTests.cs": "340A2CA2BBD4B3341FFC8737A1926D8D25EB7324459FA5955B7FD15BE1EBE99E",
+        "specs/010-durable-scan-foundation/tasks.md": "3CBA4E8DF6EF75F10F5721608A063CC88966971DC4E348590C7053687A5C8020"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/Entities/TwoRepositoryScanCoordination.cs",
+        "tests/Vulgata.Tests/DurableScanning/TwoRepositoryScanCoordinationTests.cs",
+        "specs/010-durable-scan-foundation/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1291,6 +1310,33 @@
       "observed_at": "2026-08-18T11:11:08Z",
       "summary": "Independent verification passed 3/3 focused, 14/14 surrounding durable/concurrency, and 79/79 legacy Sequential Scan Runner tests; T010/T011 are complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/15",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "1198d35bcf5932b140c37750e9db3881670cf19f",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/TwoRepositoryScanCoordinationTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.TwoRepositoryScanCoordinationTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T11:21:00Z",
+      "summary": "Root re-observation in the pinned G: checkout confirmed honest compile RED for the absent TwoRepositoryScanCoordination aggregate and closed types; stale child-checkout HEAD evidence was excluded.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/16",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "1198d35bcf5932b140c37750e9db3881670cf19f",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/Entities/TwoRepositoryScanCoordination.cs",
+        "tests/Vulgata.Tests/DurableScanning/TwoRepositoryScanCoordinationTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~TwoRepositoryScanCoordinationTests --no-restore; combined coordination/ScanExecution/ScanJob domain filter",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T11:30:31Z",
+      "summary": "After correcting invalid-child coverage to exercise Pass2, independent verification passed 4/4 focused and 21/21 combined tests; T012/T013 are complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1303,25 +1349,24 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T111108Z-57afb9",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T113031Z-ff6a1a",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
-      "src/dotnet/Vulgata.Core/Entities/ScanExecutionPhase.cs",
-      "tests/Vulgata.Tests/DurableScanning/ScanExecutionFoundationTests.cs"
+      "src/dotnet/Vulgata.Core/Entities/TwoRepositoryScanCoordination.cs",
+      "tests/Vulgata.Tests/DurableScanning/TwoRepositoryScanCoordinationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/13",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/14"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/15",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/16"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T11:11:08Z"
+  "updated_at": "2026-08-18T11:30:31Z"
 }

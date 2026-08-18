@@ -372,3 +372,18 @@ phase atoms, and legacy columns. Independent verification passed 3/3 focused,
 14/14 surrounding durable/concurrency, and 79/79 Sequential Scan Runner tests.
 T010 and T011 are complete; persistence and migration compatibility remain later
 integration tasks.
+
+### Implementation group 7
+
+The exactly-two coordination slice observed an honest missing-aggregate compile
+RED in the actual pinned G: checkout. Minimal GREEN adds canonical deterministic
+pair identity, complete same-System Repository/Scan Run/Scan Execution/Profiled
+Revision bindings, the closed combined lifecycle, bounded reasons, exact-version
+UTC-monotonic transitions, child-success gating, warning propagation, and terminal
+immutability without per-file or general N-Repository state. Independent review
+found and corrected a test-coverage defect where invalid children were initially
+rejected from Preparing rather than Pass2; the remediated test now proves each
+invalid child outcome blocks success while both child outcomes and all bindings
+remain unchanged. Final verification passed 4/4 focused and 21/21 combined domain
+tests. T012 and T013 are complete; store authorization/locking and migration remain
+later tasks.
