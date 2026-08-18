@@ -1707,6 +1707,18 @@
       "observed_at": "2026-08-18T14:54:53Z",
       "summary": "Independent verification passed 13/13 manual-resume API tests, 6/6 ownership authorization tests, and a zero-error Web build. T026/T027 are complete; production service registration remains T029/T037.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/34",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "921d425fbce774193f33191e72f1a4cbd0bf9014",
+      "artifact_paths": ["tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs"],
+      "command": "VULGATA_TEST_POSTGRES_ADMIN=<local-pg17> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~DurableScanMigrationPostgreSqlTests --no-restore",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T15:19:30Z",
+      "summary": "Real PostgreSQL 17 apply/rollback/reapply qualification passed 1/1 with protected and legacy row readability, no pending model changes, and final catalog proof that no generated vulgata_story121_ database remained. T047 is complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1719,26 +1731,22 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T145453Z-manual-resume-api",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T151930Z-pg-migration",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Shared/Scans/ManualResumeContracts.cs",
-      "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs",
-      "src/dotnet/Vulgata.Web/Api/ApiEndpointRegistrationExtensions.cs",
-      "tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs"
+      "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/32",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/33"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/34"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T14:54:53Z"
+  "updated_at": "2026-08-18T15:19:30Z"
 }

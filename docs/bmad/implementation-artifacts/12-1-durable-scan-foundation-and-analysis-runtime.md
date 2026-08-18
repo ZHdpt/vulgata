@@ -533,3 +533,18 @@ to the bounded response and emits sanitized Chinese ProblemDetails for exact
 dispatches no Worker Agent. Independent verification passed 13/13 focused API
 tests, 6/6 ownership tests, and a zero-error Web build. T026 and T027 are
 complete. Production DI remains intentionally deferred to T029/T037.
+
+### Implementation group 17
+
+T047 qualified the additive migration lifecycle on the real local PostgreSQL 17
+container through a strongly-prefixed disposable database. The harness migrated
+to the pre-Story baseline, seeded protected Document Version, Source Anchor,
+Document Edge, Uncertainty, prepared-compatible, and legacy Scan data, applied
+Story 12.1, verified no pending model changes and continued readability, rolled
+back only Story 12.1, reverified protected/legacy rows through raw SQL, and
+reapplied successfully. Two harness-only defects were corrected during the run:
+the test now uses explicit migration targets/history configuration and handles
+already-open connections/PostgreSQL NULL `to_regclass` results correctly. The
+focused real-PostgreSQL test passed 1/1, and a final catalog query proved no
+`vulgata_story121_%` database remained. T047 is complete; no production,
+migration, model, container, volume, or composition file changed.
