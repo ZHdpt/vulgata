@@ -32,4 +32,29 @@ public enum ScanExecutionPhase
     /// <summary>Terminal cancellation: an operator cancelled the Scan. No
     /// LLM resume.</summary>
     Cancelled,
+
+    /// <summary>New-path durable inputs are prepared; no Worker Agent job is
+    /// claimed or dispatched.</summary>
+    Prepared,
+
+    /// <summary>New-path per-file work is represented by durable Scan Job
+    /// Executions.</summary>
+    Running,
+
+    /// <summary>New-path progress is paused because its provider is
+    /// unavailable.</summary>
+    PausedProviderUnavailable,
+
+    /// <summary>New-path progress requires operator correction before manual
+    /// resume.</summary>
+    PausedOperatorCorrection,
+
+    /// <summary>Terminal new-path success with bounded warnings.</summary>
+    CompletedWithWarnings,
+
+    /// <summary>Terminal new-path integrity failure.</summary>
+    FailedIntegrity,
+
+    /// <summary>Terminal new-path security failure.</summary>
+    FailedSecurity,
 }

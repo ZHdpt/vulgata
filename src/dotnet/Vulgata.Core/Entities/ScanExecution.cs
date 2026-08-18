@@ -1,6 +1,20 @@
 using System.Text;
+using System.Text.Json;
 
 namespace Vulgata.Core.Entities;
+
+public enum ScanExecutionPauseCategory
+{
+    ProviderUnavailable,
+    OperatorCorrection,
+}
+
+public enum ScanExecutionFailureCategory
+{
+    Integrity,
+    Security,
+    Cancellation,
+}
 
 /// <summary>
 /// One durable record per deadline Scan run. Created by
@@ -18,6 +32,9 @@ public sealed class ScanExecution
     public const int MaxRestartIndicator = 32;
 
     private const int MaximumProfiledRevisionLength = 64;
+    private const int MaximumIdentityLength = 128;
+    private const int MaximumRuntimeIdentityUtf8Bytes = 4_096;
+    private const int MaximumMachineCodeLength = 64;
     private const int MaximumTerminalMessageUtf8Bytes = 512;
 
     // EF Core requires a parameterless constructor. It can be private.
@@ -67,6 +84,171 @@ public sealed class ScanExecution
     public ScanExecutionFailureKind? TerminalReasonKind { get; private set; }
     public DateTimeOffset StartedAt { get; private set; }
     public DateTimeOffset? TerminalAt { get; private set; }
+    public string? PromptIdentity { get; private set; }
+    public string? DocumentSchemaIdentity { get; private set; }
+    public string? AnalysisRuntimeIdentityJson { get; private set; }
+    public string? AnalysisRuntimeIdentityHash { get; private set; }
+    public ScanExecutionPauseCategory? PauseCategory { get; private set; }
+    public string? PauseCode { get; private set; }
+    public ScanExecutionFailureCategory? FailureCategory { get; private set; }
+    public string? FailureCode { get; private set; }
+    public long StateVersion { get; private set; }
+    public DateTimeOffset? UpdatedAt { get; private set; }
+
+    public static ScanExecution CreateNewPath(
+        Guid id,
+        Guid repositoryId,
+        Guid systemId,
+        Guid scanRunId,
+        string profiledRevision,
+        string promptIdentity,
+        string documentSchemaIdentity,
+        string analysisRuntimeIdentityJson,
+        string analysisRuntimeIdentityHash,
+        DateTimeOffset startedAt)
+    {
+        ThrowIfEmpty(id, nameof(id));
+        ThrowIfEmpty(repositoryId, nameof(repositoryId));
+        ThrowIfEmpty(systemId, nameof(systemId));
+        ThrowIfEmpty(scanRunId, nameof(scanRunId));
+        string revision = RequireProfiledRevision(profiledRevision);
+        string prompt = RequireIdentity(promptIdentity, nameof(promptIdentity));
+        string schema = RequireIdentity(
+            documentSchemaIdentity,
+            nameof(documentSchemaIdentity));
+        string runtimeJson = RequireRuntimeIdentityJson(analysisRuntimeIdentityJson);
+        string runtimeHash = RequireSha256(
+            analysisRuntimeIdentityHash,
+            nameof(analysisRuntimeIdentityHash));
+        RequireUtc(startedAt, nameof(startedAt));
+
+        return new ScanExecution
+        {
+            Id = id,
+            RepositoryId = repositoryId,
+            SystemId = systemId,
+            ScanRunId = scanRunId,
+            ProfiledRevision = revision,
+            PromptIdentity = prompt,
+            DocumentSchemaIdentity = schema,
+            AnalysisRuntimeIdentityJson = runtimeJson,
+            AnalysisRuntimeIdentityHash = runtimeHash,
+            StartedAt = startedAt,
+            UpdatedAt = startedAt,
+            Phase = ScanExecutionPhase.Prepared,
+        };
+    }
+
+    public void BeginRunning(long expectedStateVersion, DateTimeOffset updatedAt)
+    {
+        EnsureNewPathTransition(ScanExecutionPhase.Prepared, expectedStateVersion, updatedAt);
+        Phase = ScanExecutionPhase.Running;
+        AdvanceNewPathVersion(updatedAt);
+    }
+
+    public void PauseProviderUnavailable(
+        long expectedStateVersion,
+        string pauseCode,
+        DateTimeOffset updatedAt)
+    {
+        EnsureNewPathTransition(ScanExecutionPhase.Running, expectedStateVersion, updatedAt);
+        string code = RequireMachineCode(pauseCode, nameof(pauseCode));
+
+        Phase = ScanExecutionPhase.PausedProviderUnavailable;
+        PauseCategory = ScanExecutionPauseCategory.ProviderUnavailable;
+        PauseCode = code;
+        AdvanceNewPathVersion(updatedAt);
+    }
+
+    public void PauseOperatorCorrection(
+        long expectedStateVersion,
+        string pauseCode,
+        DateTimeOffset updatedAt)
+    {
+        EnsureNewPathTransition(ScanExecutionPhase.Running, expectedStateVersion, updatedAt);
+        string code = RequireMachineCode(pauseCode, nameof(pauseCode));
+
+        Phase = ScanExecutionPhase.PausedOperatorCorrection;
+        PauseCategory = ScanExecutionPauseCategory.OperatorCorrection;
+        PauseCode = code;
+        AdvanceNewPathVersion(updatedAt);
+    }
+
+    public void ResumeToPrepared(long expectedStateVersion, DateTimeOffset updatedAt)
+    {
+        if (Phase is not (ScanExecutionPhase.PausedProviderUnavailable or
+            ScanExecutionPhase.PausedOperatorCorrection))
+        {
+            throw new InvalidOperationException(
+                "Only a paused new-path Scan Execution can be manually resumed.");
+        }
+
+        EnsureNewPathVersionAndTime(expectedStateVersion, updatedAt);
+        Phase = ScanExecutionPhase.Prepared;
+        PauseCategory = null;
+        PauseCode = null;
+        AdvanceNewPathVersion(updatedAt);
+    }
+
+    public void CompleteWithWarnings(
+        long expectedStateVersion,
+        string terminalMessage,
+        DateTimeOffset updatedAt)
+    {
+        EnsureNewPathTransition(ScanExecutionPhase.Running, expectedStateVersion, updatedAt);
+        string message = RequireTerminalMessage(terminalMessage);
+
+        Phase = ScanExecutionPhase.CompletedWithWarnings;
+        TerminalMessage = message;
+        TerminalAt = updatedAt;
+        InFlightJobId = null;
+        PauseCategory = null;
+        PauseCode = null;
+        FailureCategory = null;
+        FailureCode = null;
+        AdvanceNewPathVersion(updatedAt);
+    }
+
+    public void FailIntegrity(
+        long expectedStateVersion,
+        string failureCode,
+        DateTimeOffset updatedAt) =>
+        FailNewPath(
+            ScanExecutionPhase.FailedIntegrity,
+            ScanExecutionFailureCategory.Integrity,
+            expectedStateVersion,
+            failureCode,
+            updatedAt);
+
+    public void FailSecurity(
+        long expectedStateVersion,
+        string failureCode,
+        DateTimeOffset updatedAt) =>
+        FailNewPath(
+            ScanExecutionPhase.FailedSecurity,
+            ScanExecutionFailureCategory.Security,
+            expectedStateVersion,
+            failureCode,
+            updatedAt);
+
+    public void Cancel(
+        long expectedStateVersion,
+        string cancelCode,
+        DateTimeOffset updatedAt)
+    {
+        EnsureNewPathNonterminal();
+        EnsureNewPathVersionAndTime(expectedStateVersion, updatedAt);
+        string code = RequireMachineCode(cancelCode, nameof(cancelCode));
+
+        Phase = ScanExecutionPhase.Cancelled;
+        TerminalAt = updatedAt;
+        InFlightJobId = null;
+        PauseCategory = null;
+        PauseCode = null;
+        FailureCategory = ScanExecutionFailureCategory.Cancellation;
+        FailureCode = code;
+        AdvanceNewPathVersion(updatedAt);
+    }
 
     /// <summary>
     /// Start a new Scan execution from an approved Pre-Scan Handoff. Validates
@@ -459,6 +641,76 @@ public sealed class ScanExecution
         }
     }
 
+    private void FailNewPath(
+        ScanExecutionPhase terminalPhase,
+        ScanExecutionFailureCategory failureCategory,
+        long expectedStateVersion,
+        string failureCode,
+        DateTimeOffset updatedAt)
+    {
+        EnsureNewPathNonterminal();
+        EnsureNewPathVersionAndTime(expectedStateVersion, updatedAt);
+        string code = RequireMachineCode(failureCode, nameof(failureCode));
+
+        Phase = terminalPhase;
+        TerminalAt = updatedAt;
+        InFlightJobId = null;
+        PauseCategory = null;
+        PauseCode = null;
+        FailureCategory = failureCategory;
+        FailureCode = code;
+        AdvanceNewPathVersion(updatedAt);
+    }
+
+    private void EnsureNewPathNonterminal()
+    {
+        if (Phase is not (ScanExecutionPhase.Prepared or
+            ScanExecutionPhase.Running or
+            ScanExecutionPhase.PausedProviderUnavailable or
+            ScanExecutionPhase.PausedOperatorCorrection))
+        {
+            throw new InvalidOperationException(
+                "The new-path Scan Execution is not in a mutable phase.");
+        }
+    }
+
+    private void EnsureNewPathTransition(
+        ScanExecutionPhase expectedPhase,
+        long expectedStateVersion,
+        DateTimeOffset updatedAt)
+    {
+        if (Phase != expectedPhase)
+        {
+            throw new InvalidOperationException(
+                $"The Scan execution is in phase {Phase}; expected {expectedPhase}.");
+        }
+
+        EnsureNewPathVersionAndTime(expectedStateVersion, updatedAt);
+    }
+
+    private void EnsureNewPathVersionAndTime(
+        long expectedStateVersion,
+        DateTimeOffset updatedAt)
+    {
+        if (StateVersion != expectedStateVersion || UpdatedAt is null)
+        {
+            throw new InvalidOperationException(
+                "The new-path Scan Execution state version is stale.");
+        }
+
+        RequireUtc(updatedAt, nameof(updatedAt));
+        if (updatedAt < UpdatedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(updatedAt));
+        }
+    }
+
+    private void AdvanceNewPathVersion(DateTimeOffset updatedAt)
+    {
+        StateVersion++;
+        UpdatedAt = updatedAt;
+    }
+
     private void EnsurePhase(ScanExecutionPhase expected)
     {
         if (Phase != expected)
@@ -489,6 +741,119 @@ public sealed class ScanExecution
             throw new ArgumentException(
                 "The Profiled Revision must be a bounded lowercase Git object ID.",
                 nameof(value));
+        }
+
+        return normalized;
+    }
+
+    private static void ThrowIfEmpty(Guid value, string parameterName)
+    {
+        if (value == Guid.Empty)
+        {
+            throw new ArgumentException("Identity must not be empty.", parameterName);
+        }
+    }
+
+    private static void RequireUtc(DateTimeOffset value, string parameterName)
+    {
+        if (value.Offset != TimeSpan.Zero)
+        {
+            throw new ArgumentException("Timestamp must use the UTC offset.", parameterName);
+        }
+    }
+
+    private static string RequireIdentity(string value, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        string normalized = value.Trim().Normalize(NormalizationForm.FormC);
+        if (normalized.Length > MaximumIdentityLength ||
+            normalized.Any(character =>
+                character <= '\u001f' || character is >= '\u007f' and <= '\u009f') ||
+            Path.IsPathRooted(normalized))
+        {
+            throw new ArgumentException(
+                "Identity must be bounded and must not contain a host path.",
+                parameterName);
+        }
+
+        return normalized;
+    }
+
+    private static string RequireRuntimeIdentityJson(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        string normalized = value.Trim().Normalize(NormalizationForm.FormC);
+        if (Encoding.UTF8.GetByteCount(normalized) > MaximumRuntimeIdentityUtf8Bytes)
+        {
+            throw new ArgumentException(
+                "Analysis Runtime Identity exceeds the finite UTF-8 byte limit.",
+                nameof(value));
+        }
+
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(normalized);
+            if (ContainsRootedPath(document.RootElement))
+            {
+                throw new ArgumentException(
+                    "Analysis Runtime Identity must not contain an absolute host path.",
+                    nameof(value));
+            }
+        }
+        catch (JsonException exception)
+        {
+            throw new ArgumentException(
+                "Analysis Runtime Identity must be valid JSON.",
+                nameof(value),
+                exception);
+        }
+
+        return normalized;
+    }
+
+    private static bool ContainsRootedPath(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            return Path.IsPathRooted(element.GetString());
+        }
+
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            return element.EnumerateArray().Any(ContainsRootedPath);
+        }
+
+        return element.ValueKind == JsonValueKind.Object &&
+            element.EnumerateObject().Any(property => ContainsRootedPath(property.Value));
+    }
+
+    private static string RequireSha256(string value, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        string normalized = value.Trim().ToLowerInvariant();
+        if (normalized.Length != 64 ||
+            normalized.Any(character =>
+                character is not (>= '0' and <= '9') and not (>= 'a' and <= 'f')))
+        {
+            throw new ArgumentException(
+                "Identity hash must be a lowercase SHA-256 value.",
+                parameterName);
+        }
+
+        return normalized;
+    }
+
+    private static string RequireMachineCode(string value, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        string normalized = value.Trim().Normalize(NormalizationForm.FormC).ToLowerInvariant();
+        if (normalized.Length > MaximumMachineCodeLength ||
+            normalized.Any(character =>
+                !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_' and not '.'))
+        {
+            throw new ArgumentException(
+                "Code must be a bounded machine-readable value.",
+                parameterName);
         }
 
         return normalized;

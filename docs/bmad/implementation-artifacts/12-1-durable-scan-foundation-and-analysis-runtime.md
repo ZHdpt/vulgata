@@ -358,3 +358,17 @@ shapes, and mutation-free terminal rejection. Independent verification passed
 scope of T008 and T009 is complete; EF mapping, conditional store concurrency,
 atomic Document/job completion, migration, and recovery integration remain owned
 by later tasks.
+
+### Implementation group 6
+
+The evolved Scan Execution domain slice first exposed and corrected a test-clock
+defect that attempted to move `UpdatedAt` backward; the corrected test remained
+an honest compile RED for the new-path factory, phases, bindings, and transitions.
+Minimal GREEN adds complete normalized new-path bindings, host-path rejection,
+the additive Prepared/running/pause/warning/failure atoms, exact-version and UTC
+monotonic transitions, manual pause recovery, bounded reasons, cancellation, and
+terminal immutability while preserving the historical `Start` factory, legacy
+phase atoms, and legacy columns. Independent verification passed 3/3 focused,
+14/14 surrounding durable/concurrency, and 79/79 Sequential Scan Runner tests.
+T010 and T011 are complete; persistence and migration compatibility remain later
+integration tasks.

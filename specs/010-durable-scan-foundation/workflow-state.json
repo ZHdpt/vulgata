@@ -390,6 +390,27 @@
         "specs/010-durable-scan-foundation/tasks.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T10:57:00Z",
+      "completed_at": "2026-08-18T11:11:08Z",
+      "input_commit": "8ea06c36da5f3136756423526337e8024704f599",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs": "57AFB9B7839056E30F0E949D2781B21B66D663A9C0837D94B0C03CA0C06E89BD",
+        "src/dotnet/Vulgata.Core/Entities/ScanExecutionPhase.cs": "8DB84B92B567E95232F638F493E02C192C1E39F2F6C02249D770EE729EEFD41F",
+        "tests/Vulgata.Tests/DurableScanning/ScanExecutionFoundationTests.cs": "2FEA2F9C8F567694BEF0C152932D67F8E1A702CE748989009A65073AF133CBD9",
+        "specs/010-durable-scan-foundation/tasks.md": "FC966BEB68CE7CC4C2623C491E91D68F110023A43D53C0A1CAA16919C8CAF229"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
+        "src/dotnet/Vulgata.Core/Entities/ScanExecutionPhase.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanExecutionFoundationTests.cs",
+        "specs/010-durable-scan-foundation/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1242,6 +1263,34 @@
       "observed_at": "2026-08-18T10:56:31Z",
       "summary": "Independent verification passed 14/14 focused and 24/24 surrounding tests for all job states, failure categories, terminal shapes, completion linkage, and terminal immutability; T008/T009 are complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/13",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "8ea06c36da5f3136756423526337e8024704f599",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/ScanExecutionFoundationTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.ScanExecutionFoundationTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T11:03:00Z",
+      "summary": "After correcting a backward fixed-clock test defect, honest compile RED remained for the absent new-path ScanExecution factory, phases, bindings, state version, and transition seams.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/14",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "8ea06c36da5f3136756423526337e8024704f599",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
+        "src/dotnet/Vulgata.Core/Entities/ScanExecutionPhase.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanExecutionFoundationTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.ScanExecutionFoundationTests --no-restore; surrounding durable/concurrency and SequentialScanRunner filters",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T11:11:08Z",
+      "summary": "Independent verification passed 3/3 focused, 14/14 surrounding durable/concurrency, and 79/79 legacy Sequential Scan Runner tests; T010/T011 are complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1254,24 +1303,25 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T105631Z-321311",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T111108Z-57afb9",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
-      "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
+      "src/dotnet/Vulgata.Core/Entities/ScanExecution.cs",
+      "src/dotnet/Vulgata.Core/Entities/ScanExecutionPhase.cs",
+      "tests/Vulgata.Tests/DurableScanning/ScanExecutionFoundationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/11",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/12"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/13",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/14"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T10:56:31Z"
+  "updated_at": "2026-08-18T11:11:08Z"
 }
