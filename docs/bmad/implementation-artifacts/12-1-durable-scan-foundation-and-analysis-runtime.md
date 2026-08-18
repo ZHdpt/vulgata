@@ -416,3 +416,19 @@ JDT archive/checksum non-substitution. Verification passed 7/7 focused and 30/30
 Analysis Runtime/Durable Scanning tests. T016 and T017 are complete. Real JDT-LS
 qualification remains separately fail-closed until the retained distribution
 archive and approved checksum are supplied.
+
+### Implementation group 10
+
+The closed analysis-port slice observed an honest missing-contract RED. Minimal
+GREEN adds the sole shared `AnalysisRuntimeContracts.cs` boundary with typed
+CodeGraph capabilities, Java session/navigation, exact revision-bound source
+ranges, runtime health, Repository/revision/workspace scope, finite limits,
+cancellation, and immutable bounded evidence/failure results. The first test run
+then exposed two harness defects: cyclic framework type traversal caused a stack
+overflow, and an ordered enumerable was not materialized for xUnit comparison.
+Both were corrected in the test only; production remained unchanged. Final
+reflection evidence excludes raw protocol/JSON-RPC, shell/flags, network, internal
+store, filesystem, whole-file/unbounded source, process/stream, EF, IQueryable,
+cross-Repository, and stale-revision capabilities. Verification passed 7/7
+focused, 14/14 Analysis Runtime, and 37/37 combined tests. T018 and T019 are
+complete.

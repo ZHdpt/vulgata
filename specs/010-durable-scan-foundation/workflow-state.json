@@ -476,6 +476,25 @@
         "specs/010-durable-scan-foundation/tasks.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T12:03:00Z",
+      "completed_at": "2026-08-18T12:20:35Z",
+      "input_commit": "f4f23cceda88ff20e5ad2f2c864c7a6f929ad7e0",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs": "008FC99423CAAC628D445DEDF715090A5F594EB6D607528988CCC61E6017F833",
+        "tests/Vulgata.Tests/AnalysisRuntime/ClosedAnalysisPortTests.cs": "394512E6334D872FDEDDB97FE2B3B479ADA9949507BD6CFAB22AACDF6AFE4683",
+        "specs/010-durable-scan-foundation/tasks.md": "954A4791AD964CB72C64F778B4740BF446ABF4198F259D4F672147735F900B43"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/ClosedAnalysisPortTests.cs",
+        "specs/010-durable-scan-foundation/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1441,6 +1460,33 @@
       "observed_at": "2026-08-18T12:02:22Z",
       "summary": "Independent verification passed 7/7 focused and 30/30 regression tests for canonical path-free identity and bounded health observations. T016/T017 are complete; real JDT qualification remains fail-closed on missing archive/checksum.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/21",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f4f23cceda88ff20e5ad2f2c864c7a6f929ad7e0",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/ClosedAnalysisPortTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ClosedAnalysisPortTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T12:08:00Z",
+      "summary": "Honest compile RED for absent closed analysis ports/models preceded GREEN; subsequent stack-overflow and collection-comparison failures were confirmed test-harness defects and corrected only in the test.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/22",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f4f23cceda88ff20e5ad2f2c864c7a6f929ad7e0",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/ClosedAnalysisPortTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ClosedAnalysisPortTests --no-restore; AnalysisRuntime and combined regressions",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T12:20:35Z",
+      "summary": "Verification passed 7/7 focused, 14/14 Analysis Runtime, and 37/37 combined tests; negative reflection confirmed the capability-shaped Core boundary. T018/T019 are complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1453,24 +1499,24 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T120222Z-32d115",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T122035Z-008fc9",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeIdentity.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeIdentityTests.cs"
+      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/ClosedAnalysisPortTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/19",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/20"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/21",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/22"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T12:02:22Z"
+  "updated_at": "2026-08-18T12:20:35Z"
 }
