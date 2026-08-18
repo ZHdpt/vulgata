@@ -1,4 +1,6 @@
-# August 15 Expedited MVP Exception
+# August 15 Expedited MVP Exception (Archived)
+
+> Historical authority only. It expired no later than 2026-08-15 23:59:59 Asia/Shanghai and cannot authorize new or resumed work. Schema-v1 states that cite it must use the unified migration procedure before mutation.
 
 ## Authority and lifetime
 

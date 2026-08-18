@@ -13,19 +13,20 @@ from typing import Any
 
 REQUIRED_AGENT_FIELDS = {"name", "description", "developer_instructions"}
 VALID_VERDICTS = {"ACCEPT", "REVISE", "BLOCKED"}
-VALID_GATES = {"spec-review", "plan-review", "analyze", "acceptance-review", "quality-review"}
+VALID_GATES = {"plan-review", "definition-review", "quality-review"}
+VALID_REVIEW_ITERATIONS = {"plan-review", "definition-review", "converge", "quality-review"}
 BLOCKING_SEVERITIES = {"CRITICAL", "HIGH"}
 VALID_SEVERITIES = BLOCKING_SEVERITIES | {"MEDIUM", "LOW"}
 VALID_STAGES = {
-    "context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze",
-    "implement", "acceptance-review", "quality-review", "conditional-e2e", "verify", "complete",
+    "context", "specify", "plan", "plan-review", "tasks", "definition-review",
+    "implement", "converge", "quality-review", "conditional-e2e", "verify", "complete",
 }
 VALID_STATUSES = {"pending", "active", "accepted", "revised", "blocked", "failed", "invalidated"}
 VALID_E2E_RESULTS = {
     "pending", "passed", "failed-product", "failed-test", "blocked", "skipped-no-risk", "skipped-covered",
 }
 VALID_EVIDENCE_KINDS = {
-    "command", "test-red", "test-green", "review", "analysis", "artifact-hash", "e2e-decision",
+    "command", "self-review", "test-red", "test-green", "review", "analysis", "convergence", "artifact-hash", "e2e-decision",
     "human-approval", "architecture-disposition", "failure",
 }
 SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
@@ -33,32 +34,32 @@ HASH_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 TIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$")
 
 ROLE_PROFILES = {
-    "bmad-sprint-orchestrator": ("gpt-5.6-sol", "high", "workspace-write"),
-    "story-context-synthesizer": ("gpt-5.6-terra", "medium", "read-only"),
+    "bmad-sprint-orchestrator": ("gpt-5.6-sol", "medium", "workspace-write"),
+    "story-context-synthesizer": ("gpt-5.6-luna", "high", "read-only"),
     "spec-author": ("gpt-5.6-sol", "medium", "workspace-write"),
-    "spec-judge": ("gpt-5.6-sol", "high", "read-only"),
-    "plan-architect": ("gpt-5.6-sol", "high", "workspace-write"),
-    "plan-judge": ("gpt-5.6-sol", "high", "read-only"),
-    "task-author": ("gpt-5.6-sol", "medium", "workspace-write"),
-    "artifact-analyst": ("gpt-5.6-sol", "high", "read-only"),
-    "tdd-implementer": ("gpt-5.6-sol", "high", "workspace-write"),
-    "acceptance-reviewer": ("gpt-5.6-sol", "high", "read-only"),
-    "quality-reviewer": ("gpt-5.6-sol", "high", "read-only"),
-    "e2e-runner": ("gpt-5.6-terra", "low", "workspace-write"),
+    "plan-architect": ("gpt-5.6-sol", "medium", "workspace-write"),
+    "plan-architect-high": ("gpt-5.6-sol", "high", "workspace-write"),
+    "task-author": ("gpt-5.6-luna", "medium", "workspace-write"),
+    "definition-reviewer": ("gpt-5.6-sol", "medium", "read-only"),
+    "tdd-test-author": ("gpt-5.6-luna", "high", "workspace-write"),
+    "tdd-implementer": ("gpt-5.6-sol", "medium", "workspace-write"),
+    "convergence-analyst": ("gpt-5.6-luna", "high", "workspace-write"),
+    "quality-reviewer": ("gpt-5.6-sol", "medium", "read-only"),
+    "e2e-runner": ("gpt-5.6-luna", "high", "workspace-write"),
     "epic-architecture-auditor": ("gpt-5.6-sol", "high", "read-only"),
 }
 ROLE_INSTRUCTION_MARKERS = {
     "bmad-sprint-orchestrator": ("load and follow run-bmad-sprint-loop", "never implement feature code", "you alone"),
     "story-context-synthesizer": ("separate sourced facts from inference", "cite repository paths"),
-    "spec-author": ("speckit-specify", "what/why", "quality checklist"),
-    "spec-judge": ("validated accept", "never edit"),
-    "plan-architect": ("speckit-plan", "resolve research", "constitution gate"),
-    "plan-judge": ("feasibility", "architecture seams", "testability"),
-    "task-author": ("speckit-tasks", "failing tests", "exact paths"),
-    "artifact-analyst": ("speckit-analyze", "never edit or remediate", "explicit user approval"),
-    "tdd-implementer": ("no production code before observing", "minimal green"),
-    "acceptance-reviewer": ("missing, partial, wrong", "scope-creep"),
-    "quality-reviewer": ("skip style already enforced by tooling", "cite documented standards"),
+    "spec-author": ("speckit-specify", "self-review", "measurable acceptance"),
+    "plan-architect": ("speckit-plan", "self-review", "architecture-decision classification"),
+    "plan-architect-high": ("speckit-plan", "self-review", "architecture-decision trigger"),
+    "task-author": ("speckit-tasks", "self-review", "source-reference coverage"),
+    "definition-reviewer": ("speckit-analyze", "earliest_owner", "never edit"),
+    "tdd-test-author": ("expected red", "test code and test evidence only", "never edit production code"),
+    "tdd-implementer": ("red evidence", "minimal change", "do not write or weaken tests"),
+    "convergence-analyst": ("speckit-converge", "append-only", "never edit spec"),
+    "quality-reviewer": ("converged immutable boundary", "skip style enforced by tooling", "cite documented standards"),
     "e2e-runner": ("test files and test evidence only", "never change production code"),
     "epic-architecture-auditor": (
         "independent explore/classification judge", "canonical absolute audit root", "git common/worktree identities",
@@ -73,8 +74,8 @@ VERDICT_REQUIRED = {
 }
 STATE_REQUIRED = {
     "schema_version", "bmad_story_key", "bmad_epic_key", "feature_directory", "execution_level", "stage", "active_gates",
-    "stage_history", "repository_preflight", "source_artifacts", "dispatches", "review_iterations",
-    "e2e_decision", "verification", "last_checkpoint", "recoverable_failure", "updated_at",
+    "stage_history", "repository_preflight", "source_artifacts", "dispatches", "review_iterations", "convergence",
+    "e2e_decision", "verification", "last_checkpoint", "recoverable_failure", "legacy_migration", "updated_at",
 }
 EPIC_EVIDENCE_REQUIRED = {
     "schema_version", "evidence_id", "kind", "stage", "source_commit", "artifact_paths", "command",
@@ -262,7 +263,7 @@ def validate_verdict(data: Any) -> list[str]:
     if findings is not None:
         finding_fields = {
             "id", "severity", "category", "artifact", "location", "affected_requirement", "evidence",
-            "correction_outcome",
+            "correction_outcome", "earliest_owner",
         }
         for index, item in enumerate(findings):
             finding = _mapping(item, f"findings[{index}]", errors)
@@ -270,8 +271,10 @@ def validate_verdict(data: Any) -> list[str]:
                 continue
             _required(finding, finding_fields, f"findings[{index}].", errors)
             _unknown(finding, finding_fields, f"findings[{index}].", errors)
-            for field in finding_fields - {"severity", "artifact"}:
+            for field in finding_fields - {"severity", "artifact", "earliest_owner"}:
                 _nonempty_string(finding.get(field), f"findings[{index}].{field}", errors)
+            if finding.get("earliest_owner") not in {"spec", "plan", "tasks", "implement"}:
+                errors.append(f"findings[{index}].earliest_owner is invalid")
             _repo_path(finding.get("artifact"), f"findings[{index}].artifact", errors)
             severity = finding.get("severity")
             if severity not in VALID_SEVERITIES:
@@ -382,10 +385,10 @@ def validate_workflow_state(data: Any) -> list[str]:
         return errors
     _required(state, STATE_REQUIRED, "", errors)
     _unknown(state, STATE_REQUIRED, "", errors)
-    if state.get("schema_version") != "1.0":
-        errors.append("schema_version must equal 1.0")
-    if state.get("execution_level") not in {"full", "standard", "expedited-mvp"}:
-        errors.append("execution_level must be full, standard, or expedited-mvp")
+    if state.get("schema_version") != "2.0":
+        errors.append("schema_version must equal 2.0; historical v1 states require explicit migration")
+    if state.get("execution_level") != "unified":
+        errors.append("execution_level must equal unified")
     _nonempty_string(state.get("bmad_story_key"), "bmad_story_key", errors)
     _nonempty_string(state.get("bmad_epic_key"), "bmad_epic_key", errors)
     _repo_path(state.get("feature_directory"), "feature_directory", errors)
@@ -396,28 +399,12 @@ def validate_workflow_state(data: Any) -> list[str]:
 
     gates = _mapping(state.get("active_gates"), "active_gates", errors)
     if gates is not None:
-        _unknown(gates, {"acceptance-review", "quality-review"}, "active_gates.", errors)
-        for name in ("acceptance-review", "quality-review"):
+        _unknown(gates, {"definition-review", "quality-review"}, "active_gates.", errors)
+        for name in ("definition-review", "quality-review"):
             if name not in gates:
                 errors.append(f"active_gates.{name}")
             else:
                 _validate_gate_record(gates[name], f"active_gates.{name}", errors)
-        if state.get("execution_level") in {"standard", "expedited-mvp"}:
-            acceptance = gates.get("acceptance-review")
-            if not isinstance(acceptance, dict) or acceptance.get("status") != "invalidated":
-                errors.append(
-                    "active_gates.acceptance-review.status must be invalidated for reduced execution_level"
-                )
-            elif (
-                acceptance.get("iteration") != 0
-                or any(
-                    acceptance.get(field) is not None
-                    for field in ("dispatch_id", "verdict_path", "input_boundary", "completed_at")
-                )
-            ):
-                errors.append(
-                    "active_gates.acceptance-review must be unused at iteration zero for reduced execution_level"
-                )
 
     history = _array(state.get("stage_history"), "stage_history", errors)
     if history is not None:
@@ -502,7 +489,7 @@ def validate_workflow_state(data: Any) -> list[str]:
 
     iterations = _mapping(state.get("review_iterations"), "review_iterations", errors)
     if iterations is not None:
-        _unknown(iterations, VALID_GATES, "review_iterations.", errors)
+        _unknown(iterations, VALID_REVIEW_ITERATIONS, "review_iterations.", errors)
         for gate in VALID_GATES:
             if gate not in iterations:
                 errors.append(f"review_iterations.{gate}")
@@ -516,14 +503,39 @@ def validate_workflow_state(data: Any) -> list[str]:
             if not isinstance(count, int) or isinstance(count, bool) or count < 0:
                 errors.append(f"review_iterations.{gate}.count must be a non-negative integer")
             _string_array(record.get("verdict_paths"), f"review_iterations.{gate}.verdict_paths", errors, paths=True)
-            if (
-                state.get("execution_level") == "expedited-mvp"
-                and gate in {"spec-review", "analyze", "acceptance-review"}
-                and (count != 0 or record.get("verdict_paths") != [])
-            ):
-                errors.append(
-                    f"review_iterations.{gate} must remain unused at iteration zero for expedited-mvp"
-                )
+
+    convergence = _mapping(state.get("convergence"), "convergence", errors)
+    if convergence is not None:
+        fields = {
+            "status", "iteration", "outcome", "findings_count", "appended_task_ids",
+            "artifact_hashes", "completed_at",
+        }
+        _required(convergence, fields, "convergence.", errors)
+        _unknown(convergence, fields, "convergence.", errors)
+        if convergence.get("status") not in VALID_STATUSES:
+            errors.append("convergence.status is invalid")
+        if not isinstance(convergence.get("iteration"), int) or isinstance(convergence.get("iteration"), bool) or convergence.get("iteration", -1) < 0:
+            errors.append("convergence.iteration must be a non-negative integer")
+        outcome = convergence.get("outcome")
+        if outcome not in {"pending", "converged", "tasks_appended", "blocked", "failed"}:
+            errors.append("convergence.outcome is invalid")
+        count = convergence.get("findings_count")
+        if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+            errors.append("convergence.findings_count must be a non-negative integer")
+        task_ids = convergence.get("appended_task_ids")
+        _string_array(task_ids, "convergence.appended_task_ids", errors)
+        if isinstance(task_ids, list) and any(not re.fullmatch(r"T[0-9]{3,}", item) for item in task_ids if isinstance(item, str)):
+            errors.append("convergence.appended_task_ids must use T### identifiers")
+        hashes = _mapping(convergence.get("artifact_hashes"), "convergence.artifact_hashes", errors)
+        if hashes is not None:
+            for path, digest in hashes.items():
+                _repo_path(path, "convergence.artifact_hashes key", errors)
+                _hash(digest, f"convergence.artifact_hashes[{path}]", errors)
+        _timestamp(convergence.get("completed_at"), "convergence.completed_at", errors, nullable=True)
+        if outcome == "converged" and (convergence.get("status") != "accepted" or count != 0 or task_ids != [] or convergence.get("completed_at") is None):
+            errors.append("converged outcome requires accepted status, zero findings/tasks, and completed_at")
+        if outcome == "tasks_appended" and (convergence.get("status") != "revised" or not isinstance(count, int) or count < 1 or not task_ids or convergence.get("completed_at") is None):
+            errors.append("tasks_appended outcome requires revised status, findings/tasks, and completed_at")
 
     e2e = _mapping(state.get("e2e_decision"), "e2e_decision", errors)
     if e2e is not None:
@@ -655,6 +667,25 @@ def validate_workflow_state(data: Any) -> list[str]:
                 errors.append("recoverable_failure.retryable must be a boolean")
             if failure_data.get("earliest_resume_stage") not in VALID_STAGES:
                 errors.append("recoverable_failure.earliest_resume_stage is invalid")
+    migration = state.get("legacy_migration")
+    if migration is not None:
+        migration_data = _mapping(migration, "legacy_migration", errors)
+        if migration_data is not None:
+            fields = {
+                "source_state_path", "source_state_sha256", "source_execution_level", "source_stage",
+                "mapped_stage", "decision_evidence_path", "migrated_at",
+            }
+            _required(migration_data, fields, "legacy_migration.", errors)
+            _unknown(migration_data, fields, "legacy_migration.", errors)
+            _repo_path(migration_data.get("source_state_path"), "legacy_migration.source_state_path", errors)
+            _hash(migration_data.get("source_state_sha256"), "legacy_migration.source_state_sha256", errors)
+            if migration_data.get("source_execution_level") not in {"full", "standard", "expedited-mvp"}:
+                errors.append("legacy_migration.source_execution_level is invalid")
+            _nonempty_string(migration_data.get("source_stage"), "legacy_migration.source_stage", errors)
+            if migration_data.get("mapped_stage") not in VALID_STAGES:
+                errors.append("legacy_migration.mapped_stage is invalid")
+            _repo_path(migration_data.get("decision_evidence_path"), "legacy_migration.decision_evidence_path", errors)
+            _timestamp(migration_data.get("migrated_at"), "legacy_migration.migrated_at", errors)
     _timestamp(state.get("updated_at"), "updated_at", errors)
 
     if state.get("stage") == "complete":
@@ -1441,22 +1472,14 @@ def _validate_schema_semantics(filename: str, schema: dict[str, Any], path: Path
             and _schema_enum(rule, "if", "properties", "status", "enum")
             == {"accepted", "revised", "blocked"}
         ), None) if isinstance(gate_rules, list) else None
-        workflow_rules = schema.get("allOf")
-        expedited_rule = next((
-            rule for rule in workflow_rules
-            if isinstance(workflow_rules, list)
-            and _schema_at(rule, "if", "properties", "execution_level", "const") == "expedited-mvp"
-        ), None) if isinstance(workflow_rules, list) else None
-        expedited_iterations = _schema_at(
-            expedited_rule, "then", "properties", "review_iterations", "properties"
-        )
-        expedited_omissions = isinstance(expedited_iterations, dict) and all(
-            _schema_at(expedited_iterations, gate, "properties", "count", "const") == 0
-            and _schema_at(expedited_iterations, gate, "properties", "verdict_paths", "maxItems") == 0
-            for gate in ("spec-review", "analyze", "acceptance-review")
-        )
+        convergence_rules = _schema_at(schema, "$defs", "convergenceRecord", "allOf")
+        convergence_outcomes = {
+            _schema_at(rule, "if", "properties", "outcome", "const")
+            for rule in convergence_rules if isinstance(convergence_rules, list) and isinstance(rule, dict)
+        } if isinstance(convergence_rules, list) else set()
         checks = [
-            (_schema_at(schema, "properties", "schema_version", "const") == "1.0", "schema version const"),
+            (_schema_at(schema, "properties", "schema_version", "const") == "2.0", "schema version const"),
+            (_schema_at(schema, "properties", "execution_level", "const") == "unified", "unified execution level"),
             (_schema_enum(schema, "$defs", "stage", "enum") == VALID_STAGES, "stage enum"),
             (_schema_enum(schema, "$defs", "status", "enum") == VALID_STATUSES, "status enum"),
             (
@@ -1476,16 +1499,14 @@ def _validate_schema_semantics(filename: str, schema: dict[str, Any], path: Path
             ),
             (
                 _schema_at(schema, "$defs", "preflight", "properties", "repository_root", "const") == "."
-                and _schema_at(
-                    schema, "$defs", "preflight", "properties", "git_common_directory", "$ref"
-                ) == "#/$defs/checkoutIdentityPath"
-                and _schema_at(
-                    schema, "$defs", "preflight", "properties", "worktree_path", "$ref"
-                ) == "#/$defs/checkoutIdentityPath",
+                and _schema_at(schema, "$defs", "preflight", "properties", "git_common_directory", "$ref")
+                == "#/$defs/checkoutIdentityPath"
+                and _schema_at(schema, "$defs", "preflight", "properties", "worktree_path", "$ref")
+                == "#/$defs/checkoutIdentityPath",
                 "checkout identity path contract",
             ),
             (isinstance(verdict_output_rule, dict), "gate raw verdict output rule"),
-            (expedited_omissions, "expedited omitted-gate iteration rules"),
+            ({"converged", "tasks_appended"} <= convergence_outcomes, "convergence outcome rules"),
             (coverage_nonempty, "coverage override nonempty arrays"),
             (
                 isinstance(skipped_rule, dict)
@@ -1587,7 +1608,7 @@ def validate_repository(repo: Path) -> list[str]:
                         errors.append(f"{path}: developer_instructions missing required role rule: {marker}")
 
     workflow_skills = {
-        "run-bmad-sprint-loop": ("speckit-specify", "speckit-analyze", "tdd-implementer"),
+        "run-bmad-sprint-loop": ("speckit-specify", "speckit-converge", "definition-reviewer", "tdd-test-author"),
         "close-bmad-epic": ("$audit-epic-architecture", "workflow-manifest-sha256", "pending-binding"),
         "audit-epic-architecture": ("$improve-codebase-architecture", "do not modify that upstream skill", "explore/report"),
     }
@@ -1623,7 +1644,8 @@ def validate_repository(repo: Path) -> list[str]:
         "verdict.schema.json": {"boundary", "finding"},
         "workflow-state.schema.json": {
             "boundary", "gateRecord", "stageRecord", "preflight", "sourceArtifact", "dispatch",
-            "reviewIteration", "e2ePredicate", "coverageOverride", "e2eDecision", "evidence", "checkpoint", "failure",
+            "reviewIteration", "convergenceRecord", "legacyMigration", "e2ePredicate", "coverageOverride",
+            "e2eDecision", "evidence", "checkpoint", "failure",
         },
         "epic-command-evidence.schema.json": {"sha", "hash", "time", "repoPath"},
         "epic-architecture-gate.schema.json": {"sha", "hash", "repoPath", "preflight", "boundary", "worktreeBoundary", "audit", "finding", "disposition", "checkpoint", "nameStatus", "changeTuple", "manifest"},
@@ -1650,6 +1672,12 @@ def validate_repository(repo: Path) -> list[str]:
         if not isinstance(semantic_rules, list) or len(semantic_rules) < minimum_rules:
             errors.append(f"{path}: semantic contract rules are incomplete")
         _validate_schema_semantics(filename, schema, path, errors)
+    legacy_schema_path = refs / "workflow-state-v1.schema.json"
+    legacy_schema = _load_json(legacy_schema_path, errors) if legacy_schema_path.is_file() else None
+    if legacy_schema is None:
+        errors.append(f"{legacy_schema_path}: missing archived v1 migration schema")
+    elif _schema_at(legacy_schema, "properties", "schema_version", "const") != "1.0":
+        errors.append(f"{legacy_schema_path}: archived schema version must equal 1.0")
     return errors
 
 

@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vulgata.local/schemas/workflow-state.schema.json",
+  "title": "BMad SpecKit Sprint Loop State",
+  "type": "object",
+  "required": ["schema_version", "bmad_story_key", "bmad_epic_key", "feature_directory", "execution_level", "stage", "active_gates", "stage_history", "repository_preflight", "source_artifacts", "dispatches", "review_iterations", "e2e_decision", "verification", "last_checkpoint", "recoverable_failure", "updated_at"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "bmad_story_key": {"type": "string", "minLength": 1},
+    "bmad_epic_key": {"type": "string", "minLength": 1},
+    "feature_directory": {"allOf": [{"$ref": "#/$defs/path"}, {"pattern": "^specs/[^/]+$"}]},
+    "execution_level": {"enum": ["full", "standard", "expedited-mvp"]},
+    "stage": {"$ref": "#/$defs/stage"},
+    "active_gates": {
+      "type": "object",
+      "required": ["acceptance-review", "quality-review"],
+      "properties": {
+        "acceptance-review": {"$ref": "#/$defs/gateRecord"},
+        "quality-review": {"$ref": "#/$defs/gateRecord"}
+      },
+      "additionalProperties": false
+    },
+    "stage_history": {"type": "array", "items": {"$ref": "#/$defs/stageRecord"}},
+    "repository_preflight": {"$ref": "#/$defs/preflight"},
+    "source_artifacts": {"type": "array", "items": {"$ref": "#/$defs/sourceArtifact"}},
+    "dispatches": {"type": "array", "items": {"$ref": "#/$defs/dispatch"}},
+    "review_iterations": {
+      "type": "object",
+      "required": ["spec-review", "plan-review", "analyze", "acceptance-review", "quality-review"],
+      "properties": {
+        "spec-review": {"$ref": "#/$defs/reviewIteration"},
+        "plan-review": {"$ref": "#/$defs/reviewIteration"},
+        "analyze": {"$ref": "#/$defs/reviewIteration"},
+        "acceptance-review": {"$ref": "#/$defs/reviewIteration"},
+        "quality-review": {"$ref": "#/$defs/reviewIteration"}
+      },
+      "additionalProperties": false
+    },
+    "e2e_decision": {"$ref": "#/$defs/e2eDecision"},
+    "verification": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "last_checkpoint": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/checkpoint"}]},
+    "recoverable_failure": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/failure"}]},
+    "updated_at": {"$ref": "#/$defs/timestamp"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "commit": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+    "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
+    "checkoutIdentityPath": {
+      "type": "string",
+      "minLength": 1,
+      "anyOf": [
+        {"$ref": "#/$defs/path"},
+        {"pattern": "^(?:[A-Za-z]:)?/(?!/)(?!.*(?:^|/)(?:\\.|\\.\\.)(?:/|$))(?!.*//)(?!.*\\\\)(?!.*[^/]/$).+$"}
+      ]
+    },
+    "stage": {"enum": ["context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze", "implement", "acceptance-review", "quality-review", "conditional-e2e", "verify", "complete"]},
+    "status": {"enum": ["pending", "active", "accepted", "revised", "blocked", "failed", "invalidated"]},
+    "boundary": {
+      "type": "object",
+      "required": ["base_commit", "candidate_commit", "diff_sha256", "artifact_hashes", "owned_paths"],
+      "properties": {
+        "base_commit": {"$ref": "#/$defs/commit"},
+        "candidate_commit": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/commit"}]},
+        "diff_sha256": {"$ref": "#/$defs/hash"},
+        "artifact_hashes": {"type": "object", "propertyNames": {"$ref": "#/$defs/path"}, "additionalProperties": {"$ref": "#/$defs/hash"}},
+        "owned_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "gateRecord": {
+      "type": "object",
+      "required": ["status", "iteration", "dispatch_id", "verdict_path", "input_boundary", "completed_at"],
+      "properties": {
+        "status": {"$ref": "#/$defs/status"},
+        "iteration": {"type": "integer", "minimum": 0},
+        "dispatch_id": {"type": ["string", "null"], "minLength": 1},
+        "verdict_path": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/path"}]},
+        "input_boundary": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/boundary"}]},
+        "completed_at": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/timestamp"}]}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["accepted", "revised", "blocked"]}}, "required": ["status"]},
+          "then": {
+            "properties": {
+              "verdict_path": {"$ref": "#/$defs/path"},
+              "input_boundary": {"$ref": "#/$defs/boundary"},
+              "completed_at": {"$ref": "#/$defs/timestamp"}
+            }
+          }
+        }
+      ]
+    },
+    "stageRecord": {
+      "type": "object",
+      "required": ["stage", "status", "started_at", "completed_at", "input_commit", "input_hashes", "agent_role", "evidence_paths", "failure"],
+      "properties": {
+        "stage": {"$ref": "#/$defs/stage"}, "status": {"$ref": "#/$defs/status"},
+        "started_at": {"$ref": "#/$defs/timestamp"}, "completed_at": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/timestamp"}]},
+        "input_commit": {"$ref": "#/$defs/commit"},
+        "input_hashes": {"type": "object", "propertyNames": {"$ref": "#/$defs/path"}, "additionalProperties": {"$ref": "#/$defs/hash"}},
+        "agent_role": {"type": "string", "minLength": 1},
+        "evidence_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+        "failure": {"type": ["object", "null"]}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "accepted"}}, "required": ["status"]},
+          "then": {"properties": {"evidence_paths": {"minItems": 1}}}
+        }
+      ]
+    },
+    "preflight": {
+      "type": "object",
+      "required": ["branch", "preflight_head", "repository_root", "git_common_directory", "worktree_path", "worktree_status", "owned_paths", "unrelated_paths", "observed_at"],
+      "properties": {
+        "branch": {"type": "string", "minLength": 1}, "preflight_head": {"$ref": "#/$defs/commit"},
+        "repository_root": {"const": "."}, "git_common_directory": {"$ref": "#/$defs/checkoutIdentityPath"}, "worktree_path": {"$ref": "#/$defs/checkoutIdentityPath"},
+        "worktree_status": {"type": "string"},
+        "owned_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+        "unrelated_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+        "observed_at": {"$ref": "#/$defs/timestamp"}
+      },
+      "additionalProperties": false
+    },
+    "sourceArtifact": {
+      "type": "object", "required": ["authority", "path", "commit", "sha256"],
+      "properties": {"authority": {"type": "string", "minLength": 1}, "path": {"$ref": "#/$defs/path"}, "commit": {"$ref": "#/$defs/commit"}, "sha256": {"$ref": "#/$defs/hash"}},
+      "additionalProperties": false
+    },
+    "dispatch": {
+      "type": "object", "required": ["role", "objective", "source_boundary", "permitted_writes", "output_path", "returned_evidence"],
+      "properties": {
+        "role": {"type": "string", "minLength": 1}, "objective": {"type": "string", "minLength": 1},
+        "source_boundary": {"$ref": "#/$defs/boundary"},
+        "permitted_writes": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+        "output_path": {"$ref": "#/$defs/path"},
+        "returned_evidence": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "reviewIteration": {
+      "type": "object", "required": ["count", "verdict_paths"],
+      "properties": {"count": {"type": "integer", "minimum": 0}, "verdict_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true}},
+      "additionalProperties": false
+    },
+    "e2ePredicate": {
+      "type": "object",
+      "required": ["predicate_id", "change_type", "gate", "triggered", "affected_paths", "affected_behavior", "evidence"],
+      "properties": {
+        "predicate_id": {"type": "string", "minLength": 1},
+        "change_type": {"type": "string", "minLength": 1},
+        "gate": {"enum": ["required", "may-skip"]},
+        "triggered": {"type": "boolean"},
+        "affected_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+        "affected_behavior": {"type": "string", "minLength": 1},
+        "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "coverageOverride": {
+      "type": "object",
+      "required": ["test_ids", "covered_predicate_ids", "source_boundary", "passing_evidence_ids", "completeness_rationale"],
+      "properties": {
+        "test_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "covered_predicate_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "source_boundary": {"$ref": "#/$defs/boundary"},
+        "passing_evidence_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "completeness_rationale": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "e2eDecision": {
+      "type": "object", "required": ["required", "predicates", "coverage_override", "rationale", "covering_tests", "owner", "source_boundary", "result", "evidence_ids"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "predicates": {"type": "array", "items": {"$ref": "#/$defs/e2ePredicate"}},
+        "coverage_override": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/coverageOverride"}]},
+        "rationale": {"type": "string", "minLength": 1},
+        "covering_tests": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "owner": {"enum": ["orchestrator", "e2e-runner"]},
+        "source_boundary": {"$ref": "#/$defs/boundary"},
+        "result": {"enum": ["pending", "passed", "failed-product", "failed-test", "blocked", "skipped-no-risk", "skipped-covered"]},
+        "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {"properties": {"required": {"const": true}}, "required": ["required"]},
+          "then": {"properties": {"owner": {"const": "e2e-runner"}}}
+        },
+        {
+          "if": {"properties": {"result": {"const": "skipped-covered"}}, "required": ["result"]},
+          "then": {
+            "properties": {
+              "coverage_override": {"$ref": "#/$defs/coverageOverride"},
+              "covering_tests": {"minItems": 1}
+            }
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object", "required": ["evidence_id", "kind", "stage", "source_commit", "artifact_paths", "command", "exit_code", "observed_at", "summary", "raw_output_path"],
+      "properties": {
+        "evidence_id": {"type": "string", "pattern": "^[^/]+/(context|specify|spec-review|plan|plan-review|tasks|analyze|implement|acceptance-review|quality-review|conditional-e2e|verify|complete)/[1-9][0-9]*$"},
+        "kind": {"enum": ["command", "test-red", "test-green", "review", "analysis", "artifact-hash", "e2e-decision", "human-approval", "architecture-disposition", "failure"]},
+        "stage": {"$ref": "#/$defs/stage"}, "source_commit": {"$ref": "#/$defs/commit"},
+        "artifact_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+        "command": {"type": ["string", "null"]}, "exit_code": {"type": ["integer", "null"]},
+        "observed_at": {"$ref": "#/$defs/timestamp"}, "summary": {"type": "string", "minLength": 1},
+        "raw_output_path": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/path"}]}
+      },
+      "additionalProperties": false
+    },
+    "checkpoint": {
+      "type": "object", "required": ["checkpoint_id", "scope_key", "stage", "committed_paths", "verification_evidence_ids", "commit_sha", "binding_status"],
+      "properties": {
+        "checkpoint_id": {"type": "string", "minLength": 1}, "scope_key": {"type": "string", "minLength": 1},
+        "stage": {"$ref": "#/$defs/stage"}, "committed_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}, "uniqueItems": true},
+        "verification_evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "commit_sha": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/commit"}]},
+        "binding_status": {"enum": ["pending", "bound"]}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {"if": {"properties": {"binding_status": {"const": "pending"}}}, "then": {"properties": {"commit_sha": {"type": "null"}}}},
+        {"if": {"properties": {"binding_status": {"const": "bound"}}}, "then": {"properties": {"commit_sha": {"$ref": "#/$defs/commit"}}}}
+      ]
+    },
+    "failure": {
+      "type": "object", "required": ["stage", "agent_role", "source_boundary", "evidence", "retryable", "earliest_resume_stage"],
+      "properties": {
+        "stage": {"$ref": "#/$defs/stage"}, "agent_role": {"type": "string", "minLength": 1},
+        "source_boundary": {"$ref": "#/$defs/boundary"}, "evidence": {"$ref": "#/$defs/evidence"},
+        "retryable": {"type": "boolean"}, "earliest_resume_stage": {"$ref": "#/$defs/stage"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"execution_level": {"enum": ["standard", "expedited-mvp"]}}, "required": ["execution_level"]},
+      "then": {
+        "properties": {
+          "active_gates": {
+            "properties": {
+              "acceptance-review": {
+                "properties": {
+                  "status": {"const": "invalidated"},
+                  "iteration": {"const": 0},
+                  "dispatch_id": {"type": "null"},
+                  "verdict_path": {"type": "null"},
+                  "input_boundary": {"type": "null"},
+                  "completed_at": {"type": "null"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"execution_level": {"const": "expedited-mvp"}}, "required": ["execution_level"]},
+      "then": {
+        "properties": {
+          "review_iterations": {
+            "properties": {
+              "spec-review": {"properties": {"count": {"const": 0}, "verdict_paths": {"maxItems": 0}}},
+              "analyze": {"properties": {"count": {"const": 0}, "verdict_paths": {"maxItems": 0}}},
+              "acceptance-review": {"properties": {"count": {"const": 0}, "verdict_paths": {"maxItems": 0}}}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"stage": {"const": "complete"}}, "required": ["stage"]},
+      "then": {
+        "properties": {
+          "last_checkpoint": {
+            "allOf": [
+              {"$ref": "#/$defs/checkpoint"},
+              {"properties": {"stage": {"const": "complete"}}}
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

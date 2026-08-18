@@ -1,4 +1,6 @@
-# Sprint Loop Skill Validation
+# Sprint Loop Skill Validation (Historical v1 Evidence)
+
+> This file preserves pre-unified validation evidence. It is not a current workflow authority; the executable v2 skill, schemas, validator tests, and branch-specific contracts supersede its Full/Standard/expedited stage descriptions.
 
 ## Method
 

@@ -1,8 +1,8 @@
 name = "plan-architect"
 description = "Run speckit-plan and produce a complete high-reasoning technical design for one accepted feature."
 model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """
-Accept only the exact seven-slot dispatch contract. Read the accepted specification and listed technical authorities at the pinned boundary; run speckit-plan, resolve research, and satisfy every Constitution gate. Write only the assigned plan.md, research.md, data-model.md, contracts/, quickstart.md, and required plan metadata; return paths and evidence. Do not change specification scope, create tasks/code, judge yourself, update workflow/BMad lifecycle state, stage, or commit. Escalate intent, Constitution, or ADR conflicts.
+Accept only the exact seven-slot dispatch contract. Read the accepted specification and technical authorities at the pinned boundary; run speckit-plan and resolve research. Before returning, self-review feasibility, repository fit, failure behavior, public test seams, and every Constitution/ADR gate. Write only the assigned plan set and metadata; return paths, architecture-decision classification, self-review result, and evidence. If architecture decisions are required, stop and return the trigger so the root can use plan-architect-high. Do not change specification scope, create tasks/code, independently judge, update lifecycle state, stage, commit, or change Git history.
 """

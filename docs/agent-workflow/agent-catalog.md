@@ -1,31 +1,29 @@
 # Sprint Loop Agent Catalog
 
-Every worker role except `bmad-sprint-orchestrator` is a direct child of the active root orchestrator. The root itself assumes `bmad-sprint-orchestrator`; it is not its own child. `workspace-write` means writes only inside the listed boundary; it never grants staging or commit authority. The root orchestrator is the sole committer. Review roles are read-only.
+Defaults follow the economical policy approved for the unified workflow. Sol/high is a dispatch-time escalation for architecture and the named risk triggers; it is not the ordinary profile.
 
-| Agent | Model / effort | Sandbox | Allowed writes | Required inputs | Output contract | Prohibited adjacent work |
-|---|---|---|---|---|---|---|
-| `bmad-sprint-orchestrator` | `gpt-5.6-sol` / high | `workspace-write` | Workflow state, BMad story/status artifacts, accepted gate evidence; explicit owned-path staging and local commits | User scope, BMad queue, story artifacts, repo authorities, branch/HEAD/status, agent returns | Ordered queue; validated state transitions; checkpoint records and local commits | Feature implementation; judging its own artifacts; blanket staging; implicit branch switch, push, merge, rebase, history rewrite, or PR |
-| `story-context-synthesizer` | `gpt-5.6-terra` / medium | `read-only` | None | Story/epic, cited PRD/architecture/UX/research/readiness, relevant source and commits, Constitution, `AGENTS.md`, ADRs, context docs, Ubiquitous Language | Cited brief with constraints, acceptance criteria, risks, conflicts, observable outcome, and facts separated from inference | Authoring spec/plan/tasks; choosing implementation; lifecycle or Git mutation |
-| `spec-author` | `gpt-5.6-sol` / medium | `workspace-write` | Assigned SpecKit feature specification and checklist only | Story brief, BMad story, approved feature short name, authoritative invariants; `speckit-specify` | `spec.md`, checklist, returned feature directory, and author evidence | Workflow-state or BMad mapping writes; technical planning, tasks, code, self-judgment, lifecycle or Git mutation |
-| `spec-judge` | `gpt-5.6-sol` / high | `read-only` | None | Pinned `spec.md`, checklist, BMad story, authoritative constraints and source commit | Verdict object for scope, completeness, testability, and BMad alignment | Editing spec; plan/code work; inheriting author conclusions; lifecycle or Git mutation |
-| `plan-architect` | `gpt-5.6-sol` / high | `workspace-write` | Assigned feature's `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`, and required plan metadata | Accepted spec, technical authorities, current code context, Constitution; `speckit-plan` | Complete technical plan set and Constitution check evidence | Spec scope changes without return to spec gate; tasks/code; self-judgment; lifecycle or Git mutation |
-| `plan-judge` | `gpt-5.6-sol` / high | `read-only` | None | Pinned complete plan set, accepted spec, Constitution, ADRs, context docs, relevant source | Verdict object for feasibility, architecture, compliance, and testability | Editing plans; tasks/code; accepting failed Constitution gates; lifecycle or Git mutation |
-| `task-author` | `gpt-5.6-sol` / medium | `workspace-write` | Assigned feature's `tasks.md` only | Accepted spec/plan set, exact repository paths and test conventions; `speckit-tasks` | Dependency-ordered tasks with test-first ordering, labels, validation criteria, and bounded groups | Changing spec/plan/code; running analysis; lifecycle or Git mutation |
-| `artifact-analyst` | `gpt-5.6-sol` / high | `read-only` | None | Current pinned `spec.md`, `plan.md`, `tasks.md`, Constitution; `speckit-analyze`; current analysis iteration | Analyze verdict (`ACCEPT`, `REVISE`, or `BLOCKED`), coverage metrics, complete findings, and artifact hashes | Editing any analyzed artifact; approving remediation; implementation; lifecycle or Git mutation |
-| `tdd-implementer` | `gpt-5.6-sol` / high | `workspace-write` | Production/test files explicitly owned by one bounded task group; task completion markers after evidence | Task IDs, accepted artifacts, owned paths, pinned diff boundary, raw correction finding when applicable, verification commands; TDD skill | Red evidence, minimal green change, refactor evidence, changed paths, commands/results, remaining risks | Adjacent tasks; broad refactor; artifact/lifecycle edits outside assignment; self-review; staging or commit |
-| `acceptance-reviewer` | `gpt-5.6-sol` / high | `read-only` | None | Same immutable base/current `HEAD`, candidate commit or non-recursive diff hash, artifact hashes, and owned paths as quality review; BMad story, accepted spec, tasks, evidence | Verdict object covering missing, partial, incorrect, and out-of-scope behavior plus exact reviewed boundary | Code/test edits; quality-axis substitution; author reasoning transcript; lifecycle or Git mutation |
-| `quality-reviewer` | `gpt-5.6-sol` / high | `read-only` | None | Full: same immutable boundary as acceptance review plus repository standards, Constitution, ADRs, and tests. Standard: that boundary plus BMad story and concise spec/plan/tasks | Full verdict covers correctness, security, edge cases, test quality, architecture seams, and regression risk. Standard verdict additionally covers missing, partial, wrong, and out-of-scope behavior as the combined acceptance-and-quality gate | Code/test edits; acceptance-axis substitution in Full; author reasoning transcript; lifecycle or Git mutation |
-| `e2e-runner` | `gpt-5.6-terra` / low | `workspace-write` | E2E/API/integration test code and test evidence explicitly assigned; never production code | Recorded E2E predicates, accepted implementation boundary, user-visible/API contracts, existing test harness and commands | Added/updated tests, commands/results, classified product-vs-test failure, evidence record | Production repair; scope/design changes; lifecycle, index, or Git mutation |
-| `epic-architecture-auditor` | `gpt-5.6-sol` / high | `read-only` | None | Epic seven-slot dispatch; pinned audit checkout and authorities; workflow-owned `$audit-epic-architecture` adapter over installed `improve-codebase-architecture` | Independent verdict and classified candidates with stable IDs, categories, verified citations, friction, uncertainties, and ADR relationships | Report/repository edits; implementation; normalization/disposition; lifecycle, index, or Git mutation |
+| Agent | Default model / effort | Sandbox | Responsibility |
+|---|---|---|---|
+| bmad-sprint-orchestrator | gpt-5.6-sol / medium | workspace-write | Queue, state, gates, explicit-path checkpoints, sole local committer |
+| story-context-synthesizer | gpt-5.6-luna / high | read-only | Optional cited source synthesis for large or conflicting authority sets |
+| spec-author | gpt-5.6-sol / medium | workspace-write | speckit-specify plus inline self-review; spec/checklist only |
+| plan-architect | gpt-5.6-sol / medium | workspace-write | speckit-plan plus inline self-review; plan set only |
+| plan-architect-high | gpt-5.6-sol / high | workspace-write | Conditional architecture-decision plan plus inline self-review |
+| task-author | gpt-5.6-luna / medium | workspace-write | speckit-tasks plus inline self-review; tasks only |
+| definition-reviewer | gpt-5.6-sol / medium | read-only | Plan-only trigger review or one combined definition/analyze verdict |
+| tdd-test-author | gpt-5.6-luna / high | workspace-write | Behavioral tests and honest RED/GREEN evidence; no production |
+| tdd-implementer | gpt-5.6-sol / medium | workspace-write | Minimal production GREEN; no tests or loop-time refactor |
+| convergence-analyst | gpt-5.6-luna / high | workspace-write | speckit-converge; append-only tasks write |
+| quality-reviewer | gpt-5.6-sol / medium | read-only | Correctness, security, tests, architecture, regression on converged boundary |
+| e2e-runner | gpt-5.6-luna / high | workspace-write | Conditional E2E/API/integration tests; never production |
+| epic-architecture-auditor | gpt-5.6-sol / high | read-only | Independent pinned epic architecture classification |
+
+## Escalation
+
+Use `plan-architect-high` only when the plan contains architecture decisions, and record the trigger in the dispatch. Other story roles retain their listed defaults. Epic architecture audit remains Sol/high because it is a separate close gate.
 
 ## Dispatch Rules
 
-- Each dispatch uses the exact seven-slot contract in [artifact contracts](artifact-contracts.md).
-- Fresh judges and reviewers receive raw pinned artifacts, never another agent's conclusion.
-- A correction dispatch receives the raw finding object without editorial dilution.
-- `tdd-implementer` is fresh for each bounded group and correction.
-- Full acceptance and quality reviewers may run in parallel against the same boundary. Standard uses one fresh quality reviewer under the combined acceptance-and-quality contract. Authorship and commits remain serialized.
-- A validated independent `ACCEPT` authorizes stage advancement; agents must not request duplicate user approval for accepted specification, plan, acceptance, or quality gates.
-- Only the root orchestrator initializes workflow state and writes both story/feature mapping sides atomically after `spec-author` returns the SpecKit-created path.
-- Agents escalate unresolved intent/scope, blocking analysis remediation, Strong architecture recommendations/ADR conflicts, and divergent or destructive VCS recovery rather than deciding them by proxy.
-- Agents stop on authority conflict, write-boundary conflict, unavailable required evidence, or unsafe external action.
+Every worker is a direct child and receives exactly the seven slots in the dispatch contract. Authors self-review their own artifact but never supply independent acceptance. Definition and quality reviewers receive raw pinned artifacts, never author conclusions. Correcting workers receive unchanged raw findings. Workers never update lifecycle state, stage, commit, or change Git history.
+
+A clean independent verdict, clean convergence, passing E2E, or passing verification advances without duplicate user approval. User authority remains required for planned-change triggers, Critical/High definition remediation, unresolved intent, destructive recovery, inseparable ownership, unsafe external action, and reserved epic findings.

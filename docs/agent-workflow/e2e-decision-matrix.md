@@ -27,7 +27,7 @@ The record contains:
 
 “Tests exist” is insufficient. A coverage override must identify the tests, cover every triggered Required predicate ID, show that they exercise the full changed behavior across each relevant observable boundary, match the decision's current `source_boundary`, and cite nonempty passing evidence from that boundary. Otherwise `required` stays true. `skipped-covered` is valid only with this complete override.
 
-Under `expedited-mvp`, persistence and migration/data-lifecycle predicates remain Required unless a complete current-boundary integration test satisfies this override. Story 11.1 therefore retains persistence and migration E2E responsibility. The clean-database two-Repository demonstration and final Docker release verification belong to Story 11.5; Story 11.1 runs Docker only if it changes container/runtime behavior.
+Persistence and migration/data-lifecycle predicates remain Required unless a complete current-boundary integration test satisfies this override. Story-specific ownership belongs in the accepted tasks and E2E decision rather than an execution-level exception.
 
 ## Runner Boundary
 
@@ -35,4 +35,4 @@ Under `expedited-mvp`, persistence and migration/data-lifecycle predicates remai
 
 When the failure is in product behavior, the root sends raw evidence to a fresh `tdd-implementer`; the affected review axes and E2E gate rerun. When the test itself is defective, only `e2e-runner` corrects it and reruns the gate. Ambiguous failures block rather than invite speculative production edits.
 
-Any added or modified tracked E2E/API/integration test changes the candidate diff identity. Full invalidates and reruns both acceptance and quality verdicts; Standard invalidates and reruns its combined quality verdict against the complete new boundary before the E2E result may advance. Test-only edits receive no bypass.
+Any added or modified tracked E2E/API/integration test changes the candidate diff identity. It invalidates and reruns the unified quality review against the complete new boundary before the E2E result may advance. Test-only edits receive no review bypass.

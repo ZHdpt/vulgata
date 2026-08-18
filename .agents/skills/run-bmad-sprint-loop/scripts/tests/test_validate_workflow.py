@@ -32,7 +32,7 @@ BOUNDARY = {
 def valid_verdict():
     return {
         "schema_version": "1.0",
-        "gate": "plan-review",
+        "gate": "definition-review",
         "verdict": "ACCEPT",
         "reviewed_commit": SHA,
         "reviewed_boundary": copy.deepcopy(BOUNDARY),
@@ -52,14 +52,14 @@ def valid_state():
         "completed_at": None,
     }
     return {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "bmad_story_key": "4-1-example",
         "bmad_epic_key": "4",
         "feature_directory": "specs/001-example",
-        "execution_level": "full",
+        "execution_level": "unified",
         "stage": "context",
         "active_gates": {
-            "acceptance-review": copy.deepcopy(gate),
+            "definition-review": copy.deepcopy(gate),
             "quality-review": copy.deepcopy(gate),
         },
         "stage_history": [{
@@ -82,11 +82,14 @@ def valid_state():
             "output_path": "specs/001-example/context-brief.md", "returned_evidence": [],
         }],
         "review_iterations": {
-            "spec-review": {"count": 0, "verdict_paths": []},
             "plan-review": {"count": 0, "verdict_paths": []},
-            "analyze": {"count": 0, "verdict_paths": []},
-            "acceptance-review": {"count": 0, "verdict_paths": []},
+            "definition-review": {"count": 0, "verdict_paths": []},
+            "converge": {"count": 0, "verdict_paths": []},
             "quality-review": {"count": 0, "verdict_paths": []},
+        },
+        "convergence": {
+            "status": "pending", "iteration": 0, "outcome": "pending", "findings_count": 0,
+            "appended_task_ids": [], "artifact_hashes": {}, "completed_at": None,
         },
         "e2e_decision": {
             "required": False, "predicates": [], "coverage_override": None,
@@ -101,6 +104,7 @@ def valid_state():
         }],
         "last_checkpoint": None,
         "recoverable_failure": None,
+        "legacy_migration": None,
         "updated_at": "2026-07-12T00:00:00Z",
     }
 
@@ -108,32 +112,32 @@ def valid_state():
 class WorkflowValidationTests(unittest.TestCase):
     REPOSITORY_ROOT = Path(__file__).resolve().parents[5]
     PROFILES = {
-        "bmad-sprint-orchestrator": ("gpt-5.6-sol", "high", "workspace-write"),
-        "story-context-synthesizer": ("gpt-5.6-terra", "medium", "read-only"),
+        "bmad-sprint-orchestrator": ("gpt-5.6-sol", "medium", "workspace-write"),
+        "story-context-synthesizer": ("gpt-5.6-luna", "high", "read-only"),
         "spec-author": ("gpt-5.6-sol", "medium", "workspace-write"),
-        "spec-judge": ("gpt-5.6-sol", "high", "read-only"),
-        "plan-architect": ("gpt-5.6-sol", "high", "workspace-write"),
-        "plan-judge": ("gpt-5.6-sol", "high", "read-only"),
-        "task-author": ("gpt-5.6-sol", "medium", "workspace-write"),
-        "artifact-analyst": ("gpt-5.6-sol", "high", "read-only"),
-        "tdd-implementer": ("gpt-5.6-sol", "high", "workspace-write"),
-        "acceptance-reviewer": ("gpt-5.6-sol", "high", "read-only"),
-        "quality-reviewer": ("gpt-5.6-sol", "high", "read-only"),
-        "e2e-runner": ("gpt-5.6-terra", "low", "workspace-write"),
+        "plan-architect": ("gpt-5.6-sol", "medium", "workspace-write"),
+        "plan-architect-high": ("gpt-5.6-sol", "high", "workspace-write"),
+        "task-author": ("gpt-5.6-luna", "medium", "workspace-write"),
+        "definition-reviewer": ("gpt-5.6-sol", "medium", "read-only"),
+        "tdd-test-author": ("gpt-5.6-luna", "high", "workspace-write"),
+        "tdd-implementer": ("gpt-5.6-sol", "medium", "workspace-write"),
+        "convergence-analyst": ("gpt-5.6-luna", "high", "workspace-write"),
+        "quality-reviewer": ("gpt-5.6-sol", "medium", "read-only"),
+        "e2e-runner": ("gpt-5.6-luna", "high", "workspace-write"),
         "epic-architecture-auditor": ("gpt-5.6-sol", "high", "read-only"),
     }
     INSTRUCTION_MARKERS = {
         "bmad-sprint-orchestrator": ("load and follow run-bmad-sprint-loop", "never implement feature code", "you alone"),
         "story-context-synthesizer": ("separate sourced facts from inference", "cite repository paths"),
-        "spec-author": ("speckit-specify", "what/why", "quality checklist"),
-        "spec-judge": ("validated accept", "never edit"),
-        "plan-architect": ("speckit-plan", "resolve research", "constitution gate"),
-        "plan-judge": ("feasibility", "architecture seams", "testability"),
-        "task-author": ("speckit-tasks", "failing tests", "exact paths"),
-        "artifact-analyst": ("speckit-analyze", "never edit or remediate", "explicit user approval"),
-        "tdd-implementer": ("no production code before observing", "minimal green"),
-        "acceptance-reviewer": ("missing, partial, wrong", "scope-creep"),
-        "quality-reviewer": ("skip style already enforced by tooling", "cite documented standards"),
+        "spec-author": ("speckit-specify", "self-review", "measurable acceptance"),
+        "plan-architect": ("speckit-plan", "self-review", "architecture-decision classification"),
+        "plan-architect-high": ("speckit-plan", "self-review", "architecture-decision trigger"),
+        "task-author": ("speckit-tasks", "self-review", "source-reference coverage"),
+        "definition-reviewer": ("speckit-analyze", "earliest_owner", "never edit"),
+        "tdd-test-author": ("expected red", "test code and test evidence only", "never edit production code"),
+        "tdd-implementer": ("red evidence", "minimal change", "do not write or weaken tests"),
+        "convergence-analyst": ("speckit-converge", "append-only", "never edit spec"),
+        "quality-reviewer": ("converged immutable boundary", "skip style enforced by tooling", "cite documented standards"),
         "e2e-runner": ("test files and test evidence only", "never change production code"),
             "epic-architecture-auditor": (
                 "independent explore/classification judge", "canonical absolute audit root", "git common/worktree identities",
@@ -190,118 +194,83 @@ class WorkflowValidationTests(unittest.TestCase):
         ]:
             self.assertTrue(any(expected in error for error in errors), (expected, errors))
 
-    def test_workflow_state_requires_a_closed_execution_level(self):
+    def test_workflow_state_requires_unified_execution_level(self):
         state = valid_state()
         del state["execution_level"]
         self.assertTrue(any("execution_level" in error for error in validate_workflow_state(state)))
 
-        state["execution_level"] = "expedited"
-        self.assertTrue(any("execution_level" in error for error in validate_workflow_state(state)))
-
-    def test_standard_execution_level_uses_one_combined_quality_gate(self):
-        state = valid_state()
-        state["execution_level"] = "standard"
-        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
-        self.assertEqual([], validate_workflow_state(state))
-
-        state["active_gates"]["acceptance-review"]["status"] = "pending"
-        errors = validate_workflow_state(state)
-        self.assertTrue(any("reduced execution_level" in error for error in errors))
-
-    def test_expedited_mvp_execution_level_uses_one_combined_quality_gate(self):
-        state = valid_state()
-        state["execution_level"] = "expedited-mvp"
-        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
-        self.assertEqual([], validate_workflow_state(state))
-
-        state["active_gates"]["acceptance-review"]["status"] = "pending"
-        errors = validate_workflow_state(state)
-        self.assertTrue(any("reduced execution_level" in error for error in errors))
-
-    def test_expedited_mvp_omitted_review_gates_remain_unused_at_iteration_zero(self):
-        state = valid_state()
-        state["execution_level"] = "expedited-mvp"
-        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
-
-        for gate in ("spec-review", "analyze", "acceptance-review"):
-            with self.subTest(gate=gate):
-                invalid = copy.deepcopy(state)
-                invalid["review_iterations"][gate] = {
-                    "count": 1,
-                    "verdict_paths": [f"specs/001-example/reviews/{gate}-1.json"],
-                }
+        for legacy in ("full", "standard", "expedited-mvp"):
+            with self.subTest(legacy=legacy):
+                invalid = valid_state()
+                invalid["execution_level"] = legacy
                 errors = validate_workflow_state(invalid)
-                self.assertTrue(
-                    any(f"review_iterations.{gate}" in error and "expedited-mvp" in error for error in errors),
-                    errors,
-                )
+                self.assertTrue(any("execution_level must equal unified" in error for error in errors), errors)
 
-    def test_blocked_combined_review_requires_raw_verdict_without_revision_increment_or_evidence_ledger(self):
+    def test_convergence_outcomes_are_semantically_bound(self):
         state = valid_state()
-        state["execution_level"] = "expedited-mvp"
-        state["active_gates"]["acceptance-review"]["status"] = "invalidated"
-        verdict_path = "specs/001-example/reviews/quality-review-blocked.json"
-        state["active_gates"]["quality-review"].update(
-            status="blocked",
-            iteration=1,
-            dispatch_id="quality-review-1",
-            verdict_path=verdict_path,
-            input_boundary=copy.deepcopy(BOUNDARY),
-            completed_at="2026-07-12T01:00:00Z",
+        state["convergence"].update(
+            status="accepted", outcome="converged", completed_at="2026-07-12T01:00:00Z"
         )
-        state["review_iterations"]["quality-review"] = {
-            "count": 0,
-            "verdict_paths": [verdict_path],
-        }
-
         self.assertEqual([], validate_workflow_state(state))
 
-        state["active_gates"]["quality-review"]["verdict_path"] = None
-        errors = validate_workflow_state(state)
-        self.assertTrue(
-            any("active_gates.quality-review.verdict_path" in error and "blocked" in error for error in errors),
-            errors,
+        state["convergence"].update(
+            status="revised", outcome="tasks_appended", findings_count=1,
+            appended_task_ids=["T042"], completed_at="2026-07-12T02:00:00Z",
         )
+        self.assertEqual([], validate_workflow_state(state))
 
-    def test_sprint_loop_skill_defines_standard_level_without_unsafe_shortcuts(self):
+        state["convergence"]["appended_task_ids"] = []
+        errors = validate_workflow_state(state)
+        self.assertTrue(any("tasks_appended outcome" in error for error in errors), errors)
+
+    def test_legacy_migration_records_expired_level_without_reauthorizing_it(self):
+        state = valid_state()
+        state["legacy_migration"] = {
+            "source_state_path": "specs/001-example/workflow-state-v1.json",
+            "source_state_sha256": HASH,
+            "source_execution_level": "expedited-mvp",
+            "source_stage": "quality-review",
+            "mapped_stage": "converge",
+            "decision_evidence_path": "specs/001-example/evidence/migration.json",
+            "migrated_at": "2026-08-18T01:00:00Z",
+        }
+        self.assertEqual([], validate_workflow_state(state))
+        state["execution_level"] = "expedited-mvp"
+        self.assertTrue(any("execution_level must equal unified" in e for e in validate_workflow_state(state)))
+
+    def test_sprint_loop_skill_defines_unified_convergent_flow(self):
         skill = (
             self.REPOSITORY_ROOT / ".agents/skills/run-bmad-sprint-loop/SKILL.md"
         ).read_text(encoding="utf-8").lower()
-        quality_agent = (
-            self.REPOSITORY_ROOT / ".codex/agents/quality-reviewer.toml"
-        ).read_text(encoding="utf-8").lower()
 
         for marker in [
-            "## execution levels",
-            "full is the default",
-            "standard eligibility",
-            "deterministic extension of an already accepted scan strategy",
-            "standard never permits",
-            "combined acceptance-and-quality",
-            "planned-change authorization",
-            "standard -> full",
+            "## unified story flow",
+            "speckit-specify + self-review",
+            "speckit-plan + self-review",
+            "speckit-tasks + self-review",
+            "independent definition-review",
+            "speckit-converge <-> implementation until converged",
+            "tdd-test-author",
+            "gpt-5.6-luna",
+            "expired august 15 exception cannot authorize",
         ]:
             self.assertIn(marker, skill)
-        self.assertIn("standard-level combined acceptance-and-quality review", quality_agent)
+        self.assertNotIn("superpowers controls implementation discipline", skill)
 
-    def test_sprint_loop_skill_closes_the_expedited_mvp_exception(self):
+    def test_planned_change_review_remains_before_tasks(self):
         skill = (
             self.REPOSITORY_ROOT / ".agents/skills/run-bmad-sprint-loop/SKILL.md"
         ).read_text(encoding="utf-8").lower()
+        early_review = skill.index("planned-change trigger")
+        before_tasks = skill.index("before task generation", early_review)
+        task_dispatch = skill.index("after tasks, dispatch", before_tasks)
+        self.assertLess(early_review, before_tasks)
+        self.assertLess(before_tasks, task_dispatch)
 
-        for marker in [
-            "expedited-mvp",
-            "story 4.3 and epic 11",
-            "2026-08-15 23:59:59 asia/shanghai",
-            "three planned checkpoints",
-            "no failing test is committed",
-            "planned-change authorization",
-        ]:
-            self.assertIn(marker, skill)
 
     def test_every_nonterminal_stage_accepts_a_well_formed_active_record(self):
-        stages = ["context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze",
-                  "implement", "acceptance-review", "quality-review", "conditional-e2e", "verify"]
+        stages = ["context", "specify", "plan", "plan-review", "tasks", "definition-review",
+                  "implement", "converge", "quality-review", "conditional-e2e", "verify"]
         for stage in stages:
             with self.subTest(stage=stage):
                 state = valid_state()
@@ -313,8 +282,11 @@ class WorkflowValidationTests(unittest.TestCase):
 
     def test_accept_with_high_finding_is_rejected(self):
         verdict = valid_verdict()
-        verdict["findings"] = [{"id": "high-1", "severity": "HIGH", "category": "correctness",
-            "summary": "blocking", "evidence": ["src/A.cs:1"], "blocking": True}]
+        verdict["findings"] = [{
+            "id": "high-1", "severity": "HIGH", "category": "correctness",
+            "artifact": "src/A.cs", "location": "line 1", "affected_requirement": "FR-001",
+            "evidence": "src/A.cs:1", "correction_outcome": "Correct behavior", "earliest_owner": "implement",
+        }]
         errors = validate_verdict(verdict)
         self.assertTrue(any("ACCEPT" in error and "blocking" in error for error in errors))
 
@@ -334,13 +306,13 @@ class WorkflowValidationTests(unittest.TestCase):
         state["repository_preflight"]["owned_paths"] = ["../escape"]
         state["source_artifacts"][0]["sha256"] = "bad"
         state["dispatches"][0]["permitted_writes"] = "all"
-        state["review_iterations"]["analyze"]["count"] = -1
+        state["review_iterations"]["definition-review"]["count"] = -1
         state["e2e_decision"]["result"] = "magic"
         state["verification"][0]["source_commit"] = "bad"
         errors = validate_workflow_state(state)
         for expected in ["bmad_story_key", "feature_directory", "active_gates.quality-review",
                          "repository_preflight.owned_paths[0]", "source_artifacts[0].sha256",
-                         "dispatches[0].permitted_writes", "review_iterations.analyze.count",
+                         "dispatches[0].permitted_writes", "review_iterations.definition-review.count",
                          "e2e_decision.result", "verification[0].source_commit"]:
             self.assertTrue(any(expected in error for error in errors), (expected, errors))
 
@@ -360,10 +332,10 @@ class WorkflowValidationTests(unittest.TestCase):
 
     def test_accepted_gate_requires_pinned_verdict_evidence(self):
         state = valid_state()
-        state["active_gates"]["acceptance-review"]["status"] = "accepted"
+        state["active_gates"]["definition-review"]["status"] = "accepted"
         errors = validate_workflow_state(state)
         for expected in ["verdict_path", "input_boundary", "completed_at"]:
-            self.assertTrue(any(f"active_gates.acceptance-review.{expected}" in error for error in errors))
+            self.assertTrue(any(f"active_gates.definition-review.{expected}" in error for error in errors))
 
     def test_e2e_semantics_require_runner_and_coverage_record(self):
         state = valid_state()
@@ -558,7 +530,7 @@ class WorkflowValidationTests(unittest.TestCase):
         self.assertEqual("1.0", verdict["properties"]["schema_version"]["const"])
         self.assertEqual({"ACCEPT", "REVISE", "BLOCKED"}, set(verdict["properties"]["verdict"]["enum"]))
         self.assertEqual(
-            {"spec-review", "plan-review", "analyze", "acceptance-review", "quality-review"},
+            {"plan-review", "definition-review", "quality-review"},
             set(verdict["properties"]["gate"]["enum"]),
         )
         self.assertEqual(
@@ -568,7 +540,8 @@ class WorkflowValidationTests(unittest.TestCase):
         state = json.loads((refs / "workflow-state.schema.json").read_text(encoding="utf-8"))
         self.assertTrue({
             "boundary", "gateRecord", "stageRecord", "preflight", "sourceArtifact", "dispatch",
-            "reviewIteration", "e2eDecision", "evidence", "checkpoint", "failure", "checkoutIdentityPath",
+            "reviewIteration", "convergenceRecord", "legacyMigration", "e2eDecision", "evidence",
+            "checkpoint", "failure", "checkoutIdentityPath",
         } <= set(state["$defs"]))
         self.assertTrue(state["allOf"])
         self.assertFalse(verdict["additionalProperties"])
@@ -585,8 +558,8 @@ class WorkflowValidationTests(unittest.TestCase):
         self.assertFalse(state["$defs"]["e2ePredicate"]["additionalProperties"])
         self.assertFalse(state["$defs"]["coverageOverride"]["additionalProperties"])
         self.assertEqual(
-            {"context", "specify", "spec-review", "plan", "plan-review", "tasks", "analyze", "implement",
-             "acceptance-review", "quality-review", "conditional-e2e", "verify", "complete"},
+            {"context", "specify", "plan", "plan-review", "tasks", "definition-review", "implement",
+             "converge", "quality-review", "conditional-e2e", "verify", "complete"},
             set(state["$defs"]["stage"]["enum"]),
         )
         self.assertEqual({"required", "may-skip"}, set(state["$defs"]["e2ePredicate"]["properties"]["gate"]["enum"]))

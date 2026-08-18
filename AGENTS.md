@@ -94,16 +94,6 @@ generation; it does not waive any later analysis, TDD, review, E2E, security, or
 verification gate. If none of these triggers applies, the ordinary workflow
 advances without this additional approval.
 
-## August 15 delivery exception
-
-Only Story 4.3 and Epic 11 may use `execution_level: "expedited-mvp"`, and only
-until Epic 11 completes or 2026-08-15 23:59:59 Asia/Shanghai, whichever happens
-first. Follow `docs/agent-workflow/august-15-expedited-mvp-exception.md`. This
-exception preserves plan review, planned-change authorization, transient
-red-green TDD, one independent combined quality review, required security and
-migration checks, final clean-database two-repository E2E, and Docker
-verification. It never permits a failing test to be committed.
-
 ## UI conventions
 
 - **Language:** Chinese-only UI (Simplified) for V1 — no i18n. Identity error messages use `ChineseIdentityErrorDescriber`; DataAnnotations that must render Chinese need explicit `ErrorMessage` text (see repo memory `vulgata-identity-localization`).
