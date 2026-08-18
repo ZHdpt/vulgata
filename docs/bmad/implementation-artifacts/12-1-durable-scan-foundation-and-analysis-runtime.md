@@ -293,3 +293,21 @@ archive/checksum remains fail-closed and required for later real qualification.
 The accepted-definition recovery checkpoint is now pending. Production
 implementation has not started and is not authorized by the latest remediation
 approval.
+
+The accepted-definition checkpoint bound uniquely to
+`76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2`. The user subsequently authorized
+production implementation on 2026-08-18. Implementation now proceeds through
+the accepted public seams using required RED, minimal GREEN, and surrounding
+verification evidence; no later gate is waived.
+
+### Implementation group 1
+
+Setup tasks T001 and T005 are complete: the accepted boundary is recorded and
+StreamJsonRpc 2.25.29 is centrally pinned/referenced. The bounded Infrastructure
+build passed with 0 errors; 791 existing analyzer/source warnings remain separate.
+
+The first Scan Context Snapshot tracer bullet observed an honest compile RED
+(CS0246/CS0103), then reached minimal GREEN through the public `Capture` seam.
+Independent verification passed 1/1 focused and 119/119 surrounding Core/domain
+tests. T007 is complete. T006 remains open for the symmetric persistence ordering,
+upper timestamp bound, and no-partial-insert cases owned by T045-T046.

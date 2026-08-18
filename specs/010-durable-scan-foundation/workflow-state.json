@@ -300,15 +300,35 @@
       "agent_role": "task-author",
       "evidence_paths": ["specs/010-durable-scan-foundation/tasks.md"],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T10:17:26Z",
+      "completed_at": "2026-08-18T10:28:53Z",
+      "input_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+      "input_hashes": {
+        "Directory.Packages.props": "DF6C87D68116D026CED5FFC82A162C285F1993E315D569AA0B32AA70CF25D9C2",
+        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj": "91C48CFD2B559C016A01DDC97111159F4FDFFFE73F636D97B7DAF1EE5D6FE57B",
+        "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs": "20FD0C8E89119CE2D25207A694239540C77159AEDA91C9A4C7E972C47857DF5B",
+        "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs": "66BCF258CB2A100D228035F1738A9A6BA73E0C7852EEAF154455BCEACCA70F2E"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "specs/010-durable-scan-foundation/README.md",
+        "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
     "branch": "demo0831/main",
-    "preflight_head": "dd3111bebbe295aa43a01e95be7bbdb97d3eecff",
+    "preflight_head": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
     "repository_root": ".",
     "git_common_directory": "G:/source/repos/vulgata/.git",
     "worktree_path": "G:/source/repos/vulgata",
-    "worktree_status": " M .specify/feature.json\n M AGENTS.md\n M docs/UBIQUITOUS_LANGUAGE.md\n M docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md\n M docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json\n?? specs/010-durable-scan-foundation/",
+    "worktree_status": "",
     "owned_paths": [
       ".specify/feature.json",
       "AGENTS.md",
@@ -333,7 +353,7 @@
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "unrelated_paths": [],
-    "observed_at": "2026-08-18T09:27:47Z"
+    "observed_at": "2026-08-18T10:17:26Z"
   },
   "source_artifacts": [
     {"authority":"approved August 30 bounded scanning proposal","path":"docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"9AA3A9098A3B69E36E15A04EA42FD49CF2F910ECE9D69785948FE62DEB90EA47"},
@@ -671,6 +691,39 @@
       "permitted_writes": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"],
       "output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json",
       "returned_evidence": ["ACCEPT", "No findings", "41/41 FR/SC coverage", "Four scenarios", "54 tasks", "All prior findings closed", "Missing JDT archive/checksum retained fail-closed"]
+    },
+    {
+      "role": "tdd-test-author",
+      "objective": "Write and observe the first Scan Context Snapshot public-seam RED, then independently verify focused and surrounding GREEN after implementation.",
+      "source_boundary": {
+        "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "DA24F90063D0B66D50D642BED8D1E1709257C6BF8B0B42E4AE89929CE5FEEFB2",
+          "specs/010-durable-scan-foundation/plan.md": "389426AD17DDC65971F3F29E1CE06B18483346E45E38A33A7C13A2F298652637"
+        },
+        "owned_paths": ["tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"]
+      },
+      "permitted_writes": ["tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"],
+      "output_path": "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs",
+      "returned_evidence": ["RED CS0246/CS0103", "GREEN 1/1 focused", "GREEN 119/119 surrounding", "No production writes"]
+    },
+    {
+      "role": "tdd-implementer",
+      "objective": "Implement the minimal ScanContextSnapshot domain behavior required to turn the first public-seam RED GREEN.",
+      "source_boundary": {
+        "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+        "candidate_commit": null,
+        "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifact_hashes": {
+          "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs": "66BCF258CB2A100D228035F1738A9A6BA73E0C7852EEAF154455BCEACCA70F2E"
+        },
+        "owned_paths": ["src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs"]
+      },
+      "permitted_writes": ["src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs"],
+      "output_path": "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs",
+      "returned_evidence": ["Minimal GREEN", "Focused 1/1 passed", "No EF or persistence behavior", "No test writes"]
     }
   ],
   "review_iterations": {
@@ -924,6 +977,60 @@
       "observed_at": "2026-08-18T09:27:47Z",
       "summary": "Fresh independent full-definition review iteration 3 returned ACCEPT with no findings, full 41/41 FR/SC and four-scenario coverage, 54 executable tasks, and every prior finding independently closed.",
       "raw_output_path": "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/1",
+      "kind": "human-approval",
+      "stage": "implement",
+      "source_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/tasks.md",
+        "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-18T10:17:26Z",
+      "summary": "User explicitly authorized Story 12.1 production implementation after the accepted-definition checkpoint. TDD, convergence, quality review, E2E, security, migration, and verification gates remain mandatory.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/2",
+      "kind": "command",
+      "stage": "implement",
+      "source_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+      "artifact_paths": ["Directory.Packages.props", "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj"],
+      "command": "dotnet build src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T10:20:30Z",
+      "summary": "StreamJsonRpc 2.25.29 restored and the bounded Infrastructure project built with 0 errors and 791 pre-existing analyzer/source warnings.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/3",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ScanContextSnapshotTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T10:23:00Z",
+      "summary": "Honest RED at the confirmed public seam: CS0246 and CS0103 because ScanContextSnapshot did not exist.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/4",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~ScanContextSnapshotTests --no-restore; surrounding domain filter",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T10:28:53Z",
+      "summary": "Independent verification passed 1/1 focused and 119/119 surrounding tests; upper temporal and persistence transaction behavior remains explicitly open under T006/T045-T046.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -936,37 +1043,28 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-definition-review-20260818T092747Z-d6367a",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T102853Z-9c9508",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "definition-review",
+    "stage": "implement",
     "committed_paths": [
-      ".specify/feature.json",
-      "AGENTS.md",
-      "docs/UBIQUITOUS_LANGUAGE.md",
+      "Directory.Packages.props",
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json",
-      "specs/010-durable-scan-foundation/checklists/requirements.md",
-      "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md",
-      "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
-      "specs/010-durable-scan-foundation/contracts/manual-resume-api.md",
-      "specs/010-durable-scan-foundation/data-model.md",
-      "specs/010-durable-scan-foundation/plan.md",
-      "specs/010-durable-scan-foundation/quickstart.md",
-      "specs/010-durable-scan-foundation/research.md",
-      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json",
-      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json",
-      "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json",
-      "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json",
-      "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json",
-      "specs/010-durable-scan-foundation/spec.md",
+      "specs/010-durable-scan-foundation/README.md",
       "specs/010-durable-scan-foundation/tasks.md",
-      "specs/010-durable-scan-foundation/workflow-state.json"
+      "specs/010-durable-scan-foundation/workflow-state.json",
+      "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+      "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs"
     ],
-    "verification_evidence_ids": ["12-1-durable-scan-foundation-and-analysis-runtime/definition-review/3"],
+    "verification_evidence_ids": [
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/2",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/3",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/4"
+    ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T09:27:47Z"
+  "updated_at": "2026-08-18T10:28:53Z"
 }
