@@ -1,5 +1,5 @@
 # generated: 2026-07-10
-# last_updated: 2026-08-04
+# last_updated: 2026-08-18
 # project: vulgata
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,19 +35,22 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-07-10
-last_updated: 2026-08-04
+last_updated: 2026-08-18
 project: vulgata
 project_key: NOKEY
 tracking_system: file-system
 story_location: docs/bmad/implementation-artifacts
 
 delivery_scope:
-  name: august-15-demonstration-slice
-  deadline: 2026-08-15
-  execution_level: expedited-mvp
+  name: august-30-bounded-production-scan-recovery
+  deadline: 2026-08-30
+  execution_level: standard
+  planning_state: approved-course-correction-paused-before-sprint-loop
+  authority: docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md
   active_sequence:
-    - 4-3-conservative-pre-scan-gate-and-communication-type-detection
-    - epic-11
+    - epic-12
+  historical_incomplete_release_path:
+    - 11-5-demo-chat-citations-and-release-gate
   deferred_until_after_deadline:
     - epic-5
     - epic-6
@@ -92,6 +95,13 @@ development_status:
   11-4-exact-rpc-http-cross-repository-demo-resolution: done
   11-5-demo-chat-citations-and-release-gate: review
   epic-11-retrospective: optional
+  epic-12: backlog
+  12-1-durable-scan-foundation-and-analysis-runtime: backlog
+  12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest: backlog
+  12-3-resumable-file-pass-1-and-code-logic-documents: backlog
+  12-4-exact-cross-repository-flow-and-pass-2: backlog
+  12-5-grounded-llm-wiki-chat-and-august-30-release-evidence: backlog
+  epic-12-retrospective: optional
   epic-5: backlog
   5-1-document-version-and-source-anchor-store: backlog
   5-2-graph-edge-endpoint-and-uncertainty-store: backlog

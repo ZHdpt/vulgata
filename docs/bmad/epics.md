@@ -311,6 +311,15 @@ From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/u
 | FR-15.2 | Deferred | LSP type information for code understanding |
 | FR-15.3 | Deferred | LSP configurable per Repository with language-specific settings |
 
+### August 30 delivery overlay mapping
+
+Epic 12 is the approved dated implementation overlay for FR-4.1–4.5, FR-4.9,
+FR-4.12, FR-5.8, FR-6.1/6.2, FR-11.6/11.7, NFR-1.1/1.2, and
+NFR-3.1–3.3. It supersedes conflicting Epic 4/Epic 11 release-path behavior
+without marking the broader Epics 5–10 requirements complete. The authoritative
+boundary is
+`docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md`.
+
 ## Epic List
 
 ### Epic 1: Foundation & Identity
@@ -335,6 +344,9 @@ Before any scanning infrastructure is built, validate that the Microsoft Agent F
 
 ### Epic 4: Pre-Scan Profiling
 **Implementation status:** Done — exact-source verification and the Epic architecture gate passed.
+**August 30 release note:** This completion remains historical. Epic 12
+supersedes the CGC-dependent production path without rewriting Epic 4's
+accepted implementation record.
 Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, apply a scan filter, and derive deterministic communication-kind hypotheses. For the August 15 demonstration, all profiling outcomes continue conservatively to an automatically approved pre-scan handoff; the LLM question generator and Human-in-the-Loop review lifecycle are deferred.
 **FRs covered:** FR-4.1
 **Architecture:** CodeGraphContextProvider HTTP integration, Code Unit data model (file path, line range, language, framework), scan filter rules, deterministic communication-kind hypotheses, and a persisted automatically approved handoff. Output: a structured pre-scan result ready for the deadline delivery slice; Epic 4 does not implement the Scan Coordinator queue or Worker Agent dispatch.
@@ -343,6 +355,23 @@ Before worker dispatch, the system profiles each Repository using CodeGraph/tree
 Deliver one prepared two-Repository path from source profiling through sequential Worker Agent generation, exact RPC/HTTP Cross-Repository matching, database-backed retrieval, and a cited Business/IT chat answer. This is the deadline delivery overlay; it implements deliberately narrow seams that later Epics 5–10 deepen rather than duplicate.
 **FRs covered for the demonstration:** FR-4.2–4.8 (sequential/minimal subset), FR-5.1–5.5 and FR-5.8 (configured RPC/HTTP subset), FR-6.1–6.3 (exact prepared-flow subset), FR-11.1–11.6 (prepared-scope subset), NFR-2.3, NFR-3.3, NFR-4.1, NFR-6.1
 **Architecture:** PostgreSQL-backed minimal Document/source/reference/retrieval store; one-Scan-at-a-time deterministic runner; one typed Worker Agent path for Pass 1 and Pass 2; configured exact RPC/HTTP matching for two prepared Repositories; Chinese Business/IT chat with citations; one final clean-database E2E and Docker build.
+
+### Epic 12: August 30 Bounded Production Scan Recovery
+Deliver a real bounded two-Repository Java/XML path after removing
+CodeGraphContext from the release-critical pipeline. The system prepares 50–150
+automatically selected File Code Units with CodeGraph, Eclipse JDT LS, and safe
+catalog-driven XML parsing; generates resumable source-anchored Pass 1 and
+endpoint-centered Pass 2 Documents; resolves selected exact Cross-Repository
+communication; and answers grounded Business/IT questions through non-vector
+database-backed LLM-Wiki retrieval.
+**FRs covered for the dated release:** bounded overlay of FR-4.1–4.5, FR-4.7,
+FR-4.9/4.10, FR-5.1–5.5/5.8, FR-6.1/6.2, FR-11.1–11.4/11.6/11.7,
+NFR-1.1/1.2, NFR-2.3, NFR-3.1–3.3, NFR-4.1, and NFR-6.1/6.2.
+**Architecture:** the approved August 30 Bounded Scanning and LLM-Wiki Design;
+revision-bound CodeGraph/JDT-LS adapters, File Code Units, safe XML catalog,
+durable bounded dispatch and pause/resume, exact endpoint matching,
+endpoint-centered flow groups, immutable Documents and projections, and
+grounded non-vector Chat.
 
 ### Epic 5: Core Single Repository Scanning
 The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, deterministic Orchestrator planning the per-Repository workflow, and LLM-powered Worker Agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties and dispatch sites; Epic 5 owns same-Repository resolution and best-effort matching against already-scanned Repositories, while final Cross-Repository Resolution is completed in Epic 7 after full detection evidence exists. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
@@ -1157,6 +1186,248 @@ So that the competition demonstration proves Vulgata's end-to-end value.
 **Then** the included tests, authorization checks, migrations, Web build, one two-Repository end-to-end demonstration path, and one final Docker image build shall pass
 **And** no deliberately failing or unresolved RED test shall be committed
 **And** known post-demo limitations shall be shown separately from completed acceptance criteria
+
+---
+
+### Epic 12: August 30 Bounded Production Scan Recovery
+
+This approved deadline overlay replaces the failed CGC-dependent release path
+without rewriting completed Epic 4 or Epic 11 history. It proves a bounded real
+product path; Epics 5–10 remain the broader post-deadline V1 backlog.
+
+#### Story 12.1: Durable Scan Foundation & Analysis Runtime
+
+As a **SystemOwner**,
+I want Scan progress, context, and analysis-tool identity persisted durably,
+So that a bounded two-Repository Scan can pause, restart, and resume without
+losing trusted work.
+
+**Acceptance Criteria:**
+
+**Given** the August 30 migration is applied to a clean PostgreSQL database
+**When** the model is inspected
+**Then** it shall persist one immutable Scan Context Snapshot per Repository
+Scan Run, deterministic per-file Scan Job Execution state, the required
+paused/completed-with-warning phases, and one lightweight System-level
+coordination record binding exactly two release Repositories
+**And** existing immutable Document, Source Anchor, Edge, Uncertainty, and
+prepared-demo rows shall remain readable
+**And** apply, rollback, reapply, concurrent update, and no-pending-model-change
+verification shall pass
+
+**Given** production composition starts
+**When** analysis dependencies are verified
+**Then** the latest stable approved CodeGraph CLI and Eclipse JDT LS shall be
+pinned to exact versions and checksums
+**And** JDT LS shall run on Java 21 with an isolated workspace per Repository
+revision
+**And** CodeGraphContext, its Python runtime, and its qualification harness
+shall not be required by production startup or the release gate
+
+**Given** Vulgata invokes analysis services
+**When** Core or Worker code requests structural evidence
+**Then** it shall use typed CodeGraph, Java LSP, and revision-bound source-reader
+ports
+**And** raw CLI, raw LSP messages, internal CodeGraph storage, shell access,
+network access, and unrestricted filesystem reads shall not cross the ports
+
+**Given** a Scan Execution is persisted with completed, pending, running, or
+retry-scheduled jobs
+**When** the application restarts or an operator resumes it
+**Then** committed Documents shall be retained, expired leases shall return to
+Pending, committed jobs shall not duplicate Documents, and remaining jobs shall
+resume only after Repository access, Profiled Revision, hashes, prompt/schema
+identity, and provider availability are revalidated
+
+#### Story 12.2: Lightweight Java/XML PreScan & Prepared Scan Manifest
+
+As a **SystemOwner**,
+I want a complete fast deterministic PreScan over my Java/XML Repositories,
+So that Worker Agents receive an automatically selected, revision-bound File
+Code Unit manifest without waiting for CodeGraphContext.
+
+**Acceptance Criteria:**
+
+**Given** an authorized Repository and requested Git reference
+**When** PreScan begins
+**Then** Vulgata shall acquire one exact Profiled Revision, enumerate contained
+files, apply deterministic filters, identify supported Java/XML inputs, and
+calculate documented exact file/source hashes
+**And** no Worker shall dispatch until the complete Prepared Scan Manifest,
+communication classifications, Scan Context Snapshot, and approved handoff
+commit atomically
+
+**Given** the prepared scope contains Java
+**When** analysis services start
+**Then** CodeGraph shall build and report a complete revision-bound index
+**And** JDT LS shall initialize and successfully return document symbols for a
+known eligible Java file within the bounded readiness timeout
+**And** a failure shall stop PreScan before any LLM cost
+
+**Given** relevant XML configuration is present
+**When** the safe XML pipeline evaluates it
+**Then** it shall prohibit DTDs, external entities, XInclude, schema-network
+fetches, and custom resolvers; enforce file/depth/element/attribute bounds; and
+use only the closed Communication Pattern Catalog selector grammar
+**And** confirmed/hint/warning evidence shall retain exact locators and
+provenance without creating a final Cross-Repository Edge
+**And** neutral fixtures shall prove the implementation contains no sample
+Repository names, paths, endpoints, or line numbers
+
+**Given** eligible bounded source files are retained
+**When** the manifest is built
+**Then** each file shall become one `CodeUnitType.File` pending Code Unit
+**And** only oversized files may split at safe Java top-level or parsed XML
+top-level boundaries; unsafe files shall be explicitly skipped, never silently
+truncated
+**And** deterministic business-seeded ordering shall use bounded general
+evidence and CodeGraph expansion with a stable path fallback
+
+#### Story 12.3: Resumable File Pass 1 & Code Logic Documents
+
+As a **SystemOwner**,
+I want bounded File Code Units analyzed concurrently with durable recovery,
+So that Vulgata produces trustworthy Code Logic Documents without losing an
+entire Scan to an LLM outage or one peripheral file failure.
+
+**Acceptance Criteria:**
+
+**Given** two approved Prepared Scan Manifests
+**When** Pass 1 begins
+**Then** deterministic application code shall dispatch one Worker job per File
+Code Unit through a shared concurrency limit defaulting to two and configurable
+from one through four
+**And** completion order shall not change job identity, Document identity,
+reconciliation, or display ordering
+
+**Given** the Worker needs additional code evidence
+**When** it calls `navigate_code`
+**Then** the typed tool shall provide bounded definition, references,
+implementations, callers, callees, symbol search, related files, or exact source
+evidence only within the authorized Repository and Profiled Revision
+**And** it shall prefer a current same-scan/current-hash Code Logic Document
+when one exists, otherwise return source evidence immediately
+**And** it shall not schedule another file, exceed eight calls, 20 results per
+call, 64 KiB, or explicit navigation depth three
+
+**Given** a Worker returns a Pass 1 result
+**When** Vulgata validates and commits it
+**Then** the authoritative `code-logic/file-v2` JSON shall contain bounded
+file purpose, internal units, rules, data flow, communication evidence,
+references, deferred observations, and Source Anchor associations
+**And** Vulgata shall deterministically materialize Markdown, Document Sections,
+and Index Entry projections without independent LLM-authored representations
+**And** invalid identity, path, hash, range, authorization, bound, or schema
+shall commit no Document
+
+**Given** the provider is transiently unavailable
+**When** five bounded probes using increasing 10-second, 30-second, one-minute,
+two-minute, and five-minute windows do not recover
+**Then** new dispatch shall stop and the Scan shall persist a provider-unavailable
+paused state with a Chinese manual-resume action
+**And** isolated transient jobs shall retry once while integrity/security
+failures fail the Scan and unclassified systemic failures pause for inspection
+
+**Given** ordinary file-specific failures occur
+**When** all Pass 1 jobs become terminal
+**Then** the Scan may continue with warnings only if every high-value seed
+succeeded and failures do not exceed `min(5, floor(10% of dispatched files))`
+**And** post-Pass1 deterministic reconciliation may create exact current
+`REFERENCES` Edges from deferred observations without rewriting Documents
+
+#### Story 12.4: Exact Cross-Repository Flow & Pass 2
+
+As a **SystemOwner**,
+I want exact communication evidence converted into bounded cross-Repository
+business flows,
+So that Vulgata explains a real process without inventing provider targets or
+unsupported relationships.
+
+**Acceptance Criteria:**
+
+**Given** current authorized consumer and provider evidence exists across the
+two release Repositories
+**When** deterministic Cross-Repository Resolution runs
+**Then** it shall match by protocol and exact normalized endpoint identifier
+**And** only one unique current provider may create a Cross-Repository
+`REFERENCES` Edge
+**And** no provider, multiple providers, conflicts, stale evidence, or
+unsupported communication shall create or retain an honest Uncertainty
+
+**Given** exact Cross-Repository Resolution finishes
+**When** Pass2 flow planning runs
+**Then** it shall create endpoint-centered groups bounded by System, protocol,
+normalized endpoint, consumer entry, and provider Repository
+**And** each group may contain the consumer Document, exact Edge, provider XML
+Document, provider implementation Document, and at most one hop of validated
+same-Repository references
+**And** raw CodeGraph proximity or LLM output shall not add members or change
+the deterministic provider decision
+
+**Given** a Pass2 Worker needs supporting knowledge
+**When** it uses `retrieve_code_logic`
+**Then** it may retrieve bounded current Code Logic sections, Source Anchors,
+source excerpts, and related Documents within the authorized System scope
+**And** every additional Document actually used shall be revalidated and added
+to `GENERATED_FROM`
+**And** direct Pass2 JDT-LS/CodeGraph verification shall remain optional and may
+be cut without weakening mandatory Document/source retrieval
+
+**Given** one flow group fails or lacks required Documents
+**When** Pass2 completes the remaining groups
+**Then** the failed group shall be omitted with a visible warning and shall not
+be synthesized from incomplete evidence
+
+#### Story 12.5: Grounded LLM-Wiki Chat & August 30 Release Evidence
+
+As a **user**,
+I want multi-turn Business/IT answers grounded in the generated LLM-Wiki,
+So that I can understand the demonstrated cross-Repository business flow and
+verify every material technical claim.
+
+**Acceptance Criteria:**
+
+**Given** a scoped authorized question
+**When** Chat retrieves evidence
+**Then** deterministic lexical scoring over current Index Entries and Document
+Sections shall select at most five Documents and bounded primary sections
+**And** one-hop expansion shall use only current persisted `REFERENCES`,
+`GENERATED_FROM`, exact Cross-Repository Edges, and Flow Groups
+**And** retrieval shall enforce mode-specific ranking, authorization,
+currentness, cardinality, byte, cycle, and relationship bounds without a vector
+database or unrestricted Agent tool loop
+
+**Given** a bounded evidence packet is ready
+**When** the LLM synthesizes an answer
+**Then** the packet shall contain opaque evidence handles, a canonical SHA-256
+fingerprint, current sections, Source Anchors, required relationships, bounded
+context, and bounded conversation state
+**And** Vulgata shall accept only claims citing valid packet evidence, allow at
+most one syntax repair when time remains, and reject the whole answer on
+semantic evidence failure
+**And** previous answers shall be conversation context rather than evidence;
+underlying previously cited Documents shall be re-fetched and revalidated
+
+**Given** a SystemOwner views a real Scan
+**When** it prepares, runs, retries, pauses, resumes, completes with warnings,
+or fails
+**Then** the Chinese UI shall show the real persisted state, counts, next retry,
+bounded failure summary, and `继续扫描` action
+**And** isolated fake Backup B state shall not support release evidence
+
+**Given** the August 30 release candidate is verified
+**When** Tier 1, Tier 2, and Tier 3 gates run
+**Then** the final real-LLM Docker path shall use a clean database, two real
+sample Repositories, real CodeGraph/JDT LS/LLM, and 50–150 automatically
+selected File Code Units
+**And** every seed shall succeed, ordinary failures shall stay within budget,
+at least one exact Cross-Repository Edge, one honest Uncertainty, and three
+Business Logic Documents shall exist
+**And** 12–20 Chat questions shall achieve at least 80% useful answers, 100% of
+accepted material technical claims cited, zero unauthorized evidence, and
+answers under 30 seconds
+**And** Docker restart shall preserve wiki/Chat access and evidence shall record
+revisions, counts, durations, schema/prompt/tool versions, and fingerprints
 
 ---
 

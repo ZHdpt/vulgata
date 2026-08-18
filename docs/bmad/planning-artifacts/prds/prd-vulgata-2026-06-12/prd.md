@@ -2,7 +2,7 @@
 title: "PRD: Vulgata"
 status: draft
 created: 2026-06-12
-updated: 2026-07-10
+updated: 2026-08-17
 ---
 
 # PRD: Vulgata
@@ -10,6 +10,41 @@ updated: 2026-07-10
 ## 0. Document Purpose
 
 This PRD defines the V1 scope for Vulgata, an LLM-powered cross-repository business logic extraction platform. It is written for the development team (2 people + AI coding agents), competition judges evaluating the project, and downstream BMad workflows (architecture, epics, stories). The PRD builds on the product brief, PRFAQ, brainstorming session, domain research, and technical research already completed. It uses a Glossary-anchored vocabulary — every domain term is defined once and used consistently throughout. Features are grouped with nested functional requirements (FRs) numbered globally. Assumptions are tagged inline and indexed.
+
+## 0.1 August 30, 2026 Delivery Overlay
+
+The competition deadline moved to August 30, 2026 after the August 15 slice
+failed to establish a reliable general scanning path. The approved correction
+is defined by:
+
+- [Sprint Change Proposal: August 30 Bounded Scanning Recovery](../../sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md)
+- [August 30 Bounded Scanning and LLM-Wiki Design](../../architecture/august-30-bounded-scanning-design.md)
+
+For the August 30 release boundary, those documents supersede conflicting V1
+details in FR-4.1 through FR-4.5, FR-4.9, FR-4.12, FR-5.8, FR-6.1/6.2,
+FR-11.6, and NFR-1.1. The complete long-term V1 requirements remain in this
+PRD as post-deadline backlog and are not deleted or falsely marked complete.
+
+The dated release shall prove:
+
+- two real Java/XML Repositories bound to exact Git Profiled Revisions;
+- CodeGraph indexing, Eclipse JDT LS Java navigation, and safe catalog-driven
+  XML parsing without CodeGraphContext in the production path;
+- 50–150 automatically selected bounded File Code Units;
+- real source-anchored Pass 1 and Pass 2 generation;
+- exact selected Custom RPC and safe HTTP Cross-Repository Resolution with
+  honest Uncertainties for unsupported or ambiguous evidence;
+- durable bounded Worker scheduling, provider backoff, pause, restart, and
+  manual resume;
+- database-backed non-vector section retrieval and one-hop persisted
+  relationship expansion; and
+- Business/IT Chat synthesis in under 30 seconds with every accepted material
+  technical claim cited to current authorized Documents and Source Anchors.
+
+General 10,000-file validation, method-level scheduling, arbitrary protocols,
+general graph clustering, Worker cross-verification waves, dynamic PreScan HITL,
+vector/embedding RAG, unrestricted Agent tool loops, and the remaining Epics
+5–10 scope are deferred beyond the August 30 release.
 
 ## 1. Vision
 
@@ -286,7 +321,12 @@ Optional Language Server Protocol integration for IDE-level code intelligence du
 - **FR-15.2:** The scanning pipeline shall optionally use LSP type information to augment LLM-based code understanding.
 - **FR-15.3:** LSP integration shall be configurable per Repository, with language-specific server configuration.
 
-### 5.16 August 15 Demonstration MVP Boundary
+### 5.16 Historical August 15 Demonstration MVP Boundary
+
+**Superseded for release planning:** This section records the historical
+August 15 slice. The approved Section 0.1 August 30 overlay is the current dated
+acceptance authority. Completion or review state from this slice does not prove
+the August 30 release.
 
 The delivery deadline for the competition demonstration is **2026-08-15**.
 The full V1 requirements remain the product backlog, but the deadline-bound

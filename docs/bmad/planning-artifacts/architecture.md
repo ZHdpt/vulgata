@@ -16,12 +16,32 @@ date: '2026-06-18'
 lastStep: 8
 status: 'complete'
 completedAt: '2026-06-18'
-updated: '2026-07-10'
+updated: '2026-08-17'
 ---
 
 # Architecture Decision Document
 
 _This document builds collaboratively through step-by-step discovery. Sections are appended as we work through each architectural decision together._
+
+## August 30, 2026 Bounded Scanning Correction
+
+The approved August 30 correction is the current implementation authority for
+the competition release:
+
+- [August 30 Bounded Scanning and LLM-Wiki Design](architecture/august-30-bounded-scanning-design.md)
+- [Sprint Change Proposal: August 30 Bounded Scanning Recovery](sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md)
+
+Where those artifacts conflict with this document or the July scanning
+supplements, the August 30 design supersedes the older scanning, orchestration,
+tooling, Cross-Repository Resolution, Pass2, Chat retrieval, deployment, and
+release-verification details for Epic 12.
+
+In particular, CodeGraphContext is removed from the production/release critical
+path. The bounded path uses revision-bound CodeGraph and Eclipse JDT LS adapters,
+safe catalog-driven XML parsing, File Code Units, deterministic bounded Worker
+scheduling, durable pause/resume, endpoint-centered Pass2 grouping, and
+non-vector database-backed LLM-Wiki retrieval. Epics 5–10 retain the broader V1
+architecture as post-deadline backlog.
 
 ## July 2026 Scanning Update
 
