@@ -10,6 +10,9 @@
       "registered_commands": {
         "trae": [
           "speckit.agent-context.update"
+        ],
+        "codex": [
+          "speckit.agent-context.update"
         ]
       },
       "registered_skills": [],
