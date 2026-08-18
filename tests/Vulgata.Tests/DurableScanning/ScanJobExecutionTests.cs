@@ -115,4 +115,92 @@ public sealed class ScanJobExecutionTests
         Assert.Equal("provider-timeout", job.FailureCode);
         Assert.Equal(retriedAt, job.StateChangedAt);
     }
+
+    [Fact]
+    public void RecoverAndReacquire_WithDueRetryOrExpiredLease_RejectsEarlyAndStaleTransitionsWithoutMutation()
+    {
+        ScanJobExecution retryingJob = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 7,
+            stateChangedAt: _createdAt);
+        Guid originalLeaseToken = Guid.Parse("50000000-0000-4000-8000-000000000005");
+        retryingJob.AcquireLease(
+            originalLeaseToken,
+            _createdAt.AddMinutes(5),
+            _createdAt.AddSeconds(1));
+        DateTimeOffset retryAt = _createdAt.AddMinutes(10);
+        retryingJob.ScheduleRetry(
+            expectedStateVersion: 1,
+            expectedLeaseToken: originalLeaseToken,
+            nextAttemptAt: retryAt,
+            failureCategory: ScanJobFailureCategory.ProviderTransient,
+            failureCode: "provider-timeout",
+            stateChangedAt: _createdAt.AddSeconds(2));
+
+        Assert.Throws<InvalidOperationException>(() => retryingJob.RecoverDueRetry(
+            expectedStateVersion: 2,
+            now: retryAt.AddTicks(-1)));
+        Assert.Throws<InvalidOperationException>(() => retryingJob.RecoverDueRetry(
+            expectedStateVersion: 1,
+            now: retryAt));
+        Assert.Equal(ScanJobExecutionState.RetryScheduled, retryingJob.State);
+        Assert.Equal(2, retryingJob.StateVersion);
+        Assert.Equal(retryAt, retryingJob.NextAttemptAt);
+
+        retryingJob.RecoverDueRetry(expectedStateVersion: 2, now: retryAt);
+
+        Assert.Equal(ScanJobExecutionState.Pending, retryingJob.State);
+        Assert.Equal(1, retryingJob.AttemptCount);
+        Assert.Equal(3, retryingJob.StateVersion);
+        Assert.Null(retryingJob.LeaseToken);
+        Assert.Null(retryingJob.LeaseExpiresAt);
+        Assert.Null(retryingJob.NextAttemptAt);
+
+        Guid reacquiredLeaseToken = Guid.Parse("70000000-0000-4000-8000-000000000007");
+        retryingJob.AcquireLease(
+            reacquiredLeaseToken,
+            retryAt.AddMinutes(5),
+            retryAt.AddSeconds(1));
+
+        Assert.Equal(ScanJobExecutionState.Running, retryingJob.State);
+        Assert.Equal(2, retryingJob.AttemptCount);
+        Assert.Equal(4, retryingJob.StateVersion);
+        Assert.Equal(reacquiredLeaseToken, retryingJob.LeaseToken);
+
+        ScanJobExecution expiringJob = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 8,
+            stateChangedAt: _createdAt);
+        Guid expiringLeaseToken = Guid.Parse("80000000-0000-4000-8000-000000000008");
+        DateTimeOffset leaseExpiresAt = _createdAt.AddMinutes(5);
+        expiringJob.AcquireLease(expiringLeaseToken, leaseExpiresAt, _createdAt.AddSeconds(1));
+
+        Assert.Throws<InvalidOperationException>(() => expiringJob.RecoverExpiredLease(
+            expectedStateVersion: 1,
+            now: leaseExpiresAt));
+        Assert.Throws<InvalidOperationException>(() => expiringJob.RecoverExpiredLease(
+            expectedStateVersion: 0,
+            now: leaseExpiresAt.AddTicks(1)));
+        Assert.Equal(ScanJobExecutionState.Running, expiringJob.State);
+        Assert.Equal(1, expiringJob.StateVersion);
+        Assert.Equal(expiringLeaseToken, expiringJob.LeaseToken);
+        Assert.Equal(leaseExpiresAt, expiringJob.LeaseExpiresAt);
+
+        expiringJob.RecoverExpiredLease(
+            expectedStateVersion: 1,
+            now: leaseExpiresAt.AddTicks(1));
+
+        Assert.Equal(ScanJobExecutionState.Pending, expiringJob.State);
+        Assert.Equal(1, expiringJob.AttemptCount);
+        Assert.Equal(2, expiringJob.StateVersion);
+        Assert.Null(expiringJob.LeaseToken);
+        Assert.Null(expiringJob.LeaseExpiresAt);
+        Assert.Equal(leaseExpiresAt.AddTicks(1), expiringJob.StateChangedAt);
+    }
 }

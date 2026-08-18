@@ -332,3 +332,16 @@ verification passed 2/2 focused and 12/12 surrounding durable/domain tests. T008
 and T009 remain open for completion, terminal failure, cancellation, retry
 reacquisition, expired-lease recovery, completion linkage, and the remaining
 failure categories.
+
+### Implementation group 4
+
+The recovery/reacquisition tracer bullet observed an honest compile RED for the
+missing due-retry and expired-lease recovery seams. Minimal GREEN now permits a
+due Retry Scheduled job to return to Pending and a strictly expired Running lease
+to recover to Pending, while rejecting early, exact-expiry, stale-version, and
+wrong-state contradictions before mutation. Retry and lease metadata are cleared,
+attempt counts are preserved by recovery, and each accepted recovery advances the
+state version once; normal lease acquisition then records the next attempt.
+Independent verification passed 3/3 focused and 13/13 surrounding tests. T008 and
+T009 remain open for terminal states, completion linkage, the complete bounded
+failure-category policy, and retry exhaustion.

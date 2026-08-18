@@ -165,6 +165,45 @@ public sealed class ScanJobExecution
         StateChangedAt = stateChangedAt;
     }
 
+    public void RecoverDueRetry(long expectedStateVersion, DateTimeOffset now)
+    {
+        ThrowIfNotUtc(now, nameof(now));
+        if (State != ScanJobExecutionState.RetryScheduled ||
+            StateVersion != expectedStateVersion ||
+            NextAttemptAt is null ||
+            now < NextAttemptAt)
+        {
+            throw new InvalidOperationException(
+                "Retry recovery requires the current version of a due Retry Scheduled job.");
+        }
+
+        State = ScanJobExecutionState.Pending;
+        StateVersion++;
+        NextAttemptAt = null;
+        FailureCategory = null;
+        FailureCode = null;
+        StateChangedAt = now;
+    }
+
+    public void RecoverExpiredLease(long expectedStateVersion, DateTimeOffset now)
+    {
+        ThrowIfNotUtc(now, nameof(now));
+        if (State != ScanJobExecutionState.Running ||
+            StateVersion != expectedStateVersion ||
+            LeaseExpiresAt is null ||
+            now <= LeaseExpiresAt)
+        {
+            throw new InvalidOperationException(
+                "Lease recovery requires the current version of a strictly expired Running job.");
+        }
+
+        State = ScanJobExecutionState.Pending;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        StateChangedAt = now;
+    }
+
     private static void ThrowIfEmpty(Guid value, string parameterName)
     {
         if (value == Guid.Empty)
