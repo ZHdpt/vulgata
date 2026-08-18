@@ -203,4 +203,222 @@ public sealed class ScanJobExecutionTests
         Assert.Null(expiringJob.LeaseExpiresAt);
         Assert.Equal(leaseExpiresAt.AddTicks(1), expiringJob.StateChangedAt);
     }
+
+    [Fact]
+    public void Complete_WithCurrentRunningLeaseAndVersion_PreservesOnlyTheImmutableDocumentLinkAndRejectsFurtherMutation()
+    {
+        ScanJobExecution job = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 7,
+            stateChangedAt: _createdAt);
+        Guid leaseToken = Guid.Parse("50000000-0000-4000-8000-000000000005");
+        Guid wrongLeaseToken = Guid.Parse("60000000-0000-4000-8000-000000000006");
+        Guid documentVersionId = Guid.Parse("90000000-0000-4000-8000-000000000009");
+        job.AcquireLease(leaseToken, _createdAt.AddMinutes(5), _createdAt.AddSeconds(1));
+
+        Assert.Throws<InvalidOperationException>(() => job.Complete(
+            expectedStateVersion: 0,
+            expectedLeaseToken: leaseToken,
+            committedDocumentVersionId: documentVersionId,
+            stateChangedAt: _createdAt.AddSeconds(2)));
+        Assert.Throws<InvalidOperationException>(() => job.Complete(
+            expectedStateVersion: 1,
+            expectedLeaseToken: wrongLeaseToken,
+            committedDocumentVersionId: documentVersionId,
+            stateChangedAt: _createdAt.AddSeconds(2)));
+        Assert.Throws<ArgumentException>(() => job.Complete(
+            expectedStateVersion: 1,
+            expectedLeaseToken: leaseToken,
+            committedDocumentVersionId: Guid.Empty,
+            stateChangedAt: _createdAt.AddSeconds(2)));
+
+        job.Complete(
+            expectedStateVersion: 1,
+            expectedLeaseToken: leaseToken,
+            committedDocumentVersionId: documentVersionId,
+            stateChangedAt: _createdAt.AddSeconds(2));
+
+        Assert.Equal(ScanJobExecutionState.Completed, job.State);
+        Assert.Equal(1, job.AttemptCount);
+        Assert.Equal(2, job.StateVersion);
+        Assert.Equal(documentVersionId, job.CommittedDocumentVersionId);
+        Assert.Null(job.LeaseToken);
+        Assert.Null(job.LeaseExpiresAt);
+        Assert.Null(job.NextAttemptAt);
+        Assert.Null(job.FailureCategory);
+        Assert.Null(job.FailureCode);
+
+        Assert.Throws<InvalidOperationException>(() => job.AcquireLease(
+            Guid.Parse("a0000000-0000-4000-8000-00000000000a"),
+            _createdAt.AddMinutes(10),
+            _createdAt.AddSeconds(3)));
+        Assert.Equal(ScanJobExecutionState.Completed, job.State);
+        Assert.Equal(2, job.StateVersion);
+        Assert.Equal(documentVersionId, job.CommittedDocumentVersionId);
+    }
+
+    [Theory]
+    [InlineData(ScanJobFailureCategory.ProviderTransient)]
+    [InlineData(ScanJobFailureCategory.ProviderConfiguration)]
+    [InlineData(ScanJobFailureCategory.JobTransient)]
+    [InlineData(ScanJobFailureCategory.JobPermanent)]
+    [InlineData(ScanJobFailureCategory.Integrity)]
+    [InlineData(ScanJobFailureCategory.Security)]
+    [InlineData(ScanJobFailureCategory.Cancellation)]
+    [InlineData(ScanJobFailureCategory.Unclassified)]
+    public void Fail_FromRunning_WithClosedFailureCategoryAndCurrentLease_ClearsDurableCompletionFields(
+        ScanJobFailureCategory failureCategory)
+    {
+        ScanJobExecution job = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 7,
+            stateChangedAt: _createdAt);
+        Guid leaseToken = Guid.Parse("50000000-0000-4000-8000-000000000005");
+        job.AcquireLease(leaseToken, _createdAt.AddMinutes(5), _createdAt.AddSeconds(1));
+
+        job.Fail(
+            expectedStateVersion: 1,
+            expectedLeaseToken: leaseToken,
+            failureCategory: failureCategory,
+            failureCode: "  Provider-TimeOut  ",
+            stateChangedAt: _createdAt.AddSeconds(2));
+
+        Assert.Equal(ScanJobExecutionState.Failed, job.State);
+        Assert.Equal(1, job.AttemptCount);
+        Assert.Equal(2, job.StateVersion);
+        Assert.Null(job.CommittedDocumentVersionId);
+        Assert.Null(job.LeaseToken);
+        Assert.Null(job.LeaseExpiresAt);
+        Assert.Null(job.NextAttemptAt);
+        Assert.Equal(failureCategory, job.FailureCategory);
+        Assert.Equal("provider-timeout", job.FailureCode);
+
+        Assert.Throws<InvalidOperationException>(() => job.AcquireLease(
+            Guid.Parse("a0000000-0000-4000-8000-00000000000a"),
+            _createdAt.AddMinutes(10),
+            _createdAt.AddSeconds(3)));
+        Assert.Equal(2, job.StateVersion);
+    }
+
+    [Fact]
+    public void Fail_FromRetryScheduled_UsesCurrentVersionWithoutLeaseAndRejectsFurtherMutation()
+    {
+        ScanJobExecution job = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 7,
+            stateChangedAt: _createdAt);
+        Guid leaseToken = Guid.Parse("50000000-0000-4000-8000-000000000005");
+        job.AcquireLease(leaseToken, _createdAt.AddMinutes(5), _createdAt.AddSeconds(1));
+        job.ScheduleRetry(
+            expectedStateVersion: 1,
+            expectedLeaseToken: leaseToken,
+            nextAttemptAt: _createdAt.AddMinutes(10),
+            failureCategory: ScanJobFailureCategory.ProviderTransient,
+            failureCode: "provider-timeout",
+            stateChangedAt: _createdAt.AddSeconds(2));
+
+        job.Fail(
+            expectedStateVersion: 2,
+            expectedLeaseToken: null,
+            failureCategory: ScanJobFailureCategory.JobPermanent,
+            failureCode: "invalid-result",
+            stateChangedAt: _createdAt.AddSeconds(3));
+
+        Assert.Equal(ScanJobExecutionState.Failed, job.State);
+        Assert.Equal(1, job.AttemptCount);
+        Assert.Equal(3, job.StateVersion);
+        Assert.Null(job.CommittedDocumentVersionId);
+        Assert.Null(job.LeaseToken);
+        Assert.Null(job.LeaseExpiresAt);
+        Assert.Null(job.NextAttemptAt);
+        Assert.Equal(ScanJobFailureCategory.JobPermanent, job.FailureCategory);
+        Assert.Equal("invalid-result", job.FailureCode);
+    }
+
+    [Fact]
+    public void Cancel_FromPendingRunningOrRetryScheduled_RecordsCancellationAndLeavesNoLeaseOrDocument()
+    {
+        ScanJobExecution pending = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 7,
+            stateChangedAt: _createdAt);
+        pending.Cancel(
+            expectedStateVersion: 0,
+            expectedLeaseToken: null,
+            failureCode: " operator-cancelled ",
+            stateChangedAt: _createdAt.AddSeconds(1));
+
+        ScanJobExecution running = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 8,
+            stateChangedAt: _createdAt);
+        Guid runningLeaseToken = Guid.Parse("80000000-0000-4000-8000-000000000008");
+        running.AcquireLease(runningLeaseToken, _createdAt.AddMinutes(5), _createdAt.AddSeconds(1));
+        running.Cancel(
+            expectedStateVersion: 1,
+            expectedLeaseToken: runningLeaseToken,
+            failureCode: "operator-cancelled",
+            stateChangedAt: _createdAt.AddSeconds(2));
+
+        ScanJobExecution retryScheduled = ScanJobExecution.Create(
+            _scanExecutionId,
+            _repositoryId,
+            _scanRunId,
+            _fileCodeUnitId,
+            manifestOrdinal: 9,
+            stateChangedAt: _createdAt);
+        Guid retryLeaseToken = Guid.Parse("a0000000-0000-4000-8000-00000000000a");
+        retryScheduled.AcquireLease(retryLeaseToken, _createdAt.AddMinutes(5), _createdAt.AddSeconds(1));
+        retryScheduled.ScheduleRetry(
+            expectedStateVersion: 1,
+            expectedLeaseToken: retryLeaseToken,
+            nextAttemptAt: _createdAt.AddMinutes(10),
+            failureCategory: ScanJobFailureCategory.ProviderTransient,
+            failureCode: "provider-timeout",
+            stateChangedAt: _createdAt.AddSeconds(2));
+        retryScheduled.Cancel(
+            expectedStateVersion: 2,
+            expectedLeaseToken: null,
+            failureCode: "operator-cancelled",
+            stateChangedAt: _createdAt.AddSeconds(3));
+
+        AssertCancellationTerminalShape(pending, expectedStateVersion: 1);
+        AssertCancellationTerminalShape(running, expectedStateVersion: 2);
+        AssertCancellationTerminalShape(retryScheduled, expectedStateVersion: 3);
+    }
+
+    private static void AssertCancellationTerminalShape(
+        ScanJobExecution job,
+        long expectedStateVersion)
+    {
+        Assert.Equal(ScanJobExecutionState.Cancelled, job.State);
+        Assert.Equal(expectedStateVersion, job.StateVersion);
+        Assert.Equal(ScanJobFailureCategory.Cancellation, job.FailureCategory);
+        Assert.Equal("operator-cancelled", job.FailureCode);
+        Assert.Null(job.CommittedDocumentVersionId);
+        Assert.Null(job.LeaseToken);
+        Assert.Null(job.LeaseExpiresAt);
+        Assert.Null(job.NextAttemptAt);
+
+        Assert.Throws<InvalidOperationException>(() => job.AcquireLease(
+            Guid.Parse("b0000000-0000-4000-8000-00000000000b"),
+            new DateTimeOffset(2026, 8, 30, 9, 1, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 8, 30, 9, 0, 0, TimeSpan.Zero)));
+        Assert.Equal(expectedStateVersion, job.StateVersion);
+    }
 }

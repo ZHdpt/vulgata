@@ -371,6 +371,25 @@
         "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T10:50:00Z",
+      "completed_at": "2026-08-18T10:56:31Z",
+      "input_commit": "10f1bb29e1f5a291453dc061b0a0faa85c12b9dc",
+      "input_hashes": {
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs": "321311665A1B151F38B12F26810F0F7B49810AED5C292675B4A3046ABA9A7BEB",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs": "40DCA34AFAB398E209F5883F000865350A352AD275440E140CDB24A5981962EB",
+        "specs/010-durable-scan-foundation/tasks.md": "4FB778C3D99EF9C340F479D3E2ED6DB5808D86926595753A0C3411778164B237"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs",
+        "specs/010-durable-scan-foundation/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1196,6 +1215,33 @@
       "observed_at": "2026-08-18T10:49:52Z",
       "summary": "Independent verification passed 3/3 focused and 13/13 surrounding tests for due-retry and strict expired-lease recovery, including subsequent reacquisition.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/11",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "10f1bb29e1f5a291453dc061b0a0faa85c12b9dc",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.ScanJobExecutionTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T10:50:00Z",
+      "summary": "Honest compile RED for the absent terminal transitions, Completed Document linkage, and seven missing closed failure-category atoms.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/12",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "10f1bb29e1f5a291453dc061b0a0faa85c12b9dc",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+        "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.ScanJobExecutionTests --no-restore; surrounding durable/domain filter",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T10:56:31Z",
+      "summary": "Independent verification passed 14/14 focused and 24/24 surrounding tests for all job states, failure categories, terminal shapes, completion linkage, and terminal immutability; T008/T009 are complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1208,23 +1254,24 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T104952Z-5c5f1d",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T105631Z-321311",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
+      "specs/010-durable-scan-foundation/tasks.md",
       "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
       "tests/Vulgata.Tests/DurableScanning/ScanJobExecutionTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/9",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/10"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/11",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/12"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T10:49:52Z"
+  "updated_at": "2026-08-18T10:56:31Z"
 }

@@ -9,11 +9,21 @@ public enum ScanJobExecutionState
     Pending,
     Running,
     RetryScheduled,
+    Completed,
+    Failed,
+    Cancelled,
 }
 
 public enum ScanJobFailureCategory
 {
     ProviderTransient,
+    ProviderConfiguration,
+    JobTransient,
+    JobPermanent,
+    Integrity,
+    Security,
+    Cancellation,
+    Unclassified,
 }
 
 public sealed class ScanJobExecution
@@ -57,6 +67,7 @@ public sealed class ScanJobExecution
     public DateTimeOffset? NextAttemptAt { get; private set; }
     public ScanJobFailureCategory? FailureCategory { get; private set; }
     public string? FailureCode { get; private set; }
+    public Guid? CommittedDocumentVersionId { get; private set; }
     public DateTimeOffset StateChangedAt { get; private set; }
 
     public static ScanJobExecution Create(
@@ -153,6 +164,7 @@ public sealed class ScanJobExecution
             throw new ArgumentOutOfRangeException(nameof(nextAttemptAt));
         }
 
+        ThrowIfInvalidFailureCategory(failureCategory);
         string normalizedFailureCode = NormalizeFailureCode(failureCode);
 
         State = ScanJobExecutionState.RetryScheduled;
@@ -183,6 +195,107 @@ public sealed class ScanJobExecution
         FailureCategory = null;
         FailureCode = null;
         StateChangedAt = now;
+    }
+
+    public void Complete(
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        Guid committedDocumentVersionId,
+        DateTimeOffset stateChangedAt)
+    {
+        if (State != ScanJobExecutionState.Running ||
+            StateVersion != expectedStateVersion ||
+            LeaseToken != expectedLeaseToken)
+        {
+            throw new InvalidOperationException(
+                "Completion requires the current Running lease and state version.");
+        }
+
+        ThrowIfEmpty(committedDocumentVersionId, nameof(committedDocumentVersionId));
+        ThrowIfNotUtc(stateChangedAt, nameof(stateChangedAt));
+        if (stateChangedAt < StateChangedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stateChangedAt));
+        }
+
+        State = ScanJobExecutionState.Completed;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = null;
+        FailureCategory = null;
+        FailureCode = null;
+        CommittedDocumentVersionId = committedDocumentVersionId;
+        StateChangedAt = stateChangedAt;
+    }
+
+    public void Fail(
+        long expectedStateVersion,
+        Guid? expectedLeaseToken,
+        ScanJobFailureCategory failureCategory,
+        string failureCode,
+        DateTimeOffset stateChangedAt)
+    {
+        if ((State != ScanJobExecutionState.Running &&
+             State != ScanJobExecutionState.RetryScheduled) ||
+            StateVersion != expectedStateVersion ||
+            LeaseToken != expectedLeaseToken)
+        {
+            throw new InvalidOperationException(
+                "Failure requires the current Running lease or Retry Scheduled state version.");
+        }
+
+        ThrowIfInvalidFailureCategory(failureCategory);
+        string normalizedFailureCode = NormalizeFailureCode(failureCode);
+        ThrowIfNotUtc(stateChangedAt, nameof(stateChangedAt));
+        if (stateChangedAt < StateChangedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stateChangedAt));
+        }
+
+        State = ScanJobExecutionState.Failed;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = null;
+        CommittedDocumentVersionId = null;
+        FailureCategory = failureCategory;
+        FailureCode = normalizedFailureCode;
+        StateChangedAt = stateChangedAt;
+    }
+
+    public void Cancel(
+        long expectedStateVersion,
+        Guid? expectedLeaseToken,
+        string failureCode,
+        DateTimeOffset stateChangedAt)
+    {
+        if ((State != ScanJobExecutionState.Pending &&
+             State != ScanJobExecutionState.Running &&
+             State != ScanJobExecutionState.RetryScheduled) ||
+            StateVersion != expectedStateVersion ||
+            LeaseToken != expectedLeaseToken)
+        {
+            throw new InvalidOperationException(
+                "Cancellation requires the current state version and lease shape.");
+        }
+
+        string normalizedFailureCode = NormalizeFailureCode(failureCode);
+        ThrowIfNotUtc(stateChangedAt, nameof(stateChangedAt));
+        if (stateChangedAt < StateChangedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stateChangedAt));
+        }
+
+        State = ScanJobExecutionState.Cancelled;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = null;
+        CommittedDocumentVersionId = null;
+        FailureCategory = ScanJobFailureCategory.Cancellation;
+        FailureCode = normalizedFailureCode;
+        StateChangedAt = stateChangedAt;
     }
 
     public void RecoverExpiredLease(long expectedStateVersion, DateTimeOffset now)
@@ -217,6 +330,14 @@ public sealed class ScanJobExecution
         if (value.Offset != TimeSpan.Zero)
         {
             throw new ArgumentException("Timestamp must use the UTC offset.", parameterName);
+        }
+    }
+
+    private static void ThrowIfInvalidFailureCategory(ScanJobFailureCategory value)
+    {
+        if (!Enum.IsDefined(value))
+        {
+            throw new ArgumentOutOfRangeException(nameof(value));
         }
     }
 

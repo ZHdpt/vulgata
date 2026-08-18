@@ -345,3 +345,16 @@ state version once; normal lease acquisition then records the next attempt.
 Independent verification passed 3/3 focused and 13/13 surrounding tests. T008 and
 T009 remain open for terminal states, completion linkage, the complete bounded
 failure-category policy, and retry exhaustion.
+
+### Implementation group 5
+
+The terminal-state tracer bullet observed an honest compile RED for the absent
+Completed, Failed, and Cancelled transitions, the Document Version completion
+link, and seven missing closed failure-category atoms. Minimal GREEN implements
+all six job states and all eight failure categories, exact lease/version guards,
+immutable Completed linkage, bounded normalized failure codes, terminal field
+shapes, and mutation-free terminal rejection. Independent verification passed
+14/14 focused and 24/24 surrounding durable/domain tests. The accepted domain
+scope of T008 and T009 is complete; EF mapping, conditional store concurrency,
+atomic Document/job completion, migration, and recovery integration remain owned
+by later tasks.
