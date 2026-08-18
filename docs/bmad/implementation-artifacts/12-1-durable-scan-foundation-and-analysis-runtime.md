@@ -432,3 +432,19 @@ store, filesystem, whole-file/unbounded source, process/stream, EF, IQueryable,
 cross-Repository, and stale-revision capabilities. Verification passed 7/7
 focused, 14/14 Analysis Runtime, and 37/37 combined tests. T018 and T019 are
 complete.
+
+### Implementation group 11
+
+Parallel test-only prerequisites T002-T004 are complete. The neutral Java 21
+fixture carries deterministic Repository/Profiled Revision and per-file hashes,
+plus definition/reference/implementation/call relationships, with traversal and
+rooted-path escape rejected. Reusable helpers provide fixed UTC time,
+deterministic IDs, recursively canonical hashes, process/filesystem doubles,
+cancellation observation, and bounded sanitized diagnostics. The disposable
+PostgreSQL 17 harness generates only strongly prefixed exact names, validates and
+quotes identifiers, preflights major version 17, targets/terminates/drops only
+the exact owned database, and keeps cleanup retryable until absence is proved.
+Root combined verification passed 24/24 tests after avoiding a known concurrent
+MVC manifest file lock with `--no-build`. Live PostgreSQL create/drop remains
+deferred because no `VULGATA_TEST_POSTGRES_ADMIN` is configured and Docker is
+unavailable; later PostgreSQL gates still require live evidence.

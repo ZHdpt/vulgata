@@ -1,0 +1,53 @@
+{
+  "schemaIdentity": "analysis-runtime-fixture/1.0",
+  "repositoryId": "12000000-0000-4000-8000-000000000002",
+  "profiledRevision": {
+    "objectId": "0123456789abcdef0123456789abcdef01234567",
+    "committedAtUtc": "2026-08-30T00:00:00Z"
+  },
+  "sourceRoot": "repository",
+  "files": [
+    {
+      "path": "pom.xml",
+      "sha256": "96370bf2091468825afedcf5c5f01f973f9b79e9c82ade2b4841f9284332ab17"
+    },
+    {
+      "path": "src/main/java/example/analysis/DefaultGreetingFormatter.java",
+      "sha256": "07cd0aa815cb5c17179f7d0833dc436205f15ce8dc46e087ff2b138c1d0405b0"
+    },
+    {
+      "path": "src/main/java/example/analysis/FixtureApplication.java",
+      "sha256": "6774098f4a30d261b01f5917ce2071689ecc93ba6313b9d8834bbb5a1258d6d0"
+    },
+    {
+      "path": "src/main/java/example/analysis/GreetingFormatter.java",
+      "sha256": "1223bf5db6dd4a59c4c2275175b245ac54f0e9ba70b5833b4e2d70faf199703e"
+    },
+    {
+      "path": "src/main/java/example/analysis/GreetingService.java",
+      "sha256": "50b7491a6ad4a65e4f794127c0b90608b520b4874b6a2006a28073b3d9fa62ee"
+    }
+  ],
+  "expectedRelationships": [
+    {
+      "kind": "definition",
+      "fromSymbol": "example.analysis.GreetingService.createGreeting",
+      "toSymbol": "example.analysis.GreetingFormatter.format"
+    },
+    {
+      "kind": "implementation",
+      "fromSymbol": "example.analysis.GreetingFormatter",
+      "toSymbol": "example.analysis.DefaultGreetingFormatter"
+    },
+    {
+      "kind": "reference",
+      "fromSymbol": "example.analysis.GreetingFormatter.format",
+      "toSymbol": "example.analysis.GreetingService.createGreeting"
+    },
+    {
+      "kind": "call",
+      "fromSymbol": "example.analysis.FixtureApplication.run",
+      "toSymbol": "example.analysis.GreetingService.createGreeting"
+    }
+  ]
+}

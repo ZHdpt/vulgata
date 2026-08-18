@@ -495,6 +495,30 @@
         "specs/010-durable-scan-foundation/tasks.md"
       ],
       "failure": null
+    },
+    {
+      "stage": "implement",
+      "status": "accepted",
+      "started_at": "2026-08-18T12:21:00Z",
+      "completed_at": "2026-08-18T12:30:33Z",
+      "input_commit": "7e278064189e824692463998d23394d56d6e653b",
+      "input_hashes": {
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeFixtureTests.cs": "752002909D29103CF12E904AE55B09F4D4B08E6B8BEC2FEB465892D59C91839A",
+        "tests/Vulgata.Tests/AnalysisRuntime/Story121TestHelperTests.cs": "E9F23B57DB277324AA42AD6E45F7AAC87958D8B8E0576F85278B59E8D4290E51",
+        "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/fixture-manifest.json": "2C1A7AF5E6F96E27566311B763683410FDCFC4A255F82CF29D2D4437885E07E8",
+        "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabase.cs": "B2E5DFEAB0ED25C4B5C10B2796B0B8D67D0D0ECA3518BF5CBF407401976FD2EE",
+        "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabaseTests.cs": "05538BE5DC1A48402E3066CB854F9865DDA8D75832E87AD6A60D2746C61C8421",
+        "specs/010-durable-scan-foundation/tasks.md": "1FDB4EFFAF40943EA18CFCB55FE04559F9642E2504AC351F38B6A923083DA1D1"
+      },
+      "agent_role": "bmad-sprint-orchestrator",
+      "evidence_paths": [
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeFixtureTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/Story121TestHelperTests.cs",
+        "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/fixture-manifest.json",
+        "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabaseTests.cs",
+        "specs/010-durable-scan-foundation/tasks.md"
+      ],
+      "failure": null
     }
   ],
   "repository_preflight": {
@@ -1487,6 +1511,22 @@
       "observed_at": "2026-08-18T12:20:35Z",
       "summary": "Verification passed 7/7 focused, 14/14 Analysis Runtime, and 37/37 combined tests; negative reflection confirmed the capability-shaped Core boundary. T018/T019 are complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/23",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "7e278064189e824692463998d23394d56d6e653b",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeFixtureTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/Story121TestHelperTests.cs",
+        "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabaseTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter AnalysisRuntimeFixtureTests|Story121TestHelperTests|DisposablePostgreSqlDatabaseTests --no-build --no-restore",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T12:30:33Z",
+      "summary": "Root combined verification passed 24/24 setup tests for contained fixture paths, deterministic helpers, and exact-name PostgreSQL lifecycle safety. Live PostgreSQL smoke remains deferred pending configured PostgreSQL 17 access.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1499,24 +1539,38 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T122035Z-008fc9",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T123033Z-752002",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/ClosedAnalysisPortTests.cs"
+      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeFixtureTests.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/BoundedSanitizedDiagnostics.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/InMemoryFileSystemDouble.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/RecordingProcessLauncherDouble.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/Story121TestHelperTests.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/Utf8CanonicalHash.cs",
+      "tests/Vulgata.Tests/DurableScanning/DeterministicTestIds.cs",
+      "tests/Vulgata.Tests/DurableScanning/FixedTestClock.cs",
+      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/.gitattributes",
+      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/fixture-manifest.json",
+      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/pom.xml",
+      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/DefaultGreetingFormatter.java",
+      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/FixtureApplication.java",
+      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/GreetingFormatter.java",
+      "tests/Vulgata.Tests/Fixtures/AnalysisRuntime/repository/src/main/java/example/analysis/GreetingService.java",
+      "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabase.cs",
+      "tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabaseTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/21",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/22"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/23"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T12:20:35Z"
+  "updated_at": "2026-08-18T12:30:33Z"
 }
