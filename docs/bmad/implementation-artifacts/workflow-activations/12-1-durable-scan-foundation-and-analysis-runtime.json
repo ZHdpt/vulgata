@@ -1,0 +1,103 @@
+{
+  "schema_version": "2.0",
+  "execution_level": "unified",
+  "bmad_story_key": "12-1-durable-scan-foundation-and-analysis-runtime",
+  "bmad_epic_key": "12",
+  "story_path": "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+  "proposed_feature_short_name": "durable-scan-foundation",
+  "stage": "context",
+  "repository_preflight": {
+    "branch": "demo0831/main",
+    "preflight_head": "f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d",
+    "repository_root": "G:/source/repos/vulgata",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "G:/source/repos/vulgata",
+    "worktree_status": "",
+    "index_status": "",
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json"
+    ],
+    "unrelated_paths": [],
+    "observed_at": "2026-08-18T07:36:10Z"
+  },
+  "activation_checkpoint": {
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-context-20260818T073610Z-a4d9e2",
+    "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
+    "stage": "context",
+    "committed_paths": [
+      "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-1-durable-scan-foundation-and-analysis-runtime.json"
+    ],
+    "verification_evidence_ids": [
+      "12-1-durable-scan-foundation-and-analysis-runtime/context/1"
+    ],
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "activation_checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-context-20260818T073610Z-a4d9e2",
+  "feature_directory": null,
+  "superseded_by_state": null,
+  "superseded_history": [
+    {
+      "commit": "d91772004cf6ad56d4fcd38b37917958733f693e",
+      "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-context-20260818T043202Z-8fcc6e",
+      "reason": "Non-ancestral activation from the pre-correction authority; preserved as evidence and not imported."
+    }
+  ],
+  "source_artifacts": [
+    {"path":"docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"9AA3A9098A3B69E36E15A04EA42FD49CF2F910ECE9D69785948FE62DEB90EA47"},
+    {"path":"docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"448181916E046024ADC0BA9582CE4B673D21CE7C386B20EC0988C874812C809D"},
+    {"path":"docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"32BBBC0DC8F4EB6BCCBC7B7BC6419F499F059E712797A819C6B4DE965DFA136D"},
+    {"path":"docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"7C420E84BA1928F40E720BA8BF4B0B1ACCC844F8C6FC669F9201F37A5A3959B0"},
+    {"path":"docs/bmad/planning-artifacts/architecture.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"7BC1219DDA8EE35E1035B8016AA3C9826F94D652C667F6058C3E2E238C0B8E2D"},
+    {"path":"docs/bmad/epics.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"1F5E54A57A7768F123AE7495667973CB682D041F49AB6E73694B66B277FC1BE6"},
+    {"path":"docs/bmad/implementation-artifacts/sprint-status.yaml","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"6C5577B10891A61A3E15D03DD89A7D4B3A3AF945B40DB5F4B65865071938A3FA"},
+    {"path":"docs/UBIQUITOUS_LANGUAGE.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"65154817125CFA8DDE3ED252D81DD361136B09E9B7C1C5D4CB74C17305085E54"},
+    {"path":"AGENTS.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"8420AF42282EDDFC081B5DF4690293AB4AAF250293C2B31C2CE779CA0BF781BE"},
+    {"path":".specify/memory/constitution.md","commit":"f8b56ed4ab081d83bbdcfa050a6ff69a76ccba5d","sha256":"1C5E7319A6FA6EF6576E92A97F65DB74057BAA2226CA4BF28B45D884E7BD8971"}
+  ],
+  "runtime_observations": {
+    "codegraph": {
+      "command": "codegraph",
+      "resolved_path": "G:/packages/npm/prefix/codegraph.ps1",
+      "version": "1.5.0",
+      "approved_hashes_verified": true
+    },
+    "java": {
+      "configured_home": "C:/Program Files/Java/latest/jdk-21",
+      "observed_version": "21.0.12",
+      "major": 21
+    },
+    "jdt_ls": {
+      "configured_path": "C:/Users/13728/.local/jdt-language-server-1.61.0-202608141332",
+      "version": "1.61.0-202608141332",
+      "core_bundle_sha256": "A58994113B7E493AA8CED51AD02DAB3E424973223E7213F7ED5B9D70861582E2",
+      "archive_checksum_observed": false,
+      "archive_checksum_requirement": "Must be recorded and verified before readiness can pass; core-bundle hash is not a substitute."
+    }
+  },
+  "planned_change_triggers": [
+    "worker-agent-tool",
+    "scan-strategy",
+    "prd-conflict-or-replacement"
+  ],
+  "integration_owner_gated_paths": [
+    "src/dotnet/Vulgata.Core/Entities/",
+    "src/dotnet/Vulgata.Core/DomainServices/",
+    "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Configurations/",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
+    "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "docker/Dockerfile",
+    "docker-compose.yml"
+  ],
+  "excluded_paths": [
+    "docs/bmad/implementation-artifacts/11-5-demo-chat-citations-and-release-gate.md",
+    "docs/bmad/implementation-artifacts/workflow-activations/11-5-demo-chat-citations-and-release-gate.json",
+    "specs/008-demo-chat-release-gate/"
+  ]
+}

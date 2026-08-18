@@ -44,8 +44,8 @@ story_location: docs/bmad/implementation-artifacts
 delivery_scope:
   name: august-30-bounded-production-scan-recovery
   deadline: 2026-08-30
-  execution_level: standard
-  planning_state: approved-course-correction-paused-before-sprint-loop
+  execution_level: unified
+  planning_state: active-unified-sprint-loop
   authority: docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md
   active_sequence:
     - epic-12
@@ -95,8 +95,8 @@ development_status:
   11-4-exact-rpc-http-cross-repository-demo-resolution: done
   11-5-demo-chat-citations-and-release-gate: review
   epic-11-retrospective: optional
-  epic-12: backlog
-  12-1-durable-scan-foundation-and-analysis-runtime: backlog
+  epic-12: in-progress
+  12-1-durable-scan-foundation-and-analysis-runtime: in-progress
   12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest: backlog
   12-3-resumable-file-pass-1-and-code-logic-documents: backlog
   12-4-exact-cross-repository-flow-and-pass-2: backlog
