@@ -5,15 +5,40 @@ using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Data;
 
-public sealed class WorkerAgentResultCommitter : IWorkerAgentResultCommitter
+public sealed class WorkerAgentResultCommitter :
+    IWorkerAgentResultCommitter,
+    IScanJobResultCommitter
 {
     private readonly IKnowledgeStoreRepository _knowledgeStore;
+    private readonly KnowledgeStoreRepository? _durableKnowledgeStore;
     private readonly PreparedPass2Flow? _preparedPass2Flow;
 
     public WorkerAgentResultCommitter(IKnowledgeStoreRepository knowledgeStore)
     {
         _knowledgeStore = knowledgeStore ??
             throw new ArgumentNullException(nameof(knowledgeStore));
+        _durableKnowledgeStore = knowledgeStore as KnowledgeStoreRepository;
+    }
+
+    public Task<ScanJobResultCommitResult> CommitAsync(
+        ScanJobResultCommitRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (_durableKnowledgeStore is null)
+        {
+            return Task.FromResult(new ScanJobResultCommitResult(
+                ScanJobResultCommitOutcome.Failed,
+                DurableScanReason.Failed,
+                null,
+                null,
+                null,
+                false));
+        }
+
+        return _durableKnowledgeStore.CommitScanJobResultAsync(
+            request,
+            cancellationToken);
     }
 
     public WorkerAgentResultCommitter(

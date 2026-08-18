@@ -1591,6 +1591,34 @@
       "observed_at": "2026-08-18T13:03:23Z",
       "summary": "Root verification passed 18/18 combined tests, a 0-error Infrastructure build, and explicit-context no-pending-model-changes validation after fixture-only ownership corrections. T006/T020/T021/T045/T046 are complete; live PostgreSQL qualification remains T047.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/26",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "0fb718f6297e651a85c1ad8f8a301714bad6c8d7",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Vulgata.Tests.DurableScanning.AtomicDocumentJobCommitTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T13:27:56Z",
+      "summary": "Honest T022 RED compiled and failed 18/18 because the existing WorkerAgentResultCommitter did not implement the durable atomic result-commit port.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/27",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "0fb718f6297e651a85c1ad8f8a301714bad6c8d7",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~AtomicDocumentJobCommitTests; dotnet test ... --filter FullyQualifiedName~WorkerAgentResultCommitterTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T13:27:56Z",
+      "summary": "Original test-author verification passed 18/18 atomic commit tests and 16/16 surrounding committer tests; exact replay is mutation-free, conflicts and injected failures do not partially persist, and T022/T023 are complete. Live PostgreSQL concurrency remains T048.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1603,34 +1631,25 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T130323Z-643ca1",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T132756Z-atomic-commit",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanContextSnapshotConfiguration.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanExecutionConfiguration.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/ScanJobExecutionConfiguration.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/TwoRepositoryScanCoordinationConfiguration.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.Designer.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
-      "tests/Vulgata.Tests/DurableScanning/ScanContextSnapshotTests.cs",
-      "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
-      "tests/Vulgata.Tests/Migrations/DurableScanModelTests.cs"
+      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs",
+      "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/24",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/25"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/26",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/27"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T13:03:23Z"
+  "updated_at": "2026-08-18T13:27:56Z"
 }

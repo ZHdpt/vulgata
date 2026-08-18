@@ -1,5 +1,6 @@
 using System.Data;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,440 @@ public sealed class KnowledgeStoreRepository(
 {
     private readonly VulgataDbContext _context = context;
     private readonly KnowledgeDocumentMaterializer _materializer = materializer;
+
+    internal async Task<ScanJobResultCommitResult> CommitScanJobResultAsync(
+        ScanJobResultCommitRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ScanJobExecution? job = await _context.Set<ScanJobExecution>()
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    candidate => candidate.Id == request.ScanJobExecutionId,
+                    cancellationToken);
+            ScanExecution? execution = job is null
+                ? null
+                : await _context.ScanExecutions
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(
+                        candidate => candidate.Id == job.ScanExecutionId,
+                        cancellationToken);
+            if (job is null || execution is null ||
+                !request.AuthorizationScope.OwnedSystemIds.Contains(execution.SystemId))
+            {
+                return ScanCommitResult(
+                    ScanJobResultCommitOutcome.Rejected,
+                    DurableScanReason.Unauthorized,
+                    job);
+            }
+
+            KnowledgeCommit? commit = CreateScanKnowledgeCommit(request, execution, job);
+            if (commit is null)
+            {
+                return ScanCommitResult(
+                    ScanJobResultCommitOutcome.Conflict,
+                    DurableScanReason.IntegrityViolation,
+                    job);
+            }
+
+            if (job.State == ScanJobExecutionState.Completed)
+            {
+                bool exactReplay =
+                    job.CommittedDocumentVersionId == request.DocumentVersionId &&
+                    await ScanCommitAggregateMatchesAsync(
+                        request,
+                        commit,
+                        execution,
+                        job,
+                        cancellationToken);
+                return exactReplay
+                    ? new ScanJobResultCommitResult(
+                        ScanJobResultCommitOutcome.Committed,
+                        DurableScanReason.None,
+                        request.DocumentVersionId,
+                        job.StateVersion,
+                        job.LeaseToken,
+                        true)
+                    : ScanCommitResult(
+                        ScanJobResultCommitOutcome.Conflict,
+                        DurableScanReason.IntegrityViolation,
+                        job);
+            }
+
+            if (job.State != ScanJobExecutionState.Running ||
+                job.StateVersion != request.ExpectedStateVersion ||
+                job.LeaseToken != request.LeaseToken)
+            {
+                return ScanCommitResult(
+                    ScanJobResultCommitOutcome.Conflict,
+                    job.StateVersion != request.ExpectedStateVersion
+                        ? DurableScanReason.StaleStateVersion
+                        : DurableScanReason.LeaseMismatch,
+                    job);
+            }
+
+            KnowledgeStoreContractValidator.ValidateCommit(commit);
+            IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                bool isSqlite = StringComparer.Ordinal.Equals(
+                    _context.Database.ProviderName,
+                    "Microsoft.EntityFrameworkCore.Sqlite");
+                await using IDbContextTransaction transaction =
+                    await _context.Database.BeginTransactionAsync(
+                        isSqlite ? IsolationLevel.Serializable : IsolationLevel.ReadCommitted,
+                        cancellationToken);
+                try
+                {
+                    ScanJobExecution currentJob = StringComparer.Ordinal.Equals(
+                            _context.Database.ProviderName,
+                            "Npgsql.EntityFrameworkCore.PostgreSQL")
+                        ? await _context.Set<ScanJobExecution>()
+                            .FromSqlInterpolated(
+                                $"SELECT * FROM \"vulgata\".\"ScanJobExecutions\" WHERE \"Id\" = {request.ScanJobExecutionId} FOR UPDATE")
+                            .SingleAsync(cancellationToken)
+                        : await _context.Set<ScanJobExecution>()
+                            .SingleAsync(
+                                candidate => candidate.Id == request.ScanJobExecutionId,
+                                cancellationToken);
+                    ScanExecution currentExecution = await _context.ScanExecutions
+                        .AsNoTracking()
+                        .SingleAsync(
+                            candidate => candidate.Id == currentJob.ScanExecutionId,
+                            cancellationToken);
+                    KnowledgeCommit? currentCommit =
+                        CreateScanKnowledgeCommit(request, currentExecution, currentJob);
+                    if (currentCommit is not null &&
+                        currentJob.State == ScanJobExecutionState.Completed)
+                    {
+                        bool exactReplay =
+                            currentJob.CommittedDocumentVersionId == request.DocumentVersionId &&
+                            await ScanCommitAggregateMatchesAsync(
+                                request,
+                                currentCommit,
+                                currentExecution,
+                                currentJob,
+                                cancellationToken);
+                        await transaction.RollbackAsync(CancellationToken.None);
+                        _context.ChangeTracker.Clear();
+                        return exactReplay
+                            ? new ScanJobResultCommitResult(
+                                ScanJobResultCommitOutcome.Committed,
+                                DurableScanReason.None,
+                                request.DocumentVersionId,
+                                currentJob.StateVersion,
+                                currentJob.LeaseToken,
+                                true)
+                            : ScanCommitResult(
+                                ScanJobResultCommitOutcome.Conflict,
+                                DurableScanReason.IntegrityViolation,
+                                currentJob);
+                    }
+
+                    if (currentCommit is null ||
+                        currentJob.State != ScanJobExecutionState.Running ||
+                        currentJob.StateVersion != request.ExpectedStateVersion ||
+                        currentJob.LeaseToken != request.LeaseToken)
+                    {
+                        await transaction.RollbackAsync(CancellationToken.None);
+                        _context.ChangeTracker.Clear();
+                        return ScanCommitResult(
+                            ScanJobResultCommitOutcome.Conflict,
+                            DurableScanReason.StaleStateVersion,
+                            currentJob);
+                    }
+
+                    KnowledgeCommitResult? invalid = await ValidateDurableOwnershipAsync(
+                        currentCommit,
+                        new RepositoryAccessScope([request.RepositoryId]),
+                        cancellationToken);
+                    Repository? owner = await _context.Repositories
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync(
+                            repository => repository.Id == request.RepositoryId,
+                            cancellationToken);
+                    if (invalid is not null || owner is null)
+                    {
+                        await transaction.RollbackAsync(CancellationToken.None);
+                        _context.ChangeTracker.Clear();
+                        return ScanCommitResult(
+                            ScanJobResultCommitOutcome.Conflict,
+                            DurableScanReason.IntegrityViolation,
+                            currentJob);
+                    }
+
+                    KnowledgeDocumentMaterialization projection = _materializer.Materialize(
+                        currentCommit.LogicalDocumentId,
+                        currentCommit.NewDocumentVersionId,
+                        currentCommit.RepositoryId,
+                        owner.SystemId,
+                        currentCommit.Content,
+                        currentCommit.CommittedAt);
+                    var logicalDocument = LogicalDocument.Create(
+                        currentCommit.LogicalDocumentId,
+                        currentCommit.RepositoryId,
+                        currentCommit.Content.DocumentType,
+                        currentCommit.Content.StableKey,
+                        currentCommit.CommittedAt);
+                    _context.Set<LogicalDocument>().Add(logicalDocument);
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    var version = DocumentVersion.Create(
+                        currentCommit.NewDocumentVersionId,
+                        currentCommit.LogicalDocumentId,
+                        currentCommit.RepositoryId,
+                        owner.SystemId,
+                        currentCommit.ScanRunId,
+                        currentCommit.ProfiledRevision,
+                        1,
+                        projection.Content.Title,
+                        projection.Content.RepositoryRelativePath,
+                        projection.Content.SchemaIdentity,
+                        projection.ContentJson,
+                        projection.ContentMarkdown,
+                        projection.ContentFingerprint,
+                        request.CommitFingerprint,
+                        currentCommit.CommittedAt);
+                    _context.Set<DocumentVersion>().Add(version);
+                    AddEvidence(currentCommit);
+                    _context.Set<IndexEntry>().Add(projection.IndexEntry);
+                    _context.Set<DocumentSection>().AddRange(projection.Sections);
+                    logicalDocument.SetInitialCurrentVersion(version);
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    currentJob.Complete(
+                        request.ExpectedStateVersion,
+                        request.LeaseToken,
+                        request.DocumentVersionId,
+                        currentCommit.CommittedAt);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    long stateVersion = currentJob.StateVersion;
+                    _context.ChangeTracker.Clear();
+                    return new ScanJobResultCommitResult(
+                        ScanJobResultCommitOutcome.Committed,
+                        DurableScanReason.None,
+                        request.DocumentVersionId,
+                        stateVersion,
+                        null,
+                        false);
+                }
+                catch
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    _context.ChangeTracker.Clear();
+                    throw;
+                }
+            });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _context.ChangeTracker.Clear();
+            return new ScanJobResultCommitResult(
+                ScanJobResultCommitOutcome.Cancelled,
+                DurableScanReason.Cancelled,
+                null,
+                null,
+                null,
+                false);
+        }
+        catch (Exception)
+        {
+            _context.ChangeTracker.Clear();
+            return new ScanJobResultCommitResult(
+                ScanJobResultCommitOutcome.Failed,
+                DurableScanReason.Failed,
+                null,
+                null,
+                null,
+                false);
+        }
+    }
+
+    private KnowledgeCommit? CreateScanKnowledgeCommit(
+        ScanJobResultCommitRequest request,
+        ScanExecution execution,
+        ScanJobExecution job)
+    {
+        WorkerAgentResultEnvelope envelope = request.WorkerResult;
+        if (job.ScanExecutionId != request.ScanExecutionId ||
+            job.RepositoryId != request.RepositoryId ||
+            job.ScanRunId != request.ScanRunId ||
+            job.FileCodeUnitId != request.FileCodeUnitId ||
+            execution.Id != request.ScanExecutionId ||
+            execution.RepositoryId != request.RepositoryId ||
+            execution.ScanRunId != request.ScanRunId ||
+            !StringComparer.Ordinal.Equals(
+                execution.ProfiledRevision,
+                request.ProfiledRevision) ||
+            !StringComparer.Ordinal.Equals(
+                execution.PromptIdentity,
+                request.PromptIdentity) ||
+            !StringComparer.Ordinal.Equals(
+                execution.DocumentSchemaIdentity,
+                request.DocumentSchemaIdentity) ||
+            !StringComparer.Ordinal.Equals(
+                execution.AnalysisRuntimeIdentityHash,
+                request.AnalysisRuntimeIdentityHash) ||
+            envelope.JobId != request.ScanJobExecutionId ||
+            envelope.ScanExecutionId != request.ScanExecutionId ||
+            envelope.Kind != WorkerAgentJobKind.Pass1CodeLogicDocument ||
+            envelope.Outcome != WorkerAgentResultOutcome.Valid ||
+            envelope.Payload is not Pass1CodeLogicDocumentResultPayload payload ||
+            payload.JobId != request.ScanJobExecutionId ||
+            payload.SystemId != execution.SystemId ||
+            payload.RepositoryId != request.RepositoryId ||
+            payload.ScanRunId != request.ScanRunId ||
+            payload.CodeUnitId != request.FileCodeUnitId ||
+            !StringComparer.Ordinal.Equals(
+                payload.ProfiledRevision,
+                request.ProfiledRevision) ||
+            request.DocumentVersionId == Guid.Empty ||
+            request.CommitFingerprint.Length != 64 ||
+            request.CommitFingerprint.Any(character => !char.IsAsciiHexDigit(character)))
+        {
+            return null;
+        }
+
+        Guid logicalDocumentId = CreateScanStableId(
+            "durable-pass1-logical-document",
+            request.RepositoryId.ToString("D"),
+            payload.Content.StableKey);
+        SourceAnchorDraft[] anchors = payload.SourceAnchors
+            .Select(anchor => new SourceAnchorDraft(
+                anchor.Id,
+                request.DocumentVersionId,
+                request.RepositoryId,
+                request.ScanRunId,
+                request.FileCodeUnitId,
+                request.ProfiledRevision,
+                anchor.RepositoryRelativePath,
+                anchor.EvidenceLocator,
+                anchor.LineStart,
+                anchor.LineEnd,
+                anchor.SourceHash))
+            .ToArray();
+        EdgeDraft[] edges = payload.ReferenceDocumentVersionIds
+            .Select(target => new EdgeDraft(
+                CreateScanStableId(
+                    "durable-pass1-reference-edge",
+                    request.DocumentVersionId.ToString("D"),
+                    target.ToString("D")),
+                request.DocumentVersionId,
+                request.RepositoryId,
+                request.ScanRunId,
+                target,
+                request.RepositoryId,
+                request.ScanRunId,
+                DocumentEdgeType.References))
+            .ToArray();
+        return new KnowledgeCommit(
+            CreateScanStableId(
+                "durable-pass1-operation",
+                request.ScanJobExecutionId.ToString("D")),
+            logicalDocumentId,
+            null,
+            request.DocumentVersionId,
+            request.RepositoryId,
+            request.ScanRunId,
+            request.ProfiledRevision,
+            payload.Content,
+            anchors,
+            edges,
+            [],
+            envelope.ReceivedAt);
+    }
+
+    private async Task<bool> ScanCommitAggregateMatchesAsync(
+        ScanJobResultCommitRequest request,
+        KnowledgeCommit commit,
+        ScanExecution execution,
+        ScanJobExecution job,
+        CancellationToken cancellationToken)
+    {
+        if (CreateScanKnowledgeCommit(request, execution, job) is null)
+        {
+            return false;
+        }
+
+        DocumentVersion? version = await _context.Set<DocumentVersion>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                candidate => candidate.Id == request.DocumentVersionId,
+                cancellationToken);
+        LogicalDocument? logicalDocument = await _context.Set<LogicalDocument>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                candidate => candidate.Id == commit.LogicalDocumentId,
+                cancellationToken);
+        if (version is null || logicalDocument is null ||
+            logicalDocument.RepositoryId != request.RepositoryId ||
+            logicalDocument.DocumentType != commit.Content.DocumentType ||
+            !StringComparer.Ordinal.Equals(
+                logicalDocument.StableKey,
+                commit.Content.StableKey) ||
+            logicalDocument.CurrentVersionId != request.DocumentVersionId ||
+            version.LogicalDocumentId != commit.LogicalDocumentId ||
+            version.RepositoryId != request.RepositoryId ||
+            version.SystemId != execution.SystemId ||
+            version.ScanRunId != request.ScanRunId ||
+            !StringComparer.Ordinal.Equals(
+                version.ProfiledRevision,
+                request.ProfiledRevision) ||
+            version.VersionNumber != 1 ||
+            version.SupersededById is not null ||
+            !StringComparer.Ordinal.Equals(
+                version.CommitFingerprint,
+                request.CommitFingerprint) ||
+            version.CreatedAt != commit.CommittedAt)
+        {
+            return false;
+        }
+
+        KnowledgeDocumentMaterialization expected = _materializer.Materialize(
+            commit.LogicalDocumentId,
+            request.DocumentVersionId,
+            request.RepositoryId,
+            execution.SystemId,
+            commit.Content,
+            commit.CommittedAt);
+        return StringComparer.Ordinal.Equals(version.Title, expected.Content.Title) &&
+            StringComparer.Ordinal.Equals(
+                version.RepositoryRelativePath,
+                expected.Content.RepositoryRelativePath) &&
+            StringComparer.Ordinal.Equals(
+                version.SchemaIdentity,
+                expected.Content.SchemaIdentity) &&
+            JsonMatches(version.ContentJson, expected.ContentJson) &&
+            StringComparer.Ordinal.Equals(
+                version.ContentMarkdown,
+                expected.ContentMarkdown) &&
+            StringComparer.Ordinal.Equals(
+                version.ContentFingerprint,
+                expected.ContentFingerprint) &&
+            await DurableAggregateMatchesAsync(commit, expected, cancellationToken);
+    }
+
+    private static ScanJobResultCommitResult ScanCommitResult(
+        ScanJobResultCommitOutcome outcome,
+        DurableScanReason reason,
+        ScanJobExecution? job) =>
+        new(
+            outcome,
+            reason,
+            job?.CommittedDocumentVersionId,
+            job?.StateVersion,
+            job?.LeaseToken,
+            false);
+
+    private static Guid CreateScanStableId(params string[] parts)
+    {
+        byte[] value = SHA256.HashData(
+            Encoding.UTF8.GetBytes(string.Join('\n', parts)));
+        return new Guid(value.AsSpan(0, 16));
+    }
 
     public async Task<KnowledgeCommitResult> CommitAsync(
         KnowledgeCommit request,

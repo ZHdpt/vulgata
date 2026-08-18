@@ -466,3 +466,20 @@ only the three Story 12.1 tables, additive Scan Execution columns/constraints an
 their indexes/FKs; Down removes only those structures and restores the previous
 phase check. T006, T020, T021, T045, and T046 are complete. Live PostgreSQL 17
 apply/rollback/reapply remains T047 and is not claimed here.
+
+### Implementation group 13
+
+The atomic Document/job completion slice observed an honest 18-case RED at the
+durable result-committer seam. The serialized T023 owner evolved the existing
+Worker Agent result committer and Knowledge Store repository without changing
+the accepted Core contract. One EF transaction now materializes exactly one
+deterministic immutable Document Version graph and completes the matching
+Running Scan Job Execution. Injected failures and cancellation roll back both
+sides. Exact already-Completed lost-response replay is evaluated before stale
+lease/version validation and returns mutation-free `Committed`; every changed
+canonical identity, fingerprint, content, link, or cardinality returns
+`Conflict` without mutation. Root/test-author verification passed 18/18 focused
+atomic tests and 16/16 surrounding committer tests; the implementer also passed
+165/165 Worker Agent and Knowledge Store regressions. T022 and T023 are
+complete. Real PostgreSQL row-lock and concurrent atomicity qualification
+remains T048 and is not claimed here.
