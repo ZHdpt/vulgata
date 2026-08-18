@@ -483,3 +483,23 @@ atomic tests and 16/16 surrounding committer tests; the implementer also passed
 165/165 Worker Agent and Knowledge Store regressions. T022 and T023 are
 complete. Real PostgreSQL row-lock and concurrent atomicity qualification
 remains T048 and is not claimed here.
+
+### Implementation group 14
+
+The recovery slice first exposed a traceable generated-contract omission: AD-5
+and the accepted ownership plan require revalidation outside database locks,
+but the generated Core boundary contained only the durable store. The initial
+test correctly could not infer live Repository/revision/hash/prompt/schema/
+provider/runtime validity from mutable database rows. The test author replaced
+that invalid inference with the accepted closed injected revalidation port, and
+production added only its immutable bounded result, the coordinator, and the
+store's cross-row Document-link integrity checks. Recovery now reads an
+ownership-filtered immutable snapshot, invokes external revalidation before
+conditional writes, recovers only expired Running and due Retry Scheduled jobs,
+preserves identities, attempts, terminal jobs, and committed Documents, and
+fails closed on cancellation, provider unavailability, mismatches, or linkage
+contradictions. It adds no loop, timer, retry policy, scheduling, or Worker
+dispatch. Original test-author verification passed 16/16 focused tests; adjacent
+durable/atomic regressions passed 39/39 and Infrastructure built with zero
+errors. T024 and T025 are complete. Concrete host adapter composition remains in
+the later accepted runtime/integration task boundaries.

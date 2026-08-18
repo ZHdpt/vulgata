@@ -1619,6 +1619,36 @@
       "observed_at": "2026-08-18T13:27:56Z",
       "summary": "Original test-author verification passed 18/18 atomic commit tests and 16/16 surrounding committer tests; exact replay is mutation-free, conflicts and injected failures do not partially persist, and T022/T023 are complete. Live PostgreSQL concurrency remains T048.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/28",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "5b52d79f879c122c17ce8ceaecc705d6900d99cd",
+      "artifact_paths": ["tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RecoveryCoordinatorTests --no-restore -clp:ErrorsOnly",
+      "exit_code": 1,
+      "observed_at": "2026-08-18T13:52:54Z",
+      "summary": "T024 reached an honest RED for the missing recovery coordinator and then exposed the generated contract's omission of the AD-5 revalidation port; test-only expression/visibility/cardinality defects were corrected before production GREEN.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/29",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "5b52d79f879c122c17ce8ceaecc705d6900d99cd",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryRevalidator.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
+        "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RecoveryCoordinatorTests --no-restore; adjacent durable/atomic regressions; dotnet build Vulgata.Infrastructure",
+      "exit_code": 0,
+      "observed_at": "2026-08-18T13:52:54Z",
+      "summary": "Original test-author verification passed 16/16 recovery tests; implementer verification passed 39/39 adjacent durable/atomic regressions and a 0-error Infrastructure build. T024/T025 are complete with no automatic dispatch, scheduling, loop, timer, or retry policy.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1631,25 +1661,27 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T132756Z-atomic-commit",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T135254Z-recovery",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/WorkerAgentResultCommitter.cs",
-      "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs"
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryRevalidator.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
+      "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/26",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/27"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/28",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/29"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T13:27:56Z"
+  "updated_at": "2026-08-18T13:52:54Z"
 }

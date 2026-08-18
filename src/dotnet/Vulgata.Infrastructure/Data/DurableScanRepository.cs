@@ -183,6 +183,34 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
                 job.NextAttemptAt,
                 job.CommittedDocumentVersionId))
             .ToListAsync(cancellationToken);
+
+        Guid[] completedDocumentIds = jobs
+            .Where(job => job.State == ScanJobExecutionState.Completed)
+            .Select(job => job.CommittedDocumentVersionId)
+            .OfType<Guid>()
+            .ToArray();
+        bool invalidCompletionShape = jobs.Any(job =>
+            (job.State == ScanJobExecutionState.Completed) !=
+            job.CommittedDocumentVersionId.HasValue);
+        int matchingDocumentCount = completedDocumentIds.Length == 0
+            ? 0
+            : await dbContext.DocumentVersions
+                .AsNoTracking()
+                .CountAsync(document =>
+                    completedDocumentIds.Contains(document.Id) &&
+                    document.RepositoryId == execution.RepositoryId &&
+                    document.ScanRunId == execution.ScanRunId,
+                    cancellationToken);
+        if (invalidCompletionShape ||
+            completedDocumentIds.Distinct().Count() != completedDocumentIds.Length ||
+            matchingDocumentCount != completedDocumentIds.Length)
+        {
+            return new(
+                DurableScanStoreOutcome.Conflict,
+                DurableScanReason.IntegrityViolation,
+                null);
+        }
+
         return new(
             DurableScanStoreOutcome.Applied,
             DurableScanReason.None,
@@ -218,6 +246,41 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
             switch (command.Transition)
             {
                 case ScanRecoveryTransitionKind.NoChange:
+                    if (command.ScanJobExecutionId is Guid completedJobId)
+                    {
+                        if (command.ExpectedJobStateVersion is not long completedJobVersion)
+                        {
+                            return Rejected(DurableScanReason.InvalidIdentity);
+                        }
+
+                        ScanJobExecution? completedJob = await FindBoundJobAsync(
+                            execution,
+                            completedJobId,
+                            cancellationToken);
+                        if (completedJob is null)
+                        {
+                            return NotFound();
+                        }
+
+                        if (completedJob.StateVersion != completedJobVersion)
+                        {
+                            return Conflict(
+                                DurableScanReason.StaleStateVersion,
+                                completedJob.StateVersion);
+                        }
+
+                        if (completedJob.State != ScanJobExecutionState.Completed ||
+                            completedJob.CommittedDocumentVersionId is not Guid documentVersionId ||
+                            !await dbContext.DocumentVersions.AsNoTracking().AnyAsync(
+                                document => document.Id == documentVersionId &&
+                                    document.RepositoryId == execution.RepositoryId &&
+                                    document.ScanRunId == execution.ScanRunId,
+                                cancellationToken))
+                        {
+                            return Conflict(DurableScanReason.IntegrityViolation);
+                        }
+                    }
+
                     return Replay(execution.StateVersion);
                 case ScanRecoveryTransitionKind.PausedToPrepared:
                     execution.ResumeToPrepared(command.ExpectedStateVersion, command.ObservedAt);

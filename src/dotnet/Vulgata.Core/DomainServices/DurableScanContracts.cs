@@ -76,6 +76,10 @@ public sealed record ScanRecoverySnapshotResult(
     DurableScanReason Reason,
     ScanRecoverySnapshot? Snapshot);
 
+public sealed record ScanRecoveryRevalidationResult(
+    bool IsValid,
+    DurableScanReason Reason);
+
 public sealed record ScanRecoveryResult(
     DurableScanStoreOutcome Outcome,
     DurableScanReason Reason,
