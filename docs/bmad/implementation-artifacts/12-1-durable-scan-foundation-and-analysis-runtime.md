@@ -694,3 +694,37 @@ symbols and the fixed adapter-owned argument templates. Independent verification
 passed 6/6 security tests and 51/51 Analysis Runtime tests; focused bounded
 evidence passed 2/2, adapter tests passed 3/3, real CodeGraph qualification
 passed 2/2, and Infrastructure built with zero errors. T041-T044 are complete.
+
+### Implementation group 24
+
+Final focused and real-environment verification is complete. T050 passed all
+134 Durable Scanning and Analysis Runtime tests with no failures or skips.
+T051 passed real PostgreSQL 17 migration apply/rollback/reapply 1/1, real
+application restart/recovery 1/1, real CodeGraph qualification 2/2,
+missing-archive JDT qualification 2/2, and capability security 6/6; disposable
+database and Repository cleanup counts were zero. The conditional real JDT
+qualification remains ineligible because no retained distribution archive and
+authoritative checksum were supplied, and no Ready claim is made.
+
+T053 found complete authority/source coverage and no unresolved contradiction.
+The managed SpecKit pointer and feature selector target `specs/010`; canonical
+Repository, Profiled Revision, Scan Run, Scan Job Execution, Document Version,
+Edge, Uncertainty, and Cross-Repository terminology is preserved. The approved
+August 18 correction explicitly governs the host-run application/tool and
+PostgreSQL-only Docker boundary. No applicable ADR or context files exist in
+this checkout. T054 found no new PreScan, Prepared Scan Manifest, selection or
+splitting, `navigate_code`, Cross-Repository Resolution, Chat, production UI,
+or final release implementation. The combined Pass2 atom is coordination state
+only, and regenerated historical model metadata does not implement later-story
+behavior.
+
+T052 remains blocked. Web builds with zero errors, Durable Scan model tests pass
+6/6, default Compose is PostgreSQL-only, and the approved profile adds Vulgata,
+but the exact full test command reports 1,485 passed and 14 failed. Five failures
+require unavailable external PostgreSQL/provider-image inputs; the remaining
+nine are stale historical Story 4.3, Story 11.5, CodeGraphContext qualification,
+migration-shape, or unrelated management-UI expectations. None is a Story 12.1
+focused regression, but the full-suite gate cannot be declared successful and
+the approved boundary forbids modifying those historical paths. Convergence,
+quality review, conditional E2E disposition, and final acceptance have not
+started.

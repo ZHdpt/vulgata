@@ -2019,6 +2019,69 @@
       "observed_at": "2026-08-19T02:37:29Z",
       "summary": "Independent verification passed T041 2/2, T043 security 6/6, CodeGraph adapter 3/3, real qualification 2/2, and the full Analysis Runtime suite 51/51; Infrastructure built with zero errors. Runtime Identity drift and option-shaped atoms are rejected before process execution while closed typed evidence remains available. T041-T044 are complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/56",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
+      "artifact_paths": ["specs/010-durable-scan-foundation/quickstart.md"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~DurableScanning|FullyQualifiedName~AnalysisRuntime --no-restore -m:1",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T02:53:53Z",
+      "summary": "T050 focused verification passed 134/134 Durable Scanning and Analysis Runtime tests with no failures or skips. Existing package/analyzer warnings were separate; conditional real JDT qualification remained ineligible without a retained archive/checksum and no readiness claim was made.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/57",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsMissingArchiveQualificationTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisCapabilitySecurityTests.cs"
+      ],
+      "command": "DurableScanMigrationPostgreSql; DurableScanRestartPostgreSql; CodeGraphCliQualification; JdtLsMissingArchiveQualification; AnalysisCapabilitySecurity",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T02:53:53Z",
+      "summary": "T051 passed real PostgreSQL migration 1/1 and restart 1/1, real CodeGraph 2/2, missing-archive JDT 2/2, and security 6/6. Disposable database and Repository cleanup counts were zero; the conditional real JDT test was correctly not run.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/58",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
+      "artifact_paths": ["specs/010-durable-scan-foundation/quickstart.md"],
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj; DurableScanModelTests; docker compose config --services",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T02:53:53Z",
+      "summary": "T052 Web build had zero errors, model tests passed 6/6, and Compose matched postgres-only/default plus vulgata/profile, but the exact full test run was 1485 passed and 14 failed. Five failures require unavailable PostgreSQL/provider-image inputs and nine are stale historical Story 4.3, Story 11.5, CGC qualification, migration-shape, or unrelated UI expectations that this approved boundary forbids modifying. Full verification remains blocked.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/59",
+      "kind": "analysis",
+      "stage": "implement",
+      "source_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
+      "artifact_paths": [
+        "docs/UBIQUITOUS_LANGUAGE.md",
+        ".specify/memory/constitution.md",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md",
+        "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md",
+        "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+        "docs/bmad/epics.md",
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md"
+      ],
+      "command": "read-only authority, terminology, source-reference, and frozen-exclusion audit of dd3111..9462be1",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T02:53:53Z",
+      "summary": "T053/T054 found canonical terminology, current SpecKit pointers, explicit August overlay authority, and no unresolved contradiction. No new later-story PreScan, manifest, splitting, navigation tool, Cross-Repository Resolution, Chat, progress UI, or actual Pass 2 implementation was found; no applicable ADR/context files exist in this checkout.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -2031,28 +2094,51 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T023729Z-ff5833",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T025353Z-258186",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
-      "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphProcessContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/BoundedAnalysisEvidenceTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisCapabilitySecurityTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs"
+      "specs/010-durable-scan-foundation/tasks.md"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/54",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/55"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/56",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/57",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/58",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/59"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
+  "recoverable_failure": {
+    "stage": "implement",
+    "agent_role": "e2e-runner",
+    "source_boundary": {
+      "base_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
+      "candidate_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifact_hashes": {
+        "specs/010-durable-scan-foundation/tasks.md": "8e1ce2c823f632c017aa7f6cdac3c676a989430e5d816837ff758495808151a6",
+        "specs/010-durable-scan-foundation/quickstart.md": "86f7d8fe684efcdadf710eacec85cb0fd9193eee9dd15be747965574492c20ea"
+      },
+      "owned_paths": []
+    },
+    "evidence": {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/58",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
+      "artifact_paths": ["specs/010-durable-scan-foundation/quickstart.md"],
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj; DurableScanModelTests; docker compose config --services",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T02:53:53Z",
+      "summary": "T052 cannot pass within the authorized Story 12.1 boundary because the full suite requires unavailable external inputs and repairs to excluded historical Story 4.3, Story 11.5, CGC qualification, migration-shape, and unrelated UI tests.",
+      "raw_output_path": null
+    },
+    "retryable": false,
+    "earliest_resume_stage": "implement"
+  },
   "legacy_migration": null,
-  "updated_at": "2026-08-19T02:37:29Z"
+  "updated_at": "2026-08-19T02:53:53Z"
 }
