@@ -1841,6 +1841,90 @@
       "observed_at": "2026-08-18T16:23:38Z",
       "summary": "Real PostgreSQL 17 qualification passed 4/4 concurrent transition and atomic failure-injection cases, with exactly one applied transition per race, no partial document graph rows, preserved Running jobs after failed commits, and zero owned databases after cleanup. T048 is complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/44",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "eeab2d532417ec9f7604e897b6a472e14acd5441",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphAdapterTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T00:01:49Z",
+      "summary": "The completed T030 behavioral test compiled RED on the absent internal trusted snapshot resolver, bounded process runner, request/result models, options, and injectable adapter constructor; its assertions cover all seven allowed mappings and prevent a shape-only GREEN.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/45",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "eeab2d532417ec9f7604e897b6a472e14acd5441",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphProcessContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphAdapterTests --no-restore; dotnet test ... --filter FullyQualifiedName~AnalysisRuntime",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T00:01:49Z",
+      "summary": "Original-author verification passed 3/3 focused CodeGraph tests and 32/32 Analysis Runtime tests. Seven scope resolutions, fixed command mappings, bounded strict JSON, identity/path validation, sanitization, cancellation/failure mapping, parameterless fail-closed behavior, and health no-index behavior are GREEN. T030/T031 are complete; T038 remains pending.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/46",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "eeab2d532417ec9f7604e897b6a472e14acd5441",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~JdtLsAdapterTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T00:01:49Z",
+      "summary": "The remediated T032 behavioral test compiled RED on the absent Java process, exclusive workspace, protocol client, options/binding, and session-factory types; it observes the complete lifecycle and cannot pass with shape-only stubs.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/47",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "eeab2d532417ec9f7604e897b6a472e14acd5441",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~JdtLsAdapterTests --no-build --no-restore; dotnet test ... --filter FullyQualifiedName~AnalysisRuntime",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T00:01:49Z",
+      "summary": "Original-author verification passed 3/3 focused JDT tests and 32/32 Analysis Runtime tests. Exact Java/Equinox/config_win/stdio launch, scope/workspace binding, initialize/initialized, four typed operations, cancellation, shutdown/exit, bounded cleanup, process-tree kill, and workspace collision are GREEN. T032/T033 are complete; T040 remains ineligible.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/48",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "eeab2d532417ec9f7604e897b6a472e14acd5441",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/JdtLsMissingArchiveQualificationTests.cs"],
+      "command": "dotnet vstest <isolated-output>/Vulgata.Tests.dll --TestCaseFilter:FullyQualifiedName~JdtLsMissingArchiveQualificationTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T00:01:49Z",
+      "summary": "T039 real-host missing-archive qualification passed 2/2 against Java 21.0.12 and JDT LS 1.61.0.202608141332. No retained ZIP/checksum sidecar exists, the observed core-JAR hash is non-substitutive, and readiness remains sanitized NotReady.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/49",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "eeab2d532417ec9f7604e897b6a472e14acd5441",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.cs"
+      ],
+      "command": "dotnet msbuild Vulgata.Infrastructure.csproj -getItem:Compile; dotnet build Infrastructure; dotnet build Web; DurableScanModelTests; real PostgreSQL DurableScanMigrationPostgreSqlTests and DurableScanRestartPostgreSqlTests",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T00:01:49Z",
+      "summary": "T049 was existing-correct with no production edit: SDK compile inclusion was present, Infrastructure and Web built with zero errors, model tests passed 6/6, real PostgreSQL migration and Program-host restart each passed 1/1, protected knowledge remained readable, and cleanup count was zero.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1853,34 +1937,33 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260818T162338Z-a8f219",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T000149Z-b2710c",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
       "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphProcessContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
       "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
       "tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/RevisionBoundSourceReaderTests.cs",
-      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      "tests/Vulgata.Tests/AnalysisRuntime/JdtLsMissingArchiveQualificationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/37",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/38",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/39",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/40",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/41",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/42",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/43"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/44",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/45",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/46",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/47",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/48",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/49"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-18T16:23:38Z"
+  "updated_at": "2026-08-19T00:01:49Z"
 }

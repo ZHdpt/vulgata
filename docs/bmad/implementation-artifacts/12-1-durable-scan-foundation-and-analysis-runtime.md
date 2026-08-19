@@ -595,3 +595,38 @@ tracer verified the required async-disposal seam and the absent retained archive
 and checksum remain fail-closed despite the supplied Java 21 and JDT LS install.
 T030-T033 remain open until the allowed-operation success path and complete JDT
 stdio/workspace/cancellation/shutdown lifecycle are implemented and verified.
+
+### Implementation group 20
+
+After explicit authorization for the exact Infrastructure-only process seams,
+T030 and T031 completed the closed CodeGraph adapter. The behavioral RED fixed
+the trusted snapshot resolver and bounded process-runner contracts and exercised
+all seven allowed operations. The GREEN revalidates Repository, Scan Run,
+Profiled Revision, and working-copy binding on every call; maps only the fixed
+allowlisted arguments; strictly bounds and parses UTF-8 JSON into typed evidence;
+and maps timeouts, malformed responses, process failures, and diagnostics closed.
+The parameterless adapter remains fail-closed and the integrity probe performs
+no indexing. Original-author verification passed 3/3 focused tests and 32/32
+Analysis Runtime tests. T030/T031 are complete; real neutral-fixture tool
+qualification remains T038 after production health composition.
+
+T032 and T033 completed the closed Java analysis lifecycle through
+Infrastructure-internal process, exclusive revision-workspace, and typed
+protocol seams. The behavioral RED observes exact Java 21, Equinox,
+`config_win`, and stdio launch arguments; initialize/initialized; all four typed
+navigation operations; cancellation; workspace collision; sanitized failures;
+ordered shutdown/exit; bounded wait; forced process-tree cleanup; and lease and
+process disposal. Original-author verification passed 3/3 focused tests and
+32/32 Analysis Runtime tests. No raw LSP, process, filesystem, workspace, host
+path, or network capability crosses Core. T032/T033 are complete. The missing
+retained JDT distribution archive and authoritative checksum still make T040
+ineligible and fail-closed.
+
+T039 separately qualified that fail-closed host state against Java 21.0.12 and
+the supplied JDT LS 1.61.0 installation: no retained ZIP or checksum sidecar is
+present, the observed core-JAR hash matches its diagnostic value but is rejected
+as a substitute, and both missing-archive failure codes remain sanitized and
+NotReady. T049 was also verified existing-correct without production edits: SDK
+compile inclusion, startup migration, model tests, real PostgreSQL migration
+lifecycle, and real Program-host restart all passed, with protected knowledge
+readable and no owned temporary database remaining.

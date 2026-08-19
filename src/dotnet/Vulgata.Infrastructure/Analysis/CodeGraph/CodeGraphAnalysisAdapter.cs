@@ -3,75 +3,65 @@ using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
-public sealed class CodeGraphAnalysisAdapter : ICodeGraphAnalysisPort
+public sealed partial class CodeGraphAnalysisAdapter : ICodeGraphAnalysisPort
 {
     private static readonly AnalysisPortFailure _unavailable = new(
         AnalysisPortFailureReason.Unavailable,
         "codegraph_binding_unavailable",
         "codegraph binding unavailable");
 
-    public Task<AnalysisIndexResult> IndexAsync(AnalysisScope scope, CancellationToken cancellationToken)
+    private readonly CodeGraphAdapterOptions? _options;
+    private readonly ICodeGraphRepositorySnapshotResolver? _snapshots;
+    private readonly ICodeGraphProcessRunner? _process;
+
+    public CodeGraphAnalysisAdapter()
     {
-        ArgumentNullException.ThrowIfNull(scope);
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(new AnalysisIndexResult(
-            AnalysisOperationStatus.Failed, "codegraph-unavailable", 0, 0, _unavailable));
     }
+
+    internal CodeGraphAnalysisAdapter(
+        CodeGraphAdapterOptions options,
+        ICodeGraphRepositorySnapshotResolver snapshots,
+        ICodeGraphProcessRunner process)
+    {
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
+        _process = process ?? throw new ArgumentNullException(nameof(process));
+    }
+
+    public Task<AnalysisIndexResult> IndexAsync(AnalysisScope scope, CancellationToken cancellationToken) =>
+        ExecuteIndexAsync(scope, ["init"], cancellationToken);
 
     public Task<AnalysisIndexResult> RebuildAsync(
         AnalysisScope scope,
-        CancellationToken cancellationToken) => IndexAsync(scope, cancellationToken);
+        CancellationToken cancellationToken) =>
+        ExecuteIndexAsync(scope, ["index", "--quiet"], cancellationToken);
 
-    public Task<CodeGraphStatusResult> GetStatusAsync(AnalysisScope scope, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(scope);
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(new CodeGraphStatusResult(
-            AnalysisOperationStatus.Failed, false, true, 0, _unavailable));
-    }
+    public Task<CodeGraphStatusResult> GetStatusAsync(AnalysisScope scope, CancellationToken cancellationToken) =>
+        ExecuteStatusAsync(scope, cancellationToken);
 
     public Task<SymbolSearchResult> SearchSymbolsAsync(
         AnalysisScope scope,
         AnalysisSymbolQuery query,
         CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(query);
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(new SymbolSearchResult(AnalysisOperationStatus.Failed, [], _unavailable));
-    }
+        => ExecuteSymbolSearchAsync(scope, query, cancellationToken);
 
     public Task<RelationshipResult> GetCallersAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
-        CancellationToken cancellationToken) => GetRelationshipsAsync(scope, request, cancellationToken);
+        CancellationToken cancellationToken) =>
+        ExecuteRelationshipsAsync(scope, request, "callers", cancellationToken);
 
     public Task<RelationshipResult> GetCalleesAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
-        CancellationToken cancellationToken) => GetRelationshipsAsync(scope, request, cancellationToken);
+        CancellationToken cancellationToken) =>
+        ExecuteRelationshipsAsync(scope, request, "callees", cancellationToken);
 
     public Task<RelatedFilesResult> GetRelatedFilesAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
         CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(request);
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(new RelatedFilesResult(AnalysisOperationStatus.Failed, [], _unavailable));
-    }
-
-    private static Task<RelationshipResult> GetRelationshipsAsync(
-        AnalysisScope scope,
-        AnalysisSymbolRequest request,
-        CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(scope);
-        ArgumentNullException.ThrowIfNull(request);
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(new RelationshipResult(AnalysisOperationStatus.Failed, [], _unavailable));
-    }
+        => ExecuteRelatedFilesAsync(scope, request, cancellationToken);
 }
 
 public sealed class CodeGraphIntegrityProbe : IAnalysisRuntimeHealthProbe

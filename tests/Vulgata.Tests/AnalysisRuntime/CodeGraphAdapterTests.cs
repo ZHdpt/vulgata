@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.CodeGraph;
@@ -235,6 +236,224 @@ public sealed class CodeGraphAdapterTests
         finally
         {
             Directory.Delete(probeRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task CodeGraphPort_AllowedJsonOperations_ReturnBoundedTypedEvidenceFromTrustedFixture()
+    {
+        // T030 RED: the accepted closed Core seam must map fixed JSON operation
+        // results to bounded typed evidence through Infrastructure-owned doubles.
+        // No installed CLI is launched and no real Repository index is touched.
+        const string root = @"G:\fixtures\story121-codegraph";
+        const string indexIdentity = "fixture-index-001";
+        AnalysisRuntimeIdentity runtimeIdentity = AnalysisRuntimeIdentity.Create(
+            new AnalysisRuntimeOptions(
+                CodeGraphCommandPath: @"G:\packages\npm\prefix\codegraph.ps1",
+                JdtLsInstallationRoot: @"C:\Users\13728\.local\jdt-language-server-1.61.0-202608141332",
+                JavaHome: @"C:\Program Files\Java\latest\jdk-21"),
+            _repositoryId,
+            profiledRevision: "0123456789abcdef0123456789abcdef01234567",
+            codeGraphPackageName: "@colbymchenry/codegraph",
+            codeGraphPackageVersion: "1.5.0",
+            codeGraphRepository: "https://github.com/colbymchenry/codegraph",
+            codeGraphCommand: "codegraph",
+            codeGraphPlatformPackage: "@colbymchenry/codegraph-win32-x64@1.5.0",
+            codeGraphHashes:
+            [
+                new("lib/dist/bin/codegraph.js", CodeGraphHash),
+                new("node.exe", NodeHash),
+                new("npm-shim.js", NpmShimHash),
+            ],
+            jdtLsReleaseIdentity: "jdt-language-server-1.61.0-202608141332",
+            jdtLsDistributionArchiveName: "jdt-language-server-1.61.0-202608141332.zip",
+            jdtLsDistributionArchiveSha256: JdtArchiveHash,
+            javaMajorVersion: 21,
+            clientName: "StreamJsonRpc",
+            clientVersion: "2.25.29",
+            transport: "stdio");
+        string runtimeIdentityHash = runtimeIdentity.Sha256;
+        AnalysisScope scope = new(
+            _repositoryId,
+            Guid.Parse("12000000-0000-4000-8000-000000000005"),
+            "0123456789abcdef0123456789abcdef01234567",
+            "fixture-binding",
+            runtimeIdentityHash,
+            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
+        AnalysisOperationBounds bounds = new(itemLimit: 8, byteLimit: 4_096);
+        AnalysisSymbolQuery query = new("Fixture", AnalysisSymbolKind.Type, bounds);
+        AnalysisSymbolRequest request = new("Fixture.Root", bounds);
+
+        CodeGraphRepositorySnapshot snapshot = new(
+            _repositoryId,
+            scope.ScanRunId,
+            scope.ProfiledRevision,
+            scope.WorkingCopyBindingToken,
+            root,
+            indexIdentity);
+        FakeCodeGraphSnapshotResolver snapshots = new(snapshot);
+        FakeCodeGraphProcessRunner process = new();
+        process.Enqueue(JsonResult("{\"status\":\"ok\",\"indexIdentity\":\"fixture-index-001\",\"durationMs\":12,\"indexedFileCount\":3}"));
+        process.Enqueue(JsonResult("{\"status\":\"ok\",\"indexIdentity\":\"fixture-index-001\",\"durationMs\":18,\"indexedFileCount\":3}"));
+        process.Enqueue(JsonResult("{\"status\":\"ready\",\"indexIdentity\":\"fixture-index-001\",\"indexedFileCount\":3}"));
+        process.Enqueue(JsonResult("{\"symbols\":[{\"symbol\":\"Fixture.Root\",\"kind\":\"type\",\"relativePath\":\"Fixture/Root.cs\",\"startLine\":2,\"endLine\":4}]}"));
+        process.Enqueue(JsonResult("{\"relationships\":[{\"sourceSymbol\":\"Fixture.Caller\",\"targetSymbol\":\"Fixture.Root\",\"relativePath\":\"Fixture/Caller.cs\",\"startLine\":7,\"endLine\":9}]}"));
+        process.Enqueue(JsonResult("{\"relationships\":[{\"sourceSymbol\":\"Fixture.Root\",\"targetSymbol\":\"Fixture.Callee\",\"relativePath\":\"Fixture/Callee.cs\",\"startLine\":11,\"endLine\":13}]}"));
+        process.Enqueue(JsonResult("{\"relativePaths\":[\"Fixture/Caller.cs\",\"Fixture/Callee.cs\"]}"));
+
+        CodeGraphAdapterOptions options = new(
+            @"G:\packages\npm\prefix\codegraph.ps1",
+            TimeSpan.FromSeconds(5),
+            StandardOutputByteLimit: 65_536,
+            StandardErrorByteLimit: 4_096);
+        ICodeGraphAnalysisPort adapter = new CodeGraphAnalysisAdapter(options, snapshots, process);
+
+        AnalysisIndexResult index = await adapter.IndexAsync(scope, CancellationToken.None);
+        AnalysisIndexResult rebuild = await adapter.RebuildAsync(scope, CancellationToken.None);
+        CodeGraphStatusResult status = await adapter.GetStatusAsync(scope, CancellationToken.None);
+        SymbolSearchResult symbols = await adapter.SearchSymbolsAsync(
+            scope,
+            query,
+            CancellationToken.None);
+        RelationshipResult callers = await adapter.GetCallersAsync(
+            scope,
+            request,
+            CancellationToken.None);
+        RelationshipResult callees = await adapter.GetCalleesAsync(
+            scope,
+            request,
+            CancellationToken.None);
+        RelatedFilesResult relatedFiles = await adapter.GetRelatedFilesAsync(
+            scope,
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(AnalysisOperationStatus.Succeeded, index.Status);
+        Assert.Equal(indexIdentity, index.IndexIdentity);
+        Assert.Equal(12, index.DurationMilliseconds);
+        Assert.Equal(3, index.IndexedFileCount);
+        Assert.Null(index.Failure);
+        Assert.Equal(AnalysisOperationStatus.Succeeded, rebuild.Status);
+        Assert.Equal(indexIdentity, rebuild.IndexIdentity);
+        Assert.Equal(18, rebuild.DurationMilliseconds);
+        Assert.Equal(3, rebuild.IndexedFileCount);
+        Assert.Null(rebuild.Failure);
+        Assert.Equal(AnalysisOperationStatus.Succeeded, status.Status);
+        Assert.True(status.Ready);
+        Assert.False(status.Stale);
+        Assert.Equal(3, status.IndexedFileCount);
+        Assert.Null(status.Failure);
+        Assert.Equal(indexIdentity, snapshots.LastExpectedIndexIdentity);
+        Assert.Equal(7, snapshots.Scopes.Count);
+
+        AnalysisSymbolEvidence symbol = Assert.Single(symbols.Symbols);
+        Assert.Equal(AnalysisOperationStatus.Succeeded, symbols.Status);
+        Assert.Null(symbols.Failure);
+        Assert.Equal("Fixture.Root", symbol.Symbol);
+        Assert.Equal(AnalysisSymbolKind.Type, symbol.Kind);
+        Assert.Equal("Fixture/Root.cs", symbol.RelativePath);
+        Assert.Equal(2, symbol.Range.StartLine);
+        Assert.Equal(4, symbol.Range.EndLine);
+
+        AnalysisRelationshipEvidence caller = Assert.Single(callers.Relationships);
+        Assert.Equal(AnalysisOperationStatus.Succeeded, callers.Status);
+        Assert.Null(callers.Failure);
+        Assert.Equal("Fixture.Caller", caller.SourceSymbol);
+        Assert.Equal("Fixture.Root", caller.TargetSymbol);
+        Assert.Equal("Fixture/Caller.cs", caller.RelativePath);
+        Assert.Equal(7, caller.Range.StartLine);
+        Assert.Equal(9, caller.Range.EndLine);
+
+        AnalysisRelationshipEvidence callee = Assert.Single(callees.Relationships);
+        Assert.Equal(AnalysisOperationStatus.Succeeded, callees.Status);
+        Assert.Null(callees.Failure);
+        Assert.Equal("Fixture.Root", callee.SourceSymbol);
+        Assert.Equal("Fixture.Callee", callee.TargetSymbol);
+        Assert.Equal("Fixture/Callee.cs", callee.RelativePath);
+        Assert.Equal(11, callee.Range.StartLine);
+        Assert.Equal(13, callee.Range.EndLine);
+
+        Assert.Equal(AnalysisOperationStatus.Succeeded, relatedFiles.Status);
+        Assert.Null(relatedFiles.Failure);
+        Assert.Equal(
+            ["Fixture/Caller.cs", "Fixture/Callee.cs"],
+            relatedFiles.RelativePaths);
+
+        Assert.Equal(7, process.Requests.Count);
+        Assert.Equal(
+            ["init", root],
+            process.Requests[0].Arguments);
+        Assert.Equal(
+            ["index", "--quiet", root],
+            process.Requests[1].Arguments);
+        Assert.Equal(
+            ["status", root, "--json"],
+            process.Requests[2].Arguments);
+        Assert.Equal(
+            ["query", "Fixture", "--kind", "type", "--path", root, "--limit", "8", "--json"],
+            process.Requests[3].Arguments);
+        Assert.Equal(
+            ["callers", "Fixture.Root", "--path", root, "--limit", "8", "--json"],
+            process.Requests[4].Arguments);
+        Assert.Equal(
+            ["callees", "Fixture.Root", "--path", root, "--limit", "8", "--json"],
+            process.Requests[5].Arguments);
+        Assert.Equal(
+            ["impact", "Fixture.Root", "--path", root, "--depth", "1", "--json"],
+            process.Requests[6].Arguments);
+        Assert.All(process.Requests, request =>
+        {
+            Assert.Equal(options.CommandPath, request.FileName);
+            Assert.Equal(root, request.WorkingDirectory);
+            Assert.Equal(options.OperationTimeout, request.Timeout);
+            Assert.Equal(options.StandardOutputByteLimit, request.StandardOutputByteLimit);
+            Assert.Equal(options.StandardErrorByteLimit, request.StandardErrorByteLimit);
+        });
+        Assert.All(snapshots.Scopes, observed =>
+        {
+            Assert.Equal(scope.RepositoryId, observed.RepositoryId);
+            Assert.Equal(scope.ScanRunId, observed.ScanRunId);
+            Assert.Equal(scope.ProfiledRevision, observed.ProfiledRevision);
+            Assert.Equal(scope.WorkingCopyBindingToken, observed.WorkingCopyBindingToken);
+            Assert.Equal(scope.RuntimeIdentityHash, observed.RuntimeIdentityHash);
+        });
+    }
+
+    private static CodeGraphProcessResult JsonResult(string json) =>
+        new(0, Encoding.UTF8.GetBytes(json), [], TimedOut: false);
+
+    private sealed class FakeCodeGraphSnapshotResolver(CodeGraphRepositorySnapshot snapshot)
+        : ICodeGraphRepositorySnapshotResolver
+    {
+        public List<AnalysisScope> Scopes { get; } = [];
+
+        public string LastExpectedIndexIdentity => snapshot.ExpectedIndexIdentity;
+
+        public Task<CodeGraphRepositorySnapshot?> ResolveAsync(
+            AnalysisScope scope,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Scopes.Add(scope);
+            return Task.FromResult<CodeGraphRepositorySnapshot?>(snapshot);
+        }
+    }
+
+    private sealed class FakeCodeGraphProcessRunner : ICodeGraphProcessRunner
+    {
+        private readonly Queue<CodeGraphProcessResult> _results = [];
+
+        public List<CodeGraphProcessRequest> Requests { get; } = [];
+
+        public void Enqueue(CodeGraphProcessResult result) => _results.Enqueue(result);
+
+        public Task<CodeGraphProcessResult> RunAsync(
+            CodeGraphProcessRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Requests.Add(request);
+            return Task.FromResult(_results.Dequeue());
         }
     }
 
