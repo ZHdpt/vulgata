@@ -415,7 +415,8 @@ public sealed class AnalysisHealthProbeResult
         string failureCode,
         string diagnostic,
         long observedAtUnixMilliseconds,
-        IEnumerable<AnalysisHealthCheck> componentChecks)
+        IEnumerable<AnalysisHealthCheck> componentChecks,
+        string? runtimeIdentityHash = null)
     {
         Status = status;
         FailureCode = AnalysisContractGuard.RequireMachineCode(
@@ -432,6 +433,12 @@ public sealed class AnalysisHealthProbeResult
             componentChecks.OrderBy(check => check.Component, StringComparer.Ordinal),
             32,
             nameof(componentChecks));
+        RuntimeIdentityHash = status == AnalysisRuntimeHealthStatus.Ready &&
+            runtimeIdentityHash is not null
+            ? AnalysisContractGuard.RequireSha256(
+                runtimeIdentityHash,
+                nameof(runtimeIdentityHash))
+            : null;
     }
 
     public AnalysisRuntimeHealthStatus Status { get; }
@@ -439,6 +446,7 @@ public sealed class AnalysisHealthProbeResult
     public string Diagnostic { get; }
     public long ObservedAtUnixMilliseconds { get; }
     public IReadOnlyCollection<AnalysisHealthCheck> ComponentChecks { get; }
+    public string? RuntimeIdentityHash { get; }
 }
 
 public interface ICodeGraphAnalysisPort

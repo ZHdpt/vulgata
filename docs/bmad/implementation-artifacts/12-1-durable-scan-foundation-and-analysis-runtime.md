@@ -821,3 +821,28 @@ The analyst appended only T055 and T056 to `tasks.md`; no source, tests,
 accepted definition, workflow state, staging, or history changed. The unified
 workflow returns to test-first implementation for these tasks before a second
 convergence pass.
+
+### Implementation group 28
+
+T055 and T056 close convergence iteration 1. T055 now verifies the configured
+archive path/name/bytes, exact JDT-LS release/launcher/configuration, Java 21,
+StreamJsonRpc 2.25.29, and CodeGraph command/package/repository/version/bundle
+plus actual component hashes before Ready. It launches neither tool and does
+not index, import, or create Repository state. A Ready result carries the
+canonical scope-bound Runtime Identity hash; NotReady carries no hash.
+
+T056 extends the immutable recovery read model with bounded Repository access,
+Profiled Revision, ordered File Code Unit SourceHash bindings, prompt/schema,
+provider availability, and Runtime Identity data. The production revalidator
+uses a fresh durable binding read and Worker Agent provider resolution, then
+recomputes configured integrity for the snapshot Repository/Profiled Revision.
+It requires exact ordinal identity/hash equality before the coordinator can
+make a conditional transition. Null, malformed, duplicated, unauthorized,
+unavailable, stale, or mismatched inputs fail closed; existing committed-
+Document integrity behavior is unchanged.
+
+The two behavioral RED groups were frozen before production work. Independent
+verification passed 23/23 focused health/revalidation tests and 150/150
+Analysis Runtime plus Durable Scanning tests. Core, Infrastructure, and Web all
+built with zero errors; only existing package/version warnings remain. T055 and
+T056 are complete and the candidate returns to convergence iteration 2.

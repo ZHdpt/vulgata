@@ -109,8 +109,8 @@ description: "Dependency-ordered implementation tasks for Durable Scan Foundatio
 
 ## Phase 8: Convergence
 
-- [ ] T055 Make configured ordinary-startup Analysis Runtime health verify the supplied distribution archive path/name and SHA-256 (including the retained `.tar.gz`), Java 21 major version, JDT-LS release/launcher/configuration, StreamJsonRpc identity, and the configured CodeGraph command/package/version/bundle/hash identity before returning Ready; add bounded positive and mismatch qualification for FR-017, FR-019, FR-020, FR-021, FR-028 and plan decisions AD-6 through AD-8 (partial).
-- [ ] T056 Complete the production Scan recovery revalidation boundary so the immutable recovery snapshot carries and verifies Repository authorization/access, bound Profiled Revision and affected file hashes, prompt/schema identity, provider availability, and normalized Analysis Runtime identity before any recovery transition; add production-boundary mismatch tests and preserve fail-closed committed-document behavior per FR-008, FR-009, FR-028, SC-002 and plan decision AD-5 (partial).
+- [x] T055 Make configured ordinary-startup Analysis Runtime health verify the supplied distribution archive path/name and SHA-256 (including the retained `.tar.gz`), Java 21 major version, JDT-LS release/launcher/configuration, StreamJsonRpc identity, and the configured CodeGraph command/package/version/bundle/hash identity before returning Ready; add bounded positive and mismatch qualification for FR-017, FR-019, FR-020, FR-021, FR-028 and plan decisions AD-6 through AD-8 (partial).
+- [x] T056 Complete the production Scan recovery revalidation boundary so the immutable recovery snapshot carries and verifies Repository authorization/access, bound Profiled Revision and affected file hashes, prompt/schema identity, provider availability, and normalized Analysis Runtime identity before any recovery transition; add production-boundary mismatch tests and preserve fail-closed committed-document behavior per FR-008, FR-009, FR-028, SC-002 and plan decision AD-5 (partial).
 
 ## Dependencies and execution order
 

@@ -2181,6 +2181,27 @@
       "observed_at": "2026-08-19T07:40:26Z",
       "summary": "Convergence iteration 1 returned tasks_appended. T055 traces incomplete configured Analysis Runtime integrity validation before Ready; T056 traces incomplete Repository/revision/source/prompt/schema/provider/runtime identity revalidation before recovery transitions. No other gap was appended.",
       "raw_output_path": "specs/010-durable-scan-foundation/tasks.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/66",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "cd9ab5e499f00fc307a3883ed75ebedcc5add6e2",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryBindingProbe.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+      ],
+      "command": "focused configured-health and production recovery RED to GREEN 23/23; AnalysisRuntime plus DurableScanning 150/150; Core/Infrastructure/Web builds",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T08:14:40Z",
+      "summary": "T055/T056 are complete. Ready requires exact configured tool/runtime integrity and exposes a scope-bound canonical Runtime Identity hash. Recovery verifies Repository/revision/file/prompt/schema/provider bindings plus a freshly recomputed configured hash before transition. Independent focused verification passed 23/23 and the combined boundary passed 150/150; all builds had zero errors.",
+      "raw_output_path": "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
     }
   ],
   "convergence": {
@@ -2202,21 +2223,29 @@
     "completed_at": "2026-08-19T07:40:26Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260819T074026Z-6e128a",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T081440Z-5c02d9",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "converge",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/tasks.md",
-      "specs/010-durable-scan-foundation/workflow-state.json"
+      "specs/010-durable-scan-foundation/workflow-state.json",
+      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryBindingProbe.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/converge/65"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/66"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T07:40:26Z"
+  "updated_at": "2026-08-19T08:14:40Z"
 }

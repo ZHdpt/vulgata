@@ -78,6 +78,19 @@ internal static class ManualResumeEndpoints
             return NotFound();
         }
 
+        if (visibleSnapshot.Snapshot is not ScanRecoverySnapshot snapshot)
+        {
+            return Problem(
+                StatusCodes.Status422UnprocessableEntity,
+                "scan-resume-integrity-rejected",
+                "扫描恢复校验未通过，已保留现有文档。");
+        }
+
+        authorizationScope = authorizationScope with
+        {
+            OwnedRepositoryIds = [snapshot.RepositoryId],
+        };
+
         ScanRecoveryResult result = await recoveryCoordinator.ResumeAsync(
             parsedScanExecutionId,
             authorizationScope,

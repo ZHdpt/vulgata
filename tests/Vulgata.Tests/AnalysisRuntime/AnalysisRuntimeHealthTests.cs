@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Tests;
@@ -51,6 +52,7 @@ public sealed class AnalysisRuntimeHealthTests
             CancellationToken.None);
 
         Assert.Equal(AnalysisRuntimeHealthStatus.NotReady, result.Status);
+        Assert.Null(result.RuntimeIdentityHash);
         Assert.Contains(
             result.FailureCode,
             new[]
@@ -173,6 +175,115 @@ public sealed class AnalysisRuntimeHealthTests
     }
 
     [Fact]
+    public async Task ConfiguredIntegrityHealth_ValidSuppliedRuntimeIdentity_ReturnsReady()
+    {
+        using WebApplicationFactory<Program> factory = CreateConfiguredRuntimeFactory(
+            CreateValidRuntimeConfiguration());
+        using IServiceScope scope = factory.Services.CreateScope();
+        IAnalysisRuntimeHealthProbe probe =
+            scope.ServiceProvider.GetRequiredService<IAnalysisRuntimeHealthProbe>();
+
+        AnalysisHealthProbeResult result = await probe.CheckConfiguredIntegrityAsync(
+            CreateScope(),
+            CancellationToken.None);
+
+        Assert.Equal(AnalysisRuntimeHealthStatus.Ready, result.Status);
+        Assert.Equal("none", result.FailureCode);
+        Assert.Equal(string.Empty, result.Diagnostic);
+        Assert.Equal(
+            new[] { "codegraph", "java", "jdt-ls", "streamjsonrpc" },
+            result.ComponentChecks.Select(check => check.Component));
+        Assert.All(
+            result.ComponentChecks,
+            check => Assert.Equal(AnalysisRuntimeHealthStatus.Ready, check.Status));
+    }
+
+    [Fact]
+    public async Task ConfiguredIntegrityHealth_ReadyIdentityHash_IsCanonicalAndBoundToScope()
+    {
+        using WebApplicationFactory<Program> factory = CreateConfiguredRuntimeFactory(
+            CreateValidRuntimeConfiguration());
+        using IServiceScope scope = factory.Services.CreateScope();
+        IAnalysisRuntimeHealthProbe probe =
+            scope.ServiceProvider.GetRequiredService<IAnalysisRuntimeHealthProbe>();
+
+        AnalysisHealthProbeResult first = await probe.CheckConfiguredIntegrityAsync(
+            CreateScope(),
+            CancellationToken.None);
+        AnalysisHealthProbeResult second = await probe.CheckConfiguredIntegrityAsync(
+            CreateScope(
+                Guid.Parse("12000000-0000-4000-8000-000000000038"),
+                "fedcba9876543210fedcba9876543210fedcba98"),
+            CancellationToken.None);
+
+        Assert.Equal(AnalysisRuntimeHealthStatus.Ready, first.Status);
+        Assert.Equal(AnalysisRuntimeHealthStatus.Ready, second.Status);
+        Assert.Matches("^[0-9a-f]{64}$", first.RuntimeIdentityHash ?? string.Empty);
+        Assert.Matches("^[0-9a-f]{64}$", second.RuntimeIdentityHash ?? string.Empty);
+        Assert.NotEqual(first.RuntimeIdentityHash, second.RuntimeIdentityHash);
+    }
+
+    [Fact]
+    public async Task ConfiguredIntegrityHealth_RepresentativeIdentityMismatches_FailClosed()
+    {
+        (string Key, string Value, string FailureMarker)[] mismatches =
+        [
+            ("AnalysisRuntime:JdtLsDistributionArchivePath",
+                @"C:\Users\13728\Downloads\missing-jdt-language-server.tar.gz", "archive"),
+            ("AnalysisRuntime:JdtLsDistributionArchiveName",
+                "jdt-language-server-1.61.0-202608141332.zip", "archive"),
+            ("AnalysisRuntime:JdtLsDistributionArchiveSha256", new string('0', 64), "archive"),
+            ("AnalysisRuntime:JavaMajorVersion", "17", "java"),
+            ("AnalysisRuntime:JdtLsReleaseIdentity", "jdt-language-server-unapproved", "jdt"),
+            ("AnalysisRuntime:JdtLsLauncher", "org.eclipse.equinox.launcher-unapproved.jar", "jdt"),
+            ("AnalysisRuntime:JdtLsConfiguration", "config_linux", "jdt"),
+            ("AnalysisRuntime:StreamJsonRpcName", "unapproved-client", "streamjsonrpc"),
+            ("AnalysisRuntime:StreamJsonRpcVersion", "2.25.28", "streamjsonrpc"),
+            ("AnalysisRuntime:CodeGraphCommand", "unapproved-codegraph", "codegraph"),
+            ("AnalysisRuntime:CodeGraphPackageName", "@unapproved/codegraph", "codegraph"),
+            ("AnalysisRuntime:CodeGraphPackageVersion", "1.5.1", "codegraph"),
+            ("AnalysisRuntime:CodeGraphBundle", "@unapproved/codegraph-win32-x64@1.5.0", "codegraph"),
+            ("AnalysisRuntime:CodeGraphHashes:npm-shim.js", new string('0', 64), "codegraph"),
+        ];
+
+        List<string> failures = [];
+        foreach ((string key, string value, string failureMarker) in mismatches)
+        {
+            Dictionary<string, string?> configuration = CreateValidRuntimeConfiguration();
+            configuration[key] = value;
+
+            try
+            {
+                using WebApplicationFactory<Program> factory =
+                    CreateConfiguredRuntimeFactory(configuration);
+                using IServiceScope scope = factory.Services.CreateScope();
+                IAnalysisRuntimeHealthProbe probe =
+                    scope.ServiceProvider.GetRequiredService<IAnalysisRuntimeHealthProbe>();
+                AnalysisHealthProbeResult result = await probe.CheckConfiguredIntegrityAsync(
+                    CreateScope(),
+                    CancellationToken.None);
+
+                if (result.Status != AnalysisRuntimeHealthStatus.NotReady ||
+                    !result.FailureCode.Contains(failureMarker, StringComparison.OrdinalIgnoreCase) ||
+                    result.Diagnostic.Length > 256 ||
+                    result.Diagnostic.Contains('\\') ||
+                    result.Diagnostic.Contains('/') ||
+                    result.Diagnostic.Contains("stderr", StringComparison.OrdinalIgnoreCase))
+                {
+                    failures.Add(
+                        $"{key}: status={result.Status}; code={result.FailureCode}; diagnostic={result.Diagnostic}");
+                }
+            }
+            catch (Exception exception)
+            {
+                failures.Add($"{key}: threw {exception.GetType().Name}");
+            }
+        }
+
+        Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
+    }
+
+    [Fact]
     public void OrdinaryStartup_InvokesConfiguredHealthProbeOnceWithoutDispatchingTools()
     {
         using StartupProbeFactory factory = new();
@@ -185,10 +296,12 @@ public sealed class AnalysisRuntimeHealthTests
         Assert.Equal(0, factory.Probe.WorkerDispatchCount);
     }
 
-    private static AnalysisScope CreateScope() => new(
-        _repositoryId,
+    private static AnalysisScope CreateScope(
+        Guid? repositoryId = null,
+        string? profiledRevision = null) => new(
+        repositoryId ?? _repositoryId,
         _scanRunId,
-        "0123456789abcdef0123456789abcdef01234567",
+        profiledRevision ?? "0123456789abcdef0123456789abcdef01234567",
         "analysis-runtime-health",
         new string('a', 64),
         new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
@@ -227,6 +340,49 @@ public sealed class AnalysisRuntimeHealthTests
             "StreamJsonRpc",
             clientVersion,
             "stdio");
+
+    private WebApplicationFactory<Program> CreateConfiguredRuntimeFactory(
+        IReadOnlyDictionary<string, string?> configuration)
+        => _factory.WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configBuilder) =>
+                configBuilder.AddInMemoryCollection(configuration)));
+
+    private static Dictionary<string, string?> CreateValidRuntimeConfiguration() =>
+        new(StringComparer.Ordinal)
+        {
+            ["AnalysisRuntime:CodeGraphCommandPath"] =
+                @"G:\packages\npm\prefix\codegraph.ps1",
+            ["AnalysisRuntime:CodeGraphCommand"] = "codegraph",
+            ["AnalysisRuntime:CodeGraphPackageName"] = "@colbymchenry/codegraph",
+            ["AnalysisRuntime:CodeGraphPackageVersion"] = "1.5.0",
+            ["AnalysisRuntime:CodeGraphRepository"] =
+                "https://github.com/colbymchenry/codegraph",
+            ["AnalysisRuntime:CodeGraphBundle"] =
+                "@colbymchenry/codegraph-win32-x64@1.5.0",
+            ["AnalysisRuntime:CodeGraphHashes:npm-shim.js"] =
+                "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877",
+            ["AnalysisRuntime:CodeGraphHashes:node.exe"] =
+                "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
+            ["AnalysisRuntime:CodeGraphHashes:lib/dist/bin/codegraph.js"] =
+                "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03",
+            ["AnalysisRuntime:JdtLsInstallationRoot"] =
+                @"C:\Users\13728\.local\jdt-language-server-1.61.0-202608141332",
+            ["AnalysisRuntime:JdtLsDistributionArchivePath"] =
+                @"C:\Users\13728\Downloads\jdt-language-server-1.61.0-202608141332.tar.gz",
+            ["AnalysisRuntime:JdtLsDistributionArchiveName"] =
+                "jdt-language-server-1.61.0-202608141332.tar.gz",
+            ["AnalysisRuntime:JdtLsDistributionArchiveSha256"] =
+                "bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f",
+            ["AnalysisRuntime:JdtLsReleaseIdentity"] =
+                "jdt-language-server-1.61.0-202608141332",
+            ["AnalysisRuntime:JdtLsLauncher"] =
+                "plugins/org.eclipse.equinox.launcher_1.8.0.v20260804-1928.jar",
+            ["AnalysisRuntime:JdtLsConfiguration"] = "config_win",
+            ["AnalysisRuntime:JavaHome"] = @"C:\Program Files\Java\latest\jdk-21",
+            ["AnalysisRuntime:JavaMajorVersion"] = "21",
+            ["AnalysisRuntime:StreamJsonRpcName"] = "StreamJsonRpc",
+            ["AnalysisRuntime:StreamJsonRpcVersion"] = "2.25.29",
+        };
 
     private static string ReadRepositoryFile(params string[] segments) =>
         File.ReadAllText(Path.Combine([GetRepositoryRoot(), .. segments]));

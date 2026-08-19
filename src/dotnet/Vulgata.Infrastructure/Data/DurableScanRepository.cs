@@ -211,6 +211,51 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
                 null);
         }
 
+        var affectedFileRows = await dbContext.ScanJobExecutions
+            .AsNoTracking()
+            .Where(job => job.ScanExecutionId == scanExecutionId &&
+                job.RepositoryId == execution.RepositoryId &&
+                job.ScanRunId == execution.ScanRunId)
+            .Join(
+                dbContext.CodeUnits.AsNoTracking(),
+                job => job.FileCodeUnitId,
+                codeUnit => codeUnit.Id,
+                (job, codeUnit) => new
+                {
+                    job.FileCodeUnitId,
+                    codeUnit.RepositoryId,
+                    codeUnit.ScanRunId,
+                    codeUnit.SourceHash,
+                })
+            .OrderBy(value => value.FileCodeUnitId)
+            .ToListAsync(cancellationToken);
+        if (affectedFileRows.Count != jobs.Count ||
+            affectedFileRows.Any(value =>
+                value.RepositoryId != execution.RepositoryId ||
+                value.ScanRunId != execution.ScanRunId ||
+                !IsLowerHexSha256(value.SourceHash)))
+        {
+            return new(
+                DurableScanStoreOutcome.Conflict,
+                DurableScanReason.IntegrityViolation,
+                null);
+        }
+
+        ScanRecoveryFileBinding[] affectedFiles = affectedFileRows
+            .Select(value => new ScanRecoveryFileBinding(
+                value.FileCodeUnitId,
+                value.SourceHash))
+            .ToArray();
+        if (execution.PromptIdentity is null ||
+            execution.DocumentSchemaIdentity is null ||
+            execution.AnalysisRuntimeIdentityHash is null)
+        {
+            return new(
+                DurableScanStoreOutcome.Conflict,
+                DurableScanReason.InvalidIdentity,
+                null);
+        }
+
         return new(
             DurableScanStoreOutcome.Applied,
             DurableScanReason.None,
@@ -220,7 +265,12 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
                 execution.RepositoryId,
                 execution.StateVersion,
                 jobs,
-                execution.Phase));
+                execution.Phase,
+                execution.ProfiledRevision,
+                affectedFiles,
+                execution.PromptIdentity,
+                execution.DocumentSchemaIdentity,
+                execution.AnalysisRuntimeIdentityHash));
     }
 
     public async Task<DurableScanStoreResult> ApplyRecoveryTransitionAsync(
@@ -770,6 +820,11 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
         scope.OwnedSystemIds is not null &&
         scope.OwnedSystemIds.Count != 0 &&
         scope.OwnedSystemIds.All(value => value != Guid.Empty);
+
+    private static bool IsLowerHexSha256(string value) =>
+        value.Length == 64 &&
+        value.All(character =>
+            character is >= '0' and <= '9' or >= 'a' and <= 'f');
 
     private static bool SnapshotIdentityMatches(
         ScanContextSnapshot left,

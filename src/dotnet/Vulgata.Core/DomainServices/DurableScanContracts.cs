@@ -44,7 +44,8 @@ public enum ScanRecoveryTransitionKind
 
 public sealed record DurableScanAuthorizationScope(
     string ActorId,
-    IReadOnlyList<Guid> OwnedSystemIds);
+    IReadOnlyList<Guid> OwnedSystemIds,
+    IReadOnlyList<Guid>? OwnedRepositoryIds = null);
 
 public sealed record DurableScanStoreResult(
     DurableScanStoreOutcome Outcome,
@@ -64,13 +65,31 @@ public sealed record ScanRecoveryJobSnapshot(
     DateTimeOffset? NextAttemptAt,
     Guid? CommittedDocumentVersionId);
 
+public sealed record ScanRecoveryFileBinding(
+    Guid FileCodeUnitId,
+    string SourceHash);
+
 public sealed record ScanRecoverySnapshot(
     Guid ScanExecutionId,
     Guid SystemId,
     Guid RepositoryId,
     long StateVersion,
     IReadOnlyList<ScanRecoveryJobSnapshot> Jobs,
-    ScanExecutionPhase Phase = ScanExecutionPhase.Pass1Planning);
+    ScanExecutionPhase Phase = ScanExecutionPhase.Pass1Planning,
+    string ProfiledRevision = "",
+    IReadOnlyList<ScanRecoveryFileBinding> AffectedFiles = null!,
+    string PromptIdentity = "",
+    string DocumentSchemaIdentity = "",
+    string AnalysisRuntimeIdentityHash = "");
+
+public sealed record ScanRecoveryObservedBindings(
+    bool RepositoryAccessible,
+    string ProfiledRevision,
+    IReadOnlyList<ScanRecoveryFileBinding> AffectedFiles,
+    string PromptIdentity,
+    string DocumentSchemaIdentity,
+    bool ProviderAvailable,
+    string AnalysisRuntimeIdentityHash);
 
 public sealed record ScanRecoverySnapshotResult(
     DurableScanStoreOutcome Outcome,

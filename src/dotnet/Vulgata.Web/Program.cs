@@ -313,6 +313,7 @@ public static class VulgataWebComposition
         builder.Services.AddSingleton<ICodeGraphAnalysisPort, CodeGraphAnalysisAdapter>();
         builder.Services.AddSingleton<IJavaAnalysisSessionFactory, UnboundJavaAnalysisSessionFactory>();
         builder.Services.AddSingleton<IRevisionBoundSourceReader, UnboundRevisionSourceReader>();
+        builder.Services.AddScoped<IScanRecoveryBindingProbe, RuntimeScanRecoveryBindingProbe>();
         builder.Services.AddScoped<IScanRecoveryRevalidator, RuntimeScanRecoveryRevalidator>();
         builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
         builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
@@ -400,8 +401,22 @@ internal sealed class AnalysisRuntimeReadiness
 internal sealed class ConfiguredAnalysisRuntimeHealthProbe(
     IConfiguration configuration) : IAnalysisRuntimeHealthProbe
 {
-    private const string _archiveName =
-        "jdt-language-server-1.61.0-202608141332.zip";
+    private const string _jdtRelease = "jdt-language-server-1.61.0-202608141332";
+    private const string _jdtLauncher =
+        "plugins/org.eclipse.equinox.launcher_1.8.0.v20260804-1928.jar";
+    private const string _jdtConfiguration = "config_win";
+    private const string _streamJsonRpcVersion = "2.25.29";
+
+    private static readonly IReadOnlyDictionary<string, string> _codeGraphHashes =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["lib/dist/bin/codegraph.js"] =
+                "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03",
+            ["node.exe"] =
+                "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
+            ["npm-shim.js"] =
+                "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877",
+        };
 
     public async Task<AnalysisHealthProbeResult> CheckConfiguredIntegrityAsync(
         AnalysisScope scope,
@@ -410,48 +425,38 @@ internal sealed class ConfiguredAnalysisRuntimeHealthProbe(
         ArgumentNullException.ThrowIfNull(scope);
         cancellationToken.ThrowIfCancellationRequested();
 
-        string? expectedArchiveSha256 =
-            configuration["AnalysisRuntime:JdtLsDistributionArchiveSha256"]?.Trim();
+        string? archivePath = Value("JdtLsDistributionArchivePath");
+        string? archiveName = Value("JdtLsDistributionArchiveName");
+        string? expectedArchiveSha256 = Value("JdtLsDistributionArchiveSha256");
         if (string.IsNullOrWhiteSpace(expectedArchiveSha256))
         {
             return NotReady(
                 "jdt_distribution_archive_checksum_missing",
-                "JDT LS distribution archive checksum missing");
+                "JDT LS archive checksum missing",
+                "jdt-ls");
         }
 
-        if (expectedArchiveSha256.Length != 64 ||
-            expectedArchiveSha256.Any(character => !Uri.IsHexDigit(character)))
+        if (!IsSha256(expectedArchiveSha256))
         {
             return NotReady(
                 "jdt_distribution_archive_checksum_missing",
-                "JDT LS distribution archive checksum invalid");
+                "JDT LS archive checksum invalid",
+                "jdt-ls");
         }
 
-        string installationRoot =
-            configuration["AnalysisRuntime:JdtLsInstallationRoot"] ??
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".local",
-                "jdt-language-server-1.61.0-202608141332");
-        string archivePath = Path.Combine(installationRoot, _archiveName);
-        if (!File.Exists(archivePath))
+        if (string.IsNullOrWhiteSpace(archivePath) ||
+            string.IsNullOrWhiteSpace(archiveName) ||
+            !IsApprovedArchiveName(archiveName) ||
+            !string.Equals(Path.GetFileName(archivePath), archiveName, StringComparison.Ordinal) ||
+            !File.Exists(archivePath))
         {
             return NotReady(
                 "jdt_distribution_archive_missing",
-                "JDT LS distribution archive missing");
+                "JDT LS archive identity missing",
+                "jdt-ls");
         }
 
-        await using FileStream archive = new(
-            archivePath,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read,
-            65_536,
-            FileOptions.Asynchronous | FileOptions.SequentialScan);
-        string actualArchiveSha256 = Convert.ToHexStringLower(
-            await System.Security.Cryptography.SHA256.HashDataAsync(
-                archive,
-                cancellationToken));
+        string actualArchiveSha256 = await ComputeSha256Async(archivePath, cancellationToken);
         if (!string.Equals(
                 actualArchiveSha256,
                 expectedArchiveSha256,
@@ -459,16 +464,115 @@ internal sealed class ConfiguredAnalysisRuntimeHealthProbe(
         {
             return NotReady(
                 "jdt_distribution_archive_checksum_mismatch",
-                "JDT LS distribution archive checksum mismatch");
+                "JDT LS archive checksum mismatch",
+                "jdt-ls");
         }
 
-        AnalysisHealthProbeResult codeGraph =
-            await new CodeGraphIntegrityProbe().CheckConfiguredIntegrityAsync(
-                scope,
-                cancellationToken);
-        if (codeGraph.Status == AnalysisRuntimeHealthStatus.NotReady)
+        string? installationRoot = Value("JdtLsInstallationRoot");
+        string? release = Value("JdtLsReleaseIdentity");
+        string? launcher = Value("JdtLsLauncher")?.Replace('\\', '/');
+        string? jdtConfiguration = Value("JdtLsConfiguration");
+        if (string.IsNullOrWhiteSpace(installationRoot) ||
+            !string.Equals(release, _jdtRelease, StringComparison.Ordinal) ||
+            !string.Equals(
+                Path.GetFileName(Path.TrimEndingDirectorySeparator(installationRoot)),
+                _jdtRelease,
+                StringComparison.Ordinal) ||
+            !string.Equals(launcher, _jdtLauncher, StringComparison.Ordinal) ||
+            !string.Equals(jdtConfiguration, _jdtConfiguration, StringComparison.Ordinal) ||
+            !File.Exists(Path.Combine(installationRoot, _jdtLauncher.Replace('/', Path.DirectorySeparatorChar))) ||
+            !Directory.Exists(Path.Combine(installationRoot, _jdtConfiguration)))
         {
-            return codeGraph;
+            return NotReady("jdt_identity_mismatch", "JDT LS identity mismatch", "jdt-ls");
+        }
+
+        string? javaHome = Value("JavaHome");
+        string javaPath = Path.Combine(javaHome ?? string.Empty, "bin", "java.exe");
+        if (!string.Equals(Value("JavaMajorVersion"), "21", StringComparison.Ordinal) ||
+            !File.Exists(javaPath) ||
+            System.Diagnostics.FileVersionInfo.GetVersionInfo(javaPath).FileMajorPart != 21)
+        {
+            return NotReady("java_major_version_mismatch", "Java major version mismatch", "java");
+        }
+
+        if (!string.Equals(Value("StreamJsonRpcName"), "StreamJsonRpc", StringComparison.Ordinal) ||
+            !string.Equals(Value("StreamJsonRpcVersion"), _streamJsonRpcVersion, StringComparison.Ordinal) ||
+            !HasExpectedStreamJsonRpcAssembly())
+        {
+            return NotReady(
+                "streamjsonrpc_identity_mismatch",
+                "StreamJsonRpc identity mismatch",
+                "streamjsonrpc");
+        }
+
+        string? commandPath = Value("CodeGraphCommandPath");
+        if (!HasExpectedCodeGraphConfiguration(commandPath))
+        {
+            return NotReady("codegraph_identity_mismatch", "CodeGraph identity mismatch", "codegraph");
+        }
+
+        string packageRoot = Path.Combine(
+            Path.GetDirectoryName(commandPath!)!,
+            "node_modules",
+            "@colbymchenry",
+            "codegraph");
+        if (!HasExpectedCodeGraphPackage(packageRoot))
+        {
+            return NotReady("codegraph_identity_mismatch", "CodeGraph package mismatch", "codegraph");
+        }
+
+        foreach ((string component, string expectedHash) in _codeGraphHashes)
+        {
+            string configuredHash = Value($"CodeGraphHashes:{component}") ?? string.Empty;
+            string componentPath = component == "npm-shim.js"
+                ? Path.Combine(packageRoot, component)
+                : Path.Combine(
+                    packageRoot,
+                    "node_modules",
+                    "@colbymchenry",
+                    "codegraph-win32-x64",
+                    component.Replace('/', Path.DirectorySeparatorChar));
+            if (!string.Equals(configuredHash, expectedHash, StringComparison.OrdinalIgnoreCase) ||
+                !File.Exists(componentPath) ||
+                !string.Equals(
+                    await ComputeSha256Async(componentPath, cancellationToken),
+                    expectedHash,
+                    StringComparison.Ordinal))
+            {
+                return NotReady(
+                    "codegraph_integrity_mismatch",
+                    "CodeGraph integrity mismatch",
+                    "codegraph");
+            }
+        }
+
+        AnalysisRuntimeIdentity identity;
+        try
+        {
+            identity = AnalysisRuntimeIdentity.Create(
+                new AnalysisRuntimeOptions(commandPath!, installationRoot, javaHome!),
+                scope.RepositoryId,
+                scope.ProfiledRevision,
+                Value("CodeGraphPackageName")!,
+                Value("CodeGraphPackageVersion")!,
+                Value("CodeGraphRepository")!,
+                Value("CodeGraphCommand")!,
+                Value("CodeGraphBundle")!,
+                _codeGraphHashes
+                    .OrderBy(value => value.Key, StringComparer.Ordinal)
+                    .Select(value => new AnalysisRuntimeComponentHash(value.Key, value.Value))
+                    .ToArray(),
+                release!,
+                archiveName,
+                expectedArchiveSha256,
+                21,
+                Value("StreamJsonRpcName")!,
+                Value("StreamJsonRpcVersion")!,
+                "stdio");
+        }
+        catch (ArgumentException)
+        {
+            return NotReady("analysis_runtime_identity_mismatch", "Runtime identity mismatch", "identity");
         }
 
         return new AnalysisHealthProbeResult(
@@ -478,17 +582,104 @@ internal sealed class ConfiguredAnalysisRuntimeHealthProbe(
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             [
                 new AnalysisHealthCheck("codegraph", AnalysisRuntimeHealthStatus.Ready),
+                new AnalysisHealthCheck("java", AnalysisRuntimeHealthStatus.Ready),
                 new AnalysisHealthCheck("jdt-ls", AnalysisRuntimeHealthStatus.Ready),
-            ]);
+                new AnalysisHealthCheck("streamjsonrpc", AnalysisRuntimeHealthStatus.Ready),
+            ],
+            identity.Sha256);
     }
 
-    private static AnalysisHealthProbeResult NotReady(string code, string diagnostic) =>
+    private string? Value(string key) => configuration[$"AnalysisRuntime:{key}"]?.Trim();
+
+    private static bool IsSha256(string value) =>
+        value.Length == 64 && value.All(Uri.IsHexDigit);
+
+    private static bool IsApprovedArchiveName(string value) =>
+        string.Equals(value, $"{_jdtRelease}.zip", StringComparison.Ordinal) ||
+        string.Equals(value, $"{_jdtRelease}.tar.gz", StringComparison.Ordinal);
+
+    private bool HasExpectedCodeGraphConfiguration(string? commandPath) =>
+        !string.IsNullOrWhiteSpace(commandPath) &&
+        File.Exists(commandPath) &&
+        string.Equals(Path.GetFileName(commandPath), "codegraph.ps1", StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(Value("CodeGraphCommand"), "codegraph", StringComparison.Ordinal) &&
+        string.Equals(Value("CodeGraphPackageName"), "@colbymchenry/codegraph", StringComparison.Ordinal) &&
+        string.Equals(Value("CodeGraphPackageVersion"), "1.5.0", StringComparison.Ordinal) &&
+        string.Equals(
+            Value("CodeGraphRepository"),
+            "https://github.com/colbymchenry/codegraph",
+            StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(
+            Value("CodeGraphBundle"),
+            "@colbymchenry/codegraph-win32-x64@1.5.0",
+            StringComparison.Ordinal);
+
+    private static bool HasExpectedCodeGraphPackage(string packageRoot)
+    {
+        string manifestPath = Path.Combine(packageRoot, "package.json");
+        string bundleRoot = Path.Combine(
+            packageRoot,
+            "node_modules",
+            "@colbymchenry",
+            "codegraph-win32-x64");
+        if (!File.Exists(manifestPath) || !Directory.Exists(bundleRoot))
+        {
+            return false;
+        }
+
+        using System.Text.Json.JsonDocument manifest =
+            System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(manifestPath));
+        System.Text.Json.JsonElement root = manifest.RootElement;
+        return root.TryGetProperty("name", out System.Text.Json.JsonElement name) &&
+               string.Equals(name.GetString(), "@colbymchenry/codegraph", StringComparison.Ordinal) &&
+               root.TryGetProperty("version", out System.Text.Json.JsonElement version) &&
+               string.Equals(version.GetString(), "1.5.0", StringComparison.Ordinal) &&
+               root.TryGetProperty("repository", out System.Text.Json.JsonElement repository) &&
+               repository.TryGetProperty("url", out System.Text.Json.JsonElement repositoryUrl) &&
+               string.Equals(
+                   repositoryUrl.GetString(),
+                   "git+https://github.com/colbymchenry/codegraph.git",
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasExpectedStreamJsonRpcAssembly()
+    {
+        System.Reflection.Assembly assembly = System.Reflection.Assembly.Load("StreamJsonRpc");
+        System.Diagnostics.FileVersionInfo version =
+            System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
+        return string.Equals(assembly.GetName().Name, "StreamJsonRpc", StringComparison.Ordinal) &&
+               version.ProductVersion?.StartsWith(
+                   $"{_streamJsonRpcVersion}+",
+                   StringComparison.Ordinal) == true;
+    }
+
+    private static async Task<string> ComputeSha256Async(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        await using FileStream stream = new(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            65_536,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        byte[] hash = await System.Security.Cryptography.SHA256.HashDataAsync(
+            stream,
+            cancellationToken);
+        return Convert.ToHexStringLower(hash);
+    }
+
+    private static AnalysisHealthProbeResult NotReady(
+        string code,
+        string diagnostic,
+        string component) =>
         new(
             AnalysisRuntimeHealthStatus.NotReady,
             code,
             diagnostic,
             DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            [new AnalysisHealthCheck("jdt-ls", AnalysisRuntimeHealthStatus.NotReady)]);
+            [new AnalysisHealthCheck(component, AnalysisRuntimeHealthStatus.NotReady)]);
 }
 
 internal sealed class RuntimeGatedWorkerAgentDispatcher(
@@ -521,10 +712,31 @@ internal sealed class RuntimeGatedWorkerAgentDispatcher(
     }
 }
 
-internal sealed class RuntimeScanRecoveryRevalidator(
-    AnalysisRuntimeReadiness readiness) : IScanRecoveryRevalidator
+internal sealed class RuntimeScanRecoveryRevalidator : IScanRecoveryRevalidator
 {
-    public Task<ScanRecoveryRevalidationResult> RevalidateAsync(
+    private const int _maximumOwnedRepositoryCount = 1_024;
+    private readonly AnalysisRuntimeReadiness _readiness;
+    private readonly IAnalysisRuntimeHealthProbe _configuredHealthProbe;
+    private readonly IScanRecoveryBindingProbe _bindingProbe;
+
+    public RuntimeScanRecoveryRevalidator(
+        AnalysisRuntimeReadiness readiness,
+        IScanRecoveryBindingProbe bindingProbe)
+        : this(readiness, new ReadinessHealthProbe(readiness), bindingProbe)
+    {
+    }
+
+    public RuntimeScanRecoveryRevalidator(
+        AnalysisRuntimeReadiness readiness,
+        IAnalysisRuntimeHealthProbe configuredHealthProbe,
+        IScanRecoveryBindingProbe bindingProbe)
+    {
+        _readiness = readiness;
+        _configuredHealthProbe = configuredHealthProbe;
+        _bindingProbe = bindingProbe;
+    }
+
+    public async Task<ScanRecoveryRevalidationResult> RevalidateAsync(
         ScanRecoverySnapshot snapshot,
         DurableScanAuthorizationScope authorizationScope,
         CancellationToken cancellationToken)
@@ -532,18 +744,186 @@ internal sealed class RuntimeScanRecoveryRevalidator(
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(authorizationScope);
         cancellationToken.ThrowIfCancellationRequested();
-        if (!authorizationScope.OwnedSystemIds.Contains(snapshot.SystemId))
+        if (!authorizationScope.OwnedSystemIds.Contains(snapshot.SystemId) ||
+            authorizationScope.OwnedRepositoryIds is not { Count: > 0 } ownedRepositoryIds ||
+            ownedRepositoryIds.Count > _maximumOwnedRepositoryCount ||
+            ownedRepositoryIds.Any(value => value == Guid.Empty) ||
+            ownedRepositoryIds.Distinct().Count() != ownedRepositoryIds.Count ||
+            !ownedRepositoryIds.Contains(snapshot.RepositoryId))
         {
-            return Task.FromResult(new ScanRecoveryRevalidationResult(
+            return new ScanRecoveryRevalidationResult(
                 false,
-                DurableScanReason.Unauthorized));
+                DurableScanReason.Unauthorized);
         }
 
-        return readiness.Current.Status == AnalysisRuntimeHealthStatus.Ready
-            ? Task.FromResult(new ScanRecoveryRevalidationResult(true, DurableScanReason.None))
-            : Task.FromResult(new ScanRecoveryRevalidationResult(
+        if (_readiness.Current.Status != AnalysisRuntimeHealthStatus.Ready)
+        {
+            return new ScanRecoveryRevalidationResult(
                 false,
-                DurableScanReason.InvalidIdentity));
+                DurableScanReason.InvalidIdentity);
+        }
+
+        ScanRecoveryObservedBindings? observed = await _bindingProbe.ObserveAsync(
+            snapshot,
+            authorizationScope,
+            cancellationToken);
+        if (observed is null)
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.InvalidIdentity);
+        }
+
+        if (!observed.RepositoryAccessible)
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.Unauthorized);
+        }
+
+        if (!observed.ProviderAvailable)
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.ProviderUnavailable);
+        }
+
+        if (!HasValidIdentity(snapshot) || !HasValidIdentity(observed))
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.IntegrityViolation);
+        }
+
+        if (!string.Equals(snapshot.ProfiledRevision, observed.ProfiledRevision, StringComparison.Ordinal) ||
+            !string.Equals(snapshot.PromptIdentity, observed.PromptIdentity, StringComparison.Ordinal) ||
+            !string.Equals(snapshot.DocumentSchemaIdentity, observed.DocumentSchemaIdentity, StringComparison.Ordinal) ||
+            !string.Equals(
+                snapshot.AnalysisRuntimeIdentityHash,
+                observed.AnalysisRuntimeIdentityHash,
+                StringComparison.Ordinal))
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.InvalidIdentity);
+        }
+
+        ScanRecoveryFileBinding[] expectedFiles = snapshot.AffectedFiles
+            .OrderBy(value => value.FileCodeUnitId)
+            .ToArray();
+        ScanRecoveryFileBinding[] observedFiles = observed.AffectedFiles
+            .OrderBy(value => value.FileCodeUnitId)
+            .ToArray();
+        if (!expectedFiles.SequenceEqual(observedFiles))
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.IntegrityViolation);
+        }
+
+        AnalysisHealthProbeResult configuredHealth =
+            await _configuredHealthProbe.CheckConfiguredIntegrityAsync(
+                CreateRecoveryAnalysisScope(snapshot),
+                cancellationToken);
+        if (configuredHealth.Status != AnalysisRuntimeHealthStatus.Ready ||
+            !string.Equals(
+                configuredHealth.RuntimeIdentityHash,
+                snapshot.AnalysisRuntimeIdentityHash,
+                StringComparison.Ordinal))
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.InvalidIdentity);
+        }
+
+        return new ScanRecoveryRevalidationResult(true, DurableScanReason.None);
+    }
+
+    private static AnalysisScope CreateRecoveryAnalysisScope(ScanRecoverySnapshot snapshot) =>
+        new(
+            snapshot.RepositoryId,
+            snapshot.ScanExecutionId,
+            snapshot.ProfiledRevision,
+            "scan-recovery",
+            snapshot.AnalysisRuntimeIdentityHash,
+            new AnalysisDeadline(
+                DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
+
+    private static bool HasValidIdentity(ScanRecoverySnapshot snapshot) =>
+        IsProfiledRevision(snapshot.ProfiledRevision) &&
+        IsIdentity(snapshot.PromptIdentity) &&
+        IsIdentity(snapshot.DocumentSchemaIdentity) &&
+        IsSha256(snapshot.AnalysisRuntimeIdentityHash) &&
+        HasValidFiles(snapshot.AffectedFiles);
+
+    private static bool HasValidIdentity(ScanRecoveryObservedBindings observed) =>
+        IsProfiledRevision(observed.ProfiledRevision) &&
+        IsIdentity(observed.PromptIdentity) &&
+        IsIdentity(observed.DocumentSchemaIdentity) &&
+        IsSha256(observed.AnalysisRuntimeIdentityHash) &&
+        HasValidFiles(observed.AffectedFiles);
+
+    private static bool HasValidFiles(IReadOnlyList<ScanRecoveryFileBinding>? files) =>
+        files is not null &&
+        files.All(value => value is not null &&
+            value.FileCodeUnitId != Guid.Empty &&
+            IsSha256(value.SourceHash)) &&
+        files.Select(value => value.FileCodeUnitId).Distinct().Count() == files.Count;
+
+    private static bool IsProfiledRevision(string? value) =>
+        value is not null && value.Length is >= 7 and <= 64 && IsLowerHex(value);
+
+    private static bool IsIdentity(string? value) =>
+        !string.IsNullOrWhiteSpace(value) && value.Length <= 128;
+
+    private static bool IsSha256(string? value) =>
+        value is not null && value.Length == 64 && IsLowerHex(value);
+
+    private static bool IsLowerHex(string value) =>
+        value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
+
+    private sealed class ReadinessHealthProbe(AnalysisRuntimeReadiness readiness)
+        : IAnalysisRuntimeHealthProbe
+    {
+        public Task<AnalysisHealthProbeResult> CheckConfiguredIntegrityAsync(
+            AnalysisScope scope,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(scope);
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(readiness.Current);
+        }
+    }
+}
+
+internal sealed class RuntimeScanRecoveryBindingProbe(
+    IDurableScanStore durableScanStore,
+    WorkerAgentProviderResolver providerResolver) : IScanRecoveryBindingProbe
+{
+    public async Task<ScanRecoveryObservedBindings?> ObserveAsync(
+        ScanRecoverySnapshot snapshot,
+        DurableScanAuthorizationScope authorizationScope,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(authorizationScope);
+        ScanRecoverySnapshotResult current = await durableScanStore.ReadRecoverySnapshotAsync(
+            authorizationScope,
+            snapshot.ScanExecutionId,
+            cancellationToken);
+        if (current.Outcome != DurableScanStoreOutcome.Applied ||
+            current.Snapshot is not ScanRecoverySnapshot bindings ||
+            bindings.SystemId != snapshot.SystemId ||
+            bindings.RepositoryId != snapshot.RepositoryId)
+        {
+            return null;
+        }
+
+        bool providerAvailable;
+        try
+        {
+            _ = await providerResolver.ResolveAsync(bindings.SystemId, cancellationToken);
+            providerAvailable = true;
+        }
+        catch (InvalidOperationException)
+        {
+            providerAvailable = false;
+        }
+
+        return new ScanRecoveryObservedBindings(
+            true,
+            bindings.ProfiledRevision,
+            bindings.AffectedFiles,
+            bindings.PromptIdentity,
+            bindings.DocumentSchemaIdentity,
+            providerAvailable,
+            bindings.AnalysisRuntimeIdentityHash);
     }
 }
 
