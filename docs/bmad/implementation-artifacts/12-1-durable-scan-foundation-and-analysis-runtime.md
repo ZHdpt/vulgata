@@ -803,3 +803,21 @@ warnings. Durable Scan model consistency passed 6/6. Compose resolves to only
 `post-deadline-app` profile. `docker/Dockerfile` and historical CGC
 qualification were not invoked or modified. Implementation is ready for the
 unified convergence gate.
+
+### Convergence iteration 1
+
+The independent convergence analyst returned `tasks_appended`, not CLEAN. It
+verified the pinned `c6e9014` implementation and 53/53 Analysis Runtime tests,
+then identified two traceable remaining gaps. T055 closes the production
+ordinary-startup integrity gap: Ready currently depends on a hard-coded JDT-LS
+`.zip` under the installation root and does not validate the configured
+archive path, Java/JDT/StreamJsonRpc identities, or configured CodeGraph
+identity. T056 closes the production recovery gap: the durable recovery
+snapshot and revalidator currently prove System ownership and global readiness
+but do not carry and verify Repository access, Profiled Revision/source hashes,
+prompt/schema/provider identity, or the bound Runtime Identity.
+
+The analyst appended only T055 and T056 to `tasks.md`; no source, tests,
+accepted definition, workflow state, staging, or history changed. The unified
+workflow returns to test-first implementation for these tasks before a second
+convergence pass.

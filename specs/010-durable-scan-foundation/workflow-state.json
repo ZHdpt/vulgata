@@ -2163,33 +2163,60 @@
       "observed_at": "2026-08-19T07:34:01Z",
       "summary": "T052 is complete under the user's exact bounded disposition. PostgreSQL 17 was healthy; mandatory ordinary startup passed 1/1; the repository suite passed 1488/1488 with exactly thirteen named non-Story-12.1 exclusions; Web built with zero errors; Durable Scan model consistency passed 6/6; Compose resolved to postgres-only by default and postgres plus vulgata under post-deadline-app.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/converge/65",
+      "kind": "convergence",
+      "stage": "converge",
+      "source_commit": "c6e9014ff388e4659f3372556266f9b05cfed061",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/tasks.md",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs"
+      ],
+      "command": "independent speckit-converge against pinned Story 12.1 implementation",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T07:40:26Z",
+      "summary": "Convergence iteration 1 returned tasks_appended. T055 traces incomplete configured Analysis Runtime integrity validation before Ready; T056 traces incomplete Repository/revision/source/prompt/schema/provider/runtime identity revalidation before recovery transitions. No other gap was appended.",
+      "raw_output_path": "specs/010-durable-scan-foundation/tasks.md"
     }
   ],
   "convergence": {
-    "status": "pending",
-    "iteration": 0,
-    "outcome": "pending",
-    "findings_count": 0,
-    "appended_task_ids": [],
-    "artifact_hashes": {},
-    "completed_at": null
+    "status": "revised",
+    "iteration": 1,
+    "outcome": "tasks_appended",
+    "findings_count": 2,
+    "appended_task_ids": [
+      "T055",
+      "T056"
+    ],
+    "artifact_hashes": {
+      "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
+      "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
+      "specs/010-durable-scan-foundation/tasks.md": "167a2628d1b3810d2801144d3077bf1cd58fb1721f36a3fc772f5dfabe9777d7",
+      "src/dotnet/Vulgata.Web/Program.cs": "62ab1e9cf56ac7b9c0bd53c434e83839708af43824e8666b2e8915c7ca392bb0",
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "d2d5daaf683d38edb2e60763485d2c2de0b933044390265b3289ac12583616ed"
+    },
+    "completed_at": "2026-08-19T07:40:26Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T073401Z-a62df1",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260819T074026Z-6e128a",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "implement",
+    "stage": "converge",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/tasks.md",
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/64"
+      "12-1-durable-scan-foundation-and-analysis-runtime/converge/65"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T07:34:01Z"
+  "updated_at": "2026-08-19T07:40:26Z"
 }

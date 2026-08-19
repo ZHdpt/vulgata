@@ -107,6 +107,11 @@ description: "Dependency-ordered implementation tasks for Durable Scan Foundatio
 - [x] T053 [P] Verify source-reference coverage and canonical terminology against `docs/UBIQUITOUS_LANGUAGE.md`, Constitution, relevant ADR/context files, the August 17/18 approved proposals, corrected August design, PRD overlay, `docs/bmad/epics.md`, and the Story record; report any authority conflict instead of inferring a resolution.
 - [x] T054 [P] Read-only verify the implementation candidate against the frozen exclusions in `specs/010-durable-scan-foundation/spec.md` and `plan.md`; record evidence only in the active workflow/convergence evidence owned by the root, never by mutating `tasks.md`: no Java/XML PreScan, Prepared Scan Manifest, File Code Unit selection/splitting, Worker generation/dispatch policy, `navigate_code`, Cross-Repository Resolution, Pass 2, Chat retrieval, production progress UI, or final release evidence (FR-031, FR-032).
 
+## Phase 8: Convergence
+
+- [ ] T055 Make configured ordinary-startup Analysis Runtime health verify the supplied distribution archive path/name and SHA-256 (including the retained `.tar.gz`), Java 21 major version, JDT-LS release/launcher/configuration, StreamJsonRpc identity, and the configured CodeGraph command/package/version/bundle/hash identity before returning Ready; add bounded positive and mismatch qualification for FR-017, FR-019, FR-020, FR-021, FR-028 and plan decisions AD-6 through AD-8 (partial).
+- [ ] T056 Complete the production Scan recovery revalidation boundary so the immutable recovery snapshot carries and verifies Repository authorization/access, bound Profiled Revision and affected file hashes, prompt/schema identity, provider availability, and normalized Analysis Runtime identity before any recovery transition; add production-boundary mismatch tests and preserve fail-closed committed-document behavior per FR-008, FR-009, FR-028, SC-002 and plan decision AD-5 (partial).
+
 ## Dependencies and execution order
 
 1. Setup T001-T005 is metadata/fixture preparation; T005 is the package-only single-integration-owner dependency task and must complete before T033. The production composition change is exclusively T036 RED → T037 GREEN.
