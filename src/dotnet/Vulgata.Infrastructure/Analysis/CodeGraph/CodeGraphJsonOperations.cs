@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Diagnostics;
 using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
@@ -23,6 +24,7 @@ public sealed partial class CodeGraphAnalysisAdapter
         try
         {
             CodeGraphRepositorySnapshot snapshot = await ResolveSnapshotAsync(scope, cancellationToken);
+            Stopwatch duration = Stopwatch.StartNew();
             CodeGraphProcessResult process = await RunAsync(
                 scope,
                 snapshot,
@@ -34,26 +36,39 @@ public sealed partial class CodeGraphAnalysisAdapter
                 return FailedIndex(failure);
             }
 
-            using JsonDocument document = ParseJson(process.StandardOutput, _options!.StandardOutputByteLimit);
-            JsonElement root = RequireObject(
-                document.RootElement,
-                "status", "indexIdentity", "durationMs", "indexedFileCount");
-            if (RequireString(root, "status") != "ok")
+            RequireMutationOutput(
+                process.StandardOutput,
+                _options!.StandardOutputByteLimit,
+                allowEmpty: operation is ["index", "--quiet"]);
+
+            CodeGraphRepositorySnapshot statusSnapshot =
+                await ResolveSnapshotAsync(scope, cancellationToken);
+            CodeGraphProcessResult statusProcess = await RunAsync(
+                scope,
+                statusSnapshot,
+                ["status", statusSnapshot.RepositoryRoot, "--json"],
+                cancellationToken);
+            failure = GetProcessFailure(statusProcess);
+            if (failure is not null)
             {
-                throw new InvalidDataException("codegraph returned unsuccessful status");
+                return FailedIndex(failure);
             }
 
-            string identity = RequireString(root, "indexIdentity");
-            if (!StringComparer.Ordinal.Equals(identity, snapshot.ExpectedIndexIdentity))
+            ParsedStatus status = ParseStatus(
+                statusProcess.StandardOutput,
+                _options.StandardOutputByteLimit,
+                statusSnapshot);
+            if (!status.Ready || status.Stale)
             {
-                throw new InvalidDataException("codegraph index identity mismatch");
+                throw new InvalidDataException("codegraph index is not ready");
             }
 
+            duration.Stop();
             return new AnalysisIndexResult(
                 AnalysisOperationStatus.Succeeded,
-                identity,
-                RequireNonNegativeLong(root, "durationMs"),
-                RequireNonNegativeInt(root, "indexedFileCount"),
+                statusSnapshot.ExpectedIndexIdentity,
+                duration.ElapsedMilliseconds,
+                status.IndexedFileCount,
                 failure: null);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -91,20 +106,16 @@ public sealed partial class CodeGraphAnalysisAdapter
                 return FailedStatus(failure);
             }
 
-            using JsonDocument document = ParseJson(process.StandardOutput, _options!.StandardOutputByteLimit);
-            JsonElement root = RequireObject(document.RootElement, "status", "indexIdentity", "indexedFileCount");
-            string status = RequireString(root, "status");
-            string identity = RequireString(root, "indexIdentity");
-            if (!StringComparer.Ordinal.Equals(identity, snapshot.ExpectedIndexIdentity) || status != "ready")
-            {
-                throw new InvalidDataException("codegraph status identity mismatch");
-            }
+            ParsedStatus status = ParseStatus(
+                process.StandardOutput,
+                _options!.StandardOutputByteLimit,
+                snapshot);
 
             return new CodeGraphStatusResult(
                 AnalysisOperationStatus.Succeeded,
-                ready: true,
-                stale: false,
-                RequireNonNegativeInt(root, "indexedFileCount"),
+                status.Ready,
+                status.Stale,
+                status.IndexedFileCount,
                 failure: null);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -136,7 +147,7 @@ public sealed partial class CodeGraphAnalysisAdapter
             CodeGraphProcessResult process = await RunAsync(
                 scope,
                 snapshot,
-                ["query", query.SearchAtom, "--kind", query.Kind.ToString().ToLowerInvariant(),
+                ["query", query.SearchAtom, "--kind", ToCodeGraphSymbolKind(query.Kind),
                     "--path", snapshot.RepositoryRoot, "--limit", Invariant(query.Bounds.ItemLimit), "--json"],
                 cancellationToken);
             AnalysisPortFailure? failure = GetProcessFailure(process);
@@ -148,17 +159,39 @@ public sealed partial class CodeGraphAnalysisAdapter
             using JsonDocument document = ParseJson(
                 process.StandardOutput,
                 Math.Min(_options!.StandardOutputByteLimit, query.Bounds.ByteLimit));
-            JsonElement root = RequireObject(document.RootElement, "symbols");
-            JsonElement values = RequireArray(root, "symbols", query.Bounds.ItemLimit);
+            JsonElement values = RequireRootArray(document.RootElement, query.Bounds.ItemLimit);
             List<AnalysisSymbolEvidence> evidence = [];
             foreach (JsonElement value in values.EnumerateArray())
             {
-                JsonElement item = RequireObject(value, "symbol", "kind", "relativePath", "startLine", "endLine");
+                JsonElement result = RequireObject(value, "node", "score");
+                RequireFiniteNumber(result, "score");
+                JsonElement item = RequireObject(
+                    result.GetProperty("node"),
+                    "id", "kind", "name", "qualifiedName", "filePath", "language",
+                    "startLine", "endLine", "startColumn", "endColumn", "visibility",
+                    "isExported", "isAsync", "isStatic", "isAbstract", "updatedAt");
+                _ = RequireString(item, "id");
+                _ = RequireString(item, "name");
+                _ = RequireString(item, "language");
+                AnalysisLineRange range = RequireRange(item);
+                int startColumn = RequireNonNegativeInt(item, "startColumn");
+                int endColumn = RequireNonNegativeInt(item, "endColumn");
+                if (range.StartLine == range.EndLine && endColumn < startColumn)
+                {
+                    throw new InvalidDataException("codegraph returned invalid column range");
+                }
+
+                RequireVisibility(item, "visibility");
+                _ = RequireBoolean(item, "isExported");
+                _ = RequireBoolean(item, "isAsync");
+                _ = RequireBoolean(item, "isStatic");
+                _ = RequireBoolean(item, "isAbstract");
+                _ = RequireNonNegativeLong(item, "updatedAt");
                 evidence.Add(new AnalysisSymbolEvidence(
-                    RequireString(item, "symbol"),
+                    RequireString(item, "qualifiedName"),
                     ParseSymbolKind(RequireString(item, "kind")),
-                    RequireContainedRelativePath(item, "relativePath"),
-                    RequireRange(item)));
+                    RequireContainedRelativePath(item, "filePath"),
+                    range));
             }
 
             return new SymbolSearchResult(AnalysisOperationStatus.Succeeded, evidence, null);
@@ -205,19 +238,27 @@ public sealed partial class CodeGraphAnalysisAdapter
             using JsonDocument document = ParseJson(
                 process.StandardOutput,
                 Math.Min(_options!.StandardOutputByteLimit, request.Bounds.ByteLimit));
-            JsonElement root = RequireObject(document.RootElement, "relationships");
-            JsonElement values = RequireArray(root, "relationships", request.Bounds.ItemLimit);
+            string collectionName = operation == "callers" ? "callers" : "callees";
+            JsonElement root = RequireObject(document.RootElement, "symbol", collectionName);
+            string requestedSymbol = RequireString(root, "symbol");
+            if (!StringComparer.Ordinal.Equals(requestedSymbol, request.ExactSymbol))
+            {
+                throw new InvalidDataException("codegraph relationship symbol mismatch");
+            }
+
+            JsonElement values = RequireArray(root, collectionName, request.Bounds.ItemLimit);
             List<AnalysisRelationshipEvidence> evidence = [];
             foreach (JsonElement value in values.EnumerateArray())
             {
-                JsonElement item = RequireObject(
-                    value,
-                    "sourceSymbol", "targetSymbol", "relativePath", "startLine", "endLine");
+                JsonElement item = RequireObject(value, "name", "kind", "filePath", "startLine");
+                string relatedSymbol = RequireString(item, "name");
+                _ = ParseSymbolKind(RequireString(item, "kind"));
+                int line = RequirePositiveInt(item, "startLine");
                 evidence.Add(new AnalysisRelationshipEvidence(
-                    RequireString(item, "sourceSymbol"),
-                    RequireString(item, "targetSymbol"),
-                    RequireContainedRelativePath(item, "relativePath"),
-                    RequireRange(item)));
+                    operation == "callers" ? relatedSymbol : requestedSymbol,
+                    operation == "callers" ? requestedSymbol : relatedSymbol,
+                    RequireContainedRelativePath(item, "filePath"),
+                    new AnalysisLineRange(line, line)));
             }
 
             return new RelationshipResult(AnalysisOperationStatus.Succeeded, evidence, null);
@@ -262,9 +303,29 @@ public sealed partial class CodeGraphAnalysisAdapter
             using JsonDocument document = ParseJson(
                 process.StandardOutput,
                 Math.Min(_options!.StandardOutputByteLimit, request.Bounds.ByteLimit));
-            JsonElement root = RequireObject(document.RootElement, "relativePaths");
-            JsonElement values = RequireArray(root, "relativePaths", request.Bounds.ItemLimit);
-            string[] paths = values.EnumerateArray().Select(RequireContainedRelativePath).ToArray();
+            JsonElement root = RequireObject(
+                document.RootElement,
+                "symbol", "depth", "nodeCount", "edgeCount", "affected");
+            if (!StringComparer.Ordinal.Equals(RequireString(root, "symbol"), request.ExactSymbol) ||
+                RequireNonNegativeInt(root, "depth") != 1)
+            {
+                throw new InvalidDataException("codegraph impact scope mismatch");
+            }
+
+            _ = RequireNonNegativeInt(root, "nodeCount");
+            _ = RequireNonNegativeInt(root, "edgeCount");
+            JsonElement values = RequireArray(root, "affected", request.Bounds.ItemLimit);
+            List<string> pathList = [];
+            foreach (JsonElement value in values.EnumerateArray())
+            {
+                JsonElement item = RequireObject(value, "name", "kind", "filePath", "startLine");
+                _ = RequireString(item, "name");
+                _ = ParseSymbolKind(RequireString(item, "kind"));
+                _ = RequirePositiveInt(item, "startLine");
+                pathList.Add(RequireContainedRelativePath(item, "filePath"));
+            }
+
+            string[] paths = [.. pathList];
             if (paths.Distinct(StringComparer.Ordinal).Count() != paths.Length)
             {
                 throw new InvalidDataException("codegraph returned duplicate paths");
@@ -394,6 +455,191 @@ public sealed partial class CodeGraphAnalysisAdapter
         });
     }
 
+    private static void RequireMutationOutput(byte[] bytes, int byteLimit, bool allowEmpty)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        if (bytes.Length == 0)
+        {
+            if (allowEmpty)
+            {
+                return;
+            }
+
+            throw new InvalidDataException("codegraph mutation output outside byte limit");
+        }
+
+        if (bytes.Length > byteLimit)
+        {
+            throw new InvalidDataException("codegraph mutation output outside byte limit");
+        }
+
+        string output = new UTF8Encoding(false, true).GetString(bytes).Trim();
+        if (string.IsNullOrWhiteSpace(output) || output.Length > byteLimit ||
+            output.Any(character => char.IsControl(character) && character is not '\r' and not '\n' and not '\t'))
+        {
+            throw new InvalidDataException("codegraph mutation output malformed");
+        }
+    }
+
+    private static ParsedStatus ParseStatus(
+        byte[] bytes,
+        int byteLimit,
+        CodeGraphRepositorySnapshot snapshot)
+    {
+        using JsonDocument document = ParseJson(bytes, byteLimit);
+        JsonElement root = RequireObject(
+            document.RootElement,
+            "initialized", "version", "projectPath", "indexPath", "lastIndexed",
+            "fileCount", "nodeCount", "edgeCount", "dbSizeBytes", "backend", "journalMode",
+            "nodesByKind", "languages", "pendingChanges", "worktreeMismatch", "index");
+        bool initialized = RequireBoolean(root, "initialized");
+        _ = RequireString(root, "version");
+        RequireTrustedStatusPath(root, "projectPath", snapshot.RepositoryRoot);
+        RequireTrustedStatusPath(root, "indexPath", Path.Combine(snapshot.RepositoryRoot, ".codegraph"));
+        _ = RequireString(root, "lastIndexed");
+        int fileCount = RequireNonNegativeInt(root, "fileCount");
+        _ = RequireNonNegativeInt(root, "nodeCount");
+        _ = RequireNonNegativeInt(root, "edgeCount");
+        _ = RequireNonNegativeLong(root, "dbSizeBytes");
+        _ = RequireString(root, "backend");
+        _ = RequireString(root, "journalMode");
+        RequireCountMap(root, "nodesByKind");
+        RequireUniqueStringArray(root, "languages", 128);
+        JsonElement pendingChanges = RequireObject(
+            root.GetProperty("pendingChanges"), "added", "modified", "removed");
+        bool hasPendingChanges = RequireNonNegativeInt(pendingChanges, "added") != 0 ||
+            RequireNonNegativeInt(pendingChanges, "modified") != 0 ||
+            RequireNonNegativeInt(pendingChanges, "removed") != 0;
+
+        bool worktreeMismatch = RequireWorktreeMismatch(root.GetProperty("worktreeMismatch"));
+        JsonElement index = RequireObject(
+            root.GetProperty("index"),
+            "builtWithVersion", "builtWithExtractionVersion", "currentExtractionVersion",
+            "reindexRecommended", "state", "pendingRefs");
+        _ = RequireString(index, "builtWithVersion");
+        _ = RequireNonNegativeInt(index, "builtWithExtractionVersion");
+        _ = RequireNonNegativeInt(index, "currentExtractionVersion");
+        bool reindexRecommended = RequireBoolean(index, "reindexRecommended");
+        string state = RequireString(index, "state");
+        int pendingRefs = RequireNonNegativeInt(index, "pendingRefs");
+        bool stale = hasPendingChanges || worktreeMismatch || reindexRecommended || pendingRefs != 0;
+        return new ParsedStatus(initialized && state == "complete", stale, fileCount);
+    }
+
+    private static JsonElement RequireRootArray(JsonElement value, int itemLimit)
+    {
+        if (value.ValueKind != JsonValueKind.Array || value.GetArrayLength() > itemLimit)
+        {
+            throw new InvalidDataException("codegraph result exceeds item limit");
+        }
+
+        return value;
+    }
+
+    private static bool RequireBoolean(JsonElement parent, string propertyName)
+    {
+        JsonElement value = parent.GetProperty(propertyName);
+        return value.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => throw new InvalidDataException("codegraph returned invalid boolean"),
+        };
+    }
+
+    private static void RequireVisibility(JsonElement parent, string propertyName)
+    {
+        _ = RequireString(parent, propertyName) switch
+        {
+            "public" or "private" or "protected" or "internal" => true,
+            _ => throw new InvalidDataException("codegraph returned unknown visibility"),
+        };
+    }
+
+    private static void RequireFiniteNumber(JsonElement parent, string propertyName)
+    {
+        JsonElement value = parent.GetProperty(propertyName);
+        if (!value.TryGetDouble(out double number) || !double.IsFinite(number))
+        {
+            throw new InvalidDataException("codegraph returned invalid number");
+        }
+    }
+
+    private static void RequireCountMap(JsonElement parent, string propertyName)
+    {
+        JsonElement value = parent.GetProperty(propertyName);
+        if (value.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException("codegraph returned invalid count map");
+        }
+
+        HashSet<string> names = new(StringComparer.Ordinal);
+        foreach (JsonProperty property in value.EnumerateObject())
+        {
+            if (!names.Add(property.Name) || string.IsNullOrWhiteSpace(property.Name) ||
+                property.Name.Length > 128 || property.Name.Any(char.IsControl) ||
+                !property.Value.TryGetInt32(out int count) || count < 0)
+            {
+                throw new InvalidDataException("codegraph returned invalid count map");
+            }
+        }
+    }
+
+    private static void RequireUniqueStringArray(
+        JsonElement parent,
+        string propertyName,
+        int itemLimit)
+    {
+        JsonElement values = RequireArray(parent, propertyName, itemLimit);
+        HashSet<string> observed = new(StringComparer.Ordinal);
+        foreach (JsonElement value in values.EnumerateArray())
+        {
+            string? text = value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+            if (string.IsNullOrWhiteSpace(text) || text.Length > 128 || text.Any(char.IsControl) ||
+                !observed.Add(text))
+            {
+                throw new InvalidDataException("codegraph returned invalid string array");
+            }
+        }
+    }
+
+    private static bool RequireWorktreeMismatch(JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Null)
+        {
+            return false;
+        }
+
+        JsonElement mismatch = RequireObject(value, "worktreeRoot", "indexRoot");
+        RequireAbsoluteBoundedPath(mismatch, "worktreeRoot");
+        RequireAbsoluteBoundedPath(mismatch, "indexRoot");
+        return true;
+    }
+
+    private static void RequireAbsoluteBoundedPath(JsonElement parent, string propertyName)
+    {
+        string path = RequireString(parent, propertyName);
+        if (!Path.IsPathFullyQualified(path))
+        {
+            throw new InvalidDataException("codegraph returned invalid absolute path");
+        }
+
+        _ = Path.GetFullPath(path);
+    }
+
+    private static void RequireTrustedStatusPath(
+        JsonElement parent,
+        string propertyName,
+        string trustedPath)
+    {
+        string observed = RequireString(parent, propertyName);
+        if (!Path.IsPathFullyQualified(observed) ||
+            !StringComparer.OrdinalIgnoreCase.Equals(Path.GetFullPath(observed), Path.GetFullPath(trustedPath)))
+        {
+            throw new InvalidDataException("codegraph status path mismatch");
+        }
+    }
+
     private static JsonElement RequireObject(JsonElement value, params string[] expectedProperties)
     {
         if (value.ValueKind != JsonValueKind.Object)
@@ -475,12 +721,22 @@ public sealed partial class CodeGraphAnalysisAdapter
 
     private static AnalysisSymbolKind ParseSymbolKind(string value) => value switch
     {
-        "type" => AnalysisSymbolKind.Type,
-        "method" => AnalysisSymbolKind.Method,
+        "type" or "class" or "interface" or "enum" => AnalysisSymbolKind.Type,
+        "method" or "function" => AnalysisSymbolKind.Method,
         "property" => AnalysisSymbolKind.Property,
         "field" => AnalysisSymbolKind.Field,
         "constructor" => AnalysisSymbolKind.Constructor,
         _ => throw new InvalidDataException("codegraph returned unknown symbol kind"),
+    };
+
+    private static string ToCodeGraphSymbolKind(AnalysisSymbolKind value) => value switch
+    {
+        AnalysisSymbolKind.Type => "class",
+        AnalysisSymbolKind.Method => "method",
+        AnalysisSymbolKind.Property => "property",
+        AnalysisSymbolKind.Field => "field",
+        AnalysisSymbolKind.Constructor => "constructor",
+        _ => throw new ArgumentOutOfRangeException(nameof(value)),
     };
 
     private static string RequireContainedRelativePath(JsonElement parent, string propertyName) =>
@@ -522,4 +778,6 @@ public sealed partial class CodeGraphAnalysisAdapter
 
     private static string Invariant(int value) =>
         value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    private sealed record ParsedStatus(bool Ready, bool Stale, int IndexedFileCount);
 }

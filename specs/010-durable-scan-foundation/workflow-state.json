@@ -1954,6 +1954,37 @@
       "observed_at": "2026-08-19T01:21:01Z",
       "summary": "Original-author verification passed 9/9 health tests, 3/3 corrected Worker gating tests, and 41/41 Analysis Runtime tests; Web built with zero errors. Startup probes once without tool/dispatch side effects, NotReady gates Worker dispatch and recovery, management stays available, historical CGC is absent, default Compose is postgres, and the approved profile adds vulgata. T036/T037 are complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/52",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "f280f7ef137b7f9c1119c9e327eeff4d489eb42b",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeGraphAdapterTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T02:20:07Z",
+      "summary": "T038 real-tool discovery exposed four exact CodeGraph 1.5.0 compatibility REDs in sequence: actual status field types/readiness, successful empty stdout from index --quiet, Core Type needing the CLI class atom, and additional bounded symbol-node metadata. Each focused boundary was frozen before its narrow production correction.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/53",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "f280f7ef137b7f9c1119c9e327eeff4d489eb42b",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs"
+      ],
+      "command": "dotnet test ... --filter FullyQualifiedName~CodeGraphAdapterTests; dotnet test ... --filter FullyQualifiedName~CodeGraphCliQualificationTests; dotnet test ... --filter CodeGraphAdapterTests|AnalysisRuntimeHealthTests; dotnet build Vulgata.Infrastructure",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T02:20:07Z",
+      "summary": "Focused CodeGraph adapter tests passed 3/3, real installed neutral-Repository qualification passed 2/2, adjacent adapter/health verification passed 12/12, and Infrastructure built with zero errors. Package/version/bundle/three hashes and all seven closed operations were verified; ordinary health created no index and cleanup left zero temporary Repository, .codegraph, or isolated build artifacts. T038 is complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1966,26 +1997,25 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T012101Z-d3f80a",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T022007Z-a841d5",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "docker-compose.yml",
-      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs",
-      "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs"
+      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/50",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/51"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/52",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/53"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T01:21:01Z"
+  "updated_at": "2026-08-19T02:20:07Z"
 }

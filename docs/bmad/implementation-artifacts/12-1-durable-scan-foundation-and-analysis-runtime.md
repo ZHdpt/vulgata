@@ -653,3 +653,24 @@ PostgreSQL alone. Original-author verification passed 9/9 health tests, correcte
 the three stale pre-gate Worker registration assertions, passed 3/3 Worker tests
 and 41/41 Analysis Runtime tests, and built Web with zero errors. T036/T037 are
 complete; real CodeGraph qualification remains T038.
+
+### Implementation group 22
+
+T038 completed real CodeGraph 1.5.0 qualification against a unique temporary
+copy of the neutral Repository. The qualification verified the installed
+package/version/bundle and all three approved component hashes, proved repeated
+ordinary integrity checks create no `.codegraph`, and exercised the closed
+adapter through init, rebuild, status, symbol search, callers, callees, and
+related-file impact. Real output exposed four bounded adapter mismatches that
+were corrected through focused T031 RED/GREEN cycles: status field types and
+`complete` readiness, successful empty stdout from `index --quiet`, the Core
+Type to CLI `class` mapping, and the additional strict symbol-node metadata.
+Each correction retained exact unknown/duplicate-field rejection, trusted-path
+validation, cancellation, byte/item limits, and typed Core projection.
+
+Final real-tool verification passed 2/2, adjacent CodeGraph/health regression
+verification passed 12/12, Infrastructure built with zero errors, and no
+temporary Repository, `.codegraph`, or isolated build artifact remained. T038
+is complete. The supplied JDT installation still lacks the retained
+distribution archive and authoritative checksum, so conditional T040 remains
+ineligible and fail-closed rather than skipped as successful evidence.

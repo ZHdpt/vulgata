@@ -240,11 +240,11 @@ public sealed class CodeGraphAdapterTests
     }
 
     [Fact]
-    public async Task CodeGraphPort_AllowedJsonOperations_ReturnBoundedTypedEvidenceFromTrustedFixture()
+    public async Task CodeGraphPort_ObservedCodeGraphV150Shapes_ReturnBoundedTypedEvidence()
     {
-        // T030 RED: the accepted closed Core seam must map fixed JSON operation
-        // results to bounded typed evidence through Infrastructure-owned doubles.
-        // No installed CLI is launched and no real Repository index is touched.
+        // T031 remediation RED: CodeGraph 1.5.0 emits human-readable init/index
+        // output, then status JSON, while the query/relationship/impact commands
+        // use their own JSON envelopes. No installed CLI is launched here.
         const string root = @"G:\fixtures\story121-codegraph";
         const string indexIdentity = "fixture-index-001";
         AnalysisRuntimeIdentity runtimeIdentity = AnalysisRuntimeIdentity.Create(
@@ -293,13 +293,90 @@ public sealed class CodeGraphAdapterTests
             indexIdentity);
         FakeCodeGraphSnapshotResolver snapshots = new(snapshot);
         FakeCodeGraphProcessRunner process = new();
-        process.Enqueue(JsonResult("{\"status\":\"ok\",\"indexIdentity\":\"fixture-index-001\",\"durationMs\":12,\"indexedFileCount\":3}"));
-        process.Enqueue(JsonResult("{\"status\":\"ok\",\"indexIdentity\":\"fixture-index-001\",\"durationMs\":18,\"indexedFileCount\":3}"));
-        process.Enqueue(JsonResult("{\"status\":\"ready\",\"indexIdentity\":\"fixture-index-001\",\"indexedFileCount\":3}"));
-        process.Enqueue(JsonResult("{\"symbols\":[{\"symbol\":\"Fixture.Root\",\"kind\":\"type\",\"relativePath\":\"Fixture/Root.cs\",\"startLine\":2,\"endLine\":4}]}"));
-        process.Enqueue(JsonResult("{\"relationships\":[{\"sourceSymbol\":\"Fixture.Caller\",\"targetSymbol\":\"Fixture.Root\",\"relativePath\":\"Fixture/Caller.cs\",\"startLine\":7,\"endLine\":9}]}"));
-        process.Enqueue(JsonResult("{\"relationships\":[{\"sourceSymbol\":\"Fixture.Root\",\"targetSymbol\":\"Fixture.Callee\",\"relativePath\":\"Fixture/Callee.cs\",\"startLine\":11,\"endLine\":13}]}"));
-        process.Enqueue(JsonResult("{\"relativePaths\":[\"Fixture/Caller.cs\",\"Fixture/Callee.cs\"]}"));
+        process.Enqueue(TextResult("Indexed 5 files, 21 nodes, 24 edges\r\n"));
+        process.Enqueue(JsonResult(RealStatusJson()));
+        // T038 real qualification captured successful rebuild/index with exit 0
+        // and empty stdout; the adapter must accept it before reading status.
+        process.Enqueue(TextResult(string.Empty));
+        process.Enqueue(JsonResult(RealStatusJson()));
+        process.Enqueue(JsonResult(RealStatusJson()));
+        process.Enqueue(JsonResult(
+            """
+            [
+              {
+                "node": {
+                  "id": "node-1",
+                  "kind": "class",
+                  "name": "Root",
+                  "qualifiedName": "Fixture.Root",
+                  "filePath": "Fixture/Root.cs",
+                  "language": "csharp",
+                  "startLine": 2,
+                  "endLine": 4,
+                  "startColumn": 0,
+                  "endColumn": 1,
+                  "visibility": "public",
+                  "isExported": false,
+                  "isAsync": false,
+                  "isStatic": false,
+                  "isAbstract": false,
+                  "updatedAt": 1787105667929
+                },
+                "score": 1.0
+              }
+            ]
+            """));
+        process.Enqueue(JsonResult(
+            """
+            {
+              "symbol": "Fixture.Root",
+              "callers": [
+                {
+                  "name": "Fixture.Caller",
+                  "kind": "method",
+                  "filePath": "Fixture/Caller.cs",
+                  "startLine": 7
+                }
+              ]
+            }
+            """));
+        process.Enqueue(JsonResult(
+            """
+            {
+              "symbol": "Fixture.Root",
+              "callees": [
+                {
+                  "name": "Fixture.Callee",
+                  "kind": "method",
+                  "filePath": "Fixture/Callee.cs",
+                  "startLine": 11
+                }
+              ]
+            }
+            """));
+        process.Enqueue(JsonResult(
+            """
+            {
+              "symbol": "Fixture.Root",
+              "depth": 1,
+              "nodeCount": 2,
+              "edgeCount": 1,
+              "affected": [
+                {
+                  "name": "Fixture.Caller",
+                  "kind": "method",
+                  "filePath": "Fixture/Caller.cs",
+                  "startLine": 7
+                },
+                {
+                  "name": "Fixture.Callee",
+                  "kind": "method",
+                  "filePath": "Fixture/Callee.cs",
+                  "startLine": 11
+                }
+              ]
+            }
+            """));
 
         CodeGraphAdapterOptions options = new(
             @"G:\packages\npm\prefix\codegraph.ps1",
@@ -330,21 +407,19 @@ public sealed class CodeGraphAdapterTests
 
         Assert.Equal(AnalysisOperationStatus.Succeeded, index.Status);
         Assert.Equal(indexIdentity, index.IndexIdentity);
-        Assert.Equal(12, index.DurationMilliseconds);
-        Assert.Equal(3, index.IndexedFileCount);
+        Assert.Equal(5, index.IndexedFileCount);
         Assert.Null(index.Failure);
         Assert.Equal(AnalysisOperationStatus.Succeeded, rebuild.Status);
         Assert.Equal(indexIdentity, rebuild.IndexIdentity);
-        Assert.Equal(18, rebuild.DurationMilliseconds);
-        Assert.Equal(3, rebuild.IndexedFileCount);
+        Assert.Equal(5, rebuild.IndexedFileCount);
         Assert.Null(rebuild.Failure);
         Assert.Equal(AnalysisOperationStatus.Succeeded, status.Status);
         Assert.True(status.Ready);
         Assert.False(status.Stale);
-        Assert.Equal(3, status.IndexedFileCount);
+        Assert.Equal(5, status.IndexedFileCount);
         Assert.Null(status.Failure);
         Assert.Equal(indexIdentity, snapshots.LastExpectedIndexIdentity);
-        Assert.Equal(7, snapshots.Scopes.Count);
+        Assert.Equal(9, snapshots.Scopes.Count);
 
         AnalysisSymbolEvidence symbol = Assert.Single(symbols.Symbols);
         Assert.Equal(AnalysisOperationStatus.Succeeded, symbols.Status);
@@ -362,7 +437,7 @@ public sealed class CodeGraphAdapterTests
         Assert.Equal("Fixture.Root", caller.TargetSymbol);
         Assert.Equal("Fixture/Caller.cs", caller.RelativePath);
         Assert.Equal(7, caller.Range.StartLine);
-        Assert.Equal(9, caller.Range.EndLine);
+        Assert.Equal(7, caller.Range.EndLine);
 
         AnalysisRelationshipEvidence callee = Assert.Single(callees.Relationships);
         Assert.Equal(AnalysisOperationStatus.Succeeded, callees.Status);
@@ -371,7 +446,7 @@ public sealed class CodeGraphAdapterTests
         Assert.Equal("Fixture.Callee", callee.TargetSymbol);
         Assert.Equal("Fixture/Callee.cs", callee.RelativePath);
         Assert.Equal(11, callee.Range.StartLine);
-        Assert.Equal(13, callee.Range.EndLine);
+        Assert.Equal(11, callee.Range.EndLine);
 
         Assert.Equal(AnalysisOperationStatus.Succeeded, relatedFiles.Status);
         Assert.Null(relatedFiles.Failure);
@@ -379,28 +454,34 @@ public sealed class CodeGraphAdapterTests
             ["Fixture/Caller.cs", "Fixture/Callee.cs"],
             relatedFiles.RelativePaths);
 
-        Assert.Equal(7, process.Requests.Count);
+        Assert.Equal(9, process.Requests.Count);
         Assert.Equal(
             ["init", root],
             process.Requests[0].Arguments);
         Assert.Equal(
-            ["index", "--quiet", root],
+            ["status", root, "--json"],
             process.Requests[1].Arguments);
         Assert.Equal(
-            ["status", root, "--json"],
+            ["index", "--quiet", root],
             process.Requests[2].Arguments);
         Assert.Equal(
-            ["query", "Fixture", "--kind", "type", "--path", root, "--limit", "8", "--json"],
+            ["status", root, "--json"],
             process.Requests[3].Arguments);
         Assert.Equal(
-            ["callers", "Fixture.Root", "--path", root, "--limit", "8", "--json"],
+            ["status", root, "--json"],
             process.Requests[4].Arguments);
         Assert.Equal(
-            ["callees", "Fixture.Root", "--path", root, "--limit", "8", "--json"],
+            ["query", "Fixture", "--kind", "class", "--path", root, "--limit", "8", "--json"],
             process.Requests[5].Arguments);
         Assert.Equal(
-            ["impact", "Fixture.Root", "--path", root, "--depth", "1", "--json"],
+            ["callers", "Fixture.Root", "--path", root, "--limit", "8", "--json"],
             process.Requests[6].Arguments);
+        Assert.Equal(
+            ["callees", "Fixture.Root", "--path", root, "--limit", "8", "--json"],
+            process.Requests[7].Arguments);
+        Assert.Equal(
+            ["impact", "Fixture.Root", "--path", root, "--depth", "1", "--json"],
+            process.Requests[8].Arguments);
         Assert.All(process.Requests, request =>
         {
             Assert.Equal(options.CommandPath, request.FileName);
@@ -418,6 +499,38 @@ public sealed class CodeGraphAdapterTests
             Assert.Equal(scope.RuntimeIdentityHash, observed.RuntimeIdentityHash);
         });
     }
+
+    private static CodeGraphProcessResult TextResult(string output) =>
+        new(0, Encoding.UTF8.GetBytes(output), [], TimedOut: false);
+
+    private static string RealStatusJson() =>
+        """
+        {
+          "initialized": true,
+          "version": "1.5.0",
+          "projectPath": "G:\\fixtures\\story121-codegraph",
+          "indexPath": "G:\\fixtures\\story121-codegraph\\.codegraph",
+          "lastIndexed": "2026-08-19T00:00:00.000Z",
+          "fileCount": 5,
+          "nodeCount": 21,
+          "edgeCount": 24,
+          "dbSizeBytes": 167936,
+          "journalMode": "wal",
+          "backend": "node-sqlite",
+          "nodesByKind": { "class": 5, "method": 16 },
+          "languages": ["java", "xml"],
+          "pendingChanges": { "added": 0, "modified": 0, "removed": 0 },
+          "worktreeMismatch": null,
+          "index": {
+            "builtWithVersion": "1.5.0",
+            "builtWithExtractionVersion": 24,
+            "currentExtractionVersion": 24,
+            "reindexRecommended": false,
+            "state": "complete",
+            "pendingRefs": 0
+          }
+        }
+        """;
 
     private static CodeGraphProcessResult JsonResult(string json) =>
         new(0, Encoding.UTF8.GetBytes(json), [], TimedOut: false);
