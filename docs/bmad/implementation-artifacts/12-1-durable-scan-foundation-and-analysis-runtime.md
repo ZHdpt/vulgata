@@ -846,3 +846,20 @@ verification passed 23/23 focused health/revalidation tests and 150/150
 Analysis Runtime plus Durable Scanning tests. Core, Infrastructure, and Web all
 built with zero errors; only existing package/version warnings remain. T055 and
 T056 are complete and the candidate returns to convergence iteration 2.
+
+### Convergence iteration 2
+
+The independent convergence analyst returned `tasks_appended`, not CLEAN. It
+verified that T055 closes configured Analysis Runtime integrity, but found that
+T056's production `RuntimeScanRecoveryBindingProbe` still obtains Repository
+access, Profiled Revision, affected SourceHash, prompt/schema, and provider
+fields by rereading the same durable recovery snapshot. Those comparisons are
+therefore self-consistency checks rather than independent current-state
+revalidation.
+
+The analyst appended only T057. It requires fresh observations from current
+Repository authorization/access, revision/source, prompt/schema, and provider
+authorities before any recovery transition, while retaining the independently
+recomputed configured Runtime Identity hash and fail-closed committed-Document
+integrity. The workflow returns to behavioral RED and minimal GREEN before a
+third convergence pass.

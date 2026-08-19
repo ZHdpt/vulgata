@@ -2202,50 +2202,59 @@
       "observed_at": "2026-08-19T08:14:40Z",
       "summary": "T055/T056 are complete. Ready requires exact configured tool/runtime integrity and exposes a scope-bound canonical Runtime Identity hash. Recovery verifies Repository/revision/file/prompt/schema/provider bindings plus a freshly recomputed configured hash before transition. Independent focused verification passed 23/23 and the combined boundary passed 150/150; all builds had zero errors.",
       "raw_output_path": "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/converge/67",
+      "kind": "convergence",
+      "stage": "converge",
+      "source_commit": "e16af208fd7a9be6310352ec5e0039aedda3ad69",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/tasks.md",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs"
+      ],
+      "command": "independent speckit-converge against pinned Story 12.1 implementation iteration 2",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T08:19:40Z",
+      "summary": "Convergence iteration 2 returned tasks_appended. T055 is closed. T056 remains partial because the production recovery binding probe rereads Repository/revision/source/prompt/schema/provider fields from the same durable snapshot instead of independently observing their current authorities. T057 was appended as the sole remaining gap.",
+      "raw_output_path": "specs/010-durable-scan-foundation/tasks.md"
     }
   ],
   "convergence": {
     "status": "revised",
-    "iteration": 1,
+    "iteration": 2,
     "outcome": "tasks_appended",
-    "findings_count": 2,
+    "findings_count": 1,
     "appended_task_ids": [
-      "T055",
-      "T056"
+      "T057"
     ],
     "artifact_hashes": {
       "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
       "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
-      "specs/010-durable-scan-foundation/tasks.md": "167a2628d1b3810d2801144d3077bf1cd58fb1721f36a3fc772f5dfabe9777d7",
-      "src/dotnet/Vulgata.Web/Program.cs": "62ab1e9cf56ac7b9c0bd53c434e83839708af43824e8666b2e8915c7ca392bb0",
-      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "d2d5daaf683d38edb2e60763485d2c2de0b933044390265b3289ac12583616ed"
+      "specs/010-durable-scan-foundation/tasks.md": "8d4dbc5a66056198185fd818f78ff0b2b7b93f0fe61181a55a0d4cac9c2cfde3",
+      "src/dotnet/Vulgata.Web/Program.cs": "52b9e83a1166c0f5f6c19d00a1a379ff6d072ed3080fa4164260616322918f8c",
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "e07b3e0bcf30f025af5dfa1f2c617b4e17c5246298b1d5fb78083330128b5152"
     },
-    "completed_at": "2026-08-19T07:40:26Z"
+    "completed_at": "2026-08-19T08:19:40Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T081440Z-5c02d9",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260819T081940Z-6d31b4",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "implement",
+    "stage": "converge",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/tasks.md",
-      "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryBindingProbe.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
-      "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs",
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs",
-      "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+      "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/66"
+      "12-1-durable-scan-foundation-and-analysis-runtime/converge/67"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T08:14:40Z"
+  "updated_at": "2026-08-19T08:19:40Z"
 }
