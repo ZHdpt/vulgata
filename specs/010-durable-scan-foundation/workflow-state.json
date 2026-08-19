@@ -1925,6 +1925,35 @@
       "observed_at": "2026-08-19T00:01:49Z",
       "summary": "T049 was existing-correct with no production edit: SDK compile inclusion was present, Infrastructure and Web built with zero errors, model tests passed 6/6, real PostgreSQL migration and Program-host restart each passed 1/1, protected knowledge remained readable, and cleanup count was zero.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/50",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "b0b1401028e29b4648e5a165b96714c5e1ee5b0e",
+      "artifact_paths": ["tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs"],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~AnalysisRuntimeHealthTests --no-restore",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T01:21:01Z",
+      "summary": "T036 compiled and ran 9 tests: 2 passed and 7 failed on missing closed-port/probe DI, absent startup integrity invocation, historical CGC production registration, missing NotReady dispatch gate, and missing post-deadline-app Compose profile.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/51",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "b0b1401028e29b4648e5a165b96714c5e1ee5b0e",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "docker-compose.yml",
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs",
+        "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs"
+      ],
+      "command": "dotnet test ... --filter FullyQualifiedName~AnalysisRuntimeHealthTests; WorkerAgentProductionRegistrationTests; AnalysisRuntime; dotnet build Vulgata.Web; docker compose config --services; docker compose --profile post-deadline-app config --services",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T01:21:01Z",
+      "summary": "Original-author verification passed 9/9 health tests, 3/3 corrected Worker gating tests, and 41/41 Analysis Runtime tests; Web built with zero errors. Startup probes once without tool/dispatch side effects, NotReady gates Worker dispatch and recovery, management stays available, historical CGC is absent, default Compose is postgres, and the approved profile adds vulgata. T036/T037 are complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1937,33 +1966,26 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T000149Z-b2710c",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T012101Z-d3f80a",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphProcessContracts.cs",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/JdtLsMissingArchiveQualificationTests.cs"
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "docker-compose.yml",
+      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs",
+      "tests/Vulgata.Tests/WorkerAgentProductionRegistrationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/44",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/45",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/46",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/47",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/48",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/49"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/50",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/51"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T00:01:49Z"
+  "updated_at": "2026-08-19T01:21:01Z"
 }

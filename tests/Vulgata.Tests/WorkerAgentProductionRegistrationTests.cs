@@ -27,7 +27,7 @@ public sealed class WorkerAgentProductionRegistrationTests
     private const string _unrelatedSource = "UNRELATED-SOURCE-MUST-NOT-CROSS";
 
     [Fact]
-    public async Task ProductionComposition_Pass1ScopedDispatch_ReachesExactCommittedHydrationAsync()
+    public async Task ProductionComposition_NotReadyGate_PrecedesAuthorizationAndInnerDispatchAsync()
     {
         using var files = new TemporarySourceDirectory();
         Guid systemId = WorkerAgentTestFixtures.Id(4);
@@ -95,33 +95,29 @@ public sealed class WorkerAgentProductionRegistrationTests
         IWorkerAgentDispatcher dispatcher =
             services.GetRequiredService<IWorkerAgentDispatcher>();
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        InvalidOperationException unauthorizedFailure = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             dispatcher.DispatchAsync(
                 packet,
                 new RepositoryAccessScope([WorkerAgentTestFixtures.Id(999)]),
                 CancellationToken.None));
+        Assert.Equal("Analysis Runtime is NotReady.", unauthorizedFailure.Message);
         Assert.Equal(0, repositorySource.LookupCount);
         Assert.Equal(0, workingCopy.AcquireCount);
         Assert.Equal(0, snapshot.AcquireCount);
         Assert.Equal(0, requestCapture.CallCount);
 
         var authorizedScope = new RepositoryAccessScope([repository.Id]);
-        WorkerAgentResultEnvelope result = await dispatcher.DispatchAsync(
+        InvalidOperationException authorizedFailure = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            dispatcher.DispatchAsync(
             packet,
             authorizedScope,
-            CancellationToken.None);
+            CancellationToken.None));
 
-        Assert.Equal(WorkerAgentResultOutcome.Error, result.Outcome);
-        Assert.Equal(1, repositorySource.LookupCount);
-        Assert.Equal(1, workingCopy.AcquireCount);
-        Assert.Same(repository, workingCopy.Repository);
-        Assert.Equal(packet.ScanRunId, workingCopy.ScanRunId);
-        Assert.Equal(1, snapshot.AcquireCount);
-        Assert.Equal(1, requestCapture.CallCount);
-        Assert.Equal(42003, requestCapture.RequestUri?.Port);
-        Assert.Contains(expectedSlice, requestCapture.Body, StringComparison.Ordinal);
-        Assert.DoesNotContain(_unrelatedSource, requestCapture.Body, StringComparison.Ordinal);
-        Assert.DoesNotContain(files.RootPath, requestCapture.Body, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Analysis Runtime is NotReady.", authorizedFailure.Message);
+        Assert.Equal(0, repositorySource.LookupCount);
+        Assert.Equal(0, workingCopy.AcquireCount);
+        Assert.Equal(0, snapshot.AcquireCount);
+        Assert.Equal(0, requestCapture.CallCount);
     }
 
     [Theory]
@@ -185,7 +181,7 @@ public sealed class WorkerAgentProductionRegistrationTests
             services.GetRequiredService<ISecretEncryptionService>());
 
         Assert.NotNull(runner);
-        Assert.IsType<WorkerAgentDispatcher>(dispatcher);
+        Assert.IsType<RuntimeGatedWorkerAgentDispatcher>(dispatcher);
         Assert.IsType<WorkerAgentResultCommitter>(committer);
         Assert.IsType<WorkerAgentProviderResolver>(
             services.GetRequiredService<WorkerAgentProviderResolver>());
@@ -206,38 +202,17 @@ public sealed class WorkerAgentProductionRegistrationTests
         Assert.Equal(expectedPort, assignment.Endpoint.Port);
 
         WorkerAgentJobPacket packet = CreatePass2Packet();
-        WorkerAgentResultEnvelope result = await dispatcher.DispatchAsync(
+        InvalidOperationException notReadyFailure = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            dispatcher.DispatchAsync(
             packet,
             new RepositoryAccessScope([packet.RepositoryId]),
-            CancellationToken.None);
-
-        Assert.Equal(WorkerAgentResultOutcome.Error, result.Outcome);
-        Assert.Equal("Worker Agent 调用失败。", result.BoundedReason);
-        Assert.Equal(1, requestCapture.CallCount);
-        Assert.Equal(expectedPort, requestCapture.RequestUri?.Port);
-        Assert.Equal("Bearer", requestCapture.AuthorizationScheme);
-        Assert.Equal(_plainSecret, requestCapture.AuthorizationParameter);
-        Assert.Equal(1, encryption.DecryptCount);
-        Assert.Equal(SecretPurposes.LlmApiKey, encryption.Purpose);
-        Assert.DoesNotContain(_plainSecret, requestCapture.Body, StringComparison.Ordinal);
-        Assert.DoesNotContain(_unrelatedSource, requestCapture.Body, StringComparison.Ordinal);
-
-        string[] capturedSecuritySurface =
-        [
-            packet.ToString(),
-            requestCapture.Body,
-            result.ToString(),
-            .. logCapture.Messages.Where(message =>
-                message.Category.StartsWith("Vulgata.Agents", StringComparison.Ordinal))
-                .Select(message => message.Text),
-        ];
-        string capturedText = string.Join(Environment.NewLine, capturedSecuritySurface);
-        Assert.DoesNotContain(_plainSecret, capturedText, StringComparison.Ordinal);
-        Assert.DoesNotContain(_rawDiagnostic, capturedText, StringComparison.Ordinal);
-        Assert.DoesNotContain(_unrelatedSource, capturedText, StringComparison.Ordinal);
-        Assert.DoesNotMatch(
-            new Regex(@"(?i)([a-z]:[\\/]|/(?:home|users|var|tmp)/)"),
-            capturedText);
+            CancellationToken.None));
+        Assert.Equal("Analysis Runtime is NotReady.", notReadyFailure.Message);
+        Assert.Equal(0, requestCapture.CallCount);
+        Assert.Equal(0, encryption.DecryptCount);
+        Assert.DoesNotContain(
+            logCapture.Messages,
+            message => message.Category.StartsWith("Vulgata.Agents", StringComparison.Ordinal));
 
         VulgataDbContext dbContext = services.GetRequiredService<VulgataDbContext>();
         Assert.Empty(await dbContext.DocumentVersions.AsNoTracking().ToListAsync());

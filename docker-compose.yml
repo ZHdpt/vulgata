@@ -1,5 +1,24 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: vulgata-postgres
+    environment:
+      POSTGRES_DB: vulgata
+      POSTGRES_USER: vulgata
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vulgata_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vulgata -d vulgata"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   vulgata:
+    profiles:
+      - post-deadline-app
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -20,23 +39,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-  postgres:
-    image: postgres:17-alpine
-    container_name: vulgata-postgres
-    environment:
-      POSTGRES_DB: vulgata
-      POSTGRES_USER: vulgata
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-vulgata_dev}
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vulgata -d vulgata"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
 
 volumes:
   pgdata:

@@ -630,3 +630,26 @@ NotReady. T049 was also verified existing-correct without production edits: SDK
 compile inclusion, startup migration, model tests, real PostgreSQL migration
 lifecycle, and real Program-host restart all passed, with protected knowledge
 readable and no owned temporary database remaining.
+
+### Implementation group 21
+
+T036 and T037 completed production Analysis Runtime health and composition. The
+behavioral RED observed seven missing behaviors across closed-port registration,
+ordinary-startup integrity invocation, bounded NotReady state, historical CGC
+removal, Worker dispatch gating, and PostgreSQL-only default composition. The
+GREEN invokes the configured integrity probe once without indexing, importing,
+opening a Java session, or dispatching a Worker; retains a bounded sanitized
+in-memory readiness result; keeps management startup available; gates every
+production Worker dispatch while NotReady; and uses readiness for Scan recovery
+revalidation. Request-bound analysis ports resolve but fail closed until T042
+supplies their trusted production binding.
+
+Production no longer registers `CodeGraphContextProvider`. After explicit
+authorization, the sole historical `RepositoryProfilingCoordinator` registration
+that required `ICodeGraphProvider` was replaced with a bounded fail-closed
+coordinator until T042; historical source and endpoints remain intact. The app
+service now uses only the `post-deadline-app` profile, so default Compose exposes
+PostgreSQL alone. Original-author verification passed 9/9 health tests, corrected
+the three stale pre-gate Worker registration assertions, passed 3/3 Worker tests
+and 41/41 Analysis Runtime tests, and built Web with zero errors. T036/T037 are
+complete; real CodeGraph qualification remains T038.
