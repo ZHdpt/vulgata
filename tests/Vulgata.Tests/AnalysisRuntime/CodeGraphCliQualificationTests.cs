@@ -84,8 +84,9 @@ public sealed class CodeGraphCliQualificationTests
                 scope.ScanRunId,
                 scope.ProfiledRevision,
                 scope.WorkingCopyBindingToken,
-                fixture,
-                "t038-neutral-index");
+                runtimeIdentityHash: scope.RuntimeIdentityHash,
+                repositoryRoot: fixture,
+                expectedIndexIdentity: "t038-neutral-index");
             RecordingSnapshotResolver resolver = new(snapshot);
             RecordingProcessRunner process = new();
             ICodeGraphAnalysisPort adapter = new CodeGraphAnalysisAdapter(

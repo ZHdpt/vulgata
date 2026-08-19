@@ -45,7 +45,8 @@ internal sealed class CodeGraphRepositorySnapshot
         string profiledRevision,
         string workingCopyBindingToken,
         string repositoryRoot,
-        string expectedIndexIdentity)
+        string expectedIndexIdentity,
+        string runtimeIdentityHash)
     {
         if (repositoryId == Guid.Empty || scanRunId == Guid.Empty)
         {
@@ -73,6 +74,7 @@ internal sealed class CodeGraphRepositorySnapshot
         ScanRunId = scanRunId;
         ProfiledRevision = profiledRevision.ToLowerInvariant();
         WorkingCopyBindingToken = workingCopyBindingToken;
+        RuntimeIdentityHash = RequireRuntimeIdentityHash(runtimeIdentityHash);
         RepositoryRoot = Path.GetFullPath(repositoryRoot);
         ExpectedIndexIdentity = RequireMachineCode(expectedIndexIdentity, nameof(expectedIndexIdentity));
     }
@@ -81,8 +83,22 @@ internal sealed class CodeGraphRepositorySnapshot
     public Guid ScanRunId { get; }
     public string ProfiledRevision { get; }
     public string WorkingCopyBindingToken { get; }
+    public string RuntimeIdentityHash { get; }
     public string RepositoryRoot { get; }
     public string ExpectedIndexIdentity { get; }
+
+    private static string RequireRuntimeIdentityHash(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length != 64 ||
+            value.Any(character => character is not (>= '0' and <= '9') and not (>= 'a' and <= 'f')))
+        {
+            throw new ArgumentException(
+                "A canonical lowercase analysis runtime identity SHA-256 is required.",
+                nameof(value));
+        }
+
+        return value;
+    }
 
     private static string RequireMachineCode(string value, string parameterName)
     {

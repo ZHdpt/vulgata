@@ -7,6 +7,11 @@ namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
 public sealed partial class CodeGraphAnalysisAdapter
 {
+    private static readonly AnalysisPortFailure _argumentRejected = new(
+        AnalysisPortFailureReason.Rejected,
+        "codegraph_argument_rejected",
+        "codegraph argument rejected");
+
     private bool IsBound => _options is not null && _snapshots is not null && _process is not null;
 
     private async Task<AnalysisIndexResult> ExecuteIndexAsync(
@@ -136,6 +141,11 @@ public sealed partial class CodeGraphAnalysisAdapter
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(query);
         cancellationToken.ThrowIfCancellationRequested();
+        if (IsCliOption(query.SearchAtom))
+        {
+            return new SymbolSearchResult(AnalysisOperationStatus.Failed, [], _argumentRejected);
+        }
+
         if (!IsBound)
         {
             return new SymbolSearchResult(AnalysisOperationStatus.Failed, [], _unavailable);
@@ -215,6 +225,11 @@ public sealed partial class CodeGraphAnalysisAdapter
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        if (IsCliOption(request.ExactSymbol))
+        {
+            return new RelationshipResult(AnalysisOperationStatus.Failed, [], _argumentRejected);
+        }
+
         if (!IsBound)
         {
             return new RelationshipResult(AnalysisOperationStatus.Failed, [], _unavailable);
@@ -281,6 +296,11 @@ public sealed partial class CodeGraphAnalysisAdapter
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        if (IsCliOption(request.ExactSymbol))
+        {
+            return new RelatedFilesResult(AnalysisOperationStatus.Failed, [], _argumentRejected);
+        }
+
         if (!IsBound)
         {
             return new RelatedFilesResult(AnalysisOperationStatus.Failed, [], _unavailable);
@@ -356,13 +376,16 @@ public sealed partial class CodeGraphAnalysisAdapter
         if (snapshot is null || snapshot.RepositoryId != scope.RepositoryId ||
             snapshot.ScanRunId != scope.ScanRunId ||
             !StringComparer.Ordinal.Equals(snapshot.ProfiledRevision, scope.ProfiledRevision) ||
-            !StringComparer.Ordinal.Equals(snapshot.WorkingCopyBindingToken, scope.WorkingCopyBindingToken))
+            !StringComparer.Ordinal.Equals(snapshot.WorkingCopyBindingToken, scope.WorkingCopyBindingToken) ||
+            !StringComparer.Ordinal.Equals(snapshot.RuntimeIdentityHash, scope.RuntimeIdentityHash))
         {
             throw new UnauthorizedAccessException("codegraph snapshot binding rejected");
         }
 
         return snapshot;
     }
+
+    private static bool IsCliOption(string atom) => atom.StartsWith('-');
 
     private Task<CodeGraphProcessResult> RunAsync(
         AnalysisScope scope,

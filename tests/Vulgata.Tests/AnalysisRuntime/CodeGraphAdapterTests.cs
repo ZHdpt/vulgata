@@ -285,12 +285,13 @@ public sealed class CodeGraphAdapterTests
         AnalysisSymbolRequest request = new("Fixture.Root", bounds);
 
         CodeGraphRepositorySnapshot snapshot = new(
-            _repositoryId,
-            scope.ScanRunId,
-            scope.ProfiledRevision,
-            scope.WorkingCopyBindingToken,
-            root,
-            indexIdentity);
+            repositoryId: _repositoryId,
+            scanRunId: scope.ScanRunId,
+            profiledRevision: scope.ProfiledRevision,
+            workingCopyBindingToken: scope.WorkingCopyBindingToken,
+            runtimeIdentityHash: scope.RuntimeIdentityHash,
+            repositoryRoot: root,
+            expectedIndexIdentity: indexIdentity);
         FakeCodeGraphSnapshotResolver snapshots = new(snapshot);
         FakeCodeGraphProcessRunner process = new();
         process.Enqueue(TextResult("Indexed 5 files, 21 nodes, 24 edges\r\n"));

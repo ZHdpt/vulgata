@@ -674,3 +674,23 @@ temporary Repository, `.codegraph`, or isolated build artifact remained. T038
 is complete. The supplied JDT installation still lacks the retained
 distribution archive and authoritative checksum, so conditional T040 remains
 ineligible and fail-closed rather than skipped as successful evidence.
+
+### Implementation group 23
+
+T041-T044 completed the bounded Analysis Evidence and adversarial capability
+slice. The T041 behavioral boundary exercises all seven CodeGraph operations,
+all four Java navigation operations, and exact Source reading through the typed
+Core ports. An authoritative CodeGraph Repository snapshot now carries the
+canonical Runtime Identity hash in addition to Repository, Scan Run, Profiled
+Revision, and working-copy binding; any mismatch is rejected after resolution
+and before process execution. No raw process, protocol, graph store, network,
+or unrestricted filesystem capability crosses the Core boundary.
+
+T043 adversarial tests cover cross-Repository and stale revision/binding/runtime
+requests, bounded ranges and byte/item limits, path escape, Java workspace
+collision, and option-shaped CodeGraph atoms. T044 rejects leading-hyphen CLI
+atoms before snapshot or process activity while preserving valid qualified
+symbols and the fixed adapter-owned argument templates. Independent verification
+passed 6/6 security tests and 51/51 Analysis Runtime tests; focused bounded
+evidence passed 2/2, adapter tests passed 3/3, real CodeGraph qualification
+passed 2/2, and Infrastructure built with zero errors. T041-T044 are complete.

@@ -1985,6 +1985,40 @@
       "observed_at": "2026-08-19T02:20:07Z",
       "summary": "Focused CodeGraph adapter tests passed 3/3, real installed neutral-Repository qualification passed 2/2, adjacent adapter/health verification passed 12/12, and Infrastructure built with zero errors. Package/version/bundle/three hashes and all seven closed operations were verified; ordinary health created no index and cleanup left zero temporary Repository, .codegraph, or isolated build artifacts. T038 is complete.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/54",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "37b99c97bf50d30a1455d3f456f562b157fd26b7",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/AnalysisRuntime/BoundedAnalysisEvidenceTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisCapabilitySecurityTests.cs"
+      ],
+      "command": "dotnet test ... --filter FullyQualifiedName~BoundedAnalysisEvidenceTests; dotnet test ... --filter FullyQualifiedName~AnalysisCapabilitySecurityTests",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T02:37:29Z",
+      "summary": "T041/T043 isolated missing authoritative Runtime Identity binding in the CodeGraph Repository snapshot and option-shaped CLI atoms reaching the process. After correcting a resolver-observation test defect, the Runtime Identity seam was a compile RED and the flag-like atom case remained the sole behavioral RED.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/55",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "37b99c97bf50d30a1455d3f456f562b157fd26b7",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphProcessContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/BoundedAnalysisEvidenceTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/AnalysisCapabilitySecurityTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs"
+      ],
+      "command": "dotnet test ... --filter BoundedAnalysisEvidenceTests; AnalysisCapabilitySecurityTests; CodeGraphAdapterTests; CodeGraphCliQualificationTests; AnalysisRuntime; dotnet build Vulgata.Infrastructure",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T02:37:29Z",
+      "summary": "Independent verification passed T041 2/2, T043 security 6/6, CodeGraph adapter 3/3, real qualification 2/2, and the full Analysis Runtime suite 51/51; Infrastructure built with zero errors. Runtime Identity drift and option-shaped atoms are rejected before process execution while closed typed evidence remains available. T041-T044 are complete.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -1997,25 +2031,28 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T022007Z-a841d5",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T023729Z-ff5833",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
       "specs/010-durable-scan-foundation/tasks.md",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphProcessContracts.cs",
       "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/BoundedAnalysisEvidenceTests.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime/AnalysisCapabilitySecurityTests.cs",
       "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphAdapterTests.cs",
       "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/52",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/53"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/54",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/55"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T02:20:07Z"
+  "updated_at": "2026-08-19T02:37:29Z"
 }
