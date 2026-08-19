@@ -166,6 +166,57 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         Assert.Equal(snapshot.ProfiledRevision, configuredHealthProbe.Scope?.ProfiledRevision);
     }
 
+    [Fact]
+    public async Task RevalidateAsync_ConfiguredRuntimeHealthFailure_FailsClosedWithBoundedReason()
+    {
+        ScanRecoverySnapshot snapshot = SnapshotT056();
+        FakeBindingProbe bindingProbe = new(ObservedT056(snapshot));
+        ThrowingHealthProbe configuredHealthProbe = new(
+            new IOException("sensitive configured-runtime failure"));
+        RuntimeScanRecoveryRevalidator revalidator = new(
+            ReadyRuntimeT056(),
+            configuredHealthProbe,
+            bindingProbe);
+
+        ScanRecoveryRevalidationResult result = await revalidator.RevalidateAsync(
+            snapshot,
+            AuthorizedScopeT056(),
+            CancellationToken.None);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(
+            result.Reason,
+            new[]
+            {
+                DurableScanReason.InvalidIdentity,
+                DurableScanReason.IntegrityViolation,
+                DurableScanReason.ProviderUnavailable,
+            });
+        Assert.Equal(1, bindingProbe.CallCount);
+        Assert.Equal(1, configuredHealthProbe.CallCount);
+    }
+
+    [Fact]
+    public async Task RevalidateAsync_ConfiguredRuntimeHealthCancellation_PropagatesWithoutFailClosedMapping()
+    {
+        ScanRecoverySnapshot snapshot = SnapshotT056();
+        FakeBindingProbe bindingProbe = new(ObservedT056(snapshot));
+        ThrowingHealthProbe configuredHealthProbe = new(
+            new OperationCanceledException("configured-runtime cancellation"));
+        RuntimeScanRecoveryRevalidator revalidator = new(
+            ReadyRuntimeT056(),
+            configuredHealthProbe,
+            bindingProbe);
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() => revalidator.RevalidateAsync(
+            snapshot,
+            AuthorizedScopeT056(),
+            CancellationToken.None));
+
+        Assert.Equal(1, bindingProbe.CallCount);
+        Assert.Equal(1, configuredHealthProbe.CallCount);
+    }
+
     private static ScanRecoverySnapshot SnapshotT056() =>
         new(
             _executionId,
@@ -574,6 +625,20 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         {
             Scope = scope;
             return Task.FromResult(result);
+        }
+    }
+
+    private sealed class ThrowingHealthProbe(Exception exception)
+        : IAnalysisRuntimeHealthProbe
+    {
+        public int CallCount { get; private set; }
+
+        public Task<AnalysisHealthProbeResult> CheckConfiguredIntegrityAsync(
+            AnalysisScope scope,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            return Task.FromException<AnalysisHealthProbeResult>(exception);
         }
     }
 }

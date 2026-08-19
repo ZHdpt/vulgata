@@ -813,10 +813,22 @@ internal sealed class RuntimeScanRecoveryRevalidator : IScanRecoveryRevalidator
             return new ScanRecoveryRevalidationResult(false, DurableScanReason.IntegrityViolation);
         }
 
-        AnalysisHealthProbeResult configuredHealth =
-            await _configuredHealthProbe.CheckConfiguredIntegrityAsync(
+        AnalysisHealthProbeResult configuredHealth;
+        try
+        {
+            configuredHealth = await _configuredHealthProbe.CheckConfiguredIntegrityAsync(
                 CreateRecoveryAnalysisScope(snapshot),
                 cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            return new ScanRecoveryRevalidationResult(false, DurableScanReason.InvalidIdentity);
+        }
+
         if (configuredHealth.Status != AnalysisRuntimeHealthStatus.Ready ||
             !string.Equals(
                 configuredHealth.RuntimeIdentityHash,

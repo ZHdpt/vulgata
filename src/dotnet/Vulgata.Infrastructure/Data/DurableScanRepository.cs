@@ -108,21 +108,28 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
         if (jobs.Any(job =>
                 job.ScanExecutionId != scanExecutionId ||
                 job.RepositoryId != repositoryId ||
-                job.ScanRunId != scanRunId) ||
+                job.ScanRunId != scanRunId ||
+                job.FileCodeUnitId == Guid.Empty ||
+                job.ManifestOrdinal <= 0 ||
+                job.StateChangedAt.Offset != TimeSpan.Zero ||
+                !IsCanonicalInitialJob(job)) ||
             jobs.Select(job => job.Id).Distinct().Count() != jobs.Count ||
             jobs.Select(job => job.FileCodeUnitId).Distinct().Count() != jobs.Count ||
-            jobs.Select(job => job.ManifestOrdinal).Distinct().Count() != jobs.Count)
+            jobs.Select(job => job.ManifestOrdinal).Distinct().Count() != jobs.Count ||
+            jobs.Where((job, index) => job.ManifestOrdinal != index + 1).Any())
         {
             return Rejected(DurableScanReason.InvalidIdentity);
         }
 
         List<ScanJobExecution> existing = await dbContext.ScanJobExecutions
             .Where(value => value.ScanExecutionId == scanExecutionId)
+            .OrderBy(value => value.ManifestOrdinal)
             .ToListAsync(cancellationToken);
         if (existing.Count != 0)
         {
-            bool replay = jobs.All(requested => existing.Any(durable =>
-                JobIdentityAndStateMatch(durable, requested)));
+            bool replay = existing.Count == jobs.Count &&
+                existing.Zip(jobs).All(pair =>
+                    JobIdentityAndStateMatch(pair.First, pair.Second));
             return replay ? Replay() : Conflict(DurableScanReason.InvalidIdentity);
         }
 
@@ -863,7 +870,36 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
         left.FileCodeUnitId == right.FileCodeUnitId &&
         left.ManifestOrdinal == right.ManifestOrdinal &&
         left.State == right.State &&
-        left.StateVersion == right.StateVersion;
+        left.AttemptCount == right.AttemptCount &&
+        left.StateVersion == right.StateVersion &&
+        left.LeaseToken == right.LeaseToken &&
+        left.LeaseExpiresAt == right.LeaseExpiresAt &&
+        left.NextAttemptAt == right.NextAttemptAt &&
+        left.FailureCategory == right.FailureCategory &&
+        left.FailureCode == right.FailureCode &&
+        left.CommittedDocumentVersionId == right.CommittedDocumentVersionId &&
+        left.StateChangedAt == right.StateChangedAt;
+
+    private static bool IsCanonicalInitialJob(ScanJobExecution job)
+    {
+        ScanJobExecution canonical = ScanJobExecution.Create(
+            job.ScanExecutionId,
+            job.RepositoryId,
+            job.ScanRunId,
+            job.FileCodeUnitId,
+            job.ManifestOrdinal,
+            job.StateChangedAt);
+        return job.Id == canonical.Id &&
+            job.State == ScanJobExecutionState.Pending &&
+            job.AttemptCount == 0 &&
+            job.StateVersion == 0 &&
+            job.LeaseToken is null &&
+            job.LeaseExpiresAt is null &&
+            job.NextAttemptAt is null &&
+            job.FailureCategory is null &&
+            job.FailureCode is null &&
+            job.CommittedDocumentVersionId is null;
+    }
 
     private static bool CoordinationIdentityMatches(
         TwoRepositoryScanCoordination left,

@@ -915,3 +915,26 @@ bounded fail-closed result.
 All three findings are implementation-owned and have separable behavioral RED
 boundaries. They return to TDD, after which convergence and quality review must
 run again. The review did not reopen any approved or excluded historical scope.
+
+### Quality correction group 30
+
+QR-001 through QR-003 are corrected test-first. Durable job-manifest replay now
+requires pristine canonical initial jobs, exact `1..N` supplied order, equal
+cardinality, deterministic identities, and complete position-by-position state
+equality; subset, superset, reordered, or mutated manifests cannot replay or
+mutate durable state. Independent verification passed 10/10 focused and
+103/103 Durable Scanning tests.
+
+The durable Scan commit path now constructs the canonical Knowledge Commit,
+materializes it, and recomputes its commit fingerprint before replay acceptance,
+transaction creation, or mutation. A caller-supplied well-shaped but
+noncanonical fingerprint returns `Conflict`/`IntegrityViolation`; canonical
+commit and lost-response replay remain valid. Independent verification passed
+19/19 focused and 39/39 adjacent persistence/committer tests.
+
+Manual recovery now maps any non-cancellation configured-health exception to a
+bounded `InvalidIdentity` result without diagnostic leakage; caller cancellation
+still propagates. Independent verification passed 14/14 focused and 86/86
+adjacent recovery/manual-resume/Analysis Runtime tests, and Web built with zero
+errors. The correction invalidates downstream convergence and quality review,
+which must rerun on the committed boundary.

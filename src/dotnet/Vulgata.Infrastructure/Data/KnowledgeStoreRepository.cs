@@ -54,6 +54,26 @@ public sealed class KnowledgeStoreRepository(
                     job);
             }
 
+            KnowledgeStoreContractValidator.ValidateCommit(commit);
+            KnowledgeDocumentMaterialization canonicalProjection = _materializer.Materialize(
+                commit.LogicalDocumentId,
+                commit.NewDocumentVersionId,
+                commit.RepositoryId,
+                execution.SystemId,
+                commit.Content,
+                commit.CommittedAt);
+            string expectedCommitFingerprint =
+                _materializer.CreateCommitFingerprint(commit, canonicalProjection);
+            if (!StringComparer.Ordinal.Equals(
+                    request.CommitFingerprint,
+                    expectedCommitFingerprint))
+            {
+                return ScanCommitResult(
+                    ScanJobResultCommitOutcome.Conflict,
+                    DurableScanReason.IntegrityViolation,
+                    job);
+            }
+
             if (job.State == ScanJobExecutionState.Completed)
             {
                 bool exactReplay =
@@ -90,7 +110,6 @@ public sealed class KnowledgeStoreRepository(
                     job);
             }
 
-            KnowledgeStoreContractValidator.ValidateCommit(commit);
             IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
             {

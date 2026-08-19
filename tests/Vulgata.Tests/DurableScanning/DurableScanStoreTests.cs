@@ -103,6 +103,131 @@ public sealed class DurableScanStoreTests
     }
 
     [Fact]
+    public async Task InsertJobExecutionsAsync_StrictSubsetReplayIsRejectedWithoutMutationAsync()
+    {
+        await using SqliteConnection connection = OpenConnection();
+        await using VulgataDbContext context = CreateContext(connection);
+        DurableScanFixture fixture = await SeedFixtureWithExecutionAsync(context);
+        IReadOnlyList<CodeUnit> additionalCodeUnits =
+            await AddAdditionalCodeUnitsAsync(context, fixture, 2);
+        IDurableScanStore store = new DurableScanRepository(context);
+
+        ScanJobExecution[] manifest = CreateManifest(fixture, additionalCodeUnits);
+        Assert.Equal(
+            DurableScanStoreOutcome.Applied,
+            (await store.InsertJobExecutionsAsync(
+                fixture.Scope,
+                fixture.ExecutionId,
+                manifest,
+                CancellationToken.None)).Outcome);
+        ScanRecoveryJobSnapshot[] before = await ReadJobsAsync(store, fixture);
+
+        DurableScanStoreResult replay = await store.InsertJobExecutionsAsync(
+            fixture.Scope,
+            fixture.ExecutionId,
+            manifest.Take(2).ToArray(),
+            CancellationToken.None);
+        ScanRecoveryJobSnapshot[] after = await ReadJobsAsync(store, fixture);
+
+        Assert.NotEqual(DurableScanStoreOutcome.Replay, replay.Outcome);
+        Assert.Equal(before, after);
+    }
+
+    [Fact]
+    public async Task InsertJobExecutionsAsync_StrictSupersetReplayIsRejectedWithoutMutationAsync()
+    {
+        await using SqliteConnection connection = OpenConnection();
+        await using VulgataDbContext context = CreateContext(connection);
+        DurableScanFixture fixture = await SeedFixtureWithExecutionAsync(context);
+        IReadOnlyList<CodeUnit> additionalCodeUnits =
+            await AddAdditionalCodeUnitsAsync(context, fixture, 3);
+        IDurableScanStore store = new DurableScanRepository(context);
+
+        ScanJobExecution[] manifest = CreateManifest(
+            fixture,
+            additionalCodeUnits.Take(2).ToArray());
+        Assert.Equal(
+            DurableScanStoreOutcome.Applied,
+            (await store.InsertJobExecutionsAsync(
+                fixture.Scope,
+                fixture.ExecutionId,
+                manifest,
+                CancellationToken.None)).Outcome);
+        ScanRecoveryJobSnapshot[] before = await ReadJobsAsync(store, fixture);
+
+        ScanJobExecution extra = CreateJob(
+            fixture,
+            additionalCodeUnits[2],
+            manifestOrdinal: 4);
+        DurableScanStoreResult replay = await store.InsertJobExecutionsAsync(
+            fixture.Scope,
+            fixture.ExecutionId,
+            [.. manifest, extra],
+            CancellationToken.None);
+        ScanRecoveryJobSnapshot[] after = await ReadJobsAsync(store, fixture);
+
+        Assert.NotEqual(DurableScanStoreOutcome.Replay, replay.Outcome);
+        Assert.Equal(before, after);
+    }
+
+    [Fact]
+    public async Task InsertJobExecutionsAsync_ReorderedReplayIsRejectedWithoutMutationAsync()
+    {
+        await using SqliteConnection connection = OpenConnection();
+        await using VulgataDbContext context = CreateContext(connection);
+        DurableScanFixture fixture = await SeedFixtureWithExecutionAsync(context);
+        IReadOnlyList<CodeUnit> additionalCodeUnits =
+            await AddAdditionalCodeUnitsAsync(context, fixture, 2);
+        IDurableScanStore store = new DurableScanRepository(context);
+
+        ScanJobExecution[] manifest = CreateManifest(fixture, additionalCodeUnits);
+        Assert.Equal(
+            DurableScanStoreOutcome.Applied,
+            (await store.InsertJobExecutionsAsync(
+                fixture.Scope,
+                fixture.ExecutionId,
+                manifest,
+                CancellationToken.None)).Outcome);
+        ScanRecoveryJobSnapshot[] before = await ReadJobsAsync(store, fixture);
+
+        DurableScanStoreResult replay = await store.InsertJobExecutionsAsync(
+            fixture.Scope,
+            fixture.ExecutionId,
+            [manifest[1], manifest[0], manifest[2]],
+            CancellationToken.None);
+        ScanRecoveryJobSnapshot[] after = await ReadJobsAsync(store, fixture);
+
+        Assert.NotEqual(DurableScanStoreOutcome.Replay, replay.Outcome);
+        Assert.Equal(before, after);
+    }
+
+    [Fact]
+    public async Task InsertJobExecutionsAsync_StateMutatedManifestIsRejectedWithoutMutationAsync()
+    {
+        await using SqliteConnection connection = OpenConnection();
+        await using VulgataDbContext context = CreateContext(connection);
+        DurableScanFixture fixture = await SeedFixtureWithExecutionAsync(context);
+        IReadOnlyList<CodeUnit> additionalCodeUnits =
+            await AddAdditionalCodeUnitsAsync(context, fixture, 2);
+        IDurableScanStore store = new DurableScanRepository(context);
+
+        ScanJobExecution[] manifest = CreateManifest(fixture, additionalCodeUnits);
+        manifest[0].AcquireLease(
+            Guid.Parse("99000000-0000-4000-8000-000000000099"),
+            _startedAt.AddMinutes(5),
+            _startedAt.AddMinutes(1));
+
+        DurableScanStoreResult result = await store.InsertJobExecutionsAsync(
+            fixture.Scope,
+            fixture.ExecutionId,
+            manifest,
+            CancellationToken.None);
+
+        Assert.Equal(DurableScanStoreOutcome.Rejected, result.Outcome);
+        Assert.Empty(await ReadJobsAsync(store, fixture));
+    }
+
+    [Fact]
     public async Task JobTransitions_PersistLeaseRetryAndCompletionShapesAndProtectTerminalRowsAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -365,6 +490,76 @@ public sealed class DurableScanStoreTests
             "{\"codeGraph\":\"1.5.0\"}",
             _runtimeHash,
             startedAt);
+
+    private static async Task<IReadOnlyList<CodeUnit>> AddAdditionalCodeUnitsAsync(
+        VulgataDbContext context,
+        DurableScanFixture fixture,
+        int count)
+    {
+        var codeUnits = Enumerable.Range(1, count)
+            .Select(index =>
+            {
+                char hashCharacter = "def"[(index - 1) % 3];
+                string hash = new(hashCharacter, 64);
+                return new CodeUnit(
+                    fixture.ScanRun.Id,
+                    fixture.Repository.Id,
+                    $"src/T020-{index}.java",
+                    hash,
+                    hash,
+                    index * 10,
+                    index * 10 + 9,
+                    $"T020-{index}",
+                    CodeUnitType.File,
+                    RangeConfidence.Exact,
+                    "java");
+            })
+            .ToArray();
+        context.CodeUnits.AddRange(codeUnits);
+        await context.SaveChangesAsync();
+        return codeUnits;
+    }
+
+    private static ScanJobExecution[] CreateManifest(
+        DurableScanFixture fixture,
+        IReadOnlyList<CodeUnit> additionalCodeUnits)
+    {
+        var jobs = new ScanJobExecution[additionalCodeUnits.Count + 1];
+        jobs[0] = CreateJob(fixture, fixture.CodeUnit, manifestOrdinal: 1);
+        for (int index = 0; index < additionalCodeUnits.Count; index++)
+        {
+            jobs[index + 1] = CreateJob(
+                fixture,
+                additionalCodeUnits[index],
+                manifestOrdinal: index + 2);
+        }
+
+        return jobs;
+    }
+
+    private static ScanJobExecution CreateJob(
+        DurableScanFixture fixture,
+        CodeUnit codeUnit,
+        int manifestOrdinal) =>
+        ScanJobExecution.Create(
+            fixture.ExecutionId,
+            fixture.Repository.Id,
+            fixture.ScanRun.Id,
+            codeUnit.Id,
+            manifestOrdinal,
+            _startedAt);
+
+    private static async Task<ScanRecoveryJobSnapshot[]> ReadJobsAsync(
+        IDurableScanStore store,
+        DurableScanFixture fixture)
+    {
+        ScanRecoverySnapshotResult result = await store.ReadRecoverySnapshotAsync(
+            fixture.Scope,
+            fixture.ExecutionId,
+            CancellationToken.None);
+        Assert.Equal(DurableScanStoreOutcome.Applied, result.Outcome);
+        return result.Snapshot!.Jobs.ToArray();
+    }
 
     private static IEntityType RequireEntity<T>(IModel model) =>
         Assert.IsAssignableFrom<IEntityType>(model.FindEntityType(typeof(T)));

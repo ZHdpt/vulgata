@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
@@ -123,6 +124,37 @@ public sealed class AtomicDocumentJobCommitTests
         Assert.Equal(completedVersion,
             (await fixture.Context.Set<ScanJobExecution>().SingleAsync()).StateVersion);
         Assert.Equal(1, await fixture.Context.Set<DocumentVersion>().CountAsync());
+    }
+
+    [Fact]
+    public async Task CommitAsync_NewCommit_WithWellShapedNonCanonicalFingerprint_ConflictsBeforeAnyDocumentOrJobMutation()
+    {
+        await using CommitFixture fixture = await CommitFixture.CreateAsync();
+        ScanJobResultCommitRequest request = fixture.CreateRequest() with
+        {
+            CommitFingerprint = new string('b', 64),
+        };
+        ScanJobExecution before = await fixture.Context.Set<ScanJobExecution>()
+            .AsNoTracking().SingleAsync();
+
+        ScanJobResultCommitResult result = await fixture.Committer.CommitAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(ScanJobResultCommitOutcome.Conflict, result.Outcome);
+        Assert.Equal(DurableScanReason.IntegrityViolation, result.Reason);
+        Assert.Equal(0, await fixture.Context.Set<LogicalDocument>().CountAsync());
+        Assert.Equal(0, await fixture.Context.Set<DocumentVersion>().CountAsync());
+        Assert.Equal(0, await fixture.Context.Set<SourceAnchor>().CountAsync());
+        Assert.Equal(0, await fixture.Context.Set<DocumentSection>().CountAsync());
+        Assert.Equal(0, await fixture.Context.Set<IndexEntry>().CountAsync());
+
+        ScanJobExecution after = await fixture.Context.Set<ScanJobExecution>()
+            .AsNoTracking().SingleAsync();
+        Assert.Equal(before.State, after.State);
+        Assert.Equal(before.StateVersion, after.StateVersion);
+        Assert.Equal(before.LeaseToken, after.LeaseToken);
+        Assert.Null(after.CommittedDocumentVersionId);
     }
 
     [Theory]
@@ -440,7 +472,9 @@ public sealed class AtomicDocumentJobCommitTests
                 _at.AddMinutes(4),
                 _at.AddMinutes(4).AddSeconds(1),
                 payload);
-            return new(
+            Guid documentVersionId = DeterministicTestIds.Create(
+                "t022-document-version", Job.Id);
+            ScanJobResultCommitRequest request = new(
                 new DurableScanAuthorizationScope("t022-actor", [System.Id]),
                 Repository.Id,
                 Execution.Id,
@@ -451,11 +485,64 @@ public sealed class AtomicDocumentJobCommitTests
                 "prompt/1.0",
                 "document-schema/1.0",
                 _runtimeHash,
-                DeterministicTestIds.Create("t022-document-version", Job.Id),
-                new string('f', 64),
+                documentVersionId,
+                string.Empty,
                 1,
                 LeaseToken,
                 envelope);
+            SourceAnchorDraft[] anchors = payload.SourceAnchors
+                .Select(anchor => new SourceAnchorDraft(
+                    anchor.Id,
+                    documentVersionId,
+                    Repository.Id,
+                    ScanRun.Id,
+                    CodeUnit.Id,
+                    _revision,
+                    anchor.RepositoryRelativePath,
+                    anchor.EvidenceLocator,
+                    anchor.LineStart,
+                    anchor.LineEnd,
+                    anchor.SourceHash))
+                .ToArray();
+            KnowledgeCommit canonicalCommit = new(
+                CreateScanStableId(
+                    "durable-pass1-operation",
+                    request.ScanJobExecutionId.ToString("D")),
+                CreateScanStableId(
+                    "durable-pass1-logical-document",
+                    request.RepositoryId.ToString("D"),
+                    payload.Content.StableKey),
+                null,
+                request.DocumentVersionId,
+                request.RepositoryId,
+                request.ScanRunId,
+                request.ProfiledRevision,
+                payload.Content,
+                anchors,
+                [],
+                [],
+                envelope.ReceivedAt);
+            KnowledgeDocumentMaterializer materializer = new();
+            KnowledgeDocumentMaterialization projection = materializer.Materialize(
+                canonicalCommit.LogicalDocumentId,
+                canonicalCommit.NewDocumentVersionId,
+                canonicalCommit.RepositoryId,
+                System.Id,
+                canonicalCommit.Content,
+                canonicalCommit.CommittedAt);
+            return request with
+            {
+                CommitFingerprint = materializer.CreateCommitFingerprint(
+                    canonicalCommit,
+                    projection),
+            };
+        }
+
+        private static Guid CreateScanStableId(params string[] parts)
+        {
+            byte[] value = SHA256.HashData(
+                global::System.Text.Encoding.UTF8.GetBytes(string.Join('\n', parts)));
+            return new Guid(value.AsSpan(0, 16));
         }
 
         public async ValueTask DisposeAsync()

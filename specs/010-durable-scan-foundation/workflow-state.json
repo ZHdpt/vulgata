@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "quality-review",
+  "stage": "implement",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -2292,6 +2292,25 @@
       "observed_at": "2026-08-19T09:08:07Z",
       "summary": "Quality review iteration 1 returned REVISE with three HIGH implementation findings: incomplete canonical job-manifest replay equality, caller-trusted durable commit fingerprints, and unbounded configured-health exceptions during manual resume. All corrections require behavioral REDs and minimal GREEN before convergence and quality review rerun.",
       "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/71",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "6d02e09a274fea394731dae74f358719bfee3508",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+      ],
+      "command": "QR-001 10/10 and DurableScanning 103/103; QR-002 19/19 and adjacent 39/39; QR-003 14/14 and adjacent 86/86; Web build 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T09:29:01Z",
+      "summary": "Quality findings QR-001 through QR-003 are corrected with frozen behavioral REDs and independent GREEN verification. Job-manifest replay is complete and canonical, durable commit fingerprints are Infrastructure-derived before mutation, and configured-health exceptions fail closed while cancellation propagates.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"
     }
   ],
   "convergence": {
@@ -2310,21 +2329,26 @@
     "completed_at": "2026-08-19T08:57:13Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260819T090807Z-a04c32",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T092901Z-b7e403",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "quality-review",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/workflow-state.json",
-      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/70"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/71"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T09:08:07Z"
+  "updated_at": "2026-08-19T09:29:01Z"
 }
