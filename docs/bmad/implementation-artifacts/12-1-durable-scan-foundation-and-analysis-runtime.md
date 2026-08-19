@@ -728,3 +728,34 @@ focused regression, but the full-suite gate cannot be declared successful and
 the approved boundary forbids modifying those historical paths. Convergence,
 quality review, conditional E2E disposition, and final acceptance have not
 started.
+
+### Implementation group 25
+
+The user authorized a bounded T052 disposition for thirteen non-Story-12.1
+failures: four historical knowledge-store PostgreSQL tests requiring
+`VULGATA_TEST_POSTGRES`; one historical provider-image contract requiring
+`VULGATA_PROVIDER_CONTRACT_IMAGE`; and eight stale or excluded Story 4.3,
+Story 11.5, historical CGC qualification, migration-shape, and unrelated UI
+expectations. The current Story 12.1 ordinary-startup health test remains
+mandatory and is not covered by that disposition.
+
+The retained JDT-LS distribution archive is now available at the operator-
+supplied path with SHA-256
+`bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f`.
+T040 therefore became eligible. Real qualification proved the archive bytes,
+Java 21.0.12, the extracted 1.61.0 release, initialize/initialized, clean Maven
+import/build, `ServiceReady`, document symbols, definition, references,
+cancellation, shutdown/exit, workspace rejection, and cleanup. It also exposed
+and retained narrow corrections for the actual `.tar.gz` runtime identity,
+explicit archive-path hashing, contained absolute file URIs, the initialized
+parameter-object notification, and StreamJsonRpc response decoding.
+
+T040 is blocked on the required real `textDocument/implementation` capability.
+The pinned JDT-LS server advertises `implementationProvider`, but repeated
+requests against both the interface type and its method declaration return an
+empty array after successful project import. Controlled tests falsified
+`didOpen`, `ServiceReady` timing, client capabilities, operation order, module
+flags/import health, and response-shape parsing as causes. No Java process or
+temporary workspace remains. The failing qualification test and two minimal
+production candidates remain unstaged and uncommitted; T040 stays unchecked,
+and convergence cannot begin.

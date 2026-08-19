@@ -2082,6 +2082,53 @@
       "observed_at": "2026-08-19T02:53:53Z",
       "summary": "T053/T054 found canonical terminology, current SpecKit pointers, explicit August overlay authority, and no unresolved contradiction. No new later-story PreScan, manifest, splitting, navigation tool, Cross-Repository Resolution, Chat, progress UI, or actual Pass 2 implementation was found; no applicable ADR/context files exist in this checkout.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/60",
+      "kind": "human-approval",
+      "stage": "implement",
+      "source_commit": "d1eee81dff589dcb4c245d9d4cb8af7a798fac9c",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/tasks.md",
+        "specs/010-durable-scan-foundation/quickstart.md"
+      ],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-19T04:49:39Z",
+      "summary": "User authorized excluding thirteen non-Story-12.1 full-suite failures: four historical knowledge-store PostgreSQL tests, one historical provider-image contract test, and eight stale or excluded Story 4.3, Story 11.5, historical CGC, migration-shape, and unrelated UI expectations. The current Story 12.1 ordinary-startup health test remains mandatory. User also supplied the exact retained JDT-LS tar.gz path and SHA-256 and confirmed the existing extracted installation.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/61",
+      "kind": "test-red",
+      "stage": "implement",
+      "source_commit": "d1eee81dff589dcb4c245d9d4cb8af7a798fac9c",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeIdentity.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+      ],
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~JdtLsRealQualificationTests --no-restore -p:GenerateMvcTestManifest=false",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T04:49:39Z",
+      "summary": "T040 became eligible after the retained archive hash matched exactly. Initial real qualification isolated product REDs for the actual tar.gz archive identity and an explicit archive path outside the extracted install root. Narrow production corrections made archive identity/path, real initialize/initialized, document symbols, definition, references, cancellation, shutdown/exit, workspace rejection, and cleanup pass; real implementation navigation remains empty.",
+      "raw_output_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/62",
+      "kind": "failure",
+      "stage": "implement",
+      "source_commit": "d1eee81dff589dcb4c245d9d4cb8af7a798fac9c",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeIdentity.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+      ],
+      "command": "controlled real JDT-LS qualification and bounded protocol/import diagnosis",
+      "exit_code": 1,
+      "observed_at": "2026-08-19T04:49:39Z",
+      "summary": "T040 is blocked by the pinned real JDT-LS implementation capability. The server advertises implementationProvider and completes clean Maven import/build, but textDocument/implementation returns an empty array for both the interface type and method declaration. Controlled evidence falsified didOpen, ServiceReady timing, navigation-only client capabilities, operation order, module/open flags and import health, and response parsing. T040 remains unchecked; the failing qualification test and two minimal production candidates are unstaged and uncommitted.",
+      "raw_output_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
     }
   ],
   "convergence": {
@@ -2094,19 +2141,17 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T025353Z-258186",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T045058Z-fd5fb4",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/workflow-state.json",
-      "specs/010-durable-scan-foundation/tasks.md"
+      "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/56",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/57",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/58",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/59"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/60",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/61",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/62"
     ],
     "commit_sha": null,
     "binding_status": "pending"
@@ -2115,30 +2160,39 @@
     "stage": "implement",
     "agent_role": "e2e-runner",
     "source_boundary": {
-      "base_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
-      "candidate_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
-      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "base_commit": "d1eee81dff589dcb4c245d9d4cb8af7a798fac9c",
+      "candidate_commit": null,
+      "diff_sha256": "8a6451e2053ac5841f230d692dda6476e32b3829236f1d27d0a544e6569e3b7e",
       "artifact_hashes": {
-        "specs/010-durable-scan-foundation/tasks.md": "8e1ce2c823f632c017aa7f6cdac3c676a989430e5d816837ff758495808151a6",
-        "specs/010-durable-scan-foundation/quickstart.md": "86f7d8fe684efcdadf710eacec85cb0fd9193eee9dd15be747965574492c20ea"
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeIdentity.cs": "765c85180cd7acfb498d16b4841c1cbaada32187a90dd99f4b3ad7fd63437a79",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs": "9e655405096279a0967251668be8c319e72638717ff88b588b23d0cc7e5f1ff4",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs": "8a38d813617240e766d570552092fd463ae2c84e2857d8de38ad016d6bb6f4b0"
       },
-      "owned_paths": []
+      "owned_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeIdentity.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+      ]
     },
     "evidence": {
-      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/58",
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/62",
       "kind": "failure",
       "stage": "implement",
-      "source_commit": "9462be1255560651d2d8a2f1794d86e63d77e148",
-      "artifact_paths": ["specs/010-durable-scan-foundation/quickstart.md"],
-      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj; DurableScanModelTests; docker compose config --services",
+      "source_commit": "d1eee81dff589dcb4c245d9d4cb8af7a798fac9c",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeIdentity.cs",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+      ],
+      "command": "controlled real JDT-LS qualification and bounded protocol/import diagnosis",
       "exit_code": 1,
-      "observed_at": "2026-08-19T02:53:53Z",
-      "summary": "T052 cannot pass within the authorized Story 12.1 boundary because the full suite requires unavailable external inputs and repairs to excluded historical Story 4.3, Story 11.5, CGC qualification, migration-shape, and unrelated UI tests.",
-      "raw_output_path": null
+      "observed_at": "2026-08-19T04:49:39Z",
+      "summary": "T040 is blocked by the pinned real JDT-LS implementation capability after all bounded local client, readiness, import, and fixture hypotheses were falsified.",
+      "raw_output_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
     },
     "retryable": false,
     "earliest_resume_stage": "implement"
   },
   "legacy_migration": null,
-  "updated_at": "2026-08-19T02:53:53Z"
+  "updated_at": "2026-08-19T04:49:39Z"
 }
