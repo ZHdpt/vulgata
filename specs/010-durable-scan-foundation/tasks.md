@@ -114,7 +114,7 @@ description: "Dependency-ordered implementation tasks for Durable Scan Foundatio
 
 ## Phase 9: Convergence
 
-- [ ] T057 Replace the production recovery binding probe's self-read of the durable snapshot with independent current Repository authorization/access, Profiled Revision, affected source-hash, prompt/schema, and provider observations; compare those fresh observations before any recovery transition while retaining the configured runtime-health hash check and fail-closed committed-document behavior per FR-007-FR-009, FR-028, SC-002 and plan decision AD-5 (partial).
+- [x] T057 Replace the production recovery binding probe's self-read of the durable snapshot with independent current Repository authorization/access, Profiled Revision, affected source-hash, prompt/schema, and provider observations; compare those fresh observations before any recovery transition while retaining the configured runtime-health hash check and fail-closed committed-document behavior per FR-007-FR-009, FR-028, SC-002 and plan decision AD-5 (partial).
 
 ## Dependencies and execution order
 

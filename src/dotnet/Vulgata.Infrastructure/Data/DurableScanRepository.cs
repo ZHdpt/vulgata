@@ -263,6 +263,7 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
                 execution.Id,
                 execution.SystemId,
                 execution.RepositoryId,
+                execution.ScanRunId,
                 execution.StateVersion,
                 jobs,
                 execution.Phase,

@@ -2220,6 +2220,26 @@
       "observed_at": "2026-08-19T08:19:40Z",
       "summary": "Convergence iteration 2 returned tasks_appended. T055 is closed. T056 remains partial because the production recovery binding probe rereads Repository/revision/source/prompt/schema/provider fields from the same durable snapshot instead of independently observing their current authorities. T057 was appended as the sole remaining gap.",
       "raw_output_path": "specs/010-durable-scan-foundation/tasks.md"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/68",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "263a2c8253611658e4a7cad11ac6cb553c439cba",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryDispatchIdentitySource.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+        "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentDispatchIdentitySource.cs",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+      ],
+      "command": "RuntimeScanRecoveryRevalidationTests 12/12; surrounding Durable Scanning, recovery, manual resume, and Analysis Runtime 151/151; dotnet build Vulgata.Web 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T08:48:10Z",
+      "summary": "T057 is complete. Recovery current bindings now come independently from exact Repository/System, bound Scan Run and current File Code Units, embedded Worker prompt plus closed Document schema, current Worker provider, and configured Analysis Runtime authorities. The probe has no durable-store dependency or recovery-snapshot self-read. Independent verification passed 12/12 focused and 151/151 surrounding tests; Web built with zero errors.",
+      "raw_output_path": "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
     }
   ],
   "convergence": {
@@ -2240,21 +2260,28 @@
     "completed_at": "2026-08-19T08:19:40Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260819T081940Z-6d31b4",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T084810Z-712f04",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "converge",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/tasks.md",
-      "specs/010-durable-scan-foundation/workflow-state.json"
+      "specs/010-durable-scan-foundation/workflow-state.json",
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IScanRecoveryDispatchIdentitySource.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ScanRunRepository.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/WorkerAgentDispatchIdentitySource.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/converge/67"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/68"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T08:19:40Z"
+  "updated_at": "2026-08-19T08:48:10Z"
 }

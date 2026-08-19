@@ -12,6 +12,7 @@ public sealed class ScanRunRepository(VulgataDbContext dbContext) : IScanRunRepo
         CancellationToken cancellationToken = default) =>
         dbContext.ScanRuns
             .AsNoTracking()
+            .Include(scanRun => scanRun.CodeUnits)
             .Include(scanRun => scanRun.LanguageSummaries)
             .Include(scanRun => scanRun.CodeUnitFrameworks)
             .Include(scanRun => scanRun.CandidateOutcomes)

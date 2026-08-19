@@ -73,6 +73,7 @@ public sealed record ScanRecoverySnapshot(
     Guid ScanExecutionId,
     Guid SystemId,
     Guid RepositoryId,
+    Guid ScanRunId,
     long StateVersion,
     IReadOnlyList<ScanRecoveryJobSnapshot> Jobs,
     ScanExecutionPhase Phase = ScanExecutionPhase.Pass1Planning,

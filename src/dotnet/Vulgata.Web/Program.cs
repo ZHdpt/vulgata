@@ -10,6 +10,7 @@ using Vulgata.Agents.ChatExecution;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.BackupB;
+using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.CommunicationDetection;
@@ -285,6 +286,9 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<RevisionBoundWorkerContextHydrator>();
         builder.Services.AddScoped<IWorkerAgentExecutionContextSource, RevisionBoundWorkerExecutionContextSource>();
         builder.Services.AddScoped<WorkerAgentProviderResolver>();
+        builder.Services.AddScoped<
+            IScanRecoveryDispatchIdentitySource,
+            WorkerAgentDispatchIdentitySource>();
         builder.Services.AddScoped<WorkerAgentDispatcher>();
         builder.Services.AddScoped<IWorkerAgentDispatcher>(services =>
             new RuntimeGatedWorkerAgentDispatcher(
@@ -883,7 +887,9 @@ internal sealed class RuntimeScanRecoveryRevalidator : IScanRecoveryRevalidator
 }
 
 internal sealed class RuntimeScanRecoveryBindingProbe(
-    IDurableScanStore durableScanStore,
+    IRepositoryRepository repositoryRepository,
+    IScanRunRepository scanRunRepository,
+    IScanRecoveryDispatchIdentitySource dispatchIdentitySource,
     WorkerAgentProviderResolver providerResolver) : IScanRecoveryBindingProbe
 {
     public async Task<ScanRecoveryObservedBindings?> ObserveAsync(
@@ -893,14 +899,67 @@ internal sealed class RuntimeScanRecoveryBindingProbe(
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(authorizationScope);
-        ScanRecoverySnapshotResult current = await durableScanStore.ReadRecoverySnapshotAsync(
-            authorizationScope,
-            snapshot.ScanExecutionId,
+        cancellationToken.ThrowIfCancellationRequested();
+        if (snapshot.SystemId == Guid.Empty ||
+            snapshot.RepositoryId == Guid.Empty ||
+            snapshot.ScanRunId == Guid.Empty ||
+            !authorizationScope.OwnedSystemIds.Contains(snapshot.SystemId) ||
+            authorizationScope.OwnedRepositoryIds is not { Count: > 0 } ownedRepositoryIds ||
+            !ownedRepositoryIds.Contains(snapshot.RepositoryId))
+        {
+            return null;
+        }
+
+        Repository? repository = await repositoryRepository.GetBySystemAndIdAsync(
+            snapshot.SystemId,
+            snapshot.RepositoryId,
             cancellationToken);
-        if (current.Outcome != DurableScanStoreOutcome.Applied ||
-            current.Snapshot is not ScanRecoverySnapshot bindings ||
-            bindings.SystemId != snapshot.SystemId ||
-            bindings.RepositoryId != snapshot.RepositoryId)
+        if (repository?.SystemId != snapshot.SystemId)
+        {
+            return null;
+        }
+
+        ScanRun? scanRun = await scanRunRepository.GetAsync(
+            snapshot.RepositoryId,
+            snapshot.ScanRunId,
+            cancellationToken);
+        if (scanRun is null ||
+            scanRun.Id != snapshot.ScanRunId ||
+            scanRun.RepositoryId != snapshot.RepositoryId ||
+            scanRun.Status is ScanRunStatus.Failed or ScanRunStatus.Aborted ||
+            !IsProfiledRevision(scanRun.ProfiledRevision))
+        {
+            return null;
+        }
+
+        Guid[] affectedFileIds = snapshot.AffectedFiles?
+            .Select(binding => binding.FileCodeUnitId)
+            .ToArray() ?? [];
+        if (affectedFileIds.Any(value => value == Guid.Empty) ||
+            affectedFileIds.Distinct().Count() != affectedFileIds.Length)
+        {
+            return null;
+        }
+
+        CodeUnit[] currentFiles = scanRun.CodeUnits
+            .Where(unit => affectedFileIds.Contains(unit.Id))
+            .ToArray();
+        if (currentFiles.Length != affectedFileIds.Length ||
+            currentFiles.Select(unit => unit.Id).Distinct().Count() != currentFiles.Length ||
+            currentFiles.Any(unit =>
+                unit.ScanRunId != scanRun.Id ||
+                unit.RepositoryId != snapshot.RepositoryId ||
+                unit.UnitType != CodeUnitType.File ||
+                !IsSha256(unit.SourceHash)))
+        {
+            return null;
+        }
+
+        ScanRecoveryDispatchIdentity? dispatchIdentity =
+            await dispatchIdentitySource.GetAsync(snapshot.SystemId, cancellationToken);
+        if (dispatchIdentity is null ||
+            !IsIdentity(dispatchIdentity.PromptIdentity) ||
+            !IsIdentity(dispatchIdentity.DocumentSchemaIdentity))
         {
             return null;
         }
@@ -908,7 +967,7 @@ internal sealed class RuntimeScanRecoveryBindingProbe(
         bool providerAvailable;
         try
         {
-            _ = await providerResolver.ResolveAsync(bindings.SystemId, cancellationToken);
+            _ = await providerResolver.ResolveAsync(snapshot.SystemId, cancellationToken);
             providerAvailable = true;
         }
         catch (InvalidOperationException)
@@ -918,13 +977,29 @@ internal sealed class RuntimeScanRecoveryBindingProbe(
 
         return new ScanRecoveryObservedBindings(
             true,
-            bindings.ProfiledRevision,
-            bindings.AffectedFiles,
-            bindings.PromptIdentity,
-            bindings.DocumentSchemaIdentity,
+            scanRun.ProfiledRevision!,
+            currentFiles
+                .OrderBy(unit => unit.Id)
+                .Select(unit => new ScanRecoveryFileBinding(unit.Id, unit.SourceHash))
+                .ToArray(),
+            dispatchIdentity.PromptIdentity,
+            dispatchIdentity.DocumentSchemaIdentity,
             providerAvailable,
-            bindings.AnalysisRuntimeIdentityHash);
+            snapshot.AnalysisRuntimeIdentityHash);
     }
+
+    private static bool IsProfiledRevision(string? value) =>
+        value is not null &&
+        value.Length is >= 7 and <= 64 &&
+        value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
+
+    private static bool IsIdentity(string? value) =>
+        !string.IsNullOrWhiteSpace(value) && value.Length <= 128;
+
+    private static bool IsSha256(string? value) =>
+        value is not null &&
+        value.Length == 64 &&
+        value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
 }
 
 internal sealed class UnboundJavaAnalysisSessionFactory : IJavaAnalysisSessionFactory

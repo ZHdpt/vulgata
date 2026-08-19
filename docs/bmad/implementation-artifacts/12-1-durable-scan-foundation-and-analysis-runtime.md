@@ -863,3 +863,25 @@ authorities before any recovery transition, while retaining the independently
 recomputed configured Runtime Identity hash and fail-closed committed-Document
 integrity. The workflow returns to behavioral RED and minimal GREEN before a
 third convergence pass.
+
+### Implementation group 29
+
+T057 closes convergence iteration 2. The immutable recovery snapshot now
+carries its bound Scan Run ID. The production binding probe no longer depends
+on `IDurableScanStore` and never rereads the Scan Execution to manufacture
+"current" values. It resolves the exact current Repository/System binding,
+loads the bound Scan Run with its current File Code Units, derives the current
+Worker prompt identity from the embedded Pass 1 prompt and the closed Knowledge
+Document schema identity, and resolves the current Worker provider assignment.
+
+Only File Code Unit IDs selected by the immutable snapshot are projected from
+the current Scan Run, with exact run/repository/type/hash/cardinality checks.
+Missing, duplicate, malformed, unauthorized, failed/aborted, unavailable, or
+mismatched observations fail closed before any recovery transition. The
+configured Analysis Runtime hash remains independently recomputed.
+
+The behavioral RED was frozen before production work. Independent verification
+passed 12/12 focused tests and 151/151 surrounding Durable Scanning, recovery,
+manual-resume, and Analysis Runtime tests. The Web build, including Core,
+Infrastructure, Agents, and Web, completed with zero errors. T057 is complete,
+and the committed candidate proceeds to convergence iteration 3.
