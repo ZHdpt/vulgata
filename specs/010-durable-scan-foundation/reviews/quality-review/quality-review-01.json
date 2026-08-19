@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "8fa8b8fe03b2db25f36023fbeb36f6b209e7e794",
+  "reviewed_boundary": {
+    "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+    "candidate_commit": "8fa8b8fe03b2db25f36023fbeb36f6b209e7e794",
+    "diff_sha256": "919abbfe334f5026e08ba1896a90fc2890480c1a9fae11f33763aca95acbb5fd",
+    "artifact_hashes": {
+      "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
+      "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
+      "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "57f15a77f9c0107acb37360d2c02a0bf6e4a403c0aa65555710cdafc24d3a3d0",
+      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs": "41773245546914f1c709a02b963766afb420a288374e9c85919079939e0ed35d",
+      "src/dotnet/Vulgata.Web/Program.cs": "48c1b5a7510cd8894614e9334e88b396c3ed6af1eecec39702afda007015e155"
+    },
+    "owned_paths": [
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/010-durable-scan-foundation/spec.md",
+    "specs/010-durable-scan-foundation/plan.md",
+    "specs/010-durable-scan-foundation/tasks.md",
+    "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md",
+    "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+    "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs",
+    "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "QR-001",
+      "severity": "HIGH",
+      "category": "durable-replay-integrity",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "location": "InsertJobExecutionsAsync lines 122-126",
+      "affected_requirement": "FR-003, FR-028 and canonical ordered-set replay",
+      "evidence": "Replay checks only that every requested job appears in the existing manifest; a strict subset can be accepted as Replay because cardinality, reverse equality, order, and canonical initial state are not all required.",
+      "correction_outcome": "Add subset, superset, order and state mutation REDs; accept Replay only for the complete canonical deterministic manifest.",
+      "earliest_owner": "implement"
+    },
+    {
+      "id": "QR-002",
+      "severity": "HIGH",
+      "category": "canonical-commit-integrity",
+      "artifact": "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+      "location": "CommitScanJobResultAsync and CreateScanKnowledgeCommit",
+      "affected_requirement": "FR-006, FR-028 and plan AD-3",
+      "evidence": "The durable Scan commit path accepts and persists any well-shaped caller CommitFingerprint without recomputing the canonical materialization fingerprint.",
+      "correction_outcome": "Add a noncanonical fingerprint RED and recompute or exclusively persist the canonical Infrastructure-derived fingerprint while retaining exact replay.",
+      "earliest_owner": "implement"
+    },
+    {
+      "id": "QR-003",
+      "severity": "HIGH",
+      "category": "fail-closed-recovery",
+      "artifact": "src/dotnet/Vulgata.Web/Program.cs",
+      "location": "RuntimeScanRecoveryRevalidator.RevalidateAsync configured health call",
+      "affected_requirement": "FR-008, FR-009, SC-002 and bounded-failure plan rule",
+      "evidence": "Non-cancellation configured health exceptions can escape manual resume as an unclassified 500 instead of a bounded fail-closed result.",
+      "correction_outcome": "Add a throwing-health-probe RED; map non-cancellation failures to a classified fail-closed result while preserving cancellation and zero transition or dispatch.",
+      "earliest_owner": "implement"
+    }
+  ],
+  "summary": "REVISE. Story 12.1 focused tests passed 162/162 and Web built with zero errors, but three HIGH implementation gaps remain in manifest replay equality, canonical commit fingerprint authority, and bounded recovery health failures."
+}

@@ -899,3 +899,19 @@ that current Repository/System, Scan Run/File Code Unit, Worker prompt/schema,
 provider, and configured Runtime Identity observations no longer originate from
 the persisted recovery snapshot. Story 12.1 advances to independent quality
 review.
+
+### Quality review iteration 1
+
+The independent quality reviewer returned REVISE at pinned commit `8fa8b8f`.
+Focused Story 12.1 verification passed 162/162 and Web built with zero errors,
+but three HIGH implementation gaps remain. QR-001 found that durable job-manifest
+replay can accept a strict subset because it lacks complete bidirectional
+canonical equality. QR-002 found that the durable Scan commit path trusts a
+well-shaped caller fingerprint instead of recomputing the canonical
+materialization fingerprint. QR-003 found that a configured runtime-health
+exception during manual resume can escape as an unclassified 500 rather than a
+bounded fail-closed result.
+
+All three findings are implementation-owned and have separable behavioral RED
+boundaries. They return to TDD, after which convergence and quality review must
+run again. The review did not reopen any approved or excluded historical scope.

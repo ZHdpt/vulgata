@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "implement",
+  "stage": "quality-review",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -49,12 +49,29 @@
       "completed_at": "2026-08-18T09:27:47Z"
     },
     "quality-review": {
-      "status": "pending",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
+      "status": "revised",
+      "iteration": 1,
+      "dispatch_id": "story_12_1_quality_review",
+      "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json",
+      "input_boundary": {
+        "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+        "candidate_commit": "8fa8b8fe03b2db25f36023fbeb36f6b209e7e794",
+        "diff_sha256": "919abbfe334f5026e08ba1896a90fc2890480c1a9fae11f33763aca95acbb5fd",
+        "artifact_hashes": {
+          "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
+          "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
+          "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1"
+        },
+        "owned_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+          "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+          "src/dotnet/Vulgata.Web/Program.cs",
+          "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+          "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs",
+          "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+        ]
+      },
+      "completed_at": "2026-08-19T09:08:07Z"
     }
   },
   "stage_history": [
@@ -991,7 +1008,7 @@
     "plan-review": {"count": 2, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json", "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"]},
     "definition-review": {"count": 3, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"]},
     "converge": {"count": 0, "verdict_paths": []},
-    "quality-review": {"count": 0, "verdict_paths": []}
+    "quality-review": {"count": 1, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"]}
   },
   "e2e_decision": {
     "required": true,
@@ -2258,6 +2275,23 @@
       "observed_at": "2026-08-19T08:57:13Z",
       "summary": "Convergence iteration 3 returned CLEAN. The analyst checked all 32 functional requirements, nine success criteria, all Story 12.1 scenarios, ten architecture decisions, five Constitution principles, all 57 completed tasks, and exclusions. T057 independent recovery provenance was confirmed and no task was appended.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/70",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "8fa8b8fe03b2db25f36023fbeb36f6b209e7e794",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Web/Program.cs"
+      ],
+      "command": "independent quality review iteration 1; focused Story 12.1 tests 162/162; Web build 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T09:08:07Z",
+      "summary": "Quality review iteration 1 returned REVISE with three HIGH implementation findings: incomplete canonical job-manifest replay equality, caller-trusted durable commit fingerprints, and unbounded configured-health exceptions during manual resume. All corrections require behavioral REDs and minimal GREEN before convergence and quality review rerun.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"
     }
   ],
   "convergence": {
@@ -2276,20 +2310,21 @@
     "completed_at": "2026-08-19T08:57:13Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260819T085713Z-8ac2b1",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260819T090807Z-a04c32",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "converge",
+    "stage": "quality-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/workflow-state.json"
+      "specs/010-durable-scan-foundation/workflow-state.json",
+      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/converge/69"
+      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/70"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T08:57:13Z"
+  "updated_at": "2026-08-19T09:08:07Z"
 }
