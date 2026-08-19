@@ -48,6 +48,8 @@ public sealed class AnalysisRuntimeIdentity
     private const string _jdtLsReleaseIdentity = "jdt-language-server-1.61.0-202608141332";
     private const string _jdtLsDistributionArchiveName =
         "jdt-language-server-1.61.0-202608141332.zip";
+    private const string _jdtLsTarGzDistributionArchiveName =
+        "jdt-language-server-1.61.0-202608141332.tar.gz";
     private const string _observedCoreJarSha256 =
         "a58994113b7e493aa8ced51ad02dab3e424973223e7213f7ed5b9d70861582e2";
     private const int _javaMajorVersion = 21;
@@ -70,12 +72,14 @@ public sealed class AnalysisRuntimeIdentity
         Guid repositoryId,
         string profiledRevision,
         IReadOnlyList<AnalysisRuntimeComponentHash> codeGraphFiles,
+        string jdtLsDistributionArchiveName,
         string jdtLsDistributionArchiveSha256,
         string canonicalJson)
     {
         RepositoryId = repositoryId;
         ProfiledRevision = profiledRevision;
         CodeGraphFiles = codeGraphFiles;
+        JdtLsDistributionArchiveName = jdtLsDistributionArchiveName;
         JdtLsDistributionArchiveSha256 = jdtLsDistributionArchiveSha256;
         CanonicalJson = canonicalJson;
         Sha256 = ComputeSha256(canonicalJson);
@@ -89,7 +93,7 @@ public sealed class AnalysisRuntimeIdentity
     public string CodeGraphPlatformPackage => _codeGraphPlatformPackage;
     public IReadOnlyList<AnalysisRuntimeComponentHash> CodeGraphFiles { get; }
     public string JdtLsReleaseIdentity => _jdtLsReleaseIdentity;
-    public string JdtLsDistributionArchiveName => _jdtLsDistributionArchiveName;
+    public string JdtLsDistributionArchiveName { get; }
     public string JdtLsDistributionArchiveSha256 { get; }
     public int JavaMajorVersion => _javaMajorVersion;
     public string ClientName => _clientName;
@@ -206,6 +210,7 @@ public sealed class AnalysisRuntimeIdentity
             repositoryId,
             revision,
             files,
+            archiveName,
             archiveHash,
             canonicalJson);
     }
@@ -260,7 +265,8 @@ public sealed class AnalysisRuntimeIdentity
         }
 
         string normalized = value.Trim();
-        if (!string.Equals(normalized, _jdtLsDistributionArchiveName, StringComparison.Ordinal) ||
+        if ((!string.Equals(normalized, _jdtLsDistributionArchiveName, StringComparison.Ordinal) &&
+             !string.Equals(normalized, _jdtLsTarGzDistributionArchiveName, StringComparison.Ordinal)) ||
             Path.IsPathRooted(normalized) ||
             normalized.Contains('/') ||
             normalized.Contains('\\'))

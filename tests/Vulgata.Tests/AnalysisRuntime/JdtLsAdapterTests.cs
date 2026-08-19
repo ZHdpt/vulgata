@@ -67,9 +67,13 @@ public sealed class JdtLsAdapterTests
         Assert.Equal(_repositoryId, identity.RepositoryId);
         Assert.Equal(ProfiledRevision, identity.ProfiledRevision);
 
-        string workspacePath = Path.Combine(
+        string workspaceRoot = Path.Combine(
             Path.GetTempPath(),
             "vulgata-story121-jdt-" + Guid.NewGuid().ToString("N"));
+        string workspacePath = Path.Combine(
+            workspaceRoot,
+            _repositoryId.ToString("N"),
+            ProfiledRevision);
         JdtLsWorkspaceBinding binding = new(
             _repositoryId,
             Guid.Parse("12000000-0000-4000-8000-000000000013"),
@@ -85,7 +89,7 @@ public sealed class JdtLsAdapterTests
             JavaExecutablePath: @"C:\Program Files\Java\latest\jdk-21\bin\java.exe",
             InstallationRoot:
                 @"C:\Users\13728\.local\jdt-language-server-1.61.0-202608141332",
-            WorkspaceRoot: Path.GetTempPath(),
+            WorkspaceRoot: workspaceRoot,
             InitializationTimeout: TimeSpan.FromSeconds(2),
             RequestTimeout: TimeSpan.FromSeconds(2),
             ShutdownTimeout: TimeSpan.FromSeconds(2),
@@ -147,9 +151,23 @@ public sealed class JdtLsAdapterTests
         }
 
         Assert.Equal(@"C:\Program Files\Java\latest\jdk-21\bin\java.exe", launcher.StartInfo.FileName);
-        Assert.Contains("config_win", launcher.StartInfo.Arguments, StringComparer.Ordinal);
-        Assert.Contains("-data", launcher.StartInfo.Arguments, StringComparer.Ordinal);
-        Assert.Contains(workspacePath, launcher.StartInfo.Arguments, StringComparer.Ordinal);
+        string[] arguments = launcher.StartInfo.Arguments.ToArray();
+        int configurationIndex = Array.IndexOf(arguments, "-configuration");
+        int dataIndex = Array.IndexOf(arguments, "-data");
+        string expectedDataPath = Path.Combine(
+            workspaceRoot,
+            _repositoryId.ToString("N"),
+            ProfiledRevision + ".jdtls-data");
+        string expectedConfigurationPath = Path.Combine(expectedDataPath, "configuration");
+        Assert.InRange(configurationIndex, 0, arguments.Length - 2);
+        Assert.InRange(dataIndex, 0, arguments.Length - 2);
+        Assert.Equal(expectedConfigurationPath, arguments[configurationIndex + 1]);
+        Assert.Equal(expectedDataPath, arguments[dataIndex + 1]);
+        Assert.NotEqual(workspacePath, arguments[dataIndex + 1]);
+        Assert.True(File.Exists(Path.Combine(expectedConfigurationPath, "config.ini")));
+        Assert.False(expectedConfigurationPath.StartsWith(
+            options.InstallationRoot,
+            StringComparison.OrdinalIgnoreCase));
         Assert.Equal(workspacePath, leases.Acquired.Binding.WorkspacePath);
         Assert.Equal(
             ["initialize", "initialized", "textDocument/documentSymbol", "textDocument/definition",
@@ -165,6 +183,9 @@ public sealed class JdtLsAdapterTests
             factory.OpenAsync(scope, CancellationToken.None));
         Assert.NotNull(collision);
         Assert.DoesNotContain(workspacePath, collision!.ToString(), StringComparison.Ordinal);
+
+        Directory.Delete(workspaceRoot, recursive: true);
+        Assert.False(Directory.Exists(workspaceRoot));
     }
 
     private static AnalysisRuntimeIdentity CreateIdentity(

@@ -759,3 +759,29 @@ flags/import health, and response-shape parsing as causes. No Java process or
 temporary workspace remains. The failing qualification test and two minimal
 production candidates remain unstaged and uncommitted; T040 stays unchecked,
 and convergence cannot begin.
+
+### Implementation group 26
+
+T040 is complete after independently verifying the focused fix from the
+referenced diagnostic task. The defect was a path-role collision: the
+Repository working copy had also been used as Eclipse's `-data` workspace,
+while the extracted distribution's shared `config_win` directory was used as
+writable Equinox configuration. JDT-LS could import the Maven project and
+answer other navigation requests, but its implementation/type-hierarchy index
+was not reliably registered in that arrangement.
+
+The adapter now keeps the Repository working copy solely as LSP `rootUri`,
+creates a contained revision-bound `-data` directory under the configured JDT
+workspace root, and copies the retained distribution `config.ini` into a
+private configuration directory beside that data. The archive path/hash,
+absolute contained document URI, parameter-object `initialized` notification,
+and bounded `JToken` response decoding corrections from group 25 remain.
+Adjacent tests lock down path containment, separation from the Repository and
+installation directories, configuration copying, and cleanup.
+
+Independent verification passed the real retained-archive qualification 2/2,
+all JDT-LS tests 7/7, and the complete Analysis Runtime boundary 53/53. The
+real test exercised initialize/initialized, symbols, definition, references,
+nonempty implementations, cancellation, shutdown/exit, cleanup, and
+cross-revision rejection using Java 21 and JDT-LS 1.61.0. No Story 12.1
+recoverable failure remains; T052 and the remaining workflow gates follow.

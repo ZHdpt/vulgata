@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
+using NewtonsoftJsonFormatting = Newtonsoft.Json.Formatting;
 using StreamJsonRpc;
 using Vulgata.Core.DomainServices;
 
@@ -96,13 +98,12 @@ public sealed class JdtLsAnalysisSessionFactory : IJavaAnalysisSessionFactory
 
     public JdtLsAnalysisSessionFactory(
         JdtLsAdapterOptions options,
-        string distributionArchiveName,
+        string distributionArchivePath,
         string distributionArchiveSha256)
     {
         _options = ValidateOptions(options);
         ValidateDistributionArchive(
-            _options,
-            distributionArchiveName,
+            distributionArchivePath,
             distributionArchiveSha256);
         _workspaceLeases = new FileJdtLsWorkspaceLeaseProvider(_options.WorkspaceRoot);
         _processLauncher = new ProcessJdtLsLauncher();
@@ -176,11 +177,32 @@ public sealed class JdtLsAnalysisSessionFactory : IJavaAnalysisSessionFactory
             throw new InvalidOperationException("jdt_launcher_unavailable");
         }
 
-        string configuration = Path.Combine(_options.InstallationRoot, "config_win");
-        if (!Directory.Exists(configuration))
+        string distributionConfiguration = Path.Combine(
+            _options.InstallationRoot,
+            "config_win",
+            "config.ini");
+        if (!File.Exists(distributionConfiguration))
         {
             throw new InvalidOperationException("jdt_configuration_unavailable");
         }
+
+        string dataPath = Path.GetFullPath(Path.Combine(
+            _options.WorkspaceRoot,
+            binding.RepositoryId.ToString("N"),
+            binding.ProfiledRevision + ".jdtls-data"));
+        string workspaceRootPrefix = Path.GetFullPath(_options.WorkspaceRoot)
+            .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        if (!dataPath.StartsWith(workspaceRootPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("jdt_data_path_escape");
+        }
+        Directory.CreateDirectory(dataPath);
+        string configurationPath = Path.Combine(dataPath, "configuration");
+        Directory.CreateDirectory(configurationPath);
+        File.Copy(
+            distributionConfiguration,
+            Path.Combine(configurationPath, "config.ini"),
+            overwrite: true);
 
         return new JdtLsProcessStartInfo(
             _options.JavaExecutablePath,
@@ -195,9 +217,9 @@ public sealed class JdtLsAnalysisSessionFactory : IJavaAnalysisSessionFactory
                 "-jar",
                 launchers[0],
                 "-configuration",
-                "config_win",
+                configurationPath,
                 "-data",
-                binding.WorkspacePath,
+                dataPath,
             }),
             _options.InstallationRoot);
     }
@@ -220,12 +242,11 @@ public sealed class JdtLsAnalysisSessionFactory : IJavaAnalysisSessionFactory
     }
 
     private static void ValidateDistributionArchive(
-        JdtLsAdapterOptions options,
-        string distributionArchiveName,
+        string distributionArchivePath,
         string distributionArchiveSha256)
     {
-        if (string.IsNullOrWhiteSpace(distributionArchiveName) ||
-            Path.GetFileName(distributionArchiveName) != distributionArchiveName ||
+        if (string.IsNullOrWhiteSpace(distributionArchivePath) ||
+            !Path.IsPathFullyQualified(distributionArchivePath) ||
             string.IsNullOrWhiteSpace(distributionArchiveSha256) ||
             distributionArchiveSha256.Length != 64 ||
             distributionArchiveSha256.Any(character => !Uri.IsHexDigit(character)))
@@ -233,7 +254,7 @@ public sealed class JdtLsAnalysisSessionFactory : IJavaAnalysisSessionFactory
             throw new ArgumentException("jdt_distribution_archive_checksum_missing");
         }
 
-        string archivePath = Path.Combine(options.InstallationRoot, distributionArchiveName);
+        string archivePath = Path.GetFullPath(distributionArchivePath);
         if (!File.Exists(archivePath))
         {
             throw new InvalidOperationException("jdt_distribution_archive_missing");
@@ -640,7 +661,7 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
     public Task InitializedAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return _rpc.NotifyAsync("initialized", new { });
+        return _rpc.NotifyWithParameterObjectAsync("initialized", new { });
     }
 
     public async Task<JavaNavigationResult> NavigateAsync(
@@ -653,9 +674,20 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
         using CancellationTokenSource linked = CreateBoundedToken(timeout, cancellationToken);
         try
         {
+            string documentPath = Path.GetFullPath(Path.Combine(
+                _workspacePath ?? throw new JsonException("jdt_workspace_unavailable"),
+                request.RelativePath));
+            string workspacePrefix = Path.GetFullPath(_workspacePath)
+                .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!documentPath.StartsWith(workspacePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new JsonException("jdt_document_outside_workspace");
+            }
+
+            string documentUri = new Uri(documentPath).AbsoluteUri;
             object parameters = new
             {
-                textDocument = new { uri = request.RelativePath },
+                textDocument = new { uri = documentUri },
                 position = request.Position is null
                     ? null
                     : new { line = request.Position.Line - 1, character = request.Position.Character - 1 },
@@ -663,13 +695,16 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
                     ? new { includeDeclaration = true }
                     : null,
             };
-            JsonElement response = await _rpc.InvokeWithParameterObjectAsync<JsonElement>(
+            JToken responseToken = await _rpc.InvokeWithParameterObjectAsync<JToken>(
                 method,
                 parameters,
                 argumentDeclaredTypes: null,
                 linked.Token).ConfigureAwait(false);
-            byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(response);
-            if (bytes.Length > Math.Min(_responseByteLimit, request.Bounds.ByteLimit))
+            using JsonDocument responseDocument = JsonDocument.Parse(
+                responseToken.ToString(NewtonsoftJsonFormatting.None));
+            JsonElement response = responseDocument.RootElement;
+            byte[] responseBytes = JsonSerializer.SerializeToUtf8Bytes(response);
+            if (responseBytes.Length > Math.Min(_responseByteLimit, request.Bounds.ByteLimit))
             {
                 return Failed(AnalysisPortFailureReason.MalformedResponse, "jdt_response_too_large");
             }
