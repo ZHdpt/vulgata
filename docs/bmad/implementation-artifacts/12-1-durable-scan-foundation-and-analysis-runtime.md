@@ -885,3 +885,17 @@ passed 12/12 focused tests and 151/151 surrounding Durable Scanning, recovery,
 manual-resume, and Analysis Runtime tests. The Web build, including Core,
 Infrastructure, Agents, and Web, completed with zero errors. T057 is complete,
 and the committed candidate proceeds to convergence iteration 3.
+
+### Convergence iteration 3
+
+The independent convergence analyst returned CLEAN at pinned commit
+`af756bc`. It checked all 32 functional requirements, nine success criteria,
+four Story 12.1 scenarios, ten architecture decisions, five Constitution
+principles, all 57 completed tasks, and the explicit exclusions. No remaining
+task was appended and `tasks.md` stayed byte-for-byte unchanged.
+
+Focused recovery revalidation passed 12/12. The analyst independently confirmed
+that current Repository/System, Scan Run/File Code Unit, Worker prompt/schema,
+provider, and configured Runtime Identity observations no longer originate from
+the persisted recovery snapshot. Story 12.1 advances to independent quality
+review.
