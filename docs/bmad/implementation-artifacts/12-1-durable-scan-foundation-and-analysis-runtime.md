@@ -785,3 +785,21 @@ real test exercised initialize/initialized, symbols, definition, references,
 nonempty implementations, cancellation, shutdown/exit, cleanup, and
 cross-revision rejection using Java 21 and JDT-LS 1.61.0. No Story 12.1
 recoverable failure remains; T052 and the remaining workflow gates follow.
+
+### Implementation group 27
+
+T052 is complete under the user's bounded disposition for thirteen exact
+non-Story-12.1 failures. PostgreSQL 17 was healthy on the approved Compose
+service, and the mandatory ordinary-startup Analysis Runtime health test passed
+1/1. The whole repository test assembly then passed 1,488/1,488 with only the
+four named historical knowledge-store PostgreSQL tests, one historical
+provider-image contract test, and eight named stale/excluded Story 4.3, Story
+11.5, historical CGC, migration-shape, or unrelated UI expectations filtered
+out. No Story 12.1 test or class-wide boundary was excluded.
+
+The Web project built with zero errors and nine existing package/version
+warnings. Durable Scan model consistency passed 6/6. Compose resolves to only
+`postgres` by default and to `postgres` plus `vulgata` under the
+`post-deadline-app` profile. `docker/Dockerfile` and historical CGC
+qualification were not invoked or modified. Implementation is ready for the
+unified convergence gate.

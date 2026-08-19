@@ -2146,6 +2146,23 @@
       "observed_at": "2026-08-19T07:28:42Z",
       "summary": "T040 is complete. The Repository remains the LSP root while revision-bound Eclipse data and private Equinox configuration directories are isolated under the configured workspace root. Independent verification passed real JDT-LS qualification 2/2, all JDT-LS tests 7/7, and Analysis Runtime 53/53, including nonempty implementation evidence, cancellation, cleanup, and cross-revision rejection.",
       "raw_output_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/64",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "768534c55bb84051d0ffecc36c18e7b65bda6ba0",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/tasks.md",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "docker-compose.yml",
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260818124712_AddDurableScanFoundation.cs"
+      ],
+      "command": "ordinary-startup health 1/1; exact thirteen-exclusion repository suite 1488/1488; dotnet build Vulgata.Web 0 errors; DurableScanModelTests 6/6; docker compose config default/profile",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T07:34:01Z",
+      "summary": "T052 is complete under the user's exact bounded disposition. PostgreSQL 17 was healthy; mandatory ordinary startup passed 1/1; the repository suite passed 1488/1488 with exactly thirteen named non-Story-12.1 exclusions; Web built with zero errors; Durable Scan model consistency passed 6/6; Compose resolved to postgres-only by default and postgres plus vulgata under post-deadline-app.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -2158,25 +2175,21 @@
     "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T072842Z-f314c2",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T073401Z-a62df1",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
     "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "specs/010-durable-scan-foundation/tasks.md",
-      "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeIdentity.cs",
-      "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/JdtLsAdapterTests.cs",
-      "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+      "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/63"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/64"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T07:28:42Z"
+  "updated_at": "2026-08-19T07:34:01Z"
 }
