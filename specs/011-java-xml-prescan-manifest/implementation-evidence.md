@@ -167,3 +167,53 @@ Document generation are absent.
   database/container state, configured project data, and unrelated user paths.
 - Binding is pending the root-owned local commit with the matching workflow
   trailer; convergence begins only after the trailer resolves uniquely.
+
+## Convergence correction: T053-T055
+
+- Convergence iteration 1 assessed all 43 Functional Requirements, 9 Success
+  Criteria, 16 acceptance scenarios, 9 Architecture Decisions, and 5
+  Constitution principles. It appended three traceable HIGH partial tasks for
+  production Java splitting, related-file expansion, and complete inventory
+  audit projection; no intent or authority defect was found.
+- T053 contract RED first proved the absence of a revision-bound exact Java
+  symbol-range source. After the closed `IPreparedTopLevelSymbolSource` seam was
+  added, the production-bound oversized-Java behavior RED observed zero units.
+  GREEN now consumes exact JDT-LS UTF-16 top-level spans through
+  `PreparedJavaRangeProvider`; exact hashes/ranges/segment ordinals are retained,
+  while missing, malformed, or oversized spans create one closed whole-file
+  `Skipped/InvalidSplitRange` audit with no partial units.
+- T054 RED observed no prepared related-file requests. GREEN invokes expansion
+  only after hard readiness with canonical at-most-20 seeds,
+  Calls/Imports/Inherits, two hops, 200 files, and the five-second bound; final
+  score/reason updates and deterministic unavailable/timeout Warning fallback
+  are verified per Repository.
+- T055 RED observed no filtered inventory audit. GREEN maps filtered, skipped,
+  unsafe XML, safe-reader bounds, and invalid split outcomes through the sole
+  canonical audit factory and emits conservative bounded Warning
+  classifications/counts.
+- The exact convergence group passed 3/3. Legacy Java range compatibility plus
+  the convergence group passed 7/7. Java range/readiness,
+  expansion/selection, XML security/ranges/classification, release, API, and
+  real-readiness surroundings passed 43/43 in 1 minute 12 seconds.
+  Infrastructure and Web built with zero errors; warnings remained existing
+  analyzer/package/reference warnings. `git diff --check` passed.
+
+## Post-convergence T052 barrier
+
+- Corrected PreparedScanning passed 101 tests with one intentional SQLite-only
+  skip. Audit passed 2/2; canonical/replay 13/13; real exact-Git, CodeGraph,
+  JDT-LS, and prepared analysis 13/13 in 14 seconds with host access;
+  PostgreSQL migration passed 2/2 and atomicity/replay/concurrency passed 21/21;
+  API passed 5/5; release plus convergence qualification passed 7/7 in 72
+  seconds; boundary/XML passed 7/7; production-literal passed 1/1.
+- Web built with zero errors and nine existing NU1507/MSB3277 warnings. The
+  complete test project ran 1,636 tests in 2 minutes 46 seconds: 1,629 passed,
+  the same six unrelated baseline failures remained, and one intentional
+  SQLite-only skip remained. Every Story 12.2 test passed.
+- The regenerated production-literal artifact inspected six production
+  assemblies, nine embedded resources, and one public output with zero matches;
+  SHA-256 is
+  `ddecfbe6da9744cec962d1f051ee550beb91fdbe12516ee46029ef078a885d79`.
+- `git diff --check` passed. The fresh disposable PostgreSQL 17 container and
+  its database were removed; the existing `vulgata-postgres` service remained
+  healthy and untouched.

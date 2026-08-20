@@ -234,7 +234,10 @@ public sealed record AnalysisSymbolEvidence(
     string Symbol,
     AnalysisSymbolKind Kind,
     string RelativePath,
-    AnalysisLineRange Range);
+    AnalysisLineRange Range)
+{
+    public PreparedJdtSymbolSpan? ExactUtf16Range { get; init; }
+}
 
 public sealed record AnalysisRelationshipEvidence(
     string SourceSymbol,
@@ -586,6 +589,19 @@ public interface IPreparedJavaReadinessPort
 {
     Task<PreparedJavaReadinessResult> ProveReadinessAsync(
         PreparedJavaReadinessRequest request,
+        CancellationToken cancellationToken);
+}
+
+public sealed record PreparedJavaSourceResult(
+    IReadOnlyList<PreparedJdtSymbolSpan> Ranges,
+    AnalysisPortFailure? Failure);
+
+public interface IPreparedTopLevelSymbolSource
+{
+    Task<PreparedJavaSourceResult> GetRangesAsync(
+        AnalysisScope scope,
+        string relativePath,
+        string fileHash,
         CancellationToken cancellationToken);
 }
 

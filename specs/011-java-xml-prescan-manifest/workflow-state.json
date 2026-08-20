@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-2",
-    "head": "24bb73e6ad4cf2c2a48168e6f57ba97ad74eecaf",
+    "head": "ff80bf148730b4739ab90d3faab35d825cedc8c6",
     "git_identity_sha256": "02a42e8df16035ff54b0fd512d1400395098eb8a8f9f940787f4c10218383020",
-    "status_sha256": "88b5733cee917c448b6e771189adb14a3611f39144ce400bfbd3ca4516b86f39",
-    "observed_at": "2026-08-20T16:27:25Z"
+    "status_sha256": "cfb09e309b7b1b7d145585ea5079f8d3328794f60fe93648c1afed6e8dc47191",
+    "observed_at": "2026-08-20T17:30:21Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/011-java-xml-prescan-manifest/tasks.md",
-      "sha256": "c02cf2f2b510b470abd08bed7aaaa8bb71d8eb79e2e5158964f6a8ace027569e"
+      "sha256": "1b1e0c229fc05a54b09d4640af8033d523fe50eba023b2fe9ac586a8bd2885b9"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 0,
+    "converge": 1,
     "quality-review": 0
   },
   "approvals": [
@@ -72,7 +72,7 @@
   ],
   "convergence": {
     "status": "pending",
-    "attempt": 0,
+    "attempt": 1,
     "outcome": "pending",
     "report_path": null
   },
@@ -91,18 +91,19 @@
     "specs/011-java-xml-prescan-manifest/decisions/definition-review-fifth-correction-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
-    "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md"
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-implement-20260820T162725Z-0029b3",
+    "checkpoint_id": "bmad-12-2-implement-20260820T173021Z-c05355",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "converge",
-    "reason": "T001-T052 are complete with durable RED/GREEN and qualification evidence; bind the verified implementation checkpoint, then run independent convergence.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
+    "reason": "T053-T055 are complete with refreshed T052 final-barrier evidence; bind the correction checkpoint and rerun independent convergence.",
+    "evidence_path": "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md"
   },
-  "updated_at": "2026-08-20T16:27:25Z"
+  "updated_at": "2026-08-20T17:30:21Z"
 }

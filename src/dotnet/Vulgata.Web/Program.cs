@@ -295,6 +295,8 @@ public static class VulgataWebComposition
         builder.Services.AddSingleton<IPreparedCommunicationCatalogSource,
             EmbeddedPreparedCommunicationCatalogSource>();
         builder.Services.AddSingleton<IPreparedJavaReadinessPort, PreparedJavaReadinessService>();
+        builder.Services.AddSingleton<IPreparedTopLevelSymbolSource, PreparedJavaRangeSource>();
+        builder.Services.AddSingleton<PreparedJavaRangeProvider>();
         builder.Services.AddScoped<ExactCandidateExtractors>();
         builder.Services.AddScoped<IExactCrossRepositoryResolver, ExactCrossRepositoryResolver>();
         builder.Services.AddScoped<IExactCrossRepositoryResolutionStore, ExactCrossRepositoryResolutionStore>();

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -22,6 +23,105 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper output)
 {
+    [Fact]
+    public void PreparedJavaRangeSource_ExposesRevisionBoundExactTopLevelRangeSeam()
+    {
+        Type? sourceType = typeof(PreparedJdtSymbolSpan).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IPreparedTopLevelSymbolSource");
+        Assert.NotNull(sourceType);
+        Assert.True(sourceType!.IsInterface);
+
+        MethodInfo? method = sourceType.GetMethod(
+            "GetRangesAsync",
+            BindingFlags.Public | BindingFlags.Instance);
+        Assert.NotNull(method);
+        ParameterInfo[] parameters = method!.GetParameters();
+        Assert.Collection(
+            parameters,
+            parameter => Assert.Equal(typeof(AnalysisScope), parameter.ParameterType),
+            parameter => Assert.Equal(typeof(string), parameter.ParameterType),
+            parameter => Assert.Equal(typeof(string), parameter.ParameterType),
+            parameter => Assert.Equal(typeof(CancellationToken), parameter.ParameterType));
+        Assert.True(method.ReturnType.IsGenericType);
+        Assert.Equal(typeof(Task<>), method.ReturnType.GetGenericTypeDefinition());
+        Type resultType = method.ReturnType.GetGenericArguments()[0];
+        Assert.NotNull(resultType.GetProperty("Ranges"));
+        Assert.NotNull(resultType.GetProperty("Failure"));
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_OversizedJava_ConsumesExactRangesOrClosesWholeFileAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
+        harness.EnableJavaRangeQualification();
+        string source = CreateOversizedJavaSource();
+
+        harness.JavaRangeSource.Mode = JavaRangeFixtureMode.Exact;
+        PreparedScanPairBuildResult exact = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(exact.Failure);
+        Assert.NotNull(exact.PairPackage);
+        PreparedFileCodeUnitDraft[] exactUnits = exact.PairPackage!.Repositories
+            .SelectMany(repository => repository.FileCodeUnits)
+            .Where(unit => unit.RelativePath == ReleaseHarness.OversizedJavaPath)
+            .OrderBy(unit => unit.SegmentOrdinal)
+            .ToArray();
+        Assert.Equal(2, exactUnits.Length);
+        string fileHash = Hash(source);
+        Assert.All(exactUnits, unit =>
+        {
+            Assert.Equal(fileHash, unit.FileHash);
+            Assert.Equal(2, unit.SegmentCount);
+            Assert.InRange(unit.ByteEndExclusive - unit.ByteStart, 1, PreparedSourceRangePlanner.MaximumRawBytes);
+            Assert.InRange(unit.LineEnd - unit.LineStart + 1, 1, PreparedSourceRangePlanner.MaximumLogicalLines);
+        });
+        byte[] sourceBytes = Encoding.UTF8.GetBytes(source);
+        long firstStart = Encoding.UTF8.GetByteCount("package release;\n");
+        long firstEnd = firstStart + Encoding.UTF8.GetByteCount(source.Split('\n')[1]);
+        long secondStart = firstEnd + Encoding.UTF8.GetByteCount("\n");
+        long secondEnd = sourceBytes.Length - Encoding.UTF8.GetByteCount("\n");
+        Assert.Equal(firstStart, exactUnits[0].ByteStart);
+        Assert.Equal(firstEnd, exactUnits[0].ByteEndExclusive);
+        Assert.Equal(secondStart, exactUnits[1].ByteStart);
+        Assert.Equal(secondEnd, exactUnits[1].ByteEndExclusive);
+        Assert.Equal(1, exactUnits[0].SegmentOrdinal);
+        Assert.Equal(2, exactUnits[1].SegmentOrdinal);
+        Assert.Equal(2, exactUnits[0].LineStart);
+        Assert.Equal(2, exactUnits[0].LineEnd);
+        Assert.Equal(3, exactUnits[1].LineStart);
+        Assert.Equal(3, exactUnits[1].LineEnd);
+        Assert.Equal(
+            HashRawInterval(source, exactUnits[0].ByteStart, exactUnits[0].ByteEndExclusive),
+            exactUnits[0].SourceHash);
+        Assert.Equal(
+            HashRawInterval(source, exactUnits[1].ByteStart, exactUnits[1].ByteEndExclusive),
+            exactUnits[1].SourceHash);
+        Assert.True(harness.JavaRangeSource.Calls >= 1);
+
+        foreach (JavaRangeFixtureMode mode in new[]
+        {
+            JavaRangeFixtureMode.Missing,
+            JavaRangeFixtureMode.Malformed,
+            JavaRangeFixtureMode.Oversized,
+        })
+        {
+            harness.JavaRangeSource.Mode = mode;
+            PreparedScanPairBuildResult closed = await harness.BuildAsync(reverseInputs: false);
+
+            Assert.Null(closed.Failure);
+            Assert.NotNull(closed.PairPackage);
+            Assert.Empty(closed.PairPackage!.Repositories
+                .SelectMany(repository => repository.FileCodeUnits)
+                .Where(unit => unit.RelativePath == ReleaseHarness.OversizedJavaPath));
+            Assert.Single(closed.PairPackage.Repositories.SelectMany(repository => repository.Audits), audit =>
+                audit.RelativePath == ReleaseHarness.OversizedJavaPath &&
+                audit.Outcome == PreparedScanAuditOutcome.Skipped &&
+                audit.Reason == PreparedScanAuditReason.InvalidSplitRange &&
+                audit.FileCodeUnitIdentityFingerprint is null &&
+                audit.PairSelectionOrdinal is null);
+        }
+    }
+
     [Fact]
     public async Task ProductionPairBuilder_ThreeRunsIncludingReversedInputs_ProducesIdenticalSc001OutputsAsync()
     {
@@ -86,6 +186,145 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             classification.Kind == CommunicationKind.Http &&
             classification.Level == ClassificationLevel.Confirmed &&
             classification.RelativePath.EndsWith("application.xml", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_RelatedExpansion_IsBoundedAfterReadinessAndFallsBackDeterministicallyAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
+        harness.EnableRelatedExpansionQualification();
+        var requests = new List<PreparedRelatedFilesRequest>();
+        harness.CodeGraph.RelatedFilesHandler = (request, _) =>
+        {
+            requests.Add(request);
+            harness.AnalysisEvents.Add($"related:{request.Scope.RepositoryId:D}");
+            return Task.FromResult(new PreparedRelatedFilesResult(
+                AnalysisOperationStatus.Succeeded,
+                [new(
+                    "src/release/Entry00.java",
+                    request.SeedRelativePaths[0],
+                    PreparedRelationshipKind.Calls,
+                    1)],
+                null));
+        };
+
+        PreparedScanPairBuildResult expanded = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(expanded.Failure);
+        Assert.NotNull(expanded.PairPackage);
+        Assert.NotEmpty(requests);
+        Assert.All(requests, request =>
+        {
+            Assert.InRange(request.SeedRelativePaths.Count, 1, PreparedScanPlanner.MaximumHighValueSeedsPerRepository);
+            Assert.Equal(2, request.MaximumHops);
+            Assert.Equal(200, request.MaximumFiles);
+            Assert.Equal(
+                [PreparedRelationshipKind.Calls, PreparedRelationshipKind.Imports, PreparedRelationshipKind.Inherits],
+                request.RelationshipKinds);
+            int readinessIndex = harness.AnalysisEvents.LastIndexOf($"java:{request.Scope.RepositoryId:D}");
+            int expansionIndex = harness.AnalysisEvents.LastIndexOf($"related:{request.Scope.RepositoryId:D}");
+            Assert.True(readinessIndex >= 0 && expansionIndex > readinessIndex);
+        });
+        foreach (PreparedRepositoryPackage repository in expanded.PairPackage.Repositories.OrderBy(value => value.RepositoryId))
+        {
+            PreparedFileCodeUnitDraft expandedUnit = repository.FileCodeUnits
+                .Single(unit => unit.RelativePath == "src/release/Entry00.java");
+            Assert.Equal(100, expandedUnit.DirectBusinessScore);
+            Assert.Equal(900, expandedUnit.FinalBusinessScore);
+            Assert.Equal(PreparedSelectionReason.RelatedCall, expandedUnit.SelectionReason);
+        }
+
+        harness.CodeGraph.RelatedFilesHandler = (_, _) => Task.FromResult(new PreparedRelatedFilesResult(
+            AnalysisOperationStatus.Failed,
+            [],
+            new AnalysisPortFailure(
+                AnalysisPortFailureReason.Unavailable,
+                "related-expansion-unavailable",
+                "bounded test failure")));
+        PreparedScanPairBuildResult fallback = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(fallback.Failure);
+        Assert.NotNull(fallback.PairPackage);
+        foreach (PreparedRepositoryPackage repository in fallback.PairPackage.Repositories.OrderBy(value => value.RepositoryId))
+        {
+            PreparedFileCodeUnitDraft fallbackUnit = repository.FileCodeUnits
+                .Single(unit => unit.RelativePath == "src/release/Entry00.java");
+            Assert.Equal(100, fallbackUnit.DirectBusinessScore);
+            Assert.Equal(100, fallbackUnit.FinalBusinessScore);
+            Assert.Equal(PreparedSelectionReason.ProductionFallback, fallbackUnit.SelectionReason);
+        }
+        Assert.Contains(
+            fallback.PairPackage.Repositories.SelectMany(repository => repository.Audits),
+            audit => audit.Outcome == PreparedScanAuditOutcome.Warning &&
+                audit.Reason == PreparedScanAuditReason.RelatedFileExpansionFailed);
+
+        harness.CodeGraph.RelatedFilesHandler = (_, _) => Task.FromResult(new PreparedRelatedFilesResult(
+            AnalysisOperationStatus.Failed,
+            [],
+            new AnalysisPortFailure(
+                AnalysisPortFailureReason.TimedOut,
+                "related-expansion-timeout",
+                "bounded test timeout")));
+        PreparedScanPairBuildResult timedOut = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(timedOut.Failure);
+        Assert.NotNull(timedOut.PairPackage);
+        foreach (PreparedRepositoryPackage repository in timedOut.PairPackage.Repositories.OrderBy(value => value.RepositoryId))
+        {
+            PreparedFileCodeUnitDraft timedOutUnit = repository.FileCodeUnits
+                .Single(unit => unit.RelativePath == "src/release/Entry00.java");
+            Assert.Equal(100, timedOutUnit.DirectBusinessScore);
+            Assert.Equal(100, timedOutUnit.FinalBusinessScore);
+            Assert.Equal(PreparedSelectionReason.ProductionFallback, timedOutUnit.SelectionReason);
+        }
+        Assert.Contains(
+            timedOut.PairPackage.Repositories.SelectMany(repository => repository.Audits),
+            audit => audit.Outcome == PreparedScanAuditOutcome.Warning &&
+                audit.Reason == PreparedScanAuditReason.RelatedFileExpansionFailed);
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_InventoryOutcomesBecomeCanonicalAuditsAndWarningsAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
+        harness.EnableInventoryEdgeCases();
+
+        PreparedScanPairBuildResult result = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(result.Failure);
+        Assert.NotNull(result.PairPackage);
+        foreach (PreparedRepositoryPackage repository in result.PairPackage!.Repositories)
+        {
+            Assert.Contains(repository.Audits, audit =>
+                audit.RelativePath == ReleaseHarness.FilteredPath &&
+                audit.Outcome == PreparedScanAuditOutcome.Filtered &&
+                audit.Reason == PreparedScanAuditReason.ExcludedTestPath &&
+                audit.FileCodeUnitIdentityFingerprint is null &&
+                audit.PairSelectionOrdinal is null);
+            Assert.Contains(repository.Audits, audit =>
+                audit.RelativePath == ReleaseHarness.InvalidSplitPath &&
+                audit.Outcome == PreparedScanAuditOutcome.Skipped &&
+                audit.Reason == PreparedScanAuditReason.InvalidSplitRange &&
+                audit.FileCodeUnitIdentityFingerprint is null &&
+                audit.PairSelectionOrdinal is null);
+            Assert.Contains(repository.Audits, audit =>
+                audit.RelativePath == ReleaseHarness.UnsafeXmlPath &&
+                audit.Outcome == PreparedScanAuditOutcome.Warning &&
+                audit.Reason == PreparedScanAuditReason.UnsafeXml &&
+                audit.FileCodeUnitIdentityFingerprint is null &&
+                audit.PairSelectionOrdinal is null);
+            Assert.Contains(repository.Audits, audit =>
+                audit.RelativePath == ReleaseHarness.HardBoundXmlPath &&
+                audit.Outcome == PreparedScanAuditOutcome.Warning &&
+                audit.Reason == PreparedScanAuditReason.HardBoundExceeded &&
+                audit.FileCodeUnitIdentityFingerprint is null &&
+                audit.PairSelectionOrdinal is null);
+            Assert.True(repository.TotalWarningCount >= 2);
+            Assert.Contains(repository.Classifications, classification =>
+                classification.Level == ClassificationLevel.Warning &&
+                classification.Rule == EvidenceRule.BoundExceeded &&
+                classification.RelativePath == ReleaseHarness.HardBoundXmlPath);
+        }
     }
 
     private static string ReleaseProjection(PreparedScanPairPackage package)
@@ -166,9 +405,67 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         return JsonSerializer.Serialize(projection);
     }
 
+    private enum JavaRangeFixtureMode
+    {
+        Exact,
+        Missing,
+        Malformed,
+        Oversized,
+    }
+
+    private sealed class QualificationJavaRangeSource : IPreparedTopLevelSymbolSource
+    {
+        internal JavaRangeFixtureMode Mode { get; set; } = JavaRangeFixtureMode.Exact;
+
+        internal int Calls { get; private set; }
+
+        public Task<PreparedJavaSourceResult> GetRangesAsync(
+            AnalysisScope scope,
+            string relativePath,
+            string fileHash,
+            CancellationToken cancellationToken)
+        {
+            Calls++;
+            Assert.NotEqual(Guid.Empty, scope.RepositoryId);
+            Assert.False(string.IsNullOrWhiteSpace(scope.ProfiledRevision));
+            Assert.Equal(ReleaseHarness.OversizedJavaPath, relativePath);
+            Assert.Equal(Hash(CreateOversizedJavaSource()), fileHash);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string[] lines = CreateOversizedJavaSource().Split('\n');
+            return Task.FromResult(Mode switch
+            {
+                JavaRangeFixtureMode.Exact => new PreparedJavaSourceResult(
+                    [
+                        new(1, 0, 1, lines[1].Length),
+                        new(2, 0, 2, lines[2].Length),
+                    ],
+                    null),
+                JavaRangeFixtureMode.Missing => new PreparedJavaSourceResult(
+                    [],
+                    new AnalysisPortFailure(
+                        AnalysisPortFailureReason.MalformedResponse,
+                        "missing_java_ranges",
+                        "missing exact Java ranges")),
+                JavaRangeFixtureMode.Malformed => new PreparedJavaSourceResult(
+                    [new(1, 0, 1, 0)],
+                    null),
+                JavaRangeFixtureMode.Oversized => new PreparedJavaSourceResult(
+                    [new(1, 0, 2, lines[2].Length)],
+                    null),
+                _ => throw new ArgumentOutOfRangeException(),
+            });
+        }
+    }
+
     private sealed class ReleaseHarness : IAsyncDisposable
     {
         internal const string OversizedXmlPath = "src/release/oversized-application.xml";
+        internal const string OversizedJavaPath = "src/release/A-LargeEntry.java";
+        internal const string FilteredPath = "src/test/Filtered.java";
+        internal const string InvalidSplitPath = "src/release/invalid-split.xml";
+        internal const string UnsafeXmlPath = "src/release/unsafe.xml";
+        internal const string HardBoundXmlPath = "src/release/hard-bound.xml";
         private readonly LoginLogoutTests.CustomWebApplicationFactory _baseFactory;
         private readonly WebApplicationFactory<Program> _factory;
         private readonly AsyncServiceScope _scope;
@@ -176,11 +473,17 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         private readonly SystemEntity _system;
         private readonly RepositoryEntity[] _repositories;
         private readonly PreparedScanRepositoryRevisionBinding[] _bindings;
+        private readonly StubPreparedCodeGraphAnalysisPort _codeGraph;
+        private readonly QualificationJavaRangeSource _javaRangeSource;
+        private readonly List<string> _analysisEvents;
         private readonly ITestOutputHelper _output;
         private readonly Dictionary<Guid, List<long>> _codeGraphMilliseconds = [];
         private readonly Dictionary<Guid, List<long>> _javaMilliseconds = [];
         private readonly Dictionary<Guid, List<long>> _preScanMilliseconds = [];
         private bool _reverseCandidates;
+        private bool _includeInventoryEdgeCases;
+        private bool _includeJavaRangeQualification;
+        private bool _omitOversizedXmlForRelatedExpansion;
 
         private ReleaseHarness(
             LoginLogoutTests.CustomWebApplicationFactory baseFactory,
@@ -190,6 +493,9 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             SystemEntity system,
             RepositoryEntity[] repositories,
             PreparedScanRepositoryRevisionBinding[] bindings,
+            StubPreparedCodeGraphAnalysisPort codeGraph,
+            QualificationJavaRangeSource javaRangeSource,
+            List<string> analysisEvents,
             ITestOutputHelper output)
         {
             _baseFactory = baseFactory;
@@ -199,14 +505,31 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             _system = system;
             _repositories = repositories;
             _bindings = bindings;
+            _codeGraph = codeGraph;
+            _javaRangeSource = javaRangeSource;
+            _analysisEvents = analysisEvents;
             _output = output;
         }
+
+        internal StubPreparedCodeGraphAnalysisPort CodeGraph => _codeGraph;
+
+        internal QualificationJavaRangeSource JavaRangeSource => _javaRangeSource;
+
+        internal List<string> AnalysisEvents => _analysisEvents;
+
+        internal void EnableInventoryEdgeCases() => _includeInventoryEdgeCases = true;
+
+        internal void EnableJavaRangeQualification() => _includeJavaRangeQualification = true;
+
+        internal void EnableRelatedExpansionQualification() => _omitOversizedXmlForRelatedExpansion = true;
 
         internal static async Task<ReleaseHarness> CreateAsync(ITestOutputHelper output)
         {
             Dictionary<Guid, List<long>>? codeGraphTimings = null;
             Dictionary<Guid, List<long>>? javaTimings = null;
             var starts = new Dictionary<Guid, Stopwatch>();
+            var analysisEvents = new List<string>();
+            var javaRangeSource = new QualificationJavaRangeSource();
             var baseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
             var revisionAcquirer = new StubPreparedRevisionAcquirer();
             revisionAcquirer.Handler = (request, _) =>
@@ -226,11 +549,21 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             var snapshotSource = new StubPreparedSnapshotSource();
             ReleaseHarness? harness = null;
             snapshotSource.Handler = (snapshot, _) => Task.FromResult(new PreparedSnapshotReadResult(
-                CreateReleaseFiles(snapshot, harness?._reverseCandidates == true),
+                CreateReleaseFiles(
+                    snapshot,
+                    harness?._reverseCandidates == true,
+                    harness?._includeInventoryEdgeCases == true,
+                    harness is not null &&
+                        harness._includeJavaRangeQualification == true &&
+                        harness._repositories[0].Id == snapshot.RepositoryId,
+                    harness?._omitOversizedXmlForRelatedExpansion != true &&
+                        harness?._includeJavaRangeQualification != true &&
+                        harness?._includeInventoryEdgeCases != true),
                 null));
             var codeGraph = new StubPreparedCodeGraphAnalysisPort();
             codeGraph.ProofHandler = (request, _) =>
             {
+                analysisEvents.Add($"proof:{request.Scope.RepositoryId:D}");
                 Stopwatch timer = Stopwatch.StartNew();
                 PreparedCodeGraphProofResult result = CompleteCodeGraph(request);
                 timer.Stop();
@@ -240,6 +573,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             var java = new StubPreparedJavaReadinessPort();
             java.Handler = (request, _) =>
             {
+                analysisEvents.Add($"java:{request.Scope.RepositoryId:D}");
                 Stopwatch timer = Stopwatch.StartNew();
                 PreparedJavaReadinessResult result = ReadyJava(request);
                 timer.Stop();
@@ -266,13 +600,15 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                     services.AddSingleton<IPreparedCodeGraphAnalysisPort>(codeGraph);
                     services.RemoveAll<IPreparedJavaReadinessPort>();
                     services.AddSingleton<IPreparedJavaReadinessPort>(java);
+                    services.RemoveAll<IPreparedTopLevelSymbolSource>();
+                    services.AddSingleton<IPreparedTopLevelSymbolSource>(javaRangeSource);
                 }));
             AsyncServiceScope scope = factory.Services.CreateAsyncScope();
             VulgataDbContext db = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
             (SystemEntity system, RepositoryEntity[] repositories, PreparedScanRepositoryRevisionBinding[] bindings) =
                 await SeedAsync(db);
             IPreparedScanPairBuilder builder = scope.ServiceProvider.GetRequiredService<IPreparedScanPairBuilder>();
-            harness = new(baseFactory, factory, scope, builder, system, repositories, bindings, output);
+            harness = new(baseFactory, factory, scope, builder, system, repositories, bindings, codeGraph, javaRangeSource, analysisEvents, output);
             codeGraphTimings = harness._codeGraphMilliseconds;
             javaTimings = harness._javaMilliseconds;
             harness._starts = starts;
@@ -347,7 +683,10 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
 
     private static IReadOnlyList<PreparedSnapshotFile> CreateReleaseFiles(
         PreparedRevisionSnapshot snapshot,
-        bool reverse)
+        bool reverse,
+        bool includeInventoryEdgeCases = false,
+        bool includeJavaRangeQualification = false,
+        bool includeOversizedXml = true)
     {
         var files = new List<PreparedSnapshotFile>(61);
         for (int index = 0; index < 60; index++)
@@ -367,7 +706,45 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 .Append("\" />\n");
         }
         oversized.Append("</configuration>");
-        files.Add(File(ReleaseHarness.OversizedXmlPath, "XML", oversized.ToString()));
+        if (includeOversizedXml)
+        {
+            files.Add(File(ReleaseHarness.OversizedXmlPath, "XML", oversized.ToString()));
+        }
+        if (includeJavaRangeQualification)
+        {
+            files.Add(File(
+                ReleaseHarness.OversizedJavaPath,
+                "Java",
+                CreateOversizedJavaSource()));
+        }
+        if (includeInventoryEdgeCases)
+        {
+            files.Add(new PreparedSnapshotFile(
+                ReleaseHarness.FilteredPath,
+                "Java",
+                false,
+                "ExcludedTestPath",
+                null,
+                null,
+                0,
+                0,
+                null,
+                ReadOnlyMemory<byte>.Empty));
+            files.Add(File(
+                ReleaseHarness.InvalidSplitPath,
+                "XML",
+                CreateInvalidSplitXml()));
+            files.Add(File(
+                ReleaseHarness.UnsafeXmlPath,
+                "XML",
+                "<!DOCTYPE configuration [<!ENTITY xxe SYSTEM \"file:///secret\">]><configuration><endpoint url=\"&xxe;\" /></configuration>"));
+            files.Add(File(
+                ReleaseHarness.HardBoundXmlPath,
+                "XML",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration>" +
+                new string('x', PreparedSourceRangePlanner.MaximumRawBytes + 1) +
+                "</configuration>"));
+        }
         return reverse ? [.. files.AsEnumerable().Reverse()] : files;
     }
 
@@ -457,4 +834,27 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
 
     private static string Hash(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+
+    private static string HashRawInterval(string source, long byteStart, long byteEndExclusive)
+    {
+        byte[] bytes = Encoding.UTF8.GetBytes(source);
+        return Convert.ToHexStringLower(SHA256.HashData(
+            bytes.AsSpan(checked((int)byteStart), checked((int)(byteEndExclusive - byteStart)))));
+    }
+
+    private static string CreateOversizedJavaSource() =>
+        "package release;\n" +
+        "public final class LargeEntryA {/*" + new string('a', 40_000) + "*/}\n" +
+        "public final class LargeEntryB {/*" + new string('b', 40_000) + "*/}\n";
+
+    private static string CreateInvalidSplitXml()
+    {
+        var source = new StringBuilder("<configuration><payload>");
+        for (int index = 0; index < 10_000; index++)
+        {
+            source.Append("<item />");
+        }
+
+        return source.Append("</payload></configuration>").ToString();
+    }
 }

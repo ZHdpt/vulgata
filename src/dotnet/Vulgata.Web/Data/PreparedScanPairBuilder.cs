@@ -3,6 +3,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.Analysis.CodeGraph;
+using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Shared.Scans;
@@ -19,6 +21,8 @@ internal sealed class PreparedScanPairBuilder(
     IPreparedCommunicationCatalogSource catalogSource,
     IPreparedCodeGraphAnalysisPort codeGraph,
     IPreparedJavaReadinessPort javaReadiness,
+    IPreparedTopLevelSymbolSource javaRangeSource,
+    PreparedJavaRangeProvider javaRangeProvider,
     AnalysisRuntimeReadiness runtimeReadiness,
     TimeProvider timeProvider) : IPreparedScanPairBuilder
 {
@@ -154,28 +158,47 @@ internal sealed class PreparedScanPairBuilder(
             PreparedCanonicalArtifact javaIdentity = PreparedScanIdentityBuilders.CreateJavaReadiness(javaProof);
             javaProof = javaProof with { IdentityHash = javaIdentity.Fingerprint };
 
-            work.Add(new(repository, scanRun, binding, revision, inventory.Files, proof, javaProof));
+            work.Add(new(repository, scanRun, binding, revision, inventory.Files, proof, javaProof, scope));
         }
 
-        return BuildPackage(systemId, coordination, catalog, work);
+        return await BuildPackageAsync(systemId, coordination, catalog, work, cancellationToken);
     }
 
-    private PreparedScanPairBuildResult BuildPackage(
+    private async Task<PreparedScanPairBuildResult> BuildPackageAsync(
         Guid systemId,
         TwoRepositoryScanCoordination coordination,
         CoreCatalog catalog,
-        IReadOnlyList<RepositoryWork> work)
+        IReadOnlyList<RepositoryWork> work,
+        CancellationToken cancellationToken)
     {
         var candidates = new List<PreparedFileCodeUnitDraft>();
         var classifications = new Dictionary<Guid, PreparedCommunicationClassificationResult>();
+        var inventoryAudits = new Dictionary<Guid, List<PreparedScanAuditDraft>>();
         InfrastructureCatalog evaluationCatalog = CreateEvaluationCatalog(catalog);
         foreach (RepositoryWork repository in work)
         {
             var observations = new List<PreparedCommunicationObservation>();
-            foreach (PreparedSnapshotFile file in repository.Files.Where(file => file.IsEligible))
+            var audits = new List<PreparedScanAuditDraft>();
+            inventoryAudits.Add(repository.Repository.Id, audits);
+            foreach (PreparedSnapshotFile file in repository.Files)
             {
+                if (!file.IsEligible)
+                {
+                    audits.Add(CreateInventoryAudit(
+                        repository,
+                        file,
+                        PreparedScanAuditOutcome.Filtered,
+                        ParseFilteredReason(file.Outcome)));
+                    continue;
+                }
+
                 if (file.FileHash is null || file.SourceHash is null || file.RawBytes.IsEmpty)
                 {
+                    audits.Add(CreateInventoryAudit(
+                        repository,
+                        file,
+                        PreparedScanAuditOutcome.Skipped,
+                        PreparedScanAuditReason.InvalidSplitRange));
                     continue;
                 }
 
@@ -187,6 +210,27 @@ internal sealed class PreparedScanPairBuilder(
                     SafeXmlReadResult read = SafeXmlReader.Read(file.RelativePath, file.RawBytes);
                     if (read.Projection is not SafeXmlProjection projection)
                     {
+                        bool boundExceeded = read.Outcome == SafeXmlOutcome.BoundExceeded;
+                        audits.Add(CreateInventoryAudit(
+                            repository,
+                            file,
+                            PreparedScanAuditOutcome.Warning,
+                            boundExceeded
+                                ? PreparedScanAuditReason.HardBoundExceeded
+                                : PreparedScanAuditReason.UnsafeXml));
+                        observations.Add(new PreparedCommunicationObservation(
+                            null,
+                            ClassificationLevel.Warning,
+                            ConfidenceBand.None,
+                            boundExceeded ? EvidenceRule.BoundExceeded : EvidenceRule.MalformedEvidence,
+                            EvidenceProvenance.Detector,
+                            file.RelativePath,
+                            boundExceeded
+                                ? $"{file.RelativePath}#xml-hard-bound"
+                                : $"{file.RelativePath}#unsafe-xml",
+                            boundExceeded
+                                ? "detector.xml-hard-bound"
+                                : "detector.unsafe-xml"));
                         continue;
                     }
 
@@ -219,6 +263,11 @@ internal sealed class PreparedScanPairBuilder(
                             projection.DirectChildRanges);
                         if (xmlSplit.Outcome != PreparedRangeOutcome.Exact)
                         {
+                            audits.Add(CreateInventoryAudit(
+                                repository,
+                                file,
+                                PreparedScanAuditOutcome.Skipped,
+                                PreparedScanAuditReason.InvalidSplitRange));
                             continue;
                         }
                     }
@@ -238,6 +287,35 @@ internal sealed class PreparedScanPairBuilder(
                 if (file.RawBytes.Length > PreparedSourceRangePlanner.MaximumRawBytes ||
                     logicalLines is < 1 or > PreparedSourceRangePlanner.MaximumLogicalLines)
                 {
+                    if (StringComparer.OrdinalIgnoreCase.Equals(file.Language, "Java"))
+                    {
+                        PreparedJavaSourceResult sourceRanges = await javaRangeSource.GetRangesAsync(
+                            repository.Scope,
+                            file.RelativePath,
+                            file.FileHash,
+                            cancellationToken);
+                        PreparedSourceSplitPlan split = sourceRanges.Failure is null
+                            ? javaRangeProvider.GetRanges(file.RawBytes, file.FileHash, sourceRanges.Ranges)
+                            : new PreparedSourceSplitPlan(
+                                PreparedRangeOutcome.Skipped,
+                                "missing_java_ranges",
+                                []);
+                        if (split.Outcome == PreparedRangeOutcome.Exact)
+                        {
+                            foreach (PreparedJavaRange range in split.Ranges)
+                            {
+                                candidates.Add(CreateFileCodeUnit(repository, file, range, evidence));
+                            }
+
+                            continue;
+                        }
+                    }
+
+                    audits.Add(CreateInventoryAudit(
+                        repository,
+                        file,
+                        PreparedScanAuditOutcome.Skipped,
+                        PreparedScanAuditReason.InvalidSplitRange));
                     continue;
                 }
 
@@ -267,6 +345,57 @@ internal sealed class PreparedScanPairBuilder(
                 PreparedCommunicationDetector.Detect(repository.ScanRun.Id, observations));
         }
 
+        var expansion = new PreparedRelatedFileExpansion(codeGraph);
+        foreach (RepositoryWork repository in work)
+        {
+            PreparedFileCodeUnitDraft[] repositoryCandidates = candidates
+                .Where(candidate => candidate.RepositoryId == repository.Repository.Id)
+                .ToArray();
+            PreparedFileCodeUnitDraft[] seeds = PreparedScanPlanner.SelectSeeds(repositoryCandidates)
+                .ToArray();
+            if (seeds.Length == 0)
+            {
+                continue;
+            }
+
+            long expansionDeadline = Math.Min(
+                repository.Scope.Deadline.UnixTimeMilliseconds,
+                timeProvider.GetUtcNow().Add(PreparedRelatedFileExpansion.Timeout).ToUnixTimeMilliseconds());
+            PreparedRelatedFileExpansionResult expanded = await expansion.ExpandAsync(
+                new PreparedRelatedFilesRequest(
+                    repository.Scope,
+                    seeds.Select(seed => seed.RelativePath).Distinct(StringComparer.Ordinal).ToArray(),
+                    repositoryCandidates.Select(candidate => candidate.RelativePath)
+                        .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray(),
+                    [
+                        PreparedRelationshipKind.Calls,
+                        PreparedRelationshipKind.Imports,
+                        PreparedRelationshipKind.Inherits,
+                    ],
+                    PreparedRelatedFileExpansion.MaximumHops,
+                    PreparedRelatedFileExpansion.MaximumFiles,
+                    expansionDeadline),
+                repositoryCandidates,
+                cancellationToken);
+            candidates.RemoveAll(candidate => candidate.RepositoryId == repository.Repository.Id);
+            candidates.AddRange(expanded.Candidates);
+            if (expanded.Outcome == PreparedRelatedFileExpansionOutcome.WarningFallback)
+            {
+                inventoryAudits[repository.Repository.Id].Add(PreparedScanAuditFactory.Create(
+                    repository.Repository.Id,
+                    repository.ScanRun.Id,
+                    repositoryCandidates.OrderBy(candidate => candidate.RelativePath, StringComparer.Ordinal)
+                        .First().RelativePath,
+                    PreparedScanAuditOutcome.Warning,
+                    PreparedScanAuditReason.RelatedFileExpansionFailed,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null));
+            }
+        }
+
         PreparedSelectionPlan selection;
         try
         {
@@ -291,7 +420,11 @@ internal sealed class PreparedScanPairBuilder(
                 .ToArray();
             PreparedScanAuditDraft[] audits = selectionAudits
                 .Where(audit => audit.RepositoryId == repository.Repository.Id)
-                .OrderBy(audit => audit.Ordinal)
+                .Concat(inventoryAudits[repository.Repository.Id])
+                .OrderBy(audit => audit.RelativePath, StringComparer.Ordinal)
+                .ThenBy(audit => AuditOutcomeRank(audit.Outcome))
+                .ThenBy(audit => audit.Reason.ToString(), StringComparer.Ordinal)
+                .ThenBy(audit => audit.DetailFingerprint, StringComparer.Ordinal)
                 .Select((audit, index) => audit with { Ordinal = index + 1 })
                 .ToArray();
             DateTimeOffset capturedAt = now < repository.ScanRun.StartedAt
@@ -379,6 +512,47 @@ internal sealed class PreparedScanPairBuilder(
             range.SourceHash,
             evidence));
 
+    private static PreparedScanAuditDraft CreateInventoryAudit(
+        RepositoryWork repository,
+        PreparedSnapshotFile file,
+        PreparedScanAuditOutcome outcome,
+        PreparedScanAuditReason reason) => PreparedScanAuditFactory.Create(
+            repository.Repository.Id,
+            repository.ScanRun.Id,
+            file.RelativePath,
+            outcome,
+            reason,
+            file.FileHash,
+            file.RawByteCount,
+            file.LogicalLineCount,
+            null,
+            null);
+
+    private static PreparedScanAuditReason ParseFilteredReason(string outcome) =>
+        Enum.TryParse(outcome, ignoreCase: false, out PreparedScanAuditReason reason) &&
+        reason is PreparedScanAuditReason.ExcludedPathSegment or
+            PreparedScanAuditReason.ExcludedTestPath or
+            PreparedScanAuditReason.UnsupportedExtension or
+            PreparedScanAuditReason.UnsafePath or
+            PreparedScanAuditReason.CaseInsensitivePathCollision or
+            PreparedScanAuditReason.LinkOrReparsePoint or
+            PreparedScanAuditReason.NonRegularEntry or
+            PreparedScanAuditReason.BinaryJava or
+            PreparedScanAuditReason.InvalidJavaEncoding or
+            PreparedScanAuditReason.UnsupportedXmlEncoding
+            ? reason
+            : PreparedScanAuditReason.UnsupportedExtension;
+
+    private static int AuditOutcomeRank(PreparedScanAuditOutcome outcome) => outcome switch
+    {
+        PreparedScanAuditOutcome.Eligible => 0,
+        PreparedScanAuditOutcome.Filtered => 1,
+        PreparedScanAuditOutcome.Skipped => 2,
+        PreparedScanAuditOutcome.Selected => 3,
+        PreparedScanAuditOutcome.Warning => 4,
+        _ => throw new ArgumentOutOfRangeException(nameof(outcome)),
+    };
+
     private static InfrastructureCatalog CreateEvaluationCatalog(CoreCatalog catalog) =>
         new(
             catalog.SchemaIdentity,
@@ -426,5 +600,6 @@ internal sealed class PreparedScanPairBuilder(
         PreparedRevisionSnapshot Revision,
         IReadOnlyList<PreparedSnapshotFile> Files,
         CodeGraphCompletenessProof CodeGraphProof,
-        JavaReadinessProof JavaProof);
+        JavaReadinessProof JavaProof,
+        AnalysisScope Scope);
 }

@@ -790,11 +790,20 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
                 ? name.GetString() ?? "java-symbol"
                 : "java-symbol";
             string relativePath = ResolveRelativePath(location, request.RelativePath, workspacePath);
+            int startCharacter = range.GetProperty("start").GetProperty("character").GetInt32();
+            int endCharacter = range.GetProperty("end").GetProperty("character").GetInt32();
             evidence.Add(new AnalysisSymbolEvidence(
                 symbol,
                 AnalysisSymbolKind.Type,
                 relativePath,
-                new AnalysisLineRange(startLine, Math.Max(startLine, endLine))));
+                new AnalysisLineRange(startLine, Math.Max(startLine, endLine)))
+            {
+                ExactUtf16Range = new PreparedJdtSymbolSpan(
+                    startLine - 1,
+                    startCharacter,
+                    endLine - 1,
+                    endCharacter),
+            });
         }
 
         return new JavaNavigationResult(AnalysisOperationStatus.Succeeded, evidence, null);
