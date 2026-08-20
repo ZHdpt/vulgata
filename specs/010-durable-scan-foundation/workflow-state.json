@@ -2370,45 +2370,57 @@
       "observed_at": "2026-08-20T05:02:49Z",
       "summary": "QR2-001 is corrected. Recovery submits one complete batch and the durable store validates the full captured boundary before one serializable transaction SaveChanges and commit. A stale later job version produces conflict with zero job or Scan Execution phase mutation.",
       "raw_output_path": "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/converge/75",
+      "kind": "convergence",
+      "stage": "converge",
+      "source_commit": "5ad2562ee642211642eae9fc94cc5b415ab9baf8",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/tasks.md",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs"
+      ],
+      "command": "independent speckit-converge iteration 5; DurableScanning 105/105; DurableScanModelTests 6/6; Web build 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T05:09:57Z",
+      "summary": "Convergence iteration 5 returned CLEAN. All 32 functional requirements, nine success criteria, four scenarios, ten architecture decisions, and 57 completed tasks were checked; QR2-001 is closed and no task was appended.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
-    "status": "invalidated",
-    "iteration": 4,
-    "outcome": "pending",
+    "status": "accepted",
+    "iteration": 5,
+    "outcome": "converged",
     "findings_count": 0,
     "appended_task_ids": [],
     "artifact_hashes": {
       "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
       "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
       "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
-      "src/dotnet/Vulgata.Web/Program.cs": "a939ecd2f9865e0d77cc199e113e11bb5f169e0cd5be793c1c935a399f8f0db2",
-      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "72e0757d102720907bdf97509ecf9e6d99f90b1f8546c2d047ca9c85fd0385b1"
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs": "b55f55612b76fc0fc28e4ce0beea3d5b4945ff9b850f1b08a6356824ca795794",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "15b65d79202d5b23276b80fab80ce72660f2b1cc9b806632903885a5a93d53b1",
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "e5c9bc30596937e5bb422e6236b38cb23b670486459e253f23c158a87b8e4299"
     },
-    "completed_at": null
+    "completed_at": "2026-08-20T05:09:57Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260820T050249Z-qr2001",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260820T050957Z-5ad256",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "implement",
+    "stage": "converge",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
-      "src/dotnet/Vulgata.Core/DomainServices/IDurableScanStore.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
-      "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs",
-      "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
-      "tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs"
+      "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/74"
+      "12-1-durable-scan-foundation-and-analysis-runtime/converge/75"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T05:02:49Z"
+  "updated_at": "2026-08-20T05:09:57Z"
 }

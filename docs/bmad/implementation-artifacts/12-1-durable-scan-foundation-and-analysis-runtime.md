@@ -977,3 +977,14 @@ Independent verification passed 31/31 focused and 27/27 adjacent recovery and
 manual-resume tests; Core, Infrastructure, and Web builds have zero errors.
 This behavior correction invalidates convergence iteration 4 and quality review
 iteration 2, which must rerun on the committed boundary.
+
+### Convergence iteration 5
+
+The independent convergence analyst returned CLEAN at corrected checkpoint
+`5ad2562e`. It checked FR-001 through FR-032, SC-001 through SC-009, all four
+acceptance scenarios, AD-1 through AD-10, and all 57 completed tasks. QR2-001's
+single complete batch, full pre-mutation validation, one serializable
+transaction, and stale-later-job zero-mutation behavior were independently
+verified. Focused recovery and store suites passed, Durable Scanning passed
+105/105, and Web built with zero errors. No task was appended. The corrected
+candidate advances to quality review iteration 3.
