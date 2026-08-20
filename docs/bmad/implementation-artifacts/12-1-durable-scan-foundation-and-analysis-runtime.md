@@ -1074,3 +1074,15 @@ fields; any non-identical result remains Conflict. Independent GREEN evidence:
 adjacent recovery/API/revalidation tests. All generated databases were removed;
 Infrastructure and Web builds have zero errors. Convergence, quality, and E2E
 must rerun on this committed correction boundary.
+
+### Convergence iteration 7
+
+The independent convergence analyst returned CLEAN at `fc6c9767`. It rechecked
+all 32 Functional Requirements, nine Success Criteria, 16 acceptance scenarios,
+ten architecture decisions, five Constitution principles, and 57 completed
+tasks. QR4-001's per-attempt rehydration, rollback retry, canonical ambiguous-
+commit Replay, complete membership/version/integrity validation, and one
+serializable transaction/save/commit per attempt were verified. Real
+PostgreSQL concurrency passed 6/6 and the adjacent Durable Scanning plus
+migration boundary passed 118/118 with zero skipped tests. No task was appended.
+The candidate advances to a fresh independent quality review.

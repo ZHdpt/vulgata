@@ -2557,12 +2557,30 @@
       "observed_at": "2026-08-20T07:11:53Z",
       "summary": "QR4-001 is corrected. Each execution-strategy attempt rehydrates fresh durable state; acknowledgement-lost retries accept only the exact canonical applied batch as mutation-free Replay. Real PostgreSQL and adjacent suites pass with zero residual databases.",
       "raw_output_path": "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/converge/83",
+      "kind": "convergence",
+      "stage": "converge",
+      "source_commit": "fc6c97679494dcd7cb54a49e6245df9ced227901",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/tasks.md",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      ],
+      "command": "independent speckit-converge iteration 7; PostgreSQL concurrency 6/6; adjacent Durable Scanning and migration 118/118",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T07:18:20Z",
+      "summary": "Convergence iteration 7 returned CLEAN. QR4-001 retry rehydration and exact canonical replay satisfy the complete Story 12.1 definition; no task was appended.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
-    "status": "invalidated",
-    "iteration": 6,
-    "outcome": "pending",
+    "status": "accepted",
+    "iteration": 7,
+    "outcome": "converged",
     "findings_count": 0,
     "appended_task_ids": [],
     "artifact_hashes": {
@@ -2570,30 +2588,27 @@
       "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
       "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
       "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs": "b55f55612b76fc0fc28e4ce0beea3d5b4945ff9b850f1b08a6356824ca795794",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "9d44e3d0639e165050b170b1da479db57d70d63951994af7956d4b7e9c7e823a",
-      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "cb8c9df887a4c468f63aa97381099e70f5151aa1f90ec68e33691ffd89137e97",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "b0cfce5c994175ae23b1c835a32f35ac9f83025f3b478d6eb677d7b65ac31f26",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "a62545b72f43fbab850e8492b5929305832c51f5977e32198bb25f8398771b57",
       "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "e5c9bc30596937e5bb422e6236b38cb23b670486459e253f23c158a87b8e4299"
     },
-    "completed_at": null
+    "completed_at": "2026-08-20T07:18:20Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260820T071153Z-qr4001",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260820T071820Z-fc6c97",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "implement",
+    "stage": "converge",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
-      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/81",
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/82"
+      "12-1-durable-scan-foundation-and-analysis-runtime/converge/83"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T07:11:53Z"
+  "updated_at": "2026-08-20T07:18:20Z"
 }
