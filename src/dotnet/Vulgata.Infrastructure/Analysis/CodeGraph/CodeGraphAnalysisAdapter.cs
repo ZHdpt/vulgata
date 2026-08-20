@@ -3,7 +3,7 @@ using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
-public sealed partial class CodeGraphAnalysisAdapter : ICodeGraphAnalysisPort
+public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysisAdapter
 {
     private static readonly AnalysisPortFailure _unavailable = new(
         AnalysisPortFailureReason.Unavailable,
@@ -28,36 +28,36 @@ public sealed partial class CodeGraphAnalysisAdapter : ICodeGraphAnalysisPort
         _process = process ?? throw new ArgumentNullException(nameof(process));
     }
 
-    public Task<AnalysisIndexResult> IndexAsync(AnalysisScope scope, CancellationToken cancellationToken) =>
+    public override Task<AnalysisIndexResult> IndexAsync(AnalysisScope scope, CancellationToken cancellationToken) =>
         ExecuteIndexAsync(scope, ["init"], cancellationToken);
 
-    public Task<AnalysisIndexResult> RebuildAsync(
+    public override Task<AnalysisIndexResult> RebuildAsync(
         AnalysisScope scope,
         CancellationToken cancellationToken) =>
         ExecuteIndexAsync(scope, ["index", "--quiet"], cancellationToken);
 
-    public Task<CodeGraphStatusResult> GetStatusAsync(AnalysisScope scope, CancellationToken cancellationToken) =>
+    public override Task<CodeGraphStatusResult> GetStatusAsync(AnalysisScope scope, CancellationToken cancellationToken) =>
         ExecuteStatusAsync(scope, cancellationToken);
 
-    public Task<SymbolSearchResult> SearchSymbolsAsync(
+    public override Task<SymbolSearchResult> SearchSymbolsAsync(
         AnalysisScope scope,
         AnalysisSymbolQuery query,
         CancellationToken cancellationToken)
         => ExecuteSymbolSearchAsync(scope, query, cancellationToken);
 
-    public Task<RelationshipResult> GetCallersAsync(
+    public override Task<RelationshipResult> GetCallersAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
         CancellationToken cancellationToken) =>
         ExecuteRelationshipsAsync(scope, request, "callers", cancellationToken);
 
-    public Task<RelationshipResult> GetCalleesAsync(
+    public override Task<RelationshipResult> GetCalleesAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
         CancellationToken cancellationToken) =>
         ExecuteRelationshipsAsync(scope, request, "callees", cancellationToken);
 
-    public Task<RelatedFilesResult> GetRelatedFilesAsync(
+    public override Task<RelatedFilesResult> GetRelatedFilesAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
         CancellationToken cancellationToken)

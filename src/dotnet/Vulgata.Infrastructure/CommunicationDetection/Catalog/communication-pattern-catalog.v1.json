@@ -1,0 +1,34 @@
+{
+  "schemaIdentity": "communication-pattern-catalog/1.0",
+  "catalogId": "vulgata-default",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "identity": "rpc-dubbo-service-declaration",
+      "pathGlob": "src/**/resources/*.xml",
+      "selector": [
+        {
+          "namespaceUri": "http://dubbo.apache.org/schema/dubbo",
+          "localName": "service"
+        }
+      ],
+      "attributes": [
+        {
+          "namespaceUri": "",
+          "localName": "interface",
+          "present": true
+        }
+      ],
+      "extract": {
+        "attribute": {
+          "namespaceUri": "",
+          "localName": "interface"
+        }
+      },
+      "removePrefix": null,
+      "communicationKind": "Rpc",
+      "rule": "RpcMatchedConfiguration",
+      "provenance": "MatchedConfiguration"
+    }
+  ]
+}

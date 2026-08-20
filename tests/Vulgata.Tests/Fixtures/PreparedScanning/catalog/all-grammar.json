@@ -1,0 +1,39 @@
+{
+  "schemaIdentity": "communication-pattern-catalog/1.0",
+  "catalogId": "neutral-fixture",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "identity": "http-attribute-extraction",
+      "pathGlob": "src/**/neutral/*.xml",
+      "selector": [
+        { "namespaceUri": "urn:vulgata:fixture:http", "localName": "client" }
+      ],
+      "ancestor": [
+        { "namespaceUri": "urn:vulgata:fixture:configuration", "localName": "configuration" }
+      ],
+      "attributes": [
+        { "namespaceUri": "", "localName": "name", "present": true },
+        { "namespaceUri": "", "localName": "name", "equals": "primary" }
+      ],
+      "extract": { "attribute": { "namespaceUri": "", "localName": "endpoint" } },
+      "removePrefix": "svc://",
+      "communicationKind": "Http",
+      "rule": "HttpMatchedConfiguration",
+      "provenance": "MatchedConfiguration"
+    },
+    {
+      "identity": "rpc-text-extraction",
+      "pathGlob": "src/main/resources/?eutral/*.xml",
+      "selector": [
+        { "namespaceUri": "urn:vulgata:fixture:configuration", "localName": "rpc-service" }
+      ],
+      "attributes": [],
+      "extract": { "elementText": true },
+      "removePrefix": null,
+      "communicationKind": "Rpc",
+      "rule": "RpcMatchedConfiguration",
+      "provenance": "MatchedConfiguration"
+    }
+  ]
+}

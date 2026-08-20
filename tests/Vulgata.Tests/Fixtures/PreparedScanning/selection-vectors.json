@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "story-12.2-selection-vectors/1.0",
+  "cases": [
+    { "name": "direct-score-descending", "scores": [100, 1000, 400], "expected": [1000, 400, 100] },
+    { "name": "path-tie-break", "paths": ["zeta.xml", "alpha.java"], "expected": ["alpha.java", "zeta.xml"] },
+    { "name": "segment-tie-break", "segments": [2, 1], "expected": [1, 2] },
+    { "name": "repository-uuid-text", "repositoryIds": ["ffeeddcc-bbaa-9988-7766-554433221100", "10213243-5465-7687-98a9-bacbdcedfe0f"], "expected": ["10213243-5465-7687-98a9-bacbdcedfe0f", "ffeeddcc-bbaa-9988-7766-554433221100"] },
+    { "name": "mandatory-seed-cap", "highValueCount": 21, "expectedMandatoryCount": 20 }
+  ]
+}

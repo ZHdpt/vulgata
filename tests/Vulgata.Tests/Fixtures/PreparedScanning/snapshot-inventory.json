@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "story-12.2-snapshot-fixture/1.0",
+  "requestedRef": "refs/heads/neutral-fixture",
+  "profiledRevision": "0123456789abcdef0123456789abcdef01234567",
+  "entries": [
+    { "path": "src/main/java/neutral/app/OrderGateway.java", "kind": "regular" },
+    { "path": "src/main/resources/neutral/communication.xml", "kind": "regular" },
+    { "path": "src/test/java/neutral/TestOnly.java", "kind": "regular-filtered" },
+    { "path": "vendor/neutral/vendor.xml", "kind": "regular-filtered" }
+  ],
+  "driftVectors": [
+    "ref-moved",
+    "origin-changed",
+    "commit-mismatch",
+    "path-added",
+    "path-removed",
+    "bytes-changed"
+  ]
+}

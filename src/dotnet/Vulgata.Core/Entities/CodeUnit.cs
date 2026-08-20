@@ -76,6 +76,12 @@ public sealed class CodeUnit
     public Guid RepositoryId { get; private set; }
     public string FilePath { get; private set; } = string.Empty;
     public string FileIdentityHash { get; private set; } = string.Empty;
+    public string? FileCodeUnitIdentityFingerprint { get; private set; }
+    public string? FileHash { get; private set; }
+    public long? ByteStart { get; private set; }
+    public long? ByteEndExclusive { get; private set; }
+    public int? SegmentOrdinal { get; private set; }
+    public int? SegmentCount { get; private set; }
     public string SourceHash { get; private set; } = string.Empty;
     public int LineStart { get; private set; }
     public int LineEnd { get; private set; }
@@ -87,6 +93,54 @@ public sealed class CodeUnit
     public ScanRun? ScanRun { get; private set; }
     public Repository? Repository { get; private set; }
     public ICollection<CodeUnitFramework> Frameworks { get; } = [];
+
+    public static CodeUnit CreatePreparedFileCodeUnit(
+        Guid id,
+        Guid scanRunId,
+        Guid repositoryId,
+        string filePath,
+        string fileHash,
+        string sourceHash,
+        long byteStart,
+        long byteEndExclusive,
+        int lineStart,
+        int lineEnd,
+        int segmentOrdinal,
+        int segmentCount,
+        string identityFingerprint,
+        string language)
+    {
+        if (id == Guid.Empty || byteStart < 0 || byteEndExclusive <= byteStart ||
+            byteEndExclusive - byteStart > 65_536 || lineEnd - lineStart + 1 > 2_000 ||
+            segmentOrdinal < 1 || segmentCount < segmentOrdinal)
+        {
+            throw new ArgumentOutOfRangeException(nameof(byteStart));
+        }
+
+        var codeUnit = new CodeUnit(
+            scanRunId,
+            repositoryId,
+            filePath,
+            fileHash,
+            sourceHash,
+            lineStart,
+            lineEnd,
+            filePath,
+            CodeUnitType.File,
+            RangeConfidence.Exact,
+            language)
+        {
+            Id = id,
+            FileCodeUnitIdentityFingerprint = RequireSha256(identityFingerprint),
+            FileHash = RequireSha256(fileHash),
+            ByteStart = byteStart,
+            ByteEndExclusive = byteEndExclusive,
+            SegmentOrdinal = segmentOrdinal,
+            SegmentCount = segmentCount,
+            Status = CodeUnitStatus.Pending,
+        };
+        return codeUnit;
+    }
 
     internal static string NormalizePath(string path)
     {

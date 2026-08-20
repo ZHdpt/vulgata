@@ -311,3 +311,72 @@ public sealed class ApprovedPreScanClassification
             classification.OccurrenceCount);
     }
 }
+
+public static class PreparedScanHandoffFactory
+{
+    public static PreparedScanHandoff Create(
+        Guid coordinationId,
+        string pairSelectionFingerprint,
+        string pairPackageFingerprint,
+        IEnumerable<PreparedScanManifestBinding> manifests,
+        IEnumerable<PreparedFileCodeUnitDraft> fileCodeUnits,
+        int selectedCount)
+    {
+        if (coordinationId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "A prepared handoff requires its coordination identity.",
+                nameof(coordinationId));
+        }
+
+        ArgumentNullException.ThrowIfNull(manifests);
+        ArgumentNullException.ThrowIfNull(fileCodeUnits);
+        PreparedScanManifestBinding[] materializedManifests =
+        [
+            .. manifests.OrderBy(
+                manifest => manifest.RepositoryId.ToString("D"),
+                StringComparer.Ordinal),
+        ];
+        PreparedFileCodeUnitDraft[] materializedFileCodeUnits =
+        [
+            .. fileCodeUnits.OrderBy(unit => unit.PairSelectionOrdinal),
+        ];
+        if (materializedManifests.Length != 2 ||
+            materializedManifests.Select(manifest => manifest.RepositoryId).Distinct().Count() != 2 ||
+            selectedCount is < 1 or > 150 ||
+            materializedFileCodeUnits.Length != selectedCount ||
+            !materializedFileCodeUnits
+                .Select(unit => unit.PairSelectionOrdinal)
+                .SequenceEqual(Enumerable.Range(1, selectedCount)))
+        {
+            throw new ArgumentException(
+                "A prepared handoff must be one complete, ordered two-Repository package.",
+                nameof(fileCodeUnits));
+        }
+
+        return new PreparedScanHandoff(
+            PreScanResult.PreparedHandoffSchemaIdentity,
+            coordinationId,
+            RequireLowercaseSha256(pairSelectionFingerprint),
+            RequireLowercaseSha256(pairPackageFingerprint),
+            Array.AsReadOnly(materializedManifests),
+            Array.AsReadOnly(materializedFileCodeUnits),
+            selectedCount);
+    }
+
+    private static string RequireLowercaseSha256(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        if (value.Length != 64 ||
+            value.Any(character =>
+                character is not (>= '0' and <= '9') and
+                    not (>= 'a' and <= 'f')))
+        {
+            throw new ArgumentException(
+                "Prepared handoff fingerprints must be lowercase SHA-256.",
+                nameof(value));
+        }
+
+        return value;
+    }
+}

@@ -1,3 +1,5 @@
+using Vulgata.Core.DomainServices;
+
 namespace Vulgata.Core.Entities;
 
 public enum PreScanApprovalState
@@ -16,6 +18,8 @@ public enum ConfirmedCommunicationKinds
 public sealed class PreScanResult
 {
     public const string CurrentSchemaVersion = "1.0";
+    public const string PreparedSchemaVersion = "2.0";
+    public const string PreparedHandoffSchemaIdentity = "prepared-scan-handoff/2.0";
     private const ConfirmedCommunicationKinds _allCommunicationKinds =
         ConfirmedCommunicationKinds.Rpc | ConfirmedCommunicationKinds.Http;
 
@@ -71,6 +75,24 @@ public sealed class PreScanResult
     public IReadOnlyList<CommunicationKindClassification> Classifications { get; private set; } =
         new List<CommunicationKindClassification>();
     public ScanRun? ScanRun { get; private set; }
+    public Guid? PreparedScanManifestId { get; private set; }
+    public string? PreparedScanManifestFingerprint { get; private set; }
+    public Guid? ContextSnapshotId { get; private set; }
+    public string? PreparedScanContextIdentityHash { get; private set; }
+    public string? ContextContentHash { get; private set; }
+    public string? HandoffSchemaIdentity { get; private set; }
+    public string? PairPackageFingerprint { get; private set; }
+    public bool IsPreparedV2 =>
+        StringComparer.Ordinal.Equals(SchemaVersion, PreparedSchemaVersion) &&
+        PreparedScanManifestId.HasValue &&
+        ContextSnapshotId.HasValue &&
+        IsLowercaseSha256(PreparedScanManifestFingerprint) &&
+        IsLowercaseSha256(PreparedScanContextIdentityHash) &&
+        IsLowercaseSha256(ContextContentHash) &&
+        IsLowercaseSha256(PairPackageFingerprint) &&
+        StringComparer.Ordinal.Equals(
+            HandoffSchemaIdentity,
+            PreparedHandoffSchemaIdentity);
 
     public static PreScanResult CreateApproved(
         Guid repositoryId,
@@ -129,6 +151,57 @@ public sealed class PreScanResult
             totalWarningCount,
             evidenceTruncated,
             Array.AsReadOnly(retainedClassifications));
+    }
+
+    public static PreScanResult CreatePreparedApproved(
+        PreparedRepositoryPackage package,
+        Guid preparedScanManifestId,
+        string pairPackageFingerprint,
+        string approvalMessage)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+        if (preparedScanManifestId == Guid.Empty || package.ProfiledRevision.Length != 40)
+        {
+            throw new ArgumentException(
+                "A prepared Pre-Scan Result requires an exact manifest binding.",
+                nameof(preparedScanManifestId));
+        }
+
+        ConfirmedCommunicationKinds confirmedKinds = package.Classifications
+            .Where(classification => classification.Level == ClassificationLevel.Confirmed)
+            .Aggregate(
+                ConfirmedCommunicationKinds.None,
+                (kinds, classification) => kinds | (classification.Kind switch
+                {
+                    CommunicationKind.Rpc => ConfirmedCommunicationKinds.Rpc,
+                    CommunicationKind.Http => ConfirmedCommunicationKinds.Http,
+                    _ => ConfirmedCommunicationKinds.None,
+                }));
+
+        PreScanResult result = CreateApproved(
+            package.RepositoryId,
+            package.ScanRunId,
+            package.ProfiledRevision,
+            package.ApprovedAt,
+            package.ManifestFingerprint,
+            approvalMessage,
+            confirmedKinds,
+            package.TotalConfirmedEvidenceCount,
+            package.TotalHintCount,
+            package.TotalWarningCount,
+            package.EvidenceTruncated,
+            package.Classifications);
+        result.SchemaVersion = PreparedSchemaVersion;
+        result.PreparedScanManifestId = preparedScanManifestId;
+        result.PreparedScanManifestFingerprint = RequireLowercaseSha256(
+            package.ManifestFingerprint);
+        result.ContextSnapshotId = package.ContextSnapshotId;
+        result.PreparedScanContextIdentityHash = RequireLowercaseSha256(
+            package.PreparedScanContextIdentityHash);
+        result.ContextContentHash = RequireLowercaseSha256(package.ContextContentHash);
+        result.HandoffSchemaIdentity = PreparedHandoffSchemaIdentity;
+        result.PairPackageFingerprint = RequireLowercaseSha256(pairPackageFingerprint);
+        return result;
     }
 
     private static void ValidateClassifications(
@@ -246,6 +319,11 @@ public sealed class PreScanResult
 
         return fingerprint;
     }
+
+    private static bool IsLowercaseSha256(string? value) =>
+        value is { Length: 64 } &&
+        value.All(character =>
+            character is (>= '0' and <= '9') or (>= 'a' and <= 'f'));
 
     private static string RequireApprovalMessage(string approvalMessage)
     {

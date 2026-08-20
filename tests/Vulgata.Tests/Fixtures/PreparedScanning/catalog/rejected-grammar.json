@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "story-12.2-rejected-catalog-vectors/1.0",
+  "cases": [
+    { "name": "path-traversal", "pathGlob": "../outside/*.xml" },
+    { "name": "absolute-path", "pathGlob": "C:/outside/*.xml" },
+    { "name": "empty-step", "selector": [{ "namespaceUri": "urn:neutral", "localName": "" }] },
+    { "name": "unbounded-element-wildcard", "selector": [{ "namespaceUri": "*", "localName": "*" }] },
+    { "name": "regular-expression", "pathGlob": "src/(main|prod)/.*\\.xml" },
+    { "name": "predicate", "selectorExpression": "service[@enabled='true']" },
+    { "name": "function", "selectorExpression": "contains(name(),'service')" },
+    { "name": "executable-expression", "script": "return endpoint" },
+    { "name": "resolver", "resolver": "custom" },
+    { "name": "network-location", "catalogLocation": "https://invalid.example/catalog.json" },
+    { "name": "unknown-property", "unexpected": true }
+  ]
+}

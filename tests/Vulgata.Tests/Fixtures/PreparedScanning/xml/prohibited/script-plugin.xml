@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<configuration>
+  <script language="neutral">disabled</script>
+  <plugin class="neutral.fixture.Plugin" />
+</configuration>

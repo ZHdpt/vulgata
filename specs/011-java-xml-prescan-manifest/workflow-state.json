@@ -3,7 +3,7 @@
   "bmad_story_key": "12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest",
   "bmad_epic_key": "12",
   "feature_directory": "specs/011-java-xml-prescan-manifest",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-2",
     "head": "6fe7d4a88ff344b1d71329d19fdb9d6d6d64b7e6",
@@ -64,10 +64,10 @@
     },
     {
       "decision_id": "story-12-2-implementation-approval-01",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "e997c182a466694bc5eab405bb68fc7396edee53ce7559f443bcbb2e7beaefb6",
       "evidence_path": "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
-      "decided_at": null
+      "decided_at": "2026-08-20T13:12:05Z"
     }
   ],
   "convergence": {
@@ -90,18 +90,19 @@
     "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json",
     "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/definition-review-fifth-correction-authorization-01.md",
-    "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md"
+    "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
+    "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-definition-20260820T125125Z-e997c1",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-12-2-implement-20260820T140324Z-t039",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Fresh combined definition review iteration 5 accepted the complete boundary; pause before the first production write for explicit implementation approval.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md"
+    "stage": "implement",
+    "reason": "T001-T039 are verified through dependency-ordered RED/GREEN groups; continue with the EF migration, store, coordinator/API, and qualification tasks.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   },
-  "updated_at": "2026-08-20T12:51:25Z"
+  "updated_at": "2026-08-20T14:03:24Z"
 }

@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md",
   "proposed_feature_short_name": "java-xml-prescan-manifest",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "source_commit": "29e889badc00db671fcabf80f50918e15381052c",
   "preflight": {
     "branch": "demo0831/story-12-2",
@@ -25,14 +25,14 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-2-definition-20260820T125125Z-e997c1",
     "stage": "definition-review",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "af6be1e7dc6d23a53c0bac29969700daeb14dbb4",
+    "binding_status": "bound"
   },
   "feature_directory": "specs/011-java-xml-prescan-manifest",
   "superseded_by_state": "specs/011-java-xml-prescan-manifest/workflow-state.json",
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Combined definition review iteration 5 accepted; pause for explicit implementation approval."
+    "stage": "implement",
+    "reason": "The user approved implementation; begin dependency-ordered TDD groups."
   },
-  "updated_at": "2026-08-20T12:51:25Z"
+  "updated_at": "2026-08-20T13:12:05Z"
 }

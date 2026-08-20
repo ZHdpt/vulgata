@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Core.Entities;
 
@@ -45,6 +46,7 @@ public sealed class ScanContextSnapshot
     public string? RepositoryContext { get; private set; }
     public string SchemaIdentity { get; private set; } = _supportedSchemaIdentity;
     public string ContentHash { get; private set; } = string.Empty;
+    public string? PreparedScanContextIdentityHash { get; private set; }
     public DateTimeOffset CapturedAt { get; private set; }
 
     public static ScanContextSnapshot Capture(
@@ -101,6 +103,29 @@ public sealed class ScanContextSnapshot
             normalizedRepositoryContext,
             contentHash,
             capturedAt);
+    }
+
+    public static ScanContextSnapshot CapturePrepared(
+        ScanRun scanRun,
+        string? globalContext,
+        string? systemContext,
+        string? repositoryContext,
+        DateTimeOffset capturedAt)
+    {
+        ScanContextSnapshot snapshot = Capture(
+            scanRun,
+            globalContext,
+            systemContext,
+            repositoryContext,
+            capturedAt);
+        snapshot.PreparedScanContextIdentityHash = PreparedScanIdentityBuilders
+            .CreateContextIdentity(
+                snapshot.RepositoryId,
+                snapshot.ScanRunId,
+                snapshot.ProfiledRevision,
+                snapshot.ContentHash)
+            .Fingerprint;
+        return snapshot;
     }
 
     private static string? NormalizeContext(string? value, string parameterName)

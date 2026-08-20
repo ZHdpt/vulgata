@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "story-12.2-neutral-fixtures/1.0",
+  "repositoryRoot": "repository",
+  "safeProductionPaths": [
+    "repository/src/main/java/neutral/app/OrderGateway.java",
+    "repository/src/main/resources/neutral/communication.xml"
+  ],
+  "filteredPaths": [
+    "repository/src/test/java/neutral/TestOnly.java",
+    "repository/build/generated/Generated.java",
+    "repository/vendor/neutral/vendor.xml"
+  ],
+  "syntheticUnsafeEntries": [
+    { "path": "../escape.java", "kind": "traversal" },
+    { "path": "repository/src/main/java/neutral/link.java", "kind": "symbolic-link" },
+    { "path": "repository/src/main/java/neutral/reparse.xml", "kind": "reparse-point" },
+    { "path": "repository/src/main/java/neutral/Order.java", "kind": "case-collision" },
+    { "path": "repository/src/main/java/neutral/order.java", "kind": "case-collision" }
+  ],
+  "hardBounds": {
+    "rawBytes": [65536, 65537, 4194304, 4194305],
+    "logicalLines": [2000, 2001],
+    "xmlDepth": [64, 65],
+    "xmlElements": [100000, 100001],
+    "xmlAttributes": [200000, 200001],
+    "attributesPerElement": [128, 129],
+    "evidenceCharacters": [16384, 16385]
+  },
+  "splitVectors": [
+    { "kind": "java", "ranges": [[0, 80], [80, 160]], "expected": "exact" },
+    { "kind": "xml", "ranges": [[47, 118], [121, 191]], "expected": "exact" },
+    { "kind": "java", "ranges": [[0, 100], [99, 160]], "expected": "overlap-rejected" },
+    { "kind": "xml", "ranges": [[0, 70000]], "expected": "oversized-rejected" }
+  ],
+  "selectionVectors": "selection-vectors.json",
+  "catalog": "catalog/all-grammar.json",
+  "rejectedCatalog": "catalog/rejected-grammar.json",
+  "snapshotInventory": "snapshot-inventory.json",
+  "prohibitedXmlDirectory": "xml/prohibited",
+  "prohibitedXmlFeatures": [
+    "dtd",
+    "external-entity",
+    "parameter-entity",
+    "xinclude",
+    "schema-network-location",
+    "xslt",
+    "script",
+    "plugin"
+  ]
+}

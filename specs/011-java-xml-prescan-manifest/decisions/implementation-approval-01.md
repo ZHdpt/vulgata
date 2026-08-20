@@ -1,8 +1,9 @@
 # Story 12.2 Implementation Approval
 
 - **Decision ID**: `story-12-2-implementation-approval-01`
-- **Status**: Pending
+- **Status**: Accepted
 - **Requested at**: `2026-08-20T12:51:25Z`
+- **Decided at**: `2026-08-20T13:12:05Z`
 - **Accepted definition boundary SHA-256**: `e997c182a466694bc5eab405bb68fc7396edee53ce7559f443bcbb2e7beaefb6`
 - **Accepted verdict**: `specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json`
 

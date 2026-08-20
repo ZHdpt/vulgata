@@ -37,15 +37,38 @@ public sealed class ExactGitRevisionSnapshotService : IExactGitRevisionSnapshotS
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(repository);
+        return await AcquireAsync(
+            repository.Id,
+            repository.GitUrl,
+            scanRunId,
+            expectedRef,
+            expectedCommit,
+            cancellationToken);
+    }
+
+    internal async Task<ICommittedRepositorySnapshotLease> AcquireAsync(
+        Guid repositoryId,
+        string repositoryOrigin,
+        Guid scanRunId,
+        string expectedRef,
+        string expectedCommit,
+        CancellationToken cancellationToken = default)
+    {
+        if (repositoryId == Guid.Empty)
+        {
+            throw new ArgumentException("Repository identity cannot be empty.", nameof(repositoryId));
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(repositoryOrigin);
         if (scanRunId == Guid.Empty)
         {
             throw new ArgumentException("Scan Run identity cannot be empty.", nameof(scanRunId));
         }
 
-        RequireFullTagRef(expectedRef);
+        RequireFullRef(expectedRef);
         RequireFullCommit(expectedCommit);
         string storageRoot = Path.GetFullPath(_options.RootPath);
-        string exactRoot = CreateExactRoot(storageRoot, repository.Id);
+        string exactRoot = CreateExactRoot(storageRoot, repositoryId);
         string operationRoot = CreateOperationRoot(exactRoot);
         string gitRoot = Path.Combine(operationRoot, "g");
         string snapshotRoot = Path.Combine(operationRoot, "s");
@@ -57,9 +80,9 @@ public sealed class ExactGitRevisionSnapshotService : IExactGitRevisionSnapshotS
                 cancellationToken);
             RejectReparsePoint(gitRoot);
             await RunRequiredGitAsync(
-                ["-C", gitRoot, "remote", "add", "origin", "--", repository.GitUrl],
+                ["-C", gitRoot, "remote", "add", "origin", "--", repositoryOrigin],
                 cancellationToken);
-            await VerifyOriginAsync(gitRoot, repository.GitUrl, cancellationToken);
+            await VerifyOriginAsync(gitRoot, repositoryOrigin, cancellationToken);
             await RunRequiredGitAsync(
                 [
                     "-C",
@@ -93,7 +116,7 @@ public sealed class ExactGitRevisionSnapshotService : IExactGitRevisionSnapshotS
                 _limits,
                 cancellationToken);
             return new ExactGitRevisionSnapshotLease(
-                repository.Id,
+                repositoryId,
                 scanRunId,
                 expectedRef,
                 expectedCommit,
@@ -463,11 +486,12 @@ public sealed class ExactGitRevisionSnapshotService : IExactGitRevisionSnapshotS
         }
     }
 
-    private static void RequireFullTagRef(string value)
+    private static void RequireFullRef(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
         if (value.Length > 256 ||
-            !value.StartsWith("refs/tags/", StringComparison.Ordinal) ||
+            !(value.StartsWith("refs/tags/", StringComparison.Ordinal) ||
+                value.StartsWith("refs/heads/", StringComparison.Ordinal)) ||
             value.Any(character => char.IsWhiteSpace(character) || char.IsControl(character)) ||
             value.Contains("..", StringComparison.Ordinal) ||
             value.Contains("@{", StringComparison.Ordinal) ||

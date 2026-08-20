@@ -288,6 +288,10 @@ public sealed class CodeGraphStatusResult
             indexedFileCount,
             nameof(indexedFileCount));
         Failure = failure;
+        Initialized = ready;
+        IndexState = ready && !stale
+            ? Entities.CodeGraphIndexState.Complete
+            : null;
     }
 
     public AnalysisOperationStatus Status { get; }
@@ -295,6 +299,35 @@ public sealed class CodeGraphStatusResult
     public bool Stale { get; }
     public int IndexedFileCount { get; }
     public AnalysisPortFailure? Failure { get; }
+
+    // Prepared-scan completeness fields are populated by the revision-bound
+    // adapter. The original constructor keeps Story 12.1 callers source- and
+    // behavior-compatible while exposing the closed typed proof surface.
+    public bool Initialized { get; init; }
+    public Entities.CodeGraphIndexState? IndexState { get; init; }
+    public long PendingAdded { get; init; }
+    public long PendingModified { get; init; }
+    public long PendingRemoved { get; init; }
+    public bool WorktreeMismatch { get; init; }
+    public bool ReindexRecommended { get; init; }
+    public long PendingReferences { get; init; }
+    public Guid RepositoryId { get; init; }
+    public Guid ScanRunId { get; init; }
+    public string ProfiledRevision { get; init; } = string.Empty;
+    public string SnapshotIdentity { get; init; } = string.Empty;
+    public string RuntimeIdentityHash { get; init; } = string.Empty;
+    public string IndexIdentity { get; init; } = string.Empty;
+    public string ProjectPath { get; init; } = string.Empty;
+    public string IndexPath { get; init; } = string.Empty;
+    public bool RepositoryBindingMatches { get; init; }
+    public bool ScanRunBindingMatches { get; init; }
+    public bool ProfiledRevisionBindingMatches { get; init; }
+    public bool SnapshotBindingMatches { get; init; }
+    public bool RuntimeBindingMatches { get; init; }
+    public bool IndexBindingMatches { get; init; }
+    public bool TrustedProjectPath { get; init; }
+    public bool TrustedIndexPath { get; init; }
+    public string CodeGraphProofIdentityHash { get; init; } = string.Empty;
 }
 
 public sealed class SymbolSearchResult
@@ -481,6 +514,78 @@ public interface ICodeGraphAnalysisPort
     Task<RelatedFilesResult> GetRelatedFilesAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
+        CancellationToken cancellationToken);
+}
+
+public sealed record PreparedCodeGraphProofRequest(
+    AnalysisScope Scope,
+    string SnapshotIdentity,
+    string SnapshotRootBindingHash,
+    string LogicalProjectBinding,
+    string LogicalIndexBinding);
+
+public sealed record PreparedCodeGraphProofResult(
+    AnalysisOperationStatus Status,
+    Entities.CodeGraphCompletenessProof? Proof,
+    AnalysisPortFailure? Failure);
+
+public enum PreparedRelationshipKind
+{
+    Calls,
+    Imports,
+    Inherits,
+}
+
+public sealed record PreparedRelatedFilesRequest(
+    AnalysisScope Scope,
+    IReadOnlyList<string> SeedRelativePaths,
+    IReadOnlyList<string> EligibleRelativePaths,
+    IReadOnlyList<PreparedRelationshipKind> RelationshipKinds,
+    int MaximumHops,
+    int MaximumFiles,
+    long DeadlineUnixTimeMilliseconds);
+
+public sealed record PreparedRelatedFile(
+    string RelativePath,
+    string SeedRelativePath,
+    PreparedRelationshipKind RelationshipKind,
+    int Hop);
+
+public sealed record PreparedRelatedFilesResult(
+    AnalysisOperationStatus Status,
+    IReadOnlyList<PreparedRelatedFile> Files,
+    AnalysisPortFailure? Failure);
+
+/// <summary>
+/// Story 12.2 extension of the closed v1 CodeGraph port. Existing v1 adapters
+/// remain valid until they explicitly opt into prepared-scan proof operations.
+/// </summary>
+public interface IPreparedCodeGraphAnalysisPort : ICodeGraphAnalysisPort
+{
+    Task<PreparedCodeGraphProofResult> BuildCompletenessProofAsync(
+        PreparedCodeGraphProofRequest request,
+        CancellationToken cancellationToken);
+
+    Task<PreparedRelatedFilesResult> GetPreparedRelatedFilesAsync(
+        PreparedRelatedFilesRequest request,
+        CancellationToken cancellationToken);
+}
+
+public sealed record PreparedJavaReadinessRequest(
+    AnalysisScope Scope,
+    string SnapshotIdentity,
+    string WorkspaceBindingHash,
+    IReadOnlyList<string> EligibleJavaRelativePaths);
+
+public sealed record PreparedJavaReadinessResult(
+    AnalysisOperationStatus Status,
+    Entities.JavaReadinessProof? Proof,
+    AnalysisPortFailure? Failure);
+
+public interface IPreparedJavaReadinessPort
+{
+    Task<PreparedJavaReadinessResult> ProveReadinessAsync(
+        PreparedJavaReadinessRequest request,
         CancellationToken cancellationToken);
 }
 

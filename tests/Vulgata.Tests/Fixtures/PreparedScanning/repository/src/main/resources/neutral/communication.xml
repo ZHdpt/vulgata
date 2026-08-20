@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="urn:vulgata:fixture:configuration" xmlns:http="urn:vulgata:fixture:http">
+  <http:client name="primary" endpoint="svc://neutral/orders" />
+  <rpc-service implementation="neutral.app.OrderGateway">orders</rpc-service>
+</configuration>

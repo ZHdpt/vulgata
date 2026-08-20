@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!DOCTYPE root [
+  <!ENTITY % external SYSTEM "https://invalid.example/parameter.ent">
+  %external;
+]>
+<root />

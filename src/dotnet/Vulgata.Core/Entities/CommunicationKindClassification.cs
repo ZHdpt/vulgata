@@ -49,6 +49,7 @@ public enum EvidenceRule
 public sealed class CommunicationKindClassification
 {
     public const string UnknownRelativePath = "(unknown)";
+    public const string PreparedSchemaIdentity = "communication-classification/1.0";
 
     private CommunicationKindClassification()
     {
@@ -90,6 +91,7 @@ public sealed class CommunicationKindClassification
     public string Locator { get; private set; } = string.Empty;
     public int OccurrenceCount { get; private set; }
     public string Fingerprint { get; private set; } = string.Empty;
+    public string? CatalogRuleIdentity { get; private set; }
     public PreScanResult? PreScanResult { get; private set; }
 
     public static CommunicationKindClassification Create(
