@@ -2495,12 +2495,30 @@
       "observed_at": "2026-08-20T06:27:56Z",
       "summary": "The PostgreSQL restart product failure and stale concurrency fixture are corrected. Recovery executes its serializable batch transaction through EF's retrying execution strategy, and injected rollback tests use the canonical commit fingerprint. Combined real PostgreSQL 17 verification passed 44/44 with zero residual generated databases.",
       "raw_output_path": "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/converge/79",
+      "kind": "convergence",
+      "stage": "converge",
+      "source_commit": "6aff10ec9588afc8c03a7a562709eea11da06fe2",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/tasks.md",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      ],
+      "command": "independent speckit-converge iteration 6; 32 FR, 9 SC, 16 scenarios, 10 AD, 57 tasks; no task appended",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T06:36:19Z",
+      "summary": "Convergence iteration 6 returned CLEAN. The PostgreSQL execution-strategy transaction correction and canonical-fingerprint rollback fixture satisfy the complete Story 12.1 definition with no remaining task.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
-    "status": "invalidated",
-    "iteration": 5,
-    "outcome": "pending",
+    "status": "accepted",
+    "iteration": 6,
+    "outcome": "converged",
     "findings_count": 0,
     "appended_task_ids": [],
     "artifact_hashes": {
@@ -2508,28 +2526,27 @@
       "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
       "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
       "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs": "b55f55612b76fc0fc28e4ce0beea3d5b4945ff9b850f1b08a6356824ca795794",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "15b65d79202d5b23276b80fab80ce72660f2b1cc9b806632903885a5a93d53b1",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "9d44e3d0639e165050b170b1da479db57d70d63951994af7956d4b7e9c7e823a",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "cb8c9df887a4c468f63aa97381099e70f5151aa1f90ec68e33691ffd89137e97",
       "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "e5c9bc30596937e5bb422e6236b38cb23b670486459e253f23c158a87b8e4299"
     },
-    "completed_at": null
+    "completed_at": "2026-08-20T06:36:19Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260820T062756Z-pgfix1",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260820T063619Z-6aff10",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "implement",
+    "stage": "converge",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
-      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/78"
+      "12-1-durable-scan-foundation-and-analysis-runtime/converge/79"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T06:27:56Z"
+  "updated_at": "2026-08-20T06:36:19Z"
 }
