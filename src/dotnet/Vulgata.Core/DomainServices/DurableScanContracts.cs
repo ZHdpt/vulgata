@@ -147,6 +147,11 @@ public sealed record ScanRecoveryTransitionCommand(
     ScanRecoveryTransitionKind Transition,
     DateTimeOffset ObservedAt);
 
+public sealed record ScanRecoveryBatchTransitionCommand(
+    Guid ScanExecutionId,
+    long ExpectedStateVersion,
+    IReadOnlyList<ScanRecoveryTransitionCommand> Transitions);
+
 public sealed record ScanJobLeaseCommand(
     Guid ScanExecutionId,
     Guid ScanJobExecutionId,

@@ -30,6 +30,11 @@ public interface IDurableScanStore
         ScanRecoveryTransitionCommand command,
         CancellationToken cancellationToken);
 
+    Task<DurableScanStoreResult> ApplyRecoveryTransitionsAsync(
+        DurableScanAuthorizationScope authorizationScope,
+        ScanRecoveryBatchTransitionCommand command,
+        CancellationToken cancellationToken);
+
     Task<DurableScanStoreResult> ClaimPendingJobAsync(
         DurableScanAuthorizationScope authorizationScope,
         ScanJobLeaseCommand command,

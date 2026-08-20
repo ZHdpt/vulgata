@@ -401,6 +401,186 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
         }
     }
 
+    public async Task<DurableScanStoreResult> ApplyRecoveryTransitionsAsync(
+        DurableScanAuthorizationScope authorizationScope,
+        ScanRecoveryBatchTransitionCommand command,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(authorizationScope);
+        ArgumentNullException.ThrowIfNull(command);
+        if (command.ScanExecutionId == Guid.Empty ||
+            command.ExpectedStateVersion < 0 ||
+            command.Transitions is null)
+        {
+            return Rejected(DurableScanReason.InvalidIdentity);
+        }
+
+        await using IDbContextTransaction transaction = await dbContext.Database
+            .BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
+        try
+        {
+            ScanExecution? execution = await FindAuthorizedExecutionAsync(
+                authorizationScope,
+                command.ScanExecutionId,
+                cancellationToken);
+            if (execution is null)
+            {
+                return NotFound();
+            }
+
+            if (execution.StateVersion != command.ExpectedStateVersion)
+            {
+                return Conflict(DurableScanReason.StaleStateVersion, execution.StateVersion);
+            }
+
+            List<ScanJobExecution> jobs = await dbContext.ScanJobExecutions
+                .Where(value => value.ScanExecutionId == execution.Id &&
+                    value.RepositoryId == execution.RepositoryId &&
+                    value.ScanRunId == execution.ScanRunId)
+                .ToListAsync(cancellationToken);
+            ScanRecoveryTransitionCommand[] jobCommands = command.Transitions
+                .Where(value => value.ScanJobExecutionId is not null)
+                .ToArray();
+            ScanRecoveryTransitionCommand[] executionCommands = command.Transitions
+                .Where(value => value.ScanJobExecutionId is null)
+                .ToArray();
+
+            if (jobCommands.Length != jobs.Count ||
+                jobCommands.Select(value => value.ScanJobExecutionId).Distinct().Count() != jobs.Count ||
+                command.Transitions.Any(value =>
+                    value.ScanExecutionId != command.ScanExecutionId ||
+                    value.ExpectedStateVersion != command.ExpectedStateVersion ||
+                    value.ObservedAt.Offset != TimeSpan.Zero) ||
+                command.Transitions.Select(value => value.ObservedAt).Distinct().Count() > 1)
+            {
+                return Rejected(DurableScanReason.InvalidIdentity);
+            }
+
+            Dictionary<Guid, ScanJobExecution> jobsById = jobs.ToDictionary(value => value.Id);
+            Guid[] completedDocumentVersionIds = jobs
+                .Where(value => value.State == ScanJobExecutionState.Completed &&
+                    value.CommittedDocumentVersionId is not null)
+                .Select(value => value.CommittedDocumentVersionId!.Value)
+                .ToArray();
+            HashSet<Guid> validCompletedDocumentVersionIds = await dbContext.DocumentVersions
+                .AsNoTracking()
+                .Where(value => completedDocumentVersionIds.Contains(value.Id) &&
+                    value.RepositoryId == execution.RepositoryId &&
+                    value.ScanRunId == execution.ScanRunId)
+                .Select(value => value.Id)
+                .ToHashSetAsync(cancellationToken);
+
+            foreach (ScanRecoveryTransitionCommand transition in jobCommands)
+            {
+                if (transition.ScanJobExecutionId is not Guid jobId ||
+                    transition.ExpectedJobStateVersion is not long expectedJobVersion ||
+                    !jobsById.TryGetValue(jobId, out ScanJobExecution? job))
+                {
+                    return Rejected(DurableScanReason.InvalidIdentity);
+                }
+
+                if (job.StateVersion != expectedJobVersion)
+                {
+                    return Conflict(DurableScanReason.StaleStateVersion, job.StateVersion);
+                }
+
+                bool completedIntegrityValid =
+                    job.State == ScanJobExecutionState.Completed &&
+                    job.CommittedDocumentVersionId is Guid documentVersionId &&
+                    validCompletedDocumentVersionIds.Contains(documentVersionId);
+                bool nonCompletedIntegrityValid =
+                    job.State != ScanJobExecutionState.Completed &&
+                    job.CommittedDocumentVersionId is null;
+                if (!completedIntegrityValid && !nonCompletedIntegrityValid)
+                {
+                    return Conflict(DurableScanReason.IntegrityViolation, job.StateVersion);
+                }
+
+                bool isExpiredLease = job.State == ScanJobExecutionState.Running &&
+                    job.LeaseExpiresAt is DateTimeOffset leaseExpiresAt &&
+                    leaseExpiresAt < transition.ObservedAt;
+                bool isDueRetry = job.State == ScanJobExecutionState.RetryScheduled &&
+                    job.NextAttemptAt is DateTimeOffset nextAttemptAt &&
+                    nextAttemptAt <= transition.ObservedAt;
+                bool transitionIsValid = transition.Transition switch
+                {
+                    ScanRecoveryTransitionKind.NoChange => !isExpiredLease && !isDueRetry,
+                    ScanRecoveryTransitionKind.ExpiredLeaseToPending => isExpiredLease,
+                    ScanRecoveryTransitionKind.DueRetryToPending => isDueRetry,
+                    _ => false,
+                };
+                if (!transitionIsValid || transition.ObservedAt < job.StateChangedAt)
+                {
+                    return Conflict(DurableScanReason.IntegrityViolation, job.StateVersion);
+                }
+            }
+
+            bool executionIsPaused = execution.Phase is
+                ScanExecutionPhase.PausedProviderUnavailable or
+                ScanExecutionPhase.PausedOperatorCorrection;
+            if (executionCommands.Length != (executionIsPaused ? 1 : 0) ||
+                executionCommands.Any(value =>
+                    value.ExpectedJobStateVersion is not null ||
+                    value.Transition != ScanRecoveryTransitionKind.PausedToPrepared ||
+                    execution.UpdatedAt is null ||
+                    value.ObservedAt < execution.UpdatedAt))
+            {
+                return Conflict(DurableScanReason.IntegrityViolation, execution.StateVersion);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            int appliedTransitionCount = 0;
+            foreach (ScanRecoveryTransitionCommand transition in jobCommands)
+            {
+                ScanJobExecution job = jobsById[transition.ScanJobExecutionId!.Value];
+                if (transition.Transition == ScanRecoveryTransitionKind.ExpiredLeaseToPending)
+                {
+                    job.RecoverExpiredLease(transition.ExpectedJobStateVersion!.Value, transition.ObservedAt);
+                    appliedTransitionCount++;
+                }
+                else if (transition.Transition == ScanRecoveryTransitionKind.DueRetryToPending)
+                {
+                    job.RecoverDueRetry(transition.ExpectedJobStateVersion!.Value, transition.ObservedAt);
+                    appliedTransitionCount++;
+                }
+            }
+
+            if (executionCommands.Length == 1)
+            {
+                execution.ResumeToPrepared(
+                    command.ExpectedStateVersion,
+                    executionCommands[0].ObservedAt);
+                appliedTransitionCount++;
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return appliedTransitionCount == 0
+                ? Replay(execution.StateVersion)
+                : Applied(execution.StateVersion);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            return Conflict(DurableScanReason.IntegrityViolation);
+        }
+        catch (ArgumentException)
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            return Rejected(DurableScanReason.InvalidIdentity);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            return Conflict(DurableScanReason.StaleStateVersion);
+        }
+    }
+
     public async Task<DurableScanStoreResult> ClaimPendingJobAsync(
         DurableScanAuthorizationScope authorizationScope,
         ScanJobLeaseCommand command,

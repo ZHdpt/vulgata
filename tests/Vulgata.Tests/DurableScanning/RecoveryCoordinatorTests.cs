@@ -215,6 +215,31 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(before, await fixture.VersionAndAttemptsAsync(job.Id));
     }
 
+    [Fact]
+    public async Task ResumeAsync_LateCapturedVersionConflict_UsesOneBatchWithoutPartialApplication()
+    {
+        await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
+        await fixture.AddRunningJobAsync(1, _start.AddMinutes(5));
+        await fixture.AddRetryScheduledJobAsync(2, _start.AddMinutes(6));
+        fixture.Clock.SetUtcNow(_start.AddMinutes(10));
+        string before = await fixture.SnapshotDurableStateAsync();
+        RecoveryFixture.BatchConflictStore batchStore =
+            fixture.InstallBatchConflictStore();
+
+        ScanRecoveryResult result = await fixture.ResumeAsync();
+
+        Assert.Equal(DurableScanStoreOutcome.Conflict, result.Outcome);
+        Assert.Equal(DurableScanReason.StaleStateVersion, result.Reason);
+        Assert.Equal(1, batchStore.BatchInvocationCount);
+        Assert.Equal(0, batchStore.SingleTransitionInvocationCount);
+        ScanRecoveryBatchTransitionCommand command =
+            Assert.IsType<ScanRecoveryBatchTransitionCommand>(batchStore.LastCommand);
+        Assert.Equal(fixture.ExecutionId, command.ScanExecutionId);
+        Assert.Equal(0, command.ExpectedStateVersion);
+        Assert.Equal(2, command.Transitions.Count);
+        Assert.Equal(before, await fixture.SnapshotDurableStateAsync());
+    }
+
     [Theory]
     [InlineData("authorization")]
     [InlineData("profiled-revision")]
@@ -542,12 +567,23 @@ public sealed class RecoveryCoordinatorTests
         internal async Task<string> SnapshotDurableStateAsync() =>
             JsonSerializer.Serialize(new
             {
-                ExecutionVersion = await ExecutionVersionAsync(),
+                Execution = await Context.ScanExecutions.AsNoTracking()
+                    .Where(value => value.Id == Execution.Id)
+                    .Select(value => new { value.Phase, value.StateVersion })
+                    .SingleAsync(),
                 Jobs = await Context.ScanJobExecutions.AsNoTracking()
                     .OrderBy(job => job.ManifestOrdinal)
                     .Select(job => new { job.Id, job.State, job.StateVersion, job.AttemptCount })
                     .ToArrayAsync(),
             });
+
+        internal BatchConflictStore InstallBatchConflictStore()
+        {
+            BatchConflictStore store = new(Store);
+            Store = store;
+            Coordinator = new DurableScanRecoveryCoordinator(Store, Revalidator, Clock);
+            return store;
+        }
 
         internal Task<int> DocumentCountAsync() => Context.DocumentVersions.CountAsync();
 
@@ -616,6 +652,89 @@ public sealed class RecoveryCoordinatorTests
                 ScanRecoveryTransitionCommand command,
                 CancellationToken cancellationToken) =>
                 inner.ApplyRecoveryTransitionAsync(authorizationScope, command, cancellationToken);
+
+            public Task<DurableScanStoreResult> ApplyRecoveryTransitionsAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                ScanRecoveryBatchTransitionCommand command,
+                CancellationToken cancellationToken) =>
+                inner.ApplyRecoveryTransitionsAsync(authorizationScope, command, cancellationToken);
+
+            public Task<DurableScanStoreResult> ClaimPendingJobAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                ScanJobLeaseCommand command,
+                CancellationToken cancellationToken) =>
+                inner.ClaimPendingJobAsync(authorizationScope, command, cancellationToken);
+
+            public Task<DurableScanStoreResult> TransitionRunningJobAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                RunningScanJobTransitionCommand command,
+                CancellationToken cancellationToken) =>
+                inner.TransitionRunningJobAsync(authorizationScope, command, cancellationToken);
+
+            public Task<DurableScanProgressResult> ReadProgressAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                Guid scanExecutionId,
+                CancellationToken cancellationToken) =>
+                inner.ReadProgressAsync(authorizationScope, scanExecutionId, cancellationToken);
+        }
+
+        internal sealed class BatchConflictStore(IDurableScanStore inner) : IDurableScanStore
+        {
+            internal int BatchInvocationCount { get; private set; }
+            internal int SingleTransitionInvocationCount { get; private set; }
+            internal ScanRecoveryBatchTransitionCommand? LastCommand { get; private set; }
+
+            public Task<DurableScanStoreResult> CreateContextSnapshotAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                ScanContextSnapshot snapshot,
+                CancellationToken cancellationToken) =>
+                inner.CreateContextSnapshotAsync(authorizationScope, snapshot, cancellationToken);
+
+            public Task<DurableScanStoreResult> CreateScanExecutionAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                ScanExecution execution,
+                CancellationToken cancellationToken) =>
+                inner.CreateScanExecutionAsync(authorizationScope, execution, cancellationToken);
+
+            public Task<DurableScanStoreResult> InsertJobExecutionsAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                Guid scanExecutionId,
+                IReadOnlyList<ScanJobExecution> jobs,
+                CancellationToken cancellationToken) =>
+                inner.InsertJobExecutionsAsync(authorizationScope, scanExecutionId, jobs, cancellationToken);
+
+            public Task<ScanRecoverySnapshotResult> ReadRecoverySnapshotAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                Guid scanExecutionId,
+                CancellationToken cancellationToken) =>
+                inner.ReadRecoverySnapshotAsync(authorizationScope, scanExecutionId, cancellationToken);
+
+            public Task<DurableScanStoreResult> ApplyRecoveryTransitionsAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                ScanRecoveryBatchTransitionCommand command,
+                CancellationToken cancellationToken)
+            {
+                BatchInvocationCount++;
+                LastCommand = command;
+                return Task.FromResult(new DurableScanStoreResult(
+                    DurableScanStoreOutcome.Conflict,
+                    DurableScanReason.StaleStateVersion,
+                    command.ExpectedStateVersion,
+                    null,
+                    null));
+            }
+
+            public Task<DurableScanStoreResult> ApplyRecoveryTransitionAsync(
+                DurableScanAuthorizationScope authorizationScope,
+                ScanRecoveryTransitionCommand command,
+                CancellationToken cancellationToken)
+            {
+                SingleTransitionInvocationCount++;
+                return inner.ApplyRecoveryTransitionAsync(
+                    authorizationScope,
+                    command,
+                    cancellationToken);
+            }
 
             public Task<DurableScanStoreResult> ClaimPendingJobAsync(
                 DurableScanAuthorizationScope authorizationScope,

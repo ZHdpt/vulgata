@@ -56,6 +56,11 @@ public sealed class DurableScanContractTests
             "Reason",
             "Snapshot");
         AssertImmutableModel(
+            typeof(ScanRecoveryBatchTransitionCommand),
+            "ScanExecutionId",
+            "ExpectedStateVersion",
+            "Transitions");
+        AssertImmutableModel(
             typeof(ScanRecoveryResult),
             "Outcome",
             "Reason",
@@ -109,6 +114,7 @@ public sealed class DurableScanContractTests
             "InsertJobExecutionsAsync",
             "ReadRecoverySnapshotAsync",
             "ApplyRecoveryTransitionAsync",
+            "ApplyRecoveryTransitionsAsync",
             "ClaimPendingJobAsync",
             "TransitionRunningJobAsync",
             "ReadProgressAsync");
@@ -119,6 +125,7 @@ public sealed class DurableScanContractTests
             ("InsertJobExecutionsAsync", typeof(DurableScanStoreResult)),
             ("ReadRecoverySnapshotAsync", typeof(ScanRecoverySnapshotResult)),
             ("ApplyRecoveryTransitionAsync", typeof(DurableScanStoreResult)),
+            ("ApplyRecoveryTransitionsAsync", typeof(DurableScanStoreResult)),
             ("ClaimPendingJobAsync", typeof(DurableScanStoreResult)),
             ("TransitionRunningJobAsync", typeof(DurableScanStoreResult)),
             ("ReadProgressAsync", typeof(DurableScanProgressResult)));

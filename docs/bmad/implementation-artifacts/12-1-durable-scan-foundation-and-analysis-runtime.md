@@ -962,3 +962,18 @@ captured-StateVersion contract. The required correction is a public-seam
 behavioral RED proving zero partial mutation, followed by a batch store
 transaction that validates the complete captured recovery set before one
 commit. Convergence and quality review must rerun after the correction.
+
+### QR2-001 correction
+
+QR2-001 is corrected test-first. The frozen public-seam tests now require one
+closed recovery batch containing the captured Scan Execution StateVersion and
+the complete Scan Job Execution transition set. The coordinator invokes that
+batch exactly once. The durable store validates membership, identity, every
+captured StateVersion, terminal Document integrity, transition timing, and the
+optional phase precondition before mutation inside one serializable EF
+transaction, followed by one SaveChanges and one commit. A stale second job now
+returns conflict with every job and the Scan Execution phase unchanged.
+Independent verification passed 31/31 focused and 27/27 adjacent recovery and
+manual-resume tests; Core, Infrastructure, and Web builds have zero errors.
+This behavior correction invalidates convergence iteration 4 and quality review
+iteration 2, which must rerun on the committed boundary.

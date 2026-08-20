@@ -299,6 +299,112 @@ public sealed class DurableScanStoreTests
     }
 
     [Fact]
+    public async Task ApplyRecoveryTransitionsAsync_StaleSecondCapturedJobVersion_ConflictsWithoutAnyMutationAsync()
+    {
+        await using SqliteConnection connection = OpenConnection();
+        await using VulgataDbContext context = CreateContext(connection);
+        DurableScanFixture fixture = await SeedFixtureWithExecutionAsync(context);
+        IReadOnlyList<CodeUnit> additionalCodeUnits =
+            await AddAdditionalCodeUnitsAsync(context, fixture, 1);
+        IDurableScanStore store = new DurableScanRepository(context);
+        ScanJobExecution[] manifest = CreateManifest(fixture, additionalCodeUnits);
+
+        Assert.Equal(
+            DurableScanStoreOutcome.Applied,
+            (await store.InsertJobExecutionsAsync(
+                fixture.Scope,
+                fixture.ExecutionId,
+                manifest,
+                CancellationToken.None)).Outcome);
+
+        Guid firstLease = Guid.Parse("99000000-0000-4000-8000-000000000099");
+        Guid secondLease = Guid.Parse("aa000000-0000-4000-8000-0000000000aa");
+        Assert.Equal(
+            DurableScanStoreOutcome.Applied,
+            (await store.ClaimPendingJobAsync(
+                fixture.Scope,
+                new ScanJobLeaseCommand(
+                    fixture.ExecutionId,
+                    manifest[0].Id,
+                    0,
+                    firstLease,
+                    _startedAt.AddMinutes(5),
+                    _startedAt.AddMinutes(1)),
+                CancellationToken.None)).Outcome);
+        Assert.Equal(
+            DurableScanStoreOutcome.Applied,
+            (await store.ClaimPendingJobAsync(
+                fixture.Scope,
+                new ScanJobLeaseCommand(
+                    fixture.ExecutionId,
+                    manifest[1].Id,
+                    0,
+                    secondLease,
+                    _startedAt.AddMinutes(5),
+                    _startedAt.AddMinutes(1)),
+                CancellationToken.None)).Outcome);
+        Assert.Equal(
+            DurableScanStoreOutcome.Applied,
+            (await store.TransitionRunningJobAsync(
+                fixture.Scope,
+                new RunningScanJobTransitionCommand(
+                    fixture.ExecutionId,
+                    manifest[1].Id,
+                    1,
+                    secondLease,
+                    ScanJobExecutionState.RetryScheduled,
+                    _startedAt.AddMinutes(6),
+                    ScanJobFailureCategory.ProviderTransient,
+                    "provider-timeout",
+                    _startedAt.AddMinutes(2)),
+                CancellationToken.None)).Outcome);
+
+        ScanRecoverySnapshot snapshot = Assert.IsType<ScanRecoverySnapshot>(
+            (await store.ReadRecoverySnapshotAsync(
+                fixture.Scope,
+                fixture.ExecutionId,
+                CancellationToken.None)).Snapshot);
+        ScanRecoveryJobSnapshot[] beforeJobs = snapshot.Jobs.ToArray();
+        var beforeExecution = await context.ScanExecutions
+            .AsNoTracking()
+            .Where(value => value.Id == fixture.ExecutionId)
+            .Select(value => new { value.Phase, value.StateVersion })
+            .SingleAsync();
+        ScanRecoveryTransitionCommand firstTransition = new(
+            fixture.ExecutionId,
+            snapshot.StateVersion,
+            beforeJobs[0].ScanJobExecutionId,
+            beforeJobs[0].StateVersion,
+            ScanRecoveryTransitionKind.ExpiredLeaseToPending,
+            _startedAt.AddMinutes(10));
+        ScanRecoveryTransitionCommand staleSecondTransition = new(
+            fixture.ExecutionId,
+            snapshot.StateVersion,
+            beforeJobs[1].ScanJobExecutionId,
+            beforeJobs[1].StateVersion - 1,
+            ScanRecoveryTransitionKind.DueRetryToPending,
+            _startedAt.AddMinutes(10));
+
+        DurableScanStoreResult result = await store.ApplyRecoveryTransitionsAsync(
+            fixture.Scope,
+            new ScanRecoveryBatchTransitionCommand(
+                fixture.ExecutionId,
+                snapshot.StateVersion,
+                [firstTransition, staleSecondTransition]),
+            CancellationToken.None);
+
+        Assert.Equal(DurableScanStoreOutcome.Conflict, result.Outcome);
+        Assert.Equal(DurableScanReason.StaleStateVersion, result.Reason);
+        var afterExecution = await context.ScanExecutions
+            .AsNoTracking()
+            .Where(value => value.Id == fixture.ExecutionId)
+            .Select(value => new { value.Phase, value.StateVersion })
+            .SingleAsync();
+        Assert.Equal(beforeExecution, afterExecution);
+        Assert.Equal(beforeJobs, await ReadJobsAsync(store, fixture));
+    }
+
+    [Fact]
     public void Model_DurableKeysChecksAndRestrictiveDeletesAreDeclared()
     {
         using SqliteConnection connection = OpenConnection();

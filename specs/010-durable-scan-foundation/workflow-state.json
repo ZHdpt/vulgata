@@ -2350,12 +2350,32 @@
       "observed_at": "2026-08-20T04:40:40Z",
       "summary": "Quality review iteration 2 returned REVISE with QR2-001: recovery job and phase transitions commit independently, permitting partial durable mutation before a later conflict or cancellation. Prior QR-001 through QR-003 are closed.",
       "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/74",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "be596a769e76e36807131ed20abdba495a270418",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+        "src/dotnet/Vulgata.Core/DomainServices/IDurableScanStore.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
+        "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs"
+      ],
+      "command": "QR2-001 focused 31/31; independent adjacent recovery/manual-resume 27/27; Core, Infrastructure, and Web builds 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T05:02:49Z",
+      "summary": "QR2-001 is corrected. Recovery submits one complete batch and the durable store validates the full captured boundary before one serializable transaction SaveChanges and commit. A stale later job version produces conflict with zero job or Scan Execution phase mutation.",
+      "raw_output_path": "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
     }
   ],
   "convergence": {
-    "status": "accepted",
+    "status": "invalidated",
     "iteration": 4,
-    "outcome": "converged",
+    "outcome": "pending",
     "findings_count": 0,
     "appended_task_ids": [],
     "artifact_hashes": {
@@ -2365,24 +2385,30 @@
       "src/dotnet/Vulgata.Web/Program.cs": "a939ecd2f9865e0d77cc199e113e11bb5f169e0cd5be793c1c935a399f8f0db2",
       "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "72e0757d102720907bdf97509ecf9e6d99f90b1f8546c2d047ca9c85fd0385b1"
     },
-    "completed_at": "2026-08-19T09:33:00Z"
+    "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260820T044040Z-5d3eab",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260820T050249Z-qr2001",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "quality-review",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json",
-      "specs/010-durable-scan-foundation/workflow-state.json"
+      "specs/010-durable-scan-foundation/workflow-state.json",
+      "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IDurableScanStore.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
+      "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
+      "tests/Vulgata.Tests/DurableScanning/DurableScanContractTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/73"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/74"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T04:40:40Z"
+  "updated_at": "2026-08-20T05:02:49Z"
 }

@@ -44,92 +44,62 @@ public sealed class DurableScanRecoveryCoordinator(
             }
 
             DateTimeOffset observedAt = timeProvider.GetUtcNow();
-            int recoveredExpiredLeaseCount = 0;
-            int releasedDueRetryCount = 0;
-            bool stateChanged = false;
+            List<ScanRecoveryTransitionCommand> transitions = [];
             foreach (ScanRecoveryJobSnapshot job in snapshot.Jobs)
             {
-                if (job.State == ScanJobExecutionState.Completed)
-                {
-                    DurableScanStoreResult verified = await store.ApplyRecoveryTransitionAsync(
-                        authorizationScope,
-                        new ScanRecoveryTransitionCommand(
-                            snapshot.ScanExecutionId,
-                            snapshot.StateVersion,
-                            job.ScanJobExecutionId,
-                            job.StateVersion,
-                            ScanRecoveryTransitionKind.NoChange,
-                            observedAt),
-                        cancellationToken);
-                    if (verified.Outcome is not DurableScanStoreOutcome.Applied and
-                        not DurableScanStoreOutcome.Replay)
-                    {
-                        return new(
-                            DurableScanStoreOutcome.Conflict,
-                            DurableScanReason.IntegrityViolation,
-                            verified.StateVersion);
-                    }
-
-                    continue;
-                }
-
                 ScanRecoveryTransitionKind? transition = SelectTransition(job, observedAt);
-                if (transition is null)
-                {
-                    continue;
-                }
-
-                DurableScanStoreResult applied = await store.ApplyRecoveryTransitionAsync(
-                    authorizationScope,
-                    new ScanRecoveryTransitionCommand(
-                        snapshot.ScanExecutionId,
-                        snapshot.StateVersion,
-                        job.ScanJobExecutionId,
-                        job.StateVersion,
-                        transition.Value,
-                        observedAt),
-                    cancellationToken);
-                if (applied.Outcome is not DurableScanStoreOutcome.Applied and
-                    not DurableScanStoreOutcome.Replay)
-                {
-                    return new(applied.Outcome, applied.Reason, applied.StateVersion);
-                }
-
-                if (applied.Outcome == DurableScanStoreOutcome.Applied)
-                {
-                    stateChanged = true;
-                    if (transition == ScanRecoveryTransitionKind.ExpiredLeaseToPending)
-                    {
-                        recoveredExpiredLeaseCount++;
-                    }
-                    else
-                    {
-                        releasedDueRetryCount++;
-                    }
-                }
+                transitions.Add(new ScanRecoveryTransitionCommand(
+                    snapshot.ScanExecutionId,
+                    snapshot.StateVersion,
+                    job.ScanJobExecutionId,
+                    job.StateVersion,
+                    transition ?? ScanRecoveryTransitionKind.NoChange,
+                    observedAt));
             }
 
             if (snapshot.Phase is ScanExecutionPhase.PausedProviderUnavailable or
                 ScanExecutionPhase.PausedOperatorCorrection)
             {
-                DurableScanStoreResult resumed = await store.ApplyRecoveryTransitionAsync(
-                    authorizationScope,
-                    new ScanRecoveryTransitionCommand(
-                        snapshot.ScanExecutionId,
-                        snapshot.StateVersion,
-                        null,
-                        null,
-                        ScanRecoveryTransitionKind.PausedToPrepared,
-                        observedAt),
-                    cancellationToken);
-                if (resumed.Outcome is not DurableScanStoreOutcome.Applied and
-                    not DurableScanStoreOutcome.Replay)
+                transitions.Add(new ScanRecoveryTransitionCommand(
+                    snapshot.ScanExecutionId,
+                    snapshot.StateVersion,
+                    null,
+                    null,
+                    ScanRecoveryTransitionKind.PausedToPrepared,
+                    observedAt));
+            }
+
+            DurableScanStoreResult applied = await store.ApplyRecoveryTransitionsAsync(
+                authorizationScope,
+                new ScanRecoveryBatchTransitionCommand(
+                    snapshot.ScanExecutionId,
+                    snapshot.StateVersion,
+                    transitions),
+                cancellationToken);
+            if (applied.Outcome is not DurableScanStoreOutcome.Applied and
+                not DurableScanStoreOutcome.Replay)
+            {
+                if (snapshot.Jobs.Any(value =>
+                        value.State == ScanJobExecutionState.Completed))
                 {
-                    return new(resumed.Outcome, resumed.Reason, resumed.StateVersion);
+                    return new(
+                        DurableScanStoreOutcome.Conflict,
+                        DurableScanReason.IntegrityViolation,
+                        applied.StateVersion);
                 }
 
-                stateChanged |= resumed.Outcome == DurableScanStoreOutcome.Applied;
+                return new(applied.Outcome, applied.Reason, applied.StateVersion);
             }
+
+            bool stateChanged = applied.Outcome == DurableScanStoreOutcome.Applied;
+            int recoveredExpiredLeaseCount = stateChanged
+                ? transitions.Count(value =>
+                    value.Transition == ScanRecoveryTransitionKind.ExpiredLeaseToPending)
+                : 0;
+            int releasedDueRetryCount = stateChanged
+                ? transitions.Count(value =>
+                    value.Transition == ScanRecoveryTransitionKind.DueRetryToPending)
+                : 0;
 
             ScanRecoverySnapshotResult reread = await store.ReadRecoverySnapshotAsync(
                 authorizationScope,
