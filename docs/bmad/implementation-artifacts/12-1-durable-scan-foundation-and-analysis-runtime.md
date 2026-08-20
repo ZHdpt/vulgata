@@ -1086,3 +1086,15 @@ serializable transaction/save/commit per attempt were verified. Real
 PostgreSQL concurrency passed 6/6 and the adjacent Durable Scanning plus
 migration boundary passed 118/118 with zero skipped tests. No task was appended.
 The candidate advances to a fresh independent quality review.
+
+### Quality review iteration 5
+
+The independent reviewer returned ACCEPT at `af309a72`. QR4-001 is closed:
+each retry begins from rehydrated durable state, an acknowledgement-lost commit
+is accepted only after exact canonical batch verification, and non-identical
+state remains Conflict. Independent real PostgreSQL retry tests passed 6/6;
+the adjacent durable and migration boundary passed 135/135 with zero skipped
+tests and no residual databases; Web built with zero errors. The review notes a
+nonblocking future constraint that context-wide ChangeTracker clearing would
+discard unrelated pending changes in a hypothetical shared unit of work, while
+the supported recovery caller performs only reads. Required E2E runs next.

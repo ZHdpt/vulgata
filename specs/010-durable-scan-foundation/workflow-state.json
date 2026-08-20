@@ -49,21 +49,21 @@
       "completed_at": "2026-08-18T09:27:47Z"
     },
     "quality-review": {
-      "status": "invalidated",
-      "iteration": 4,
-      "dispatch_id": "story_12_1_quality_review_4",
-      "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json",
+      "status": "accepted",
+      "iteration": 5,
+      "dispatch_id": "story_12_1_quality_review_5",
+      "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-05.json",
       "input_boundary": {
         "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
-        "candidate_commit": "6aff10ec9588afc8c03a7a562709eea11da06fe2",
-        "diff_sha256": "89e15527fcc11379b79289d6d3edfce9dc29e7d6e5be839145cb56568372c3f3",
+        "candidate_commit": "fc6c97679494dcd7cb54a49e6245df9ced227901",
+        "diff_sha256": "3a1a00b66147278bbc37a0ce0ceadd95e9100f1ac4de0b32fd2bae215047c051",
         "artifact_hashes": {
           "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
           "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
           "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
           "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs": "b55f55612b76fc0fc28e4ce0beea3d5b4945ff9b850f1b08a6356824ca795794",
-          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "9d44e3d0639e165050b170b1da479db57d70d63951994af7956d4b7e9c7e823a",
-          "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "cb8c9df887a4c468f63aa97381099e70f5151aa1f90ec68e33691ffd89137e97"
+          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "b0cfce5c994175ae23b1c835a32f35ac9f83025f3b478d6eb677d7b65ac31f26",
+          "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "a62545b72f43fbab850e8492b5929305832c51f5977e32198bb25f8398771b57"
         },
         "owned_paths": [
           "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
@@ -76,7 +76,7 @@
           "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
         ]
       },
-      "completed_at": "2026-08-20T06:44:18Z"
+      "completed_at": "2026-08-20T07:26:45Z"
     }
   },
   "stage_history": [
@@ -1013,7 +1013,7 @@
     "plan-review": {"count": 2, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json", "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"]},
     "definition-review": {"count": 3, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"]},
     "converge": {"count": 0, "verdict_paths": []},
-    "quality-review": {"count": 4, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-03.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json"]}
+    "quality-review": {"count": 5, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-03.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-05.json"]}
   },
   "e2e_decision": {
     "required": true,
@@ -2575,6 +2575,22 @@
       "observed_at": "2026-08-20T07:18:20Z",
       "summary": "Convergence iteration 7 returned CLEAN. QR4-001 retry rehydration and exact canonical replay satisfy the complete Story 12.1 definition; no task was appended.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/84",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "af309a72955f54df140d232045b7ae4e1fec86ff",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-05.json",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      ],
+      "command": "independent quality review iteration 5; real PostgreSQL retry 6/6; adjacent durable/migration 135/135; Web build 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T07:26:45Z",
+      "summary": "Quality review iteration 5 returned ACCEPT. QR4-001 is closed with fresh-state retries and exact canonical acknowledgement-loss replay verification; no blocking finding remains.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-05.json"
     }
   ],
   "convergence": {
@@ -2595,20 +2611,21 @@
     "completed_at": "2026-08-20T07:18:20Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260820T071820Z-fc6c97",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260820T072645Z-9ad807",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "converge",
+    "stage": "quality-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-05.json",
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/converge/83"
+      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/84"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T07:18:20Z"
+  "updated_at": "2026-08-20T07:26:45Z"
 }
