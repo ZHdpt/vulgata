@@ -1,10 +1,22 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Git;
+using Vulgata.Shared.Scans;
+using Vulgata.Tests.PreparedScanning.TestDoubles;
+using Vulgata.Web.Data;
+using RepositoryEntity = Vulgata.Core.Entities.Repository;
+using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Tests.AnalysisRuntime;
 
@@ -228,6 +240,361 @@ public sealed class PreparedScanRealQualificationTests
         Assert.Equal(JavaImportState.NotApplicable, proof.ImportState);
         Assert.Equal(0, proof.DocumentSymbolCount);
         Assert.NotNull(proof.IdentityHash);
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_JavaRevisionPath_UsesPinnedJdtLsAndProducesRanges()
+    {
+        string fixtureRoot = CreateTemporaryRoot("t056-real-git");
+        try
+        {
+            (string firstOrigin, string firstRevision, string firstRef) = await CreateLocalJavaGitRepositoryAsync(
+                fixtureRoot,
+                "one");
+            (string secondOrigin, string secondRevision, string secondRef) = await CreateLocalJavaGitRepositoryAsync(
+                fixtureRoot,
+                "two");
+
+            StubPreparedCodeGraphAnalysisPort codeGraph = new();
+            codeGraph.ProofHandler = (request, _) => Task.FromResult(
+                new PreparedCodeGraphProofResult(
+                AnalysisOperationStatus.Succeeded,
+                new CodeGraphCompletenessProof(
+                    request.Scope.RepositoryId,
+                    request.Scope.ScanRunId,
+                    request.Scope.ProfiledRevision,
+                    request.SnapshotIdentity,
+                    request.SnapshotRootBindingHash,
+                    request.Scope.RuntimeIdentityHash,
+                    $"repository-{request.Scope.RepositoryId:N}",
+                    "codegraph-completeness-proof/1.0",
+                    true,
+                    CodeGraphIndexState.Complete,
+                    0,
+                    0,
+                    0,
+                    false,
+                    false,
+                    0,
+                    64,
+                    $"repository-{request.Scope.RepositoryId:N}",
+                    $"index-{request.Scope.RepositoryId:N}",
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    new('b', 64),
+                    0),
+                    null));
+
+            StubPreparedCommunicationCatalogSource catalog = new();
+            catalog.Handler = _ => Task.FromResult(new PreparedCatalogLoadResult(
+                new CommunicationPatternCatalog(
+                    "communication-pattern-catalog/1.0",
+                    "t056-java-composition",
+                    "1",
+                    new('c', 64),
+                    []),
+                null));
+
+            using LoginLogoutTests.CustomWebApplicationFactory baseFactory = new();
+            using WebApplicationFactory<Program> factory = baseFactory.WithWebHostBuilder(
+                builder => builder.ConfigureTestServices(services =>
+                {
+                    string gitStorage = Path.Combine(fixtureRoot, "prepared-storage");
+                    services.RemoveAll<GitWorkingCopyOptions>();
+                    services.AddSingleton(new GitWorkingCopyOptions(gitStorage));
+                    services.RemoveAll<ExactGitRevisionSnapshotService>();
+                    services.AddScoped<ExactGitRevisionSnapshotService>();
+                    services.RemoveAll<PreparedScanRevisionAcquirer>();
+                    services.AddScoped<PreparedScanRevisionAcquirer>();
+                    services.RemoveAll<IPreparedRevisionAcquirer>();
+                    services.AddScoped<IPreparedRevisionAcquirer>(provider =>
+                        provider.GetRequiredService<PreparedScanRevisionAcquirer>());
+                    services.RemoveAll<IPreparedSnapshotSource>();
+                    services.AddScoped<IPreparedSnapshotSource, PreparedSnapshotSource>();
+                    services.RemoveAll<IAnalysisRuntimeHealthProbe>();
+                    services.AddSingleton<IAnalysisRuntimeHealthProbe>(
+                        new StubReadyAnalysisRuntimeHealthProbe());
+                    services.RemoveAll<IPreparedCommunicationCatalogSource>();
+                    services.AddSingleton<IPreparedCommunicationCatalogSource>(catalog);
+                    services.RemoveAll<IPreparedCodeGraphAnalysisPort>();
+                    services.AddSingleton<IPreparedCodeGraphAnalysisPort>(codeGraph);
+                }));
+
+            await using AsyncServiceScope scope = factory.Services.CreateAsyncScope();
+            AnalysisRuntimeReadiness readiness = scope.ServiceProvider
+                .GetRequiredService<AnalysisRuntimeReadiness>();
+            readiness.Update(new AnalysisHealthProbeResult(
+                AnalysisRuntimeHealthStatus.Ready,
+                "t056-host-runtime",
+                "pinned host Java 21 and JDT-LS runtime",
+                1_800_000_000_000,
+                [
+                    new AnalysisHealthCheck("codegraph", AnalysisRuntimeHealthStatus.Ready),
+                    new AnalysisHealthCheck("jdt-ls", AnalysisRuntimeHealthStatus.Ready),
+                ],
+                new('9', 64)));
+
+            VulgataDbContext db = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+                (SystemEntity system, RepositoryEntity first, RepositoryEntity second,
+                PreparedScanRepositoryRevisionBinding[] bindings) = await SeedJavaBindingsAsync(
+                    db,
+                    firstOrigin,
+                    secondOrigin,
+                    firstRevision,
+                    secondRevision,
+                    firstRef,
+                    secondRef);
+            IPreparedScanPairBuilder builder = scope.ServiceProvider
+                .GetRequiredService<IPreparedScanPairBuilder>();
+
+            PreparedScanPairBuildResult result = await builder.BuildAsync(
+                system.Id,
+                [first, second],
+                bindings,
+                CancellationToken.None);
+
+            Assert.True(
+                result.PairPackage is not null,
+                $"Java-containing preparation must reach readiness/ranges; failure={result.Failure?.FailureCode}");
+            Assert.Null(result.Failure);
+        Assert.Equal(2, result.PairPackage.Repositories.Count);
+        IJavaAnalysisSessionFactory sessionFactory = scope.ServiceProvider
+            .GetRequiredService<IJavaAnalysisSessionFactory>();
+        IPreparedJavaReadinessPort readinessPort = scope.ServiceProvider
+            .GetRequiredService<IPreparedJavaReadinessPort>();
+        IPreparedTopLevelSymbolSource rangeSource = scope.ServiceProvider
+            .GetRequiredService<IPreparedTopLevelSymbolSource>();
+        Assert.IsType<JdtLsAnalysisSessionFactory>(sessionFactory);
+        Assert.IsType<PreparedJavaReadinessService>(readinessPort);
+        Assert.IsType<PreparedJavaRangeSource>(rangeSource);
+        Assert.All(result.PairPackage.Repositories, repository =>
+            Assert.Equal(JavaReadinessOutcome.Ready, repository.JavaReadiness.Outcome));
+        Assert.All(result.PairPackage.Repositories, repository =>
+            Assert.True(repository.JavaReadiness.DocumentSymbolCount > 0));
+        Assert.Contains(
+            result.PairPackage.Repositories.SelectMany(repository => repository.FileCodeUnits),
+            unit => unit.RelativePath.EndsWith(".java", StringComparison.Ordinal) &&
+                unit.SegmentCount > 1);
+        Assert.Equal("jdt-language-server-1.61.0-202608141332", result.PairPackage.Repositories[0]
+            .JavaReadiness.JdtLsRelease);
+        Assert.Equal(
+            "bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f",
+            result.PairPackage.Repositories[0].JavaReadiness.JdtLsDistributionArchiveHash);
+        Assert.Equal("2.25.29", result.PairPackage.Repositories[0].JavaReadiness.StreamJsonRpcVersion);
+            Assert.Equal(21, result.PairPackage.Repositories[0].JavaReadiness.JavaMajor);
+        }
+        finally
+        {
+            DeleteDirectory(fixtureRoot);
+        }
+    }
+
+    private static IReadOnlyList<PreparedSnapshotFile> CreateJavaSnapshotFiles(
+        PreparedRevisionSnapshot snapshot)
+    {
+        List<PreparedSnapshotFile> files = new(capacity: 60);
+        for (int index = 0; index < 60; index++)
+        {
+            bool java = index % 2 == 0;
+            string relativePath = java
+                ? $"src/neutral/Entry-{index:00}.java"
+                : $"src/neutral/config-{index:00}.xml";
+            string source = java
+                ? $"package neutral;\npublic final class Entry{index:00} {{\n    public static final int VALUE = {index};\n}}\n"
+                : $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<configuration><entry name=\"neutral-{index:00}\" value=\"{snapshot.RepositoryId:N}\" /></configuration>\n";
+            byte[] rawBytes = System.Text.Encoding.UTF8.GetBytes(source);
+            string hash = Convert.ToHexStringLower(SHA256.HashData(rawBytes));
+            files.Add(new PreparedSnapshotFile(
+                relativePath,
+                java ? "Java" : "XML",
+                IsEligible: true,
+                "EligibleProductionSource",
+                hash,
+                hash,
+                rawBytes.LongLength,
+                source.Count(character => character == '\n'),
+                "utf-8",
+                rawBytes));
+        }
+
+        return files;
+    }
+
+    private static async Task<(string Origin, string Revision, string Ref)> CreateLocalJavaGitRepositoryAsync(
+        string root,
+        string suffix)
+    {
+        string origin = Path.Combine(root, $"origin-{suffix}");
+        Directory.CreateDirectory(origin);
+        await RunProcessAsync("git", ["init", "--quiet", "--initial-branch=main"], origin);
+        for (int index = 0; index < 60; index++)
+        {
+            bool java = index % 2 == 0;
+            string relativePath = java
+                ? $"src/main/java/example/analysis/Entry{index:00}.java"
+                : $"src/main/resources/config-{index:00}.xml";
+            string path = Path.Combine(origin, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            string source = java
+                ? CreateJavaSource(index)
+                : $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<configuration><entry name=\"entry-{index:00}\" value=\"{suffix}\" /></configuration>\n";
+            await File.WriteAllTextAsync(path, source, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        await File.WriteAllTextAsync(Path.Combine(origin, "neutral.txt"), "qualification\n");
+        await RunProcessAsync("git", ["add", "--all"], origin);
+        await RunProcessAsync(
+            "git",
+            ["-c", "user.name=Vulgata Qualification", "-c", "user.email=qualification@invalid", "commit", "--quiet", "-m", "t056"],
+            origin);
+        string revision = (await RunProcessAsync("git", ["rev-parse", "refs/heads/main"], origin)).Trim();
+        string tag = $"t056-{suffix}";
+        await RunProcessAsync("git", ["tag", tag, revision], origin);
+        return (origin, revision, $"refs/tags/{tag}");
+    }
+
+    private static string CreateJavaSource(int index)
+    {
+        var source = new StringBuilder();
+        source.AppendLine("package example.analysis;");
+        source.AppendLine($"public final class Entry{index:00} {{");
+        if (index == 0)
+        {
+            string payload = new('a', 40_000);
+            source.AppendLine($"    private static final String PAYLOAD = \"{payload}\";");
+        }
+        else
+        {
+            source.AppendLine("    public int value() { return 1; }");
+        }
+
+        source.AppendLine("}");
+        if (index == 0)
+        {
+            string payload = new('b', 40_000);
+            source.AppendLine("final class SecondaryEntry00 {");
+            source.AppendLine($"    private static final String PAYLOAD = \"{payload}\";");
+            source.AppendLine("}");
+        }
+
+        return source.ToString();
+    }
+
+    private static async Task<(
+        SystemEntity System,
+        RepositoryEntity First,
+        RepositoryEntity Second,
+        PreparedScanRepositoryRevisionBinding[] Bindings)> SeedJavaBindingsAsync(
+        VulgataDbContext db,
+        string firstOrigin,
+        string secondOrigin,
+        string firstRevision,
+        string secondRevision,
+        string firstRef,
+        string secondRef)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        SystemEntity system = new(
+            "T056 Java composition system",
+            "private local Java readiness fixture",
+            "prepared T056 context",
+            now);
+        RepositoryEntity first = system.AddRepository(
+            "t056-java-one",
+            firstOrigin,
+            null,
+            "Java repository one",
+            now);
+        RepositoryEntity second = system.AddRepository(
+            "t056-java-two",
+            secondOrigin,
+            null,
+            "Java repository two",
+            now);
+        ScanRun firstRun = ScanRun.Start(first.Id, 1_800, now);
+        firstRun.BindProfiledRevision(firstRevision);
+        ScanRun secondRun = ScanRun.Start(second.Id, 1_800, now);
+        secondRun.BindProfiledRevision(secondRevision);
+        ScanContextSnapshot firstSnapshot = ScanContextSnapshot.CapturePrepared(
+            firstRun,
+            "prepared T056 context",
+            "prepared T056 system context",
+            first.Context,
+            now);
+        ScanContextSnapshot secondSnapshot = ScanContextSnapshot.CapturePrepared(
+            secondRun,
+            "prepared T056 context",
+            "prepared T056 system context",
+            second.Context,
+            now);
+        PreScanResult firstPreScan = PreScanResult.CreateApproved(
+            first.Id,
+            firstRun.Id,
+            firstRevision,
+            now,
+            new('f', 64),
+            "预扫描已批准——继续进入顺序演示运行器",
+            ConfirmedCommunicationKinds.None,
+            0,
+            0,
+            0,
+            false,
+            []);
+        PreScanResult secondPreScan = PreScanResult.CreateApproved(
+            second.Id,
+            secondRun.Id,
+            secondRevision,
+            now,
+            new('1', 64),
+            "预扫描已批准——继续进入顺序演示运行器",
+            ConfirmedCommunicationKinds.None,
+            0,
+            0,
+            0,
+            false,
+            []);
+        ScanExecution firstExecution = ScanExecution.Start(
+            Guid.NewGuid(),
+            first.Id,
+            system.Id,
+            firstRun.Id,
+            firstPreScan.Id,
+            firstRevision,
+            now);
+        ScanExecution secondExecution = ScanExecution.Start(
+            Guid.NewGuid(),
+            second.Id,
+            system.Id,
+            secondRun.Id,
+            secondPreScan.Id,
+            secondRevision,
+            now);
+        TwoRepositoryScanCoordination coordination = TwoRepositoryScanCoordination.Create(
+            firstExecution,
+            secondExecution,
+            now);
+
+        db.Systems.Add(system);
+        db.ScanRuns.AddRange(firstRun, secondRun);
+        db.ScanContextSnapshots.AddRange(firstSnapshot, secondSnapshot);
+        db.PreScanResults.AddRange(firstPreScan, secondPreScan);
+        db.ScanExecutions.AddRange(firstExecution, secondExecution);
+        db.TwoRepositoryScanCoordinations.Add(coordination);
+        await db.SaveChangesAsync();
+
+        return (
+            system,
+            first,
+            second,
+            [
+                new() { RepositoryId = first.Id, GitRef = firstRef, ProfiledRevision = firstRevision },
+                new() { RepositoryId = second.Id, GitRef = secondRef, ProfiledRevision = secondRevision },
+            ]);
     }
 
     [Fact]

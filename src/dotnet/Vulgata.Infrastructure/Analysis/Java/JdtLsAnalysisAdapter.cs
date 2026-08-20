@@ -1,10 +1,12 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using NewtonsoftJsonFormatting = Newtonsoft.Json.Formatting;
 using StreamJsonRpc;
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.Git;
 
 namespace Vulgata.Infrastructure.Analysis.Java;
 
@@ -106,6 +108,23 @@ public sealed class JdtLsAnalysisSessionFactory : IJavaAnalysisSessionFactory
             distributionArchivePath,
             distributionArchiveSha256);
         _workspaceLeases = new FileJdtLsWorkspaceLeaseProvider(_options.WorkspaceRoot);
+        _processLauncher = new ProcessJdtLsLauncher();
+        _protocolClients = new StreamJsonRpcJdtLsProtocolClientFactory();
+    }
+
+    public JdtLsAnalysisSessionFactory(
+        JdtLsAdapterOptions options,
+        string distributionArchivePath,
+        string distributionArchiveSha256,
+        PreparedScanRevisionAcquirer revisionAcquirer)
+    {
+        _options = ValidateOptions(options);
+        ValidateDistributionArchive(
+            distributionArchivePath,
+            distributionArchiveSha256);
+        _workspaceLeases = new PreparedRevisionJdtLsWorkspaceLeaseProvider(
+            revisionAcquirer,
+            _options.WorkspaceRoot);
         _processLauncher = new ProcessJdtLsLauncher();
         _protocolClients = new StreamJsonRpcJdtLsProtocolClientFactory();
     }
@@ -399,6 +418,102 @@ internal sealed class FileJdtLsWorkspaceLeaseProvider : IJdtLsWorkspaceLeaseProv
     }
 }
 
+internal sealed class PreparedRevisionJdtLsWorkspaceLeaseProvider(
+    PreparedScanRevisionAcquirer revisionAcquirer,
+    string runtimeWorkspaceRoot) : IJdtLsWorkspaceLeaseProvider
+{
+    private readonly string _runtimeWorkspaceRoot = RequireRuntimeRoot(runtimeWorkspaceRoot);
+
+    public async Task<IJdtLsWorkspaceLease> AcquireAsync(
+        AnalysisScope scope,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        cancellationToken.ThrowIfCancellationRequested();
+        ICommittedRepositorySnapshotLease revisionLease = revisionAcquirer.RequireLease(
+            scope.WorkingCopyBindingToken);
+        if (revisionLease.RepositoryId != scope.RepositoryId ||
+            revisionLease.ScanRunId != scope.ScanRunId ||
+            !string.Equals(
+                revisionLease.ProfiledRevision,
+                scope.ProfiledRevision,
+                StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("jdt_revision_lease_binding_mismatch");
+        }
+
+        await revisionLease.VerifyIdentityAsync(cancellationToken).ConfigureAwait(false);
+        string workspacePath = Path.GetFullPath(revisionLease.RootPath);
+        string runtimePath = Path.GetFullPath(Path.Combine(
+            _runtimeWorkspaceRoot,
+            scope.RepositoryId.ToString("N"),
+            scope.ProfiledRevision + ".jdtls-data"));
+        string runtimePrefix = _runtimeWorkspaceRoot.TrimEnd(Path.DirectorySeparatorChar) +
+            Path.DirectorySeparatorChar;
+        if (!runtimePath.StartsWith(runtimePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("jdt_runtime_workspace_escape");
+        }
+
+        Directory.CreateDirectory(runtimePath);
+        try
+        {
+            FileStream lockStream = new(
+                Path.Combine(runtimePath, ".vulgata-lease"),
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite,
+                FileShare.None,
+                bufferSize: 1,
+                FileOptions.Asynchronous);
+            return new PreparedRevisionJdtLsWorkspaceLease(
+                new JdtLsWorkspaceBinding(
+                    scope.RepositoryId,
+                    scope.ScanRunId,
+                    scope.ProfiledRevision,
+                    scope.WorkingCopyBindingToken,
+                    workspacePath),
+                revisionLease,
+                lockStream);
+        }
+        catch (IOException)
+        {
+            throw new InvalidOperationException("jdt_workspace_in_use");
+        }
+    }
+
+    private static string RequireRuntimeRoot(string value)
+    {
+        if (!Path.IsPathFullyQualified(value))
+        {
+            throw new ArgumentException(
+                "A fully qualified runtime workspace root is required.",
+                nameof(value));
+        }
+
+        return Path.GetFullPath(value);
+    }
+}
+
+internal sealed class PreparedRevisionJdtLsWorkspaceLease(
+    JdtLsWorkspaceBinding binding,
+    ICommittedRepositorySnapshotLease revisionLease,
+    FileStream lockStream) : IJdtLsWorkspaceLease
+{
+    public JdtLsWorkspaceBinding Binding { get; } = binding;
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await revisionLease.VerifyIdentityAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        finally
+        {
+            await lockStream.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+}
+
 internal sealed class FileJdtLsWorkspaceLease(
     JdtLsWorkspaceBinding binding,
     FileStream lockStream) : IJdtLsWorkspaceLease
@@ -626,8 +741,10 @@ internal sealed class StreamJsonRpcJdtLsProtocolClientFactory : IJdtLsProtocolCl
 
 internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
 {
+    private static readonly UTF8Encoding _strictUtf8 = new(false, true);
     private readonly JsonRpc _rpc;
     private readonly int _responseByteLimit;
+    private readonly HashSet<string> _openedDocuments = new(StringComparer.OrdinalIgnoreCase);
     private string? _workspacePath;
 
     public StreamJsonRpcJdtLsProtocolClient(IJdtLsProcess process, int responseByteLimit)
@@ -685,6 +802,31 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
             }
 
             string documentUri = new Uri(documentPath).AbsoluteUri;
+            if (_openedDocuments.Add(documentUri))
+            {
+                var file = new FileInfo(documentPath);
+                if (!file.Exists || file.Length is <= 0 or > 4_194_304)
+                {
+                    throw new JsonException("jdt_document_outside_bounds");
+                }
+
+                byte[] documentBytes = await File.ReadAllBytesAsync(documentPath, linked.Token)
+                    .ConfigureAwait(false);
+                string documentText = _strictUtf8.GetString(documentBytes);
+                await _rpc.NotifyWithParameterObjectAsync(
+                    "textDocument/didOpen",
+                    new
+                    {
+                        textDocument = new
+                        {
+                            uri = documentUri,
+                            languageId = "java",
+                            version = 1,
+                            text = documentText,
+                        },
+                    }).ConfigureAwait(false);
+            }
+
             object parameters = new
             {
                 textDocument = new { uri = documentUri },
@@ -703,7 +845,10 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
                     parameters,
                     argumentDeclaredTypes: null,
                     linked.Token).ConfigureAwait(false);
-                if (method != "textDocument/implementation" ||
+                bool waitsForReadiness = method is
+                    "textDocument/documentSymbol" or
+                    "textDocument/implementation";
+                if (!waitsForReadiness ||
                     (responseToken.Type != JTokenType.Null && responseToken.HasValues))
                 {
                     break;

@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/011-java-xml-prescan-manifest/tasks.md",
-      "sha256": "1b1e0c229fc05a54b09d4640af8033d523fe50eba023b2fe9ac586a8bd2885b9"
+      "sha256": "a68724fa5dd361e75e862919884b6667fbe79262d841af020c30c20c7c0f7287"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 1,
+    "converge": 2,
     "quality-review": 0
   },
   "approvals": [
@@ -71,10 +71,10 @@
     }
   ],
   "convergence": {
-    "status": "pending",
-    "attempt": 1,
-    "outcome": "pending",
-    "report_path": null
+    "status": "revised",
+    "attempt": 2,
+    "outcome": "tasks_appended",
+    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-02.md"
   },
   "e2e": {
     "result": "pending",
@@ -92,18 +92,18 @@
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-01.md"
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-02.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-implement-20260820T173021Z-c05355",
+    "checkpoint_id": "bmad-12-2-implement-20260820T180826Z-a68724",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "converge",
-    "reason": "T053-T055 are complete with refreshed T052 final-barrier evidence; bind the correction checkpoint and rerun independent convergence.",
-    "evidence_path": "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md"
+    "reason": "T056 real revision-bound Java/JDT-LS paired-preparation correction is GREEN; bind this checkpoint and run convergence iteration 3.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   },
-  "updated_at": "2026-08-20T17:30:21Z"
+  "updated_at": "2026-08-20T18:08:26Z"
 }

@@ -217,3 +217,32 @@ Document generation are absent.
 - `git diff --check` passed. The fresh disposable PostgreSQL 17 container and
   its database were removed; the existing `vulgata-postgres` service remained
   healthy and untouched.
+
+## Convergence correction: T056
+
+- Convergence iteration 2 found that production still registered the fail-closed
+  `UnboundJavaAnalysisSessionFactory` and the inventory-required Java readiness
+  path. The requirement-backed RED used two real local Git repositories and the
+  production paired builder; it failed 0/1 with
+  `prepared-scan-java-not-ready` before a Prepared Scan Pair Package existed.
+- Production now resolves the scoped real `JdtLsAnalysisSessionFactory` through
+  the retained `PreparedScanRevisionAcquirer` lease. Repository, Scan Run,
+  Profiled Revision, and lease identity are checked before use and again during
+  disposal. The exact retained revision root is the JDT `rootUri`; Eclipse
+  `-data`, the lock, and copied configuration remain in a separate contained
+  runtime workspace.
+- Java readiness selects the ordinal-first non-descriptor Java source, opens it
+  with bounded strict UTF-8 `didOpen`, requires nonempty document symbols within
+  the lesser of the Scan deadline and 60 seconds, and emits the canonical pinned
+  Java 21/JDT-LS 1.61.0/StreamJsonRpc 2.25.29 stdio proof. XML-only preparation
+  remains explicit `NotApplicable`.
+- The corrected host fixture contains an approximately 80 KB Java source with
+  two bounded top-level types, proving exact JDT-LS top-level range acquisition
+  and split-unit projection through the production paired builder. The unchanged
+  focused qualification passed 1/1 in 40 seconds; XML-only `NotApplicable`
+  passed 1/1; JDT-LS adapter/real qualification, prepared readiness, Java
+  split/range, paired-real, and oversized-Java surroundings passed 19/19 in
+  1 minute 12 seconds.
+- Infrastructure and Web built with zero errors. Existing warning totals were
+  two and 709 respectively. `git diff --check` passed with line-ending notices
+  only.

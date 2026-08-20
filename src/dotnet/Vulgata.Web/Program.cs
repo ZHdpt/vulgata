@@ -294,8 +294,8 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IPreparedSnapshotSource, PreparedSnapshotSource>();
         builder.Services.AddSingleton<IPreparedCommunicationCatalogSource,
             EmbeddedPreparedCommunicationCatalogSource>();
-        builder.Services.AddSingleton<IPreparedJavaReadinessPort, PreparedJavaReadinessService>();
-        builder.Services.AddSingleton<IPreparedTopLevelSymbolSource, PreparedJavaRangeSource>();
+        builder.Services.AddScoped<IPreparedJavaReadinessPort, PreparedJavaReadinessService>();
+        builder.Services.AddScoped<IPreparedTopLevelSymbolSource, PreparedJavaRangeSource>();
         builder.Services.AddSingleton<PreparedJavaRangeProvider>();
         builder.Services.AddScoped<ExactCandidateExtractors>();
         builder.Services.AddScoped<IExactCrossRepositoryResolver, ExactCrossRepositoryResolver>();
@@ -338,7 +338,33 @@ public static class VulgataWebComposition
             services.GetRequiredService<CodeGraphAnalysisAdapter>());
         builder.Services.AddSingleton<IPreparedCodeGraphAnalysisPort>(services =>
             services.GetRequiredService<CodeGraphAnalysisAdapter>());
-        builder.Services.AddSingleton<IJavaAnalysisSessionFactory, UnboundJavaAnalysisSessionFactory>();
+        builder.Services.AddScoped<IJavaAnalysisSessionFactory>(services =>
+        {
+            const string release = "jdt-language-server-1.61.0-202608141332";
+            const string archiveSha256 =
+                "bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f";
+            AnalysisRuntimeOptions options = services.GetRequiredService<AnalysisRuntimeOptions>();
+            GitWorkingCopyOptions git = services.GetRequiredService<GitWorkingCopyOptions>();
+            string archivePath = builder.Configuration["AnalysisRuntime:JdtLsDistributionArchivePath"] ??
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    "Downloads",
+                    release + ".tar.gz");
+            string runtimeWorkspace = builder.Configuration["AnalysisRuntime:JdtLsWorkspaceRoot"] ??
+                Path.Combine(git.RootPath, ".jdtls-runtime");
+            return new JdtLsAnalysisSessionFactory(
+                new JdtLsAdapterOptions(
+                    Path.Combine(options.JavaHome, "bin", "java.exe"),
+                    options.JdtLsInstallationRoot,
+                    runtimeWorkspace,
+                    InitializationTimeout: TimeSpan.FromSeconds(30),
+                    RequestTimeout: TimeSpan.FromSeconds(30),
+                    ShutdownTimeout: TimeSpan.FromSeconds(10),
+                    ResponseByteLimit: 1_048_576),
+                archivePath,
+                archiveSha256,
+                services.GetRequiredService<PreparedScanRevisionAcquirer>());
+        });
         builder.Services.AddSingleton<IRevisionBoundSourceReader, UnboundRevisionSourceReader>();
         builder.Services.AddScoped<IScanRecoveryBindingProbe, RuntimeScanRecoveryBindingProbe>();
         builder.Services.AddScoped<IScanRecoveryRevalidator, RuntimeScanRecoveryRevalidator>();
