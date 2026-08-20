@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Npgsql;
+using System.Data.Common;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
@@ -156,6 +157,192 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
         await AssertDatabaseWasDroppedAsync(administrator, databaseName);
     }
 
+    [Fact]
+    public async Task PostgreSql17_RecoveryBatch_TransientAfterSaveChanges_RetriesWithoutPartialState()
+    {
+        string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
+        if (string.IsNullOrWhiteSpace(administrator))
+        {
+            return;
+        }
+
+        await using DisposablePostgreSqlDatabase database =
+            await DisposablePostgreSqlDatabase.CreateAsync(administrator);
+        string databaseName = database.DatabaseName;
+        try
+        {
+            await using (VulgataDbContext seedContext =
+                await CreateMigratedContextAsync(database.ConnectionString))
+            {
+                Assert.Equal(17, await ReadPostgreSqlMajorAsync(seedContext));
+                DurableFixture fixture = await DurableFixture.SeedAsync(seedContext);
+                ScanExecution execution = await seedContext.ScanExecutions.SingleAsync();
+                execution.BeginRunning(0, At.AddMinutes(2));
+                execution.PauseProviderUnavailable(1, "provider-unavailable", At.AddMinutes(3));
+                await seedContext.SaveChangesAsync();
+                DurableScanRepository seededStore = new(seedContext);
+                Assert.Equal(
+                    DurableScanStoreOutcome.Applied,
+                    (await seededStore.ClaimPendingJobAsync(
+                        fixture.Scope,
+                        new ScanJobLeaseCommand(
+                            fixture.Execution.Id,
+                            fixture.Job.Id,
+                            0,
+                            fixture.LeaseToken,
+                            At.AddMinutes(10),
+                            At.AddMinutes(4)),
+                        CancellationToken.None)).Outcome);
+            }
+
+            var interceptor = new TransientAfterRecoverySaveChangesInterceptor();
+            await using VulgataDbContext context = CreateContext(
+                database.ConnectionString,
+                interceptor,
+                enableRetryOnFailure: true);
+            DurableFixture loaded = await DurableFixture.LoadAsync(context);
+            DurableScanRepository store = new(context);
+            ScanRecoverySnapshot snapshot = Assert.IsType<ScanRecoverySnapshot>(
+                (await store.ReadRecoverySnapshotAsync(
+                    loaded.Scope,
+                    loaded.Execution.Id,
+                    CancellationToken.None)).Snapshot);
+            ScanRecoveryBatchTransitionCommand command = CreateRecoveryCommand(snapshot);
+            interceptor.Arm();
+
+            DurableScanStoreResult result = await store.ApplyRecoveryTransitionsAsync(
+                loaded.Scope,
+                command,
+                CancellationToken.None);
+
+            Assert.Equal(DurableScanStoreOutcome.Applied, result.Outcome);
+            Assert.Equal(1, interceptor.TransientFailuresInjected);
+            Assert.Equal(snapshot.StateVersion + 1, result.StateVersion);
+            ScanExecution recoveredExecution = await context.ScanExecutions.SingleAsync();
+            ScanJobExecution recoveredJob = await context.ScanJobExecutions.SingleAsync();
+            Assert.Equal(ScanExecutionPhase.Prepared, recoveredExecution.Phase);
+            Assert.Equal(snapshot.StateVersion + 1, recoveredExecution.StateVersion);
+            Assert.Equal(ScanJobExecutionState.Pending, recoveredJob.State);
+            Assert.Equal(snapshot.Jobs[0].StateVersion + 1, recoveredJob.StateVersion);
+            Assert.Null(recoveredJob.LeaseToken);
+            Assert.Null(recoveredJob.LeaseExpiresAt);
+            Assert.Null(recoveredJob.NextAttemptAt);
+        }
+        finally
+        {
+            await database.DisposeAsync();
+        }
+
+        await AssertDatabaseWasDroppedAsync(administrator, databaseName);
+    }
+
+    [Fact]
+    public async Task PostgreSql17_RecoveryBatch_AcknowledgementLostAfterCommit_ReplaysWithoutDuplicateStateAdvance()
+    {
+        string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
+        if (string.IsNullOrWhiteSpace(administrator))
+        {
+            return;
+        }
+
+        await using DisposablePostgreSqlDatabase database =
+            await DisposablePostgreSqlDatabase.CreateAsync(administrator);
+        string databaseName = database.DatabaseName;
+        try
+        {
+            await using (VulgataDbContext seedContext =
+                await CreateMigratedContextAsync(database.ConnectionString))
+            {
+                Assert.Equal(17, await ReadPostgreSqlMajorAsync(seedContext));
+                DurableFixture fixture = await DurableFixture.SeedAsync(seedContext);
+                ScanExecution execution = await seedContext.ScanExecutions.SingleAsync();
+                execution.BeginRunning(0, At.AddMinutes(2));
+                execution.PauseProviderUnavailable(1, "provider-unavailable", At.AddMinutes(3));
+                await seedContext.SaveChangesAsync();
+                DurableScanRepository seededStore = new(seedContext);
+                Assert.Equal(
+                    DurableScanStoreOutcome.Applied,
+                    (await seededStore.ClaimPendingJobAsync(
+                        fixture.Scope,
+                        new ScanJobLeaseCommand(
+                            fixture.Execution.Id,
+                            fixture.Job.Id,
+                            0,
+                            fixture.LeaseToken,
+                            At.AddMinutes(10),
+                            At.AddMinutes(4)),
+                        CancellationToken.None)).Outcome);
+            }
+
+            var interceptor = new AcknowledgementLostAfterCommitInterceptor();
+            await using VulgataDbContext context = CreateContext(
+                database.ConnectionString,
+                interceptor,
+                enableRetryOnFailure: true);
+            DurableFixture loaded = await DurableFixture.LoadAsync(context);
+            DurableScanRepository store = new(context);
+            ScanRecoverySnapshot snapshot = Assert.IsType<ScanRecoverySnapshot>(
+                (await store.ReadRecoverySnapshotAsync(
+                    loaded.Scope,
+                    loaded.Execution.Id,
+                    CancellationToken.None)).Snapshot);
+            ScanRecoveryBatchTransitionCommand command = CreateRecoveryCommand(snapshot);
+            interceptor.Arm();
+
+            DurableScanStoreResult result = await store.ApplyRecoveryTransitionsAsync(
+                loaded.Scope,
+                command,
+                CancellationToken.None);
+
+            Assert.Contains(
+                result.Outcome,
+                new[] { DurableScanStoreOutcome.Applied, DurableScanStoreOutcome.Replay });
+            Assert.Equal(1, interceptor.AcknowledgementFailuresInjected);
+            Assert.Equal(snapshot.StateVersion + 1, result.StateVersion);
+            ScanExecution recoveredExecution = await context.ScanExecutions.SingleAsync();
+            ScanJobExecution recoveredJob = await context.ScanJobExecutions.SingleAsync();
+            Assert.Equal(ScanExecutionPhase.Prepared, recoveredExecution.Phase);
+            Assert.Equal(snapshot.StateVersion + 1, recoveredExecution.StateVersion);
+            Assert.Equal(ScanJobExecutionState.Pending, recoveredJob.State);
+            Assert.Equal(snapshot.Jobs[0].StateVersion + 1, recoveredJob.StateVersion);
+            Assert.Null(recoveredJob.LeaseToken);
+            Assert.Null(recoveredJob.LeaseExpiresAt);
+            Assert.Null(recoveredJob.NextAttemptAt);
+        }
+        finally
+        {
+            await database.DisposeAsync();
+        }
+
+        await AssertDatabaseWasDroppedAsync(administrator, databaseName);
+    }
+
+    private static ScanRecoveryBatchTransitionCommand CreateRecoveryCommand(
+        ScanRecoverySnapshot snapshot)
+    {
+        ScanRecoveryJobSnapshot job = Assert.Single(snapshot.Jobs);
+        DateTimeOffset observedAt = At.AddMinutes(20);
+        return new ScanRecoveryBatchTransitionCommand(
+            snapshot.ScanExecutionId,
+            snapshot.StateVersion,
+            [
+                new ScanRecoveryTransitionCommand(
+                    snapshot.ScanExecutionId,
+                    snapshot.StateVersion,
+                    job.ScanJobExecutionId,
+                    job.StateVersion,
+                    ScanRecoveryTransitionKind.ExpiredLeaseToPending,
+                    observedAt),
+                new ScanRecoveryTransitionCommand(
+                    snapshot.ScanExecutionId,
+                    snapshot.StateVersion,
+                    null,
+                    null,
+                    ScanRecoveryTransitionKind.PausedToPrepared,
+                    observedAt),
+            ]);
+    }
+
     private static async Task<DurableScanStoreResult> ClaimAsync(
         string connectionString,
         DurableScanAuthorizationScope scope,
@@ -197,11 +384,18 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
 
     private static VulgataDbContext CreateContext(
         string connectionString,
-        SaveChangesInterceptor? interceptor = null)
+        IInterceptor? interceptor = null,
+        bool enableRetryOnFailure = false)
     {
         DbContextOptionsBuilder<VulgataDbContext> builder = new();
         builder.UseNpgsql(connectionString, npgsql =>
-            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public"));
+        {
+            npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public");
+            if (enableRetryOnFailure)
+            {
+                npgsql.EnableRetryOnFailure(3);
+            }
+        });
         if (interceptor is not null)
         {
             builder.AddInterceptors(interceptor);
@@ -541,4 +735,81 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
     }
 
     private sealed class InjectedAtomicCommitFailureException : Exception;
+
+    private sealed class TransientAfterRecoverySaveChangesInterceptor : SaveChangesInterceptor
+    {
+        private int armed;
+
+        internal int TransientFailuresInjected { get; private set; }
+
+        internal void Arm() => armed = 1;
+
+        public override int SavedChanges(
+            SaveChangesCompletedEventData eventData,
+            int result)
+        {
+            ThrowIfArmed();
+            return result;
+        }
+
+        public override ValueTask<int> SavedChangesAsync(
+            SaveChangesCompletedEventData eventData,
+            int result,
+            CancellationToken cancellationToken = default)
+        {
+            ThrowIfArmed();
+            return ValueTask.FromResult(result);
+        }
+
+        private void ThrowIfArmed()
+        {
+            if (Interlocked.Exchange(ref armed, 0) == 1)
+            {
+                TransientFailuresInjected++;
+                throw new PostgresException(
+                    "Injected serialization failure after recovery SaveChanges.",
+                    "ERROR",
+                    "ERROR",
+                    "40001");
+            }
+        }
+    }
+
+    private sealed class AcknowledgementLostAfterCommitInterceptor : DbTransactionInterceptor
+    {
+        private int armed;
+
+        internal int AcknowledgementFailuresInjected { get; private set; }
+
+        internal void Arm() => armed = 1;
+
+        public override void TransactionCommitted(
+            DbTransaction transaction,
+            TransactionEndEventData eventData)
+        {
+            ThrowIfArmed();
+        }
+
+        public override Task TransactionCommittedAsync(
+            DbTransaction transaction,
+            TransactionEndEventData eventData,
+            CancellationToken cancellationToken = default)
+        {
+            ThrowIfArmed();
+            return Task.CompletedTask;
+        }
+
+        private void ThrowIfArmed()
+        {
+            if (Interlocked.Exchange(ref armed, 0) == 1)
+            {
+                AcknowledgementFailuresInjected++;
+                throw new PostgresException(
+                    "Injected acknowledgement loss after commit.",
+                    "ERROR",
+                    "ERROR",
+                    "40001");
+            }
+        }
+    }
 }

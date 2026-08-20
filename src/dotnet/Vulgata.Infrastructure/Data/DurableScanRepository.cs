@@ -428,6 +428,7 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
         ScanRecoveryBatchTransitionCommand command,
         CancellationToken cancellationToken)
     {
+        dbContext.ChangeTracker.Clear();
         await using IDbContextTransaction transaction = await dbContext.Database
             .BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         try
@@ -439,11 +440,6 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
             if (execution is null)
             {
                 return NotFound();
-            }
-
-            if (execution.StateVersion != command.ExpectedStateVersion)
-            {
-                return Conflict(DurableScanReason.StaleStateVersion, execution.StateVersion);
             }
 
             List<ScanJobExecution> jobs = await dbContext.ScanJobExecutions
@@ -482,6 +478,22 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
                     value.ScanRunId == execution.ScanRunId)
                 .Select(value => value.Id)
                 .ToHashSetAsync(cancellationToken);
+
+            if (IsCanonicalRecoveryReplay(
+                    execution,
+                    jobsById,
+                    jobCommands,
+                    executionCommands,
+                    validCompletedDocumentVersionIds,
+                    command.ExpectedStateVersion))
+            {
+                return Replay(execution.StateVersion);
+            }
+
+            if (execution.StateVersion != command.ExpectedStateVersion)
+            {
+                return Conflict(DurableScanReason.StaleStateVersion, execution.StateVersion);
+            }
 
             foreach (ScanRecoveryTransitionCommand transition in jobCommands)
             {
@@ -592,6 +604,91 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
             await transaction.RollbackAsync(CancellationToken.None);
             return Conflict(DurableScanReason.StaleStateVersion);
         }
+    }
+
+    private static bool IsCanonicalRecoveryReplay(
+        ScanExecution execution,
+        IReadOnlyDictionary<Guid, ScanJobExecution> jobsById,
+        IReadOnlyList<ScanRecoveryTransitionCommand> jobCommands,
+        IReadOnlyList<ScanRecoveryTransitionCommand> executionCommands,
+        IReadOnlySet<Guid> validCompletedDocumentVersionIds,
+        long expectedExecutionStateVersion)
+    {
+        bool executionMatches = executionCommands.Count switch
+        {
+            0 => execution.StateVersion == expectedExecutionStateVersion &&
+                execution.Phase is not (ScanExecutionPhase.PausedProviderUnavailable or
+                    ScanExecutionPhase.PausedOperatorCorrection),
+            1 => expectedExecutionStateVersion < long.MaxValue &&
+                executionCommands[0].ExpectedJobStateVersion is null &&
+                executionCommands[0].Transition == ScanRecoveryTransitionKind.PausedToPrepared &&
+                execution.StateVersion == expectedExecutionStateVersion + 1 &&
+                execution.Phase == ScanExecutionPhase.Prepared &&
+                execution.UpdatedAt == executionCommands[0].ObservedAt &&
+                execution.PauseCategory is null &&
+                execution.PauseCode is null,
+            _ => false,
+        };
+        if (!executionMatches)
+        {
+            return false;
+        }
+
+        foreach (ScanRecoveryTransitionCommand transition in jobCommands)
+        {
+            if (transition.ScanJobExecutionId is not Guid jobId ||
+                transition.ExpectedJobStateVersion is not long expectedJobStateVersion ||
+                !jobsById.TryGetValue(jobId, out ScanJobExecution? job))
+            {
+                return false;
+            }
+
+            if (transition.Transition == ScanRecoveryTransitionKind.NoChange)
+            {
+                bool completedIntegrityValid =
+                    job.State == ScanJobExecutionState.Completed &&
+                    job.CommittedDocumentVersionId is Guid documentVersionId &&
+                    validCompletedDocumentVersionIds.Contains(documentVersionId);
+                bool nonCompletedIntegrityValid =
+                    job.State != ScanJobExecutionState.Completed &&
+                    job.CommittedDocumentVersionId is null;
+                bool isExpiredLease = job.State == ScanJobExecutionState.Running &&
+                    job.LeaseExpiresAt is DateTimeOffset leaseExpiresAt &&
+                    leaseExpiresAt < transition.ObservedAt;
+                bool isDueRetry = job.State == ScanJobExecutionState.RetryScheduled &&
+                    job.NextAttemptAt is DateTimeOffset nextAttemptAt &&
+                    nextAttemptAt <= transition.ObservedAt;
+                if (job.StateVersion != expectedJobStateVersion ||
+                    (!completedIntegrityValid && !nonCompletedIntegrityValid) ||
+                    isExpiredLease ||
+                    isDueRetry ||
+                    transition.ObservedAt < job.StateChangedAt)
+                {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (transition.Transition is not (
+                    ScanRecoveryTransitionKind.ExpiredLeaseToPending or
+                    ScanRecoveryTransitionKind.DueRetryToPending) ||
+                expectedJobStateVersion == long.MaxValue ||
+                job.State != ScanJobExecutionState.Pending ||
+                job.StateVersion != expectedJobStateVersion + 1 ||
+                job.StateChangedAt != transition.ObservedAt ||
+                job.LeaseToken is not null ||
+                job.LeaseExpiresAt is not null ||
+                job.NextAttemptAt is not null ||
+                job.FailureCategory is not null ||
+                job.FailureCode is not null ||
+                job.CommittedDocumentVersionId is not null)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public async Task<DurableScanStoreResult> ClaimPendingJobAsync(

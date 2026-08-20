@@ -1058,3 +1058,19 @@ attempt, and verified Applied or mutation-free Replay without duplicate durable
 mutation. This is Story 12.1's third quality REVISE outcome, so the unified
 workflow stops here pending explicit operator direction; no automatic fourth
 correction cycle is authorized.
+
+### Authorized QR4-001 correction
+
+The operator explicitly authorized one bounded QR4-001 correction cycle. Two
+real PostgreSQL public-seam REDs reproduced false Conflict after a rolled-back
+transient attempt and after a successful commit whose acknowledgement was lost.
+The durable recovery store now clears tracked state before every execution-
+strategy attempt and rehydrates the complete durable boundary. An already-
+applied retry returns mutation-free Replay only when the Scan Execution and
+every Scan Job Execution exactly match the canonical requested post-transition
+state, including membership, versions, timestamps, and cleared incompatible
+fields; any non-identical result remains Conflict. Independent GREEN evidence:
+2/2 retry tests, 6/6 PostgreSQL concurrency, 2/2 restart/migration, and 57/57
+adjacent recovery/API/revalidation tests. All generated databases were removed;
+Infrastructure and Web builds have zero errors. Convergence, quality, and E2E
+must rerun on this committed correction boundary.

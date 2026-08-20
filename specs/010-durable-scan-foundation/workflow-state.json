@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "quality-review",
+  "stage": "implement",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -49,7 +49,7 @@
       "completed_at": "2026-08-18T09:27:47Z"
     },
     "quality-review": {
-      "status": "revised",
+      "status": "invalidated",
       "iteration": 4,
       "dispatch_id": "story_12_1_quality_review_4",
       "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json",
@@ -2530,12 +2530,39 @@
       "observed_at": "2026-08-20T06:44:18Z",
       "summary": "Quality review iteration 4 returned REVISE with HIGH QR4-001: execution-strategy retries reuse already-mutated tracked entities and do not verify an ambiguous successful commit. This is the third quality REVISE outcome, requiring workflow stop and explicit operator direction.",
       "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/81",
+      "kind": "human-approval",
+      "stage": "implement",
+      "source_commit": "4a65e88a135a4d6ca019640d35e1d40691f86664",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json"],
+      "command": null,
+      "exit_code": null,
+      "observed_at": "2026-08-20T07:11:53Z",
+      "summary": "The operator explicitly approved one bounded QR4-001 correction cycle after the mandatory third-REVISE stop. No other scope or gate was waived.",
+      "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/82",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "4a65e88a135a4d6ca019640d35e1d40691f86664",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      ],
+      "command": "QR4 retry RED 0/2 then GREEN 2/2; PostgreSQL concurrency 6/6; restart and migration 2/2; adjacent recovery/API/revalidation 57/57",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T07:11:53Z",
+      "summary": "QR4-001 is corrected. Each execution-strategy attempt rehydrates fresh durable state; acknowledgement-lost retries accept only the exact canonical applied batch as mutation-free Replay. Real PostgreSQL and adjacent suites pass with zero residual databases.",
+      "raw_output_path": "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
     }
   ],
   "convergence": {
-    "status": "accepted",
+    "status": "invalidated",
     "iteration": 6,
-    "outcome": "converged",
+    "outcome": "pending",
     "findings_count": 0,
     "appended_task_ids": [],
     "artifact_hashes": {
@@ -2547,50 +2574,26 @@
       "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "cb8c9df887a4c468f63aa97381099e70f5151aa1f90ec68e33691ffd89137e97",
       "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "e5c9bc30596937e5bb422e6236b38cb23b670486459e253f23c158a87b8e4299"
     },
-    "completed_at": "2026-08-20T06:36:19Z"
+    "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260820T064418Z-6a626a",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260820T071153Z-qr4001",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "quality-review",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json",
-      "specs/010-durable-scan-foundation/workflow-state.json"
+      "specs/010-durable-scan-foundation/workflow-state.json",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/80"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/81",
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/82"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": {
-    "stage": "quality-review",
-    "agent_role": "quality-reviewer",
-    "source_boundary": {
-      "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
-      "candidate_commit": "6aff10ec9588afc8c03a7a562709eea11da06fe2",
-      "diff_sha256": "89e15527fcc11379b79289d6d3edfce9dc29e7d6e5be839145cb56568372c3f3",
-      "artifact_hashes": {
-        "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json": "6a626a9c295cd77d14ad736d17a993fe9d40ff490ebc2040a3c04d0353cc4dfd"
-      },
-      "owned_paths": ["src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs"]
-    },
-    "evidence": {
-      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/80",
-      "kind": "failure",
-      "stage": "quality-review",
-      "source_commit": "3f3a0d8ffe3d1e6be663e391206e61bfeff02f24",
-      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json", "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs"],
-      "command": "independent quality review iteration 4",
-      "exit_code": 0,
-      "observed_at": "2026-08-20T06:44:18Z",
-      "summary": "Third quality REVISE outcome. Automatic correction routing stops with HIGH QR4-001 pending explicit operator direction.",
-      "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json"
-    },
-    "retryable": false,
-    "earliest_resume_stage": "implement"
-  },
+  "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T06:44:18Z"
+  "updated_at": "2026-08-20T07:11:53Z"
 }
