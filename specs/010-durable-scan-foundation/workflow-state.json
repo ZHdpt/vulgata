@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "conditional-e2e",
+  "stage": "implement",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -49,7 +49,7 @@
       "completed_at": "2026-08-18T09:27:47Z"
     },
     "quality-review": {
-      "status": "accepted",
+      "status": "invalidated",
       "iteration": 3,
       "dispatch_id": "story_12_1_quality_review_3",
       "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-03.json",
@@ -1086,8 +1086,8 @@
       },
       "owned_paths": ["src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs", "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs", "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs", "src/dotnet/Vulgata.Web/Program.cs"]
     },
-    "result": "blocked",
-    "evidence_ids": ["12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/77"]
+    "result": "pending",
+    "evidence_ids": ["12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/77", "12-1-durable-scan-foundation-and-analysis-runtime/implement/78"]
   },
   "verification": [
     {
@@ -2479,12 +2479,28 @@
       "observed_at": "2026-08-20T05:24:07Z",
       "summary": "Required E2E is partially passed but blocked on PostgreSQL 17. No service, binaries, port 5432 listener, Docker runtime, or configured VULGATA_TEST_POSTGRES_ADMIN connection is available; migration, restart, concurrency, and real atomicity tests early-return and are not acceptance evidence.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/implement/78",
+      "kind": "test-green",
+      "stage": "implement",
+      "source_commit": "009a5fbdc6a4b1e3e53f9a0a9601a8d1f3946d63",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs"
+      ],
+      "command": "real PostgreSQL 17 combined migration, restart, concurrency, recovery, and atomic commit verification 44/44",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T06:27:56Z",
+      "summary": "The PostgreSQL restart product failure and stale concurrency fixture are corrected. Recovery executes its serializable batch transaction through EF's retrying execution strategy, and injected rollback tests use the canonical commit fingerprint. Combined real PostgreSQL 17 verification passed 44/44 with zero residual generated databases.",
+      "raw_output_path": "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
     }
   ],
   "convergence": {
-    "status": "accepted",
+    "status": "invalidated",
     "iteration": 5,
-    "outcome": "converged",
+    "outcome": "pending",
     "findings_count": 0,
     "appended_task_ids": [],
     "artifact_hashes": {
@@ -2495,49 +2511,25 @@
       "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "15b65d79202d5b23276b80fab80ce72660f2b1cc9b806632903885a5a93d53b1",
       "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "e5c9bc30596937e5bb422e6236b38cb23b670486459e253f23c158a87b8e4299"
     },
-    "completed_at": "2026-08-20T05:09:57Z"
+    "completed_at": null
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-conditional-e2e-20260820T052407Z-pgblocked",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260820T062756Z-pgfix1",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "conditional-e2e",
+    "stage": "implement",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/workflow-state.json"
+      "specs/010-durable-scan-foundation/workflow-state.json",
+      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/77"
+      "12-1-durable-scan-foundation-and-analysis-runtime/implement/78"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": {
-    "stage": "conditional-e2e",
-    "agent_role": "e2e-runner",
-    "source_boundary": {
-      "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
-      "candidate_commit": "5ad2562ee642211642eae9fc94cc5b415ab9baf8",
-      "diff_sha256": "7d2e14c561da1ce9cc61342940e56fdbffb36b48eb28366888720ca9425e3ecd",
-      "artifact_hashes": {
-        "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-03.json": "bc2947c4ef33cb3868044b81c327a2c4ccd765795fb75d6ec9f0a6900ed2d0c6"
-      },
-      "owned_paths": ["tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs", "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs", "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"]
-    },
-    "evidence": {
-      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/77",
-      "kind": "failure",
-      "stage": "conditional-e2e",
-      "source_commit": "049d1450ca6317e093a51930a9f06c7a542348d8",
-      "artifact_paths": ["tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs", "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs", "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"],
-      "command": "PostgreSQL availability and required qualification checks",
-      "exit_code": null,
-      "observed_at": "2026-08-20T05:24:07Z",
-      "summary": "PostgreSQL 17 E2E is retryably blocked because no service, binaries, Docker runtime, listener, or admin connection is available.",
-      "raw_output_path": null
-    },
-    "retryable": true,
-    "earliest_resume_stage": "conditional-e2e"
-  },
+  "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T05:24:07Z"
+  "updated_at": "2026-08-20T06:27:56Z"
 }

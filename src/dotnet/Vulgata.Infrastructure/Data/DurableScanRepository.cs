@@ -415,6 +415,19 @@ public sealed class DurableScanRepository(VulgataDbContext dbContext) :
             return Rejected(DurableScanReason.InvalidIdentity);
         }
 
+        IExecutionStrategy executionStrategy = dbContext.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(() =>
+            ApplyRecoveryTransitionsInTransactionAsync(
+                authorizationScope,
+                command,
+                cancellationToken));
+    }
+
+    private async Task<DurableScanStoreResult> ApplyRecoveryTransitionsInTransactionAsync(
+        DurableScanAuthorizationScope authorizationScope,
+        ScanRecoveryBatchTransitionCommand command,
+        CancellationToken cancellationToken)
+    {
         await using IDbContextTransaction transaction = await dbContext.Database
             .BeginTransactionAsync(System.Data.IsolationLevel.Serializable, cancellationToken);
         try

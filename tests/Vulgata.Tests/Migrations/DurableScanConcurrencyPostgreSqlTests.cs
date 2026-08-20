@@ -435,7 +435,7 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
                 At.AddMinutes(4),
                 At.AddMinutes(4).AddSeconds(1),
                 payload);
-            return new(
+            ScanJobResultCommitRequest request = new(
                 Scope,
                 Repository.Id,
                 Execution.Id,
@@ -447,10 +447,63 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
                 "document-schema/1.0",
                 RuntimeHash,
                 DeterministicTestIds.Create("t048-document-version", Job.Id),
-                new string('f', 64),
+                string.Empty,
                 1,
                 LeaseToken,
                 envelope);
+            SourceAnchorDraft[] anchors = payload.SourceAnchors
+                .Select(anchor => new SourceAnchorDraft(
+                    anchor.Id,
+                    request.DocumentVersionId,
+                    Repository.Id,
+                    ScanRun.Id,
+                    CodeUnit.Id,
+                    Revision,
+                    anchor.RepositoryRelativePath,
+                    anchor.EvidenceLocator,
+                    anchor.LineStart,
+                    anchor.LineEnd,
+                    anchor.SourceHash))
+                .ToArray();
+            KnowledgeCommit canonicalCommit = new(
+                CreateScanStableId(
+                    "durable-pass1-operation",
+                    request.ScanJobExecutionId.ToString("D")),
+                CreateScanStableId(
+                    "durable-pass1-logical-document",
+                    request.RepositoryId.ToString("D"),
+                    payload.Content.StableKey),
+                null,
+                request.DocumentVersionId,
+                request.RepositoryId,
+                request.ScanRunId,
+                request.ProfiledRevision,
+                payload.Content,
+                anchors,
+                [],
+                [],
+                envelope.ReceivedAt);
+            KnowledgeDocumentMaterializer materializer = new();
+            KnowledgeDocumentMaterialization projection = materializer.Materialize(
+                canonicalCommit.LogicalDocumentId,
+                canonicalCommit.NewDocumentVersionId,
+                canonicalCommit.RepositoryId,
+                System.Id,
+                canonicalCommit.Content,
+                canonicalCommit.CommittedAt);
+            return request with
+            {
+                CommitFingerprint = materializer.CreateCommitFingerprint(
+                    canonicalCommit,
+                    projection),
+            };
+        }
+
+        private Guid CreateScanStableId(params string[] parts)
+        {
+            byte[] value = global::System.Security.Cryptography.SHA256.HashData(
+                global::System.Text.Encoding.UTF8.GetBytes(string.Join('\n', parts)));
+            return new Guid(value.AsSpan(0, 16));
         }
     }
 

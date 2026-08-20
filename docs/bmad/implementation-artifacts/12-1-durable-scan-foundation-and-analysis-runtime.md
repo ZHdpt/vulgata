@@ -1015,3 +1015,19 @@ truthfully early-return without that input, so their reported counts are not E2E
 evidence. This is a retryable environmental blocker at conditional E2E, not a
 product failure. Story completion requires a PostgreSQL 17 admin connection or
 safe service and a rerun of those predicates.
+
+### PostgreSQL E2E correction
+
+After PostgreSQL 17 became available, the required tests genuinely executed and
+exposed one product failure plus one test defect. Restart recovery returned
+Conflict because the Npgsql retrying execution strategy rejected a
+user-initiated serializable transaction created outside `ExecuteAsync`. The
+durable store now runs the unchanged single-transaction batch body through
+EF's configured execution strategy. The concurrency fixture's three injected
+rollback cases now use the canonical Knowledge Commit fingerprint, allowing
+them to reach the intended SaveChanges failure seam. Independent combined
+verification passed 44/44: migration 1/1, restart 1/1, PostgreSQL concurrency
+and atomicity 4/4, recovery 19/19, and atomic Document plus Scan Job Execution
+commit 19/19 on PostgreSQL 17.10. All generated databases were removed. The
+production and tracked E2E test changes invalidate convergence, quality review,
+and the prior E2E result; those gates must rerun on the committed boundary.
