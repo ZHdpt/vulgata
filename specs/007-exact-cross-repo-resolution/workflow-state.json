@@ -1,161 +1,74 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "3.0",
   "bmad_story_key": "11-4-exact-rpc-http-cross-repository-demo-resolution",
   "bmad_epic_key": "11",
   "feature_directory": "specs/007-exact-cross-repo-resolution",
-  "execution_level": "unified",
   "stage": "complete",
-  "active_gates": {
-    "definition-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    },
-    "quality-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    }
-  },
-  "stage_history": [
-    {
-      "stage": "complete",
-      "status": "accepted",
-      "started_at": "2026-08-18T03:21:52Z",
-      "completed_at": "2026-08-18T03:21:52Z",
-      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "input_hashes": {
-        "specs/007-exact-cross-repo-resolution/workflow-state.json": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "failure": null
-    }
-  ],
-  "repository_preflight": {
+  "preflight": {
     "branch": "demo0831/main",
-    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
-    "repository_root": ".",
-    "git_common_directory": ".git",
-    "worktree_path": ".",
-    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
-    "owned_paths": [
-      "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
-      "specs/007-exact-cross-repo-resolution/workflow-state.json",
-      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-    ],
-    "unrelated_paths": [],
-    "observed_at": "2026-08-18T03:21:52Z"
+    "head": "be821b58f55dcfd18a605435e55df96a9a76b0d7",
+    "git_identity_sha256": "2146bb34aec9d9049448b29261ce29b19298f98484957e73f3a73c5679e3e702",
+    "status_sha256": "4c55d7a62f3e8563189aecd8e48c2842a0e457b748ac1e485b4faa65c7ce74ce",
+    "observed_at": "2026-08-20T08:41:08Z"
   },
-  "source_artifacts": [],
-  "dispatches": [],
-  "review_iterations": {
-    "plan-review": {
-      "count": 0,
-      "verdict_paths": []
+  "artifacts": {
+    "spec": {
+      "path": "specs/007-exact-cross-repo-resolution/spec.md",
+      "sha256": "567bd30707e296c4155ab35aa00b4844a434a3231cbe1c5e3810236d9d5b2864"
     },
-    "definition-review": {
-      "count": 0,
-      "verdict_paths": []
+    "plan": {
+      "path": "specs/007-exact-cross-repo-resolution/plan.md",
+      "sha256": "1a6bf385c311d7e65151a7043731d8259442dd274bc97c41a5797dc1b5cfc615"
     },
-    "converge": {
-      "count": 0,
-      "verdict_paths": []
-    },
-    "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+    "tasks": {
+      "path": "specs/007-exact-cross-repo-resolution/tasks.md",
+      "sha256": "c8993f56884737ad9f6841062e8c304e4c7d79f203911bdcb748f29408903c07"
     }
   },
+  "gates": {
+    "plan-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "definition-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "quality-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [],
   "convergence": {
     "status": "accepted",
-    "iteration": 0,
+    "attempt": 0,
     "outcome": "converged",
-    "findings_count": 0,
-    "appended_task_ids": [],
-    "artifact_hashes": {
-      "specs/007-exact-cross-repo-resolution/workflow-state-v1.json": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037"
-    },
-    "completed_at": "2026-08-18T03:21:52Z"
+    "report_path": "specs/007-exact-cross-repo-resolution/tasks.md"
   },
-  "e2e_decision": {
-    "required": false,
-    "predicates": [],
-    "coverage_override": null,
-    "rationale": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-    "covering_tests": [],
-    "owner": "orchestrator",
-    "source_boundary": {
-      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "candidate_commit": null,
-      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "artifact_hashes": {
-        "specs/007-exact-cross-repo-resolution/workflow-state.json": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037"
-      },
-      "owned_paths": [
-        "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
-        "specs/007-exact-cross-repo-resolution/workflow-state.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-      ]
-    },
+  "e2e": {
     "result": "passed",
-    "evidence_ids": [
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/complete/1"
-    ]
+    "decision_path": "specs/007-exact-cross-repo-resolution/tasks.md"
   },
-  "verification": [
-    {
-      "evidence_id": "11-4-exact-rpc-http-cross-repository-demo-resolution/complete/1",
-      "kind": "analysis",
-      "stage": "complete",
-      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "artifact_paths": [
-        "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
-      "exit_code": 0,
-      "observed_at": "2026-08-18T03:21:52Z",
-      "summary": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-    }
+  "current_evidence_paths": [
+    "specs/007-exact-cross-repo-resolution/spec.md",
+    "specs/007-exact-cross-repo-resolution/plan.md",
+    "specs/007-exact-cross-repo-resolution/tasks.md"
   ],
-  "last_checkpoint": {
+  "checkpoint": {
     "checkpoint_id": "bmad-11-4-complete-20260804T044758Z-35c0",
-    "scope_key": "11-4-exact-rpc-http-cross-repository-demo-resolution",
     "stage": "complete",
-    "committed_paths": [
-      "docs/bmad/implementation-artifacts/11-4-exact-rpc-http-cross-repository-demo-resolution.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/007-exact-cross-repo-resolution/reviews/quality-review/quality-review-05faffe.json",
-      "specs/007-exact-cross-repo-resolution/tasks.md",
-      "specs/007-exact-cross-repo-resolution/workflow-state.json"
-    ],
-    "verification_evidence_ids": [
-      "11-4-exact-rpc-http-cross-repository-demo-resolution/complete/1"
-    ],
     "commit_sha": "c07df7d8789e7b975dc7fb6a121dff564e8549ad",
     "binding_status": "bound"
   },
-  "recoverable_failure": null,
-  "legacy_migration": {
-    "source_state_path": "specs/007-exact-cross-repo-resolution/workflow-state-v1.json",
-    "source_state_sha256": "ee35661b5a30ad636b53deeddf900f6047b0df92686ae0c0734afb397bc55037",
-    "source_execution_level": "expedited-mvp",
-    "source_stage": "complete",
-    "mapped_stage": "complete",
-    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-    "migrated_at": "2026-08-18T03:21:52Z"
-  },
-  "updated_at": "2026-08-18T03:21:52Z"
+  "resume": null,
+  "updated_at": "2026-08-20T08:41:08Z"
 }

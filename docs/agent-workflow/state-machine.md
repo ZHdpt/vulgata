@@ -2,7 +2,7 @@
 
 ## Sources of Truth
 
-BMad owns coarse lifecycle. A story-local `workflow-state.json` owns resumable internal progress and cannot override BMad. New states use schema `2.0` and `execution_level: unified`.
+BMad owns coarse lifecycle. A story-local `workflow-state.json` is a compact resumable snapshot and cannot override BMad. New states use schema `3.0`; detailed history stays in durable artifacts and Git.
 
 ## BMad Lifecycle
 
@@ -21,10 +21,11 @@ The epic vocabulary is `backlog`, `in-progress`, and `done`. First story activat
 
 ```text
 context, specify, plan, plan-review, tasks, definition-review,
-implement, converge, quality-review, conditional-e2e, verify, complete
+implementation-approval, implement, converge, quality-review,
+conditional-e2e, verify, complete
 ```
 
-`plan-review` appears only for a repository planned-change trigger. It must accept, and the named user authorization must be durable, before `tasks`.
+`plan-review` appears for a repository planned-change trigger or an architecture decision/change in the plan. It must accept, and the named user authorization must be durable, before `tasks`.
 
 | Stage | Owner | Exit |
 |---|---|---|
@@ -34,6 +35,7 @@ implement, converge, quality-review, conditional-e2e, verify, complete
 | plan-review | definition reviewer in plan-only mode | accepted verdict and required user authorization |
 | tasks | task author | dependency-ordered tasks plus successful self-review |
 | definition-review | fresh definition reviewer | one accepted spec/plan/tasks/analyze verdict |
+| implementation-approval | root and user | accepted definition hashes explicitly authorized for production implementation |
 | implement | test author then implementer | honest RED, minimal GREEN, surrounding GREEN; or truthful nonbehavioral evidence |
 | converge | convergence analyst | clean outcome, or appended tasks returning to implement |
 | quality-review | fresh quality reviewer | accepted converged boundary |
@@ -63,31 +65,10 @@ A spec correction regenerates plan and tasks. A plan correction regenerates task
 
 `converged` advances. `tasks_appended` returns to implementation and then converge. Behavior-changing tasks use TDD; test-only, documentation, and non-executable metadata use bounded normal execution without fabricated RED. An intent or authority defect returns to definition.
 
-Stop on the third non-converged pass unless each pass strictly reduces the open set and the next work remains bounded.
-
-## Legacy v1 Migration
-
-Existing schema-1.0 states remain readable evidence. They cannot resume mutation directly.
-
-1. Validate the historical state with the archived v1 schema.
-2. Resolve its BMad mapping, checkpoint trailers, ancestry, artifact hashes, and owned paths.
-3. Map the last proven historical stage to the earliest unified owner:
-   - context/spec-review -> specify;
-   - plan/plan-review -> plan;
-   - tasks/analyze -> tasks;
-   - implement -> implement;
-   - acceptance/quality review -> converge;
-   - conditional-e2e/verify -> quality-review;
-   - complete -> terminal v2 normalization only when the original bytes, current BMad `done` status, ancestral completion-state binding, and ancestral `done` transition are all proven; otherwise return to `quality-review`.
-4. Write a schema-2.0 state that preserves v1 state/evidence paths as superseded history and records the migration decision.
-5. Revalidate before any mutation.
-
-The expired `expedited-mvp` value is historical evidence only and grants no authority.
-
-A legacy completion may bind state and `done` in one commit or in two separately proven ancestral commits. The migration report is the compatibility bridge; it preserves the old state hash, both commit proofs, and whether the legacy trailer vocabulary differs from v2. This normalization does not rerun delivery or convert malformed legacy fields into current evidence.
+The first three non-converged passes return automatically when progress remains possible. The fourth consecutive non-converged pass in this phase pauses for user direction.
 
 ## Resume and Failure
 
-Resume validates activation/mapping, schema version, branch and Git/worktree identities, exact status/ownership, artifact hashes, evidence, boundary identities, trailers, and ancestry. Completed stages with identical inputs are no-ops. Restart at the earliest invalid owner and preserve superseded evidence.
+Resume validates activation/mapping, schema version and size, branch/Git identity hashes, artifact hashes, current evidence pointers, trailers, and ancestry. Completed stages with identical inputs are no-ops. Restart at the earliest invalid owner; durable artifacts and Git preserve superseded evidence.
 
-Record retryable tool failures without advancing. Stop for unresolved intent/authority, three REVISE outcomes, BLOCKED, divergent history, destructive recovery, inseparable user work, unavailable required infrastructure, unsafe external action, or ambiguous E2E failure. Never repair through reset, rebase, force-push, implicit merge, or silent branch switching.
+Record retryable tool failures without advancing. Pause for the fourth consecutive REVISE in one phase, unresolved intent/authority, BLOCKED, divergent history, destructive recovery, inseparable user work, unavailable required infrastructure, unsafe external action, or ambiguous E2E failure. Never repair through reset, rebase, force-push, implicit merge, or silent branch switching.

@@ -22,11 +22,11 @@ Use Vulgata terms from `docs/UBIQUITOUS_LANGUAGE.md` verbatim. Surface Constitut
 
 Resolve exactly one target: `next`, `resume`, one story, one epic, or a dependency-ordered list. `dry-run` reports resolution, ownership, stages, agents, gates, checkpoints, and E2E predicates without mutation. Reject ambiguous keys, duplicate activation, and new work for `done` stories. Never expand scope to an unmet prerequisite without user authorization.
 
-New activations use `schema_version: "2.0"` and `execution_level: "unified"`. Historical v1 `full`, `standard`, and `expedited-mvp` states are read-only until the migration procedure in the state machine records their earliest valid unified stage. The expired August 15 exception cannot authorize new or resumed work.
+New activations use compact `schema_version: "3.0"`. `workflow-state.json` is a bounded resume snapshot, not an event ledger: keep only current artifact hashes, gate/decision pointers, attempt counters, checkpoint, and resume data. Detailed reviews, commands, dispatches, and superseded history remain in their durable artifacts and Git.
 
 ## Preflight and Ownership
 
-Before mutation, record branch, full `HEAD`, repository root, Git common directory, worktree path, exact porcelain/index state, owned paths, unrelated paths, and observation time. Load the selected BMad artifacts, Constitution, relevant ADR/context documents, repository instructions, and current mapped state. Require a non-detached branch unless the host provides an explicit native handoff. Preserve unrelated work and stop when owned and unrelated changes are inseparable.
+Before mutation, observe branch, full `HEAD`, repository root, Git common directory, worktree path, exact porcelain/index state, owned paths, unrelated paths, and observation time. Store branch/HEAD plus hashes of Git identity and status in compact state; put any detailed ownership record needed for recovery in the development record. Load the selected BMad artifacts, Constitution, relevant ADR/context documents, repository instructions, and current mapped state. Require a non-detached branch unless the host provides an explicit native handoff. Preserve unrelated work and stop when owned and unrelated changes are inseparable.
 
 The active root is the sole lifecycle/state writer and committer. Workers never stage or commit. The root stages explicit owned paths only after refreshing preflight, inspecting the staged diff, running `git diff --cached --check`, and completing checkpoint verification. No implicit branch switch, reset, rebase, merge, push, force-push, history rewrite, or pull request.
 
@@ -39,6 +39,7 @@ preflight/context
 -> conditional early plan-review + planned-change authorization
 -> speckit-tasks + self-review
 -> independent definition-review
+-> implementation approval
 -> TDD implementation
 -> speckit-converge <-> implementation until converged
 -> independent quality-review
@@ -57,11 +58,13 @@ Dispatch authors serially over one pinned authority set:
 
 Self-review is part of each authoring turn, not an independent gate or extra worker.
 
-When `AGENTS.md` identifies a planned-change trigger, dispatch `definition-reviewer` in plan-only mode after the plan. An accepted independent verdict is required before the root requests the named user authorization and before task generation. Approval authorizes only progression to tasks. For untriggered work, continue directly to tasks.
+When `AGENTS.md` identifies a planned-change trigger or the plan introduces an architecture decision/change, dispatch `definition-reviewer` in plan-only mode after the plan. An accepted independent verdict is required before the root requests the named user authorization and before task generation. The request identifies the repository-policy or architecture trigger and its consequences. Approval authorizes only progression to tasks. For untriggered work, continue directly to tasks.
 
 After tasks, dispatch one fresh `definition-reviewer` (`gpt-5.6-sol`, medium) over the raw BMad story, specification, complete plan set, tasks, Constitution, ADRs, contexts, and relevant source. It runs the read-only `speckit-analyze` checks and judges BMad alignment, feasibility, testability, terminology, coverage, task ordering, and unresolved placeholders in one verdict.
 
-Every finding names its earliest owner: `spec`, `plan`, or `tasks`. `REVISE` returns raw findings to that author, regenerates all downstream artifacts, and reruns the independent review. A spec correction regenerates plan and tasks; a plan correction regenerates tasks; a task correction changes tasks only. Stop on `BLOCKED`, unresolved intent/authority, or the third `REVISE`. Critical/High analysis remediation still requires explicit user approval before artifact edits.
+Every finding names its earliest owner: `spec`, `plan`, or `tasks`. `REVISE` returns raw findings to that author, regenerates all downstream artifacts, and reruns the independent review without asking the user to approve ordinary correction. A spec correction regenerates plan and tasks; a plan correction regenerates tasks; a task correction changes tasks only. Pause on `BLOCKED`, an authority contradiction, or the fourth consecutive `REVISE` in the same phase.
+
+After the complete definition is independently accepted, pause once at `implementation-approval` before the first production write. Present the decision using the format in `review-and-correction.md`. The approval binds the accepted artifact hashes; it covers all internal seams and architecture choices already disclosed by those artifacts. Do not ask again unless the approved scope changes or a new approval trigger appears.
 
 ### 2. Implement with TDD
 
@@ -84,13 +87,13 @@ After the current tasks are implemented, dispatch `convergence-analyst` (`gpt-5.
 - `tasks_appended`: classify every task. Missing, partial, contradictory, or removed observable behavior returns through TDD. Test-only, documentation, and non-executable metadata use bounded normal execution. Then rerun convergence.
 - an intent/authority defect that cannot be repaired as remaining implementation work returns to the earliest definition owner instead of being hidden as a code task.
 
-Stop on the third non-converged pass unless the latest pass strictly reduced the open set and the next work is already bounded; never loop without measurable progress.
+The first three non-converged passes return automatically to the named owner when progress remains possible. Pause on the fourth consecutive non-converged pass in this phase, or earlier for a real blocker or authority trigger; never loop without measurable progress.
 
 ### 4. Review, E2E, and Verify
 
 Dispatch one fresh `quality-reviewer` (`gpt-5.6-sol`, medium) over the converged pinned boundary. It judges correctness, security, edge cases, tests, architecture seams, regression risk, and repository standards; convergence supplies implementation-to-definition coverage, so the reviewer does not repeat a separate acceptance ceremony.
 
-`REVISE` returns raw findings to the applicable test/implementation or definition owner. Behavior correction requires regression RED; definition correction invalidates convergence. After correction, rerun every invalidated downstream stage. Stop on `BLOCKED` or the third `REVISE`.
+`REVISE` returns raw findings to the applicable test/implementation or definition owner without routine user approval. Behavior correction requires regression RED; definition correction invalidates convergence. After correction, rerun every invalidated downstream stage. Pause on `BLOCKED` or the fourth consecutive `REVISE` in this phase.
 
 Apply the E2E decision matrix. Required E2E uses `e2e-runner` (`gpt-5.6-luna`, high), which may edit tests but never production. Product failure returns to TDD; a test defect stays with the runner; ambiguous failure stops for user direction. Any tracked test edit invalidates quality review.
 
@@ -100,7 +103,13 @@ Final verification runs story-specific tests, Web build, full tests, required se
 
 Create recovery checkpoints only when durable content exists: activation; accepted definition; verified implementation group; converged review candidate; correction; completion. Adjacent artifact-only work shares the accepted-definition checkpoint. Every commit uses an explicit path manifest and unique workflow trailers; completion is trusted only after the pending checkpoint ID resolves uniquely to an ancestral commit.
 
-On resume, validate mapping, schema version, branch/Git/worktree identity, ownership, artifact hashes, stage evidence, review boundary, checkpoint trailers, and ancestry. Restart at the earliest invalid owner and preserve superseded evidence. Hash invalidation is not a judge revision. Record retryable tool failure without advancing; stop for divergent history, destructive recovery, inseparable ownership, unsafe external action, unavailable required infrastructure, or authority conflict.
+On resume, validate mapping, schema version, compact-state size, branch/Git identity hashes, artifact hashes, current evidence pointers, checkpoint trailers, and ancestry. Restart at the earliest invalid owner; Git and durable artifacts preserve superseded evidence. Hash invalidation is not a judge revision. Record retryable tool failure without advancing; stop for divergent history, destructive recovery, inseparable ownership, unsafe external action, unavailable required infrastructure, or authority conflict.
+
+## User Approval Policy
+
+Ask only for: repository-mandated planned-change authorization; the mandatory pre-implementation approval; contradiction with a prior user-approved decision or higher authority; a new architecture decision/change outside the accepted plan; the fourth consecutive `REVISE` or non-converged result in one phase; a hard blocker; or another unresolved high-impact choice the root can explain concretely. Ordinary review correction, test failure, safe bounded remediation, independent `ACCEPT`, clean convergence, and verification never need approval.
+
+When asking, include the topic and exact decision, a brief and current status, why user judgment is required, related repository-relative files, relevant prior/higher authorities, viable options, a recommendation with consequences, design concepts when useful, the exact scope authorized, and the downstream gates that remain. Record the decision once and reuse it while its scope hash remains current.
 
 Complete a story only when definition is accepted, every task is complete, behavior changes have honest RED/GREEN evidence, convergence is clean, quality review accepts the current boundary, E2E is passed or validly skipped, final verification passes, and `review -> done` is bound to the completion checkpoint. Report story, feature directory, checkpoint SHAs, tests/build, convergence, review, E2E, residual nonblocking findings, preserved unrelated work, and next queue item. Close an eligible epic only through `$close-bmad-epic`.
 

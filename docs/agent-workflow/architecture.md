@@ -44,6 +44,7 @@ BMad story + authorities
   -> plan (self-reviewed)
   -> tasks (self-reviewed)
   -> independent definition review
+  -> informed implementation approval
   -> tests RED -> production GREEN
   -> converge
        ├─ tasks appended -> classified implementation -> converge
@@ -54,11 +55,11 @@ BMad story + authorities
   -> bound completion
 ```
 
-A repository planned-change trigger inserts an independent plan-only review and explicit user authorization after plan acceptance and before tasks. The later definition review covers the complete artifact set without duplicating accepted unchanged plan conclusions.
+A repository planned-change trigger or architecture decision/change inserts an independent plan-only review and explicit user authorization after plan acceptance and before tasks. The later definition review covers the complete artifact set without duplicating accepted unchanged plan conclusions.
 
 ## Atomic Identity and Ownership
 
-One story maps to exactly one SpecKit directory through canonical activation, workflow state, and the BMad development record. Durable paths are repository-relative; checkout identity paths are the only absolute-path exception. Preflight binds branch, full HEAD, Git/worktree identities, exact status, owned paths, and unrelated paths.
+One story maps to exactly one SpecKit directory through canonical activation, workflow state, and the BMad development record. The schema-v3 state is a bounded current snapshot; detailed dispatch, review, verification, and historical boundaries remain in their native artifacts and Git. Durable artifact paths are repository-relative. Preflight stores branch, full HEAD, and hashes of Git identity and observed status.
 
 Only the root writes shared lifecycle/state, stages explicit paths, and creates local commits. Definition authors, tests, production, convergence, review, and E2E have disjoint write boundaries. Shared-file work is serialized.
 

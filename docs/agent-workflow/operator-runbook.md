@@ -12,7 +12,7 @@ Use $run-bmad-sprint-loop resume.
 Use $run-bmad-sprint-loop dry-run for epic 4.
 ```
 
-New work always uses the unified v2 flow. A historical Full, Standard, or expedited state first runs the migration branch in the state machine.
+New and resumed work uses the compact schema-v3 unified flow.
 
 ## Expected Progress
 
@@ -21,25 +21,26 @@ The operator should see compact stage updates, not repeated ceremony explanation
 1. selected story, dependencies, branch/HEAD, ownership;
 2. spec/plan/tasks self-review results;
 3. one independent definition verdict;
-4. RED/GREEN evidence by coherent behavior group;
-5. convergence outcome and appended-task count;
-6. one quality verdict;
-7. E2E decision and final verification;
-8. bound checkpoint and next queue item.
+4. one informed implementation approval;
+5. RED/GREEN evidence by coherent behavior group;
+6. convergence outcome and appended-task count;
+7. one quality verdict;
+8. E2E decision, final verification, bound checkpoint, and next queue item.
 
 ## Human Gates
 
 Pause only for:
 
 - planned-change authorization after accepted early plan review and before tasks;
-- Critical/High definition remediation;
-- unresolved product intent, authority conflict, BLOCKED, or third REVISE;
+- accepted-definition implementation approval before the first production write;
+- contradiction with prior user approval/higher authority, or a new architecture decision outside the accepted plan;
+- unresolved product intent, hard blocker, BLOCKED, or the fourth consecutive REVISE/non-converged result in one phase;
 - inseparable ownership or divergent/destructive Git recovery;
 - unavailable required infrastructure or unsafe external action;
 - ambiguous E2E failure;
 - reserved epic architecture findings and retrospective choice.
 
-Independent ACCEPT, clean convergence, passing commands, and safe checkpoint binding do not need repeated confirmation.
+Ordinary REVISE correction, independent ACCEPT, clean convergence, passing commands, and safe checkpoint binding do not need confirmation. Every real approval request supplies the decision, brief, files/authorities, options, recommendation and consequences, scope hash, and remaining gates.
 
 ## Checkpoints
 
@@ -47,7 +48,7 @@ Ordinary recovery boundaries are activation, accepted definition, each coherent 
 
 ## Recovery
 
-Use the state machine's earliest-owner table. Do not reconstruct missing verdicts, fabricate RED, guess mappings, or repair Git history. Historical v1 state is evidence input to an explicit v2 migration, never silently relabeled.
+Use the state machine's earliest-owner table. Do not reconstruct missing verdicts, fabricate RED, guess mappings, or repair Git history. Detailed history is recovered from durable evidence and Git, not accumulated in workflow state.
 
 ## Epic Close
 

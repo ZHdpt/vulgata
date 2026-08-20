@@ -14,20 +14,14 @@ from typing import Any
 REQUIRED_AGENT_FIELDS = {"name", "description", "developer_instructions"}
 VALID_VERDICTS = {"ACCEPT", "REVISE", "BLOCKED"}
 VALID_GATES = {"plan-review", "definition-review", "quality-review"}
-VALID_REVIEW_ITERATIONS = {"plan-review", "definition-review", "converge", "quality-review"}
 BLOCKING_SEVERITIES = {"CRITICAL", "HIGH"}
 VALID_SEVERITIES = BLOCKING_SEVERITIES | {"MEDIUM", "LOW"}
 VALID_STAGES = {
     "context", "specify", "plan", "plan-review", "tasks", "definition-review",
-    "implement", "converge", "quality-review", "conditional-e2e", "verify", "complete",
+    "implementation-approval", "implement", "converge", "quality-review", "conditional-e2e", "verify", "complete",
 }
-VALID_STATUSES = {"pending", "active", "accepted", "revised", "blocked", "failed", "invalidated"}
 VALID_E2E_RESULTS = {
     "pending", "passed", "failed-product", "failed-test", "blocked", "skipped-no-risk", "skipped-covered",
-}
-VALID_EVIDENCE_KINDS = {
-    "command", "self-review", "test-red", "test-green", "review", "analysis", "convergence", "artifact-hash", "e2e-decision",
-    "human-approval", "architecture-disposition", "failure",
 }
 SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
 HASH_RE = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -73,10 +67,10 @@ VERDICT_REQUIRED = {
     "reviewed_artifacts", "findings", "summary",
 }
 STATE_REQUIRED = {
-    "schema_version", "bmad_story_key", "bmad_epic_key", "feature_directory", "execution_level", "stage", "active_gates",
-    "stage_history", "repository_preflight", "source_artifacts", "dispatches", "review_iterations", "convergence",
-    "e2e_decision", "verification", "last_checkpoint", "recoverable_failure", "legacy_migration", "updated_at",
+    "schema_version", "bmad_story_key", "bmad_epic_key", "feature_directory", "stage", "preflight", "artifacts",
+    "gates", "attempts", "approvals", "convergence", "e2e", "current_evidence_paths", "checkpoint", "resume", "updated_at",
 }
+MAX_WORKFLOW_STATE_BYTES = 12 * 1024
 EPIC_EVIDENCE_REQUIRED = {
     "schema_version", "evidence_id", "kind", "stage", "source_commit", "artifact_paths", "command",
     "exit_code", "observed_at", "summary", "raw_output_path", "raw_output_sha256", "execution_worktree",
@@ -204,11 +198,6 @@ def _string_array(value: Any, field: str, errors: list[str], paths: bool = False
             errors.append(f"{field}[{index}] must be a non-empty string")
 
 
-def _require_items(value: Any, field: str, errors: list[str]) -> None:
-    if isinstance(value, list) and not value:
-        errors.append(f"{field} must contain at least one item")
-
-
 def _boundary(value: Any, field: str, errors: list[str]) -> None:
     data = _mapping(value, field, errors)
     if data is None:
@@ -288,94 +277,41 @@ def validate_verdict(data: Any) -> list[str]:
     return errors
 
 
-def _validate_gate_record(value: Any, field: str, errors: list[str]) -> None:
-    data = _mapping(value, field, errors)
-    if data is None:
+def _validate_compact_gate(value: Any, field: str, errors: list[str]) -> None:
+    gate = _mapping(value, field, errors)
+    if gate is None:
         return
-    required = {"status", "iteration", "dispatch_id", "verdict_path", "input_boundary", "completed_at"}
-    _required(data, required, f"{field}.", errors)
-    _unknown(data, required, f"{field}.", errors)
-    if data.get("status") not in VALID_STATUSES:
+    fields = {"status", "attempt", "verdict_path"}
+    _required(gate, fields, f"{field}.", errors)
+    _unknown(gate, fields, f"{field}.", errors)
+    status = gate.get("status")
+    if status not in {"pending", "accepted", "revised", "blocked", "invalidated"}:
         errors.append(f"{field}.status is invalid")
-    if not isinstance(data.get("iteration"), int) or isinstance(data.get("iteration"), bool) or data.get("iteration", -1) < 0:
-        errors.append(f"{field}.iteration must be a non-negative integer")
-    dispatch_id = data.get("dispatch_id")
-    if dispatch_id is not None:
-        _nonempty_string(dispatch_id, f"{field}.dispatch_id", errors)
-    _repo_path(data.get("verdict_path"), f"{field}.verdict_path", errors, nullable=True)
-    if data.get("input_boundary") is not None:
-        _boundary(data["input_boundary"], f"{field}.input_boundary", errors)
-    _timestamp(data.get("completed_at"), f"{field}.completed_at", errors, nullable=True)
-    if data.get("status") in {"accepted", "revised", "blocked"}:
-        status = data.get("status")
-        if data.get("verdict_path") is None:
-            errors.append(f"{field}.verdict_path is required when {status}")
-        if data.get("input_boundary") is None:
-            errors.append(f"{field}.input_boundary is required when {status}")
-        if data.get("completed_at") is None:
-            errors.append(f"{field}.completed_at is required when {status}")
+    attempt = gate.get("attempt")
+    if not isinstance(attempt, int) or isinstance(attempt, bool) or attempt < 0:
+        errors.append(f"{field}.attempt must be a non-negative integer")
+    _repo_path(gate.get("verdict_path"), f"{field}.verdict_path", errors, nullable=True)
+    if status in {"accepted", "revised", "blocked"} and gate.get("verdict_path") is None:
+        errors.append(f"{field}.verdict_path is required when {status}")
 
 
-def _validate_evidence(value: Any, field: str, errors: list[str], story_key: str | None) -> None:
-    data = _mapping(value, field, errors)
-    if data is None:
+def _validate_compact_checkpoint(value: Any, field: str, errors: list[str]) -> None:
+    checkpoint = _mapping(value, field, errors)
+    if checkpoint is None:
         return
-    required = {
-        "evidence_id", "kind", "stage", "source_commit", "artifact_paths", "command", "exit_code",
-        "observed_at", "summary", "raw_output_path",
-    }
-    _required(data, required, f"{field}.", errors)
-    _unknown(data, required, f"{field}.", errors)
-    _nonempty_string(data.get("evidence_id"), f"{field}.evidence_id", errors)
-    if data.get("kind") not in VALID_EVIDENCE_KINDS:
-        errors.append(f"{field}.kind is invalid")
-    if data.get("stage") not in VALID_STAGES:
+    fields = {"checkpoint_id", "stage", "commit_sha", "binding_status"}
+    _required(checkpoint, fields, f"{field}.", errors)
+    _unknown(checkpoint, fields, f"{field}.", errors)
+    _nonempty_string(checkpoint.get("checkpoint_id"), f"{field}.checkpoint_id", errors)
+    if checkpoint.get("stage") not in VALID_STAGES:
         errors.append(f"{field}.stage is invalid")
-    evidence_id = data.get("evidence_id")
-    if isinstance(evidence_id, str):
-        match = re.fullmatch(r"([^/]+)/([^/]+)/([1-9]\d*)", evidence_id)
-        if (
-            match is None
-            or story_key is None
-            or match.group(1) != story_key
-            or match.group(2) != data.get("stage")
-            or match.group(2) not in VALID_STAGES
-        ):
-            errors.append(f"{field}.evidence_id must match story-key/stage/positive-sequence")
-    _sha(data.get("source_commit"), f"{field}.source_commit", errors)
-    _string_array(data.get("artifact_paths"), f"{field}.artifact_paths", errors, paths=True)
-    if data.get("command") is not None:
-        _nonempty_string(data.get("command"), f"{field}.command", errors)
-    if data.get("exit_code") is not None and (not isinstance(data.get("exit_code"), int) or isinstance(data.get("exit_code"), bool)):
-        errors.append(f"{field}.exit_code must be an integer or null")
-    _timestamp(data.get("observed_at"), f"{field}.observed_at", errors)
-    _nonempty_string(data.get("summary"), f"{field}.summary", errors)
-    _repo_path(data.get("raw_output_path"), f"{field}.raw_output_path", errors, nullable=True)
-
-
-def _validate_checkpoint(value: Any, field: str, errors: list[str]) -> None:
-    data = _mapping(value, field, errors)
-    if data is None:
-        return
-    required = {
-        "checkpoint_id", "scope_key", "stage", "committed_paths", "verification_evidence_ids", "commit_sha",
-        "binding_status",
-    }
-    _required(data, required, f"{field}.", errors)
-    _unknown(data, required, f"{field}.", errors)
-    _nonempty_string(data.get("checkpoint_id"), f"{field}.checkpoint_id", errors)
-    _nonempty_string(data.get("scope_key"), f"{field}.scope_key", errors)
-    if data.get("stage") not in VALID_STAGES:
-        errors.append(f"{field}.stage is invalid")
-    _string_array(data.get("committed_paths"), f"{field}.committed_paths", errors, paths=True)
-    _string_array(data.get("verification_evidence_ids"), f"{field}.verification_evidence_ids", errors)
-    binding = data.get("binding_status")
+    binding = checkpoint.get("binding_status")
     if binding not in {"pending", "bound"}:
         errors.append(f"{field}.binding_status is invalid")
-    if binding == "pending" and data.get("commit_sha") is not None:
+    if binding == "pending" and checkpoint.get("commit_sha") is not None:
         errors.append(f"{field}.commit_sha must be null while binding is pending")
     if binding == "bound":
-        _sha(data.get("commit_sha"), f"{field}.commit_sha", errors)
+        _sha(checkpoint.get("commit_sha"), f"{field}.commit_sha", errors)
 
 
 def validate_workflow_state(data: Any) -> list[str]:
@@ -385,316 +321,171 @@ def validate_workflow_state(data: Any) -> list[str]:
         return errors
     _required(state, STATE_REQUIRED, "", errors)
     _unknown(state, STATE_REQUIRED, "", errors)
-    if state.get("schema_version") != "2.0":
-        errors.append("schema_version must equal 2.0; historical v1 states require explicit migration")
-    if state.get("execution_level") != "unified":
-        errors.append("execution_level must equal unified")
+    try:
+        canonical_size = len(json.dumps(state, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    except (TypeError, ValueError):
+        canonical_size = MAX_WORKFLOW_STATE_BYTES + 1
+    if canonical_size > MAX_WORKFLOW_STATE_BYTES:
+        errors.append(f"workflow state canonical JSON exceeds {MAX_WORKFLOW_STATE_BYTES} bytes")
+    if state.get("schema_version") != "3.0":
+        errors.append("schema_version must equal 3.0")
     _nonempty_string(state.get("bmad_story_key"), "bmad_story_key", errors)
     _nonempty_string(state.get("bmad_epic_key"), "bmad_epic_key", errors)
     _repo_path(state.get("feature_directory"), "feature_directory", errors)
     if isinstance(state.get("feature_directory"), str) and not re.fullmatch(r"specs/[^/]+", state["feature_directory"]):
-        errors.append("feature_directory must match specs/<feature>")
-    if state.get("stage") not in VALID_STAGES:
+        errors.append("feature_directory must be exactly one directory under specs/")
+    stage = state.get("stage")
+    if stage not in VALID_STAGES:
         errors.append("stage is invalid")
 
-    gates = _mapping(state.get("active_gates"), "active_gates", errors)
-    if gates is not None:
-        _unknown(gates, {"definition-review", "quality-review"}, "active_gates.", errors)
-        for name in ("definition-review", "quality-review"):
-            if name not in gates:
-                errors.append(f"active_gates.{name}")
-            else:
-                _validate_gate_record(gates[name], f"active_gates.{name}", errors)
-
-    history = _array(state.get("stage_history"), "stage_history", errors)
-    if history is not None:
-        required = {
-            "stage", "status", "started_at", "completed_at", "input_commit", "input_hashes", "agent_role",
-            "evidence_paths", "failure",
-        }
-        for index, item in enumerate(history):
-            record = _mapping(item, f"stage_history[{index}]", errors)
-            if record is None:
-                continue
-            _required(record, required, f"stage_history[{index}].", errors)
-            _unknown(record, required, f"stage_history[{index}].", errors)
-            if record.get("stage") not in VALID_STAGES:
-                errors.append(f"stage_history[{index}].stage is invalid")
-            if record.get("status") not in VALID_STATUSES:
-                errors.append(f"stage_history[{index}].status is invalid")
-            _timestamp(record.get("started_at"), f"stage_history[{index}].started_at", errors)
-            _timestamp(record.get("completed_at"), f"stage_history[{index}].completed_at", errors, nullable=True)
-            _sha(record.get("input_commit"), f"stage_history[{index}].input_commit", errors)
-            hashes = _mapping(record.get("input_hashes"), f"stage_history[{index}].input_hashes", errors)
-            if hashes is not None:
-                for path, digest in hashes.items():
-                    _repo_path(path, f"stage_history[{index}].input_hashes key", errors)
-                    _hash(digest, f"stage_history[{index}].input_hashes[{path}]", errors)
-            _nonempty_string(record.get("agent_role"), f"stage_history[{index}].agent_role", errors)
-            _string_array(record.get("evidence_paths"), f"stage_history[{index}].evidence_paths", errors, paths=True)
-            if record.get("status") == "accepted" and not record.get("evidence_paths"):
-                errors.append(f"stage_history[{index}].evidence_paths must not be empty when accepted")
-            if record.get("failure") is not None:
-                _mapping(record["failure"], f"stage_history[{index}].failure", errors)
-
-    preflight = _mapping(state.get("repository_preflight"), "repository_preflight", errors)
+    preflight = _mapping(state.get("preflight"), "preflight", errors)
     if preflight is not None:
-        fields = {
-            "branch", "preflight_head", "repository_root", "git_common_directory", "worktree_path",
-            "worktree_status", "owned_paths", "unrelated_paths", "observed_at",
-        }
-        _required(preflight, fields, "repository_preflight.", errors)
-        _unknown(preflight, fields, "repository_preflight.", errors)
-        _nonempty_string(preflight.get("branch"), "repository_preflight.branch", errors)
-        _sha(preflight.get("preflight_head"), "repository_preflight.preflight_head", errors)
-        _repo_path(preflight.get("repository_root"), "repository_preflight.repository_root", errors)
-        if isinstance(preflight.get("repository_root"), str) and preflight["repository_root"] != ".":
-            errors.append("repository_preflight.repository_root must equal .")
-        for key in ("git_common_directory", "worktree_path"):
-            _checkout_identity_path(preflight.get(key), f"repository_preflight.{key}", errors)
-        if not isinstance(preflight.get("worktree_status"), str):
-            errors.append("repository_preflight.worktree_status must be a string")
-        _string_array(preflight.get("owned_paths"), "repository_preflight.owned_paths", errors, paths=True)
-        _string_array(preflight.get("unrelated_paths"), "repository_preflight.unrelated_paths", errors, paths=True)
-        _timestamp(preflight.get("observed_at"), "repository_preflight.observed_at", errors)
+        fields = {"branch", "head", "git_identity_sha256", "status_sha256", "observed_at"}
+        _required(preflight, fields, "preflight.", errors)
+        _unknown(preflight, fields, "preflight.", errors)
+        _nonempty_string(preflight.get("branch"), "preflight.branch", errors)
+        _sha(preflight.get("head"), "preflight.head", errors)
+        _hash(preflight.get("git_identity_sha256"), "preflight.git_identity_sha256", errors)
+        _hash(preflight.get("status_sha256"), "preflight.status_sha256", errors)
+        _timestamp(preflight.get("observed_at"), "preflight.observed_at", errors)
 
-    sources = _array(state.get("source_artifacts"), "source_artifacts", errors)
-    if sources is not None:
-        for index, item in enumerate(sources):
-            source = _mapping(item, f"source_artifacts[{index}]", errors)
-            if source is None:
+    artifacts = _mapping(state.get("artifacts"), "artifacts", errors)
+    if artifacts is not None:
+        fields = {"spec", "plan", "tasks"}
+        _required(artifacts, fields, "artifacts.", errors)
+        _unknown(artifacts, fields, "artifacts.", errors)
+        for name in sorted(fields):
+            value = artifacts.get(name)
+            if value is None:
                 continue
-            _required(source, {"authority", "path", "commit", "sha256"}, f"source_artifacts[{index}].", errors)
-            _unknown(source, {"authority", "path", "commit", "sha256"}, f"source_artifacts[{index}].", errors)
-            _nonempty_string(source.get("authority"), f"source_artifacts[{index}].authority", errors)
-            _repo_path(source.get("path"), f"source_artifacts[{index}].path", errors)
-            _sha(source.get("commit"), f"source_artifacts[{index}].commit", errors)
-            _hash(source.get("sha256"), f"source_artifacts[{index}].sha256", errors)
+            artifact = _mapping(value, f"artifacts.{name}", errors)
+            if artifact is None:
+                continue
+            _required(artifact, {"path", "sha256"}, f"artifacts.{name}.", errors)
+            _unknown(artifact, {"path", "sha256"}, f"artifacts.{name}.", errors)
+            _repo_path(artifact.get("path"), f"artifacts.{name}.path", errors)
+            _hash(artifact.get("sha256"), f"artifacts.{name}.sha256", errors)
+        if stage in {"plan", "plan-review", "tasks", "definition-review", "implementation-approval", "implement", "converge", "quality-review", "conditional-e2e", "verify", "complete"} and artifacts.get("spec") is None:
+            errors.append("artifacts.spec is required at the current stage")
+        if stage in {"tasks", "definition-review", "implementation-approval", "implement", "converge", "quality-review", "conditional-e2e", "verify", "complete"} and artifacts.get("plan") is None:
+            errors.append("artifacts.plan is required at the current stage")
+        if stage in {"definition-review", "implementation-approval", "implement", "converge", "quality-review", "conditional-e2e", "verify", "complete"} and artifacts.get("tasks") is None:
+            errors.append("artifacts.tasks is required at the current stage")
 
-    dispatches = _array(state.get("dispatches"), "dispatches", errors)
-    if dispatches is not None:
-        fields = {"role", "objective", "source_boundary", "permitted_writes", "output_path", "returned_evidence"}
-        for index, item in enumerate(dispatches):
-            dispatch = _mapping(item, f"dispatches[{index}]", errors)
-            if dispatch is None:
-                continue
-            _required(dispatch, fields, f"dispatches[{index}].", errors)
-            _unknown(dispatch, fields, f"dispatches[{index}].", errors)
-            _nonempty_string(dispatch.get("role"), f"dispatches[{index}].role", errors)
-            _nonempty_string(dispatch.get("objective"), f"dispatches[{index}].objective", errors)
-            _boundary(dispatch.get("source_boundary"), f"dispatches[{index}].source_boundary", errors)
-            _string_array(dispatch.get("permitted_writes"), f"dispatches[{index}].permitted_writes", errors, paths=True)
-            _repo_path(dispatch.get("output_path"), f"dispatches[{index}].output_path", errors)
-            _string_array(dispatch.get("returned_evidence"), f"dispatches[{index}].returned_evidence", errors)
+    gates = _mapping(state.get("gates"), "gates", errors)
+    if gates is not None:
+        fields = {"plan-review", "definition-review", "quality-review"}
+        _required(gates, fields, "gates.", errors)
+        _unknown(gates, fields, "gates.", errors)
+        for name in sorted(fields):
+            _validate_compact_gate(gates.get(name), f"gates.{name}", errors)
 
-    iterations = _mapping(state.get("review_iterations"), "review_iterations", errors)
-    if iterations is not None:
-        _unknown(iterations, VALID_REVIEW_ITERATIONS, "review_iterations.", errors)
-        for gate in VALID_GATES:
-            if gate not in iterations:
-                errors.append(f"review_iterations.{gate}")
+    attempts = _mapping(state.get("attempts"), "attempts", errors)
+    if attempts is not None:
+        fields = {"definition-review", "converge", "quality-review"}
+        _required(attempts, fields, "attempts.", errors)
+        _unknown(attempts, fields, "attempts.", errors)
+        for name in sorted(fields):
+            value = attempts.get(name)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                errors.append(f"attempts.{name} must be a non-negative integer")
+
+    approvals = _array(state.get("approvals"), "approvals", errors)
+    if approvals is not None:
+        if len(approvals) > 12:
+            errors.append("approvals must contain at most 12 current decision references")
+        decision_ids: set[str] = set()
+        for index, value in enumerate(approvals):
+            approval = _mapping(value, f"approvals[{index}]", errors)
+            if approval is None:
                 continue
-            record = _mapping(iterations[gate], f"review_iterations.{gate}", errors)
-            if record is None:
-                continue
-            _required(record, {"count", "verdict_paths"}, f"review_iterations.{gate}.", errors)
-            _unknown(record, {"count", "verdict_paths"}, f"review_iterations.{gate}.", errors)
-            count = record.get("count")
-            if not isinstance(count, int) or isinstance(count, bool) or count < 0:
-                errors.append(f"review_iterations.{gate}.count must be a non-negative integer")
-            _string_array(record.get("verdict_paths"), f"review_iterations.{gate}.verdict_paths", errors, paths=True)
+            fields = {"decision_id", "status", "scope_sha256", "evidence_path", "decided_at"}
+            _required(approval, fields, f"approvals[{index}].", errors)
+            _unknown(approval, fields, f"approvals[{index}].", errors)
+            decision_id = approval.get("decision_id")
+            _nonempty_string(decision_id, f"approvals[{index}].decision_id", errors)
+            if isinstance(decision_id, str) and decision_id in decision_ids:
+                errors.append(f"approvals[{index}].decision_id is duplicated")
+            if isinstance(decision_id, str):
+                decision_ids.add(decision_id)
+            status = approval.get("status")
+            if status not in {"pending", "accepted", "declined"}:
+                errors.append(f"approvals[{index}].status is invalid")
+            _hash(approval.get("scope_sha256"), f"approvals[{index}].scope_sha256", errors)
+            _repo_path(approval.get("evidence_path"), f"approvals[{index}].evidence_path", errors, nullable=True)
+            _timestamp(approval.get("decided_at"), f"approvals[{index}].decided_at", errors, nullable=True)
+            if status in {"accepted", "declined"} and (approval.get("evidence_path") is None or approval.get("decided_at") is None):
+                errors.append(f"approvals[{index}] completed decision requires evidence_path and decided_at")
 
     convergence = _mapping(state.get("convergence"), "convergence", errors)
     if convergence is not None:
-        fields = {
-            "status", "iteration", "outcome", "findings_count", "appended_task_ids",
-            "artifact_hashes", "completed_at",
-        }
+        fields = {"status", "attempt", "outcome", "report_path"}
         _required(convergence, fields, "convergence.", errors)
         _unknown(convergence, fields, "convergence.", errors)
-        if convergence.get("status") not in VALID_STATUSES:
+        status = convergence.get("status")
+        if status not in {"pending", "accepted", "revised", "blocked", "invalidated"}:
             errors.append("convergence.status is invalid")
-        if not isinstance(convergence.get("iteration"), int) or isinstance(convergence.get("iteration"), bool) or convergence.get("iteration", -1) < 0:
-            errors.append("convergence.iteration must be a non-negative integer")
+        attempt = convergence.get("attempt")
+        if not isinstance(attempt, int) or isinstance(attempt, bool) or attempt < 0:
+            errors.append("convergence.attempt must be a non-negative integer")
         outcome = convergence.get("outcome")
         if outcome not in {"pending", "converged", "tasks_appended", "blocked", "failed"}:
             errors.append("convergence.outcome is invalid")
-        count = convergence.get("findings_count")
-        if not isinstance(count, int) or isinstance(count, bool) or count < 0:
-            errors.append("convergence.findings_count must be a non-negative integer")
-        task_ids = convergence.get("appended_task_ids")
-        _string_array(task_ids, "convergence.appended_task_ids", errors)
-        if isinstance(task_ids, list) and any(not re.fullmatch(r"T[0-9]{3,}", item) for item in task_ids if isinstance(item, str)):
-            errors.append("convergence.appended_task_ids must use T### identifiers")
-        hashes = _mapping(convergence.get("artifact_hashes"), "convergence.artifact_hashes", errors)
-        if hashes is not None:
-            for path, digest in hashes.items():
-                _repo_path(path, "convergence.artifact_hashes key", errors)
-                _hash(digest, f"convergence.artifact_hashes[{path}]", errors)
-        _timestamp(convergence.get("completed_at"), "convergence.completed_at", errors, nullable=True)
-        if outcome == "converged" and (convergence.get("status") != "accepted" or count != 0 or task_ids != [] or convergence.get("completed_at") is None):
-            errors.append("converged outcome requires accepted status, zero findings/tasks, and completed_at")
-        if outcome == "tasks_appended" and (convergence.get("status") != "revised" or not isinstance(count, int) or count < 1 or not task_ids or convergence.get("completed_at") is None):
-            errors.append("tasks_appended outcome requires revised status, findings/tasks, and completed_at")
+        _repo_path(convergence.get("report_path"), "convergence.report_path", errors, nullable=True)
+        if outcome == "converged" and (status != "accepted" or convergence.get("report_path") is None):
+            errors.append("converged outcome requires accepted status and report_path")
+        if outcome == "tasks_appended" and (status != "revised" or convergence.get("report_path") is None):
+            errors.append("tasks_appended outcome requires revised status and report_path")
 
-    e2e = _mapping(state.get("e2e_decision"), "e2e_decision", errors)
+    e2e = _mapping(state.get("e2e"), "e2e", errors)
     if e2e is not None:
-        fields = {
-            "required", "predicates", "coverage_override", "rationale", "covering_tests", "owner",
-            "source_boundary", "result", "evidence_ids",
-        }
-        _required(e2e, fields, "e2e_decision.", errors)
-        _unknown(e2e, fields, "e2e_decision.", errors)
-        if not isinstance(e2e.get("required"), bool):
-            errors.append("e2e_decision.required must be a boolean")
-        required_predicates: set[str] = set()
-        predicate_ids: set[str] = set()
-        predicates = _array(e2e.get("predicates"), "e2e_decision.predicates", errors)
-        if predicates is not None:
-            predicate_fields = {
-                "predicate_id", "change_type", "gate", "triggered", "affected_paths", "affected_behavior", "evidence",
-            }
-            for index, item in enumerate(predicates):
-                predicate = _mapping(item, f"e2e_decision.predicates[{index}]", errors)
-                if predicate is None:
-                    continue
-                _required(predicate, predicate_fields, f"e2e_decision.predicates[{index}].", errors)
-                _unknown(predicate, predicate_fields, f"e2e_decision.predicates[{index}].", errors)
-                predicate_id = predicate.get("predicate_id")
-                _nonempty_string(predicate_id, f"e2e_decision.predicates[{index}].predicate_id", errors)
-                if isinstance(predicate_id, str):
-                    if predicate_id in predicate_ids:
-                        errors.append("e2e_decision.predicates must have unique predicate_id values")
-                    predicate_ids.add(predicate_id)
-                _nonempty_string(predicate.get("change_type"), f"e2e_decision.predicates[{index}].change_type", errors)
-                if predicate.get("gate") not in {"required", "may-skip"}:
-                    errors.append(f"e2e_decision.predicates[{index}].gate is invalid")
-                if not isinstance(predicate.get("triggered"), bool):
-                    errors.append(f"e2e_decision.predicates[{index}].triggered must be a boolean")
-                _string_array(predicate.get("affected_paths"), f"e2e_decision.predicates[{index}].affected_paths", errors, paths=True)
-                _nonempty_string(predicate.get("affected_behavior"), f"e2e_decision.predicates[{index}].affected_behavior", errors)
-                _string_array(predicate.get("evidence"), f"e2e_decision.predicates[{index}].evidence", errors)
-                if predicate.get("triggered") is True and predicate.get("gate") == "required" and isinstance(predicate_id, str):
-                    required_predicates.add(predicate_id)
-        complete_override = False
-        override_value = e2e.get("coverage_override")
-        if override_value is not None:
-            override = _mapping(override_value, "e2e_decision.coverage_override", errors)
-            if override is not None:
-                override_fields = {
-                    "test_ids", "covered_predicate_ids", "source_boundary", "passing_evidence_ids",
-                    "completeness_rationale",
-                }
-                _required(override, override_fields, "e2e_decision.coverage_override.", errors)
-                _unknown(override, override_fields, "e2e_decision.coverage_override.", errors)
-                _string_array(override.get("test_ids"), "e2e_decision.coverage_override.test_ids", errors)
-                _string_array(override.get("covered_predicate_ids"), "e2e_decision.coverage_override.covered_predicate_ids", errors)
-                _boundary(override.get("source_boundary"), "e2e_decision.coverage_override.source_boundary", errors)
-                _string_array(override.get("passing_evidence_ids"), "e2e_decision.coverage_override.passing_evidence_ids", errors)
-                _require_items(override.get("test_ids"), "e2e_decision.coverage_override.test_ids", errors)
-                _require_items(
-                    override.get("covered_predicate_ids"),
-                    "e2e_decision.coverage_override.covered_predicate_ids",
-                    errors,
-                )
-                _require_items(
-                    override.get("passing_evidence_ids"),
-                    "e2e_decision.coverage_override.passing_evidence_ids",
-                    errors,
-                )
-                _nonempty_string(override.get("completeness_rationale"), "e2e_decision.coverage_override.completeness_rationale", errors)
-                covered = override.get("covered_predicate_ids")
-                tests = override.get("test_ids")
-                passing = override.get("passing_evidence_ids")
-                current_boundary = override.get("source_boundary") == e2e.get("source_boundary")
-                complete_override = (
-                    isinstance(covered, list)
-                    and all(isinstance(item, str) for item in covered)
-                    and required_predicates <= set(covered)
-                    and isinstance(tests, list) and bool(tests)
-                    and isinstance(passing, list) and bool(passing)
-                    and current_boundary
-                    and isinstance(override.get("completeness_rationale"), str)
-                    and bool(override["completeness_rationale"].strip())
-                )
-                if not current_boundary:
-                    errors.append("e2e_decision.coverage_override.source_boundary must match current source_boundary")
-                if not required_predicates <= set(covered) if isinstance(covered, list) and all(isinstance(item, str) for item in covered) else True:
-                    errors.append("e2e_decision.coverage_override must cover every triggered required predicate")
-        _nonempty_string(e2e.get("rationale"), "e2e_decision.rationale", errors)
-        _string_array(e2e.get("covering_tests"), "e2e_decision.covering_tests", errors)
-        _nonempty_string(e2e.get("owner"), "e2e_decision.owner", errors)
-        if e2e.get("owner") not in {"orchestrator", "e2e-runner"}:
-            errors.append("e2e_decision.owner is invalid")
-        _boundary(e2e.get("source_boundary"), "e2e_decision.source_boundary", errors)
-        if e2e.get("result") not in VALID_E2E_RESULTS:
-            errors.append("e2e_decision.result is invalid")
-        _string_array(e2e.get("evidence_ids"), "e2e_decision.evidence_ids", errors)
-        if e2e.get("required") is True and e2e.get("owner") != "e2e-runner":
-            errors.append("e2e_decision.owner must be e2e-runner when required")
-        if e2e.get("result") == "skipped-covered" and not complete_override:
-            errors.append("e2e_decision.coverage_override is required and complete for skipped-covered")
-        if e2e.get("result") == "skipped-covered":
-            _require_items(e2e.get("covering_tests"), "e2e_decision.covering_tests", errors)
-        if required_predicates and e2e.get("required") is not True and not (
-            e2e.get("result") == "skipped-covered" and complete_override
-        ):
-            errors.append("e2e_decision.required must be true without a complete coverage override")
+        fields = {"result", "decision_path"}
+        _required(e2e, fields, "e2e.", errors)
+        _unknown(e2e, fields, "e2e.", errors)
+        result = e2e.get("result")
+        if result not in VALID_E2E_RESULTS:
+            errors.append("e2e.result is invalid")
+        _repo_path(e2e.get("decision_path"), "e2e.decision_path", errors, nullable=True)
+        if result != "pending" and e2e.get("decision_path") is None:
+            errors.append("completed E2E decision requires decision_path")
 
-    verification = _array(state.get("verification"), "verification", errors)
-    if verification is not None:
-        for index, evidence in enumerate(verification):
-            _validate_evidence(evidence, f"verification[{index}]", errors, state.get("bmad_story_key"))
+    evidence_paths = state.get("current_evidence_paths")
+    _string_array(evidence_paths, "current_evidence_paths", errors, paths=True)
+    if isinstance(evidence_paths, list):
+        if len(evidence_paths) > 12:
+            errors.append("current_evidence_paths must contain at most 12 paths")
+        if len(evidence_paths) != len(set(item for item in evidence_paths if isinstance(item, str))):
+            errors.append("current_evidence_paths must be unique")
 
-    checkpoint = state.get("last_checkpoint")
+    checkpoint = state.get("checkpoint")
     if checkpoint is not None:
-        _validate_checkpoint(checkpoint, "last_checkpoint", errors)
-    failure = state.get("recoverable_failure")
-    if failure is not None:
-        failure_data = _mapping(failure, "recoverable_failure", errors)
-        if failure_data is not None:
-            fields = {"stage", "agent_role", "source_boundary", "evidence", "retryable", "earliest_resume_stage"}
-            _required(failure_data, fields, "recoverable_failure.", errors)
-            _unknown(failure_data, fields, "recoverable_failure.", errors)
-            if failure_data.get("stage") not in VALID_STAGES:
-                errors.append("recoverable_failure.stage is invalid")
-            _nonempty_string(failure_data.get("agent_role"), "recoverable_failure.agent_role", errors)
-            _boundary(failure_data.get("source_boundary"), "recoverable_failure.source_boundary", errors)
-            _validate_evidence(
-                failure_data.get("evidence"), "recoverable_failure.evidence", errors, state.get("bmad_story_key")
-            )
-            if not isinstance(failure_data.get("retryable"), bool):
-                errors.append("recoverable_failure.retryable must be a boolean")
-            if failure_data.get("earliest_resume_stage") not in VALID_STAGES:
-                errors.append("recoverable_failure.earliest_resume_stage is invalid")
-    migration = state.get("legacy_migration")
-    if migration is not None:
-        migration_data = _mapping(migration, "legacy_migration", errors)
-        if migration_data is not None:
-            fields = {
-                "source_state_path", "source_state_sha256", "source_execution_level", "source_stage",
-                "mapped_stage", "decision_evidence_path", "migrated_at",
-            }
-            _required(migration_data, fields, "legacy_migration.", errors)
-            _unknown(migration_data, fields, "legacy_migration.", errors)
-            _repo_path(migration_data.get("source_state_path"), "legacy_migration.source_state_path", errors)
-            _hash(migration_data.get("source_state_sha256"), "legacy_migration.source_state_sha256", errors)
-            if migration_data.get("source_execution_level") not in {"full", "standard", "expedited-mvp"}:
-                errors.append("legacy_migration.source_execution_level is invalid")
-            _nonempty_string(migration_data.get("source_stage"), "legacy_migration.source_stage", errors)
-            if migration_data.get("mapped_stage") not in VALID_STAGES:
-                errors.append("legacy_migration.mapped_stage is invalid")
-            _repo_path(migration_data.get("decision_evidence_path"), "legacy_migration.decision_evidence_path", errors)
-            _timestamp(migration_data.get("migrated_at"), "legacy_migration.migrated_at", errors)
+        _validate_compact_checkpoint(checkpoint, "checkpoint", errors)
+
+    resume = state.get("resume")
+    if resume is not None:
+        resume_data = _mapping(resume, "resume", errors)
+        if resume_data is not None:
+            fields = {"stage", "reason", "evidence_path"}
+            _required(resume_data, fields, "resume.", errors)
+            _unknown(resume_data, fields, "resume.", errors)
+            if resume_data.get("stage") not in VALID_STAGES:
+                errors.append("resume.stage is invalid")
+            _nonempty_string(resume_data.get("reason"), "resume.reason", errors)
+            if isinstance(resume_data.get("reason"), str) and len(resume_data["reason"]) > 240:
+                errors.append("resume.reason must not exceed 240 characters")
+            _repo_path(resume_data.get("evidence_path"), "resume.evidence_path", errors, nullable=True)
+
     _timestamp(state.get("updated_at"), "updated_at", errors)
-
-    if state.get("stage") == "complete":
+    if stage == "complete":
         if checkpoint is None:
-            errors.append("last_checkpoint is required for provisional complete state")
-        elif isinstance(checkpoint, dict) and checkpoint.get("stage") != "complete":
-            errors.append("last_checkpoint.stage must be complete for provisional complete state")
+            errors.append("checkpoint is required for complete state")
+        elif isinstance(checkpoint, dict) and (checkpoint.get("stage") != "complete" or checkpoint.get("binding_status") != "bound"):
+            errors.append("complete state requires a bound complete checkpoint")
+        if resume is not None:
+            errors.append("resume must be null for complete state")
+    elif stage in VALID_STAGES and resume is None:
+        errors.append("resume is required for non-complete state")
     return errors
-
 
 def _git(repo: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(repo), *args], text=True, stderr=subprocess.DEVNULL).strip()
@@ -1454,67 +1245,42 @@ def _validate_schema_semantics(filename: str, schema: dict[str, Any], path: Path
         } if isinstance(rules, list) else set()
         checks.append(({"ACCEPT", "REVISE"} <= rule_verdicts, "verdict conditional rules"))
     elif filename == "workflow-state.schema.json":
-        coverage = _schema_at(schema, "$defs", "coverageOverride", "properties")
-        coverage_nonempty = isinstance(coverage, dict) and all(
-            _schema_at(coverage, field, "minItems") == 1
-            for field in ("test_ids", "covered_predicate_ids", "passing_evidence_ids")
-        )
-        e2e_rules = _schema_at(schema, "$defs", "e2eDecision", "allOf")
-        skipped_rule = next((
-            rule for rule in e2e_rules
-            if isinstance(e2e_rules, list)
-            and _schema_at(rule, "if", "properties", "result", "const") == "skipped-covered"
-        ), None) if isinstance(e2e_rules, list) else None
-        gate_rules = _schema_at(schema, "$defs", "gateRecord", "allOf")
+        gate_rules = _schema_at(schema, "$defs", "gate", "allOf")
         verdict_output_rule = next((
             rule for rule in gate_rules
             if isinstance(gate_rules, list)
             and _schema_enum(rule, "if", "properties", "status", "enum")
             == {"accepted", "revised", "blocked"}
         ), None) if isinstance(gate_rules, list) else None
-        convergence_rules = _schema_at(schema, "$defs", "convergenceRecord", "allOf")
+        convergence_rules = _schema_at(schema, "$defs", "convergence", "allOf")
         convergence_outcomes = {
             _schema_at(rule, "if", "properties", "outcome", "const")
             for rule in convergence_rules if isinstance(convergence_rules, list) and isinstance(rule, dict)
         } if isinstance(convergence_rules, list) else set()
         checks = [
-            (_schema_at(schema, "properties", "schema_version", "const") == "2.0", "schema version const"),
-            (_schema_at(schema, "properties", "execution_level", "const") == "unified", "unified execution level"),
+            (_schema_at(schema, "properties", "schema_version", "const") == "3.0", "schema version const"),
             (_schema_enum(schema, "$defs", "stage", "enum") == VALID_STAGES, "stage enum"),
-            (_schema_enum(schema, "$defs", "status", "enum") == VALID_STATUSES, "status enum"),
             (
-                _schema_enum(schema, "$defs", "e2eDecision", "properties", "result", "enum")
+                _schema_enum(schema, "$defs", "e2e", "properties", "result", "enum")
                 == VALID_E2E_RESULTS,
                 "E2E result enum",
             ),
             (
-                _schema_enum(schema, "$defs", "evidence", "properties", "kind", "enum")
-                == VALID_EVIDENCE_KINDS,
-                "evidence kind enum",
+                _schema_at(schema, "properties", "approvals", "maxItems") == 12
+                and _schema_at(schema, "properties", "current_evidence_paths", "maxItems") == 12,
+                "bounded current references",
             ),
             (
-                _schema_at(schema, "$defs", "e2eDecision", "properties", "source_boundary", "$ref")
-                == "#/$defs/boundary",
-                "E2E source boundary reference",
-            ),
-            (
-                _schema_at(schema, "$defs", "preflight", "properties", "repository_root", "const") == "."
-                and _schema_at(schema, "$defs", "preflight", "properties", "git_common_directory", "$ref")
-                == "#/$defs/checkoutIdentityPath"
-                and _schema_at(schema, "$defs", "preflight", "properties", "worktree_path", "$ref")
-                == "#/$defs/checkoutIdentityPath",
-                "checkout identity path contract",
+                _schema_at(schema, "$defs", "preflight", "properties", "head", "$ref") == "#/$defs/sha"
+                and _schema_at(schema, "$defs", "preflight", "properties", "git_identity_sha256", "$ref")
+                == "#/$defs/hash"
+                and _schema_at(schema, "$defs", "preflight", "properties", "status_sha256", "$ref")
+                == "#/$defs/hash",
+                "compact preflight hashes",
             ),
             (isinstance(verdict_output_rule, dict), "gate raw verdict output rule"),
             ({"converged", "tasks_appended"} <= convergence_outcomes, "convergence outcome rules"),
-            (coverage_nonempty, "coverage override nonempty arrays"),
-            (
-                isinstance(skipped_rule, dict)
-                and _schema_at(skipped_rule, "then", "properties", "coverage_override", "$ref")
-                == "#/$defs/coverageOverride"
-                and _schema_at(skipped_rule, "then", "properties", "covering_tests", "minItems") == 1,
-                "skipped-covered conditional rule",
-            ),
+            (bool(schema.get("allOf")), "complete-state conditional rule"),
         ]
     elif filename == "epic-command-evidence.schema.json":
         checks = [
@@ -1643,9 +1409,8 @@ def validate_repository(repo: Path) -> list[str]:
     schema_defs = {
         "verdict.schema.json": {"boundary", "finding"},
         "workflow-state.schema.json": {
-            "boundary", "gateRecord", "stageRecord", "preflight", "sourceArtifact", "dispatch",
-            "reviewIteration", "convergenceRecord", "legacyMigration", "e2ePredicate", "coverageOverride",
-            "e2eDecision", "evidence", "checkpoint", "failure",
+            "sha", "hash", "timestamp", "path", "stage", "preflight", "artifact", "gate",
+            "approval", "convergence", "e2e", "checkpoint", "resume",
         },
         "epic-command-evidence.schema.json": {"sha", "hash", "time", "repoPath"},
         "epic-architecture-gate.schema.json": {"sha", "hash", "repoPath", "preflight", "boundary", "worktreeBoundary", "audit", "finding", "disposition", "checkpoint", "nameStatus", "changeTuple", "manifest"},
@@ -1672,13 +1437,6 @@ def validate_repository(repo: Path) -> list[str]:
         if not isinstance(semantic_rules, list) or len(semantic_rules) < minimum_rules:
             errors.append(f"{path}: semantic contract rules are incomplete")
         _validate_schema_semantics(filename, schema, path, errors)
-    legacy_schema_path = refs / "workflow-state-v1.schema.json"
-    legacy_schema = _load_json(legacy_schema_path, errors) if legacy_schema_path.is_file() else None
-    if legacy_schema is None:
-        errors.append(f"{legacy_schema_path}: missing archived v1 migration schema")
-    elif _schema_at(legacy_schema, "properties", "schema_version", "const") != "1.0":
-        errors.append(f"{legacy_schema_path}: archived schema version must equal 1.0")
-
     for state_path in sorted(repo.glob("specs/*/workflow-state.json")):
         state = _load_json(state_path, errors)
         if state is None:

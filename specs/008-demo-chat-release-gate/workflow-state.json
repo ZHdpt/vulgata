@@ -1,141 +1,73 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "3.0",
   "bmad_story_key": "11-5-demo-chat-citations-and-release-gate",
   "bmad_epic_key": "11",
   "feature_directory": "specs/008-demo-chat-release-gate",
-  "execution_level": "unified",
   "stage": "converge",
-  "active_gates": {
-    "definition-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    },
-    "quality-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    }
-  },
-  "stage_history": [
-    {
-      "stage": "converge",
-      "status": "active",
-      "started_at": "2026-08-18T03:21:52Z",
-      "completed_at": null,
-      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "input_hashes": {
-        "specs/008-demo-chat-release-gate/workflow-state.json": "3ab3a86a634d0265a501bb1fdcf7e946730fa67f998112b61721335399796e17"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "failure": null
-    }
-  ],
-  "repository_preflight": {
+  "preflight": {
     "branch": "demo0831/main",
-    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
-    "repository_root": ".",
-    "git_common_directory": ".git",
-    "worktree_path": ".",
-    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
-    "owned_paths": [
-      "specs/008-demo-chat-release-gate/workflow-state-v1.json",
-      "specs/008-demo-chat-release-gate/workflow-state.json",
-      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-    ],
-    "unrelated_paths": [],
-    "observed_at": "2026-08-18T03:21:52Z"
+    "head": "be821b58f55dcfd18a605435e55df96a9a76b0d7",
+    "git_identity_sha256": "2146bb34aec9d9049448b29261ce29b19298f98484957e73f3a73c5679e3e702",
+    "status_sha256": "4c55d7a62f3e8563189aecd8e48c2842a0e457b748ac1e485b4faa65c7ce74ce",
+    "observed_at": "2026-08-20T08:41:08Z"
   },
-  "source_artifacts": [],
-  "dispatches": [],
-  "review_iterations": {
-    "plan-review": {
-      "count": 0,
-      "verdict_paths": []
+  "artifacts": {
+    "spec": {
+      "path": "specs/008-demo-chat-release-gate/spec.md",
+      "sha256": "26ea01d777c7d1968ecb2a454eac3934f4c41054f4663dbf86382ee2ca12e461"
     },
-    "definition-review": {
-      "count": 0,
-      "verdict_paths": []
+    "plan": {
+      "path": "specs/008-demo-chat-release-gate/plan.md",
+      "sha256": "c8e22d4f50e32ff686397a25cd2636975409602227e2658fd20ebf5414272515"
     },
-    "converge": {
-      "count": 0,
-      "verdict_paths": []
-    },
-    "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+    "tasks": {
+      "path": "specs/008-demo-chat-release-gate/tasks.md",
+      "sha256": "6f449adbf66ba484c8242dd540f1477baabf550076f3403c38c3f1e7c729ccb6"
     }
   },
+  "gates": {
+    "plan-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "definition-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "quality-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [],
   "convergence": {
     "status": "pending",
-    "iteration": 0,
+    "attempt": 0,
     "outcome": "pending",
-    "findings_count": 0,
-    "appended_task_ids": [],
-    "artifact_hashes": {},
-    "completed_at": null
+    "report_path": null
   },
-  "e2e_decision": {
-    "required": false,
-    "predicates": [],
-    "coverage_override": null,
-    "rationale": "Re-evaluate after v2 convergence.",
-    "covering_tests": [],
-    "owner": "orchestrator",
-    "source_boundary": {
-      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "candidate_commit": null,
-      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "artifact_hashes": {
-        "specs/008-demo-chat-release-gate/workflow-state.json": "3ab3a86a634d0265a501bb1fdcf7e946730fa67f998112b61721335399796e17"
-      },
-      "owned_paths": [
-        "specs/008-demo-chat-release-gate/workflow-state-v1.json",
-        "specs/008-demo-chat-release-gate/workflow-state.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-      ]
-    },
+  "e2e": {
     "result": "pending",
-    "evidence_ids": []
+    "decision_path": null
   },
-  "verification": [
-    {
-      "evidence_id": "11-5-demo-chat-citations-and-release-gate/converge/1",
-      "kind": "analysis",
-      "stage": "converge",
-      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "artifact_paths": [
-        "specs/008-demo-chat-release-gate/workflow-state-v1.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
-      "exit_code": 0,
-      "observed_at": "2026-08-18T03:21:52Z",
-      "summary": "Legacy quality-review state conservatively mapped to converge; no legacy review is treated as v2 acceptance.",
-      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-    }
+  "current_evidence_paths": [
+    "specs/008-demo-chat-release-gate/spec.md",
+    "specs/008-demo-chat-release-gate/plan.md",
+    "specs/008-demo-chat-release-gate/tasks.md"
   ],
-  "last_checkpoint": null,
-  "recoverable_failure": null,
-  "legacy_migration": {
-    "source_state_path": "specs/008-demo-chat-release-gate/workflow-state-v1.json",
-    "source_state_sha256": "3ab3a86a634d0265a501bb1fdcf7e946730fa67f998112b61721335399796e17",
-    "source_execution_level": "expedited-mvp",
-    "source_stage": "quality-review",
-    "mapped_stage": "converge",
-    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-    "migrated_at": "2026-08-18T03:21:52Z"
+  "checkpoint": null,
+  "resume": {
+    "stage": "converge",
+    "reason": "Resume 11-5-demo-chat-citations-and-release-gate at converge from current compact-state pointers.",
+    "evidence_path": "specs/008-demo-chat-release-gate/tasks.md"
   },
-  "updated_at": "2026-08-18T03:21:52Z"
+  "updated_at": "2026-08-20T08:41:08Z"
 }

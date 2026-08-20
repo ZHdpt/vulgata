@@ -1,160 +1,74 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "3.0",
   "bmad_story_key": "11-3-pass-1-and-pass-2-demo-document-generation",
   "bmad_epic_key": "11",
   "feature_directory": "specs/006-demo-document-generation",
-  "execution_level": "unified",
   "stage": "complete",
-  "active_gates": {
-    "definition-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    },
-    "quality-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    }
-  },
-  "stage_history": [
-    {
-      "stage": "complete",
-      "status": "accepted",
-      "started_at": "2026-08-18T03:21:52Z",
-      "completed_at": "2026-08-18T03:21:52Z",
-      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "input_hashes": {
-        "specs/006-demo-document-generation/workflow-state.json": "17b7961a436fde2257361b2044b7c9e4853902cfb9f59f6a977c56fbbe38e893"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "failure": null
-    }
-  ],
-  "repository_preflight": {
+  "preflight": {
     "branch": "demo0831/main",
-    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
-    "repository_root": ".",
-    "git_common_directory": ".git",
-    "worktree_path": ".",
-    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
-    "owned_paths": [
-      "specs/006-demo-document-generation/workflow-state-v1.json",
-      "specs/006-demo-document-generation/workflow-state.json",
-      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-    ],
-    "unrelated_paths": [],
-    "observed_at": "2026-08-18T03:21:52Z"
+    "head": "be821b58f55dcfd18a605435e55df96a9a76b0d7",
+    "git_identity_sha256": "2146bb34aec9d9049448b29261ce29b19298f98484957e73f3a73c5679e3e702",
+    "status_sha256": "4c55d7a62f3e8563189aecd8e48c2842a0e457b748ac1e485b4faa65c7ce74ce",
+    "observed_at": "2026-08-20T08:41:08Z"
   },
-  "source_artifacts": [],
-  "dispatches": [],
-  "review_iterations": {
-    "plan-review": {
-      "count": 0,
-      "verdict_paths": []
+  "artifacts": {
+    "spec": {
+      "path": "specs/006-demo-document-generation/spec.md",
+      "sha256": "a53ea65d16a38e02dfdea56d5efa8d714fc89db61dba8915386c907a33bc2954"
     },
-    "definition-review": {
-      "count": 0,
-      "verdict_paths": []
+    "plan": {
+      "path": "specs/006-demo-document-generation/plan.md",
+      "sha256": "005b15d995d5c2f9888ba041ca61e24d5a583ea94889cedbe834b4fb22afd5ce"
     },
-    "converge": {
-      "count": 0,
-      "verdict_paths": []
-    },
-    "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+    "tasks": {
+      "path": "specs/006-demo-document-generation/tasks.md",
+      "sha256": "0fcd2bcca0ded4f8a070a0048d2315c889f82626c9354f1bbf52e7655ff1154b"
     }
   },
+  "gates": {
+    "plan-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "definition-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "quality-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [],
   "convergence": {
     "status": "accepted",
-    "iteration": 0,
+    "attempt": 0,
     "outcome": "converged",
-    "findings_count": 0,
-    "appended_task_ids": [],
-    "artifact_hashes": {
-      "specs/006-demo-document-generation/workflow-state-v1.json": "17b7961a436fde2257361b2044b7c9e4853902cfb9f59f6a977c56fbbe38e893"
-    },
-    "completed_at": "2026-08-18T03:21:52Z"
+    "report_path": "specs/006-demo-document-generation/tasks.md"
   },
-  "e2e_decision": {
-    "required": false,
-    "predicates": [],
-    "coverage_override": null,
-    "rationale": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-    "covering_tests": [],
-    "owner": "orchestrator",
-    "source_boundary": {
-      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "candidate_commit": null,
-      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "artifact_hashes": {
-        "specs/006-demo-document-generation/workflow-state.json": "17b7961a436fde2257361b2044b7c9e4853902cfb9f59f6a977c56fbbe38e893"
-      },
-      "owned_paths": [
-        "specs/006-demo-document-generation/workflow-state-v1.json",
-        "specs/006-demo-document-generation/workflow-state.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-      ]
-    },
+  "e2e": {
     "result": "passed",
-    "evidence_ids": [
-      "11-3-pass-1-and-pass-2-demo-document-generation/complete/1"
-    ]
+    "decision_path": "specs/006-demo-document-generation/tasks.md"
   },
-  "verification": [
-    {
-      "evidence_id": "11-3-pass-1-and-pass-2-demo-document-generation/complete/1",
-      "kind": "analysis",
-      "stage": "complete",
-      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "artifact_paths": [
-        "specs/006-demo-document-generation/workflow-state-v1.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
-      "exit_code": 0,
-      "observed_at": "2026-08-18T03:21:52Z",
-      "summary": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-    }
+  "current_evidence_paths": [
+    "specs/006-demo-document-generation/spec.md",
+    "specs/006-demo-document-generation/plan.md",
+    "specs/006-demo-document-generation/tasks.md"
   ],
-  "last_checkpoint": {
+  "checkpoint": {
     "checkpoint_id": "bmad-11-3-complete-20260801T175237Z-3c71b8",
-    "scope_key": "11-3-pass-1-and-pass-2-demo-document-generation",
     "stage": "complete",
-    "committed_paths": [
-      "docs/bmad/implementation-artifacts/11-3-pass-1-and-pass-2-demo-document-generation.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/006-demo-document-generation/reviews/quality-review/quality-review-07f5073.json",
-      "specs/006-demo-document-generation/workflow-state.json"
-    ],
-    "verification_evidence_ids": [
-      "11-3-pass-1-and-pass-2-demo-document-generation/complete/1"
-    ],
     "commit_sha": "67b5eaf45ff3c3348e240e323bed6f80c9e885e0",
     "binding_status": "bound"
   },
-  "recoverable_failure": null,
-  "legacy_migration": {
-    "source_state_path": "specs/006-demo-document-generation/workflow-state-v1.json",
-    "source_state_sha256": "17b7961a436fde2257361b2044b7c9e4853902cfb9f59f6a977c56fbbe38e893",
-    "source_execution_level": "expedited-mvp",
-    "source_stage": "complete",
-    "mapped_stage": "complete",
-    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-    "migrated_at": "2026-08-18T03:21:52Z"
-  },
-  "updated_at": "2026-08-18T03:21:52Z"
+  "resume": null,
+  "updated_at": "2026-08-20T08:41:08Z"
 }

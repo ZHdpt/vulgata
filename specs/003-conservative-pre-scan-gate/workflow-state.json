@@ -1,160 +1,74 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "3.0",
   "bmad_story_key": "4-3-conservative-pre-scan-gate-and-communication-type-detection",
   "bmad_epic_key": "4",
   "feature_directory": "specs/003-conservative-pre-scan-gate",
-  "execution_level": "unified",
   "stage": "complete",
-  "active_gates": {
-    "definition-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    },
-    "quality-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    }
-  },
-  "stage_history": [
-    {
-      "stage": "complete",
-      "status": "accepted",
-      "started_at": "2026-08-18T03:21:52Z",
-      "completed_at": "2026-08-18T03:21:52Z",
-      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "input_hashes": {
-        "specs/003-conservative-pre-scan-gate/workflow-state.json": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "failure": null
-    }
-  ],
-  "repository_preflight": {
+  "preflight": {
     "branch": "demo0831/main",
-    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
-    "repository_root": ".",
-    "git_common_directory": ".git",
-    "worktree_path": ".",
-    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
-    "owned_paths": [
-      "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
-      "specs/003-conservative-pre-scan-gate/workflow-state.json",
-      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-    ],
-    "unrelated_paths": [],
-    "observed_at": "2026-08-18T03:21:52Z"
+    "head": "be821b58f55dcfd18a605435e55df96a9a76b0d7",
+    "git_identity_sha256": "2146bb34aec9d9049448b29261ce29b19298f98484957e73f3a73c5679e3e702",
+    "status_sha256": "4c55d7a62f3e8563189aecd8e48c2842a0e457b748ac1e485b4faa65c7ce74ce",
+    "observed_at": "2026-08-20T08:41:08Z"
   },
-  "source_artifacts": [],
-  "dispatches": [],
-  "review_iterations": {
-    "plan-review": {
-      "count": 0,
-      "verdict_paths": []
+  "artifacts": {
+    "spec": {
+      "path": "specs/003-conservative-pre-scan-gate/spec.md",
+      "sha256": "e8788067201a62caf95b0cd9f65a7794a5217430e38388e2cd6a2613bb80d2ac"
     },
-    "definition-review": {
-      "count": 0,
-      "verdict_paths": []
+    "plan": {
+      "path": "specs/003-conservative-pre-scan-gate/plan.md",
+      "sha256": "f70eb515835046dde4252b50c08a3e3c52e4edf43197c30f63ef08ddb5a288e3"
     },
-    "converge": {
-      "count": 0,
-      "verdict_paths": []
-    },
-    "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+    "tasks": {
+      "path": "specs/003-conservative-pre-scan-gate/tasks.md",
+      "sha256": "f69204aeeb4a80792e11840c8fb508842bf998057670d98fdd546e55b40c7316"
     }
   },
+  "gates": {
+    "plan-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "definition-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "quality-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [],
   "convergence": {
     "status": "accepted",
-    "iteration": 0,
+    "attempt": 0,
     "outcome": "converged",
-    "findings_count": 0,
-    "appended_task_ids": [],
-    "artifact_hashes": {
-      "specs/003-conservative-pre-scan-gate/workflow-state-v1.json": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd"
-    },
-    "completed_at": "2026-08-18T03:21:52Z"
+    "report_path": "specs/003-conservative-pre-scan-gate/tasks.md"
   },
-  "e2e_decision": {
-    "required": false,
-    "predicates": [],
-    "coverage_override": null,
-    "rationale": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-    "covering_tests": [],
-    "owner": "orchestrator",
-    "source_boundary": {
-      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "candidate_commit": null,
-      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "artifact_hashes": {
-        "specs/003-conservative-pre-scan-gate/workflow-state.json": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd"
-      },
-      "owned_paths": [
-        "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
-        "specs/003-conservative-pre-scan-gate/workflow-state.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-      ]
-    },
+  "e2e": {
     "result": "passed",
-    "evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/complete/1"
-    ]
+    "decision_path": "specs/003-conservative-pre-scan-gate/tasks.md"
   },
-  "verification": [
-    {
-      "evidence_id": "4-3-conservative-pre-scan-gate-and-communication-type-detection/complete/1",
-      "kind": "analysis",
-      "stage": "complete",
-      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "artifact_paths": [
-        "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
-      "exit_code": 0,
-      "observed_at": "2026-08-18T03:21:52Z",
-      "summary": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-    }
+  "current_evidence_paths": [
+    "specs/003-conservative-pre-scan-gate/spec.md",
+    "specs/003-conservative-pre-scan-gate/plan.md",
+    "specs/003-conservative-pre-scan-gate/tasks.md"
   ],
-  "last_checkpoint": {
+  "checkpoint": {
     "checkpoint_id": "bmad-4-3-lease-only-complete-20260801T111849",
-    "scope_key": "4-3-conservative-pre-scan-gate-and-communication-type-detection",
     "stage": "complete",
-    "committed_paths": [
-      "docs/bmad/implementation-artifacts/4-3-conservative-pre-scan-gate-and-communication-type-detection.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/003-conservative-pre-scan-gate/tasks.md",
-      "specs/003-conservative-pre-scan-gate/workflow-state.json"
-    ],
-    "verification_evidence_ids": [
-      "4-3-conservative-pre-scan-gate-and-communication-type-detection/complete/1"
-    ],
     "commit_sha": "68792e5dbd8a95eaee47d5cc98ef8e4bae0ab928",
     "binding_status": "bound"
   },
-  "recoverable_failure": null,
-  "legacy_migration": {
-    "source_state_path": "specs/003-conservative-pre-scan-gate/workflow-state-v1.json",
-    "source_state_sha256": "c14787a4881b74c6debb403e9b13ffae99bef918d106b02f81ae3da01bd440fd",
-    "source_execution_level": "expedited-mvp",
-    "source_stage": "complete",
-    "mapped_stage": "complete",
-    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-    "migrated_at": "2026-08-18T03:21:52Z"
-  },
-  "updated_at": "2026-08-18T03:21:52Z"
+  "resume": null,
+  "updated_at": "2026-08-20T08:41:08Z"
 }

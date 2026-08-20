@@ -2,35 +2,28 @@
 
 All durable artifact, ownership, and authority paths are repository-relative with `/` separators. Only checkout identity paths may be canonical absolute paths. Timestamps are UTC RFC 3339; commits are full SHAs.
 
-## Workflow State v2
+## Compact Workflow State v3
 
-Each feature owns `specs/<feature>/workflow-state.json`.
+Each feature owns `specs/<feature>/workflow-state.json`. It is a current resume snapshot capped at 12 KiB of canonical JSON, not a duplicate evidence ledger.
 
 | Field | Contract |
 |---|---|
-| `schema_version` | `2.0` |
-| `execution_level` | `unified` |
+| `schema_version` | `3.0` |
 | story/epic/feature identity | immutable one-to-one BMad and SpecKit mapping |
 | `stage` | one unified stage from state-machine.md |
-| `active_gates` | `definition-review` and `quality-review` pinned gate records |
-| `convergence` | status, iteration, outcome, findings count, appended task IDs, artifact hashes, completion time |
-| `stage_history` | ordered input boundary, owner, evidence, result, and failure records |
-| `repository_preflight` | branch, HEAD, repository/Git/worktree identities, exact status, owned/unrelated paths, observation time |
-| `source_artifacts` | authority path, commit, and SHA-256 |
-| `dispatches` | role, objective, pinned boundary, permitted writes, output, evidence |
-| `review_iterations` | `plan-review`, `definition-review`, `converge`, and `quality-review` counts and artifact paths |
-| `e2e_decision` | predicates, coverage override, result, owner, boundary, evidence |
-| `verification` | ordered evidence objects |
-| `last_checkpoint` | pending/bound checkpoint identity |
-| `recoverable_failure` | failure evidence and earliest safe resume owner |
-| `legacy_migration` | null for new work; otherwise v1 path/hash, old level/stage, mapped v2 stage, decision evidence |
+| `preflight` | branch, HEAD, hashes of Git identity and observed status, observation time |
+| `artifacts` | current spec/plan/tasks repository-relative path and SHA-256 |
+| `gates` | current plan/definition/quality status, attempt, and verdict pointer |
+| `attempts` | consecutive current-boundary REVISE/non-converged counters; reset after ACCEPT/converged or upstream-boundary replacement |
+| `approvals` | at most 12 current decision pointers: ID, scope hash, status, time, evidence path |
+| `convergence` | current status, attempt, outcome, and report pointer |
+| `e2e` | current result and decision pointer |
+| `current_evidence_paths` | at most 12 unique paths needed to resume or audit the current boundary |
+| `checkpoint` | current pending/bound checkpoint identity and optional cached commit SHA |
+| `resume` | nonterminal stage, concise reason, and optional evidence pointer |
 | `updated_at` | atomic state-write time |
 
-Accepted/revised/blocked gate records require a raw verdict path, pinned input boundary, and completion time. A clean convergence record requires `outcome: converged`, zero findings, and no appended task IDs. `tasks_appended` requires at least one finding and task ID. Completion is provisional until its checkpoint trailer resolves uniquely and ancestrally.
-
-## Legacy State
-
-The archived `workflow-state-v1.schema.json` validates historical evidence only. A v1 state cannot authorize mutation. Migration follows state-machine.md, preserves the exact v1 bytes under `workflow-state-v1.json`, records schema drift instead of silently repairing it, and creates a v2 state with `legacy_migration`. A terminal compatibility record additionally cites the ancestral completion-state binding and BMad `done` transition. Expired expedited authority is never current authority.
+Accepted/revised/blocked gates point to their raw verdict. Completed decisions and E2E results point to durable evidence. A clean convergence result points to its report. Full verdict bodies, command output, dispatch prompts, historical transitions, and superseded boundaries remain in their native review/evidence/development artifacts and Git. Completion requires a bound complete checkpoint and no resume instruction.
 
 ## Story/Feature Mapping and Activation
 
@@ -109,7 +102,7 @@ Workflow-Checkpoint: bmad-4-1-definition-review-20260818T031500Z-a1b2c3
 
 Epic checkpoints use `BMad-Epic: <epic-key>` and `Workflow-Scope: epic/<epic-key>` instead of `BMad-Story`. A commit never claims a story scope for an epic checkpoint or vice versa.
 
-The committed state intentionally contains `commit_sha: null` (or `binding_status: "pending"`). The commit trailer binds the stable ID to the commit without self-reference. After commit, the orchestrator and resume derive the immutable SHA by locating exactly one matching `Workflow-Checkpoint` trailer and verifying its ancestry and contents. A cached `commit_sha` may appear in later state, but the trailer-derived SHA is canonical and the checkpoint commit is never amended merely to store itself. Checkpoint records include `checkpoint_id`, `scope_key`, `stage`, `committed_paths`, `verification_evidence_ids`, nullable cached `commit_sha`, and `binding_status`.
+The committed state intentionally contains `commit_sha: null` while `binding_status` is `pending`. The commit trailer binds the stable ID to the commit without self-reference. After commit, the orchestrator and resume derive the immutable SHA by locating exactly one matching `Workflow-Checkpoint` trailer and verifying its ancestry and contents. A cached `commit_sha` may appear in later state, but the trailer-derived SHA is canonical and the checkpoint commit is never amended merely to store itself. The compact state keeps only `checkpoint_id`, `stage`, nullable cached `commit_sha`, and `binding_status`; detailed path and verification manifests stay in checkpoint evidence and Git.
 
 For the final checkpoint, the committed state may name stage `complete` with a pending binding. Completion becomes valid only after the commit succeeds, the unique trailer resolves to the current final checkpoint ID, its SHA is an ancestor of `HEAD`, and its committed paths contain the BMad `done` transition. Resume derives this binding before trusting `complete`.
 

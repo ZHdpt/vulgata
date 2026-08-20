@@ -1,162 +1,74 @@
 {
-  "schema_version": "2.0",
+  "schema_version": "3.0",
   "bmad_story_key": "11-1-minimal-knowledge-store-and-retrieval-projection",
   "bmad_epic_key": "11",
   "feature_directory": "specs/004-minimal-knowledge-store",
-  "execution_level": "unified",
   "stage": "complete",
-  "active_gates": {
-    "definition-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    },
-    "quality-review": {
-      "status": "invalidated",
-      "iteration": 0,
-      "dispatch_id": null,
-      "verdict_path": null,
-      "input_boundary": null,
-      "completed_at": null
-    }
-  },
-  "stage_history": [
-    {
-      "stage": "complete",
-      "status": "accepted",
-      "started_at": "2026-08-18T03:21:52Z",
-      "completed_at": "2026-08-18T03:21:52Z",
-      "input_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "input_hashes": {
-        "specs/004-minimal-knowledge-store/workflow-state.json": "afbbdaadfa2c91fefc05dfccd951caa8ed0421f072ae819f4b8a8c67a9d88188"
-      },
-      "agent_role": "bmad-sprint-orchestrator",
-      "evidence_paths": [
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "failure": null
-    }
-  ],
-  "repository_preflight": {
+  "preflight": {
     "branch": "demo0831/main",
-    "preflight_head": "1e71ff3547f24c2fe7041d88077961d70a660485",
-    "repository_root": ".",
-    "git_common_directory": ".git",
-    "worktree_path": ".",
-    "worktree_status": "?? .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py",
-    "owned_paths": [
-      "specs/004-minimal-knowledge-store/workflow-state-v1.json",
-      "specs/004-minimal-knowledge-store/workflow-state.json",
-      "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-      ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-    ],
-    "unrelated_paths": [],
-    "observed_at": "2026-08-18T03:21:52Z"
+    "head": "be821b58f55dcfd18a605435e55df96a9a76b0d7",
+    "git_identity_sha256": "2146bb34aec9d9049448b29261ce29b19298f98484957e73f3a73c5679e3e702",
+    "status_sha256": "4c55d7a62f3e8563189aecd8e48c2842a0e457b748ac1e485b4faa65c7ce74ce",
+    "observed_at": "2026-08-20T08:41:08Z"
   },
-  "source_artifacts": [],
-  "dispatches": [],
-  "review_iterations": {
-    "plan-review": {
-      "count": 0,
-      "verdict_paths": []
+  "artifacts": {
+    "spec": {
+      "path": "specs/004-minimal-knowledge-store/spec.md",
+      "sha256": "8e4a0cd14aa0eb0ddb1a68ecef26f58cedaeb4263a60ac7fe4cb10d1cff0b162"
     },
-    "definition-review": {
-      "count": 0,
-      "verdict_paths": []
+    "plan": {
+      "path": "specs/004-minimal-knowledge-store/plan.md",
+      "sha256": "aadd387dd9dd9f2f9e7e70f960a5a8e82c0faf107879534333f534e18ba80ede"
     },
-    "converge": {
-      "count": 0,
-      "verdict_paths": []
-    },
-    "quality-review": {
-      "count": 0,
-      "verdict_paths": []
+    "tasks": {
+      "path": "specs/004-minimal-knowledge-store/tasks.md",
+      "sha256": "b96460274e325048fdd2f4d81a545318989cf5012317872f3dba003d67cb56c9"
     }
   },
+  "gates": {
+    "plan-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "definition-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "quality-review": {
+      "status": "invalidated",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [],
   "convergence": {
     "status": "accepted",
-    "iteration": 0,
+    "attempt": 0,
     "outcome": "converged",
-    "findings_count": 0,
-    "appended_task_ids": [],
-    "artifact_hashes": {
-      "specs/004-minimal-knowledge-store/workflow-state-v1.json": "afbbdaadfa2c91fefc05dfccd951caa8ed0421f072ae819f4b8a8c67a9d88188"
-    },
-    "completed_at": "2026-08-18T03:21:52Z"
+    "report_path": "specs/004-minimal-knowledge-store/tasks.md"
   },
-  "e2e_decision": {
-    "required": false,
-    "predicates": [],
-    "coverage_override": null,
-    "rationale": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-    "covering_tests": [],
-    "owner": "orchestrator",
-    "source_boundary": {
-      "base_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "candidate_commit": null,
-      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "artifact_hashes": {
-        "specs/004-minimal-knowledge-store/workflow-state.json": "afbbdaadfa2c91fefc05dfccd951caa8ed0421f072ae819f4b8a8c67a9d88188"
-      },
-      "owned_paths": [
-        "specs/004-minimal-knowledge-store/workflow-state-v1.json",
-        "specs/004-minimal-knowledge-store/workflow-state.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-        ".agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py"
-      ]
-    },
+  "e2e": {
     "result": "passed",
-    "evidence_ids": [
-      "11-1-minimal-knowledge-store-and-retrieval-projection/complete/1"
-    ]
+    "decision_path": "specs/004-minimal-knowledge-store/tasks.md"
   },
-  "verification": [
-    {
-      "evidence_id": "11-1-minimal-knowledge-store-and-retrieval-projection/complete/1",
-      "kind": "analysis",
-      "stage": "complete",
-      "source_commit": "1e71ff3547f24c2fe7041d88077961d70a660485",
-      "artifact_paths": [
-        "specs/004-minimal-knowledge-store/workflow-state-v1.json",
-        "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-      ],
-      "command": "python .agents/skills/run-bmad-sprint-loop/scripts/migrate_v1_states.py --repo .",
-      "exit_code": 0,
-      "observed_at": "2026-08-18T03:21:52Z",
-      "summary": "Terminal v1 completion accepted through verified BMad status, ancestral completion commit, and binding bridge.",
-      "raw_output_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json"
-    }
+  "current_evidence_paths": [
+    "specs/004-minimal-knowledge-store/spec.md",
+    "specs/004-minimal-knowledge-store/plan.md",
+    "specs/004-minimal-knowledge-store/tasks.md"
   ],
-  "last_checkpoint": {
+  "checkpoint": {
     "checkpoint_id": "bmad-11-1-complete-20260731T090255Z-c7e441",
-    "scope_key": "11-1-minimal-knowledge-store-and-retrieval-projection",
     "stage": "complete",
-    "committed_paths": [
-      "docs/bmad/implementation-artifacts/11-1-minimal-knowledge-store-and-retrieval-projection.md",
-      "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/004-minimal-knowledge-store/evidence/story-11-1-final-verification.txt",
-      "specs/004-minimal-knowledge-store/reviews/quality-review/quality-review-recovery-f23f6ee.json",
-      "specs/004-minimal-knowledge-store/tasks.md",
-      "specs/004-minimal-knowledge-store/workflow-state.json"
-    ],
-    "verification_evidence_ids": [
-      "11-1-minimal-knowledge-store-and-retrieval-projection/complete/1"
-    ],
     "commit_sha": "96ba064ca321427d7f8bd5aa914a6026536608b5",
     "binding_status": "bound"
   },
-  "recoverable_failure": null,
-  "legacy_migration": {
-    "source_state_path": "specs/004-minimal-knowledge-store/workflow-state-v1.json",
-    "source_state_sha256": "afbbdaadfa2c91fefc05dfccd951caa8ed0421f072ae819f4b8a8c67a9d88188",
-    "source_execution_level": "expedited-mvp",
-    "source_stage": "complete",
-    "mapped_stage": "complete",
-    "decision_evidence_path": "docs/bmad/implementation-artifacts/workflow-migrations/v1-to-v2-2026-08-18.json",
-    "migrated_at": "2026-08-18T03:21:52Z"
-  },
-  "updated_at": "2026-08-18T03:21:52Z"
+  "resume": null,
+  "updated_at": "2026-08-20T08:41:08Z"
 }
