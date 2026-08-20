@@ -988,3 +988,16 @@ transaction, and stale-later-job zero-mutation behavior were independently
 verified. Focused recovery and store suites passed, Durable Scanning passed
 105/105, and Web built with zero errors. No task was appended. The corrected
 candidate advances to quality review iteration 3.
+
+### Quality review iteration 3
+
+The independent quality reviewer returned ACCEPT at checkpoint `77e7b1f7`.
+QR-001, QR-002, QR-003, and QR2-001 are closed. The corrected recovery boundary
+uses one complete batch, validates authorization, membership, identity, every
+captured StateVersion, terminal Document integrity, transition eligibility and
+the optional phase precondition before mutation, and performs one SaveChanges
+and one commit inside one serializable transaction. Focused recovery, store,
+and contract tests passed 31/31; adjacent atomic commit, revalidation, and
+manual-resume API tests passed 46/46; Web built with zero errors. Because the
+story changes authorization, API, persistence, migration/data lifecycle, and
+multi-module runtime behavior, conditional E2E is required next.
