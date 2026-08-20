@@ -949,3 +949,16 @@ confirmed strict complete manifest equality, Infrastructure-derived canonical
 fingerprints before mutation/replay, and bounded configured-health failure with
 cancellation propagation. The corrected candidate advances to quality review
 iteration 2.
+
+### Quality review iteration 2
+
+The independent quality reviewer returned REVISE at checkpoint `d340e8f5`.
+Prior findings QR-001 through QR-003 are closed, but QR2-001 found that manual
+recovery persists each eligible Scan Job Execution transition and the Scan
+Execution phase transition separately. A later version conflict, integrity
+failure, or cancellation can therefore return failure after earlier mutations
+have committed, contrary to AD-5's single conditional transaction and the
+captured-StateVersion contract. The required correction is a public-seam
+behavioral RED proving zero partial mutation, followed by a batch store
+transaction that validates the complete captured recovery set before one
+commit. Convergence and quality review must rerun after the correction.

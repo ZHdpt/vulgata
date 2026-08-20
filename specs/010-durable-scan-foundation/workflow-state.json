@@ -50,28 +50,32 @@
     },
     "quality-review": {
       "status": "revised",
-      "iteration": 1,
-      "dispatch_id": "story_12_1_quality_review",
-      "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json",
+      "iteration": 2,
+      "dispatch_id": "story_12_1_quality_review_2",
+      "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json",
       "input_boundary": {
         "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
-        "candidate_commit": "8fa8b8fe03b2db25f36023fbeb36f6b209e7e794",
-        "diff_sha256": "919abbfe334f5026e08ba1896a90fc2890480c1a9fae11f33763aca95acbb5fd",
+        "candidate_commit": "6a1858c0463a91d286c7b06117eeb9fd242d83a5",
+        "diff_sha256": "3185c74eabfbfd6c500f381a15dc3440ab619735d08b078f7caca539122b47e2",
         "artifact_hashes": {
           "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
           "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
-          "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1"
+          "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
+          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs": "618009663242220d3fefaf7172440c93235eeb0662c076830fe46141a66653d7",
+          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "e9e524e30bf3d625970b958e320223db8a76ef806836182bc74958185e759302"
         },
         "owned_paths": [
+          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
           "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
           "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
           "src/dotnet/Vulgata.Web/Program.cs",
           "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
           "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs",
-          "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+          "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs",
+          "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
         ]
       },
-      "completed_at": "2026-08-19T09:08:07Z"
+      "completed_at": "2026-08-20T04:40:40Z"
     }
   },
   "stage_history": [
@@ -1008,7 +1012,7 @@
     "plan-review": {"count": 2, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json", "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"]},
     "definition-review": {"count": 3, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"]},
     "converge": {"count": 0, "verdict_paths": []},
-    "quality-review": {"count": 1, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"]}
+    "quality-review": {"count": 2, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json"]}
   },
   "e2e_decision": {
     "required": true,
@@ -2330,6 +2334,22 @@
       "observed_at": "2026-08-19T09:33:00Z",
       "summary": "Convergence iteration 4 returned CLEAN after quality corrections. QR-001 through QR-003 were verified against the full Story 12.1 definition; no task was appended.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/73",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "d340e8f5a2754fc734f49208d7be426ad8f95485",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs"
+      ],
+      "command": "independent quality review iteration 2; correction groups 43/43; adjacent recovery/API/model 37/37; Web build 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T04:40:40Z",
+      "summary": "Quality review iteration 2 returned REVISE with QR2-001: recovery job and phase transitions commit independently, permitting partial durable mutation before a later conflict or cancellation. Prior QR-001 through QR-003 are closed.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json"
     }
   ],
   "convergence": {
@@ -2348,20 +2368,21 @@
     "completed_at": "2026-08-19T09:33:00Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260819T093300Z-c31a9e",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260820T044040Z-5d3eab",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "converge",
+    "stage": "quality-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json",
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/converge/72"
+      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/73"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T09:33:00Z"
+  "updated_at": "2026-08-20T04:40:40Z"
 }
