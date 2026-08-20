@@ -14,12 +14,27 @@ internal sealed class CodeUnitConfiguration : IEntityTypeConfiguration<CodeUnit>
         builder.Property(unit => unit.Id).ValueGeneratedNever();
         builder.Property(unit => unit.FilePath).HasMaxLength(2_048);
         builder.Property(unit => unit.FileIdentityHash).HasMaxLength(64).IsFixedLength();
+        builder.Property(unit => unit.FileCodeUnitIdentityFingerprint).HasMaxLength(64).IsFixedLength();
+        builder.Property(unit => unit.FileHash).HasMaxLength(64).IsFixedLength();
         builder.Property(unit => unit.SourceHash).HasMaxLength(64).IsFixedLength();
         builder.Property(unit => unit.SymbolName).HasMaxLength(512);
         builder.Property(unit => unit.UnitType).HasConversion<string>().HasMaxLength(32);
         builder.Property(unit => unit.RangeConfidence).HasConversion<string>().HasMaxLength(32);
         builder.Property(unit => unit.Status).HasConversion<string>().HasMaxLength(32);
         builder.Property(unit => unit.Language).HasMaxLength(64);
+        builder.ToTable("CodeUnits", table =>
+        {
+            table.HasCheckConstraint(
+                "CK_CodeUnits_PreparedFileShape",
+                "(\"FileCodeUnitIdentityFingerprint\" IS NULL AND \"FileHash\" IS NULL AND " +
+                "\"ByteStart\" IS NULL AND \"ByteEndExclusive\" IS NULL AND " +
+                "\"SegmentOrdinal\" IS NULL AND \"SegmentCount\" IS NULL) OR " +
+                "(length(\"FileCodeUnitIdentityFingerprint\") = 64 AND length(\"FileHash\") = 64 AND " +
+                "\"ByteStart\" >= 0 AND \"ByteEndExclusive\" > \"ByteStart\" AND " +
+                "\"ByteEndExclusive\" - \"ByteStart\" <= 65536 AND " +
+                "\"SegmentOrdinal\" >= 1 AND \"SegmentCount\" >= \"SegmentOrdinal\" AND " +
+                "\"UnitType\" = 'File' AND \"RangeConfidence\" = 'Exact' AND \"Status\" = 'Pending')");
+        });
         builder.HasIndex(unit => new
         {
             unit.ScanRunId,

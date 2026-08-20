@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
@@ -13,6 +14,8 @@ public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysis
     private readonly CodeGraphAdapterOptions? _options;
     private readonly ICodeGraphRepositorySnapshotResolver? _snapshots;
     private readonly ICodeGraphProcessRunner? _process;
+    private readonly object _preparedStatusLock = new();
+    private PreparedStatusObservation? _preparedStatus;
 
     public CodeGraphAnalysisAdapter()
     {
@@ -36,8 +39,32 @@ public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysis
         CancellationToken cancellationToken) =>
         ExecuteIndexAsync(scope, ["index", "--quiet"], cancellationToken);
 
-    public override Task<CodeGraphStatusResult> GetStatusAsync(AnalysisScope scope, CancellationToken cancellationToken) =>
-        ExecuteStatusAsync(scope, cancellationToken);
+    public override async Task<CodeGraphStatusResult> GetStatusAsync(
+        AnalysisScope scope,
+        CancellationToken cancellationToken)
+    {
+        long startedAt = Environment.TickCount64;
+        CodeGraphStatusResult result = await ExecuteStatusAsync(scope, cancellationToken);
+        if (result.Status == AnalysisOperationStatus.Succeeded &&
+            result.Ready &&
+            !result.Stale &&
+            result.Failure is null)
+        {
+            var observation = new PreparedStatusObservation(
+                scope.RepositoryId,
+                scope.ScanRunId,
+                scope.ProfiledRevision,
+                scope.RuntimeIdentityHash,
+                result.IndexedFileCount,
+                Math.Max(0, Environment.TickCount64 - startedAt));
+            lock (_preparedStatusLock)
+            {
+                _preparedStatus = observation;
+            }
+        }
+
+        return result;
+    }
 
     public override Task<SymbolSearchResult> SearchSymbolsAsync(
         AnalysisScope scope,
@@ -62,6 +89,122 @@ public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysis
         AnalysisSymbolRequest request,
         CancellationToken cancellationToken)
         => ExecuteRelatedFilesAsync(scope, request, cancellationToken);
+
+    public override async Task<PreparedCodeGraphProofResult> BuildCompletenessProofAsync(
+        PreparedCodeGraphProofRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!IsBound)
+        {
+            return new PreparedCodeGraphProofResult(
+                AnalysisOperationStatus.Failed,
+                Proof: null,
+                _unavailable);
+        }
+
+        try
+        {
+            CodeGraphRepositorySnapshot snapshot = await ResolveSnapshotAsync(
+                request.Scope,
+                cancellationToken);
+            PreparedStatusObservation? observation;
+            lock (_preparedStatusLock)
+            {
+                observation = _preparedStatus;
+            }
+
+            if (observation is null ||
+                observation.RepositoryId != request.Scope.RepositoryId ||
+                observation.ScanRunId != request.Scope.ScanRunId ||
+                !StringComparer.Ordinal.Equals(
+                    observation.ProfiledRevision,
+                    request.Scope.ProfiledRevision) ||
+                !StringComparer.Ordinal.Equals(
+                    observation.RuntimeIdentityHash,
+                    request.Scope.RuntimeIdentityHash))
+            {
+                return new PreparedCodeGraphProofResult(
+                    AnalysisOperationStatus.Failed,
+                    Proof: null,
+                    new AnalysisPortFailure(
+                        AnalysisPortFailureReason.NotReady,
+                        "codegraph_complete_status_required",
+                        "codegraph complete status required"));
+            }
+
+            var proof = new CodeGraphCompletenessProof(
+                request.Scope.RepositoryId,
+                request.Scope.ScanRunId,
+                request.Scope.ProfiledRevision,
+                request.SnapshotIdentity,
+                request.SnapshotRootBindingHash,
+                request.Scope.RuntimeIdentityHash,
+                snapshot.ExpectedIndexIdentity,
+                "codegraph-completeness-proof/1.0",
+                Initialized: true,
+                CodeGraphIndexState.Complete,
+                PendingAdded: 0,
+                PendingModified: 0,
+                PendingRemoved: 0,
+                WorktreeMismatch: false,
+                ReindexRecommended: false,
+                PendingReferences: 0,
+                observation.IndexedFileCount,
+                request.LogicalProjectBinding,
+                request.LogicalIndexBinding,
+                RepositoryBindingMatched: true,
+                ScanRunBindingMatched: true,
+                RevisionBindingMatched: true,
+                RuntimeBindingMatched: true,
+                SnapshotBindingMatched: true,
+                ProjectPathTrusted: true,
+                IndexPathTrusted: true,
+                IdentityHash: string.Empty,
+                observation.DurationMilliseconds);
+            PreparedCanonicalArtifact identity = PreparedScanIdentityBuilders.CreateCodeGraphProof(proof);
+            proof = proof with { IdentityHash = identity.Fingerprint };
+            return new PreparedCodeGraphProofResult(
+                AnalysisOperationStatus.Succeeded,
+                proof,
+                Failure: null);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            return new PreparedCodeGraphProofResult(
+                AnalysisOperationStatus.Failed,
+                Proof: null,
+                MapFailure(exception));
+        }
+    }
+
+    public override Task<PreparedRelatedFilesResult> GetPreparedRelatedFilesAsync(
+        PreparedRelatedFilesRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new PreparedRelatedFilesResult(
+            AnalysisOperationStatus.Failed,
+            [],
+            new AnalysisPortFailure(
+                AnalysisPortFailureReason.Unavailable,
+                "codegraph_prepared_expansion_unavailable",
+                "codegraph prepared expansion unavailable")));
+    }
+
+    private sealed record PreparedStatusObservation(
+        Guid RepositoryId,
+        Guid ScanRunId,
+        string ProfiledRevision,
+        string RuntimeIdentityHash,
+        int IndexedFileCount,
+        long DurationMilliseconds);
 }
 
 public sealed class CodeGraphIntegrityProbe : IAnalysisRuntimeHealthProbe

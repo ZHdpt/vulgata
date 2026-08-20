@@ -28,6 +28,22 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<long?>("ByteEndExclusive")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ByteStart")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileCodeUnitIdentityFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("FileHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<string>("FileIdentityHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -60,6 +76,12 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("ScanRunId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("SegmentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SegmentOrdinal")
+                        .HasColumnType("integer");
+
                     b.Property<string>("SourceHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -90,7 +112,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.HasIndex("ScanRunId", "FilePath", "LineStart", "LineEnd", "SymbolName", "UnitType")
                         .IsUnique();
 
-                    b.ToTable("CodeUnits", "vulgata");
+                    b.ToTable("CodeUnits", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_CodeUnits_PreparedFileShape", "(\"FileCodeUnitIdentityFingerprint\" IS NULL AND \"FileHash\" IS NULL AND \"ByteStart\" IS NULL AND \"ByteEndExclusive\" IS NULL AND \"SegmentOrdinal\" IS NULL AND \"SegmentCount\" IS NULL) OR (length(\"FileCodeUnitIdentityFingerprint\") = 64 AND length(\"FileHash\") = 64 AND \"ByteStart\" >= 0 AND \"ByteEndExclusive\" > \"ByteStart\" AND \"ByteEndExclusive\" - \"ByteStart\" <= 65536 AND \"SegmentOrdinal\" >= 1 AND \"SegmentCount\" >= \"SegmentOrdinal\" AND \"UnitType\" = 'File' AND \"RangeConfidence\" = 'Exact' AND \"Status\" = 'Pending')");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.CodeUnitEdge", b =>
@@ -188,6 +213,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CatalogRuleIdentity")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("Confidence")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -243,6 +272,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("CommunicationKindClassifications", "vulgata", t =>
                         {
+                            t.HasCheckConstraint("CK_CommunicationKindClassifications_CatalogRuleIdentity_Length", "\"CatalogRuleIdentity\" IS NULL OR length(\"CatalogRuleIdentity\") BETWEEN 1 AND 256");
+
                             t.HasCheckConstraint("CK_CommunicationKindClassifications_Compatibility", "(\"Rule\" = 'RpcDirectAnnotation' AND \"Kind\" = 'Rpc' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'StructuralAnnotation') OR (\"Rule\" = 'RpcMatchedConfiguration' AND \"Kind\" = 'Rpc' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'MatchedConfiguration') OR (\"Rule\" IN ('HttpControllerAnnotation', 'HttpClientAnnotation') AND \"Kind\" = 'Http' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'StructuralAnnotation') OR (\"Rule\" = 'HttpMatchedConfiguration' AND \"Kind\" = 'Http' AND \"Level\" = 'Confirmed' AND \"Confidence\" = 'High' AND \"Provenance\" = 'MatchedConfiguration') OR (\"Rule\" = 'RpcImportOnly' AND \"Kind\" = 'Rpc' AND \"Level\" = 'Hint' AND \"Confidence\" = 'Conservative' AND \"Provenance\" IN ('Import', 'PackageManifest', 'FrameworkFact')) OR (\"Rule\" = 'HttpImportOnly' AND \"Kind\" = 'Http' AND \"Level\" = 'Hint' AND \"Confidence\" = 'Conservative' AND \"Provenance\" IN ('Import', 'PackageManifest', 'FrameworkFact')) OR (\"Rule\" IN ('MalformedEvidence', 'UnsafePath', 'BoundExceeded', 'ContradictoryEvidence') AND \"Level\" = 'Warning' AND \"Confidence\" = 'None' AND \"Provenance\" = 'Detector') OR (\"Rule\" = 'UnsupportedFamily' AND \"Kind\" IS NULL AND \"Level\" = 'Warning' AND \"Confidence\" = 'None' AND \"Provenance\" = 'Detector')");
 
                             t.HasCheckConstraint("CK_CommunicationKindClassifications_Confidence", "\"Confidence\" IN ('High', 'Conservative', 'None')");
@@ -995,6 +1026,14 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<int>("ConfirmedCommunicationKinds")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ContextContentHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid?>("ContextSnapshotId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("EvidenceTruncated")
                         .HasColumnType("boolean");
 
@@ -1003,6 +1042,28 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
                         .IsFixedLength();
+
+                    b.Property<string>("HandoffSchemaIdentity")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("PairPackageFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("PreparedScanContextIdentityHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("PreparedScanManifestFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid?>("PreparedScanManifestId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ProfiledRevision")
                         .IsRequired()
@@ -1042,6 +1103,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.HasIndex("RepositoryId", "ScanRunId")
                         .IsUnique();
 
+                    b.HasIndex("ContextSnapshotId", "ScanRunId", "RepositoryId");
+
+                    b.HasIndex("PreparedScanManifestId", "ScanRunId", "RepositoryId")
+                        .IsUnique();
+
                     b.ToTable("PreScanResults", "vulgata", t =>
                         {
                             t.HasCheckConstraint("CK_PreScanResults_ApprovalMessage_Length", "length(\"ApprovalMessage\") BETWEEN 1 AND 256");
@@ -1054,11 +1120,339 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                             t.HasCheckConstraint("CK_PreScanResults_Identity", "\"Id\" = \"ScanRunId\"");
 
+                            t.HasCheckConstraint("CK_PreScanResults_PreparedV2Shape", "(\"SchemaVersion\" = '1.0' AND \"PreparedScanManifestId\" IS NULL AND \"PreparedScanManifestFingerprint\" IS NULL AND \"ContextSnapshotId\" IS NULL AND \"PreparedScanContextIdentityHash\" IS NULL AND \"ContextContentHash\" IS NULL AND \"HandoffSchemaIdentity\" IS NULL AND \"PairPackageFingerprint\" IS NULL) OR (\"SchemaVersion\" = '2.0' AND \"PreparedScanManifestId\" IS NOT NULL AND length(\"PreparedScanManifestFingerprint\") = 64 AND \"ContextSnapshotId\" IS NOT NULL AND length(\"PreparedScanContextIdentityHash\") = 64 AND length(\"ContextContentHash\") = 64 AND \"HandoffSchemaIdentity\" = 'prepared-scan-handoff/2.0' AND length(\"PairPackageFingerprint\") = 64)");
+
                             t.HasCheckConstraint("CK_PreScanResults_ProfiledRevision_Length", "length(\"ProfiledRevision\") BETWEEN 1 AND 64");
 
-                            t.HasCheckConstraint("CK_PreScanResults_SchemaVersion", "\"SchemaVersion\" = '1.0'");
+                            t.HasCheckConstraint("CK_PreScanResults_SchemaVersion", "\"SchemaVersion\" IN ('1.0', '2.0')");
 
                             t.HasCheckConstraint("CK_PreScanResults_State", "\"State\" = 'PreScanApproved'");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreparedScanAudit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DetailFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("FileCodeUnitIdentityFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("FileHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int?>("LogicalLineCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Ordinal")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<int?>("PairSelectionOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("PreparedScanManifestEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PreparedScanManifestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("RawByteCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PreparedScanManifestId", "FileCodeUnitIdentityFingerprint")
+                        .IsUnique()
+                        .HasFilter("\"FileCodeUnitIdentityFingerprint\" IS NOT NULL AND \"Outcome\" = 'Selected'");
+
+                    b.HasIndex("PreparedScanManifestId", "Ordinal")
+                        .IsUnique();
+
+                    b.HasIndex("PreparedScanManifestId", "PairSelectionOrdinal")
+                        .IsUnique()
+                        .HasFilter("\"PairSelectionOrdinal\" IS NOT NULL");
+
+                    b.HasIndex("PreparedScanManifestId", "PreparedScanManifestEntryId")
+                        .IsUnique()
+                        .HasFilter("\"PreparedScanManifestEntryId\" IS NOT NULL");
+
+                    b.HasIndex("PreparedScanManifestId", "ScanRunId", "RepositoryId");
+
+                    b.HasIndex("PreparedScanManifestId", "PreparedScanManifestEntryId", "FileCodeUnitIdentityFingerprint", "PairSelectionOrdinal")
+                        .HasDatabaseName("IX_PreparedScanAudits_PreparedScanManifestId_PreparedScanMani~1");
+
+                    b.HasIndex("PreparedScanManifestId", "RelativePath", "Outcome", "Reason", "DetailFingerprint")
+                        .IsUnique();
+
+                    b.ToTable("PreparedScanAudits", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_PreparedScanAudits_Hashes", "(\"FileHash\" IS NULL OR length(\"FileHash\") = 64) AND (\"FileCodeUnitIdentityFingerprint\" IS NULL OR length(\"FileCodeUnitIdentityFingerprint\") = 64) AND length(\"DetailFingerprint\") = 64");
+
+                            t.HasCheckConstraint("CK_PreparedScanAudits_Measurements", "(\"RawByteCount\" IS NULL OR \"RawByteCount\" >= 0) AND (\"LogicalLineCount\" IS NULL OR \"LogicalLineCount\" >= 0)");
+
+                            t.HasCheckConstraint("CK_PreparedScanAudits_Ordinal", "\"Ordinal\" >= 1");
+
+                            t.HasCheckConstraint("CK_PreparedScanAudits_SelectedShape", "(\"Outcome\" = 'Selected' AND \"FileCodeUnitIdentityFingerprint\" IS NOT NULL AND \"PairSelectionOrdinal\" IS NOT NULL AND \"PairSelectionOrdinal\" >= 1 AND \"PreparedScanManifestEntryId\" IS NOT NULL) OR (\"Outcome\" = 'Eligible' AND \"FileCodeUnitIdentityFingerprint\" IS NOT NULL AND \"PairSelectionOrdinal\" IS NULL AND \"PreparedScanManifestEntryId\" IS NULL) OR (\"Outcome\" IN ('Filtered', 'Skipped', 'Warning') AND \"FileCodeUnitIdentityFingerprint\" IS NULL AND \"PairSelectionOrdinal\" IS NULL AND \"PreparedScanManifestEntryId\" IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreparedScanManifest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovalState")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CandidateCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CatalogHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("CatalogSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<long>("CodeGraphObservedDurationMilliseconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("CodeGraphProofIdentityHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ContextContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("ContextSnapshotId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CoordinationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EligibleCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("EvidenceTruncated")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("FilteredCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("JavaReadinessIdentityHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<long>("JavaReadinessObservedDurationMilliseconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PairSelectionFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("PreparedScanContextIdentityHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character(40)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequestedRef")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<int>("RetainedClassificationCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RuntimeIdentityHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("SelectedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SkippedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SnapshotIdentity")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("TotalConfirmedEvidenceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalHintCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalWarningCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Fingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("CoordinationId", "RepositoryId")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "ScanRunId")
+                        .IsUnique();
+
+                    b.HasIndex("ScanRunId", "RepositoryId");
+
+                    b.HasIndex("ContextSnapshotId", "ScanRunId", "RepositoryId");
+
+                    b.ToTable("PreparedScanManifests", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_PreparedScanManifests_ApprovalState", "\"ApprovalState\" = 'Approved'");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifests_Counts", "\"CandidateCount\" >= 0 AND \"EligibleCount\" >= 0 AND \"FilteredCount\" >= 0 AND \"SkippedCount\" >= 0 AND \"SelectedCount\" >= 0 AND \"TotalConfirmedEvidenceCount\" >= 0 AND \"TotalHintCount\" >= 0 AND \"TotalWarningCount\" >= 0 AND \"RetainedClassificationCount\" BETWEEN 0 AND 256");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifests_Durations", "\"CodeGraphObservedDurationMilliseconds\" >= 0 AND \"JavaReadinessObservedDurationMilliseconds\" >= 0");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifests_Hashes", "length(\"SnapshotIdentity\") = 64 AND length(\"RuntimeIdentityHash\") = 64 AND length(\"CodeGraphProofIdentityHash\") = 64 AND length(\"JavaReadinessIdentityHash\") = 64 AND length(\"CatalogHash\") = 64 AND length(\"PreparedScanContextIdentityHash\") = 64 AND length(\"ContextContentHash\") = 64 AND length(\"PairSelectionFingerprint\") = 64 AND length(\"Fingerprint\") = 64");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifests_ProfiledRevision", "length(\"ProfiledRevision\") = 40");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifests_SchemaIdentity", "\"SchemaIdentity\" = 'prepared-scan-manifest/1.0'");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreparedScanManifestEntry", b =>
+                {
+                    b.Property<Guid>("FileCodeUnitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CoordinationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DirectBusinessScore")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileCodeUnitIdentityFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("FinalBusinessScore")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ManifestOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PairSelectionOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PreparedScanManifestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SelectionReason")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("FileCodeUnitId");
+
+                    b.HasIndex("CoordinationId", "PairSelectionOrdinal")
+                        .IsUnique();
+
+                    b.HasIndex("PreparedScanManifestId", "CoordinationId");
+
+                    b.HasIndex("PreparedScanManifestId", "FileCodeUnitIdentityFingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("PreparedScanManifestId", "ManifestOrdinal")
+                        .IsUnique();
+
+                    b.ToTable("PreparedScanManifestEntries", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_PreparedScanManifestEntries_Fingerprint", "length(\"FileCodeUnitIdentityFingerprint\") = 64");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifestEntries_Ordinals", "\"ManifestOrdinal\" >= 1 AND \"PairSelectionOrdinal\" >= 1");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifestEntries_Scores", "\"DirectBusinessScore\" >= 0 AND \"FinalBusinessScore\" >= \"DirectBusinessScore\"");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifestEntries_SelectionReason", "\"SelectionReason\" IN ('DirectBusinessEvidence', 'RelatedCall', 'RelatedImport', 'RelatedInheritance', 'ProductionFallback')");
                         });
                 });
 
@@ -1167,6 +1561,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasMaxLength(10000)
                         .HasColumnType("character varying(10000)");
 
+                    b.Property<string>("PreparedScanContextIdentityHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<string>("ProfiledRevision")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -1203,6 +1602,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.ToTable("ScanContextSnapshots", "vulgata", t =>
                         {
                             t.HasCheckConstraint("CK_ScanContextSnapshots_ContentHash_Length", "length(\"ContentHash\") = 64");
+
+                            t.HasCheckConstraint("CK_ScanContextSnapshots_PreparedIdentityHash_Length", "\"PreparedScanContextIdentityHash\" IS NULL OR length(\"PreparedScanContextIdentityHash\") = 64");
 
                             t.HasCheckConstraint("CK_ScanContextSnapshots_SchemaIdentity_Closed", "\"SchemaIdentity\" = 'scan-context-snapshot/1.0'");
                         });
@@ -2200,7 +2601,84 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Vulgata.Core.Entities.ScanContextSnapshot", null)
+                        .WithMany()
+                        .HasForeignKey("ContextSnapshotId", "ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "ScanRunId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.PreparedScanManifest", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.PreScanResult", "PreparedScanManifestId", "ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Vulgata.Core.Entities.PreparedScanManifest", "Id", "ScanRunId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("ScanRun");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreparedScanAudit", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.PreparedScanManifest", "PreparedScanManifest")
+                        .WithMany("Audits")
+                        .HasForeignKey("PreparedScanManifestId", "ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "ScanRunId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.PreparedScanManifestEntry", "PreparedScanManifestEntry")
+                        .WithMany()
+                        .HasForeignKey("PreparedScanManifestId", "PreparedScanManifestEntryId", "FileCodeUnitIdentityFingerprint", "PairSelectionOrdinal")
+                        .HasPrincipalKey("PreparedScanManifestId", "FileCodeUnitId", "FileCodeUnitIdentityFingerprint", "PairSelectionOrdinal")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PreparedScanManifest");
+
+                    b.Navigation("PreparedScanManifestEntry");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreparedScanManifest", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.TwoRepositoryScanCoordination", null)
+                        .WithMany()
+                        .HasForeignKey("CoordinationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanRun", "ScanRun")
+                        .WithMany()
+                        .HasForeignKey("ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanContextSnapshot", null)
+                        .WithMany()
+                        .HasForeignKey("ContextSnapshotId", "ScanRunId", "RepositoryId")
+                        .HasPrincipalKey("Id", "ScanRunId", "RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ScanRun");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreparedScanManifestEntry", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.CodeUnit", "FileCodeUnit")
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.PreparedScanManifestEntry", "FileCodeUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.PreparedScanManifest", "PreparedScanManifest")
+                        .WithMany("Entries")
+                        .HasForeignKey("PreparedScanManifestId", "CoordinationId")
+                        .HasPrincipalKey("Id", "CoordinationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FileCodeUnit");
+
+                    b.Navigation("PreparedScanManifest");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Repository", b =>
@@ -2519,6 +2997,13 @@ namespace Vulgata.Infrastructure.Data.Migrations
             modelBuilder.Entity("Vulgata.Core.Entities.PreScanResult", b =>
                 {
                     b.Navigation("Classifications");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.PreparedScanManifest", b =>
+                {
+                    b.Navigation("Audits");
+
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Repository", b =>

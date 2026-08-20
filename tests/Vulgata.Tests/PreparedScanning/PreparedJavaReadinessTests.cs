@@ -1,5 +1,6 @@
 using System.Reflection;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Analysis.Java;
 
 namespace Vulgata.Tests.PreparedScanning;
@@ -103,6 +104,50 @@ public sealed class PreparedJavaReadinessTests
                 Enum.GetNames(type).Any(value =>
                     value.Contains("NotApplicable", StringComparison.OrdinalIgnoreCase)));
         Assert.NotNull(outcomeEnum);
+    }
+
+    [Fact]
+    public async Task JavaReadiness_XMLOnly_ProducesStableNotApplicableProof()
+    {
+        AnalysisScope scope = new(
+            Guid.Parse("12000000-0000-4000-8000-000000000122"),
+            Guid.Parse("22000000-0000-4000-8000-000000000122"),
+            "0123456789abcdef0123456789abcdef01234567",
+            "story122-xml-only",
+            new string('a', 64),
+            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
+        var service = new PreparedJavaReadinessService();
+        var request = new PreparedJavaReadinessRequest(
+            scope,
+            new string('b', 64),
+            new string('c', 64),
+            EligibleJavaRelativePaths: []);
+
+        PreparedJavaReadinessResult first = await service.ProveReadinessAsync(
+            request,
+            CancellationToken.None);
+        PreparedJavaReadinessResult second = await service.ProveReadinessAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(AnalysisOperationStatus.Succeeded, first.Status);
+        Assert.Null(first.Failure);
+        JavaReadinessProof firstProof = Assert.IsType<JavaReadinessProof>(first.Proof);
+        JavaReadinessProof secondProof = Assert.IsType<JavaReadinessProof>(second.Proof);
+        Assert.Equal(JavaReadinessOutcome.NotApplicable, firstProof.Outcome);
+        Assert.Null(firstProof.ReadinessFile);
+        Assert.False(firstProof.WorkspaceExclusive);
+        Assert.False(firstProof.InitializeCompleted);
+        Assert.False(firstProof.InitializedNotificationSent);
+        Assert.Equal(JavaImportState.NotApplicable, firstProof.ImportState);
+        Assert.Equal(0, firstProof.DocumentSymbolCount);
+        Assert.True(firstProof.RepositoryBindingMatched);
+        Assert.True(firstProof.ScanRunBindingMatched);
+        Assert.True(firstProof.RevisionBindingMatched);
+        Assert.True(firstProof.RuntimeBindingMatched);
+        Assert.True(firstProof.SnapshotBindingMatched);
+        Assert.NotNull(firstProof.IdentityHash);
+        Assert.Equal(firstProof.IdentityHash, secondProof.IdentityHash);
     }
 
     private static Type RequireType(Assembly assembly, string fullName)

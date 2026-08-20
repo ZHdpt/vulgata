@@ -19,6 +19,7 @@ public sealed class DurableScanMigrationPostgreSqlTests
 {
     private const string BaselineMigration = "20260803140908_AddExactCrossRepositoryResolution";
     private const string StoryMigration = "20260818124712_AddDurableScanFoundation";
+    private const string LatestMigration = "20260820120000_AddPreparedScanManifest";
     private static readonly DateTimeOffset CreatedAt =
         new(2026, 8, 18, 12, 0, 0, TimeSpan.Zero);
     private static readonly Guid SystemId = Guid.Parse("91000000-0000-0000-0000-000000000001");
@@ -70,8 +71,10 @@ public sealed class DurableScanMigrationPostgreSqlTests
             await using (VulgataDbContext context = CreateContext(database.ConnectionString))
             {
                 IMigrator migrator = context.GetService<IMigrator>();
-                Assert.Equal([StoryMigration], await context.Database.GetPendingMigrationsAsync());
-                await migrator.MigrateAsync(StoryMigration);
+                Assert.Equal(
+                    [StoryMigration, LatestMigration],
+                    await context.Database.GetPendingMigrationsAsync());
+                await migrator.MigrateAsync(LatestMigration);
                 Assert.Contains(StoryMigration, await context.Database.GetAppliedMigrationsAsync());
                 await AssertProtectedRowsAsync(context);
                 await AssertLegacyScanReadableAsync(context);
@@ -85,7 +88,7 @@ public sealed class DurableScanMigrationPostgreSqlTests
                 Assert.Null(await ReadTableRegClassAsync(context, "ScanContextSnapshots"));
                 Assert.Null(await ReadTableRegClassAsync(context, "ScanJobExecutions"));
 
-                await migrator.MigrateAsync(StoryMigration);
+                await migrator.MigrateAsync(LatestMigration);
                 Assert.Contains(StoryMigration, await context.Database.GetAppliedMigrationsAsync());
                 Assert.False(context.Database.HasPendingModelChanges());
                 await AssertProtectedRowsAsync(context);
@@ -148,14 +151,12 @@ public sealed class DurableScanMigrationPostgreSqlTests
         SetId(targetRepository, TargetRepositoryId);
         ScanRun sourceRun = CreateCompletedScanRun(SourceScanRunId, SourceRepositoryId);
         ScanRun targetRun = CreateCompletedScanRun(TargetScanRunId, TargetRepositoryId);
-        CodeUnit sourceUnit = CreateCodeUnit(SourceCodeUnitId, SourceScanRunId, SourceRepositoryId, "src/t047-source.cs");
-        CodeUnit targetUnit = CreateCodeUnit(TargetCodeUnitId, TargetScanRunId, TargetRepositoryId, "src/t047-target.cs");
 
         context.Systems.Add(system);
         context.Repositories.AddRange(sourceRepository, targetRepository);
         context.ScanRuns.AddRange(sourceRun, targetRun);
-        context.CodeUnits.AddRange(sourceUnit, targetUnit);
         await context.SaveChangesAsync();
+        await InsertHistoricalCodeUnitsAsync(context);
 
         LogicalDocument sourceLogical = LogicalDocument.Create(
             SourceLogicalDocumentId, SourceRepositoryId, DocumentType.CodeLogic, "t047/source", CreatedAt);
@@ -197,6 +198,22 @@ public sealed class DurableScanMigrationPostgreSqlTests
         context.Uncertainties.Add(uncertainty);
         await context.SaveChangesAsync();
     }
+
+    private static Task<int> InsertHistoricalCodeUnitsAsync(VulgataDbContext context) =>
+        // The Story 12.1 boundary does not contain Story 12.2 prepared-file
+        // columns. Keep this seed pinned to the historical relational shape
+        // instead of asking the current EF model to write columns that are
+        // intentionally absent before the Story 12.2 migration is applied.
+        context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO vulgata."CodeUnits"
+                ("Id", "ScanRunId", "RepositoryId", "FilePath", "FileIdentityHash", "SourceHash",
+                 "LineStart", "LineEnd", "SymbolName", "UnitType", "RangeConfidence", "Language", "Status")
+            VALUES
+                ({SourceCodeUnitId}, {SourceScanRunId}, {SourceRepositoryId}, 'src/t047-source.cs',
+                 {SourceHash}, {SourceHash}, 1, 10, 'T047.Source', 'Class', 'Exact', 'csharp', 'Pending'),
+                ({TargetCodeUnitId}, {TargetScanRunId}, {TargetRepositoryId}, 'src/t047-target.cs',
+                 {SourceHash}, {SourceHash}, 1, 10, 'T047.Target', 'Class', 'Exact', 'csharp', 'Pending');
+            """);
 
     private static async Task InsertLegacyScanExecutionAsync(VulgataDbContext context)
     {
@@ -321,15 +338,6 @@ public sealed class DurableScanMigrationPostgreSqlTests
         run.SetCandidateCount(0);
         run.Complete(0, 0, CreatedAt.AddSeconds(1));
         return run;
-    }
-
-    private static CodeUnit CreateCodeUnit(Guid id, Guid scanRunId, Guid repositoryId, string path)
-    {
-        CodeUnit unit = new(
-            scanRunId, repositoryId, path, SourceHash, SourceHash, 1, 10,
-            Path.GetFileNameWithoutExtension(path), CodeUnitType.Class, RangeConfidence.Exact, "csharp");
-        SetId(unit, id);
-        return unit;
     }
 
     private static void SetId<T>(T value, Guid id)

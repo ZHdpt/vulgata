@@ -26,6 +26,10 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<PreScanResult> PreScanResults => Set<PreScanResult>();
     public DbSet<CommunicationKindClassification> CommunicationKindClassifications =>
         Set<CommunicationKindClassification>();
+    public DbSet<PreparedScanManifest> PreparedScanManifests => Set<PreparedScanManifest>();
+    public DbSet<PreparedScanManifestEntry> PreparedScanManifestEntries =>
+        Set<PreparedScanManifestEntry>();
+    public DbSet<PreparedScanAudit> PreparedScanAudits => Set<PreparedScanAudit>();
     public DbSet<LogicalDocument> LogicalDocuments => Set<LogicalDocument>();
     public DbSet<DocumentVersion> DocumentVersions => Set<DocumentVersion>();
     public DbSet<SourceAnchor> SourceAnchors => Set<SourceAnchor>();

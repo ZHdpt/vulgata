@@ -1,4 +1,18 @@
 using System.Reflection;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.Data;
+using Vulgata.Shared.Scans;
+using Vulgata.Tests.PreparedScanning.TestDoubles;
+using Vulgata.Web.Data;
+using RepositoryEntity = Vulgata.Core.Entities.Repository;
+using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Tests.PreparedScanning;
 
@@ -101,9 +115,330 @@ public sealed class PreparedScanApiTests
                 nested.Name.Contains("Response", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(
             endpoints.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance),
-            method => method.Name.Contains("Dispatch", StringComparison.OrdinalIgnoreCase) ||
+                method => method.Name.Contains("Dispatch", StringComparison.OrdinalIgnoreCase) ||
                 method.Name.Contains("Worker", StringComparison.OrdinalIgnoreCase) ||
                 method.Name.Contains("Document", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task PreparedScanPairBuilder_ProductionCompositionBuildsNeutralExactTwoPackageAsync()
+    {
+        int revisionAcquisitionCalls = 0;
+        int snapshotReads = 0;
+        int catalogCalls = 0;
+        int codeGraphCalls = 0;
+        int javaReadinessCalls = 0;
+        StubPreparedRevisionAcquirer revisionAcquirer = new();
+        revisionAcquirer.Handler = (request, _) =>
+        {
+            revisionAcquisitionCalls++;
+            return Task.FromResult(new PreparedRevisionAcquisitionResult(
+                new PreparedRevisionSnapshot(
+                    request.RepositoryId,
+                    request.ScanRunId,
+                    request.RequestedRef,
+                    request.ProfiledRevision,
+                    new('a', 64),
+                    $"snapshot-{request.RepositoryId:N}",
+                    $"root-{request.RepositoryId:N}"),
+                null));
+        };
+
+        StubPreparedSnapshotSource snapshotSource = new();
+        snapshotSource.Handler = (snapshot, _) =>
+        {
+            snapshotReads++;
+            return Task.FromResult(new PreparedSnapshotReadResult(
+                CreateNeutralSnapshotFiles(snapshot),
+                null));
+        };
+        StubReadyAnalysisRuntimeHealthProbe runtimeProbe = new();
+
+        StubPreparedCodeGraphAnalysisPort codeGraph = new();
+        codeGraph.ProofHandler = (request, _) =>
+        {
+            codeGraphCalls++;
+            return Task.FromResult(new PreparedCodeGraphProofResult(
+                AnalysisOperationStatus.Succeeded,
+                new CodeGraphCompletenessProof(
+                    request.Scope.RepositoryId,
+                    request.Scope.ScanRunId,
+                    request.Scope.ProfiledRevision,
+                    request.SnapshotIdentity,
+                    request.SnapshotRootBindingHash,
+                    request.Scope.RuntimeIdentityHash,
+                    "prepared-api-index",
+                    "codegraph-completeness-proof/1.0",
+                    true,
+                    CodeGraphIndexState.Complete,
+                    0,
+                    0,
+                    0,
+                    false,
+                    false,
+                    0,
+                    64,
+                    request.LogicalProjectBinding,
+                    request.LogicalIndexBinding,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    new('b', 64),
+                    0),
+                null));
+        };
+
+        StubPreparedJavaReadinessPort javaReadiness = new();
+        javaReadiness.Handler = (request, _) =>
+        {
+            javaReadinessCalls++;
+            return Task.FromResult(new PreparedJavaReadinessResult(
+                AnalysisOperationStatus.Succeeded,
+                new JavaReadinessProof(
+                    request.Scope.RepositoryId,
+                    request.Scope.ScanRunId,
+                    request.Scope.ProfiledRevision,
+                    request.SnapshotIdentity,
+                    request.Scope.RuntimeIdentityHash,
+                    request.WorkspaceBindingHash,
+                    "java-readiness/1.0",
+                    JavaReadinessOutcome.NotApplicable,
+                    "jdt-language-server-1.61.0-202608141332",
+                    new('c', 64),
+                    21,
+                    "2.25.29",
+                    AnalysisTransport.Stdio,
+                    false,
+                    null,
+                    false,
+                    false,
+                    JavaImportState.NotApplicable,
+                    0,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    new('d', 64),
+                    0),
+                null));
+        };
+
+        StubPreparedCommunicationCatalogSource catalog = new();
+        catalog.Handler = _ =>
+        {
+            catalogCalls++;
+            return Task.FromResult(new PreparedCatalogLoadResult(
+                new CommunicationPatternCatalog(
+                    "communication-pattern-catalog/1.0",
+                    "prepared-api-catalog",
+                    "1",
+                    new('e', 64),
+                    []),
+                null));
+        };
+
+        using LoginLogoutTests.CustomWebApplicationFactory baseFactory = new();
+        using WebApplicationFactory<Program> factory = baseFactory.WithWebHostBuilder(
+            builder => builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IPreparedRevisionAcquirer>();
+                services.AddSingleton<IPreparedRevisionAcquirer>(revisionAcquirer);
+                services.RemoveAll<IPreparedSnapshotSource>();
+                services.AddSingleton<IPreparedSnapshotSource>(snapshotSource);
+                services.RemoveAll<IAnalysisRuntimeHealthProbe>();
+                services.AddSingleton<IAnalysisRuntimeHealthProbe>(runtimeProbe);
+                services.RemoveAll<IPreparedCommunicationCatalogSource>();
+                services.AddSingleton<IPreparedCommunicationCatalogSource>(catalog);
+                services.RemoveAll<IPreparedCodeGraphAnalysisPort>();
+                services.AddSingleton<IPreparedCodeGraphAnalysisPort>(codeGraph);
+                services.RemoveAll<IPreparedJavaReadinessPort>();
+                services.AddSingleton<IPreparedJavaReadinessPort>(javaReadiness);
+            }));
+
+        await using AsyncServiceScope scope = factory.Services.CreateAsyncScope();
+        VulgataDbContext db = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+        (SystemEntity system, RepositoryEntity first, RepositoryEntity second,
+            PreparedScanRepositoryRevisionBinding[] bindings) = await SeedExactTwoBindingsAsync(db);
+        Assert.Equal(2, await db.Repositories.CountAsync(repository => repository.SystemId == system.Id));
+        Assert.Equal(2, await db.ScanRuns.CountAsync(run =>
+            run.RepositoryId == first.Id || run.RepositoryId == second.Id));
+        Assert.Equal(1, await db.TwoRepositoryScanCoordinations.CountAsync(coordination =>
+            coordination.SystemId == system.Id));
+        IPreparedScanPairBuilder builder = scope.ServiceProvider
+            .GetRequiredService<IPreparedScanPairBuilder>();
+
+        PreparedScanPairBuildResult result = await builder.BuildAsync(
+            system.Id,
+            [first, second],
+            bindings,
+            CancellationToken.None);
+
+        Assert.True(
+            revisionAcquisitionCalls > 0,
+            "Production pair composition must invoke IPreparedRevisionAcquirer for each persisted revision.");
+        Assert.Equal(2, revisionAcquisitionCalls);
+        Assert.Equal(2, snapshotReads);
+        Assert.Equal(1, catalogCalls);
+        Assert.Equal(2, codeGraphCalls);
+        Assert.Equal(2, javaReadinessCalls);
+        Assert.True(
+            catalogCalls > 0,
+            "Production pair composition must invoke IPreparedCommunicationCatalogSource.");
+        Assert.True(
+            codeGraphCalls > 0,
+            "Production pair composition must invoke IPreparedCodeGraphAnalysisPort.");
+        Assert.True(
+            javaReadinessCalls > 0,
+            "Production pair composition must invoke IPreparedJavaReadinessPort.");
+        Assert.NotEqual("prepared_scan_pipeline_unavailable", result.Failure?.FailureCode);
+        Assert.NotNull(result.PairPackage);
+        Assert.Null(result.Failure);
+        Assert.Equal(2, result.PairPackage.Repositories.Count);
+        Assert.InRange(result.PairPackage.SelectedCount, 50, 150);
+    }
+
+    private static IReadOnlyList<PreparedSnapshotFile> CreateNeutralSnapshotFiles(
+        PreparedRevisionSnapshot snapshot)
+    {
+        List<PreparedSnapshotFile> files = new(capacity: 60);
+        for (int index = 0; index < 60; index++)
+        {
+            bool java = index % 2 == 0;
+            string relativePath = java
+                ? $"src/neutral/Entry-{index:00}.java"
+                : $"src/neutral/config-{index:00}.xml";
+            string source = java
+                ? $"package neutral;\npublic final class Entry{index:00} {{\n    public static final int VALUE = {index};\n}}\n"
+                : $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<configuration><entry name=\"neutral-{index:00}\" value=\"{snapshot.RepositoryId:N}\" /></configuration>\n";
+            byte[] rawBytes = System.Text.Encoding.UTF8.GetBytes(source);
+            string hash = Convert.ToHexStringLower(SHA256.HashData(rawBytes));
+            files.Add(new PreparedSnapshotFile(
+                relativePath,
+                java ? "Java" : "XML",
+                IsEligible: true,
+                "EligibleProductionSource",
+                hash,
+                hash,
+                rawBytes.LongLength,
+                source.Count(character => character == '\n'),
+                "utf-8",
+                rawBytes));
+        }
+
+        return files;
+    }
+
+    private static async Task<(
+        SystemEntity System,
+        RepositoryEntity First,
+        RepositoryEntity Second,
+        PreparedScanRepositoryRevisionBinding[] Bindings)> SeedExactTwoBindingsAsync(
+        VulgataDbContext db)
+    {
+        DateTimeOffset now = PreparedScanTestHost.FixedUtcNow;
+        const string firstRevision = "0123456789abcdef0123456789abcdef01234567";
+        const string secondRevision = "fedcba9876543210fedcba9876543210fedcba98";
+        SystemEntity system = new(
+            "Prepared API composition system",
+            "persisted exact-two fixture",
+            "prepared API global context",
+            now);
+        RepositoryEntity first = system.AddRepository(
+            "prepared-api-one",
+            "https://example.invalid/prepared-api-one.git",
+            null,
+            "repository one context",
+            now);
+        RepositoryEntity second = system.AddRepository(
+            "prepared-api-two",
+            "https://example.invalid/prepared-api-two.git",
+            null,
+            "repository two context",
+            now);
+        ScanRun firstRun = ScanRun.Start(first.Id, 1_800, now);
+        firstRun.BindProfiledRevision(firstRevision);
+        ScanRun secondRun = ScanRun.Start(second.Id, 1_800, now);
+        secondRun.BindProfiledRevision(secondRevision);
+        ScanContextSnapshot firstSnapshot = ScanContextSnapshot.CapturePrepared(
+            firstRun,
+            "prepared API global context",
+            "prepared API system context",
+            first.Context,
+            now);
+        ScanContextSnapshot secondSnapshot = ScanContextSnapshot.CapturePrepared(
+            secondRun,
+            "prepared API global context",
+            "prepared API system context",
+            second.Context,
+            now);
+        PreScanResult firstPreScan = PreScanResult.CreateApproved(
+            first.Id,
+            firstRun.Id,
+            firstRevision,
+            now,
+            new('f', 64),
+            "预扫描已批准——继续进入顺序演示运行器",
+            ConfirmedCommunicationKinds.None,
+            0,
+            0,
+            0,
+            false,
+            []);
+        PreScanResult secondPreScan = PreScanResult.CreateApproved(
+            second.Id,
+            secondRun.Id,
+            secondRevision,
+            now,
+            new('1', 64),
+            "预扫描已批准——继续进入顺序演示运行器",
+            ConfirmedCommunicationKinds.None,
+            0,
+            0,
+            0,
+            false,
+            []);
+        ScanExecution firstExecution = ScanExecution.Start(
+            Guid.NewGuid(),
+            first.Id,
+            system.Id,
+            firstRun.Id,
+            firstPreScan.Id,
+            firstRevision,
+            now);
+        ScanExecution secondExecution = ScanExecution.Start(
+            Guid.NewGuid(),
+            second.Id,
+            system.Id,
+            secondRun.Id,
+            secondPreScan.Id,
+            secondRevision,
+            now);
+        TwoRepositoryScanCoordination coordination = TwoRepositoryScanCoordination.Create(
+            firstExecution,
+            secondExecution,
+            now);
+
+        db.Systems.Add(system);
+        db.ScanRuns.AddRange(firstRun, secondRun);
+        db.ScanContextSnapshots.AddRange(firstSnapshot, secondSnapshot);
+        db.PreScanResults.AddRange(firstPreScan, secondPreScan);
+        db.ScanExecutions.AddRange(firstExecution, secondExecution);
+        db.TwoRepositoryScanCoordinations.Add(coordination);
+        await db.SaveChangesAsync();
+
+        return (
+            system,
+            first,
+            second,
+            [
+                new() { RepositoryId = first.Id, GitRef = "refs/tags/release-a", ProfiledRevision = firstRevision },
+                new() { RepositoryId = second.Id, GitRef = "refs/tags/release-b", ProfiledRevision = secondRevision },
+            ]);
     }
 
     private static Type RequireSharedType(Func<Type, bool> predicate)

@@ -72,3 +72,98 @@ Document generation are absent.
   8 failed/0 passed pending their store and API production owners.
 - A broader historical `PreScan` filter passed 96 tests and retained one unrelated
   pre-existing Story 4.3 composition failure; it is outside this narrowed group.
+
+## Group 4: T040-T046
+
+- T040 added the cohesive prepared-scan EF migration and model. The focused
+  model/context/handoff suite passed 23/23; API surroundings passed 31/31 after
+  a migration-only SQLite ordering bridge corrected a temporary-table foreign-key
+  mismatch. Infrastructure and Web built with zero errors, EF reported no pending
+  model changes, and the PostgreSQL idempotent script excluded the SQLite bridge.
+- T045 executed two PostgreSQL 17.10 migration lifecycle tests on a fresh
+  disposable service. Clean apply, rollback, protected historical/v1/demo/Story
+  12.1 compatibility, reapply, and forced late-boundary rollback all passed 2/2;
+  no owned databases remained and the disposable container was removed.
+- T041/T042 reached 5/5 focused GREEN for exact-two atomic commit, exact replay,
+  mutation conflict, cancellation/rejection zero-write behavior, and durable
+  manifest/entry/Code Unit/audit/result/context persistence. Subsequent
+  requirement-backed regression coverage passed 3/3 with one justified
+  PostgreSQL-only skip under SQLite after full canonical reconstruction,
+  classification persistence, stored Code Unit fingerprint validation, and
+  concurrent identical-writer recovery were corrected.
+- T043/T044 API composition passed 5/5 focused, 14/14 API/store/handoff, and
+  31/31 surrounding API tests. Core, Infrastructure, Shared, and Web built with
+  zero errors. T047 first exposed that the production builder silently skipped
+  oversized XML and emitted no classifications. The unchanged release tests moved
+  from 1/3 to 3/3 after the builder was corrected to use safe XML parsing,
+  direct-child range planning, catalog evaluation, and bounded classification.
+  The original test author independently reran the exact 3-test filter GREEN in
+  46 seconds; the test SHA-256 remained
+  `fbec83be1ffaf9f3b788f144a0a10ca409c45faeb56158b7679f43ad696dcb52`.
+  Per-Repository PreScan under 120 seconds, CodeGraph under 30 seconds, and JDT-LS
+  under 60 seconds assertions all passed. T044 and T047 are therefore complete.
+- T046 real host-tool qualification passed 5/5 using exact Git, CodeGraph 1.5.0,
+  Java 21, and JDT LS 1.61.0. Deterministic readiness/proof coverage passed 8/8
+  and Story 12.1 adapter surroundings passed 11/11. XML-only readiness is explicit
+  NotApplicable; hard failures remain closed; related-file expansion remains the
+  approved warning fallback.
+
+## Group 5: T048-T051 qualifications completed to date
+
+- T048/T051 workflow, runtime-pin, security, and scope boundary tests passed 4/4.
+  An independent scan inspected 28 prepared production files and found zero
+  forbidden Worker, Document, LLM, CodeGraphContext, or Story 12.3 surfaces.
+- T049 production-literal qualification passed 1/1 twice with byte-identical
+  output. It inspected six production assemblies, nine embedded resources, and
+  one public catalog projection; the denylist found zero matches. The required
+  ignored JSON artifact is retained at
+  `artifacts/qualification/story-12.2/production-literal-inspection.json`.
+- T050 authoritative PostgreSQL 17.10 qualification discovered and passed 21/21
+  tests in 16 seconds. It covered six forced-insert boundaries, six cancellation
+  boundaries, stale and concurrent writers, exact replay/conflict, stable proof
+  and selected-child mutation, stored Code Unit fingerprint tamper, retained
+  classification persistence, audit reconstruction, and null/FK enforcement.
+  No harness-owned databases remained; the disposable container was removed and
+  the existing project PostgreSQL service was untouched.
+
+## Group 6: T052 final verification barrier
+
+- The ordered quickstart boundary passed: PreparedScanning 97/97 with one
+  justified SQLite-only skip; audit 2/2; canonical/replay 13/13; real Git,
+  CodeGraph, JDT-LS, and prepared analysis 13/13; PostgreSQL migration 2/2;
+  PostgreSQL atomicity 21/21; API 5/5; release qualification 3/3; boundary/XML
+  security 7/7; and production-literal qualification 1/1.
+- The retained JDT-LS real qualification exposed deterministic empty
+  `textDocument/implementation` evidence after general navigation succeeded.
+  An implementation-only 250 ms retry, bounded by the existing request timeout
+  and caller cancellation, moved the unchanged RED to three fresh host GREEN
+  repetitions; JDT/prepared-real surroundings passed 10/10.
+- The older durable-scan PostgreSQL rollback fixture was updated to seed only its
+  historical columns and to expect Story 12.1 then Story 12.2 as the exact
+  pending migration sequence. Its live PostgreSQL test passed 1/1 and the Story
+  12.2 lifecycle suite remained 2/2 GREEN.
+- Web build completed with zero errors and nine existing NU1507/MSB3277 warnings.
+  The complete test project ran 1,632 tests: 1,625 passed, 6 unrelated baseline
+  failures, and 1 intentional SQLite-only skip. The six preserved baselines are
+  Story 4.3 runtime composition, stale sequential migration equality, two
+  CodeGraph `plan_revision` fixtures, a missing legacy provider-contract image,
+  and one management-page label assertion. Every Story 12.2 suite passed.
+- The regenerated production-literal artifact reports six assemblies, nine
+  resources, one public output, zero matches, and verdict `zero-match`; SHA-256
+  `d25de28326be5edf4c700e15a3b07b857618ffe7bd84dbee46b059dd994e08a5`.
+- No owned PostgreSQL databases remained, the disposable T052 container was
+  auto-removed, and the existing project PostgreSQL 17 service remained healthy
+  and untouched.
+
+## Verified implementation checkpoint 2
+
+- Checkpoint ID:
+  `bmad-12-2-implement-20260820T162725Z-0029b3`.
+- Parent checkpoint: `24bb73e6ad4cf2c2a48168e6f57ba97ad74eecaf`.
+- Intended content is the complete explicit Story 12.2 owned production, EF
+  migration/model/configuration, API/coordinator, qualification tests, literal
+  JSON artifact, task markers, workflow state, and evidence boundary accumulated
+  after the T001-T039 checkpoint. It excludes ignored build outputs, disposable
+  database/container state, configured project data, and unrelated user paths.
+- Binding is pending the root-owned local commit with the matching workflow
+  trailer; convergence begins only after the trailer resolves uniquely.

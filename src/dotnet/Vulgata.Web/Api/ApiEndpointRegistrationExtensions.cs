@@ -16,5 +16,6 @@ internal static class ApiEndpointRegistrationExtensions
         app.MapLlmProviderApiEndpoints();
         app.MapContextApiEndpoints();
         app.MapManualResumeApiEndpoints();
+        app.MapPreparedScanApiEndpoints();
     }
 }

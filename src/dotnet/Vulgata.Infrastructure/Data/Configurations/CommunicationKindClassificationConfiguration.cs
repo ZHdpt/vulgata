@@ -74,6 +74,9 @@ internal sealed class CommunicationKindClassificationConfiguration
             table.HasCheckConstraint(
                 "CK_CommunicationKindClassifications_Fingerprint_Length",
                 "length(\"Fingerprint\") = 64");
+            table.HasCheckConstraint(
+                "CK_CommunicationKindClassifications_CatalogRuleIdentity_Length",
+                "\"CatalogRuleIdentity\" IS NULL OR length(\"CatalogRuleIdentity\") BETWEEN 1 AND 256");
         });
 
         builder.HasKey(classification => classification.Id);
@@ -103,6 +106,8 @@ internal sealed class CommunicationKindClassificationConfiguration
             .HasMaxLength(64)
             .IsFixedLength()
             .IsRequired();
+        builder.Property(classification => classification.CatalogRuleIdentity)
+            .HasMaxLength(256);
         builder.HasIndex(classification => new
             {
                 classification.PreScanResultId,

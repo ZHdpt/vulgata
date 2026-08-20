@@ -58,6 +58,13 @@ public sealed record PreparedFileCodeUnitDraft(
     int ManifestOrdinal,
     int PairSelectionOrdinal)
 {
+    public string Language => Path.GetExtension(RelativePath).ToLowerInvariant() switch
+    {
+        ".java" => "java",
+        ".xml" => "xml",
+        _ => throw new InvalidOperationException("A prepared File Code Unit requires Java or XML input."),
+    };
+
     public static PreparedFileCodeUnitDraft Create(PreparedFileCodeUnitInput input) =>
         PreparedScanPlanner.CreateFileCodeUnit(input);
 }
@@ -168,7 +175,14 @@ public sealed record PreparedRepositoryPackage(
     int TotalWarningCount,
     bool EvidenceTruncated,
     DateTimeOffset CapturedAt,
-    DateTimeOffset ApprovedAt);
+    DateTimeOffset ApprovedAt)
+{
+    public string? GlobalContext { get; init; }
+
+    public string? SystemContext { get; init; }
+
+    public string? RepositoryContext { get; init; }
+}
 
 public sealed record PreparedScanPairPackage(
     Guid CoordinationId,
@@ -228,6 +242,33 @@ public interface IPreparedRevisionAcquirer
         CancellationToken cancellationToken);
 }
 
+public sealed record PreparedSnapshotFile(
+    string RelativePath,
+    string? Language,
+    bool IsEligible,
+    string Outcome,
+    string? FileHash,
+    string? SourceHash,
+    long? RawByteCount,
+    int? LogicalLineCount,
+    string? EncodingIdentity,
+    ReadOnlyMemory<byte> RawBytes);
+
+public sealed record PreparedSnapshotReadResult(
+    IReadOnlyList<PreparedSnapshotFile> Files,
+    PreparedScanFailure? Failure);
+
+/// <summary>
+/// Performs inventory and raw-artifact operations through an opaque acquired
+/// snapshot binding. Host paths never cross this boundary.
+/// </summary>
+public interface IPreparedSnapshotSource
+{
+    Task<PreparedSnapshotReadResult> ReadAsync(
+        PreparedRevisionSnapshot snapshot,
+        CancellationToken cancellationToken);
+}
+
 public sealed record PreparedCatalogLoadResult(
     CommunicationPatternCatalog? Catalog,
     PreparedScanFailure? Failure);
@@ -238,6 +279,8 @@ public interface IPreparedCommunicationCatalogSource
 }
 
 public sealed record PreparedCanonicalArtifact(ReadOnlyMemory<byte> Envelope, string Fingerprint);
+
+public sealed record PreparedManifestFingerprintBinding(Guid RepositoryId, string ManifestFingerprint);
 
 /// <summary>
 /// Stable Story 12.2 identity projections. Volatile observation metadata and
@@ -433,6 +476,129 @@ public static class PreparedScanIdentityBuilders
                 Field(8, CanonicalEnvelope.String(locator)),
                 Field(9, CanonicalEnvelope.UInt64((ulong)occurrenceCount)),
                 Field(10, CanonicalEnvelope.String(catalogRuleIdentity)),
+            ]);
+    }
+
+    public static PreparedCanonicalArtifact CreatePairSelection(
+        Guid coordinationId,
+        IEnumerable<PreparedFileCodeUnitDraft> selected)
+    {
+        PreparedFileCodeUnitDraft[] ordered = selected
+            .OrderBy(unit => unit.PairSelectionOrdinal)
+            .ToArray();
+        if (coordinationId == Guid.Empty ||
+            ordered.Length is < PreparedScanPlanner.MinimumPairSelection or > PreparedScanPlanner.MaximumPairSelection ||
+            !ordered.Select(unit => unit.PairSelectionOrdinal)
+                .SequenceEqual(Enumerable.Range(1, ordered.Length)))
+        {
+            throw new ArgumentException("Pair selection requires one complete bounded ordinal domain.", nameof(selected));
+        }
+
+        return CreateArtifact(
+            "vulgata/story-12.2/pair-selection/1.0",
+            [
+                Field(1, CanonicalEnvelope.Uuid(coordinationId)),
+                Field(2, CanonicalEnvelope.List(ordered.Select(unit => CanonicalEnvelope.Object(
+                [
+                    Field(1, CanonicalEnvelope.Uuid(unit.RepositoryId)),
+                    Field(2, Hash(unit.IdentityFingerprint)),
+                    Field(3, CanonicalEnvelope.Int64(unit.FinalBusinessScore)),
+                    Field(4, CanonicalEnvelope.Enum(unit.SelectionReason.ToString())),
+                    Field(5, CanonicalEnvelope.UInt64((ulong)unit.ManifestOrdinal)),
+                    Field(6, CanonicalEnvelope.UInt64((ulong)unit.PairSelectionOrdinal)),
+                ])))),
+            ]);
+    }
+
+    public static PreparedCanonicalArtifact CreateManifest(
+        PreparedRepositoryPackage package,
+        string pairSelectionFingerprint)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+        PreparedFileCodeUnitDraft[] entries = package.FileCodeUnits
+            .OrderBy(unit => unit.ManifestOrdinal)
+            .ToArray();
+        PreparedScanAuditDraft[] audits = package.Audits.OrderBy(audit => audit.Ordinal).ToArray();
+        int eligible = audits.Count(audit => audit.Outcome is PreparedScanAuditOutcome.Eligible or PreparedScanAuditOutcome.Selected);
+        int filtered = audits.Count(audit => audit.Outcome == PreparedScanAuditOutcome.Filtered);
+        int skipped = audits.Count(audit => audit.Outcome == PreparedScanAuditOutcome.Skipped);
+        int classificationTotal = checked(
+            package.TotalConfirmedEvidenceCount + package.TotalHintCount + package.TotalWarningCount);
+
+        return CreateArtifact(
+            "vulgata/story-12.2/prepared-scan-manifest/1.0",
+            [
+                Field(1, CanonicalEnvelope.Uuid(package.RepositoryId)),
+                Field(2, CanonicalEnvelope.Uuid(package.ScanRunId)),
+                Field(3, CanonicalEnvelope.Uuid(package.CoordinationId)),
+                Field(4, CanonicalEnvelope.String(RequireRevision(package.ProfiledRevision))),
+                Field(5, CanonicalEnvelope.String(package.RequestedRef)),
+                Field(6, CanonicalEnvelope.String("prepared-scan-manifest/1.0")),
+                Field(7, Hash(package.SnapshotIdentity)),
+                Field(8, Hash(package.RuntimeIdentityHash)),
+                Field(9, Hash(package.CodeGraphProof.IdentityHash)),
+                Field(10, Hash(package.JavaReadiness.IdentityHash)),
+                Field(11, CanonicalEnvelope.String(package.Catalog.SchemaIdentity)),
+                Field(12, Hash(package.Catalog.ResourceHash)),
+                Field(13, Hash(package.PreparedScanContextIdentityHash)),
+                Field(14, Hash(package.ContextContentHash)),
+                Field(15, CanonicalEnvelope.UInt64((ulong)audits.Length)),
+                Field(16, CanonicalEnvelope.UInt64((ulong)eligible)),
+                Field(17, CanonicalEnvelope.UInt64((ulong)filtered)),
+                Field(18, CanonicalEnvelope.UInt64((ulong)skipped)),
+                Field(19, CanonicalEnvelope.UInt64((ulong)entries.Length)),
+                Field(20, CanonicalEnvelope.UInt64((ulong)classificationTotal)),
+                Field(21, CanonicalEnvelope.UInt64((ulong)package.Classifications.Count)),
+                Field(22, CanonicalEnvelope.Boolean(package.EvidenceTruncated)),
+                Field(23, Hash(pairSelectionFingerprint)),
+                Field(24, CanonicalEnvelope.List(entries.Select(unit => CanonicalEnvelope.Object(
+                [
+                    Field(1, Hash(unit.IdentityFingerprint)),
+                    Field(2, CanonicalEnvelope.Int64(unit.DirectBusinessScore)),
+                    Field(3, CanonicalEnvelope.Int64(unit.FinalBusinessScore)),
+                    Field(4, CanonicalEnvelope.Enum(unit.SelectionReason.ToString())),
+                    Field(5, CanonicalEnvelope.UInt64((ulong)unit.ManifestOrdinal)),
+                    Field(6, CanonicalEnvelope.UInt64((ulong)unit.PairSelectionOrdinal)),
+                ])))),
+                Field(25, CanonicalEnvelope.List(audits.Select(audit => CanonicalEnvelope.Object(
+                [
+                    Field(1, CanonicalEnvelope.UInt64((ulong)audit.Ordinal)),
+                    Field(2, Hash(audit.DetailFingerprint)),
+                ])))),
+                Field(26, CanonicalEnvelope.List(package.Classifications.Select(
+                    classification => Hash(classification.Fingerprint)))),
+                Field(27, CanonicalEnvelope.Enum("Approved")),
+            ]);
+    }
+
+    public static PreparedCanonicalArtifact CreatePairPackage(
+        Guid coordinationId,
+        string pairSelectionFingerprint,
+        IEnumerable<PreparedManifestFingerprintBinding> manifests,
+        int selectedCount)
+    {
+        PreparedManifestFingerprintBinding[] ordered = manifests
+            .OrderBy(binding => binding.RepositoryId.ToString("D").ToLowerInvariant(), StringComparer.Ordinal)
+            .ToArray();
+        if (coordinationId == Guid.Empty || ordered.Length != 2 ||
+            ordered.Select(binding => binding.RepositoryId).Distinct().Count() != 2 ||
+            selectedCount is < PreparedScanPlanner.MinimumPairSelection or > PreparedScanPlanner.MaximumPairSelection)
+        {
+            throw new ArgumentException("A prepared pair package requires exactly two bounded manifests.", nameof(manifests));
+        }
+
+        return CreateArtifact(
+            "vulgata/story-12.2/prepared-scan-pair-package/1.0",
+            [
+                Field(1, CanonicalEnvelope.Uuid(coordinationId)),
+                Field(2, Hash(pairSelectionFingerprint)),
+                Field(3, CanonicalEnvelope.List(ordered.Select(binding => CanonicalEnvelope.Object(
+                [
+                    Field(1, CanonicalEnvelope.Uuid(binding.RepositoryId)),
+                    Field(2, Hash(binding.ManifestFingerprint)),
+                ])))),
+                Field(4, CanonicalEnvelope.UInt64((ulong)selectedCount)),
+                Field(5, CanonicalEnvelope.String("prepared-scan-pair-package/1.0")),
             ]);
     }
 

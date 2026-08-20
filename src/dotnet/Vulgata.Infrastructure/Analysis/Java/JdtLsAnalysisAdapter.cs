@@ -695,11 +695,24 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
                     ? new { includeDeclaration = true }
                     : null,
             };
-            JToken responseToken = await _rpc.InvokeWithParameterObjectAsync<JToken>(
-                method,
-                parameters,
-                argumentDeclaredTypes: null,
-                linked.Token).ConfigureAwait(false);
+            JToken responseToken;
+            do
+            {
+                responseToken = await _rpc.InvokeWithParameterObjectAsync<JToken>(
+                    method,
+                    parameters,
+                    argumentDeclaredTypes: null,
+                    linked.Token).ConfigureAwait(false);
+                if (method != "textDocument/implementation" ||
+                    (responseToken.Type != JTokenType.Null && responseToken.HasValues))
+                {
+                    break;
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(250), linked.Token)
+                    .ConfigureAwait(false);
+            }
+            while (true);
             using JsonDocument responseDocument = JsonDocument.Parse(
                 responseToken.ToString(NewtonsoftJsonFormatting.None));
             JsonElement response = responseDocument.RootElement;

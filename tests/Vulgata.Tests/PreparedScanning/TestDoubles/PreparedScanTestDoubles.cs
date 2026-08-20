@@ -17,6 +17,43 @@ public sealed class StubPreparedRevisionAcquirer : IPreparedRevisionAcquirer
         CancellationToken cancellationToken) => Handler(request, cancellationToken);
 }
 
+public sealed class StubPreparedSnapshotSource : IPreparedSnapshotSource
+{
+    public Func<PreparedRevisionSnapshot, CancellationToken, Task<PreparedSnapshotReadResult>>
+        Handler { get; set; } = (_, _) => Task.FromResult(new PreparedSnapshotReadResult(
+            [],
+            new PreparedScanFailure(
+                PreparedScanFailureReason.UnsafeInput,
+                "snapshot_not_configured",
+                "snapshot test double was not configured")));
+
+    public Task<PreparedSnapshotReadResult> ReadAsync(
+        PreparedRevisionSnapshot snapshot,
+        CancellationToken cancellationToken) => Handler(snapshot, cancellationToken);
+}
+
+public sealed class StubReadyAnalysisRuntimeHealthProbe : IAnalysisRuntimeHealthProbe
+{
+    public Task<AnalysisHealthProbeResult> CheckConfiguredIntegrityAsync(
+        AnalysisScope scope,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(new AnalysisHealthProbeResult(
+            AnalysisRuntimeHealthStatus.Ready,
+            "test-runtime-ready",
+            "deterministic prepared-scan test runtime",
+            1_800_000_000_000,
+            [
+                new AnalysisHealthCheck("analysis-runtime", AnalysisRuntimeHealthStatus.Ready),
+                new AnalysisHealthCheck("codegraph", AnalysisRuntimeHealthStatus.Ready),
+                new AnalysisHealthCheck("jdt-ls", AnalysisRuntimeHealthStatus.Ready),
+            ],
+            new('9', 64)));
+    }
+}
+
 public sealed class StubPreparedCodeGraphAnalysisPort : IPreparedCodeGraphAnalysisPort
 {
     public Func<PreparedCodeGraphProofRequest, CancellationToken, Task<PreparedCodeGraphProofResult>>

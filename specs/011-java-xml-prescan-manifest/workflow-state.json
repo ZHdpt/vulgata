@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-2",
-    "head": "6fe7d4a88ff344b1d71329d19fdb9d6d6d64b7e6",
-    "git_identity_sha256": "b5ffb78808e8c73ef37f5d3f6a16df9fa852448e21ea4ef4eb63862428e7915e",
-    "status_sha256": "57da1ef104d14798eea938f932a68500394386a980dd2600634678b3a54fbf90",
-    "observed_at": "2026-08-20T09:19:42Z"
+    "head": "24bb73e6ad4cf2c2a48168e6f57ba97ad74eecaf",
+    "git_identity_sha256": "02a42e8df16035ff54b0fd512d1400395098eb8a8f9f940787f4c10218383020",
+    "status_sha256": "88b5733cee917c448b6e771189adb14a3611f39144ce400bfbd3ca4516b86f39",
+    "observed_at": "2026-08-20T16:27:25Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/011-java-xml-prescan-manifest/tasks.md",
-      "sha256": "a900414c09b60fbd44b97f8568a1f3dcef8ae2354454c9cbfa21905b565f2880"
+      "sha256": "c02cf2f2b510b470abd08bed7aaaa8bb71d8eb79e2e5158964f6a8ace027569e"
     }
   },
   "gates": {
@@ -86,23 +86,23 @@
     "specs/011-java-xml-prescan-manifest/tasks.md",
     "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md",
     "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json",
-    "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-04.json",
     "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json",
     "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/definition-review-fifth-correction-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
-    "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
+    "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-implement-20260820T140324Z-t039",
+    "checkpoint_id": "bmad-12-2-implement-20260820T162725Z-0029b3",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "T001-T039 are verified through dependency-ordered RED/GREEN groups; continue with the EF migration, store, coordinator/API, and qualification tasks.",
+    "stage": "converge",
+    "reason": "T001-T052 are complete with durable RED/GREEN and qualification evidence; bind the verified implementation checkpoint, then run independent convergence.",
     "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   },
-  "updated_at": "2026-08-20T14:03:24Z"
+  "updated_at": "2026-08-20T16:27:25Z"
 }

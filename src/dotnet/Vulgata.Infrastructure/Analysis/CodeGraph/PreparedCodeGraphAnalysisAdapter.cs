@@ -7,7 +7,7 @@ namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 /// derives from this seam so adding preparation does not create a second
 /// concrete raw-tool adapter.
 /// </summary>
-public abstract class PreparedCodeGraphAnalysisAdapter : ICodeGraphAnalysisPort
+public abstract class PreparedCodeGraphAnalysisAdapter : IPreparedCodeGraphAnalysisPort
 {
     public abstract Task<AnalysisIndexResult> IndexAsync(
         AnalysisScope scope,
@@ -39,6 +39,14 @@ public abstract class PreparedCodeGraphAnalysisAdapter : ICodeGraphAnalysisPort
     public abstract Task<RelatedFilesResult> GetRelatedFilesAsync(
         AnalysisScope scope,
         AnalysisSymbolRequest request,
+        CancellationToken cancellationToken);
+
+    public abstract Task<PreparedCodeGraphProofResult> BuildCompletenessProofAsync(
+        PreparedCodeGraphProofRequest request,
+        CancellationToken cancellationToken);
+
+    public abstract Task<PreparedRelatedFilesResult> GetPreparedRelatedFilesAsync(
+        PreparedRelatedFilesRequest request,
         CancellationToken cancellationToken);
 }
 

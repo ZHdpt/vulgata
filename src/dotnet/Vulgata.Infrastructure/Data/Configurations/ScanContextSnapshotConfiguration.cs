@@ -17,9 +17,18 @@ internal sealed class ScanContextSnapshotConfiguration :
             table.HasCheckConstraint(
                 "CK_ScanContextSnapshots_SchemaIdentity_Closed",
                 "\"SchemaIdentity\" = 'scan-context-snapshot/1.0'");
+            table.HasCheckConstraint(
+                "CK_ScanContextSnapshots_PreparedIdentityHash_Length",
+                "\"PreparedScanContextIdentityHash\" IS NULL OR length(\"PreparedScanContextIdentityHash\") = 64");
         });
         builder.HasKey(snapshot => snapshot.Id);
         builder.HasAlternateKey(snapshot => new { snapshot.ScanRunId, snapshot.RepositoryId });
+        builder.HasAlternateKey(snapshot => new
+        {
+            snapshot.Id,
+            snapshot.ScanRunId,
+            snapshot.RepositoryId,
+        });
         builder.Property(snapshot => snapshot.Id).ValueGeneratedNever();
         builder.Property(snapshot => snapshot.ProfiledRevision).HasMaxLength(64).IsRequired();
         builder.Property(snapshot => snapshot.GlobalContext).HasMaxLength(10_000);
@@ -30,6 +39,9 @@ internal sealed class ScanContextSnapshotConfiguration :
             .HasMaxLength(64)
             .IsFixedLength()
             .IsRequired();
+        builder.Property(snapshot => snapshot.PreparedScanContextIdentityHash)
+            .HasMaxLength(64)
+            .IsFixedLength();
         builder.Property(snapshot => snapshot.CapturedAt)
             .HasColumnType("timestamp with time zone")
             .IsRequired();

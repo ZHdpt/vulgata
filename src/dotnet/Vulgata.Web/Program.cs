@@ -13,6 +13,7 @@ using Vulgata.Core.DomainServices.BackupB;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
+using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CrossRepository;
@@ -22,6 +23,7 @@ using Vulgata.Infrastructure.Git;
 using Vulgata.Infrastructure.Git.BackupB;
 using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
+using Vulgata.Shared.Scans;
 using Vulgata.Shared.Validators.Repositories;
 using Vulgata.Shared.Validators.Systems;
 using Vulgata.Web.Api;
@@ -262,6 +264,10 @@ public static class VulgataWebComposition
                 services.GetRequiredService<TimeProvider>()));
         builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
         builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
+        builder.Services.AddScoped<IPreparedScanStore, PreparedScanStore>();
+        builder.Services.AddScoped<IPreparedScanHandoffSource, PreparedScanHandoffSource>();
+        builder.Services.AddScoped<IPreparedScanPairBuilder, PreparedScanPairBuilder>();
+        builder.Services.AddScoped<PreparedScanCoordinator>();
         builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
         builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
         builder.Services.AddScoped<IRepositoryAuthorizationVerifier, RepositoryAuthorizationVerifier>();
@@ -277,7 +283,18 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IChatRevealDelay, ChatRevealDelay>();
         builder.Services.AddScoped<DemoScanUiState>();
         builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
-        builder.Services.AddScoped<IExactGitRevisionSnapshotService, ExactGitRevisionSnapshotService>();
+        builder.Services.AddScoped<ExactGitRevisionSnapshotService>();
+        builder.Services.AddScoped<IExactGitRevisionSnapshotService>(services =>
+            services.GetRequiredService<ExactGitRevisionSnapshotService>());
+        builder.Services.AddScoped<PreparedScanRevisionAcquirer>();
+        builder.Services.AddScoped<IPreparedRevisionAcquirer>(services =>
+            services.GetRequiredService<PreparedScanRevisionAcquirer>());
+        builder.Services.AddScoped<PreparedScanCandidateEnumerator>();
+        builder.Services.AddScoped<PreparedScanRawArtifactReader>();
+        builder.Services.AddScoped<IPreparedSnapshotSource, PreparedSnapshotSource>();
+        builder.Services.AddSingleton<IPreparedCommunicationCatalogSource,
+            EmbeddedPreparedCommunicationCatalogSource>();
+        builder.Services.AddSingleton<IPreparedJavaReadinessPort, PreparedJavaReadinessService>();
         builder.Services.AddScoped<ExactCandidateExtractors>();
         builder.Services.AddScoped<IExactCrossRepositoryResolver, ExactCrossRepositoryResolver>();
         builder.Services.AddScoped<IExactCrossRepositoryResolutionStore, ExactCrossRepositoryResolutionStore>();
@@ -314,7 +331,11 @@ public static class VulgataWebComposition
                 @"C:\Program Files\Java\latest\jdk-21"));
         builder.Services.AddSingleton<AnalysisRuntimeReadiness>();
         builder.Services.AddSingleton<IAnalysisRuntimeHealthProbe, ConfiguredAnalysisRuntimeHealthProbe>();
-        builder.Services.AddSingleton<ICodeGraphAnalysisPort, CodeGraphAnalysisAdapter>();
+        builder.Services.AddSingleton<CodeGraphAnalysisAdapter>();
+        builder.Services.AddSingleton<ICodeGraphAnalysisPort>(services =>
+            services.GetRequiredService<CodeGraphAnalysisAdapter>());
+        builder.Services.AddSingleton<IPreparedCodeGraphAnalysisPort>(services =>
+            services.GetRequiredService<CodeGraphAnalysisAdapter>());
         builder.Services.AddSingleton<IJavaAnalysisSessionFactory, UnboundJavaAnalysisSessionFactory>();
         builder.Services.AddSingleton<IRevisionBoundSourceReader, UnboundRevisionSourceReader>();
         builder.Services.AddScoped<IScanRecoveryBindingProbe, RuntimeScanRecoveryBindingProbe>();
@@ -362,6 +383,7 @@ public static class VulgataWebComposition
         builder.Services.AddValidatorsFromAssemblyContaining<CreateLlmProviderRequestValidator>();
         builder.Services.AddValidatorsFromAssemblyContaining<UpsertSystemLlmProviderOverrideRequestValidator>();
         builder.Services.AddValidatorsFromAssemblyContaining<UpsertDatabaseConnectionRequestValidator>();
+        builder.Services.AddScoped<IValidator<PreparedScanRequest>, PreparedScanRequestValidator>();
         builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
         return frameworkCatalog;

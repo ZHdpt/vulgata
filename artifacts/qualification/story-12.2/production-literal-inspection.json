@@ -1,0 +1,451 @@
+{
+  "SchemaVersion": "story-12.2-production-literal-inspection/1.0",
+  "Task": "T049",
+  "DenylistSha256": "efb5eb11ce5e332819e103b97613e978d4aa2e85137f379f103eb1bb6c85bb24",
+  "Denylist": [
+    {
+      "Category": "canonical-path",
+      "Literal": "src/main/java/neutral/app/OrderGateway.java",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/snapshot-inventory.json"
+    },
+    {
+      "Category": "canonical-path",
+      "Literal": "src/main/resources/neutral/communication.xml",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/snapshot-inventory.json"
+    },
+    {
+      "Category": "canonical-path",
+      "Literal": "src/test/java/neutral/TestOnly.java",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/snapshot-inventory.json"
+    },
+    {
+      "Category": "canonical-path",
+      "Literal": "vendor/neutral/vendor.xml",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/snapshot-inventory.json"
+    },
+    {
+      "Category": "endpoint",
+      "Literal": "svc://neutral/orders",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/repository/src/main/resources/neutral/communication.xml"
+    },
+    {
+      "Category": "endpoint-after-prefix-removal",
+      "Literal": "neutral/orders",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/repository/src/main/resources/neutral/communication.xml"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:100",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:118",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:121",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:160",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:191",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:47",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:70000",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:80",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022line\u0022:99",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:100",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:118",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:121",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:160",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:191",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:47",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:70000",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:80",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineEnd\u0022:99",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:100",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:118",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:121",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:160",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:191",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:47",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:70000",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:80",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineNumber\u0022:99",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:100",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:118",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:121",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:160",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:191",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:47",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:70000",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:80",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "\u0022lineStart\u0022:99",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:100",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:118",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:121",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:160",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:191",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:47",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:70000",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:80",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line:99",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=100",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=118",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=121",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=160",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=191",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=47",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=70000",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=80",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-line-context",
+      "Literal": "line=99",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-rooted-path",
+      "Literal": "repository/src/main/java/neutral/app/OrderGateway.java",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "fixture-rooted-path",
+      "Literal": "repository/src/main/resources/neutral/communication.xml",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json"
+    },
+    {
+      "Category": "release-repository-name",
+      "Literal": "release-a",
+      "Source": "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md"
+    },
+    {
+      "Category": "release-repository-name",
+      "Literal": "release-b",
+      "Source": "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md"
+    },
+    {
+      "Category": "release-repository-ref",
+      "Literal": "refs/tags/release-a",
+      "Source": "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md"
+    },
+    {
+      "Category": "release-repository-ref",
+      "Literal": "refs/tags/release-b",
+      "Source": "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md"
+    },
+    {
+      "Category": "repository-name",
+      "Literal": "neutral-fixture",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/catalog/all-grammar.json"
+    },
+    {
+      "Category": "repository-name",
+      "Literal": "neutral-fixture",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/snapshot-inventory.json"
+    },
+    {
+      "Category": "repository-ref",
+      "Literal": "refs/heads/neutral-fixture",
+      "Source": "tests/Vulgata.Tests/Fixtures/PreparedScanning/snapshot-inventory.json"
+    }
+  ],
+  "InspectedAssemblies": [
+    {
+      "Identity": "Vulgata.Agents.dll",
+      "Version": "1.0.0.0",
+      "ModuleVersionId": "a6a47c75-215d-4e23-9d09-895be0d7cf25",
+      "Sha256": "a34c81b44f7b26b2e6b2efb152c69faa5c71e9893398ae8f1bfb8d58145c6ab2"
+    },
+    {
+      "Identity": "Vulgata.Core.dll",
+      "Version": "1.0.0.0",
+      "ModuleVersionId": "50e9b360-0e0d-49da-ac97-66471159b48c",
+      "Sha256": "476e432b844ff3b8a58889b58f4acbafa7d0eec1d0049056ee8c84f1c9c325d6"
+    },
+    {
+      "Identity": "Vulgata.Infrastructure.dll",
+      "Version": "1.0.0.0",
+      "ModuleVersionId": "46e9f612-5308-4b75-8b46-0d017506c465",
+      "Sha256": "4d8de8c9b71d1be67fd012bed832fcde6dd201b4a47981c387c197d4e9d06b8f"
+    },
+    {
+      "Identity": "Vulgata.Shared.dll",
+      "Version": "1.0.0.0",
+      "ModuleVersionId": "0c84df27-cfcb-44bd-ac01-016bfab8cf1e",
+      "Sha256": "aeda9537baf8bcec1ea4b38324787c227bf6a4b667adf6d9d90e191571669047"
+    },
+    {
+      "Identity": "Vulgata.Web.ViewModels.dll",
+      "Version": "1.0.0.0",
+      "ModuleVersionId": "292299f4-7e87-4b0d-9ba5-a7dad52aa1a2",
+      "Sha256": "bb596f445ca647b76ce74745e684239a9a7eb43574826b4c1a960cf95b10b62c"
+    },
+    {
+      "Identity": "Vulgata.Web.dll",
+      "Version": "1.0.0.0",
+      "ModuleVersionId": "a3db90c8-0baf-4c1c-9988-35edbe68ae26",
+      "Sha256": "06b7105f1d6ccb4b1fee8f14341f88fb34c256d41101121090c7cd5dbe17cbc2"
+    }
+  ],
+  "InspectedResources": [
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.PreparedFlows.demo-business-flow.v1.json",
+      "Bytes": 1270,
+      "Sha256": "27e3f64faab69603173ef54b2bdbb1306d65c4ad50f928981299069f8840547a"
+    },
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Prompts.chat-business.v1.md",
+      "Bytes": 2023,
+      "Sha256": "fcbd5c09713b006c47c9b20f7d18cb22d448903b41fcaac1674a6adf3cb710e9"
+    },
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Prompts.chat-it.v1.md",
+      "Bytes": 1681,
+      "Sha256": "418691a3dcb3464673a8e2458437314b45af1d7273909d78da9c2b2a7b11ec8d"
+    },
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Prompts.pass1-code-logic-worker.v1.md",
+      "Bytes": 6046,
+      "Sha256": "4f7afc804335ac7e7cc2c10aa6cb034af9d4cdad224e64493dd3f1589ebd6673"
+    },
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Prompts.pass2-business-flow-worker.v1.md",
+      "Bytes": 6721,
+      "Sha256": "47f4e2f4e10d706c8f51c38a4b10ba1c529c2522af0d47624f8aacd09a92213c"
+    },
+    {
+      "Identity": "Vulgata.Infrastructure.dll::Vulgata.Infrastructure.CommunicationDetection.Catalog.communication-evidence-rules.v1.json",
+      "Bytes": 3224,
+      "Sha256": "a863ac88464d7dc6afd78c9c60d1b7958f92c02c35e32be6e068d622dfc1c2e9"
+    },
+    {
+      "Identity": "Vulgata.Infrastructure.dll::Vulgata.Infrastructure.CommunicationDetection.Catalog.communication-pattern-catalog.v1.json",
+      "Bytes": 804,
+      "Sha256": "d8cb15b874628264cb767b4fb93e5b7d66a1b5d12e170532c49f957324d08d79"
+    },
+    {
+      "Identity": "Vulgata.Infrastructure.dll::Vulgata.Infrastructure.CrossRepository.Profiles.demo-resolution-profile.v1.json",
+      "Bytes": 2815,
+      "Sha256": "5d621ca3a09d88305abc2a3661747ef4c9e04b3016f54baced7dc9c113e434bb"
+    },
+    {
+      "Identity": "Vulgata.Infrastructure.dll::Vulgata.Infrastructure.FrameworkDetection.Catalog.framework-catalog.v1.json",
+      "Bytes": 2533,
+      "Sha256": "06959d23ff2b6354a0368cefe1b916d45b9eec8bd561e2df79062656334e3700"
+    }
+  ],
+  "InspectedPublicOutputs": [
+    {
+      "Identity": "CommunicationCatalogLoader.LoadEmbedded",
+      "Bytes": 661,
+      "Sha256": "6f0732955a4c002a911160c59600cd1894d98f7dbbbca8a3e63854b13f6de0f8"
+    }
+  ],
+  "Exclusions": [
+    "Vulgata.Tests.dll and every other test/fixture binary",
+    "tests/Vulgata.Tests/Fixtures/**",
+    "third-party and platform assemblies"
+  ],
+  "Matches": [],
+  "Verdict": "zero-match"
+}
