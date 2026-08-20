@@ -154,8 +154,7 @@ and unrelated work remain excluded.
 - Canonical activation:
   `docs/bmad/implementation-artifacts/workflow-activations/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.json`
 - Proposed SpecKit short name: `java-xml-prescan-manifest`.
-- Expected free allocation: `specs/011-java-xml-prescan-manifest`; the
-  specification author owns the actual allocation.
+- Allocated feature directory: `specs/011-java-xml-prescan-manifest`.
 - Workflow schema/execution: `3.0` / unified.
 - Authority source commit:
   `29e889badc00db671fcabf80f50918e15381052c`.
@@ -168,3 +167,203 @@ ancestral commit `be821b58f55dcfd18a605435e55df96a9a76b0d7`. Current historical
 PreScan code may supply seams but cannot override the dated Epic 12 authority
 or reintroduce CodeGraphContext. Specification is the next owner; tasks and
 production implementation remain unauthorized.
+
+### Combined definition review iteration 5 acceptance
+
+The explicitly authorized fifth review returned `ACCEPT`. The prepared-only
+`PreparedScanManifestEntry` principal is EF Core/PostgreSQL feasible while
+historical nullable `CodeUnit` fields remain non-key and require no backfill.
+All qualification owners precede the sole final verification barrier. All 43
+Functional Requirements and nine Success Criteria are covered, the August host
+runtime pins and Story 12.3 exclusions remain intact, and no blocking finding
+remains. DR5-001 is a nonblocking Medium implementation-partitioning note: T048
+owns executable boundary tests and T051 owns the evidence record to avoid shared
+file duplication. The raw verdict is preserved at
+`specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json`.
+The workflow is paused at the separate implementation-approval gate; production
+implementation remains unauthorized.
+
+### Task-generation outcome
+
+`speckit-tasks` produced 45 dependency-ordered tasks across setup, foundational
+contracts, four P1 vertical slices, migration, real-tool qualification, release
+qualification, security boundaries, and final verification. Every behavioral
+production task has an explicit public-seam RED predecessor and focused GREEN
+owner; migration/model snapshot, persistence/replay, and API/DI shared ownership
+is assigned solely to T036, T038, and T040. All 43 Functional Requirements and
+nine Success Criteria are traced, and Story 12.3 Worker execution and Document
+generation remain excluded. The task author self-review and `git diff --check`
+passed. Fresh combined definition review is next; production implementation
+remains unauthorized.
+
+### Combined definition review iteration 1
+
+Fresh independent combined review returned `REVISE`. DR-001 found that the
+legacy Story 12.1 Scan Context Snapshot identifier includes `CapturedAt`, while
+the Prepared Scan Manifest canonical envelope included that identifier in replay
+identity; unchanged preparations at different instants could therefore diverge.
+DR-002 through DR-005 require regenerated tasks to order XML ranges after the
+safe XML projection, add explicit PostgreSQL atomic-store qualification, prove
+three complete deterministic preparations and the two-minute per-Repository
+bound, and correct nonbehavioral RED labels. The raw verdict is preserved at
+`specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-01.json`.
+The plan owner is the earliest correction owner; tasks are downstream-invalid
+and production implementation remains unauthorized.
+
+### Plan correction after combined definition review iteration 1
+
+The plan owner closed DR-001 with the additive
+`PreparedScanContextIdentityHash` canonical domain over Repository, Scan Run,
+Profiled Revision, snapshot schema, and content hash. Manifest identity now
+references that stable hash; the legacy time-derived snapshot ID and
+`CapturedAt` remain unchanged relational/audit metadata and are excluded from
+replay identity. Historical Story 12.1 rows are neither backfilled nor
+reinterpreted. The corrected plan also fixes the exact downstream test seams for
+safe-XML-before-XML-split ordering, disposable PostgreSQL 17 store atomicity,
+three-run/reversed-input release qualification with full per-Repository timing,
+and nonbehavioral qualification labels. Task regeneration is next; production
+implementation remains unauthorized.
+
+### Task regeneration after combined definition review iteration 1
+
+The task owner regenerated a 49-task dependency graph. It adds capture-time and
+legacy-ID variance vectors, makes safe XML projection/range-index GREEN before
+the sole XML split consumer, assigns disposable PostgreSQL 17 store atomicity to
+an exact suite separate from migration lifecycle, requires three complete paired
+preparations with reversed inputs and full per-Repository timing, and labels
+workflow/security inspections as post-GREEN nonbehavioral qualification. All 43
+Functional Requirements and nine Success Criteria remain traced. Fresh combined
+definition review iteration 2 is next; production implementation remains
+unauthorized.
+
+### Combined definition review iteration 2
+
+Fresh review returned `REVISE`. The stable Prepared Scan Context identity,
+PostgreSQL atomic-store suite, full three-run qualification, and nonbehavioral
+labels were accepted. DR2-001 found that XML split tasks were still physically
+placed after their US4 consumers and release qualifications, with contradictory
+parallel guidance. DR2-002 found the canonical audit-fingerprint production task
+lacked an honest preceding RED owner. DR2-003 found two stale spec sentences
+that still described glossary adoption as pending although the authoritative
+glossary is already updated. The raw verdict is preserved at
+`specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-02.json`.
+The spec is the earliest correction owner; plan and tasks are downstream-invalid,
+and production implementation remains unauthorized.
+
+### Plan-only review iteration 1
+
+The independent reviewer returned `REVISE` with four High findings. PR-001
+requires the specification to limit nonfatal fallback to post-readiness related-
+file expansion. PR-002 requires distinct per-Repository manifest and pair-
+selection ordinal domains. PR-004 requires a canonical Repository identity
+comparator and exact high-value/cap semantics. PR-003 requires the regenerated
+plan to define complete versioned canonical byte envelopes and UUID construction
+without ID/fingerprint cycles. The raw verdict is preserved at
+`specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-01.json`.
+Correction returns to the specification owner, then regenerates the complete
+plan set before a fresh plan-only review. Tasks and production implementation
+remain unauthorized.
+
+### Definition correction after plan review iteration 1
+
+The specification author closed PR-001, PR-002, and PR-004 without renumbering
+the 43 Functional Requirements. It now distinguishes hard analysis readiness
+from the sole post-readiness expansion fallback, defines Repository-local
+Manifest Ordinals and pair-global Pair Selection Ordinals, fixes lowercase UUID
+text comparison, and defines mandatory high-value seed/cap semantics with
+golden cases. The plan architect regenerated every plan artifact and closed
+PR-003 through the versioned noncircular canonical-envelope contract at
+`specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md`, including
+domain separators, exact scalar/list/nested encodings, field order, derived
+exclusions, SHA-256, UUIDv8 construction, golden vectors, and independent
+reconstruction tests. Fresh independent plan-only review iteration 2 is next.
+Tasks and production implementation remain unauthorized.
+
+### Planned-change authorization
+
+The user explicitly approved scope
+`a77c1118e1c4a33ab43094b554745fa2b1297c749a7853e63d9834e43a53e150`
+on 2026-08-20. The workflow may proceed to dependency-ordered task generation.
+The approval does not authorize production implementation; fresh combined
+definition review and the separate implementation-approval gate remain
+mandatory.
+
+### Plan-only review iteration 2
+
+The fresh independent reviewer returned `REVISE` with one High plan-owned
+finding, PR2-001. PR-001, PR-002, and PR-004 from iteration 1 are independently
+closed; the original PR-003 envelope cycle/grammar defect is mostly closed.
+However, CodeGraph and Java readiness hashes still lack normative envelope
+preimages and include volatile measured durations, so unchanged preparations
+could produce different manifest fingerprints. The raw verdict is preserved at
+`specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-02.json`.
+The plan owner must define stable proof-identity envelopes, move durations to
+nonidentity audit telemetry, add proof golden vectors and independent replay
+reconstruction, and regenerate downstream plan artifacts. Tasks and production
+implementation remain unauthorized.
+
+### Definition correction after plan review iteration 2
+
+The plan architect regenerated every affected planning artifact for PR2-001.
+CodeGraph completeness and Java readiness now have exact versioned canonical
+proof-identity envelopes; the manifest references those stable hashes. Measured
+duration, timestamps, process/resource telemetry, diagnostics, raw protocol
+messages, absolute paths, tokens, and failed-attempt detail remain bounded audit
+metadata and are excluded from replay identity. Literal proof vectors,
+independent relational reconstruction, duration-variance replay, and stable-
+predicate mutation conflict tests are required. Fresh independent plan-only
+review iteration 3 is next. Tasks and production implementation remain
+unauthorized.
+
+### Plan-only review iteration 3 and authorization pause
+
+Fresh independent review iteration 3 returned `ACCEPT` with no findings. It
+independently closed PR-001 through PR-004 and PR2-001, revalidated all 43
+Functional Requirements and nine Success Criteria, preserved the August host-
+runtime architecture and Story 12.3 exclusion, and accepted the complete
+planned-change disclosure. The raw verdict is preserved at
+`specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json`.
+The workflow is paused before task generation for explicit planned-change
+authorization bound to scope
+`a77c1118e1c4a33ab43094b554745fa2b1297c749a7853e63d9834e43a53e150`.
+The pending request is at
+`specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md`.
+Tasks and production implementation remain unauthorized.
+
+### Specification outcome
+
+`speckit-specify` allocated `specs/011-java-xml-prescan-manifest`. The author
+self-review passed bounded intent, 43 measurable Functional Requirements, nine
+Success Criteria, terminology, authority precedence, source-reference coverage,
+Story 12.3 exclusions, and placeholder checks. No `[NEEDS CLARIFICATION]` item
+remains. The root adopted Prepared Scan Manifest, File Code Unit, and Scan
+Context Snapshot into the Ubiquitous Language glossary. Planning is the next
+owner; task generation and production implementation remain unauthorized.
+
+### Planning outcome
+
+`plan-architect-high` completed the full `speckit-plan` set with an acceptable
+inline self-review. The plan makes exact acquisition/hash, disposable analysis
+workspace, closed CodeGraph/JDT-LS proof, safe XML/catalog, bounded split,
+deterministic pair ordering, versioned prepared-package, pair-wide atomic
+transaction/replay, migration, API, and verification decisions. All 43
+Functional Requirements and nine Success Criteria are traced. The only
+nonblocking capability risk is bounded CodeGraph relationship-type evidence;
+unsupported behavior records a Warning and uses deterministic direct ordering,
+never a broader tool. Independent plan-only review is the next owner. Tasks and
+production implementation remain unauthorized.
+
+### Combined definition review iteration 4 and mandatory pause
+
+Fresh review returned `REVISE`. DR4-001 found that nullable historical-compatible
+`CodeUnit` columns cannot simultaneously serve as the proposed EF Core alternate
+principal key for selected-audit association; the next plan must use a feasible
+prepared-only principal/entry shape or another explicit non-null principal
+constraint while retaining every audit replay preimage. DR4-002 found final
+verification physically precedes the production-literal, PostgreSQL atomicity,
+and workflow/security qualifications whose evidence it requires. DR4-003 is a
+stale quickstart provenance label. The raw verdict is preserved at
+`specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-04.json`.
+Because this is the fourth definition-review `REVISE`, workflow policy pauses
+before any fifth correction for explicit user direction. Production
+implementation remains unauthorized.

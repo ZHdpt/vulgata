@@ -14,6 +14,9 @@
 | **Pass 2** | The second phase: deterministic planning traces path-aware graph slices from entry points, clusters them into flow groups, and dispatches one Worker Agent per flow group to synthesize Business Logic Documents from Code Logic Documents and trace evidence. | BL Doc Generation |
 | **Document Pre-Allocation** | Creating logical Document slots or planned version rows for filtered Code Units before Worker Agents run, so same-scan references can target stable identities without treating unfinished placeholders as generated Documents. | Pre-seeding |
 | **Profiled Revision** | The immutable Git commit identity from which one ScanRun profile and its Pre-Scan Result are derived. Later consumers must use that exact revision rather than whichever commit is currently checked out. | Current Revision, Working-Copy Revision |
+| **Scan Context Snapshot** | The immutable Global, System, and Repository advisory context captured once for one Repository Scan Run at one Profiled Revision. It is context for later analysis, not source evidence, and cannot be edited after capture. | Context Bundle, Scan Context |
+| **Prepared Scan Manifest** | The immutable, schema-versioned, canonically ordered and fingerprinted result of complete deterministic PreScan for one Repository. It binds the exact source inventory, selection and audit outcomes, File Code Units, analysis-readiness proof, Communication Kind Classification references, and Scan Context Snapshot. | Work Manifest, Scan Queue |
+| **File Code Unit** | A `CodeUnitType.File` scheduling unit representing one complete bounded file or one exact safe segment of an oversized file at one Profiled Revision. It is not a method-level Code Unit and does not imply Worker execution or a Document. | File Job, File Chunk |
 | **Pre-Scan Result** | The immutable, ScanRun-scoped deterministic result produced after Repository profiling. It records `pre_scan_approved`, confirmed communication kinds, bounded evidence samples, warnings, and integrity metadata without dispatching any Worker Agent. | Pre-Scan Report, Scan Approval |
 | **Communication Kind Classification** | A conservative classification of an observed prepared communication kind as Confirmed, Hint, or Warning. It identifies only the kind of communication and does not resolve providers, consumers, endpoints, or Cross-Repository relationships. | Communication Type Detection, Endpoint Detection |
 | **Evidence Locator** | A bounded Repository-relative source location plus rule and provenance metadata supporting a Communication Kind Classification. It never contains source content or an absolute path. | Evidence Record, Source Snippet |
@@ -64,6 +67,8 @@
 - A **Two-Repository Scan Coordination** binds exactly two independent Repository Scan lifecycles within one **System** without changing either Scan's Repository scope.
 - An **Orchestrator** manages one **Scan** and dispatches N **Worker Agents**.
 - A **ScanRun** profiles exactly one **Profiled Revision** and produces at most one **Pre-Scan Result** for that revision.
+- A **Scan Context Snapshot** captures immutable advisory context for that **ScanRun** and **Profiled Revision**.
+- A complete **Prepared Scan Manifest** orders the bounded **File Code Units** selected for one Repository without authorizing Worker Agent dispatch.
 - A **Pre-Scan Result** contains zero or more **Communication Kind Classifications**, each supported by bounded **Evidence Locators**.
 - An authorized **Pre-Scan Handoff** exposes an approved **Pre-Scan Result** to a downstream runner, which must verify the same **Profiled Revision** before continuing.
 - A **Worker Agent** processes one **Code Unit** (Pass 1) or one flow group's Code Logic Documents and trace evidence (Pass 2).

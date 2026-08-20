@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "6fe7d4a88ff344b1d71329d19fdb9d6d6d64b7e6",
+  "reviewed_boundary": {
+    "base_commit": "6fe7d4a88ff344b1d71329d19fdb9d6d6d64b7e6",
+    "candidate_commit": null,
+    "diff_sha256": "358091c9c3f84686b9085b40ca06987e0db26df138a63318a251e9f450b79abe",
+    "artifact_hashes": {
+      "docs/UBIQUITOUS_LANGUAGE.md": "837986eb1af9efa95e1a94798701ea6a9fbc500997f2800ea0dca6d26197d163",
+      "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md": "dd12fbdb414ba8c421f96cbd74fe42b3c5071de06dcc03999848f31122e789cb",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.json": "ca059ac677e9b53dac76d994081da8b9d46b04a4f0e9adbe48f74de921d515fa",
+      "specs/011-java-xml-prescan-manifest/checklists/requirements.md": "070affb70472c8d264cdf06ec5e06412e0ef06119bb7be388ce385351a5d8150",
+      "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md": "5b8d37a48e2d23e651ca1b8a3c140704544b37227a8150a6d95aaa3e05616b68",
+      "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md": "e03635acd4c51bde3acde8307dbf03ff29011d70acec07d042512290e8681036",
+      "specs/011-java-xml-prescan-manifest/contracts/prepared-scan-contracts.md": "a204e9794d41f8058daca352ccd11a2d1a493eed3d51136adce8fe58b94679d7",
+      "specs/011-java-xml-prescan-manifest/contracts/safe-analysis-contracts.md": "a76857c8c44f5fd7d45150c26eb2701516aaa7b2e5adcf76df07e4db99476e78",
+      "specs/011-java-xml-prescan-manifest/data-model.md": "9d3cfea549cd6768748437e1b5940280f27cf21dcc9131823367dbda09ec2d5d",
+      "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md": "d639a3d68687a099e16a3ec0ead36d7dee816016f1fe7cf67991cdea9b2a19d7",
+      "specs/011-java-xml-prescan-manifest/plan.md": "76e12bc1bcff7521ab5644dc2be1217c17b432ad3b0c99c1c62b69a7efec1601",
+      "specs/011-java-xml-prescan-manifest/quickstart.md": "4cc364628f5a12ab2eb0c1eb5aa072c7f0a9a524f38ae10fc8a32bd6e7675603",
+      "specs/011-java-xml-prescan-manifest/research.md": "7cab8890fe18fa60c4542931dd3e3bb12812b8c85665556a78a43f2d915677c1",
+      "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-01.json": "f0d3b960f8e8fcb431b04dd2d7c57632137da228473edb981fdcb2ca8649a112",
+      "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-02.json": "ba079866ecd2783b54cfbe1b4d25fd51539e5664c7d321a7e146a202215e5c85",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-01.json": "229e646f2f9b6a4fe2386f46d7fdafa1f6a4a51129cd1b5fac004c8da7cc0699",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-02.json": "5e99552855a82a1370ebd8d95a31df06922925fee6d321df01222d5413df5655",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json": "c9b61d972b180319c59f6aa70fff59cb8499aadf3d7db92fbb976d205246cfd6",
+      "specs/011-java-xml-prescan-manifest/spec.md": "c15d03b2b10e4eaa452a59e3b96acafdbb04160de556ca93c28380117a085ad3",
+      "specs/011-java-xml-prescan-manifest/tasks.md": "c800df9d80485563b38a310571f38594c7cd56d04cf11807dd9c2603facf8855",
+      "specs/011-java-xml-prescan-manifest/workflow-state.json": "7254992c1eaaafd9eaf57316bbcb30acdd44d336ddb75edc028c7cba956d1933"
+    },
+    "owned_paths": [
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.json",
+      "specs/011-java-xml-prescan-manifest/checklists/requirements.md",
+      "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md",
+      "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md",
+      "specs/011-java-xml-prescan-manifest/contracts/prepared-scan-contracts.md",
+      "specs/011-java-xml-prescan-manifest/contracts/safe-analysis-contracts.md",
+      "specs/011-java-xml-prescan-manifest/data-model.md",
+      "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md",
+      "specs/011-java-xml-prescan-manifest/plan.md",
+      "specs/011-java-xml-prescan-manifest/quickstart.md",
+      "specs/011-java-xml-prescan-manifest/research.md",
+      "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-01.json",
+      "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-02.json",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-01.json",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-02.json",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json",
+      "specs/011-java-xml-prescan-manifest/spec.md",
+      "specs/011-java-xml-prescan-manifest/tasks.md",
+      "specs/011-java-xml-prescan-manifest/workflow-state.json"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md", ".agents/skills/run-bmad-sprint-loop/SKILL.md", ".agents/skills/run-bmad-sprint-loop/references/dispatch-contract.md", ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json", ".agents/skills/speckit-analyze/SKILL.md", ".specify/extensions.yml", ".specify/memory/constitution.md", "docs/UBIQUITOUS_LANGUAGE.md", "docs/agent-workflow/agent-catalog.md", "docs/agent-workflow/artifact-contracts.md", "docs/agent-workflow/review-and-correction.md", "docs/bmad/epics.md", "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md", "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md", "docs/bmad/implementation-artifacts/workflow-activations/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.json", "docs/bmad/planning-artifacts/architecture.md", "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md", "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md", "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md", "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md", "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md", "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md", "specs/010-durable-scan-foundation/plan.md", "specs/010-durable-scan-foundation/spec.md", "specs/011-java-xml-prescan-manifest/checklists/requirements.md", "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md", "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md", "specs/011-java-xml-prescan-manifest/contracts/prepared-scan-contracts.md", "specs/011-java-xml-prescan-manifest/contracts/safe-analysis-contracts.md", "specs/011-java-xml-prescan-manifest/data-model.md", "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md", "specs/011-java-xml-prescan-manifest/plan.md", "specs/011-java-xml-prescan-manifest/quickstart.md", "specs/011-java-xml-prescan-manifest/research.md", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-01.json", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-02.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-01.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-02.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json", "specs/011-java-xml-prescan-manifest/spec.md", "specs/011-java-xml-prescan-manifest/tasks.md", "specs/011-java-xml-prescan-manifest/workflow-state.json", "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs", "src/dotnet/Vulgata.Core/DomainServices/ApprovedPreScanHandoff.cs", "src/dotnet/Vulgata.Core/DomainServices/IApprovedPreScanHandoffSource.cs", "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs", "src/dotnet/Vulgata.Core/Entities/CommunicationKindClassification.cs", "src/dotnet/Vulgata.Core/Entities/PreScanResult.cs", "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs", "src/dotnet/Vulgata.Core/Entities/TwoRepositoryScanCoordination.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs", "src/dotnet/Vulgata.Infrastructure/Data/ApprovedPreScanHandoffSource.cs", "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs", "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs", "src/dotnet/Vulgata.Infrastructure/Git/ScanCandidateEnumerator.cs", "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs", "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs", "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs", "tests/Vulgata.Tests/ExactGitRevisionAcquisitionTests.cs", "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "DR3-001",
+      "severity": "HIGH",
+      "category": "Relational replay feasibility",
+      "artifact": "specs/011-java-xml-prescan-manifest/data-model.md",
+      "location": "section 2 Prepared Scan Audit Outcome; canonical-envelope.md section 4.6; prepared-scan-contracts.md IPreparedScanStore step 3",
+      "affected_requirement": "FR-034, FR-038, FR-040, SC-001, SC-008",
+      "evidence": "The canonical Prepared Scan Audit envelope requires nullable File Code Unit identity fingerprint at tag 9 and nullable PairSelectionOrdinal at tag 10. The persisted Prepared Scan Audit Outcome table omits both preimage fields and has no File Code Unit association from which they can be reconstructed unambiguously, especially when one path yields multiple segments. The store contract nevertheless requires independent reconstruction of every canonical envelope from complete PostgreSQL rows. Persisting only DetailFingerprint cannot prove its preimage or detect a corrupted-but-self-consistent stored digest, so exact relational replay and changed-child conflict behavior are not implementable as specified.",
+      "correction_outcome": "Regenerate the plan set so Prepared Scan Audit persistence retains every canonical-envelope preimage field, including nullable FileCodeUnitIdentityFingerprint and PairSelectionOrdinal or an equally exact unambiguous relational association. Define conditional invariants for selected versus nonselected audits, include both fields in migration/configuration/store ownership, and require independent PostgreSQL reconstruction plus mutation tests. Then regenerate downstream tasks.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "DR3-002",
+      "severity": "HIGH",
+      "category": "Acceptance coverage",
+      "artifact": "specs/011-java-xml-prescan-manifest/tasks.md",
+      "location": "T002, T028-T035, T047-T051, and Traceability and self-review",
+      "affected_requirement": "FR-024, SC-006, Story 12.2 AC-3",
+      "evidence": "The tasks create neutral fixtures and test XML safety, catalog behavior, classifications, release determinism, and general Story-boundary exclusions, but no task explicitly tests or inspects production behavior for zero literal sample Repository names, paths, endpoints, or line numbers. T048 enumerates LLM, Worker, navigate_code, Document, Edge, Pass 2, Chat, Backup B, and CodeGraphContext exclusions only; T051 merely names a generic security inspection record. The quickstart expects sample-specific literals to be absent, but no task owns that assertion. The traceability claim therefore does not provide executable coverage for the final clause of FR-024 and SC-006.",
+      "correction_outcome": "Regenerate tasks to assign an exact post-GREEN production-literal inspection or public-seam neutral-fixture assertion covering Repository names, paths, endpoints, and line numbers, with a concrete test or qualification path and failure routing to a requirement-backed RED/GREEN correction. Include it in SC-006 traceability and final verification.",
+      "earliest_owner": "tasks"
+    },
+    {
+      "id": "DR3-003",
+      "severity": "MEDIUM",
+      "category": "Verification command consistency",
+      "artifact": "specs/011-java-xml-prescan-manifest/quickstart.md",
+      "location": "section 3 Canonical-envelope and independent replay proof",
+      "affected_requirement": "FR-040, SC-008, Constitution Principle IV",
+      "evidence": "The section invokes FullyQualifiedName~PreparedReplayReconstruction, but no plan or task assigns that test identity. Independent store replay reconstruction is assigned to PreparedScanAtomicReplayTests and PreparedScanAtomicPostgreSqlTests. Because the filter is ORed with PreparedCanonicalEnvelope, the command can pass while silently running no relational replay-reconstruction test, despite the section's stated expectation.",
+      "correction_outcome": "Align the quickstart filter with an exact task-owned test identity, or explicitly require the assigned replay test class to use PreparedReplayReconstruction in its fully qualified name. Keep the PostgreSQL reconstruction suite separately mandatory.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "DR3-004",
+      "severity": "LOW",
+      "category": "TDD self-review consistency",
+      "artifact": "specs/011-java-xml-prescan-manifest/tasks.md",
+      "location": "Traceability and self-review, fifth bullet",
+      "affected_requirement": "Task testing rule",
+      "evidence": "The self-review lists T038 among tasks explicitly classified as non-RED, while T038 is an Author RED tests task for prepared-context, v1/v2 handoff, projection, and no-dispatch behavior. The task itself has a valid following GREEN owner T039, but the summary classification contradicts it.",
+      "correction_outcome": "Remove T038 from the non-RED list and retain its explicit RED-to-T039-GREEN ownership.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "REVISE. Fresh read-only combined definition review covered the raw Story 12.2 record, corrected specification/checklist, fully regenerated plan set and contracts, current 51-task graph, Constitution, AGENTS.md, Ubiquitous Language, PRD and August authorities, prior definition verdicts, Story 12.1 contracts, and relevant source/test seams. The speckit-analyze prerequisite helper resolved the persisted feature pointer to specs/010-durable-scan-foundation; analysis therefore continued explicitly and non-destructively against dispatch-pinned feature 011. Counts are 43 unique Functional Requirements, nine unique Success Criteria, and 51 sequential unique tasks, with no unresolved placeholders. DR-001 through DR-005 and DR2-001 through DR2-003 are closed: stable prepared-context identity excludes capture time and legacy ID; XML projection and split are physically ordered before US4 consumers; disposable PostgreSQL atomicity and three-run timing qualifications exist; nonbehavioral checks are labeled; canonical audit RED/GREEN ownership precedes consumers; and glossary adoption text is current. The approved runtime and scope remain preserved: Vulgata, CodeGraph @colbymchenry/codegraph@1.5.0, Java 21, and JDT LS jdt-language-server-1.61.0-202608141332 over StreamJsonRpc 2.25.29 stdio run on Windows; PostgreSQL 17 is the only required Docker service; CodeGraphContext is not reintroduced; Story 12.3 Worker execution, navigate_code, dispatch/retry policy, and Document generation remain excluded. Acceptance is prevented by two new High findings: the relational audit model cannot reconstruct its canonical identity preimage, and the sample-specific production-literal prohibition has no exact task owner. A Medium verification-filter mismatch and Low TDD summary contradiction should be corrected in the same plan/tasks regeneration. git diff --check reported no whitespace errors, only line-ending notices; no file, state, verdict, index, branch, commit, or Git history was changed, and production implementation remains unauthorized."
+}

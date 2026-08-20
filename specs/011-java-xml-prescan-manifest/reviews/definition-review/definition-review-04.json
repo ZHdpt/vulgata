@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "6fe7d4a88ff344b1d71329d19fdb9d6d6d64b7e6",
+  "reviewed_boundary": {
+    "base_commit": "6fe7d4a88ff344b1d71329d19fdb9d6d6d64b7e6",
+    "candidate_commit": null,
+    "diff_sha256": "6d37ab6e8d9d18f7cf72f2b22335cabc6dd877593be6513be02437dbc9c44c62",
+    "artifact_hashes": {
+      "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md": "dd12fbdb414ba8c421f96cbd74fe42b3c5071de06dcc03999848f31122e789cb",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.json": "cef578955b68d04dd06c046bfeec27e993f5b3653e647a7c65be96b6f333bba9",
+      "docs/UBIQUITOUS_LANGUAGE.md": "837986eb1af9efa95e1a94798701ea6a9fbc500997f2800ea0dca6d26197d163",
+      "specs/011-java-xml-prescan-manifest/checklists/requirements.md": "070affb70472c8d264cdf06ec5e06412e0ef06119bb7be388ce385351a5d8150",
+      "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md": "7ae2178ec1a9aeb1019f51895ca223708f6eff38b6d4a4aaa163e024e231d638",
+      "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md": "d83d661ca89e77ab7517baa712d38040bece40dca6af3ab441666c85b50b7219",
+      "specs/011-java-xml-prescan-manifest/contracts/prepared-scan-contracts.md": "f085ca9340483d4663a03b873fd5c84304510b65581f659ce8a4b1e4daede996",
+      "specs/011-java-xml-prescan-manifest/contracts/safe-analysis-contracts.md": "5a7d8dda3426dd8fba0adfa76fc697be580233992afc98e37dd138efbaddc15c",
+      "specs/011-java-xml-prescan-manifest/data-model.md": "e03d3b02e8517b13797a31d4e9c6647f9140b84d732f47f6deed51a765683afd",
+      "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md": "d639a3d68687a099e16a3ec0ead36d7dee816016f1fe7cf67991cdea9b2a19d7",
+      "specs/011-java-xml-prescan-manifest/plan.md": "6bb4e5f7c899e56a546674ae9de18bc3dfca6a6f1d6917a6f6e45c57d46a1209",
+      "specs/011-java-xml-prescan-manifest/quickstart.md": "21c833ff1c95bdfae65c42e455f2ee3f0b730bff27b336cd71f88baba3f4535a",
+      "specs/011-java-xml-prescan-manifest/research.md": "44818e2467fbe096a474bb5a023acfc66690b75258131dd1210a22771ebfb8b4",
+      "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-01.json": "f0d3b960f8e8fcb431b04dd2d7c57632137da228473edb981fdcb2ca8649a112",
+      "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-02.json": "ba079866ecd2783b54cfbe1b4d25fd51539e5664c7d321a7e146a202215e5c85",
+      "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-03.json": "a6149e352001ac2355cce0e9a55ea556fa27bdb0338c93c68c28cbe720f44547",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-01.json": "229e646f2f9b6a4fe2386f46d7fdafa1f6a4a51129cd1b5fac004c8da7cc0699",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-02.json": "5e99552855a82a1370ebd8d95a31df06922925fee6d321df01222d5413df5655",
+      "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json": "c9b61d972b180319c59f6aa70fff59cb8499aadf3d7db92fbb976d205246cfd6",
+      "specs/011-java-xml-prescan-manifest/spec.md": "c15d03b2b10e4eaa452a59e3b96acafdbb04160de556ca93c28380117a085ad3",
+      "specs/011-java-xml-prescan-manifest/tasks.md": "eb556b97e5f070589ace7b999d123704bd7301e2db63175720350b26769fe22c",
+      "specs/011-java-xml-prescan-manifest/workflow-state.json": "2270ab7b025d16658319b92fc31f7b15356bc6ecb0f006ab9536af89f50ea057"
+    },
+    "owned_paths": [
+      "docs/UBIQUITOUS_LANGUAGE.md", "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md", "docs/bmad/implementation-artifacts/workflow-activations/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.json", "specs/011-java-xml-prescan-manifest/checklists/requirements.md", "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md", "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md", "specs/011-java-xml-prescan-manifest/contracts/prepared-scan-contracts.md", "specs/011-java-xml-prescan-manifest/contracts/safe-analysis-contracts.md", "specs/011-java-xml-prescan-manifest/data-model.md", "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md", "specs/011-java-xml-prescan-manifest/plan.md", "specs/011-java-xml-prescan-manifest/quickstart.md", "specs/011-java-xml-prescan-manifest/research.md", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-01.json", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-02.json", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-03.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-01.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-02.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json", "specs/011-java-xml-prescan-manifest/spec.md", "specs/011-java-xml-prescan-manifest/tasks.md", "specs/011-java-xml-prescan-manifest/workflow-state.json"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md", ".agents/skills/run-bmad-sprint-loop/SKILL.md", ".agents/skills/run-bmad-sprint-loop/references/dispatch-contract.md", ".agents/skills/run-bmad-sprint-loop/references/verdict.schema.json", ".agents/skills/speckit-analyze/SKILL.md", ".specify/extensions.yml", ".specify/memory/constitution.md", "docs/UBIQUITOUS_LANGUAGE.md", "docs/agent-workflow/agent-catalog.md", "docs/agent-workflow/artifact-contracts.md", "docs/agent-workflow/review-and-correction.md", "docs/bmad/epics.md", "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md", "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md", "docs/bmad/implementation-artifacts/workflow-activations/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.json", "docs/bmad/planning-artifacts/architecture.md", "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md", "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md", "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md", "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md", "specs/010-durable-scan-foundation/contracts/analysis-runtime-contracts.md", "specs/010-durable-scan-foundation/contracts/durable-scan-contracts.md", "specs/010-durable-scan-foundation/plan.md", "specs/010-durable-scan-foundation/spec.md", "specs/011-java-xml-prescan-manifest/checklists/requirements.md", "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md", "specs/011-java-xml-prescan-manifest/contracts/preparation-api.md", "specs/011-java-xml-prescan-manifest/contracts/prepared-scan-contracts.md", "specs/011-java-xml-prescan-manifest/contracts/safe-analysis-contracts.md", "specs/011-java-xml-prescan-manifest/data-model.md", "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md", "specs/011-java-xml-prescan-manifest/plan.md", "specs/011-java-xml-prescan-manifest/quickstart.md", "specs/011-java-xml-prescan-manifest/research.md", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-01.json", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-02.json", "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-03.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-01.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-02.json", "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json", "specs/011-java-xml-prescan-manifest/spec.md", "specs/011-java-xml-prescan-manifest/tasks.md", "specs/011-java-xml-prescan-manifest/workflow-state.json", "src/dotnet/Vulgata.Core/DomainServices/AnalysisRuntimeContracts.cs", "src/dotnet/Vulgata.Core/DomainServices/ApprovedPreScanHandoff.cs", "src/dotnet/Vulgata.Core/DomainServices/IPreparedScanHandoffSource.cs", "src/dotnet/Vulgata.Core/Entities/CodeUnit.cs", "src/dotnet/Vulgata.Core/Entities/CommunicationKindClassification.cs", "src/dotnet/Vulgata.Core/Entities/PreScanResult.cs", "src/dotnet/Vulgata.Core/Entities/ScanContextSnapshot.cs", "src/dotnet/Vulgata.Core/Entities/TwoRepositoryScanCoordination.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphJsonOperations.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs", "src/dotnet/Vulgata.Infrastructure/Data/ApprovedPreScanHandoffSource.cs", "src/dotnet/Vulgata.Infrastructure/Data/Configurations/CodeUnitConfiguration.cs", "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs", "src/dotnet/Vulgata.Infrastructure/Git/ExactGitRevisionSnapshotService.cs", "src/dotnet/Vulgata.Infrastructure/Git/ScanCandidateEnumerator.cs", "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs", "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs", "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs", "tests/Vulgata.Tests/ExactGitRevisionAcquisitionTests.cs", "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "DR4-001",
+      "severity": "HIGH",
+      "category": "Persistence feasibility and historical compatibility",
+      "artifact": "specs/011-java-xml-prescan-manifest/data-model.md",
+      "location": "sections 2-3, especially lines 55 and 70-85; plan.md AD-7/Persistence and Migration; tasks.md T040",
+      "affected_requirement": "FR-038 through FR-040, SC-008",
+      "evidence": "The corrected model makes PreparedScanManifestId, FileCodeUnitIdentityFingerprint, and PairSelectionOrdinal nullable on CodeUnit so historical rows remain valid, but then declares an alternate principal key containing those fields for the selected-audit composite FK. In EF Core, alternate-key properties are key properties and become required; a filtered unique index cannot substitute as an FK principal key. The current CodeUnit mapping already uses EF alternate keys, so implementing the planned key either makes the new columns non-null and breaks historical CodeUnit rows, or cannot create the claimed EF/PostgreSQL relationship. T040 repeats the contradictory nullable-shape plus filtered-FK requirement without choosing a feasible persistence seam.",
+      "correction_outcome": "Regenerate the plan set with an EF Core/PostgreSQL-feasible same-manifest association that preserves historical nullable CodeUnit rows—for example, a prepared-only principal/entry table with non-null association columns, or another explicitly mapped relational shape whose referenced key is a valid non-null principal constraint. Retain all audit canonical preimage columns and independent replay reconstruction. Update the data model, canonical/prepared contracts, migration ownership, and PostgreSQL lifecycle/atomicity tasks to prove both schema feasibility and legacy compatibility.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "DR4-002",
+      "severity": "HIGH",
+      "category": "Dependency ordering and verification integrity",
+      "artifact": "specs/011-java-xml-prescan-manifest/tasks.md",
+      "location": "T049-T052, Phase 7/Phase 8, Dependencies and execution order, and Placeholder/diff self-review",
+      "affected_requirement": "FR-024, FR-038 through FR-040, SC-006, SC-008, final verification",
+      "evidence": "T049 is physically scheduled before T050 and T051 but requires T050 production-literal evidence and T051 discovered counts while running the complete quickstart. The quickstart itself requires PreparedScanProductionLiteralQualificationTests and PreparedScanAtomicPostgreSqlTests and states final verification is last. Under sequential task execution, those test owners do not yet exist when T049 runs; under the stated parallel guidance, T049 can race them. T052 is likewise a post-GREEN security record placed after final verification. This contradicts the file's claim that all 52 tasks are physically dependency ordered and can permit missing or zero-discovery qualification evidence.",
+      "correction_outcome": "Regenerate tasks so the production-literal, PostgreSQL atomicity/replay, and workflow/security qualification owners complete before one final quickstart/build/full-test verification task. Place that verification task physically last, give it explicit dependencies on all three evidence owners, and update phase, parallel, traceability, MVP, and self-review text consistently.",
+      "earliest_owner": "tasks"
+    },
+    {
+      "id": "DR4-003",
+      "severity": "LOW",
+      "category": "Boundary metadata consistency",
+      "artifact": "specs/011-java-xml-prescan-manifest/quickstart.md",
+      "location": "line 5",
+      "affected_requirement": "Definition boundary provenance",
+      "evidence": "The quickstart still says the plan set was regenerated after combined definition-review attempt 2, while the current plan/tasks boundary was regenerated after attempt 3 and is being reviewed in iteration 4.",
+      "correction_outcome": "Update the quickstart boundary statement to identify the current regeneration source without changing validation behavior.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "summary": "REVISE. Fresh read-only combined definition review iteration 4 explicitly ran the speckit-analyze prerequisite against dispatch-pinned feature 011; the directory contains spec, plan, tasks, research, data model, quickstart, and contracts. Semantic analysis found 43 unique Functional Requirements, nine unique Success Criteria, 52 unique sequential task IDs, 100% requirement-to-task coverage, no unresolved placeholders, no Constitution MUST violation, and no material terminology drift. All previously cited behavioral closures are present: audit tags 1-10 are named as persisted/reconstructed preimages; production-literal qualification covers Repository names, paths, endpoints, and line numbers; exact replay and PostgreSQL filters have named task owners with discovered-count requirements; T038 remains behavioral RED with T039 GREEN; stable prepared-context and readiness identities exclude volatile time/duration fields; XML range production is ordered before US4 consumers; runtime pins and the Windows-host/PostgreSQL-only topology are intact; CodeGraphContext and all Story 12.3 Worker execution, dispatch, navigate_code, and Document generation remain excluded. Acceptance is nevertheless blocked by two new High defects: the selected-audit composite FK relies on nullable CodeUnit fields that cannot serve as the planned EF alternate principal key without breaking historical compatibility, and final verification T049 precedes the qualification tasks whose evidence it requires. A Low stale quickstart boundary label should be corrected with the plan regeneration. This is the fourth consecutive definition-review REVISE sequence, so workflow policy requires the root to persist this raw verdict and pause for user direction rather than automatically starting another correction. No file, lifecycle state, index, commit, branch, or Git history was changed; production implementation remains unauthorized."
+}

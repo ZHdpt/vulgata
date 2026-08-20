@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest.md",
   "proposed_feature_short_name": "java-xml-prescan-manifest",
-  "stage": "specify",
+  "stage": "implementation-approval",
   "source_commit": "29e889badc00db671fcabf80f50918e15381052c",
   "preflight": {
     "branch": "demo0831/story-12-2",
@@ -23,16 +23,16 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-context-20260820T090836Z-9d4d5a",
-    "stage": "context",
+    "checkpoint_id": "bmad-12-2-definition-20260820T125125Z-e997c1",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "feature_directory": null,
-  "superseded_by_state": null,
+  "feature_directory": "specs/011-java-xml-prescan-manifest",
+  "superseded_by_state": "specs/011-java-xml-prescan-manifest/workflow-state.json",
   "resume": {
-    "stage": "specify",
-    "reason": "Context synthesis is complete; allocate one SpecKit feature and author the bounded specification."
+    "stage": "implementation-approval",
+    "reason": "Combined definition review iteration 5 accepted; pause for explicit implementation approval."
   },
-  "updated_at": "2026-08-20T09:08:36Z"
+  "updated_at": "2026-08-20T12:51:25Z"
 }
