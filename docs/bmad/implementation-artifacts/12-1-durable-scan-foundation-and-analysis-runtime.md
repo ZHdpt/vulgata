@@ -1042,3 +1042,19 @@ one serializable transaction, complete pre-mutation validation, one
 SaveChanges, one commit, and replay safety. The corrected canonical-fingerprint
 PostgreSQL fixture retains its injected rollback assertions. No task was
 appended. The candidate advances to a fresh quality review.
+
+### Quality review iteration 4 — workflow stop
+
+The independent quality reviewer returned REVISE with HIGH finding QR4-001.
+Although the serializable transaction now executes inside EF's retry strategy,
+each retry reuses the same DbContext and entities already mutated in memory by a
+prior failed attempt. A rolled-back transient failure can therefore retry from
+Pending/Prepared entities with incremented StateVersions and return a false
+Conflict instead of reapplying recovery. An acknowledgement-lost successful
+commit also lacks canonical durable-result verification. Existing PostgreSQL
+evidence does not inject either retry condition. The required correction needs
+public-seam REDs for rolled-back retry and ambiguous commit, fresh state per
+attempt, and verified Applied or mutation-free Replay without duplicate durable
+mutation. This is Story 12.1's third quality REVISE outcome, so the unified
+workflow stops here pending explicit operator direction; no automatic fourth
+correction cycle is authorized.

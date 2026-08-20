@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "implement",
+  "stage": "quality-review",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -49,20 +49,21 @@
       "completed_at": "2026-08-18T09:27:47Z"
     },
     "quality-review": {
-      "status": "invalidated",
-      "iteration": 3,
-      "dispatch_id": "story_12_1_quality_review_3",
-      "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-03.json",
+      "status": "revised",
+      "iteration": 4,
+      "dispatch_id": "story_12_1_quality_review_4",
+      "verdict_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json",
       "input_boundary": {
         "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
-        "candidate_commit": "5ad2562ee642211642eae9fc94cc5b415ab9baf8",
-        "diff_sha256": "7d2e14c561da1ce9cc61342940e56fdbffb36b48eb28366888720ca9425e3ecd",
+        "candidate_commit": "6aff10ec9588afc8c03a7a562709eea11da06fe2",
+        "diff_sha256": "89e15527fcc11379b79289d6d3edfce9dc29e7d6e5be839145cb56568372c3f3",
         "artifact_hashes": {
           "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
           "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
           "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
           "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs": "b55f55612b76fc0fc28e4ce0beea3d5b4945ff9b850f1b08a6356824ca795794",
-          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "15b65d79202d5b23276b80fab80ce72660f2b1cc9b806632903885a5a93d53b1"
+          "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs": "9d44e3d0639e165050b170b1da479db57d70d63951994af7956d4b7e9c7e823a",
+          "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "cb8c9df887a4c468f63aa97381099e70f5151aa1f90ec68e33691ffd89137e97"
         },
         "owned_paths": [
           "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRecoveryCoordinator.cs",
@@ -75,7 +76,7 @@
           "tests/Vulgata.Tests/DurableScanning/RecoveryCoordinatorTests.cs"
         ]
       },
-      "completed_at": "2026-08-20T05:18:26Z"
+      "completed_at": "2026-08-20T06:44:18Z"
     }
   },
   "stage_history": [
@@ -1012,7 +1013,7 @@
     "plan-review": {"count": 2, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/plan-review/plan-review-01.json", "specs/010-durable-scan-foundation/reviews/plan-review/plan-review-02.json"]},
     "definition-review": {"count": 3, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/definition-review/definition-review-01.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-02.json", "specs/010-durable-scan-foundation/reviews/definition-review/definition-review-03.json"]},
     "converge": {"count": 0, "verdict_paths": []},
-    "quality-review": {"count": 3, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-03.json"]}
+    "quality-review": {"count": 4, "verdict_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-02.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-03.json", "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json"]}
   },
   "e2e_decision": {
     "required": true,
@@ -2513,6 +2514,22 @@
       "observed_at": "2026-08-20T06:36:19Z",
       "summary": "Convergence iteration 6 returned CLEAN. The PostgreSQL execution-strategy transaction correction and canonical-fingerprint rollback fixture satisfy the complete Story 12.1 definition with no remaining task.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/80",
+      "kind": "review",
+      "stage": "quality-review",
+      "source_commit": "3f3a0d8ffe3d1e6be663e391206e61bfeff02f24",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+      ],
+      "command": "independent quality review iteration 4; focused 52/52; Web build 0 errors",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T06:44:18Z",
+      "summary": "Quality review iteration 4 returned REVISE with HIGH QR4-001: execution-strategy retries reuse already-mutated tracked entities and do not verify an ambiguous successful commit. This is the third quality REVISE outcome, requiring workflow stop and explicit operator direction.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json"
     }
   ],
   "convergence": {
@@ -2533,20 +2550,47 @@
     "completed_at": "2026-08-20T06:36:19Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260820T063619Z-6aff10",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260820T064418Z-6a626a",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "converge",
+    "stage": "quality-review",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json",
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/converge/79"
+      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/80"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "recoverable_failure": null,
+  "recoverable_failure": {
+    "stage": "quality-review",
+    "agent_role": "quality-reviewer",
+    "source_boundary": {
+      "base_commit": "76e4c9a07d0d9689d0c958ba46c5baaad7d87bd2",
+      "candidate_commit": "6aff10ec9588afc8c03a7a562709eea11da06fe2",
+      "diff_sha256": "89e15527fcc11379b79289d6d3edfce9dc29e7d6e5be839145cb56568372c3f3",
+      "artifact_hashes": {
+        "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json": "6a626a9c295cd77d14ad736d17a993fe9d40ff490ebc2040a3c04d0353cc4dfd"
+      },
+      "owned_paths": ["src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs"]
+    },
+    "evidence": {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/80",
+      "kind": "failure",
+      "stage": "quality-review",
+      "source_commit": "3f3a0d8ffe3d1e6be663e391206e61bfeff02f24",
+      "artifact_paths": ["specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json", "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs"],
+      "command": "independent quality review iteration 4",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T06:44:18Z",
+      "summary": "Third quality REVISE outcome. Automatic correction routing stops with HIGH QR4-001 pending explicit operator direction.",
+      "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-04.json"
+    },
+    "retryable": false,
+    "earliest_resume_stage": "implement"
+  },
   "legacy_migration": null,
-  "updated_at": "2026-08-20T06:36:19Z"
+  "updated_at": "2026-08-20T06:44:18Z"
 }
