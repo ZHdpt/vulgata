@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "implement",
+  "stage": "conditional-e2e",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -1087,8 +1087,8 @@
       },
       "owned_paths": ["src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs", "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs", "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs", "src/dotnet/Vulgata.Web/Api/Scans/ManualResumeEndpoints.cs", "src/dotnet/Vulgata.Web/Program.cs"]
     },
-    "result": "pending",
-    "evidence_ids": ["12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/77", "12-1-durable-scan-foundation-and-analysis-runtime/implement/78"]
+    "result": "passed",
+    "evidence_ids": ["12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/77", "12-1-durable-scan-foundation-and-analysis-runtime/implement/78", "12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/85"]
   },
   "verification": [
     {
@@ -2591,6 +2591,25 @@
       "observed_at": "2026-08-20T07:26:45Z",
       "summary": "Quality review iteration 5 returned ACCEPT. QR4-001 is closed with fresh-state retries and exact canonical acknowledgement-loss replay verification; no blocking finding remains.",
       "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-05.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/85",
+      "kind": "e2e-decision",
+      "stage": "conditional-e2e",
+      "source_commit": "38072faa9fbfb41d3e0f989e9ae7b6948d7c0f2a",
+      "artifact_paths": [
+        "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/DurableScanRestartPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/CodeGraphCliQualificationTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/JdtLsRealQualificationTests.cs"
+      ],
+      "command": "PostgreSQL migration 1/1; restart/concurrency/retry 7/7; manual resume 13/13; CodeGraph 2/2; JDT-LS 2/2; runtime health/security 18/18; adjacent recovery/atomicity 52/52",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T07:33:28Z",
+      "summary": "All required Story 12.1 E2E predicates passed on the accepted boundary with zero skipped tests, genuine PostgreSQL 17 execution, real CodeGraph and JDT-LS qualification, and complete generated-database cleanup.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -2611,21 +2630,20 @@
     "completed_at": "2026-08-20T07:18:20Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-quality-review-20260820T072645Z-9ad807",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-conditional-e2e-20260820T073328Z-e2eall",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "quality-review",
+    "stage": "conditional-e2e",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-05.json",
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/quality-review/84"
+      "12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/85"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T07:26:45Z"
+  "updated_at": "2026-08-20T07:33:28Z"
 }

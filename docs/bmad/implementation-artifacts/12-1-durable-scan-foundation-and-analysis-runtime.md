@@ -1098,3 +1098,14 @@ tests and no residual databases; Web built with zero errors. The review notes a
 nonblocking future constraint that context-wide ChangeTracker clearing would
 discard unrelated pending changes in a hypothetical shared unit of work, while
 the supported recovery caller performs only reads. Required E2E runs next.
+
+### Final conditional E2E
+
+All required E2E predicates passed on the accepted checkpoint `38072faa` with
+zero skipped tests: PostgreSQL 17 migration 1/1, restart/concurrency/retry 7/7,
+manual-resume API authorization and ownership 13/13, real CodeGraph 1.5.0 2/2,
+real JDT-LS with Java 21 and the approved archive hash 2/2, Analysis Runtime
+health/security 18/18, and adjacent recovery/revalidation/atomic commit 52/52.
+The PostgreSQL tests genuinely executed, including rollback-after-save and
+acknowledgement-lost retry, and removed all generated databases. No tracked
+bytes changed during E2E. The story advances to pinned final verification.
