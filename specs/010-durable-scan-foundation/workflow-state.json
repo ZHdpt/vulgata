@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "verify",
+  "stage": "complete",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -2627,6 +2627,22 @@
       "observed_at": "2026-08-20T07:40:46Z",
       "summary": "Final verification passed. All Story 12.1 tests, required E2E, Web build, migration/security/runtime checks, exact bounded full suite, reviewed production/test hashes, candidate ancestry, workflow schema, Compose topology, and database cleanup are green. Only expected post-review workflow records differ from the reviewed artifact manifest.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/complete/87",
+      "kind": "analysis",
+      "stage": "complete",
+      "source_commit": "864359a15b0cfad35224886397ed12c306d92398",
+      "artifact_paths": [
+        "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml",
+        "specs/010-durable-scan-foundation/workflow-state.json"
+      ],
+      "command": "completion precondition and lifecycle review-to-done verification",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T07:41:44Z",
+      "summary": "Story 12.1 completion preconditions are satisfied: accepted definition, all tasks complete, honest TDD evidence, convergence clean, quality accepted, E2E passed, final verification passed, and review status is durably ancestral.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -2647,21 +2663,21 @@
     "completed_at": "2026-08-20T07:18:20Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-verify-20260820T074046Z-finalv",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-complete-20260820T074144Z-done12",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "verify",
+    "stage": "complete",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/verify/86"
+      "12-1-durable-scan-foundation-and-analysis-runtime/complete/87"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T07:40:46Z"
+  "updated_at": "2026-08-20T07:41:44Z"
 }

@@ -1,7 +1,7 @@
 ---
 story_key: 12-1-durable-scan-foundation-and-analysis-runtime
 title: "Story 12.1: Durable Scan Foundation & Analysis Runtime"
-Status: review
+Status: done
 Epic: 12
 Story: 1
 created: 2026-08-18
@@ -1123,3 +1123,11 @@ evidence changed after review. The reviewed candidate is ancestral. Workflow
 validation and diff checks passed, Compose remains PostgreSQL-only by default
 and PostgreSQL plus Vulgata under `post-deadline-app`, and no generated Story
 12.1 database remains. The BMad lifecycle advances from in-progress to review.
+
+### Completion
+
+Story 12.1 is complete. The accepted definition, 57 tasks, clean convergence,
+independent quality acceptance, required E2E, and pinned final verification are
+all durable. The completion checkpoint advances the BMad lifecycle from review
+to done. Epic 12 remains in progress; the dependency-ordered next queue item is
+Story 12.2, Lightweight Java/XML PreScan & Prepared Scan Manifest.
