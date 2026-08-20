@@ -97,7 +97,7 @@ development_status:
   epic-11-retrospective: optional
   epic-12: in-progress
   12-1-durable-scan-foundation-and-analysis-runtime: done
-  12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest: backlog
+  12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest: in-progress
   12-3-resumable-file-pass-1-and-code-logic-documents: backlog
   12-4-exact-cross-repository-flow-and-pass-2: backlog
   12-5-grounded-llm-wiki-chat-and-august-30-release-evidence: backlog
