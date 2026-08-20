@@ -938,3 +938,14 @@ still propagates. Independent verification passed 14/14 focused and 86/86
 adjacent recovery/manual-resume/Analysis Runtime tests, and Web built with zero
 errors. The correction invalidates downstream convergence and quality review,
 which must rerun on the committed boundary.
+
+### Convergence iteration 4
+
+The independent convergence analyst returned CLEAN at corrected commit
+`6a1858c`. It verified QR-001 through QR-003 against the full Story 12.1
+definition and appended no task. Focused manifest replay passed 10/10, atomic
+commit passed 19/19, and recovery revalidation passed 14/14. Static inspection
+confirmed strict complete manifest equality, Infrastructure-derived canonical
+fingerprints before mutation/replay, and bounded configured-health failure with
+cancellation propagation. The corrected candidate advances to quality review
+iteration 2.

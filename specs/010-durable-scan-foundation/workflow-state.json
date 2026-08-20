@@ -2311,11 +2311,30 @@
       "observed_at": "2026-08-19T09:29:01Z",
       "summary": "Quality findings QR-001 through QR-003 are corrected with frozen behavioral REDs and independent GREEN verification. Job-manifest replay is complete and canonical, durable commit fingerprints are Infrastructure-derived before mutation, and configured-health exceptions fail closed while cancellation propagates.",
       "raw_output_path": "specs/010-durable-scan-foundation/reviews/quality-review/quality-review-01.json"
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/converge/72",
+      "kind": "convergence",
+      "stage": "converge",
+      "source_commit": "6a1858c0463a91d286c7b06117eeb9fd242d83a5",
+      "artifact_paths": [
+        "specs/010-durable-scan-foundation/spec.md",
+        "specs/010-durable-scan-foundation/plan.md",
+        "specs/010-durable-scan-foundation/tasks.md",
+        "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
+        "src/dotnet/Vulgata.Web/Program.cs"
+      ],
+      "command": "independent speckit-converge iteration 4; QR-001 10/10; QR-002 19/19; QR-003 14/14",
+      "exit_code": 0,
+      "observed_at": "2026-08-19T09:33:00Z",
+      "summary": "Convergence iteration 4 returned CLEAN after quality corrections. QR-001 through QR-003 were verified against the full Story 12.1 definition; no task was appended.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
     "status": "accepted",
-    "iteration": 3,
+    "iteration": 4,
     "outcome": "converged",
     "findings_count": 0,
     "appended_task_ids": [],
@@ -2323,32 +2342,26 @@
       "specs/010-durable-scan-foundation/spec.md": "da24f90063d0b66d50d642bed8d1e1709257c6bf8b0b42e4ae89929ce5feefb2",
       "specs/010-durable-scan-foundation/plan.md": "389426ad17ddc65971f3f29e1ce06b18483346e45e38a33a7c13a2f298652637",
       "specs/010-durable-scan-foundation/tasks.md": "943041b97cea44cfcef7c692a24655d79cd91ca3886cb8258d8cdad2408eb4e1",
-      "src/dotnet/Vulgata.Web/Program.cs": "48c1b5a7510cd8894614e9334e88b396c3ed6af1eecec39702afda007015e155",
+      "src/dotnet/Vulgata.Web/Program.cs": "a939ecd2f9865e0d77cc199e113e11bb5f169e0cd5be793c1c935a399f8f0db2",
       "src/dotnet/Vulgata.Core/DomainServices/DurableScanContracts.cs": "72e0757d102720907bdf97509ecf9e6d99f90b1f8546c2d047ca9c85fd0385b1"
     },
-    "completed_at": "2026-08-19T08:57:13Z"
+    "completed_at": "2026-08-19T09:33:00Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-implement-20260819T092901Z-b7e403",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-converge-20260819T093300Z-c31a9e",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "implement",
+    "stage": "converge",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
-      "specs/010-durable-scan-foundation/workflow-state.json",
-      "src/dotnet/Vulgata.Infrastructure/Data/DurableScanRepository.cs",
-      "src/dotnet/Vulgata.Infrastructure/Data/KnowledgeStoreRepository.cs",
-      "src/dotnet/Vulgata.Web/Program.cs",
-      "tests/Vulgata.Tests/DurableScanning/DurableScanStoreTests.cs",
-      "tests/Vulgata.Tests/DurableScanning/AtomicDocumentJobCommitTests.cs",
-      "tests/Vulgata.Tests/DurableScanning/RuntimeScanRecoveryRevalidationTests.cs"
+      "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/implement/71"
+      "12-1-durable-scan-foundation-and-analysis-runtime/converge/72"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-19T09:29:01Z"
+  "updated_at": "2026-08-19T09:33:00Z"
 }
