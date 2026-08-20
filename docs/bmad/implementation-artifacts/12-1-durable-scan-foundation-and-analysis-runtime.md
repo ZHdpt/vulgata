@@ -1001,3 +1001,17 @@ and contract tests passed 31/31; adjacent atomic commit, revalidation, and
 manual-resume API tests passed 46/46; Web built with zero errors. Because the
 story changes authorization, API, persistence, migration/data lifecycle, and
 multi-module runtime behavior, conditional E2E is required next.
+
+### Conditional E2E attempt 1
+
+Current-boundary E2E passed the manual-resume API 13/13, real CodeGraph 1.5.0
+qualification 2/2, real JDT-LS qualification 2/2 using Java 21 and the approved
+archive hash, and 28 Analysis Runtime health/security checks. The required
+PostgreSQL 17 migration, restart-persistence, concurrency, and real atomic
+recovery predicates are BLOCKED by unavailable infrastructure: no PostgreSQL
+service or binaries, port 5432 listener, Docker runtime, or
+`VULGATA_TEST_POSTGRES_ADMIN` connection is available. The repository tests
+truthfully early-return without that input, so their reported counts are not E2E
+evidence. This is a retryable environmental blocker at conditional E2E, not a
+product failure. Story completion requires a PostgreSQL 17 admin connection or
+safe service and a rerun of those predicates.
