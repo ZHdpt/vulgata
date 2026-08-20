@@ -1,7 +1,7 @@
 ---
 story_key: 12-1-durable-scan-foundation-and-analysis-runtime
 title: "Story 12.1: Durable Scan Foundation & Analysis Runtime"
-Status: in-progress
+Status: review
 Epic: 12
 Story: 1
 created: 2026-08-18
@@ -1109,3 +1109,17 @@ health/security 18/18, and adjacent recovery/revalidation/atomic commit 52/52.
 The PostgreSQL tests genuinely executed, including rollback-after-save and
 acknowledgement-lost retry, and removed all generated databases. No tracked
 bytes changed during E2E. The story advances to pinned final verification.
+
+### Final verification
+
+Pinned final verification passed at `bae04c15`. The Web project built with zero
+errors. The unfiltered repository suite produced 1,514 passes and exactly the
+thirteen previously authorized historical/non-Story-12.1 failures; rerunning
+with only those exact method names excluded passed 1,514/1,514 with zero
+skipped tests. No Story 12.1 class or test was excluded. Ordinary-startup and
+Durable Scan model consistency passed 8/8. The accepted production and test
+artifact hashes are unchanged; only this development record and workflow
+evidence changed after review. The reviewed candidate is ancestral. Workflow
+validation and diff checks passed, Compose remains PostgreSQL-only by default
+and PostgreSQL plus Vulgata under `post-deadline-app`, and no generated Story
+12.1 database remains. The BMad lifecycle advances from in-progress to review.

@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "feature_directory": "specs/010-durable-scan-foundation",
   "execution_level": "unified",
-  "stage": "conditional-e2e",
+  "stage": "verify",
   "active_gates": {
     "definition-review": {
       "status": "accepted",
@@ -2610,6 +2610,23 @@
       "observed_at": "2026-08-20T07:33:28Z",
       "summary": "All required Story 12.1 E2E predicates passed on the accepted boundary with zero skipped tests, genuine PostgreSQL 17 execution, real CodeGraph and JDT-LS qualification, and complete generated-database cleanup.",
       "raw_output_path": null
+    },
+    {
+      "evidence_id": "12-1-durable-scan-foundation-and-analysis-runtime/verify/86",
+      "kind": "command",
+      "stage": "verify",
+      "source_commit": "bae04c154f4e8e8cb6fda93b7ffb6e4fa1a999dc",
+      "artifact_paths": [
+        "src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+        "tests/Vulgata.Tests/Vulgata.Tests.csproj",
+        "docker-compose.yml",
+        "specs/010-durable-scan-foundation/workflow-state.json"
+      ],
+      "command": "Web build 0 errors; unfiltered suite 1514 passed plus exact 13 authorized historical failures; exact bounded suite 1514/1514; ordinary-startup/model 8/8; workflow/hash/ancestry/Compose/PostgreSQL cleanup checks",
+      "exit_code": 0,
+      "observed_at": "2026-08-20T07:40:46Z",
+      "summary": "Final verification passed. All Story 12.1 tests, required E2E, Web build, migration/security/runtime checks, exact bounded full suite, reviewed production/test hashes, candidate ancestry, workflow schema, Compose topology, and database cleanup are green. Only expected post-review workflow records differ from the reviewed artifact manifest.",
+      "raw_output_path": null
     }
   ],
   "convergence": {
@@ -2630,20 +2647,21 @@
     "completed_at": "2026-08-20T07:18:20Z"
   },
   "last_checkpoint": {
-    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-conditional-e2e-20260820T073328Z-e2eall",
+    "checkpoint_id": "bmad-12-1-durable-scan-foundation-and-analysis-runtime-verify-20260820T074046Z-finalv",
     "scope_key": "12-1-durable-scan-foundation-and-analysis-runtime",
-    "stage": "conditional-e2e",
+    "stage": "verify",
     "committed_paths": [
       "docs/bmad/implementation-artifacts/12-1-durable-scan-foundation-and-analysis-runtime.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
       "specs/010-durable-scan-foundation/workflow-state.json"
     ],
     "verification_evidence_ids": [
-      "12-1-durable-scan-foundation-and-analysis-runtime/conditional-e2e/85"
+      "12-1-durable-scan-foundation-and-analysis-runtime/verify/86"
     ],
     "commit_sha": null,
     "binding_status": "pending"
   },
   "recoverable_failure": null,
   "legacy_migration": null,
-  "updated_at": "2026-08-20T07:33:28Z"
+  "updated_at": "2026-08-20T07:40:46Z"
 }

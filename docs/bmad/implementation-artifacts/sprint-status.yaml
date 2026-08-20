@@ -96,7 +96,7 @@ development_status:
   11-5-demo-chat-citations-and-release-gate: review
   epic-11-retrospective: optional
   epic-12: in-progress
-  12-1-durable-scan-foundation-and-analysis-runtime: in-progress
+  12-1-durable-scan-foundation-and-analysis-runtime: review
   12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest: backlog
   12-3-resumable-file-pass-1-and-code-logic-documents: backlog
   12-4-exact-cross-repository-flow-and-pass-2: backlog
