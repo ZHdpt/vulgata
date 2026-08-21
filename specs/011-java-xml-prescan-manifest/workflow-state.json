@@ -3,7 +3,7 @@
   "bmad_story_key": "12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest",
   "bmad_epic_key": "12",
   "feature_directory": "specs/011-java-xml-prescan-manifest",
-  "stage": "implement",
+  "stage": "complete",
   "preflight": {
     "branch": "demo0831/story-12-2",
     "head": "ff80bf148730b4739ab90d3faab35d825cedc8c6",
@@ -109,15 +109,11 @@
     "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-04.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-verify-20260821T045250Z-passed",
-    "stage": "verify",
-    "commit_sha": null,
-    "binding_status": "pending"
-  },
-  "resume": {
+    "checkpoint_id": "bmad-12-2-complete-20260821T045424Z",
     "stage": "complete",
-    "reason": "Final verification passed: Story tests and E2E are green, Web has zero errors, full-suite results match six unrelated baselines, and cleanup is complete. Bind completion.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/verification/final-verification-01.md"
+    "commit_sha": "201951f7a2772181875269fff18950c91418a377",
+    "binding_status": "bound"
   },
-  "updated_at": "2026-08-21T04:52:50Z"
+  "resume": null,
+  "updated_at": "2026-08-21T04:54:24Z"
 }
