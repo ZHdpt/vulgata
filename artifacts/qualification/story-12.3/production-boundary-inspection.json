@@ -1,0 +1,129 @@
+{
+  "SchemaVersion": "story-12.3-production-boundary-inspection/1.0",
+  "Task": "T047",
+  "ExpectedSourceCommit": "cb3fb0f17b2eaf92d93afe71c710cd7b92c1e3bd",
+  "ObservedSourceCommit": "cb3fb0f17b2eaf92d93afe71c710cd7b92c1e3bd",
+  "ObservedAtUtc": "2026-08-21T17:17:52.9239985+00:00",
+  "QualificationCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionBoundaryQualificationTests",
+  "InspectedPaths": [
+    {
+      "Path": "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md",
+      "Bytes": 2814,
+      "Sha256": "6fa86f7a06d714dcfc2111ab3b959f8a52cef7b7db8cb0c7adf41dba7e9cc12d"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
+      "Bytes": 4695,
+      "Sha256": "f32fec1ef4043d0b325c600ae8e7ef74296d086768bcc05bc698fc6c374a70b0"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs",
+      "Bytes": 14456,
+      "Sha256": "9677e096dfa762be5f645a9db1b82655c1d99426580961df4c3df843f7b087ca"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs",
+      "Bytes": 17695,
+      "Sha256": "234e6abf09ff22d090e4dd336ed679a61135dbc6de8752d1518ac1cf1b75ce03"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationService.cs",
+      "Bytes": 3762,
+      "Sha256": "824cd653981bab9bba293c1716994d0e00358d1a6c34153d0025b06d91479d41"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1WorkerDispatcher.cs",
+      "Bytes": 5563,
+      "Sha256": "d2db1446c443228c420556f10894e2032e933d1986aa96fe67d0d781a5864f46"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Infrastructure/Analysis/PreparedNavigation/PreparedPass1NavigationService.cs",
+      "Bytes": 26515,
+      "Sha256": "7a865ea2090c156542a1d07d421c5578bf1b9334188bfe2bf0f60ae8adfd954a"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs",
+      "Bytes": 27708,
+      "Sha256": "230d72ff896af42f4309fbf9277ab7a9c1ef1437c0e51750d7cd08481f372d58"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+      "Bytes": 145231,
+      "Sha256": "401c39ecdc61082065d14abff6b8576a90b84a1c3dad713801ac0208d3e139ee"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Shared/Scans/Pass1ExecutionContracts.cs",
+      "Bytes": 1505,
+      "Sha256": "bd109e68862a1e17f0e61c12e201b57b1ef5a9abd1bd2a6ccb8cc2ae315c6d7c"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Shared/Scans/Pass1ExecutionValidators.cs",
+      "Bytes": 1485,
+      "Sha256": "d79cbe47975e48a05fac2fefd42dc352c16f934343a9444198f7ad4db9778ad0"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Web/Api/ApiEndpointRegistrationExtensions.cs",
+      "Bytes": 698,
+      "Sha256": "4d3a1392ad0305841ca1e7b7706b5f7b7b0b23c52699c317031e6cd05bc859c6"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Web/Api/Scans/Pass1ExecutionEndpoints.cs",
+      "Bytes": 10539,
+      "Sha256": "163f1a5ede43cd278bdad1ea44facb1a2c612679dd1055566ba27867327f38fa"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs",
+      "Bytes": 10781,
+      "Sha256": "44c871f8f482f2fa2856a708f6cb267752bde947b54ab1e207a4474e438e1e90"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Web/Data/PreparedPass1DispatchWorker.cs",
+      "Bytes": 608,
+      "Sha256": "feeb15c5f5adaee4cc7952d9b3406d03eb1c9e065503f9c953460134f71d97f8"
+    },
+    {
+      "Path": "src/dotnet/Vulgata.Web/Program.cs",
+      "Bytes": 55120,
+      "Sha256": "4c78b2aeccafb7beeac2a1c412a0b1fe80af36690990a882e631516b67586741"
+    }
+  ],
+  "ForbiddenLiterals": [
+    "CodeGraphContext",
+    "retrieve_code_logic",
+    "PreparedPass2",
+    "BusinessLogicDocument",
+    "IChatAgentDispatcher",
+    "IWorkerAgentDispatcher",
+    "RawLsp",
+    "JSON-RPC",
+    "ProcessStartInfo",
+    "HttpClient",
+    "Socket",
+    "NetworkStream",
+    "File.Read",
+    "Directory.",
+    "DbSet",
+    "DbContext",
+    "Npgsql"
+  ],
+  "ForbiddenMatches": [],
+  "Composition": {
+    "NavigateBinding": true,
+    "DispatcherBinding": true,
+    "ExactlyOneNavigateCode": true,
+    "ExactlyOneFunctionFactory": true,
+    "EightToolAttempts": true,
+    "SharedConcurrency": true,
+    "FourAuthorizedEndpoints": true,
+    "EndpointRegistration": true,
+    "NavigateFunctionRegistration": true,
+    "NavigationPortRegistration": true,
+    "CoordinatorRegistration": true,
+    "All": true
+  },
+  "PromptResources": [
+    "Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md"
+  ],
+  "PromptClosed": true,
+  "Verdict": "pass"
+}

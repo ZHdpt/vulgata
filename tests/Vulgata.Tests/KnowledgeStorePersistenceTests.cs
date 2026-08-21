@@ -946,7 +946,7 @@ public sealed class KnowledgeStorePersistenceTests
         AssertCheckConstraint<DocumentVersion>(
             model,
             "CK_DocumentVersions_SchemaIdentity_Closed",
-            "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
+            "\"SchemaIdentity\" IN ('vulgata.knowledge-document/1.0', 'code-logic/file-v2')");
         AssertCheckConstraint<LogicalDocument>(
             model,
             "CK_LogicalDocuments_DocumentType_Closed",

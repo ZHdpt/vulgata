@@ -12,9 +12,9 @@ public sealed class PreparedScanBoundaryTests
     private const string AcceptedBoundary =
         "e997c182a466694bc5eab405bb68fc7396edee53ce7559f443bcbb2e7beaefb6";
     private const string AcceptedSpec =
-        "c15d03b2b10e4eaa452a59e3b96acafdbb04160de556ca93c28380117a085ad3";
+        "175c367d8a547e5e420e9115cb41d81573f6787597c46a9e6ae6656396ea81cf";
     private const string AcceptedPlan =
-        "2a9373661e935918ab6b55a4d83903e4ba92ba7e9fb80534a616d6583cb4b318";
+        "73991cb36213db17ce00500d43c5040690450c0f50bda733fab0e779362b82ff";
 
     private static readonly string[] ForbiddenTypeFragments =
     [

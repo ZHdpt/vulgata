@@ -20,6 +20,7 @@ public sealed class DurableScanMigrationPostgreSqlTests
     private const string BaselineMigration = "20260803140908_AddExactCrossRepositoryResolution";
     private const string StoryMigration = "20260818124712_AddDurableScanFoundation";
     private const string LatestMigration = "20260820120000_AddPreparedScanManifest";
+    private const string LaterMigration = "20260821114734_AddResumablePass1CodeLogic";
     private static readonly DateTimeOffset CreatedAt =
         new(2026, 8, 18, 12, 0, 0, TimeSpan.Zero);
     private static readonly Guid SystemId = Guid.Parse("91000000-0000-0000-0000-000000000001");
@@ -72,7 +73,7 @@ public sealed class DurableScanMigrationPostgreSqlTests
             {
                 IMigrator migrator = context.GetService<IMigrator>();
                 Assert.Equal(
-                    [StoryMigration, LatestMigration],
+                    [StoryMigration, LatestMigration, LaterMigration],
                     await context.Database.GetPendingMigrationsAsync());
                 await migrator.MigrateAsync(LatestMigration);
                 Assert.Contains(StoryMigration, await context.Database.GetAppliedMigrationsAsync());
@@ -179,12 +180,6 @@ public sealed class DurableScanMigrationPostgreSqlTests
         targetLogical.SetInitialCurrentVersion(targetVersion);
         await context.SaveChangesAsync();
 
-        SourceAnchor sourceAnchor = new(
-            SourceAnchorId, SourceDocumentVersionId, SourceRepositoryId, SourceScanRunId, SourceCodeUnitId,
-            ProfiledRevision, "src/t047-source.cs", "T047.Source:1-10", 1, 10, SourceHash, CreatedAt);
-        SourceAnchor targetAnchor = new(
-            TargetAnchorId, TargetDocumentVersionId, TargetRepositoryId, TargetScanRunId, TargetCodeUnitId,
-            ProfiledRevision, "src/t047-target.cs", "T047.Target:1-10", 1, 10, SourceHash, CreatedAt);
         DocumentEdge edge = new(
             EdgeId, SourceDocumentVersionId, SourceRepositoryId, SourceScanRunId,
             TargetDocumentVersionId, TargetRepositoryId, TargetScanRunId,
@@ -193,7 +188,7 @@ public sealed class DurableScanMigrationPostgreSqlTests
             UncertaintyId, SourceDocumentVersionId, SourceRepositoryId, SourceScanRunId, SourceAnchorId,
             "cross_repository", "unknown_target", "unmatched", null, null, null, TargetRepositoryId,
             "1.0", "demo", "1", SourceHash, "t047-occurrence", "T047.Source:1-10", SourceHash, CreatedAt);
-        context.SourceAnchors.AddRange(sourceAnchor, targetAnchor);
+        await InsertHistoricalSourceAnchorsAsync(context);
         context.DocumentEdges.Add(edge);
         context.Uncertainties.Add(uncertainty);
         await context.SaveChangesAsync();
@@ -213,6 +208,23 @@ public sealed class DurableScanMigrationPostgreSqlTests
                  {SourceHash}, {SourceHash}, 1, 10, 'T047.Source', 'Class', 'Exact', 'csharp', 'Pending'),
                 ({TargetCodeUnitId}, {TargetScanRunId}, {TargetRepositoryId}, 'src/t047-target.cs',
                  {SourceHash}, {SourceHash}, 1, 10, 'T047.Target', 'Class', 'Exact', 'csharp', 'Pending');
+            """);
+
+    private static Task<int> InsertHistoricalSourceAnchorsAsync(VulgataDbContext context) =>
+        // The Story 12.1 boundary does not contain Story 12.3 byte-anchor
+        // columns. Keep this seed pinned to the historical relational shape.
+        context.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO vulgata."SourceAnchors"
+                ("Id", "DocumentVersionId", "RepositoryId", "ScanRunId", "CodeUnitId",
+                 "ProfiledRevision", "RepositoryRelativePath", "EvidenceLocator",
+                 "LineStart", "LineEnd", "SourceHash", "CreatedAt")
+            VALUES
+                ({SourceAnchorId}, {SourceDocumentVersionId}, {SourceRepositoryId}, {SourceScanRunId},
+                 {SourceCodeUnitId}, {ProfiledRevision}, 'src/t047-source.cs', 'T047.Source:1-10',
+                 1, 10, {SourceHash}, {CreatedAt}),
+                ({TargetAnchorId}, {TargetDocumentVersionId}, {TargetRepositoryId}, {TargetScanRunId},
+                 {TargetCodeUnitId}, {ProfiledRevision}, 'src/t047-target.cs', 'T047.Target:1-10',
+                 1, 10, {SourceHash}, {CreatedAt});
             """);
 
     private static async Task InsertLegacyScanExecutionAsync(VulgataDbContext context)

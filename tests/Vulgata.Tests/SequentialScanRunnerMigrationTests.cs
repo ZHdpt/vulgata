@@ -62,6 +62,17 @@ public sealed class SequentialScanRunnerMigrationTests
                 "(\"Phase\" = 'Cancelled' AND \"FailureCategory\" = 'Cancellation' AND \"FailureCode\" IS NOT NULL)))",
         };
 
+    private static readonly IReadOnlyDictionary<string, string> _historicalMigrationCheckSqlByName =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["CK_ScanExecutions_Phase_Closed"] =
+                "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled')",
+            ["CK_ScanExecutions_RestartIndicator_Bound"] =
+                "0 <= \"RestartIndicator\" AND \"RestartIndicator\" <= 32",
+            ["CK_ScanExecutions_TerminalReasonKind_Closed"] =
+                "\"TerminalReasonKind\" IS NULL OR \"TerminalReasonKind\" IN ('SchemaInvalid', 'Error', 'Unbounded', 'MissingPrerequisite', 'DuplicateActiveScan', 'MissingCodeUnit', 'ForbiddenContent', 'OverLimitPacket')",
+        };
+
     [Fact]
     public void AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible()
     {
@@ -130,7 +141,7 @@ public sealed class SequentialScanRunnerMigrationTests
                 .OfType<CreateTableOperation>()
                 .SelectMany(operation => operation.CheckConstraints)
                 .ToDictionary(check => check.Name!, check => check.Sql);
-        AssertChecks(migrationCheckSqlByName);
+        AssertChecks(migrationCheckSqlByName, _historicalMigrationCheckSqlByName);
 
         // T069: alternate keys (Id, RepositoryId) and (ScanRunId, RepositoryId) exist.
         CreateTableOperation table = Assert.Single(
@@ -287,13 +298,16 @@ public sealed class SequentialScanRunnerMigrationTests
                     .SequenceEqual(propertyNames));
     }
 
-    private static void AssertChecks(IReadOnlyDictionary<string, string> actual)
+    private static void AssertChecks(
+        IReadOnlyDictionary<string, string> actual,
+        IReadOnlyDictionary<string, string>? expected = null)
     {
+        expected ??= _checkSqlByName;
         Assert.Equal(
-            _checkSqlByName.Keys.Order(StringComparer.Ordinal),
+            expected.Keys.Order(StringComparer.Ordinal),
             actual.Keys.Order(StringComparer.Ordinal));
         Assert.All(
-            _checkSqlByName,
+            expected,
             expected => Assert.Equal(expected.Value, actual[expected.Key]));
     }
 

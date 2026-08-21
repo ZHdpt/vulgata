@@ -15,6 +15,7 @@ public sealed class PreparedScanMigrationPostgreSqlTests(ITestOutputHelper outpu
 {
     private const string BaselineMigration = "20260818124712_AddDurableScanFoundation";
     private const string StoryMigration = "20260820120000_AddPreparedScanManifest";
+    private const string LaterMigration = "20260821114734_AddResumablePass1CodeLogic";
     private const string ProfiledRevision = "0123456789abcdef0123456789abcdef01234567";
     private const string Sha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     private static readonly Guid SystemId = Guid.Parse("a1000000-0000-0000-0000-000000000001");
@@ -49,8 +50,7 @@ public sealed class PreparedScanMigrationPostgreSqlTests(ITestOutputHelper outpu
                 // Clean database -> current Story 12.2 migration.
                 await migrator.MigrateAsync(StoryMigration);
                 Assert.Contains(StoryMigration, await context.Database.GetAppliedMigrationsAsync());
-                Assert.Empty(await context.Database.GetPendingMigrationsAsync());
-                Assert.False(context.Database.HasPendingModelChanges());
+                Assert.Equal([LaterMigration], await context.Database.GetPendingMigrationsAsync());
                 await AssertPreparedSchemaPresentAsync(context);
 
                 // Return to the Story 12.1 boundary so protected legacy rows can be
@@ -64,10 +64,12 @@ public sealed class PreparedScanMigrationPostgreSqlTests(ITestOutputHelper outpu
             await using (VulgataDbContext context = CreateContext(database.ConnectionString))
             {
                 IMigrator migrator = context.GetService<IMigrator>();
-                Assert.Equal([StoryMigration], await context.Database.GetPendingMigrationsAsync());
+                Assert.Equal(
+                    [StoryMigration, LaterMigration],
+                    await context.Database.GetPendingMigrationsAsync());
 
                 await migrator.MigrateAsync(StoryMigration);
-                Assert.False(context.Database.HasPendingModelChanges());
+                Assert.Equal([LaterMigration], await context.Database.GetPendingMigrationsAsync());
                 await AssertPreparedSchemaPresentAsync(context);
                 await AssertProtectedHistoricalRowsAsync(database.ConnectionString, preparedColumnsExist: true);
 
@@ -78,8 +80,7 @@ public sealed class PreparedScanMigrationPostgreSqlTests(ITestOutputHelper outpu
 
                 await migrator.MigrateAsync(StoryMigration);
                 Assert.Contains(StoryMigration, await context.Database.GetAppliedMigrationsAsync());
-                Assert.Empty(await context.Database.GetPendingMigrationsAsync());
-                Assert.False(context.Database.HasPendingModelChanges());
+                Assert.Equal([LaterMigration], await context.Database.GetPendingMigrationsAsync());
                 await AssertPreparedSchemaPresentAsync(context);
                 await AssertProtectedHistoricalRowsAsync(database.ConnectionString, preparedColumnsExist: true);
             }
@@ -149,7 +150,7 @@ public sealed class PreparedScanMigrationPostgreSqlTests(ITestOutputHelper outpu
             {
                 await context.GetService<IMigrator>().MigrateAsync(StoryMigration);
                 Assert.Contains(StoryMigration, await context.Database.GetAppliedMigrationsAsync());
-                Assert.False(context.Database.HasPendingModelChanges());
+                Assert.Equal([LaterMigration], await context.Database.GetPendingMigrationsAsync());
             }
 
             await using (VulgataDbContext context = CreateContext(database.ConnectionString))

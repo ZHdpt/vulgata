@@ -42,7 +42,7 @@ public sealed class KnowledgeStoreMigrationTests
             ["CK_DocumentVersions_ContentFingerprint_Length"] =
                 "length(\"ContentFingerprint\") = 64",
             ["CK_DocumentVersions_SchemaIdentity_Closed"] =
-                "\"SchemaIdentity\" IN ('vulgata.knowledge-document/1.0', 'code-logic/file-v2')",
+                "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'",
             ["CK_DocumentVersions_SupersededBy_NotSelf"] =
                 "\"SupersededById\" IS NULL OR \"SupersededById\" <> \"Id\"",
             ["CK_DocumentVersions_VersionNumber_Positive"] = "\"VersionNumber\" > 0",
@@ -57,6 +57,13 @@ public sealed class KnowledgeStoreMigrationTests
                 "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')",
             ["CK_SourceAnchors_LineEnd_Range"] = "\"LineEnd\" >= \"LineStart\"",
             ["CK_SourceAnchors_LineStart_Positive"] = "\"LineStart\" > 0",
+        };
+
+    private static readonly IReadOnlyDictionary<string, string> _currentModelCheckSqlByName =
+        new Dictionary<string, string>(_checkSqlByName, StringComparer.Ordinal)
+        {
+            ["CK_DocumentVersions_SchemaIdentity_Closed"] =
+                "\"SchemaIdentity\" IN ('vulgata.knowledge-document/1.0', 'code-logic/file-v2')",
             ["CK_SourceAnchors_ByteRange_Shape"] =
                 "(\"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR " +
                 "(\"ByteStart\" IS NOT NULL AND \"ByteEnd\" IS NOT NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\")",
@@ -187,7 +194,7 @@ public sealed class KnowledgeStoreMigrationTests
                 .Select(type => model.FindEntityType(type)!)
                 .SelectMany(entity => entity.GetCheckConstraints())
                 .ToDictionary(check => check.Name!, check => check.Sql);
-        AssertChecks(modelCheckSqlByName);
+        AssertChecks(modelCheckSqlByName, _currentModelCheckSqlByName);
 
         IEntityType logicalDocument = model.FindEntityType(typeof(LogicalDocument))!;
         Assert.Contains(
@@ -383,13 +390,16 @@ public sealed class KnowledgeStoreMigrationTests
                     .SequenceEqual(propertyNames));
     }
 
-    private static void AssertChecks(IReadOnlyDictionary<string, string> actual)
+    private static void AssertChecks(
+        IReadOnlyDictionary<string, string> actual,
+        IReadOnlyDictionary<string, string>? expected = null)
     {
+        expected ??= _checkSqlByName;
         Assert.Equal(
-            _checkSqlByName.Keys.Order(StringComparer.Ordinal),
+            expected.Keys.Order(StringComparer.Ordinal),
             actual.Keys.Order(StringComparer.Ordinal));
         Assert.All(
-            _checkSqlByName,
+            expected,
             expected => Assert.Equal(expected.Value, actual[expected.Key]));
     }
 

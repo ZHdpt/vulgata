@@ -32,20 +32,11 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
     [Fact]
     public void FileCodeUnitConstruction_ExposesWholeFileAndExactSplitBoundChecks()
     {
-        Type? factory = typeof(PreparedScanPlanner).Assembly.GetTypes()
-            .FirstOrDefault(type => type.Name.Contains("FileCodeUnit", StringComparison.Ordinal) &&
-                type.IsPublic);
-
-        Assert.True(
-            factory is not null,
-            "The File Code Unit public seam is missing; T037 must add the bounded factory.");
-
-        string[] names = factory!.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+        Type factory = typeof(PreparedFileCodeUnitDraft);
+        string[] names = factory.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
             .Select(method => method.Name)
             .ToArray();
-        Assert.Contains(names, name => name.Contains("Create", StringComparison.Ordinal) ||
-            name.Contains("Build", StringComparison.Ordinal) ||
-            name.Contains("Validate", StringComparison.Ordinal));
+        Assert.Contains("Create", names);
     }
 
     [Fact]

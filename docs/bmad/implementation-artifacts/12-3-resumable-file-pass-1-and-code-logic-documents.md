@@ -290,6 +290,33 @@ The workflow may correct only `DR4-001` in `tasks.md` and run a fresh combined
 definition review. The accepted specification and plan remain unchanged, and
 production implementation remains unauthorized.
 
+### Implementation checkpoint: T046-T049
+
+Qualification now binds the accepted Windows-host runtime without persisting
+machine-specific paths: CodeGraph 1.5.0, Java 21, the pinned JDT-LS archive and
+stdio factory, StreamJsonRpc 2.25.29, and live PostgreSQL major 17 were
+verified. Root reruns passed the real JDT-LS readiness check 1/1 and real
+Navigate Code qualification 3/3. Production-boundary inspection covered
+sixteen current paths and found zero forbidden capabilities or composition
+matches; the exclusion report found no Story 12.4/12.5 production scope and
+confirmed that `CodeGraphContext` appears only in the Worker prompt's explicit
+prohibition.
+
+The stable pre-convergence barrier passed 48/48 PostgreSQL atomicity/migration
+checks, 267/267 focused PreparedPass1 checks, and 437/438 adjacent checks with
+one existing skip. A test-only compatibility correction distinguished
+historical migration shapes from the accepted additive Story 12.3 model,
+removed brittle public-type reflection, and refreshed accepted Story 12.2
+artifact hashes; production behavior did not change. Web build completed with
+zero errors and nine warnings. The unfiltered full suite exposed six unrelated
+or harness-only baseline checks; the broad current-boundary rerun excluding
+five unchanged baseline checks passed 1911 tests with one existing skip and
+only the known parallel migration collision, whose isolated rerun passed 1/1.
+The exact baseline treatment and commands are durable in
+`specs/012-resumable-file-pass1-code-logic/verification/final-verification.md`.
+Checkpoint `bmad-12-3-implement-20260821T172520Z-6c2a9d` hands off all 49
+completed tasks to SpecKit convergence.
+
 ### Combined definition review iteration 5 and implementation pause
 
 Fresh independent combined review returned `ACCEPT` with zero findings against
