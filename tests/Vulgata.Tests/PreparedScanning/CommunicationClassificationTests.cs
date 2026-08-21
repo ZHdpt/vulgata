@@ -1,4 +1,5 @@
 using System.Reflection;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CommunicationDetection;
 
@@ -75,6 +76,41 @@ public sealed class CommunicationClassificationTests
         Assert.Contains(nameof(EvidenceRule.BoundExceeded), Enum.GetNames<EvidenceRule>());
         Assert.Contains(nameof(ClassificationLevel.Warning), Enum.GetNames<ClassificationLevel>());
         Assert.Contains(nameof(ConfidenceBand.None), Enum.GetNames<ConfidenceBand>());
+    }
+
+    [Fact]
+    public void PreparedCommunicationDetector_OverBoundWarningsRetainExactly256InNormativeOrder()
+    {
+        Guid preScanResultId = Guid.NewGuid();
+        PreparedCommunicationObservation[] observations = Enumerable.Range(0, 257)
+            .Select(index => new PreparedCommunicationObservation(
+                null,
+                ClassificationLevel.Warning,
+                ConfidenceBand.None,
+                EvidenceRule.MalformedEvidence,
+                EvidenceProvenance.Detector,
+                $"src/malformed-{index:D3}.java",
+                $"src/malformed-{index:D3}.java#warning",
+                "qualification.over-bound"))
+            .ToArray();
+
+        PreparedCommunicationClassificationResult result = PreparedCommunicationDetector.Detect(
+            preScanResultId, observations);
+        IReadOnlyList<CommunicationKindClassification> retained = result.Classifications;
+
+        Assert.Equal(257, result.TotalClassificationCount);
+        Assert.Equal(257, result.TotalWarningCount);
+        Assert.Equal(256, result.RetainedClassificationCount);
+        Assert.True(result.EvidenceTruncated);
+        Assert.Equal(1, retained.Count(classification => classification.Rule == EvidenceRule.BoundExceeded));
+        Assert.NotEqual(retained.Count - 1, retained
+            .Select((classification, index) => (classification, index))
+            .Single(value => value.classification.Rule == EvidenceRule.BoundExceeded)
+            .index);
+        Assert.Equal(
+            PreparedScanIdentityBuilders.OrderCommunicationClassifications(retained)
+                .Select(classification => classification.Fingerprint),
+            retained.Select(classification => classification.Fingerprint));
     }
 
     private static Type RequireType(string fullName)

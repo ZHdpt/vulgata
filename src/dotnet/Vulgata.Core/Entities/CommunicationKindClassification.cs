@@ -135,6 +135,44 @@ public sealed class CommunicationKindClassification
             RequireLowercaseSha256(fingerprint));
     }
 
+    public static CommunicationKindClassification CreatePrepared(
+        Guid preScanResultId,
+        CommunicationKind? kind,
+        ClassificationLevel level,
+        ConfidenceBand confidence,
+        EvidenceRule rule,
+        EvidenceProvenance provenance,
+        string relativePath,
+        string locator,
+        int occurrenceCount,
+        string fingerprint,
+        string catalogRuleIdentity)
+    {
+        CommunicationKindClassification classification = Create(
+            preScanResultId,
+            kind,
+            level,
+            confidence,
+            rule,
+            provenance,
+            relativePath,
+            locator,
+            occurrenceCount,
+            fingerprint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(catalogRuleIdentity);
+        if (catalogRuleIdentity.Length > 256 ||
+            catalogRuleIdentity.Length != catalogRuleIdentity.Trim().Length ||
+            catalogRuleIdentity.Any(char.IsControl))
+        {
+            throw new ArgumentException(
+                "The catalog rule identity must be normalized and at most 256 characters.",
+                nameof(catalogRuleIdentity));
+        }
+
+        classification.CatalogRuleIdentity = catalogRuleIdentity;
+        return classification;
+    }
+
     private static void ValidateClosedValues(
         CommunicationKind? kind,
         ClassificationLevel level,

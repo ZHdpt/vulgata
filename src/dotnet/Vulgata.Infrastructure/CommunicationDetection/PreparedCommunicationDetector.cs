@@ -89,7 +89,7 @@ public static class PreparedCommunicationDetector
             bounded.Add(CreateBoundWarning(
                 preScanResultId,
                 complete.Count - (MaximumRetainedClassifications - 1)));
-            retained = bounded;
+            retained = PreparedScanIdentityBuilders.OrderCommunicationClassifications(bounded);
         }
 
         return new(
@@ -118,7 +118,7 @@ public static class PreparedCommunicationDetector
             observation.Locator,
             occurrenceCount,
             observation.CatalogRuleIdentity);
-        return CommunicationKindClassification.Create(
+        return CommunicationKindClassification.CreatePrepared(
             preScanResultId,
             observation.Kind,
             observation.Level,
@@ -128,7 +128,8 @@ public static class PreparedCommunicationDetector
             observation.RelativePath,
             observation.Locator,
             occurrenceCount,
-            artifact.Fingerprint);
+            artifact.Fingerprint,
+            observation.CatalogRuleIdentity);
     }
 
     private static CommunicationKindClassification CreateBoundWarning(

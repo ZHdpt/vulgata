@@ -388,3 +388,28 @@ Document generation are absent.
   1/1, and classification contracts 4/4.
 - Core, Infrastructure, and Web built with zero errors; Core retained no EF or
   Infrastructure dependency, and `git diff --check` passed.
+
+## Quality-review correction: QR3-001
+
+- Quality review attempt 3 found that over-bound prepared communication
+  detection retained the canonical first 255 classifications and then appended
+  `BoundExceeded` without reapplying the normative order. The production
+  package therefore failed its own strengthened initial-order validation.
+- The behavioral RED used 257 distinct valid warning observations. It proved
+  that the detector returned 256 retained classifications with
+  `BoundExceeded` last, and that the resulting PostgreSQL package returned
+  `Conflict` instead of `Committed`.
+- The detector now applies the Core normative comparator to the final bounded
+  set. Prepared `PreScanResult` creation accepts the Story 12.2 maximum of 256
+  retained classifications while the legacy path remains capped at 100.
+  Prepared classification creation also validates and retains the existing
+  catalog-rule identity so durable replay reconstructs the same fingerprint;
+  no schema or migration change was required.
+- The original test author independently verified the unchanged test hashes and
+  GREEN behavior: the two QR3 tests passed 2/2, the full communication
+  classification suite passed 5/5, PostgreSQL atomic tests passed 31/31,
+  QR-001/QR2/T060 focused coverage passed 9/9, and SQLite replay passed 5/5.
+  PostgreSQL was the isolated 17.10 service on port 55435.
+- Core, Infrastructure, and Web built with zero errors. Only existing package,
+  reference, and analyzer warnings remained. `git diff --check` passed with
+  line-ending notices only. No Story 12.3 Worker or Document behavior was added.

@@ -3,6 +3,7 @@ using Npgsql;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.Data;
 using Xunit.Abstractions;
 
@@ -467,6 +468,76 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public async Task PostgreSql17_OverBoundDetectorPackageCommitsReplaysAndRejectsExternalReorderAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedCommunicationClassificationResult detection = CreateOverBoundClassificationResult(
+            fixture.Package.Repositories[0].ScanRunId);
+        PreparedScanPairPackage detectorPackage = AddOverBoundClassifications(fixture.Package, detection);
+        string[] detectorOrder = detectorPackage.Repositories[0].Classifications
+            .Select(classification => classification.Fingerprint)
+            .ToArray();
+        string[] normativeOrder = PreparedScanIdentityBuilders
+            .OrderCommunicationClassifications(detectorPackage.Repositories[0].Classifications)
+            .Select(classification => classification.Fingerprint)
+            .ToArray();
+
+        Assert.Equal(257, detection.TotalClassificationCount);
+        Assert.Equal(257, detection.TotalWarningCount);
+        Assert.Equal(256, detection.RetainedClassificationCount);
+        Assert.True(detection.EvidenceTruncated);
+        Assert.Equal(256, detectorPackage.Repositories[0].Classifications.Count);
+        output.WriteLine("Detector order equals normative order: {0}", detectorOrder.SequenceEqual(normativeOrder));
+        output.WriteLine("BoundExceeded position: {0}", detectorPackage.Repositories[0].Classifications
+            .Select((classification, index) => (classification, index))
+            .Single(value => value.classification.Rule == EvidenceRule.BoundExceeded).index);
+
+        PreparedScanStore store = PreparedScanPostgreSqlFixture.CreateStore(fixture.Context);
+        PreparedScanCommitResult committed = await store.CommitPairAsync(
+            fixture.Authorization, detectorPackage, 0, CancellationToken.None);
+        Assert.Equal(PreparedScanCommitOutcome.Committed, committed.Outcome);
+        DurableCounts afterCommit = await ReadCountsAsync(fixture.ConnectionString);
+
+        await using VulgataDbContext restartedContext =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        PreparedScanCommitResult replay = await PreparedScanPostgreSqlFixture.CreateStore(restartedContext)
+            .CommitPairAsync(fixture.Authorization, detectorPackage, 0, CancellationToken.None);
+        Assert.Equal(PreparedScanCommitOutcome.Replay, replay.Outcome);
+        Assert.Equal(afterCommit, await ReadCountsAsync(fixture.ConnectionString));
+
+        CommunicationKindClassification[] reversed = detectorPackage.Repositories[0].Classifications
+            .Reverse()
+            .ToArray();
+        PreparedRepositoryPackage reorderedFirst = detectorPackage.Repositories[0] with
+        {
+            Classifications = reversed,
+        };
+        reorderedFirst = reorderedFirst with
+        {
+            ManifestFingerprint = PreparedScanIdentityBuilders.CreateManifest(
+                reorderedFirst, detectorPackage.PairSelectionFingerprint).Fingerprint,
+        };
+        PreparedRepositoryPackage[] reorderedRepositories =
+            [reorderedFirst, detectorPackage.Repositories[1]];
+        PreparedCanonicalArtifact reorderedPair = PreparedScanIdentityBuilders.CreatePairPackage(
+            detectorPackage.CoordinationId,
+            detectorPackage.PairSelectionFingerprint,
+            reorderedRepositories.Select(repository => new PreparedManifestFingerprintBinding(
+                repository.RepositoryId, repository.ManifestFingerprint)),
+            detectorPackage.SelectedCount);
+        PreparedScanPairPackage externallyReordered = detectorPackage with
+        {
+            Repositories = reorderedRepositories,
+            PairPackageFingerprint = reorderedPair.Fingerprint,
+        };
+        PreparedScanCommitResult reordered = await PreparedScanPostgreSqlFixture.CreateStore(restartedContext)
+            .CommitPairAsync(fixture.Authorization, externallyReordered, 0, CancellationToken.None);
+
+        Assert.Equal(PreparedScanCommitOutcome.Conflict, reordered.Outcome);
+        Assert.Equal(afterCommit, await ReadCountsAsync(fixture.ConnectionString));
+    }
+
+    [Fact]
     public async Task PostgreSql17_DigestAndCodeUnitFingerprintTamperingCannotReplayAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -622,6 +693,59 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         {
             Repositories = repositories,
             PairPackageFingerprint = pairFingerprint,
+        };
+    }
+
+    private static PreparedCommunicationClassificationResult CreateOverBoundClassificationResult(
+        Guid scanRunId)
+    {
+        PreparedCommunicationObservation[] observations = Enumerable.Range(0, 257)
+            .Select(index => new PreparedCommunicationObservation(
+                null,
+                ClassificationLevel.Warning,
+                ConfidenceBand.None,
+                EvidenceRule.MalformedEvidence,
+                EvidenceProvenance.Detector,
+                $"src/malformed-{index:D3}.java",
+                $"src/malformed-{index:D3}.java#warning",
+                "qualification.over-bound"))
+            .ToArray();
+        return PreparedCommunicationDetector.Detect(scanRunId, observations);
+    }
+
+    private static PreparedScanPairPackage AddOverBoundClassifications(
+        PreparedScanPairPackage package,
+        PreparedCommunicationClassificationResult detection)
+    {
+        PreparedRepositoryPackage first = package.Repositories[0] with
+        {
+            Classifications = detection.Classifications,
+            TotalConfirmedEvidenceCount = detection.TotalConfirmedCount,
+            TotalHintCount = detection.TotalHintCount,
+            TotalWarningCount = detection.TotalWarningCount,
+            EvidenceTruncated = detection.EvidenceTruncated,
+        };
+        first = first with
+        {
+            ManifestFingerprint = PreparedScanIdentityBuilders.CreateManifest(
+                first, package.PairSelectionFingerprint).Fingerprint,
+        };
+        PreparedRepositoryPackage second = package.Repositories[1] with
+        {
+            ManifestFingerprint = PreparedScanIdentityBuilders.CreateManifest(
+                package.Repositories[1], package.PairSelectionFingerprint).Fingerprint,
+        };
+        PreparedRepositoryPackage[] repositories = [first, second];
+        PreparedCanonicalArtifact pair = PreparedScanIdentityBuilders.CreatePairPackage(
+            package.CoordinationId,
+            package.PairSelectionFingerprint,
+            repositories.Select(repository => new PreparedManifestFingerprintBinding(
+                repository.RepositoryId, repository.ManifestFingerprint)),
+            package.SelectedCount);
+        return package with
+        {
+            Repositories = repositories,
+            PairPackageFingerprint = pair.Fingerprint,
         };
     }
 

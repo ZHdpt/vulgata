@@ -20,6 +20,8 @@ public sealed class PreScanResult
     public const string CurrentSchemaVersion = "1.0";
     public const string PreparedSchemaVersion = "2.0";
     public const string PreparedHandoffSchemaIdentity = "prepared-scan-handoff/2.0";
+    public const int MaximumLegacyRetainedClassifications = 100;
+    public const int MaximumPreparedRetainedClassifications = 256;
     private const ConfirmedCommunicationKinds _allCommunicationKinds =
         ConfirmedCommunicationKinds.Rpc | ConfirmedCommunicationKinds.Http;
 
@@ -108,6 +110,37 @@ public sealed class PreScanResult
         bool evidenceTruncated,
         IEnumerable<CommunicationKindClassification> classifications)
     {
+        return CreateApproved(
+            repositoryId,
+            scanRunId,
+            profiledRevision,
+            approvedAt,
+            fingerprint,
+            approvalMessage,
+            confirmedCommunicationKinds,
+            totalConfirmedEvidenceCount,
+            totalHintCount,
+            totalWarningCount,
+            evidenceTruncated,
+            classifications,
+            MaximumLegacyRetainedClassifications);
+    }
+
+    private static PreScanResult CreateApproved(
+        Guid repositoryId,
+        Guid scanRunId,
+        string profiledRevision,
+        DateTimeOffset approvedAt,
+        string fingerprint,
+        string approvalMessage,
+        ConfirmedCommunicationKinds confirmedCommunicationKinds,
+        int totalConfirmedEvidenceCount,
+        int totalHintCount,
+        int totalWarningCount,
+        bool evidenceTruncated,
+        IEnumerable<CommunicationKindClassification> classifications,
+        int maximumRetainedClassifications)
+    {
         if (repositoryId == Guid.Empty || scanRunId == Guid.Empty)
         {
             throw new ArgumentException(
@@ -136,7 +169,8 @@ public sealed class PreScanResult
             totalHintCount,
             totalWarningCount,
             evidenceTruncated,
-            retainedClassifications);
+            retainedClassifications,
+            maximumRetainedClassifications);
 
         return new(
             repositoryId,
@@ -190,7 +224,8 @@ public sealed class PreScanResult
             package.TotalHintCount,
             package.TotalWarningCount,
             package.EvidenceTruncated,
-            package.Classifications);
+            package.Classifications,
+            MaximumPreparedRetainedClassifications);
         result.SchemaVersion = PreparedSchemaVersion;
         result.PreparedScanManifestId = preparedScanManifestId;
         result.PreparedScanManifestFingerprint = RequireLowercaseSha256(
@@ -211,13 +246,14 @@ public sealed class PreScanResult
         int totalHintCount,
         int totalWarningCount,
         bool evidenceTruncated,
-        CommunicationKindClassification[] classifications)
+        CommunicationKindClassification[] classifications,
+        int maximumRetainedClassifications)
     {
-        if (classifications.Length > 100)
+        if (classifications.Length > maximumRetainedClassifications)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(classifications),
-                "A Pre-Scan Result retains at most 100 classification samples.");
+                $"A Pre-Scan Result retains at most {maximumRetainedClassifications} classification samples.");
         }
 
         if (classifications.Any(classification =>
