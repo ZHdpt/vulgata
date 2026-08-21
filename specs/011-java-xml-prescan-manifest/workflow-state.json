@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 4,
+    "converge": 5,
     "quality-review": 0
   },
   "approvals": [
@@ -85,10 +85,10 @@
     }
   ],
   "convergence": {
-    "status": "revised",
-    "attempt": 4,
-    "outcome": "tasks_appended",
-    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-04.md"
+    "status": "accepted",
+    "attempt": 5,
+    "outcome": "converged",
+    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md"
   },
   "e2e": {
     "result": "pending",
@@ -106,18 +106,18 @@
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-04.md"
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-implement-20260821T020436Z-7da232",
-    "stage": "implement",
+    "checkpoint_id": "bmad-12-2-converge-20260821T021223Z-7da232",
+    "stage": "converge",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "converge",
-    "reason": "Authorized T058-T059 corrections have independent RED/GREEN verification; bind the coherent implementation checkpoint and rerun convergence against the current boundary.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
+    "stage": "quality-review",
+    "reason": "Convergence attempt 5 is clean at the pinned T058-T059 boundary; bind the converged review candidate and dispatch independent quality review.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md"
   },
-  "updated_at": "2026-08-21T02:04:36Z"
+  "updated_at": "2026-08-21T02:12:23Z"
 }
