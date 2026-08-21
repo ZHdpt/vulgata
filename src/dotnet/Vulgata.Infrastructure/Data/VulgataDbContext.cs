@@ -47,6 +47,12 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<ScanJobExecution> ScanJobExecutions => Set<ScanJobExecution>();
     public DbSet<TwoRepositoryScanCoordination> TwoRepositoryScanCoordinations =>
         Set<TwoRepositoryScanCoordination>();
+    public DbSet<Pass1PairExecution> Pass1PairExecutions => Set<Pass1PairExecution>();
+    public DbSet<Pass1ConcurrencyChange> Pass1ConcurrencyChanges => Set<Pass1ConcurrencyChange>();
+    public DbSet<Pass1NavigationBudget> Pass1NavigationBudgets => Set<Pass1NavigationBudget>();
+    public DbSet<Pass1NavigationReceipt> Pass1NavigationReceipts => Set<Pass1NavigationReceipt>();
+    public DbSet<Pass1Outcome> Pass1Outcomes => Set<Pass1Outcome>();
+    public DbSet<Pass1FailureInventoryEntry> Pass1FailureInventoryEntries => Set<Pass1FailureInventoryEntry>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

@@ -146,6 +146,7 @@ public sealed class TwoRepositoryScanCoordinationTests
                 TwoRepositoryScanCoordinationPhase.FailedIntegrity,
                 TwoRepositoryScanCoordinationPhase.FailedSecurity,
                 TwoRepositoryScanCoordinationPhase.Cancelled,
+                TwoRepositoryScanCoordinationPhase.FailedPass1,
             },
             Enum.GetValues<TwoRepositoryScanCoordinationPhase>());
 
@@ -158,6 +159,7 @@ public sealed class TwoRepositoryScanCoordinationTests
                 TwoRepositoryScanReasonCategory.Security,
                 TwoRepositoryScanReasonCategory.Cancellation,
                 TwoRepositoryScanReasonCategory.Unclassified,
+                TwoRepositoryScanReasonCategory.Pass1Policy,
             },
             Enum.GetValues<TwoRepositoryScanReasonCategory>());
     }

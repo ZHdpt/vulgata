@@ -546,7 +546,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                             t.HasCheckConstraint("CK_DocumentVersions_ContentFingerprint_Length", "length(\"ContentFingerprint\") = 64");
 
-                            t.HasCheckConstraint("CK_DocumentVersions_SchemaIdentity_Closed", "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
+                            t.HasCheckConstraint("CK_DocumentVersions_SchemaIdentity_Closed", "\"SchemaIdentity\" IN ('vulgata.knowledge-document/1.0', 'code-logic/file-v2')");
 
                             t.HasCheckConstraint("CK_DocumentVersions_SupersededBy_NotSelf", "\"SupersededById\" IS NULL OR \"SupersededById\" <> \"Id\"");
 
@@ -979,6 +979,424 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1ConcurrencyChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChangeFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChangedByPrincipalId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<long>("ConcurrencyRevision")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("EffectiveLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("ExpectedStateVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("PairExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PreviousLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("ResultingStateVersion")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PairExecutionId", "ConcurrencyRevision")
+                        .IsUnique();
+
+                    b.HasIndex("PairExecutionId", "ExpectedStateVersion")
+                        .IsUnique();
+
+                    b.ToTable("Pass1ConcurrencyChanges", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass1ConcurrencyChanges_Shape", "\"ExpectedStateVersion\" >= 0 AND \"ResultingStateVersion\" = \"ExpectedStateVersion\" + 1 AND \"PreviousLimit\" BETWEEN 1 AND 4 AND \"EffectiveLimit\" BETWEEN 1 AND 4 AND \"PreviousLimit\" <> \"EffectiveLimit\" AND \"ConcurrencyRevision\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1FailureInventoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FailureCategory")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("FailureCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("FileCodeUnitId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ManifestOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PairExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PairSelectionOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RepositoryRelativePath")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<int>("SegmentOrdinal")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileCodeUnitId");
+
+                    b.HasIndex("RepositoryId");
+
+                    b.HasIndex("PairExecutionId", "FileCodeUnitId")
+                        .IsUnique();
+
+                    b.HasIndex("PairExecutionId", "PairSelectionOrdinal")
+                        .IsUnique();
+
+                    b.ToTable("Pass1FailureInventoryEntries", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass1FailureInventoryEntries_Ordinals", "\"PairSelectionOrdinal\" > 0 AND \"ManifestOrdinal\" > 0 AND \"SegmentOrdinal\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1NavigationBudget", b =>
+                {
+                    b.Property<Guid>("ScanJobExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AcceptedCallCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EvidenceBytes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaximumDepthObserved")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PairExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ToolAttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ScanJobExecutionId");
+
+                    b.HasIndex("PairExecutionId");
+
+                    b.ToTable("Pass1NavigationBudgets", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass1NavigationBudgets_Bounds", "\"ToolAttemptCount\" BETWEEN 0 AND 8 AND \"AcceptedCallCount\" BETWEEN 0 AND \"ToolAttemptCount\" AND \"EvidenceBytes\" BETWEEN 0 AND 65536 AND \"MaximumDepthObserved\" BETWEEN 0 AND 3 AND \"StateVersion\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1NavigationReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BoundKind")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("Depth")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DescriptorJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("EvidenceBytes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Operation")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("PairExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReceiptFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("ReceiptOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RequestFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("ResultCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ScanJobExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ToolAttemptOrdinal")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PairExecutionId");
+
+                    b.HasIndex("ReceiptFingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("ScanJobExecutionId", "ReceiptOrdinal")
+                        .IsUnique();
+
+                    b.HasIndex("ScanJobExecutionId", "ToolAttemptOrdinal")
+                        .IsUnique()
+                        .HasFilter("\"ToolAttemptOrdinal\" IS NOT NULL");
+
+                    b.ToTable("Pass1NavigationReceipts", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass1NavigationReceipts_Bounds", "\"ReceiptOrdinal\" BETWEEN 1 AND 9 AND (\"ToolAttemptOrdinal\" IS NULL OR \"ToolAttemptOrdinal\" BETWEEN 1 AND 8) AND (\"Depth\" IS NULL OR \"Depth\" BETWEEN 1 AND 4) AND \"ResultCount\" BETWEEN 0 AND 20 AND \"EvidenceBytes\" BETWEEN 0 AND 65536");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1Outcome", b =>
+                {
+                    b.Property<Guid>("PairExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CompletedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DispatchedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HighValueSeedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrdinaryFailureBudget")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrdinaryFailureCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OutcomeFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("ReconciledEdgeCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReconciliationFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("SucceededHighValueSeedCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("PairExecutionId");
+
+                    b.ToTable("Pass1Outcomes", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass1Outcomes_Counts", "\"DispatchedCount\" >= 0 AND \"CompletedCount\" BETWEEN 0 AND \"DispatchedCount\" AND \"OrdinaryFailureCount\" BETWEEN 0 AND \"DispatchedCount\" AND \"OrdinaryFailureBudget\" BETWEEN 0 AND 5 AND \"HighValueSeedCount\" BETWEEN 0 AND \"DispatchedCount\" AND \"SucceededHighValueSeedCount\" BETWEEN 0 AND \"HighValueSeedCount\" AND \"ReconciledEdgeCount\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1PairExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AnalysisRuntimeIdentityHashOne")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("AnalysisRuntimeIdentityHashTwo")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("CircuitState")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<int>("ConcurrencyLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("ConcurrencyRevision")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("ConcurrencyUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CoordinationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DispatchedFileCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DocumentSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("HighValueSeedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("InitialConcurrencyLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ManifestOneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ManifestTwoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("NextProbeAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PairPackageFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("PairSelectionFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Pass1PairFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Phase")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("ProbeOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PromptIdentityOne")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("PromptIdentityTwo")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ReasonCategory")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset?>("RetryAfterAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("SystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("TerminalAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoordinationId")
+                        .IsUnique();
+
+                    b.HasIndex("ManifestOneId");
+
+                    b.HasIndex("ManifestTwoId");
+
+                    b.HasIndex("PairPackageFingerprint")
+                        .IsUnique();
+
+                    b.ToTable("Pass1PairExecutions", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass1PairExecutions_Concurrency", "\"InitialConcurrencyLimit\" BETWEEN 1 AND 4 AND \"ConcurrencyLimit\" BETWEEN 1 AND 4");
+
+                            t.HasCheckConstraint("CK_Pass1PairExecutions_Counts", "\"DispatchedFileCount\" BETWEEN 50 AND 150 AND \"HighValueSeedCount\" BETWEEN 0 AND \"DispatchedFileCount\"");
+
+                            t.HasCheckConstraint("CK_Pass1PairExecutions_ProbeOrdinal", "\"ProbeOrdinal\" BETWEEN 0 AND 5");
+
+                            t.HasCheckConstraint("CK_Pass1PairExecutions_Versions", "\"StateVersion\" >= 0 AND \"ConcurrencyRevision\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.PendingContextChange", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1254,8 +1672,58 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("CodeGraphIndexIdentity")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<bool>("CodeGraphIndexPathTrusted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CodeGraphIndexState")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<long>("CodeGraphIndexedFileCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("CodeGraphInitialized")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CodeGraphLogicalIndexBinding")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("CodeGraphLogicalProjectBinding")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
                     b.Property<long>("CodeGraphObservedDurationMilliseconds")
                         .HasColumnType("bigint");
+
+                    b.Property<long>("CodeGraphPendingAdded")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CodeGraphPendingModified")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CodeGraphPendingReferences")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CodeGraphPendingRemoved")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("CodeGraphProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character(40)")
+                        .IsFixedLength();
+
+                    b.Property<bool>("CodeGraphProjectPathTrusted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("CodeGraphProofIdentityHash")
                         .IsRequired()
@@ -1263,32 +1731,55 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
-                    b.Property<Guid>("CodeGraphRepositoryId").HasColumnType("uuid");
-                    b.Property<Guid>("CodeGraphScanRunId").HasColumnType("uuid");
-                    b.Property<string>("CodeGraphProfiledRevision").IsRequired().HasMaxLength(40).HasColumnType("character(40)").IsFixedLength();
-                    b.Property<string>("CodeGraphSnapshotIdentity").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
-                    b.Property<string>("CodeGraphSnapshotRootBindingHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
-                    b.Property<string>("CodeGraphRuntimeIdentityHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
-                    b.Property<string>("CodeGraphIndexIdentity").IsRequired().HasMaxLength(1024).HasColumnType("character varying(1024)");
-                    b.Property<string>("CodeGraphProofSchemaIdentity").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)");
-                    b.Property<bool>("CodeGraphInitialized").HasColumnType("boolean");
-                    b.Property<string>("CodeGraphIndexState").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
-                    b.Property<long>("CodeGraphPendingAdded").HasColumnType("bigint");
-                    b.Property<long>("CodeGraphPendingModified").HasColumnType("bigint");
-                    b.Property<long>("CodeGraphPendingRemoved").HasColumnType("bigint");
-                    b.Property<bool>("CodeGraphWorktreeMismatch").HasColumnType("boolean");
-                    b.Property<bool>("CodeGraphReindexRecommended").HasColumnType("boolean");
-                    b.Property<long>("CodeGraphPendingReferences").HasColumnType("bigint");
-                    b.Property<long>("CodeGraphIndexedFileCount").HasColumnType("bigint");
-                    b.Property<string>("CodeGraphLogicalProjectBinding").IsRequired().HasMaxLength(2048).HasColumnType("character varying(2048)");
-                    b.Property<string>("CodeGraphLogicalIndexBinding").IsRequired().HasMaxLength(2048).HasColumnType("character varying(2048)");
-                    b.Property<bool>("CodeGraphRepositoryBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("CodeGraphScanRunBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("CodeGraphRevisionBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("CodeGraphRuntimeBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("CodeGraphSnapshotBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("CodeGraphProjectPathTrusted").HasColumnType("boolean");
-                    b.Property<bool>("CodeGraphIndexPathTrusted").HasColumnType("boolean");
+                    b.Property<string>("CodeGraphProofSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<bool>("CodeGraphReindexRecommended")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CodeGraphRepositoryBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("CodeGraphRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CodeGraphRevisionBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CodeGraphRuntimeBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CodeGraphRuntimeIdentityHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<bool>("CodeGraphScanRunBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("CodeGraphScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CodeGraphSnapshotBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CodeGraphSnapshotIdentity")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("CodeGraphSnapshotRootBindingHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<bool>("CodeGraphWorktreeMismatch")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("ContextContentHash")
                         .IsRequired()
@@ -1320,39 +1811,114 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
+                    b.Property<long>("JavaReadinessDocumentSymbolCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("JavaReadinessFile")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
                     b.Property<string>("JavaReadinessIdentityHash")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
-                    b.Property<Guid>("JavaReadinessRepositoryId").HasColumnType("uuid");
-                    b.Property<Guid>("JavaReadinessScanRunId").HasColumnType("uuid");
-                    b.Property<string>("JavaReadinessProfiledRevision").IsRequired().HasMaxLength(40).HasColumnType("character(40)").IsFixedLength();
-                    b.Property<string>("JavaReadinessSnapshotIdentity").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
-                    b.Property<string>("JavaReadinessRuntimeIdentityHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
-                    b.Property<string>("JavaReadinessWorkspaceBindingHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
-                    b.Property<string>("JavaReadinessSchemaIdentity").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)");
-                    b.Property<string>("JavaReadinessOutcome").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
-                    b.Property<string>("JavaReadinessJdtLsRelease").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)");
-                    b.Property<string>("JavaReadinessJdtLsDistributionArchiveHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
-                    b.Property<int>("JavaReadinessJavaMajor").HasColumnType("integer");
-                    b.Property<string>("JavaReadinessStreamJsonRpcVersion").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
-                    b.Property<string>("JavaReadinessTransport").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
-                    b.Property<bool>("JavaReadinessWorkspaceExclusive").HasColumnType("boolean");
-                    b.Property<string>("JavaReadinessFile").HasMaxLength(4096).HasColumnType("character varying(4096)");
-                    b.Property<bool>("JavaReadinessInitializeCompleted").HasColumnType("boolean");
-                    b.Property<bool>("JavaReadinessInitializedNotificationSent").HasColumnType("boolean");
-                    b.Property<string>("JavaReadinessImportState").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
-                    b.Property<long>("JavaReadinessDocumentSymbolCount").HasColumnType("bigint");
-                    b.Property<bool>("JavaReadinessRepositoryBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("JavaReadinessScanRunBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("JavaReadinessRevisionBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("JavaReadinessRuntimeBindingMatched").HasColumnType("boolean");
-                    b.Property<bool>("JavaReadinessSnapshotBindingMatched").HasColumnType("boolean");
+                    b.Property<string>("JavaReadinessImportState")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("JavaReadinessInitializeCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("JavaReadinessInitializedNotificationSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("JavaReadinessJavaMajor")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("JavaReadinessJdtLsDistributionArchiveHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("JavaReadinessJdtLsRelease")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<long>("JavaReadinessObservedDurationMilliseconds")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("JavaReadinessOutcome")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("JavaReadinessProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character(40)")
+                        .IsFixedLength();
+
+                    b.Property<bool>("JavaReadinessRepositoryBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("JavaReadinessRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("JavaReadinessRevisionBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("JavaReadinessRuntimeBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JavaReadinessRuntimeIdentityHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<bool>("JavaReadinessScanRunBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("JavaReadinessScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("JavaReadinessSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<bool>("JavaReadinessSnapshotBindingMatched")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("JavaReadinessSnapshotIdentity")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("JavaReadinessStreamJsonRpcVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("JavaReadinessTransport")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("JavaReadinessWorkspaceBindingHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<bool>("JavaReadinessWorkspaceExclusive")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("PairSelectionFingerprint")
                         .IsRequired()
@@ -1769,11 +2335,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("ScanExecutions", "vulgata", t =>
                         {
-                            t.HasCheckConstraint("CK_ScanExecutions_NewPathBinding_Shape", "(\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Failed') AND \"PromptIdentity\" IS NULL AND \"DocumentSchemaIdentity\" IS NULL AND \"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND \"UpdatedAt\" IS NULL) OR (\"Phase\" IN ('Prepared', 'Running', 'PausedProviderUnavailable', 'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity') AND \"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND \"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND \"UpdatedAt\" IS NOT NULL) OR (\"Phase\" IN ('Completed', 'Cancelled') AND ((\"PromptIdentity\" IS NULL AND \"DocumentSchemaIdentity\" IS NULL AND \"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND \"UpdatedAt\" IS NULL) OR (\"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND \"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND \"UpdatedAt\" IS NOT NULL)))");
+                            t.HasCheckConstraint("CK_ScanExecutions_NewPathBinding_Shape", "(\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Failed') AND \"PromptIdentity\" IS NULL AND \"DocumentSchemaIdentity\" IS NULL AND \"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND \"UpdatedAt\" IS NULL) OR (\"Phase\" IN ('Prepared', 'Running', 'PausedProviderUnavailable', 'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1') AND \"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND \"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND \"UpdatedAt\" IS NOT NULL) OR (\"Phase\" IN ('Completed', 'Cancelled') AND ((\"PromptIdentity\" IS NULL AND \"DocumentSchemaIdentity\" IS NULL AND \"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND \"UpdatedAt\" IS NULL) OR (\"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND \"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND \"UpdatedAt\" IS NOT NULL)))");
 
-                            t.HasCheckConstraint("CK_ScanExecutions_PauseFailure_Shape", "(\"Phase\" = 'PausedProviderUnavailable' AND \"PauseCategory\" = 'ProviderUnavailable' AND \"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'PausedOperatorCorrection' AND \"PauseCategory\" = 'OperatorCorrection' AND \"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'FailedIntegrity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND \"FailureCategory\" = 'Integrity' AND \"FailureCode\" IS NOT NULL) OR (\"Phase\" = 'FailedSecurity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND \"FailureCategory\" = 'Security' AND \"FailureCode\" IS NOT NULL) OR (\"Phase\" NOT IN ('PausedProviderUnavailable', 'PausedOperatorCorrection', 'FailedIntegrity', 'FailedSecurity') AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND ((\"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'Cancelled' AND \"FailureCategory\" = 'Cancellation' AND \"FailureCode\" IS NOT NULL)))");
+                            t.HasCheckConstraint("CK_ScanExecutions_PauseFailure_Shape", "(\"Phase\" = 'PausedProviderUnavailable' AND \"PauseCategory\" = 'ProviderUnavailable' AND \"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'PausedOperatorCorrection' AND \"PauseCategory\" = 'OperatorCorrection' AND \"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'FailedIntegrity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND \"FailureCategory\" = 'Integrity' AND \"FailureCode\" IS NOT NULL) OR (\"Phase\" = 'FailedSecurity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND \"FailureCategory\" = 'Security' AND \"FailureCode\" IS NOT NULL) OR (\"Phase\" = 'FailedPass1' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND \"FailureCategory\" = 'Pass1Policy' AND \"FailureCode\" IS NOT NULL) OR (\"Phase\" NOT IN ('PausedProviderUnavailable', 'PausedOperatorCorrection', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1') AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND ((\"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR (\"Phase\" = 'Cancelled' AND \"FailureCategory\" = 'Cancellation' AND \"FailureCode\" IS NOT NULL)))");
 
-                            t.HasCheckConstraint("CK_ScanExecutions_Phase_Closed", "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled', 'Prepared', 'Running', 'PausedProviderUnavailable', 'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity')");
+                            t.HasCheckConstraint("CK_ScanExecutions_Phase_Closed", "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled', 'Prepared', 'Running', 'PausedProviderUnavailable', 'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1')");
 
                             t.HasCheckConstraint("CK_ScanExecutions_RestartIndicator_Bound", "0 <= \"RestartIndicator\" AND \"RestartIndicator\" <= 32");
 
@@ -1961,6 +2527,12 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<long?>("ByteEnd")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ByteStart")
+                        .HasColumnType("bigint");
+
                     b.Property<Guid>("CodeUnitId")
                         .HasColumnType("uuid");
 
@@ -2015,6 +2587,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("SourceAnchors", "vulgata", t =>
                         {
+                            t.HasCheckConstraint("CK_SourceAnchors_ByteRange_Shape", "(\"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR (\"ByteStart\" IS NOT NULL AND \"ByteEnd\" IS NOT NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\")");
+
                             t.HasCheckConstraint("CK_SourceAnchors_LineEnd_Range", "\"LineEnd\" >= \"LineStart\"");
 
                             t.HasCheckConstraint("CK_SourceAnchors_LineStart_Positive", "\"LineStart\" > 0");
@@ -2192,15 +2766,15 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("TwoRepositoryScanCoordinations", "vulgata", t =>
                         {
-                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_Phase_Closed", "\"Phase\" IN ('Preparing', 'Pass1', 'Resolving', 'Pass2', 'Paused', 'Completed', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'Cancelled')");
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_Phase_Closed", "\"Phase\" IN ('Preparing', 'Pass1', 'Resolving', 'Pass2', 'Paused', 'Completed', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'Cancelled', 'FailedPass1')");
 
-                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_ReasonCategory_Closed", "\"ReasonCategory\" IS NULL OR \"ReasonCategory\" IN ('ProviderUnavailable', 'OperatorCorrection', 'Integrity', 'Security', 'Cancellation', 'Unclassified')");
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_ReasonCategory_Closed", "\"ReasonCategory\" IS NULL OR \"ReasonCategory\" IN ('ProviderUnavailable', 'OperatorCorrection', 'Integrity', 'Security', 'Cancellation', 'Unclassified', 'Pass1Policy')");
 
                             t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_Repositories_Distinct", "\"RepositoryOneId\" <> \"RepositoryTwoId\"");
 
                             t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_StateVersion_Bound", "\"StateVersion\" >= 0");
 
-                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_TerminalReason_Shape", "(\"Phase\" IN ('Completed', 'CompletedWithWarnings') AND \"TerminalAt\" IS NOT NULL AND \"ReasonCategory\" IS NULL AND \"ReasonCode\" IS NULL) OR (\"Phase\" IN ('FailedIntegrity', 'FailedSecurity', 'Cancelled') AND \"TerminalAt\" IS NOT NULL AND \"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR (\"Phase\" = 'Paused' AND \"TerminalAt\" IS NULL AND \"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR (\"Phase\" IN ('Preparing', 'Pass1', 'Resolving', 'Pass2') AND \"TerminalAt\" IS NULL AND \"ReasonCategory\" IS NULL AND \"ReasonCode\" IS NULL)");
+                            t.HasCheckConstraint("CK_TwoRepositoryScanCoordinations_TerminalReason_Shape", "(\"Phase\" IN ('Completed', 'CompletedWithWarnings') AND \"TerminalAt\" IS NOT NULL AND \"ReasonCategory\" IS NULL AND \"ReasonCode\" IS NULL) OR (\"Phase\" IN ('FailedIntegrity', 'FailedSecurity', 'Cancelled', 'FailedPass1') AND \"TerminalAt\" IS NOT NULL AND \"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR (\"Phase\" = 'Paused' AND \"TerminalAt\" IS NULL AND \"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR (\"Phase\" IN ('Preparing', 'Pass1', 'Resolving', 'Pass2') AND \"TerminalAt\" IS NULL AND \"ReasonCategory\" IS NULL AND \"ReasonCode\" IS NULL)");
                         });
                 });
 
@@ -2644,6 +3218,96 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("CurrentVersion");
 
                     b.Navigation("Repository");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1ConcurrencyChange", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Pass1PairExecution", null)
+                        .WithMany()
+                        .HasForeignKey("PairExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1FailureInventoryEntry", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.CodeUnit", null)
+                        .WithMany()
+                        .HasForeignKey("FileCodeUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Pass1Outcome", null)
+                        .WithMany()
+                        .HasForeignKey("PairExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1NavigationBudget", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Pass1PairExecution", null)
+                        .WithMany()
+                        .HasForeignKey("PairExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanJobExecution", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.Pass1NavigationBudget", "ScanJobExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1NavigationReceipt", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Pass1PairExecution", null)
+                        .WithMany()
+                        .HasForeignKey("PairExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.ScanJobExecution", null)
+                        .WithMany()
+                        .HasForeignKey("ScanJobExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1Outcome", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Pass1PairExecution", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.Pass1Outcome", "PairExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass1PairExecution", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.TwoRepositoryScanCoordination", null)
+                        .WithMany()
+                        .HasForeignKey("CoordinationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.PreparedScanManifest", null)
+                        .WithMany()
+                        .HasForeignKey("ManifestOneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.PreparedScanManifest", null)
+                        .WithMany()
+                        .HasForeignKey("ManifestTwoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.PreScanResult", b =>

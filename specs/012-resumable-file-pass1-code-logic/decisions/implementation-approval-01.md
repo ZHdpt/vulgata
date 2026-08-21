@@ -1,7 +1,8 @@
 # Story 12.3 Implementation Approval
 
 - Decision ID: `story-12-3-implementation-approval-01`
-- Status: Pending
+- Status: Accepted
+- Decided at: `2026-08-21T11:30:08Z`
 - Scope SHA-256: `4879d08354c64ae796e172e722708b5c76090858518f9f2f7b958f6d082c5359`
 - Specification SHA-256: `7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1`
 - Plan SHA-256: `f913da57b120faa9a64e21d380b08159d2bdfcab9b3f5e37e60dfe7cbdca0c41`
@@ -25,3 +26,8 @@ CodeGraphContext, unrestricted Agent tools, or changes to accepted Story
 12.1/12.2 behavior beyond the planned AD-12 additive compatibility correction.
 It does not waive TDD, convergence, quality review, E2E, security, migration,
 final verification, or checkpoint gates.
+
+## Decision
+
+The user explicitly approved production implementation of this exact scope on
+2026-08-21. No excluded scope or downstream gate was waived.

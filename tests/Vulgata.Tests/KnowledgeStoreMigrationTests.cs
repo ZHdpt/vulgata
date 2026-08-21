@@ -42,7 +42,7 @@ public sealed class KnowledgeStoreMigrationTests
             ["CK_DocumentVersions_ContentFingerprint_Length"] =
                 "length(\"ContentFingerprint\") = 64",
             ["CK_DocumentVersions_SchemaIdentity_Closed"] =
-                "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'",
+                "\"SchemaIdentity\" IN ('vulgata.knowledge-document/1.0', 'code-logic/file-v2')",
             ["CK_DocumentVersions_SupersededBy_NotSelf"] =
                 "\"SupersededById\" IS NULL OR \"SupersededById\" <> \"Id\"",
             ["CK_DocumentVersions_VersionNumber_Positive"] = "\"VersionNumber\" > 0",
@@ -57,6 +57,9 @@ public sealed class KnowledgeStoreMigrationTests
                 "\"DocumentType\" IN ('CodeLogic', 'BusinessLogic')",
             ["CK_SourceAnchors_LineEnd_Range"] = "\"LineEnd\" >= \"LineStart\"",
             ["CK_SourceAnchors_LineStart_Positive"] = "\"LineStart\" > 0",
+            ["CK_SourceAnchors_ByteRange_Shape"] =
+                "(\"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR " +
+                "(\"ByteStart\" IS NOT NULL AND \"ByteEnd\" IS NOT NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\")",
         };
 
     [Fact]

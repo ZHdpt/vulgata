@@ -57,4 +57,7 @@ public enum ScanExecutionPhase
 
     /// <summary>Terminal new-path security failure.</summary>
     FailedSecurity,
+
+    /// <summary>Terminal new-path Pass 1 policy failure.</summary>
+    FailedPass1,
 }

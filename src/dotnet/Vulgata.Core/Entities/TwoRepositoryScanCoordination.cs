@@ -16,6 +16,7 @@ public enum TwoRepositoryScanCoordinationPhase
     FailedIntegrity,
     FailedSecurity,
     Cancelled,
+    FailedPass1,
 }
 
 public enum TwoRepositoryScanReasonCategory
@@ -26,6 +27,7 @@ public enum TwoRepositoryScanReasonCategory
     Security,
     Cancellation,
     Unclassified,
+    Pass1Policy,
 }
 
 public sealed class TwoRepositoryScanCoordination
@@ -215,6 +217,17 @@ public sealed class TwoRepositoryScanCoordination
             reasonCode,
             updatedAt);
 
+    public void FailPass1(
+        long expectedStateVersion,
+        string reasonCode,
+        DateTimeOffset updatedAt) =>
+        Terminate(
+            TwoRepositoryScanCoordinationPhase.FailedPass1,
+            TwoRepositoryScanReasonCategory.Pass1Policy,
+            expectedStateVersion,
+            reasonCode,
+            updatedAt);
+
     public void Cancel(
         long expectedStateVersion,
         string reasonCode,
@@ -269,6 +282,7 @@ public sealed class TwoRepositoryScanCoordination
             TwoRepositoryScanCoordinationPhase.CompletedWithWarnings or
             TwoRepositoryScanCoordinationPhase.FailedIntegrity or
             TwoRepositoryScanCoordinationPhase.FailedSecurity or
+            TwoRepositoryScanCoordinationPhase.FailedPass1 or
             TwoRepositoryScanCoordinationPhase.Cancelled)
         {
             throw new InvalidOperationException("A terminal coordination is immutable.");

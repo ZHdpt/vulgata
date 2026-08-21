@@ -14,6 +14,7 @@ public enum ScanExecutionFailureCategory
     Integrity,
     Security,
     Cancellation,
+    Pass1Policy,
 }
 
 /// <summary>
@@ -208,6 +209,31 @@ public sealed class ScanExecution
         FailureCode = null;
         AdvanceNewPathVersion(updatedAt);
     }
+
+    public void Complete(long expectedStateVersion, DateTimeOffset updatedAt)
+    {
+        EnsureNewPathTransition(ScanExecutionPhase.Running, expectedStateVersion, updatedAt);
+        Phase = ScanExecutionPhase.Completed;
+        TerminalMessage = null;
+        TerminalAt = updatedAt;
+        InFlightJobId = null;
+        PauseCategory = null;
+        PauseCode = null;
+        FailureCategory = null;
+        FailureCode = null;
+        AdvanceNewPathVersion(updatedAt);
+    }
+
+    public void FailPass1(
+        long expectedStateVersion,
+        string failureCode,
+        DateTimeOffset updatedAt) =>
+        FailNewPath(
+            ScanExecutionPhase.FailedPass1,
+            ScanExecutionFailureCategory.Pass1Policy,
+            expectedStateVersion,
+            failureCode,
+            updatedAt);
 
     public void FailIntegrity(
         long expectedStateVersion,

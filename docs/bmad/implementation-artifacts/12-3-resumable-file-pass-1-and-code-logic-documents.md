@@ -304,6 +304,30 @@ The workflow pauses for explicit production implementation authorization; TDD,
 convergence, quality review, E2E, security, migration, verification, and
 completion checkpoints remain mandatory.
 
+### Implementation approval
+
+The user explicitly approved implementation scope
+`4879d08354c64ae796e172e722708b5c76090858518f9f2f7b958f6d082c5359`
+on 2026-08-21. The accepted 49-task definition may proceed through TDD.
+Story 12.4/12.5 exclusions and every convergence, review, E2E, qualification,
+verification, security, migration, and checkpoint gate remain in force.
+
+### Implementation checkpoint: T001-T008
+
+The foundation group completed the accepted seam inventory, deterministic
+two-manifest fixtures, externalized v2 Worker prompt, canonical Pass 1
+contracts, additive domain state, and the `AddResumablePass1CodeLogic`
+migration. T004 first observed one expected missing-codec failure out of four
+tests; T006 first observed six expected missing-transition/schema failures out
+of seven tests. Production then turned the canonical and adjacent contract
+set green (21/21), the migration seam green (7/7), and the root-owned combined
+foundation plus AD-12 compatibility selection green (14/14). Core,
+Infrastructure, and Agents builds completed with zero errors; EF reports no
+pending model changes; `git diff --check` is clean. Accepted Story 12.1/12.2
+state atoms and document schema v1 remain supported alongside the additive v2
+contract. Checkpoint `bmad-12-3-implement-20260821T115533Z-73963f` hands off
+to US1 tasks T009-T016.
+
 ### Authorized task correction after definition review iteration 4
 
 The task owner closed `DR4-001` within the approved scope. Host-runtime,

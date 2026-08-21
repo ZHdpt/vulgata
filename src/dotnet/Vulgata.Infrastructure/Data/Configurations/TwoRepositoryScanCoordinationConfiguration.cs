@@ -15,12 +15,12 @@ internal sealed class TwoRepositoryScanCoordinationConfiguration :
             table.HasCheckConstraint(
                 "CK_TwoRepositoryScanCoordinations_Phase_Closed",
                 "\"Phase\" IN ('Preparing', 'Pass1', 'Resolving', 'Pass2', 'Paused', " +
-                "'Completed', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'Cancelled')");
+                "'Completed', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'Cancelled', 'FailedPass1')");
             table.HasCheckConstraint(
                 "CK_TwoRepositoryScanCoordinations_ReasonCategory_Closed",
                 "\"ReasonCategory\" IS NULL OR \"ReasonCategory\" IN (" +
                 "'ProviderUnavailable', 'OperatorCorrection', 'Integrity', 'Security', " +
-                "'Cancellation', 'Unclassified')");
+                "'Cancellation', 'Unclassified', 'Pass1Policy')");
             table.HasCheckConstraint(
                 "CK_TwoRepositoryScanCoordinations_Repositories_Distinct",
                 "\"RepositoryOneId\" <> \"RepositoryTwoId\"");
@@ -31,7 +31,7 @@ internal sealed class TwoRepositoryScanCoordinationConfiguration :
                 "CK_TwoRepositoryScanCoordinations_TerminalReason_Shape",
                 "(\"Phase\" IN ('Completed', 'CompletedWithWarnings') AND \"TerminalAt\" IS NOT NULL AND " +
                 "\"ReasonCategory\" IS NULL AND \"ReasonCode\" IS NULL) OR " +
-                "(\"Phase\" IN ('FailedIntegrity', 'FailedSecurity', 'Cancelled') AND " +
+                "(\"Phase\" IN ('FailedIntegrity', 'FailedSecurity', 'Cancelled', 'FailedPass1') AND " +
                 "\"TerminalAt\" IS NOT NULL AND \"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR " +
                 "(\"Phase\" = 'Paused' AND \"TerminalAt\" IS NULL AND " +
                 "\"ReasonCategory\" IS NOT NULL AND \"ReasonCode\" IS NOT NULL) OR " +

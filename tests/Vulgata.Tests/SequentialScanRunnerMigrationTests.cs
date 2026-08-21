@@ -23,11 +23,43 @@ public sealed class SequentialScanRunnerMigrationTests
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["CK_ScanExecutions_Phase_Closed"] =
-                "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled')",
+                "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', 'Failed', 'Cancelled', 'Prepared', 'Running', 'PausedProviderUnavailable', 'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1')",
             ["CK_ScanExecutions_TerminalReasonKind_Closed"] =
                 "\"TerminalReasonKind\" IS NULL OR \"TerminalReasonKind\" IN ('SchemaInvalid', 'Error', 'Unbounded', 'MissingPrerequisite', 'DuplicateActiveScan', 'MissingCodeUnit', 'ForbiddenContent', 'OverLimitPacket')",
             ["CK_ScanExecutions_RestartIndicator_Bound"] =
                 "0 <= \"RestartIndicator\" AND \"RestartIndicator\" <= 32",
+            ["CK_ScanExecutions_StateVersion_Bound"] = "\"StateVersion\" >= 0",
+            ["CK_ScanExecutions_NewPathBinding_Shape"] =
+                "(\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Failed') AND " +
+                "\"PromptIdentity\" IS NULL AND \"DocumentSchemaIdentity\" IS NULL AND " +
+                "\"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND " +
+                "\"UpdatedAt\" IS NULL) OR " +
+                "(\"Phase\" IN ('Prepared', 'Running', 'PausedProviderUnavailable', " +
+                "'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1') AND " +
+                "\"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND " +
+                "\"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND " +
+                "\"UpdatedAt\" IS NOT NULL) OR " +
+                "(\"Phase\" IN ('Completed', 'Cancelled') AND ((\"PromptIdentity\" IS NULL AND " +
+                "\"DocumentSchemaIdentity\" IS NULL AND \"AnalysisRuntimeIdentityJson\" IS NULL AND " +
+                "\"AnalysisRuntimeIdentityHash\" IS NULL AND \"UpdatedAt\" IS NULL) OR " +
+                "(\"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND " +
+                "\"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND " +
+                "\"UpdatedAt\" IS NOT NULL)))",
+            ["CK_ScanExecutions_PauseFailure_Shape"] =
+                "(\"Phase\" = 'PausedProviderUnavailable' AND \"PauseCategory\" = 'ProviderUnavailable' AND " +
+                "\"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR " +
+                "(\"Phase\" = 'PausedOperatorCorrection' AND \"PauseCategory\" = 'OperatorCorrection' AND " +
+                "\"PauseCode\" IS NOT NULL AND \"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR " +
+                "(\"Phase\" = 'FailedIntegrity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND " +
+                "\"FailureCategory\" = 'Integrity' AND \"FailureCode\" IS NOT NULL) OR " +
+                "(\"Phase\" = 'FailedSecurity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND " +
+                "\"FailureCategory\" = 'Security' AND \"FailureCode\" IS NOT NULL) OR " +
+                "(\"Phase\" = 'FailedPass1' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND " +
+                "\"FailureCategory\" = 'Pass1Policy' AND \"FailureCode\" IS NOT NULL) OR " +
+                "(\"Phase\" NOT IN ('PausedProviderUnavailable', 'PausedOperatorCorrection', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1') AND " +
+                "\"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND " +
+                "((\"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR " +
+                "(\"Phase\" = 'Cancelled' AND \"FailureCategory\" = 'Cancellation' AND \"FailureCode\" IS NOT NULL)))",
         };
 
     [Fact]

@@ -3,7 +3,7 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-3",
     "head": "433834aca53fae868812685a85a9c3c830824025",
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "5503600f3f22628b6967d74ea415dbcbc58bcba5e09255f4eced280e33089e6a"
+      "sha256": "794af725f03482c89b83b0d3ac4499067d8369b4782e8b6274fb598f478b0a20"
     }
   },
   "gates": {
@@ -60,10 +60,10 @@
     },
     {
       "decision_id": "story-12-3-implementation-approval-01",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "4879d08354c64ae796e172e722708b5c76090858518f9f2f7b958f6d082c5359",
       "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md",
-      "decided_at": null
+      "decided_at": "2026-08-21T11:30:08Z"
     }
   ],
   "convergence": {
@@ -88,15 +88,15 @@
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-definition-review-20260821T092318Z-d1b327",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-12-3-implement-20260821T115533Z-73963f",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Combined definition review attempt 5 accepted the current boundary; await explicit implementation authorization.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md"
+    "stage": "implement",
+    "reason": "T001-T008 verified; begin US1 T009-T016 with behavioral RED evidence.",
+    "evidence_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md"
   },
-  "updated_at": "2026-08-21T09:23:07Z"
+  "updated_at": "2026-08-21T11:55:33Z"
 }

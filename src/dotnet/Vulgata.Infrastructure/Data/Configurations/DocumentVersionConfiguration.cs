@@ -22,7 +22,7 @@ internal sealed class DocumentVersionConfiguration : IEntityTypeConfiguration<Do
                 "length(\"CommitFingerprint\") = 64");
             table.HasCheckConstraint(
                 "CK_DocumentVersions_SchemaIdentity_Closed",
-                "\"SchemaIdentity\" = 'vulgata.knowledge-document/1.0'");
+                "\"SchemaIdentity\" IN ('vulgata.knowledge-document/1.0', 'code-logic/file-v2')");
         });
         builder.HasKey(version => version.Id);
         builder.HasAlternateKey(version => new

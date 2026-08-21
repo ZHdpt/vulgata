@@ -62,7 +62,7 @@ internal sealed class ScanExecutionConfiguration : IEntityTypeConfiguration<Scan
             "CK_ScanExecutions_Phase_Closed",
             "\"Phase\" IN ('Pass1Planning', 'Pass1Running', 'Pass1Completed', 'Completed', " +
             "'Failed', 'Cancelled', 'Prepared', 'Running', 'PausedProviderUnavailable', " +
-            "'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity')"));
+            "'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1')"));
         builder.ToTable(table => table.HasCheckConstraint(
             "CK_ScanExecutions_TerminalReasonKind_Closed",
             "\"TerminalReasonKind\" IS NULL OR \"TerminalReasonKind\" IN (" +
@@ -81,7 +81,7 @@ internal sealed class ScanExecutionConfiguration : IEntityTypeConfiguration<Scan
             "\"AnalysisRuntimeIdentityJson\" IS NULL AND \"AnalysisRuntimeIdentityHash\" IS NULL AND " +
             "\"UpdatedAt\" IS NULL) OR " +
             "(\"Phase\" IN ('Prepared', 'Running', 'PausedProviderUnavailable', " +
-            "'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity') AND " +
+            "'PausedOperatorCorrection', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1') AND " +
             "\"PromptIdentity\" IS NOT NULL AND \"DocumentSchemaIdentity\" IS NOT NULL AND " +
             "\"AnalysisRuntimeIdentityJson\" IS NOT NULL AND \"AnalysisRuntimeIdentityHash\" IS NOT NULL AND " +
             "\"UpdatedAt\" IS NOT NULL) OR " +
@@ -101,7 +101,9 @@ internal sealed class ScanExecutionConfiguration : IEntityTypeConfiguration<Scan
             "\"FailureCategory\" = 'Integrity' AND \"FailureCode\" IS NOT NULL) OR " +
             "(\"Phase\" = 'FailedSecurity' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND " +
             "\"FailureCategory\" = 'Security' AND \"FailureCode\" IS NOT NULL) OR " +
-            "(\"Phase\" NOT IN ('PausedProviderUnavailable', 'PausedOperatorCorrection', 'FailedIntegrity', 'FailedSecurity') AND " +
+            "(\"Phase\" = 'FailedPass1' AND \"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND " +
+            "\"FailureCategory\" = 'Pass1Policy' AND \"FailureCode\" IS NOT NULL) OR " +
+            "(\"Phase\" NOT IN ('PausedProviderUnavailable', 'PausedOperatorCorrection', 'FailedIntegrity', 'FailedSecurity', 'FailedPass1') AND " +
             "\"PauseCategory\" IS NULL AND \"PauseCode\" IS NULL AND " +
             "((\"FailureCategory\" IS NULL AND \"FailureCode\" IS NULL) OR " +
             "(\"Phase\" = 'Cancelled' AND \"FailureCategory\" = 'Cancellation' AND \"FailureCode\" IS NOT NULL)))"));

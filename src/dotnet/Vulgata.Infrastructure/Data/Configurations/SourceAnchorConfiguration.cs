@@ -12,6 +12,10 @@ internal sealed class SourceAnchorConfiguration : IEntityTypeConfiguration<Sourc
         {
             table.HasCheckConstraint("CK_SourceAnchors_LineStart_Positive", "\"LineStart\" > 0");
             table.HasCheckConstraint("CK_SourceAnchors_LineEnd_Range", "\"LineEnd\" >= \"LineStart\"");
+            table.HasCheckConstraint(
+                "CK_SourceAnchors_ByteRange_Shape",
+                "(\"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR " +
+                "(\"ByteStart\" IS NOT NULL AND \"ByteEnd\" IS NOT NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\")");
         });
         builder.HasKey(anchor => anchor.Id);
         builder.HasAlternateKey(anchor => new

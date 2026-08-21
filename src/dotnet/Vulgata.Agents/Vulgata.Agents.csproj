@@ -15,6 +15,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Prompts\pass1-code-logic-worker.v1.md"
                       LogicalName="Vulgata.Agents.Prompts.pass1-code-logic-worker.v1.md" />
+    <EmbeddedResource Include="Prompts\pass1-code-logic-worker.v2.md"
+                      LogicalName="Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md" />
     <EmbeddedResource Include="Prompts\pass2-business-flow-worker.v1.md"
                       LogicalName="Vulgata.Agents.Prompts.pass2-business-flow-worker.v1.md" />
     <EmbeddedResource Include="Prompts\chat-business.v1.md"
