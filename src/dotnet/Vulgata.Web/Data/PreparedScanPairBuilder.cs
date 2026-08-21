@@ -184,11 +184,14 @@ internal sealed class PreparedScanPairBuilder(
             {
                 if (!file.IsEligible)
                 {
+                    PreparedScanAuditReason reason = ParseFilteredReason(file.Outcome);
                     audits.Add(CreateInventoryAudit(
                         repository,
                         file,
-                        PreparedScanAuditOutcome.Filtered,
-                        ParseFilteredReason(file.Outcome)));
+                        reason == PreparedScanAuditReason.HardBoundExceeded
+                            ? PreparedScanAuditOutcome.Warning
+                            : PreparedScanAuditOutcome.Filtered,
+                        reason));
                     continue;
                 }
 
@@ -539,7 +542,8 @@ internal sealed class PreparedScanPairBuilder(
             PreparedScanAuditReason.NonRegularEntry or
             PreparedScanAuditReason.BinaryJava or
             PreparedScanAuditReason.InvalidJavaEncoding or
-            PreparedScanAuditReason.UnsupportedXmlEncoding
+            PreparedScanAuditReason.UnsupportedXmlEncoding or
+            PreparedScanAuditReason.HardBoundExceeded
             ? reason
             : PreparedScanAuditReason.UnsupportedExtension;
 

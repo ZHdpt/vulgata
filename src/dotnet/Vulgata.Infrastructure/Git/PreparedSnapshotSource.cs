@@ -38,23 +38,40 @@ public sealed class PreparedSnapshotSource(
                     continue;
                 }
 
-                PreparedRawArtifact artifact = await artifactReader.ReadAsync(
-                    lease.RootPath,
-                    candidate.RelativePath,
-                    snapshot.ProfiledRevision,
-                    snapshot.SnapshotIdentity,
-                    cancellationToken);
-                files.Add(new(
-                    artifact.RelativePath,
-                    candidate.Language,
-                    true,
-                    candidate.Outcome,
-                    artifact.FileHash,
-                    artifact.SourceHash,
-                    artifact.RawByteCount,
-                    artifact.LogicalLineCount,
-                    artifact.EncodingIdentity,
-                    artifact.RawBytes));
+                try
+                {
+                    PreparedRawArtifact artifact = await artifactReader.ReadAsync(
+                        lease.RootPath,
+                        candidate.RelativePath,
+                        snapshot.ProfiledRevision,
+                        snapshot.SnapshotIdentity,
+                        cancellationToken);
+                    files.Add(new(
+                        artifact.RelativePath,
+                        candidate.Language,
+                        true,
+                        candidate.Outcome,
+                        artifact.FileHash,
+                        artifact.SourceHash,
+                        artifact.RawByteCount,
+                        artifact.LogicalLineCount,
+                        artifact.EncodingIdentity,
+                        artifact.RawBytes));
+                }
+                catch (PreparedRawArtifactRejectedException rejection)
+                {
+                    files.Add(new(
+                        candidate.RelativePath,
+                        candidate.Language,
+                        false,
+                        rejection.Outcome.ToString(),
+                        null,
+                        null,
+                        rejection.RawByteCount,
+                        null,
+                        null,
+                        ReadOnlyMemory<byte>.Empty));
+                }
             }
 
             await lease.VerifyIdentityAsync(cancellationToken);

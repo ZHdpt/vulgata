@@ -246,3 +246,50 @@ Document generation are absent.
 - Infrastructure and Web built with zero errors. Existing warning totals were
   two and 709 respectively. `git diff --check` passed with line-ending notices
   only.
+
+## Convergence correction: T057
+
+- Convergence iteration 3 identified F5: a raw-artifact rejection escaped the
+  per-file boundary and caused `PreparedSnapshotSource` to return
+  `prepared-snapshot-read-failed`, losing otherwise safe files. The authorized
+  behavioral RED used one safe Java file and one binary Java file in the same
+  exact local Git revision; it failed 0/1 because no retained inventory existed.
+- The raw reader now emits typed closed rejection reasons for hard bounds,
+  binary or invalidly encoded Java, unsupported/conflicting XML encoding,
+  nonregular/unreadable files, and link/reparse entries. Snapshot inventory
+  retains one noneligible outcome with bounded byte metadata, empty raw bytes,
+  and null hashes, then continues deterministic processing of safe files.
+  Snapshot identity changes and read races remain repository-level failures.
+- `HardBoundExceeded` projects as a bounded Warning; other closed raw-artifact
+  reasons retain their exact filtered audit reason. Rejected artifacts cannot
+  become File Code Units or acquire selection associations.
+- The unchanged focused test passed 1/1 in 907 ms, the production-bound
+  `BinaryJava` characterization passed 1/1 in 6 seconds, and the combined raw
+  artifact plus release suite passed 10/10 in 53 seconds. The original test
+  author independently confirmed GREEN with unchanged assertions and unchanged
+  test-file hashes.
+- Infrastructure and Web built with zero errors and only two NU1507/nine
+  existing warnings respectively. `git diff --check` passed with line-ending
+  notices only.
+
+## Post-T057 final verification barrier
+
+- With host access to the pinned JDT-LS archive and a fresh disposable
+  PostgreSQL 17 container, PreparedScanning passed 102 tests with one intentional
+  SQLite-only skip. The exact PostgreSQL migration lifecycle remained 2/2 and
+  atomicity/replay/concurrency remained 21/21. Retained real Git, CodeGraph CLI,
+  Java 21, JDT-LS, and paired preparation qualification passed 19/19.
+- The complete test project ran 1,638 tests in 3 minutes 17 seconds: 1,631
+  passed, the same six unrelated baseline failures remained, and one intentional
+  SQLite-only skip remained. Every Story 12.2 test passed.
+- The real scoped Java factory exposed one stale synchronous-scope disposal in
+  `AnalysisRuntimeHealthTests`. The test now uses `CreateAsyncScope` and
+  `await using`; all four registration assertions are unchanged, the exact test
+  passed 1/1, and the class passed 12/12.
+- Web built with zero errors and nine existing package/reference warnings. The
+  regenerated production-literal artifact inspected six assemblies, nine
+  embedded resources, and one public output with zero matches and verdict
+  `zero-match`; SHA-256 is
+  `95e63dbaec3c9573285f8150c648188ab2fec9b353b62aacf102fef01e20f0f5`.
+- The disposable PostgreSQL container and its database were removed. The
+  existing `vulgata-postgres` service remained healthy and untouched.

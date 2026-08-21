@@ -31,9 +31,9 @@ public sealed class AnalysisRuntimeHealthTests
     }
 
     [Fact]
-    public void ProductionComposition_RegistersClosedAnalysisPortsAndHealthProbe()
+    public async Task ProductionComposition_RegistersClosedAnalysisPortsAndHealthProbe()
     {
-        using IServiceScope scope = _factory.Services.CreateScope();
+        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
         Assert.NotNull(scope.ServiceProvider.GetService<ICodeGraphAnalysisPort>());
         Assert.NotNull(scope.ServiceProvider.GetService<IJavaAnalysisSessionFactory>());
         Assert.NotNull(scope.ServiceProvider.GetService<IRevisionBoundSourceReader>());

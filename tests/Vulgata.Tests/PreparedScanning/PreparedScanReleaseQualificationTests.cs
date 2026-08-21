@@ -319,6 +319,12 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 audit.Reason == PreparedScanAuditReason.HardBoundExceeded &&
                 audit.FileCodeUnitIdentityFingerprint is null &&
                 audit.PairSelectionOrdinal is null);
+            Assert.Contains(repository.Audits, audit =>
+                audit.RelativePath == ReleaseHarness.BinaryJavaPath &&
+                audit.Outcome == PreparedScanAuditOutcome.Filtered &&
+                audit.Reason == PreparedScanAuditReason.BinaryJava &&
+                audit.FileCodeUnitIdentityFingerprint is null &&
+                audit.PairSelectionOrdinal is null);
             Assert.True(repository.TotalWarningCount >= 2);
             Assert.Contains(repository.Classifications, classification =>
                 classification.Level == ClassificationLevel.Warning &&
@@ -466,6 +472,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         internal const string InvalidSplitPath = "src/release/invalid-split.xml";
         internal const string UnsafeXmlPath = "src/release/unsafe.xml";
         internal const string HardBoundXmlPath = "src/release/hard-bound.xml";
+        internal const string BinaryJavaPath = "src/release/binary.java";
         private readonly LoginLogoutTests.CustomWebApplicationFactory _baseFactory;
         private readonly WebApplicationFactory<Program> _factory;
         private readonly AsyncServiceScope _scope;
@@ -744,6 +751,17 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration>" +
                 new string('x', PreparedSourceRangePlanner.MaximumRawBytes + 1) +
                 "</configuration>"));
+            files.Add(new PreparedSnapshotFile(
+                ReleaseHarness.BinaryJavaPath,
+                "Java",
+                false,
+                "BinaryJava",
+                null,
+                null,
+                4,
+                null,
+                null,
+                ReadOnlyMemory<byte>.Empty));
         }
         return reverse ? [.. files.AsEnumerable().Reverse()] : files;
     }

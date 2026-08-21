@@ -14,6 +14,32 @@ public sealed record PreparedRawArtifact(
     string EncodingIdentity,
     ReadOnlyMemory<byte> RawBytes);
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Design",
+    "CA1032:Implement standard exception constructors",
+    Justification = "This internal closed-outcome carrier must always include a reason and bounded metadata.")]
+internal sealed class PreparedRawArtifactRejectedException(
+    PreparedRawArtifactRejection outcome,
+    long? rawByteCount,
+    Exception? innerException = null) : IOException(
+        "The source artifact was rejected by the closed raw-artifact contract.",
+        innerException)
+{
+    public PreparedRawArtifactRejection Outcome { get; } = outcome;
+
+    public long? RawByteCount { get; } = rawByteCount;
+}
+
+internal enum PreparedRawArtifactRejection
+{
+    LinkOrReparsePoint,
+    NonRegularEntry,
+    BinaryJava,
+    InvalidJavaEncoding,
+    UnsupportedXmlEncoding,
+    HardBoundExceeded,
+}
+
 public sealed class PreparedScanRawArtifactReader
 {
     public const int MaximumRawBytes = 4_194_304;
@@ -30,19 +56,28 @@ public sealed class PreparedScanRawArtifactReader
         FileInfo before = RequireRegularFile(fullPath);
         if (before.Length > MaximumRawBytes)
         {
-            throw new InvalidDataException("The source artifact exceeds the hard audit bound.");
+            throw Reject(PreparedRawArtifactRejection.HardBoundExceeded, before.Length);
         }
 
         byte[] bytes = new byte[before.Length];
-        await using (var stream = new FileStream(
-                         fullPath,
-                         FileMode.Open,
-                         FileAccess.Read,
-                         FileShare.Read,
-                         64 * 1024,
-                         FileOptions.Asynchronous | FileOptions.SequentialScan))
+        try
         {
+            await using var stream = new FileStream(
+                fullPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                64 * 1024,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
             await stream.ReadExactlyAsync(bytes, cancellationToken);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw ClassifyUnreadable(before, fullPath, exception);
+        }
+        catch (IOException exception) when (exception is not EndOfStreamException)
+        {
+            throw ClassifyUnreadable(before, fullPath, exception);
         }
 
         FileInfo after = RequireRegularFile(fullPath);
@@ -74,9 +109,14 @@ public sealed class PreparedScanRawArtifactReader
     {
         var file = new FileInfo(path);
         file.Refresh();
-        if (!file.Exists || (file.Attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) != 0)
+        if (!file.Exists || (file.Attributes & (FileAttributes.Directory | FileAttributes.Device)) != 0)
         {
-            throw new InvalidDataException("The source artifact is not a regular contained file.");
+            throw Reject(PreparedRawArtifactRejection.NonRegularEntry, file.Exists ? file.Length : null);
+        }
+
+        if ((file.Attributes & FileAttributes.ReparsePoint) != 0)
+        {
+            throw Reject(PreparedRawArtifactRejection.LinkOrReparsePoint, file.Length);
         }
 
         return file;
@@ -108,11 +148,19 @@ public sealed class PreparedScanRawArtifactReader
     {
         if (bytes.AsSpan().Contains((byte)0))
         {
-            throw new InvalidDataException("Java source cannot contain NUL bytes.");
+            throw Reject(PreparedRawArtifactRejection.BinaryJava, bytes.LongLength);
         }
 
-        _ = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true)
-            .GetString(bytes);
+        try
+        {
+            _ = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true)
+                .GetString(bytes);
+        }
+        catch (DecoderFallbackException exception)
+        {
+            throw Reject(PreparedRawArtifactRejection.InvalidJavaEncoding, bytes.LongLength, exception);
+        }
+
         return "utf-8";
     }
 
@@ -120,27 +168,37 @@ public sealed class PreparedScanRawArtifactReader
     {
         string text;
         string identity;
-        if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
+        try
         {
-            text = new UnicodeEncoding(false, true, true).GetString(bytes);
-            identity = "utf-16le";
+            if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
+            {
+                text = new UnicodeEncoding(false, true, true).GetString(bytes);
+                identity = "utf-16le";
+            }
+            else if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
+            {
+                text = new UnicodeEncoding(true, true, true).GetString(bytes);
+                identity = "utf-16be";
+            }
+            else
+            {
+                text = new UTF8Encoding(false, true).GetString(bytes);
+                identity = "utf-8";
+            }
         }
-        else if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
+        catch (DecoderFallbackException exception)
         {
-            text = new UnicodeEncoding(true, true, true).GetString(bytes);
-            identity = "utf-16be";
-        }
-        else
-        {
-            text = new UTF8Encoding(false, true).GetString(bytes);
-            identity = "utf-8";
+            throw Reject(PreparedRawArtifactRejection.UnsupportedXmlEncoding, bytes.LongLength, exception);
         }
 
-        ValidateXmlDeclarationEncoding(text, identity);
+        ValidateXmlDeclarationEncoding(text, identity, bytes.LongLength);
         return identity;
     }
 
-    private static void ValidateXmlDeclarationEncoding(string text, string actualEncoding)
+    private static void ValidateXmlDeclarationEncoding(
+        string text,
+        string actualEncoding,
+        long rawByteCount)
     {
         int declarationEnd = text.IndexOf("?>", StringComparison.Ordinal);
         if (declarationEnd < 0 || declarationEnd > 512 ||
@@ -159,20 +217,20 @@ public sealed class PreparedScanRawArtifactReader
         ReadOnlySpan<char> suffix = declaration[(encodingIndex + "encoding".Length)..].TrimStart();
         if (suffix.IsEmpty || suffix[0] != '=')
         {
-            throw new InvalidDataException("The XML encoding declaration is malformed.");
+            throw Reject(PreparedRawArtifactRejection.UnsupportedXmlEncoding, rawByteCount);
         }
 
         suffix = suffix[1..].TrimStart();
         if (suffix.Length < 3 || suffix[0] is not ('\'' or '"'))
         {
-            throw new InvalidDataException("The XML encoding declaration is malformed.");
+            throw Reject(PreparedRawArtifactRejection.UnsupportedXmlEncoding, rawByteCount);
         }
 
         char quote = suffix[0];
         int close = suffix[1..].IndexOf(quote);
         if (close < 0)
         {
-            throw new InvalidDataException("The XML encoding declaration is malformed.");
+            throw Reject(PreparedRawArtifactRejection.UnsupportedXmlEncoding, rawByteCount);
         }
 
         string declared = suffix.Slice(1, close).ToString();
@@ -183,8 +241,34 @@ public sealed class PreparedScanRawArtifactReader
                 : false;
         if (!matches)
         {
-            throw new InvalidDataException("The XML encoding declaration is unsupported or conflicts with the bytes.");
+            throw Reject(PreparedRawArtifactRejection.UnsupportedXmlEncoding, rawByteCount);
         }
+    }
+
+    private static PreparedRawArtifactRejectedException Reject(
+        PreparedRawArtifactRejection outcome,
+        long? rawByteCount,
+        Exception? innerException = null) => new(outcome, rawByteCount, innerException);
+
+    private static PreparedRawArtifactRejectedException ClassifyUnreadable(
+        FileInfo before,
+        string fullPath,
+        Exception exception)
+    {
+        var after = new FileInfo(fullPath);
+        after.Refresh();
+        if (!after.Exists ||
+            (after.Attributes &
+                (FileAttributes.Directory | FileAttributes.Device | FileAttributes.ReparsePoint)) != 0 ||
+            before.Length != after.Length ||
+            before.LastWriteTimeUtc != after.LastWriteTimeUtc)
+        {
+            throw new InvalidOperationException(
+                "The source artifact changed while it was read.",
+                exception);
+        }
+
+        return Reject(PreparedRawArtifactRejection.NonRegularEntry, before.Length, exception);
     }
 
     private static int CountLogicalLines(byte[] bytes, string encodingIdentity)

@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/011-java-xml-prescan-manifest/tasks.md",
-      "sha256": "a68724fa5dd361e75e862919884b6667fbe79262d841af020c30c20c7c0f7287"
+      "sha256": "509221c0f7b204e462ab3e719c4159bf47ae85b710d9abfa35903e1230193f2d"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 2,
+    "converge": 3,
     "quality-review": 0
   },
   "approvals": [
@@ -68,13 +68,20 @@
       "scope_sha256": "e997c182a466694bc5eab405bb68fc7396edee53ce7559f443bcbb2e7beaefb6",
       "evidence_path": "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
       "decided_at": "2026-08-20T13:12:05Z"
+    },
+    {
+      "decision_id": "story-12-2-convergence-third-revision-authorization-01",
+      "status": "accepted",
+      "scope_sha256": "f8d4ab6d51d8bb7935c56660bcbbb124b6a7ba50bc938cd6532f012ab1c01941",
+      "evidence_path": "specs/011-java-xml-prescan-manifest/decisions/convergence-third-revision-authorization-01.md",
+      "decided_at": "2026-08-20T23:36:41Z"
     }
   ],
   "convergence": {
     "status": "revised",
-    "attempt": 2,
+    "attempt": 3,
     "outcome": "tasks_appended",
-    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-02.md"
+    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-03.md"
   },
   "e2e": {
     "result": "pending",
@@ -88,22 +95,22 @@
     "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json",
     "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json",
     "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md",
-    "specs/011-java-xml-prescan-manifest/decisions/definition-review-fifth-correction-authorization-01.md",
+    "specs/011-java-xml-prescan-manifest/decisions/convergence-third-revision-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-02.md"
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-implement-20260820T180826Z-a68724",
+    "checkpoint_id": "bmad-12-2-implement-20260821T001329Z-509221",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "converge",
-    "reason": "T056 real revision-bound Java/JDT-LS paired-preparation correction is GREEN; bind this checkpoint and run convergence iteration 3.",
+    "reason": "Authorized T057 per-file bounded raw-artifact correction and the refreshed final verification barrier are complete; bind this checkpoint and rerun convergence.",
     "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   },
-  "updated_at": "2026-08-20T18:08:26Z"
+  "updated_at": "2026-08-21T00:13:29Z"
 }
