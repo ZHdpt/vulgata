@@ -15,6 +15,67 @@ namespace Vulgata.Infrastructure.Data;
 public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
     : IPass1CodeLogicDocumentCommitter
 {
+    internal static IReadOnlyList<Pass1ReferenceObservation> ReadReferenceObservations(
+        DocumentVersion source,
+        Guid sourceFileCodeUnitId,
+        int pairSelectionOrdinal)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        using JsonDocument document = JsonDocument.Parse(source.ContentJson);
+        JsonElement root = document.RootElement;
+        if (source.SchemaIdentity != "code-logic/file-v2" ||
+            root.GetProperty("schemaIdentity").GetString() != "code-logic/file-v2")
+        {
+            throw new InvalidDataException("Reconciliation requires authoritative code-logic/file-v2 content.");
+        }
+
+        var observations = new List<Pass1ReferenceObservation>();
+        foreach (JsonElement known in root.GetProperty("knownReferences").EnumerateArray())
+        {
+            observations.Add(CreateObservation(
+                source,
+                sourceFileCodeUnitId,
+                pairSelectionOrdinal,
+                known.GetProperty("sourceClaimLocator").GetString()!,
+                normalizedTargetSymbol: null,
+                known.GetProperty("targetRepositoryRelativePath").GetString(),
+                known.GetProperty("targetSourceHash").GetString(),
+                known.GetProperty("targetDocumentVersionId").GetGuid(),
+                canResolve: true,
+                rejectionCode: null));
+        }
+
+        foreach (JsonElement deferred in root.GetProperty("deferredObservations").EnumerateArray())
+        {
+            string outcome = deferred.GetProperty("outcome").GetString()!;
+            string? path = OptionalString(deferred, "targetRepositoryRelativePath");
+            string? hash = OptionalString(deferred, "targetSourceHash");
+            string? symbol = OptionalString(deferred, "targetSymbol");
+            bool canResolve = outcome == "Insufficient" && path is not null && hash is not null;
+            observations.Add(CreateObservation(
+                source,
+                sourceFileCodeUnitId,
+                pairSelectionOrdinal,
+                deferred.GetProperty("sourceClaimLocator").GetString()!,
+                symbol,
+                path,
+                hash,
+                directTargetDocumentVersionId: null,
+                canResolve,
+                canResolve ? null : DeferredReason(outcome)));
+        }
+
+        return observations
+            .OrderBy(value => value.SourceRepositoryId.ToString("D"), StringComparer.Ordinal)
+            .ThenBy(value => value.PairSelectionOrdinal)
+            .ThenBy(value => value.SourceDocumentVersionId.ToString("D"), StringComparer.Ordinal)
+            .ThenBy(value => value.ObservationFingerprint, StringComparer.Ordinal)
+            .ThenBy(value => value.TargetCanonicalPath, StringComparer.Ordinal)
+            .ThenBy(value => value.NormalizedTargetSymbol, StringComparer.Ordinal)
+            .ThenBy(value => value.DirectTargetDocumentVersionId?.ToString("D"), StringComparer.Ordinal)
+            .ToArray();
+    }
+
     public async Task<Pass1DocumentCommitResult> CommitAsync(
         Pass1DocumentCommitRequest request,
         CancellationToken cancellationToken = default)
@@ -449,9 +510,77 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
     private static string StableKey(PreparedPass1WorkerPacket packet) =>
         $"{packet.RepositoryRelativePath}#segment={packet.SegmentOrdinal}";
 
+    private static Pass1ReferenceObservation CreateObservation(
+        DocumentVersion source,
+        Guid sourceFileCodeUnitId,
+        int pairSelectionOrdinal,
+        string sourceClaimLocator,
+        string? normalizedTargetSymbol,
+        string? targetCanonicalPath,
+        string? targetSourceHash,
+        Guid? directTargetDocumentVersionId,
+        bool canResolve,
+        string? rejectionCode)
+    {
+        ReadOnlyMemory<byte>? hash = targetSourceHash is null
+            ? null
+            : Convert.FromHexString(targetSourceHash);
+        PreparedPass1CanonicalArtifact artifact = PreparedPass1CanonicalCodec.CreateReferenceObservation(new(
+            source.Id,
+            sourceFileCodeUnitId,
+            sourceClaimLocator,
+            normalizedTargetSymbol,
+            targetCanonicalPath,
+            hash,
+            TargetLineRange: null));
+        return new(
+            source.RepositoryId,
+            source.ScanRunId,
+            source.ProfiledRevision,
+            pairSelectionOrdinal,
+            source.Id,
+            artifact.FingerprintHex,
+            normalizedTargetSymbol,
+            targetCanonicalPath,
+            targetSourceHash,
+            directTargetDocumentVersionId,
+            canResolve,
+            rejectionCode);
+    }
+
+    private static string? OptionalString(JsonElement owner, string propertyName)
+    {
+        JsonElement value = owner.GetProperty(propertyName);
+        return value.ValueKind == JsonValueKind.Null ? null : value.GetString();
+    }
+
+    private static string DeferredReason(string outcome) => outcome switch
+    {
+        "Ambiguous" => "ambiguous-target",
+        "Stale" => "stale-target",
+        "Unsupported" => "unsupported-operation",
+        "CrossRepository" => "cross-repository",
+        "BoundExceeded" => "navigation-bound-exceeded",
+        _ => "no-exact-current-target",
+    };
+
     private static Pass1DocumentCommitResult Rejected(string reason) =>
         new(Pass1DocumentCommitStatus.Rejected, null, null, null, reason);
 
     private static Pass1DocumentCommitResult Conflict(string reason) =>
         new(Pass1DocumentCommitStatus.Conflict, null, null, null, reason);
 }
+
+internal sealed record Pass1ReferenceObservation(
+    Guid SourceRepositoryId,
+    Guid SourceScanRunId,
+    string SourceProfiledRevision,
+    int PairSelectionOrdinal,
+    Guid SourceDocumentVersionId,
+    string ObservationFingerprint,
+    string? NormalizedTargetSymbol,
+    string? TargetCanonicalPath,
+    string? TargetSourceHash,
+    Guid? DirectTargetDocumentVersionId,
+    bool CanResolve,
+    string? RejectionCode);

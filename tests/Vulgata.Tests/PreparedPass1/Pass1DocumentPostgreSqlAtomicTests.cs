@@ -167,6 +167,140 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(0, await CountAsync(fixture.ConnectionString, "\"DocumentVersions\"", "\"SupersededById\" IS NOT NULL"));
     }
 
+    public static TheoryData<string, string, string, string> ReconciliationWriteBoundaries => new()
+    {
+        { "before-edge", "vulgata.\"DocumentEdges\"", "INSERT", "BEFORE" },
+        { "after-edge", "vulgata.\"DocumentEdges\"", "INSERT", "AFTER" },
+        { "before-outcome", "vulgata.\"Pass1Outcomes\"", "INSERT", "BEFORE" },
+        { "after-outcome", "vulgata.\"Pass1Outcomes\"", "INSERT", "AFTER" },
+        { "before-warning-inventory", "vulgata.\"Pass1FailureInventoryEntries\"", "INSERT", "BEFORE" },
+        { "after-warning-inventory", "vulgata.\"Pass1FailureInventoryEntries\"", "INSERT", "AFTER" },
+        { "before-child-status", "vulgata.\"ScanExecutions\"", "UPDATE", "BEFORE" },
+        { "after-child-status", "vulgata.\"ScanExecutions\"", "UPDATE", "AFTER" },
+    };
+
+    [Theory]
+    [MemberData(nameof(ReconciliationWriteBoundaries))]
+    public async Task PostgreSql17_ReconciliationFailureAtEveryWriteBoundary_RollsBackPairOutcomeChildrenWarningsAndEdges(
+        string boundary,
+        string table,
+        string operation,
+        string timing)
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await fixture.PrepareForReconciliationAsync();
+        await InstallReconciliationFailingTriggerAsync(fixture.ConnectionString, boundary, table, operation, timing);
+        ReconciliationVisibility before = await fixture.ReadReconciliationVisibilityAsync();
+
+        PreparedPass1ReconciliationResult result = await fixture.ReconcileAsync();
+
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Failed, result.Outcome);
+        Assert.Equal(before, await fixture.ReadReconciliationVisibilityAsync());
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ReconciliationStaleWriter_IsConflictAndMutationFree()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await fixture.PrepareForReconciliationAsync();
+        ReconciliationVisibility before = await fixture.ReadReconciliationVisibilityAsync();
+
+        PreparedPass1ReconciliationResult result = await fixture.ReconcileAsync(
+            expectedPairStateVersion: await fixture.GetPairStateVersionAsync() + 1);
+
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Conflict, result.Outcome);
+        Assert.Equal(before, await fixture.ReadReconciliationVisibilityAsync());
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ReconciliationCancellation_IsMutationFree()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await fixture.PrepareForReconciliationAsync();
+        ReconciliationVisibility before = await fixture.ReadReconciliationVisibilityAsync();
+        using CancellationTokenSource cancellation = new();
+        cancellation.Cancel();
+
+        PreparedPass1ReconciliationResult result = await fixture.ReconcileAsync(
+            cancellationToken: cancellation.Token);
+
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Cancelled, result.Outcome);
+        Assert.Equal(before, await fixture.ReadReconciliationVisibilityAsync());
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ReconciliationExactReplay_IsIdempotentAndChangedReplayConflicts()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await fixture.PrepareForReconciliationAsync();
+
+        PreparedPass1ReconciliationResult first = await fixture.ReconcileAsync();
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Reconciled, first.Outcome);
+        ReconciliationVisibility afterFirst = await fixture.ReadReconciliationVisibilityAsync();
+
+        PreparedPass1ReconciliationResult replay = await fixture.ReconcileAsync(
+            expectedReconciliationFingerprint: first.ReconciliationFingerprint);
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Replay, replay.Outcome);
+        Assert.Equal(first.ReconciliationFingerprint, replay.ReconciliationFingerprint);
+        Assert.Equal(afterFirst, await fixture.ReadReconciliationVisibilityAsync());
+
+        PreparedPass1ReconciliationResult changed = await fixture.ReconcileAsync(
+            expectedReconciliationFingerprint: new string('0', 64));
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Conflict, changed.Outcome);
+        Assert.Equal(afterFirst, await fixture.ReadReconciliationVisibilityAsync());
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ConcurrentReconciliation_HasDeterministicSingleEdgeAndNoPartialVisibility()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await fixture.PrepareForReconciliationAsync();
+        await using VulgataDbContext secondContext = PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        IPreparedPass1Store secondStore = new PreparedPass1Store(secondContext);
+        PreparedPass1ReconciliationRequest request = await fixture.CreateReconciliationRequestAsync();
+
+        Task<PreparedPass1ReconciliationResult> first = new PreparedPass1Store(fixture.Prepared.Context)
+            .ReconcileAsync(fixture.PairExecutionId, request);
+        Task<PreparedPass1ReconciliationResult> second = secondStore
+            .ReconcileAsync(fixture.PairExecutionId, request);
+        PreparedPass1ReconciliationResult[] results = await Task.WhenAll(first, second);
+
+        Assert.Contains(results, value => value.Outcome == PreparedPass1ReconciliationOutcome.Reconciled);
+        Assert.Contains(results, value => value.Outcome is
+            PreparedPass1ReconciliationOutcome.Replay or PreparedPass1ReconciliationOutcome.Conflict);
+        Assert.Equal(1, await CountAsync(fixture.ConnectionString, "\"DocumentEdges\""));
+        Assert.Equal(1, await CountAsync(fixture.ConnectionString, "\"Pass1Outcomes\""));
+        Assert.Equal(0, await CountAsync(fixture.ConnectionString, "\"Pass1FailureInventoryEntries\""));
+    }
+
+    private static async Task InstallReconciliationFailingTriggerAsync(
+        string connectionString,
+        string boundary,
+        string table,
+        string operation,
+        string timing)
+    {
+        string suffix = boundary.Replace('-', '_');
+        await using NpgsqlConnection connection = new(connectionString);
+        await connection.OpenAsync();
+        await using NpgsqlCommand command = new($"""
+            CREATE OR REPLACE FUNCTION t123_reconcile_fail_{suffix}() RETURNS trigger
+            LANGUAGE plpgsql AS $$
+            BEGIN
+                RAISE EXCEPTION 'T042 injected reconciliation boundary: {boundary}';
+            END $$;
+            CREATE TRIGGER t123_reconcile_fail_{suffix}_trigger
+            {timing} {operation} ON {table}
+            FOR EACH ROW EXECUTE FUNCTION t123_reconcile_fail_{suffix}();
+            """, connection);
+        await command.ExecuteNonQueryAsync();
+    }
+
     private static string GetAdministratorConnectionStringOrSkip()
     {
         string? value = Environment.GetEnvironmentVariable("VULGATA_TEST_ADMIN_CONNECTION") ??
@@ -247,6 +381,158 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         internal IPass1CodeLogicDocumentCommitter Committer { get; }
         internal Pass1DocumentCommitRequest Request { get; }
         internal byte[] ChangedCanonicalJson { get; }
+        internal Guid PairExecutionId => Request.Packet.PairExecutionId;
+
+        internal async Task PrepareForReconciliationAsync()
+        {
+            Pass1DocumentCommitResult committed = await Committer.CommitAsync(
+                Request,
+                CancellationToken.None);
+            Assert.Equal(Pass1DocumentCommitStatus.Committed, committed.Status);
+            await SeedRemainingCompletedJobsAsync();
+            await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                DELETE FROM "vulgata"."DocumentEdges"
+                WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId};
+                """);
+            Prepared.Context.ChangeTracker.Clear();
+        }
+
+        private async Task SeedRemainingCompletedJobsAsync()
+        {
+            Prepared.Context.ChangeTracker.Clear();
+            ScanJobExecution[] remainingJobs = await Prepared.Context.ScanJobExecutions
+                .AsNoTracking()
+                .Where(value => value.Id != Request.Packet.JobId)
+                .OrderBy(value => value.Id)
+                .ToArrayAsync();
+            if (remainingJobs.Length == 0)
+            {
+                return;
+            }
+
+            DocumentVersion source = await Prepared.Context.DocumentVersions
+                .AsNoTracking()
+                .SingleAsync(value => value.Id == Request.DocumentVersionId);
+            List<(ScanJobExecution Job, LogicalDocument Logical, DocumentVersion Version)> seeded = [];
+            foreach (ScanJobExecution job in remainingJobs)
+            {
+                CodeUnit unit = await Prepared.Context.CodeUnits
+                    .AsNoTracking()
+                    .SingleAsync(value => value.Id == job.FileCodeUnitId);
+                Guid logicalId = StableGuid($"t042-logical:{job.Id:D}");
+                Guid versionId = StableGuid($"t042-version:{job.Id:D}");
+                LogicalDocument logical = LogicalDocument.Create(
+                    logicalId,
+                    job.RepositoryId,
+                    DocumentType.CodeLogic,
+                    $"{unit.FilePath}#segment=1#t042={job.Id:D}",
+                    PreparedScanTestHost.FixedUtcNow.AddMinutes(1));
+                DocumentVersion version = DocumentVersion.Create(
+                    versionId,
+                    logicalId,
+                    job.RepositoryId,
+                    Prepared.SystemId,
+                    job.ScanRunId,
+                    source.ProfiledRevision,
+                    1,
+                    unit.FilePath,
+                    unit.FilePath,
+                    "code-logic/file-v2",
+                    source.ContentJson,
+                    source.ContentMarkdown,
+                    source.ContentFingerprint,
+                    source.CommitFingerprint,
+                    PreparedScanTestHost.FixedUtcNow.AddMinutes(1));
+                seeded.Add((job, logical, version));
+                Prepared.Context.LogicalDocuments.Add(logical);
+                Prepared.Context.DocumentVersions.Add(version);
+            }
+
+            await Prepared.Context.SaveChangesAsync();
+            foreach ((_, LogicalDocument logical, DocumentVersion version) in seeded)
+            {
+                logical.SetInitialCurrentVersion(version);
+            }
+
+            await Prepared.Context.SaveChangesAsync();
+            foreach ((ScanJobExecution job, _, DocumentVersion version) in seeded)
+            {
+                await Prepared.Context.ScanJobExecutions
+                    .Where(value => value.Id == job.Id)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(value => value.State, ScanJobExecutionState.Completed)
+                        .SetProperty(value => value.StateVersion, 1L)
+                        .SetProperty(value => value.LeaseToken, (Guid?)null)
+                        .SetProperty(value => value.LeaseExpiresAt, (DateTimeOffset?)null)
+                        .SetProperty(value => value.NextAttemptAt, (DateTimeOffset?)null)
+                        .SetProperty(value => value.FailureCategory, (ScanJobFailureCategory?)null)
+                        .SetProperty(value => value.FailureCode, (string?)null)
+                        .SetProperty(value => value.CommittedDocumentVersionId, version.Id)
+                        .SetProperty(value => value.StateChangedAt, PreparedScanTestHost.FixedUtcNow.AddMinutes(1)));
+            }
+
+            Prepared.Context.ChangeTracker.Clear();
+        }
+
+        internal async Task<long> GetPairStateVersionAsync() =>
+            await Prepared.Context.Pass1PairExecutions.AsNoTracking()
+                .Where(value => value.Id == PairExecutionId)
+                .Select(value => value.StateVersion)
+                .SingleAsync();
+
+        internal async Task<PreparedPass1ReconciliationRequest> CreateReconciliationRequestAsync(
+            long? expectedPairStateVersion = null,
+            string? expectedReconciliationFingerprint = null) =>
+            new(
+                Prepared.Authorization,
+                expectedPairStateVersion ?? await GetPairStateVersionAsync(),
+                expectedReconciliationFingerprint,
+                PreparedScanTestHost.FixedUtcNow.AddMinutes(2));
+
+        internal async Task<PreparedPass1ReconciliationResult> ReconcileAsync(
+            long? expectedPairStateVersion = null,
+            string? expectedReconciliationFingerprint = null,
+            CancellationToken cancellationToken = default)
+        {
+            PreparedPass1ReconciliationRequest request = await CreateReconciliationRequestAsync(
+                expectedPairStateVersion,
+                expectedReconciliationFingerprint);
+            return await new PreparedPass1Store(Prepared.Context)
+                .ReconcileAsync(PairExecutionId, request, cancellationToken);
+        }
+
+        internal async Task<ReconciliationVisibility> ReadReconciliationVisibilityAsync()
+        {
+            Prepared.Context.ChangeTracker.Clear();
+            GraphCounts graph = await GraphCounts.ReadAsync(ConnectionString);
+            int outcomes = await CountAsync(ConnectionString, "\"Pass1Outcomes\"");
+            int failureInventory = await CountAsync(ConnectionString, "\"Pass1FailureInventoryEntries\"");
+            string jobs = string.Join(
+                "|",
+                await Prepared.Context.ScanJobExecutions.AsNoTracking()
+                    .OrderBy(value => value.Id)
+                    .Select(value => value.Id.ToString() + ":" + value.State + ":" + value.StateVersion + ":" + value.CommittedDocumentVersionId)
+                    .ToArrayAsync());
+            string children = string.Join(
+                "|",
+                await Prepared.Context.ScanExecutions.AsNoTracking()
+                    .OrderBy(value => value.Id)
+                    .Select(value => value.Id.ToString() + ":" + value.Phase + ":" + value.StateVersion)
+                    .ToArrayAsync());
+            Pass1PairExecution pair = await Prepared.Context.Pass1PairExecutions.AsNoTracking()
+                .SingleAsync(value => value.Id == PairExecutionId);
+            TwoRepositoryScanCoordination coordination = await Prepared.Context.TwoRepositoryScanCoordinations
+                .AsNoTracking()
+                .SingleAsync(value => value.Id == pair.CoordinationId);
+            return new(
+                graph,
+                outcomes,
+                failureInventory,
+                jobs,
+                children,
+                pair.Phase + ":" + pair.StateVersion,
+                coordination.Phase + ":" + coordination.StateVersion);
+        }
 
         internal static async Task<CommitFixture> CreateAsync(string administrator)
         {
@@ -347,6 +633,15 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             await CountAsync(connectionString, "\"ScanJobExecutions\"", "\"State\" = 'Completed'"));
     }
 
+    private sealed record ReconciliationVisibility(
+        GraphCounts Graph,
+        int OutcomeCount,
+        int FailureInventoryCount,
+        string Jobs,
+        string Children,
+        string Pair,
+        string Coordination);
+
     private static byte[] CreateCanonicalJson(
         PreparedPass1WorkerPacket packet,
         string targetPath,
@@ -389,6 +684,14 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         deferred["targetSourceHash"] = targetSourceHash;
         deferred["navigationReceiptIds"] = new JsonArray(NavigationReceiptId.ToString("D"));
         return Encoding.UTF8.GetBytes(root.ToJsonString(new JsonSerializerOptions { WriteIndented = false }));
+    }
+
+    private static Guid StableGuid(string value)
+    {
+        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+        bytes[6] = (byte)((bytes[6] & 0x0f) | 0x40);
+        bytes[8] = (byte)((bytes[8] & 0x3f) | 0x80);
+        return new Guid(bytes[..16], bigEndian: true);
     }
 
     private static async Task SeedTargetGraphAsync(

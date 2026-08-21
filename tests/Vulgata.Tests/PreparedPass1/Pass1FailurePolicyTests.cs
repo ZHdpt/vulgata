@@ -221,6 +221,142 @@ public sealed class Pass1FailurePolicyTests
         Assert.DoesNotContain(properties, property => property.Name is "ProviderProbeCount" or "RecoveredLeaseCount");
     }
 
+    // T038 RED: terminal accounting is one atomic pair-scoped operation.  The
+    // result must be reconstructed from the immutable start-time job set and
+    // the accepted Story 12.2 manifest entries; callers cannot supply a live
+    // denominator, a rescored seed count, or an independent failure list.
+    [Fact]
+    public void TerminalAccounting_UsesFixedStartDenominatorAndExactFailureBudget()
+    {
+        MethodInfo method = RequireTerminalAccountingMethod();
+        Type result = UnwrapTask(method.ReturnType);
+        PropertyInfo[] properties = result.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.Contains(properties, property => property.Name == "DispatchedCount");
+        Assert.Contains(properties, property => property.Name == "CompletedCount");
+        Assert.Contains(properties, property => property.Name == "OrdinaryFailureCount");
+        Assert.Contains(properties, property => property.Name == "OrdinaryFailureBudget");
+        Assert.Contains(properties, property => property.Name is "Outcome" or "Status");
+        Assert.DoesNotContain(
+            method.GetParameters(),
+            parameter => parameter.Name is "dispatchedCount" or "ordinaryFailureBudget" or "failureCount" or
+                "ordinaryFailureCount");
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(9, 0)]
+    [InlineData(10, 1)]
+    [InlineData(50, 5)]
+    [InlineData(51, 5)]
+    public void TerminalAccounting_OrdinaryFailureBudget_IsMinFiveFloorTenPercent(
+        int dispatchedCount,
+        int expectedBudget)
+    {
+        MethodInfo method = RequireTerminalAccountingMethod();
+        Type result = UnwrapTask(method.ReturnType);
+        PropertyInfo? budget = result.GetProperty("OrdinaryFailureBudget");
+
+        Assert.NotNull(budget);
+        Assert.Equal(typeof(int), budget!.PropertyType);
+        Assert.InRange(dispatchedCount, 0, int.MaxValue);
+        Assert.Equal(expectedBudget, Math.Min(5, dispatchedCount / 10));
+    }
+
+    [Fact]
+    public void TerminalAccounting_ReconstructsStory12Point2SeedsAndRequiresEverySeedSuccess()
+    {
+        MethodInfo method = RequireTerminalAccountingMethod();
+        Type result = UnwrapTask(method.ReturnType);
+        PropertyInfo[] properties = result.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.Contains(properties, property => property.Name == "HighValueSeedCount");
+        Assert.Contains(properties, property => property.Name == "SucceededHighValueSeedCount");
+        Assert.DoesNotContain(
+            method.GetParameters(),
+            parameter => parameter.Name is "highValueSeedCount" or "succeededHighValueSeedCount" or
+                "seedCount" or "seedPaths");
+        Assert.DoesNotContain(
+            method.GetParameters(),
+            parameter => parameter.ParameterType == typeof(IEnumerable<Guid>) ||
+                parameter.ParameterType == typeof(IReadOnlyCollection<Guid>));
+    }
+
+    [Theory]
+    [InlineData("Succeeded")]
+    [InlineData("CompletedWithWarnings")]
+    [InlineData("FailedPass1")]
+    public void TerminalAccounting_UsesHonestOutcomeAndWarningInventory(
+        string expectedStatus)
+    {
+        MethodInfo method = RequireTerminalAccountingMethod();
+        Type result = UnwrapTask(method.ReturnType);
+        PropertyInfo[] properties = result.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        PropertyInfo? status = properties.SingleOrDefault(property => property.Name is "Outcome" or "Status");
+        Assert.NotNull(status);
+        Assert.True(status!.PropertyType.IsEnum, "Terminal accounting status must be a closed enum.");
+        Assert.Contains(expectedStatus, Enum.GetNames(status.PropertyType));
+
+        PropertyInfo? inventory = properties.SingleOrDefault(property =>
+            property.Name is "FailureInventory" or "FailedFiles" or "Warnings");
+        Assert.NotNull(inventory);
+        Assert.True(
+            inventory!.PropertyType != typeof(string),
+            "The failed-file inventory must be a structured bounded collection.");
+    }
+
+    [Fact]
+    public void TerminalAccounting_FailureInventoryIsCanonicalAndBoundedToPreparedFileIdentity()
+    {
+        MethodInfo method = RequireTerminalAccountingMethod();
+        Type result = UnwrapTask(method.ReturnType);
+        PropertyInfo inventory = result.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .SingleOrDefault(property => property.Name is "FailureInventory" or "FailedFiles" or "Warnings")!;
+        Assert.NotNull(inventory);
+
+        Type entry = ResolveElementType(inventory!.PropertyType);
+        PropertyInfo[] properties = entry.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        Assert.Contains(properties, property => property.Name == "FileCodeUnitId");
+        Assert.Contains(properties, property => property.Name == "RepositoryId");
+        Assert.Contains(properties, property => property.Name == "PairSelectionOrdinal");
+        Assert.Contains(properties, property => property.Name == "ManifestOrdinal");
+        Assert.Contains(properties, property => property.Name == "SegmentOrdinal");
+        Assert.Contains(properties, property => property.Name == "RepositoryRelativePath");
+        Assert.Contains(properties, property => property.Name == "FailureCategory");
+        Assert.Contains(properties, property => property.Name == "FailureCode");
+        Assert.DoesNotContain(
+            properties,
+            property => property.Name.Contains("Source", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("Provider", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("Diagnostic", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("Exception", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void TerminalAccounting_FailedSeedOrOverBudgetStopsAtResolvingWithoutLaterPassAuthorization()
+    {
+        MethodInfo method = RequireTerminalAccountingMethod();
+        Type result = UnwrapTask(method.ReturnType);
+        PropertyInfo[] properties = result.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        PropertyInfo? coordinationPhase = properties.SingleOrDefault(property =>
+            property.Name is "CoordinationPhase" or "HandoffPhase" or "PairPhase");
+        Assert.NotNull(coordinationPhase);
+        Assert.True(coordinationPhase!.PropertyType.IsEnum);
+        Assert.Contains("Resolving", Enum.GetNames(coordinationPhase.PropertyType));
+
+        PropertyInfo? laterPass = properties.SingleOrDefault(property =>
+            property.Name is "LaterPassAuthorized" or "Pass2Authorized" or "Story12Point4Authorized");
+        Assert.NotNull(laterPass);
+        Assert.Equal(typeof(bool), laterPass!.PropertyType);
+        Assert.DoesNotContain(
+            properties,
+            property => property.Name.Contains("Pass2Job", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("BusinessLogicDocument", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("CrossRepository", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static MethodInfo RequireFailureMethod()
     {
         Type? contract = typeof(CanonicalEnvelope).Assembly.GetType(
@@ -237,6 +373,45 @@ public sealed class Pass1FailurePolicyTests
             method is not null,
             "T032 RED: IPreparedPass1Store must expose one durable RecordFailureAsync classification seam.");
         return method!;
+    }
+
+    private static MethodInfo RequireTerminalAccountingMethod()
+    {
+        Type? contract = typeof(CanonicalEnvelope).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IPreparedPass1Store",
+            throwOnError: false,
+            ignoreCase: false);
+        Assert.True(
+            contract is not null,
+            "T038 RED: IPreparedPass1Store is not available; T039 must preserve the public store contract.");
+
+        MethodInfo? method = contract!.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .SingleOrDefault(candidate => candidate.Name == "CompletePass1Async");
+        Assert.True(
+            method is not null,
+            "T038 RED: IPreparedPass1Store must expose one atomic CompletePass1Async terminal-accounting seam.");
+        Assert.True(
+            method!.GetParameters().Any(parameter => parameter.ParameterType == typeof(Guid)),
+            "Terminal accounting must be pair-scoped by the durable pair execution identity.");
+        Assert.Contains(
+            method.GetParameters(),
+            parameter => parameter.ParameterType == typeof(CancellationToken));
+        return method;
+    }
+
+    private static Type ResolveElementType(Type collectionType)
+    {
+        if (collectionType.IsArray)
+        {
+            return collectionType.GetElementType()!;
+        }
+
+        Type? enumerable = collectionType.GetInterfaces()
+            .Append(collectionType)
+            .SingleOrDefault(type =>
+                type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+        Assert.NotNull(enumerable);
+        return enumerable!.GetGenericArguments()[0];
     }
 
     private static Type UnwrapTask(Type returnType)

@@ -413,6 +413,30 @@ recovery seams; accepted Story 12.1/12.2 behavior remained green. Checkpoint
 `bmad-12-3-implement-20260821T152445Z-c1ede2` hands off to terminal accounting,
 reconciliation, and public execution API tasks T038-T045.
 
+### Implementation checkpoint: T038-T045
+
+US5 now computes the ordinary-failure budget from the immutable dispatched
+denominator, requires every Story 12.2 high-value seed to succeed, emits honest
+warning-free, completed-with-warning, or failed outcomes, and maintains a
+bounded canonical failed-file inventory. Deterministic reconciliation accepts
+only exact current same-Repository, same-Scan, current-hash targets, rejects
+stale, ambiguous, unsupported, Cross-Repository, self, duplicate, and absent
+targets, and never mutates immutable Documents. The transaction atomically
+commits the REFERENCES Edge set, Pass1Outcome, failure inventory, both child
+statuses, coordination `Resolving`, and pair `ReadyForResolution`; injected
+PostgreSQL failures leave no partial visibility and concurrent contenders
+converge to replay or conflict. The authenticated public API now composes Start,
+active-concurrency update, Status, and Resume with ManagementAccess,
+ownership-filtered 404, bounded validation and ProblemDetails, deterministic
+warnings, Chinese `继续扫描`, and sanitized responses. RED first observed twelve
+terminal-accounting failures, sixteen reconciliation failures, seven concrete
+PostgreSQL transaction/concurrency failures out of thirty, and eleven API
+failures. GREEN verification passed PostgreSQL reconciliation 30/30, adjacent
+terminal/reconciliation/API tests 57/57, API authorization/resume 29/29, and
+existing recovery/start/concurrency 26/26 with zero build errors. Checkpoint
+`bmad-12-3-implement-20260821T161559Z-d706f3` hands off to qualification tasks
+T046-T049 and the stable pre-convergence barrier.
+
 ### Authorized task correction after definition review iteration 4
 
 The task owner closed `DR4-001` within the approved scope. Host-runtime,

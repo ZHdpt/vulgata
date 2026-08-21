@@ -23,7 +23,7 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260821T152445Z-c1ede2",
+    "checkpoint_id": "bmad-12-3-implement-20260821T161559Z-d706f3",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
@@ -32,7 +32,7 @@
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
     "stage": "implement",
-    "reason": "T032-T037 verified; begin terminal accounting, reconciliation, and public execution API T038-T045 with behavioral RED evidence."
+    "reason": "T038-T045 verified; begin qualification T046-T049 and stable pre-convergence barrier."
   },
-  "updated_at": "2026-08-21T15:24:45Z"
+  "updated_at": "2026-08-21T16:15:59Z"
 }

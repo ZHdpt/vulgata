@@ -269,3 +269,48 @@ public sealed record PreparedPass1CommitInput(
     ReadOnlyMemory<byte> IndexEntryProjectionFingerprint,
     IReadOnlyList<ReadOnlyMemory<byte>> NavigationReceiptFingerprints,
     IReadOnlyList<ReadOnlyMemory<byte>> CommunicationClassificationFingerprints);
+
+public enum PreparedPass1ReconciliationOutcome
+{
+    Reconciled,
+    Replay,
+    Conflict,
+    Ineligible,
+    NotFound,
+    Rejected,
+    Cancelled,
+    Failed,
+}
+
+public sealed record PreparedPass1ReconciliationRequest(
+    PreparedScanAuthorizationScope AuthorizationScope,
+    long ExpectedPairStateVersion,
+    string? ExpectedReconciliationFingerprint,
+    DateTimeOffset ReconciledAt);
+
+public sealed record PreparedPass1ReconciledEdge(
+    Guid Id,
+    Guid SourceDocumentVersionId,
+    Guid TargetDocumentVersionId);
+
+public sealed record PreparedPass1ReconciliationWarning(
+    Guid SourceDocumentVersionId,
+    string ObservationFingerprint,
+    string ReasonCode,
+    string? TargetLocator);
+
+/// <summary>
+/// Sanitized deterministic reconciliation result. Immutable Document
+/// representations never cross this operational boundary.
+/// </summary>
+public sealed record PreparedPass1ReconciliationResult(
+    PreparedPass1ReconciliationOutcome Outcome,
+    Pass1PairExecutionPhase? PairState,
+    string? ReconciliationFingerprint,
+    IReadOnlyList<PreparedPass1ReconciledEdge> Edges,
+    IReadOnlyList<PreparedPass1ReconciliationWarning> Warnings,
+    int ReconciledEdgeCount,
+    int WarningCount,
+    int ChildExecutionCount,
+    bool IsReplay,
+    bool PairBindingValid);

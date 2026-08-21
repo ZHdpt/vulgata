@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "5647ec537be5fb6dc93fcd6e4cc9e588b057d462cd0430a4d6da2ba2ddc12d9f"
+      "sha256": "e555705ff7dec3d385483dc8c612ca2bc807e6eacd373955e8bfc4f96ac2b2c7"
     }
   },
   "gates": {
@@ -88,15 +88,15 @@
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260821T152445Z-c1ede2",
+    "checkpoint_id": "bmad-12-3-implement-20260821T161559Z-d706f3",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T032-T037 verified; begin terminal accounting, reconciliation, and public execution API T038-T045 with behavioral RED evidence.",
+    "reason": "T038-T045 verified; begin qualification T046-T049 and stable pre-convergence barrier.",
     "evidence_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md"
   },
-  "updated_at": "2026-08-21T15:24:45Z"
+  "updated_at": "2026-08-21T16:15:59Z"
 }

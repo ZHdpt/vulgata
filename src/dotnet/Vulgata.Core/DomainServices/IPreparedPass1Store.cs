@@ -60,6 +60,37 @@ public sealed record PreparedPass1ConcurrencyUpdateResult(
     long? ConcurrencyRevision,
     int PreservedLeaseCount);
 
+public enum PreparedPass1CompletionOutcome
+{
+    Succeeded,
+    CompletedWithWarnings,
+    FailedPass1,
+    Replay,
+    Conflict,
+    Ineligible,
+    NotFound,
+    Rejected,
+    Cancelled,
+    Failed,
+}
+
+/// <summary>
+/// Sanitized pair-scoped terminal accounting reconstructed from the durable
+/// prepared job set. It never authorizes a later pass.
+/// </summary>
+public sealed record PreparedPass1CompletionResult(
+    PreparedPass1CompletionOutcome Outcome,
+    int DispatchedCount,
+    int CompletedCount,
+    int OrdinaryFailureCount,
+    int OrdinaryFailureBudget,
+    int HighValueSeedCount,
+    int SucceededHighValueSeedCount,
+    IReadOnlyList<Pass1FailureInventoryEntry> FailureInventory,
+    TwoRepositoryScanCoordinationPhase CoordinationPhase,
+    bool LaterPassAuthorized,
+    bool IsReplay);
+
 public interface IPreparedPass1Store
 {
     Task<PreparedPass1StartResult> StartAsync(
@@ -112,5 +143,16 @@ public interface IPreparedPass1Store
         bool providerAvailable,
         DateTimeOffset observedAt,
         DateTimeOffset? retryAfterAt = null,
+        CancellationToken cancellationToken = default);
+
+    Task<PreparedPass1ReconciliationResult> ReconcileAsync(
+        Guid pairExecutionId,
+        PreparedPass1ReconciliationRequest reconciliation,
+        CancellationToken cancellationToken = default);
+
+    Task<PreparedPass1CompletionResult> CompletePass1Async(
+        Guid pairExecutionId,
+        PreparedScanAuthorizationScope authorizationScope,
+        DateTimeOffset completedAt,
         CancellationToken cancellationToken = default);
 }

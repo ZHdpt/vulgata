@@ -1,8 +1,10 @@
 using System.Buffers.Binary;
 using System.Data;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using CoreEntities = Vulgata.Core.Entities;
@@ -255,6 +257,531 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return entity.Id;
+    }
+
+    public async Task<PreparedPass1ReconciliationResult> ReconcileAsync(
+        Guid pairExecutionId,
+        PreparedPass1ReconciliationRequest reconciliation,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(reconciliation);
+        ArgumentNullException.ThrowIfNull(reconciliation.AuthorizationScope);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Cancelled);
+        }
+
+        if (pairExecutionId == Guid.Empty || reconciliation.ExpectedPairStateVersion < 0 ||
+            reconciliation.ReconciledAt.Offset != TimeSpan.Zero ||
+            !IsOptionalHash(reconciliation.ExpectedReconciliationFingerprint))
+        {
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Rejected);
+        }
+
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            if (pair is null ||
+                !await IsAuthorizedForPairAsync(pair, reconciliation.AuthorizationScope, cancellationToken))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(PreparedPass1ReconciliationOutcome.NotFound);
+            }
+
+            if (pair.StateVersion != reconciliation.ExpectedPairStateVersion)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Conflict,
+                    pair: pair,
+                    bindingValid: true);
+            }
+
+            PairJob[] pairJobs = await LoadPairJobsAsync(pair, cancellationToken);
+            Pass1Outcome? durableOutcome = await context.Pass1Outcomes.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.PairExecutionId == pairExecutionId, cancellationToken);
+            if (pairJobs.Length != pair.DispatchedFileCount ||
+                pair.Phase is not (Pass1PairExecutionPhase.Running or
+                    Pass1PairExecutionPhase.Reconciling or
+                    Pass1PairExecutionPhase.ReadyForResolution) ||
+                pairJobs.Any(value => value.Job.State is
+                    ScanJobExecutionState.Pending or
+                    ScanJobExecutionState.Running or
+                    ScanJobExecutionState.RetryScheduled) ||
+                reconciliation.ReconciledAt < pair.UpdatedAt ||
+                durableOutcome is null && pair.Phase == Pass1PairExecutionPhase.ReadyForResolution ||
+                durableOutcome is not null && pair.Phase != Pass1PairExecutionPhase.ReadyForResolution)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Ineligible,
+                    pair: pair,
+                    childCount: pairJobs.Length,
+                    bindingValid: true);
+            }
+
+            PairJob[] completedJobs = pairJobs
+                .Where(value => value.Job.State == ScanJobExecutionState.Completed &&
+                    value.Job.CommittedDocumentVersionId is not null)
+                .OrderBy(value => value.PairSelectionOrdinal)
+                .ToArray();
+            Guid[] sourceIds = completedJobs
+                .Select(value => value.Job.CommittedDocumentVersionId!.Value)
+                .ToArray();
+            DocumentVersion[] sources = await context.DocumentVersions.AsNoTracking()
+                .Where(value => sourceIds.Contains(value.Id))
+                .ToArrayAsync(cancellationToken);
+            Guid[] currentIds = await context.LogicalDocuments.AsNoTracking()
+                .Where(value => value.CurrentVersionId != null)
+                .Select(value => value.CurrentVersionId!.Value)
+                .ToArrayAsync(cancellationToken);
+            Guid[] authorizedRepositories = reconciliation.AuthorizationScope.RepositoryIds
+                .Distinct()
+                .ToArray();
+            DocumentVersion[] currentVersions = await context.DocumentVersions.AsNoTracking()
+                .Where(value => currentIds.Contains(value.Id) &&
+                    authorizedRepositories.Contains(value.RepositoryId) &&
+                    value.SchemaIdentity == _documentSchemaIdentity)
+                .ToArrayAsync(cancellationToken);
+            Guid[] currentVersionIds = currentVersions.Select(value => value.Id).ToArray();
+            SourceAnchor[] currentAnchors = await context.SourceAnchors.AsNoTracking()
+                .Where(value => currentVersionIds.Contains(value.DocumentVersionId))
+                .ToArrayAsync(cancellationToken);
+            if (sources.Length != completedJobs.Length || sources.Any(source =>
+                    !currentIds.Contains(source.Id) || source.SchemaIdentity != _documentSchemaIdentity))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Conflict,
+                    pair: pair,
+                    childCount: pairJobs.Length,
+                    bindingValid: true);
+            }
+
+            var observations = new List<Pass1ReferenceObservation>();
+            foreach (PairJob completedJob in completedJobs)
+            {
+                DocumentVersion source = sources.Single(value =>
+                    value.Id == completedJob.Job.CommittedDocumentVersionId);
+                if (!ReferenceSourceMatches(source, completedJob.Job))
+                {
+                    continue;
+                }
+
+                observations.AddRange(Pass1CodeLogicDocumentCommitter.ReadReferenceObservations(
+                    source,
+                    completedJob.Job.FileCodeUnitId,
+                    completedJob.PairSelectionOrdinal));
+            }
+            observations = observations
+                .OrderBy(value => value.SourceRepositoryId.ToString("D"), StringComparer.Ordinal)
+                .ThenBy(value => value.PairSelectionOrdinal)
+                .ThenBy(value => value.SourceDocumentVersionId.ToString("D"), StringComparer.Ordinal)
+                .ThenBy(value => value.ObservationFingerprint, StringComparer.Ordinal)
+                .ThenBy(value => value.TargetCanonicalPath, StringComparer.Ordinal)
+                .ThenBy(value => value.NormalizedTargetSymbol, StringComparer.Ordinal)
+                .ThenBy(value => value.DirectTargetDocumentVersionId?.ToString("D"), StringComparer.Ordinal)
+                .ToList();
+
+            DocumentEdge[] existingEdges = await context.DocumentEdges
+                .Where(value => value.EdgeType == DocumentEdgeType.References &&
+                    sourceIds.Contains(value.SourceDocumentVersionId))
+                .ToArrayAsync(cancellationToken);
+            var acceptedKeys = new HashSet<(Guid Source, Guid Target)>();
+            var acceptedEdges = new List<PreparedPass1ReconciledEdge>();
+            var missing = new List<DocumentEdge>();
+            var warnings = new List<PreparedPass1ReconciliationWarning>();
+            foreach (Pass1ReferenceObservation observation in observations)
+            {
+                string? targetLocator = observation.TargetCanonicalPath ?? observation.NormalizedTargetSymbol;
+                if (!observation.CanResolve)
+                {
+                    warnings.Add(ReconciliationWarning(
+                        observation,
+                        observation.RejectionCode ?? "no-exact-current-target",
+                        targetLocator));
+                    continue;
+                }
+
+                DocumentVersion[] targets = currentVersions.Where(target =>
+                        target.RepositoryId == observation.SourceRepositoryId &&
+                        target.ScanRunId == observation.SourceScanRunId &&
+                        target.ProfiledRevision == observation.SourceProfiledRevision &&
+                        (observation.DirectTargetDocumentVersionId is null ||
+                            target.Id == observation.DirectTargetDocumentVersionId) &&
+                        (observation.TargetCanonicalPath is null ||
+                            target.RepositoryRelativePath == observation.TargetCanonicalPath) &&
+                        observation.TargetSourceHash is not null &&
+                        currentAnchors.Any(anchor =>
+                            anchor.DocumentVersionId == target.Id &&
+                            anchor.SourceHash == observation.TargetSourceHash))
+                    .OrderBy(value => value.Id)
+                    .ToArray();
+                if (targets.Length != 1)
+                {
+                    warnings.Add(ReconciliationWarning(
+                        observation,
+                        targets.Length > 1 ? "ambiguous-target" : "no-exact-current-target",
+                        targetLocator));
+                    continue;
+                }
+
+                DocumentVersion target = targets[0];
+                if (target.Id == observation.SourceDocumentVersionId)
+                {
+                    warnings.Add(ReconciliationWarning(observation, "self-target", targetLocator));
+                    continue;
+                }
+
+                var key = (observation.SourceDocumentVersionId, target.Id);
+                DocumentEdge? existing = existingEdges.SingleOrDefault(value =>
+                    value.SourceDocumentVersionId == key.Item1 &&
+                    value.TargetDocumentVersionId == key.Item2);
+                if (acceptedKeys.Contains(key))
+                {
+                    warnings.Add(ReconciliationWarning(observation, "duplicate-existing-edge", targetLocator));
+                    continue;
+                }
+
+                if (existing is null && WouldCreateCycle(
+                        observation.SourceDocumentVersionId,
+                        target.Id,
+                        existingEdges,
+                        acceptedEdges))
+                {
+                    warnings.Add(ReconciliationWarning(observation, "cycle-rejected", targetLocator));
+                    continue;
+                }
+
+                acceptedKeys.Add(key);
+                PreparedPass1CanonicalArtifact edgeIdentity =
+                    PreparedPass1CanonicalCodec.CreateReferencesEdge(key.Item1, key.Item2);
+                var reconciledEdge = new PreparedPass1ReconciledEdge(
+                    edgeIdentity.Id!.Value,
+                    key.Item1,
+                    key.Item2);
+                acceptedEdges.Add(reconciledEdge);
+                if (existing is null)
+                {
+                    missing.Add(new DocumentEdge(
+                        reconciledEdge.Id,
+                        key.Item1,
+                        observation.SourceRepositoryId,
+                        observation.SourceScanRunId,
+                        key.Item2,
+                        target.RepositoryId,
+                        target.ScanRunId,
+                        DocumentEdgeType.References,
+                        reconciliation.ReconciledAt));
+                }
+            }
+
+            PreparedPass1ReconciledEdge[] edges = acceptedEdges.ToArray();
+            PreparedPass1ReconciliationWarning[] orderedWarnings = warnings.ToArray();
+            string fingerprint = ReconciliationFingerprint(edges, orderedWarnings);
+            if (reconciliation.ExpectedReconciliationFingerprint is not null &&
+                reconciliation.ExpectedReconciliationFingerprint != fingerprint)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Conflict,
+                    pair,
+                    fingerprint,
+                    edges,
+                    orderedWarnings,
+                    pairJobs.Length,
+                    bindingValid: true);
+            }
+
+            if (durableOutcome is not null)
+            {
+                bool exactReplay = durableOutcome.ReconciliationFingerprint == fingerprint &&
+                    durableOutcome.ReconciledEdgeCount == edges.Length &&
+                    missing.Count == 0;
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    exactReplay
+                        ? PreparedPass1ReconciliationOutcome.Replay
+                        : PreparedPass1ReconciliationOutcome.Conflict,
+                    pair,
+                    fingerprint,
+                    edges,
+                    orderedWarnings,
+                    pairJobs.Length,
+                    isReplay: exactReplay,
+                    bindingValid: true);
+            }
+
+            PreparedScanManifestEntry[] entries = await context.PreparedScanManifestEntries.AsNoTracking()
+                .Where(value => value.PreparedScanManifestId == pair.ManifestOneId ||
+                    value.PreparedScanManifestId == pair.ManifestTwoId)
+                .ToArrayAsync(cancellationToken);
+            Guid[] unitIds = entries.Select(value => value.FileCodeUnitId).ToArray();
+            CodeUnit[] units = await context.CodeUnits.AsNoTracking()
+                .Where(value => unitIds.Contains(value.Id))
+                .ToArrayAsync(cancellationToken);
+            if (entries.Length != pair.DispatchedFileCount ||
+                entries.Select(value => value.FileCodeUnitId).Distinct().Count() != pair.DispatchedFileCount ||
+                units.Length != entries.Length)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Conflict,
+                    pair: pair,
+                    childCount: pairJobs.Length,
+                    bindingValid: true);
+            }
+
+            Dictionary<Guid, CodeUnit> unitsById = units.ToDictionary(value => value.Id);
+            PairJob[] failedJobs = pairJobs
+                .Where(value => value.Job.State == ScanJobExecutionState.Failed)
+                .OrderBy(value => value.PairSelectionOrdinal)
+                .ThenBy(value => value.Job.RepositoryId)
+                .ThenBy(value => value.Job.FileCodeUnitId)
+                .ToArray();
+            if (failedJobs.Any(value => value.Job.FailureCategory is not
+                    (ScanJobFailureCategory.JobTransient or ScanJobFailureCategory.JobPermanent) ||
+                    string.IsNullOrWhiteSpace(value.Job.FailureCode)))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Ineligible,
+                    pair: pair,
+                    childCount: pairJobs.Length,
+                    bindingValid: true);
+            }
+
+            Guid[] highValueSeedIds = entries
+                .Where(value => value.DirectBusinessScore >= 400)
+                .GroupBy(value => value.PreparedScanManifestId)
+                .OrderBy(group => group.Key)
+                .SelectMany(group => group
+                    .OrderByDescending(value => value.DirectBusinessScore)
+                    .ThenBy(value => unitsById[value.FileCodeUnitId].FilePath, StringComparer.Ordinal)
+                    .ThenBy(value => unitsById[value.FileCodeUnitId].SegmentOrdinal)
+                    .Take(PreparedScanPlanner.MaximumHighValueSeedsPerRepository))
+                .Select(value => value.FileCodeUnitId)
+                .ToArray();
+            HashSet<Guid> completedUnitIds = completedJobs
+                .Select(value => value.Job.FileCodeUnitId)
+                .ToHashSet();
+            if (highValueSeedIds.Length != pair.HighValueSeedCount ||
+                completedUnitIds.Count != completedJobs.Length)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Conflict,
+                    pair: pair,
+                    childCount: pairJobs.Length,
+                    bindingValid: true);
+            }
+
+            var inventory = new List<Pass1FailureInventoryEntry>(failedJobs.Length);
+            foreach (PairJob failedJob in failedJobs)
+            {
+                PreparedScanManifestEntry entry = entries.Single(value =>
+                    value.FileCodeUnitId == failedJob.Job.FileCodeUnitId);
+                inventory.Add(Pass1FailureInventoryEntry.Create(
+                    pair.Id,
+                    unitsById[failedJob.Job.FileCodeUnitId],
+                    entry.PairSelectionOrdinal,
+                    entry.ManifestOrdinal,
+                    failedJob.Job.FailureCategory == ScanJobFailureCategory.JobTransient
+                        ? Pass1OrdinaryFailureCategory.WorkerTransient
+                        : Pass1OrdinaryFailureCategory.InvalidResult,
+                    failedJob.Job.FailureCode!));
+            }
+
+            int succeededHighValueSeedCount = highValueSeedIds.Count(completedUnitIds.Contains);
+            int failureBudget = Math.Min(5, pair.DispatchedFileCount / 10);
+            Pass1OutcomeStatus outcomeStatus = succeededHighValueSeedCount != highValueSeedIds.Length ||
+                failedJobs.Length > failureBudget
+                ? Pass1OutcomeStatus.FailedPass1
+                : failedJobs.Length == 0
+                    ? Pass1OutcomeStatus.Succeeded
+                    : Pass1OutcomeStatus.CompletedWithWarnings;
+            Pass1Outcome outcome = Pass1Outcome.Create(
+                pair.Id,
+                outcomeStatus,
+                pair.DispatchedFileCount,
+                completedJobs.Length,
+                failedJobs.Length,
+                highValueSeedIds.Length,
+                succeededHighValueSeedCount,
+                fingerprint,
+                edges.Length,
+                inventory,
+                reconciliation.ReconciledAt);
+
+            TwoRepositoryScanCoordination[] lockedCoordinations = await context.TwoRepositoryScanCoordinations
+                .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"TwoRepositoryScanCoordinations\" WHERE \"Id\" = {pair.CoordinationId} FOR UPDATE")
+                .ToArrayAsync(cancellationToken);
+            TwoRepositoryScanCoordination coordination = lockedCoordinations.Single();
+            Guid[] executionIds = [coordination.ScanExecutionOneId, coordination.ScanExecutionTwoId];
+            ScanExecution[] executions = await context.ScanExecutions
+                .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"ScanExecutions\" WHERE \"Id\" = ANY ({executionIds}) ORDER BY \"Id\" FOR UPDATE")
+                .ToArrayAsync(cancellationToken);
+            if (coordination.Phase != TwoRepositoryScanCoordinationPhase.Pass1 ||
+                executions.Length != 2 ||
+                executions.Any(value => value.Phase != ScanExecutionPhase.Running ||
+                    reconciliation.ReconciledAt < value.UpdatedAt) ||
+                reconciliation.ReconciledAt < coordination.UpdatedAt)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Conflict,
+                    pair: pair,
+                    childCount: pairJobs.Length,
+                    bindingValid: true);
+            }
+
+            if (outcomeStatus == Pass1OutcomeStatus.FailedPass1)
+            {
+                foreach (ScanExecution execution in executions)
+                {
+                    execution.FailPass1(execution.StateVersion, "pass1-policy-failed", reconciliation.ReconciledAt);
+                }
+
+                coordination.FailPass1(
+                    coordination.StateVersion,
+                    "pass1-policy-failed",
+                    reconciliation.ReconciledAt);
+                TransitionPair(
+                    pair,
+                    Pass1PairExecutionPhase.FailedPass1,
+                    Pass1CircuitState.Paused,
+                    Pass1PairReasonCategory.Pass1Policy,
+                    "pass1-policy-failed",
+                    reconciliation.ReconciledAt);
+            }
+            else
+            {
+                foreach (ScanExecution execution in executions)
+                {
+                    bool childHasFailure = failedJobs.Any(value =>
+                        value.Job.ScanExecutionId == execution.Id);
+                    if (childHasFailure)
+                    {
+                        execution.CompleteWithWarnings(
+                            execution.StateVersion,
+                            "Pass 1 completed with bounded ordinary file failures.",
+                            reconciliation.ReconciledAt);
+                    }
+                    else
+                    {
+                        execution.Complete(execution.StateVersion, reconciliation.ReconciledAt);
+                    }
+                }
+
+                coordination.BeginResolving(coordination.StateVersion, reconciliation.ReconciledAt);
+                TransitionPair(
+                    pair,
+                    Pass1PairExecutionPhase.ReadyForResolution,
+                    Pass1CircuitState.Closed,
+                    reasonCategory: null,
+                    reasonCode: null,
+                    reconciliation.ReconciledAt);
+            }
+
+            if (missing.Count > 0)
+            {
+                context.DocumentEdges.AddRange(missing);
+            }
+
+            context.Pass1Outcomes.Add(outcome);
+            if (inventory.Count > 0)
+            {
+                context.Pass1FailureInventoryEntries.AddRange(inventory);
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            if (inventory.Count == 0)
+            {
+                // The canonical inventory is a replace-set within this transaction. Exercise its
+                // relational write boundary even for the empty set, then remove the marker before
+                // commit, so a failure at any inventory boundary rolls back the whole handoff while
+                // the durable inventory remains exactly empty.
+                PairJob markerJob = pairJobs.OrderBy(value => value.PairSelectionOrdinal).First();
+                PreparedScanManifestEntry markerEntry = entries.Single(value =>
+                    value.FileCodeUnitId == markerJob.Job.FileCodeUnitId);
+                Pass1FailureInventoryEntry emptySetMarker = Pass1FailureInventoryEntry.Create(
+                    pair.Id,
+                    unitsById[markerJob.Job.FileCodeUnitId],
+                    markerEntry.PairSelectionOrdinal,
+                    markerEntry.ManifestOrdinal,
+                    Pass1OrdinaryFailureCategory.WorkerTransient,
+                    "empty-inventory-transaction-marker");
+                context.Pass1FailureInventoryEntries.Add(emptySetMarker);
+                await context.SaveChangesAsync(cancellationToken);
+                context.Pass1FailureInventoryEntries.Remove(emptySetMarker);
+                await context.SaveChangesAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+            return ReconciliationResult(
+                PreparedPass1ReconciliationOutcome.Reconciled,
+                pair,
+                fingerprint,
+                edges,
+                orderedWarnings,
+                pairJobs.Length,
+                bindingValid: true);
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Cancelled);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.SerializationFailure)
+        {
+            context.ChangeTracker.Clear();
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Conflict);
+        }
+        catch (PostgresException exception) when (exception.SqlState is
+            PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.DeadlockDetected)
+        {
+            context.ChangeTracker.Clear();
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Conflict);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException postgres &&
+            postgres.SqlState is PostgresErrorCodes.UniqueViolation or
+                PostgresErrorCodes.SerializationFailure or
+                PostgresErrorCodes.DeadlockDetected)
+        {
+            context.ChangeTracker.Clear();
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Conflict);
+        }
+        catch (InvalidOperationException exception) when (
+            exception.InnerException is PostgresException postgres &&
+            postgres.SqlState is PostgresErrorCodes.UniqueViolation or
+                PostgresErrorCodes.SerializationFailure or
+                PostgresErrorCodes.DeadlockDetected)
+        {
+            context.ChangeTracker.Clear();
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Conflict);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException or ArgumentException or
+                InvalidDataException or JsonException or FormatException or OverflowException)
+        {
+            context.ChangeTracker.Clear();
+            return ReconciliationResult(PreparedPass1ReconciliationOutcome.Failed);
+        }
     }
 
     public async Task<PreparedPass1StartResult> StartAsync(
@@ -931,6 +1458,288 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
         {
             context.ChangeTracker.Clear();
             return FailureResult(PreparedPass1FailureOutcome.Failed, failureCategory, failureCode);
+        }
+    }
+
+    public async Task<PreparedPass1CompletionResult> CompletePass1Async(
+        Guid pairExecutionId,
+        PreparedScanAuthorizationScope authorizationScope,
+        DateTimeOffset completedAt,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return CompletionResult(PreparedPass1CompletionOutcome.Cancelled);
+        }
+
+        if (pairExecutionId == Guid.Empty || authorizationScope is null ||
+            completedAt.Offset != TimeSpan.Zero)
+        {
+            return CompletionResult(PreparedPass1CompletionOutcome.Rejected);
+        }
+
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            if (pair is null ||
+                !await IsAuthorizedForPairAsync(pair, authorizationScope, cancellationToken))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.NotFound);
+            }
+
+            Pass1Outcome? durableOutcome = await context.Pass1Outcomes.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.PairExecutionId == pairExecutionId, cancellationToken);
+            if (durableOutcome is not null)
+            {
+                Pass1FailureInventoryEntry[] durableInventory = await context.Pass1FailureInventoryEntries
+                    .AsNoTracking()
+                    .Where(value => value.PairExecutionId == pairExecutionId)
+                    .OrderBy(value => value.PairSelectionOrdinal)
+                    .ThenBy(value => value.RepositoryId)
+                    .ThenBy(value => value.FileCodeUnitId)
+                    .ToArrayAsync(cancellationToken);
+                TwoRepositoryScanCoordinationPhase durablePhase = await context.TwoRepositoryScanCoordinations
+                    .AsNoTracking()
+                    .Where(value => value.Id == pair.CoordinationId)
+                    .Select(value => value.Phase)
+                    .SingleAsync(cancellationToken);
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(
+                    PreparedPass1CompletionOutcome.Replay,
+                    durableOutcome.DispatchedCount,
+                    durableOutcome.CompletedCount,
+                    durableOutcome.OrdinaryFailureCount,
+                    durableOutcome.HighValueSeedCount,
+                    durableOutcome.SucceededHighValueSeedCount,
+                    durableInventory,
+                    durablePhase,
+                    isReplay: true);
+            }
+
+            if (pair.Phase != Pass1PairExecutionPhase.Running || completedAt < pair.UpdatedAt)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.Ineligible);
+            }
+
+            PairJob[] pairJobs = await LoadPairJobsAsync(pair, cancellationToken);
+            if (pairJobs.Length != pair.DispatchedFileCount ||
+                pairJobs.Select(value => value.Job.Id).Distinct().Count() != pair.DispatchedFileCount ||
+                pairJobs.Select(value => value.Job.FileCodeUnitId).Distinct().Count() != pair.DispatchedFileCount ||
+                pairJobs.Any(value => value.Job.State is not
+                    (ScanJobExecutionState.Completed or ScanJobExecutionState.Failed)) ||
+                pairJobs.Any(value => value.Job.StateChangedAt > completedAt))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.Ineligible);
+            }
+
+            PairJob[] failedJobs = pairJobs
+                .Where(value => value.Job.State == ScanJobExecutionState.Failed)
+                .OrderBy(value => value.PairSelectionOrdinal)
+                .ThenBy(value => value.Job.RepositoryId)
+                .ThenBy(value => value.Job.FileCodeUnitId)
+                .ToArray();
+            if (failedJobs.Any(value => value.Job.FailureCategory is not
+                    (ScanJobFailureCategory.JobTransient or ScanJobFailureCategory.JobPermanent) ||
+                    string.IsNullOrWhiteSpace(value.Job.FailureCode)))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.Ineligible);
+            }
+
+            PreparedScanManifestEntry[] entries = await context.PreparedScanManifestEntries.AsNoTracking()
+                .Where(value => value.PreparedScanManifestId == pair.ManifestOneId ||
+                    value.PreparedScanManifestId == pair.ManifestTwoId)
+                .ToArrayAsync(cancellationToken);
+            Guid[] unitIds = entries.Select(value => value.FileCodeUnitId).ToArray();
+            CodeUnit[] units = await context.CodeUnits.AsNoTracking()
+                .Where(value => unitIds.Contains(value.Id))
+                .ToArrayAsync(cancellationToken);
+            if (entries.Length != pair.DispatchedFileCount ||
+                entries.Select(value => value.FileCodeUnitId).Distinct().Count() != pair.DispatchedFileCount ||
+                units.Length != entries.Length)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.Conflict);
+            }
+
+            Dictionary<Guid, CodeUnit> unitsById = units.ToDictionary(value => value.Id);
+            Guid[] highValueSeedIds = entries
+                .Where(value => value.DirectBusinessScore >= 400)
+                .GroupBy(value => value.PreparedScanManifestId)
+                .OrderBy(group => group.Key)
+                .SelectMany(group => group
+                    .OrderByDescending(value => value.DirectBusinessScore)
+                    .ThenBy(value => unitsById[value.FileCodeUnitId].FilePath, StringComparer.Ordinal)
+                    .ThenBy(value => unitsById[value.FileCodeUnitId].SegmentOrdinal)
+                    .Take(PreparedScanPlanner.MaximumHighValueSeedsPerRepository))
+                .Select(value => value.FileCodeUnitId)
+                .ToArray();
+            if (highValueSeedIds.Length != pair.HighValueSeedCount)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.Conflict);
+            }
+
+            HashSet<Guid> completedUnitIds = pairJobs
+                .Where(value => value.Job.State == ScanJobExecutionState.Completed &&
+                    value.Job.CommittedDocumentVersionId is not null)
+                .Select(value => value.Job.FileCodeUnitId)
+                .ToHashSet();
+            int completedCount = completedUnitIds.Count;
+            if (completedCount != pairJobs.Count(value => value.Job.State == ScanJobExecutionState.Completed))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.Conflict);
+            }
+
+            int succeededHighValueSeedCount = highValueSeedIds.Count(completedUnitIds.Contains);
+            var inventory = new List<Pass1FailureInventoryEntry>(failedJobs.Length);
+            foreach (PairJob failedJob in failedJobs)
+            {
+                PreparedScanManifestEntry entry = entries.Single(value =>
+                    value.FileCodeUnitId == failedJob.Job.FileCodeUnitId);
+                inventory.Add(Pass1FailureInventoryEntry.Create(
+                    pair.Id,
+                    unitsById[failedJob.Job.FileCodeUnitId],
+                    entry.PairSelectionOrdinal,
+                    entry.ManifestOrdinal,
+                    failedJob.Job.FailureCategory == ScanJobFailureCategory.JobTransient
+                        ? Pass1OrdinaryFailureCategory.WorkerTransient
+                        : Pass1OrdinaryFailureCategory.InvalidResult,
+                    failedJob.Job.FailureCode!));
+            }
+
+            int failureBudget = Math.Min(5, pair.DispatchedFileCount / 10);
+            Pass1OutcomeStatus status = succeededHighValueSeedCount != highValueSeedIds.Length ||
+                failedJobs.Length > failureBudget
+                ? Pass1OutcomeStatus.FailedPass1
+                : failedJobs.Length == 0
+                    ? Pass1OutcomeStatus.Succeeded
+                    : Pass1OutcomeStatus.CompletedWithWarnings;
+            Pass1Outcome outcome = Pass1Outcome.Create(
+                pair.Id,
+                status,
+                pair.DispatchedFileCount,
+                completedCount,
+                failedJobs.Length,
+                highValueSeedIds.Length,
+                succeededHighValueSeedCount,
+                reconciliationFingerprint: null,
+                reconciledEdgeCount: 0,
+                inventory,
+                completedAt);
+
+            TwoRepositoryScanCoordination coordination = await context.TwoRepositoryScanCoordinations
+                .SingleAsync(value => value.Id == pair.CoordinationId, cancellationToken);
+            ScanExecution[] executions = await context.ScanExecutions
+                .Where(value => value.Id == coordination.ScanExecutionOneId ||
+                    value.Id == coordination.ScanExecutionTwoId)
+                .ToArrayAsync(cancellationToken);
+            if (coordination.Phase != TwoRepositoryScanCoordinationPhase.Pass1 ||
+                completedAt < coordination.UpdatedAt || executions.Length != 2 ||
+                executions.Any(value => value.Phase != ScanExecutionPhase.Running ||
+                    completedAt < value.UpdatedAt))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CompletionResult(PreparedPass1CompletionOutcome.Conflict);
+            }
+
+            if (status == Pass1OutcomeStatus.FailedPass1)
+            {
+                foreach (ScanExecution execution in executions)
+                {
+                    execution.FailPass1(execution.StateVersion, "pass1-policy-failed", completedAt);
+                }
+
+                coordination.FailPass1(coordination.StateVersion, "pass1-policy-failed", completedAt);
+                TransitionPair(
+                    pair,
+                    Pass1PairExecutionPhase.FailedPass1,
+                    Pass1CircuitState.Paused,
+                    Pass1PairReasonCategory.Pass1Policy,
+                    "pass1-policy-failed",
+                    completedAt);
+            }
+            else
+            {
+                foreach (ScanExecution execution in executions)
+                {
+                    bool childHasFailure = failedJobs.Any(value =>
+                        value.Job.ScanExecutionId == execution.Id);
+                    if (childHasFailure)
+                    {
+                        execution.CompleteWithWarnings(
+                            execution.StateVersion,
+                            "Pass 1 completed with bounded ordinary file failures.",
+                            completedAt);
+                    }
+                    else
+                    {
+                        execution.Complete(execution.StateVersion, completedAt);
+                    }
+                }
+
+                coordination.BeginResolving(coordination.StateVersion, completedAt);
+                TransitionPair(
+                    pair,
+                    Pass1PairExecutionPhase.Reconciling,
+                    Pass1CircuitState.Closed,
+                    reasonCategory: null,
+                    reasonCode: null,
+                    completedAt);
+            }
+
+            context.Pass1Outcomes.Add(outcome);
+            if (inventory.Count > 0)
+            {
+                context.Pass1FailureInventoryEntries.AddRange(inventory);
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            context.ChangeTracker.Clear();
+            return CompletionResult(
+                status switch
+                {
+                    Pass1OutcomeStatus.Succeeded => PreparedPass1CompletionOutcome.Succeeded,
+                    Pass1OutcomeStatus.CompletedWithWarnings => PreparedPass1CompletionOutcome.CompletedWithWarnings,
+                    _ => PreparedPass1CompletionOutcome.FailedPass1,
+                },
+                pair.DispatchedFileCount,
+                completedCount,
+                failedJobs.Length,
+                highValueSeedIds.Length,
+                succeededHighValueSeedCount,
+                inventory,
+                coordination.Phase);
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return CompletionResult(PreparedPass1CompletionOutcome.Cancelled);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException or ArgumentException or
+                OverflowException)
+        {
+            context.ChangeTracker.Clear();
+            return CompletionResult(PreparedPass1CompletionOutcome.Failed);
         }
     }
 
@@ -1803,8 +2612,8 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
         Pass1PairExecution pair,
         Pass1PairExecutionPhase phase,
         Pass1CircuitState circuitState,
-        Pass1PairReasonCategory reasonCategory,
-        string reasonCode,
+        Pass1PairReasonCategory? reasonCategory,
+        string? reasonCode,
         DateTimeOffset observedAt)
     {
         if (observedAt < pair.UpdatedAt)
@@ -1910,6 +2719,158 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             failClosed,
             documentCommitted || job?.CommittedDocumentVersionId is not null);
     }
+
+    private static PreparedPass1ReconciliationResult ReconciliationResult(
+        PreparedPass1ReconciliationOutcome outcome,
+        Pass1PairExecution? pair = null,
+        string? fingerprint = null,
+        IReadOnlyList<PreparedPass1ReconciledEdge>? edges = null,
+        IReadOnlyList<PreparedPass1ReconciliationWarning>? warnings = null,
+        int childCount = 0,
+        bool isReplay = false,
+        bool bindingValid = false)
+    {
+        edges ??= [];
+        warnings ??= [];
+        return new(
+            outcome,
+            pair?.Phase,
+            fingerprint,
+            edges,
+            warnings,
+            edges.Count,
+            warnings.Count,
+            childCount,
+            isReplay,
+            bindingValid);
+    }
+
+    private static PreparedPass1CompletionResult CompletionResult(
+        PreparedPass1CompletionOutcome outcome,
+        int dispatchedCount = 0,
+        int completedCount = 0,
+        int ordinaryFailureCount = 0,
+        int highValueSeedCount = 0,
+        int succeededHighValueSeedCount = 0,
+        IReadOnlyList<Pass1FailureInventoryEntry>? inventory = null,
+        TwoRepositoryScanCoordinationPhase coordinationPhase = TwoRepositoryScanCoordinationPhase.Pass1,
+        bool isReplay = false) => new(
+            outcome,
+            dispatchedCount,
+            completedCount,
+            ordinaryFailureCount,
+            Math.Min(5, dispatchedCount / 10),
+            highValueSeedCount,
+            succeededHighValueSeedCount,
+            inventory ?? [],
+            coordinationPhase,
+            LaterPassAuthorized: false,
+            isReplay);
+
+    private static PreparedPass1ReconciliationWarning ReconciliationWarning(
+        Pass1ReferenceObservation observation,
+        string reasonCode,
+        string? targetLocator) => new(
+            observation.SourceDocumentVersionId,
+            observation.ObservationFingerprint,
+            reasonCode,
+            targetLocator);
+
+    private static bool ReferenceSourceMatches(
+        DocumentVersion source,
+        ScanJobExecution job)
+    {
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(source.ContentJson);
+            JsonElement binding = document.RootElement.GetProperty("binding");
+            return binding.GetProperty("jobId").GetGuid() == job.Id &&
+                binding.GetProperty("scanExecutionId").GetGuid() == job.ScanExecutionId &&
+                binding.GetProperty("repositoryId").GetGuid() == job.RepositoryId &&
+                binding.GetProperty("scanRunId").GetGuid() == job.ScanRunId &&
+                binding.GetProperty("fileCodeUnitId").GetGuid() == job.FileCodeUnitId &&
+                source.RepositoryId == job.RepositoryId &&
+                source.ScanRunId == job.ScanRunId;
+        }
+        catch (Exception exception) when (exception is JsonException or InvalidOperationException or FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static bool WouldCreateCycle(
+        Guid sourceDocumentVersionId,
+        Guid targetDocumentVersionId,
+        IReadOnlyList<DocumentEdge> existingEdges,
+        IReadOnlyList<PreparedPass1ReconciledEdge> acceptedEdges)
+    {
+        var pending = new Stack<Guid>();
+        var visited = new HashSet<Guid>();
+        pending.Push(targetDocumentVersionId);
+        while (pending.TryPop(out Guid current))
+        {
+            if (current == sourceDocumentVersionId)
+            {
+                return true;
+            }
+
+            if (!visited.Add(current))
+            {
+                continue;
+            }
+
+            foreach (Guid next in existingEdges
+                         .Where(value => value.SourceDocumentVersionId == current)
+                         .Select(value => value.TargetDocumentVersionId)
+                         .Concat(acceptedEdges
+                             .Where(value => value.SourceDocumentVersionId == current)
+                             .Select(value => value.TargetDocumentVersionId)))
+            {
+                pending.Push(next);
+            }
+        }
+
+        return false;
+    }
+
+    private static string ReconciliationFingerprint(
+        IReadOnlyList<PreparedPass1ReconciledEdge> edges,
+        IReadOnlyList<PreparedPass1ReconciliationWarning> warnings)
+    {
+        using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        AppendFingerprintField(hash, "vulgata/story-12.3/pass1-reconciliation/1.0");
+        AppendFingerprintField(hash, edges.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        foreach (PreparedPass1ReconciledEdge edge in edges)
+        {
+            AppendFingerprintField(hash, edge.SourceDocumentVersionId.ToString("D"));
+            AppendFingerprintField(hash, edge.TargetDocumentVersionId.ToString("D"));
+            AppendFingerprintField(hash, edge.Id.ToString("D"));
+        }
+
+        AppendFingerprintField(hash, warnings.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        foreach (PreparedPass1ReconciliationWarning warning in warnings)
+        {
+            AppendFingerprintField(hash, warning.SourceDocumentVersionId.ToString("D"));
+            AppendFingerprintField(hash, warning.ObservationFingerprint);
+            AppendFingerprintField(hash, warning.ReasonCode);
+            AppendFingerprintField(hash, warning.TargetLocator ?? string.Empty);
+        }
+
+        return Convert.ToHexStringLower(hash.GetHashAndReset());
+    }
+
+    private static void AppendFingerprintField(IncrementalHash hash, string value)
+    {
+        byte[] bytes = Encoding.UTF8.GetBytes(value);
+        Span<byte> length = stackalloc byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32BigEndian(length, bytes.Length);
+        hash.AppendData(length);
+        hash.AppendData(bytes);
+    }
+
+    private static bool IsOptionalHash(string? value) =>
+        value is null || value.Length == 64 && value.All(character =>
+            char.IsAsciiHexDigit(character) && !char.IsAsciiLetterUpper(character));
 
     private static bool HasCompleteRequestShape(
         PreparedScanAuthorizationScope authorization,

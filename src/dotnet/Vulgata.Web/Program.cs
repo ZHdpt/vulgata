@@ -350,6 +350,9 @@ public static class VulgataWebComposition
             services.GetRequiredService<PreparedPass1Store>());
         builder.Services.AddScoped<IPreparedPass1NavigationReceiptSink>(services =>
             services.GetRequiredService<PreparedPass1Store>());
+        builder.Services.AddScoped<IPreparedPass1ProviderAvailabilityProbe,
+            PreparedPass1ProviderAvailabilityProbe>();
+        builder.Services.AddScoped<PreparedPass1Coordinator>();
         builder.Services.AddScoped<PreparedPass1NavigationService>();
         builder.Services.AddScoped<IPass1NavigationService>(services =>
             services.GetRequiredService<PreparedPass1NavigationService>());
@@ -428,6 +431,10 @@ public static class VulgataWebComposition
         builder.Services.AddValidatorsFromAssemblyContaining<UpsertSystemLlmProviderOverrideRequestValidator>();
         builder.Services.AddValidatorsFromAssemblyContaining<UpsertDatabaseConnectionRequestValidator>();
         builder.Services.AddScoped<IValidator<PreparedScanRequest>, PreparedScanRequestValidator>();
+        builder.Services.AddScoped<IValidator<StartPass1ExecutionRequest>,
+            StartPass1ExecutionRequestValidator>();
+        builder.Services.AddScoped<IValidator<UpdatePass1ConcurrencyRequest>,
+            UpdatePass1ConcurrencyRequestValidator>();
         builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
         return frameworkCatalog;
