@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "story": "12.2",
+  "required": true,
+  "predicates": [
+    {
+      "predicate_id": "user-visible-workflow",
+      "change_type": "User-visible workflow",
+      "gate": "required",
+      "triggered": false,
+      "affected_paths": [],
+      "affected_behavior": "Story 12.2 adds no UI journey and stops before Worker execution or Document generation.",
+      "evidence": ["quality-review-04"]
+    },
+    {
+      "predicate_id": "authentication-authorization",
+      "change_type": "Authentication/authorization",
+      "gate": "required",
+      "triggered": false,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Web/Api/Scans/PreparedScanEndpoints.cs"
+      ],
+      "affected_behavior": "The endpoint reuses the existing ManagementAccess policy and does not change authentication or authorization semantics.",
+      "evidence": ["quality-review-04"]
+    },
+    {
+      "predicate_id": "api-persistence-multi-module",
+      "change_type": "API/SignalR/persistence/multi-module integration",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Web/Api/Scans/PreparedScanEndpoints.cs",
+        "src/dotnet/Vulgata.Web/Data/PreparedScanCoordinator.cs",
+        "src/dotnet/Vulgata.Web/Data/PreparedScanPairBuilder.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanStore.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanRepository.cs"
+      ],
+      "affected_behavior": "Prepared Scan crosses Web, Core, Infrastructure, real host analysis tools, and atomic PostgreSQL persistence/replay.",
+      "evidence": ["convergence-09", "quality-review-04"]
+    },
+    {
+      "predicate_id": "ef-migration-data-lifecycle",
+      "change_type": "EF migration or observable data lifecycle",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260820120000_AddPreparedScanManifest.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/Configurations/PreparedScanManifestConfiguration.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanRepository.cs"
+      ],
+      "affected_behavior": "Story 12.2 adds Prepared Scan persistence, atomic pair commit, exact replay/conflict, rollback, and migration lifecycle behavior.",
+      "evidence": ["quality-review-04"]
+    },
+    {
+      "predicate_id": "existing-integration-coverage",
+      "change_type": "Existing integration test proves full changed behavior",
+      "gate": "may-skip",
+      "triggered": true,
+      "affected_paths": [
+        "tests/Vulgata.Tests/PreparedScanning/PreparedScanApiTests.cs",
+        "tests/Vulgata.Tests/PreparedScanning/PreparedScanAtomicPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/Migrations/PreparedScanMigrationPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/AnalysisRuntime/PreparedScanRealQualificationTests.cs"
+      ],
+      "affected_behavior": "Existing tests cover the relevant boundaries, but the required E2E runner must establish a single current-boundary passing result before this gate advances.",
+      "evidence": ["quality-review-04"]
+    },
+    {
+      "predicate_id": "documentation-or-refactor",
+      "change_type": "Documentation-only or behavior-preserving refactor",
+      "gate": "may-skip",
+      "triggered": false,
+      "affected_paths": [],
+      "affected_behavior": "The story materially changes runtime preparation and persistence behavior.",
+      "evidence": ["convergence-09"]
+    }
+  ],
+  "coverage_override": null,
+  "rationale": "API, multi-module persistence, EF migration, and data-lifecycle predicates are triggered. Existing tests are comprehensive, but required E2E execution will establish their combined result at the accepted current boundary rather than claiming a pre-execution coverage override.",
+  "covering_tests": [
+    "Vulgata.Tests.PreparedScanning.PreparedScanApiTests",
+    "Vulgata.Tests.PreparedScanning.PreparedScanAtomicPostgreSqlTests",
+    "Vulgata.Tests.Migrations.PreparedScanMigrationPostgreSqlTests",
+    "Vulgata.Tests.AnalysisRuntime.PreparedScanRealQualificationTests"
+  ],
+  "owner": "e2e-runner",
+  "source_boundary": {
+    "base_commit": "29e889badc00db671fcabf80f50918e15381052c",
+    "candidate_commit": "d7262f97dd72ebd33a7d6bdbf77cd3d4624d74f5",
+    "diff_sha256": "862fc52dfb1f48c52d7e34659d042ce9ebaeb0034c44f728f761b8ceb64618fb",
+    "artifact_hashes": {
+      "specs/011-java-xml-prescan-manifest/spec.md": "c15d03b2b10e4eaa452a59e3b96acafdbb04160de556ca93c28380117a085ad3",
+      "specs/011-java-xml-prescan-manifest/plan.md": "2a9373661e935918ab6b55a4d83903e4ba92ba7e9fb80534a616d6583cb4b318",
+      "specs/011-java-xml-prescan-manifest/tasks.md": "aab3144ff425d56fa2e4509afde51e6b0c120e5c953d1cb218e87c56c6cecb12",
+      "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-04.json": "28d588680e04edeac405a70c8df931de7bbb0ea9dc080641a854f8cf9f6e0ec3"
+    },
+    "owned_paths": [
+      "src/dotnet/Vulgata.Core",
+      "src/dotnet/Vulgata.Infrastructure",
+      "src/dotnet/Vulgata.Shared/Scans",
+      "src/dotnet/Vulgata.Web/Api/Scans",
+      "src/dotnet/Vulgata.Web/Data/PreparedScanCoordinator.cs",
+      "src/dotnet/Vulgata.Web/Data/PreparedScanPairBuilder.cs",
+      "tests/Vulgata.Tests/AnalysisRuntime",
+      "tests/Vulgata.Tests/Migrations",
+      "tests/Vulgata.Tests/PreparedScanning"
+    ]
+  },
+  "result": "pending",
+  "evidence_ids": ["convergence-09", "quality-review-04"],
+  "decided_at": "2026-08-21T04:28:20Z"
+}

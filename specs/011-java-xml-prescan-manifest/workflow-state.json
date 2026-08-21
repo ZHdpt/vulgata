@@ -92,7 +92,7 @@
   },
   "e2e": {
     "result": "pending",
-    "decision_path": null
+    "decision_path": "specs/011-java-xml-prescan-manifest/e2e-decision.json"
   },
   "current_evidence_paths": [
     "specs/011-java-xml-prescan-manifest/spec.md",
@@ -100,24 +100,24 @@
     "specs/011-java-xml-prescan-manifest/tasks.md",
     "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md",
     "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json",
-    "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/convergence-fourth-revision-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
+    "specs/011-java-xml-prescan-manifest/e2e-decision.json",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
     "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-09.md",
     "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-04.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-quality-review-20260821T042624Z-accept-04",
-    "stage": "quality-review",
+    "checkpoint_id": "bmad-12-2-e2e-decision-20260821T042820Z-required",
+    "stage": "conditional-e2e",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "conditional-e2e",
-    "reason": "Quality review attempt 4 ACCEPTED with no findings. Bind the accepted candidate, apply the E2E decision matrix, then run final pinned verification.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-04.json"
+    "reason": "E2E is required for API, multi-module persistence, migration, and data-lifecycle boundaries. Run the accepted current-boundary integration suite.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/e2e-decision.json"
   },
-  "updated_at": "2026-08-21T04:26:24Z"
+  "updated_at": "2026-08-21T04:28:20Z"
 }
