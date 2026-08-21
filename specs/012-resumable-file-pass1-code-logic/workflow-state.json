@@ -3,7 +3,7 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "quality-review",
+  "stage": "plan",
   "preflight": {
     "branch": "demo0831/story-12-3",
     "head": "433834aca53fae868812685a85a9c3c830824025",
@@ -27,21 +27,25 @@
   },
   "gates": {
     "plan-review": {
-      "status": "accepted",
+      "status": "invalidated",
       "attempt": 2,
       "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-02.json"
     },
     "definition-review": {
-      "status": "accepted",
+      "status": "invalidated",
       "attempt": 5,
       "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-05.json"
     },
-    "quality-review": { "status": "pending", "attempt": 0, "verdict_path": null }
+    "quality-review": {
+      "status": "revised",
+      "attempt": 1,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json"
+    }
   },
   "attempts": {
     "definition-review": 0,
     "converge": 0,
-    "quality-review": 0
+    "quality-review": 1
   },
   "approvals": [
     {
@@ -67,9 +71,9 @@
     }
   ],
   "convergence": {
-    "status": "accepted",
+    "status": "invalidated",
     "attempt": 1,
-    "outcome": "converged",
+    "outcome": "pending",
     "report_path": "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-01.md"
   },
   "e2e": { "result": "pending", "decision_path": null },
@@ -78,9 +82,9 @@
     "specs/012-resumable-file-pass1-code-logic/spec.md",
     "specs/012-resumable-file-pass1-code-logic/plan.md",
     "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-01.md",
-    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-01.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/quality-review-correction-01.md",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
-    "specs/012-resumable-file-pass1-code-logic/decisions/definition-review-correction-04.md",
     "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-05.json",
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md",
     "artifacts/qualification/story-12.3/host-runtime.md",
@@ -88,15 +92,15 @@
     "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-converge-20260821T173634Z-8d4f2a",
-    "stage": "converge",
+    "checkpoint_id": "bmad-12-3-quality-review-20260821T175001Z-c4a91e",
+    "stage": "quality-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "quality-review",
-    "reason": "Convergence attempt 1 is clean; dispatch fresh independent quality review after checkpoint binding.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-01.md"
+    "stage": "plan",
+    "reason": "Quality review attempt 1 found a blocking plan-owned production-composition gap; await explicit correction authorization.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/quality-review-correction-01.md"
   },
-  "updated_at": "2026-08-21T17:36:34Z"
+  "updated_at": "2026-08-21T17:50:01Z"
 }
