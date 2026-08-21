@@ -1,7 +1,7 @@
 ---
 story_key: 12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest
 title: "Story 12.2: Lightweight Java/XML PreScan & Prepared Scan Manifest"
-Status: in-progress
+Status: done
 Epic: 12
 Story: 2
 created: 2026-08-20

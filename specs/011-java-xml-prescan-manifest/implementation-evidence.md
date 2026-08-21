@@ -431,3 +431,22 @@ Document generation are absent.
 - No test or production path changed. The existing project PostgreSQL container
   was not used or altered. Durable evidence is recorded in
   `e2e/e2e-01.md`.
+
+## Final verification barrier
+
+- The complete PreparedScanning namespace passed 114 tests with one intentional
+  SQLite-only skip. Required E2E had already passed 53/53 across API,
+  PostgreSQL migration/atomic lifecycle, release, and the real host toolchain.
+- Web built with zero errors and nine existing warnings. The complete test
+  project ran 1,651 tests in 5 minutes 42 seconds: 1,644 passed, the same six
+  unrelated baseline failures remained, and one intentional skip remained.
+  Every Story 12.2 test passed.
+- Production-literal evidence regenerated after the final build: six production
+  assemblies, nine resources, one public output, zero matches, verdict
+  `zero-match`, SHA-256
+  `8ab1dec8e5852ebe830e183ea145d93e3c3dc1537be6fb42ce47c2e0380fde71`.
+- The accepted production/test boundary did not drift, `git diff --check`
+  passed, and the workflow validator accepted the schema-v3 snapshot. The
+  disposable PostgreSQL container and dedicated full-suite database were
+  removed; the existing project PostgreSQL service remained healthy and
+  untouched. Full evidence is in `verification/final-verification-01.md`.

@@ -353,38 +353,38 @@
     {
       "Identity": "Vulgata.Agents.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "ffd7e1ba-b57d-4704-a7a6-e4d13590ae44",
-      "Sha256": "73d30c730a90ac95c7016cc69d444784445b36244c74628b406b294dd0eaed1b"
+      "ModuleVersionId": "18d063ad-cf47-4aa4-86c2-f7917b8230a3",
+      "Sha256": "406f2b1c964bcb26ef4dcf5070c71666f37c0c0c0418a74ef3ad70aa35669793"
     },
     {
       "Identity": "Vulgata.Core.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "799f739f-0d4e-4aa2-8d6d-efcc8a18495d",
-      "Sha256": "6e21a40f1da5e27a5e1c0b37dec759025d7cdd91bf4bfdc8fd3a5cff4d09a5d8"
+      "ModuleVersionId": "38fece04-02bd-473e-8467-f8f7ba8b7d5b",
+      "Sha256": "3365b5ca9c5a84606ffc1eb119bcc5ee21662883f8d33d07195559bc2cfa76fa"
     },
     {
       "Identity": "Vulgata.Infrastructure.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "0f1418b3-bbd1-4820-ac64-6c1dee55db30",
-      "Sha256": "48db0813876755844853f8d14a8a402f796f29e0803ee13a5b6b2d889c1fff89"
+      "ModuleVersionId": "39372ddc-d039-4170-83a1-4b3a4d856f96",
+      "Sha256": "159758698462f7ce6e843bc102c0edaeb82b8cd13171871eda39c989e1b0ec57"
     },
     {
       "Identity": "Vulgata.Shared.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "473d465c-292e-46a2-8022-2264b58898f7",
-      "Sha256": "bc8c8b03ecfefac2f71e76987d03dfa0d8997c2268f71d1becf7b3bceaabbccf"
+      "ModuleVersionId": "b94058d0-a2cb-41de-80b0-e6f072397bcc",
+      "Sha256": "ba74e209df5ae9e34402b60646864f3219723c782c673422b29c54ef632377d0"
     },
     {
       "Identity": "Vulgata.Web.ViewModels.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "16a99e83-1fe3-4afa-a6a0-e4358b675253",
-      "Sha256": "3221cf0d80e915696779410c1e9d5323b931868476a66e221d7692681fa57cd9"
+      "ModuleVersionId": "786bf44f-b317-4713-9ec1-63af4bd6573a",
+      "Sha256": "f515e1fb4af58a3a751f9a66fa1aa50d2c8d861ec2f81604a5cf88df738a7e3c"
     },
     {
       "Identity": "Vulgata.Web.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "ccf24673-b1f1-4324-8fbd-3c0a15b66a2e",
-      "Sha256": "d46ba44f6bca0ef548ffcb6b8143b14bb893b541f0b271a210493da436de0dff"
+      "ModuleVersionId": "6b009ccd-0a34-455c-a113-7cc300129900",
+      "Sha256": "f8b91ccd618cc04d61ab9f93c116ae89650fefc074824c6b125b7339b8ea1a9c"
     }
   ],
   "InspectedResources": [
