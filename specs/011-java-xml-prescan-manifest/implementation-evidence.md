@@ -349,3 +349,22 @@ Document generation are absent.
 - EF reported no pending Vulgata model changes, the idempotent migration script
   generated successfully, Infrastructure and Web built with zero errors and
   only two/nine existing warnings, and `git diff --check` passed.
+
+## Quality-review correction: QR2-001
+
+- Quality review attempt 2 found that restart replay loaded retained
+  classifications by fingerprint, while manifest creation uses the normative
+  level/kind/rule/path/locator/fingerprint order. A two-classification package
+  with deliberately reversed semantic and fingerprint orders committed, then
+  returned `Conflict` instead of `Replay` through a fresh PostgreSQL context.
+- `PreparedCommunicationDetector.OrderCanonical` now owns the single normative
+  comparator. Detector retention, durable reload, row equality, and manifest
+  tag 26 reconstruction all use it. Supplied package order must itself be
+  canonical; missing, extra, changed, or noncanonical classifications continue
+  to conflict.
+- The unchanged restart regression passed 1/1 on PostgreSQL 17.10 with the
+  exact package and durable row counts unchanged. Full PostgreSQL atomic tests
+  passed 29/29, QR-001 tamper tests 7/7, duration-only replay 1/1, SQLite atomic
+  replay 5/5, classification contracts 4/4, and migration lifecycle 2/2.
+- Infrastructure and Web built with zero errors and only existing warnings;
+  `git diff --check` passed. No schema or migration change was required.

@@ -383,6 +383,42 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public async Task PostgreSql17_RestartExactRetryUsesNormativeClassificationOrderAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanPairPackage classified = AddTwoCanonicalClassifications(fixture.Package);
+        PreparedRepositoryPackage first = classified.Repositories[0];
+        string[] normativeOrder = first.Classifications
+            .Select(classification => classification.Fingerprint)
+            .ToArray();
+        string[] fingerprintOrder = first.Classifications
+            .OrderBy(classification => classification.Fingerprint, StringComparer.Ordinal)
+            .Select(classification => classification.Fingerprint)
+            .ToArray();
+        Assert.False(normativeOrder.SequenceEqual(fingerprintOrder));
+        output.WriteLine("Normative classification order: {0}", string.Join(", ", normativeOrder));
+        output.WriteLine("Fingerprint classification order: {0}", string.Join(", ", fingerprintOrder));
+
+        PreparedScanStore store = PreparedScanPostgreSqlFixture.CreateStore(fixture.Context);
+        PreparedScanCommitResult committed = await store.CommitPairAsync(
+            fixture.Authorization, classified, 0, CancellationToken.None);
+        Assert.Equal(PreparedScanCommitOutcome.Committed, committed.Outcome);
+        DurableCounts beforeReplay = await ReadCountsAsync(fixture.ConnectionString);
+        fixture.Context.ChangeTracker.Clear();
+
+        await using VulgataDbContext restartedContext =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        PreparedScanCommitResult replay = await PreparedScanPostgreSqlFixture.CreateStore(restartedContext)
+            .CommitPairAsync(fixture.Authorization, classified, 0, CancellationToken.None);
+
+        output.WriteLine("Restart exact-retry outcome: {0}", replay.Outcome);
+        Assert.Equal(PreparedScanCommitOutcome.Replay, replay.Outcome);
+        Assert.Equal(beforeReplay, await ReadCountsAsync(fixture.ConnectionString));
+        Assert.Equal(normativeOrder, classified.Repositories[0].Classifications
+            .Select(classification => classification.Fingerprint).ToArray());
+    }
+
+    [Fact]
     public async Task PostgreSql17_DigestAndCodeUnitFingerprintTamperingCannotReplayAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -510,6 +546,100 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
             Repositories = repositories,
             PairPackageFingerprint = pairFingerprint,
         };
+    }
+
+    private static PreparedScanPairPackage AddTwoCanonicalClassifications(
+        PreparedScanPairPackage package)
+    {
+        PreparedRepositoryPackage first = package.Repositories[0];
+        CommunicationKindClassification[] classifications = CreateNormativeClassificationPair(first.ScanRunId);
+        first = first with
+        {
+            Classifications = classifications,
+            TotalConfirmedEvidenceCount = 2,
+        };
+        first = ApplyManifestIdentity(first, package.PairSelectionFingerprint);
+        PreparedRepositoryPackage second = ApplyManifestIdentity(
+            package.Repositories[1], package.PairSelectionFingerprint);
+        PreparedRepositoryPackage[] repositories = [first, second];
+
+        MethodInfo pairBuilder = typeof(PreparedScanAtomicReplayTests).GetMethod(
+            "CreatePairPackageFingerprint", BindingFlags.Static | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("The accepted T041 pair fingerprint builder is unavailable.");
+        string pairFingerprint = (string)(pairBuilder.Invoke(
+            null,
+            [package.CoordinationId, package.PairSelectionFingerprint, repositories, package.SelectedCount])
+            ?? throw new InvalidOperationException("The pair fingerprint builder returned no fingerprint."));
+        return package with
+        {
+            Repositories = repositories,
+            PairPackageFingerprint = pairFingerprint,
+        };
+    }
+
+    private static CommunicationKindClassification[] CreateNormativeClassificationPair(Guid scanRunId)
+    {
+        for (int suffix = 0; suffix < 256; suffix++)
+        {
+            CommunicationKindClassification rpc = CreateClassification(
+                scanRunId,
+                CommunicationKind.Rpc,
+                EvidenceRule.RpcDirectAnnotation,
+                $"src/rpc-{suffix:D3}.java",
+                $"src/rpc-{suffix:D3}.java#rpc");
+            CommunicationKindClassification http = CreateClassification(
+                scanRunId,
+                CommunicationKind.Http,
+                EvidenceRule.HttpControllerAnnotation,
+                $"src/http-{suffix:D3}.java",
+                $"src/http-{suffix:D3}.java#http");
+
+            CommunicationKindClassification[] normative = [rpc, http];
+            if (!normative.OrderBy(classification => classification.Fingerprint, StringComparer.Ordinal)
+                    .SequenceEqual(normative))
+            {
+                return normative;
+            }
+        }
+
+        throw new InvalidOperationException(
+            "The classification fixture could not produce distinct normative and fingerprint orderings.");
+    }
+
+    private static CommunicationKindClassification CreateClassification(
+        Guid scanRunId,
+        CommunicationKind kind,
+        EvidenceRule rule,
+        string relativePath,
+        string locator)
+    {
+        const string catalogRule = "qualification.ordering";
+        PreparedCanonicalArtifact identity = PreparedScanIdentityBuilders.CreateCommunicationClassification(
+            scanRunId,
+            kind,
+            ClassificationLevel.Confirmed,
+            ConfidenceBand.High,
+            rule,
+            EvidenceProvenance.StructuralAnnotation,
+            relativePath,
+            locator,
+            1,
+            catalogRule);
+        CommunicationKindClassification classification = CommunicationKindClassification.Create(
+            scanRunId,
+            kind,
+            ClassificationLevel.Confirmed,
+            ConfidenceBand.High,
+            rule,
+            EvidenceProvenance.StructuralAnnotation,
+            relativePath,
+            locator,
+            1,
+            identity.Fingerprint);
+        typeof(CommunicationKindClassification).GetProperty(
+            nameof(CommunicationKindClassification.CatalogRuleIdentity),
+            BindingFlags.Public | BindingFlags.Instance)!.SetValue(classification, catalogRule);
+        return classification;
     }
 
     private static PreparedRepositoryPackage ApplyManifestIdentity(

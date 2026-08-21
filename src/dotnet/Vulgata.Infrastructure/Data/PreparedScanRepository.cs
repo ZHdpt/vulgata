@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CommunicationDetection;
 
 namespace Vulgata.Infrastructure.Data;
 
@@ -101,8 +102,8 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
             CommunicationKindClassification[] classifications = await context
                 .CommunicationKindClassifications.AsNoTracking()
                 .Where(value => value.PreScanResultId == package.ScanRunId)
-                .OrderBy(value => value.Fingerprint)
                 .ToArrayAsync(cancellationToken);
+            classifications = PreparedCommunicationDetector.OrderCanonical(classifications);
             if (!ClassificationsMatch(classifications, package.Classifications))
             {
                 return PreparedScanCommitOutcome.Conflict;
@@ -636,8 +637,16 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
             return false;
         }
 
-        CommunicationKindClassification[] ordered = supplied.OrderBy(value => value.Fingerprint).ToArray();
-        return stored.Select((value, index) => ClassificationMatches(value, ordered[index])).All(value => value);
+        CommunicationKindClassification[] orderedStored =
+            PreparedCommunicationDetector.OrderCanonical(stored);
+        CommunicationKindClassification[] orderedSupplied =
+            PreparedCommunicationDetector.OrderCanonical(supplied);
+        bool suppliedIsCanonical = supplied
+            .Select(value => value.Fingerprint)
+            .SequenceEqual(orderedSupplied.Select(value => value.Fingerprint), StringComparer.Ordinal);
+        return suppliedIsCanonical && orderedStored
+            .Select((value, index) => ClassificationMatches(value, orderedSupplied[index]))
+            .All(value => value);
     }
 
     private static bool ClassificationMatches(

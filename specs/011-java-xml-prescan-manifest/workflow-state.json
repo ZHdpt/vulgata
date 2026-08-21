@@ -38,14 +38,14 @@
     },
     "quality-review": {
       "status": "revised",
-      "attempt": 1,
-      "verdict_path": "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-01.json"
+      "attempt": 2,
+      "verdict_path": "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-02.json"
     }
   },
   "attempts": {
     "definition-review": 0,
     "converge": 6,
-    "quality-review": 1
+    "quality-review": 2
   },
   "approvals": [
     {
@@ -106,18 +106,18 @@
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
     "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-06.md",
-    "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-01.json"
+    "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-02.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-converge-20260821T025540Z-qr001",
-    "stage": "converge",
+    "checkpoint_id": "bmad-12-2-quality-correction-20260821T031759Z-qr2001",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "quality-review",
-    "reason": "Convergence attempt 6 is clean after QR-001; bind the corrected converged candidate and dispatch fresh independent quality review.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-06.md"
+    "stage": "converge",
+    "reason": "QR2-001 normative classification replay ordering is independently GREEN on PostgreSQL 17; bind the correction checkpoint and rerun convergence before quality review.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   },
-  "updated_at": "2026-08-21T02:55:40Z"
+  "updated_at": "2026-08-21T03:17:59Z"
 }
