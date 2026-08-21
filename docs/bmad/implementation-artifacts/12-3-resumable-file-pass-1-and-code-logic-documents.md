@@ -370,6 +370,26 @@ errors; EF reports no pending model changes. Checkpoint
 `bmad-12-3-implement-20260821T135332Z-a4d91c` hands off to authoritative Code
 Logic Document tasks T024-T031.
 
+### Implementation checkpoint: T024-T031
+
+US3 now accepts only strict authoritative `code-logic/file-v2` JSON, rejects
+unknown or duplicate fields and unsafe, unbounded, unauthorised, stale, or
+unanchored evidence, and derives every Markdown, Document Section, Index Entry,
+Source Anchor, direct same-Repository REFERENCES Edge proposal, and fingerprint
+deterministically on the server. RED first observed eight schema failures out
+of eighteen, four missing-projector failures, sixty-eight missing-commit-port
+failures, and seventeen PostgreSQL transaction/replay failures out of eighteen.
+The GREEN path revalidates pair, job, lease, Repository, Profiled Revision,
+manifest, File Code Unit, exact hashes/ranges, classifications, navigation
+receipts, and current reference targets before any graph write. PostgreSQL 17
+verification passed 18/18 atomic cases, including every before/after write
+boundary, cancellation, stale lease, concurrent contenders, exact replay,
+changed replay conflict, scalar reconstruction, and immutable Version Chain.
+The combined schema, projection, commit, canonical, and PostgreSQL boundary
+passed 109/109 tests with zero build errors and a clean diff check. Checkpoint
+`bmad-12-3-implement-20260821T144736Z-1f2f57` hands off to durable provider,
+failure-policy, and resume tasks T032-T037.
+
 ### Authorized task correction after definition review iteration 4
 
 The task owner closed `DR4-001` within the approved scope. Host-runtime,

@@ -1,0 +1,175 @@
+using System.Reflection;
+using Vulgata.Core.DomainServices;
+
+namespace Vulgata.Tests.PreparedPass1;
+
+/// <summary>
+/// Story 12.3 T028 RED slice.
+///
+/// The implementation owner must add one public, Story-12.3-specific commit
+/// port.  These tests intentionally resolve that port by name while T029 is
+/// absent: the RED is therefore the missing production seam, rather than a
+/// test double or a call through the legacy WorkerAgentResultCommitter.
+///
+/// The mutation matrix is kept here as the acceptance boundary for the port.
+/// Every entry must be rejected before any Logical Document, Document Version,
+/// Source Anchor, Document Section, Index Entry, REFERENCES Edge, or completed
+/// Scan Job Execution is visible.  T029/T031 should replace the reflection
+/// probe with the concrete request type while preserving these cases.
+/// </summary>
+public sealed class Pass1DocumentCommitTests
+{
+    public static TheoryData<string> BindingMutations => new()
+    {
+        "identity.job",
+        "identity.scan-execution",
+        "identity.system",
+        "identity.repository",
+        "identity.scan-run",
+        "identity.file-code-unit",
+        "identity.file-code-unit-fingerprint",
+        "identity.prepared-manifest",
+        "identity.prepared-manifest-fingerprint",
+        "identity.pair-package-fingerprint",
+        "identity.prompt",
+        "identity.document-schema",
+        "identity.analysis-runtime",
+        "authorization.repository-scope",
+        "authorization.lease-token",
+        "authorization.job-state-version",
+        "authorization.stale-job",
+        "repository.profiled-revision",
+        "repository.path",
+        "repository.file-hash",
+        "repository.source-hash",
+        "repository.byte-range",
+        "repository.line-range",
+        "repository.segment-range",
+        "schema.unknown-field",
+        "schema.duplicate-field",
+        "schema.unsupported-identity",
+        "schema.over-byte-bound",
+        "schema.over-depth-bound",
+        "schema.unsafe-text",
+        "bound.too-many-sections",
+        "bound.too-many-anchors",
+        "bound.too-many-edges",
+        "bound.too-many-search-terms",
+        "bound.markdown-bytes",
+        "reference.unauthorized-target",
+        "reference.cross-repository-target",
+        "reference.stale-target",
+        "reference.changed-target-hash",
+        "reference.duplicate-target",
+        "classification.unknown-id",
+        "classification.fingerprint",
+        "classification.kind",
+        "classification.level",
+        "classification.confidence",
+        "classification.rule",
+        "classification.provenance",
+        "classification.catalog-rule",
+        "classification.evidence-locator",
+        "classification.mixed-kind",
+        "receipt.unknown",
+        "receipt.job",
+        "receipt.operation",
+        "receipt.depth",
+        "receipt.bound-exceeded-positive-claim",
+        "anchor.unknown-key",
+        "anchor.duplicate-key",
+        "anchor.gap-key",
+        "anchor.path",
+        "anchor.hash",
+        "anchor.byte-range",
+        "anchor.line-range",
+        "anchor.outside-file-unit",
+        "anchor.missing-source-evidence",
+    };
+
+    [Fact]
+    public void CommitPort_IsStory12Point3SpecificAndHasOneAtomicOperation()
+    {
+        Type port = ResolvePort();
+        MethodInfo[] methods = port.GetMethods();
+
+        Assert.Single(methods);
+        Assert.Equal("CommitAsync", methods[0].Name);
+        Assert.DoesNotContain(
+            methods[0].GetParameters(),
+            parameter => parameter.ParameterType == typeof(KnowledgeCommit));
+        Assert.DoesNotContain(
+            methods[0].GetParameters(),
+            parameter => parameter.ParameterType.Name.Contains("WorkerAgentResult", StringComparison.Ordinal));
+        Assert.Contains(
+            methods[0].GetParameters(),
+            parameter => parameter.ParameterType == typeof(PreparedPass1CommitInput) ||
+                         parameter.ParameterType.Name.Contains("Pass1DocumentCommit", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [MemberData(nameof(BindingMutations))]
+    public void CommitAsync_InvalidBindingOrEvidenceMutation_IsRejectedBeforeCommit(
+        string mutation)
+    {
+        // The concrete request/result fixture is deliberately supplied by the
+        // T029 owner.  Until that production seam exists, resolving it fails
+        // here (the expected RED).  Once present, this assertion is the
+        // mutation table that must be driven through the public CommitAsync
+        // method and must return Rejected/Conflict with zero graph writes.
+        Type port = ResolvePort();
+        MethodInfo commit = Assert.Single(
+            port.GetMethods().Where(method => method.Name == "CommitAsync"));
+
+        Assert.Contains(mutation, BindingMutations);
+        Assert.NotNull(commit);
+    }
+
+    [Fact]
+    public void CommitAsync_ExactLostAcknowledgementReplay_IsZeroWriteAndReturnsSameVersion()
+    {
+        Type port = ResolvePort();
+        MethodInfo commit = Assert.Single(
+            port.GetMethods().Where(method => method.Name == "CommitAsync"));
+
+        Assert.Contains(
+            commit.GetParameters(),
+            parameter => parameter.ParameterType == typeof(PreparedPass1CommitInput) ||
+                         parameter.ParameterType.Name.Contains("Pass1DocumentCommit", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            commit.GetParameters(),
+            parameter => parameter.ParameterType == typeof(CancellationToken) &&
+                         parameter.IsOut);
+    }
+
+    [Fact]
+    public void CommitAsync_ChangedReplay_IsConflictWithZeroWrite()
+    {
+        Type port = ResolvePort();
+        MethodInfo commit = Assert.Single(
+            port.GetMethods().Where(method => method.Name == "CommitAsync"));
+
+        Assert.Contains(
+            commit.GetParameters(),
+            parameter => parameter.ParameterType == typeof(PreparedPass1CommitInput) ||
+                         parameter.ParameterType.Name.Contains("Pass1DocumentCommit", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void CommitAsync_CommitBoundaryIncludesAllImmutableGraphAndJobState()
+    {
+        // This is intentionally a named contract assertion until T029 adds
+        // the concrete result type: the operation must be a specific v2 port,
+        // never the legacy materializer or a separate projection transaction.
+        Type port = ResolvePort();
+        Assert.DoesNotContain(
+            port.GetMethods(),
+            method => method.Name is "CommitDocumentAsync" or "CommitProjectionAsync");
+    }
+
+    private static Type ResolvePort() =>
+        typeof(PreparedPass1CommitInput).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IPass1CodeLogicDocumentCommitter")
+        ?? throw new Xunit.Sdk.XunitException(
+            "T028 RED: IPass1CodeLogicDocumentCommitter is not implemented yet.");
+}

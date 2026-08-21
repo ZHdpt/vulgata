@@ -10,7 +10,7 @@ namespace Vulgata.Agents.WorkerExecution;
 /// </summary>
 public sealed class PreparedPass1ResultParser
 {
-    private const int _maximumResultBytes = 1_048_576;
+    private const int _maximumResultBytes = CodeLogicFileV2Contract.MaximumUtf8Bytes;
     private static readonly string[] _rootProperties =
     [
         "schemaIdentity", "binding", "sourceAnchors", "filePurpose",
@@ -39,13 +39,20 @@ public sealed class PreparedPass1ResultParser
             throw new InvalidDataException("Prepared Pass 1 result exceeds its bounded JSON shape.");
         }
 
+        if (IsServerDeferredCallsMarker(utf8Json))
+        {
+            utf8Json = CreateDeferredCallsFallback(packet).Utf8Json;
+        }
+
+        byte[] canonicalJson = CodeLogicFileV2Contract.ValidateAndCanonicalize(packet, utf8Json);
+
         using JsonDocument document = JsonDocument.Parse(
             utf8Json,
             new JsonDocumentOptions
             {
                 AllowTrailingCommas = false,
                 CommentHandling = JsonCommentHandling.Disallow,
-                MaxDepth = 64,
+                MaxDepth = CodeLogicFileV2Contract.MaximumJsonDepth,
             });
         JsonElement root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object)
@@ -122,13 +129,29 @@ public sealed class PreparedPass1ResultParser
 
         return new PreparedPass1ParsedWorkerResult(
             "code-logic/file-v2",
-            utf8Json.ToArray());
+            canonicalJson);
     }
 
     public static PreparedPass1RawWorkerResult CreateDeferredCallsFallback(
         PreparedPass1WorkerPacket packet)
     {
         ArgumentNullException.ThrowIfNull(packet);
+        string evidenceLocator = $"{packet.RepositoryRelativePath}#L{packet.LineStart}-L{packet.LineEnd}";
+        PreparedPass1CanonicalArtifact receipt = PreparedPass1CanonicalCodec.CreateNavigationReceipt(
+            new PreparedPass1NavigationReceiptInput(
+                null,
+                packet.JobId,
+                1,
+                8,
+                PreparedPass1NavigationOperation.Definition,
+                1,
+                PreparedPass1NavigationOutcome.BoundExceeded,
+                PreparedPass1NavigationBoundKind.Calls,
+                [],
+                0,
+                0,
+                8,
+                0));
         byte[] json = JsonSerializer.SerializeToUtf8Bytes(
             new
             {
@@ -159,8 +182,33 @@ public sealed class PreparedPass1ResultParser
                     documentSchemaIdentity = packet.DocumentSchemaIdentity,
                     analysisRuntimeIdentityHash = packet.AnalysisRuntimeIdentityHash,
                 },
-                sourceAnchors = Array.Empty<object>(),
-                filePurpose = new { summary = "deferred navigation bound" },
+                sourceAnchors = new[]
+                {
+                    new
+                    {
+                        key = "a001",
+                        repositoryRelativePath = packet.RepositoryRelativePath,
+                        byteStart = packet.ByteStart,
+                        byteEnd = packet.ByteEnd,
+                        lineStart = packet.LineStart,
+                        lineEnd = packet.LineEnd,
+                        sourceHash = packet.SourceHash,
+                        evidenceLocator,
+                    },
+                },
+                filePurpose = new
+                {
+                    summary = "deferred navigation bound",
+                    sourceAnchorRefs = new[] { "a001" },
+                    responsibilities = new[]
+                    {
+                        new
+                        {
+                            description = "Records the bounded File Code Unit pending further navigation.",
+                            sourceAnchorRefs = new[] { "a001" },
+                        },
+                    },
+                },
                 internalUnits = Array.Empty<object>(),
                 executionFlow = Array.Empty<object>(),
                 dataFlow = Array.Empty<object>(),
@@ -170,7 +218,20 @@ public sealed class PreparedPass1ResultParser
                 knownReferences = Array.Empty<object>(),
                 deferredObservations = new[]
                 {
-                    new { outcome = "BoundExceeded", boundKind = "Calls" },
+                    new
+                    {
+                        order = 1,
+                        relationshipKind = "References",
+                        outcome = "BoundExceeded",
+                        sourceClaimLocator = evidenceLocator,
+                        targetSymbol = "navigation-Calls-bound",
+                        targetRepositoryRelativePath = (string?)null,
+                        targetSourceHash = (string?)null,
+                        navigationOperation = "Definition",
+                        navigationDepth = 1,
+                        navigationReceiptIds = new[] { receipt.Id!.Value },
+                        sourceAnchorRefs = new[] { "a001" },
+                    },
                 },
                 assumptions = Array.Empty<object>(),
             });
@@ -178,6 +239,34 @@ public sealed class PreparedPass1ResultParser
             PreparedPass1RawWorkerOutcome.Completed,
             json,
             "navigation-calls-bound-exceeded");
+    }
+
+    private static bool IsServerDeferredCallsMarker(ReadOnlyMemory<byte> utf8Json)
+    {
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(utf8Json);
+            JsonElement root = document.RootElement;
+            return root.ValueKind == JsonValueKind.Object &&
+                root.TryGetProperty("sourceAnchors", out JsonElement anchors) &&
+                anchors.ValueKind == JsonValueKind.Array && anchors.GetArrayLength() == 0 &&
+                root.TryGetProperty("filePurpose", out JsonElement purpose) &&
+                purpose.ValueKind == JsonValueKind.Object && purpose.EnumerateObject().Count() == 1 &&
+                purpose.TryGetProperty("summary", out JsonElement summary) &&
+                summary.GetString() == "deferred navigation bound" &&
+                root.TryGetProperty("deferredObservations", out JsonElement observations) &&
+                observations.ValueKind == JsonValueKind.Array && observations.GetArrayLength() == 1 &&
+                observations[0].ValueKind == JsonValueKind.Object &&
+                observations[0].EnumerateObject().Count() == 2 &&
+                observations[0].TryGetProperty("outcome", out JsonElement outcome) &&
+                outcome.GetString() == "BoundExceeded" &&
+                observations[0].TryGetProperty("boundKind", out JsonElement boundKind) &&
+                boundKind.GetString() == "Calls";
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     private static void RequireString(JsonElement owner, string name, string expected)
