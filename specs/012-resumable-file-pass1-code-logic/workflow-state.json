@@ -1,0 +1,102 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
+  "bmad_epic_key": "12",
+  "feature_directory": "specs/012-resumable-file-pass1-code-logic",
+  "stage": "implementation-approval",
+  "preflight": {
+    "branch": "demo0831/story-12-3",
+    "head": "433834aca53fae868812685a85a9c3c830824025",
+    "git_identity_sha256": "20f31a1f46e44f2705ce94fa2038563aac4856da9303fa00020ac5cf08a12f60",
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-21T07:03:08Z"
+  },
+  "artifacts": {
+    "spec": {
+      "path": "specs/012-resumable-file-pass1-code-logic/spec.md",
+      "sha256": "7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1"
+    },
+    "plan": {
+      "path": "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "sha256": "f913da57b120faa9a64e21d380b08159d2bdfcab9b3f5e37e60dfe7cbdca0c41"
+    },
+    "tasks": {
+      "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
+      "sha256": "5503600f3f22628b6967d74ea415dbcbc58bcba5e09255f4eced280e33089e6a"
+    }
+  },
+  "gates": {
+    "plan-review": {
+      "status": "accepted",
+      "attempt": 2,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-02.json"
+    },
+    "definition-review": {
+      "status": "accepted",
+      "attempt": 5,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-05.json"
+    },
+    "quality-review": { "status": "pending", "attempt": 0, "verdict_path": null }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [
+    {
+      "decision_id": "story-12-3-planned-change-authorization-01",
+      "status": "accepted",
+      "scope_sha256": "b422424248a47e1bfda677ca7362dd12addc4861873f173edd4579ecb3d3199a",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-01.md",
+      "decided_at": "2026-08-21T08:25:57Z"
+    },
+    {
+      "decision_id": "story-12-3-definition-review-correction-04",
+      "status": "accepted",
+      "scope_sha256": "04356ccf78c8e6ac996f18eae0429e793b73412c32ad4adaeef781b19edd9574",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/definition-review-correction-04.md",
+      "decided_at": "2026-08-21T09:15:56Z"
+    },
+    {
+      "decision_id": "story-12-3-implementation-approval-01",
+      "status": "pending",
+      "scope_sha256": "4879d08354c64ae796e172e722708b5c76090858518f9f2f7b958f6d082c5359",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md",
+      "decided_at": null
+    }
+  ],
+  "convergence": {
+    "status": "pending",
+    "attempt": 0,
+    "outcome": "pending",
+    "report_path": null
+  },
+  "e2e": { "result": "pending", "decision_path": null },
+  "current_evidence_paths": [
+    "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-02.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-01.md",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/definition-review-correction-04.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-05.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md"
+  ],
+  "checkpoint": {
+    "checkpoint_id": "bmad-12-3-definition-review-20260821T092318Z-d1b327",
+    "stage": "definition-review",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "resume": {
+    "stage": "implementation-approval",
+    "reason": "Combined definition review attempt 5 accepted the current boundary; await explicit implementation authorization.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md"
+  },
+  "updated_at": "2026-08-21T09:23:07Z"
+}

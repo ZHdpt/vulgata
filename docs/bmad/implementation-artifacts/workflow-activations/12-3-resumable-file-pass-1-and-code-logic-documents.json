@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
   "proposed_feature_short_name": "resumable-file-pass1-code-logic",
-  "stage": "specify",
+  "stage": "implementation-approval",
   "source_commit": "433834aca53fae868812685a85a9c3c830824025",
   "preflight": {
     "branch": "demo0831/story-12-3",
@@ -23,16 +23,16 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-context-20260821T070729Z-cbae18",
-    "stage": "context",
+    "checkpoint_id": "bmad-12-3-definition-review-20260821T092318Z-d1b327",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "feature_directory": null,
-  "superseded_by_state": null,
+  "feature_directory": "specs/012-resumable-file-pass1-code-logic",
+  "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
-    "stage": "specify",
-    "reason": "Context synthesis is READY_FOR_SPEC; dispatch the specification author."
+    "stage": "implementation-approval",
+    "reason": "Combined definition review attempt 5 accepted the current boundary; await explicit implementation authorization."
   },
-  "updated_at": "2026-08-21T07:07:29Z"
+  "updated_at": "2026-08-21T09:23:07Z"
 }
