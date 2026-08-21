@@ -14,6 +14,7 @@ using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Infrastructure.Analysis.PreparedNavigation;
 using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CrossRepository;
@@ -340,6 +341,19 @@ public static class VulgataWebComposition
             services.GetRequiredService<CodeGraphAnalysisAdapter>());
         builder.Services.AddScoped<IPreparedCodeGraphAnalysisPort>(services =>
             services.GetRequiredService<CodeGraphAnalysisAdapter>());
+        builder.Services.AddScoped<PreparedPass1Store>();
+        builder.Services.AddScoped<IPreparedPass1Store>(services =>
+            services.GetRequiredService<PreparedPass1Store>());
+        builder.Services.AddScoped<IPreparedPass1NavigationScopeSource>(services =>
+            services.GetRequiredService<PreparedPass1Store>());
+        builder.Services.AddScoped<IPreparedPass1CurrentDocumentEvidenceSource>(services =>
+            services.GetRequiredService<PreparedPass1Store>());
+        builder.Services.AddScoped<IPreparedPass1NavigationReceiptSink>(services =>
+            services.GetRequiredService<PreparedPass1Store>());
+        builder.Services.AddScoped<PreparedPass1NavigationService>();
+        builder.Services.AddScoped<IPass1NavigationService>(services =>
+            services.GetRequiredService<PreparedPass1NavigationService>());
+        builder.Services.AddScoped<PreparedNavigateCodeFunction>();
         builder.Services.AddScoped<IJavaAnalysisSessionFactory>(services =>
         {
             const string release = "jdt-language-server-1.61.0-202608141332";

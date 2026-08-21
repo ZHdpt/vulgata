@@ -14,10 +14,14 @@ namespace Vulgata.Agents.WorkerExecution;
 public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor executor)
     : IPreparedPass1WorkerDispatcher
 {
+    private const int _maximumProviderTurns = 10;
+    private const int _maximumToolAttempts = 8;
     private const string _promptResourceName =
         "Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md";
     private readonly IPreparedPass1JobExecutor _executor =
         executor ?? throw new ArgumentNullException(nameof(executor));
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, ConversationState>
+        _conversationStates = new();
 
     public async Task<PreparedPass1DispatchResult> DispatchAsync(
         PreparedPass1DispatchRequest request,
@@ -61,10 +65,53 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
         PreparedPass1JobDispatchResult[] results,
         CancellationToken cancellationToken)
     {
-        PreparedPass1RawWorkerResult raw = await _executor.ExecuteAsync(
-            packet,
-            prompt,
-            cancellationToken);
+        ConversationState state = _conversationStates.GetOrAdd(
+            packet.JobId,
+            _ => new ConversationState(packet.RemainingNavigationBudget));
+        PreparedPass1RawWorkerResult raw;
+        PreparedPass1WorkerPacket currentPacket = packet;
+        while (true)
+        {
+            int turn;
+            int remaining;
+            lock (state)
+            {
+                if (state.ProviderTurns >= _maximumProviderTurns)
+                {
+                    raw = PreparedPass1ResultParser.CreateDeferredCallsFallback(packet);
+                    break;
+                }
+
+                state.ProviderTurns++;
+                turn = state.ProviderTurns;
+                remaining = state.RemainingNavigationBudget;
+            }
+
+            currentPacket = packet with { RemainingNavigationBudget = remaining };
+            raw = await _executor.ExecuteAsync(currentPacket, prompt, cancellationToken);
+            if (raw.Outcome != PreparedPass1RawWorkerOutcome.Rejected ||
+                !string.Equals(
+                    raw.ReasonCode,
+                    "invalid-or-repeated-tool-call",
+                    StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            lock (state)
+            {
+                if (state.RemainingNavigationBudget > 0)
+                {
+                    state.RemainingNavigationBudget--;
+                }
+            }
+
+            if (turn >= _maximumProviderTurns)
+            {
+                raw = PreparedPass1ResultParser.CreateDeferredCallsFallback(packet);
+                break;
+            }
+        }
         if (!Enum.IsDefined(raw.Outcome))
         {
             throw new InvalidDataException("Prepared Pass 1 provider returned an unknown outcome.");
@@ -213,7 +260,10 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
             assignment.PairSelectionOrdinal,
             assignment.SourceUtf8.ToArray(),
             snapshot,
-            Array.AsReadOnly(classifications));
+            Array.AsReadOnly(classifications))
+        {
+            RemainingNavigationBudget = assignment.RemainingNavigationBudget,
+        };
     }
 
     private static void ValidateAssignment(PreparedPass1FileCodeUnitAssignment value)
@@ -301,4 +351,20 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
         !Path.IsPathRooted(value) &&
         !value.Contains('\\', StringComparison.Ordinal) &&
         value.Split('/').All(segment => segment is not ("" or "." or ".."));
+
+    private sealed class ConversationState
+    {
+        public ConversationState(int remainingNavigationBudget)
+        {
+            if (remainingNavigationBudget is < 0 or > _maximumToolAttempts)
+            {
+                throw new InvalidDataException("The remaining navigation budget is outside its closed bound.");
+            }
+
+            RemainingNavigationBudget = remainingNavigationBudget;
+        }
+
+        public int ProviderTurns { get; set; }
+        public int RemainingNavigationBudget { get; set; }
+    }
 }

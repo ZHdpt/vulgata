@@ -1,5 +1,10 @@
 using System.Reflection;
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 using Vulgata.Tests.PreparedPass1.Fixtures;
 
 namespace Vulgata.Tests.PreparedPass1;
@@ -170,6 +175,87 @@ public sealed class PreparedPass1WorkerDispatcherTests
                 method.Name.Contains("Enumerate", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public async Task DispatchAsync_BoundedProviderLoop_UsesTenTurnsAndReturnsSchemaValidDeferredFallbackAsync()
+    {
+        ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 9);
+        IPreparedPass1WorkerDispatcher dispatcher = CreateDispatcher(executor);
+
+        PreparedPass1DispatchResult result = await dispatcher.DispatchAsync(
+            CreateLoopRequest(),
+            CancellationToken.None);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, item =>
+        {
+            Assert.Equal(PreparedPass1RawWorkerOutcome.Completed, item.Outcome);
+            Assert.NotNull(item.ParsedResult);
+            Assert.Equal("code-logic/file-v2", item.ParsedResult!.SchemaIdentity);
+            Assert.Contains(
+                "BoundExceeded",
+                Encoding.UTF8.GetString(item.ParsedResult.CanonicalCandidateJson.Span),
+                StringComparison.Ordinal);
+        });
+        Assert.Equal(10, executor.TurnCount(result.Results[0].JobId));
+        Assert.Equal(10, executor.TurnCount(result.Results[1].JobId));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_RetryReusesJobAndRemainingNavigationBudgetAsync()
+    {
+        ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 8);
+        IPreparedPass1WorkerDispatcher dispatcher = CreateDispatcher(executor);
+        PreparedPass1DispatchRequest request = CreateLoopRequest();
+
+        PreparedPass1DispatchResult first = await dispatcher.DispatchAsync(
+            request,
+            CancellationToken.None);
+        PreparedPass1DispatchResult replay = await dispatcher.DispatchAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(
+            first.Results.Select(item => item.JobId),
+            replay.Results.Select(item => item.JobId));
+        Assert.All(
+            executor.TotalTurns,
+            turns => Assert.InRange(turns.Value, 1, 10));
+        Assert.All(
+            replay.Results,
+            item => Assert.Equal("code-logic/file-v2", item.ParsedResult?.SchemaIdentity));
+
+        Type packetType = resultPacketType();
+        Assert.NotNull(
+            packetType.GetProperty("RemainingNavigationBudget", BindingFlags.Public | BindingFlags.Instance));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_EightRefusedToolAttempts_CreateOneCallsMarkerAndNeverAttemptNinthToolCallAsync()
+    {
+        ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 8);
+        IPreparedPass1WorkerDispatcher dispatcher = CreateDispatcher(executor);
+
+        PreparedPass1DispatchResult result = await dispatcher.DispatchAsync(
+            CreateLoopRequest(),
+            CancellationToken.None);
+
+        Assert.All(result.Results, item =>
+        {
+            Assert.Equal(PreparedPass1RawWorkerOutcome.Completed, item.Outcome);
+            Assert.NotNull(item.ParsedResult);
+            Assert.Contains(
+                "Calls",
+                Encoding.UTF8.GetString(item.ParsedResult!.CanonicalCandidateJson.Span),
+                StringComparison.Ordinal);
+        });
+        Assert.All(
+            executor.TotalTurns,
+            turns => Assert.Equal(9, turns.Value));
+        Assert.All(
+            executor.ToolAttemptCounts,
+            attempts => Assert.Equal(8, attempts.Value));
+    }
+
     private static Type RequireType(string fullName, Assembly assembly) =>
         assembly.GetType(fullName, throwOnError: false, ignoreCase: false)
         ?? throw new InvalidOperationException(
@@ -177,4 +263,190 @@ public sealed class PreparedPass1WorkerDispatcherTests
 
     private static Assembly LoadAgentsAssembly() =>
         Assembly.Load("Vulgata.Agents");
+
+    private static IPreparedPass1WorkerDispatcher CreateDispatcher(
+        ScriptedProviderExecutor executor)
+    {
+        Type implementation = RequireType(
+            DispatcherImplementationName,
+            LoadAgentsAssembly());
+        return Assert.IsAssignableFrom<IPreparedPass1WorkerDispatcher>(
+            Activator.CreateInstance(implementation, executor));
+    }
+
+    private static Type resultPacketType()
+    {
+        MethodInfo dispatch = Assert.Single(
+            typeof(IPreparedPass1WorkerDispatcher).GetMethods(),
+            method => method.Name == "DispatchAsync");
+        Type resultType = dispatch.ReturnType.GetGenericArguments().Single();
+        PropertyInfo packetCollection = Assert.Single(
+            resultType.GetProperties(),
+            property => property.Name is "Packets" or "Jobs" or "DispatchPackets");
+        return packetCollection.PropertyType
+            .GetInterfaces()
+            .Append(packetCollection.PropertyType)
+            .Where(type => type.IsGenericType)
+            .SelectMany(type => type.GetGenericArguments())
+            .FirstOrDefault(type => type != typeof(Guid))
+            ?? packetCollection.PropertyType.GetElementType()
+            ?? throw new InvalidOperationException("The dispatch result must expose packets.");
+    }
+
+    private static PreparedPass1DispatchRequest CreateLoopRequest()
+    {
+        ApprovedPreparedManifestPairSeed pair =
+            PreparedPass1ManifestPairFixtures.CreateApprovedPair();
+        Guid systemId = Guid.Parse("50000000-0000-4000-8000-000000000005");
+        Guid pairExecutionId = Guid.Parse("60000000-0000-4000-8000-000000000006");
+        List<PreparedPass1FileCodeUnitAssignment> assignments = [];
+        List<PreparedPass1ContextSnapshotProjection> snapshots = [];
+
+        foreach (PreparedManifestSeed manifest in pair.Manifests)
+        {
+            PreparedFileCodeUnitSeed file = manifest.FileCodeUnits[0];
+            Guid scanExecutionId = GuidFromHash($"execution:{manifest.RepositoryId:D}");
+            Guid manifestId = GuidFromHash($"manifest:{manifest.RepositoryId:D}");
+            Guid contextId = GuidFromHash($"context:{manifest.RepositoryId:D}");
+            byte[] source = Encoding.UTF8.GetBytes(file.Source);
+            string contextHash = Sha256($"context:{manifest.RepositoryId:D}");
+            snapshots.Add(new(
+                contextId,
+                manifest.RepositoryId,
+                manifest.ScanRunId,
+                manifest.ProfiledRevision,
+                contextHash,
+                contextHash,
+                null,
+                null,
+                null));
+
+            Guid fileCodeUnitId = GuidFromHash($"unit:{manifest.RepositoryId:D}:{file.RelativePath}");
+            Guid jobId = ScanJobExecution.Create(
+                scanExecutionId,
+                manifest.RepositoryId,
+                manifest.ScanRunId,
+                fileCodeUnitId,
+                file.ManifestOrdinal,
+                DateTimeOffset.UnixEpoch).Id;
+            assignments.Add(new(
+                pairExecutionId,
+                jobId,
+                scanExecutionId,
+                systemId,
+                manifest.RepositoryId,
+                manifest.ScanRunId,
+                manifest.ProfiledRevision,
+                fileCodeUnitId,
+                file.IdentityFingerprint,
+                manifestId,
+                manifest.ManifestFingerprint,
+                pair.PairFingerprint,
+                file.RelativePath,
+                0,
+                source.Length,
+                1,
+                Math.Max(1, file.Source.Count(value => value == '\n') + 1),
+                1,
+                1,
+                file.FileHash,
+                file.SourceHash,
+                "story-12-3-loop-prompt",
+                "code-logic/file-v2",
+                Sha256("runtime:story-12-3"),
+                contextId,
+                file.ManifestOrdinal,
+                file.PairSelectionOrdinal,
+                source));
+        }
+
+        return new(
+            assignments,
+            snapshots,
+            [],
+            2);
+    }
+
+    private static Guid GuidFromHash(string value) =>
+        new(SHA256.HashData(Encoding.UTF8.GetBytes(value)).AsSpan(0, 16));
+
+    private static string Sha256(string value) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+
+    private sealed class ScriptedProviderExecutor(int turnsBeforeFinalResult)
+        : IPreparedPass1JobExecutor
+    {
+        private readonly ConcurrentDictionary<Guid, int> _turns = new();
+        private readonly ConcurrentDictionary<Guid, int> _toolAttempts = new();
+
+        public IReadOnlyDictionary<Guid, int> TotalTurns => _turns;
+
+        public IReadOnlyDictionary<Guid, int> ToolAttemptCounts => _toolAttempts;
+
+        public int TurnCount(Guid jobId) => _turns[jobId];
+
+        public Task<PreparedPass1RawWorkerResult> ExecuteAsync(
+            PreparedPass1WorkerPacket packet,
+            string systemPrompt,
+            CancellationToken cancellationToken = default)
+        {
+            int turn = _turns.AddOrUpdate(packet.JobId, 1, (_, previous) => previous + 1);
+            if (turn <= turnsBeforeFinalResult)
+            {
+                _toolAttempts.AddOrUpdate(packet.JobId, 1, (_, previous) => previous + 1);
+                return Task.FromResult(new PreparedPass1RawWorkerResult(
+                    PreparedPass1RawWorkerOutcome.Rejected,
+                    ReadOnlyMemory<byte>.Empty,
+                    "invalid-or-repeated-tool-call"));
+            }
+
+            return Task.FromResult(new PreparedPass1RawWorkerResult(
+                PreparedPass1RawWorkerOutcome.Completed,
+                DeferredFallbackJson(packet),
+                null));
+        }
+
+        private static ReadOnlyMemory<byte> DeferredFallbackJson(
+            PreparedPass1WorkerPacket packet) =>
+            JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                schemaIdentity = "code-logic/file-v2",
+                binding = new
+                {
+                    jobId = packet.JobId.ToString("D"),
+                    scanExecutionId = packet.ScanExecutionId.ToString("D"),
+                    systemId = packet.SystemId.ToString("D"),
+                    repositoryId = packet.RepositoryId.ToString("D"),
+                    scanRunId = packet.ScanRunId.ToString("D"),
+                    profiledRevision = packet.ProfiledRevision,
+                    fileCodeUnitId = packet.FileCodeUnitId.ToString("D"),
+                    fileCodeUnitIdentityFingerprint = packet.FileCodeUnitIdentityFingerprint,
+                    preparedScanManifestId = packet.PreparedScanManifestId.ToString("D"),
+                    preparedScanManifestFingerprint = packet.PreparedScanManifestFingerprint,
+                    pairPackageFingerprint = packet.PairPackageFingerprint,
+                    repositoryRelativePath = packet.RepositoryRelativePath,
+                    byteStart = packet.ByteStart,
+                    byteEnd = packet.ByteEnd,
+                    lineStart = packet.LineStart,
+                    lineEnd = packet.LineEnd,
+                    segmentOrdinal = packet.SegmentOrdinal,
+                    segmentCount = packet.SegmentCount,
+                    fileHash = packet.FileHash,
+                    sourceHash = packet.SourceHash,
+                    promptIdentity = packet.PromptIdentity,
+                    documentSchemaIdentity = packet.DocumentSchemaIdentity,
+                    analysisRuntimeIdentityHash = packet.AnalysisRuntimeIdentityHash,
+                },
+                sourceAnchors = Array.Empty<object>(),
+                filePurpose = new { summary = "deferred navigation bound" },
+                internalUnits = Array.Empty<object>(),
+                executionFlow = Array.Empty<object>(),
+                dataFlow = Array.Empty<object>(),
+                rules = Array.Empty<object>(),
+                dataAccess = Array.Empty<object>(),
+                communicationEvidence = Array.Empty<object>(),
+                knownReferences = Array.Empty<object>(),
+                deferredObservations = new[] { new { outcome = "BoundExceeded", boundKind = "Calls" } },
+                assumptions = Array.Empty<object>() });
+    }
 }

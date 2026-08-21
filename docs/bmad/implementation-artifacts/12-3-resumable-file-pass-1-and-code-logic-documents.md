@@ -348,6 +348,28 @@ for Start audit/lease ordering. Builds completed with zero errors and
 `bmad-12-3-implement-20260821T124742Z-7c1a2e` hands off to bounded
 `navigate_code` tasks T017-T023.
 
+### Implementation checkpoint: T017-T023
+
+US2 now exposes one closed `navigate_code` AIFunction over eight authorized
+typed operations. The service binds Repository, Scan Run, Profiled Revision,
+source hash, File Code Unit, depth, call/result/evidence limits, prefers a
+current same-Scan/current-hash Code Logic Document, and otherwise returns
+bounded exact source evidence only after an atomic receipt commit. The durable
+Worker loop allows at most ten provider turns and eight navigation attempts,
+persists remaining budget across retry/restart, writes metadata-only refusal
+and Calls-exhaustion receipts, and never exposes raw LSP, CodeGraph storage,
+CodeGraphContext, shell, network, or unrestricted filesystem access. RED first
+observed 6/7 missing service cases, 4/5 missing secure-composition cases, and
+3/3 missing loop/budget cases. Root verification passed 45/45 navigation,
+dispatcher, pair-start, concurrency, and PostgreSQL atomicity tests after the
+store changes. Real host qualification passed 3/3 against CodeGraph 1.5.0,
+Java 21, and `jdt-language-server-1.61.0-202608141332` over stdio, including
+supported Java navigation, XML rejection, and sanitized revision-bound source
+fallback. Core, Infrastructure, Agents, and Web builds completed with zero
+errors; EF reports no pending model changes. Checkpoint
+`bmad-12-3-implement-20260821T135332Z-a4d91c` hands off to authoritative Code
+Logic Document tasks T024-T031.
+
 ### Authorized task correction after definition review iteration 4
 
 The task owner closed `DR4-001` within the approved scope. Host-runtime,

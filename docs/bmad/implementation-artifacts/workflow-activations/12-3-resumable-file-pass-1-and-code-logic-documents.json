@@ -23,7 +23,7 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260821T124742Z-7c1a2e",
+    "checkpoint_id": "bmad-12-3-implement-20260821T135332Z-a4d91c",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
@@ -32,7 +32,7 @@
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
     "stage": "implement",
-    "reason": "T009-T016 verified; begin bounded navigate_code US2 T017-T023 with behavioral RED evidence."
+    "reason": "T017-T023 verified; begin authoritative Code Logic Document US3 T024-T031 with behavioral RED evidence."
   },
-  "updated_at": "2026-08-21T12:47:42Z"
+  "updated_at": "2026-08-21T13:53:32Z"
 }

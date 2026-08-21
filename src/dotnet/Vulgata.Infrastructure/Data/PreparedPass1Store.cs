@@ -1,13 +1,259 @@
 using System.Data;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using CoreEntities = Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Data;
 
-public sealed class PreparedPass1Store(VulgataDbContext context) : IPreparedPass1Store
+public sealed class PreparedPass1Store(VulgataDbContext context) :
+    IPreparedPass1Store,
+    IPreparedPass1NavigationScopeSource,
+    IPreparedPass1CurrentDocumentEvidenceSource,
+    IPreparedPass1NavigationReceiptSink
 {
     private const string _documentSchemaIdentity = "code-logic/file-v2";
+
+    public async Task<PreparedPass1NavigationScope?> GetAsync(
+        Guid jobId,
+        Guid sourceFileCodeUnitId,
+        CancellationToken cancellationToken)
+    {
+        if (jobId == Guid.Empty || sourceFileCodeUnitId == Guid.Empty)
+        {
+            return null;
+        }
+
+        ScanJobExecution? job = await context.ScanJobExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == jobId && value.FileCodeUnitId == sourceFileCodeUnitId, cancellationToken);
+        Pass1NavigationBudget? budget = await context.Pass1NavigationBudgets.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.ScanJobExecutionId == jobId, cancellationToken);
+        if (job is null || budget is null)
+        {
+            return null;
+        }
+
+        Pass1PairExecution? pair = await context.Pass1PairExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == budget.PairExecutionId, cancellationToken);
+        ScanExecution? execution = await context.ScanExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == job.ScanExecutionId, cancellationToken);
+        PreparedScanManifest? manifest = pair is null ? null : await context.PreparedScanManifests.AsNoTracking()
+            .SingleOrDefaultAsync(value =>
+                (value.Id == pair.ManifestOneId || value.Id == pair.ManifestTwoId) &&
+                value.RepositoryId == job.RepositoryId && value.ScanRunId == job.ScanRunId,
+                cancellationToken);
+        if (pair is null || execution is null || manifest is null ||
+            execution.ProfiledRevision != manifest.ProfiledRevision ||
+            string.IsNullOrWhiteSpace(execution.AnalysisRuntimeIdentityHash))
+        {
+            return null;
+        }
+
+        Guid[] selectedIds = await context.PreparedScanManifestEntries.AsNoTracking()
+            .Where(value => value.PreparedScanManifestId == manifest.Id)
+            .Select(value => value.FileCodeUnitId)
+            .ToArrayAsync(cancellationToken);
+        CodeUnit[] units = await context.CodeUnits.AsNoTracking()
+            .Where(value => selectedIds.Contains(value.Id))
+            .OrderBy(value => value.FilePath)
+            .ThenBy(value => value.SegmentOrdinal)
+            .ToArrayAsync(cancellationToken);
+        if (units.Any(value => value.ByteStart is null || value.ByteEndExclusive is null || value.SegmentOrdinal is null))
+        {
+            return null;
+        }
+
+        PreparedPass1AuthorizedSource[] sources = [.. units.Select(value => new PreparedPass1AuthorizedSource(
+            value.Id,
+            value.FilePath,
+            value.SourceHash,
+            new PreparedPass1LineRange((ulong)value.LineStart, (ulong)value.LineEnd),
+            new PreparedPass1ByteRange((ulong)value.ByteStart!.Value, (ulong)value.ByteEndExclusive!.Value),
+            value.SegmentOrdinal!.Value,
+            $"src://{value.FilePath}#L{value.LineStart}-L{value.LineEnd}"))];
+        string[] receiptJson = await context.Pass1NavigationReceipts.AsNoTracking()
+            .Where(value => value.ScanJobExecutionId == jobId)
+            .OrderBy(value => value.ReceiptOrdinal)
+            .Select(value => value.DescriptorJson)
+            .ToArrayAsync(cancellationToken);
+        ReadOnlyMemory<byte>[] observed = [.. receiptJson
+            .Select(ParseTargetIdentity)
+            .Where(value => value is not null)
+            .Select(value => (ReadOnlyMemory<byte>)value!)];
+
+        var analysisScope = new AnalysisScope(
+            job.RepositoryId,
+            job.ScanRunId,
+            execution.ProfiledRevision,
+            $"pass1-{job.Id:N}",
+            execution.AnalysisRuntimeIdentityHash,
+            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeMilliseconds()));
+        return new PreparedPass1NavigationScope(
+            job.Id,
+            job.RepositoryId,
+            job.ScanRunId,
+            execution.ProfiledRevision,
+            job.FileCodeUnitId,
+            analysisScope,
+            sources,
+            budget.ToolAttemptCount,
+            budget.AcceptedCallCount,
+            budget.EvidenceBytes,
+            observed);
+    }
+
+    public async Task<PreparedPass1CurrentDocumentEvidence?> FindAsync(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1AuthorizedSource source,
+        PreparedPass1NavigationTarget target,
+        CancellationToken cancellationToken)
+    {
+        DocumentVersion? version = await context.DocumentVersions.AsNoTracking()
+            .Where(value =>
+                value.RepositoryId == scope.RepositoryId &&
+                value.ScanRunId == scope.ScanRunId &&
+                value.ProfiledRevision == scope.ProfiledRevision &&
+                value.RepositoryRelativePath == source.CanonicalPath &&
+                value.SchemaIdentity == _documentSchemaIdentity &&
+                context.SourceAnchors.Any(anchor =>
+                    anchor.DocumentVersionId == value.Id &&
+                    anchor.CodeUnitId == source.FileCodeUnitId &&
+                    anchor.SourceHash == source.SourceHash))
+            .Join(
+                context.LogicalDocuments.AsNoTracking().Where(value => value.CurrentVersionId != null),
+                version => version.Id,
+                logical => logical.CurrentVersionId,
+                (version, _) => version)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (version is null)
+        {
+            return null;
+        }
+
+        SourceAnchor[] anchors = await context.SourceAnchors.AsNoTracking()
+            .Where(value => value.DocumentVersionId == version.Id &&
+                value.CodeUnitId == source.FileCodeUnitId && value.SourceHash == source.SourceHash)
+            .OrderBy(value => value.Id)
+            .ToArrayAsync(cancellationToken);
+        if (anchors.Length == 0)
+        {
+            return null;
+        }
+
+        Guid[] sections = await context.DocumentSections.AsNoTracking()
+            .Where(value => value.DocumentVersionId == version.Id)
+            .OrderBy(value => value.SectionOrder)
+            .Select(value => value.Id)
+            .ToArrayAsync(cancellationToken);
+        var descriptor = new PreparedPass1DocumentEvidenceDescriptor(
+            version.LogicalDocumentId,
+            version.Id,
+            version.RepositoryRelativePath,
+            Convert.FromHexString(source.SourceHash),
+            sections,
+            [.. anchors.Select(value => value.Id)]);
+        return new PreparedPass1CurrentDocumentEvidence(
+            version.RepositoryId,
+            version.ScanRunId,
+            version.ProfiledRevision,
+            source.SegmentOrdinal,
+            source.SourceHash,
+            descriptor);
+    }
+
+    public async Task<Guid?> CommitAsync(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReceiptDraft receipt,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(receipt);
+        if (scope.JobId != request.JobId || scope.SourceFileCodeUnitId != request.SourceFileCodeUnitId)
+        {
+            return null;
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        context.ChangeTracker.Clear();
+        Pass1NavigationBudget[] locked = await context.Pass1NavigationBudgets
+            .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"Pass1NavigationBudgets\" WHERE \"ScanJobExecutionId\" = {request.JobId} FOR UPDATE")
+            .ToArrayAsync(cancellationToken);
+        Pass1NavigationBudget? budget = locked.SingleOrDefault();
+        if (budget is null || budget.PairExecutionId == Guid.Empty ||
+            budget.ToolAttemptCount != scope.ToolAttemptCount ||
+            budget.AcceptedCallCount != scope.AcceptedCallCount || budget.EvidenceBytes != scope.EvidenceBytes)
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            return null;
+        }
+
+        bool callsMarker = receipt.Outcome == PreparedPass1NavigationOutcome.BoundExceeded &&
+            receipt.BoundKind == PreparedPass1NavigationBoundKind.Calls && budget.ToolAttemptCount == 8;
+        int? toolOrdinal = callsMarker ? null : checked((int)request.ToolAttemptOrdinal);
+        Pass1NavigationReceipt? replay = callsMarker
+            ? await context.Pass1NavigationReceipts.SingleOrDefaultAsync(value =>
+                value.ScanJobExecutionId == request.JobId && value.BoundKind == CoreEntities.Pass1NavigationBoundKind.Calls,
+                cancellationToken)
+            : await context.Pass1NavigationReceipts.SingleOrDefaultAsync(value =>
+                value.ScanJobExecutionId == request.JobId && value.ToolAttemptOrdinal == toolOrdinal,
+                cancellationToken);
+        if (replay is not null)
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            return replay.RequestFingerprint == Convert.ToHexStringLower(receipt.RequestDigest.Span) || callsMarker
+                ? replay.Id
+                : null;
+        }
+
+        bool accepted = receipt.Outcome is PreparedPass1NavigationOutcome.DocumentEvidence or
+            PreparedPass1NavigationOutcome.SourceEvidence;
+        int receiptOrdinal = budget.ToolAttemptCount + 1;
+        PreparedPass1NavigationReceiptInput canonicalInput = new(
+            callsMarker ? null : receipt.RequestDigest,
+            request.JobId,
+            (ulong)receiptOrdinal,
+            callsMarker ? null : request.ToolAttemptOrdinal,
+            callsMarker ? null : request.Operation,
+            callsMarker ? null : request.RequestedDepth,
+            receipt.Outcome,
+            receipt.BoundKind,
+            callsMarker ? [] : receipt.Results,
+            (ulong)(callsMarker ? 0 : receipt.ResultCount),
+            (ulong)(callsMarker ? 0 : receipt.EvidenceBytes),
+            (ulong)(budget.AcceptedCallCount + (accepted ? 1 : 0)),
+            (ulong)(budget.EvidenceBytes + (accepted ? receipt.EvidenceBytes : 0)));
+        PreparedPass1CanonicalArtifact artifact = PreparedPass1CanonicalCodec.CreateNavigationReceipt(canonicalInput);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        string descriptorJson = JsonSerializer.Serialize(new
+        {
+            targetObservationIdentity = Convert.ToHexStringLower(receipt.TargetObservationIdentity.Span),
+            descriptors = receipt.Results,
+        });
+        var entity = CoreEntities.Pass1NavigationReceipt.Create(
+            artifact.Id!.Value,
+            request.JobId,
+            budget.PairExecutionId,
+            receiptOrdinal,
+            toolOrdinal,
+            callsMarker ? null : Enum.Parse<CoreEntities.Pass1NavigationOperation>(request.Operation.ToString()),
+            callsMarker ? null : checked((int)request.RequestedDepth),
+            Enum.Parse<CoreEntities.Pass1NavigationOutcomeKind>(receipt.Outcome.ToString()),
+            receipt.BoundKind is null ? null : Enum.Parse<CoreEntities.Pass1NavigationBoundKind>(receipt.BoundKind.ToString()!),
+            callsMarker ? null : Convert.ToHexStringLower(receipt.RequestDigest.Span),
+            artifact.FingerprintHex,
+            callsMarker ? 0 : receipt.ResultCount,
+            callsMarker ? 0 : receipt.EvidenceBytes,
+            descriptorJson,
+            now);
+        budget.ApplyReceipt(budget.StateVersion, toolOrdinal, accepted, receipt.EvidenceBytes, checked((int)request.RequestedDepth), now);
+        context.Pass1NavigationReceipts.Add(entity);
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return entity.Id;
+    }
 
     public async Task<PreparedPass1StartResult> StartAsync(
         PreparedScanAuthorizationScope authorizationScope,
@@ -693,6 +939,28 @@ public sealed class PreparedPass1Store(VulgataDbContext context) : IPreparedPass
                 .ThenBy(value => value.PairSelectionOrdinal)
                 .Take(PreparedScanPlanner.MaximumHighValueSeedsPerRepository)
                 .Count());
+
+    private static byte[]? ParseTargetIdentity(string descriptorJson)
+    {
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(descriptorJson);
+            if (!document.RootElement.TryGetProperty("targetObservationIdentity", out JsonElement value) ||
+                value.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            string? hex = value.GetString();
+            return hex is { Length: 64 } && hex.All(Uri.IsHexDigit)
+                ? Convert.FromHexString(hex)
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private static PreparedPass1StartResult Result(PreparedPass1StartOutcome outcome) =>
         new(outcome, null, null);

@@ -80,7 +80,10 @@ public sealed record PreparedPass1FileCodeUnitAssignment(
     Guid ContextSnapshotId,
     int ManifestOrdinal,
     int PairSelectionOrdinal,
-    ReadOnlyMemory<byte> SourceUtf8);
+    ReadOnlyMemory<byte> SourceUtf8)
+{
+    public int RemainingNavigationBudget { get; init; } = 8;
+}
 
 public sealed record PreparedPass1ContextSnapshotProjection(
     Guid ContextSnapshotId,
@@ -143,7 +146,10 @@ public sealed record PreparedPass1WorkerPacket(
     int PairSelectionOrdinal,
     ReadOnlyMemory<byte> SourceUtf8,
     PreparedPass1ContextSnapshotProjection ContextSnapshot,
-    IReadOnlyList<PreparedPass1CommunicationClassificationProjection> CommunicationClassifications);
+    IReadOnlyList<PreparedPass1CommunicationClassificationProjection> CommunicationClassifications)
+{
+    public int RemainingNavigationBudget { get; init; } = 8;
+}
 
 public enum PreparedPass1RawWorkerOutcome
 {

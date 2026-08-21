@@ -125,6 +125,61 @@ public sealed class PreparedPass1ResultParser
             utf8Json.ToArray());
     }
 
+    public static PreparedPass1RawWorkerResult CreateDeferredCallsFallback(
+        PreparedPass1WorkerPacket packet)
+    {
+        ArgumentNullException.ThrowIfNull(packet);
+        byte[] json = JsonSerializer.SerializeToUtf8Bytes(
+            new
+            {
+                schemaIdentity = "code-logic/file-v2",
+                binding = new
+                {
+                    jobId = packet.JobId.ToString("D"),
+                    scanExecutionId = packet.ScanExecutionId.ToString("D"),
+                    systemId = packet.SystemId.ToString("D"),
+                    repositoryId = packet.RepositoryId.ToString("D"),
+                    scanRunId = packet.ScanRunId.ToString("D"),
+                    profiledRevision = packet.ProfiledRevision,
+                    fileCodeUnitId = packet.FileCodeUnitId.ToString("D"),
+                    fileCodeUnitIdentityFingerprint = packet.FileCodeUnitIdentityFingerprint,
+                    preparedScanManifestId = packet.PreparedScanManifestId.ToString("D"),
+                    preparedScanManifestFingerprint = packet.PreparedScanManifestFingerprint,
+                    pairPackageFingerprint = packet.PairPackageFingerprint,
+                    repositoryRelativePath = packet.RepositoryRelativePath,
+                    byteStart = packet.ByteStart,
+                    byteEnd = packet.ByteEnd,
+                    lineStart = packet.LineStart,
+                    lineEnd = packet.LineEnd,
+                    segmentOrdinal = packet.SegmentOrdinal,
+                    segmentCount = packet.SegmentCount,
+                    fileHash = packet.FileHash,
+                    sourceHash = packet.SourceHash,
+                    promptIdentity = packet.PromptIdentity,
+                    documentSchemaIdentity = packet.DocumentSchemaIdentity,
+                    analysisRuntimeIdentityHash = packet.AnalysisRuntimeIdentityHash,
+                },
+                sourceAnchors = Array.Empty<object>(),
+                filePurpose = new { summary = "deferred navigation bound" },
+                internalUnits = Array.Empty<object>(),
+                executionFlow = Array.Empty<object>(),
+                dataFlow = Array.Empty<object>(),
+                rules = Array.Empty<object>(),
+                dataAccess = Array.Empty<object>(),
+                communicationEvidence = Array.Empty<object>(),
+                knownReferences = Array.Empty<object>(),
+                deferredObservations = new[]
+                {
+                    new { outcome = "BoundExceeded", boundKind = "Calls" },
+                },
+                assumptions = Array.Empty<object>(),
+            });
+        return new PreparedPass1RawWorkerResult(
+            PreparedPass1RawWorkerOutcome.Completed,
+            json,
+            "navigation-calls-bound-exceeded");
+    }
+
     private static void RequireString(JsonElement owner, string name, string expected)
     {
         if (!owner.TryGetProperty(name, out JsonElement value) ||

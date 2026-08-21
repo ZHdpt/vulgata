@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "615ff2e18889f7ac92eaa64837461b89ed93f4cd7dec63bbbf675bb16c41f85b"
+      "sha256": "e9d698a33fd0cdcf0c888cb29b683982cd7521d176411c8baf5269d080680553"
     }
   },
   "gates": {
@@ -88,15 +88,15 @@
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260821T124742Z-7c1a2e",
+    "checkpoint_id": "bmad-12-3-implement-20260821T135332Z-a4d91c",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T009-T016 verified; begin bounded navigate_code US2 T017-T023 with behavioral RED evidence.",
+    "reason": "T017-T023 verified; begin authoritative Code Logic Document US3 T024-T031 with behavioral RED evidence.",
     "evidence_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md"
   },
-  "updated_at": "2026-08-21T12:47:42Z"
+  "updated_at": "2026-08-21T13:53:32Z"
 }
