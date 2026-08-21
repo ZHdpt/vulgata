@@ -37,15 +37,15 @@
       "verdict_path": "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json"
     },
     "quality-review": {
-      "status": "pending",
-      "attempt": 0,
-      "verdict_path": null
+      "status": "revised",
+      "attempt": 1,
+      "verdict_path": "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-01.json"
     }
   },
   "attempts": {
     "definition-review": 0,
     "converge": 5,
-    "quality-review": 0
+    "quality-review": 1
   },
   "approvals": [
     {
@@ -99,25 +99,25 @@
     "specs/011-java-xml-prescan-manifest/plan.md",
     "specs/011-java-xml-prescan-manifest/tasks.md",
     "specs/011-java-xml-prescan-manifest/contracts/canonical-envelope.md",
-    "specs/011-java-xml-prescan-manifest/reviews/plan-review/plan-review-03.json",
     "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json",
     "specs/011-java-xml-prescan-manifest/decisions/planned-change-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/convergence-fourth-revision-authorization-01.md",
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md"
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md",
+    "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-converge-20260821T021223Z-7da232",
-    "stage": "converge",
+    "checkpoint_id": "bmad-12-2-quality-correction-20260821T024906Z-qr001",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "quality-review",
-    "reason": "Convergence attempt 5 is clean at the pinned T058-T059 boundary; bind the converged review candidate and dispatch independent quality review.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md"
+    "stage": "converge",
+    "reason": "QR-001 durable typed-proof and complete manifest reconstruction is independently GREEN on PostgreSQL 17; bind the correction checkpoint and rerun convergence before quality review.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   },
-  "updated_at": "2026-08-21T02:12:23Z"
+  "updated_at": "2026-08-21T02:49:06Z"
 }

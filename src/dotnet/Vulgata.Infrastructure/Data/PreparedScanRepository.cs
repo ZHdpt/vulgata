@@ -57,7 +57,8 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
             PreparedScanManifest manifest = existing.Single(value => value.Id == manifestId);
             PreparedCanonicalArtifact graph = PreparedScanIdentityBuilders.CreateCodeGraphProof(package.CodeGraphProof);
             PreparedCanonicalArtifact java = PreparedScanIdentityBuilders.CreateJavaReadiness(package.JavaReadiness);
-            if (!ManifestMatches(manifest, package, pair, graph.Fingerprint, java.Fingerprint))
+            if (!StoredProofsMatch(manifest, graph.Fingerprint, java.Fingerprint) ||
+                !ManifestMatches(manifest, package, pair, graph.Fingerprint, java.Fingerprint))
             {
                 return PreparedScanCommitOutcome.Conflict;
             }
@@ -103,6 +104,11 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
                 .OrderBy(value => value.Fingerprint)
                 .ToArrayAsync(cancellationToken);
             if (!ClassificationsMatch(classifications, package.Classifications))
+            {
+                return PreparedScanCommitOutcome.Conflict;
+            }
+
+            if (!StoredManifestFingerprintMatches(manifest, entries, audits, classifications))
             {
                 return PreparedScanCommitOutcome.Conflict;
             }
@@ -163,6 +169,8 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
             Set(manifest, nameof(manifest.RuntimeIdentityHash), package.RuntimeIdentityHash);
             Set(manifest, nameof(manifest.CodeGraphProofIdentityHash), graph.Fingerprint);
             Set(manifest, nameof(manifest.JavaReadinessIdentityHash), java.Fingerprint);
+            SetCodeGraphProof(manifest, package.CodeGraphProof);
+            SetJavaReadinessProof(manifest, package.JavaReadiness);
             Set(manifest, nameof(manifest.CodeGraphObservedDurationMilliseconds), package.CodeGraphProof.ObservedDurationMilliseconds);
             Set(manifest, nameof(manifest.JavaReadinessObservedDurationMilliseconds), package.JavaReadiness.ObservedDurationMilliseconds);
             Set(manifest, nameof(manifest.CatalogSchemaIdentity), package.Catalog.SchemaIdentity);
@@ -368,6 +376,7 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
         stored.CoordinationId == supplied.CoordinationId &&
         StringComparer.Ordinal.Equals(stored.ProfiledRevision, supplied.ProfiledRevision) &&
         StringComparer.Ordinal.Equals(stored.RequestedRef, supplied.RequestedRef) &&
+        StringComparer.Ordinal.Equals(stored.SchemaIdentity, PreparedScanManifest.CurrentSchemaIdentity) &&
         StringComparer.Ordinal.Equals(stored.SnapshotIdentity, supplied.SnapshotIdentity) &&
         StringComparer.Ordinal.Equals(stored.RuntimeIdentityHash, supplied.RuntimeIdentityHash) &&
         StringComparer.Ordinal.Equals(stored.CodeGraphProofIdentityHash, graphIdentity) &&
@@ -378,12 +387,211 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
         StringComparer.Ordinal.Equals(stored.ContextContentHash, supplied.ContextContentHash) &&
         StringComparer.Ordinal.Equals(stored.PairSelectionFingerprint, pair.PairSelectionFingerprint) &&
         StringComparer.Ordinal.Equals(stored.Fingerprint, supplied.ManifestFingerprint) &&
+        stored.CandidateCount == supplied.Audits.Count &&
+        stored.EligibleCount == supplied.Audits.Count(value => value.Outcome is PreparedScanAuditOutcome.Eligible or PreparedScanAuditOutcome.Selected) &&
+        stored.FilteredCount == supplied.Audits.Count(value => value.Outcome == PreparedScanAuditOutcome.Filtered) &&
+        stored.SkippedCount == supplied.Audits.Count(value => value.Outcome == PreparedScanAuditOutcome.Skipped) &&
         stored.SelectedCount == supplied.FileCodeUnits.Count &&
         stored.TotalConfirmedEvidenceCount == supplied.TotalConfirmedEvidenceCount &&
         stored.TotalHintCount == supplied.TotalHintCount &&
         stored.TotalWarningCount == supplied.TotalWarningCount &&
         stored.RetainedClassificationCount == supplied.Classifications.Count &&
-        stored.EvidenceTruncated == supplied.EvidenceTruncated;
+        stored.EvidenceTruncated == supplied.EvidenceTruncated &&
+        stored.ApprovalState == PreparedScanManifestApprovalState.Approved;
+
+    private static bool StoredProofsMatch(
+        PreparedScanManifest stored,
+        string suppliedGraphIdentity,
+        string suppliedJavaIdentity)
+    {
+        try
+        {
+            PreparedCanonicalArtifact graph = PreparedScanIdentityBuilders.CreateCodeGraphProof(
+                new CodeGraphCompletenessProof(
+                    stored.CodeGraphRepositoryId,
+                    stored.CodeGraphScanRunId,
+                    stored.CodeGraphProfiledRevision,
+                    stored.CodeGraphSnapshotIdentity,
+                    stored.CodeGraphSnapshotRootBindingHash,
+                    stored.CodeGraphRuntimeIdentityHash,
+                    stored.CodeGraphIndexIdentity,
+                    stored.CodeGraphProofSchemaIdentity,
+                    stored.CodeGraphInitialized,
+                    stored.CodeGraphIndexState,
+                    stored.CodeGraphPendingAdded,
+                    stored.CodeGraphPendingModified,
+                    stored.CodeGraphPendingRemoved,
+                    stored.CodeGraphWorktreeMismatch,
+                    stored.CodeGraphReindexRecommended,
+                    stored.CodeGraphPendingReferences,
+                    stored.CodeGraphIndexedFileCount,
+                    stored.CodeGraphLogicalProjectBinding,
+                    stored.CodeGraphLogicalIndexBinding,
+                    stored.CodeGraphRepositoryBindingMatched,
+                    stored.CodeGraphScanRunBindingMatched,
+                    stored.CodeGraphRevisionBindingMatched,
+                    stored.CodeGraphRuntimeBindingMatched,
+                    stored.CodeGraphSnapshotBindingMatched,
+                    stored.CodeGraphProjectPathTrusted,
+                    stored.CodeGraphIndexPathTrusted,
+                    stored.CodeGraphProofIdentityHash,
+                    stored.CodeGraphObservedDurationMilliseconds));
+            PreparedCanonicalArtifact java = PreparedScanIdentityBuilders.CreateJavaReadiness(
+                new JavaReadinessProof(
+                    stored.JavaReadinessRepositoryId,
+                    stored.JavaReadinessScanRunId,
+                    stored.JavaReadinessProfiledRevision,
+                    stored.JavaReadinessSnapshotIdentity,
+                    stored.JavaReadinessRuntimeIdentityHash,
+                    stored.JavaReadinessWorkspaceBindingHash,
+                    stored.JavaReadinessSchemaIdentity,
+                    stored.JavaReadinessOutcome,
+                    stored.JavaReadinessJdtLsRelease,
+                    stored.JavaReadinessJdtLsDistributionArchiveHash,
+                    stored.JavaReadinessJavaMajor,
+                    stored.JavaReadinessStreamJsonRpcVersion,
+                    stored.JavaReadinessTransport,
+                    stored.JavaReadinessWorkspaceExclusive,
+                    stored.JavaReadinessFile,
+                    stored.JavaReadinessInitializeCompleted,
+                    stored.JavaReadinessInitializedNotificationSent,
+                    stored.JavaReadinessImportState,
+                    stored.JavaReadinessDocumentSymbolCount,
+                    stored.JavaReadinessRepositoryBindingMatched,
+                    stored.JavaReadinessScanRunBindingMatched,
+                    stored.JavaReadinessRevisionBindingMatched,
+                    stored.JavaReadinessRuntimeBindingMatched,
+                    stored.JavaReadinessSnapshotBindingMatched,
+                    stored.JavaReadinessIdentityHash,
+                    stored.JavaReadinessObservedDurationMilliseconds));
+            return StringComparer.Ordinal.Equals(graph.Fingerprint, stored.CodeGraphProofIdentityHash) &&
+                StringComparer.Ordinal.Equals(graph.Fingerprint, suppliedGraphIdentity) &&
+                StringComparer.Ordinal.Equals(java.Fingerprint, stored.JavaReadinessIdentityHash) &&
+                StringComparer.Ordinal.Equals(java.Fingerprint, suppliedJavaIdentity);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    private static bool StoredManifestFingerprintMatches(
+        PreparedScanManifest stored,
+        IReadOnlyList<PreparedScanManifestEntry> entries,
+        IReadOnlyList<PreparedScanAudit> audits,
+        IReadOnlyList<CommunicationKindClassification> classifications)
+    {
+        try
+        {
+            int classificationTotal = checked(
+                stored.TotalConfirmedEvidenceCount + stored.TotalHintCount + stored.TotalWarningCount);
+            PreparedCanonicalArtifact manifest = PreparedScanIdentityBuilders.ReconstructCanonical(
+                "vulgata/story-12.2/prepared-scan-manifest/1.0",
+                [
+                    new(1, CanonicalEnvelope.Uuid(stored.RepositoryId)),
+                    new(2, CanonicalEnvelope.Uuid(stored.ScanRunId)),
+                    new(3, CanonicalEnvelope.Uuid(stored.CoordinationId)),
+                    new(4, CanonicalEnvelope.String(stored.ProfiledRevision)),
+                    new(5, CanonicalEnvelope.String(stored.RequestedRef)),
+                    new(6, CanonicalEnvelope.String(stored.SchemaIdentity)),
+                    new(7, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.SnapshotIdentity))),
+                    new(8, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.RuntimeIdentityHash))),
+                    new(9, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.CodeGraphProofIdentityHash))),
+                    new(10, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.JavaReadinessIdentityHash))),
+                    new(11, CanonicalEnvelope.String(stored.CatalogSchemaIdentity)),
+                    new(12, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.CatalogHash))),
+                    new(13, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.PreparedScanContextIdentityHash))),
+                    new(14, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.ContextContentHash))),
+                    new(15, CanonicalEnvelope.UInt64((ulong)stored.CandidateCount)),
+                    new(16, CanonicalEnvelope.UInt64((ulong)stored.EligibleCount)),
+                    new(17, CanonicalEnvelope.UInt64((ulong)stored.FilteredCount)),
+                    new(18, CanonicalEnvelope.UInt64((ulong)stored.SkippedCount)),
+                    new(19, CanonicalEnvelope.UInt64((ulong)stored.SelectedCount)),
+                    new(20, CanonicalEnvelope.UInt64((ulong)classificationTotal)),
+                    new(21, CanonicalEnvelope.UInt64((ulong)stored.RetainedClassificationCount)),
+                    new(22, CanonicalEnvelope.Boolean(stored.EvidenceTruncated)),
+                    new(23, CanonicalEnvelope.Bytes(Convert.FromHexString(stored.PairSelectionFingerprint))),
+                    new(24, CanonicalEnvelope.List(entries.Select(entry => CanonicalEnvelope.Object([
+                        new(1, CanonicalEnvelope.Bytes(Convert.FromHexString(entry.FileCodeUnitIdentityFingerprint))),
+                        new(2, CanonicalEnvelope.Int64(entry.DirectBusinessScore)),
+                        new(3, CanonicalEnvelope.Int64(entry.FinalBusinessScore)),
+                        new(4, CanonicalEnvelope.Enum(entry.SelectionReason.ToString())),
+                        new(5, CanonicalEnvelope.UInt64((ulong)entry.ManifestOrdinal)),
+                        new(6, CanonicalEnvelope.UInt64((ulong)entry.PairSelectionOrdinal)),
+                    ])))),
+                    new(25, CanonicalEnvelope.List(audits.Select(audit => CanonicalEnvelope.Object([
+                        new(1, CanonicalEnvelope.UInt64((ulong)audit.Ordinal)),
+                        new(2, CanonicalEnvelope.Bytes(Convert.FromHexString(audit.DetailFingerprint))),
+                    ])))),
+                    new(26, CanonicalEnvelope.List(classifications.Select(classification =>
+                        CanonicalEnvelope.Bytes(Convert.FromHexString(classification.Fingerprint))))),
+                    new(27, CanonicalEnvelope.Enum(stored.ApprovalState.ToString())),
+                ]);
+            return StringComparer.Ordinal.Equals(manifest.Fingerprint, stored.Fingerprint);
+        }
+        catch (Exception exception) when (exception is ArgumentException or FormatException or OverflowException)
+        {
+            return false;
+        }
+    }
+
+    private void SetCodeGraphProof(PreparedScanManifest manifest, CodeGraphCompletenessProof proof)
+    {
+        Set(manifest, nameof(manifest.CodeGraphRepositoryId), proof.RepositoryId);
+        Set(manifest, nameof(manifest.CodeGraphScanRunId), proof.ScanRunId);
+        Set(manifest, nameof(manifest.CodeGraphProfiledRevision), proof.ProfiledRevision);
+        Set(manifest, nameof(manifest.CodeGraphSnapshotIdentity), proof.SnapshotIdentity);
+        Set(manifest, nameof(manifest.CodeGraphSnapshotRootBindingHash), proof.SnapshotRootBindingHash);
+        Set(manifest, nameof(manifest.CodeGraphRuntimeIdentityHash), proof.RuntimeIdentityHash);
+        Set(manifest, nameof(manifest.CodeGraphIndexIdentity), proof.IndexIdentity);
+        Set(manifest, nameof(manifest.CodeGraphProofSchemaIdentity), proof.ProofSchemaIdentity);
+        Set(manifest, nameof(manifest.CodeGraphInitialized), proof.Initialized);
+        Set(manifest, nameof(manifest.CodeGraphIndexState), proof.IndexState);
+        Set(manifest, nameof(manifest.CodeGraphPendingAdded), proof.PendingAdded);
+        Set(manifest, nameof(manifest.CodeGraphPendingModified), proof.PendingModified);
+        Set(manifest, nameof(manifest.CodeGraphPendingRemoved), proof.PendingRemoved);
+        Set(manifest, nameof(manifest.CodeGraphWorktreeMismatch), proof.WorktreeMismatch);
+        Set(manifest, nameof(manifest.CodeGraphReindexRecommended), proof.ReindexRecommended);
+        Set(manifest, nameof(manifest.CodeGraphPendingReferences), proof.PendingReferences);
+        Set(manifest, nameof(manifest.CodeGraphIndexedFileCount), proof.IndexedFileCount);
+        Set(manifest, nameof(manifest.CodeGraphLogicalProjectBinding), proof.LogicalProjectBinding);
+        Set(manifest, nameof(manifest.CodeGraphLogicalIndexBinding), proof.LogicalIndexBinding);
+        Set(manifest, nameof(manifest.CodeGraphRepositoryBindingMatched), proof.RepositoryBindingMatched);
+        Set(manifest, nameof(manifest.CodeGraphScanRunBindingMatched), proof.ScanRunBindingMatched);
+        Set(manifest, nameof(manifest.CodeGraphRevisionBindingMatched), proof.RevisionBindingMatched);
+        Set(manifest, nameof(manifest.CodeGraphRuntimeBindingMatched), proof.RuntimeBindingMatched);
+        Set(manifest, nameof(manifest.CodeGraphSnapshotBindingMatched), proof.SnapshotBindingMatched);
+        Set(manifest, nameof(manifest.CodeGraphProjectPathTrusted), proof.ProjectPathTrusted);
+        Set(manifest, nameof(manifest.CodeGraphIndexPathTrusted), proof.IndexPathTrusted);
+    }
+
+    private void SetJavaReadinessProof(PreparedScanManifest manifest, JavaReadinessProof proof)
+    {
+        Set(manifest, nameof(manifest.JavaReadinessRepositoryId), proof.RepositoryId);
+        Set(manifest, nameof(manifest.JavaReadinessScanRunId), proof.ScanRunId);
+        Set(manifest, nameof(manifest.JavaReadinessProfiledRevision), proof.ProfiledRevision);
+        Set(manifest, nameof(manifest.JavaReadinessSnapshotIdentity), proof.SnapshotIdentity);
+        Set(manifest, nameof(manifest.JavaReadinessRuntimeIdentityHash), proof.RuntimeIdentityHash);
+        Set(manifest, nameof(manifest.JavaReadinessWorkspaceBindingHash), proof.WorkspaceBindingHash);
+        Set(manifest, nameof(manifest.JavaReadinessSchemaIdentity), proof.ReadinessSchemaIdentity);
+        Set(manifest, nameof(manifest.JavaReadinessOutcome), proof.Outcome);
+        Set(manifest, nameof(manifest.JavaReadinessJdtLsRelease), proof.JdtLsRelease);
+        Set(manifest, nameof(manifest.JavaReadinessJdtLsDistributionArchiveHash), proof.JdtLsDistributionArchiveHash);
+        Set(manifest, nameof(manifest.JavaReadinessJavaMajor), proof.JavaMajor);
+        Set(manifest, nameof(manifest.JavaReadinessStreamJsonRpcVersion), proof.StreamJsonRpcVersion);
+        Set(manifest, nameof(manifest.JavaReadinessTransport), proof.Transport);
+        Set(manifest, nameof(manifest.JavaReadinessWorkspaceExclusive), proof.WorkspaceExclusive);
+        Set(manifest, nameof(manifest.JavaReadinessFile), proof.ReadinessFile);
+        Set(manifest, nameof(manifest.JavaReadinessInitializeCompleted), proof.InitializeCompleted);
+        Set(manifest, nameof(manifest.JavaReadinessInitializedNotificationSent), proof.InitializedNotificationSent);
+        Set(manifest, nameof(manifest.JavaReadinessImportState), proof.ImportState);
+        Set(manifest, nameof(manifest.JavaReadinessDocumentSymbolCount), proof.DocumentSymbolCount);
+        Set(manifest, nameof(manifest.JavaReadinessRepositoryBindingMatched), proof.RepositoryBindingMatched);
+        Set(manifest, nameof(manifest.JavaReadinessScanRunBindingMatched), proof.ScanRunBindingMatched);
+        Set(manifest, nameof(manifest.JavaReadinessRevisionBindingMatched), proof.RevisionBindingMatched);
+        Set(manifest, nameof(manifest.JavaReadinessRuntimeBindingMatched), proof.RuntimeBindingMatched);
+        Set(manifest, nameof(manifest.JavaReadinessSnapshotBindingMatched), proof.SnapshotBindingMatched);
+    }
 
     private static bool EntryMatches(PreparedScanManifestEntry stored, PreparedFileCodeUnitDraft supplied) =>
         StringComparer.Ordinal.Equals(stored.FileCodeUnitIdentityFingerprint, supplied.IdentityFingerprint) &&

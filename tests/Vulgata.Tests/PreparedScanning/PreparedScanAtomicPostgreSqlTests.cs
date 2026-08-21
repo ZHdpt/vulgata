@@ -59,6 +59,134 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public async Task PostgreSql17_TamperedStoredCodeGraphProofPreimageCannotMasqueradeAsReplayAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanStore store = PreparedScanPostgreSqlFixture.CreateStore(fixture.Context);
+        Assert.Equal(PreparedScanCommitOutcome.Committed, (await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None)).Outcome);
+        DurableCounts before = await ReadCountsAsync(fixture.ConnectionString);
+
+        Guid manifestId = PreparedScanIdentityBuilders.CreateDeterministicIdentity(
+            "PreparedScanManifest", fixture.Package.Repositories[0].ManifestFingerprint);
+        TypedProofStorageTarget? target = await FindTypedProofStorageTargetAsync(
+            fixture.ConnectionString, "logicalindexbinding");
+        Assert.True(
+            target is not null,
+            "Durable CodeGraph typed proof preimage field LogicalIndexBinding is absent; opaque proof hashes are insufficient.");
+        await ExecuteSqlAsync(fixture.ConnectionString, target!.CreateMutationSql(manifestId));
+        Assert.Equal(1, await ScalarAsync<int>(
+            fixture.ConnectionString, target.CreateRowCountSql(manifestId)));
+
+        PreparedScanCommitResult result = await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None);
+
+        output.WriteLine("Tampered stored CodeGraph proof preimage outcome: {0}", result.Outcome);
+        Assert.Equal(PreparedScanCommitOutcome.Conflict, result.Outcome);
+        Assert.Equal(before, await ReadCountsAsync(fixture.ConnectionString));
+        Assert.Equal(1, await ScalarAsync<int>(
+            fixture.ConnectionString, target.CreateRowCountSql(manifestId)));
+    }
+
+    [Fact]
+    public async Task PostgreSql17_TamperedStoredJavaReadinessProofPreimageCannotMasqueradeAsReplayAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanStore store = PreparedScanPostgreSqlFixture.CreateStore(fixture.Context);
+        Assert.Equal(PreparedScanCommitOutcome.Committed, (await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None)).Outcome);
+        DurableCounts before = await ReadCountsAsync(fixture.ConnectionString);
+
+        Guid manifestId = PreparedScanIdentityBuilders.CreateDeterministicIdentity(
+            "PreparedScanManifest", fixture.Package.Repositories[0].ManifestFingerprint);
+        TypedProofStorageTarget? target = await FindTypedProofStorageTargetAsync(
+            fixture.ConnectionString, "workspacebindinghash");
+        Assert.True(
+            target is not null,
+            "Durable Java typed proof preimage field WorkspaceBindingHash is absent; opaque proof hashes are insufficient.");
+        await ExecuteSqlAsync(fixture.ConnectionString, target!.CreateMutationSql(manifestId));
+        Assert.Equal(1, await ScalarAsync<int>(
+            fixture.ConnectionString, target.CreateRowCountSql(manifestId)));
+
+        PreparedScanCommitResult result = await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None);
+
+        output.WriteLine("Tampered stored Java readiness proof preimage outcome: {0}", result.Outcome);
+        Assert.Equal(PreparedScanCommitOutcome.Conflict, result.Outcome);
+        Assert.Equal(before, await ReadCountsAsync(fixture.ConnectionString));
+        Assert.Equal(1, await ScalarAsync<int>(
+            fixture.ConnectionString, target.CreateRowCountSql(manifestId)));
+    }
+
+    public static TheoryData<string> OmittedManifestScalarColumns => new()
+    {
+        "CandidateCount",
+        "EligibleCount",
+        "FilteredCount",
+        "SkippedCount",
+    };
+
+    [Fact]
+    public async Task PostgreSql17_TamperedStoredManifestSchemaIdentityCannotReplayAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanStore store = PreparedScanPostgreSqlFixture.CreateStore(fixture.Context);
+        Assert.Equal(PreparedScanCommitOutcome.Committed, (await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None)).Outcome);
+        DurableCounts before = await ReadCountsAsync(fixture.ConnectionString);
+        string manifestId = PreparedScanIdentityBuilders.CreateDeterministicIdentity(
+            "PreparedScanManifest", fixture.Package.Repositories[0].ManifestFingerprint).ToString("D");
+
+        await ExecuteSqlAsync(fixture.ConnectionString, $"""
+            ALTER TABLE vulgata."PreparedScanManifests"
+                DROP CONSTRAINT "CK_PreparedScanManifests_SchemaIdentity";
+            UPDATE vulgata."PreparedScanManifests"
+            SET "SchemaIdentity" = 'prepared-scan-manifest/tampered'
+            WHERE "Id" = '{manifestId}';
+            """);
+
+        PreparedScanCommitResult result = await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None);
+
+        output.WriteLine("Tampered stored manifest schema identity outcome: {0}", result.Outcome);
+        Assert.Equal(PreparedScanCommitOutcome.Conflict, result.Outcome);
+        Assert.Equal(before, await ReadCountsAsync(fixture.ConnectionString));
+        Assert.Equal("prepared-scan-manifest/tampered", await ScalarAsync<string>(
+            fixture.ConnectionString,
+            $"SELECT \"SchemaIdentity\" FROM vulgata.\"PreparedScanManifests\" WHERE \"Id\" = '{manifestId}';"));
+    }
+
+    [Theory]
+    [MemberData(nameof(OmittedManifestScalarColumns))]
+    public async Task PostgreSql17_TamperedStoredManifestScalarCannotReplayAsync(string column)
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanStore store = PreparedScanPostgreSqlFixture.CreateStore(fixture.Context);
+        Assert.Equal(PreparedScanCommitOutcome.Committed, (await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None)).Outcome);
+        DurableCounts before = await ReadCountsAsync(fixture.ConnectionString);
+        string manifestId = PreparedScanIdentityBuilders.CreateDeterministicIdentity(
+            "PreparedScanManifest", fixture.Package.Repositories[0].ManifestFingerprint).ToString("D");
+
+        await ExecuteSqlAsync(fixture.ConnectionString, $"""
+            UPDATE vulgata."PreparedScanManifests"
+            SET "{column}" = "{column}" + 1
+            WHERE "Id" = '{manifestId}';
+            """);
+
+        PreparedScanCommitResult result = await store.CommitPairAsync(
+            fixture.Authorization, fixture.Package, 0, CancellationToken.None);
+
+        output.WriteLine("Tampered stored manifest scalar {0} outcome: {1}", column, result.Outcome);
+        Assert.Equal(PreparedScanCommitOutcome.Conflict, result.Outcome);
+        Assert.Equal(before, await ReadCountsAsync(fixture.ConnectionString));
+        Assert.Equal(1, await ScalarAsync<int>(fixture.ConnectionString, $"""
+            SELECT count(*)::integer FROM vulgata."PreparedScanManifests"
+            WHERE "Id" = '{manifestId}' AND "{column}" > 0;
+            """));
+    }
+
+    [Fact]
     public async Task PostgreSql17_StableProofOrChildMutationConflictsWithoutMutationAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -449,6 +577,78 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
             CREATE TRIGGER {function}_trigger BEFORE {operation} ON {table}
             FOR EACH ROW EXECUTE FUNCTION {function}();
             """);
+    }
+
+    private static async Task<TypedProofStorageTarget?> FindTypedProofStorageTargetAsync(
+        string connectionString,
+        string canonicalFieldFragment)
+    {
+        await using NpgsqlConnection connection = new(connectionString);
+        await connection.OpenAsync();
+        await using NpgsqlCommand command = new("""
+            SELECT table_name, column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'vulgata'
+            ORDER BY table_name, ordinal_position;
+            """, connection);
+        await using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        Dictionary<string, List<string>> columnsByTable = new(StringComparer.Ordinal);
+        while (await reader.ReadAsync())
+        {
+            string table = reader.GetString(0);
+            string column = reader.GetString(1);
+            columnsByTable.TryGetValue(table, out List<string>? columns);
+            (columns ??= []).Add(column);
+            columnsByTable[table] = columns;
+        }
+
+        foreach ((string table, List<string> columns) in columnsByTable)
+        {
+            string? proofColumn = columns.FirstOrDefault(column =>
+                column.Replace("_", string.Empty, StringComparison.Ordinal)
+                    .Contains(canonicalFieldFragment, StringComparison.OrdinalIgnoreCase));
+            if (proofColumn is null)
+            {
+                continue;
+            }
+
+            string? manifestKey = string.Equals(table, "PreparedScanManifests", StringComparison.Ordinal)
+                ? columns.FirstOrDefault(column => string.Equals(column, "Id", StringComparison.Ordinal))
+                : columns.FirstOrDefault(column =>
+                    string.Equals(column, "PreparedScanManifestId", StringComparison.Ordinal) ||
+                    string.Equals(column, "ManifestId", StringComparison.Ordinal));
+            if (manifestKey is not null)
+            {
+                return new(table, proofColumn, manifestKey);
+            }
+        }
+
+        return null;
+    }
+
+    private sealed record TypedProofStorageTarget(
+        string TableName,
+        string ColumnName,
+        string ManifestKeyColumn)
+    {
+        internal string CreateMutationSql(Guid manifestId) => $"""
+            UPDATE vulgata.{QuoteIdentifier(TableName)}
+            SET {QuoteIdentifier(ColumnName)} = CASE
+                WHEN left({QuoteIdentifier(ColumnName)}::text, 1) = 'e'
+                    THEN 'f' || substring({QuoteIdentifier(ColumnName)}::text FROM 2)
+                ELSE 'e' || substring({QuoteIdentifier(ColumnName)}::text FROM 2)
+            END
+            WHERE {QuoteIdentifier(ManifestKeyColumn)} = '{manifestId:D}';
+            """;
+
+        internal string CreateRowCountSql(Guid manifestId) => $"""
+            SELECT count(*)::integer
+            FROM vulgata.{QuoteIdentifier(TableName)}
+            WHERE {QuoteIdentifier(ManifestKeyColumn)} = '{manifestId:D}';
+            """;
+
+        private static string QuoteIdentifier(string identifier) =>
+            $"\"{identifier.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
     }
 
     private static async Task InstallSleepingTriggerAsync(

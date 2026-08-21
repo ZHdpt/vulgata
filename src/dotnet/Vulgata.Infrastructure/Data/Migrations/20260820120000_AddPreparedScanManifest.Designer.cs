@@ -1266,6 +1266,33 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
+                    b.Property<Guid>("CodeGraphRepositoryId").HasColumnType("uuid");
+                    b.Property<Guid>("CodeGraphScanRunId").HasColumnType("uuid");
+                    b.Property<string>("CodeGraphProfiledRevision").IsRequired().HasMaxLength(40).HasColumnType("character(40)").IsFixedLength();
+                    b.Property<string>("CodeGraphSnapshotIdentity").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
+                    b.Property<string>("CodeGraphSnapshotRootBindingHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
+                    b.Property<string>("CodeGraphRuntimeIdentityHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
+                    b.Property<string>("CodeGraphIndexIdentity").IsRequired().HasMaxLength(1024).HasColumnType("character varying(1024)");
+                    b.Property<string>("CodeGraphProofSchemaIdentity").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)");
+                    b.Property<bool>("CodeGraphInitialized").HasColumnType("boolean");
+                    b.Property<string>("CodeGraphIndexState").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
+                    b.Property<long>("CodeGraphPendingAdded").HasColumnType("bigint");
+                    b.Property<long>("CodeGraphPendingModified").HasColumnType("bigint");
+                    b.Property<long>("CodeGraphPendingRemoved").HasColumnType("bigint");
+                    b.Property<bool>("CodeGraphWorktreeMismatch").HasColumnType("boolean");
+                    b.Property<bool>("CodeGraphReindexRecommended").HasColumnType("boolean");
+                    b.Property<long>("CodeGraphPendingReferences").HasColumnType("bigint");
+                    b.Property<long>("CodeGraphIndexedFileCount").HasColumnType("bigint");
+                    b.Property<string>("CodeGraphLogicalProjectBinding").IsRequired().HasMaxLength(2048).HasColumnType("character varying(2048)");
+                    b.Property<string>("CodeGraphLogicalIndexBinding").IsRequired().HasMaxLength(2048).HasColumnType("character varying(2048)");
+                    b.Property<bool>("CodeGraphRepositoryBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("CodeGraphScanRunBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("CodeGraphRevisionBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("CodeGraphRuntimeBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("CodeGraphSnapshotBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("CodeGraphProjectPathTrusted").HasColumnType("boolean");
+                    b.Property<bool>("CodeGraphIndexPathTrusted").HasColumnType("boolean");
+
                     b.Property<string>("ContextContentHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -1301,6 +1328,31 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
                         .IsFixedLength();
+
+                    b.Property<Guid>("JavaReadinessRepositoryId").HasColumnType("uuid");
+                    b.Property<Guid>("JavaReadinessScanRunId").HasColumnType("uuid");
+                    b.Property<string>("JavaReadinessProfiledRevision").IsRequired().HasMaxLength(40).HasColumnType("character(40)").IsFixedLength();
+                    b.Property<string>("JavaReadinessSnapshotIdentity").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
+                    b.Property<string>("JavaReadinessRuntimeIdentityHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
+                    b.Property<string>("JavaReadinessWorkspaceBindingHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
+                    b.Property<string>("JavaReadinessSchemaIdentity").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)");
+                    b.Property<string>("JavaReadinessOutcome").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
+                    b.Property<string>("JavaReadinessJdtLsRelease").IsRequired().HasMaxLength(128).HasColumnType("character varying(128)");
+                    b.Property<string>("JavaReadinessJdtLsDistributionArchiveHash").IsRequired().HasMaxLength(64).HasColumnType("character(64)").IsFixedLength();
+                    b.Property<int>("JavaReadinessJavaMajor").HasColumnType("integer");
+                    b.Property<string>("JavaReadinessStreamJsonRpcVersion").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+                    b.Property<string>("JavaReadinessTransport").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
+                    b.Property<bool>("JavaReadinessWorkspaceExclusive").HasColumnType("boolean");
+                    b.Property<string>("JavaReadinessFile").HasMaxLength(4096).HasColumnType("character varying(4096)");
+                    b.Property<bool>("JavaReadinessInitializeCompleted").HasColumnType("boolean");
+                    b.Property<bool>("JavaReadinessInitializedNotificationSent").HasColumnType("boolean");
+                    b.Property<string>("JavaReadinessImportState").IsRequired().HasMaxLength(32).HasColumnType("character varying(32)");
+                    b.Property<long>("JavaReadinessDocumentSymbolCount").HasColumnType("bigint");
+                    b.Property<bool>("JavaReadinessRepositoryBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("JavaReadinessScanRunBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("JavaReadinessRevisionBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("JavaReadinessRuntimeBindingMatched").HasColumnType("boolean");
+                    b.Property<bool>("JavaReadinessSnapshotBindingMatched").HasColumnType("boolean");
 
                     b.Property<long>("JavaReadinessObservedDurationMilliseconds")
                         .HasColumnType("bigint");
@@ -1395,6 +1447,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
                             t.HasCheckConstraint("CK_PreparedScanManifests_Hashes", "length(\"SnapshotIdentity\") = 64 AND length(\"RuntimeIdentityHash\") = 64 AND length(\"CodeGraphProofIdentityHash\") = 64 AND length(\"JavaReadinessIdentityHash\") = 64 AND length(\"CatalogHash\") = 64 AND length(\"PreparedScanContextIdentityHash\") = 64 AND length(\"ContextContentHash\") = 64 AND length(\"PairSelectionFingerprint\") = 64 AND length(\"Fingerprint\") = 64");
 
                             t.HasCheckConstraint("CK_PreparedScanManifests_ProfiledRevision", "length(\"ProfiledRevision\") = 40");
+
+                            t.HasCheckConstraint("CK_PreparedScanManifests_ProofCounts", "\"CodeGraphPendingAdded\" >= 0 AND \"CodeGraphPendingModified\" >= 0 AND \"CodeGraphPendingRemoved\" >= 0 AND \"CodeGraphPendingReferences\" >= 0 AND \"CodeGraphIndexedFileCount\" >= 0 AND \"JavaReadinessDocumentSymbolCount\" >= 0");
 
                             t.HasCheckConstraint("CK_PreparedScanManifests_SchemaIdentity", "\"SchemaIdentity\" = 'prepared-scan-manifest/1.0'");
                         });

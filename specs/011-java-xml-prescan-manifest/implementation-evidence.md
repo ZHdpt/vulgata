@@ -324,3 +324,28 @@ Document generation are absent.
   warnings. The test project built with zero errors and ten existing warnings.
   `git diff --check` passed with line-ending notices only, and the correction
   added no CodeGraphContext, Worker Agent, Document, or `navigate_code` surface.
+
+## Quality-review correction: QR-001
+
+- Quality review attempt 1 found that durable replay trusted opaque CodeGraph
+  and Java proof hashes and omitted canonical manifest scalars. Five stored
+  SchemaIdentity/count tamper cases returned `Replay` instead of `Conflict`,
+  while the schema lacked typed CodeGraph `LogicalIndexBinding` and Java
+  `WorkspaceBindingHash` preimages. The corrected behavioral suite observed
+  seven PostgreSQL product REDs with the original valid caller package intact.
+- Prepared Scan Manifest persistence now retains every stable field from the
+  versioned CodeGraph completeness and Java readiness canonical envelopes as
+  typed columns. Replay reconstructs both proof fingerprints from durable typed
+  state, compares stored and supplied proof identities, reconstructs the full
+  manifest envelope from stored scalars and ordered relational children, and
+  returns zero-mutation `Conflict` for any mismatch. Only documented volatile
+  duration/telemetry and time-derived capture identifiers remain outside replay
+  identity.
+- The unchanged seven tamper tests passed 7/7 on PostgreSQL 17.10. The complete
+  PostgreSQL atomic suite passed 28/28, SQLite atomic replay passed 5/5, and the
+  PostgreSQL migration lifecycle passed 2/2. Each tamper retained the deliberate
+  corrupt value and unchanged durable row counts after replay rejection;
+  duration-only replay remained GREEN.
+- EF reported no pending Vulgata model changes, the idempotent migration script
+  generated successfully, Infrastructure and Web built with zero errors and
+  only two/nine existing warnings, and `git diff --check` passed.

@@ -145,6 +145,56 @@ public sealed class PreparedScanManifest
     public string RuntimeIdentityHash { get; private set; } = string.Empty;
     public string CodeGraphProofIdentityHash { get; private set; } = string.Empty;
     public string JavaReadinessIdentityHash { get; private set; } = string.Empty;
+    public Guid CodeGraphRepositoryId { get; private set; }
+    public Guid CodeGraphScanRunId { get; private set; }
+    public string CodeGraphProfiledRevision { get; private set; } = string.Empty;
+    public string CodeGraphSnapshotIdentity { get; private set; } = string.Empty;
+    public string CodeGraphSnapshotRootBindingHash { get; private set; } = string.Empty;
+    public string CodeGraphRuntimeIdentityHash { get; private set; } = string.Empty;
+    public string CodeGraphIndexIdentity { get; private set; } = string.Empty;
+    public string CodeGraphProofSchemaIdentity { get; private set; } = string.Empty;
+    public bool CodeGraphInitialized { get; private set; }
+    public CodeGraphIndexState CodeGraphIndexState { get; private set; }
+    public long CodeGraphPendingAdded { get; private set; }
+    public long CodeGraphPendingModified { get; private set; }
+    public long CodeGraphPendingRemoved { get; private set; }
+    public bool CodeGraphWorktreeMismatch { get; private set; }
+    public bool CodeGraphReindexRecommended { get; private set; }
+    public long CodeGraphPendingReferences { get; private set; }
+    public long CodeGraphIndexedFileCount { get; private set; }
+    public string CodeGraphLogicalProjectBinding { get; private set; } = string.Empty;
+    public string CodeGraphLogicalIndexBinding { get; private set; } = string.Empty;
+    public bool CodeGraphRepositoryBindingMatched { get; private set; }
+    public bool CodeGraphScanRunBindingMatched { get; private set; }
+    public bool CodeGraphRevisionBindingMatched { get; private set; }
+    public bool CodeGraphRuntimeBindingMatched { get; private set; }
+    public bool CodeGraphSnapshotBindingMatched { get; private set; }
+    public bool CodeGraphProjectPathTrusted { get; private set; }
+    public bool CodeGraphIndexPathTrusted { get; private set; }
+    public Guid JavaReadinessRepositoryId { get; private set; }
+    public Guid JavaReadinessScanRunId { get; private set; }
+    public string JavaReadinessProfiledRevision { get; private set; } = string.Empty;
+    public string JavaReadinessSnapshotIdentity { get; private set; } = string.Empty;
+    public string JavaReadinessRuntimeIdentityHash { get; private set; } = string.Empty;
+    public string JavaReadinessWorkspaceBindingHash { get; private set; } = string.Empty;
+    public string JavaReadinessSchemaIdentity { get; private set; } = string.Empty;
+    public JavaReadinessOutcome JavaReadinessOutcome { get; private set; }
+    public string JavaReadinessJdtLsRelease { get; private set; } = string.Empty;
+    public string JavaReadinessJdtLsDistributionArchiveHash { get; private set; } = string.Empty;
+    public int JavaReadinessJavaMajor { get; private set; }
+    public string JavaReadinessStreamJsonRpcVersion { get; private set; } = string.Empty;
+    public AnalysisTransport JavaReadinessTransport { get; private set; }
+    public bool JavaReadinessWorkspaceExclusive { get; private set; }
+    public string? JavaReadinessFile { get; private set; }
+    public bool JavaReadinessInitializeCompleted { get; private set; }
+    public bool JavaReadinessInitializedNotificationSent { get; private set; }
+    public JavaImportState JavaReadinessImportState { get; private set; }
+    public long JavaReadinessDocumentSymbolCount { get; private set; }
+    public bool JavaReadinessRepositoryBindingMatched { get; private set; }
+    public bool JavaReadinessScanRunBindingMatched { get; private set; }
+    public bool JavaReadinessRevisionBindingMatched { get; private set; }
+    public bool JavaReadinessRuntimeBindingMatched { get; private set; }
+    public bool JavaReadinessSnapshotBindingMatched { get; private set; }
     public long CodeGraphObservedDurationMilliseconds { get; private set; }
     public long JavaReadinessObservedDurationMilliseconds { get; private set; }
     public string CatalogSchemaIdentity { get; private set; } = string.Empty;
