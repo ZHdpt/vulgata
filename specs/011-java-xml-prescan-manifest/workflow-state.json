@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 7,
+    "converge": 8,
     "quality-review": 2
   },
   "approvals": [
@@ -85,10 +85,10 @@
     }
   ],
   "convergence": {
-    "status": "revised",
-    "attempt": 7,
-    "outcome": "tasks_appended",
-    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-07.md"
+    "status": "accepted",
+    "attempt": 8,
+    "outcome": "converged",
+    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-08.md"
   },
   "e2e": {
     "result": "pending",
@@ -105,19 +105,19 @@
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-07.md",
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-08.md",
     "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-02.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-convergence-correction-20260821T033342Z-t060",
-    "stage": "implement",
+    "checkpoint_id": "bmad-12-2-converge-20260821T034101Z-t060",
+    "stage": "converge",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "converge",
-    "reason": "T060 shared Core classification ordering and pre-persistence rejection are independently GREEN on PostgreSQL 17; bind the correction checkpoint and rerun convergence.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
+    "stage": "quality-review",
+    "reason": "Convergence attempt 8 is clean after T060; bind the converged candidate and dispatch fresh quality-review attempt 3.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-08.md"
   },
-  "updated_at": "2026-08-21T03:33:42Z"
+  "updated_at": "2026-08-21T03:41:01Z"
 }
