@@ -1,4 +1,6 @@
+using System.Buffers.Binary;
 using System.Data;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
@@ -484,6 +486,661 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
         }
     }
 
+    public async Task<PreparedPass1RecoveryResult> RecoverAsync(
+        Guid pairExecutionId,
+        PreparedScanAuthorizationScope authorizationScope,
+        bool providerAvailable,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(authorizationScope);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return RecoveryResult(
+                PreparedPass1RecoveryOutcome.Cancelled,
+                DurableScanReason.Cancelled,
+                pairExecutionId: pairExecutionId);
+        }
+
+        if (pairExecutionId == Guid.Empty || observedAt.Offset != TimeSpan.Zero ||
+            authorizationScope.UserId == Guid.Empty || authorizationScope.SystemId == Guid.Empty ||
+            authorizationScope.RepositoryIds is null ||
+            authorizationScope.RepositoryIds.Distinct().Count() != 2)
+        {
+            return RecoveryResult(PreparedPass1RecoveryOutcome.Rejected, DurableScanReason.InvalidIdentity);
+        }
+
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            if (pair is null || !await IsAuthorizedForPairAsync(pair, authorizationScope, cancellationToken))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return RecoveryResult(PreparedPass1RecoveryOutcome.NotFound, DurableScanReason.Unauthorized);
+            }
+
+            RecoverySnapshot? snapshot = await ReconstructRecoveryAsync(pair, cancellationToken);
+            if (snapshot is null || observedAt < pair.UpdatedAt)
+            {
+                if (observedAt >= pair.UpdatedAt && !IsTerminal(pair.Phase))
+                {
+                    TransitionPair(
+                        pair,
+                        Pass1PairExecutionPhase.FailedIntegrity,
+                        Pass1CircuitState.Paused,
+                        Pass1PairReasonCategory.Integrity,
+                        "recovery-binding-mismatch",
+                        observedAt);
+                    await FailRecoveryChildrenAsync(pair, observedAt, cancellationToken);
+                    await context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return RecoveryResult(
+                        PreparedPass1RecoveryOutcome.FailedClosed,
+                        DurableScanReason.IntegrityViolation,
+                        pair,
+                        pairBindingValid: false);
+                }
+
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return RecoveryResult(
+                    PreparedPass1RecoveryOutcome.Failed,
+                    DurableScanReason.IntegrityViolation,
+                    pair,
+                    pairBindingValid: false);
+            }
+
+            PairJob[] jobs = snapshot.Jobs;
+            int completed = jobs.Count(value =>
+                value.Job.State == ScanJobExecutionState.Completed &&
+                value.Job.CommittedDocumentVersionId is not null);
+            int expired = 0;
+            int dueRetries = 0;
+            bool changed = false;
+
+            if (!providerAvailable)
+            {
+                if (pair.Phase == Pass1PairExecutionPhase.Running &&
+                    pair.CircuitState == Pass1CircuitState.Closed)
+                {
+                    OpenProviderCircuit(pair, observedAt, retryAfterAt: null);
+                    changed = true;
+                }
+                else if (pair.Phase == Pass1PairExecutionPhase.ProbingProvider &&
+                    pair.NextProbeAt is DateTimeOffset nextProbeAt && observedAt >= nextProbeAt)
+                {
+                    changed = true;
+                    if (pair.ProbeOrdinal >= 5)
+                    {
+                        TransitionProviderCircuit(
+                            pair,
+                            Pass1PairExecutionPhase.PausedProviderUnavailable,
+                            Pass1CircuitState.Paused,
+                            pair.ProbeOrdinal,
+                            null,
+                            pair.RetryAfterAt,
+                            Pass1PairReasonCategory.ProviderUnavailable,
+                            "provider-unavailable",
+                            observedAt);
+                        await PauseProviderUnavailableAsync(pair, observedAt, cancellationToken);
+                    }
+                    else
+                    {
+                        int nextOrdinal = pair.ProbeOrdinal + 1;
+                        TransitionProviderCircuit(
+                            pair,
+                            Pass1PairExecutionPhase.ProbingProvider,
+                            Pass1CircuitState.Probing,
+                            nextOrdinal,
+                            GetProbeEligibility(pair.Id, nextOrdinal, observedAt, pair.RetryAfterAt),
+                            pair.RetryAfterAt,
+                            Pass1PairReasonCategory.ProviderUnavailable,
+                            "provider-unavailable",
+                            observedAt);
+                    }
+                }
+
+                if (changed)
+                {
+                    await context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                }
+
+                context.ChangeTracker.Clear();
+                return RecoveryResult(
+                    PreparedPass1RecoveryOutcome.Paused,
+                    DurableScanReason.ProviderUnavailable,
+                    pair,
+                    completedJobCount: completed,
+                    pendingJobCount: CountRemaining(jobs),
+                    isReplay: !changed,
+                    pairBindingValid: true,
+                    manualResumeAction: pair.Phase == Pass1PairExecutionPhase.PausedProviderUnavailable
+                        ? "继续扫描"
+                        : null);
+            }
+
+            if (pair.Phase is Pass1PairExecutionPhase.ProbingProvider or
+                Pass1PairExecutionPhase.PausedProviderUnavailable or
+                Pass1PairExecutionPhase.PausedOperatorCorrection or
+                Pass1PairExecutionPhase.PausedInspection)
+            {
+                ResumePairAndChildren(pair, snapshot, observedAt);
+                changed = true;
+            }
+
+            if (pair.Phase != Pass1PairExecutionPhase.Running || pair.CircuitState != Pass1CircuitState.Closed)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return RecoveryResult(
+                    IsTerminal(pair.Phase)
+                        ? PreparedPass1RecoveryOutcome.NoOpReplay
+                        : PreparedPass1RecoveryOutcome.Paused,
+                    DurableScanReason.None,
+                    pair,
+                    completedJobCount: completed,
+                    pendingJobCount: CountRemaining(jobs),
+                    isReplay: true,
+                    pairBindingValid: true);
+            }
+
+            foreach (PairJob item in jobs)
+            {
+                if (item.Job.State == ScanJobExecutionState.Running &&
+                    item.Job.LeaseExpiresAt is DateTimeOffset leaseExpiresAt &&
+                    leaseExpiresAt < observedAt)
+                {
+                    item.Job.RecoverExpiredLease(item.Job.StateVersion, observedAt);
+                    expired++;
+                    changed = true;
+                }
+                else if (item.Job.State == ScanJobExecutionState.RetryScheduled &&
+                    item.Job.AttemptCount < 2 &&
+                    item.Job.NextAttemptAt is DateTimeOffset nextAttemptAt &&
+                    nextAttemptAt <= observedAt)
+                {
+                    item.Job.RecoverDueRetry(item.Job.StateVersion, observedAt);
+                    dueRetries++;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                await context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            }
+            else
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+            }
+
+            int pending = CountRemaining(jobs);
+            context.ChangeTracker.Clear();
+            return RecoveryResult(
+                changed ? PreparedPass1RecoveryOutcome.Continued : PreparedPass1RecoveryOutcome.NoOpReplay,
+                DurableScanReason.None,
+                pair,
+                expired,
+                dueRetries,
+                completed,
+                pending,
+                continued: pending > 0,
+                isReplay: !changed,
+                pairBindingValid: true);
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return RecoveryResult(
+                PreparedPass1RecoveryOutcome.Cancelled,
+                DurableScanReason.Cancelled,
+                pairExecutionId: pairExecutionId);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException or ArgumentException or OverflowException)
+        {
+            context.ChangeTracker.Clear();
+            return RecoveryResult(
+                PreparedPass1RecoveryOutcome.Failed,
+                DurableScanReason.Failed,
+                pairExecutionId: pairExecutionId);
+        }
+    }
+
+    public async Task<PreparedPass1FailureResult> RecordFailureAsync(
+        Guid pairExecutionId,
+        Guid jobId,
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        ScanJobFailureCategory failureCategory,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default)
+    {
+        string failureCode = Enum.IsDefined(failureCategory)
+            ? GetFailureCode(failureCategory)
+            : "invalid-failure-category";
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return FailureResult(
+                PreparedPass1FailureOutcome.Cancelled,
+                failureCategory,
+                failureCode,
+                cancellationRequested: true);
+        }
+
+        if (pairExecutionId == Guid.Empty || jobId == Guid.Empty || expectedStateVersion < 0 ||
+            expectedLeaseToken == Guid.Empty || !Enum.IsDefined(failureCategory) ||
+            observedAt.Offset != TimeSpan.Zero)
+        {
+            return FailureResult(PreparedPass1FailureOutcome.Rejected, failureCategory, failureCode);
+        }
+
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            if (pair is null)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                return FailureResult(PreparedPass1FailureOutcome.NotFound, failureCategory, failureCode);
+            }
+
+            Pass1NavigationBudget? budget = await context.Pass1NavigationBudgets.AsNoTracking()
+                .SingleOrDefaultAsync(value =>
+                    value.PairExecutionId == pairExecutionId && value.ScanJobExecutionId == jobId,
+                    cancellationToken);
+            ScanJobExecution[] lockedJobs = budget is null
+                ? []
+                : await context.ScanJobExecutions
+                    .FromSqlInterpolated(
+                        $"SELECT * FROM \"vulgata\".\"ScanJobExecutions\" WHERE \"Id\" = {jobId} FOR UPDATE")
+                    .ToArrayAsync(cancellationToken);
+            ScanJobExecution? job = lockedJobs.SingleOrDefault();
+            if (job is null)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return FailureResult(PreparedPass1FailureOutcome.NotFound, failureCategory, failureCode, pair: pair);
+            }
+
+            if (job.State == ScanJobExecutionState.Completed || IsTerminal(pair.Phase))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return FailureResult(
+                    PreparedPass1FailureOutcome.Conflict,
+                    failureCategory,
+                    failureCode,
+                    pair,
+                    job,
+                    documentCommitted: job.State == ScanJobExecutionState.Completed);
+            }
+
+            if (job.StateVersion != expectedStateVersion || job.LeaseToken != expectedLeaseToken)
+            {
+                bool replay = job.FailureCategory == failureCategory &&
+                    job.FailureCode == failureCode &&
+                    job.State is ScanJobExecutionState.RetryScheduled or ScanJobExecutionState.Failed or ScanJobExecutionState.Cancelled;
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return FailureResult(
+                    replay ? PreparedPass1FailureOutcome.Replay : PreparedPass1FailureOutcome.Conflict,
+                    failureCategory,
+                    failureCode,
+                    pair,
+                    job);
+            }
+
+            PreparedPass1FailureOutcome outcome;
+            switch (failureCategory)
+            {
+                case ScanJobFailureCategory.JobTransient when job.AttemptCount == 1:
+                    job.ScheduleRetry(
+                        expectedStateVersion,
+                        expectedLeaseToken,
+                        observedAt.AddSeconds(1),
+                        failureCategory,
+                        failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.RetryScheduled;
+                    break;
+                case ScanJobFailureCategory.JobTransient:
+                case ScanJobFailureCategory.JobPermanent:
+                    job.Fail(
+                        expectedStateVersion,
+                        expectedLeaseToken,
+                        failureCategory,
+                        failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.Recorded;
+                    break;
+                case ScanJobFailureCategory.ProviderTransient when
+                    pair.Phase == Pass1PairExecutionPhase.ProbingProvider &&
+                    pair.CircuitState == Pass1CircuitState.Probing:
+                    outcome = PreparedPass1FailureOutcome.Replay;
+                    break;
+                case ScanJobFailureCategory.ProviderTransient when
+                    pair.Phase == Pass1PairExecutionPhase.Running &&
+                    pair.CircuitState == Pass1CircuitState.Closed:
+                    OpenProviderCircuit(pair, observedAt, retryAfterAt: null);
+                    outcome = PreparedPass1FailureOutcome.Paused;
+                    break;
+                case ScanJobFailureCategory.ProviderTransient:
+                    outcome = PreparedPass1FailureOutcome.Conflict;
+                    break;
+                case ScanJobFailureCategory.ProviderConfiguration:
+                    TransitionPair(
+                        pair,
+                        Pass1PairExecutionPhase.PausedOperatorCorrection,
+                        Pass1CircuitState.Paused,
+                        Pass1PairReasonCategory.OperatorCorrection,
+                        failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.Paused;
+                    break;
+                case ScanJobFailureCategory.Unclassified:
+                    TransitionPair(
+                        pair,
+                        Pass1PairExecutionPhase.PausedInspection,
+                        Pass1CircuitState.Paused,
+                        Pass1PairReasonCategory.Inspection,
+                        failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.Paused;
+                    break;
+                case ScanJobFailureCategory.Cancellation:
+                    job.Cancel(expectedStateVersion, expectedLeaseToken, failureCode, observedAt);
+                    TransitionPair(
+                        pair,
+                        Pass1PairExecutionPhase.Cancelled,
+                        Pass1CircuitState.Paused,
+                        Pass1PairReasonCategory.Cancellation,
+                        failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.Cancelled;
+                    break;
+                case ScanJobFailureCategory.Integrity:
+                case ScanJobFailureCategory.Security:
+                    job.Fail(
+                        expectedStateVersion,
+                        expectedLeaseToken,
+                        failureCategory,
+                        failureCode,
+                        observedAt);
+                    TransitionPair(
+                        pair,
+                        failureCategory == ScanJobFailureCategory.Integrity
+                            ? Pass1PairExecutionPhase.FailedIntegrity
+                            : Pass1PairExecutionPhase.FailedSecurity,
+                        Pass1CircuitState.Paused,
+                        failureCategory == ScanJobFailureCategory.Integrity
+                            ? Pass1PairReasonCategory.Integrity
+                            : Pass1PairReasonCategory.Security,
+                        failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.FailedClosed;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(failureCategory));
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            int ordinaryFailures = await context.ScanJobExecutions.AsNoTracking()
+                .CountAsync(value =>
+                    value.State == ScanJobExecutionState.Failed &&
+                    (value.FailureCategory == ScanJobFailureCategory.JobTransient ||
+                     value.FailureCategory == ScanJobFailureCategory.JobPermanent) &&
+                    context.Pass1NavigationBudgets.Any(budgetValue =>
+                        budgetValue.PairExecutionId == pairExecutionId &&
+                        budgetValue.ScanJobExecutionId == value.Id),
+                    cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return FailureResult(
+                outcome,
+                failureCategory,
+                failureCode,
+                pair,
+                job,
+                ordinaryFailureCount: ordinaryFailures);
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return FailureResult(
+                PreparedPass1FailureOutcome.Cancelled,
+                failureCategory,
+                failureCode,
+                cancellationRequested: true);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException or ArgumentException or OverflowException)
+        {
+            context.ChangeTracker.Clear();
+            return FailureResult(PreparedPass1FailureOutcome.Failed, failureCategory, failureCode);
+        }
+    }
+
+    public async Task<PreparedPass1ProviderCircuitResult> RecordProviderTransientAsync(
+        Guid pairExecutionId,
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Cancelled);
+        }
+
+        if (pairExecutionId == Guid.Empty || observedAt.Offset != TimeSpan.Zero ||
+            retryAfterAt?.Offset is { } offset && offset != TimeSpan.Zero)
+        {
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Rejected);
+        }
+
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            if (pair is null)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.NotFound);
+            }
+
+            if (pair.Phase == Pass1PairExecutionPhase.ProbingProvider &&
+                pair.CircuitState == Pass1CircuitState.Probing)
+            {
+                Guid[] replayDocuments = await LoadCompletedDocumentVersionIdsAsync(
+                    pairExecutionId,
+                    cancellationToken);
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ProviderCircuitResult(
+                    PreparedPass1ProviderCircuitOutcome.Replay,
+                    pair,
+                    replayDocuments);
+            }
+
+            if (pair.Phase != Pass1PairExecutionPhase.Running ||
+                pair.CircuitState != Pass1CircuitState.Closed ||
+                observedAt < pair.UpdatedAt)
+            {
+                Guid[] conflictDocuments = await LoadCompletedDocumentVersionIdsAsync(
+                    pairExecutionId,
+                    cancellationToken);
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ProviderCircuitResult(
+                    PreparedPass1ProviderCircuitOutcome.Conflict,
+                    pair,
+                    conflictDocuments);
+            }
+
+            OpenProviderCircuit(pair, observedAt, retryAfterAt);
+            await context.SaveChangesAsync(cancellationToken);
+            Guid[] completedDocuments = await LoadCompletedDocumentVersionIdsAsync(
+                pairExecutionId,
+                cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return ProviderCircuitResult(
+                PreparedPass1ProviderCircuitOutcome.Opened,
+                pair,
+                completedDocuments);
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Cancelled);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException or ArgumentException or OverflowException)
+        {
+            context.ChangeTracker.Clear();
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Failed);
+        }
+    }
+
+    public async Task<PreparedPass1ProviderCircuitResult> ProbeProviderAsync(
+        Guid pairExecutionId,
+        long expectedStateVersion,
+        int expectedProbeOrdinal,
+        bool providerAvailable,
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Cancelled);
+        }
+
+        if (pairExecutionId == Guid.Empty || expectedStateVersion < 0 ||
+            expectedProbeOrdinal is < 1 or > 5 || observedAt.Offset != TimeSpan.Zero ||
+            retryAfterAt?.Offset is { } offset && offset != TimeSpan.Zero)
+        {
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Rejected);
+        }
+
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            if (pair is null)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.NotFound);
+            }
+
+            Guid[] completedDocuments = await LoadCompletedDocumentVersionIdsAsync(
+                pairExecutionId,
+                cancellationToken);
+            if (pair.Phase != Pass1PairExecutionPhase.ProbingProvider ||
+                pair.CircuitState != Pass1CircuitState.Probing ||
+                pair.StateVersion != expectedStateVersion ||
+                pair.ProbeOrdinal != expectedProbeOrdinal)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ProviderCircuitResult(
+                    PreparedPass1ProviderCircuitOutcome.Conflict,
+                    pair,
+                    completedDocuments);
+            }
+
+            if (pair.NextProbeAt is null || observedAt < pair.NextProbeAt || observedAt < pair.UpdatedAt)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return ProviderCircuitResult(
+                    PreparedPass1ProviderCircuitOutcome.Ineligible,
+                    pair,
+                    completedDocuments);
+            }
+
+            PreparedPass1ProviderCircuitOutcome outcome;
+            if (providerAvailable)
+            {
+                TransitionProviderCircuit(
+                    pair,
+                    Pass1PairExecutionPhase.Running,
+                    Pass1CircuitState.Closed,
+                    probeOrdinal: 0,
+                    nextProbeAt: null,
+                    retryAfterAt: null,
+                    reasonCategory: null,
+                    reasonCode: null,
+                    observedAt);
+                outcome = PreparedPass1ProviderCircuitOutcome.Recovered;
+            }
+            else if (expectedProbeOrdinal == 5)
+            {
+                TransitionProviderCircuit(
+                    pair,
+                    Pass1PairExecutionPhase.PausedProviderUnavailable,
+                    Pass1CircuitState.Paused,
+                    expectedProbeOrdinal,
+                    nextProbeAt: null,
+                    retryAfterAt: null,
+                    Pass1PairReasonCategory.ProviderUnavailable,
+                    "provider-unavailable",
+                    observedAt);
+                await PauseProviderUnavailableAsync(pair, observedAt, cancellationToken);
+                outcome = PreparedPass1ProviderCircuitOutcome.Paused;
+            }
+            else
+            {
+                int nextOrdinal = expectedProbeOrdinal + 1;
+                DateTimeOffset? boundedRetryAfter = BoundRetryAfter(observedAt, retryAfterAt);
+                TransitionProviderCircuit(
+                    pair,
+                    Pass1PairExecutionPhase.ProbingProvider,
+                    Pass1CircuitState.Probing,
+                    nextOrdinal,
+                    GetProbeEligibility(pair.Id, nextOrdinal, observedAt, boundedRetryAfter),
+                    boundedRetryAfter,
+                    Pass1PairReasonCategory.ProviderUnavailable,
+                    "provider-unavailable",
+                    observedAt);
+                outcome = PreparedPass1ProviderCircuitOutcome.ProbeScheduled;
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return ProviderCircuitResult(outcome, pair, completedDocuments);
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Cancelled);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException or ArgumentException or OverflowException)
+        {
+            context.ChangeTracker.Clear();
+            return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Failed);
+        }
+    }
+
     public async Task<PreparedPass1ConcurrencyUpdateResult> UpdateConcurrencyAsync(
         PreparedScanAuthorizationScope authorizationScope,
         Guid pairExecutionId,
@@ -747,6 +1404,239 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
                 .SequenceEqual(authorizationScope.RepositoryIds.Distinct().Order());
     }
 
+    private async Task<RecoverySnapshot?> ReconstructRecoveryAsync(
+        Pass1PairExecution pair,
+        CancellationToken cancellationToken)
+    {
+        TwoRepositoryScanCoordination? coordination = await context.TwoRepositoryScanCoordinations
+            .SingleOrDefaultAsync(value => value.Id == pair.CoordinationId, cancellationToken);
+        if (coordination is null || coordination.SystemId != pair.SystemId)
+        {
+            return null;
+        }
+
+        PreparedScanManifest[] manifests = await context.PreparedScanManifests.AsNoTracking()
+            .Where(value => value.Id == pair.ManifestOneId || value.Id == pair.ManifestTwoId)
+            .OrderBy(value => value.RepositoryId)
+            .ToArrayAsync(cancellationToken);
+        ScanExecution[] executions = await context.ScanExecutions
+            .Where(value => value.Id == coordination.ScanExecutionOneId || value.Id == coordination.ScanExecutionTwoId)
+            .OrderBy(value => value.RepositoryId)
+            .ToArrayAsync(cancellationToken);
+        if (manifests.Length != 2 || executions.Length != 2 ||
+            manifests.Select(value => value.RepositoryId).Distinct().Count() != 2 ||
+            pair.ManifestOneId != manifests[0].Id || pair.ManifestTwoId != manifests[1].Id ||
+            coordination.RepositoryOneId != manifests[0].RepositoryId ||
+            coordination.RepositoryTwoId != manifests[1].RepositoryId ||
+            coordination.ScanExecutionOneId != executions[0].Id ||
+            coordination.ScanExecutionTwoId != executions[1].Id)
+        {
+            return null;
+        }
+
+        for (int index = 0; index < 2; index++)
+        {
+            PreparedScanManifest manifest = manifests[index];
+            ScanExecution execution = executions[index];
+            string expectedPrompt = index == 0 ? pair.PromptIdentityOne : pair.PromptIdentityTwo;
+            string expectedRuntime = index == 0
+                ? pair.AnalysisRuntimeIdentityHashOne
+                : pair.AnalysisRuntimeIdentityHashTwo;
+            if (manifest.CoordinationId != pair.CoordinationId ||
+                manifest.ApprovalState != PreparedScanManifestApprovalState.Approved ||
+                manifest.SchemaIdentity != PreparedScanManifest.CurrentSchemaIdentity ||
+                manifest.PairSelectionFingerprint != pair.PairSelectionFingerprint ||
+                execution.SystemId != pair.SystemId ||
+                execution.RepositoryId != manifest.RepositoryId ||
+                execution.ScanRunId != manifest.ScanRunId ||
+                execution.ProfiledRevision != manifest.ProfiledRevision ||
+                execution.PromptIdentity != expectedPrompt ||
+                execution.DocumentSchemaIdentity != pair.DocumentSchemaIdentity ||
+                execution.DocumentSchemaIdentity != _documentSchemaIdentity ||
+                execution.AnalysisRuntimeIdentityHash != expectedRuntime ||
+                manifest.RuntimeIdentityHash != expectedRuntime ||
+                manifest.CodeGraphRepositoryId != manifest.RepositoryId ||
+                manifest.CodeGraphScanRunId != manifest.ScanRunId ||
+                manifest.CodeGraphProfiledRevision != manifest.ProfiledRevision ||
+                manifest.CodeGraphRuntimeIdentityHash != manifest.RuntimeIdentityHash ||
+                manifest.JavaReadinessRepositoryId != manifest.RepositoryId ||
+                manifest.JavaReadinessScanRunId != manifest.ScanRunId ||
+                manifest.JavaReadinessProfiledRevision != manifest.ProfiledRevision ||
+                manifest.JavaReadinessRuntimeIdentityHash != manifest.RuntimeIdentityHash)
+            {
+                return null;
+            }
+        }
+
+        PreparedPass1CanonicalArtifact identity;
+        try
+        {
+            identity = PreparedPass1CanonicalCodec.CreatePairExecution(new(
+                pair.CoordinationId,
+                pair.SystemId,
+                Convert.FromHexString(pair.PairPackageFingerprint),
+                Convert.FromHexString(pair.PairSelectionFingerprint),
+                manifests.Select((manifest, index) => new PreparedPass1ManifestBinding(
+                    manifest.RepositoryId,
+                    manifest.ScanRunId,
+                    executions[index].Id,
+                    manifest.Id,
+                    Convert.FromHexString(manifest.Fingerprint),
+                    Convert.FromHexString(manifest.ProfiledRevision),
+                    Convert.FromHexString(manifest.PreparedScanContextIdentityHash))).ToArray(),
+                executions.Select(value => value.PromptIdentity!).ToArray(),
+                pair.DocumentSchemaIdentity,
+                executions.Select(value =>
+                    (ReadOnlyMemory<byte>)Convert.FromHexString(value.AnalysisRuntimeIdentityHash!)).ToArray()));
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+
+        if (identity.Id != pair.Id || identity.FingerprintHex != pair.Pass1PairFingerprint)
+        {
+            return null;
+        }
+
+        PreparedScanManifestEntry[] entries = await context.PreparedScanManifestEntries.AsNoTracking()
+            .Where(value => value.PreparedScanManifestId == pair.ManifestOneId ||
+                value.PreparedScanManifestId == pair.ManifestTwoId)
+            .OrderBy(value => value.PairSelectionOrdinal)
+            .ToArrayAsync(cancellationToken);
+        Guid[] unitIds = entries.Select(value => value.FileCodeUnitId).ToArray();
+        CodeUnit[] units = await context.CodeUnits.AsNoTracking()
+            .Where(value => unitIds.Contains(value.Id))
+            .ToArrayAsync(cancellationToken);
+        if (entries.Length != pair.DispatchedFileCount || units.Length != entries.Length ||
+            entries.Select(value => value.PairSelectionOrdinal)
+                .Distinct().Order().SequenceEqual(Enumerable.Range(1, entries.Length)) is false)
+        {
+            return null;
+        }
+
+        foreach (PreparedScanManifestEntry entry in entries)
+        {
+            CodeUnit? unit = units.SingleOrDefault(value => value.Id == entry.FileCodeUnitId);
+            PreparedScanManifest? manifest = manifests.SingleOrDefault(value => value.Id == entry.PreparedScanManifestId);
+            if (unit is null || manifest is null || unit.RepositoryId != manifest.RepositoryId ||
+                unit.ScanRunId != manifest.ScanRunId || unit.ByteStart is null ||
+                unit.ByteEndExclusive is null || unit.SegmentOrdinal is null || unit.SegmentCount is null ||
+                string.IsNullOrWhiteSpace(unit.FileHash))
+            {
+                return null;
+            }
+
+            PreparedCanonicalArtifact unitIdentity = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+                unit.RepositoryId,
+                unit.ScanRunId,
+                manifest.ProfiledRevision,
+                unit.FilePath,
+                unit.FileHash,
+                unit.ByteStart.Value,
+                unit.ByteEndExclusive.Value,
+                unit.LineStart,
+                unit.LineEnd,
+                unit.SegmentOrdinal.Value,
+                unit.SegmentCount.Value,
+                unit.SourceHash);
+            if (entry.FileCodeUnitIdentityFingerprint != unitIdentity.Fingerprint ||
+                unit.FileCodeUnitIdentityFingerprint != unitIdentity.Fingerprint)
+            {
+                return null;
+            }
+        }
+
+        PairJob[] jobs = await LoadPairJobsAsync(pair, cancellationToken);
+        if (jobs.Length != entries.Length || jobs.Select(value => value.Job.FileCodeUnitId).Distinct().Count() != jobs.Length ||
+            jobs.Any(value => !entries.Any(entry =>
+                entry.FileCodeUnitId == value.Job.FileCodeUnitId &&
+                entry.ManifestOrdinal == value.Job.ManifestOrdinal &&
+                entry.PairSelectionOrdinal == value.PairSelectionOrdinal)) ||
+            jobs.Any(value => value.Job.State == ScanJobExecutionState.Completed &&
+                (value.Job.CommittedDocumentVersionId is null ||
+                 !context.DocumentVersions.Any(version => version.Id == value.Job.CommittedDocumentVersionId))))
+        {
+            return null;
+        }
+
+        return new RecoverySnapshot(coordination, manifests, executions, entries, units, jobs);
+    }
+
+    private void ResumePairAndChildren(
+        Pass1PairExecution pair,
+        RecoverySnapshot snapshot,
+        DateTimeOffset observedAt)
+    {
+        TransitionProviderCircuit(
+            pair,
+            Pass1PairExecutionPhase.Running,
+            Pass1CircuitState.Closed,
+            0,
+            null,
+            null,
+            null,
+            null,
+            observedAt);
+        foreach (ScanExecution execution in snapshot.Executions.Where(value => value.Phase is
+                     ScanExecutionPhase.PausedProviderUnavailable or
+                     ScanExecutionPhase.PausedOperatorCorrection))
+        {
+            execution.ResumeToPrepared(execution.StateVersion, observedAt);
+            execution.BeginRunning(execution.StateVersion, observedAt);
+        }
+
+        if (snapshot.Coordination.Phase == TwoRepositoryScanCoordinationPhase.Paused)
+        {
+            context.Entry(snapshot.Coordination).Property(value => value.Phase).CurrentValue =
+                TwoRepositoryScanCoordinationPhase.Pass1;
+            context.Entry(snapshot.Coordination).Property(value => value.ReasonCategory).CurrentValue = null;
+            context.Entry(snapshot.Coordination).Property(value => value.ReasonCode).CurrentValue = null;
+            context.Entry(snapshot.Coordination).Property(value => value.StateVersion).CurrentValue =
+                checked(snapshot.Coordination.StateVersion + 1);
+            context.Entry(snapshot.Coordination).Property(value => value.UpdatedAt).CurrentValue = observedAt;
+            context.Entry(snapshot.Coordination).Property(value => value.TerminalAt).CurrentValue = null;
+        }
+    }
+
+    private async Task FailRecoveryChildrenAsync(
+        Pass1PairExecution pair,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken)
+    {
+        TwoRepositoryScanCoordination? coordination = await context.TwoRepositoryScanCoordinations
+            .SingleOrDefaultAsync(value => value.Id == pair.CoordinationId, cancellationToken);
+        if (coordination is null)
+        {
+            return;
+        }
+
+        ScanExecution[] executions = await context.ScanExecutions
+            .Where(value => value.Id == coordination.ScanExecutionOneId || value.Id == coordination.ScanExecutionTwoId)
+            .ToArrayAsync(cancellationToken);
+        foreach (ScanExecution execution in executions.Where(value => value.Phase is
+                     ScanExecutionPhase.Prepared or ScanExecutionPhase.Running or
+                     ScanExecutionPhase.PausedProviderUnavailable or ScanExecutionPhase.PausedOperatorCorrection))
+        {
+            execution.FailIntegrity(execution.StateVersion, "recovery-binding-mismatch", observedAt);
+        }
+
+        if (coordination.Phase is not (
+            TwoRepositoryScanCoordinationPhase.Completed or
+            TwoRepositoryScanCoordinationPhase.CompletedWithWarnings or
+            TwoRepositoryScanCoordinationPhase.FailedIntegrity or
+            TwoRepositoryScanCoordinationPhase.FailedSecurity or
+            TwoRepositoryScanCoordinationPhase.Cancelled or
+            TwoRepositoryScanCoordinationPhase.FailedPass1))
+        {
+            coordination.FailIntegrity(coordination.StateVersion, "recovery-binding-mismatch", observedAt);
+        }
+    }
+
+    private static int CountRemaining(IEnumerable<PairJob> jobs) => jobs.Count(value =>
+        value.Job.State is ScanJobExecutionState.Pending or
+            ScanJobExecutionState.Running or ScanJobExecutionState.RetryScheduled);
+
     private static bool IsExactConcurrencyReplay(
         Pass1ConcurrencyChange prior,
         Guid pairExecutionId,
@@ -781,6 +1671,245 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             Pass1PairExecutionPhase.PausedProviderUnavailable or
             Pass1PairExecutionPhase.PausedOperatorCorrection or
             Pass1PairExecutionPhase.PausedInspection;
+
+    private void OpenProviderCircuit(
+        Pass1PairExecution pair,
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt)
+    {
+        DateTimeOffset? boundedRetryAfter = BoundRetryAfter(observedAt, retryAfterAt);
+        TransitionProviderCircuit(
+            pair,
+            Pass1PairExecutionPhase.ProbingProvider,
+            Pass1CircuitState.Probing,
+            probeOrdinal: 1,
+            GetProbeEligibility(pair.Id, 1, observedAt, boundedRetryAfter),
+            boundedRetryAfter,
+            Pass1PairReasonCategory.ProviderUnavailable,
+            "provider-unavailable",
+            observedAt);
+    }
+
+    private void TransitionProviderCircuit(
+        Pass1PairExecution pair,
+        Pass1PairExecutionPhase phase,
+        Pass1CircuitState circuitState,
+        int probeOrdinal,
+        DateTimeOffset? nextProbeAt,
+        DateTimeOffset? retryAfterAt,
+        Pass1PairReasonCategory? reasonCategory,
+        string? reasonCode,
+        DateTimeOffset observedAt)
+    {
+        if (observedAt < pair.UpdatedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(observedAt));
+        }
+
+        context.Entry(pair).Property(value => value.Phase).CurrentValue = phase;
+        context.Entry(pair).Property(value => value.CircuitState).CurrentValue = circuitState;
+        context.Entry(pair).Property(value => value.ProbeOrdinal).CurrentValue = probeOrdinal;
+        context.Entry(pair).Property(value => value.NextProbeAt).CurrentValue = nextProbeAt;
+        context.Entry(pair).Property(value => value.RetryAfterAt).CurrentValue = retryAfterAt;
+        context.Entry(pair).Property(value => value.ReasonCategory).CurrentValue = reasonCategory;
+        context.Entry(pair).Property(value => value.ReasonCode).CurrentValue = reasonCode;
+        context.Entry(pair).Property(value => value.StateVersion).CurrentValue = checked(pair.StateVersion + 1);
+        context.Entry(pair).Property(value => value.UpdatedAt).CurrentValue = observedAt;
+        context.Entry(pair).Property(value => value.TerminalAt).CurrentValue = null;
+    }
+
+    private async Task PauseProviderUnavailableAsync(
+        Pass1PairExecution pair,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken)
+    {
+        PairJob[] jobs = await LoadPairJobsAsync(pair, cancellationToken);
+        Guid[] scanExecutionIds = jobs.Select(value => value.Job.ScanExecutionId).Distinct().ToArray();
+        ScanExecution[] executions = await context.ScanExecutions
+            .Where(value => scanExecutionIds.Contains(value.Id))
+            .ToArrayAsync(cancellationToken);
+        foreach (ScanExecution execution in executions.Where(value => value.Phase == ScanExecutionPhase.Running))
+        {
+            execution.PauseProviderUnavailable(
+                execution.StateVersion,
+                "provider-unavailable",
+                observedAt);
+        }
+
+        TwoRepositoryScanCoordination? coordination = await context.TwoRepositoryScanCoordinations
+            .SingleOrDefaultAsync(value => value.Id == pair.CoordinationId, cancellationToken);
+        if (coordination is not null && coordination.Phase == TwoRepositoryScanCoordinationPhase.Pass1)
+        {
+            coordination.Pause(
+                coordination.StateVersion,
+                TwoRepositoryScanReasonCategory.ProviderUnavailable,
+                "provider-unavailable",
+                observedAt);
+        }
+    }
+
+    private async Task<Guid[]> LoadCompletedDocumentVersionIdsAsync(
+        Guid pairExecutionId,
+        CancellationToken cancellationToken) =>
+        await context.ScanJobExecutions.AsNoTracking()
+            .Where(value => value.CommittedDocumentVersionId != null &&
+                context.Pass1NavigationBudgets.Any(budget =>
+                    budget.PairExecutionId == pairExecutionId &&
+                    budget.ScanJobExecutionId == value.Id))
+            .OrderBy(value => value.Id)
+            .Select(value => value.CommittedDocumentVersionId!.Value)
+            .ToArrayAsync(cancellationToken);
+
+    private static DateTimeOffset? BoundRetryAfter(
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt)
+    {
+        if (retryAfterAt is null || retryAfterAt <= observedAt)
+        {
+            return null;
+        }
+
+        DateTimeOffset maximum = observedAt.AddMinutes(10);
+        return retryAfterAt < maximum ? retryAfterAt : maximum;
+    }
+
+    private static DateTimeOffset GetProbeEligibility(
+        Guid pairExecutionId,
+        int probeOrdinal,
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt)
+    {
+        TimeSpan delay = probeOrdinal switch
+        {
+            1 => TimeSpan.FromSeconds(10),
+            2 => TimeSpan.FromSeconds(30),
+            3 => TimeSpan.FromMinutes(1),
+            4 => TimeSpan.FromMinutes(2),
+            5 => TimeSpan.FromMinutes(5),
+            _ => throw new ArgumentOutOfRangeException(nameof(probeOrdinal)),
+        };
+        Span<byte> input = stackalloc byte[20];
+        pairExecutionId.TryWriteBytes(input[..16], bigEndian: true, out _);
+        BinaryPrimitives.WriteInt32BigEndian(input[16..], probeOrdinal);
+        Span<byte> digest = stackalloc byte[SHA256.HashSizeInBytes];
+        SHA256.HashData(input, digest);
+        long jitterTicks = (long)(BinaryPrimitives.ReadUInt64BigEndian(digest) %
+            (ulong)(delay.Ticks / 10));
+        DateTimeOffset nominal = observedAt.Add(delay).AddTicks(jitterTicks);
+        return retryAfterAt > nominal ? retryAfterAt.Value : nominal;
+    }
+
+    private void TransitionPair(
+        Pass1PairExecution pair,
+        Pass1PairExecutionPhase phase,
+        Pass1CircuitState circuitState,
+        Pass1PairReasonCategory reasonCategory,
+        string reasonCode,
+        DateTimeOffset observedAt)
+    {
+        if (observedAt < pair.UpdatedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(observedAt));
+        }
+
+        context.Entry(pair).Property(value => value.Phase).CurrentValue = phase;
+        context.Entry(pair).Property(value => value.CircuitState).CurrentValue = circuitState;
+        context.Entry(pair).Property(value => value.ReasonCategory).CurrentValue = reasonCategory;
+        context.Entry(pair).Property(value => value.ReasonCode).CurrentValue = reasonCode;
+        context.Entry(pair).Property(value => value.StateVersion).CurrentValue = checked(pair.StateVersion + 1);
+        context.Entry(pair).Property(value => value.UpdatedAt).CurrentValue = observedAt;
+        context.Entry(pair).Property(value => value.TerminalAt).CurrentValue = IsTerminal(phase)
+            ? observedAt
+            : null;
+    }
+
+    private static PreparedPass1ProviderCircuitResult ProviderCircuitResult(
+        PreparedPass1ProviderCircuitOutcome outcome,
+        Pass1PairExecution? pair = null,
+        IReadOnlyList<Guid>? completedDocumentVersionIds = null)
+    {
+        IReadOnlyList<Guid> documentIds = completedDocumentVersionIds ?? [];
+        bool paused = pair?.Phase == Pass1PairExecutionPhase.PausedProviderUnavailable;
+        return new(
+            outcome,
+            pair?.CircuitState ?? Pass1CircuitState.Closed,
+            pair?.Phase ?? Pass1PairExecutionPhase.Running,
+            pair?.ProbeOrdinal ?? 0,
+            pair?.NextProbeAt,
+            pair?.RetryAfterAt,
+            pair?.ReasonCode ?? outcome.ToString(),
+            paused ? "继续扫描" : string.Empty,
+            documentIds.Count,
+            documentIds,
+            pair?.Phase == Pass1PairExecutionPhase.Running &&
+                pair.CircuitState == Pass1CircuitState.Closed);
+    }
+
+    private static bool IsTerminal(Pass1PairExecutionPhase phase) => phase is
+        Pass1PairExecutionPhase.ReadyForResolution or
+        Pass1PairExecutionPhase.FailedPass1 or
+        Pass1PairExecutionPhase.FailedIntegrity or
+        Pass1PairExecutionPhase.FailedSecurity or
+        Pass1PairExecutionPhase.Cancelled;
+
+    private static string GetFailureCode(ScanJobFailureCategory failureCategory) => failureCategory switch
+    {
+        ScanJobFailureCategory.ProviderTransient => "provider-unavailable",
+        ScanJobFailureCategory.ProviderConfiguration => "provider-configuration",
+        ScanJobFailureCategory.JobTransient => "job-transient",
+        ScanJobFailureCategory.JobPermanent => "job-permanent",
+        ScanJobFailureCategory.Integrity => "integrity-failure",
+        ScanJobFailureCategory.Security => "security-failure",
+        ScanJobFailureCategory.Cancellation => "cancelled",
+        ScanJobFailureCategory.Unclassified => "unclassified-systemic",
+        _ => throw new ArgumentOutOfRangeException(nameof(failureCategory)),
+    };
+
+    private static PreparedPass1FailureResult FailureResult(
+        PreparedPass1FailureOutcome outcome,
+        ScanJobFailureCategory failureCategory,
+        string failureCode,
+        Pass1PairExecution? pair = null,
+        ScanJobExecution? job = null,
+        int ordinaryFailureCount = 0,
+        bool cancellationRequested = false,
+        bool documentCommitted = false)
+    {
+        Pass1PairExecutionPhase? pairState = pair?.Phase;
+        bool retryScheduled = job?.State == ScanJobExecutionState.RetryScheduled;
+        bool failClosed = pairState is Pass1PairExecutionPhase.FailedIntegrity or
+            Pass1PairExecutionPhase.FailedSecurity;
+        bool terminal = failClosed ||
+            pairState is Pass1PairExecutionPhase.FailedPass1 or Pass1PairExecutionPhase.Cancelled ||
+            job?.State is ScanJobExecutionState.Failed or ScanJobExecutionState.Cancelled;
+        bool newDispatchAllowed = pairState == Pass1PairExecutionPhase.Running &&
+            pair?.CircuitState == Pass1CircuitState.Closed;
+        string? resumeAction = pairState switch
+        {
+            Pass1PairExecutionPhase.PausedProviderUnavailable => "继续扫描",
+            Pass1PairExecutionPhase.PausedOperatorCorrection => "修正提供商配置后手动继续扫描",
+            Pass1PairExecutionPhase.PausedInspection => "检查系统性失败后手动继续扫描",
+            _ => null,
+        };
+
+        return new PreparedPass1FailureResult(
+            outcome,
+            failureCategory,
+            failureCode,
+            outcome.ToString(),
+            retryScheduled,
+            job?.AttemptCount ?? 0,
+            pair?.DispatchedFileCount ?? 0,
+            terminal,
+            ordinaryFailureCount,
+            pairState,
+            resumeAction,
+            newDispatchAllowed,
+            cancellationRequested || failureCategory == ScanJobFailureCategory.Cancellation,
+            retryScheduled,
+            failClosed,
+            documentCommitted || job?.CommittedDocumentVersionId is not null);
+    }
 
     private static bool HasCompleteRequestShape(
         PreparedScanAuthorizationScope authorization,
@@ -990,12 +2119,47 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             pair?.ConcurrencyRevision,
             activeLeaseCount);
 
+    private static PreparedPass1RecoveryResult RecoveryResult(
+        PreparedPass1RecoveryOutcome outcome,
+        DurableScanReason reason,
+        Pass1PairExecution? pair = null,
+        int recoveredExpiredLeaseCount = 0,
+        int releasedDueRetryCount = 0,
+        int completedJobCount = 0,
+        int pendingJobCount = 0,
+        bool continued = false,
+        bool isReplay = false,
+        bool pairBindingValid = false,
+        string? manualResumeAction = null,
+        Guid? pairExecutionId = null) => new(
+            outcome,
+            reason,
+            pair?.Id ?? pairExecutionId,
+            pair?.Phase,
+            pair?.StateVersion,
+            recoveredExpiredLeaseCount,
+            releasedDueRetryCount,
+            completedJobCount,
+            pendingJobCount,
+            continued,
+            isReplay,
+            pairBindingValid,
+            manualResumeAction);
+
     private sealed record StartSnapshot(
         TwoRepositoryScanCoordination Coordination,
         PreparedScanManifest[] Manifests,
         ScanExecution[] Executions,
         PreparedScanManifestEntry[] Entries,
         PreparedFileCodeUnitDraft[] Units);
+
+    private sealed record RecoverySnapshot(
+        TwoRepositoryScanCoordination Coordination,
+        PreparedScanManifest[] Manifests,
+        ScanExecution[] Executions,
+        PreparedScanManifestEntry[] Entries,
+        CodeUnit[] Units,
+        PairJob[] Jobs);
 
     private sealed record PairJob(
         ScanJobExecution Job,

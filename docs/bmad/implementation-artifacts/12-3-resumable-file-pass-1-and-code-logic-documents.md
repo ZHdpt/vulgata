@@ -390,6 +390,29 @@ passed 109/109 tests with zero build errors and a clean diff check. Checkpoint
 `bmad-12-3-implement-20260821T144736Z-1f2f57` hands off to durable provider,
 failure-policy, and resume tasks T032-T037.
 
+### Implementation checkpoint: T032-T037
+
+US4 now classifies Worker failure outcomes through sanitized durable atoms,
+retries one isolated transient job exactly once, pauses configuration/provider
+and unclassified systemic failures, and fails integrity/security violations
+closed without changing the dispatched denominator or completed Documents.
+The provider circuit stops claims pair-wide, uses the exact 10/30/60/120/300
+second recovery windows with deterministic bounded jitter and Retry-After, and
+persists `PausedProviderUnavailable` after the fifth failed probe with the
+Chinese manual-resume action `继续扫描`. Recovery revalidates the pair, both child
+Scan Executions, approved manifests, Repository, Profiled Revision, prompt,
+schema, runtime/tool readiness, every File Code Unit hash/range/identity, jobs,
+leases, retries, receipts, and committed Documents; it skips completed work and
+continues only due valid jobs. RED first observed eighteen failure-policy
+failures, six provider-circuit failures, and sixteen recovery failures out of
+twenty-two. GREEN verification passed 46/46 focused tests and 92/92 broader
+store, dispatcher, and PostgreSQL 17 regressions with zero build errors. The
+existing non-partial `IPreparedPass1Store` required three explicitly routed
+compatibility corrections to declare the accepted typed failure, circuit, and
+recovery seams; accepted Story 12.1/12.2 behavior remained green. Checkpoint
+`bmad-12-3-implement-20260821T152445Z-c1ede2` hands off to terminal accounting,
+reconciliation, and public execution API tasks T038-T045.
+
 ### Authorized task correction after definition review iteration 4
 
 The task owner closed `DR4-001` within the approved scope. Host-runtime,

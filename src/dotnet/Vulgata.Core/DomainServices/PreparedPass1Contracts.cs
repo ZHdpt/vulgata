@@ -1,4 +1,97 @@
+using Vulgata.Core.Entities;
+
 namespace Vulgata.Core.DomainServices;
+
+public enum PreparedPass1FailureOutcome
+{
+    Recorded,
+    RetryScheduled,
+    Paused,
+    FailedClosed,
+    Cancelled,
+    Replay,
+    Conflict,
+    NotFound,
+    Rejected,
+    Failed,
+}
+
+public sealed record PreparedPass1FailureResult(
+    PreparedPass1FailureOutcome Outcome,
+    ScanJobFailureCategory FailureCategory,
+    string FailureCode,
+    string Status,
+    bool RetryScheduled,
+    int AttemptCount,
+    int DispatchedCount,
+    bool Terminal,
+    int OrdinaryFailureCount,
+    Pass1PairExecutionPhase? PairState,
+    string? ManualResumeAction,
+    bool NewDispatchAllowed,
+    bool CancellationRequested,
+    bool AutomaticResumeAllowed,
+    bool FailClosed,
+    bool DocumentCommitted);
+
+public enum PreparedPass1ProviderCircuitOutcome
+{
+    Opened,
+    Replay,
+    ProbeScheduled,
+    Recovered,
+    Paused,
+    Ineligible,
+    Conflict,
+    NotFound,
+    Rejected,
+    Cancelled,
+    Failed,
+}
+
+public sealed record PreparedPass1ProviderCircuitResult(
+    PreparedPass1ProviderCircuitOutcome Outcome,
+    Pass1CircuitState CircuitState,
+    Pass1PairExecutionPhase Phase,
+    int ProbeOrdinal,
+    DateTimeOffset? NextProbeAt,
+    DateTimeOffset? RetryAfterAt,
+    string ReasonCode,
+    string ManualResumeAction,
+    int CompletedDocumentCount,
+    IReadOnlyList<Guid> CompletedDocumentVersionIds,
+    bool AllowsNewClaims);
+
+public enum PreparedPass1RecoveryOutcome
+{
+    Continued,
+    NoOpReplay,
+    Paused,
+    FailedClosed,
+    Cancelled,
+    NotFound,
+    Rejected,
+    Failed,
+}
+
+/// <summary>
+/// Sanitized durable result of one pair-wide Pass 1 recovery attempt.
+/// Binding details and provider diagnostics intentionally never cross this boundary.
+/// </summary>
+public sealed record PreparedPass1RecoveryResult(
+    PreparedPass1RecoveryOutcome Outcome,
+    DurableScanReason Reason,
+    Guid? PairExecutionId,
+    Pass1PairExecutionPhase? PairState,
+    long? StateVersion,
+    int RecoveredExpiredLeaseCount,
+    int ReleasedDueRetryCount,
+    int SkippedCompletedJobCount,
+    int PendingJobCount,
+    bool Continued,
+    bool IsReplay,
+    bool PairBindingValid,
+    string? ManualResumeAction);
 
 public sealed record PreparedPass1CanonicalArtifact(
     ReadOnlyMemory<byte> Envelope,

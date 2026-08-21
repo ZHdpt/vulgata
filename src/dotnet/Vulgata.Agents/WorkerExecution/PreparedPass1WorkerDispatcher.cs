@@ -130,8 +130,20 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
             packet.PairSelectionOrdinal,
             raw.Outcome,
             parsed,
-            raw.ReasonCode);
+            GetSanitizedReasonCode(raw));
     }
+
+    private static string? GetSanitizedReasonCode(PreparedPass1RawWorkerResult raw) => raw.Outcome switch
+    {
+        PreparedPass1RawWorkerOutcome.Completed => null,
+        PreparedPass1RawWorkerOutcome.ProviderUnavailable => "provider-unavailable",
+        PreparedPass1RawWorkerOutcome.Rejected when string.Equals(
+            raw.ReasonCode,
+            "invalid-or-repeated-tool-call",
+            StringComparison.Ordinal) => "invalid-or-repeated-tool-call",
+        PreparedPass1RawWorkerOutcome.Rejected => "worker-result-rejected",
+        _ => throw new InvalidDataException("Prepared Pass 1 provider returned an unknown outcome."),
+    };
 
     private static PreparedPass1WorkerPacket[] BuildPackets(PreparedPass1DispatchRequest request)
     {

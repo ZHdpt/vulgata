@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "96258476cc420e8793dd13574f1db680e564df2f31d97fbf119715af68f03874"
+      "sha256": "5647ec537be5fb6dc93fcd6e4cc9e588b057d462cd0430a4d6da2ba2ddc12d9f"
     }
   },
   "gates": {
@@ -88,15 +88,15 @@
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260821T144736Z-1f2f57",
+    "checkpoint_id": "bmad-12-3-implement-20260821T152445Z-c1ede2",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T024-T031 verified; begin durable provider, failure-policy, and resume US4 T032-T037 with behavioral RED evidence.",
+    "reason": "T032-T037 verified; begin terminal accounting, reconciliation, and public execution API T038-T045 with behavioral RED evidence.",
     "evidence_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md"
   },
-  "updated_at": "2026-08-21T14:47:36Z"
+  "updated_at": "2026-08-21T15:24:45Z"
 }

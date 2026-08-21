@@ -1,3 +1,5 @@
+using Vulgata.Core.Entities;
+
 namespace Vulgata.Core.DomainServices;
 
 public enum PreparedPass1StartOutcome
@@ -79,5 +81,36 @@ public interface IPreparedPass1Store
         long expectedStateVersion,
         string principalId,
         DateTimeOffset changedAt,
+        CancellationToken cancellationToken = default);
+
+    Task<PreparedPass1RecoveryResult> RecoverAsync(
+        Guid pairExecutionId,
+        PreparedScanAuthorizationScope authorizationScope,
+        bool providerAvailable,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default);
+
+    Task<PreparedPass1FailureResult> RecordFailureAsync(
+        Guid pairExecutionId,
+        Guid jobId,
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        ScanJobFailureCategory failureCategory,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default);
+
+    Task<PreparedPass1ProviderCircuitResult> RecordProviderTransientAsync(
+        Guid pairExecutionId,
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt = null,
+        CancellationToken cancellationToken = default);
+
+    Task<PreparedPass1ProviderCircuitResult> ProbeProviderAsync(
+        Guid pairExecutionId,
+        long expectedStateVersion,
+        int expectedProbeOrdinal,
+        bool providerAvailable,
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt = null,
         CancellationToken cancellationToken = default);
 }
