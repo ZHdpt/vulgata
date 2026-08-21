@@ -293,3 +293,34 @@ Document generation are absent.
   `95e63dbaec3c9573285f8150c648188ab2fec9b353b62aacf102fef01e20f0f5`.
 - The disposable PostgreSQL container and its database were removed. The
   existing `vulgata-postgres` service remained healthy and untouched.
+
+## Convergence correction: T058-T059
+
+- Convergence iteration 4 identified two HIGH partials. The T058 production
+  paired qualification used two exact local Git revisions with real production
+  DI and failed 0/1 at `prepared-scan-codegraph-not-ready`; the registered
+  CodeGraph adapter had no revision-bound resolver and the paired builder had
+  not run fresh index/rebuild/status before proof. The T059 qualification used
+  a lexically first empty Java file and failed 0/1 because both Repository
+  readiness requests retained that empty path.
+- Production CodeGraph is now scoped to the preparation lease. It verifies the
+  Repository, Scan Run, Profiled Revision, runtime, and opaque lease binding,
+  verifies the retained exact revision before each phase, copies verified source
+  into a disposable mutable analysis workspace, and rehashes every non-index
+  byte before operations. The paired path runs init, rebuild, explicit complete
+  status, and only then the canonical completeness proof. Hard failures still
+  reject approval; only the already accepted post-readiness related expansion
+  may fall back.
+- Empty, BOM-only, and whitespace-only Java artifacts are excluded before the
+  ordinal readiness ordering. Valid nonempty Java remains eligible and XML-only
+  preparation remains explicit `NotApplicable`.
+- The unchanged T058 real-host test passed 1/1 in 1 minute 12 seconds; T059
+  passed 1/1 in 13 seconds. The original test author independently verified the
+  five-test three-run determinism, oversized XML, XML-only, hard-readiness, and
+  related-expansion surroundings at 5/5 in 39 seconds. A combined production
+  run passed 5/5 in 2 minutes 14 seconds, and pinned CodeGraph/JDT-LS, Java
+  ranges, and hard-readiness surroundings passed 4/4 in 1 minute 18 seconds.
+- Infrastructure and Web built with zero errors and only two/nine existing
+  warnings. The test project built with zero errors and ten existing warnings.
+  `git diff --check` passed with line-ending notices only, and the correction
+  added no CodeGraphContext, Worker Agent, Document, or `navigate_code` surface.

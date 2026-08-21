@@ -1,10 +1,13 @@
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.Git;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
-public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysisAdapter
+public sealed partial class CodeGraphAnalysisAdapter :
+    PreparedCodeGraphAnalysisAdapter,
+    IAsyncDisposable
 {
     private static readonly AnalysisPortFailure _unavailable = new(
         AnalysisPortFailureReason.Unavailable,
@@ -18,6 +21,26 @@ public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysis
     private PreparedStatusObservation? _preparedStatus;
 
     public CodeGraphAnalysisAdapter()
+    {
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "The adapter owns and disposes the revision-bound snapshot resolver.")]
+    public CodeGraphAnalysisAdapter(
+        AnalysisRuntimeOptions options,
+        PreparedScanRevisionAcquirer revisionAcquirer)
+        : this(
+            new CodeGraphAdapterOptions(
+                ResolveCommandPath((options ?? throw new ArgumentNullException(nameof(options)))
+                    .CodeGraphCommandPath),
+                TimeSpan.FromSeconds(30),
+                StandardOutputByteLimit: 256 * 1024,
+                StandardErrorByteLimit: 16 * 1024),
+            new PreparedRevisionCodeGraphSnapshotResolver(
+                revisionAcquirer ?? throw new ArgumentNullException(nameof(revisionAcquirer))),
+            new CodeGraphProcessRunner())
     {
     }
 
@@ -198,6 +221,14 @@ public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysis
                 "codegraph prepared expansion unavailable")));
     }
 
+    public async ValueTask DisposeAsync()
+    {
+        if (_snapshots is IAsyncDisposable disposable)
+        {
+            await disposable.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
     private sealed record PreparedStatusObservation(
         Guid RepositoryId,
         Guid ScanRunId,
@@ -205,6 +236,32 @@ public sealed partial class CodeGraphAnalysisAdapter : PreparedCodeGraphAnalysis
         string RuntimeIdentityHash,
         int IndexedFileCount,
         long DurationMilliseconds);
+
+    private static string ResolveCommandPath(string configuredPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(configuredPath);
+        if (Path.IsPathFullyQualified(configuredPath))
+        {
+            return Path.GetFullPath(configuredPath);
+        }
+
+        string? path = Environment.GetEnvironmentVariable("PATH");
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            foreach (string directory in path.Split(
+                         Path.PathSeparator,
+                         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                string candidate = Path.Combine(directory, configuredPath);
+                if (File.Exists(candidate))
+                {
+                    return Path.GetFullPath(candidate);
+                }
+            }
+        }
+
+        return Path.GetFullPath(configuredPath);
+    }
 }
 
 public sealed class CodeGraphIntegrityProbe : IAnalysisRuntimeHealthProbe

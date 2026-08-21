@@ -284,6 +284,26 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
     }
 
     [Fact]
+    public async Task ProductionPairBuilder_EmptyOrdinalFirstJava_IsExcludedFromReadinessCandidatesAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
+        harness.EnableEmptyJavaReadinessCandidate();
+
+        PreparedScanPairBuildResult result = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(result.Failure);
+        Assert.NotNull(result.PairPackage);
+        Assert.NotEmpty(harness.JavaRequests);
+        Assert.All(
+            harness.JavaRequests,
+            paths =>
+            {
+                Assert.DoesNotContain("src/release/A-Empty.java", paths);
+                Assert.Contains("src/release/Entry00.java", paths);
+            });
+    }
+
+    [Fact]
     public async Task ProductionPairBuilder_InventoryOutcomesBecomeCanonicalAuditsAndWarningsAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -483,6 +503,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         private readonly StubPreparedCodeGraphAnalysisPort _codeGraph;
         private readonly QualificationJavaRangeSource _javaRangeSource;
         private readonly List<string> _analysisEvents;
+        private readonly List<IReadOnlyList<string>> _javaRequests;
         private readonly ITestOutputHelper _output;
         private readonly Dictionary<Guid, List<long>> _codeGraphMilliseconds = [];
         private readonly Dictionary<Guid, List<long>> _javaMilliseconds = [];
@@ -491,6 +512,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         private bool _includeInventoryEdgeCases;
         private bool _includeJavaRangeQualification;
         private bool _omitOversizedXmlForRelatedExpansion;
+        private bool _includeEmptyJavaReadinessCandidate;
 
         private ReleaseHarness(
             LoginLogoutTests.CustomWebApplicationFactory baseFactory,
@@ -503,6 +525,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             StubPreparedCodeGraphAnalysisPort codeGraph,
             QualificationJavaRangeSource javaRangeSource,
             List<string> analysisEvents,
+            List<IReadOnlyList<string>> javaRequests,
             ITestOutputHelper output)
         {
             _baseFactory = baseFactory;
@@ -515,6 +538,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             _codeGraph = codeGraph;
             _javaRangeSource = javaRangeSource;
             _analysisEvents = analysisEvents;
+            _javaRequests = javaRequests;
             _output = output;
         }
 
@@ -524,11 +548,15 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
 
         internal List<string> AnalysisEvents => _analysisEvents;
 
+        internal IReadOnlyList<IReadOnlyList<string>> JavaRequests => _javaRequests;
+
         internal void EnableInventoryEdgeCases() => _includeInventoryEdgeCases = true;
 
         internal void EnableJavaRangeQualification() => _includeJavaRangeQualification = true;
 
         internal void EnableRelatedExpansionQualification() => _omitOversizedXmlForRelatedExpansion = true;
+
+        internal void EnableEmptyJavaReadinessCandidate() => _includeEmptyJavaReadinessCandidate = true;
 
         internal static async Task<ReleaseHarness> CreateAsync(ITestOutputHelper output)
         {
@@ -536,6 +564,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             Dictionary<Guid, List<long>>? javaTimings = null;
             var starts = new Dictionary<Guid, Stopwatch>();
             var analysisEvents = new List<string>();
+            var javaRequests = new List<IReadOnlyList<string>>();
             var javaRangeSource = new QualificationJavaRangeSource();
             var baseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
             var revisionAcquirer = new StubPreparedRevisionAcquirer();
@@ -565,7 +594,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                         harness._repositories[0].Id == snapshot.RepositoryId,
                     harness?._omitOversizedXmlForRelatedExpansion != true &&
                         harness?._includeJavaRangeQualification != true &&
-                        harness?._includeInventoryEdgeCases != true),
+                        harness?._includeInventoryEdgeCases != true,
+                    harness?._includeEmptyJavaReadinessCandidate == true),
                 null));
             var codeGraph = new StubPreparedCodeGraphAnalysisPort();
             codeGraph.ProofHandler = (request, _) =>
@@ -581,6 +611,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             java.Handler = (request, _) =>
             {
                 analysisEvents.Add($"java:{request.Scope.RepositoryId:D}");
+                javaRequests.Add(request.EligibleJavaRelativePaths.ToArray());
                 Stopwatch timer = Stopwatch.StartNew();
                 PreparedJavaReadinessResult result = ReadyJava(request);
                 timer.Stop();
@@ -615,7 +646,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             (SystemEntity system, RepositoryEntity[] repositories, PreparedScanRepositoryRevisionBinding[] bindings) =
                 await SeedAsync(db);
             IPreparedScanPairBuilder builder = scope.ServiceProvider.GetRequiredService<IPreparedScanPairBuilder>();
-            harness = new(baseFactory, factory, scope, builder, system, repositories, bindings, codeGraph, javaRangeSource, analysisEvents, output);
+            harness = new(baseFactory, factory, scope, builder, system, repositories, bindings, codeGraph, javaRangeSource, analysisEvents, javaRequests, output);
             codeGraphTimings = harness._codeGraphMilliseconds;
             javaTimings = harness._javaMilliseconds;
             harness._starts = starts;
@@ -693,7 +724,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         bool reverse,
         bool includeInventoryEdgeCases = false,
         bool includeJavaRangeQualification = false,
-        bool includeOversizedXml = true)
+        bool includeOversizedXml = true,
+        bool includeEmptyJavaReadinessCandidate = false)
     {
         var files = new List<PreparedSnapshotFile>(61);
         for (int index = 0; index < 60; index++)
@@ -723,6 +755,10 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 ReleaseHarness.OversizedJavaPath,
                 "Java",
                 CreateOversizedJavaSource()));
+        }
+        if (includeEmptyJavaReadinessCandidate)
+        {
+            files.Add(File("src/release/A-Empty.java", "Java", string.Empty));
         }
         if (includeInventoryEdgeCases)
         {

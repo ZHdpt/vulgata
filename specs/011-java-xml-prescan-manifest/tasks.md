@@ -151,3 +151,10 @@ The minimum demonstrable slice is T001-T021: one exact Repository inventory with
 **Purpose**: Preserve per-file bounded outcomes for invalid or oversized exact-source artifacts.
 
 - [x] T057 Keep exact snapshot preparation alive when an eligible Java/XML artifact is oversized, binary, invalidly encoded, or otherwise unreadable: return one deterministic `Skipped`/bounded `Warning` inventory record with its closed `PreparedScanAuditReason` and complete candidate/retained totals, continue the remaining files, and prove no such file becomes a File Code Unit while safe files still reach the paired manifest; add focused snapshot-source and production-bound qualification for FR-006, FR-016-FR-018, FR-025-FR-028, FR-034, and US3/AC3 (partial).
+
+## Phase 12: Convergence
+
+**Purpose**: Close remaining production analysis-composition and Java readiness-file selection gaps found against the pinned implementation boundary.
+
+- [x] T058 [US2] Add the production revision-bound CodeGraph composition that resolves the acquired snapshot lease, registers the real `@colbymchenry/codegraph@1.5.0` adapter/options/process runner on the Windows host, and executes fresh index/rebuild/status completeness checks before `BuildCompletenessProofAsync`; add a public-seam RED/GREEN and real Java/XML paired qualification proving the exact Repository/Profiled Revision binding, hard-readiness failure before Java/approval, and the existing post-readiness expansion fallback per FR-010-FR-011, FR-031, FR-042, US2/AC1-4, SC-003, and AD-2/AD-3 (partial).
+- [x] T059 [US2] Exclude empty eligible Java files when constructing the ordinal-first readiness-file candidates, while retaining deterministic module/package descriptor exclusions and hard-bound filtering; add a focused readiness RED/GREEN and production-bound qualification with a lexically-first empty Java plus a valid Java file proving the valid file is selected and XML-only remains `NotApplicable` per FR-012-FR-015, US2/AC2-3, the empty-file edge case, and AD-3 (partial).

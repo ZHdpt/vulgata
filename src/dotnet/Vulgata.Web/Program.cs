@@ -333,10 +333,12 @@ public static class VulgataWebComposition
                 @"C:\Program Files\Java\latest\jdk-21"));
         builder.Services.AddSingleton<AnalysisRuntimeReadiness>();
         builder.Services.AddSingleton<IAnalysisRuntimeHealthProbe, ConfiguredAnalysisRuntimeHealthProbe>();
-        builder.Services.AddSingleton<CodeGraphAnalysisAdapter>();
-        builder.Services.AddSingleton<ICodeGraphAnalysisPort>(services =>
+        builder.Services.AddScoped<CodeGraphAnalysisAdapter>(services => new CodeGraphAnalysisAdapter(
+            services.GetRequiredService<AnalysisRuntimeOptions>(),
+            services.GetRequiredService<PreparedScanRevisionAcquirer>()));
+        builder.Services.AddScoped<ICodeGraphAnalysisPort>(services =>
             services.GetRequiredService<CodeGraphAnalysisAdapter>());
-        builder.Services.AddSingleton<IPreparedCodeGraphAnalysisPort>(services =>
+        builder.Services.AddScoped<IPreparedCodeGraphAnalysisPort>(services =>
             services.GetRequiredService<CodeGraphAnalysisAdapter>());
         builder.Services.AddScoped<IJavaAnalysisSessionFactory>(services =>
         {

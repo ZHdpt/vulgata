@@ -394,6 +394,119 @@ public sealed class PreparedScanRealQualificationTests
         }
     }
 
+    [Fact]
+    public async Task ProductionPairBuilder_ExactRevision_UsesFreshCodeGraphBeforeJdtReadiness()
+    {
+        string fixtureRoot = CreateTemporaryRoot("t058-real-codegraph");
+        try
+        {
+            (string firstOrigin, string firstRevision, string firstRef) =
+                await CreateLocalJavaGitRepositoryAsync(fixtureRoot, "one");
+            (string secondOrigin, string secondRevision, string secondRef) =
+                await CreateLocalJavaGitRepositoryAsync(fixtureRoot, "two");
+
+            StubPreparedCommunicationCatalogSource catalog = new();
+            catalog.Handler = _ => Task.FromResult(new PreparedCatalogLoadResult(
+                new CommunicationPatternCatalog(
+                    "communication-pattern-catalog/1.0",
+                    "t058-real-codegraph",
+                    "1",
+                    new('c', 64),
+                    []),
+                null));
+
+            using LoginLogoutTests.CustomWebApplicationFactory baseFactory = new();
+            using WebApplicationFactory<Program> factory = baseFactory.WithWebHostBuilder(
+                builder => builder.ConfigureTestServices(services =>
+                {
+                    string gitStorage = Path.Combine(fixtureRoot, "prepared-storage");
+                    services.RemoveAll<GitWorkingCopyOptions>();
+                    services.AddSingleton(new GitWorkingCopyOptions(gitStorage));
+                    services.RemoveAll<ExactGitRevisionSnapshotService>();
+                    services.AddScoped<ExactGitRevisionSnapshotService>();
+                    services.RemoveAll<PreparedScanRevisionAcquirer>();
+                    services.AddScoped<PreparedScanRevisionAcquirer>();
+                    services.RemoveAll<IPreparedRevisionAcquirer>();
+                    services.AddScoped<IPreparedRevisionAcquirer>(provider =>
+                        provider.GetRequiredService<PreparedScanRevisionAcquirer>());
+                    services.RemoveAll<IAnalysisRuntimeHealthProbe>();
+                    services.AddSingleton<IAnalysisRuntimeHealthProbe>(
+                        new StubReadyAnalysisRuntimeHealthProbe());
+                    services.RemoveAll<IPreparedCommunicationCatalogSource>();
+                    services.AddSingleton<IPreparedCommunicationCatalogSource>(catalog);
+                    services.RemoveAll<AnalysisRuntimeOptions>();
+                    services.AddSingleton(new AnalysisRuntimeOptions(
+                        CodeGraphCommandPath,
+                        JdtLsRoot,
+                        JavaHome));
+                }));
+
+            await using AsyncServiceScope scope = factory.Services.CreateAsyncScope();
+            AnalysisRuntimeReadiness readiness = scope.ServiceProvider
+                .GetRequiredService<AnalysisRuntimeReadiness>();
+            readiness.Update(new AnalysisHealthProbeResult(
+                AnalysisRuntimeHealthStatus.Ready,
+                "t058-host-runtime",
+                "pinned host CodeGraph, Java 21 and JDT-LS runtime",
+                1_800_000_000_000,
+                [
+                    new AnalysisHealthCheck("codegraph", AnalysisRuntimeHealthStatus.Ready),
+                    new AnalysisHealthCheck("jdt-ls", AnalysisRuntimeHealthStatus.Ready),
+                ],
+                new('9', 64)));
+
+            Assert.IsType<CodeGraphAnalysisAdapter>(
+                scope.ServiceProvider.GetRequiredService<IPreparedCodeGraphAnalysisPort>());
+
+            VulgataDbContext db = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            (SystemEntity system, RepositoryEntity first, RepositoryEntity second,
+                PreparedScanRepositoryRevisionBinding[] bindings) = await SeedJavaBindingsAsync(
+                    db,
+                    firstOrigin,
+                    secondOrigin,
+                    firstRevision,
+                    secondRevision,
+                    firstRef,
+                    secondRef);
+            IPreparedScanPairBuilder builder = scope.ServiceProvider
+                .GetRequiredService<IPreparedScanPairBuilder>();
+
+            PreparedScanPairBuildResult result = await builder.BuildAsync(
+                system.Id,
+                [first, second],
+                bindings,
+                CancellationToken.None);
+
+            Assert.True(
+                result.PairPackage is not null,
+                $"Exact revision-bound CodeGraph/JDT preparation must complete; failure={result.Failure?.FailureCode}");
+            Assert.Null(result.Failure);
+            Assert.Equal(2, result.PairPackage.Repositories.Count);
+            Assert.Equal(
+                firstRevision,
+                result.PairPackage.Repositories.Single(repository => repository.RepositoryId == first.Id)
+                    .ProfiledRevision);
+            Assert.Equal(
+                secondRevision,
+                result.PairPackage.Repositories.Single(repository => repository.RepositoryId == second.Id)
+                    .ProfiledRevision);
+            Assert.All(
+                result.PairPackage.Repositories,
+                repository =>
+                {
+                    Assert.True(repository.CodeGraphProof.Initialized);
+                    Assert.Equal(CodeGraphIndexState.Complete, repository.CodeGraphProof.IndexState);
+                    Assert.True(repository.CodeGraphProof.SnapshotBindingMatched);
+                    Assert.True(repository.CodeGraphProof.RevisionBindingMatched);
+                    Assert.Equal(JavaReadinessOutcome.Ready, repository.JavaReadiness.Outcome);
+                });
+        }
+        finally
+        {
+            DeleteDirectory(fixtureRoot);
+        }
+    }
+
     private static IReadOnlyList<PreparedSnapshotFile> CreateJavaSnapshotFiles(
         PreparedRevisionSnapshot snapshot)
     {

@@ -122,6 +122,34 @@ internal sealed class PreparedScanPairBuilder(
                 revision.SnapshotBindingToken,
                 runtimeHashes[0],
                 new AnalysisDeadline(timeProvider.GetUtcNow().AddMinutes(2).ToUnixTimeMilliseconds()));
+            if (codeGraph is CodeGraphAnalysisAdapter)
+            {
+                AnalysisIndexResult initialized = await codeGraph.IndexAsync(scope, cancellationToken);
+                if (initialized.Status != AnalysisOperationStatus.Succeeded || initialized.Failure is not null)
+                {
+                    return Reject(
+                        PreparedScanFailureReason.AnalysisNotReady,
+                        "prepared-scan-codegraph-not-ready");
+                }
+
+                AnalysisIndexResult rebuilt = await codeGraph.RebuildAsync(scope, cancellationToken);
+                if (rebuilt.Status != AnalysisOperationStatus.Succeeded || rebuilt.Failure is not null)
+                {
+                    return Reject(
+                        PreparedScanFailureReason.AnalysisNotReady,
+                        "prepared-scan-codegraph-not-ready");
+                }
+
+                CodeGraphStatusResult status = await codeGraph.GetStatusAsync(scope, cancellationToken);
+                if (status.Status != AnalysisOperationStatus.Succeeded || status.Failure is not null ||
+                    !status.Ready || status.Stale)
+                {
+                    return Reject(
+                        PreparedScanFailureReason.AnalysisNotReady,
+                        "prepared-scan-codegraph-not-ready");
+                }
+            }
+
             PreparedCodeGraphProofResult codeGraphResult = await codeGraph.BuildCompletenessProofAsync(
                 new PreparedCodeGraphProofRequest(
                     scope,
@@ -139,7 +167,9 @@ internal sealed class PreparedScanPairBuilder(
             proof = proof with { IdentityHash = proofIdentity.Fingerprint };
 
             string[] javaPaths = inventory.Files
-                .Where(file => file.IsEligible && StringComparer.OrdinalIgnoreCase.Equals(file.Language, "Java"))
+                .Where(file => file.IsEligible &&
+                    StringComparer.OrdinalIgnoreCase.Equals(file.Language, "Java") &&
+                    HasJavaSourceContent(file.RawBytes.Span))
                 .Select(file => file.RelativePath)
                 .Order(StringComparer.Ordinal)
                 .ToArray();
@@ -590,6 +620,17 @@ internal sealed class PreparedScanPairBuilder(
 
     private static string HashToken(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+
+    private static bool HasJavaSourceContent(ReadOnlySpan<byte> rawBytes)
+    {
+        if (rawBytes.IsEmpty)
+        {
+            return false;
+        }
+
+        string source = Encoding.UTF8.GetString(rawBytes).TrimStart('\uFEFF');
+        return !string.IsNullOrWhiteSpace(source);
+    }
 
     private static PreparedScanPairBuildResult Reject(PreparedScanFailureReason reason, string code) =>
         new(null, 0, Failure(reason, code));
