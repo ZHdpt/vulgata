@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 8,
+    "converge": 9,
     "quality-review": 3
   },
   "approvals": [
@@ -86,9 +86,9 @@
   ],
   "convergence": {
     "status": "accepted",
-    "attempt": 8,
+    "attempt": 9,
     "outcome": "converged",
-    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-08.md"
+    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-09.md"
   },
   "e2e": {
     "result": "pending",
@@ -105,19 +105,19 @@
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-08.md",
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-09.md",
     "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-03.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-quality-correction-20260821T040737Z-qr3-001",
-    "stage": "implement",
+    "checkpoint_id": "bmad-12-2-converge-20260821T041357Z-qr3-001",
+    "stage": "converge",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "converge",
-    "reason": "QR3-001 is independently GREEN: bounded output is canonical, catalog identity survives PostgreSQL replay, and the legacy cap remains 100. Bind the correction checkpoint and rerun convergence.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
+    "stage": "quality-review",
+    "reason": "Convergence attempt 9 is clean after QR3-001. Bind the converged candidate and dispatch fresh quality-review attempt 4.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-09.md"
   },
-  "updated_at": "2026-08-21T04:07:37Z"
+  "updated_at": "2026-08-21T04:13:57Z"
 }
