@@ -413,3 +413,21 @@ Document generation are absent.
 - Core, Infrastructure, and Web built with zero errors. Only existing package,
   reference, and analyzer warnings remained. `git diff --check` passed with
   line-ending notices only. No Story 12.3 Worker or Document behavior was added.
+
+## Conditional E2E: E2E-01
+
+- The E2E matrix required execution because Story 12.2 crosses API,
+  multi-module persistence, EF migration, and observable data-lifecycle
+  boundaries. No coverage override was claimed.
+- The accepted existing integration coverage passed 53/53 with no failures or
+  skips: API composition 5/5, PostgreSQL 17 migration lifecycle 2/2, atomic
+  commit/replay/conflict 31/31, release qualification 8/8, and real Windows-host
+  Git/CodeGraph/Java/JDT-LS qualification 7/7.
+- The run observed PostgreSQL 17.10, CodeGraph 1.5.0, Java 21.0.12, and the
+  pinned JDT-LS 1.61.0 archive over stdio. It verified exact revision binding,
+  fresh CodeGraph initialization/rebuild/status, JDT-LS readiness, migration
+  rollback/reapply, atomic zero-mutation failures, restart replay, and closed
+  reorder conflicts.
+- No test or production path changed. The existing project PostgreSQL container
+  was not used or altered. Durable evidence is recorded in
+  `e2e/e2e-01.md`.

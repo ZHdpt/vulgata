@@ -76,7 +76,7 @@
     }
   ],
   "coverage_override": null,
-  "rationale": "API, multi-module persistence, EF migration, and data-lifecycle predicates are triggered. Existing tests are comprehensive, but required E2E execution will establish their combined result at the accepted current boundary rather than claiming a pre-execution coverage override.",
+  "rationale": "API, multi-module persistence, EF migration, and data-lifecycle predicates are triggered. Required E2E execution passed all 53 accepted existing integration tests across API composition, PostgreSQL migration and atomic replay, release behavior, and the real Windows-host toolchain.",
   "covering_tests": [
     "Vulgata.Tests.PreparedScanning.PreparedScanApiTests",
     "Vulgata.Tests.PreparedScanning.PreparedScanAtomicPostgreSqlTests",
@@ -106,7 +106,8 @@
       "tests/Vulgata.Tests/PreparedScanning"
     ]
   },
-  "result": "pending",
-  "evidence_ids": ["convergence-09", "quality-review-04"],
-  "decided_at": "2026-08-21T04:28:20Z"
+  "result": "passed",
+  "evidence_ids": ["convergence-09", "quality-review-04", "e2e-01"],
+  "decided_at": "2026-08-21T04:28:20Z",
+  "completed_at": "2026-08-21T04:40:35Z"
 }
