@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 5,
+    "converge": 6,
     "quality-review": 1
   },
   "approvals": [
@@ -86,9 +86,9 @@
   ],
   "convergence": {
     "status": "accepted",
-    "attempt": 5,
+    "attempt": 6,
     "outcome": "converged",
-    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md"
+    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-06.md"
   },
   "e2e": {
     "result": "pending",
@@ -105,19 +105,19 @@
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-05.md",
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-06.md",
     "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-quality-correction-20260821T024906Z-qr001",
-    "stage": "implement",
+    "checkpoint_id": "bmad-12-2-converge-20260821T025540Z-qr001",
+    "stage": "converge",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "converge",
-    "reason": "QR-001 durable typed-proof and complete manifest reconstruction is independently GREEN on PostgreSQL 17; bind the correction checkpoint and rerun convergence before quality review.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
+    "stage": "quality-review",
+    "reason": "Convergence attempt 6 is clean after QR-001; bind the corrected converged candidate and dispatch fresh independent quality review.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-06.md"
   },
-  "updated_at": "2026-08-21T02:49:06Z"
+  "updated_at": "2026-08-21T02:55:40Z"
 }
