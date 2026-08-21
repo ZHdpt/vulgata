@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/011-java-xml-prescan-manifest/tasks.md",
-      "sha256": "7da2328fa6886a31953ee73c48bff64aab21e48892ae98bd3a126f28fd31587f"
+      "sha256": "aab3144ff425d56fa2e4509afde51e6b0c120e5c953d1cb218e87c56c6cecb12"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 6,
+    "converge": 7,
     "quality-review": 2
   },
   "approvals": [
@@ -85,10 +85,10 @@
     }
   ],
   "convergence": {
-    "status": "accepted",
-    "attempt": 6,
-    "outcome": "converged",
-    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-06.md"
+    "status": "revised",
+    "attempt": 7,
+    "outcome": "tasks_appended",
+    "report_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-07.md"
   },
   "e2e": {
     "result": "pending",
@@ -105,19 +105,19 @@
     "specs/011-java-xml-prescan-manifest/decisions/implementation-approval-01.md",
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
-    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-06.md",
+    "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-07.md",
     "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-02.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-quality-correction-20260821T031759Z-qr2001",
+    "checkpoint_id": "bmad-12-2-convergence-correction-20260821T033342Z-t060",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "converge",
-    "reason": "QR2-001 normative classification replay ordering is independently GREEN on PostgreSQL 17; bind the correction checkpoint and rerun convergence before quality review.",
+    "reason": "T060 shared Core classification ordering and pre-persistence rejection are independently GREEN on PostgreSQL 17; bind the correction checkpoint and rerun convergence.",
     "evidence_path": "specs/011-java-xml-prescan-manifest/implementation-evidence.md"
   },
-  "updated_at": "2026-08-21T03:17:59Z"
+  "updated_at": "2026-08-21T03:33:42Z"
 }

@@ -288,6 +288,32 @@ public sealed record PreparedManifestFingerprintBinding(Guid RepositoryId, strin
 /// </summary>
 public static class PreparedScanIdentityBuilders
 {
+    public static CommunicationKindClassification[] OrderCommunicationClassifications(
+        IEnumerable<CommunicationKindClassification> classifications)
+    {
+        ArgumentNullException.ThrowIfNull(classifications);
+        return classifications
+            .OrderBy(classification => classification.Level switch
+            {
+                ClassificationLevel.Confirmed => 0,
+                ClassificationLevel.Hint => 1,
+                ClassificationLevel.Warning => 2,
+                _ => throw new ArgumentOutOfRangeException(nameof(classifications)),
+            })
+            .ThenBy(classification => classification.Kind switch
+            {
+                CommunicationKind.Rpc => 0,
+                CommunicationKind.Http => 1,
+                null => 255,
+                _ => throw new ArgumentOutOfRangeException(nameof(classifications)),
+            })
+            .ThenBy(classification => classification.Rule.ToString(), StringComparer.Ordinal)
+            .ThenBy(classification => classification.RelativePath, StringComparer.Ordinal)
+            .ThenBy(classification => classification.Locator, StringComparer.Ordinal)
+            .ThenBy(classification => classification.Fingerprint, StringComparer.Ordinal)
+            .ToArray();
+    }
+
     public static PreparedCanonicalArtifact Create(
         string domain,
         IEnumerable<CanonicalField> fields) => CreateArtifact(domain, fields);
@@ -519,6 +545,8 @@ public static class PreparedScanIdentityBuilders
             .OrderBy(unit => unit.ManifestOrdinal)
             .ToArray();
         PreparedScanAuditDraft[] audits = package.Audits.OrderBy(audit => audit.Ordinal).ToArray();
+        CommunicationKindClassification[] classifications =
+            OrderCommunicationClassifications(package.Classifications);
         int eligible = audits.Count(audit => audit.Outcome is PreparedScanAuditOutcome.Eligible or PreparedScanAuditOutcome.Selected);
         int filtered = audits.Count(audit => audit.Outcome == PreparedScanAuditOutcome.Filtered);
         int skipped = audits.Count(audit => audit.Outcome == PreparedScanAuditOutcome.Skipped);
@@ -548,7 +576,7 @@ public static class PreparedScanIdentityBuilders
                 Field(18, CanonicalEnvelope.UInt64((ulong)skipped)),
                 Field(19, CanonicalEnvelope.UInt64((ulong)entries.Length)),
                 Field(20, CanonicalEnvelope.UInt64((ulong)classificationTotal)),
-                Field(21, CanonicalEnvelope.UInt64((ulong)package.Classifications.Count)),
+                Field(21, CanonicalEnvelope.UInt64((ulong)classifications.Length)),
                 Field(22, CanonicalEnvelope.Boolean(package.EvidenceTruncated)),
                 Field(23, Hash(pairSelectionFingerprint)),
                 Field(24, CanonicalEnvelope.List(entries.Select(unit => CanonicalEnvelope.Object(
@@ -565,7 +593,7 @@ public static class PreparedScanIdentityBuilders
                     Field(1, CanonicalEnvelope.UInt64((ulong)audit.Ordinal)),
                     Field(2, Hash(audit.DetailFingerprint)),
                 ])))),
-                Field(26, CanonicalEnvelope.List(package.Classifications.Select(
+                Field(26, CanonicalEnvelope.List(classifications.Select(
                     classification => Hash(classification.Fingerprint)))),
                 Field(27, CanonicalEnvelope.Enum("Approved")),
             ]);

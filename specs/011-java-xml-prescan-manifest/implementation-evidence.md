@@ -368,3 +368,23 @@ Document generation are absent.
   replay 5/5, classification contracts 4/4, and migration lifecycle 2/2.
 - Infrastructure and Web built with zero errors and only existing warnings;
   `git diff --check` passed. No schema or migration change was required.
+
+## Convergence correction: T060
+
+- Convergence iteration 7 found that manifest tag 26 still consumed caller
+  classification order directly and initial package validation did not reject a
+  noncanonical sequence. A reversed two-classification package recomputed valid
+  manifest and pair fingerprints, then returned `Committed` instead of the
+  required pre-persistence `Conflict`.
+- Core now owns `OrderCommunicationClassifications`, the single typed normative
+  comparator. Manifest tag 26 normalizes through it; detector retention,
+  initial package validation, durable reload, and replay equality consume the
+  same authority. Initial validation requires the supplied sequence itself to
+  be canonical before any DbContext query or mutation.
+- The unchanged T060 regression passed 1/1 on PostgreSQL 17.10 and proved zero
+  prepared manifests, entries, File Code Units, audits, context snapshots, or
+  prepared results. Full PostgreSQL atomic tests passed 30/30, QR-001 tamper
+  tests 7/7, QR2 restart replay 1/1, SQLite replay 5/5, duration-only replay
+  1/1, and classification contracts 4/4.
+- Core, Infrastructure, and Web built with zero errors; Core retained no EF or
+  Infrastructure dependency, and `git diff --check` passed.

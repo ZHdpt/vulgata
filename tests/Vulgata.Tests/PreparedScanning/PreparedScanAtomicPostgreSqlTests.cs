@@ -419,6 +419,54 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public async Task PostgreSql17_NoncanonicalClassificationOrderConflictsBeforeFirstCommitAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanPairPackage canonical = AddTwoCanonicalClassifications(fixture.Package);
+        PreparedRepositoryPackage canonicalFirst = canonical.Repositories[0];
+        string[] normativeOrder = canonicalFirst.Classifications
+            .Select(classification => classification.Fingerprint)
+            .ToArray();
+        CommunicationKindClassification[] reversed = canonicalFirst.Classifications
+            .Reverse()
+            .ToArray();
+        string[] suppliedOrder = reversed.Select(classification => classification.Fingerprint).ToArray();
+        Assert.False(normativeOrder.SequenceEqual(suppliedOrder));
+
+        PreparedRepositoryPackage noncanonicalFirst = canonicalFirst with
+        {
+            Classifications = reversed,
+        };
+        PreparedCanonicalArtifact manifest = PreparedScanIdentityBuilders.CreateManifest(
+            noncanonicalFirst, canonical.PairSelectionFingerprint);
+        noncanonicalFirst = noncanonicalFirst with { ManifestFingerprint = manifest.Fingerprint };
+        PreparedRepositoryPackage[] repositories = [noncanonicalFirst, canonical.Repositories[1]];
+        PreparedCanonicalArtifact pair = PreparedScanIdentityBuilders.CreatePairPackage(
+            canonical.CoordinationId,
+            canonical.PairSelectionFingerprint,
+            repositories.Select(repository => new PreparedManifestFingerprintBinding(
+                repository.RepositoryId, repository.ManifestFingerprint)),
+            canonical.SelectedCount);
+        PreparedScanPairPackage selfConsistentNoncanonical = canonical with
+        {
+            Repositories = repositories,
+            PairPackageFingerprint = pair.Fingerprint,
+        };
+
+        Assert.Equal(manifest.Fingerprint, selfConsistentNoncanonical.Repositories[0].ManifestFingerprint);
+        Assert.Equal(pair.Fingerprint, selfConsistentNoncanonical.PairPackageFingerprint);
+        output.WriteLine("Normative classification order: {0}", string.Join(", ", normativeOrder));
+        output.WriteLine("Supplied noncanonical order: {0}", string.Join(", ", suppliedOrder));
+
+        PreparedScanCommitResult result = await PreparedScanPostgreSqlFixture.CreateStore(fixture.Context)
+            .CommitPairAsync(fixture.Authorization, selfConsistentNoncanonical, 0, CancellationToken.None);
+
+        output.WriteLine("Noncanonical first-commit outcome: {0}", result.Outcome);
+        Assert.Equal(PreparedScanCommitOutcome.Conflict, result.Outcome);
+        Assert.Equal(DurableCounts.PrincipalOnly, await ReadCountsAsync(fixture.ConnectionString));
+    }
+
+    [Fact]
     public async Task PostgreSql17_DigestAndCodeUnitFingerprintTamperingCannotReplayAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();

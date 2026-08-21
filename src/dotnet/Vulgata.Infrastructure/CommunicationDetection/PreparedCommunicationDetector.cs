@@ -66,7 +66,8 @@ public static class PreparedCommunicationDetector
             .ThenBy(observation => observation.CatalogRuleIdentity, StringComparer.Ordinal)
             .ToArray();
 
-        List<CommunicationKindClassification> complete = OrderCanonical(orderedObservations
+        List<CommunicationKindClassification> complete = PreparedScanIdentityBuilders
+            .OrderCommunicationClassifications(orderedObservations
             .GroupBy(static observation => observation)
             .Select(group => CreateClassification(preScanResultId, group.Key, group.Count())))
             .ToList();
@@ -99,20 +100,6 @@ public static class PreparedCommunicationDetector
             warnings,
             retained.Count,
             truncated);
-    }
-
-    internal static CommunicationKindClassification[] OrderCanonical(
-        IEnumerable<CommunicationKindClassification> classifications)
-    {
-        ArgumentNullException.ThrowIfNull(classifications);
-        return classifications
-            .OrderBy(classification => LevelRank(classification.Level))
-            .ThenBy(classification => KindRank(classification.Kind))
-            .ThenBy(classification => classification.Rule.ToString(), StringComparer.Ordinal)
-            .ThenBy(classification => classification.RelativePath, StringComparer.Ordinal)
-            .ThenBy(classification => classification.Locator, StringComparer.Ordinal)
-            .ThenBy(classification => classification.Fingerprint, StringComparer.Ordinal)
-            .ToArray();
     }
 
     private static CommunicationKindClassification CreateClassification(

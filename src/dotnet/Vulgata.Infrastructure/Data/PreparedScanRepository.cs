@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
-using Vulgata.Infrastructure.CommunicationDetection;
 
 namespace Vulgata.Infrastructure.Data;
 
@@ -103,7 +102,8 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
                 .CommunicationKindClassifications.AsNoTracking()
                 .Where(value => value.PreScanResultId == package.ScanRunId)
                 .ToArrayAsync(cancellationToken);
-            classifications = PreparedCommunicationDetector.OrderCanonical(classifications);
+            classifications = PreparedScanIdentityBuilders
+                .OrderCommunicationClassifications(classifications);
             if (!ClassificationsMatch(classifications, package.Classifications))
             {
                 return PreparedScanCommitOutcome.Conflict;
@@ -321,6 +321,14 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
 
             foreach (PreparedRepositoryPackage package in pair.Repositories)
             {
+                CommunicationKindClassification[] orderedClassifications =
+                    PreparedScanIdentityBuilders.OrderCommunicationClassifications(package.Classifications);
+                if (!package.Classifications.Select(value => value.Fingerprint).SequenceEqual(
+                    orderedClassifications.Select(value => value.Fingerprint), StringComparer.Ordinal))
+                {
+                    return false;
+                }
+
                 string graph = PreparedScanIdentityBuilders.CreateCodeGraphProof(package.CodeGraphProof).Fingerprint;
                 string java = PreparedScanIdentityBuilders.CreateJavaReadiness(package.JavaReadiness).Fingerprint;
                 if (!StringComparer.Ordinal.Equals(graph, package.CodeGraphProof.IdentityHash) ||
@@ -638,9 +646,9 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
         }
 
         CommunicationKindClassification[] orderedStored =
-            PreparedCommunicationDetector.OrderCanonical(stored);
+            PreparedScanIdentityBuilders.OrderCommunicationClassifications(stored);
         CommunicationKindClassification[] orderedSupplied =
-            PreparedCommunicationDetector.OrderCanonical(supplied);
+            PreparedScanIdentityBuilders.OrderCommunicationClassifications(supplied);
         bool suppliedIsCanonical = supplied
             .Select(value => value.Fingerprint)
             .SequenceEqual(orderedSupplied.Select(value => value.Fingerprint), StringComparer.Ordinal);
