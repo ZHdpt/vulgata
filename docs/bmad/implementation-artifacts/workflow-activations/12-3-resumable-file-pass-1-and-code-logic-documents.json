@@ -1,0 +1,38 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
+  "bmad_epic_key": "12",
+  "story_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
+  "proposed_feature_short_name": "resumable-file-pass1-code-logic",
+  "stage": "specify",
+  "source_commit": "433834aca53fae868812685a85a9c3c830824025",
+  "preflight": {
+    "branch": "demo0831/story-12-3",
+    "head": "433834aca53fae868812685a85a9c3c830824025",
+    "repository_root": "G:/source/repos/vulgata",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "G:/source/repos/vulgata",
+    "git_identity_sha256": "20f31a1f46e44f2705ce94fa2038563aac4856da9303fa00020ac5cf08a12f60",
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-21T07:03:08Z"
+  },
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "docs/bmad/implementation-artifacts/workflow-activations/12-3-resumable-file-pass-1-and-code-logic-documents.json"
+  ],
+  "unrelated_paths": [],
+  "checkpoint": {
+    "checkpoint_id": "bmad-12-3-context-20260821T070729Z-cbae18",
+    "stage": "context",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "feature_directory": null,
+  "superseded_by_state": null,
+  "resume": {
+    "stage": "specify",
+    "reason": "Context synthesis is READY_FOR_SPEC; dispatch the specification author."
+  },
+  "updated_at": "2026-08-21T07:07:29Z"
+}
