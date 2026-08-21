@@ -37,15 +37,15 @@
       "verdict_path": "specs/011-java-xml-prescan-manifest/reviews/definition-review/definition-review-05.json"
     },
     "quality-review": {
-      "status": "revised",
-      "attempt": 3,
-      "verdict_path": "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-03.json"
+      "status": "accepted",
+      "attempt": 4,
+      "verdict_path": "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-04.json"
     }
   },
   "attempts": {
     "definition-review": 0,
     "converge": 9,
-    "quality-review": 3
+    "quality-review": 4
   },
   "approvals": [
     {
@@ -106,18 +106,18 @@
     "specs/011-java-xml-prescan-manifest/implementation-evidence.md",
     "tests/Vulgata.Tests/PreparedScanning/PreparedScanVerificationChecklist.md",
     "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-09.md",
-    "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-03.json"
+    "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-04.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-2-converge-20260821T041357Z-qr3-001",
-    "stage": "converge",
+    "checkpoint_id": "bmad-12-2-quality-review-20260821T042624Z-accept-04",
+    "stage": "quality-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "quality-review",
-    "reason": "Convergence attempt 9 is clean after QR3-001. Bind the converged candidate and dispatch fresh quality-review attempt 4.",
-    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/convergence/convergence-09.md"
+    "stage": "conditional-e2e",
+    "reason": "Quality review attempt 4 ACCEPTED with no findings. Bind the accepted candidate, apply the E2E decision matrix, then run final pinned verification.",
+    "evidence_path": "specs/011-java-xml-prescan-manifest/reviews/quality-review/quality-review-04.json"
   },
-  "updated_at": "2026-08-21T04:13:57Z"
+  "updated_at": "2026-08-21T04:26:24Z"
 }
