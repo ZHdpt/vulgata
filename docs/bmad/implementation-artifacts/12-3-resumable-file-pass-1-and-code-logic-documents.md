@@ -328,6 +328,26 @@ state atoms and document schema v1 remain supported alongside the additive v2
 contract. Checkpoint `bmad-12-3-implement-20260821T115533Z-73963f` hands off
 to US1 tasks T009-T016.
 
+### Implementation checkpoint: T009-T016
+
+US1 now consumes exactly two approved Prepared Scan Manifests, creates the
+complete deterministic pair-wide job and navigation-budget set atomically,
+claims by canonical Pair Selection Ordinal under one shared limit, preserves
+Repository-local Manifest Ordinal display, and supports authorized versioned
+concurrency changes. The additive prepared dispatcher emits one server-owned
+packet per prepared File Code Unit from the embedded v2 prompt and does not
+enumerate or schedule navigation. The RED seams first observed the missing
+store, claim/update, dispatcher, and PostgreSQL race behavior. Root verification
+then passed 71/71 tests, including 11 strict PostgreSQL 17 start/claim cases,
+four pair-start cases, eleven concurrency/order cases, four prepared-dispatcher
+cases, and legacy-adjacent dispatcher coverage. The real claim-race correction
+materializes the pair `FOR UPDATE` lock, reads post-lock committed queue state
+under `READ COMMITTED`, clears stale tracking, and uses durable prepared time
+for Start audit/lease ordering. Builds completed with zero errors and
+`git diff --check` is clean. Checkpoint
+`bmad-12-3-implement-20260821T124742Z-7c1a2e` hands off to bounded
+`navigate_code` tasks T017-T023.
+
 ### Authorized task correction after definition review iteration 4
 
 The task owner closed `DR4-001` within the approved scope. Host-runtime,
