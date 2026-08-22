@@ -60,7 +60,11 @@ public sealed class Pass1ProductionProviderOutageTests
         Pass1ExecutionStartResponse started =
             (await start.Content.ReadFromJsonAsync<Pass1ExecutionStartResponse>())!;
 
-        DateTime deadline = DateTime.UtcNow.AddSeconds(30);
+        // Keep the production recovery schedule intact: 10s + 30s + 60s +
+        // 120s + 300s, plus transport/jitter overhead.  This conditional
+        // qualification timeout is deliberately longer than that schedule;
+        // it does not replace or shorten any production recovery window.
+        DateTime deadline = DateTime.UtcNow.AddSeconds(540);
         Pass1ExecutionStatusResponse? status = null;
         while (DateTime.UtcNow < deadline)
         {

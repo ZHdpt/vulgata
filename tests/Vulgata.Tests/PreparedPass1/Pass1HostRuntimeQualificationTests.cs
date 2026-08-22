@@ -3,7 +3,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Shared.Scans;
 using Vulgata.Tests.PreparedScanning;
@@ -26,6 +28,24 @@ public sealed class Pass1HostRuntimeQualificationTests
         "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877";
     private const string JdtLsArchiveHash =
         "bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f";
+
+    [T062HostQualificationFact]
+    public async Task ProductionComposition_RequiresBoundRevisionSourceBeforeClaimedNavigation()
+    {
+        T062QualificationInputs qualification =
+            await Pass1ProductionExecutionTests.LoadQualificationInputsAsync();
+        using var host = Pass1ProductionExecutionTests.CreateProductionHost(
+            qualification.ConnectionString);
+        using IServiceScope scope = host.Services.CreateScope();
+        IRevisionBoundSourceReader sourceReader =
+            scope.ServiceProvider.GetRequiredService<IRevisionBoundSourceReader>();
+
+        Assert.False(
+            sourceReader.GetType().Name.Contains("Unbound", StringComparison.Ordinal),
+            "T062 RED: production host still registers UnboundRevisionSourceReader; " +
+            "claimed source hydration and typed navigation cannot establish the exact " +
+            "approved Profiled Revision binding.");
+    }
 
     [T062HostQualificationFact]
     public async Task PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution()
