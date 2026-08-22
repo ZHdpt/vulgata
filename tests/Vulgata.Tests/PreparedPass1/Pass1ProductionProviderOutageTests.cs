@@ -33,20 +33,17 @@ public sealed class Pass1ProductionProviderOutageTests
     private const string ProbeDriverTypeName =
         "Vulgata.Web.Data.PreparedPass1ProbeDriver";
 
-    [Fact]
+    [T062HostQualificationFact]
     public async Task AuthenticatedRealPair_ProviderUnavailable_PausesDurablyAndStopsNewDispatch()
     {
-        await using PreparedScanPostgreSqlFixture fixture =
-            await Pass1ProductionExecutionTests.PreparePairAsync();
+        T062QualificationInputs qualification =
+            await Pass1ProductionExecutionTests.LoadQualificationInputsAsync();
         using var host = Pass1ProductionExecutionTests.CreateProductionHost(
-            fixture.ConnectionString);
-        await ConfigureUnavailableWorkerProviderAsync(host);
+            qualification.ConnectionString);
+        await ConfigureUnavailableWorkerProviderAsync(host, qualification.SystemId);
         using HttpClient client = await Pass1ProductionExecutionTests
-            .CreateAuthenticatedClientAsync(host, fixture);
-        Guid[] manifests = await fixture.Context.PreparedScanManifests
-            .OrderBy(value => value.RepositoryId)
-            .Select(value => value.Id)
-            .ToArrayAsync();
+            .CreateAuthenticatedClientAsync(host, qualification.SystemId);
+        Guid[] manifests = qualification.ManifestIds.ToArray();
 
         using HttpResponseMessage start = await client.PostAsJsonAsync(
             "/api/pass1-executions",
@@ -88,7 +85,8 @@ public sealed class Pass1ProductionProviderOutageTests
     }
 
     private static async Task ConfigureUnavailableWorkerProviderAsync(
-        WebApplicationFactory<Program> host)
+        WebApplicationFactory<Program> host,
+        Guid systemId)
     {
         await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
         VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
@@ -97,13 +95,29 @@ public sealed class Pass1ProductionProviderOutageTests
         string encryptedApiKey = await encryption.EncryptAsync(
             SecretPurposes.LlmApiKey,
             "t062-provider-outage-key");
-        context.LlmProviders.Add(new LlmProvider(
+        LlmProvider provider = new(
             "t062-provider-outage",
             "http://127.0.0.1:1",
             encryptedApiKey,
             ApiType.ChatCompletions,
             AgentType.Worker,
-            PreparedScanTestHost.FixedUtcNow));
+            DateTimeOffset.UtcNow);
+        context.LlmProviders.Add(provider);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        SystemLlmProviderOverride? providerOverride = await context.SystemLlmProviderOverrides
+            .SingleOrDefaultAsync(value => value.SystemId == systemId && value.AgentType == AgentType.Worker);
+        if (providerOverride is null)
+        {
+            context.SystemLlmProviderOverrides.Add(SystemLlmProviderOverride.Create(
+                systemId,
+                provider.Id,
+                AgentType.Worker,
+                now));
+        }
+        else
+        {
+            providerOverride.Update(provider.Id, AgentType.Worker, now);
+        }
         await context.SaveChangesAsync();
     }
 

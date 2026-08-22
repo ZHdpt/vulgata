@@ -27,19 +27,16 @@ public sealed class Pass1HostRuntimeQualificationTests
     private const string JdtLsArchiveHash =
         "bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f";
 
-    [Fact]
+    [T062HostQualificationFact]
     public async Task PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution()
     {
-        await using PreparedScanPostgreSqlFixture fixture =
-            await Pass1ProductionExecutionTests.PreparePairAsync();
+        T062QualificationInputs qualification =
+            await Pass1ProductionExecutionTests.LoadQualificationInputsAsync();
         using var host = Pass1ProductionExecutionTests.CreateProductionHost(
-            fixture.ConnectionString);
+            qualification.ConnectionString);
         using HttpClient client = await Pass1ProductionExecutionTests
-            .CreateAuthenticatedClientAsync(host, fixture);
-        Guid[] manifests = await fixture.Context.PreparedScanManifests
-            .OrderBy(value => value.RepositoryId)
-            .Select(value => value.Id)
-            .ToArrayAsync();
+            .CreateAuthenticatedClientAsync(host, qualification.SystemId);
+        Guid[] manifests = qualification.ManifestIds.ToArray();
 
         using HttpResponseMessage response = await client.PostAsJsonAsync(
             "/api/pass1-executions",

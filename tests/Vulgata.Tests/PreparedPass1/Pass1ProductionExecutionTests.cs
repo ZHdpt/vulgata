@@ -31,7 +31,7 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1ProductionExecutionTests
 {
-    [Theory]
+    [T062HostQualificationTheory]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
@@ -39,15 +39,19 @@ public sealed class Pass1ProductionExecutionTests
     public async Task AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence(
         int concurrencyLimit)
     {
-        await using PreparedScanPostgreSqlFixture fixture = await PreparePairAsync();
+        RequireRealHostQualificationPrerequisites();
+        T062QualificationInputs qualification = await LoadQualificationInputsAsync();
         using WebApplicationFactory<Program> host = CreateProductionHost(
-            fixture.ConnectionString);
-        using HttpClient client = await CreateAuthenticatedClientAsync(host, fixture);
+            qualification.ConnectionString);
+        await ConfigureWorkerProviderAsync(
+            host,
+            qualification.SystemId,
+            qualification.ProviderEndpoint);
+        using HttpClient client = await CreateAuthenticatedClientAsync(
+            host,
+            qualification.SystemId);
 
-        Guid[] manifestIds = await fixture.Context.PreparedScanManifests
-            .OrderBy(value => value.RepositoryId)
-            .Select(value => value.Id)
-            .ToArrayAsync();
+        Guid[] manifestIds = qualification.ManifestIds.ToArray();
         Assert.Equal(2, manifestIds.Length);
 
         using HttpResponseMessage start = await client.PostAsJsonAsync(
@@ -81,7 +85,7 @@ public sealed class Pass1ProductionExecutionTests
         Assert.Equal(0, terminal.FailedCount);
 
         await using VulgataDbContext verification =
-            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+            PreparedScanPostgreSqlFixture.CreateContext(qualification.ConnectionString);
         Pass1PairExecution pair = await verification.Pass1PairExecutions
             .AsNoTracking()
             .SingleAsync(value => value.Id == started.Pass1ExecutionId);
@@ -176,36 +180,217 @@ public sealed class Pass1ProductionExecutionTests
         Assert.Equal(fingerprints, replayFingerprints);
     }
 
-    internal static async Task<PreparedScanPostgreSqlFixture> PreparePairAsync()
+    internal static async Task<T062QualificationInputs> LoadQualificationInputsAsync()
     {
-        string administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN")
-            ?? throw new InvalidOperationException(
-                "T062 requires VULGATA_TEST_POSTGRES_ADMIN for PostgreSQL 17.");
-        PreparedScanPostgreSqlFixture fixture =
-            await PreparedScanPostgreSqlFixture.CreateAsync(administrator);
+        RequireRealHostQualificationPrerequisites();
+        string connectionString = Environment.GetEnvironmentVariable(
+            "VULGATA_T062_QUALIFICATION_CONNECTION")!;
+        Guid systemId = ParseRequiredGuid("VULGATA_T062_SYSTEM_ID");
+        Guid[] manifestIds =
+        [
+            ParseRequiredGuid("VULGATA_T062_MANIFEST_ONE_ID"),
+            ParseRequiredGuid("VULGATA_T062_MANIFEST_TWO_ID"),
+        ];
+        string[] roots =
+        [
+            Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_ONE_ROOT")!,
+            Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_TWO_ROOT")!,
+        ];
+        Uri providerEndpoint = new(
+            Environment.GetEnvironmentVariable("VULGATA_T062_WORKER_PROVIDER_ENDPOINT")!);
 
-        // The fixture seeds the accepted Story 12.2 rows through the older
-        // ScanExecution.Start constructor. Bind the execution-only runtime
-        // fields before the atomic pair commit, preserving the approved
-        // PreScanResult IDs and every committed manifest/context fingerprint.
-        const string schema = "code-logic/file-v2";
-        const string runtime = "{\"runtime\":\"story-12-3-production\"}";
-        string runtimeHash = Convert.ToHexStringLower(
-            System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(runtime)));
-        await fixture.Context.ScanExecutions.ExecuteUpdateAsync(setters => setters
-            .SetProperty(execution => execution.Phase, ScanExecutionPhase.Prepared)
-            .SetProperty(execution => execution.PromptIdentity, "story-12-3-production-prompt")
-            .SetProperty(execution => execution.DocumentSchemaIdentity, schema)
-            .SetProperty(execution => execution.AnalysisRuntimeIdentityJson, runtime)
-            .SetProperty(execution => execution.AnalysisRuntimeIdentityHash, runtimeHash)
-            .SetProperty(execution => execution.UpdatedAt, PreparedScanTestHost.FixedUtcNow));
+        await using VulgataDbContext context =
+            PreparedScanPostgreSqlFixture.CreateContext(connectionString);
+        PreparedScanManifest[] manifests = await context.PreparedScanManifests
+            .Where(manifest => manifestIds.Contains(manifest.Id))
+            .Include(manifest => manifest.Entries)
+            .ThenInclude(entry => entry.FileCodeUnit)
+            .AsNoTracking()
+            .ToArrayAsync();
+        Assert.Equal(2, manifests.Length);
+        Assert.Equal(2, manifests.Select(manifest => manifest.RepositoryId).Distinct().Count());
+        Assert.All(manifests, manifest =>
+        {
+            Assert.Equal(PreparedScanManifestApprovalState.Approved, manifest.ApprovalState);
+            Assert.Equal(PreparedScanManifest.CurrentSchemaIdentity, manifest.SchemaIdentity);
+            Assert.True(manifest.SelectedCount >= 25);
+        });
 
-        PreparedScanCommitResult committed = await PreparedScanPostgreSqlFixture
-            .CreateStore(fixture.Context)
-            .CommitPairAsync(fixture.Authorization, fixture.Package, 0, CancellationToken.None);
-        Assert.Equal(PreparedScanCommitOutcome.Committed, committed.Outcome);
+        PreparedScanManifest[] orderedManifests = manifests
+            .OrderBy(manifest => manifest.RepositoryId)
+            .ToArray();
+        string profiledRevision = orderedManifests[0].ProfiledRevision;
+        Assert.All(orderedManifests, manifest => Assert.Equal(profiledRevision, manifest.ProfiledRevision));
+        int exactJavaXmlCount = 0;
+        foreach ((PreparedScanManifest manifest, string root) in orderedManifests.Zip(roots))
+        {
+            foreach (PreparedScanManifestEntry entry in manifest.Entries)
+            {
+                CodeUnit unit = entry.FileCodeUnit
+                    ?? throw new Xunit.Sdk.XunitException("T062 manifest entry has no File Code Unit.");
+                string fullPath = Path.Combine(root, unit.FilePath.Replace('/', Path.DirectorySeparatorChar));
+                Assert.True(File.Exists(fullPath), $"T062 source byte prerequisite missing: {fullPath}");
+                byte[] bytes = await File.ReadAllBytesAsync(fullPath);
+                string sourceHash = Convert.ToHexStringLower(
+                    System.Security.Cryptography.SHA256.HashData(bytes));
+                Assert.Equal(sourceHash, unit.SourceHash);
+                Assert.Equal(sourceHash, unit.FileHash);
+                if (unit.FilePath.EndsWith(".java", StringComparison.OrdinalIgnoreCase) ||
+                    unit.FilePath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+                {
+                    exactJavaXmlCount++;
+                }
+            }
+        }
 
-        return fixture;
+        Assert.True(exactJavaXmlCount >= 2, "T062 requires exact Java and XML source evidence in the approved pair.");
+        return new(connectionString, systemId, manifestIds, profiledRevision, roots, providerEndpoint);
+    }
+
+    private static Guid ParseRequiredGuid(string variableName) =>
+        Guid.TryParse(Environment.GetEnvironmentVariable(variableName), out Guid value) && value != Guid.Empty
+            ? value
+            : throw new Xunit.Sdk.XunitException($"T062 requires a non-empty {variableName}.");
+
+    internal static async Task ConfigureWorkerProviderAsync(
+        WebApplicationFactory<Program> host,
+        Guid systemId,
+        Uri endpoint)
+    {
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+        VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+        ISecretEncryptionService encryption =
+            scope.ServiceProvider.GetRequiredService<ISecretEncryptionService>();
+        string apiKey = Environment.GetEnvironmentVariable("VULGATA_T062_WORKER_PROVIDER_API_KEY")
+            ?? throw new Xunit.Sdk.XunitException(
+                "T062 requires VULGATA_T062_WORKER_PROVIDER_API_KEY for the controlled Worker provider.");
+        string encryptedApiKey = await encryption.EncryptAsync(SecretPurposes.LlmApiKey, apiKey);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        LlmProvider? provider = await context.LlmProviders
+            .SingleOrDefaultAsync(value => value.Name == "t062-worker-provider");
+        if (provider is null)
+        {
+            provider = new LlmProvider(
+                "t062-worker-provider",
+                endpoint.ToString(),
+                encryptedApiKey,
+                ApiType.ChatCompletions,
+                AgentType.Worker,
+                now);
+            context.LlmProviders.Add(provider);
+        }
+        else
+        {
+            provider.UpdateDetails(
+                "t062-worker-provider",
+                endpoint.ToString(),
+                encryptedApiKey,
+                ApiType.ChatCompletions,
+                AgentType.Worker,
+                now);
+        }
+
+        SystemLlmProviderOverride? providerOverride = await context.SystemLlmProviderOverrides
+            .SingleOrDefaultAsync(value => value.SystemId == systemId && value.AgentType == AgentType.Worker);
+        if (providerOverride is null)
+        {
+            context.SystemLlmProviderOverrides.Add(
+                SystemLlmProviderOverride.Create(systemId, provider.Id, AgentType.Worker, now));
+        }
+        else
+        {
+            providerOverride.Update(provider.Id, AgentType.Worker, now);
+        }
+        await context.SaveChangesAsync();
+    }
+
+    internal static void RequireRealHostQualificationPrerequisites()
+    {
+        string? reason = HostQualificationSkipReason();
+        if (reason is not null)
+        {
+            SkipQualification(reason);
+        }
+
+        string firstRoot = Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_ONE_ROOT")!;
+        string secondRoot = Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_TWO_ROOT")!;
+        foreach (string root in new[] { firstRoot!, secondRoot! })
+        {
+            if (!Directory.Exists(root))
+            {
+                SkipQualification($"T062 host qualification skipped: source root is unavailable: {root}.");
+            }
+
+            string[] files = Directory.GetFiles(root, "*.*", SearchOption.AllDirectories);
+            if (files.Count(file => file.EndsWith(".java", StringComparison.OrdinalIgnoreCase)) == 0 ||
+                files.Count(file => file.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)) == 0)
+            {
+                SkipQualification(
+                    $"T062 host qualification skipped: source root must contain both Java and XML files: {root}.");
+            }
+        }
+    }
+
+    internal static string? HostQualificationSkipReason()
+    {
+        string? qualificationConnection = Environment.GetEnvironmentVariable(
+            "VULGATA_T062_QUALIFICATION_CONNECTION");
+        string? postgresAdmin = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
+        string? systemId = Environment.GetEnvironmentVariable("VULGATA_T062_SYSTEM_ID");
+        string? manifestOneId = Environment.GetEnvironmentVariable("VULGATA_T062_MANIFEST_ONE_ID");
+        string? manifestTwoId = Environment.GetEnvironmentVariable("VULGATA_T062_MANIFEST_TWO_ID");
+        string? firstRoot = Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_ONE_ROOT");
+        string? secondRoot = Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_TWO_ROOT");
+        string? providerEndpoint = Environment.GetEnvironmentVariable("VULGATA_T062_WORKER_PROVIDER_ENDPOINT");
+        string? sourceBinding = Environment.GetEnvironmentVariable("VULGATA_T062_SOURCE_BINDING_READY");
+        if (!string.Equals(
+                Environment.GetEnvironmentVariable("VULGATA_T062_APPROVED_PAIR_REAL"),
+                "1",
+                StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(qualificationConnection) ||
+            string.IsNullOrWhiteSpace(postgresAdmin) ||
+            !Guid.TryParse(systemId, out Guid parsedSystemId) || parsedSystemId == Guid.Empty ||
+            !Guid.TryParse(manifestOneId, out Guid parsedManifestOneId) || parsedManifestOneId == Guid.Empty ||
+            !Guid.TryParse(manifestTwoId, out Guid parsedManifestTwoId) || parsedManifestTwoId == Guid.Empty ||
+            parsedManifestOneId == parsedManifestTwoId ||
+            string.IsNullOrWhiteSpace(firstRoot) || string.IsNullOrWhiteSpace(secondRoot) ||
+            string.IsNullOrWhiteSpace(providerEndpoint) || !string.Equals(sourceBinding, "1", StringComparison.Ordinal) ||
+            !Uri.TryCreate(providerEndpoint, UriKind.Absolute, out Uri? endpoint) ||
+            endpoint.Scheme is not ("http" or "https"))
+        {
+            return
+                "T062 host qualification skipped: set VULGATA_T062_APPROVED_PAIR_REAL=1, " +
+                "VULGATA_T062_QUALIFICATION_CONNECTION, VULGATA_T062_SYSTEM_ID, " +
+                "VULGATA_T062_MANIFEST_ONE_ID, and VULGATA_T062_MANIFEST_TWO_ID, plus " +
+                "VULGATA_T062_REPOSITORY_ONE_ROOT, VULGATA_T062_REPOSITORY_TWO_ROOT, " +
+                "VULGATA_T062_WORKER_PROVIDER_ENDPOINT, and VULGATA_T062_SOURCE_BINDING_READY=1. " +
+                "The roots must be the approved profiled revisions with revision-bound Java/XML " +
+                "bytes; the endpoint must be an explicitly controlled Worker provider. PostgreSQL " +
+                "17 still requires VULGATA_TEST_POSTGRES_ADMIN.";
+        }
+
+        foreach (string root in new[] { firstRoot!, secondRoot! })
+        {
+            if (!Directory.Exists(root))
+            {
+                return $"T062 host qualification skipped: source root is unavailable: {root}.";
+            }
+
+            string[] files = Directory.GetFiles(root, "*.*", SearchOption.AllDirectories);
+            if (files.Count(file => file.EndsWith(".java", StringComparison.OrdinalIgnoreCase)) == 0 ||
+                files.Count(file => file.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)) == 0)
+            {
+                return
+                    $"T062 host qualification skipped: source root must contain both Java and XML files: {root}.";
+            }
+        }
+
+        return null;
+    }
+
+    private static void SkipQualification(string message)
+    {
+        throw Xunit.Sdk.SkipException.ForSkip(message);
     }
 
     internal static WebApplicationFactory<Program> CreateProductionHost(
@@ -268,7 +453,7 @@ public sealed class Pass1ProductionExecutionTests
 
     internal static async Task<HttpClient> CreateAuthenticatedClientAsync(
         WebApplicationFactory<Program> host,
-        PreparedScanPostgreSqlFixture fixture)
+        Guid systemId)
     {
         string email = $"pass1-t062-{Guid.NewGuid():N}@example.com";
         const string password = "Valid1!Pass";
@@ -282,7 +467,7 @@ public sealed class Pass1ProductionExecutionTests
             await users.AddToRoleAsync(user, RoleNames.SystemOwner);
             VulgataDbContext domain = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
             domain.SystemOwnerAssignments.Add(SystemOwnerAssignment.Create(
-                fixture.SystemId, user.Id, PreparedScanTestHost.FixedUtcNow));
+                systemId, user.Id, DateTimeOffset.UtcNow));
             await domain.SaveChangesAsync();
         }
 
@@ -352,4 +537,24 @@ public sealed class Pass1ProductionExecutionTests
             $"last phase={last?.Phase ?? "unavailable"}.");
     }
 
+}
+
+internal sealed record T062QualificationInputs(
+    string ConnectionString,
+    Guid SystemId,
+    IReadOnlyList<Guid> ManifestIds,
+    string ProfiledRevision,
+    IReadOnlyList<string> SourceRoots,
+    Uri ProviderEndpoint);
+
+internal sealed class T062HostQualificationTheoryAttribute : TheoryAttribute
+{
+    public T062HostQualificationTheoryAttribute() => Skip =
+        Pass1ProductionExecutionTests.HostQualificationSkipReason();
+}
+
+internal sealed class T062HostQualificationFactAttribute : FactAttribute
+{
+    public T062HostQualificationFactAttribute() => Skip =
+        Pass1ProductionExecutionTests.HostQualificationSkipReason();
 }
