@@ -3,13 +3,13 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "plan",
+  "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-3",
-    "head": "433834aca53fae868812685a85a9c3c830824025",
-    "git_identity_sha256": "20f31a1f46e44f2705ce94fa2038563aac4856da9303fa00020ac5cf08a12f60",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-21T07:03:08Z"
+    "head": "c13827b1f370fcc62df49da92c7c8d33c4a78112",
+    "git_identity_sha256": "589f779d4a3e5736e6ed024087426a46b7c256adb097986c7501fcf47047419e",
+    "status_sha256": "602cca245539bf71fb0ce3fe3d86f1e963420455ba3fa67fb7d671c55851de06",
+    "observed_at": "2026-08-22T01:46:05Z"
   },
   "artifacts": {
     "spec": {
@@ -18,7 +18,7 @@
     },
     "plan": {
       "path": "specs/012-resumable-file-pass1-code-logic/plan.md",
-      "sha256": "f913da57b120faa9a64e21d380b08159d2bdfcab9b3f5e37e60dfe7cbdca0c41"
+      "sha256": "9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f"
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
@@ -27,9 +27,9 @@
   },
   "gates": {
     "plan-review": {
-      "status": "invalidated",
-      "attempt": 2,
-      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-02.json"
+      "status": "accepted",
+      "attempt": 4,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-04.json"
     },
     "definition-review": {
       "status": "invalidated",
@@ -68,6 +68,13 @@
       "scope_sha256": "4879d08354c64ae796e172e722708b5c76090858518f9f2f7b958f6d082c5359",
       "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md",
       "decided_at": "2026-08-21T11:30:08Z"
+    },
+    {
+      "decision_id": "story-12-3-quality-review-correction-01",
+      "status": "accepted",
+      "scope_sha256": "504940abc9934fa8cc9e1cf6781c8fcc5bfdbc4140e21767bc19881058eaca84",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/quality-review-correction-01.md",
+      "decided_at": "2026-08-22T01:46:05Z"
     }
   ],
   "convergence": {
@@ -81,26 +88,25 @@
     "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
     "specs/012-resumable-file-pass1-code-logic/spec.md",
     "specs/012-resumable-file-pass1-code-logic/plan.md",
-    "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-01.md",
     "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-04.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-02.md",
     "specs/012-resumable-file-pass1-code-logic/decisions/quality-review-correction-01.md",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
-    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-05.json",
-    "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-01.md",
     "artifacts/qualification/story-12.3/host-runtime.md",
     "artifacts/qualification/story-12.3/production-boundary-inspection.json",
     "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-quality-review-20260821T175001Z-c4a91e",
-    "stage": "quality-review",
+    "checkpoint_id": "bmad-12-3-plan-review-20260822T023626Z-a7c4e2",
+    "stage": "plan-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan",
-    "reason": "Quality review attempt 1 found a blocking plan-owned production-composition gap; await explicit correction authorization.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/quality-review-correction-01.md"
+    "stage": "tasks",
+    "reason": "Plan review attempt 4 accepted corrected architecture; await hash-bound planned-change authorization before task regeneration.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-02.md"
   },
-  "updated_at": "2026-08-21T17:50:01Z"
+  "updated_at": "2026-08-22T02:36:26Z"
 }

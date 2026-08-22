@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
   "proposed_feature_short_name": "resumable-file-pass1-code-logic",
-  "stage": "plan",
+  "stage": "plan-review",
   "source_commit": "433834aca53fae868812685a85a9c3c830824025",
   "preflight": {
     "branch": "demo0831/story-12-3",
@@ -23,16 +23,16 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-quality-review-20260821T175001Z-c4a91e",
-    "stage": "quality-review",
+    "checkpoint_id": "bmad-12-3-plan-review-20260822T023626Z-a7c4e2",
+    "stage": "plan-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
-    "stage": "plan",
-    "reason": "Quality review attempt 1 found a blocking plan-owned production-composition gap; await explicit correction authorization."
+    "stage": "tasks",
+    "reason": "Plan review attempt 4 accepted corrected architecture; await hash-bound planned-change authorization before task regeneration."
   },
   "updated_at": "2026-08-21T17:36:34Z"
 }

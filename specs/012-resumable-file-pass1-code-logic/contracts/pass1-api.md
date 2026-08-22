@@ -43,6 +43,8 @@ No response contains source/context/classification text, host/tool path, provide
 
 An exact replay of Start compares `concurrencyLimit` with the immutable initial start value, not the possibly updated effective value. It returns the current status/effective limit with zero writes. A different start limit is `409`; active reconfiguration uses the endpoint below.
 
+After the atomic transaction commits, `Created` and an exact replay whose current pair remains `Running` with a closed circuit signal the bounded host execution service. The API does not await 50-150 Worker jobs. The signal is idempotent and carries no source/provider content; one single-flight pair coordinator repeatedly fills durable capacity with independently scoped runners and owns claim-to-terminal continuation. If the process stops after commit but before signaling, the durable pair remains recoverable and the explicit Resume endpoint is the recovery path.
+
 ## Update concurrency
 
 `PATCH /api/pass1-executions/{pass1ExecutionId}/concurrency`
@@ -58,7 +60,7 @@ Request:
 
 The caller must be authenticated, satisfy `ManagementAccess`, and currently own both Repositories through SystemOwner scope. Only integer limit 1-4 and a nonnegative exact version are accepted; unknown properties are rejected. The pair must be pre-reconciliation and nonterminal. Success returns `200 OK` with the ordinary status representation, current `stateVersion`, effective limit, and `concurrencyRevision`.
 
-The update is one pair-row-locked version transition. Existing leases remain valid. A decrease issues no new lease until the number of unexpired Running leases is below the new limit; an increase applies only after commit. Equal limit at the current version is a zero-write no-op. Exact lost-ack replay of the deterministic `(pair, expected version, previous limit, effective limit, authorized principal)` change is a zero-write `200`; stale/mismatched change is `409`. It never rewrites the immutable initial start limit or any scan/content/display identity.
+The update is one pair-row-locked version transition. Existing leases remain valid. A decrease issues no new lease until the number of unexpired Running leases is below the new limit; an increase applies only after commit. Equal limit at the current version is a zero-write no-op. Exact lost-ack replay of the deterministic `(pair, expected version, previous limit, effective limit, authorized principal)` change is a zero-write `200`; stale/mismatched change is `409`. It never rewrites the immutable initial start limit or any scan/content/display identity. An eligible success wakes the same pair coordinator: 1-to-4 fills up to three new slots while the original runner may still be blocked, whereas 4-to-1 preserves all four leases and launches no replacement until durable active count falls below one.
 
 ## Status
 
@@ -70,7 +72,7 @@ Returns the same identity and canonically ordered bounded progress/warning summa
 
 `POST /api/pass1-executions/{pass1ExecutionId}/resume`
 
-The body is empty. It accepts no caller-selected phase, retry/probe schedule, lease, path, revision, provider, runtime, or force flag. It performs current ownership filtering, both-child Story 12.1 revalidation, pair/manifest revalidation, and one active provider probe. Success returns the status representation; an already eligible state is an idempotent `200` no-op.
+The body is empty. It accepts no caller-selected phase, retry/probe schedule, lease, path, revision, provider, runtime, or force flag. It performs current ownership filtering, both-child Story 12.1 revalidation, pair/manifest revalidation, and the same fixed active source-free provider request used by the probe driver; configuration resolution alone is not availability. Success returns the status representation. `Continued` and an already-eligible Running no-op signal the pair pump idempotently. A fifth-failure paused pair remains dormant until this explicit authenticated action succeeds; no background timer or host startup reactivates it.
 
 This pair endpoint is additive. The accepted `POST /api/scan-executions/{scanExecutionId}/resume` endpoint and its 401/403/404 behavior remain unchanged for existing consumers.
 

@@ -1,6 +1,6 @@
 # Contract: Bounded `navigate_code`
 
-`navigate_code` is an internal Worker Agent function, not an HTTP endpoint. The server binds job, actor, System, Repository, Scan Run, Profiled Revision, Prepared Scan Manifest, approved snapshot, prompt/schema/runtime identity, and remaining budget. None is accepted from model arguments.
+`navigate_code` is an internal Worker Agent function, not an HTTP endpoint. The server binds pair, job, current expected job `StateVersion`, current lease token/expiry, actor, System, Repository, Scan Run, Profiled Revision, Prepared Scan Manifest, approved snapshot, prompt/schema/runtime identity, source File Code Unit, and remaining budget. None is accepted from model arguments. Lease values are not serialized into provider messages, function arguments/results, receipts, API/status output, Documents, or logs.
 
 ## Request
 
@@ -96,7 +96,11 @@ Otherwise the facade immediately reads exact source evidence from the approved r
 
 ## Durable receipt and revalidation
 
-Only a successfully committed source-bearing receipt authorizes navigation evidence. Every metadata-only BoundExceeded receipt/marker authorizes only the truthful statement that the named bound was exhausted; it cannot prove a relationship, communication kind, target existence, or source claim. Final Worker result validation checks every receipt belongs to the same job and exact durable budget. It revalidates source-bearing descriptors against the same authorized Document/anchor or revision-bound path/range/hash, and reconstructs refusal receipts from counters/request hashes without any source lookup. A stale or mismatched receipt makes the result invalid and commits nothing.
+Scope resolution before any Document/analysis/source read requires the bound pair to be `Running` with a closed circuit and the bound job to be `Running` at the exact expected version with the same unexpired lease. The approved Repository/Profiled Revision/source inventory and budget must still match that job. A missing, expired, replaced-owner, paused, completed, terminal, or mismatched binding returns the same empty `Unavailable` response and performs no analysis/source read.
+
+After bounded evidence is assembled internally, receipt commit locks pair, job, and budget and repeats every lease/version/expiry/phase/circuit check using the injected UTC `TimeProvider`. Only a successfully committed source-bearing receipt releases navigation evidence to the Worker. If authorization changes during analysis, the transaction writes no receipt and the function returns empty `Unavailable`; internal evidence is discarded. Every metadata-only BoundExceeded receipt/marker authorizes only the truthful statement that the named bound was exhausted; it cannot prove a relationship, communication kind, target existence, or source claim.
+
+Final Worker result validation checks every receipt belongs to the same job and exact durable budget. It revalidates source-bearing descriptors against the same authorized Document/anchor or revision-bound path/range/hash, and reconstructs refusal receipts from counters/request hashes without any source lookup. A stale or mismatched receipt makes the result invalid and commits nothing.
 
 ## Forbidden behavior
 

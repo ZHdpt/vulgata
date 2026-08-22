@@ -86,6 +86,16 @@ Story 12.3 creates the accepted entity with:
 
 No new pair ordinal or manifest field is added. Exact manifest membership and `PairSelectionOrdinal` are joined through `PreparedScanManifestEntry` by the pair's manifest IDs and File Code Unit ID. Existing unique constraints `(ScanExecutionId, FileCodeUnitId)` and `(ScanExecutionId, ManifestOrdinal)` remain the identity guards. `AttemptCount <= 2` is a Story 12.3 policy enforced by its store, not a global schema change that could reinterpret other users.
 
+### Runtime-only claim authorization
+
+The production claim result carries a server-only authorization projection, not a new row: pair/job IDs, current job `StateVersion`, lease token/expiry, pair `StateVersion`, Pair Selection Ordinal, Manifest Ordinal, and nullable next durable eligibility. The packet source must consume that exact projection and revalidate it after revision-bound source hydration. It never enters a model-visible packet, API/status response, navigation receipt, provider message, Document, or log.
+
+Before choosing a Pending job, the Story 12.3 claim transaction releases only due `RetryScheduled` jobs using their current versions and recovers only strictly expired leases. If no claim is possible, `NextEligibleAt` is the minimum durable future retry/lease/probe eligibility; null with zero active leases means the complete job set is terminal and eligible for terminal reconciliation. This projection drives `TimeProvider` delays without a polling or in-memory retry authority.
+
+### Runtime-only pair coordinator projection
+
+One in-process single-flight coordinator exists per explicitly activated pair. Its runner map contains only local completion handles keyed by claimed job/lease authorization; it is not persisted, cannot select work, and is discarded on process loss. Fill serially obtains durable claims but launches each claimed job in an independent DI scope without awaiting a prior runner. It stops at `AtCapacity`/ineligible/closed state, observes completions only as wake-ups, and refills from the durable store. A lower limit preserves existing leases and blocks replacements while active count is at or above the limit; an increase wakes Fill immediately. Reconciliation requires both an empty local runner map and a fresh durable terminal-exhaustion result. No table, column, migration, content identity, or display order derives from this projection.
+
 ## 4. Pass1NavigationBudget
 
 Exactly one row per Story 12.3 job.
@@ -102,6 +112,8 @@ Exactly one row per Story 12.3 job.
 | `UpdatedAt` | UTC | Audit only |
 
 Check constraints enforce `AcceptedCallCount <= ToolAttemptCount`, all maxima, and nonnegative counters. Retry and restart reuse this row. A job without this row is not claimable on the prepared path.
+
+Every runtime navigation scope additionally carries the current server-only claim authorization. The authorization is not duplicated into this row. Scope resolution and receipt commit both require the job to remain `Running` at that version with that unexpired lease and require the owning pair to remain `Running` with a closed circuit.
 
 ## 5. Pass1NavigationReceipt
 
@@ -174,6 +186,8 @@ Reuse `LogicalDocument`, immutable `DocumentVersion`, `DocumentSection`, `IndexE
 
 No Flow Group, Flow Trace, Uncertainty, Cross-Repository exact evidence, Business Logic Document, or Pass 2 row is created.
 
+Completed replay reconstructs the complete canonical commit graph from scalar rows: the Document Version, exact ordered Source Anchors, exact ordered Document Sections, exactly one Index Entry, and exact direct REFERENCES Edges. A durable successful `Pass1Outcome` additionally authorizes only the Edge set independently reconstructed by the pure reconciliation projection. Missing, extra, changed, reordered, or duplicate relationships are never hidden by stored fingerprints.
+
 ## 8. Source Anchor compatibility correction
 
 Add nullable `ByteStart` and `ByteEnd` to existing Source Anchor rows:
@@ -226,6 +240,8 @@ DocumentVersion N -- N DocumentVersion through DocumentEdge REFERENCES
 
 The pair transaction is the only start visibility boundary. The Document/job transaction is the only per-file success boundary. The reconciliation transaction is the only post-Pass1 Edge/outcome/handoff boundary.
 
+The in-process activation channel, single-flight capacity-filling pair coordinator, local runner handles, claimed packet, provider probe observation, and probe ticket are transient control projections. They create no durable identity and cannot make a claim, retry, probe, pause, completion, capacity, order, or reconciliation decision without the persisted rows above. A process restart discards them; authenticated manual Resume reconstructs authority from PostgreSQL before reactivation.
+
 ## 12. Migration disposition
 
 One cohesive additive EF migration under Infrastructure will:
@@ -237,3 +253,5 @@ One cohesive additive EF migration under Infrastructure will:
 5. update `VulgataDbContext` and model snapshot.
 
 There is no data backfill, content rewrite, new required value on historical rows, or destructive column change. Clean PostgreSQL 17 apply/rollback/reapply, legacy row read, v1/v2 coexistence, and no-pending-model-change evidence are mandatory.
+
+The Quality Review 01 correction adds no table or column: production execution uses existing jobs/pair/probe state, lease-bound navigation uses existing job/lease/version fields, and complete replay reads the existing Document graph. If implementation produces an EF model delta for these corrections, it is a design violation and must return to plan review rather than silently adding persistence.

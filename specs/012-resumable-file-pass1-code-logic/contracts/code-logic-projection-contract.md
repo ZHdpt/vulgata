@@ -87,4 +87,14 @@ Atomic write scope is exactly: Logical Document when absent, immutable Document 
 
 ## Independent replay reconstruction
 
-Replay loads authoritative ContentJson and relational graph, regenerates canonical bytes, Markdown, sections, index, anchors, direct Edges, all identities and CommitFingerprint, and compares them to the incoming result and persisted values. JSONB property order is irrelevant because the canonical writer is rerun; array order and authored text are material. Any missing/extra/reordered array item, changed normalization, projection drift, identity mismatch, or graph difference is `Conflict` with no mutation.
+Replay loads authoritative ContentJson and scalar relational rows, regenerates canonical bytes, Markdown, sections, index, anchors, direct Edges, all identities and CommitFingerprint, and compares them to the incoming result and persisted values. It requires:
+
+- the one expected Document Version and current Logical Document pointer;
+- the exact Source Anchor set and canonical order, including every identity, Repository/Scan/File Code Unit/revision/path/locator/line/byte/hash field;
+- the exact Document Section set and `SectionOrder`, including stable IDs/kinds/headings/Markdown/search text plus canonically decoded anchor/authorized-Document ID arrays;
+- exactly one Index Entry with every identity/type/title/summary/path/term-array/search field equal to the pure projection; and
+- the exact direct REFERENCES Edge set with canonical identity/source/target/type and no duplicate source/target relation under a different row ID.
+
+If a durable successful `Pass1Outcome` already exists, replay invokes the same pure reconciliation projection over immutable Documents/current target bindings and compares the exact union of direct and post-Pass1 Edges. A reconciled Edge cannot mask a missing or mutated direct Edge. Before an outcome exists, every extra source Edge conflicts.
+
+JSONB property order is irrelevant because the canonical writer is rerun; array/section/anchor order and authored text are material. Stored content/commit/reconciliation fingerprints are comparison outputs, never substitutes for row reconstruction. Any missing, extra, duplicate, reordered, renormalized, changed, or unparseable row is `Conflict` or Integrity failure with no mutation.

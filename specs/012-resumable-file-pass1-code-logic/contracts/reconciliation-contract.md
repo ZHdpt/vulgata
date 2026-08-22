@@ -29,6 +29,8 @@ Direct known references are evaluated through the same target predicate and Edge
 
 One transaction locks the pair execution and relevant Edge uniqueness keys, revalidates all source/target currentness, inserts the canonically ordered missing Edges, writes the reconciliation fingerprint/count on the immutable `Pass1Outcome`, and advances the coordination handoff. An injected failure writes no subset and leaves Documents unchanged. Exact replay independently reconstructs the candidate decisions and existing Edge set; equality is mutation-free, divergence conflicts and prevents handoff.
 
+Candidate evaluation is implemented as one pure deterministic projection shared by reconciliation replay and completed Document replay. It returns the exact canonical source/target Edge identities and warnings without writing. This lets the Document committer distinguish direct commit-time Edges from exact post-Pass1 Edges without trusting the stored outcome fingerprint or permitting an unrelated extra Edge.
+
 ## Rejections
 
 Self, duplicate, stale, ambiguous, unsupported, cross-Repository, cross-Scan-Run, cross-revision, changed-hash, unauthorized, absent, or multiple-current targets create no Edge. The deferred observation remains unchanged in ContentJson. Story 12.3 does not create or resolve Uncertainty, endpoint/provider/consumer identity, Cross-Repository Edge, flow group, Pass 2 job, or Business Logic Document.

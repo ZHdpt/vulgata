@@ -1,10 +1,19 @@
 # Story 12.3 Quality-Review Correction Authorization 01
 
-Status: pending explicit user authorization
+Status: accepted
 
 Source verdict: `reviews/quality-review/quality-review-01.json`
 
 Reviewed commit: `03080c6963b4cbe2a6c952459e33d044f1146466`
+
+Decision ID: `story-12-3-quality-review-correction-01`
+
+Authorized scope SHA-256: `504940abc9934fa8cc9e1cf6781c8fcc5bfdbc4140e21767bc19881058eaca84`
+
+Scope construction: SHA-256 of the exact UTF-8 correction disclosure presented
+for authorization before the decision metadata in this section was added.
+
+Decided at: `2026-08-22T01:46:05Z`
 
 ## Trigger
 
@@ -81,3 +90,11 @@ Authorization does not accept a corrected plan or waive any gate. Remaining:
 corrected plan, independent plan-review ACCEPT, task regeneration, definition
 review ACCEPT, honest TDD RED/GREEN, convergence, fresh quality review,
 conditional E2E, final verification, and a bound `review -> done` checkpoint.
+
+## Decision
+
+The user explicitly approved this correction scope on 2026-08-22. The root may
+correct the plan and rerun the invalidated definition gates. This decision does
+not itself accept the corrected plan, authorize a scope outside this disclosure,
+or waive the repository-mandated post-plan-review authorization before task
+generation.

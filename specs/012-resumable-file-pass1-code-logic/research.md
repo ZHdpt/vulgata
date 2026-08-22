@@ -33,7 +33,7 @@ The pair stores each canonically ordered child Scan Execution's exact prompt and
 
 ## R-3: Claim order and shared concurrency
 
-**Decision**: Claim under a transaction that locks `Pass1PairExecution`, counts unexpired `Running` leases across both bound Scan Executions, and selects the smallest eligible Story 12.2 `PairSelectionOrdinal`. The claim then applies the accepted `ScanJobExecution.AcquireLease` transition. An authorized `PATCH` command may version-conditionally change the persisted effective limit among 1-4 before reconciliation. A decrease preserves every valid lease and closes claims while active lease count is at or above the new limit; an increase applies only to claims after the update commits. Each effective change has a canonical immutable `Pass1ConcurrencyChange`; exact lost-ack replay is zero-write. Database row order, Repository order, completion order, and change timing are never identity/order selectors. Repository-local progress is projected by `ManifestOrdinal`; pair progress and warnings use `PairSelectionOrdinal`.
+**Decision**: Claim under a transaction that locks `Pass1PairExecution`, recovers strictly expired leases and due nonexhausted Story 12.3 retries, counts unexpired `Running` leases across both bound Scan Executions, and selects the smallest eligible Story 12.2 `PairSelectionOrdinal`. The claim then applies the accepted `ScanJobExecution.AcquireLease` transition and returns a server-only current version/lease authorization plus earliest durable eligibility; a specific packet source double-checks it after revision-bound source hydration. An authorized `PATCH` command may version-conditionally change the persisted effective limit among 1-4 before reconciliation. A decrease preserves every valid lease and closes claims while active lease count is at or above the new limit; an increase applies only to claims after the update commits. Each effective change has a canonical immutable `Pass1ConcurrencyChange`; exact lost-ack replay is zero-write. Database row order, Repository order, completion order, and change timing are never identity/order selectors. Repository-local progress is projected by `ManifestOrdinal`; pair progress and warnings use `PairSelectionOrdinal`.
 
 **Rationale**: Locking one bounded pair row is simple and makes the 1-4 shared limit observable. The accepted job unique constraints remain the authoritative per-file identity guards.
 
@@ -46,7 +46,7 @@ The pair stores each canonically ordered child Scan Execution's exact prompt and
 
 ## R-4: Bounded `navigate_code` implementation
 
-**Decision**: Expose exactly one Microsoft.Extensions.AI `AIFunction` named `navigate_code` through a new explicit prepared dispatcher. Its request has one closed operation enum: `Definition`, `References`, `Implementations`, `Callers`, `Callees`, `SymbolSearch`, `RelatedFiles`, or `ExactSourceEvidence`. The server supplies job/scope identity; those values are not tool arguments.
+**Decision**: Expose exactly one Microsoft.Extensions.AI `AIFunction` named `navigate_code` through a new explicit prepared dispatcher. Its request has one closed operation enum: `Definition`, `References`, `Implementations`, `Callers`, `Callees`, `SymbolSearch`, `RelatedFiles`, or `ExactSourceEvidence`. The server supplies pair/job/source identity plus the current expected job `StateVersion`, lease token, and lease expiry; those values are never tool arguments, provider content, API output, receipt content, or Document content.
 
 The facade composes only accepted typed seams:
 
@@ -81,7 +81,7 @@ Every target is intersected with the approved Repository/revision snapshot. Resu
 
 **Decision**: Each accepted navigation call conditionally advances `Pass1NavigationBudget` and inserts one immutable `Pass1NavigationReceipt`. The receipt stores receipt/tool-attempt ordinals, operation/depth, canonical request/result hashes, result count, UTF-8 evidence bytes, and bounded evidence descriptors (Document/section/anchor IDs or path/range/source-hash metadata), never source text. A results/bytes/depth refusal instead writes a metadata-only `BoundExceeded` receipt with zero descriptors/evidence; when either accepted-call or tool-attempt count reaches eight and disables further calls, the same transaction appends one Calls exhaustion marker without a ninth tool attempt. These refusal receipts authorize only a deferred bound-exhaustion statement. The result validator requires receipt identities for navigation-derived claims and independently revalidates their current descriptors or budget/refusal state before commit.
 
-An analysis call runs outside the database lock. The complete response is first bounded and canonicalized; one short transaction then locks the budget, revalidates state and remaining capacity, writes the receipt/counters, and only afterward releases the response to the Worker. A failure before receipt commit returns no evidence. A lost response may consume capacity safely but cannot exceed it.
+An analysis call runs outside the database lock. Before analysis, scope resolution verifies the job is `Running`, its expected version/current unexpired lease matches, and the pair is `Running` with a closed circuit. The complete response is then bounded and canonicalized; one short transaction locks the pair, job, and budget, repeats the same lease/version/expiry/phase/circuit checks, revalidates remaining capacity, writes the receipt/counters, and only afterward releases the response to the Worker. A stale/replaced/expired/paused/terminal binding returns the same empty `Unavailable` shape and commits no receipt. A failure before receipt commit returns no evidence. A lost response may consume capacity safely but cannot exceed it.
 
 **Rationale**: Counts must survive retry and restart, while FR-044 forbids raw source/provider content as status evidence. Hash-and-descriptor receipts provide a testable authorization chain.
 
@@ -128,7 +128,7 @@ After semantic validation, a server writer emits `ContentJson` in the exact prop
 
 **Decision**: Add a specific `IPass1CodeLogicDocumentCommitter` over a shared internal transaction primitive in `KnowledgeStoreRepository`. It revalidates authorization, pair/manifest/job/lease/version, source/hashes/ranges, receipts, classifications, current referenced Documents, prompt/schema/runtime identity, canonical JSON and all projections. One transaction inserts or supersedes the Logical Document version, Document Version, Source Anchors, direct REFERENCES Edges, Document Sections, Index Entry, and advances the job to `Completed` with the deterministic Document Version ID.
 
-Already-Completed replay is checked before lease validation, exactly as Story 12.1 requires. It independently reconstructs canonical JSON/projections/graph/commit fingerprint from rows. Exact equality returns the existing version with zero writes; any missing, extra, reordered, renormalized, or changed value conflicts with zero writes.
+Already-Completed replay is checked before lease validation, exactly as Story 12.1 requires. It independently reconstructs canonical JSON, Markdown, Source Anchors, Document Sections, the single Index Entry, direct REFERENCES Edges, identities, cardinalities, and commit fingerprint from scalar rows. The comparison uses canonical order and rejects duplicate source/target relationships even when their row IDs differ. When a durable post-Pass1 outcome exists, the same pure reconciliation projection reconstructs the separately added Edge set; only the exact union of direct and reconciled Edges is legal. Exact equality returns the existing version with zero writes; any missing, extra, reordered, renormalized, duplicated, or changed value conflicts or fails integrity with zero writes.
 
 **Rationale**: This preserves the accepted lost-acknowledgement contract while avoiding a second transaction or nested unit of work.
 
@@ -142,7 +142,7 @@ Already-Completed replay is checked before lease validation, exactly as Story 12
 
 **Decision**: Persist pair-wide circuit state on `Pass1PairExecution`: `Closed`, `Probing`, or `Paused`, probe ordinal 0-5, next eligibility, bounded retry-after, and a sanitized machine code. Provider-transient HTTP 408/429/5xx, timeout, or transport loss opens the circuit and stops new claims. Probe delays are 10s, 30s, 60s, 120s, and 300s after the preceding observed failure, plus deterministic nonnegative jitter below 10% derived from pair ID/probe ordinal. A valid `Retry-After` may push eligibility later, capped at ten minutes from receipt; invalid or larger values are ignored in favor of the nominal schedule. No sixth probe exists.
 
-The active probe is a minimal, fixed, source-free Worker-provider chat request with a bounded timeout. It persists only availability/classification and sanitized code. Success closes the circuit. Fifth failure atomically pauses both nonterminal child Scans as `PausedProviderUnavailable` and the coordination as `Paused` while preserving completed Documents and remaining jobs.
+The active probe is a minimal, fixed, source-free Worker-provider Chat Completions request with no tools, Repository/System/Scan identity, source, context, classifications, Document text, or caller-controlled content. It uses the resolved Worker model and encrypted credential only inside the provider client, disables SDK retries, bounds timeout/request/response bytes, discards response text, and returns only `Available`, `TransientUnavailable` with bounded Retry-After, or `ProviderConfiguration`. Success closes the circuit; 401/403 or invalid assignment pauses for operator correction; other provider-transient observations advance the durable probe ticket. Fifth transient failure atomically pauses both nonterminal child Scans as `PausedProviderUnavailable` and the coordination as `Paused` while preserving completed Documents and remaining jobs.
 
 Failure mapping:
 
@@ -162,7 +162,35 @@ Failure mapping:
 - Persist raw HTTP/provider diagnostics: rejected by security and FR-044.
 - Unlimited `Retry-After`: rejected because recovery must remain bounded.
 
-## R-11: Honest terminal accounting and Story 12.4 handoff
+## R-11: Compose authenticated Start into bounded production execution
+
+**Decision**: Add one host-run, explicitly activated `BackgroundService` and one single-flight capacity-filling coordinator per pair over the existing Story 12.3 ports. A successful authenticated Start, exact eligible Start replay, successful manual Resume, or concurrency update signals the pair ID plus its already ownership-filtered authorization scope through a bounded in-process wake-up channel. The service deduplicates pair activations in memory and the coordinator repeatedly:
+
+1. claims only through `IPreparedPass1Store.ClaimNextAsync`;
+2. receives the current job `StateVersion`, lease token/expiry, pair state version, ordinals, and next durable eligibility as a server-only claim authorization;
+3. for every claim, launches an independent DI-scoped runner that asks the specific Infrastructure packet source to reconstruct exactly one claimed File Code Unit packet from the approved manifests, Scan Context Snapshot, classifications, and revision-bound source, with a second lease check before returning it;
+4. immediately returns to claim/fill without awaiting that runner; each runner invokes one prepared Worker through `IPreparedPass1WorkerDispatcher`, whose production `IPreparedPass1JobExecutor` registers only the lease-bound `navigate_code` function, then atomically commits a valid canonical result or records one closed durable failure against that exact lease;
+5. continues launching until the store reports `AtCapacity`, future/ineligible work, terminal exhaustion, or a circuit/pause/failure/cancellation state that closes dispatch;
+6. observes any runner completion or explicit activation only as a wake-up, removes the completed local handle, reloads durable state, and fills newly available capacity without using completion order as claim/identity authority;
+7. immediately stops launches when durable policy closes dispatch, drains already-launched runners to closed outcomes, and follows the single pair-wide durable provider probe ticket when the provider is transiently unavailable; and
+8. only after the local runner set is empty and a fresh claim proves no Running, Pending, or due/future retry work remains, calls the existing deterministic `ReconcileAsync` terminal-accounting/handoff transaction.
+
+`ClaimNextAsync` releases due Story 12.3 `RetryScheduled` jobs under the same pair lock before choosing the lowest Pair Selection Ordinal and reports the next retry/lease/probe eligibility rather than requiring polling. The coordinator uses `TimeProvider` delays, runner-completion notifications, and store outcomes; it never invents an in-memory retry, order, capacity, or terminal decision. A 4-to-1 change preserves all four leases and blocks replacements until durable active count falls below one; a 1-to-4 change wakes the coordinator and fills three newly available slots without waiting for the first runner. The channel and local runner handles are only wake-up/lifetime mechanisms: PostgreSQL jobs, leases, circuit state, and outcome remain authoritative.
+
+The hosted service never scans the database for dormant work at process startup. Process loss preserves durable progress but requires the accepted authenticated manual Resume to revalidate and signal remaining work. After the fifth failed probe it removes the activation and performs no automatic background resume; only `继续扫描` can reactivate the pair. This distinguishes continuation of one explicitly activated Running/Probing execution from the excluded automatic recovery of a persisted paused execution.
+
+**Rationale**: Quality Review 01 showed that the current Start path persists jobs but no production caller claims, dispatches, commits, probes, or reconciles them. Plan Review 03 then showed that a claim-to-completion loop could close that call graph while remaining strictly sequential and leaving FR-006's shared 1-4 capacity operationally unused. The current `PreparedPass1DispatchWorker` also accepts caller-supplied already-claimed batches, while no prepared job executor or commit port is registered. A capacity-filling single-flight host coordinator closes the production call graph and requires real bounded overlap without moving Vulgata into Docker, bypassing durable leases, or absorbing Story 12.4.
+
+**Alternatives considered**:
+
+- Execute all 50-150 jobs inside the Start HTTP request: rejected because request cancellation/timeouts would own Scan lifetime and provider recovery windows.
+- Poll all persisted pairs or resume them automatically on host startup: rejected by the explicit manual-resume boundary.
+- Let the dispatcher enumerate/claim work or use its own semaphore: rejected because the durable pair row is the sole capacity/order authority.
+- Await each claimed runner before the next claim: rejected because it is conformingly durable but strictly sequential, cannot fill limits two through four, and cannot prove the required shared bounded concurrency.
+- Queue one payload per File Code Unit in memory: rejected because it duplicates the complete durable job set and loses exact restart/replay authority.
+- Keep a caller-built batch dispatcher as the production seam: rejected because it cannot prove the current lease/version or server-owned packet composition.
+
+## R-12: Honest terminal accounting and Story 12.4 handoff
 
 **Decision**: The pair denominator is the distinct complete start-time job set. High-value seeds are reconstructed, not rescored: within each Repository, take the first at most 20 manifest entries with `DirectBusinessScore >= 400` under descending direct score, exact path, segment ordinal. Attempts, probes, leases, and replays never add denominator/failure entries.
 
@@ -176,7 +204,7 @@ After every job is terminal, compute the pair-wide ordinary failure count and bu
 - Put warnings only in terminal prose: rejected because ordered replay and exact counts need durable structured rows.
 - Start Story 12.4 automatically in the same worker: rejected by the explicit story boundary.
 
-## R-12: Required compatibility corrections and migration
+## R-13: Required compatibility corrections and migration
 
 **Decision**: One additive migration, provisionally named `AddResumablePass1CodeLogic`, is required. It creates the Story 12.3 tables/indexes, allows `code-logic/file-v2` beside `vulgata.knowledge-document/1.0`, adds nullable exact byte bounds to Source Anchors, and adds only the missing new-path failure atoms/transitions needed for honest Pass 1 status.
 
@@ -196,18 +224,19 @@ Add `FailedPass1`/`Pass1Policy` only to the new path, preserve every existing en
 - Store v2 content under the v1 schema identity: rejected because schema identity would lie.
 - encode byte ranges only inside JSON: rejected because Source Anchor associations could not be independently validated from relational rows.
 
-## R-13: Verification levels
+## R-14: Verification levels
 
-**Decision**: Use public-seam TDD slices and four qualification layers:
+**Decision**: Use public-seam TDD slices and five qualification layers:
 
 1. pure canonical grammar/identity/projector/failure-budget tests with literal vectors and an independent reconstructor;
-2. API, authorization, dispatcher/tool, recovery, and SQLite integration tests;
-3. disposable PostgreSQL 17 migration/atomic-start/claim/commit/replay/reconciliation fault injection;
-4. real Windows-host CodeGraph 1.5.0, Java 21, pinned JDT LS over stdio, and a controllable OpenAI-compatible provider fixture, followed by one approved-pair host qualification.
+2. API, authorization, dispatcher/tool, recovery, lease-race, and SQLite integration tests;
+3. authenticated `WebApplicationFactory<Program>` production composition with a controllable OpenAI-compatible transport and fake time, proving Start-to-terminal and the five-probe outage path without direct test orchestration of store methods;
+4. disposable PostgreSQL 17 migration/atomic-start/claim/commit/full-graph-replay/reconciliation fault injection;
+5. real Windows-host CodeGraph 1.5.0, Java 21, pinned JDT LS over stdio, and a controllable OpenAI-compatible provider fixture, followed by one authenticated approved-pair host qualification through the production DI graph.
 
-The host qualification varies concurrency 1/2/4 and ten completion schedules without requiring Story 12.4/12.5. Security qualification inspects production composition and denies CodeGraphContext, raw protocol/storage, shell/network/filesystem tools, and source/provider/host-path persistence.
+Production composition uses controllable barriers inside independently scoped Workers: enough eligible jobs must reach simultaneous counts two and four before release, a counter must never exceed the durable limit, held runners must prove 4-to-1 preservation/no replacement and 1-to-4 immediate fill, and at least ten release schedules must retain identical deterministic results. This barrier fails a sequential coordinator by timeout. The host qualification also varies concurrency 1/2/4 and completion schedules, performs real typed Java navigation plus exact XML source evidence, commits/reconciles, and stops at the Story 12.4 handoff. Security qualification inspects the complete production registration/call graph and denies CodeGraphContext, raw protocol/storage, shell/network/filesystem tools, and source/provider/host-path persistence. Existing constructor/literal/runtime-version checks remain supporting evidence rather than execution proof.
 
-**Rationale**: Pure tests prove determinism, PostgreSQL proves relational atomicity, and real tools prove the accepted host boundary. A mock-only claim is insufficient for SC-012.
+**Rationale**: Pure tests prove determinism, production composition proves reachability, PostgreSQL proves relational atomicity/corruption handling, and real tools prove the accepted host boundary. Isolated store tests, static DI inspection, or a runtime-version-only claim are insufficient for SC-008/SC-012 and QR-005.
 
 **Alternatives considered**:
 

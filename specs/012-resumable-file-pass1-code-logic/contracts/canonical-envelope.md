@@ -1,6 +1,6 @@
 # Contract: Story 12.3 Canonical Envelopes and Deterministic Identities
 
-This contract extends, but does not change, Story 12.2 `canonical-envelope/1.0`. Implementations must reuse its `CENV` framing, type tags, big-endian lengths/integers, RFC/network-order UUID bytes, NFC strings, list/object rules, SHA-256 hashing, and UUIDv8 bit construction. JSON serialization, database ordering, reflection order, culture, timestamps, concurrency, completion order, and `.NET Guid.ToByteArray()` are never identity inputs.
+This contract extends, but does not change, Story 12.2 `canonical-envelope/1.0`. Implementations must reuse its `CENV` framing, type tags, big-endian lengths/integers, RFC/network-order UUID bytes, NFC strings, list/object rules, SHA-256 hashing, and UUIDv8 bit construction. JSON serialization, database ordering, reflection order, culture, timestamps, concurrency, completion order, lease tokens/expiry, job/pair StateVersions, activation identity, probe tickets, and `.NET Guid.ToByteArray()` are never content/Document/display identity inputs. Lease/version values remain mandatory conditional authorization inputs where the runtime and navigation contracts require them.
 
 ## 1. Domain prefix and enum encoding
 

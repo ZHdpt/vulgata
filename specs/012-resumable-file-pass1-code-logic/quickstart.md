@@ -63,8 +63,9 @@ Expected:
 - exactly two complete approved manifests start;
 - all missing/partial/stale/mismatched/hidden packages create zero jobs;
 - every File Code Unit has exactly one accepted Story 12.1 deterministic job;
-- default capacity is two; 1/2/3/4 work; 0/5/noninteger reject before dispatch;
+- default capacity is two; 1/2/3/4 work; barrier-controlled Workers prove actual simultaneous execution reaches two and four when enough jobs are eligible, while 0/5/noninteger reject before dispatch;
 - authorized versioned 4->1 and 1->4 updates affect only later claims, preserve valid leases, and stop claims while active leases meet/exceed a decreased limit;
+- with four Workers held, 4->1 revokes none and launches no replacement until active durable leases fall below one; with one Worker held, 1->4 launches three additional Workers before the first completes;
 - current/equal update is a zero-write no-op; exact lost-ack update replay is zero-write; stale version, changed actor/target, hidden ownership, reconciling, and terminal updates reject;
 - original Start replay compares the immutable initial limit and returns the current effective limit; it cannot mutate concurrency;
 - reversed inputs and at least ten completion schedules keep job/Document/display identities identical;
@@ -79,6 +80,7 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedNam
 Expected:
 
 - all eight operations return only authorized current Document or exact source evidence;
+- current lease/version succeeds; expired/replaced lease, paused/probing circuit, Completed job, terminal pair, and authorization change between analysis and receipt commit disclose no evidence and write no receipt;
 - current-Document and source-fallback evidence share stable target/observation identity;
 - unavailable and unauthorized shapes are indistinguishable;
 - 8 calls, 20 results, 65,536 cumulative bytes, one hop and depth 3 are hard limits with no partial evidence;
@@ -100,6 +102,8 @@ Expected:
 - every single identity/authorization/path/hash/range/schema/bound/reference/classification/receipt/anchor mutation writes zero graph rows and leaves the job non-Completed;
 - exact lost-ack replay returns the same Document Version with zero mutation;
 - changed/reordered/renormalized/partial replay conflicts;
+- removing, changing, reordering, or duplicating any Source Anchor, Document Section, Index Entry, or direct REFERENCES Edge field/cardinality conflicts or fails integrity with zero writes;
+- exact replay after successful local reconciliation independently reconstructs and accepts only the exact direct-plus-reconciled Edge union;
 - Version Chain owner remains Repository/path/segment and older immutable version remains preserved.
 
 ## 7. Failure circuit, retry, pause, and resume
@@ -111,8 +115,9 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedNam
 Expected:
 
 - provider transient permits exactly five ordered 10/30/60/120/300-second nominal windows with deterministic jitter and bounded Retry-After;
+- every window performs one fixed source-free Chat Completions request with no tools/Repository/System/Scan/source/context/Document content, zero SDK retry, bounded bytes/timeout, discarded response text, and closed availability classification;
 - no new job is claimed while probing;
-- fifth failure persists pair/child provider-unavailable pause and `继续扫描`;
+- fifth failure persists pair/child provider-unavailable pause and `继续扫描`; advancing time or restarting the host performs no sixth/background probe;
 - success reopens only remaining valid work;
 - isolated JobTransient attempts the same job at most twice across restart;
 - provider configuration/unclassified systemic pause correctly;
@@ -158,7 +163,25 @@ Expected:
 - v1 and v2 schema identities coexist; v2 byte anchors are required by the new path;
 - EF reports no pending model changes.
 
-## 10. Real tool and host qualification
+## 10. Production-composed Start-to-terminal execution
+
+```pwsh
+dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~Pass1ProductionExecutionTests|FullyQualifiedName~Pass1ProductionProviderOutageTests"
+```
+
+Expected:
+
+- the authenticated Start API accepts exactly two approved Prepared Scan Manifests and returns after durable atomic start;
+- the production `Program` DI graph resolves the activator/hosted service, claimed-packet source, job executor, dispatcher, lease-bound navigation function, committer, active health request/probe driver, and reconciler;
+- without a test calling store methods directly, the pair reaches claims, one Worker job per File Code Unit, immutable canonical Documents, durable ordinary retry/failure policy, deterministic reconciliation, and truthful terminal status;
+- barrier-controlled production Workers fail a sequential coordinator by requiring two and four independently scoped runners to be simultaneously inside execution before release; observed concurrency reaches the effective limit when enough jobs are eligible and never exceeds it;
+- with four production runners held, 4->1 preserves all leases, stops new launches, drains them, and only refills below the new limit; with one runner held, 1->4 fills three additional slots without waiting for that runner;
+- limits 1/2/4, activation replay/deduplication, and at least ten forward/reverse/permuted barrier-release schedules preserve job/Document/Edge/reconciliation/display identity and order;
+- a circuit/pause/failure/cancellation transition stops launches immediately, in-flight runners close durably, and reconciliation occurs only after the local runner set is drained plus fresh durable terminal exhaustion;
+- fake-time provider outage uses the same production composition, makes exactly five active requests at durable eligibility, stops claims, persists `PausedProviderUnavailable`/`继续扫描`, and never self-reactivates;
+- stopping the host after durable Start loses no job/Document state; no dormant pair is discovered automatically; authenticated Resume revalidates and explicitly reactivates the remaining pair.
+
+## 11. Real tool and host qualification
 
 ```pwsh
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~NavigateCodeRealToolQualificationTests"
@@ -170,23 +193,25 @@ Expected:
 - real CodeGraph/JDT-LS/source operations are revision-bound and sanitized;
 - all supported neutral Java operations succeed; XML/source and unsupported combinations return the closed bounded outcome;
 - exact pinned runtime identities/hashes are recorded in the evidence artifact, not Documents;
-- one approved two-Repository Pass 1 finishes at concurrency 1/2/4 with identical identities/order/Edges;
+- one authenticated approved two-Repository Pass 1 resolves the production DI graph, makes at least one real Java typed navigation call plus exact XML source evidence, and finishes at concurrency 1/2/4 with identical identities/order/Edges;
 - PostgreSQL 17 is the only required Docker service;
 - zero production dependency on CodeGraphContext.
 
 This is Story 12.3 qualification only. Do not start Cross-Repository Resolution, Pass 2, Business Logic Documents, Chat, evaluation questions, or final release run.
 
-## 11. Security/composition qualification
+Runtime/version/hash construction without this Start-to-terminal path is supporting evidence only, not host execution proof.
+
+## 12. Security/composition qualification
 
 ```pwsh
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~Pass1ProductionBoundaryQualificationTests"
 ```
 
-Expected artifact: `artifacts/qualification/story-12.3/production-boundary-inspection.json`, recording inspected production assemblies/resources, denylist hash, tool-registration inventory, schema/prompt/runtime identities, and zero forbidden matches. Test assemblies/fixtures are not production scan targets.
+Expected artifact: `artifacts/qualification/story-12.3/production-boundary-inspection.json`, recording inspected production assemblies/resources, denylist hash, tool-registration inventory, schema/prompt/runtime identities, the complete required DI registration/call-edge inventory from authenticated Start to terminal reconciliation/provider pause, and zero forbidden matches. Test assemblies/fixtures are not production scan targets.
 
 Any match routes to a requirement-backed behavioral regression test; qualification does not edit production to hide it.
 
-## 12. Final verification barrier
+## 13. Final verification barrier
 
 ```pwsh
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~PreparedPass1"
