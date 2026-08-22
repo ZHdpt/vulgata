@@ -41,6 +41,17 @@ or authenticated approved-pair E2E run. The prior full-suite repository and
 environment baseline classification below is unchanged and is not relabeled as
 Story 12.3 success.
 
+The post-quality conditional E2E decision is recorded in `e2e-decision.json`
+as **required / blocked**. Its focused PostgreSQL and lifecycle boundary passed
+95/95, and provider-outage composition passed 9/9 with one intentional
+approved-pair skip. The authenticated API lane passed 2/11; nine tests stopped
+at the existing login-form extractor before product assertions and are
+classified as test-harness failures. Host qualification passed one, failed one
+for the missing T046 CodeGraph command, and skipped two unavailable approved-pair
+paths. No coverage override is claimed. Story 12.3 implementation and quality
+review are accepted, but lifecycle completion remains blocked until the named
+T046/T062 prerequisites are supplied and the required E2E gate passes.
+
 ## T064 qualification record
 
 Observed at `2026-08-22T18:24:08.2257694Z` on branch

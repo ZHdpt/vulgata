@@ -1,0 +1,184 @@
+{
+  "schema_version": "1.0",
+  "story": "12.3",
+  "required": true,
+  "predicates": [
+    {
+      "predicate_id": "user-visible-workflow",
+      "change_type": "User-visible workflow",
+      "gate": "required",
+      "triggered": false,
+      "affected_paths": [],
+      "affected_behavior": "No UI journey is added.",
+      "evidence": ["quality-review-03"]
+    },
+    {
+      "predicate_id": "authentication-authorization",
+      "change_type": "Authentication/authorization",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Web/Api/Scans/Pass1ExecutionEndpoints.cs",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1ExecutionApiTests.cs"
+      ],
+      "affected_behavior": "Authenticated Pass 1 start, status, resume, concurrency, and ownership-filtered APIs.",
+      "evidence": ["quality-review-03", "story-12-3/e2e/02-api-harness"]
+    },
+    {
+      "predicate_id": "api-persistence-multi-module",
+      "change_type": "API/SignalR/persistence/multi-module integration",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Agents/WorkerExecution",
+        "src/dotnet/Vulgata.Core/DomainServices",
+        "src/dotnet/Vulgata.Infrastructure/Data",
+        "src/dotnet/Vulgata.Web/Api/Scans",
+        "src/dotnet/Vulgata.Web/Data",
+        "tests/Vulgata.Tests/PreparedPass1"
+      ],
+      "affected_behavior": "Cross-module Worker dispatch, durable claims, leases, Documents, reconciliation, and API lifecycle.",
+      "evidence": ["quality-review-03", "story-12-3/e2e/01-focused-integration"]
+    },
+    {
+      "predicate_id": "ef-migration-data-lifecycle",
+      "change_type": "EF migration or observable data lifecycle",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260821114734_AddResumablePass1CodeLogic.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1MigrationTests.cs",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1PairPostgreSqlAtomicTests.cs",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs"
+      ],
+      "affected_behavior": "Pass 1 schema, atomic lifecycle, replay, rollback, reconciliation, and terminal state.",
+      "evidence": ["quality-review-03", "story-12-3/e2e/01-focused-integration"]
+    },
+    {
+      "predicate_id": "existing-integration-coverage",
+      "change_type": "Existing integration test proves full changed behavior",
+      "gate": "may-skip",
+      "triggered": true,
+      "affected_paths": ["tests/Vulgata.Tests/PreparedPass1"],
+      "affected_behavior": "Focused coverage passes, but authenticated API and approved-pair host execution do not fully pass at this boundary.",
+      "evidence": [
+        "story-12-3/e2e/01-focused-integration",
+        "story-12-3/e2e/02-api-harness",
+        "story-12-3/e2e/03-host-prerequisites"
+      ]
+    },
+    {
+      "predicate_id": "documentation-or-refactor",
+      "change_type": "Documentation-only or behavior-preserving refactor",
+      "gate": "may-skip",
+      "triggered": false,
+      "affected_paths": [],
+      "affected_behavior": "Story 12.3 materially changes runtime behavior.",
+      "evidence": ["quality-review-03"]
+    }
+  ],
+  "coverage_override": null,
+  "rationale": "Required E2E remains blocked. The focused PostgreSQL and production lifecycle boundary passed 95/95 tests. Provider-outage composition passed 9/9 with one intentional approved-pair skip. Authenticated API coverage is incomplete: with Windows EventLog disabled for the restricted runner, 2/11 tests passed and 9/11 failed before assertions at the existing login-form extractor. Host qualification reported 1 pass, 1 missing T046 prerequisite failure, and 2 skips. Approved-pair execution and real host-tool variables are absent, so no complete current-boundary coverage override is valid.",
+  "covering_tests": [
+    "Vulgata.Tests.PreparedPass1.Pass1ExecutionApiTests",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests",
+    "Vulgata.Tests.PreparedPass1.Pass1PairPostgreSqlAtomicTests",
+    "Vulgata.Tests.PreparedPass1.Pass1DocumentPostgreSqlAtomicTests",
+    "Vulgata.Tests.PreparedPass1.Pass1MigrationTests",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionProviderOutageTests",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests"
+  ],
+  "owner": "e2e-runner",
+  "source_boundary": {
+    "base_commit": "29e889badc00db671fcabf80f50918e15381052c",
+    "candidate_commit": "99a2bc4e3072688783df40f12cbc30132279ed85",
+    "diff_sha256": "c5a6f50bb650a217103fccd86fffba03bfdc7e1945b376adeda934dd2f601365",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "fd46fa773182880f7cd6a0113793b45e83432f5efcb2ec867881ebcb9ca964f6",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "9a1ea96d61e27c4e17203ff40b57fecba88e34e195e6e2287c17d3554412e065",
+      "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md": "f4b98ff1fe1b5646194158ec2d6325e464c2d54cc26be29fa15b300eb818a878",
+      "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md": "7385bf772d04f89e5fd90a5b44ceb8019e228d182917495eddf51eb725ed67ae",
+      "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json": "dc32fb11ad7c73b2fca47a28dd3b1977b60e06bde0d039bd8e63888e8ab46e73",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "06ce25ef7dc41d604254cff213641ab51c6c82877e290bc1929991a739b441bf",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "04816ecc1de96b5bd04febee9f383a7b7775b7f487a701453726821a4fc52944",
+      "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "907ef68c6470c8fda8585f95cd660f7e5726bb9e9e9b79c185c199ddcde5c2be"
+    },
+    "owned_paths": [
+      "src/dotnet/Vulgata.Agents/WorkerExecution",
+      "src/dotnet/Vulgata.Core/DomainServices",
+      "src/dotnet/Vulgata.Infrastructure/Analysis",
+      "src/dotnet/Vulgata.Infrastructure/Data",
+      "src/dotnet/Vulgata.Infrastructure/Git",
+      "src/dotnet/Vulgata.Web/Api/Scans",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+      "tests/Vulgata.Tests/PreparedPass1",
+      "tests/Vulgata.Tests/Migrations"
+    ]
+  },
+  "result": "blocked",
+  "evidence_ids": [
+    "story-12-3/e2e/01-focused-integration",
+    "story-12-3/e2e/02-api-harness",
+    "story-12-3/e2e/03-host-prerequisites"
+  ],
+  "decided_at": "2026-08-22T20:34:30.9353477Z",
+  "completed_at": null,
+  "blocker_prerequisites": [
+    "VULGATA_T046_CODEGRAPH_COMMAND",
+    "VULGATA_T046_JAVA_EXECUTABLE",
+    "VULGATA_T046_JDT_LS_ROOT",
+    "VULGATA_T046_JDT_LS_ARCHIVE",
+    "VULGATA_T062_APPROVED_PAIR_REAL",
+    "VULGATA_T062_SOURCE_BINDING_READY"
+  ],
+  "execution_evidence": [
+    {
+      "evidence_id": "story-12-3/e2e/01-focused-integration",
+      "total": 95,
+      "passed": 95,
+      "failed": 0,
+      "skipped": 0,
+      "duration": "2m22s",
+      "result": "passed"
+    },
+    {
+      "evidence_id": "story-12-3/e2e/02-api-harness",
+      "total": 11,
+      "passed": 2,
+      "failed": 9,
+      "skipped": 0,
+      "duration": "25s",
+      "result": "failed-test-harness",
+      "failure": "Expected a POST login form at Pass1ExecutionApiTests.ExtractFormFields line 260"
+    },
+    {
+      "evidence_id": "story-12-3/e2e/03-approved-pair",
+      "total": 1,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 1,
+      "result": "blocked-skipped"
+    },
+    {
+      "evidence_id": "story-12-3/e2e/04-provider-outage",
+      "total": 10,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 1,
+      "result": "passed-with-skip"
+    },
+    {
+      "evidence_id": "story-12-3/e2e/05-host-runtime",
+      "total": 4,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 2,
+      "result": "blocked",
+      "failure": "VULGATA_T046_CODEGRAPH_COMMAND and approved-pair host prerequisites absent"
+    }
+  ]
+}
