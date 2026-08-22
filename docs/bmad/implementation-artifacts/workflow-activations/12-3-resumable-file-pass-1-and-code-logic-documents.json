@@ -23,16 +23,16 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-correction-20260822T111530Z-c8f4a1",
+    "checkpoint_id": "bmad-12-3-implement-20260822T120816Z-4d72b9",
     "stage": "implement",
-    "commit_sha": "d1eeb0a9ff97e9a195ec26c017a7d0a05fbc4696",
+    "commit_sha": "68dd41e5e504ef89d4178268ad72b8f23e8fd94d",
     "binding_status": "bound"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
     "stage": "implement",
-    "reason": "T052/T053 claimed-packet hydration is GREEN with exact RED/GREEN evidence and the T050 capacity harness remains GREEN through a test-only hydration seam; begin T054 executor/dispatcher/committer/failure/reconciliation composition RED."
+    "reason": "T054 composition RED is bound to one-unit dispatcher rejection plus the absent concrete executor/host composition; implement T055 executor/dispatcher/committer/failure/reconciliation composition without provider recovery behavior."
   },
-  "updated_at": "2026-08-22T12:03:51Z"
+  "updated_at": "2026-08-22T12:25:47Z"
 }

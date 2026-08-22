@@ -1,0 +1,27 @@
+{
+  "evidence_id": "12-3/implement/5",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "68dd41e5e504ef89d4178268ad72b8f23e8fd94d",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionCompositionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionCompositionTests.cs": "495ca34ab7b7246f269b830b2e35640679cce316248c972449ba933e04996d5d",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "cac92d7953f3f9aa19622989a945341dca955cfbceaa070160fe93768a7939ae"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass1ProductionCompositionTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests --logger console;verbosity=minimal",
+  "result": {
+    "passed": 1,
+    "failed": 2,
+    "skipped": 0,
+    "classification": "expected-behavioral-and-boundary-red",
+    "representative_failures": [
+      "The real prepared dispatcher rejects one claimed File Code Unit because it still requires one two-Repository batch.",
+      "The production PreparedPass1JobExecutor implementation and closed host composition are absent."
+    ]
+  },
+  "observed_at": "2026-08-22T12:25:47Z",
+  "summary": "T054 RED is compile-clean and behaviorally honest. One claimed File Code Unit cannot reach a recording executor through the real dispatcher, and the static production boundary lacks the concrete executor and required executor/dispatcher/committer registrations. The invalid-result runner path already proves durable Integrity classification with zero committer calls."
+}

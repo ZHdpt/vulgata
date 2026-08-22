@@ -22,6 +22,7 @@ public sealed class Pass1ProductionBoundaryQualificationTests
     private static readonly string[] InspectedRelativePaths =
     [
         "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs",
+        "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
         "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs",
         "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
         "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md",
@@ -106,6 +107,12 @@ public sealed class Pass1ProductionBoundaryQualificationTests
 
         string dispatcherSource = ReadSource(repositoryRoot,
             "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs");
+        string dispatchWorkerSource = ReadSource(repositoryRoot,
+            "src/dotnet/Vulgata.Web/Data/PreparedPass1DispatchWorker.cs");
+        string runnerSource = ReadSource(repositoryRoot,
+            "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs");
+        string committerSource = ReadSource(repositoryRoot,
+            "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs");
         string navigateSource = ReadSource(repositoryRoot,
             "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs");
         string endpointSource = ReadSource(repositoryRoot,
@@ -113,6 +120,11 @@ public sealed class Pass1ProductionBoundaryQualificationTests
         string registrationSource = ReadSource(repositoryRoot,
             "src/dotnet/Vulgata.Web/Api/ApiEndpointRegistrationExtensions.cs");
         string programSource = ReadSource(repositoryRoot, "src/dotnet/Vulgata.Web/Program.cs");
+        Assembly agentsAssembly = typeof(PreparedPass1WorkerDispatcher).Assembly;
+        Type? executorImplementation = agentsAssembly.GetType(
+            "Vulgata.Agents.WorkerExecution.PreparedPass1JobExecutor",
+            throwOnError: false,
+            ignoreCase: false);
 
         ConstructorBinding navigateBinding = ReadConstructorBinding(typeof(PreparedNavigateCodeFunction));
         ConstructorBinding dispatcherBinding = ReadConstructorBinding(typeof(PreparedPass1WorkerDispatcher));
@@ -127,9 +139,22 @@ public sealed class Pass1ProductionBoundaryQualificationTests
             CountOrdinal(registrationSource, "MapPass1ExecutionApiEndpoints()") == 1,
             CountOrdinal(programSource, "AddScoped<PreparedNavigateCodeFunction>()") == 1,
             CountOrdinal(programSource, "AddScoped<IPass1NavigationService>") == 1,
-            CountOrdinal(programSource, "AddScoped<PreparedPass1Coordinator>()") == 1);
+            CountOrdinal(programSource, "AddScoped<PreparedPass1Coordinator>()") == 1,
+            executorImplementation is not null &&
+                typeof(IPreparedPass1JobExecutor).IsAssignableFrom(executorImplementation),
+            HasRegistration(programSource, "IPreparedPass1JobExecutor", "PreparedPass1JobExecutor"),
+            HasRegistration(programSource, "IPreparedPass1WorkerDispatcher", "PreparedPass1WorkerDispatcher"),
+            HasRegistration(programSource, "IPass1CodeLogicDocumentCommitter", "Pass1CodeLogicDocumentCommitter"),
+            CountOrdinal(dispatchWorkerSource, "GetRequiredService<IPreparedPass1WorkerDispatcher>()") == 1,
+            CountOrdinal(dispatcherSource, "_executor.ExecuteAsync") == 1,
+            CountOrdinal(runnerSource, "GetRequiredService<PreparedPass1DispatchWorker>()") == 1 &&
+                CountOrdinal(runnerSource, "ExecuteAsync(request, cancellationToken)") == 1,
+            CountOrdinal(runnerSource, "IPass1CodeLogicDocumentCommitter>().CommitAsync") == 1,
+            CountOrdinal(committerSource, "CommitAsync(") >= 1,
+            CountOrdinal(runnerSource, "store.ReconcileAsync(") >= 2,
+            CountOrdinal("public async Task<PreparedPass1ReconciliationResult> ReconcileAsync(",
+                ReadSource(repositoryRoot, "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs")) == 1);
 
-        Assembly agentsAssembly = typeof(PreparedPass1WorkerDispatcher).Assembly;
         string promptResource = "Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md";
         string[] promptResources = agentsAssembly.GetManifestResourceNames()
             .Where(name => string.Equals(name, promptResource, StringComparison.Ordinal))
@@ -201,6 +226,11 @@ public sealed class Pass1ProductionBoundaryQualificationTests
 
         return count;
     }
+
+    private static bool HasRegistration(string source, string serviceType, string implementationType) =>
+        source.Contains(serviceType, StringComparison.Ordinal) &&
+        source.Contains(implementationType, StringComparison.Ordinal) &&
+        source.Contains("AddScoped<", StringComparison.Ordinal);
 
     private static int GetLineNumber(string text, int offset) =>
         text.AsSpan(0, offset).Count('\n') + 1;
@@ -287,12 +317,27 @@ public sealed class Pass1ProductionBoundaryQualificationTests
         bool EndpointRegistration,
         bool NavigateFunctionRegistration,
         bool NavigationPortRegistration,
-        bool CoordinatorRegistration)
+        bool CoordinatorRegistration,
+        bool ExecutorImplementation,
+        bool ExecutorRegistration,
+        bool DispatcherRegistration,
+        bool CommitterRegistration,
+        bool DispatchWorkerToDispatcher,
+        bool DispatcherToExecutor,
+        bool RunnerToDispatchWorker,
+        bool RunnerToCommitter,
+        bool CommitterImplementation,
+        bool RunnerToReconcile,
+        bool ReconcileImplementation)
     {
         public bool All => NavigateBinding && DispatcherBinding && ExactlyOneNavigateCode &&
             ExactlyOneFunctionFactory && EightToolAttempts && SharedConcurrency &&
             FourAuthorizedEndpoints && EndpointRegistration && NavigateFunctionRegistration &&
-            NavigationPortRegistration && CoordinatorRegistration;
+            NavigationPortRegistration && CoordinatorRegistration && ExecutorImplementation &&
+            ExecutorRegistration && DispatcherRegistration && CommitterRegistration &&
+            DispatchWorkerToDispatcher && DispatcherToExecutor && RunnerToDispatchWorker &&
+            RunnerToCommitter && CommitterImplementation && RunnerToReconcile &&
+            ReconcileImplementation;
     }
 
     private sealed record InspectedPath(string Path, long Bytes, string Sha256);

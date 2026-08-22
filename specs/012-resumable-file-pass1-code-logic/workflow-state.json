@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "415a374ee2feae54ee369787277c4141f9105cb85a2d92bb66447a0d9f446664"
+      "sha256": "4e534ff5e7910ca1c3fd9198cb66f6999edc1c2fdb0ca28e29e2c6fcb295e6b9"
     }
   },
   "gates": {
@@ -112,23 +112,23 @@
     "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
     "artifacts/qualification/story-12.3/host-runtime.md",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-01.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-01.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-02.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-02.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-03.json",
     "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-10.json",
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-correction-20260822T111530Z-c8f4a1",
+    "checkpoint_id": "bmad-12-3-implement-20260822T120816Z-4d72b9",
     "stage": "implement",
-    "commit_sha": "d1eeb0a9ff97e9a195ec26c017a7d0a05fbc4696",
+    "commit_sha": "68dd41e5e504ef89d4178268ad72b8f23e8fd94d",
     "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T052/T053 claimed-packet hydration is GREEN with exact RED/GREEN evidence and the T050 capacity harness remains GREEN through a test-only hydration seam; begin T054 executor/dispatcher/committer/failure/reconciliation composition RED.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-02.json"
+    "reason": "T054 composition RED is bound to one-unit dispatcher rejection plus the absent concrete executor/host composition; implement T055 executor/dispatcher/committer/failure/reconciliation composition without provider recovery behavior.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-03.json"
   },
-  "updated_at": "2026-08-22T12:03:51Z"
+  "updated_at": "2026-08-22T12:25:47Z"
 }
