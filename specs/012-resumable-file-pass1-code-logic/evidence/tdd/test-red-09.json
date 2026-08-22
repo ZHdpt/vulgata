@@ -1,0 +1,26 @@
+{
+  "evidence_id": "12-3/implement/19",
+  "kind": "test-red",
+  "stage": "implement-correction-2",
+  "source_commit": "77c111d9d617b6a237056c7052df4baa5432ba2d",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "de1ee82cab5590bdef535f16cd1aaf235149cd3fcfd7a76ec50e33796ac93836"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~ProviderUnavailableClaim_IsRelinquishedWithoutRetryBudget_AndEarlyRecoveryResumesDispatch|FullyQualifiedName~ExhaustedWithNonLocalActiveLease_DoesNotReconcileOrBusyLoopBeforeActivation|FullyQualifiedName~Shutdown_WithCancellationResistantWorker_RetainsRevisionBindingsUntilLocalDrain",
+  "result": {
+    "passed": 0,
+    "failed": 3,
+    "skipped": 0,
+    "classification": "expected-provider-lease-shutdown-red",
+    "failures": [
+      "Provider-transient concurrency-one execution retained one Running claim instead of relinquishing it without retry/failure budget consumption.",
+      "Exhausted with a nonlocal active lease issued seven ClaimNext calls during a 750 ms inactive window instead of waiting for activation or time eligibility.",
+      "Host shutdown released the pair revision binding before the cancellation-resistant local Worker drained."
+    ]
+  },
+  "observed_at": "2026-08-22T19:27:26.5944081Z",
+  "summary": "T067 production-composed PostgreSQL tests expose all three QR2-002 lifecycle defects while preserving exact one-attempt, zero-retry, zero-failure accounting for the provider-transient claim."
+}

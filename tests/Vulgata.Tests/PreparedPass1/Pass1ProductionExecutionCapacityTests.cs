@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
@@ -439,6 +440,219 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
+    [Fact]
+    public async Task ProviderUnavailableClaim_IsRelinquishedWithoutRetryBudget_AndEarlyRecoveryResumesDispatch()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
+        ManualTimeProvider time = new(PreparedScanTestHost.FixedUtcNow);
+        using WebApplicationFactory<Program> host = CreateConfiguredHost(
+            fixture.ConnectionString,
+            fixture.Package,
+            time,
+            new AlwaysHealthyProviderProbe());
+        await ConfigureWorkerProviderAsync(host, fixture.SystemId);
+        ControllableWorker worker = host.Services.GetRequiredService<ControllableWorker>();
+        worker.UseProviderUnavailableReasonCode = true;
+        worker.SetOutcome(PreparedPass1RawWorkerOutcome.ProviderUnavailable);
+        worker.EnableAutoRelease();
+        using HttpClient client = await CreateAuthenticatedClientAsync(host, fixture);
+        Guid[] manifests = await fixture.Context.PreparedScanManifests
+            .OrderBy(value => value.RepositoryId)
+            .Select(value => value.Id)
+            .ToArrayAsync();
+
+        using HttpResponseMessage start = await client.PostAsJsonAsync(
+            "/api/pass1-executions",
+            new { firstManifestId = manifests[0], secondManifestId = manifests[1], concurrencyLimit = 1 });
+        Assert.Equal(HttpStatusCode.Created, start.StatusCode);
+        Pass1ExecutionStartResponse started =
+            (await start.Content.ReadFromJsonAsync<Pass1ExecutionStartResponse>())!;
+        await WaitForPhaseAsync(client, started.Pass1ExecutionId, "ProbingProvider", TimeSpan.FromSeconds(3));
+
+        await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
+        {
+            VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            ScanJobExecution[] jobs = await context.ScanJobExecutions
+                .AsNoTracking()
+                .ToArrayAsync();
+            Assert.Single(jobs, value => value.AttemptCount == 1);
+            Assert.All(jobs, job => Assert.True(job.AttemptCount is 0 or 1));
+            Assert.Equal(0, jobs.Count(value => value.State == ScanJobExecutionState.Running));
+            Assert.Equal(0, jobs.Count(value => value.State == ScanJobExecutionState.RetryScheduled));
+            Assert.All(jobs, job =>
+            {
+                Assert.Null(job.FailureCategory);
+                Assert.Null(job.FailureCode);
+            });
+
+            Pass1PairExecution ticket = await context.Pass1PairExecutions
+                .AsNoTracking()
+                .SingleAsync(value => value.Id == started.Pass1ExecutionId);
+            Assert.NotNull(ticket.NextProbeAt);
+            time.Advance(ticket.NextProbeAt!.Value - time.GetUtcNow());
+        }
+
+        worker.SetOutcome(PreparedPass1RawWorkerOutcome.Completed);
+        await Task.Delay(100);
+        PreparedPass1ExecutionActivator activator =
+            host.Services.GetRequiredService<PreparedPass1ExecutionActivator>();
+        activator.Signal(started.Pass1ExecutionId, fixture.Authorization, CreateHandoff(fixture.Package));
+        Assert.True(
+            await worker.WaitForAtLeastAsync(2, TimeSpan.FromSeconds(3)),
+            $"T067 RED: early provider recovery did not resume dispatch; started {worker.StartedCount}.");
+        worker.ReleaseAll();
+    }
+
+    [Fact]
+    public async Task ExhaustedWithNonLocalActiveLease_DoesNotReconcileOrBusyLoopBeforeActivation()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
+        ManualTimeProvider time = new(PreparedScanTestHost.FixedUtcNow);
+        using WebApplicationFactory<Program> host = CreateConfiguredHost(
+            fixture.ConnectionString,
+            fixture.Package,
+            time);
+        Guid pairExecutionId;
+        PreparedPass1ClaimResult remoteClaim;
+        await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
+        {
+            IPreparedPass1Store store = scope.ServiceProvider.GetRequiredService<IPreparedPass1Store>();
+            PreparedPass1StartResult start = await store.StartAsync(
+                fixture.Authorization,
+                CreateHandoff(fixture.Package),
+                concurrencyLimit: 2);
+            Assert.Equal(PreparedPass1StartOutcome.Created, start.Outcome);
+            pairExecutionId = start.PairExecutionId!.Value;
+            remoteClaim = await store.ClaimNextAsync(
+                pairExecutionId,
+                time.GetUtcNow(),
+                TimeSpan.FromMinutes(30));
+            Assert.Equal(PreparedPass1ClaimOutcome.Claimed, remoteClaim.Outcome);
+
+            VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            ScanJobExecution[] pending = await context.ScanJobExecutions
+                .Where(value => value.Id != remoteClaim.JobId)
+                .ToArrayAsync();
+            foreach (ScanJobExecution job in pending)
+            {
+                job.Cancel(job.StateVersion, null, "t067-remote-terminal", time.GetUtcNow());
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        ReconciliationProbe reconciliation = host.Services.GetRequiredService<ReconciliationProbe>();
+        host.Services.GetRequiredService<PreparedPass1ExecutionActivator>()
+            .Signal(pairExecutionId, fixture.Authorization, CreateHandoff(fixture.Package));
+        await Task.Delay(750);
+
+        Assert.Equal(0, reconciliation.ReconciliationCalls);
+        Assert.InRange(reconciliation.ClaimCalls, 1, 2);
+        await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
+        {
+            VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            Assert.Equal(
+                Pass1PairExecutionPhase.Running,
+                await context.Pass1PairExecutions
+                    .Where(value => value.Id == pairExecutionId)
+                    .Select(value => value.Phase)
+                    .SingleAsync());
+            Assert.Equal(
+                ScanJobExecutionState.Running,
+                await context.ScanJobExecutions
+                    .Where(value => value.Id == remoteClaim.JobId)
+                    .Select(value => value.State)
+                    .SingleAsync());
+
+            ScanJobExecution active = await context.ScanJobExecutions
+                .SingleAsync(value => value.Id == remoteClaim.JobId);
+            active.Cancel(active.StateVersion, active.LeaseToken, "t067-remote-completed", time.GetUtcNow());
+            await context.SaveChangesAsync();
+        }
+        host.Services.GetRequiredService<PreparedPass1ExecutionActivator>()
+            .Signal(pairExecutionId, fixture.Authorization, CreateHandoff(fixture.Package));
+        Assert.True(
+            await WaitForReconciliationCallsAsync(reconciliation, 1, TimeSpan.FromSeconds(3)),
+            "T067 RED: activation after the nonlocal lease completed did not resume reconciliation.");
+    }
+
+    [Fact]
+    public async Task Shutdown_WithCancellationResistantWorker_RetainsRevisionBindingsUntilLocalDrain()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
+        using WebApplicationFactory<Program> host = CreateConfiguredHost(fixture.ConnectionString, fixture.Package);
+        ControllableWorker worker = host.Services.GetRequiredService<ControllableWorker>();
+        worker.CancellationResistant = true;
+        using HttpClient client = await CreateAuthenticatedClientAsync(host, fixture);
+        Guid[] manifests = await fixture.Context.PreparedScanManifests
+            .OrderBy(value => value.RepositoryId)
+            .Select(value => value.Id)
+            .ToArrayAsync();
+        using HttpResponseMessage start = await client.PostAsJsonAsync(
+            "/api/pass1-executions",
+            new { firstManifestId = manifests[0], secondManifestId = manifests[1], concurrencyLimit = 1 });
+        Assert.Equal(HttpStatusCode.Created, start.StatusCode);
+        Pass1ExecutionStartResponse started =
+            (await start.Content.ReadFromJsonAsync<Pass1ExecutionStartResponse>())!;
+        Assert.True(
+            await worker.WaitForAtLeastAsync(1, TimeSpan.FromSeconds(3)),
+            "T067 RED: cancellation-resistant Worker was not launched.");
+
+        IPreparedPass1RevisionBindingRegistry bindings =
+            host.Services.GetRequiredService<IPreparedPass1RevisionBindingRegistry>();
+        Guid repositoryId = fixture.Package.Repositories
+            .OrderBy(value => value.RepositoryId)
+            .First()
+            .RepositoryId;
+        Assert.NotNull(bindings.ResolveBinding(started.Pass1ExecutionId, repositoryId));
+
+        host.Services.GetRequiredService<IHostApplicationLifetime>().StopApplication();
+        await Task.Delay(750);
+        Assert.NotNull(
+            bindings.ResolveBinding(started.Pass1ExecutionId, repositoryId));
+        worker.ReleaseAll();
+        DateTimeOffset deadline = DateTimeOffset.UtcNow.AddSeconds(3);
+        while (DateTimeOffset.UtcNow < deadline &&
+               bindings.ResolveBinding(started.Pass1ExecutionId, repositoryId) is not null)
+        {
+            await Task.Delay(50);
+        }
+
+        Assert.Null(bindings.ResolveBinding(started.Pass1ExecutionId, repositoryId));
+    }
+
+    private static async Task<Pass1ExecutionStatusResponse> WaitForPhaseAsync(
+        HttpClient client,
+        Guid executionId,
+        string phase,
+        TimeSpan timeout)
+    {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow.Add(timeout);
+        Pass1ExecutionStatusResponse status = await ReadStatusAsync(client, executionId);
+        while (DateTimeOffset.UtcNow < deadline && status.Phase != phase)
+        {
+            await Task.Delay(50);
+            status = await ReadStatusAsync(client, executionId);
+        }
+
+        Assert.Equal(phase, status.Phase);
+        return status;
+    }
+
+    private static async Task<bool> WaitForReconciliationCallsAsync(
+        ReconciliationProbe reconciliation,
+        int expected,
+        TimeSpan timeout)
+    {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow.Add(timeout);
+        while (DateTimeOffset.UtcNow < deadline && reconciliation.ReconciliationCalls < expected)
+        {
+            await Task.Delay(50);
+        }
+
+        return reconciliation.ReconciliationCalls >= expected;
+    }
+
     private async Task<PreparedScanPostgreSqlFixture> CreatePreparedPairAsync()
     {
         string administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN")
@@ -479,9 +693,48 @@ public sealed class Pass1ProductionExecutionCapacityTests
         return fixture;
     }
 
+    private static async Task ConfigureWorkerProviderAsync(
+        WebApplicationFactory<Program> host,
+        Guid systemId)
+    {
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+        VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+        ISecretEncryptionService encryption =
+            scope.ServiceProvider.GetRequiredService<ISecretEncryptionService>();
+        string encryptedApiKey = await encryption.EncryptAsync(
+            SecretPurposes.LlmApiKey,
+            "t067-provider-health-key");
+        LlmProvider provider = new(
+            "t067-provider-health",
+            "http://127.0.0.1:1",
+            encryptedApiKey,
+            ApiType.ChatCompletions,
+            AgentType.Worker,
+            PreparedScanTestHost.FixedUtcNow);
+        context.LlmProviders.Add(provider);
+        SystemLlmProviderOverride? existing = await context.SystemLlmProviderOverrides
+            .SingleOrDefaultAsync(value => value.SystemId == systemId && value.AgentType == AgentType.Worker);
+        if (existing is null)
+        {
+            context.SystemLlmProviderOverrides.Add(SystemLlmProviderOverride.Create(
+                systemId,
+                provider.Id,
+                AgentType.Worker,
+                PreparedScanTestHost.FixedUtcNow));
+        }
+        else
+        {
+            existing.Update(provider.Id, AgentType.Worker, PreparedScanTestHost.FixedUtcNow);
+        }
+
+        await context.SaveChangesAsync();
+    }
+
     private static WebApplicationFactory<Program> CreateConfiguredHost(
         string connectionString,
-        PreparedScanPairPackage package) =>
+        PreparedScanPairPackage package,
+        TimeProvider? timeProvider = null,
+        IPreparedPass1ProviderHealthProbe? providerHealthProbe = null) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             string keyRingPath = Path.Combine(
@@ -538,6 +791,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
                 services.RemoveAll<IPreparedPass1Store>();
                 services.RemoveAll<IPreparedRevisionAcquirer>();
                 services.RemoveAll<IPreparedRevisionLeaseResolver>();
+                services.RemoveAll<TimeProvider>();
+                services.AddSingleton(timeProvider ?? TimeProvider.System);
                 services.AddSingleton<IPreparedScanHandoffSource>(
                     new LegacyPreparedScanHandoffSource(package));
                 services.AddSingleton<SyntheticPreparedRevisionRuntime>();
@@ -547,6 +802,11 @@ public sealed class Pass1ProductionExecutionCapacityTests
                     provider.GetRequiredService<SyntheticPreparedRevisionRuntime>());
                 services.AddSingleton<IPreparedPass1ProviderAvailabilityProbe,
                     AlwaysAvailableProviderProbe>();
+                if (providerHealthProbe is not null)
+                {
+                    services.RemoveAll<IPreparedPass1ProviderHealthProbe>();
+                    services.AddSingleton<IPreparedPass1ProviderHealthProbe>(providerHealthProbe);
+                }
                 services.AddSingleton<ReconciliationProbe>();
                 services.AddScoped<IPreparedPass1Store>(provider =>
                     new RecordingPass1Store(
@@ -746,9 +1006,22 @@ public sealed class Pass1ProductionExecutionCapacityTests
             Task.FromResult(true);
     }
 
+    private sealed class AlwaysHealthyProviderProbe : IPreparedPass1ProviderHealthProbe
+    {
+        public Task<PreparedPass1ProviderHealthResult> ProbeAsync(
+            Uri endpoint,
+            string model,
+            string apiKey,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedPass1ProviderHealthResult(
+                PreparedPass1ProviderHealthOutcome.Available,
+                null));
+    }
+
     private sealed class ReconciliationProbe
     {
         private int _reconciliationCalls;
+        private int _claimCalls;
         private int _conflictOnce;
         private int _conflictInjections;
         private int _holdReconciliation;
@@ -758,6 +1031,7 @@ public sealed class Pass1ProductionExecutionCapacityTests
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public int ReconciliationCalls => Volatile.Read(ref _reconciliationCalls);
+        public int ClaimCalls => Volatile.Read(ref _claimCalls);
         public int ConflictInjections => Volatile.Read(ref _conflictInjections);
 
         public bool ConflictOnce
@@ -769,6 +1043,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         public bool CloseReconciliation { get; set; }
 
         public void RecordReconciliationCall() => Interlocked.Increment(ref _reconciliationCalls);
+
+        public void RecordClaimCall() => Interlocked.Increment(ref _claimCalls);
 
         public void HoldReconciliation() => Interlocked.Exchange(ref _holdReconciliation, 1);
 
@@ -814,8 +1090,11 @@ public sealed class Pass1ProductionExecutionCapacityTests
             Guid pairExecutionId,
             DateTimeOffset now,
             TimeSpan leaseDuration,
-            CancellationToken cancellationToken = default) =>
-            inner.ClaimNextAsync(pairExecutionId, now, leaseDuration, cancellationToken);
+            CancellationToken cancellationToken = default)
+        {
+            probe.RecordClaimCall();
+            return inner.ClaimNextAsync(pairExecutionId, now, leaseDuration, cancellationToken);
+        }
 
         public Task<PreparedPass1ConcurrencyUpdateResult> UpdateConcurrencyAsync(
             PreparedScanAuthorizationScope authorizationScope,
@@ -1384,6 +1663,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         public int StartedCount => Volatile.Read(ref _startedCount);
         public int MaximumActiveCount => Volatile.Read(ref _maximumActiveCount);
         public IReadOnlyList<int> StartedOrdinals => _startedOrdinals.ToArray();
+        public bool CancellationResistant { get; set; }
+        public bool UseProviderUnavailableReasonCode { get; set; }
 
         public async Task<PreparedPass1RawWorkerResult> ExecuteAsync(
             PreparedPass1WorkerPacket packet,
@@ -1402,14 +1683,24 @@ public sealed class Pass1ProductionExecutionCapacityTests
             }
             try
             {
-                await release.Task.WaitAsync(cancellationToken);
+                if (CancellationResistant)
+                {
+                    await release.Task;
+                }
+                else
+                {
+                    await release.Task.WaitAsync(cancellationToken);
+                }
                 PreparedPass1RawWorkerOutcome outcome = (PreparedPass1RawWorkerOutcome)Volatile.Read(ref _outcome);
                 if (outcome != PreparedPass1RawWorkerOutcome.Completed)
                 {
                     return new(
                         outcome,
                         ReadOnlyMemory<byte>.Empty,
-                        "t050-scripted-terminal");
+                        UseProviderUnavailableReasonCode &&
+                        outcome == PreparedPass1RawWorkerOutcome.ProviderUnavailable
+                            ? "provider-unavailable"
+                            : "t050-scripted-terminal");
                 }
                 return new(
                     PreparedPass1RawWorkerOutcome.Completed,
@@ -1485,5 +1776,15 @@ public sealed class Pass1ProductionExecutionCapacityTests
                 }
             }
         }
+    }
+
+    private sealed class ManualTimeProvider(DateTimeOffset current) : TimeProvider
+    {
+        private DateTimeOffset _current = current;
+
+        public override DateTimeOffset GetUtcNow() => _current;
+
+        public void Advance(TimeSpan amount) =>
+            _current = _current.Add(amount);
     }
 }
