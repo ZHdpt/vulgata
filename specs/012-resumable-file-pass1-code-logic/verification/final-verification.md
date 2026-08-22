@@ -1,106 +1,78 @@
-# Story 12.3 stable pre-convergence verification
+# Story 12.3 T064 qualification verification
 
-Observed at `2026-08-21T17:23:25Z` against branch `demo0831/story-12-3` and
-committed implementation source `cb3fb0f17b2eaf92d93afe71c710cd7b92c1e3bd`,
-plus the T046-T049 qualification and test-only compatibility corrections
-listed below. This is the T048 pre-convergence barrier; it does not replace
-root-owned pinned verification after convergence, quality review, and the E2E
-decision.
+Observed at `2026-08-22T18:24:08.2257694Z` on branch
+`demo0831/story-12-3`, pinned to full HEAD
+`7a0e6a3c29c08148796f27b395097592939cb6bf`.
 
 ## Result
 
-Story 12.3 qualification is **PASS with six explicitly isolated repository
-baseline/harness checks**. All Story 12.3 focused, adjacent, migration,
-PostgreSQL, runtime, composition, exclusion, build, and diff checks pass.
-The six isolated checks are unchanged by Story 12.3 or require an unrelated
-completion-lane input; none is presented as a passing full-suite result.
+T064 qualification is **complete with explicit environment and repository-baseline
+limitations**. The focused Story 12.3 migration, production-boundary,
+security/exclusion, and build checks passed. The available environment did not
+contain the pinned T046 host-tool paths or the approved real-pair inputs, so this
+record does not claim real CodeGraph/JDT-LS or authenticated prepared-pair E2E.
+The unfiltered suite was run, but it is not reported as passing: its completed
+sandbox run contained environment/baseline failures and its unsandboxed retry was
+interrupted before final totals. No unexpected Story 12.3 production failure was
+observed.
 
-## Passing evidence
+## Qualification evidence
 
 | Boundary | Result |
 |---|---|
-| T046 host/runtime plus T047 production boundary | 3 passed, 0 failed |
-| real `NavigateCodeRealToolQualificationTests` | 3 passed, 0 failed |
-| pinned JDT-LS readiness | 1 passed, 0 failed |
-| PostgreSQL 17 pair/document atomicity plus migration | 48 passed, 0 failed |
-| focused `PreparedPass1` | 267 passed, 0 failed |
-| corrected adjacent DurableScanning/PreparedScanning/KnowledgeStore/AnalysisRuntime | 437 passed, 1 existing skip, 0 failed |
-| test-only historical/current migration compatibility | 13 passed, 0 failed |
+| `Pass1MigrationTests` migration/no-delta | 7 passed, 0 failed, 0 skipped |
+| `Pass1ProductionBoundaryQualificationTests` after bounded harness correction | 1 passed, 0 failed; artifact verdict `pass` |
+| security/exclusion/provider-focused checks | 33 passed, 0 failed, 1 real-provider skip |
+| `Pass1HostRuntimeQualificationTests` | 1 passed, 1 missing-prerequisite failure, 2 real-pair skips |
 | Web build | succeeded, 0 errors, 9 warnings |
-| broad repository run excluding five proven unrelated baseline checks | 1911 passed, 1 existing skip, 1 parallel-only failure |
-| parallel-only ExactCrossRepository migration lifecycle, isolated rerun | 1 passed, 0 failed |
-| `git diff --check` | pass |
-| workflow schema/contracts validator | pass |
+| sandbox full suite | 1875 passed, 163 failed, 5 skipped; 2043 total; 4m33s |
+| unsandboxed full-suite retry | interrupted after the last observed progress at 3m10s; no final totals |
 
-The disposable KnowledgeStore PostgreSQL tests used the dedicated database
-name `vulgata_story123_knowledge`; credentials and connection strings are not
-persisted here. PostgreSQL reported major version 17. Host tool locations were
-provided through local environment configuration and are intentionally absent
-from this artifact.
+The production-boundary artifact records no forbidden literals, a closed prompt,
+all composition checks true, and verdict `pass`. The earlier false
+`ReconcileImplementation` result was a test-harness argument-order defect in
+`CountOrdinal(value, literal)`; the bounded correction is included in the pinned
+HEAD and root reran the exact qualification class 1/1 GREEN.
 
-## Test-only compatibility corrections
+## Runtime and E2E limitations
 
-No production behavior changed during T048 diagnosis. The correction preserves
-historical migrations while testing the accepted current model separately:
+The PostgreSQL topology check passed, preserving PostgreSQL 17 as the only
+required Docker service. These prerequisites were absent from the qualification
+process:
 
-- the Story 12.2 File Code Unit test now targets the exact
-  `PreparedFileCodeUnitDraft.Create` seam instead of selecting any public type
-  whose name contains `FileCodeUnit`;
-- the Story 12.2 boundary test binds the current accepted spec and plan bytes;
-- Knowledge Store tests distinguish the immutable v1 migration from the
-  additive current v1/`code-logic/file-v2` model and byte-anchor constraint;
-- sequential-runner and earlier PostgreSQL lifecycle tests distinguish their
-  historical relational boundary from the later
-  `AddResumablePass1CodeLogic` migration;
-- the required KnowledgeStore PostgreSQL environment variable was supplied to
-  an explicitly disposable database, turning four configuration failures into
-  4/4 passes.
+- `VULGATA_T046_CODEGRAPH_COMMAND`
+- `VULGATA_T046_JAVA_EXECUTABLE`
+- `VULGATA_T046_JDT_LS_ROOT` / `VULGATA_T046_JDT_LS_ARCHIVE`
+- `VULGATA_T062_APPROVED_PAIR_REAL`
+- `VULGATA_T062_SOURCE_BINDING_READY`
 
-## Full-suite baseline treatment
+Accordingly, the exact host-run CodeGraph `@colbymchenry/codegraph@1.5.0`, Java
+21, and JDT LS `jdt-language-server-1.61.0-202608141332` stdio integration was
+not re-executed here. The two authenticated real-pair tests and the provider
+outage test were honestly skipped rather than replaced with synthetic evidence.
 
-The unfiltered run completed with 1908 passed, 1 skipped, and 9 failed before
-the compatibility corrections. Three failures were the Story 12.3 test-only
-migration compatibility defects corrected above. One ExactCrossRepository
-migration lifecycle check failed only when competing with the parallel full
-suite and passed immediately in isolation. The five remaining checks are
-outside the Story 12.3 base-to-candidate diff:
+## Full-suite classification
 
-1. `CodeGraphProviderContractTests.FinalImage_ExactPinned051_ExactProductionProjections_MatchObservedContract`
-   requires the absent legacy completion-lane `VULGATA_PROVIDER_CONTRACT_IMAGE`
-   input and targets the superseded 0.5.1 qualification lane.
-2. `QualificationPreflightTests.Run_WithFakeExecutor_InvokesOnlyFreshBuildAndExactSyntheticCategoryAsync`
-   reads a legacy `plan_revision` workflow-state shape that is absent from the
-   current copied fixture.
-3. `QualificationPreflightTests.Run_WithIncompleteConsumedAttempt_ReconcilesInTempAndNeverCreatesAttempt0003Async`
-   is the same unchanged legacy qualification-state lane.
-4. `Story43EndToEndTests.ProductionComposition_TwoCommittedRepositories_PersistsIsolatedProfilesAndApprovedPreScanResultsAsync`
-   requires the full configured analysis-runtime integrity environment; without
-   it the expected coordinator is replaced by the fail-closed runtime-unavailable
-   coordinator.
-5. `RepositoryManagementTests.SystemOwner_CanCreateRepository_ForAssignedSystem_AndPageShowsRepositoryManagement`
-   expects the unrelated page label `最近扫描时间`, which is absent from the
-   unchanged current page.
+The completed sandbox run's 163 failures were dominated by restricted Windows
+Event Log, Data Protection AppData, ACL, and JDT workspace access. It also
+contained known missing-input/baseline lanes: the separate disposable
+`VULGATA_TEST_POSTGRES` database, a legacy provider image, absent host-runtime
+paths, real-pair prerequisites, and the subsequently corrected boundary harness.
 
-These checks were neither modified nor absorbed. The subsequent broad run
-excluded exactly those five checks, leaving only the parallel-only
-ExactCrossRepository result; its isolated current-boundary run passed.
+The unsandboxed retry did not complete. Before interruption, its observed
+non-Story-12.3 failures included two legacy `QualificationPreflightTests`
+`plan_revision` assertions, the existing Story 4.3 fail-closed
+runtime-unavailable mismatch, and the repository-management `最近扫描时间` UI-text
+assertion. At 3m10s it reported the expected real provider-outage and approved-pair
+tests skipped. These results are evidence of execution, not a full-suite PASS.
 
-## Commands
+## Scope and security conclusion
 
-Commands were run from the repository root with required local environment
-values supplied but not printed:
+Focused checks found no `CodeGraphContext`, raw LSP/CodeGraph storage, shell,
+network, unrestricted filesystem access, startup sweep, background resume, Story
+12.4 Cross-Repository Resolution/Pass 2/Business Logic Document behavior, or Story
+12.5 Chat/release behavior. No EF model or migration delta was introduced by the
+Story 12.3 correction lane.
 
-```pwsh
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~Pass1HostRuntimeQualificationTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests"
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~Pass1PairPostgreSqlAtomicTests|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests|FullyQualifiedName~Pass1MigrationTests"
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~PreparedPass1"
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~DurableScanning|FullyQualifiedName~PreparedScanning|FullyQualifiedName~KnowledgeStore|FullyQualifiedName~AnalysisRuntime"
-dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
-git diff --check
-uv run --offline --with PyYAML python validate_workflow.py --repo <repository-root>
-```
-
-T049 separately records that no Story 12.4/12.5, `CodeGraphContext`, Pass 2,
-Business Logic Document, Chat, final release UI, evaluation, or release-run
-production behavior was added.
+T064 is qualification evidence only. Root retains sole authority for quality
+review, E2E disposition, lifecycle state, staging, and commit.
