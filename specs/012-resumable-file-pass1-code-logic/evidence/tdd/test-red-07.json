@@ -1,0 +1,26 @@
+{
+  "evidence_id": "12-3/implement/13",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "4207c230fecf7a6b06bbb97557dafc341c000a33",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionProviderOutageTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1HostRuntimeQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs": "0eb8e15f18de3e56c699509bc621616edda448d1aa3086f90ed95d4b9abfcd92",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionProviderOutageTests.cs": "de260fb0a99247a6327807e0c271bc5cb6337dfc6463ae8feeb8fa7ba6efd048",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1HostRuntimeQualificationTests.cs": "2776d82595c96d410863fda9cee683f08affa6681d296dcf160ddf0eb8d61834"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence|FullyQualifiedName~AuthenticatedRealPair_ProviderUnavailable_PausesDurablyAndStopsNewDispatch|FullyQualifiedName~PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution --no-build --no-restore --logger trx",
+  "result": {
+    "passed": 0,
+    "failed": 6,
+    "skipped": 0,
+    "classification": "expected-production-reachability-red",
+    "representative_failure": "Authenticated production Start returns HTTP 422 pass1-start-rejected because PreparedScanHandoffSource emits approved prepared-scan-handoff/2.0 while PreparedPass1Store.HasCompleteRequestShape accepts only prepared-scan-handoff/1.0."
+  },
+  "observed_at": "2026-08-22T16:08:06Z",
+  "summary": "T062 uses the production scoped PreparedScanHandoffSource, authenticated API, PostgreSQL 17, exact approved two-Repository manifests, concurrency limits one through four, explicit unavailable Worker provider, and pinned host qualification. All six paths are honestly blocked at the same stale handoff-schema compatibility seam before dispatch; no fake pipeline source is used."
+}

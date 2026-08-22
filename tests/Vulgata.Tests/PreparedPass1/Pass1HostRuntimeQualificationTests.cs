@@ -1,7 +1,12 @@
 using System.Diagnostics;
+using System.Net;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Shared.Scans;
+using Vulgata.Tests.PreparedScanning;
 
 namespace Vulgata.Tests.PreparedPass1;
 
@@ -10,6 +15,7 @@ namespace Vulgata.Tests.PreparedPass1;
 /// This test only observes the pinned host tools and the existing PostgreSQL
 /// service; it does not download, install, or alter any runtime.
 /// </summary>
+[Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1HostRuntimeQualificationTests
 {
     private const string CodeGraphPackageHash =
@@ -20,6 +26,37 @@ public sealed class Pass1HostRuntimeQualificationTests
         "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877";
     private const string JdtLsArchiveHash =
         "bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f";
+
+    [Fact]
+    public async Task PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution()
+    {
+        await using PreparedScanPostgreSqlFixture fixture =
+            await Pass1ProductionExecutionTests.PreparePairAsync();
+        using var host = Pass1ProductionExecutionTests.CreateProductionHost(
+            fixture.ConnectionString);
+        using HttpClient client = await Pass1ProductionExecutionTests
+            .CreateAuthenticatedClientAsync(host, fixture);
+        Guid[] manifests = await fixture.Context.PreparedScanManifests
+            .OrderBy(value => value.RepositoryId)
+            .Select(value => value.Id)
+            .ToArrayAsync();
+
+        using HttpResponseMessage response = await client.PostAsJsonAsync(
+            "/api/pass1-executions",
+            new
+            {
+                firstManifestId = manifests[0],
+                secondManifestId = manifests[1],
+                concurrencyLimit = 2,
+            });
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.True(
+            response.StatusCode == HttpStatusCode.Created,
+            $"T062 RED: pinned runtime passed qualification but Start was not reachable; status={response.StatusCode}, body={body}");
+        Pass1ExecutionStartResponse started =
+            (await response.Content.ReadFromJsonAsync<Pass1ExecutionStartResponse>())!;
+        Assert.False(started.IsReplay, body);
+    }
 
     [Fact]
     public async Task PinnedHostTools_AreExactAndJdtLsUsesStdioFactory()

@@ -1,8 +1,16 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Reflection;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.Data;
+using Vulgata.Shared;
+using Vulgata.Tests.PreparedScanning;
+using Vulgata.Shared.Scans;
 
 namespace Vulgata.Tests.PreparedPass1;
 
@@ -15,6 +23,7 @@ namespace Vulgata.Tests.PreparedPass1;
 /// be exercised with these dependencies and must classify only the bounded
 /// observation that crosses the durable boundary.
 /// </summary>
+[Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1ProductionProviderOutageTests
 {
     private const string HealthProbeTypeName =
@@ -23,6 +32,80 @@ public sealed class Pass1ProductionProviderOutageTests
         "Vulgata.Core.DomainServices.IPreparedPass1ProviderHealthProbe";
     private const string ProbeDriverTypeName =
         "Vulgata.Web.Data.PreparedPass1ProbeDriver";
+
+    [Fact]
+    public async Task AuthenticatedRealPair_ProviderUnavailable_PausesDurablyAndStopsNewDispatch()
+    {
+        await using PreparedScanPostgreSqlFixture fixture =
+            await Pass1ProductionExecutionTests.PreparePairAsync();
+        using var host = Pass1ProductionExecutionTests.CreateProductionHost(
+            fixture.ConnectionString);
+        await ConfigureUnavailableWorkerProviderAsync(host);
+        using HttpClient client = await Pass1ProductionExecutionTests
+            .CreateAuthenticatedClientAsync(host, fixture);
+        Guid[] manifests = await fixture.Context.PreparedScanManifests
+            .OrderBy(value => value.RepositoryId)
+            .Select(value => value.Id)
+            .ToArrayAsync();
+
+        using HttpResponseMessage start = await client.PostAsJsonAsync(
+            "/api/pass1-executions",
+            new
+            {
+                firstManifestId = manifests[0],
+                secondManifestId = manifests[1],
+                concurrencyLimit = 2,
+            });
+        string body = await start.Content.ReadAsStringAsync();
+        Assert.True(
+            start.StatusCode == HttpStatusCode.Created,
+            $"T062 RED: provider-outage pair could not enter production execution; status={start.StatusCode}, body={body}");
+        Pass1ExecutionStartResponse started =
+            (await start.Content.ReadFromJsonAsync<Pass1ExecutionStartResponse>())!;
+
+        DateTime deadline = DateTime.UtcNow.AddSeconds(30);
+        Pass1ExecutionStatusResponse? status = null;
+        while (DateTime.UtcNow < deadline)
+        {
+            using HttpResponseMessage response = await client.GetAsync(
+                $"/api/pass1-executions/{started.Pass1ExecutionId:D}");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            status = (await response.Content.ReadFromJsonAsync<Pass1ExecutionStatusResponse>())!;
+            if (status.Phase == "PausedProviderUnavailable")
+            {
+                break;
+            }
+
+            await Task.Delay(250);
+        }
+
+        Assert.NotNull(status);
+        Assert.Equal(
+            "PausedProviderUnavailable",
+            status!.Phase);
+        Assert.True(status.DispatchedCount == 0 || status.PendingCount > 0);
+        Assert.Contains("继续", status.ManualResumeAction ?? body, StringComparison.Ordinal);
+    }
+
+    private static async Task ConfigureUnavailableWorkerProviderAsync(
+        WebApplicationFactory<Program> host)
+    {
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+        VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+        ISecretEncryptionService encryption =
+            scope.ServiceProvider.GetRequiredService<ISecretEncryptionService>();
+        string encryptedApiKey = await encryption.EncryptAsync(
+            SecretPurposes.LlmApiKey,
+            "t062-provider-outage-key");
+        context.LlmProviders.Add(new LlmProvider(
+            "t062-provider-outage",
+            "http://127.0.0.1:1",
+            encryptedApiKey,
+            ApiType.ChatCompletions,
+            AgentType.Worker,
+            PreparedScanTestHost.FixedUtcNow));
+        await context.SaveChangesAsync();
+    }
 
     [Fact]
     public void ActiveProviderProbe_UsesInjectedTransportAndTimeInsteadOfConfigurationResolution()
