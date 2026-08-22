@@ -152,8 +152,9 @@ public sealed class Pass1ProductionBoundaryQualificationTests
             CountOrdinal(runnerSource, "IPass1CodeLogicDocumentCommitter>().CommitAsync") == 1,
             CountOrdinal(committerSource, "CommitAsync(") >= 1,
             CountOrdinal(runnerSource, "store.ReconcileAsync(") >= 2,
-            CountOrdinal("public async Task<PreparedPass1ReconciliationResult> ReconcileAsync(",
-                ReadSource(repositoryRoot, "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs")) == 1);
+            CountOrdinal(
+                ReadSource(repositoryRoot, "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs"),
+                "public async Task<PreparedPass1ReconciliationResult> ReconcileAsync(") == 1);
 
         string promptResource = "Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md";
         string[] promptResources = agentsAssembly.GetManifestResourceNames()
