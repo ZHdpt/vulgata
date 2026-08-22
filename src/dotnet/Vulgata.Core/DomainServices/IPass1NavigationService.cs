@@ -1,3 +1,5 @@
+using Vulgata.Core.Entities;
+
 namespace Vulgata.Core.DomainServices;
 
 /// <summary>
@@ -57,7 +59,16 @@ public sealed record PreparedPass1NavigationScope(
     int ToolAttemptCount,
     int AcceptedCallCount,
     int EvidenceBytes,
-    IReadOnlyList<ReadOnlyMemory<byte>> ObservedTargetIdentities);
+    IReadOnlyList<ReadOnlyMemory<byte>> ObservedTargetIdentities,
+    Guid PairExecutionId = default,
+    long JobStateVersion = 0,
+    long PairStateVersion = 0,
+    Guid LeaseToken = default,
+    DateTimeOffset LeaseExpiresAt = default,
+    string PairState = "",
+    Pass1CircuitState CircuitState = Pass1CircuitState.Closed,
+    ScanJobExecutionState JobState = ScanJobExecutionState.Pending,
+    string AuthorizationBinding = "");
 
 public sealed record PreparedPass1CurrentDocumentEvidence(
     Guid RepositoryId,
@@ -88,6 +99,11 @@ public interface IPreparedPass1NavigationScopeSource
         Guid jobId,
         Guid sourceFileCodeUnitId,
         CancellationToken cancellationToken);
+
+    Task<PreparedPass1NavigationScope?> GetAsync(
+        PreparedPass1NavigationRequestInput request,
+        CancellationToken cancellationToken) =>
+        GetAsync(request.JobId, request.SourceFileCodeUnitId, cancellationToken);
 }
 
 /// <summary>

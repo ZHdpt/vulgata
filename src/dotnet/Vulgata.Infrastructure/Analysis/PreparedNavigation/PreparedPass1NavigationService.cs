@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Analysis.PreparedNavigation;
 
@@ -11,7 +12,8 @@ public sealed class PreparedPass1NavigationService(
     IPreparedPass1NavigationReceiptSink receiptSink,
     IJavaAnalysisSessionFactory javaSessionFactory,
     ICodeGraphAnalysisPort codeGraph,
-    IRevisionBoundSourceReader sourceReader) : IPass1NavigationService
+    IRevisionBoundSourceReader sourceReader,
+    TimeProvider? timeProvider = null) : IPass1NavigationService
 {
     private const int _maximumCalls = 8;
     private const int _maximumResults = 20;
@@ -29,6 +31,7 @@ public sealed class PreparedPass1NavigationService(
         codeGraph ?? throw new ArgumentNullException(nameof(codeGraph));
     private readonly IRevisionBoundSourceReader _sourceReader =
         sourceReader ?? throw new ArgumentNullException(nameof(sourceReader));
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
     public async Task<PreparedPass1NavigationResponse> NavigateAsync(
         PreparedPass1NavigationRequestInput request,
@@ -38,10 +41,9 @@ public sealed class PreparedPass1NavigationService(
         cancellationToken.ThrowIfCancellationRequested();
 
         PreparedPass1NavigationScope? scope = await _scopeSource.GetAsync(
-            request.JobId,
-            request.SourceFileCodeUnitId,
+            request,
             cancellationToken).ConfigureAwait(false);
-        if (scope is null || !ScopeMatches(scope, request))
+        if (scope is null || !ScopeMatches(scope, request, _timeProvider.GetUtcNow()))
         {
             return Empty(PreparedPass1NavigationOutcome.Unavailable, Guid.Empty, request, null);
         }
@@ -231,7 +233,8 @@ public sealed class PreparedPass1NavigationService(
                             scope.AnalysisScope, navigationRequest, cancellationToken).ConfigureAwait(false),
                         PreparedPass1NavigationOperation.References => await session.GetReferencesAsync(
                             scope.AnalysisScope, navigationRequest, cancellationToken).ConfigureAwait(false),
-                        PreparedPass1NavigationOperation.Implementations => throw new NotImplementedException(),
+                        PreparedPass1NavigationOperation.Implementations => await session.GetImplementationsAsync(
+                            scope.AnalysisScope, navigationRequest, cancellationToken).ConfigureAwait(false),
                         PreparedPass1NavigationOperation.Callers => throw new NotImplementedException(),
                         PreparedPass1NavigationOperation.Callees => throw new NotImplementedException(),
                         PreparedPass1NavigationOperation.SymbolSearch => throw new NotImplementedException(),
@@ -356,9 +359,11 @@ public sealed class PreparedPass1NavigationService(
 
     private static bool ScopeMatches(
         PreparedPass1NavigationScope scope,
-        PreparedPass1NavigationRequestInput request) =>
+        PreparedPass1NavigationRequestInput request,
+        DateTimeOffset currentTime) =>
         scope.JobId == request.JobId &&
         scope.SourceFileCodeUnitId == request.SourceFileCodeUnitId &&
+        AuthorizationMatches(scope, request, currentTime) &&
         scope.RepositoryId != Guid.Empty &&
         scope.ScanRunId != Guid.Empty &&
         scope.AnalysisScope.RepositoryId == scope.RepositoryId &&
@@ -370,6 +375,26 @@ public sealed class PreparedPass1NavigationService(
         scope.AcceptedCallCount is >= 0 and <= _maximumCalls &&
         scope.AcceptedCallCount <= scope.ToolAttemptCount &&
         scope.EvidenceBytes is >= 0 and <= _maximumEvidenceBytes;
+
+    private static bool AuthorizationMatches(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        DateTimeOffset currentTime) =>
+            currentTime.Offset == TimeSpan.Zero &&
+            scope.PairExecutionId != Guid.Empty &&
+            scope.PairExecutionId == request.PairExecutionId &&
+            scope.JobStateVersion > 0 && scope.JobStateVersion == request.JobStateVersion &&
+            scope.PairStateVersion >= 0 && scope.PairStateVersion == request.PairStateVersion &&
+            scope.LeaseToken != Guid.Empty && scope.LeaseToken == request.LeaseToken &&
+            scope.LeaseExpiresAt > currentTime && request.LeaseExpiresAt > currentTime &&
+            string.Equals(scope.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) &&
+            string.Equals(request.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) &&
+            scope.CircuitState == Pass1CircuitState.Closed &&
+            request.CircuitState == Pass1CircuitState.Closed &&
+            scope.JobState == ScanJobExecutionState.Running &&
+            request.JobState == ScanJobExecutionState.Running &&
+            !string.IsNullOrWhiteSpace(scope.AuthorizationBinding) &&
+            string.Equals(scope.AuthorizationBinding, request.AuthorizationBinding, StringComparison.Ordinal);
 
     private static bool TryValidateDepth(
         PreparedPass1NavigationScope scope,

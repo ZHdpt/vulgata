@@ -1,0 +1,47 @@
+{
+  "evidence_id": "12-3/implement/10",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "0223bfab25c997603448afcbd4d8aeecd4340ee7",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationService.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedPass1Contracts.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1WorkerDispatcher.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/PreparedNavigation/PreparedPass1NavigationService.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+    "tests/Vulgata.Tests/PreparedPass1/NavigateCodeSecurityTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationService.cs": "66c7d1c083f3437a2927c4f05b307543b5b4bba26a0206e17b52e39ba5814409",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedPass1Contracts.cs": "4e236fb9941a1e9d146eb61e5aebf318e2e2e5375854a78abe2cffd77a7c9c75",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1WorkerDispatcher.cs": "0ffa9b63aea67cdd9d89cdf6a2232829bcff608df87ca302a29f1949d178e806",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "a23eb15bdf7ece83947dfd4a76b18d9e3d47a2bcf98b5c8af07c8cc94da2b7ab",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs": "1514e0f826a29f15ec1012ec0709311a7370cdf3f1d8c34cc1a171497b9cb47e",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "1de7796359d13956b976094c14aa64a8028c205c99c6662ad8da8efb23d33933",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/PreparedNavigation/PreparedPass1NavigationService.cs": "7cb48776ce3abebd613878ca2e857e79824c777b9ecf181bc3f815bf042560b4",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "d7dbd079f24e79d9fb3707d812db6f92760b5c7b82d24f7e1c0d7da9ac5311d0",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "1e4d7d1d469848e809c54f9d90db03b2bd3436a9a2d5abedd41c167cca7471ef",
+    "tests/Vulgata.Tests/PreparedPass1/NavigateCodeSecurityTests.cs": "c009e056f7052a0a50493baad0148622c8d7d59d47f0a944c446ac2ff4df3e37"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~NavigateCodeContractTests|FullyQualifiedName~NavigateCodeSecurityTests|FullyQualifiedName~NavigateCodeIntegrationTests|FullyQualifiedName~NavigateCodeLeaseSecurityCorrectionTests --no-restore --logger console;verbosity=minimal",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests|FullyQualifiedName~Pass1ClaimedPacketExecutionTests --no-build --no-restore --logger trx",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --verbosity minimal"
+  ],
+  "result": {
+    "navigation_passed": 31,
+    "exact_t058_passed": 19,
+    "postgresql_regression_passed": 28,
+    "failed": 0,
+    "skipped": 0,
+    "build_errors": 0,
+    "build_warnings": 9,
+    "classification": "green"
+  },
+  "observed_at": "2026-08-22T14:29:26Z",
+  "summary": "T059 carries exact server-only pair/job versions, lease token/expiry, state, circuit, and approved System plus Repository-pair authorization through dispatch without exposing them to the model; it revalidates current authority before navigation and in the atomic receipt transaction, preserves Administrator-start compatibility, and routes Implementations through bounded JDT-LS. The obsolete internal request-shape harness now requires the hidden fields while the public tool schema remains closed."
+}

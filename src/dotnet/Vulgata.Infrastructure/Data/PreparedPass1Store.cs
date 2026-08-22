@@ -11,7 +11,9 @@ using CoreEntities = Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Data;
 
-public sealed class PreparedPass1Store(VulgataDbContext context) :
+public sealed class PreparedPass1Store(
+    VulgataDbContext context,
+    TimeProvider? timeProvider = null) :
     IPreparedPass1Store,
     IPreparedPass1ProviderTransitionStore,
     IPreparedPass1NavigationScopeSource,
@@ -19,12 +21,30 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
     IPreparedPass1NavigationReceiptSink
 {
     private const string _documentSchemaIdentity = "code-logic/file-v2";
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
     public async Task<PreparedPass1NavigationScope?> GetAsync(
         Guid jobId,
         Guid sourceFileCodeUnitId,
+        CancellationToken cancellationToken) =>
+        await GetAsync(
+            new PreparedPass1NavigationRequestInput(
+                jobId,
+                0,
+                PreparedPass1NavigationOperation.Definition,
+                sourceFileCodeUnitId,
+                new(null, null, null, null, null),
+                0,
+                null),
+            cancellationToken);
+
+    public async Task<PreparedPass1NavigationScope?> GetAsync(
+        PreparedPass1NavigationRequestInput request,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        Guid jobId = request.JobId;
+        Guid sourceFileCodeUnitId = request.SourceFileCodeUnitId;
         if (jobId == Guid.Empty || sourceFileCodeUnitId == Guid.Empty)
         {
             return null;
@@ -34,13 +54,28 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             .SingleOrDefaultAsync(value => value.Id == jobId && value.FileCodeUnitId == sourceFileCodeUnitId, cancellationToken);
         Pass1NavigationBudget? budget = await context.Pass1NavigationBudgets.AsNoTracking()
             .SingleOrDefaultAsync(value => value.ScanJobExecutionId == jobId, cancellationToken);
-        if (job is null || budget is null)
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        if (job is null || budget is null ||
+            request.PairExecutionId == Guid.Empty ||
+            request.JobStateVersion <= 0 ||
+            request.PairStateVersion < 0 ||
+            request.LeaseToken == Guid.Empty ||
+            request.LeaseExpiresAt <= now ||
+            request.JobState != ScanJobExecutionState.Running ||
+            !string.Equals(request.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) ||
+            request.CircuitState != Pass1CircuitState.Closed ||
+            job.State != ScanJobExecutionState.Running ||
+            job.StateVersion != request.JobStateVersion ||
+            job.LeaseToken != request.LeaseToken ||
+            job.LeaseExpiresAt != request.LeaseExpiresAt ||
+            job.LeaseExpiresAt <= now ||
+            budget.PairExecutionId != request.PairExecutionId)
         {
             return null;
         }
 
         Pass1PairExecution? pair = await context.Pass1PairExecutions.AsNoTracking()
-            .SingleOrDefaultAsync(value => value.Id == budget.PairExecutionId, cancellationToken);
+            .SingleOrDefaultAsync(value => value.Id == request.PairExecutionId, cancellationToken);
         ScanExecution? execution = await context.ScanExecutions.AsNoTracking()
             .SingleOrDefaultAsync(value => value.Id == job.ScanExecutionId, cancellationToken);
         PreparedScanManifest? manifest = pair is null ? null : await context.PreparedScanManifests.AsNoTracking()
@@ -49,8 +84,12 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
                 value.RepositoryId == job.RepositoryId && value.ScanRunId == job.ScanRunId,
                 cancellationToken);
         if (pair is null || execution is null || manifest is null ||
+            pair.StateVersion != request.PairStateVersion ||
+            pair.Phase != Pass1PairExecutionPhase.Running ||
+            pair.CircuitState != Pass1CircuitState.Closed ||
             execution.ProfiledRevision != manifest.ProfiledRevision ||
-            string.IsNullOrWhiteSpace(execution.AnalysisRuntimeIdentityHash))
+            string.IsNullOrWhiteSpace(execution.AnalysisRuntimeIdentityHash) ||
+            !await HasCurrentAuthorizationAsync(pair, request.AuthorizationBinding, cancellationToken))
         {
             return null;
         }
@@ -93,7 +132,7 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             execution.ProfiledRevision,
             $"pass1-{job.Id:N}",
             execution.AnalysisRuntimeIdentityHash,
-            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeMilliseconds()));
+            new AnalysisDeadline(now.AddMinutes(5).ToUnixTimeMilliseconds()));
         return new PreparedPass1NavigationScope(
             job.Id,
             job.RepositoryId,
@@ -105,7 +144,50 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             budget.ToolAttemptCount,
             budget.AcceptedCallCount,
             budget.EvidenceBytes,
-            observed);
+            observed,
+            pair.Id,
+            job.StateVersion,
+            pair.StateVersion,
+            job.LeaseToken!.Value,
+            job.LeaseExpiresAt!.Value,
+            pair.Phase.ToString(),
+            pair.CircuitState,
+            job.State,
+            request.AuthorizationBinding);
+    }
+
+    private async Task<bool> HasCurrentAuthorizationAsync(
+        Pass1PairExecution pair,
+        string authorizationBinding,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(authorizationBinding))
+        {
+            return false;
+        }
+
+        PreparedScanManifest[] manifests = await context.PreparedScanManifests.AsNoTracking()
+            .Where(value => value.Id == pair.ManifestOneId || value.Id == pair.ManifestTwoId)
+            .OrderBy(value => value.RepositoryId)
+            .ToArrayAsync(cancellationToken);
+        Guid[] repositoryIds = [.. manifests.Select(value => value.RepositoryId).Distinct().Order()];
+        if (manifests.Length != 2 || repositoryIds.Length != 2 ||
+            manifests.Any(value =>
+                value.CoordinationId != pair.CoordinationId ||
+                value.ApprovalState != PreparedScanManifestApprovalState.Approved ||
+                value.SchemaIdentity != PreparedScanManifest.CurrentSchemaIdentity) ||
+            await context.Repositories.AsNoTracking().CountAsync(value =>
+                repositoryIds.Contains(value.Id) && value.SystemId == pair.SystemId,
+                cancellationToken) != 2)
+        {
+            return false;
+        }
+
+        return string.Equals(
+            PreparedPass1AuthorizationBinding.Create(
+                new PreparedScanAuthorizationScope(Guid.Empty, pair.SystemId, repositoryIds)),
+            authorizationBinding,
+            StringComparison.Ordinal);
     }
 
     public async Task<PreparedPass1CurrentDocumentEvidence?> FindAsync(
@@ -176,20 +258,75 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(receipt);
-        if (scope.JobId != request.JobId || scope.SourceFileCodeUnitId != request.SourceFileCodeUnitId)
+        if (scope.JobId != request.JobId ||
+            scope.SourceFileCodeUnitId != request.SourceFileCodeUnitId ||
+            scope.PairExecutionId == Guid.Empty ||
+            scope.PairExecutionId != request.PairExecutionId ||
+            scope.JobStateVersion != request.JobStateVersion ||
+            scope.PairStateVersion != request.PairStateVersion ||
+            scope.LeaseToken == Guid.Empty ||
+            scope.LeaseToken != request.LeaseToken ||
+            scope.LeaseExpiresAt != request.LeaseExpiresAt ||
+            !string.Equals(scope.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) ||
+            !string.Equals(request.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) ||
+            scope.CircuitState != Pass1CircuitState.Closed ||
+            request.CircuitState != Pass1CircuitState.Closed ||
+            scope.JobState != ScanJobExecutionState.Running ||
+            request.JobState != ScanJobExecutionState.Running ||
+            string.IsNullOrWhiteSpace(scope.AuthorizationBinding) ||
+            !string.Equals(scope.AuthorizationBinding, request.AuthorizationBinding, StringComparison.Ordinal))
         {
             return null;
         }
 
         await using var transaction = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         context.ChangeTracker.Clear();
-        Pass1NavigationBudget[] locked = await context.Pass1NavigationBudgets
+        Pass1PairExecution? pair = (await context.Pass1PairExecutions
+            .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"Pass1PairExecutions\" WHERE \"Id\" = {request.PairExecutionId} FOR UPDATE")
+            .ToArrayAsync(cancellationToken))
+            .SingleOrDefault();
+        ScanJobExecution? job = (await context.ScanJobExecutions
+            .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"ScanJobExecutions\" WHERE \"Id\" = {request.JobId} FOR UPDATE")
+            .ToArrayAsync(cancellationToken))
+            .SingleOrDefault();
+        Pass1NavigationBudget? budget = (await context.Pass1NavigationBudgets
             .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"Pass1NavigationBudgets\" WHERE \"ScanJobExecutionId\" = {request.JobId} FOR UPDATE")
-            .ToArrayAsync(cancellationToken);
-        Pass1NavigationBudget? budget = locked.SingleOrDefault();
-        if (budget is null || budget.PairExecutionId == Guid.Empty ||
+            .ToArrayAsync(cancellationToken))
+            .SingleOrDefault();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        ScanExecution? execution = job is null
+            ? null
+            : await context.ScanExecutions.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == job.ScanExecutionId, cancellationToken);
+        PreparedScanManifest? manifest = job is null || pair is null
+            ? null
+            : await context.PreparedScanManifests.AsNoTracking()
+                .SingleOrDefaultAsync(value =>
+                    (value.Id == pair.ManifestOneId || value.Id == pair.ManifestTwoId) &&
+                    value.RepositoryId == job.RepositoryId &&
+                    value.ScanRunId == job.ScanRunId,
+                    cancellationToken);
+        if (job is null || pair is null || budget is null || execution is null || manifest is null ||
+            budget.PairExecutionId != request.PairExecutionId ||
             budget.ToolAttemptCount != scope.ToolAttemptCount ||
-            budget.AcceptedCallCount != scope.AcceptedCallCount || budget.EvidenceBytes != scope.EvidenceBytes)
+            budget.AcceptedCallCount != scope.AcceptedCallCount ||
+            budget.EvidenceBytes != scope.EvidenceBytes ||
+            job.FileCodeUnitId != request.SourceFileCodeUnitId ||
+            job.RepositoryId != scope.RepositoryId ||
+            job.ScanRunId != scope.ScanRunId ||
+            job.State != ScanJobExecutionState.Running ||
+            job.StateVersion != request.JobStateVersion ||
+            job.LeaseToken != request.LeaseToken ||
+            job.LeaseExpiresAt != request.LeaseExpiresAt ||
+            job.LeaseExpiresAt <= now ||
+            pair.StateVersion != request.PairStateVersion ||
+            pair.Phase != Pass1PairExecutionPhase.Running ||
+            pair.CircuitState != Pass1CircuitState.Closed ||
+            !string.Equals(execution.ProfiledRevision, scope.ProfiledRevision, StringComparison.Ordinal) ||
+            execution.RepositoryId != scope.RepositoryId ||
+            execution.ScanRunId != scope.ScanRunId ||
+            !string.Equals(manifest.ProfiledRevision, scope.ProfiledRevision, StringComparison.Ordinal) ||
+            !await HasCurrentAuthorizationAsync(pair, request.AuthorizationBinding, cancellationToken))
         {
             await transaction.RollbackAsync(CancellationToken.None);
             return null;
@@ -231,7 +368,6 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             (ulong)(budget.AcceptedCallCount + (accepted ? 1 : 0)),
             (ulong)(budget.EvidenceBytes + (accepted ? receipt.EvidenceBytes : 0)));
         PreparedPass1CanonicalArtifact artifact = PreparedPass1CanonicalCodec.CreateNavigationReceipt(canonicalInput);
-        DateTimeOffset now = DateTimeOffset.UtcNow;
         string descriptorJson = JsonSerializer.Serialize(new
         {
             targetObservationIdentity = Convert.ToHexStringLower(receipt.TargetObservationIdentity.Span),

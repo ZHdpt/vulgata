@@ -92,6 +92,20 @@ public sealed class PreparedPass1JobRunner(
             return;
         }
 
+        hydratedPacket = hydratedPacket with
+        {
+            ServerAuthorization = new PreparedPass1ServerAuthorization(
+                activation.PairExecutionId,
+                claim.JobStateVersion,
+                claim.PairStateVersion,
+                claim.LeaseToken,
+                claim.LeaseExpiresAt,
+                nameof(Pass1PairExecutionPhase.Running),
+                Pass1CircuitState.Closed,
+                ScanJobExecutionState.Running,
+                PreparedPass1AuthorizationBinding.Create(activation.AuthorizationScope)),
+        };
+
         PreparedPass1DispatchRequest request = CreateDispatchRequest(hydratedPacket);
 
         PreparedPass1DispatchResult dispatch;
@@ -298,6 +312,7 @@ public sealed class PreparedPass1JobRunner(
             packet.SourceUtf8)
         {
             RemainingNavigationBudget = packet.RemainingNavigationBudget,
+            ServerAuthorization = packet.ServerAuthorization,
         };
         return new(
             [assignment],

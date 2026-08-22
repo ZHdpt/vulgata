@@ -296,6 +296,7 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
             Array.AsReadOnly(classifications))
         {
             RemainingNavigationBudget = assignment.RemainingNavigationBudget,
+            ServerAuthorization = assignment.ServerAuthorization,
         };
     }
 

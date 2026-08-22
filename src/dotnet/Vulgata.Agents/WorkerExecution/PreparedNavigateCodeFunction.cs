@@ -2,6 +2,7 @@ using Microsoft.Extensions.AI;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Agents.WorkerExecution;
 
@@ -12,7 +13,16 @@ namespace Vulgata.Agents.WorkerExecution;
 public sealed record PreparedNavigateCodeBinding(
     Guid JobId,
     ulong ToolAttemptOrdinal,
-    Guid SourceFileCodeUnitId);
+    Guid SourceFileCodeUnitId,
+    Guid PairExecutionId = default,
+    long JobStateVersion = 0,
+    long PairStateVersion = 0,
+    Guid LeaseToken = default,
+    DateTimeOffset LeaseExpiresAt = default,
+    string PairState = "",
+    Pass1CircuitState CircuitState = Pass1CircuitState.Closed,
+    ScanJobExecutionState JobState = ScanJobExecutionState.Pending,
+    string AuthorizationBinding = "");
 
 /// <summary>
 /// Closed model-visible target for <c>navigate_code</c>. Paths are always
@@ -72,7 +82,16 @@ public sealed class PreparedNavigateCodeFunction(IPass1NavigationService navigat
                     target.ExactLineRange,
                     sourceHash),
                 depth,
-                parentIdentity);
+                parentIdentity,
+                binding.PairExecutionId,
+                binding.JobStateVersion,
+                binding.PairStateVersion,
+                binding.LeaseToken,
+                binding.LeaseExpiresAt,
+                binding.PairState,
+                binding.CircuitState,
+                binding.JobState,
+                binding.AuthorizationBinding);
             return await _navigationService.NavigateAsync(request, cancellationToken);
         }
 

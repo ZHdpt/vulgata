@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Core.DomainServices;
@@ -182,7 +184,40 @@ public sealed record PreparedPass1NavigationRequestInput(
     Guid SourceFileCodeUnitId,
     PreparedPass1NavigationTarget Target,
     ulong RequestedDepth,
-    ReadOnlyMemory<byte>? ParentObservationIdentity);
+    ReadOnlyMemory<byte>? ParentObservationIdentity,
+    Guid PairExecutionId = default,
+    long JobStateVersion = 0,
+    long PairStateVersion = 0,
+    Guid LeaseToken = default,
+    DateTimeOffset LeaseExpiresAt = default,
+    string PairState = "",
+    Pass1CircuitState CircuitState = Pass1CircuitState.Closed,
+    ScanJobExecutionState JobState = ScanJobExecutionState.Pending,
+    string AuthorizationBinding = "");
+
+public sealed record PreparedPass1ServerAuthorization(
+    Guid PairExecutionId,
+    long JobStateVersion,
+    long PairStateVersion,
+    Guid LeaseToken,
+    DateTimeOffset LeaseExpiresAt,
+    string PairState,
+    Pass1CircuitState CircuitState,
+    ScanJobExecutionState JobState,
+    string AuthorizationBinding);
+
+public static class PreparedPass1AuthorizationBinding
+{
+    public static string Create(PreparedScanAuthorizationScope scope)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        string canonical = string.Join(
+            '\n',
+            scope.SystemId.ToString("D"),
+            string.Join(',', scope.RepositoryIds.Distinct().Order().Select(value => value.ToString("D"))));
+        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
+    }
+}
 
 public abstract record PreparedPass1EvidenceDescriptor(string CanonicalPath);
 

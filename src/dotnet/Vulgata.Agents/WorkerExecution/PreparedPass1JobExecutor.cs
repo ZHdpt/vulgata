@@ -7,6 +7,7 @@ using Microsoft.Extensions.AI;
 using OpenAI;
 using OpenAI.Chat;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 using Vulgata.Shared;
 
 namespace Vulgata.Agents.WorkerExecution;
@@ -36,6 +37,24 @@ public sealed class PreparedPass1JobExecutor(
         if (packet.RemainingNavigationBudget <= 0)
         {
             return PreparedPass1ResultParser.CreateDeferredCallsFallback(packet);
+        }
+
+        PreparedPass1ServerAuthorization? authorization = packet.ServerAuthorization;
+        if (authorization is null ||
+            authorization.PairExecutionId == Guid.Empty ||
+            authorization.JobStateVersion <= 0 ||
+            authorization.PairStateVersion < 0 ||
+            authorization.LeaseToken == Guid.Empty ||
+            authorization.LeaseExpiresAt == default ||
+            !string.Equals(authorization.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) ||
+            authorization.CircuitState != Pass1CircuitState.Closed ||
+            authorization.JobState != ScanJobExecutionState.Running ||
+            string.IsNullOrWhiteSpace(authorization.AuthorizationBinding))
+        {
+            return new(
+                PreparedPass1RawWorkerOutcome.Rejected,
+                ReadOnlyMemory<byte>.Empty,
+                "security-failure");
         }
 
         ResolvedWorkerAgentProvider provider;
@@ -80,7 +99,16 @@ public sealed class PreparedPass1JobExecutor(
         AIFunction navigateCode = navigateCodeFunction.Create(new(
             packet.JobId,
             toolAttemptOrdinal,
-            packet.FileCodeUnitId));
+            packet.FileCodeUnitId,
+            authorization.PairExecutionId,
+            authorization.JobStateVersion,
+            authorization.PairStateVersion,
+            authorization.LeaseToken,
+            authorization.LeaseExpiresAt,
+            authorization.PairState,
+            authorization.CircuitState,
+            authorization.JobState,
+            authorization.AuthorizationBinding));
 
         using var httpClient = new HttpClient(httpMessageHandler, disposeHandler: false);
         var clientOptions = new OpenAIClientOptions
