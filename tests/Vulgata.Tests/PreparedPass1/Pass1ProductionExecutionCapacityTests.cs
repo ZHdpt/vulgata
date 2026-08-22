@@ -397,6 +397,14 @@ public sealed class Pass1ProductionExecutionCapacityTests
             .CommitPairAsync(fixture.Authorization, fixture.Package, 0, CancellationToken.None);
         Assert.Equal(PreparedScanCommitOutcome.Committed, committed.Outcome);
 
+        foreach (ScanRun run in await fixture.Context.ScanRuns.ToArrayAsync())
+        {
+            run.SetCandidateCount(0);
+            run.Complete(0, 0, PreparedScanTestHost.FixedUtcNow);
+            run.RecordApprovedPreScanOutcome("预扫描已批准——继续进入顺序演示运行器");
+        }
+        await fixture.Context.SaveChangesAsync();
+
         const string schema = "code-logic/file-v2";
         const string runtime = "{\"runtime\":\"story-12-3-test\"}";
         string runtimeHash = Convert.ToHexStringLower(
@@ -409,6 +417,10 @@ public sealed class Pass1ProductionExecutionCapacityTests
             .SetProperty(execution => execution.AnalysisRuntimeIdentityJson, runtime)
             .SetProperty(execution => execution.AnalysisRuntimeIdentityHash, runtimeHash)
             .SetProperty(execution => execution.UpdatedAt, PreparedScanTestHost.FixedUtcNow));
+        await fixture.Context.PreparedScanManifests.ExecuteUpdateAsync(setters => setters
+            .SetProperty(manifest => manifest.RuntimeIdentityHash, runtimeHash)
+            .SetProperty(manifest => manifest.CodeGraphRuntimeIdentityHash, runtimeHash)
+            .SetProperty(manifest => manifest.JavaReadinessRuntimeIdentityHash, runtimeHash));
         fixture.Context.ChangeTracker.Clear();
         return fixture;
     }
@@ -470,8 +482,15 @@ public sealed class Pass1ProductionExecutionCapacityTests
                 services.RemoveAll<IPreparedScanHandoffSource>();
                 services.RemoveAll<IPreparedPass1ProviderAvailabilityProbe>();
                 services.RemoveAll<IPreparedPass1Store>();
+                services.RemoveAll<IPreparedRevisionAcquirer>();
+                services.RemoveAll<IPreparedRevisionLeaseResolver>();
                 services.AddSingleton<IPreparedScanHandoffSource>(
                     new LegacyPreparedScanHandoffSource(package));
+                services.AddSingleton<SyntheticPreparedRevisionRuntime>();
+                services.AddSingleton<IPreparedRevisionAcquirer>(provider =>
+                    provider.GetRequiredService<SyntheticPreparedRevisionRuntime>());
+                services.AddSingleton<IPreparedRevisionLeaseResolver>(provider =>
+                    provider.GetRequiredService<SyntheticPreparedRevisionRuntime>());
                 services.AddSingleton<IPreparedPass1ProviderAvailabilityProbe,
                     AlwaysAvailableProviderProbe>();
                 services.AddSingleton<ReconciliationProbe>();
@@ -566,6 +585,81 @@ public sealed class Pass1ProductionExecutionCapacityTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult<PreparedScanHandoff?>(
                 coordinationId == _handoff.CoordinationId ? _handoff : null);
+    }
+
+    private sealed class SyntheticPreparedRevisionRuntime :
+        IPreparedRevisionAcquirer,
+        IPreparedRevisionLeaseResolver
+    {
+        private readonly ConcurrentDictionary<string, ICommittedRepositorySnapshotLease> _leases =
+            new(StringComparer.Ordinal);
+
+        public Task<PreparedRevisionAcquisitionResult> AcquireAsync(
+            PreparedRevisionRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string identity = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
+                string.Join(
+                    '|',
+                    request.RepositoryId.ToString("D"),
+                    request.ScanRunId.ToString("D"),
+                    request.RepositoryOrigin,
+                    request.RequestedRef,
+                    request.ProfiledRevision))));
+            string containedRootToken = "synthetic-root-" + identity;
+            _leases[containedRootToken] = new SyntheticSnapshotLease(
+                request.RepositoryId,
+                request.ScanRunId,
+                request.ProfiledRevision,
+                Path.GetFullPath(AppContext.BaseDirectory));
+
+            return Task.FromResult(new PreparedRevisionAcquisitionResult(
+                new PreparedRevisionSnapshot(
+                    request.RepositoryId,
+                    request.ScanRunId,
+                    request.RequestedRef,
+                    request.ProfiledRevision,
+                    identity,
+                    "synthetic-binding-" + identity,
+                    containedRootToken),
+                null));
+        }
+
+        public bool TryResolveLease(
+            string bindingToken,
+            out ICommittedRepositorySnapshotLease? lease)
+        {
+            if (!string.IsNullOrWhiteSpace(bindingToken) &&
+                _leases.TryGetValue(bindingToken, out ICommittedRepositorySnapshotLease? resolved))
+            {
+                lease = resolved;
+                return true;
+            }
+
+            lease = null;
+            return false;
+        }
+
+        private sealed class SyntheticSnapshotLease(
+            Guid repositoryId,
+            Guid scanRunId,
+            string profiledRevision,
+            string rootPath) : ICommittedRepositorySnapshotLease
+        {
+            public Guid RepositoryId => repositoryId;
+            public Guid ScanRunId => scanRunId;
+            public string ProfiledRevision => profiledRevision;
+            public string RootPath => rootPath;
+
+            public Task VerifyIdentityAsync(CancellationToken cancellationToken = default)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return Task.CompletedTask;
+            }
+
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
     }
 
     private sealed class AlwaysAvailableProviderProbe : IPreparedPass1ProviderAvailabilityProbe
@@ -691,6 +785,19 @@ public sealed class Pass1ProductionExecutionCapacityTests
                 expectedStateVersion,
                 expectedLeaseToken,
                 failureCategory,
+                observedAt,
+                cancellationToken);
+
+        public Task<PreparedPass1FailureResult> FailRevisionBindingAsync(
+            Guid pairExecutionId,
+            PreparedScanAuthorizationScope authorizationScope,
+            long expectedStateVersion,
+            DateTimeOffset observedAt,
+            CancellationToken cancellationToken = default) =>
+            inner.FailRevisionBindingAsync(
+                pairExecutionId,
+                authorizationScope,
+                expectedStateVersion,
                 observedAt,
                 cancellationToken);
 
