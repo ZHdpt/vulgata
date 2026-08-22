@@ -1110,17 +1110,31 @@ public sealed class PreparedPass1Store(
                 expired.Job.RecoverExpiredLease(expired.Job.StateVersion, now);
             }
 
+            foreach (PairJob dueRetry in jobs.Where(value =>
+                         value.Job.State == ScanJobExecutionState.RetryScheduled &&
+                         value.Job.NextAttemptAt is DateTimeOffset nextAttemptAt &&
+                         nextAttemptAt <= now))
+            {
+                dueRetry.Job.RecoverDueRetry(dueRetry.Job.StateVersion, now);
+            }
+
             int activeLeaseCount = jobs.Count(value =>
                 value.Job.State == ScanJobExecutionState.Running &&
                 value.Job.LeaseExpiresAt > now);
             if (activeLeaseCount >= pair.ConcurrencyLimit)
             {
+                DateTimeOffset? nextEligibleAt = jobs
+                    .Where(value =>
+                        value.Job.State == ScanJobExecutionState.Running &&
+                        value.Job.LeaseExpiresAt > now)
+                    .Min(value => value.Job.LeaseExpiresAt);
                 await context.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return ClaimResult(
                     PreparedPass1ClaimOutcome.AtCapacity,
                     activeLeaseCount: activeLeaseCount,
-                    concurrencyLimit: pair.ConcurrencyLimit);
+                    concurrencyLimit: pair.ConcurrencyLimit,
+                    nextEligibleAt: nextEligibleAt);
             }
 
             PairJob? next = jobs
@@ -1130,12 +1144,24 @@ public sealed class PreparedPass1Store(
                 .FirstOrDefault();
             if (next is null)
             {
+                DateTimeOffset? nextEligibleAt = jobs
+                    .Select(value => value.Job.State switch
+                    {
+                        ScanJobExecutionState.Running => value.Job.LeaseExpiresAt,
+                        ScanJobExecutionState.RetryScheduled => value.Job.NextAttemptAt,
+                        _ => null,
+                    })
+                    .Where(value => value is not null)
+                    .Min();
                 await context.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
                 return ClaimResult(
-                    PreparedPass1ClaimOutcome.Exhausted,
+                    nextEligibleAt is null
+                        ? PreparedPass1ClaimOutcome.Exhausted
+                        : PreparedPass1ClaimOutcome.AtCapacity,
                     activeLeaseCount: activeLeaseCount,
-                    concurrencyLimit: pair.ConcurrencyLimit);
+                    concurrencyLimit: pair.ConcurrencyLimit,
+                    nextEligibleAt: nextEligibleAt);
             }
 
             Guid leaseToken = Guid.NewGuid();
@@ -1477,6 +1503,15 @@ public sealed class PreparedPass1Store(
                 bool replay = job.FailureCategory == failureCategory &&
                     job.FailureCode == failureCode &&
                     job.State is ScanJobExecutionState.RetryScheduled or ScanJobExecutionState.Failed or ScanJobExecutionState.Cancelled;
+                replay |= failureCategory == ScanJobFailureCategory.ProviderTransient &&
+                    pair.Phase == Pass1PairExecutionPhase.ProbingProvider &&
+                    pair.CircuitState == Pass1CircuitState.Probing &&
+                    job.State == ScanJobExecutionState.Pending &&
+                    expectedStateVersion < long.MaxValue &&
+                    job.StateVersion == expectedStateVersion + 1 &&
+                    job.LeaseToken is null &&
+                    job.FailureCategory is null &&
+                    job.FailureCode is null;
                 await transaction.RollbackAsync(CancellationToken.None);
                 context.ChangeTracker.Clear();
                 return FailureResult(
@@ -1513,11 +1548,19 @@ public sealed class PreparedPass1Store(
                 case ScanJobFailureCategory.ProviderTransient when
                     pair.Phase == Pass1PairExecutionPhase.ProbingProvider &&
                     pair.CircuitState == Pass1CircuitState.Probing:
+                    job.RelinquishLeaseForProviderProbe(
+                        expectedStateVersion,
+                        expectedLeaseToken,
+                        observedAt);
                     outcome = PreparedPass1FailureOutcome.Replay;
                     break;
                 case ScanJobFailureCategory.ProviderTransient when
                     pair.Phase == Pass1PairExecutionPhase.Running &&
                     pair.CircuitState == Pass1CircuitState.Closed:
+                    job.RelinquishLeaseForProviderProbe(
+                        expectedStateVersion,
+                        expectedLeaseToken,
+                        observedAt);
                     OpenProviderCircuit(pair, observedAt, retryAfterAt: null);
                     outcome = PreparedPass1FailureOutcome.Paused;
                     break;
@@ -3514,7 +3557,8 @@ public sealed class PreparedPass1Store(
     private static PreparedPass1ClaimResult ClaimResult(
         PreparedPass1ClaimOutcome outcome,
         int activeLeaseCount = 0,
-        int concurrencyLimit = 0) =>
+        int concurrencyLimit = 0,
+        DateTimeOffset? nextEligibleAt = null) =>
         new(
             outcome,
             Guid.Empty,
@@ -3525,7 +3569,10 @@ public sealed class PreparedPass1Store(
             activeLeaseCount,
             concurrencyLimit,
             0,
-            0);
+            0)
+        {
+            NextEligibleAt = nextEligibleAt,
+        };
 
     private static PreparedPass1ConcurrencyUpdateResult ConcurrencyResult(
         PreparedPass1ConcurrencyUpdateOutcome outcome,

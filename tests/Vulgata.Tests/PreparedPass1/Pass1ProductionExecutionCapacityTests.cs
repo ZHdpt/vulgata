@@ -497,9 +497,17 @@ public sealed class Pass1ProductionExecutionCapacityTests
         PreparedPass1ExecutionActivator activator =
             host.Services.GetRequiredService<PreparedPass1ExecutionActivator>();
         activator.Signal(started.Pass1ExecutionId, fixture.Authorization, CreateHandoff(fixture.Package));
+        bool resumed = await worker.WaitForAtLeastAsync(2, TimeSpan.FromSeconds(3));
+        Pass1ExecutionStatusResponse recoveryStatus = await ReadStatusAsync(
+            client,
+            started.Pass1ExecutionId);
+        ReconciliationProbe recoveryProbe = host.Services.GetRequiredService<ReconciliationProbe>();
         Assert.True(
-            await worker.WaitForAtLeastAsync(2, TimeSpan.FromSeconds(3)),
-            $"T067 RED: early provider recovery did not resume dispatch; started {worker.StartedCount}.");
+            resumed,
+            $"T067 RED: early provider recovery did not resume dispatch; started={worker.StartedCount}, " +
+            $"phase={recoveryStatus.Phase}, pending={recoveryStatus.PendingCount}, " +
+            $"running={recoveryStatus.RunningCount}, retry={recoveryStatus.RetryScheduledCount}, " +
+            $"claimCalls={recoveryProbe.ClaimCalls}.");
         worker.ReleaseAll();
     }
 
@@ -542,6 +550,7 @@ public sealed class Pass1ProductionExecutionCapacityTests
         }
 
         ReconciliationProbe reconciliation = host.Services.GetRequiredService<ReconciliationProbe>();
+        reconciliation.ResetClaimCalls();
         host.Services.GetRequiredService<PreparedPass1ExecutionActivator>()
             .Signal(pairExecutionId, fixture.Authorization, CreateHandoff(fixture.Package));
         await Task.Delay(750);
@@ -571,9 +580,23 @@ public sealed class Pass1ProductionExecutionCapacityTests
         }
         host.Services.GetRequiredService<PreparedPass1ExecutionActivator>()
             .Signal(pairExecutionId, fixture.Authorization, CreateHandoff(fixture.Package));
+        bool reconciled = await WaitForReconciliationCallsAsync(
+            reconciliation,
+            1,
+            TimeSpan.FromSeconds(3));
+        Pass1PairExecutionPhase phaseAfterActivation;
+        await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
+        {
+            phaseAfterActivation = await scope.ServiceProvider.GetRequiredService<VulgataDbContext>()
+                .Pass1PairExecutions
+                .Where(value => value.Id == pairExecutionId)
+                .Select(value => value.Phase)
+                .SingleAsync();
+        }
         Assert.True(
-            await WaitForReconciliationCallsAsync(reconciliation, 1, TimeSpan.FromSeconds(3)),
-            "T067 RED: activation after the nonlocal lease completed did not resume reconciliation.");
+            reconciled,
+            $"T067 RED: activation after the nonlocal lease completed did not resume reconciliation; " +
+            $"phase={phaseAfterActivation}, claimCalls={reconciliation.ClaimCalls}.");
     }
 
     [Fact]
@@ -664,6 +687,10 @@ public sealed class Pass1ProductionExecutionCapacityTests
             .CreateStore(fixture.Context)
             .CommitPairAsync(fixture.Authorization, fixture.Package, 0, CancellationToken.None);
         Assert.Equal(PreparedScanCommitOutcome.Committed, committed.Outcome);
+        fixture.Context.SystemOwnerAssignments.Add(SystemOwnerAssignment.Create(
+            fixture.SystemId,
+            fixture.Authorization.UserId.ToString("D"),
+            PreparedScanTestHost.FixedUtcNow));
 
         foreach (ScanRun run in await fixture.Context.ScanRuns.ToArrayAsync())
         {
@@ -1045,6 +1072,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         public void RecordReconciliationCall() => Interlocked.Increment(ref _reconciliationCalls);
 
         public void RecordClaimCall() => Interlocked.Increment(ref _claimCalls);
+
+        public void ResetClaimCalls() => Interlocked.Exchange(ref _claimCalls, 0);
 
         public void HoldReconciliation() => Interlocked.Exchange(ref _holdReconciliation, 1);
 
@@ -1533,14 +1562,17 @@ public sealed class Pass1ProductionExecutionCapacityTests
             int pairSelectionOrdinal,
             CancellationToken cancellationToken)
         {
-            while (_nextOrdinalByPair.GetOrAdd(pairExecutionId, 1) != pairSelectionOrdinal)
+            while (_nextOrdinalByPair.GetOrAdd(pairExecutionId, 1) < pairSelectionOrdinal)
             {
                 await Task.Delay(5, cancellationToken);
             }
         }
 
         private void AdvanceTurn(Guid pairExecutionId, int pairSelectionOrdinal) =>
-            _nextOrdinalByPair[pairExecutionId] = pairSelectionOrdinal + 1;
+            _nextOrdinalByPair.AddOrUpdate(
+                pairExecutionId,
+                pairSelectionOrdinal + 1,
+                (_, current) => Math.Max(current, pairSelectionOrdinal + 1));
 
         private static byte[] CreateSource(Guid jobId, int byteCount)
         {

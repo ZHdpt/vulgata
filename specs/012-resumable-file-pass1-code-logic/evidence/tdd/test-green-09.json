@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/20",
+  "kind": "test-green",
+  "stage": "implement-correction-2",
+  "source_commit": "fee9469c9effa1adc66f49d8024576ae8b1ff466",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1Store.cs": "d9c9f41aad10dda43f80f36e4693317fe2ff5768e3b773097c821216beb8d337",
+    "src/dotnet/Vulgata.Core/Entities/ScanJobExecution.cs": "63306ca2cbd6b6dca9f62e010fe63838cf7b1309e52c9b0cd82973b71ef49b68",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "907ef68c6470c8fda8585f95cd660f7e5726bb9e9e9b79c185c199ddcde5c2be",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "04816ecc1de96b5bd04febee9f383a7b7775b7f487a701453726821a4fc52944",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "06ce25ef7dc41d604254cff213641ab51c6c82877e290bc1929991a739b441bf",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "87c699685aa578c51749ad9e28cab9c1f898b95687c3708a51f9f5f286a2688d"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~ProviderUnavailableClaim_IsRelinquishedWithoutRetryBudget_AndEarlyRecoveryResumesDispatch|FullyQualifiedName~ExhaustedWithNonLocalActiveLease_DoesNotReconcileOrBusyLoopBeforeActivation|FullyQualifiedName~Shutdown_WithCancellationResistantWorker_RetainsRevisionBindingsUntilLocalDrain",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter provider/circuit/recovery/PostgreSQL-atomic adjacent suites",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter ScanJobExecution|Pass1FailurePolicyTests"
+  ],
+  "result": {
+    "exact_regressions": "3 passed, 0 failed, 0 skipped",
+    "production_capacity": "18 passed, 0 failed, 0 skipped",
+    "provider_circuit_recovery_atomic": "54 passed, 0 failed, 1 intentional authenticated-real-provider skip",
+    "entity_and_failure_policy": "44 passed, 0 failed, 0 skipped",
+    "build": "0 errors with existing warnings"
+  },
+  "observed_at": "2026-08-22T19:57:12.0184428Z",
+  "summary": "Provider-transient handling atomically relinquishes the exact claim without retry/failure budget use, claims expose durable next eligibility and never terminate with active/future work, activation and TimeProvider waits do not poll, and shutdown retains exact pair revision bindings until every local Worker drains. System Owner and approved-manifest defense-in-depth remains intact."
+}

@@ -19,54 +19,72 @@ public sealed class PreparedPass1JobRunner(
         CancellationToken cancellationToken)
     {
         var runners = new Dictionary<Guid, Task>();
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            PreparedPass1ClaimResult claim;
-            await using (AsyncServiceScope claimScope = scopeFactory.CreateAsyncScope())
+            while (!cancellationToken.IsCancellationRequested)
             {
-                claim = await claimScope.ServiceProvider
-                    .GetRequiredService<IPreparedPass1Store>()
-                    .ClaimNextAsync(
-                        slot.Current.PairExecutionId,
-                        timeProvider.GetUtcNow(),
-                        _leaseDuration,
-                        cancellationToken);
-            }
-
-            if (claim.Outcome == PreparedPass1ClaimOutcome.Claimed)
-            {
-                PreparedPass1Activation activation = slot.Current;
-                runners.Add(
-                    claim.JobId,
-                    RunClaimAsync(activation, claim, cancellationToken));
-                continue;
-            }
-
-            if (claim.Outcome is PreparedPass1ClaimOutcome.AtCapacity or
-                PreparedPass1ClaimOutcome.Exhausted)
-            {
-                RemoveCompleted(runners);
-                if (runners.Count > 0)
+                PreparedPass1Activation observedActivation = slot.Current;
+                PreparedPass1ClaimResult claim;
+                await using (AsyncServiceScope claimScope = scopeFactory.CreateAsyncScope())
                 {
-                    Task wake = slot.WaitAsync(cancellationToken);
-                    Task completed = await Task.WhenAny(runners.Values.Append(wake));
-                    await completed;
-                    RemoveCompleted(runners);
+                    claim = await claimScope.ServiceProvider
+                        .GetRequiredService<IPreparedPass1Store>()
+                        .ClaimNextAsync(
+                            slot.Current.PairExecutionId,
+                            timeProvider.GetUtcNow(),
+                            _leaseDuration,
+                            cancellationToken);
+                }
+
+                if (claim.Outcome == PreparedPass1ClaimOutcome.Claimed)
+                {
+                    PreparedPass1Activation activation = slot.Current;
+                    runners.Add(
+                        claim.JobId,
+                        RunClaimAsync(activation, claim, cancellationToken));
                     continue;
                 }
 
-                if (claim.Outcome == PreparedPass1ClaimOutcome.Exhausted)
+                if (claim.Outcome is PreparedPass1ClaimOutcome.AtCapacity or
+                    PreparedPass1ClaimOutcome.Exhausted)
                 {
-                    await CompleteAndReconcileAsync(slot.Current, cancellationToken);
-                    return;
+                    RemoveCompleted(runners);
+                    if (runners.Count > 0)
+                    {
+                        await WaitForLocalCompletionOrActivationAsync(
+                            slot,
+                            observedActivation,
+                            runners.Values,
+                            cancellationToken);
+                        RemoveCompleted(runners);
+                        continue;
+                    }
+
+                    if (claim.Outcome == PreparedPass1ClaimOutcome.Exhausted)
+                    {
+                        if (await CompleteAndReconcileAsync(slot.Current, cancellationToken))
+                        {
+                            return;
+                        }
+
+                        await slot.WaitAsync(cancellationToken);
+                        continue;
+                    }
+
+                    await WaitForActivationOrEligibilityAsync(
+                        slot,
+                        observedActivation,
+                        claim.NextEligibleAt,
+                        cancellationToken);
+                    continue;
                 }
 
-                await slot.WaitAsync(cancellationToken);
-                continue;
+                return;
             }
-
+        }
+        finally
+        {
             await DrainAsync(runners);
-            return;
         }
     }
 
@@ -153,10 +171,14 @@ public sealed class PreparedPass1JobRunner(
             else if (string.Equals(result.ReasonCode, "provider-unavailable", StringComparison.Ordinal))
             {
                 await services.GetRequiredService<IPreparedPass1Store>()
-                    .RecordProviderTransientAsync(
+                    .RecordFailureAsync(
                         activation.PairExecutionId,
+                        claim.JobId,
+                        claim.JobStateVersion,
+                        claim.LeaseToken,
+                        ScanJobFailureCategory.ProviderTransient,
                         timeProvider.GetUtcNow(),
-                        cancellationToken: cancellationToken);
+                        cancellationToken);
             }
             else
             {
@@ -222,7 +244,7 @@ public sealed class PreparedPass1JobRunner(
         }
     }
 
-    private async Task CompleteAndReconcileAsync(
+    private async Task<bool> CompleteAndReconcileAsync(
         PreparedPass1Activation activation,
         CancellationToken cancellationToken)
     {
@@ -233,7 +255,7 @@ public sealed class PreparedPass1JobRunner(
             services.GetRequiredService<VulgataDbContext>(), activation, cancellationToken);
         if (snapshot is null)
         {
-            return;
+            return false;
         }
 
         PreparedPass1ReconciliationResult reconciled = await store.ReconcileAsync(
@@ -246,14 +268,14 @@ public sealed class PreparedPass1JobRunner(
             cancellationToken);
         if (reconciled.Outcome != PreparedPass1ReconciliationOutcome.Conflict)
         {
-            return;
+            return true;
         }
 
         PairSnapshot? reloaded = await LoadEligibleReconciliationAsync(
             services.GetRequiredService<VulgataDbContext>(), activation, cancellationToken);
         if (reloaded is null || reloaded != snapshot)
         {
-            return;
+            return true;
         }
 
         _ = await store.ReconcileAsync(
@@ -264,6 +286,7 @@ public sealed class PreparedPass1JobRunner(
                 null,
                 timeProvider.GetUtcNow()),
             cancellationToken);
+        return true;
     }
 
     private static PreparedPass1DispatchRequest CreateDispatchRequest(
@@ -364,7 +387,7 @@ public sealed class PreparedPass1JobRunner(
             return null;
         }
 
-        Guid[] authorizedRepositories = activation.AuthorizationScope.RepositoryIds.Distinct().Order().ToArray();
+        Guid[] authorizedRepositories = activation.AuthorizationScope.RepositoryIds.Distinct().ToArray();
         PreparedScanManifest[] manifests = await context.PreparedScanManifests.AsNoTracking()
             .Where(value => value.Id == pair.ManifestOneId || value.Id == pair.ManifestTwoId)
             .OrderBy(value => value.RepositoryId)
@@ -373,8 +396,8 @@ public sealed class PreparedPass1JobRunner(
             value.SystemId == pair.SystemId &&
             value.UserId == activation.AuthorizationScope.UserId.ToString("D"),
             cancellationToken);
-        if (!authorized || manifests.Length != 2 ||
-            !manifests.Select(value => value.RepositoryId).SequenceEqual(authorizedRepositories) ||
+        if (!authorized || manifests.Length != 2 || authorizedRepositories.Length != 2 ||
+            manifests.Any(value => !authorizedRepositories.Contains(value.RepositoryId)) ||
             manifests.Any(value => value.ApprovalState != PreparedScanManifestApprovalState.Approved ||
                 value.CoordinationId != pair.CoordinationId ||
                 value.PairSelectionFingerprint != pair.PairSelectionFingerprint))
@@ -390,6 +413,98 @@ public sealed class PreparedPass1JobRunner(
         foreach (Guid jobId in runners.Where(value => value.Value.IsCompleted).Select(value => value.Key).ToArray())
         {
             runners.Remove(jobId);
+        }
+    }
+
+    private static async Task WaitForLocalCompletionOrActivationAsync(
+        PreparedPass1ExecutionActivator.ActivationSlot slot,
+        PreparedPass1Activation observedActivation,
+        IEnumerable<Task> runners,
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            using var wakeCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            Task wake = slot.WaitAsync(wakeCancellation.Token);
+            Task completed = await Task.WhenAny(runners.Append(wake));
+            if (completed != wake)
+            {
+                wakeCancellation.Cancel();
+            }
+
+            try
+            {
+                await completed;
+            }
+            finally
+            {
+                wakeCancellation.Cancel();
+                if (completed != wake)
+                {
+                    try
+                    {
+                        await wake;
+                    }
+                    catch (OperationCanceledException) when (wakeCancellation.IsCancellationRequested)
+                    {
+                    }
+                }
+            }
+
+            if (completed != wake || !ReferenceEquals(observedActivation, slot.Current))
+            {
+                return;
+            }
+        }
+    }
+
+    private async Task WaitForActivationOrEligibilityAsync(
+        PreparedPass1ExecutionActivator.ActivationSlot slot,
+        PreparedPass1Activation observedActivation,
+        DateTimeOffset? nextEligibleAt,
+        CancellationToken cancellationToken)
+    {
+        if (nextEligibleAt is null)
+        {
+            await slot.WaitAsync(cancellationToken);
+            return;
+        }
+
+        TimeSpan delay = nextEligibleAt.Value - timeProvider.GetUtcNow();
+        if (delay <= TimeSpan.Zero)
+        {
+            delay = TimeSpan.FromMilliseconds(1);
+        }
+
+        while (true)
+        {
+            using var waitCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            Task activation = slot.WaitAsync(waitCancellation.Token);
+            Task eligibility = Task.Delay(delay, timeProvider, waitCancellation.Token);
+            Task completed = await Task.WhenAny(activation, eligibility);
+            try
+            {
+                await completed;
+            }
+            finally
+            {
+                waitCancellation.Cancel();
+                if (completed == eligibility)
+                {
+                    try
+                    {
+                        await activation;
+                    }
+                    catch (OperationCanceledException) when (waitCancellation.IsCancellationRequested)
+                    {
+                    }
+                }
+            }
+
+            if (completed == eligibility || !ReferenceEquals(observedActivation, slot.Current))
+            {
+                return;
+            }
         }
     }
 

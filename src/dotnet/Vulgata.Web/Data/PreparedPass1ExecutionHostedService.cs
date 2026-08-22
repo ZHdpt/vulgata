@@ -62,7 +62,7 @@ public sealed class PreparedPass1ExecutionHostedService(
                     cancellationToken);
                 if (phase == Pass1PairExecutionPhase.ProbingProvider)
                 {
-                    phase = await ProbeUntilTransitionAsync(pairExecutionId, cancellationToken);
+                    phase = await ProbeUntilTransitionAsync(pairExecutionId, slot, cancellationToken);
                     if (phase != Pass1PairExecutionPhase.Running)
                     {
                         return;
@@ -126,6 +126,7 @@ public sealed class PreparedPass1ExecutionHostedService(
 
     private async Task<Pass1PairExecutionPhase?> ProbeUntilTransitionAsync(
         Guid pairExecutionId,
+        PreparedPass1ExecutionActivator.ActivationSlot slot,
         CancellationToken cancellationToken)
     {
         await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
@@ -182,6 +183,40 @@ public sealed class PreparedPass1ExecutionHostedService(
                             cancellationToken);
                     return configuration.Phase;
                 }
+            }
+
+            DateTimeOffset now = timeProvider.GetUtcNow();
+            if (ticket.NextProbeAt.Value > now)
+            {
+                using var waitCancellation =
+                    CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                Task activation = slot.WaitAsync(waitCancellation.Token);
+                Task due = Task.Delay(
+                    ticket.NextProbeAt.Value - now,
+                    timeProvider,
+                    waitCancellation.Token);
+                Task completed = await Task.WhenAny(activation, due);
+                try
+                {
+                    await completed;
+                }
+                finally
+                {
+                    waitCancellation.Cancel();
+                    Task pending = completed == activation ? due : activation;
+                    if (pending == activation)
+                    {
+                        try
+                        {
+                            await pending;
+                        }
+                        catch (OperationCanceledException) when (waitCancellation.IsCancellationRequested)
+                        {
+                        }
+                    }
+                }
+
+                continue;
             }
 
             PreparedPass1ProviderCircuitResult result = await driver.ProbeAsync(

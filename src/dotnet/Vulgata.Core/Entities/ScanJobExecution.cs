@@ -317,6 +317,35 @@ public sealed class ScanJobExecution
         StateChangedAt = now;
     }
 
+    public void RelinquishLeaseForProviderProbe(
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        DateTimeOffset stateChangedAt)
+    {
+        if (State != ScanJobExecutionState.Running ||
+            StateVersion != expectedStateVersion ||
+            LeaseToken != expectedLeaseToken)
+        {
+            throw new InvalidOperationException(
+                "Provider probe relinquishment requires the current Running lease and state version.");
+        }
+
+        ThrowIfNotUtc(stateChangedAt, nameof(stateChangedAt));
+        if (stateChangedAt < StateChangedAt)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stateChangedAt));
+        }
+
+        State = ScanJobExecutionState.Pending;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = null;
+        FailureCategory = null;
+        FailureCode = null;
+        StateChangedAt = stateChangedAt;
+    }
+
     private static void ThrowIfEmpty(Guid value, string parameterName)
     {
         if (value == Guid.Empty)

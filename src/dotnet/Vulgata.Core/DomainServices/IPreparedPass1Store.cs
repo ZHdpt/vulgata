@@ -40,7 +40,15 @@ public sealed record PreparedPass1ClaimResult(
     int ActiveLeaseCount,
     int ConcurrencyLimit,
     long JobStateVersion,
-    long PairStateVersion);
+    long PairStateVersion)
+{
+    /// <summary>
+    /// Earliest durable instant at which an active lease expires or a scheduled
+    /// retry becomes eligible. Null means only an explicit activation can make
+    /// the non-terminal claim state eligible.
+    /// </summary>
+    public DateTimeOffset? NextEligibleAt { get; init; }
+}
 
 public enum PreparedPass1ConcurrencyUpdateOutcome
 {
