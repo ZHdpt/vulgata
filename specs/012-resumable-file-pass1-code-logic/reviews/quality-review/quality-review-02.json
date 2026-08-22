@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "ad903a2667f0c67e4403fd8077a89d4d5bcea9e2",
+  "reviewed_boundary": {
+    "base_commit": "29e889badc00db671fcabf80f50918e15381052c",
+    "candidate_commit": "ad903a2667f0c67e4403fd8077a89d4d5bcea9e2",
+    "diff_sha256": "d061ef5ce4cd23d4b039a92cacf2cc394cc60eb75e4156ce1368f93ce4565630",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "21a73e52325c6246dcb4a62f17f63324e4daecd98ea77ebf3bb107bcecc01918",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "9a1ea96d61e27c4e17203ff40b57fecba88e34e195e6e2287c17d3554412e065",
+      "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-02.md": "018b1b8adddf5c7aca6dc8751c8b1173c9a43b7afd55623baf51dd3b3b30d22d",
+      "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md": "50479c73426f6246ef366d936c61c77cb39d7498449f3c1917de210995018991",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "352fe566dae9935e9bcc4750bf80b7f3d1e4c2d58be2966f6c6e35b1ca5fe0ce",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "1e4d7d1d469848e809c54f9d90db03b2bd3436a9a2d5abedd41c167cca7471ef",
+      "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "341b3f7197372c95bb85a289472e0144a67a9d743d332b91fe3752671a03bd88"
+    }
+  },
+  "findings": [
+    {
+      "id": "QR2-001",
+      "severity": "HIGH",
+      "category": "atomicity-reconciliation-correctness",
+      "artifact": "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+      "location": "CompleteAndReconcileAsync lines 225-279; PreparedPass1Store.cs lines 452-466 and 2026-2078",
+      "affected_requirement": "FR-044 and FR-047 through FR-052; SC-010 and SC-011; pass1-runtime-contracts.md lines 36 and 126; task T051",
+      "evidence": "The production runner first invokes CompletePass1Async, which writes Pass1Outcome and transitions the pair to Reconciling, and only afterward invokes ReconcileAsync. ReconcileAsync explicitly treats a durable outcome on any phase other than ReadyForResolution as ineligible, so the normal second call cannot atomically create reconciliation Edges or advance the approved handoff. The hosted pump then re-enters a Reconciling pair, but ClaimNextAsync returns Ineligible and the runner never calls reconciliation from that path. The production pair is therefore stranded despite all jobs being terminal. Pass1ProductionExecutionCapacityTests masks this by accepting Reconciling as a terminal result and counting reconciliation calls without requiring a Reconciled outcome or ReadyForResolution.",
+      "correction_outcome": "Use ReconcileAsync directly as the sole normal terminal transaction after a freshly drained Exhausted result with zero active leases, allowing it to write the outcome, warning inventory, exact same-Repository REFERENCES Edges, child states, coordination handoff, and ReadyForResolution or FailedPass1 atomically. Retry a conflict only after reloading the same exact eligible terminal boundary. Add PostgreSQL production-composed tests that reject residual Reconciling, require the final phase and reconciliation outcome, and inject cancellation/failure at every outcome-edge-handoff boundary to prove complete rollback.",
+      "earliest_owner": "implement"
+    },
+    {
+      "id": "QR2-002",
+      "severity": "HIGH",
+      "category": "provider-recovery-lease-lifecycle-concurrency",
+      "artifact": "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+      "location": "RunPairAsync lines 21-69 and provider-transient branch lines 145-167; PreparedPass1Store.cs ClaimNextAsync lines 1104-1138 and RecordProviderTransientAsync lines 2109-2177; PreparedPass1ExecutionHostedService.cs lines 94-103",
+      "affected_requirement": "FR-037, FR-038, and FR-044; SC-008 and SC-009; pass1-runtime-contracts.md lines 34-38, 52-58, 77, 89-100, and 126; tasks T050, T056, and T057",
+      "evidence": "A provider-transient Worker opens the pair circuit but leaves its job Running with the original 30-minute lease, then the local runner returns and loses the current claim. After a successful probe, ClaimNextAsync cannot return that retained Running claim. With concurrency one, remaining work can be blocked until lease expiry. When no Pending job exists, ClaimNextAsync returns Exhausted even with ActiveLeaseCount greater than zero, and RunPairAsync treats every Exhausted result as terminal and attempts completion/reconciliation instead of waiting for future lease eligibility. This permits premature terminal attempts and repeated pump cycling. On host cancellation the runner loop also exits without draining its local task set, after which the hosted service releases the pair revision bindings.",
+      "correction_outcome": "Preserve a provider-transient claim through successful recovery or durably relinquish and requeue it without consuming the isolated job retry or failure budget; do not silently abandon a Running lease. Treat Exhausted as terminal only when ActiveLeaseCount is zero and no future retry or lease eligibility exists, using an explicit TimeProvider-backed eligibility wait or activation wake rather than polling. Drain every locally launched runner before releasing pair-owned revision bindings, including cancellation and shutdown. Add production-composed PostgreSQL tests for concurrency-one early probe success, nonlocal active-lease Exhausted, no busy loop or premature reconciliation, exact retry accounting, and StopAsync with a held cancellation-resistant Worker proving release occurs only after drain.",
+      "earliest_owner": "implement"
+    }
+  ],
+  "summary": "REVISE. The correction substantially improves exact revision binding, navigation authorization, provider probing, full-graph replay, and production composition, and 85 focused Story 12.3 tests passed in this review. Two High execution defects remain: the normal production path deterministically strands completed work in Reconciling because it commits Pass1Outcome before invoking the unified reconciliation transaction, and provider-transient recovery loses the retained claim while treating Exhausted with active leases as terminal and releasing revision bindings without guaranteed shutdown drain. External real-tool prerequisites remain a truthful final-verification limitation and are not classified as a code defect."
+}
