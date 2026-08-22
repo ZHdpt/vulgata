@@ -56,6 +56,7 @@ public sealed class PreparedPass1Coordinator(
     ISystemRepository systemRepository,
     VulgataDbContext context,
     IPreparedPass1ProviderAvailabilityProbe providerProbe,
+    PreparedPass1ExecutionActivator executionActivator,
     TimeProvider timeProvider)
 {
     internal async Task<PreparedPass1StartBinding?> ResolveStartAsync(
@@ -121,15 +122,24 @@ public sealed class PreparedPass1Coordinator(
         return new(scope, handoff);
     }
 
-    internal Task<PreparedPass1StartResult> StartAsync(
+    internal async Task<PreparedPass1StartResult> StartAsync(
         PreparedPass1StartBinding binding,
         int concurrencyLimit,
-        CancellationToken cancellationToken) =>
-        store.StartAsync(
+        CancellationToken cancellationToken)
+    {
+        PreparedPass1StartResult result = await store.StartAsync(
             binding.AuthorizationScope,
             binding.Handoff,
             concurrencyLimit,
             cancellationToken);
+        if (result.Outcome is PreparedPass1StartOutcome.Created or PreparedPass1StartOutcome.Replay &&
+            result.PairExecutionId is Guid pairExecutionId)
+        {
+            executionActivator.Signal(pairExecutionId, binding.AuthorizationScope, binding.Handoff);
+        }
+
+        return result;
+    }
 
     internal async Task<PreparedPass1ExecutionBinding?> ResolveExecutionAsync(
         Guid pairExecutionId,
@@ -152,12 +162,12 @@ public sealed class PreparedPass1Coordinator(
             return null;
         }
 
-        Guid[] repositoryIds = await context.ScanJobExecutions.AsNoTracking()
-            .Where(job => job.ScanExecutionId == pairExecutionId)
+        ScanJobExecution[] pairJobs = await LoadPairJobsAsync(pair, cancellationToken);
+        Guid[] repositoryIds = pairJobs
             .Select(job => job.RepositoryId)
             .Distinct()
             .OrderBy(id => id)
-            .ToArrayAsync(cancellationToken);
+            .ToArray();
         if (repositoryIds.Length != 2 ||
             await context.Repositories.AsNoTracking().CountAsync(
                 repository => repositoryIds.Contains(repository.Id) &&
@@ -174,9 +184,7 @@ public sealed class PreparedPass1Coordinator(
         PreparedPass1ExecutionBinding binding,
         CancellationToken cancellationToken)
     {
-        ScanJobExecution[] jobs = await context.ScanJobExecutions.AsNoTracking()
-            .Where(job => job.ScanExecutionId == binding.Pair.Id)
-            .ToArrayAsync(cancellationToken);
+        ScanJobExecution[] jobs = await LoadPairJobsAsync(binding.Pair, cancellationToken);
         if (jobs.Length != binding.Pair.DispatchedFileCount)
         {
             return null;
@@ -210,12 +218,13 @@ public sealed class PreparedPass1Coordinator(
             warnings);
     }
 
-    internal Task<PreparedPass1ConcurrencyUpdateResult> UpdateConcurrencyAsync(
+    internal async Task<PreparedPass1ConcurrencyUpdateResult> UpdateConcurrencyAsync(
         PreparedPass1ExecutionBinding binding,
         UpdatePass1ConcurrencyRequest request,
         string principalId,
-        CancellationToken cancellationToken) =>
-        store.UpdateConcurrencyAsync(
+        CancellationToken cancellationToken)
+    {
+        PreparedPass1ConcurrencyUpdateResult result = await store.UpdateConcurrencyAsync(
             binding.AuthorizationScope,
             binding.Pair.Id,
             request.ConcurrencyLimit,
@@ -223,6 +232,15 @@ public sealed class PreparedPass1Coordinator(
             principalId,
             timeProvider.GetUtcNow(),
             cancellationToken);
+        if (result.Outcome is PreparedPass1ConcurrencyUpdateOutcome.Updated or
+            PreparedPass1ConcurrencyUpdateOutcome.NoChange or
+            PreparedPass1ConcurrencyUpdateOutcome.Replay)
+        {
+            executionActivator.Signal(binding.Pair.Id, binding.AuthorizationScope);
+        }
+
+        return result;
+    }
 
     public async Task<PreparedPass1RecoveryResult> ResumeAsync(
         Guid pairExecutionId,
@@ -245,16 +263,38 @@ public sealed class PreparedPass1Coordinator(
             return Cancelled(pairExecutionId);
         }
 
-        return await store.RecoverAsync(
+        PreparedPass1RecoveryResult result = await store.RecoverAsync(
             pairExecutionId,
             authorizationScope,
             providerAvailable,
             timeProvider.GetUtcNow(),
             cancellationToken);
+        if (result.Outcome is PreparedPass1RecoveryOutcome.Continued or
+            PreparedPass1RecoveryOutcome.NoOpReplay &&
+            result.PairExecutionId == pairExecutionId)
+        {
+            executionActivator.Signal(pairExecutionId, authorizationScope);
+        }
+
+        return result;
     }
 
     internal static TimeSpan GetProviderProbeWindow(int zeroBasedOrdinal) =>
         WorkerAgentProviderHealthProbe.GetProbeDelay(checked(zeroBasedOrdinal + 1));
+
+    private async Task<ScanJobExecution[]> LoadPairJobsAsync(
+        Pass1PairExecution pair,
+        CancellationToken cancellationToken)
+    {
+        Guid[] fileCodeUnitIds = await context.PreparedScanManifestEntries.AsNoTracking()
+            .Where(entry => entry.PreparedScanManifestId == pair.ManifestOneId ||
+                entry.PreparedScanManifestId == pair.ManifestTwoId)
+            .Select(entry => entry.FileCodeUnitId)
+            .ToArrayAsync(cancellationToken);
+        return await context.ScanJobExecutions.AsNoTracking()
+            .Where(job => fileCodeUnitIds.Contains(job.FileCodeUnitId))
+            .ToArrayAsync(cancellationToken);
+    }
 
     private static string? ManualResumeAction(Pass1PairExecutionPhase phase) => phase switch
     {

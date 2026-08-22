@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
   "proposed_feature_short_name": "resumable-file-pass1-code-logic",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "source_commit": "433834aca53fae868812685a85a9c3c830824025",
   "preflight": {
     "branch": "demo0831/story-12-3",
@@ -23,16 +23,16 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-definition-review-20260822T040013Z-88a8f5",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-12-3-implement-20260822T102151Z-7aea32",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Combined definition review attempt 9 accepted the corrected T050-T064 boundary; await new hash-bound implementation approval."
+    "stage": "implement",
+    "reason": "T050/T051 verified RED-to-GREEN and checkpointed; begin T052 claimed-packet behavioral RED before T053 production GREEN."
   },
-  "updated_at": "2026-08-22T04:00:13Z"
+  "updated_at": "2026-08-22T10:29:54Z"
 }

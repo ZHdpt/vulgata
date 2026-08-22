@@ -3,13 +3,13 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-3",
-    "head": "8ec768d5609c28c5b571b11e4f3cd89a040191e7",
-    "git_identity_sha256": "40325d8e0191fb7aa4ff2dc902d8ae0d9479c7d740d8be33644289dcfcecce2d",
-    "status_sha256": "7adfae284caa820285808c63c1b85800240e3cd48cc964f8f2012fb74f7d3f05",
-    "observed_at": "2026-08-22T03:10:29Z"
+    "head": "54289710d8da4e5acbf7e347b818d64ab41c4002",
+    "git_identity_sha256": "51914b01dbae7b86f94e68af543523dba609479ffc3201f4604b2746b8b42c17",
+    "status_sha256": "58a19f6d2119a58c1716e70097cf15608cc0affaf0f53f245d44d11ad6f157f6",
+    "observed_at": "2026-08-22T10:29:54Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "d76b48872a94b9b4313e4899bbc1d452fba1c37a9a225a9a454a7d52e490e680"
+      "sha256": "5f210a630bebe23ea2f8dfede23bbcdbc54cc617cd81e7424fbbef31cfc577f4"
     }
   },
   "gates": {
@@ -85,10 +85,10 @@
     },
     {
       "decision_id": "story-12-3-implementation-approval-02",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "bef1ba1d1de192ee31ba68c6ccf1b57b7bccb57c9a94172e05a542306585b42a",
       "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md",
-      "decided_at": null
+      "decided_at": "2026-08-22T08:23:08Z"
     }
   ],
   "convergence": {
@@ -107,21 +107,21 @@
     "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-02.md",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
     "artifacts/qualification/story-12.3/host-runtime.md",
-    "artifacts/qualification/story-12.3/production-boundary-inspection.json",
-    "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-01.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-01.json",
     "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-09.json",
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-definition-review-20260822T040013Z-88a8f5",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-12-3-implement-20260822T102151Z-7aea32",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Combined definition review attempt 9 accepted the corrected T050-T064 boundary; await new hash-bound implementation approval.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md"
+    "stage": "implement",
+    "reason": "T050/T051 verified RED-to-GREEN and checkpointed; begin T052 claimed-packet behavioral RED before T053 production GREEN.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/tasks.md"
   },
-  "updated_at": "2026-08-22T04:00:13Z"
+  "updated_at": "2026-08-22T10:29:54Z"
 }

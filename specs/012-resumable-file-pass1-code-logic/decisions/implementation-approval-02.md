@@ -1,7 +1,8 @@
 # Story 12.3 Corrected Implementation Approval 02
 
 - Decision ID: `story-12-3-implementation-approval-02`
-- Status: Pending
+- Status: Accepted
+- Decided at: `2026-08-22T08:23:08Z`
 - Scope SHA-256: `bef1ba1d1de192ee31ba68c6ccf1b57b7bccb57c9a94172e05a542306585b42a`
 - Specification SHA-256: `7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1`
 - Plan SHA-256: `9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f`
@@ -46,4 +47,5 @@ root-owned commit gates.
 
 ## Decision
 
-Pending explicit user approval of this exact scope hash.
+The user explicitly approved production implementation of this exact scope on
+2026-08-22. No excluded scope or downstream gate was waived.

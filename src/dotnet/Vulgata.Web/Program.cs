@@ -352,6 +352,10 @@ public static class VulgataWebComposition
             services.GetRequiredService<PreparedPass1Store>());
         builder.Services.AddScoped<IPreparedPass1ProviderAvailabilityProbe,
             PreparedPass1ProviderAvailabilityProbe>();
+        builder.Services.AddSingleton<PreparedPass1ExecutionActivator>();
+        builder.Services.AddHostedService<PreparedPass1ExecutionHostedService>();
+        builder.Services.AddScoped<PreparedPass1JobRunner>();
+        builder.Services.AddScoped<PreparedPass1DispatchWorker>();
         builder.Services.AddScoped<PreparedPass1Coordinator>();
         builder.Services.AddScoped<PreparedPass1NavigationService>();
         builder.Services.AddScoped<IPass1NavigationService>(services =>

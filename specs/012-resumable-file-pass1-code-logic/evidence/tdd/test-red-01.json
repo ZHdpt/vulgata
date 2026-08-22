@@ -1,0 +1,20 @@
+{
+  "evidence_id": "12-3/implement/1",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "54289710d8da4e5acbf7e347b818d64ab41c4002",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs"
+  ],
+  "artifact_sha256": "6d704a2dee9269abbe04b3507ddcd14f9bb24fd6f99c4f4d5042c1fc08abdc4f",
+  "command": "In a disposable clean clone at source commit 54289710d8da4e5acbf7e347b818d64ab41c4002, copy the exact final T050 test file and run dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests with a process-local VULGATA_TEST_POSTGRES_ADMIN.",
+  "result": {
+    "passed": 0,
+    "failed": 14,
+    "skipped": 0,
+    "classification": "expected-behavioral-red",
+    "representative_failure": "authenticated Start persisted the pair but launched 0 Workers; expected simultaneous capacity 2 or 4"
+  },
+  "observed_at": "2026-08-22T10:21:51Z",
+  "summary": "The exact final T050 behavioral suite is compile-clean and fails only because the accepted source checkpoint has no production activation/capacity-filling coordinator. The disposable clone was removed after observation."
+}

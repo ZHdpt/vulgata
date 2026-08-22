@@ -7,10 +7,11 @@ namespace Vulgata.Web.Data;
 /// Claim persistence remains owned by IPreparedPass1Store; this worker neither
 /// enumerates files nor creates jobs.
 /// </summary>
-public sealed class PreparedPass1DispatchWorker(IPreparedPass1WorkerDispatcher dispatcher)
+public sealed class PreparedPass1DispatchWorker(IServiceProvider services)
 {
     public Task<PreparedPass1DispatchResult> ExecuteAsync(
         PreparedPass1DispatchRequest request,
         CancellationToken cancellationToken = default) =>
-        dispatcher.DispatchAsync(request, cancellationToken);
+        services.GetRequiredService<IPreparedPass1WorkerDispatcher>()
+            .DispatchAsync(request, cancellationToken);
 }

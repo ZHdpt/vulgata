@@ -1,0 +1,39 @@
+{
+  "evidence_id": "12-3/implement/2",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "54289710d8da4e5acbf7e347b818d64ab41c4002",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionActivator.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1DispatchWorker.cs",
+    "src/dotnet/Vulgata.Web/Program.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "6d704a2dee9269abbe04b3507ddcd14f9bb24fd6f99c4f4d5042c1fc08abdc4f",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionActivator.cs": "4f060c33b8cc4f0cca04b2f1145c6e11fcb6c4a87202cd582f84c704df4e1ecc",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "bff3e024001a7492dcf81ca28cc1464c268903249fac0a264884bc2fb9740d39",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs": "463f191113de28ec4721650c8e572e81e0b88904a1be95c6062adaf22dfe43f9",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "a0ada032a0d9489041ee8374408263138af5b9dc1aa0f21aae208311b9281d95",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1DispatchWorker.cs": "240e8f5b53c9a23215999223da048babc1f2ed08685161777b653cd7805fe416",
+    "src/dotnet/Vulgata.Web/Program.cs": "a2df42d874eaf34c01e3420e56f3f8d6d9e7ae1cc975e4518c8eb7bd4751ac7f"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests --no-build",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ConcurrencyAndOrderingTests|FullyQualifiedName~Pass1ConcurrencyUpdateTests|FullyQualifiedName~Pass1PairStartTests|FullyQualifiedName~Pass1RecoveryAndResumeApiTests --no-build",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ExecutionApiTests --no-build",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj"
+  ],
+  "result": {
+    "focused": "14 passed, 0 failed, 0 skipped",
+    "surrounding": "37 passed, 0 failed",
+    "api": "11 passed, 0 failed",
+    "web_build": "0 errors; existing warnings remain",
+    "diff_check": "passed"
+  },
+  "observed_at": "2026-08-22T10:21:51Z",
+  "summary": "T050/T051 are GREEN. Start, Resume, and concurrency updates signal one deduplicated capacity-filling pair pump; durable claims remain authoritative; independent scoped runners fill/refill capacity; closure drains locally; fresh durable exhaustion gates reconciliation; and one Conflict retries only for the same eligible terminal pair. Later correction tasks remain excluded."
+}
