@@ -1,0 +1,56 @@
+{
+  "evidence_id": "12-3/implement/14",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "4f39c84",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedPass1RevisionBindings.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/PreparedRevisionCodeGraphSnapshotResolver.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Source/PreparedRevisionSourceReader.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ClaimedPacketSource.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/CompositePreparedRevisionLeaseResolver.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/PreparedPass1RevisionBindingRegistry.cs",
+    "src/dotnet/Vulgata.Infrastructure/Git/PreparedScanRevisionAcquirer.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs",
+    "src/dotnet/Vulgata.Web/Program.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1Store.cs": "48f542e38b7ba141f34853a3b81241629a1f25ec1f18fc43406c69f23326d372",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedPass1RevisionBindings.cs": "9715218be1dbafa053c97f9e2df2b7ca4524a773dc5663e34a387f629eac5b9c",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/CodeGraphAnalysisAdapter.cs": "5606ce208af544bf7ada9766fd2f27c0f9a5e11aa84473a400322bb9fc2c6ab3",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/PreparedRevisionCodeGraphSnapshotResolver.cs": "580fd2e11478d6ea0a399e80ecc572ffdd9cc12f44753e95a6218f86e057d881",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs": "ca9b05eb22f6392c97aa4e7fd5f0bd6e130044d8935f2f44c306782998055ab7",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Source/PreparedRevisionSourceReader.cs": "3bb64fc1e8e0729d3a65844da9cfd0bd2f9fd68974338ba40df496378ce80d1f",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs": "3f907ba1d0085d676b21c79f837144595c5a48b986b935d64055d76ca56f23ec",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ClaimedPacketSource.cs": "3fdcfabe91e9ad1952a6d6dc400e6b1ae3ac71aa5973524c183eea881e17b3cc",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "341b3f7197372c95bb85a289472e0144a67a9d743d332b91fe3752671a03bd88",
+    "src/dotnet/Vulgata.Infrastructure/Git/CompositePreparedRevisionLeaseResolver.cs": "d57f00d1d2e6a166ad7d3e5fdde8077f476784141843a9cf8524c211cd1c4604",
+    "src/dotnet/Vulgata.Infrastructure/Git/PreparedPass1RevisionBindingRegistry.cs": "9fd220f449ba358702cab0d07d61ee06f9a76795e9ee1f8177150889634b14a2",
+    "src/dotnet/Vulgata.Infrastructure/Git/PreparedScanRevisionAcquirer.cs": "a2ba220f7b0f8b146140f37c7151c4eca8fa76a9f727601134c884e7e0eb58d1",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "352fe566dae9935e9bcc4750bf80b7f3d1e4c2d58be2966f6c6e35b1ca5fe0ce",
+    "src/dotnet/Vulgata.Web/Program.cs": "3e24c49e2a3510b0a45598d29311104d0c7daf31560c1006d055fd7657446957"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1RevisionBindingLifecycleTests|FullyQualifiedName~Pass1PairPostgreSqlAtomicTests --no-restore",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests --no-build --no-restore",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter production composition/provider/source/CodeGraph/JDT/navigation focused matrix --no-restore",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --verbosity minimal"
+  ],
+  "result": {
+    "revision_binding_lifecycle_and_pair_atomic_passed": 21,
+    "production_capacity_passed": 14,
+    "composition_provider_source_analysis_navigation_passed": 45,
+    "conditional_host_qualification_skipped": 3,
+    "failed": 0,
+    "build_errors": 0,
+    "build_warnings": 9,
+    "classification": "green"
+  },
+  "observed_at": "2026-08-22T18:02:22Z",
+  "summary": "T063 binds each approved pair to exactly two retained Profiled Revision snapshots before dispatch, routes source, CodeGraph, and JDT-LS through pair-owned opaque bindings, revalidates the complete approved pair identity before acquisition, fails rejected bindings atomically, preserves immutable completed children after Pass 1, and releases bindings only after the pair pump drains. The synthetic production-capacity harness now supplies exact revision leases and matching terminal/runtime fixture state."
+}

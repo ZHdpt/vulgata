@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
-using Vulgata.Infrastructure.Git;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
@@ -30,7 +29,7 @@ public sealed partial class CodeGraphAnalysisAdapter :
         Justification = "The adapter owns and disposes the revision-bound snapshot resolver.")]
     public CodeGraphAnalysisAdapter(
         AnalysisRuntimeOptions options,
-        PreparedScanRevisionAcquirer revisionAcquirer)
+        IPreparedRevisionLeaseResolver revisionLeases)
         : this(
             new CodeGraphAdapterOptions(
                 ResolveCommandPath((options ?? throw new ArgumentNullException(nameof(options)))
@@ -39,7 +38,7 @@ public sealed partial class CodeGraphAnalysisAdapter :
                 StandardOutputByteLimit: 256 * 1024,
                 StandardErrorByteLimit: 16 * 1024),
             new PreparedRevisionCodeGraphSnapshotResolver(
-                revisionAcquirer ?? throw new ArgumentNullException(nameof(revisionAcquirer))),
+                revisionLeases ?? throw new ArgumentNullException(nameof(revisionLeases))),
             new CodeGraphProcessRunner())
     {
     }

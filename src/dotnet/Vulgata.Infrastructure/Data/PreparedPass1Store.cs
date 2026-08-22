@@ -20,6 +20,11 @@ public sealed class PreparedPass1Store(
     IPreparedPass1CurrentDocumentEvidenceSource,
     IPreparedPass1NavigationReceiptSink
 {
+    public PreparedPass1Store(VulgataDbContext context)
+        : this(context, TimeProvider.System)
+    {
+    }
+
     private const string _documentSchemaIdentity = "code-logic/file-v2";
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
@@ -130,7 +135,11 @@ public sealed class PreparedPass1Store(
             job.RepositoryId,
             job.ScanRunId,
             execution.ProfiledRevision,
-            $"pass1-{job.Id:N}",
+            PreparedPass1RevisionBindingToken.Create(
+                pair.Id,
+                job.RepositoryId,
+                job.ScanRunId,
+                execution.ProfiledRevision),
             execution.AnalysisRuntimeIdentityHash,
             new AnalysisDeadline(now.AddMinutes(5).ToUnixTimeMilliseconds()));
         return new PreparedPass1NavigationScope(
@@ -1604,6 +1613,214 @@ public sealed class PreparedPass1Store(
         {
             context.ChangeTracker.Clear();
             return FailureResult(PreparedPass1FailureOutcome.Failed, failureCategory, failureCode);
+        }
+    }
+
+    public async Task<PreparedPass1FailureResult> FailRevisionBindingAsync(
+        Guid pairExecutionId,
+        PreparedScanAuthorizationScope authorizationScope,
+        long expectedStateVersion,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default)
+    {
+        const string failureCode = "revision-binding-failure";
+        const ScanJobFailureCategory failureCategory = ScanJobFailureCategory.Integrity;
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return FailureResult(
+                PreparedPass1FailureOutcome.Cancelled,
+                failureCategory,
+                failureCode,
+                cancellationRequested: true);
+        }
+
+        if (pairExecutionId == Guid.Empty || authorizationScope is null ||
+            expectedStateVersion < 0 || observedAt.Offset != TimeSpan.Zero)
+        {
+            return FailureResult(
+                PreparedPass1FailureOutcome.Rejected,
+                failureCategory,
+                failureCode);
+        }
+
+        try
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            if (pair is null)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                return FailureResult(
+                    PreparedPass1FailureOutcome.NotFound,
+                    failureCategory,
+                    failureCode);
+            }
+
+            if (!await IsAuthorizedForPairAsync(pair, authorizationScope, cancellationToken))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return FailureResult(
+                    PreparedPass1FailureOutcome.Conflict,
+                    failureCategory,
+                    failureCode,
+                    pair);
+            }
+
+            if (pair.Phase == Pass1PairExecutionPhase.FailedIntegrity &&
+                string.Equals(pair.ReasonCode, failureCode, StringComparison.Ordinal) &&
+                pair.StateVersion == expectedStateVersion)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return FailureResult(
+                    PreparedPass1FailureOutcome.Replay,
+                    failureCategory,
+                    failureCode,
+                    pair);
+            }
+
+            if (pair.StateVersion != expectedStateVersion ||
+                pair.Phase is not (
+                    Pass1PairExecutionPhase.Running or Pass1PairExecutionPhase.Reconciling))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return FailureResult(
+                    PreparedPass1FailureOutcome.Conflict,
+                    failureCategory,
+                    failureCode,
+                    pair);
+            }
+
+            DateTimeOffset failedAt = observedAt < pair.UpdatedAt
+                ? pair.UpdatedAt
+                : observedAt;
+
+            TwoRepositoryScanCoordination? coordination =
+                await context.TwoRepositoryScanCoordinations.SingleOrDefaultAsync(
+                    value => value.Id == pair.CoordinationId,
+                    cancellationToken);
+            ScanExecution[] executions = coordination is null
+                ? []
+                : await context.ScanExecutions
+                    .Where(value =>
+                        value.Id == coordination.ScanExecutionOneId ||
+                        value.Id == coordination.ScanExecutionTwoId)
+                    .OrderBy(value => value.RepositoryId)
+                    .ToArrayAsync(cancellationToken);
+            PreparedScanManifest[] manifests = await context.PreparedScanManifests.AsNoTracking()
+                .Where(value => value.Id == pair.ManifestOneId || value.Id == pair.ManifestTwoId)
+                .OrderBy(value => value.RepositoryId)
+                .ToArrayAsync(cancellationToken);
+            bool exactBindings = coordination is not null && manifests.Length == 2 &&
+                executions.Length == 2 &&
+                coordination.SystemId == pair.SystemId &&
+                manifests.Select(value => value.RepositoryId).SequenceEqual(
+                    executions.Select(value => value.RepositoryId)) &&
+                executions.All(execution =>
+                    execution.SystemId == pair.SystemId &&
+                    manifests.Any(manifest =>
+                        manifest.RepositoryId == execution.RepositoryId &&
+                        manifest.ScanRunId == execution.ScanRunId &&
+                        string.Equals(
+                            manifest.ProfiledRevision,
+                            execution.ProfiledRevision,
+                            StringComparison.Ordinal))) &&
+                manifests.Any(value =>
+                    value.RepositoryId == coordination.RepositoryOneId &&
+                    value.ScanRunId == coordination.ScanRunOneId &&
+                    string.Equals(
+                        value.ProfiledRevision,
+                        coordination.ProfiledRevisionOne,
+                        StringComparison.Ordinal)) &&
+                manifests.Any(value =>
+                    value.RepositoryId == coordination.RepositoryTwoId &&
+                    value.ScanRunId == coordination.ScanRunTwoId &&
+                    string.Equals(
+                        value.ProfiledRevision,
+                        coordination.ProfiledRevisionTwo,
+                        StringComparison.Ordinal));
+            bool phasesCanFail = pair.Phase switch
+            {
+                Pass1PairExecutionPhase.Running =>
+                    coordination?.Phase == TwoRepositoryScanCoordinationPhase.Pass1 &&
+                    executions.All(value => value.Phase is
+                        ScanExecutionPhase.Prepared or ScanExecutionPhase.Running or
+                        ScanExecutionPhase.PausedProviderUnavailable or
+                        ScanExecutionPhase.PausedOperatorCorrection),
+                Pass1PairExecutionPhase.Reconciling =>
+                    coordination?.Phase == TwoRepositoryScanCoordinationPhase.Resolving &&
+                    executions.All(value => value.Phase is
+                        ScanExecutionPhase.Completed or ScanExecutionPhase.CompletedWithWarnings),
+                _ => false,
+            };
+            if (coordination is null || executions.Length != 2 ||
+                executions.Select(value => value.RepositoryId).Distinct().Count() != 2 ||
+                !exactBindings || !phasesCanFail ||
+                coordination.Phase is
+                    TwoRepositoryScanCoordinationPhase.Completed or
+                    TwoRepositoryScanCoordinationPhase.CompletedWithWarnings or
+                    TwoRepositoryScanCoordinationPhase.FailedIntegrity or
+                    TwoRepositoryScanCoordinationPhase.FailedSecurity or
+                    TwoRepositoryScanCoordinationPhase.Cancelled or
+                    TwoRepositoryScanCoordinationPhase.FailedPass1)
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return FailureResult(
+                    PreparedPass1FailureOutcome.Conflict,
+                    failureCategory,
+                    failureCode,
+                    pair);
+            }
+
+            bool failMutableChildren = pair.Phase == Pass1PairExecutionPhase.Running;
+            TransitionPair(
+                pair,
+                Pass1PairExecutionPhase.FailedIntegrity,
+                Pass1CircuitState.Paused,
+                Pass1PairReasonCategory.Integrity,
+                failureCode,
+                failedAt);
+            if (failMutableChildren)
+            {
+                foreach (ScanExecution execution in executions)
+                {
+                    execution.FailIntegrity(execution.StateVersion, failureCode, failedAt);
+                }
+            }
+
+            coordination.FailIntegrity(coordination.StateVersion, failureCode, failedAt);
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return FailureResult(
+                PreparedPass1FailureOutcome.FailedClosed,
+                failureCategory,
+                failureCode,
+                pair);
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return FailureResult(
+                PreparedPass1FailureOutcome.Cancelled,
+                failureCategory,
+                failureCode,
+                cancellationRequested: true);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException or
+                ArgumentException or OverflowException)
+        {
+            context.ChangeTracker.Clear();
+            return FailureResult(
+                PreparedPass1FailureOutcome.Failed,
+                failureCategory,
+                failureCode);
         }
     }
 
@@ -3116,7 +3333,7 @@ public sealed class PreparedPass1Store(
         PreparedScanHandoff handoff) =>
         authorization.UserId != Guid.Empty &&
         authorization.SystemId != Guid.Empty &&
-        handoff.SchemaIdentity == "prepared-scan-handoff/1.0" &&
+        handoff.SchemaIdentity == PreScanResult.PreparedHandoffSchemaIdentity &&
         handoff.CoordinationId != Guid.Empty &&
         handoff.Manifests.Count == 2 &&
         handoff.SelectedCount is >= 50 and <= 150 &&

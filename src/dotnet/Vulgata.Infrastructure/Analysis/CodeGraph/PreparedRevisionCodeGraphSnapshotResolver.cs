@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Core.DomainServices;
-using Vulgata.Infrastructure.Git;
 
 namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 
@@ -11,7 +10,7 @@ internal sealed class PreparedRevisionCodeGraphSnapshotResolver :
     ICodeGraphRepositorySnapshotResolver,
     IAsyncDisposable
 {
-    private readonly PreparedScanRevisionAcquirer _revisionAcquirer;
+    private readonly IPreparedRevisionLeaseResolver _revisionLeases;
     private readonly ConcurrentDictionary<string, AnalysisWorkspace> _workspaces =
         new(StringComparer.Ordinal);
     private readonly string _workspaceRoot = Path.Combine(
@@ -20,10 +19,10 @@ internal sealed class PreparedRevisionCodeGraphSnapshotResolver :
         Guid.NewGuid().ToString("N"));
 
     public PreparedRevisionCodeGraphSnapshotResolver(
-        PreparedScanRevisionAcquirer revisionAcquirer)
+        IPreparedRevisionLeaseResolver revisionLeases)
     {
-        _revisionAcquirer = revisionAcquirer ??
-            throw new ArgumentNullException(nameof(revisionAcquirer));
+        _revisionLeases = revisionLeases ??
+            throw new ArgumentNullException(nameof(revisionLeases));
     }
 
     public async Task<CodeGraphRepositorySnapshot?> ResolveAsync(
@@ -33,8 +32,12 @@ internal sealed class PreparedRevisionCodeGraphSnapshotResolver :
         ArgumentNullException.ThrowIfNull(scope);
         cancellationToken.ThrowIfCancellationRequested();
 
-        ICommittedRepositorySnapshotLease lease = _revisionAcquirer.RequireLease(
-            scope.WorkingCopyBindingToken);
+        if (!_revisionLeases.TryResolveLease(
+                scope.WorkingCopyBindingToken,
+                out ICommittedRepositorySnapshotLease? lease) || lease is null)
+        {
+            throw new InvalidOperationException("codegraph_revision_lease_unavailable");
+        }
         RequireLeaseBinding(lease, scope);
         await lease.VerifyIdentityAsync(cancellationToken).ConfigureAwait(false);
 

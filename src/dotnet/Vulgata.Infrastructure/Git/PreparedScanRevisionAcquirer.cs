@@ -8,7 +8,10 @@ namespace Vulgata.Infrastructure.Git;
 /// Narrows exact Git acquisition to the values required by prepared scanning.
 /// Ordinary working-copy and arbitrary revision inputs are intentionally absent.
 /// </summary>
-public sealed class PreparedScanRevisionAcquirer : IPreparedRevisionAcquirer, IAsyncDisposable
+public sealed class PreparedScanRevisionAcquirer :
+    IPreparedRevisionAcquirer,
+    IPreparedRevisionLeaseResolver,
+    IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, ICommittedRepositorySnapshotLease> _leases =
         new(StringComparer.Ordinal);
@@ -104,6 +107,11 @@ public sealed class PreparedScanRevisionAcquirer : IPreparedRevisionAcquirer, IA
         _leases.TryGetValue(containedRootToken, out ICommittedRepositorySnapshotLease? lease)
             ? lease
             : throw new InvalidOperationException("The prepared snapshot lease is unavailable.");
+
+    public bool TryResolveLease(
+        string bindingToken,
+        out ICommittedRepositorySnapshotLease? lease) =>
+        _leases.TryGetValue(bindingToken, out lease);
 
     public async ValueTask DisposeAsync()
     {

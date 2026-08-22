@@ -59,7 +59,11 @@ public sealed class PreparedPass1ClaimedPacketSource(
                 binding.RepositoryId,
                 binding.ScanRunId,
                 binding.ProfiledRevision,
-                $"pass1-{binding.JobId:N}",
+                PreparedPass1RevisionBindingToken.Create(
+                    pairExecutionId,
+                    binding.RepositoryId,
+                    binding.ScanRunId,
+                    binding.ProfiledRevision),
                 binding.AnalysisRuntimeIdentityHash,
                 new AnalysisDeadline(observedAt.Add(_sourceDeadline).ToUnixTimeMilliseconds()));
             SourceExcerptResult source = await sourceReader.ReadAsync(

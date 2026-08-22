@@ -40,7 +40,7 @@ public sealed class RevisionBoundSourceReader(
         if (!string.Equals(
                 scope.ProfiledRevision,
                 _snapshotLease.ProfiledRevision,
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.Ordinal))
         {
             return Failed(
                 scope,

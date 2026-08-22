@@ -132,6 +132,15 @@ public interface IPreparedPass1Store
         DateTimeOffset observedAt,
         CancellationToken cancellationToken = default);
 
+    Task<PreparedPass1FailureResult> FailRevisionBindingAsync(
+        Guid pairExecutionId,
+        PreparedScanAuthorizationScope authorizationScope,
+        long expectedStateVersion,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException(
+            "The prepared Pass 1 store does not support revision-binding failure transitions.");
+
     Task<PreparedPass1ProviderCircuitResult> RecordProviderTransientAsync(
         Guid pairExecutionId,
         DateTimeOffset observedAt,

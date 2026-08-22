@@ -116,14 +116,14 @@ public sealed class JdtLsAnalysisSessionFactory : IJavaAnalysisSessionFactory
         JdtLsAdapterOptions options,
         string distributionArchivePath,
         string distributionArchiveSha256,
-        PreparedScanRevisionAcquirer revisionAcquirer)
+        IPreparedRevisionLeaseResolver revisionLeases)
     {
         _options = ValidateOptions(options);
         ValidateDistributionArchive(
             distributionArchivePath,
             distributionArchiveSha256);
         _workspaceLeases = new PreparedRevisionJdtLsWorkspaceLeaseProvider(
-            revisionAcquirer,
+            revisionLeases,
             _options.WorkspaceRoot);
         _processLauncher = new ProcessJdtLsLauncher();
         _protocolClients = new StreamJsonRpcJdtLsProtocolClientFactory();
@@ -419,7 +419,7 @@ internal sealed class FileJdtLsWorkspaceLeaseProvider : IJdtLsWorkspaceLeaseProv
 }
 
 internal sealed class PreparedRevisionJdtLsWorkspaceLeaseProvider(
-    PreparedScanRevisionAcquirer revisionAcquirer,
+    IPreparedRevisionLeaseResolver revisionLeases,
     string runtimeWorkspaceRoot) : IJdtLsWorkspaceLeaseProvider
 {
     private readonly string _runtimeWorkspaceRoot = RequireRuntimeRoot(runtimeWorkspaceRoot);
@@ -430,8 +430,12 @@ internal sealed class PreparedRevisionJdtLsWorkspaceLeaseProvider(
     {
         ArgumentNullException.ThrowIfNull(scope);
         cancellationToken.ThrowIfCancellationRequested();
-        ICommittedRepositorySnapshotLease revisionLease = revisionAcquirer.RequireLease(
-            scope.WorkingCopyBindingToken);
+        if (!revisionLeases.TryResolveLease(
+                scope.WorkingCopyBindingToken,
+                out ICommittedRepositorySnapshotLease? revisionLease) || revisionLease is null)
+        {
+            throw new InvalidOperationException("jdt_revision_lease_unavailable");
+        }
         if (revisionLease.RepositoryId != scope.RepositoryId ||
             revisionLease.ScanRunId != scope.ScanRunId ||
             !string.Equals(

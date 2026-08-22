@@ -15,6 +15,7 @@ using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.Analysis.PreparedNavigation;
+using Vulgata.Infrastructure.Analysis.Source;
 using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CrossRepository;
@@ -290,6 +291,13 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<PreparedScanRevisionAcquirer>();
         builder.Services.AddScoped<IPreparedRevisionAcquirer>(services =>
             services.GetRequiredService<PreparedScanRevisionAcquirer>());
+        builder.Services.AddSingleton<PreparedPass1RevisionBindingRegistry>();
+        builder.Services.AddSingleton<IPreparedPass1RevisionBindingRegistry>(services =>
+            services.GetRequiredService<PreparedPass1RevisionBindingRegistry>());
+        builder.Services.AddScoped<IPreparedRevisionLeaseResolver>(services =>
+            new CompositePreparedRevisionLeaseResolver(
+                services.GetRequiredService<PreparedScanRevisionAcquirer>(),
+                services.GetRequiredService<PreparedPass1RevisionBindingRegistry>()));
         builder.Services.AddScoped<PreparedScanCandidateEnumerator>();
         builder.Services.AddScoped<PreparedScanRawArtifactReader>();
         builder.Services.AddScoped<IPreparedSnapshotSource, PreparedSnapshotSource>();
@@ -336,7 +344,7 @@ public static class VulgataWebComposition
         builder.Services.AddSingleton<IAnalysisRuntimeHealthProbe, ConfiguredAnalysisRuntimeHealthProbe>();
         builder.Services.AddScoped<CodeGraphAnalysisAdapter>(services => new CodeGraphAnalysisAdapter(
             services.GetRequiredService<AnalysisRuntimeOptions>(),
-            services.GetRequiredService<PreparedScanRevisionAcquirer>()));
+            services.GetRequiredService<IPreparedRevisionLeaseResolver>()));
         builder.Services.AddScoped<ICodeGraphAnalysisPort>(services =>
             services.GetRequiredService<CodeGraphAnalysisAdapter>());
         builder.Services.AddScoped<IPreparedCodeGraphAnalysisPort>(services =>
@@ -400,9 +408,9 @@ public static class VulgataWebComposition
                     ResponseByteLimit: 1_048_576),
                 archivePath,
                 archiveSha256,
-                services.GetRequiredService<PreparedScanRevisionAcquirer>());
+                services.GetRequiredService<IPreparedRevisionLeaseResolver>());
         });
-        builder.Services.AddSingleton<IRevisionBoundSourceReader, UnboundRevisionSourceReader>();
+        builder.Services.AddScoped<IRevisionBoundSourceReader, PreparedRevisionSourceReader>();
         builder.Services.AddScoped<IScanRecoveryBindingProbe, RuntimeScanRecoveryBindingProbe>();
         builder.Services.AddScoped<IScanRecoveryRevalidator, RuntimeScanRecoveryRevalidator>();
         builder.Services.AddScoped<IDatabaseConnectionRepository, DatabaseConnectionRepository>();
