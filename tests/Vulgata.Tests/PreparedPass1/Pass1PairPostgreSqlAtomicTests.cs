@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -129,8 +130,175 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Equal(committed, await ReadVisibilityAsync(fixture.ConnectionString));
     }
 
+    [Fact]
+    public async Task PostgreSql17_RejectedExactPairBinding_FailsBothScansAndNeverDispatchesOrCommitsAsync()
+    {
+        MethodInfo failureMethod = RequireRevisionBindingFailureMethod();
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        IPreparedPass1Store store = CreatePass1Store(fixture.Context);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Guid pairId = started.PairExecutionId!.Value;
+        long stateVersion = await ReadPairStateVersionAsync(fixture.ConnectionString, pairId);
+        int documentsBefore = await ScalarAsync<int>(
+            fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";");
+
+        object result = await InvokeRevisionBindingFailureAsync(
+            store,
+            failureMethod,
+            pairId,
+            fixture.Authorization,
+            stateVersion);
+        Assert.Equal("FailedIntegrity", ReadProperty(result, "PairState")?.ToString());
+        Assert.Equal("revision-binding-failure", ReadProperty(result, "FailureCode"));
+        Assert.Equal(
+            documentsBefore,
+            await ScalarAsync<int>(
+                fixture.ConnectionString,
+                "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";"));
+        Assert.Equal(
+            "FailedIntegrity",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                $"SELECT \"Phase\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';"));
+        Assert.Equal(
+            "FailedIntegrity,FailedIntegrity",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                "SELECT string_agg(\"Phase\", ',' ORDER BY \"RepositoryId\") FROM vulgata.\"ScanExecutions\";"));
+        Assert.Equal(
+            "FailedIntegrity",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                "SELECT \"Phase\" FROM vulgata.\"TwoRepositoryScanCoordinations\" LIMIT 1;"));
+        Assert.Equal(
+            0,
+            await ScalarAsync<int>(
+                fixture.ConnectionString,
+                "SELECT count(*)::integer FROM vulgata.\"ScanJobExecutions\" WHERE \"State\" = 'Running';"));
+
+        long failedVersion = await ReadPairStateVersionAsync(fixture.ConnectionString, pairId);
+        object replay = await InvokeRevisionBindingFailureAsync(
+            store,
+            failureMethod,
+            pairId,
+            fixture.Authorization,
+            failedVersion);
+        Assert.Contains("Replay", ReadProperty(replay, "Outcome")?.ToString() ?? string.Empty);
+        Assert.Equal(failedVersion, await ReadPairStateVersionAsync(fixture.ConnectionString, pairId));
+        Assert.Equal(
+            documentsBefore,
+            await ScalarAsync<int>(
+                fixture.ConnectionString,
+                "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";"));
+    }
+
+    [Fact]
+    public async Task PostgreSql17_RevisionBindingFailure_RejectsStaleAndUnauthorizedAuthorityWithoutMutationAsync()
+    {
+        MethodInfo failureMethod = RequireRevisionBindingFailureMethod();
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        IPreparedPass1Store store = CreatePass1Store(fixture.Context);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Guid pairId = started.PairExecutionId!.Value;
+        long currentVersion = await ReadPairStateVersionAsync(fixture.ConnectionString, pairId);
+        string beforePhase = await ScalarAsync<string>(
+            fixture.ConnectionString,
+            $"SELECT \"Phase\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';");
+
+        PreparedScanAuthorizationScope unauthorized = fixture.Authorization with
+        {
+            SystemId = Guid.Parse("bbbbbbbb-cccc-4ddd-8eee-ffffffffffff"),
+        };
+        object unauthorizedResult = await InvokeRevisionBindingFailureAsync(
+            store,
+            failureMethod,
+            pairId,
+            unauthorized,
+            currentVersion);
+        Assert.Contains(
+            ReadProperty(unauthorizedResult, "Outcome")?.ToString(),
+            new[] { "Rejected", "Conflict" });
+        Assert.Equal(beforePhase, await ScalarAsync<string>(
+            fixture.ConnectionString,
+            $"SELECT \"Phase\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';"));
+
+        object staleResult = await InvokeRevisionBindingFailureAsync(
+            store,
+            failureMethod,
+            pairId,
+            fixture.Authorization,
+            currentVersion + 1);
+        Assert.Contains(
+            ReadProperty(staleResult, "Outcome")?.ToString(),
+            new[] { "Rejected", "Conflict" });
+        Assert.Equal(currentVersion, await ReadPairStateVersionAsync(fixture.ConnectionString, pairId));
+    }
+
     private static IPreparedPass1Store CreatePass1Store(VulgataDbContext context) =>
         new PreparedPass1Store(context);
+
+    private static MethodInfo RequireRevisionBindingFailureMethod()
+    {
+        MethodInfo? method = typeof(IPreparedPass1Store).GetMethods()
+            .SingleOrDefault(candidate =>
+                candidate.Name.Contains("Fail", StringComparison.OrdinalIgnoreCase) &&
+                candidate.Name.Contains("Revision", StringComparison.OrdinalIgnoreCase) &&
+                candidate.Name.Contains("Binding", StringComparison.OrdinalIgnoreCase));
+        Assert.True(
+            method is not null,
+            "T062 RED: IPreparedPass1Store has no atomic FailRevisionBindingAsync " +
+            "transition for rejected exact pair acquisition.");
+        return method!;
+    }
+
+    private static async Task<object> InvokeRevisionBindingFailureAsync(
+        IPreparedPass1Store store,
+        MethodInfo method,
+        Guid pairId,
+        PreparedScanAuthorizationScope authorization,
+        long expectedStateVersion)
+    {
+        object?[] arguments = method.GetParameters()
+            .Select(parameter => (object?)(parameter.ParameterType == typeof(Guid)
+                ? pairId
+                : parameter.ParameterType == typeof(PreparedScanAuthorizationScope)
+                    ? authorization
+                    : parameter.ParameterType == typeof(long)
+                        ? expectedStateVersion
+                        : parameter.ParameterType == typeof(DateTimeOffset)
+                            ? PreparedScanTestHost.FixedUtcNow.AddMinutes(1)
+                            : parameter.ParameterType == typeof(CancellationToken)
+                                ? CancellationToken.None
+                                : null))
+            .ToArray();
+        object invocation = method.Invoke(store, arguments)!;
+        Task task = Assert.IsAssignableFrom<Task>(invocation);
+        await task.ConfigureAwait(false);
+        return task.GetType().GetProperty("Result")!.GetValue(task)!;
+    }
+
+    private static object? ReadProperty(object instance, string name) =>
+        instance.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance)?.GetValue(instance);
+
+    private static Task<long> ReadPairStateVersionAsync(string connectionString, Guid pairId) =>
+        ScalarAsync<long>(
+            connectionString,
+            $"SELECT \"StateVersion\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';");
 
     private static PreparedScanHandoff CreateHandoff(PreparedScanPairPackage package) =>
         new(

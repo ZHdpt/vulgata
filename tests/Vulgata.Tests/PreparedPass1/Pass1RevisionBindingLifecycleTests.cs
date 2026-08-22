@@ -2,6 +2,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Tests.PreparedPass1;
 
@@ -192,6 +193,61 @@ public sealed class Pass1RevisionBindingLifecycleTests
             property => property.Name.Contains("BindingToken", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public void Store_ExposesAtomicRevisionBindingFailureTransitionWithClosedEffects()
+    {
+        MethodInfo method = RequireRevisionBindingFailureMethod();
+        ParameterInfo[] parameters = method.GetParameters();
+
+        Assert.Contains(
+            parameters,
+            parameter => parameter.ParameterType == typeof(Guid) &&
+                parameter.Name is "pairExecutionId" or "pairId");
+        Assert.Contains(
+            parameters,
+            parameter => parameter.ParameterType == typeof(PreparedScanAuthorizationScope));
+        Assert.Contains(
+            parameters,
+            parameter => parameter.ParameterType == typeof(long) &&
+                parameter.Name is "expectedStateVersion" or "pairStateVersion");
+        Assert.Contains(
+            parameters,
+            parameter => parameter.ParameterType == typeof(DateTimeOffset) &&
+                parameter.Name is "observedAt" or "failedAt");
+        Assert.Contains(
+            parameters,
+            parameter => parameter.ParameterType == typeof(CancellationToken));
+        Assert.DoesNotContain(
+            parameters,
+            parameter => parameter.ParameterType == typeof(string) &&
+                parameter.Name is "reasonCode" or "diagnostic");
+
+        Type result = UnwrapAsync(method.ReturnType);
+        PropertyInfo[] resultProperties = result.GetProperties(
+            BindingFlags.Instance | BindingFlags.Public);
+        Assert.Contains(resultProperties, property => property.Name == "PairState");
+        Assert.Contains(resultProperties, property => property.Name == "FailureCode");
+        PropertyInfo pairStateProperty = resultProperties.Single(
+            property => property.Name == "PairState");
+        Assert.Equal(
+            typeof(Pass1PairExecutionPhase),
+            Nullable.GetUnderlyingType(pairStateProperty.PropertyType) ??
+                pairStateProperty.PropertyType);
+
+        PropertyInfo? outcomeProperty = resultProperties
+            .SingleOrDefault(property => property.Name == "Outcome");
+        Assert.NotNull(outcomeProperty);
+        Type outcome = Nullable.GetUnderlyingType(outcomeProperty!.PropertyType) ??
+            outcomeProperty.PropertyType;
+        Assert.True(
+            Enum.GetNames(outcome).Any(name =>
+                name.Contains("Replay", StringComparison.OrdinalIgnoreCase)) &&
+            Enum.GetNames(outcome).Any(name =>
+                name.Contains("Conflict", StringComparison.OrdinalIgnoreCase)),
+            "T062 RED: revision-binding failure must support exact replay and " +
+            "reject stale/unauthorized/mismatched authority without mutation.");
+    }
+
     private static Type RequireCoreContract()
     {
         Type[] contracts = typeof(PreparedRevisionRequest).Assembly
@@ -269,6 +325,25 @@ public sealed class Pass1RevisionBindingLifecycleTests
             "T062 RED: Core binding contract must resolve a stable opaque token " +
             "by persisted pair and Repository identity for source/CodeGraph/JDT-LS.");
         return method!;
+    }
+
+    private static MethodInfo RequireRevisionBindingFailureMethod()
+    {
+        MethodInfo? method = typeof(IPreparedPass1Store).GetMethods()
+            .SingleOrDefault(candidate =>
+                candidate.Name.Contains("Fail", StringComparison.OrdinalIgnoreCase) &&
+                candidate.Name.Contains("Revision", StringComparison.OrdinalIgnoreCase) &&
+                candidate.Name.Contains("Binding", StringComparison.OrdinalIgnoreCase));
+        Assert.True(
+            method is not null,
+            "T062 RED: IPreparedPass1Store must expose an atomic " +
+            "FailRevisionBindingAsync pair transition before rejected exact " +
+            "two-Repository acquisition can be closed safely.");
+        Assert.True(
+            method!.ReturnType.IsGenericType &&
+            method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>),
+            "T062 RED: revision-binding failure must return a typed durable result.");
+        return method;
     }
 
     private static Type FindBindingProjection(Type acquisition)
