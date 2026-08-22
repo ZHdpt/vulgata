@@ -2,7 +2,7 @@
   "evidence_id": "12-3/implement/2",
   "kind": "test-green",
   "stage": "implement",
-  "source_commit": "54289710d8da4e5acbf7e347b818d64ab41c4002",
+  "source_commit": "d1eeb0a9ff97e9a195ec26c017a7d0a05fbc4696",
   "artifact_paths": [
     "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs",
     "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionActivator.cs",
@@ -13,11 +13,11 @@
     "src/dotnet/Vulgata.Web/Program.cs"
   ],
   "artifact_sha256": {
-    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "6d704a2dee9269abbe04b3507ddcd14f9bb24fd6f99c4f4d5042c1fc08abdc4f",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "339e839494e7ffb20bdbab2cc60f52df8338570c14dcb69dd79dcdd9dedff258",
     "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionActivator.cs": "4f060c33b8cc4f0cca04b2f1145c6e11fcb6c4a87202cd582f84c704df4e1ecc",
     "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "bff3e024001a7492dcf81ca28cc1464c268903249fac0a264884bc2fb9740d39",
     "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs": "463f191113de28ec4721650c8e572e81e0b88904a1be95c6062adaf22dfe43f9",
-    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "a0ada032a0d9489041ee8374408263138af5b9dc1aa0f21aae208311b9281d95",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "9c21f693ef5ef005597754d2e129f0b2611bb7b1a7e67e5849b6fff11a4ba68e",
     "src/dotnet/Vulgata.Web/Data/PreparedPass1DispatchWorker.cs": "240e8f5b53c9a23215999223da048babc1f2ed08685161777b653cd7805fe416",
     "src/dotnet/Vulgata.Web/Program.cs": "a2df42d874eaf34c01e3420e56f3f8d6d9e7ae1cc975e4518c8eb7bd4751ac7f"
   },
@@ -34,6 +34,6 @@
     "web_build": "0 errors; existing warnings remain",
     "diff_check": "passed"
   },
-  "observed_at": "2026-08-22T10:21:51Z",
-  "summary": "T050/T051 are GREEN. Start, Resume, and concurrency updates signal one deduplicated capacity-filling pair pump; durable claims remain authoritative; independent scoped runners fill/refill capacity; closure drains locally; fresh durable exhaustion gates reconciliation; and one Conflict retries only for the same eligible terminal pair. Later correction tasks remain excluded."
+  "observed_at": "2026-08-22T12:03:51Z",
+  "summary": "T050/T051 remain GREEN after T053 introduced mandatory claimed-packet hydration. The capacity test host now supplies a deterministic scoped claimed-packet source while production remains fail-closed; Start, Resume, and concurrency updates signal one deduplicated capacity-filling pair pump; durable claims remain authoritative; independent scoped runners fill/refill capacity; closure drains locally; fresh durable exhaustion gates reconciliation; and one Conflict retries only for the same eligible terminal pair. Later production composition remains excluded."
 }

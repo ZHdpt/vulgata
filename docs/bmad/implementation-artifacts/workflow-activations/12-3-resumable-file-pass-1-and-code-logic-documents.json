@@ -23,16 +23,16 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260822T102151Z-7aea32",
+    "checkpoint_id": "bmad-12-3-correction-20260822T111530Z-c8f4a1",
     "stage": "implement",
-    "commit_sha": "328dfbc76db1c3a3f408f68ef1f03a518f4fff37",
+    "commit_sha": "d1eeb0a9ff97e9a195ec26c017a7d0a05fbc4696",
     "binding_status": "bound"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
     "stage": "implement",
-    "reason": "Refreshed scope d17688241da9288d0302128cfc4f6d0a990a90cdc1b73ba9f6bd965a81e6ffe4 approved and T052 RED bound; implement T053 claimed-packet hydration and additive claim-version projection."
+    "reason": "T052/T053 claimed-packet hydration is GREEN with exact RED/GREEN evidence and the T050 capacity harness remains GREEN through a test-only hydration seam; begin T054 executor/dispatcher/committer/failure/reconciliation composition RED."
   },
-  "updated_at": "2026-08-22T11:15:30Z"
+  "updated_at": "2026-08-22T12:03:51Z"
 }

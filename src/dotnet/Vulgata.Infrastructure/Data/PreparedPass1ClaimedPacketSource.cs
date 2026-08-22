@@ -1,0 +1,385 @@
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
+
+namespace Vulgata.Infrastructure.Data;
+
+/// <summary>
+/// Fail-closed reconstruction of one exact prepared File Code Unit from a
+/// current durable claim. Authorization material never enters the returned
+/// provider-visible packet.
+/// </summary>
+public sealed class PreparedPass1ClaimedPacketSource(
+    VulgataDbContext context,
+    IRevisionBoundSourceReader sourceReader,
+    TimeProvider timeProvider) : IPreparedPass1ClaimedPacketSource
+{
+    private static readonly TimeSpan _sourceDeadline = TimeSpan.FromMinutes(5);
+    private static readonly IReadOnlyList<PreparedPass1CommunicationClassificationProjection>
+        _noClassifications = [];
+    private readonly TimeProvider _timeProvider =
+        timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+
+    public async Task<PreparedPass1WorkerPacket?> HydrateAsync(
+        Guid pairExecutionId,
+        PreparedPass1ClaimResult claim,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default)
+    {
+        if (claim is null ||
+            cancellationToken.IsCancellationRequested ||
+            pairExecutionId == Guid.Empty ||
+            claim.Outcome != PreparedPass1ClaimOutcome.Claimed ||
+            claim.JobId == Guid.Empty ||
+            claim.LeaseToken == Guid.Empty ||
+            claim.JobStateVersion <= 0 ||
+            claim.PairStateVersion < 0 ||
+            observedAt.Offset != TimeSpan.Zero ||
+            claim.LeaseExpiresAt.Offset != TimeSpan.Zero ||
+            claim.LeaseExpiresAt <= observedAt)
+        {
+            return null;
+        }
+
+        try
+        {
+            ClaimedBinding? binding = await LoadCurrentBindingAsync(
+                pairExecutionId,
+                claim,
+                observedAt,
+                cancellationToken);
+            if (binding is null)
+            {
+                return null;
+            }
+
+            var scope = new AnalysisScope(
+                binding.RepositoryId,
+                binding.ScanRunId,
+                binding.ProfiledRevision,
+                $"pass1-{binding.JobId:N}",
+                binding.AnalysisRuntimeIdentityHash,
+                new AnalysisDeadline(observedAt.Add(_sourceDeadline).ToUnixTimeMilliseconds()));
+            SourceExcerptResult source = await sourceReader.ReadAsync(
+                scope,
+                new RevisionBoundSourceRequest(
+                    binding.RepositoryRelativePath,
+                    new AnalysisLineRange(binding.LineStart, binding.LineEnd),
+                    binding.FileHash,
+                    checked((int)(binding.ByteEnd - binding.ByteStart))),
+                cancellationToken);
+
+            byte[] sourceUtf8 = Encoding.UTF8.GetBytes(source.Excerpt);
+            if (!IsExactSource(binding, source, sourceUtf8))
+            {
+                return null;
+            }
+
+            context.ChangeTracker.Clear();
+            DateTimeOffset revalidatedAt = _timeProvider.GetUtcNow();
+            if (revalidatedAt < observedAt)
+            {
+                revalidatedAt = observedAt;
+            }
+
+            ClaimedBinding? revalidated = await LoadCurrentBindingAsync(
+                pairExecutionId,
+                claim,
+                revalidatedAt,
+                cancellationToken);
+            if (revalidated is null || !Matches(binding, revalidated))
+            {
+                return null;
+            }
+
+            return new PreparedPass1WorkerPacket(
+                pairExecutionId,
+                binding.JobId,
+                binding.ScanExecutionId,
+                binding.SystemId,
+                binding.RepositoryId,
+                binding.ScanRunId,
+                binding.ProfiledRevision,
+                binding.FileCodeUnitId,
+                binding.FileCodeUnitIdentityFingerprint,
+                binding.PreparedScanManifestId,
+                binding.PreparedScanManifestFingerprint,
+                binding.PairPackageFingerprint,
+                binding.RepositoryRelativePath,
+                binding.ByteStart,
+                binding.ByteEnd,
+                binding.LineStart,
+                binding.LineEnd,
+                binding.SegmentOrdinal,
+                binding.SegmentCount,
+                binding.FileHash,
+                binding.SourceHash,
+                binding.PromptIdentity,
+                binding.DocumentSchemaIdentity,
+                binding.AnalysisRuntimeIdentityHash,
+                binding.ManifestOrdinal,
+                binding.PairSelectionOrdinal,
+                sourceUtf8,
+                binding.ContextSnapshot,
+                binding.CommunicationClassifications);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or InvalidOperationException or OverflowException)
+        {
+            return null;
+        }
+    }
+
+    private async Task<ClaimedBinding?> LoadCurrentBindingAsync(
+        Guid pairExecutionId,
+        PreparedPass1ClaimResult claim,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken)
+    {
+        Pass1PairExecution? pair = await context.Pass1PairExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == pairExecutionId, cancellationToken);
+        if (pair is null ||
+            pair.StateVersion != claim.PairStateVersion ||
+            pair.Phase != Pass1PairExecutionPhase.Running ||
+            pair.CircuitState != Pass1CircuitState.Closed)
+        {
+            return null;
+        }
+
+        ScanJobExecution? job = await context.ScanJobExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == claim.JobId, cancellationToken);
+        if (!IsCurrentJob(job, claim, observedAt) || job is null)
+        {
+            return null;
+        }
+
+        ScanExecution? execution = await context.ScanExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == job.ScanExecutionId, cancellationToken);
+        CodeUnit? unit = await context.CodeUnits.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == job.FileCodeUnitId, cancellationToken);
+        if (execution is null || unit is null ||
+            execution.SystemId != pair.SystemId ||
+            execution.RepositoryId != job.RepositoryId ||
+            execution.ScanRunId != job.ScanRunId ||
+            unit.RepositoryId != job.RepositoryId ||
+            unit.ScanRunId != job.ScanRunId ||
+            string.IsNullOrWhiteSpace(execution.PromptIdentity) ||
+            !string.Equals(execution.DocumentSchemaIdentity, "code-logic/file-v2", StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(execution.AnalysisRuntimeIdentityHash) ||
+            string.IsNullOrWhiteSpace(unit.FileCodeUnitIdentityFingerprint) ||
+            string.IsNullOrWhiteSpace(unit.FileHash) ||
+            unit.ByteStart is null || unit.ByteEndExclusive is null ||
+            unit.SegmentOrdinal is null || unit.SegmentCount is null)
+        {
+            return null;
+        }
+
+        PreparedScanManifestEntry? entry = await context.PreparedScanManifestEntries.AsNoTracking()
+            .SingleOrDefaultAsync(value =>
+                value.FileCodeUnitId == unit.Id &&
+                value.ManifestOrdinal == claim.ManifestOrdinal &&
+                value.PairSelectionOrdinal == claim.PairSelectionOrdinal &&
+                (value.PreparedScanManifestId == pair.ManifestOneId ||
+                    value.PreparedScanManifestId == pair.ManifestTwoId),
+                cancellationToken);
+        if (entry is null ||
+            !string.Equals(
+                entry.FileCodeUnitIdentityFingerprint,
+                unit.FileCodeUnitIdentityFingerprint,
+                StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        PreparedScanManifest? manifest = await context.PreparedScanManifests.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == entry.PreparedScanManifestId, cancellationToken);
+        ScanContextSnapshot? snapshot = manifest is null
+            ? null
+            : await context.ScanContextSnapshots.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == manifest.ContextSnapshotId, cancellationToken);
+        bool authorized = await context.SystemOwnerAssignments.AsNoTracking()
+            .AnyAsync(value => value.SystemId == pair.SystemId, cancellationToken);
+        bool repositoryBound = await context.Repositories.AsNoTracking()
+            .AnyAsync(value => value.Id == job.RepositoryId && value.SystemId == pair.SystemId, cancellationToken);
+        if (!authorized || !repositoryBound || manifest is null || snapshot is null ||
+            manifest.ApprovalState != PreparedScanManifestApprovalState.Approved ||
+            manifest.CoordinationId != pair.CoordinationId ||
+            manifest.RepositoryId != job.RepositoryId ||
+            manifest.ScanRunId != job.ScanRunId ||
+            !string.Equals(manifest.ProfiledRevision, execution.ProfiledRevision, StringComparison.Ordinal) ||
+            !string.Equals(manifest.PairSelectionFingerprint, pair.PairSelectionFingerprint, StringComparison.Ordinal) ||
+            !string.Equals(snapshot.ProfiledRevision, execution.ProfiledRevision, StringComparison.Ordinal) ||
+            snapshot.RepositoryId != job.RepositoryId ||
+            snapshot.ScanRunId != job.ScanRunId ||
+            !string.Equals(snapshot.PreparedScanContextIdentityHash, manifest.PreparedScanContextIdentityHash, StringComparison.Ordinal) ||
+            !string.Equals(snapshot.ContentHash, manifest.ContextContentHash, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        PreparedCanonicalArtifact unitIdentity = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+            unit.RepositoryId,
+            unit.ScanRunId,
+            manifest.ProfiledRevision,
+            unit.FilePath,
+            unit.FileHash,
+            unit.ByteStart.Value,
+            unit.ByteEndExclusive.Value,
+            unit.LineStart,
+            unit.LineEnd,
+            unit.SegmentOrdinal.Value,
+            unit.SegmentCount.Value,
+            unit.SourceHash);
+        if (!string.Equals(entry.FileCodeUnitIdentityFingerprint, unitIdentity.Fingerprint, StringComparison.Ordinal) ||
+            !string.Equals(unit.FileCodeUnitIdentityFingerprint, unitIdentity.Fingerprint, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        Guid? preScanResultId = await context.PreScanResults.AsNoTracking()
+            .Where(value => value.PreparedScanManifestId == manifest.Id)
+            .Select(value => (Guid?)value.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+        CommunicationKindClassification[] classifications = preScanResultId is null
+            ? []
+            : await context.CommunicationKindClassifications.AsNoTracking()
+                .Where(value =>
+                    value.PreScanResultId == preScanResultId &&
+                    value.RelativePath == unit.FilePath &&
+                    value.Locator.StartsWith(unit.FilePath + "#"))
+                .OrderBy(value => value.Fingerprint)
+                .ToArrayAsync(cancellationToken);
+        if (classifications.Any(value => string.IsNullOrWhiteSpace(value.CatalogRuleIdentity)))
+        {
+            return null;
+        }
+
+        var snapshotProjection = new PreparedPass1ContextSnapshotProjection(
+            snapshot.Id,
+            snapshot.RepositoryId,
+            snapshot.ScanRunId,
+            snapshot.ProfiledRevision,
+            snapshot.PreparedScanContextIdentityHash!,
+            snapshot.ContentHash,
+            snapshot.GlobalContext,
+            snapshot.SystemContext,
+            snapshot.RepositoryContext);
+        PreparedPass1CommunicationClassificationProjection[] classificationProjections = [.. classifications.Select(value =>
+            new PreparedPass1CommunicationClassificationProjection(
+                unit.Id,
+                value.Id,
+                manifest.Id,
+                manifest.RepositoryId,
+                manifest.ScanRunId,
+                manifest.ProfiledRevision,
+                value.Fingerprint,
+                value.Kind,
+                value.Level,
+                value.Confidence,
+                value.Rule,
+                value.Provenance,
+                value.CatalogRuleIdentity!,
+                value.RelativePath,
+                value.Locator))];
+
+        return new ClaimedBinding(
+            job.Id,
+            job.ScanExecutionId,
+            pair.SystemId,
+            job.RepositoryId,
+            job.ScanRunId,
+            execution.ProfiledRevision,
+            unit.Id,
+            unit.FileCodeUnitIdentityFingerprint,
+            manifest.Id,
+            manifest.Fingerprint,
+            pair.PairPackageFingerprint,
+            unit.FilePath,
+            unit.ByteStart.Value,
+            unit.ByteEndExclusive.Value,
+            unit.LineStart,
+            unit.LineEnd,
+            unit.SegmentOrdinal.Value,
+            unit.SegmentCount.Value,
+            unit.FileHash,
+            unit.SourceHash,
+            execution.PromptIdentity,
+            execution.DocumentSchemaIdentity!,
+            execution.AnalysisRuntimeIdentityHash,
+            job.ManifestOrdinal,
+            claim.PairSelectionOrdinal,
+            snapshotProjection,
+            Array.AsReadOnly(classificationProjections));
+    }
+
+    private static bool IsCurrentJob(
+        ScanJobExecution? job,
+        PreparedPass1ClaimResult claim,
+        DateTimeOffset observedAt) =>
+        job is not null &&
+        job.State == ScanJobExecutionState.Running &&
+        job.StateVersion == claim.JobStateVersion &&
+        job.LeaseToken == claim.LeaseToken &&
+        job.LeaseExpiresAt == claim.LeaseExpiresAt &&
+        job.LeaseExpiresAt > observedAt &&
+        job.ManifestOrdinal == claim.ManifestOrdinal;
+
+    private static bool IsExactSource(
+        ClaimedBinding binding,
+        SourceExcerptResult source,
+        byte[] sourceUtf8) =>
+        source.Status == AnalysisOperationStatus.Succeeded &&
+        source.Failure is null &&
+        source.RepositoryId == binding.RepositoryId &&
+        string.Equals(source.ProfiledRevision, binding.ProfiledRevision, StringComparison.Ordinal) &&
+        string.Equals(source.RelativePath, binding.RepositoryRelativePath, StringComparison.Ordinal) &&
+        source.Range.StartLine == binding.LineStart &&
+        source.Range.EndLine == binding.LineEnd &&
+        string.Equals(source.SourceSha256, binding.FileHash, StringComparison.OrdinalIgnoreCase) &&
+        source.ByteCount == sourceUtf8.Length &&
+        sourceUtf8.LongLength == binding.ByteEnd - binding.ByteStart &&
+        string.Equals(
+            Convert.ToHexStringLower(SHA256.HashData(sourceUtf8)),
+            binding.SourceHash,
+            StringComparison.OrdinalIgnoreCase);
+
+    private static bool Matches(ClaimedBinding first, ClaimedBinding second) =>
+        first with { CommunicationClassifications = _noClassifications } ==
+            second with { CommunicationClassifications = _noClassifications } &&
+        first.CommunicationClassifications.SequenceEqual(second.CommunicationClassifications);
+
+    private sealed record ClaimedBinding(
+        Guid JobId,
+        Guid ScanExecutionId,
+        Guid SystemId,
+        Guid RepositoryId,
+        Guid ScanRunId,
+        string ProfiledRevision,
+        Guid FileCodeUnitId,
+        string FileCodeUnitIdentityFingerprint,
+        Guid PreparedScanManifestId,
+        string PreparedScanManifestFingerprint,
+        string PairPackageFingerprint,
+        string RepositoryRelativePath,
+        long ByteStart,
+        long ByteEnd,
+        int LineStart,
+        int LineEnd,
+        int SegmentOrdinal,
+        int SegmentCount,
+        string FileHash,
+        string SourceHash,
+        string PromptIdentity,
+        string DocumentSchemaIdentity,
+        string AnalysisRuntimeIdentityHash,
+        int ManifestOrdinal,
+        int PairSelectionOrdinal,
+        PreparedPass1ContextSnapshotProjection ContextSnapshot,
+        IReadOnlyList<PreparedPass1CommunicationClassificationProjection> CommunicationClassifications);
+}

@@ -1,0 +1,36 @@
+{
+  "evidence_id": "12-3/implement/4",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "d1eeb0a9ff97e9a195ec26c017a7d0a05fbc4696",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ClaimedPacketExecutionTests.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1ClaimedPacketSource.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ClaimedPacketSource.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ClaimedPacketExecutionTests.cs": "703e84f27ec2fa7a66597c56c6e0ebcbeb8afa39e82e17764032543c2fbc55da",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1Store.cs": "ef37b0e9b299ef7005facb0688c63883a2a1a6397c3af0e35b98ddaf28072d33",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "2d2d2848996799ff7f19727086a67f74082f817cfcc65c6c39bbf40054b168ab",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1ClaimedPacketSource.cs": "ed71e7a0ae725a20685d9d5d6a00c81dcc87b0951ad58f399bdcaaf23a8fc91f",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ClaimedPacketSource.cs": "6309665c574a0ee19f561f0f777479b8ce7c78e627c6e2f52db82ce5f254f847",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "9c21f693ef5ef005597754d2e129f0b2611bb7b1a7e67e5849b6fff11a4ba68e"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass1ClaimedPacketExecutionTests --logger console;verbosity=minimal with process-local PostgreSQL 17 administrator configuration",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ConcurrencyAndOrderingTests|FullyQualifiedName~Pass1ConcurrencyUpdateTests|FullyQualifiedName~Pass1PairStartTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+    "git diff --check"
+  ],
+  "result": {
+    "focused": "14 passed, 0 failed, 0 skipped",
+    "surrounding": "22 passed, 0 failed",
+    "web_build": "0 errors; existing warnings remain",
+    "diff_check": "passed; line-ending warnings only"
+  },
+  "observed_at": "2026-08-22T11:55:31Z",
+  "summary": "T052/T053 are GREEN. The server hydrates only a current claimed File Code Unit after current pair, job, lease, authorization, Repository, Profiled Revision, manifest, context, and deterministic File Code Unit identity validation; it validates exact revision-bound source bytes, rechecks with fresh time after source I/O, excludes lease/version secrets from the provider packet, and commits no Document or job mutation on rejection."
+}

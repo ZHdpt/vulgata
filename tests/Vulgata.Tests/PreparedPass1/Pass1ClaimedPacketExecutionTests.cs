@@ -1,17 +1,12 @@
 using System.Reflection;
 using System.Text;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Tests.PreparedScanning;
-using Vulgata.Web.Data;
+using Vulgata.Tests.PreparedScanning.TestDoubles;
 
 namespace Vulgata.Tests.PreparedPass1;
 
@@ -33,9 +28,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         RequireClaimedPacketSourceContract();
         await using ClaimedFixture fixture = await CreateClaimedFixtureAsync();
         RecordingSourceReader reader = new(fixture.SourceText);
-        using WebApplicationFactory<Program> host = CreateHost(fixture.Prepared.ConnectionString, reader);
 
-        object? result = await InvokeHydrateAsync(host, fixture.PairId, fixture.Claim);
+        object? result = await InvokeHydrateAsync(fixture.Prepared.Context, reader, fixture.PairId, fixture.Claim);
         PreparedPass1WorkerPacket packet = Assert.IsType<PreparedPass1WorkerPacket>(result);
 
         Assert.Equal(fixture.Claim.JobId, packet.JobId);
@@ -69,9 +63,15 @@ public sealed class Pass1ClaimedPacketExecutionTests
         int jobsBefore = await fixture.Prepared.Context.ScanJobExecutions.CountAsync();
         int documentsBefore = await fixture.Prepared.Context.DocumentVersions.CountAsync();
         await ApplyDriftAsync(fixture, drift);
-        using WebApplicationFactory<Program> host = CreateHost(fixture.Prepared.ConnectionString, reader);
 
-        object? result = await InvokeHydrateAsync(host, fixture.PairId, fixture.Claim);
+        object? result = await InvokeHydrateAsync(
+            fixture.Prepared.Context,
+            reader,
+            fixture.PairId,
+            fixture.Claim,
+            observedAt: drift == "expired-lease"
+                ? fixture.Claim.LeaseExpiresAt.AddSeconds(1)
+                : null);
 
         Assert.Null(result);
         Assert.Equal(0, reader.ReadCount);
@@ -97,9 +97,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         int jobsBefore = await fixture.Prepared.Context.ScanJobExecutions.CountAsync();
         int documentsBefore = await fixture.Prepared.Context.DocumentVersions.CountAsync();
         await ApplyDriftAsync(fixture, drift);
-        using WebApplicationFactory<Program> host = CreateHost(fixture.Prepared.ConnectionString, reader);
 
-        object? result = await InvokeHydrateAsync(host, fixture.PairId, fixture.Claim);
+        object? result = await InvokeHydrateAsync(fixture.Prepared.Context, reader, fixture.PairId, fixture.Claim);
 
         Assert.Null(result);
         Assert.Equal(0, reader.ReadCount);
@@ -117,9 +116,13 @@ public sealed class Pass1ClaimedPacketExecutionTests
         int documentsBefore = await fixture.Prepared.Context.DocumentVersions.CountAsync();
         using CancellationTokenSource cancellation = new();
         cancellation.Cancel();
-        using WebApplicationFactory<Program> host = CreateHost(fixture.Prepared.ConnectionString, reader);
 
-        object? result = await InvokeHydrateAsync(host, fixture.PairId, fixture.Claim, cancellation.Token);
+        object? result = await InvokeHydrateAsync(
+            fixture.Prepared.Context,
+            reader,
+            fixture.PairId,
+            fixture.Claim,
+            cancellation.Token);
 
         Assert.Null(result);
         Assert.Equal(0, reader.ReadCount);
@@ -141,14 +144,21 @@ public sealed class Pass1ClaimedPacketExecutionTests
     }
 
     private static async Task<object?> InvokeHydrateAsync(
-        WebApplicationFactory<Program> host,
+        VulgataDbContext context,
+        RecordingSourceReader reader,
         Guid pairExecutionId,
         PreparedPass1ClaimResult claim,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        DateTimeOffset? observedAt = null)
     {
         Type contract = RequireClaimedPacketSourceContract();
         Type implementation = RequireClaimedPacketSourceImplementation();
-        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+        using ServiceProvider provider = new ServiceCollection()
+            .AddSingleton(context)
+            .AddSingleton<IRevisionBoundSourceReader>(reader)
+            .AddSingleton<TimeProvider>(new FixedTimeProvider(PreparedScanTestHost.FixedUtcNow))
+            .BuildServiceProvider();
+        await using AsyncServiceScope scope = provider.CreateAsyncScope();
         object source;
         try
         {
@@ -171,7 +181,12 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Assert.True(index >= 0, "T052 RED: the resolved production source does not implement the approved hydration port.");
         MethodInfo method = mapping.TargetMethods[index];
         object?[] arguments = method.GetParameters()
-            .Select(parameter => ResolveArgument(parameter, pairExecutionId, claim, cancellationToken))
+            .Select(parameter => ResolveArgument(
+                parameter,
+                pairExecutionId,
+                claim,
+                cancellationToken,
+                observedAt ?? PreparedScanTestHost.FixedUtcNow))
             .ToArray();
         object invocation = method.Invoke(source, arguments)
             ?? throw new Xunit.Sdk.XunitException("T052 RED: packet hydration returned no asynchronous result.");
@@ -188,7 +203,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         ParameterInfo parameter,
         Guid pairExecutionId,
         PreparedPass1ClaimResult claim,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        DateTimeOffset observedAt)
     {
         if (parameter.ParameterType == typeof(Guid))
         {
@@ -209,7 +225,7 @@ public sealed class Pass1ClaimedPacketExecutionTests
 
         if (parameter.ParameterType == typeof(DateTimeOffset))
         {
-            return PreparedScanTestHost.FixedUtcNow;
+            return observedAt;
         }
 
         return parameter.HasDefaultValue
@@ -256,9 +272,17 @@ public sealed class Pass1ClaimedPacketExecutionTests
             await PreparedScanPostgreSqlFixture.CreateAsync(administrator);
         try
         {
+            const string sourceText = "package p;\nclass Claimed {\nvoid x(){}\n}\n";
+            Assert.Equal(40, Encoding.UTF8.GetByteCount(sourceText));
+            PreparedScanPairPackage package = CreateClaimedPackage(prepared.Package, sourceText);
+            prepared.Context.SystemOwnerAssignments.Add(SystemOwnerAssignment.Create(
+                prepared.SystemId,
+                prepared.Authorization.UserId.ToString(),
+                PreparedScanTestHost.FixedUtcNow));
+            await prepared.Context.SaveChangesAsync();
             PreparedScanCommitResult committed = await PreparedScanPostgreSqlFixture
                 .CreateStore(prepared.Context)
-                .CommitPairAsync(prepared.Authorization, prepared.Package, 0, CancellationToken.None);
+                .CommitPairAsync(prepared.Authorization, package, 0, CancellationToken.None);
             Assert.Equal(PreparedScanCommitOutcome.Committed, committed.Outcome);
             string runtime = "{\"runtime\":\"story-12-3-t052\"}";
             string runtimeHash = Convert.ToHexStringLower(
@@ -273,7 +297,7 @@ public sealed class Pass1ClaimedPacketExecutionTests
                 .SetProperty(value => value.UpdatedAt, PreparedScanTestHost.FixedUtcNow));
             prepared.Context.ChangeTracker.Clear();
             PreparedPass1StartResult started = await new PreparedPass1Store(prepared.Context)
-                .StartAsync(prepared.Authorization, CreateHandoff(prepared.Package), 2, CancellationToken.None);
+                .StartAsync(prepared.Authorization, CreateHandoff(package), 2, CancellationToken.None);
             Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
             Pass1PairExecution pair = await prepared.Context.Pass1PairExecutions.SingleAsync();
             PreparedPass1ClaimResult claim = await new PreparedPass1Store(prepared.Context)
@@ -301,7 +325,7 @@ public sealed class Pass1ClaimedPacketExecutionTests
                 unit.ByteEndExclusive!.Value,
                 unit.LineStart,
                 unit.LineEnd,
-                "package prepared;\nclass ClaimedPacket { }\n");
+                sourceText);
         }
         catch
         {
@@ -325,8 +349,6 @@ public sealed class Pass1ClaimedPacketExecutionTests
                     .ExecuteUpdateAsync(setters => setters.SetProperty(value => value.StateVersion, value => value.StateVersion + 1));
                 break;
             case "expired-lease":
-                await fixture.Prepared.Context.ScanJobExecutions.Where(value => value.Id == fixture.Claim.JobId)
-                    .ExecuteUpdateAsync(setters => setters.SetProperty(value => value.LeaseExpiresAt, PreparedScanTestHost.FixedUtcNow.AddSeconds(-1)));
                 break;
             case "pair-version":
                 await fixture.Prepared.Context.Pass1PairExecutions.Where(value => value.Id == fixture.PairId)
@@ -340,8 +362,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
                 await fixture.Prepared.Context.SystemOwnerAssignments.ExecuteDeleteAsync();
                 break;
             case "repository":
-                await fixture.Prepared.Context.ScanJobExecutions.Where(value => value.Id == fixture.Claim.JobId)
-                    .ExecuteUpdateAsync(setters => setters.SetProperty(value => value.RepositoryId, Guid.NewGuid()));
+                await fixture.Prepared.Context.Repositories.Where(value => value.Id == fixture.RepositoryId)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(value => value.SystemId, (Guid?)null));
                 break;
             case "profiled-revision":
                 await fixture.Prepared.Context.ScanExecutions.Where(value => value.Id == fixture.ScanExecutionId)
@@ -366,44 +388,81 @@ public sealed class Pass1ClaimedPacketExecutionTests
         fixture.Prepared.Context.ChangeTracker.Clear();
     }
 
-    private static WebApplicationFactory<Program> CreateHost(
-        string connectionString,
-        RecordingSourceReader reader) =>
-        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+    private static PreparedScanPairPackage CreateClaimedPackage(
+        PreparedScanPairPackage package,
+        string sourceText)
+    {
+        string hash = Convert.ToHexStringLower(
+            System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(sourceText)));
+        PreparedRepositoryPackage[] repositories = package.Repositories.ToArray();
+        PreparedRepositoryPackage first = repositories[0];
+        PreparedFileCodeUnitDraft original = first.FileCodeUnits
+            .Single(unit => unit.PairSelectionOrdinal == 1);
+        PreparedFileCodeUnitDraft rebased = original with
         {
-            string keyRingPath = Path.Combine(Path.GetTempPath(), "vulgata-tests", "t052", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(keyRingPath);
-            builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
-                new Dictionary<string, string?>
-                {
-                    ["ConnectionStrings:DefaultConnection"] = connectionString,
-                    ["DataProtection:KeyRingPath"] = keyRingPath,
-                    ["DataProtection:ApplicationName"] = "Vulgata.Tests.T052." + Guid.NewGuid().ToString("N"),
-                }));
-            builder.ConfigureServices(services =>
+            FileHash = hash,
+            SourceHash = hash,
+        };
+        rebased = rebased with
+        {
+            IdentityFingerprint = PreparedScanPlanner.FingerprintIdentity(rebased),
+        };
+        rebased = rebased with
+        {
+            Id = PreparedScanIdentityBuilders.CreateDeterministicIdentity(
+                "FileCodeUnit",
+                rebased.IdentityFingerprint),
+        };
+        PreparedScanAuditDraft originalAudit = first.Audits
+            .Single(audit => audit.PreparedScanManifestEntryId == original.Id);
+        PreparedScanAuditDraft rebasedAudit = PreparedScanAuditFactory.Create(
+            originalAudit.RepositoryId,
+            originalAudit.ScanRunId,
+            originalAudit.RelativePath,
+            originalAudit.Outcome,
+            originalAudit.Reason,
+            hash,
+            originalAudit.RawByteCount,
+            originalAudit.LogicalLineCount,
+            rebased.IdentityFingerprint,
+            originalAudit.PairSelectionOrdinal,
+            originalAudit.Ordinal,
+            rebased.Id);
+        repositories[0] = first with
+        {
+            FileCodeUnits = first.FileCodeUnits
+                .Select(unit => unit.Id == original.Id ? rebased : unit)
+                .ToArray(),
+            Audits = first.Audits
+                .Select(audit => audit.Id == originalAudit.Id ? rebasedAudit : audit)
+                .ToArray(),
+        };
+        string pairSelectionFingerprint = PreparedScanIdentityBuilders.CreatePairSelection(
+            package.CoordinationId,
+            repositories.SelectMany(repository => repository.FileCodeUnits)).Fingerprint;
+        for (int index = 0; index < repositories.Length; index++)
+        {
+            repositories[index] = repositories[index] with
             {
-                services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
-                services.RemoveAll<DbContextOptions<VulgataDbContext>>();
-                services.RemoveAll<IDbContextFactory<VulgataDbContext>>();
-                services.RemoveAll<IConfigureOptions<DbContextOptions<ApplicationDbContext>>>();
-                services.RemoveAll<IConfigureOptions<DbContextOptions<VulgataDbContext>>>();
-                services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
-                services.RemoveAll<IDbContextOptionsConfiguration<VulgataDbContext>>();
-                services.RemoveAll<ApplicationDbContext>();
-                services.RemoveAll<VulgataDbContext>();
-                services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(
-                    connectionString,
-                    npgsql => npgsql.MigrationsHistoryTable("__IdentityMigrationsHistory", "identity")));
-                services.AddDbContext<VulgataDbContext>(options => options.UseNpgsql(
-                    connectionString,
-                    npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public")));
-                services.AddDbContextFactory<VulgataDbContext>(options => options.UseNpgsql(
-                    connectionString,
-                    npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public")));
-                services.RemoveAll<IRevisionBoundSourceReader>();
-                services.AddSingleton<IRevisionBoundSourceReader>(reader);
-            });
-        });
+                ManifestFingerprint = PreparedScanIdentityBuilders.CreateManifest(
+                    repositories[index],
+                    pairSelectionFingerprint).Fingerprint,
+            };
+        }
+        string pairPackageFingerprint = PreparedScanIdentityBuilders.CreatePairPackage(
+            package.CoordinationId,
+            pairSelectionFingerprint,
+            repositories.Select(repository => new PreparedManifestFingerprintBinding(
+                repository.RepositoryId,
+                repository.ManifestFingerprint)),
+            package.SelectedCount).Fingerprint;
+        return package with
+        {
+            PairSelectionFingerprint = pairSelectionFingerprint,
+            PairPackageFingerprint = pairPackageFingerprint,
+            Repositories = repositories,
+        };
+    }
 
     private static PreparedScanHandoff CreateHandoff(PreparedScanPairPackage package) =>
         new(

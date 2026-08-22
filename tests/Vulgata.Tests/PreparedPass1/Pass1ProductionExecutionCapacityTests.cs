@@ -466,6 +466,7 @@ public sealed class Pass1ProductionExecutionCapacityTests
                         npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public");
                     }));
                 services.RemoveAll<IPreparedPass1JobExecutor>();
+                services.RemoveAll<IPreparedPass1ClaimedPacketSource>();
                 services.RemoveAll<IPreparedScanHandoffSource>();
                 services.RemoveAll<IPreparedPass1ProviderAvailabilityProbe>();
                 services.RemoveAll<IPreparedPass1Store>();
@@ -481,6 +482,10 @@ public sealed class Pass1ProductionExecutionCapacityTests
                 services.AddSingleton<ControllableWorker>();
                 services.AddSingleton<IPreparedPass1JobExecutor>(provider =>
                     provider.GetRequiredService<ControllableWorker>());
+                services.AddSingleton<IPreparedPass1ClaimedPacketSource>(provider =>
+                    new TestClaimedPacketSource(
+                        provider.GetRequiredService<IDbContextFactory<VulgataDbContext>>(),
+                        package));
                 services.RemoveAll<IPreparedPass1WorkerDispatcher>();
                 services.AddSingleton<IPreparedPass1WorkerDispatcher>(provider =>
                     new ControllableDispatcher(provider.GetRequiredService<ControllableWorker>()));
@@ -950,6 +955,141 @@ public sealed class Pass1ProductionExecutionCapacityTests
                 request.DocumentVersionId,
                 commitFingerprint,
                 null);
+        }
+    }
+
+    private sealed class TestClaimedPacketSource(
+        IDbContextFactory<VulgataDbContext> contextFactory,
+        PreparedScanPairPackage package) : IPreparedPass1ClaimedPacketSource
+    {
+        private readonly ConcurrentDictionary<Guid, int> _nextOrdinalByPair = new();
+
+        public async Task<PreparedPass1WorkerPacket?> HydrateAsync(
+            Guid pairExecutionId,
+            PreparedPass1ClaimResult claim,
+            DateTimeOffset observedAt,
+            CancellationToken cancellationToken = default)
+        {
+            await WaitForTurnAsync(pairExecutionId, claim.PairSelectionOrdinal, cancellationToken);
+            await using VulgataDbContext context =
+                await contextFactory.CreateDbContextAsync(cancellationToken);
+            Pass1PairExecution? pair = await context.Pass1PairExecutions
+                .AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == pairExecutionId, cancellationToken);
+            ScanJobExecution? job = await context.ScanJobExecutions
+                .AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == claim.JobId, cancellationToken);
+            if (pair is null || job is null ||
+                claim.Outcome != PreparedPass1ClaimOutcome.Claimed)
+            {
+                AdvanceTurn(pairExecutionId, claim.PairSelectionOrdinal);
+                return null;
+            }
+
+            ScanExecution? execution = await context.ScanExecutions
+                .AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == job.ScanExecutionId, cancellationToken);
+            PreparedFileCodeUnitDraft? draft = package.Repositories
+                .SelectMany(value => value.FileCodeUnits)
+                .SingleOrDefault(value => value.Id == job.FileCodeUnitId &&
+                    value.ManifestOrdinal == claim.ManifestOrdinal &&
+                    value.PairSelectionOrdinal == claim.PairSelectionOrdinal);
+            PreparedScanManifestEntry? entry = await context.PreparedScanManifestEntries
+                .AsNoTracking()
+                .SingleOrDefaultAsync(value =>
+                    value.FileCodeUnitId == job.FileCodeUnitId &&
+                     value.ManifestOrdinal == claim.ManifestOrdinal &&
+                     value.PairSelectionOrdinal == claim.PairSelectionOrdinal &&
+                     (value.PreparedScanManifestId == pair.ManifestOneId ||
+                      value.PreparedScanManifestId == pair.ManifestTwoId),
+                    cancellationToken);
+            PreparedScanManifest? manifest = entry is null
+                ? null
+                : await context.PreparedScanManifests.AsNoTracking()
+                    .SingleOrDefaultAsync(value => value.Id == entry.PreparedScanManifestId, cancellationToken);
+            ScanContextSnapshot? snapshot = manifest is null
+                ? null
+                : await context.ScanContextSnapshots.AsNoTracking()
+                    .SingleOrDefaultAsync(value => value.Id == manifest.ContextSnapshotId, cancellationToken);
+            if (execution is null || draft is null || entry is null || manifest is null || snapshot is null)
+            {
+                AdvanceTurn(pairExecutionId, claim.PairSelectionOrdinal);
+                return null;
+            }
+
+            int byteCount = checked((int)(draft.ByteEndExclusive - draft.ByteStart));
+            byte[] source = CreateSource(claim.JobId, byteCount);
+            PreparedPass1ContextSnapshotProjection snapshotProjection = new(
+                snapshot.Id,
+                snapshot.RepositoryId,
+                snapshot.ScanRunId,
+                snapshot.ProfiledRevision,
+                snapshot.PreparedScanContextIdentityHash!,
+                snapshot.ContentHash,
+                snapshot.GlobalContext,
+                snapshot.SystemContext,
+                snapshot.RepositoryContext);
+            PreparedPass1WorkerPacket packet = new(
+                pair.Id,
+                claim.JobId,
+                job.ScanExecutionId,
+                execution.SystemId,
+                job.RepositoryId,
+                job.ScanRunId,
+                execution.ProfiledRevision,
+                job.FileCodeUnitId,
+                draft.IdentityFingerprint,
+                manifest.Id,
+                manifest.Fingerprint,
+                pair.PairPackageFingerprint,
+                draft.RelativePath,
+                draft.ByteStart,
+                draft.ByteEndExclusive,
+                draft.LineStart,
+                draft.LineEnd,
+                draft.SegmentOrdinal,
+                draft.SegmentCount,
+                draft.FileHash,
+                Convert.ToHexStringLower(SHA256.HashData(source)),
+                execution.PromptIdentity!,
+                execution.DocumentSchemaIdentity!,
+                execution.AnalysisRuntimeIdentityHash!,
+                claim.ManifestOrdinal,
+                claim.PairSelectionOrdinal,
+                source,
+                snapshotProjection,
+                [])
+            {
+                RemainingNavigationBudget = 8,
+            };
+            AdvanceTurn(pairExecutionId, claim.PairSelectionOrdinal);
+            return packet;
+        }
+
+        private async Task WaitForTurnAsync(
+            Guid pairExecutionId,
+            int pairSelectionOrdinal,
+            CancellationToken cancellationToken)
+        {
+            while (_nextOrdinalByPair.GetOrAdd(pairExecutionId, 1) != pairSelectionOrdinal)
+            {
+                await Task.Delay(5, cancellationToken);
+            }
+        }
+
+        private void AdvanceTurn(Guid pairExecutionId, int pairSelectionOrdinal) =>
+            _nextOrdinalByPair[pairExecutionId] = pairSelectionOrdinal + 1;
+
+        private static byte[] CreateSource(Guid jobId, int byteCount)
+        {
+            byte[] seed = Encoding.UTF8.GetBytes($"// t050 source {jobId:D}\n");
+            byte[] source = new byte[byteCount];
+            for (int index = 0; index < source.Length; index++)
+            {
+                source[index] = seed[index % seed.Length];
+            }
+
+            return source;
         }
     }
 

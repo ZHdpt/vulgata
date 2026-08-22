@@ -38,7 +38,9 @@ public sealed record PreparedPass1ClaimResult(
     int PairSelectionOrdinal,
     int ManifestOrdinal,
     int ActiveLeaseCount,
-    int ConcurrencyLimit);
+    int ConcurrencyLimit,
+    long JobStateVersion,
+    long PairStateVersion);
 
 public enum PreparedPass1ConcurrencyUpdateOutcome
 {

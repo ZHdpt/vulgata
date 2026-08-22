@@ -998,7 +998,9 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
                 next.PairSelectionOrdinal,
                 next.Job.ManifestOrdinal,
                 activeLeaseCount + 1,
-                pair.ConcurrencyLimit);
+                pair.ConcurrencyLimit,
+                next.Job.StateVersion,
+                pair.StateVersion);
         }
         catch (OperationCanceledException)
         {
@@ -3067,7 +3069,9 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             0,
             0,
             activeLeaseCount,
-            concurrencyLimit);
+            concurrencyLimit,
+            0,
+            0);
 
     private static PreparedPass1ConcurrencyUpdateResult ConcurrencyResult(
         PreparedPass1ConcurrencyUpdateOutcome outcome,

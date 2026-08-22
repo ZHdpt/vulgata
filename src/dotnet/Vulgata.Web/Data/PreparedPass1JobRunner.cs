@@ -6,8 +6,7 @@ using Vulgata.Infrastructure.Data;
 namespace Vulgata.Web.Data;
 
 /// <summary>
-/// Runs one durable claim. Packet hydration is deliberately limited to the
-/// already-authorized Start handoff until the claimed-packet task replaces it.
+/// Runs one durable claim through the current server-authorized packet source.
 /// </summary>
 public sealed class PreparedPass1JobRunner(
     IServiceScopeFactory scopeFactory,
@@ -78,15 +77,22 @@ public sealed class PreparedPass1JobRunner(
     {
         await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
         IServiceProvider services = scope.ServiceProvider;
-        PreparedPass1DispatchRequest? request = await CreateDispatchRequestAsync(
-            services.GetRequiredService<VulgataDbContext>(), activation, claim, cancellationToken);
-        if (request is null)
+        PreparedPass1WorkerPacket? hydratedPacket = await services
+            .GetRequiredService<IPreparedPass1ClaimedPacketSource>()
+            .HydrateAsync(
+                activation.PairExecutionId,
+                claim,
+                timeProvider.GetUtcNow(),
+                cancellationToken);
+        if (hydratedPacket is null)
         {
             await RecordFailureAsync(
                 services, activation.PairExecutionId, claim,
                 ScanJobFailureCategory.Integrity, cancellationToken);
             return;
         }
+
+        PreparedPass1DispatchRequest request = CreateDispatchRequest(hydratedPacket);
 
         PreparedPass1DispatchResult dispatch;
         try
@@ -143,8 +149,7 @@ public sealed class PreparedPass1JobRunner(
                 result.ParsedResult.CanonicalCandidateJson,
                 logical.Id!.Value,
                 version.Id!.Value,
-                await ReadJobVersionAsync(
-                    services.GetRequiredService<VulgataDbContext>(), claim.JobId, cancellationToken),
+                claim.JobStateVersion,
                 claim.LeaseToken,
                 timeProvider.GetUtcNow()),
             cancellationToken);
@@ -206,72 +211,46 @@ public sealed class PreparedPass1JobRunner(
             cancellationToken);
     }
 
-    private static async Task<PreparedPass1DispatchRequest?> CreateDispatchRequestAsync(
-        VulgataDbContext context,
-        PreparedPass1Activation activation,
-        PreparedPass1ClaimResult claim,
-        CancellationToken cancellationToken)
+    private static PreparedPass1DispatchRequest CreateDispatchRequest(
+        PreparedPass1WorkerPacket packet)
     {
-        PreparedScanHandoff? handoff = activation.Handoff;
-        PreparedFileCodeUnitDraft? unit = handoff?.FileCodeUnits.SingleOrDefault(value =>
-            value.PairSelectionOrdinal == claim.PairSelectionOrdinal &&
-            value.ManifestOrdinal == claim.ManifestOrdinal);
-        ScanJobExecution? job = await context.ScanJobExecutions.AsNoTracking()
-            .SingleOrDefaultAsync(value => value.Id == claim.JobId, cancellationToken);
-        if (handoff is null || unit is null || job is null ||
-            job.State != ScanJobExecutionState.Running || job.LeaseToken != claim.LeaseToken)
-        {
-            return null;
-        }
-
-        ScanExecution execution = await context.ScanExecutions.AsNoTracking()
-            .SingleAsync(value => value.Id == job.ScanExecutionId, cancellationToken);
-        PreparedScanManifest manifest = await context.PreparedScanManifests.AsNoTracking()
-            .SingleAsync(value => value.RepositoryId == job.RepositoryId &&
-                value.ScanRunId == job.ScanRunId && value.CoordinationId == handoff.CoordinationId,
-                cancellationToken);
-        ScanContextSnapshot snapshot = await context.ScanContextSnapshots.AsNoTracking()
-            .SingleAsync(value => value.Id == manifest.ContextSnapshotId, cancellationToken);
         PreparedPass1FileCodeUnitAssignment assignment = new(
-            activation.PairExecutionId,
-            job.Id,
-            job.ScanExecutionId,
-            execution.SystemId,
-            job.RepositoryId,
-            job.ScanRunId,
-            unit.ProfiledRevision,
-            job.FileCodeUnitId,
-            unit.IdentityFingerprint,
-            manifest.Id,
-            manifest.Fingerprint,
-            handoff.PairPackageFingerprint,
-            unit.RelativePath,
-            unit.ByteStart,
-            unit.ByteEndExclusive,
-            unit.LineStart,
-            unit.LineEnd,
-            unit.SegmentOrdinal,
-            unit.SegmentCount,
-            unit.FileHash,
-            unit.SourceHash,
-            execution.PromptIdentity!,
-            execution.DocumentSchemaIdentity!,
-            execution.AnalysisRuntimeIdentityHash!,
-            snapshot.Id,
-            unit.ManifestOrdinal,
-            unit.PairSelectionOrdinal,
-            ReadOnlyMemory<byte>.Empty);
-        PreparedPass1ContextSnapshotProjection contextSnapshot = new(
-            snapshot.Id,
-            snapshot.RepositoryId,
-            snapshot.ScanRunId,
-            snapshot.ProfiledRevision,
-            snapshot.PreparedScanContextIdentityHash!,
-            snapshot.ContentHash,
-            snapshot.GlobalContext,
-            snapshot.SystemContext,
-            snapshot.RepositoryContext);
-        return new([assignment], [contextSnapshot], [], 1);
+            packet.PairExecutionId,
+            packet.JobId,
+            packet.ScanExecutionId,
+            packet.SystemId,
+            packet.RepositoryId,
+            packet.ScanRunId,
+            packet.ProfiledRevision,
+            packet.FileCodeUnitId,
+            packet.FileCodeUnitIdentityFingerprint,
+            packet.PreparedScanManifestId,
+            packet.PreparedScanManifestFingerprint,
+            packet.PairPackageFingerprint,
+            packet.RepositoryRelativePath,
+            packet.ByteStart,
+            packet.ByteEnd,
+            packet.LineStart,
+            packet.LineEnd,
+            packet.SegmentOrdinal,
+            packet.SegmentCount,
+            packet.FileHash,
+            packet.SourceHash,
+            packet.PromptIdentity,
+            packet.DocumentSchemaIdentity,
+            packet.AnalysisRuntimeIdentityHash,
+            packet.ContextSnapshot.ContextSnapshotId,
+            packet.ManifestOrdinal,
+            packet.PairSelectionOrdinal,
+            packet.SourceUtf8)
+        {
+            RemainingNavigationBudget = packet.RemainingNavigationBudget,
+        };
+        return new(
+            [assignment],
+            [packet.ContextSnapshot],
+            packet.CommunicationClassifications,
+            1);
     }
 
     private static async Task<long> ReadJobVersionAsync(
