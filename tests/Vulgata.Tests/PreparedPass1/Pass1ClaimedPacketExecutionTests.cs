@@ -466,7 +466,7 @@ public sealed class Pass1ClaimedPacketExecutionTests
 
     private static PreparedScanHandoff CreateHandoff(PreparedScanPairPackage package) =>
         new(
-            "prepared-scan-handoff/1.0",
+            PreScanResult.PreparedHandoffSchemaIdentity,
             package.CoordinationId,
             package.PairSelectionFingerprint,
             package.PairPackageFingerprint,

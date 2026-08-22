@@ -1241,7 +1241,7 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
     }
 
     private static PreparedScanHandoff CreateHandoff(PreparedScanPairPackage package) => new(
-        "prepared-scan-handoff/1.0", package.CoordinationId, package.PairSelectionFingerprint,
+        PreScanResult.PreparedHandoffSchemaIdentity, package.CoordinationId, package.PairSelectionFingerprint,
         package.PairPackageFingerprint,
         package.Repositories.OrderBy(value => value.RepositoryId).Select(repository => new PreparedScanManifestBinding(
             repository.RepositoryId, repository.ScanRunId, repository.ProfiledRevision,
