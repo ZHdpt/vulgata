@@ -1,0 +1,24 @@
+{
+  "evidence_id": "12-3/implement/17",
+  "kind": "test-red",
+  "stage": "implement-correction-2",
+  "source_commit": "414e15439f255c76f600471b0ac70709ed025924",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "db281216186b96922e5fcecf7b393b224f91defd4c1e8541a27f3e289d629b1c"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~FullyDrainedPair_UsesReconcileAsTheSoleNormalTerminalTransaction_AndLeavesNoReconcilingState",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "classification": "expected-normal-terminal-reconciliation-red",
+    "representative_failure": "Expected ReadyForResolution but observed Reconciling after every prepared File Code Unit drained and the reconciliation seam was invoked exactly once."
+  },
+  "existing_atomic_coverage": "Pass1DocumentPostgreSqlAtomicTests already injects failures at every reconciliation write boundary and verifies cancellation, stale-writer conflict, outcome, warnings, REFERENCES Edges, child states, coordination, and handoff remain mutation-free.",
+  "observed_at": "2026-08-22T19:01:30.5032482Z",
+  "summary": "T065 proves the production-composed runner performs a non-atomic pre-transition that strands the pair in Reconciling before the durable reconciliation transaction can accept it."
+}

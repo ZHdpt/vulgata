@@ -216,6 +216,62 @@ public sealed class Pass1ProductionExecutionCapacityTests
     }
 
     [Fact]
+    public async Task FullyDrainedPair_UsesReconcileAsTheSoleNormalTerminalTransaction_AndLeavesNoReconcilingState()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
+        using WebApplicationFactory<Program> host = CreateConfiguredHost(fixture.ConnectionString, fixture.Package);
+        ControllableWorker worker = host.Services.GetRequiredService<ControllableWorker>();
+        ReconciliationProbe reconciliation = host.Services.GetRequiredService<ReconciliationProbe>();
+        worker.EnableAutoRelease();
+        using HttpClient client = await CreateAuthenticatedClientAsync(host, fixture);
+        Guid[] manifests = await fixture.Context.PreparedScanManifests
+            .OrderBy(value => value.RepositoryId)
+            .Select(value => value.Id)
+            .ToArrayAsync();
+
+        using HttpResponseMessage start = await client.PostAsJsonAsync(
+            "/api/pass1-executions",
+            new { firstManifestId = manifests[0], secondManifestId = manifests[1], concurrencyLimit = 2 });
+        string startBody = await start.Content.ReadAsStringAsync();
+        Assert.True(start.StatusCode == HttpStatusCode.Created, $"T065 Start expected Created: {startBody}");
+        Pass1ExecutionStartResponse started =
+            (await start.Content.ReadFromJsonAsync<Pass1ExecutionStartResponse>())!;
+        Assert.True(
+            await worker.WaitForAtLeastAsync(fixture.Package.SelectedCount, TimeSpan.FromSeconds(8)),
+            $"T065 RED: fully drained pair launched {worker.StartedCount} of {fixture.Package.SelectedCount} jobs.");
+        worker.ReleaseAll();
+
+        Pass1ExecutionStatusResponse terminal = await WaitForDrainedStatusAsync(
+            client,
+            started.Pass1ExecutionId,
+            fixture.Package.SelectedCount,
+            TimeSpan.FromSeconds(8));
+
+        Assert.Equal(fixture.Package.SelectedCount, terminal.DispatchedCount);
+        Assert.Equal(0, terminal.PendingCount);
+        Assert.Equal(0, terminal.RunningCount);
+        Assert.Equal(0, terminal.RetryScheduledCount);
+        Assert.Equal(1, reconciliation.ReconciliationCalls);
+        Assert.Equal("ReadyForResolution", terminal.Phase);
+        Assert.Equal(
+            "ReadyForResolution",
+            await fixture.Context.Pass1PairExecutions
+                .Where(value => value.Id == started.Pass1ExecutionId)
+                .Select(value => value.Phase.ToString())
+                .SingleAsync());
+        Assert.Equal(
+            "Resolving",
+            await fixture.Context.TwoRepositoryScanCoordinations
+                .Select(value => value.Phase.ToString())
+                .SingleAsync());
+        Assert.Equal(
+            1,
+            await fixture.Context.Pass1Outcomes.CountAsync(value =>
+                value.PairExecutionId == started.Pass1ExecutionId));
+        worker.ReleaseAll();
+    }
+
+    [Fact]
     public async Task ReconciliationConflict_ReloadsAndRetriesOnlyTheSameStillEligibleTerminalPair()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -572,6 +628,28 @@ public sealed class Pass1ProductionExecutionCapacityTests
             $"/api/pass1-executions/{executionId:D}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<Pass1ExecutionStatusResponse>())!;
+    }
+
+    private static async Task<Pass1ExecutionStatusResponse> WaitForDrainedStatusAsync(
+        HttpClient client,
+        Guid executionId,
+        int expectedDispatchedCount,
+        TimeSpan timeout)
+    {
+        DateTimeOffset deadline = DateTimeOffset.UtcNow.Add(timeout);
+        Pass1ExecutionStatusResponse status = await ReadStatusAsync(client, executionId);
+        while (DateTimeOffset.UtcNow < deadline &&
+               (status.Phase == "Running" ||
+                status.DispatchedCount != expectedDispatchedCount ||
+                status.PendingCount != 0 ||
+                status.RunningCount != 0 ||
+                status.RetryScheduledCount != 0))
+        {
+            await Task.Delay(100);
+            status = await ReadStatusAsync(client, executionId);
+        }
+
+        return status;
     }
 
     private sealed class LegacyPreparedScanHandoffSource(PreparedScanPairPackage package)
