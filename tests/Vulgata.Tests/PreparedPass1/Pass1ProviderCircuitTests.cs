@@ -382,6 +382,11 @@ public sealed class Pass1ProviderCircuitTests
             return time.GetUtcNow();
         }
 
+        if (type == typeof(Uri))
+        {
+            return new Uri("https://provider.invalid/v1");
+        }
+
         if (type == typeof(int))
         {
             return name?.Contains("ordinal", StringComparison.OrdinalIgnoreCase) == true ? ordinal : 0;
@@ -445,7 +450,7 @@ public sealed class Pass1ProviderCircuitTests
         public void SetUtcNow(DateTimeOffset value) => _now = value;
     }
 
-    private sealed class StatefulProxy : DispatchProxy
+    private class StatefulProxy : DispatchProxy
     {
         public static List<DateTimeOffset> ProbeTimes { get; } = [];
 

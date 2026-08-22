@@ -1,6 +1,8 @@
 using System.Net;
 using System.Reflection;
 using Microsoft.Extensions.Hosting;
+using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Tests.PreparedPass1;
 
@@ -346,7 +348,7 @@ public sealed class Pass1ProductionProviderOutageTests
         }
     }
 
-    private sealed class RecordingProxy : DispatchProxy
+    private class RecordingProxy : DispatchProxy
     {
         public static List<ProxyCall> Calls { get; } = [];
 
@@ -368,7 +370,20 @@ public sealed class Pass1ProductionProviderOutageTests
             if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
             {
                 Type valueType = returnType.GetGenericArguments()[0];
-                object? value = valueType.IsValueType ? Activator.CreateInstance(valueType) : null;
+                object? value = valueType == typeof(PreparedPass1ProviderCircuitResult)
+                    ? new PreparedPass1ProviderCircuitResult(
+                        PreparedPass1ProviderCircuitOutcome.ProbeScheduled,
+                        Pass1CircuitState.Probing,
+                        Pass1PairExecutionPhase.ProbingProvider,
+                        1,
+                        DateTimeOffset.UtcNow.AddSeconds(10),
+                        null,
+                        "provider-unavailable",
+                        string.Empty,
+                        0,
+                        [],
+                        false)
+                    : valueType.IsValueType ? Activator.CreateInstance(valueType) : null;
                 return typeof(Task).GetMethod(nameof(Task.FromResult))!
                     .MakeGenericMethod(valueType)
                     .Invoke(null, [value]);
