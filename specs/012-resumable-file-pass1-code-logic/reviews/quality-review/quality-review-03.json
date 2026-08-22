@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "6c7bde666b0f62548c85900019d9d031d9a35cd8",
+  "reviewed_boundary": {
+    "base_commit": "29e889badc00db671fcabf80f50918e15381052c",
+    "candidate_commit": "6c7bde666b0f62548c85900019d9d031d9a35cd8",
+    "diff_sha256": "97dd8bc3dee4abe55406222a8f77683bf45b8ad1a22ebd78502845e4ba6f9049",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "fd46fa773182880f7cd6a0113793b45e83432f5efcb2ec867881ebcb9ca964f6",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "9a1ea96d61e27c4e17203ff40b57fecba88e34e195e6e2287c17d3554412e065",
+      "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md": "f4b98ff1fe1b5646194158ec2d6325e464c2d54cc26be29fa15b300eb818a878",
+      "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md": "7385bf772d04f89e5fd90a5b44ceb8019e228d182917495eddf51eb725ed67ae",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "06ce25ef7dc41d604254cff213641ab51c6c82877e290bc1929991a739b441bf",
+      "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "04816ecc1de96b5bd04febee9f383a7b7775b7f487a701453726821a4fc52944",
+      "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "907ef68c6470c8fda8585f95cd660f7e5726bb9e9e9b79c185c199ddcde5c2be"
+    }
+  },
+  "findings": [],
+  "summary": "ACCEPT. QR2-001 is closed: a freshly drained Running pair invokes ReconcileAsync directly as the sole serializable terminal transaction, atomically committing Pass1Outcome, warnings, deterministic same-Repository REFERENCES Edges, child states, coordination, and the ReadyForResolution or FailedPass1 handoff without residual Reconciling. QR2-002 is closed: provider-transient claims are atomically relinquished without consuming retry or failure budget, active or future-eligible work is nonterminal, eligibility waits are activation/TimeProvider-backed, and shutdown drains local Workers before releasing pair-owned Profiled Revision bindings. The candidate preserves deterministic identity and ordering, exact authorization/revision/hash boundaries, bounded eight-operation navigate_code, immutable code-logic/file-v2 Documents with server-derived projections, partial-completion policy, Story 12.4/12.5 and CodeGraphContext exclusions, and the approved Windows-host/PostgreSQL-only architecture. Independent review reran 70 correction-focused tests with 70 passing and 251 broader navigation/document/failure/reconciliation tests with 250 passing; the sole initial real JDT-LS implementations timeout passed on an isolated 1/1 rerun and did not establish a reproducible code defect. The unavailable authenticated real approved-pair E2E and documented repository/environment full-suite baseline remain truthful limitations, not acceptance claims."
+}
