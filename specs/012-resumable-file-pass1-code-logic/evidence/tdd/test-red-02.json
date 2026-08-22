@@ -1,0 +1,20 @@
+{
+  "evidence_id": "12-3/implement/3",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "328dfbc76db1c3a3f408f68ef1f03a518f4fff37",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ClaimedPacketExecutionTests.cs"
+  ],
+  "artifact_sha256": "6a24bf01a77ca3c50bec0474dd23ae65f3f7a9ae1ea69305268b171c28edbc9f",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass1ClaimedPacketExecutionTests --logger console;verbosity=minimal",
+  "result": {
+    "passed": 1,
+    "failed": 13,
+    "skipped": 0,
+    "classification": "expected-behavioral-red",
+    "representative_failure": "IPreparedPass1ClaimedPacketSource is absent; T053 must add the claimed-packet source contract"
+  },
+  "observed_at": "2026-08-22T10:37:00Z",
+  "summary": "The exact final T052 PostgreSQL-backed behavioral suite is compile-clean. Thirteen scenarios fail at the absent production claimed-packet port; the provider-visible packet secrecy characterization already passes. The suite will exercise current claim hydration, job/pair version and lease drift, authorization and prepared binding drift, cancellation, nondisclosure, and zero mutation once T053 adds the port."
+}

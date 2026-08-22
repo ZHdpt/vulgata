@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "5f210a630bebe23ea2f8dfede23bbcdbc54cc617cd81e7424fbbef31cfc577f4"
+      "sha256": "983a7a64f112e442e43c7fe63a39e49b4119bc466986e4a11041d259dcd64720"
     }
   },
   "gates": {
@@ -33,8 +33,8 @@
     },
     "definition-review": {
       "status": "accepted",
-      "attempt": 9,
-      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-09.json"
+      "attempt": 10,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-10.json"
     },
     "quality-review": {
       "status": "revised",
@@ -89,6 +89,13 @@
       "scope_sha256": "bef1ba1d1de192ee31ba68c6ccf1b57b7bccb57c9a94172e05a542306585b42a",
       "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md",
       "decided_at": "2026-08-22T08:23:08Z"
+    },
+    {
+      "decision_id": "story-12-3-implementation-approval-03",
+      "status": "accepted",
+      "scope_sha256": "d17688241da9288d0302128cfc4f6d0a990a90cdc1b73ba9f6bd965a81e6ffe4",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-03.md",
+      "decided_at": "2026-08-22T11:15:30Z"
     }
   ],
   "convergence": {
@@ -103,25 +110,25 @@
     "specs/012-resumable-file-pass1-code-logic/spec.md",
     "specs/012-resumable-file-pass1-code-logic/plan.md",
     "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json",
-    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-04.json",
     "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-02.md",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
     "artifacts/qualification/story-12.3/host-runtime.md",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-01.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-01.json",
-    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-09.json",
-    "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md"
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-02.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-10.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-03.md"
   ],
   "checkpoint": {
     "checkpoint_id": "bmad-12-3-implement-20260822T102151Z-7aea32",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "328dfbc76db1c3a3f408f68ef1f03a518f4fff37",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T050/T051 verified RED-to-GREEN and checkpointed; begin T052 claimed-packet behavioral RED before T053 production GREEN.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/tasks.md"
+    "reason": "Refreshed scope d17688241da9288d0302128cfc4f6d0a990a90cdc1b73ba9f6bd965a81e6ffe4 approved and T052 RED bound; implement T053 claimed-packet hydration and additive claim-version projection.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-02.json"
   },
-  "updated_at": "2026-08-22T10:29:54Z"
+  "updated_at": "2026-08-22T11:15:30Z"
 }
