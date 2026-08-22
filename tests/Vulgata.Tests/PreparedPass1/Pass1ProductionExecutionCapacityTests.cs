@@ -209,9 +209,7 @@ public sealed class Pass1ProductionExecutionCapacityTests
         Pass1ExecutionStatusResponse terminal = await ReadStatusAsync(client, started.Pass1ExecutionId);
         Assert.Equal(fixture.Package.SelectedCount, terminal.DispatchedCount);
         Assert.Equal(fixture.Package.SelectedCount, worker.StartedCount);
-        Assert.True(
-            terminal.Phase is "Completed" or "CompletedWithWarnings" or "Reconciling",
-            $"T050 RED: fresh durable Exhausted did not yield a terminal local-drain state; phase={terminal.Phase}.");
+        Assert.Equal("ReadyForResolution", terminal.Phase);
         worker.ReleaseAll();
     }
 

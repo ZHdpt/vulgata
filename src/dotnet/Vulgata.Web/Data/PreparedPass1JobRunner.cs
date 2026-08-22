@@ -229,18 +229,6 @@ public sealed class PreparedPass1JobRunner(
         await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
         IServiceProvider services = scope.ServiceProvider;
         IPreparedPass1Store store = services.GetRequiredService<IPreparedPass1Store>();
-        PreparedPass1CompletionResult completed = await store.CompletePass1Async(
-            activation.PairExecutionId,
-            activation.AuthorizationScope,
-            timeProvider.GetUtcNow(),
-            cancellationToken);
-        if (completed.Outcome is not (PreparedPass1CompletionOutcome.Succeeded or
-            PreparedPass1CompletionOutcome.CompletedWithWarnings or
-            PreparedPass1CompletionOutcome.Replay))
-        {
-            return;
-        }
-
         PairSnapshot? snapshot = await LoadEligibleReconciliationAsync(
             services.GetRequiredService<VulgataDbContext>(), activation, cancellationToken);
         if (snapshot is null)
@@ -369,7 +357,7 @@ public sealed class PreparedPass1JobRunner(
     {
         Pass1PairExecution? pair = await context.Pass1PairExecutions.AsNoTracking()
             .SingleOrDefaultAsync(value => value.Id == activation.PairExecutionId, cancellationToken);
-        if (pair is null || pair.Phase != Pass1PairExecutionPhase.Reconciling ||
+        if (pair is null || pair.Phase != Pass1PairExecutionPhase.Running ||
             pair.CircuitState != Pass1CircuitState.Closed ||
             pair.SystemId != activation.AuthorizationScope.SystemId)
         {

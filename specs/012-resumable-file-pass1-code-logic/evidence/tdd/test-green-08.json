@@ -1,0 +1,27 @@
+{
+  "evidence_id": "12-3/implement/18",
+  "kind": "test-green",
+  "stage": "implement-correction-2",
+  "source_commit": "b4aba6abf28dbc9dc6b861ce81632ef8cfdaa875",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "348452bda2bf3f3c4254dac0ae9e987b5fbc2567687ae903c7b41d48d66958ce",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "11074c7e8df640c5cff2d2c84df58d54b6e697c39b046e3a1877bcfb01369afe"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~FullyDrainedPair_UsesReconcileAsTheSoleNormalTerminalTransaction_AndLeavesNoReconcilingState",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ReconciliationTests|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests"
+  ],
+  "result": {
+    "exact_regression": "1 passed, 0 failed, 0 skipped",
+    "production_capacity": "15 passed, 0 failed, 0 skipped",
+    "reconciliation_and_atomic": "71 passed, 0 failed, 0 skipped",
+    "build": "0 errors with existing warnings"
+  },
+  "observed_at": "2026-08-22T19:09:46.2571430Z",
+  "summary": "The production runner now invokes ReconcileAsync directly from an eligible freshly drained Running pair. The single store transaction atomically writes the Pass1 outcome, warnings, deterministic same-Repository REFERENCES Edges, child states, coordination, and handoff, reaching ReadyForResolution without residual Reconciling."
+}
