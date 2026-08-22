@@ -1,0 +1,26 @@
+{
+  "evidence_id": "12-3/implement/9",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "2e84834a3533953f29212cd083c08ee8446220b7",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/NavigateCodeLeaseSecurityCorrectionTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/NavigateCodeLeaseSecurityCorrectionTests.cs": "5937815507a33df1c71f9dc75e6b387ae54bb8ab7e4683ebf7ad98f78f45e92a"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~NavigateCodeLeaseSecurityCorrectionTests --no-restore --verbosity minimal",
+  "result": {
+    "passed": 9,
+    "failed": 10,
+    "skipped": 0,
+    "classification": "expected-security-and-behavioral-red",
+    "representative_failures": [
+      "Prepared navigation scope, request, and hidden binding omit exact pair/job versions and lease token/expiry authorization state.",
+      "Seven distinct stale lease, circuit, job, pair, and ownership cases cannot reach behavioral rejection because the server-owned authorization seam is absent.",
+      "Implementations throws before calling bounded IJavaAnalysisSession.GetImplementationsAsync."
+    ]
+  },
+  "observed_at": "2026-08-22T14:01:20Z",
+  "summary": "T058 is an observed public-facade RED. Current typed operations other than Implementations remain bounded, forbidden reads and receipt-commit ownership races remain nondisclosing, while the exact hidden lease/version/pair authorization seam is absent and Implementations bypasses JDT-LS by throwing."
+}
