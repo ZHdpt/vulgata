@@ -23,16 +23,16 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260822T122809Z-6f91ac",
+    "checkpoint_id": "bmad-12-3-correction-20260822T123510Z-9ab3d4",
     "stage": "implement",
-    "commit_sha": "b540402bcf68f3b09c04fc0b9799f3aa90f9e735",
+    "commit_sha": "f5d15d77d3804fb4a92165ae15b98649ce1ec927",
     "binding_status": "bound"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
     "stage": "implement",
-    "reason": "T054 composition RED is bound to one-unit dispatcher rejection plus the absent concrete executor/host composition; implement T055 executor/dispatcher/committer/failure/reconciliation composition without provider recovery behavior."
+    "reason": "T054/T055 production executor, dispatcher, failure, atomic commit, and reconciliation composition is GREEN; begin T056 source-free active provider outage/probe RED without changing the completed execution composition."
   },
-  "updated_at": "2026-08-22T12:25:47Z"
+  "updated_at": "2026-08-22T12:49:20Z"
 }

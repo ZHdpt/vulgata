@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "4e534ff5e7910ca1c3fd9198cb66f6999edc1c2fdb0ca28e29e2c6fcb295e6b9"
+      "sha256": "0b7ec55f48f11c2d818e64dd8e1b9f10839bd7a47a3007e86da4967161789da1"
     }
   },
   "gates": {
@@ -116,19 +116,19 @@
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-02.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-02.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-03.json",
-    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-10.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-03.json",
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260822T122809Z-6f91ac",
+    "checkpoint_id": "bmad-12-3-correction-20260822T123510Z-9ab3d4",
     "stage": "implement",
-    "commit_sha": "b540402bcf68f3b09c04fc0b9799f3aa90f9e735",
+    "commit_sha": "f5d15d77d3804fb4a92165ae15b98649ce1ec927",
     "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T054 composition RED is bound to one-unit dispatcher rejection plus the absent concrete executor/host composition; implement T055 executor/dispatcher/committer/failure/reconciliation composition without provider recovery behavior.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-03.json"
+    "reason": "T054/T055 production executor, dispatcher, failure, atomic commit, and reconciliation composition is GREEN; begin T056 source-free active provider outage/probe RED without changing the completed execution composition.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-03.json"
   },
-  "updated_at": "2026-08-22T12:25:47Z"
+  "updated_at": "2026-08-22T12:49:20Z"
 }

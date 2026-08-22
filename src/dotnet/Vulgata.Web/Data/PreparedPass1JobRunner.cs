@@ -107,6 +107,13 @@ public sealed class PreparedPass1JobRunner(
                 ScanJobFailureCategory.Integrity, cancellationToken);
             return;
         }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            await RecordFailureAsync(
+                services, activation.PairExecutionId, claim,
+                ScanJobFailureCategory.Unclassified, cancellationToken);
+            return;
+        }
 
         PreparedPass1JobDispatchResult? result = dispatch.Results.SingleOrDefault(value =>
             value.JobId == claim.JobId && value.PairSelectionOrdinal == claim.PairSelectionOrdinal);
@@ -123,11 +130,26 @@ public sealed class PreparedPass1JobRunner(
 
         if (result.Outcome == PreparedPass1RawWorkerOutcome.ProviderUnavailable)
         {
-            await services.GetRequiredService<IPreparedPass1Store>()
-                .RecordProviderTransientAsync(
-                    activation.PairExecutionId,
-                    timeProvider.GetUtcNow(),
-                    cancellationToken: cancellationToken);
+            if (string.Equals(result.ReasonCode, "provider-configuration", StringComparison.Ordinal))
+            {
+                await RecordFailureAsync(
+                    services, activation.PairExecutionId, claim,
+                    ScanJobFailureCategory.ProviderConfiguration, cancellationToken);
+            }
+            else if (string.Equals(result.ReasonCode, "provider-unavailable", StringComparison.Ordinal))
+            {
+                await services.GetRequiredService<IPreparedPass1Store>()
+                    .RecordProviderTransientAsync(
+                        activation.PairExecutionId,
+                        timeProvider.GetUtcNow(),
+                        cancellationToken: cancellationToken);
+            }
+            else
+            {
+                await RecordFailureAsync(
+                    services, activation.PairExecutionId, claim,
+                    ScanJobFailureCategory.Unclassified, cancellationToken);
+            }
             return;
         }
 
@@ -135,7 +157,7 @@ public sealed class PreparedPass1JobRunner(
         {
             await RecordFailureAsync(
                 services, activation.PairExecutionId, claim,
-                ScanJobFailureCategory.Integrity, cancellationToken);
+                ClassifyRejectedResult(result), cancellationToken);
             return;
         }
 
@@ -143,16 +165,47 @@ public sealed class PreparedPass1JobRunner(
             new(packet.RepositoryId, packet.RepositoryRelativePath, checked((ulong)packet.SegmentOrdinal)));
         PreparedPass1CanonicalArtifact version = PreparedPass1CanonicalCodec.CreateDocumentVersion(
             new(packet.JobId, Convert.FromHexString(packet.FileCodeUnitIdentityFingerprint), packet.DocumentSchemaIdentity));
-        _ = await services.GetRequiredService<IPass1CodeLogicDocumentCommitter>().CommitAsync(
-            new Pass1DocumentCommitRequest(
-                packet,
-                result.ParsedResult.CanonicalCandidateJson,
-                logical.Id!.Value,
-                version.Id!.Value,
-                claim.JobStateVersion,
-                claim.LeaseToken,
-                timeProvider.GetUtcNow()),
-            cancellationToken);
+        Pass1DocumentCommitResult commit;
+        try
+        {
+            commit = await services.GetRequiredService<IPass1CodeLogicDocumentCommitter>().CommitAsync(
+                new Pass1DocumentCommitRequest(
+                    packet,
+                    result.ParsedResult.CanonicalCandidateJson,
+                    logical.Id!.Value,
+                    version.Id!.Value,
+                    claim.JobStateVersion,
+                    claim.LeaseToken,
+                    timeProvider.GetUtcNow()),
+                cancellationToken);
+        }
+        catch (Exception exception) when (
+            exception is InvalidDataException or ArgumentException or OverflowException)
+        {
+            await RecordFailureAsync(
+                services, activation.PairExecutionId, claim,
+                ScanJobFailureCategory.Integrity, cancellationToken);
+            return;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            await RecordFailureAsync(
+                services, activation.PairExecutionId, claim,
+                ScanJobFailureCategory.Unclassified, cancellationToken);
+            return;
+        }
+
+        if (commit.Status is not (Pass1DocumentCommitStatus.Committed or
+            Pass1DocumentCommitStatus.Replayed))
+        {
+            await RecordFailureAsync(
+                services, activation.PairExecutionId, claim,
+                commit.Status is Pass1DocumentCommitStatus.Rejected or
+                    Pass1DocumentCommitStatus.Conflict
+                    ? ScanJobFailureCategory.Integrity
+                    : ScanJobFailureCategory.Unclassified,
+                cancellationToken);
+        }
     }
 
     private async Task CompleteAndReconcileAsync(
@@ -252,6 +305,19 @@ public sealed class PreparedPass1JobRunner(
             packet.CommunicationClassifications,
             1);
     }
+
+    private static ScanJobFailureCategory ClassifyRejectedResult(
+        PreparedPass1JobDispatchResult result) => result.ReasonCode switch
+        {
+            "integrity-failure" => ScanJobFailureCategory.Integrity,
+            "security-failure" => ScanJobFailureCategory.Security,
+            "provider-configuration" => ScanJobFailureCategory.ProviderConfiguration,
+            "cancelled" => ScanJobFailureCategory.Cancellation,
+            "unclassified-systemic" => ScanJobFailureCategory.Unclassified,
+            "worker-result-rejected" or "invalid-or-repeated-tool-call" =>
+                ScanJobFailureCategory.JobTransient,
+            _ => ScanJobFailureCategory.Unclassified,
+        };
 
     private static async Task<long> ReadJobVersionAsync(
         VulgataDbContext context,

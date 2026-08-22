@@ -1,0 +1,40 @@
+{
+  "evidence_id": "12-3/implement/6",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "f5d15d77d3804fb4a92165ae15b98649ce1ec927",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionCompositionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+    "src/dotnet/Vulgata.Web/Program.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionCompositionTests.cs": "865e8212e110ff70fa47000583d0f28d3e6d4ac2b2208dc673100bdc73b4bd88",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "cac92d7953f3f9aa19622989a945341dca955cfbceaa070160fe93768a7939ae",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "d3f46098895feb7f90d5b81510eef7490749d1cf43cac00e802014770fedcafd",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs": "eb1d6e933245437166b8868c5c1268c215d611edcb0b65c184c3f8db68c04c96",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "b8d02259ba8a9c040ec33e58ab783fbe0bc01a4bff4fb9a5fb1ae75eb68f015a",
+    "src/dotnet/Vulgata.Web/Program.cs": "65c285edb02333567e533b7f5a98068df9c64a49209b34d2776f465bd018134f"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass1ProductionCompositionTests",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreparedPass1WorkerDispatcherTests|FullyQualifiedName~Pass1FailurePolicyTests|FullyQualifiedName~Pass1DocumentCommitTests|FullyQualifiedName~Pass1ProductionCompositionTests",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests|FullyQualifiedName~Pass1ClaimedPacketExecutionTests with process-local PostgreSQL 17 administrator configuration",
+    "Run Pass1ProductionBoundaryQualificationTests in a disposable clone to avoid mutating the T064-owned qualification artifact",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore -v:minimal",
+    "git diff --check"
+  ],
+  "result": {
+    "composition": "2 passed, 0 failed",
+    "dispatcher_failure_commit": "107 passed, 0 failed",
+    "capacity_and_claimed_packet": "28 passed, 0 failed",
+    "boundary": "Composition.All=true; PromptClosed=true; verdict pass",
+    "web_build": "0 errors; 9 existing warnings",
+    "diff_check": "passed; line-ending warnings only"
+  },
+  "observed_at": "2026-08-22T12:48:15Z",
+  "summary": "T054/T055 are GREEN. One claimed File Code Unit reaches the real bounded executor through the dispatcher; production DI resolves the claimed-packet source, executor, dispatcher, and atomic committer; ordinary rejection follows the first-attempt JobTransient policy with zero Document commit; closed provider, trusted-integrity/security, cancellation, systemic, and commit outcomes remain non-success unless the atomic commit is Committed or Replayed; normal reconciliation remains coordinator-owned."
+}

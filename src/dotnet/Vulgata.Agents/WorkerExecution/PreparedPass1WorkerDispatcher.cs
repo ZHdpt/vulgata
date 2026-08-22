@@ -117,9 +117,23 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
             throw new InvalidDataException("Prepared Pass 1 provider returned an unknown outcome.");
         }
 
-        PreparedPass1ParsedWorkerResult? parsed = raw.Outcome == PreparedPass1RawWorkerOutcome.Completed
-            ? PreparedPass1ResultParser.Parse(packet, raw.Utf8Json)
-            : null;
+        PreparedPass1ParsedWorkerResult? parsed = null;
+        if (raw.Outcome == PreparedPass1RawWorkerOutcome.Completed)
+        {
+            try
+            {
+                parsed = PreparedPass1ResultParser.Parse(packet, raw.Utf8Json);
+            }
+            catch (Exception exception) when (
+                exception is InvalidDataException or ArgumentException or
+                    System.Text.Json.JsonException or OverflowException)
+            {
+                raw = new PreparedPass1RawWorkerResult(
+                    PreparedPass1RawWorkerOutcome.Rejected,
+                    ReadOnlyMemory<byte>.Empty,
+                    "worker-result-rejected");
+            }
+        }
         if (raw.Outcome != PreparedPass1RawWorkerOutcome.Completed && !raw.Utf8Json.IsEmpty)
         {
             throw new InvalidDataException("A failed prepared Worker result cannot carry provider content.");
@@ -136,11 +150,18 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
     private static string? GetSanitizedReasonCode(PreparedPass1RawWorkerResult raw) => raw.Outcome switch
     {
         PreparedPass1RawWorkerOutcome.Completed => null,
+        PreparedPass1RawWorkerOutcome.ProviderUnavailable when string.Equals(
+            raw.ReasonCode,
+            "provider-configuration",
+            StringComparison.Ordinal) => "provider-configuration",
         PreparedPass1RawWorkerOutcome.ProviderUnavailable => "provider-unavailable",
         PreparedPass1RawWorkerOutcome.Rejected when string.Equals(
             raw.ReasonCode,
             "invalid-or-repeated-tool-call",
             StringComparison.Ordinal) => "invalid-or-repeated-tool-call",
+        PreparedPass1RawWorkerOutcome.Rejected when raw.ReasonCode is
+            "integrity-failure" or "security-failure" or "provider-configuration" or
+            "cancelled" or "unclassified-systemic" => raw.ReasonCode,
         PreparedPass1RawWorkerOutcome.Rejected => "worker-result-rejected",
         _ => throw new InvalidDataException("Prepared Pass 1 provider returned an unknown outcome."),
     };
@@ -161,11 +182,11 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
         if (assignments.Select(value => value.JobId).Distinct().Count() != assignments.Length ||
             assignments.Select(value => value.FileCodeUnitId).Distinct().Count() != assignments.Length ||
             assignments.Select(value => value.PairSelectionOrdinal).Distinct().Count() != assignments.Length ||
-            assignments.Select(value => value.PreparedScanManifestId).Distinct().Count() != 2 ||
-            assignments.Select(value => value.RepositoryId).Distinct().Count() != 2 ||
-            assignments.Select(value => value.ScanRunId).Distinct().Count() != 2)
+            assignments.Select(value => value.PreparedScanManifestId).Distinct().Count() is < 1 or > 2 ||
+            assignments.Select(value => value.RepositoryId).Distinct().Count() is < 1 or > 2 ||
+            assignments.Select(value => value.ScanRunId).Distinct().Count() is < 1 or > 2)
         {
-            throw new InvalidDataException("Prepared Pass 1 units must be one exact two-Repository prepared pair.");
+            throw new InvalidDataException("Prepared Pass 1 units must belong to one exact prepared pair.");
         }
 
         Guid pairExecutionId = assignments[0].PairExecutionId;
