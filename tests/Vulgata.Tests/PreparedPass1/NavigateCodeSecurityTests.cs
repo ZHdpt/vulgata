@@ -116,6 +116,18 @@ public sealed class NavigateCodeSecurityTests
         PropertyInfo[] properties = requestType.GetProperties(
             BindingFlags.Public | BindingFlags.Instance);
 
+        string[] serverAuthorizationFields =
+        [
+            "PairExecutionId",
+            "JobStateVersion",
+            "PairStateVersion",
+            "LeaseToken",
+            "LeaseExpiresAt",
+            "PairState",
+            "CircuitState",
+            "JobState",
+            "AuthorizationBinding",
+        ];
         string[] allowed =
         [
             "JobId",
@@ -125,10 +137,14 @@ public sealed class NavigateCodeSecurityTests
             "Target",
             "RequestedDepth",
             "ParentObservationIdentity",
+            .. serverAuthorizationFields,
         ];
         Assert.All(
             properties,
             property => Assert.Contains(property.Name, allowed));
+        Assert.All(
+            serverAuthorizationFields,
+            field => Assert.Contains(properties, property => property.Name == field));
 
         Assert.Equal(
             [
