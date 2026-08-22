@@ -2,8 +2,8 @@
   "SchemaVersion": "story-12.3-production-boundary-inspection/1.0",
   "Task": "T047",
   "ExpectedSourceCommit": "cb3fb0f17b2eaf92d93afe71c710cd7b92c1e3bd",
-  "ObservedSourceCommit": "60d3911fa4d63a345d4eab12beba5cb55f14868d",
-  "ObservedAtUtc": "2026-08-22T20:02:29.2099992+00:00",
+  "ObservedSourceCommit": "99a2bc4e3072688783df40f12cbc30132279ed85",
+  "ObservedAtUtc": "2026-08-22T20:30:10.275029+00:00",
   "QualificationCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionBoundaryQualificationTests",
   "InspectedPaths": [
     {

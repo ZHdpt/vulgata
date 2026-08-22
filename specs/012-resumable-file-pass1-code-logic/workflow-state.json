@@ -3,13 +3,13 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "implement",
+  "stage": "conditional-e2e",
   "preflight": {
     "branch": "demo0831/story-12-3",
-    "head": "54289710d8da4e5acbf7e347b818d64ab41c4002",
-    "git_identity_sha256": "51914b01dbae7b86f94e68af543523dba609479ffc3201f4604b2746b8b42c17",
-    "status_sha256": "58a19f6d2119a58c1716e70097cf15608cc0affaf0f53f245d44d11ad6f157f6",
-    "observed_at": "2026-08-22T10:29:54Z"
+    "head": "aa82fe5c9181d0c257e6882fc0f8bb2bd41c9060",
+    "git_identity_sha256": "8289bde1db62cefae8327730315b66fecc98fd1b3fc436566c888f91cb783350",
+    "status_sha256": "f568d5fc885ee0a988e0da3e502f5916bab2718a70dac364f024b27b08d61450",
+    "observed_at": "2026-08-22T20:43:26Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "0b7ec55f48f11c2d818e64dd8e1b9f10839bd7a47a3007e86da4967161789da1"
+      "sha256": "fd46fa773182880f7cd6a0113793b45e83432f5efcb2ec867881ebcb9ca964f6"
     }
   },
   "gates": {
@@ -37,15 +37,15 @@
       "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-10.json"
     },
     "quality-review": {
-      "status": "revised",
-      "attempt": 1,
-      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json"
+      "status": "accepted",
+      "attempt": 3,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json"
     }
   },
   "attempts": {
-    "definition-review": 0,
-    "converge": 0,
-    "quality-review": 1
+    "definition-review": 10,
+    "converge": 3,
+    "quality-review": 3
   },
   "approvals": [
     {
@@ -99,36 +99,39 @@
     }
   ],
   "convergence": {
-    "status": "invalidated",
-    "attempt": 1,
-    "outcome": "pending",
-    "report_path": "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-01.md"
+    "status": "accepted",
+    "attempt": 3,
+    "outcome": "converged",
+    "report_path": "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md"
   },
-  "e2e": { "result": "pending", "decision_path": null },
+  "e2e": {
+    "result": "blocked",
+    "decision_path": "specs/012-resumable-file-pass1-code-logic/e2e-decision.json"
+  },
   "current_evidence_paths": [
-    "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
     "specs/012-resumable-file-pass1-code-logic/spec.md",
     "specs/012-resumable-file-pass1-code-logic/plan.md",
-    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
-    "artifacts/qualification/story-12.3/host-runtime.md",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-01.json",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-02.json",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-02.json",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-03.json",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-03.json",
-    "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-03.md"
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-08.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-08.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-09.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-09.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json",
+    "specs/012-resumable-file-pass1-code-logic/e2e-decision.json",
+    "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md",
+    "artifacts/qualification/story-12.3/production-boundary-inspection.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-correction-20260822T123510Z-9ab3d4",
-    "stage": "implement",
-    "commit_sha": "f5d15d77d3804fb4a92165ae15b98649ce1ec927",
-    "binding_status": "bound"
+    "checkpoint_id": "bmad-12-3-e2e-blocked-20260822T204326Z",
+    "stage": "conditional-e2e",
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "T054/T055 production executor, dispatcher, failure, atomic commit, and reconciliation composition is GREEN; begin T056 source-free active provider outage/probe RED without changing the completed execution composition.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-03.json"
+    "stage": "conditional-e2e",
+    "reason": "Required E2E is blocked by absent T046/T062 host prerequisites and an existing authenticated API login-form test-harness failure.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/e2e-decision.json"
   },
-  "updated_at": "2026-08-22T12:49:20Z"
+  "updated_at": "2026-08-22T20:43:26Z"
 }

@@ -4,35 +4,37 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
   "proposed_feature_short_name": "resumable-file-pass1-code-logic",
-  "stage": "implement",
-  "source_commit": "433834aca53fae868812685a85a9c3c830824025",
+  "stage": "conditional-e2e",
+  "source_commit": "aa82fe5c9181d0c257e6882fc0f8bb2bd41c9060",
   "preflight": {
     "branch": "demo0831/story-12-3",
-    "head": "433834aca53fae868812685a85a9c3c830824025",
+    "head": "aa82fe5c9181d0c257e6882fc0f8bb2bd41c9060",
     "repository_root": "G:/source/repos/vulgata",
     "git_common_directory": "G:/source/repos/vulgata/.git",
     "worktree_path": "G:/source/repos/vulgata",
-    "git_identity_sha256": "20f31a1f46e44f2705ce94fa2038563aac4856da9303fa00020ac5cf08a12f60",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-21T07:03:08Z"
+    "git_identity_sha256": "8289bde1db62cefae8327730315b66fecc98fd1b3fc436566c888f91cb783350",
+    "status_sha256": "f568d5fc885ee0a988e0da3e502f5916bab2718a70dac364f024b27b08d61450",
+    "observed_at": "2026-08-22T20:43:26Z"
   },
   "owned_paths": [
-    "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
-    "docs/bmad/implementation-artifacts/sprint-status.yaml",
-    "docs/bmad/implementation-artifacts/workflow-activations/12-3-resumable-file-pass-1-and-code-logic-documents.json"
+    "artifacts/qualification/story-12.3/production-boundary-inspection.json",
+    "docs/bmad/implementation-artifacts/workflow-activations/12-3-resumable-file-pass-1-and-code-logic-documents.json",
+    "specs/012-resumable-file-pass1-code-logic/workflow-state.json"
   ],
-  "unrelated_paths": [],
+  "unrelated_paths": [
+    "artifacts/qualification/story-12.2/production-literal-inspection.json"
+  ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-correction-20260822T123510Z-9ab3d4",
-    "stage": "implement",
-    "commit_sha": "f5d15d77d3804fb4a92165ae15b98649ce1ec927",
-    "binding_status": "bound"
+    "checkpoint_id": "bmad-12-3-e2e-blocked-20260822T204326Z",
+    "stage": "conditional-e2e",
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
-    "stage": "implement",
-    "reason": "T054/T055 production executor, dispatcher, failure, atomic commit, and reconciliation composition is GREEN; begin T056 source-free active provider outage/probe RED without changing the completed execution composition."
+    "stage": "conditional-e2e",
+    "reason": "Required E2E is blocked by absent T046/T062 host prerequisites and an existing authenticated API login-form test-harness failure."
   },
-  "updated_at": "2026-08-22T12:49:20Z"
+  "updated_at": "2026-08-22T20:43:26Z"
 }
