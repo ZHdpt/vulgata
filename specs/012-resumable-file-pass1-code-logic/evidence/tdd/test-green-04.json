@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/8",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "cc4d8f05312618dc3716e05aed3486f50b9ff090",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ProviderHealthProbe.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1ProviderHealthProbe.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ProbeDriver.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs",
+    "src/dotnet/Vulgata.Web/Program.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ProviderHealthProbe.cs": "4ccc1948552c3acb3f5dc9354ac4ce67e3bac0e2a1d9239eeae711665c71a746",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1ProviderHealthProbe.cs": "27011402d99cb1e0c8ea1abf34e8ae5e3afb494099cdca1d29ee97bb1acf7991",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "d9fcb99122c6f64ac169235d44d88dee18cd3107d6d014880f4f948294767e7a",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ProbeDriver.cs": "7d17140c03bd6fb0c5cc23c9b7cdf176b9be661550d2fbbe329ab7c8b578550c",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs": "f9aa699743e6ada8f7a6d238ae448eb408b3ff20509287f2a41a68cf099317a6",
+    "src/dotnet/Vulgata.Web/Program.cs": "3da5b139456cebc9f50e8ff88101bdca5f8daf9185da5f96d202bb51d9ee105e"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionProviderOutageTests|FullyQualifiedName~Pass1ProviderCircuitTests|FullyQualifiedName~Pass1ProductionCompositionTests|FullyQualifiedName~Pass1RecoveryAndResumeApiTests --no-restore --verbosity minimal",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionExecutionCapacityTests|FullyQualifiedName~Pass1ClaimedPacketExecutionTests --no-restore --no-build --verbosity minimal",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore"
+  ],
+  "result": {
+    "focused_passed": 42,
+    "postgresql_regression_passed": 28,
+    "failed": 0,
+    "skipped": 0,
+    "build_errors": 0,
+    "classification": "green"
+  },
+  "observed_at": "2026-08-22T13:44:13Z",
+  "summary": "T057 replaces configuration resolution as health with one bounded source-free active request using injected time, strict closed response classification, a Core versioned transition-store abstraction, eligibility waiting, atomic durable probe transitions, exact fifth-failure provider-unavailable pause with 继续扫描, and no sixth/startup/background probe. Existing capacity and claimed-packet PostgreSQL boundaries remain GREEN."
+}

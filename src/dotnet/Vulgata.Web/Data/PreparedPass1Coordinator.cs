@@ -3,10 +3,14 @@ using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Shared;
 using Vulgata.Shared.Scans;
 
 namespace Vulgata.Web.Data;
 
+// Compatibility-only contract retained for callers compiled against the
+// accepted Story 12.1/12.2 coordinator surface. Production composition no
+// longer treats configuration resolution as a health observation.
 public interface IPreparedPass1ProviderAvailabilityProbe
 {
     Task<bool> IsAvailableAsync(Guid pairExecutionId, CancellationToken cancellationToken);
@@ -14,9 +18,13 @@ public interface IPreparedPass1ProviderAvailabilityProbe
 
 internal sealed class PreparedPass1ProviderAvailabilityProbe(
     VulgataDbContext context,
-    WorkerAgentProviderResolver providerResolver) : IPreparedPass1ProviderAvailabilityProbe
+    WorkerAgentProviderResolver providerResolver,
+    ISecretEncryptionService encryptionService,
+    IPreparedPass1ProviderHealthProbe healthProbe) : IPreparedPass1ProviderAvailabilityProbe
 {
-    public async Task<bool> IsAvailableAsync(Guid pairExecutionId, CancellationToken cancellationToken)
+    public async Task<bool> IsAvailableAsync(
+        Guid pairExecutionId,
+        CancellationToken cancellationToken)
     {
         Guid systemId = await context.Pass1PairExecutions.AsNoTracking()
             .Where(pair => pair.Id == pairExecutionId)
@@ -29,10 +37,22 @@ internal sealed class PreparedPass1ProviderAvailabilityProbe(
 
         try
         {
-            _ = await providerResolver.ResolveAsync(systemId, cancellationToken);
-            return true;
+            ResolvedWorkerAgentProvider provider = await providerResolver.ResolveAsync(
+                systemId,
+                cancellationToken);
+            string apiKey = await encryptionService.DecryptAsync(
+                SecretPurposes.LlmApiKey,
+                provider.EncryptedApiKey,
+                cancellationToken);
+            PreparedPass1ProviderHealthResult observation = await healthProbe.ProbeAsync(
+                provider.Endpoint,
+                provider.Model,
+                apiKey,
+                cancellationToken);
+            return observation.IsAvailable;
         }
-        catch (InvalidOperationException)
+        catch (Exception exception) when (
+            exception is InvalidOperationException or ArgumentException)
         {
             return false;
         }
@@ -256,7 +276,9 @@ public sealed class PreparedPass1Coordinator(
         bool providerAvailable;
         try
         {
-            providerAvailable = await providerProbe.IsAvailableAsync(pairExecutionId, cancellationToken);
+            providerAvailable = await providerProbe.IsAvailableAsync(
+                pairExecutionId,
+                cancellationToken);
         }
         catch (OperationCanceledException)
         {

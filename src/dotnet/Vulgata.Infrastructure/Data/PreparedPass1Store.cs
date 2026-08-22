@@ -13,6 +13,7 @@ namespace Vulgata.Infrastructure.Data;
 
 public sealed class PreparedPass1Store(VulgataDbContext context) :
     IPreparedPass1Store,
+    IPreparedPass1ProviderTransitionStore,
     IPreparedPass1NavigationScopeSource,
     IPreparedPass1CurrentDocumentEvidenceSource,
     IPreparedPass1NavigationReceiptSink
@@ -1832,9 +1833,60 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
         Guid pairExecutionId,
         long expectedStateVersion,
         int expectedProbeOrdinal,
+        PreparedPass1ProviderHealthResult observation,
+        DateTimeOffset observedAt,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(observation);
+        ProviderProbeObservation durableObservation = observation.Outcome switch
+        {
+            PreparedPass1ProviderHealthOutcome.Available => ProviderProbeObservation.Available,
+            PreparedPass1ProviderHealthOutcome.ProviderConfiguration =>
+                ProviderProbeObservation.Configuration,
+            PreparedPass1ProviderHealthOutcome.ProviderUnavailable =>
+                ProviderProbeObservation.Unavailable,
+            PreparedPass1ProviderHealthOutcome.UnclassifiedSystemic =>
+                ProviderProbeObservation.Inspection,
+            _ => throw new ArgumentOutOfRangeException(nameof(observation)),
+        };
+        return await ProbeProviderCoreAsync(
+            pairExecutionId,
+            expectedStateVersion,
+            expectedProbeOrdinal,
+            durableObservation,
+            observedAt,
+            durableObservation == ProviderProbeObservation.Unavailable
+                ? observation.RetryAfterAt
+                : null,
+            cancellationToken);
+    }
+
+    public async Task<PreparedPass1ProviderCircuitResult> ProbeProviderAsync(
+        Guid pairExecutionId,
+        long expectedStateVersion,
+        int expectedProbeOrdinal,
         bool providerAvailable,
         DateTimeOffset observedAt,
         DateTimeOffset? retryAfterAt = null,
+        CancellationToken cancellationToken = default) =>
+        await ProbeProviderCoreAsync(
+            pairExecutionId,
+            expectedStateVersion,
+            expectedProbeOrdinal,
+            providerAvailable
+                ? ProviderProbeObservation.Available
+                : ProviderProbeObservation.Unavailable,
+            observedAt,
+            retryAfterAt,
+            cancellationToken);
+
+    private async Task<PreparedPass1ProviderCircuitResult> ProbeProviderCoreAsync(
+        Guid pairExecutionId,
+        long expectedStateVersion,
+        int expectedProbeOrdinal,
+        ProviderProbeObservation observation,
+        DateTimeOffset observedAt,
+        DateTimeOffset? retryAfterAt,
         CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
@@ -1889,7 +1941,7 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             }
 
             PreparedPass1ProviderCircuitOutcome outcome;
-            if (providerAvailable)
+            if (observation == ProviderProbeObservation.Available)
             {
                 TransitionProviderCircuit(
                     pair,
@@ -1902,6 +1954,34 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
                     reasonCode: null,
                     observedAt);
                 outcome = PreparedPass1ProviderCircuitOutcome.Recovered;
+            }
+            else if (observation == ProviderProbeObservation.Configuration)
+            {
+                TransitionProviderCircuit(
+                    pair,
+                    Pass1PairExecutionPhase.PausedOperatorCorrection,
+                    Pass1CircuitState.Paused,
+                    expectedProbeOrdinal,
+                    nextProbeAt: null,
+                    retryAfterAt: null,
+                    Pass1PairReasonCategory.OperatorCorrection,
+                    "provider-configuration",
+                    observedAt);
+                outcome = PreparedPass1ProviderCircuitOutcome.Paused;
+            }
+            else if (observation == ProviderProbeObservation.Inspection)
+            {
+                TransitionProviderCircuit(
+                    pair,
+                    Pass1PairExecutionPhase.PausedInspection,
+                    Pass1CircuitState.Paused,
+                    expectedProbeOrdinal,
+                    nextProbeAt: null,
+                    retryAfterAt: null,
+                    Pass1PairReasonCategory.Inspection,
+                    "unclassified-systemic",
+                    observedAt);
+                outcome = PreparedPass1ProviderCircuitOutcome.Paused;
             }
             else if (expectedProbeOrdinal == 5)
             {
@@ -1950,6 +2030,14 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             context.ChangeTracker.Clear();
             return ProviderCircuitResult(PreparedPass1ProviderCircuitOutcome.Failed);
         }
+    }
+
+    private enum ProviderProbeObservation
+    {
+        Available,
+        Unavailable,
+        Configuration,
+        Inspection,
     }
 
     public async Task<PreparedPass1ConcurrencyUpdateResult> UpdateConcurrencyAsync(
@@ -2640,7 +2728,13 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
         IReadOnlyList<Guid>? completedDocumentVersionIds = null)
     {
         IReadOnlyList<Guid> documentIds = completedDocumentVersionIds ?? [];
-        bool paused = pair?.Phase == Pass1PairExecutionPhase.PausedProviderUnavailable;
+        string manualResumeAction = pair?.Phase switch
+        {
+            Pass1PairExecutionPhase.PausedProviderUnavailable => "继续扫描",
+            Pass1PairExecutionPhase.PausedOperatorCorrection => "修正提供商配置后手动继续扫描",
+            Pass1PairExecutionPhase.PausedInspection => "检查系统性失败后手动继续扫描",
+            _ => string.Empty,
+        };
         return new(
             outcome,
             pair?.CircuitState ?? Pass1CircuitState.Closed,
@@ -2649,7 +2743,7 @@ public sealed class PreparedPass1Store(VulgataDbContext context) :
             pair?.NextProbeAt,
             pair?.RetryAfterAt,
             pair?.ReasonCode ?? outcome.ToString(),
-            paused ? "继续扫描" : string.Empty,
+            manualResumeAction,
             documentIds.Count,
             documentIds,
             pair?.Phase == Pass1PairExecutionPhase.Running &&
