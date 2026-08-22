@@ -2,7 +2,9 @@
 
 Decision ID: `story-12-3-planned-change-authorization-02`
 
-Status: pending explicit user authorization
+Status: accepted
+
+Decided at: `2026-08-22T03:10:29Z`
 
 Accepted scope SHA-256: `20da042c3c1ab95e062a86ccbb82c8d34e6f4fc476c69a15f1b847e46222e8d9`
 
@@ -60,3 +62,10 @@ implementation approval for the new accepted definition hashes; behavioral TDD
 RED/GREEN; convergence; fresh quality review; required/covered E2E decision;
 PostgreSQL atomicity/security/provider/real-host qualification; pinned final
 verification; and a root-bound `review -> done` completion checkpoint.
+
+## Decision
+
+The user explicitly approved the exact accepted scope on 2026-08-22. The root
+may regenerate dependency-ordered tasks. This approval does not authorize
+production implementation and remains valid only while the accepted scope
+SHA-256 is unchanged.

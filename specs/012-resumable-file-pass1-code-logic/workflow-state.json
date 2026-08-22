@@ -3,13 +3,13 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "plan-review",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-3",
-    "head": "c13827b1f370fcc62df49da92c7c8d33c4a78112",
-    "git_identity_sha256": "589f779d4a3e5736e6ed024087426a46b7c256adb097986c7501fcf47047419e",
-    "status_sha256": "602cca245539bf71fb0ce3fe3d86f1e963420455ba3fa67fb7d671c55851de06",
-    "observed_at": "2026-08-22T01:46:05Z"
+    "head": "8ec768d5609c28c5b571b11e4f3cd89a040191e7",
+    "git_identity_sha256": "40325d8e0191fb7aa4ff2dc902d8ae0d9479c7d740d8be33644289dcfcecce2d",
+    "status_sha256": "7adfae284caa820285808c63c1b85800240e3cd48cc964f8f2012fb74f7d3f05",
+    "observed_at": "2026-08-22T03:10:29Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/012-resumable-file-pass1-code-logic/tasks.md",
-      "sha256": "26940caa05960c7568dba9eb3abb94fe62bf8e706285fb2dbe20f37ff12bbeec"
+      "sha256": "d76b48872a94b9b4313e4899bbc1d452fba1c37a9a225a9a454a7d52e490e680"
     }
   },
   "gates": {
@@ -32,9 +32,9 @@
       "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-04.json"
     },
     "definition-review": {
-      "status": "invalidated",
-      "attempt": 5,
-      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-05.json"
+      "status": "accepted",
+      "attempt": 9,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-09.json"
     },
     "quality-review": {
       "status": "revised",
@@ -75,6 +75,20 @@
       "scope_sha256": "504940abc9934fa8cc9e1cf6781c8fcc5bfdbc4140e21767bc19881058eaca84",
       "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/quality-review-correction-01.md",
       "decided_at": "2026-08-22T01:46:05Z"
+    },
+    {
+      "decision_id": "story-12-3-planned-change-authorization-02",
+      "status": "accepted",
+      "scope_sha256": "20da042c3c1ab95e062a86ccbb82c8d34e6f4fc476c69a15f1b847e46222e8d9",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-02.md",
+      "decided_at": "2026-08-22T03:10:29Z"
+    },
+    {
+      "decision_id": "story-12-3-implementation-approval-02",
+      "status": "pending",
+      "scope_sha256": "bef1ba1d1de192ee31ba68c6ccf1b57b7bccb57c9a94172e05a542306585b42a",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md",
+      "decided_at": null
     }
   ],
   "convergence": {
@@ -91,22 +105,23 @@
     "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-01.json",
     "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-04.json",
     "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-02.md",
-    "specs/012-resumable-file-pass1-code-logic/decisions/quality-review-correction-01.md",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
     "artifacts/qualification/story-12.3/host-runtime.md",
     "artifacts/qualification/story-12.3/production-boundary-inspection.json",
-    "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md"
+    "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-09.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-plan-review-20260822T023626Z-a7c4e2",
-    "stage": "plan-review",
+    "checkpoint_id": "bmad-12-3-definition-review-20260822T040013Z-88a8f5",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "tasks",
-    "reason": "Plan review attempt 4 accepted corrected architecture; await hash-bound planned-change authorization before task regeneration.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-02.md"
+    "stage": "implementation-approval",
+    "reason": "Combined definition review attempt 9 accepted the corrected T050-T064 boundary; await new hash-bound implementation approval.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-02.md"
   },
-  "updated_at": "2026-08-22T02:36:26Z"
+  "updated_at": "2026-08-22T04:00:13Z"
 }
