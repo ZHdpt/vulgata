@@ -2,8 +2,8 @@
   "SchemaVersion": "story-12.3-production-boundary-inspection/1.0",
   "Task": "T047",
   "ExpectedSourceCommit": "cb3fb0f17b2eaf92d93afe71c710cd7b92c1e3bd",
-  "ObservedSourceCommit": "7a0e6a3c29c08148796f27b395097592939cb6bf",
-  "ObservedAtUtc": "2026-08-22T18:24:08.2257694+00:00",
+  "ObservedSourceCommit": "60d3911fa4d63a345d4eab12beba5cb55f14868d",
+  "ObservedAtUtc": "2026-08-22T20:02:29.2099992+00:00",
   "QualificationCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionBoundaryQualificationTests",
   "InspectedPaths": [
     {
@@ -53,8 +53,8 @@
     },
     {
       "Path": "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
-      "Bytes": 166411,
-      "Sha256": "341b3f7197372c95bb85a289472e0144a67a9d743d332b91fe3752671a03bd88"
+      "Bytes": 168795,
+      "Sha256": "907ef68c6470c8fda8585f95cd660f7e5726bb9e9e9b79c185c199ddcde5c2be"
     },
     {
       "Path": "src/dotnet/Vulgata.Shared/Scans/Pass1ExecutionContracts.cs",

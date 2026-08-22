@@ -1,4 +1,47 @@
-# Story 12.3 T064 qualification verification
+# Story 12.3 final verification
+
+## T069 correction requalification
+
+Observed at `2026-08-22T20:04:00Z` on branch
+`demo0831/story-12-3`, with production pinned to full HEAD
+`60d3911fa4d63a345d4eab12beba5cb55f14868d`.
+
+Quality-review attempt 2 corrections QR2-001 and QR2-002 are locally qualified:
+
+| Boundary | Result |
+|---|---|
+| reconciliation, provider, lease, shutdown, recovery, and PostgreSQL atomic focus | 134 passed, 0 failed, 1 authenticated real-provider skip |
+| `Pass1MigrationTests` migration/no-delta | 7 passed, 0 failed, 0 skipped; no migration path changed |
+| `Pass1ProductionBoundaryQualificationTests` | 1 passed, 0 failed; refreshed artifact verdict `pass` |
+| navigate-code security/exclusion and production composition | 33 passed, 0 failed, 0 skipped |
+| Web build | succeeded, 0 errors, 9 warnings |
+
+The normal drained path now uses `ReconcileAsync` as the sole atomic terminal
+transaction and reaches `ReadyForResolution`; the PostgreSQL boundary tests still
+prove complete rollback of Pass 1 outcome, warning inventory, deterministic
+same-Repository REFERENCES Edges, child states, coordination, and approved
+handoff. Provider-transient work atomically relinquishes the exact claim without
+retry/failure budget use, active or future-eligible work is nonterminal and waits
+on activation or `TimeProvider`, and shutdown retains pair-owned revision
+bindings until local Workers drain. The System Owner and approved-manifest
+defense-in-depth gate remains enforced.
+
+The refreshed production-boundary inspection is
+`artifacts/qualification/story-12.3/production-boundary-inspection.json`. It
+contains no forbidden literal and reports every composition check true. The
+Story 12.2 qualification artifact remains unrelated and is not Story 12.3
+evidence.
+
+Conditional host E2E remains unavailable rather than failed or replaced. None
+of `VULGATA_T046_CODEGRAPH_COMMAND`, `VULGATA_T046_JAVA_EXECUTABLE`,
+`VULGATA_T046_JDT_LS_ROOT` / `VULGATA_T046_JDT_LS_ARCHIVE`,
+`VULGATA_T062_APPROVED_PAIR_REAL`, or `VULGATA_T062_SOURCE_BINDING_READY` is
+present. Therefore this correction does not claim a new real CodeGraph/JDT-LS
+or authenticated approved-pair E2E run. The prior full-suite repository and
+environment baseline classification below is unchanged and is not relabeled as
+Story 12.3 success.
+
+## T064 qualification record
 
 Observed at `2026-08-22T18:24:08.2257694Z` on branch
 `demo0831/story-12-3`, pinned to full HEAD
