@@ -1,0 +1,28 @@
+{
+  "evidence_id": "12-3/implement/7",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "ea55e47a2b9ff14d131d1a3003330d416d0674e1",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionProviderOutageTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProviderCircuitTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionProviderOutageTests.cs": "b177c2da64c70c6b5124c57924a9e527629f7391d4cf75777d856d5d9228fdf9",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProviderCircuitTests.cs": "b1135c77a58975dde73bed8ed2183186ab9c9bc81ff9f830a530a92297e8f6f9"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass1ProductionProviderOutageTests|FullyQualifiedName~Pass1ProviderCircuitTests --verbosity minimal",
+  "result": {
+    "passed": 6,
+    "failed": 12,
+    "skipped": 0,
+    "classification": "expected-behavioral-red",
+    "representative_failures": [
+      "The versioned IPreparedPass1ProviderHealthProbe and fixed active health-probe implementation are absent.",
+      "The production PreparedPass1ProbeDriver is absent, so five durable probe transitions, claim suppression, fifth-failure pause, and no-sixth behavior cannot execute.",
+      "The current configuration-resolution availability seam cannot issue or classify the single bounded source-free provider request."
+    ]
+  },
+  "observed_at": "2026-08-22T13:09:41Z",
+  "summary": "T056 RED is compile-clean and behaviorally bound to fake HTTP transport, controllable time, and stateful public store/health seams. The tests require exactly one source-free request, closed response classification, five observed versioned transitions at 10/30/60/120/300-second nominal windows, zero claims while probing, provider-unavailable pause with the Chinese 继续扫描 action after failure five, and no sixth/startup/background probe."
+}

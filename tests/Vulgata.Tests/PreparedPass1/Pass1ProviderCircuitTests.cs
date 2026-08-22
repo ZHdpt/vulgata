@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -199,6 +200,337 @@ public sealed class Pass1ProviderCircuitTests
             property => property.Name.Contains("Source", StringComparison.OrdinalIgnoreCase) ||
                 property.Name.Contains("Credential", StringComparison.OrdinalIgnoreCase) ||
                 property.Name.Contains("Raw", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ProviderCircuit_UsesTheVersionedActiveHealthProbeContractRatherThanConfigurationResolution()
+    {
+        Assembly core = Assembly.Load("Vulgata.Core");
+        Type contract = core.GetType(
+            "Vulgata.Core.DomainServices.IPreparedPass1ProviderHealthProbe",
+            throwOnError: false,
+            ignoreCase: false)
+            ?? throw new InvalidOperationException(
+                "T056 RED: the versioned active provider health probe contract is missing.");
+
+        Assert.True(contract.IsInterface);
+        MethodInfo[] methods = contract.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+        Assert.Contains(
+            methods,
+            method => method.ReturnType.IsGenericType &&
+                method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>));
+        Assert.DoesNotContain(
+            methods,
+            method => method.Name.Contains("Resolve", StringComparison.OrdinalIgnoreCase) ||
+                method.Name.Contains("Configured", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ProviderCircuit_ExposesNoProbeTicketBeyondTheFifthDurableWindow()
+    {
+        Type probe = RequireProbeType();
+        MethodInfo delay = RequirePublicStaticMethod(probe, "GetProbeDelay", parameterCount: 1);
+        for (int ordinal = 1; ordinal <= 5; ordinal++)
+        {
+            Assert.IsType<TimeSpan>(delay.Invoke(null, [ordinal]));
+        }
+
+        Type healthProbe = Assembly.Load("Vulgata.Agents").GetType(
+            "Vulgata.Agents.WorkerExecution.PreparedPass1ProviderHealthProbe",
+            throwOnError: false,
+            ignoreCase: false)
+            ?? throw new InvalidOperationException(
+                "T056 RED: the active provider probe must own the fifth-failure/no-sixth boundary.");
+        Assert.DoesNotContain(
+            healthProbe.GetMethods(BindingFlags.Public | BindingFlags.Static),
+            method => method.Name.Contains("Sixth", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ProviderProbeDriver_ConsumesFiveDurableWindowsWithoutClaimsAndPersistsTheFifthPause()
+    {
+        Type driver = RequireType(
+            "Vulgata.Web",
+            "Vulgata.Web.Data.PreparedPass1ProbeDriver");
+        Type healthContract = RequireType(
+            "Vulgata.Core",
+            "Vulgata.Core.DomainServices.IPreparedPass1ProviderHealthProbe");
+
+        StatefulProxy.Reset();
+        object store = DispatchProxy.Create(typeof(IPreparedPass1Store), typeof(StatefulProxy));
+        object health = DispatchProxy.Create(healthContract, typeof(StatefulProxy));
+        ManualTimeProvider time = new(new DateTimeOffset(2026, 8, 22, 12, 0, 0, TimeSpan.Zero));
+        object instance = CreateDriver(driver, store, health, time);
+        MethodInfo operation = driver.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(method => method.ReturnType == typeof(Task) ||
+                (method.ReturnType.IsGenericType &&
+                    method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>)))
+            .SingleOrDefault(method => method.Name.Contains("Probe", StringComparison.OrdinalIgnoreCase) ||
+                method.Name.Contains("Run", StringComparison.OrdinalIgnoreCase))
+            ?? throw new Xunit.Sdk.XunitException(
+                "T056 RED: the provider probe driver must expose one invokable async operation.");
+
+        DateTimeOffset previousFailure = time.GetUtcNow();
+        for (int ordinal = 1; ordinal <= 5; ordinal++)
+        {
+            TimeSpan nominal = WorkerAgentProviderHealthProbe.GetProbeDelay(ordinal);
+            DateTimeOffset eligible = previousFailure.Add(nominal);
+            time.SetUtcNow(eligible);
+            InvokeDriver(operation, instance, store, health, time, ordinal);
+            Assert.Equal(eligible, StatefulProxy.ProbeTimes[^1]);
+            previousFailure = eligible;
+        }
+
+        Assert.Equal(5, StatefulProxy.ProbeTimes.Count);
+        Assert.Equal(
+            [1, 2, 3, 4, 5],
+            StatefulProxy.ProbeOrdinals);
+        Assert.Empty(StatefulProxy.ClaimCalls);
+        Assert.Equal(5, StatefulProxy.VersionedTransitions);
+        Assert.Equal(Pass1PairExecutionPhase.PausedProviderUnavailable, StatefulProxy.LastPhase);
+        Assert.Equal("继续扫描", StatefulProxy.LastManualResumeAction);
+
+        time.SetUtcNow(time.GetUtcNow().AddHours(2));
+        InvokeDriver(operation, instance, store, health, time, 6);
+        Assert.Equal(5, StatefulProxy.ProbeTimes.Count);
+        Assert.Empty(StatefulProxy.ClaimCalls);
+    }
+
+    private static Type RequireType(string assemblyName, string fullName) =>
+        Assembly.Load(assemblyName).GetType(fullName, throwOnError: false, ignoreCase: false)
+        ?? throw new InvalidOperationException($"T056 RED: missing production seam {fullName}.");
+
+    private static object CreateDriver(
+        Type implementation,
+        object store,
+        object health,
+        TimeProvider time)
+    {
+        foreach (ConstructorInfo constructor in implementation
+            .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+            .OrderBy(value => value.GetParameters().Length))
+        {
+            try
+            {
+                return constructor.Invoke(constructor.GetParameters()
+                    .Select(parameter => ResolveDriverValue(parameter.ParameterType, parameter.Name, store, health, time))
+                    .ToArray());
+            }
+            catch (TargetInvocationException)
+            {
+            }
+            catch (ArgumentException)
+            {
+            }
+        }
+
+        throw new Xunit.Sdk.XunitException(
+            "T056 RED: provider probe driver cannot be composed with stateful public seams and fake time.");
+    }
+
+    private static void InvokeDriver(
+        MethodInfo operation,
+        object instance,
+        object store,
+        object health,
+        ManualTimeProvider time,
+        int ordinal)
+    {
+        object invocation = operation.Invoke(instance, operation.GetParameters()
+            .Select(parameter => ResolveDriverValue(
+                parameter.ParameterType,
+                parameter.Name,
+                store,
+                health,
+                time,
+                ordinal))
+            .ToArray())
+            ?? throw new Xunit.Sdk.XunitException("T056 RED: driver returned no async operation.");
+        if (invocation is not Task task)
+        {
+            throw new Xunit.Sdk.XunitException("T056 RED: driver operation must return Task or Task<T>.");
+        }
+
+        task.GetAwaiter().GetResult();
+    }
+
+    private static object? ResolveDriverValue(
+        Type type,
+        string? name,
+        object store,
+        object health,
+        TimeProvider time,
+        int ordinal = 1)
+    {
+        if (type == typeof(TimeProvider))
+        {
+            return time;
+        }
+
+        if (type == typeof(CancellationToken))
+        {
+            return CancellationToken.None;
+        }
+
+        if (type == typeof(Guid))
+        {
+            return Guid.Parse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+        }
+
+        if (type == typeof(DateTimeOffset))
+        {
+            return time.GetUtcNow();
+        }
+
+        if (type == typeof(int))
+        {
+            return name?.Contains("ordinal", StringComparison.OrdinalIgnoreCase) == true ? ordinal : 0;
+        }
+
+        if (type == typeof(long))
+        {
+            return 1L;
+        }
+
+        if (type == typeof(bool))
+        {
+            return false;
+        }
+
+        if (type == typeof(string))
+        {
+            return "health-test-secret";
+        }
+
+        if (type.IsInterface)
+        {
+            if (type.IsInstanceOfType(health))
+            {
+                return health;
+            }
+
+            if (type.IsInstanceOfType(store))
+            {
+                return store;
+            }
+
+            return DispatchProxy.Create(type, typeof(StatefulProxy));
+        }
+
+        if (type.IsValueType)
+        {
+            return Activator.CreateInstance(type);
+        }
+
+        ConstructorInfo? constructor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+            .OrderBy(value => value.GetParameters().Length)
+            .FirstOrDefault();
+        return constructor?.Invoke(constructor.GetParameters()
+            .Select(parameter => ResolveDriverValue(
+                parameter.ParameterType,
+                parameter.Name,
+                store,
+                health,
+                time,
+                ordinal))
+            .ToArray());
+    }
+
+    private sealed class ManualTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        private DateTimeOffset _now = now;
+
+        public override DateTimeOffset GetUtcNow() => _now;
+
+        public void SetUtcNow(DateTimeOffset value) => _now = value;
+    }
+
+    private sealed class StatefulProxy : DispatchProxy
+    {
+        public static List<DateTimeOffset> ProbeTimes { get; } = [];
+
+        public static List<int> ProbeOrdinals { get; } = [];
+
+        public static List<string> ClaimCalls { get; } = [];
+
+        public static int VersionedTransitions { get; private set; }
+
+        public static Pass1PairExecutionPhase LastPhase { get; private set; }
+
+        public static string? LastManualResumeAction { get; private set; }
+
+        public static void Reset()
+        {
+            ProbeTimes.Clear();
+            ProbeOrdinals.Clear();
+            ClaimCalls.Clear();
+            VersionedTransitions = 0;
+            LastPhase = default;
+            LastManualResumeAction = null;
+        }
+
+        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
+        {
+            if (targetMethod is null)
+            {
+                return null;
+            }
+
+            string methodName = targetMethod.Name;
+            if (methodName.Contains("Claim", StringComparison.OrdinalIgnoreCase))
+            {
+                ClaimCalls.Add(methodName);
+            }
+
+            if (methodName.Contains("ProbeProvider", StringComparison.OrdinalIgnoreCase))
+            {
+                int ordinal = args?.OfType<int>().FirstOrDefault() ?? ProbeTimes.Count + 1;
+                DateTimeOffset observedAt = args?.OfType<DateTimeOffset>().FirstOrDefault() ?? DateTimeOffset.MinValue;
+                ProbeOrdinals.Add(ordinal);
+                ProbeTimes.Add(observedAt);
+                VersionedTransitions++;
+                LastPhase = ordinal == 5
+                    ? Pass1PairExecutionPhase.PausedProviderUnavailable
+                    : Pass1PairExecutionPhase.Running;
+                LastManualResumeAction = ordinal == 5 ? "继续扫描" : null;
+                return TaskResult(
+                    targetMethod.ReturnType,
+                    new PreparedPass1ProviderCircuitResult(
+                        ordinal == 5
+                            ? PreparedPass1ProviderCircuitOutcome.Paused
+                            : PreparedPass1ProviderCircuitOutcome.ProbeScheduled,
+                        ordinal == 5 ? Pass1CircuitState.Paused : Pass1CircuitState.Probing,
+                        LastPhase,
+                        ordinal,
+                        ordinal == 5 ? null : observedAt.AddSeconds(10),
+                        null,
+                        "provider-unavailable",
+                        ordinal == 5 ? "继续扫描" : string.Empty,
+                        0,
+                        [],
+                        false));
+            }
+
+            return TaskResult(targetMethod.ReturnType, null);
+        }
+
+        private static object? TaskResult(Type returnType, object? value)
+        {
+            if (returnType == typeof(Task))
+            {
+                return Task.CompletedTask;
+            }
+
+            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                Type valueType = returnType.GetGenericArguments()[0];
+                return typeof(Task).GetMethod(nameof(Task.FromResult))!
+                    .MakeGenericMethod(valueType)
+                    .Invoke(null, [value]);
+            }
+
+            return null;
+        }
     }
 
     private static Type RequireProbeType()
