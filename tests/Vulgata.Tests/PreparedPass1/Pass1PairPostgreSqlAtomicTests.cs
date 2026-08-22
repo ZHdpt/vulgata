@@ -249,6 +249,108 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Equal(currentVersion, await ReadPairStateVersionAsync(fixture.ConnectionString, pairId));
     }
 
+    [Fact]
+    public async Task PostgreSql17_RevisionBindingFailureAfterReconciling_PreservesCompletedChildrenAndDocumentsAsync()
+    {
+        MethodInfo failureMethod = RequireRevisionBindingFailureMethod();
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        IPreparedPass1Store store = CreatePass1Store(fixture.Context);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Guid pairId = started.PairExecutionId!.Value;
+        await MaterializeCompletedDocumentsAsync(fixture, pairId);
+
+        PreparedPass1CompletionResult completion = await store.CompletePass1Async(
+            pairId,
+            fixture.Authorization,
+            PreparedScanTestHost.FixedUtcNow.AddMinutes(2),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1CompletionOutcome.Succeeded, completion.Outcome);
+        Assert.Equal(
+            "Reconciling",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                $"SELECT \"Phase\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';"));
+        Assert.Equal(
+            "Completed,Completed",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                "SELECT string_agg(\"Phase\", ',' ORDER BY \"RepositoryId\") FROM vulgata.\"ScanExecutions\";"));
+        Assert.Equal(
+            "Resolving",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                "SELECT \"Phase\" FROM vulgata.\"TwoRepositoryScanCoordinations\" LIMIT 1;"));
+
+        int documentsBefore = await ScalarAsync<int>(
+            fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";");
+        long versionBefore = await ReadPairStateVersionAsync(fixture.ConnectionString, pairId);
+        int outcomesBefore = await ScalarAsync<int>(
+            fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"Pass1Outcomes\";");
+
+        object result = await InvokeRevisionBindingFailureAsync(
+            store,
+            failureMethod,
+            pairId,
+            fixture.Authorization,
+            versionBefore);
+        Assert.Equal("FailedIntegrity", ReadProperty(result, "PairState")?.ToString());
+        Assert.Equal("revision-binding-failure", ReadProperty(result, "FailureCode"));
+        Assert.Equal(
+            "FailedIntegrity",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                $"SELECT \"Phase\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';"));
+        Assert.Equal(
+            "FailedIntegrity",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                "SELECT \"Phase\" FROM vulgata.\"TwoRepositoryScanCoordinations\" LIMIT 1;"));
+        Assert.Equal(
+            "Completed,Completed",
+            await ScalarAsync<string>(
+                fixture.ConnectionString,
+                "SELECT string_agg(\"Phase\", ',' ORDER BY \"RepositoryId\") FROM vulgata.\"ScanExecutions\";"));
+        Assert.Equal(
+            documentsBefore,
+            await ScalarAsync<int>(
+                fixture.ConnectionString,
+                "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";"));
+        Assert.Equal(
+            outcomesBefore,
+            await ScalarAsync<int>(
+                fixture.ConnectionString,
+                "SELECT count(*)::integer FROM vulgata.\"Pass1Outcomes\";"));
+        Assert.Equal(
+            0,
+            await ScalarAsync<int>(
+                fixture.ConnectionString,
+                "SELECT count(*)::integer FROM vulgata.\"ScanJobExecutions\" WHERE \"State\" <> 'Completed';"));
+
+        long failedVersion = await ReadPairStateVersionAsync(fixture.ConnectionString, pairId);
+        object replay = await InvokeRevisionBindingFailureAsync(
+            store,
+            failureMethod,
+            pairId,
+            fixture.Authorization,
+            failedVersion);
+        Assert.Contains("Replay", ReadProperty(replay, "Outcome")?.ToString() ?? string.Empty);
+        Assert.Equal(failedVersion, await ReadPairStateVersionAsync(fixture.ConnectionString, pairId));
+        Assert.Equal(
+            documentsBefore,
+            await ScalarAsync<int>(
+                fixture.ConnectionString,
+                "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";"));
+    }
+
     private static IPreparedPass1Store CreatePass1Store(VulgataDbContext context) =>
         new PreparedPass1Store(context);
 
@@ -299,6 +401,89 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         ScalarAsync<long>(
             connectionString,
             $"SELECT \"StateVersion\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';");
+
+    private static async Task MaterializeCompletedDocumentsAsync(
+        PreparedScanPostgreSqlFixture fixture,
+        Guid pairId)
+    {
+        DateTimeOffset now = PreparedScanTestHost.FixedUtcNow.AddMinutes(1);
+        ScanJobExecution[] jobs = await fixture.Context.ScanJobExecutions
+            .AsNoTracking()
+            .OrderBy(job => job.Id)
+            .ToArrayAsync();
+        ScanExecution[] executions = await fixture.Context.ScanExecutions
+            .AsNoTracking()
+            .ToArrayAsync();
+        Dictionary<Guid, ScanExecution> executionsById = executions.ToDictionary(value => value.Id);
+        List<(LogicalDocument Logical, DocumentVersion Version, ScanJobExecution Job)> materialized = [];
+        foreach (ScanJobExecution job in jobs)
+        {
+            ScanExecution execution = executionsById[job.ScanExecutionId];
+            CodeUnit unit = await fixture.Context.CodeUnits
+                .AsNoTracking()
+                .SingleAsync(value => value.Id == job.FileCodeUnitId);
+            Guid logicalId = StableGuid($"t062-reconciling-logical:{job.Id:D}");
+            Guid versionId = StableGuid($"t062-reconciling-version:{job.Id:D}");
+            LogicalDocument logical = LogicalDocument.Create(
+                logicalId,
+                job.RepositoryId,
+                DocumentType.CodeLogic,
+                $"{unit.FilePath}#segment={unit.SegmentOrdinal}",
+                now);
+            DocumentVersion version = DocumentVersion.Create(
+                versionId,
+                logicalId,
+                job.RepositoryId,
+                execution.SystemId,
+                job.ScanRunId,
+                execution.ProfiledRevision,
+                1,
+                unit.FilePath,
+                unit.FilePath,
+                "code-logic/file-v2",
+                "{}",
+                "# completed",
+                new string('1', 64),
+                new string('2', 64),
+                now);
+            materialized.Add((logical, version, job));
+            fixture.Context.LogicalDocuments.Add(logical);
+        }
+
+        await fixture.Context.SaveChangesAsync();
+        foreach ((LogicalDocument logical, DocumentVersion version, _) in materialized)
+        {
+            fixture.Context.DocumentVersions.Add(version);
+            logical.SetInitialCurrentVersion(version);
+        }
+
+        await fixture.Context.SaveChangesAsync();
+        foreach ((_, DocumentVersion version, ScanJobExecution job) in materialized)
+        {
+            await fixture.Context.ScanJobExecutions
+                .Where(value => value.Id == job.Id)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(value => value.State, ScanJobExecutionState.Completed)
+                    .SetProperty(value => value.StateVersion, 1L)
+                    .SetProperty(value => value.LeaseToken, (Guid?)null)
+                    .SetProperty(value => value.LeaseExpiresAt, (DateTimeOffset?)null)
+                    .SetProperty(value => value.NextAttemptAt, (DateTimeOffset?)null)
+                    .SetProperty(value => value.FailureCategory, (ScanJobFailureCategory?)null)
+                    .SetProperty(value => value.FailureCode, (string?)null)
+                    .SetProperty(value => value.CommittedDocumentVersionId, version.Id)
+                    .SetProperty(value => value.StateChangedAt, now));
+        }
+
+        fixture.Context.ChangeTracker.Clear();
+    }
+
+    private static Guid StableGuid(string value)
+    {
+        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+        bytes[6] = (byte)((bytes[6] & 0x0f) | 0x40);
+        bytes[8] = (byte)((bytes[8] & 0x3f) | 0x80);
+        return new Guid(bytes[..16], bigEndian: true);
+    }
 
     private static PreparedScanHandoff CreateHandoff(PreparedScanPairPackage package) =>
         new(
