@@ -1,0 +1,33 @@
+{
+  "evidence_id": "12-3/implement/11",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "b3f7ade77506d9629d718921b5ed333394bef874",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentCommitTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "fa37d91c02c23af165b7881e856a82ef35fdd3404e889ca263dfb5d89fa0ad55",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentCommitTests.cs": "1a2f47d17d33f724b06ebd965bf5bd9f0c299e048895f037f710ffc09945fe48"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1DocumentCommitTests --no-restore --logger console;verbosity=minimal",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PostgreSql17_CompletedReplay_RejectsCanonicalGraphCorruptionWithoutMutation|FullyQualifiedName~PostgreSql17_ReconciliationReplay_RejectsEdgeUnionCorruptionWithoutMutation --no-build --no-restore --logger trx"
+  ],
+  "result": {
+    "public_contract_passed": 93,
+    "postgresql_total": 25,
+    "postgresql_expected_red_failed": 18,
+    "postgresql_existing_protections_passed": 7,
+    "skipped": 0,
+    "classification": "expected-complete-graph-replay-red",
+    "representative_failures": [
+      "Completed replay returns Replayed after Source Anchor, Document Section, Index Entry, or direct REFERENCES Edge removal, mutation, reorder, or cardinality drift.",
+      "Reconciliation replay returns Replay after reconciled REFERENCES Edge union reorder or cardinality drift.",
+      "Existing uniqueness and exact-edge protections reject four duplicate attempts plus reconciled remove, mutate, and duplicate cases."
+    ]
+  },
+  "observed_at": "2026-08-22T15:00:02Z",
+  "summary": "T060 executes all five corruption classes against each canonical graph component after a successful commit or reconciliation. Eighteen cases expose incomplete immutable graph replay validation while seven prove existing database or reconciliation protections; every rejected/replayed attempt remains mutation-free."
+}

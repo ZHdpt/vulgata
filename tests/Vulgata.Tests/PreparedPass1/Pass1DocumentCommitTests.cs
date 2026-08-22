@@ -19,6 +19,35 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1DocumentCommitTests
 {
+    public static TheoryData<string> CanonicalGraphReplayCases => new()
+    {
+        "source-anchor-remove",
+        "source-anchor-mutate",
+        "source-anchor-reorder",
+        "source-anchor-duplicate",
+        "source-anchor-cardinality",
+        "document-section-remove",
+        "document-section-mutate",
+        "document-section-reorder",
+        "document-section-duplicate",
+        "document-section-cardinality",
+        "index-entry-remove",
+        "index-entry-mutate",
+        "index-entry-reorder",
+        "index-entry-duplicate",
+        "index-entry-cardinality",
+        "direct-references-edge-remove",
+        "direct-references-edge-mutate",
+        "direct-references-edge-reorder",
+        "direct-references-edge-duplicate",
+        "direct-references-edge-cardinality",
+        "reconciled-edge-union-remove",
+        "reconciled-edge-union-mutate",
+        "reconciled-edge-union-reorder",
+        "reconciled-edge-union-duplicate",
+        "reconciled-edge-union-cardinality",
+    };
+
     public static TheoryData<string> BindingMutations => new()
     {
         "identity.job",
@@ -165,6 +194,48 @@ public sealed class Pass1DocumentCommitTests
         Assert.DoesNotContain(
             port.GetMethods(),
             method => method.Name is "CommitDocumentAsync" or "CommitProjectionAsync");
+    }
+
+    [Theory]
+    [MemberData(nameof(CanonicalGraphReplayCases))]
+    public void CommitAsync_CanonicalGraphCorruptionCase_UsesThePublicAtomicReplayPort(
+        string corruption)
+    {
+        // T060 RED public-seam cases.  The PostgreSQL companion executes each
+        // case against a completed commit.  This assertion keeps every
+        // corruption operation bound to the one public CommitAsync operation;
+        // a second projection/materializer port cannot silently accept it.
+        Type port = ResolvePort();
+        MethodInfo commit = Assert.Single(
+            port.GetMethods().Where(method => method.Name == "CommitAsync"));
+        Type result = UnwrapTask(commit.ReturnType);
+
+        Assert.Contains(corruption, CanonicalGraphReplayCases);
+        Assert.Contains(
+            result.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name is "Status" or "Outcome" or "Disposition");
+        Assert.Contains(
+            result.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name is "DocumentVersionId" or "VersionId");
+        Assert.Contains(
+            result.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name is "CommitFingerprint" or "Fingerprint");
+
+        Type status = result.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .First(property => property.Name is "Status" or "Outcome" or "Disposition")
+            .PropertyType;
+        Assert.True(status.IsEnum, "The public commit result must expose a closed replay disposition.");
+        Assert.Contains("Replayed", Enum.GetNames(status), StringComparer.Ordinal);
+        Assert.Contains("Conflict", Enum.GetNames(status), StringComparer.Ordinal);
+    }
+
+    private static Type UnwrapTask(Type returnType)
+    {
+        Assert.True(
+            returnType.IsGenericType &&
+            returnType.GetGenericTypeDefinition() == typeof(Task<>),
+            "The public commit operation must return Task<T>.");
+        return returnType.GetGenericArguments()[0];
     }
 
     private static Type ResolvePort() =>

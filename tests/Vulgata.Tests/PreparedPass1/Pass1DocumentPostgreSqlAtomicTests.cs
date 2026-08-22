@@ -31,6 +31,12 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Guid.Parse("cccccccc-dddd-4eee-8fff-aaaaaaaaaaaa");
     private static readonly Guid NavigationReceiptId =
         Guid.Parse("dddddddd-eeee-4fff-8000-bbbbbbbbbbbb");
+    private static readonly Guid ExtraAnchorId =
+        Guid.Parse("eeeeeeee-1111-4222-8333-444444444444");
+    private static readonly Guid ExtraSectionId =
+        Guid.Parse("eeeeeeee-2222-4333-8444-555555555555");
+    private static readonly Guid ExtraEdgeId =
+        Guid.Parse("eeeeeeee-3333-4444-8555-666666666666");
 
     public static TheoryData<string, string, string, string> DocumentWriteBoundaries => new()
     {
@@ -49,6 +55,113 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         { "before-job-completion", "vulgata.\"ScanJobExecutions\"", "UPDATE", "BEFORE" },
         { "after-job-completion", "vulgata.\"ScanJobExecutions\"", "UPDATE", "AFTER" },
     };
+
+    public static TheoryData<string> CanonicalGraphCorruptions => new()
+    {
+        "source-anchor-remove",
+        "source-anchor-mutate",
+        "source-anchor-reorder",
+        "source-anchor-duplicate",
+        "source-anchor-cardinality",
+        "document-section-remove",
+        "document-section-mutate",
+        "document-section-reorder",
+        "document-section-duplicate",
+        "document-section-cardinality",
+        "index-entry-remove",
+        "index-entry-mutate",
+        "index-entry-reorder",
+        "index-entry-duplicate",
+        "index-entry-cardinality",
+        "direct-reference-edge-remove",
+        "direct-reference-edge-mutate",
+        "direct-reference-edge-reorder",
+        "direct-reference-edge-duplicate",
+        "direct-reference-edge-cardinality",
+    };
+
+    public static TheoryData<string> ReconciledEdgeUnionCorruptions => new()
+    {
+        "reconciled-edge-remove",
+        "reconciled-edge-mutate",
+        "reconciled-edge-reorder",
+        "reconciled-edge-duplicate",
+        "reconciled-edge-cardinality",
+    };
+
+    /// <summary>
+    /// T060 RED: a completed replay must reconstruct every persisted canonical
+    /// graph row.  The current committer only compares DocumentVersion scalar
+    /// fields, so each corruption is expected to return Replayed until T061
+    /// adds the complete graph comparison.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(CanonicalGraphCorruptions))]
+    public async Task PostgreSql17_CompletedReplay_RejectsCanonicalGraphCorruptionWithoutMutation(
+        string corruption)
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        Pass1DocumentCommitResult first = await fixture.Committer.CommitAsync(
+            fixture.Request,
+            CancellationToken.None);
+        Assert.Equal(Pass1DocumentCommitStatus.Committed, first.Status);
+
+        bool duplicateProtected = await fixture.ApplyCanonicalGraphCorruptionAsync(corruption);
+        if (duplicateProtected)
+        {
+            Assert.EndsWith("-duplicate", corruption, StringComparison.Ordinal);
+            return;
+        }
+        GraphSnapshot beforeReplay = await fixture.ReadGraphSnapshotAsync();
+
+        Pass1DocumentCommitResult? replay = null;
+        Exception? failure = null;
+        try
+        {
+            replay = await fixture.Committer.CommitAsync(fixture.Request, CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+        }
+
+        Assert.True(
+            failure is not null || replay?.Status != Pass1DocumentCommitStatus.Replayed,
+            $"T060 RED: {corruption} returned Replayed after canonical graph corruption.");
+        Assert.Equal(beforeReplay, await fixture.ReadGraphSnapshotAsync());
+    }
+
+    /// <summary>
+    /// T060 RED: reconciliation replay must validate the exact direct-plus-
+    /// reconciled REFERENCES Edge union, not just its durable fingerprint and
+    /// row count.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ReconciledEdgeUnionCorruptions))]
+    public async Task PostgreSql17_ReconciliationReplay_RejectsEdgeUnionCorruptionWithoutMutation(
+        string corruption)
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await fixture.PrepareForReconciliationAsync();
+        PreparedPass1ReconciliationResult first = await fixture.ReconcileAsync();
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Reconciled, first.Outcome);
+
+        bool duplicateProtected = await fixture.ApplyReconciledEdgeCorruptionAsync(corruption);
+        if (duplicateProtected)
+        {
+            Assert.EndsWith("-duplicate", corruption, StringComparison.Ordinal);
+            return;
+        }
+        string beforeReplay = await fixture.ReadReferencesEdgeDigestAsync();
+
+        PreparedPass1ReconciliationResult replay = await fixture.ReconcileAsync(
+            expectedReconciliationFingerprint: first.ReconciliationFingerprint);
+
+        Assert.NotEqual(PreparedPass1ReconciliationOutcome.Replay, replay.Outcome);
+        Assert.Equal(beforeReplay, await fixture.ReadReferencesEdgeDigestAsync());
+    }
 
     [Theory]
     [MemberData(nameof(DocumentWriteBoundaries))]
@@ -480,6 +593,309 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
                 .Select(value => value.StateVersion)
                 .SingleAsync();
 
+        internal async Task<bool> ApplyCanonicalGraphCorruptionAsync(string corruption)
+        {
+            try
+            {
+                switch (corruption)
+                {
+                case "source-anchor-remove":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        DELETE FROM "vulgata"."SourceAnchors"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                case "source-anchor-mutate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."SourceAnchors"
+                        SET "EvidenceLocator" = "EvidenceLocator" || '#t060-mutated'
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                case "source-anchor-reorder":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."SourceAnchors" (
+                            "Id", "DocumentVersionId", "RepositoryId", "ScanRunId", "CodeUnitId",
+                            "ProfiledRevision", "RepositoryRelativePath", "EvidenceLocator",
+                            "LineStart", "LineEnd", "SourceHash", "ByteStart", "ByteEnd", "CreatedAt")
+                        SELECT {ExtraAnchorId}, "DocumentVersionId", "RepositoryId", "ScanRunId", "CodeUnitId",
+                            "ProfiledRevision", "RepositoryRelativePath", "EvidenceLocator" || '#t060-reorder',
+                            "LineStart", "LineEnd", "SourceHash", "ByteStart", "ByteEnd", "CreatedAt"
+                        FROM "vulgata"."SourceAnchors"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId}
+                        LIMIT 1;
+                        UPDATE "vulgata"."SourceAnchors"
+                        SET "LineStart" = 2, "LineEnd" = 3
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId}
+                          AND "Id" <> {ExtraAnchorId};
+                        UPDATE "vulgata"."SourceAnchors"
+                        SET "LineStart" = 1, "LineEnd" = 2
+                        WHERE "Id" = {ExtraAnchorId};
+                        """);
+                    break;
+                case "source-anchor-duplicate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."SourceAnchors" (
+                            "Id", "DocumentVersionId", "RepositoryId", "ScanRunId", "CodeUnitId",
+                            "ProfiledRevision", "RepositoryRelativePath", "EvidenceLocator",
+                            "LineStart", "LineEnd", "SourceHash", "ByteStart", "ByteEnd", "CreatedAt")
+                        SELECT "Id", "DocumentVersionId", "RepositoryId", "ScanRunId", "CodeUnitId",
+                            "ProfiledRevision", "RepositoryRelativePath", "EvidenceLocator",
+                            "LineStart", "LineEnd", "SourceHash", "ByteStart", "ByteEnd", "CreatedAt"
+                        FROM "vulgata"."SourceAnchors"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId}
+                        LIMIT 1;
+                        """);
+                    break;
+                case "source-anchor-cardinality":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        DELETE FROM "vulgata"."SourceAnchors"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                case "document-section-remove":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        DELETE FROM "vulgata"."DocumentSections"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId}
+                          AND "SectionOrder" = 1;
+                        """);
+                    break;
+                case "document-section-mutate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."DocumentSections"
+                        SET "Heading" = "Heading" || '（T060）'
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId}
+                          AND "SectionOrder" = 1;
+                        """);
+                    break;
+                case "document-section-reorder":
+                    Guid[] sectionIds = await Prepared.Context.DocumentSections.AsNoTracking()
+                        .Where(value => value.DocumentVersionId == Request.DocumentVersionId)
+                        .OrderBy(value => value.SectionOrder)
+                        .Select(value => value.Id)
+                        .Take(2)
+                        .ToArrayAsync();
+                    Assert.Equal(2, sectionIds.Length);
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."DocumentSections" SET "SectionOrder" = 1000 WHERE "Id" = {sectionIds[0]};
+                        UPDATE "vulgata"."DocumentSections" SET "SectionOrder" = 1 WHERE "Id" = {sectionIds[1]};
+                        UPDATE "vulgata"."DocumentSections" SET "SectionOrder" = 2 WHERE "Id" = {sectionIds[0]};
+                        """);
+                    break;
+                case "document-section-duplicate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."DocumentSections" (
+                            "Id", "LogicalDocumentId", "DocumentVersionId", "RepositoryId", "StableSectionId",
+                            "SectionOrder", "SectionKind", "Heading", "ContentMarkdown", "SearchText",
+                            "SourceAnchorIdsJson", "DocumentVersionIdsJson", "CreatedAt")
+                        SELECT "Id", "LogicalDocumentId", "DocumentVersionId", "RepositoryId", "StableSectionId",
+                            "SectionOrder", "SectionKind", "Heading", "ContentMarkdown", "SearchText",
+                            "SourceAnchorIdsJson", "DocumentVersionIdsJson", "CreatedAt"
+                        FROM "vulgata"."DocumentSections"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId}
+                        LIMIT 1;
+                        """);
+                    break;
+                case "document-section-cardinality":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."DocumentSections" (
+                            "Id", "LogicalDocumentId", "DocumentVersionId", "RepositoryId", "StableSectionId",
+                            "SectionOrder", "SectionKind", "Heading", "ContentMarkdown", "SearchText",
+                            "SourceAnchorIdsJson", "DocumentVersionIdsJson", "CreatedAt")
+                        SELECT {ExtraSectionId}, "LogicalDocumentId", "DocumentVersionId", "RepositoryId", {ExtraSectionId},
+                            999, "SectionKind", "Heading" || ' extra', "ContentMarkdown", "SearchText",
+                            "SourceAnchorIdsJson", "DocumentVersionIdsJson", "CreatedAt"
+                        FROM "vulgata"."DocumentSections"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId}
+                        LIMIT 1;
+                        """);
+                    break;
+                case "index-entry-remove":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        DELETE FROM "vulgata"."IndexEntries"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                case "index-entry-mutate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."IndexEntries"
+                        SET "SearchText" = "SearchText" || ' t060-mutated'
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                    """);
+                    break;
+                case "index-entry-reorder":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."IndexEntries"
+                        SET "Id" = {ExtraEdgeId}
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                case "index-entry-duplicate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."IndexEntries" (
+                            "Id", "LogicalDocumentId", "DocumentVersionId", "RepositoryId", "SystemId",
+                            "DocumentType", "Title", "Summary", "RepositoryRelativePath", "KeySymbolsJson",
+                            "BusinessTermsJson", "TechnicalTermsJson", "SearchText", "CreatedAt")
+                        SELECT "Id", "LogicalDocumentId", "DocumentVersionId", "RepositoryId", "SystemId",
+                            "DocumentType", "Title", "Summary", "RepositoryRelativePath", "KeySymbolsJson",
+                            "BusinessTermsJson", "TechnicalTermsJson", "SearchText", "CreatedAt"
+                        FROM "vulgata"."IndexEntries"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                case "index-entry-cardinality":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        DELETE FROM "vulgata"."IndexEntries"
+                        WHERE "DocumentVersionId" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                case "direct-reference-edge-remove":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        DELETE FROM "vulgata"."DocumentEdges"
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References';
+                        """);
+                    break;
+                case "direct-reference-edge-mutate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."DocumentEdges"
+                        SET "EdgeType" = 'GeneratedFrom'
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References';
+                        """);
+                    break;
+                case "direct-reference-edge-reorder":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."DocumentEdges"
+                        SET "Id" = {ExtraEdgeId}
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References';
+                        """);
+                    break;
+                case "direct-reference-edge-duplicate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."DocumentEdges" (
+                            "Id", "SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId",
+                            "TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId", "EdgeType", "CreatedAt")
+                        SELECT "Id", "SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId",
+                            "TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId", "EdgeType", "CreatedAt"
+                        FROM "vulgata"."DocumentEdges"
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References'
+                        LIMIT 1;
+                        """);
+                    break;
+                case "direct-reference-edge-cardinality":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."DocumentEdges" (
+                            "Id", "SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId",
+                            "TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId", "EdgeType", "CreatedAt")
+                        SELECT {ExtraEdgeId}, "Id", "RepositoryId", "ScanRunId",
+                            "Id", "RepositoryId", "ScanRunId", 'References', {PreparedScanTestHost.FixedUtcNow}
+                        FROM "vulgata"."DocumentVersions"
+                        WHERE "Id" = {Request.DocumentVersionId};
+                        """);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(corruption), corruption, null);
+                }
+            }
+            catch (PostgresException exception) when (corruption.EndsWith("-duplicate", StringComparison.Ordinal))
+            {
+                Assert.Equal("23505", exception.SqlState);
+                Prepared.Context.ChangeTracker.Clear();
+                return true;
+            }
+
+            Prepared.Context.ChangeTracker.Clear();
+            return false;
+        }
+
+        internal async Task<bool> ApplyReconciledEdgeCorruptionAsync(string corruption)
+        {
+            try
+            {
+                switch (corruption)
+                {
+                case "reconciled-edge-remove":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        DELETE FROM "vulgata"."DocumentEdges"
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References';
+                        """);
+                    break;
+                case "reconciled-edge-mutate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."DocumentEdges"
+                        SET "EdgeType" = 'GeneratedFrom'
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References';
+                    """);
+                    break;
+                case "reconciled-edge-reorder":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."DocumentEdges"
+                        SET "Id" = {ExtraEdgeId}
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References';
+                        """);
+                    break;
+                case "reconciled-edge-duplicate":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."DocumentEdges" (
+                            "Id", "SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId",
+                            "TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId", "EdgeType", "CreatedAt")
+                        SELECT "Id", "SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId",
+                            "TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId", "EdgeType", "CreatedAt"
+                        FROM "vulgata"."DocumentEdges"
+                        WHERE "SourceDocumentVersionId" = {Request.DocumentVersionId}
+                          AND "EdgeType" = 'References'
+                        LIMIT 1;
+                        """);
+                    break;
+                case "reconciled-edge-cardinality":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        INSERT INTO "vulgata"."DocumentEdges" (
+                            "Id", "SourceDocumentVersionId", "SourceRepositoryId", "SourceScanRunId",
+                            "TargetDocumentVersionId", "TargetRepositoryId", "TargetScanRunId", "EdgeType", "CreatedAt")
+                        SELECT {ExtraEdgeId}, "Id", "RepositoryId", "ScanRunId",
+                            "Id", "RepositoryId", "ScanRunId", 'References', {PreparedScanTestHost.FixedUtcNow}
+                        FROM "vulgata"."DocumentVersions"
+                        WHERE "Id" = {Request.DocumentVersionId};
+                    """);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(corruption), corruption, null);
+                }
+            }
+            catch (PostgresException exception) when (corruption.EndsWith("-duplicate", StringComparison.Ordinal))
+            {
+                Assert.Equal("23505", exception.SqlState);
+                Prepared.Context.ChangeTracker.Clear();
+                return true;
+            }
+
+            Prepared.Context.ChangeTracker.Clear();
+            return false;
+        }
+
+        internal async Task<GraphSnapshot> ReadGraphSnapshotAsync()
+        {
+            Prepared.Context.ChangeTracker.Clear();
+            return new(
+                await ReadRowsDigestAsync(ConnectionString, "SourceAnchors", Request.DocumentVersionId),
+                await ReadRowsDigestAsync(ConnectionString, "DocumentSections", Request.DocumentVersionId),
+                await ReadRowsDigestAsync(ConnectionString, "IndexEntries", Request.DocumentVersionId),
+                await ReadRowsDigestAsync(ConnectionString, "DocumentEdges", Request.DocumentVersionId),
+                await Prepared.Context.ScanJobExecutions.AsNoTracking()
+                    .Where(value => value.Id == Request.Packet.JobId)
+                    .Select(value => value.State + ":" + value.StateVersion + ":" + value.CommittedDocumentVersionId)
+                    .SingleAsync());
+        }
+
+        internal Task<string> ReadReferencesEdgeDigestAsync() =>
+            ReadRowsDigestAsync(ConnectionString, "DocumentEdges", Request.DocumentVersionId, referencesOnly: true);
+
         internal async Task<PreparedPass1ReconciliationRequest> CreateReconciliationRequestAsync(
             long? expectedPairStateVersion = null,
             string? expectedReconciliationFingerprint = null) =>
@@ -612,6 +1028,37 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
                 .SingleAsync();
 
         public async ValueTask DisposeAsync() => await Prepared.DisposeAsync();
+    }
+
+    private sealed record GraphSnapshot(
+        string SourceAnchors,
+        string DocumentSections,
+        string IndexEntries,
+        string DocumentEdges,
+        string Job);
+
+    private static async Task<string> ReadRowsDigestAsync(
+        string connectionString,
+        string table,
+        Guid documentVersionId,
+        bool referencesOnly = false)
+    {
+        string edgeFilter = referencesOnly ? " AND \"EdgeType\" = 'References'" : string.Empty;
+        string versionColumn = table == "DocumentEdges"
+            ? "SourceDocumentVersionId"
+            : "DocumentVersionId";
+        string sql = $"""
+            SELECT COALESCE(string_agg(row_to_json(rows)::text, '|' ORDER BY rows."Id"), '')
+            FROM (
+                SELECT * FROM vulgata."{table}"
+                WHERE "{versionColumn}" = @documentVersionId{edgeFilter}
+            ) rows;
+            """;
+        await using NpgsqlConnection connection = new(connectionString);
+        await connection.OpenAsync();
+        await using NpgsqlCommand command = new(sql, connection);
+        command.Parameters.AddWithValue("documentVersionId", documentVersionId);
+        return Convert.ToString(await command.ExecuteScalarAsync()) ?? string.Empty;
     }
 
     private sealed record GraphCounts(
