@@ -40,7 +40,7 @@ public sealed class Pass1ProductionCompositionTests
     }
 
     [Fact]
-    public async Task InvalidWorkerResult_IsClassifiedAndCannotReachAtomicCommitAsync()
+    public async Task OrdinaryRejectedWorkerResult_IsRetryClassifiedAndCannotReachAtomicCommitAsync()
     {
         DateTimeOffset now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -87,7 +87,7 @@ public sealed class Pass1ProductionCompositionTests
 
         await (Task)method.Invoke(runner, [activation, claim, CancellationToken.None])!;
 
-        Assert.Equal(ScanJobFailureCategory.Integrity, store.RecordedCategory);
+        Assert.Equal(ScanJobFailureCategory.JobTransient, store.RecordedCategory);
         Assert.Equal(0, committer.CallCount);
     }
 

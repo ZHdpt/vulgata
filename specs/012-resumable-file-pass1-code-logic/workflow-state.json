@@ -120,9 +120,9 @@
     "specs/012-resumable-file-pass1-code-logic/decisions/implementation-approval-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-implement-20260822T120816Z-4d72b9",
+    "checkpoint_id": "bmad-12-3-implement-20260822T122809Z-6f91ac",
     "stage": "implement",
-    "commit_sha": "68dd41e5e504ef89d4178268ad72b8f23e8fd94d",
+    "commit_sha": "b540402bcf68f3b09c04fc0b9799f3aa90f9e735",
     "binding_status": "bound"
   },
   "resume": {
