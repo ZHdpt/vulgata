@@ -173,8 +173,13 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
                 .Where(value => value.Id == request.LogicalDocumentId)
                 .Select(value => value.CurrentVersionId)
                 .SingleOrDefaultAsync(cancellationToken);
+            bool canonicalGraphMatches = await CanonicalGraphMatchesAsync(
+                request,
+                projection,
+                cancellationToken);
             bool exact = JobMatchesPacket(job, request.Packet) &&
                 await DurableBindingsMatchAsync(request.Packet, projection, cancellationToken) &&
+                canonicalGraphMatches &&
                 job.CommittedDocumentVersionId == request.DocumentVersionId &&
                 currentVersionId == request.DocumentVersionId &&
                 committed is not null &&
@@ -350,6 +355,256 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
         await transaction.CommitAsync(cancellationToken);
         return new(Pass1DocumentCommitStatus.Committed, request.LogicalDocumentId,
             request.DocumentVersionId, commitFingerprint, null);
+    }
+
+    private async Task<bool> CanonicalGraphMatchesAsync(
+        Pass1DocumentCommitRequest request,
+        CodeLogicFileV2Projection projection,
+        CancellationToken cancellationToken)
+    {
+        SourceAnchor[] anchors = await context.SourceAnchors.AsNoTracking()
+            .Where(value => value.DocumentVersionId == request.DocumentVersionId)
+            .ToArrayAsync(cancellationToken);
+        if (anchors.Length != projection.SourceAnchors.Count ||
+            projection.SourceAnchors.Any(expected => !anchors.Any(actual =>
+                actual.Id == expected.Id &&
+                actual.DocumentVersionId == request.DocumentVersionId &&
+                actual.RepositoryId == request.Packet.RepositoryId &&
+                actual.ScanRunId == request.Packet.ScanRunId &&
+                actual.CodeUnitId == expected.FileCodeUnitId &&
+                actual.ProfiledRevision == request.Packet.ProfiledRevision &&
+                actual.RepositoryRelativePath == expected.RepositoryRelativePath &&
+                actual.EvidenceLocator == expected.EvidenceLocator &&
+                actual.LineStart == checked((int)expected.LineStart) &&
+                actual.LineEnd == checked((int)expected.LineEnd) &&
+                actual.SourceHash == Convert.ToHexStringLower(expected.SourceHash.Span) &&
+                actual.ByteStart == checked((long)expected.ByteStart) &&
+                actual.ByteEnd == checked((long)expected.ByteEnd) &&
+                actual.CreatedAt == request.CommittedAt)))
+        {
+            return false;
+        }
+
+        DocumentSection[] sections = await context.DocumentSections.AsNoTracking()
+            .Where(value => value.DocumentVersionId == request.DocumentVersionId)
+            .OrderBy(value => value.SectionOrder)
+            .ToArrayAsync(cancellationToken);
+        if (sections.Length != projection.Sections.Count)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < sections.Length; index++)
+        {
+            DocumentSection actual = sections[index];
+            CodeLogicFileV2SectionProjection expected = projection.Sections[index];
+            if (actual.Id != expected.StableSectionId ||
+                actual.LogicalDocumentId != request.LogicalDocumentId ||
+                actual.DocumentVersionId != request.DocumentVersionId ||
+                actual.RepositoryId != request.Packet.RepositoryId ||
+                actual.StableSectionId != expected.StableSectionId ||
+                actual.SectionOrder != expected.SectionOrder ||
+                actual.SectionKind != expected.SectionKind ||
+                actual.Heading != expected.Heading ||
+                actual.ContentMarkdown != expected.Markdown ||
+                actual.SearchText != expected.SearchText ||
+                !CodeLogicFileV2Projector.MatchesOrderedJsonArray(
+                    actual.SourceAnchorIdsJson,
+                    expected.SourceAnchorIds) ||
+                !CodeLogicFileV2Projector.MatchesOrderedJsonArray(
+                    actual.DocumentVersionIdsJson,
+                    expected.AuthorizedDocumentVersionIds) ||
+                actual.CreatedAt != request.CommittedAt)
+            {
+                return false;
+            }
+        }
+
+        IndexEntry[] entries = await context.IndexEntries.AsNoTracking()
+            .Where(value => value.DocumentVersionId == request.DocumentVersionId)
+            .ToArrayAsync(cancellationToken);
+        CodeLogicFileV2IndexEntryProjection indexEntry = projection.IndexEntry;
+        if (entries.Length != 1)
+        {
+            return false;
+        }
+
+        IndexEntry actualIndex = entries[0];
+        if (actualIndex.Id != indexEntry.Id ||
+            actualIndex.LogicalDocumentId != request.LogicalDocumentId ||
+            actualIndex.DocumentVersionId != request.DocumentVersionId ||
+            actualIndex.RepositoryId != request.Packet.RepositoryId ||
+            actualIndex.SystemId != request.Packet.SystemId ||
+            actualIndex.DocumentType != DocumentType.CodeLogic ||
+            actualIndex.Title != indexEntry.Title ||
+            actualIndex.Summary != indexEntry.Summary ||
+            actualIndex.RepositoryRelativePath != request.Packet.RepositoryRelativePath ||
+            !CodeLogicFileV2Projector.MatchesOrderedJsonArray(
+                actualIndex.KeySymbolsJson,
+                indexEntry.KeySymbols) ||
+            !CodeLogicFileV2Projector.MatchesOrderedJsonArray(
+                actualIndex.BusinessTermsJson,
+                indexEntry.BusinessTerms) ||
+            !CodeLogicFileV2Projector.MatchesOrderedJsonArray(
+                actualIndex.TechnicalTermsJson,
+                indexEntry.TechnicalTerms) ||
+            actualIndex.SearchText != indexEntry.SearchText ||
+            actualIndex.CreatedAt != request.CommittedAt)
+        {
+            return false;
+        }
+
+        DocumentEdge[] edges = await context.DocumentEdges.AsNoTracking()
+            .Where(value => value.SourceDocumentVersionId == request.DocumentVersionId)
+            .ToArrayAsync(cancellationToken);
+        Pass1Outcome? outcome = await context.Pass1Outcomes.AsNoTracking()
+            .SingleOrDefaultAsync(
+                value => value.PairExecutionId == request.Packet.PairExecutionId,
+                cancellationToken);
+        Guid[] targetIds = projection.DirectReferenceEdges
+            .Select(value => value.TargetDocumentVersionId)
+            .Distinct()
+            .ToArray();
+        DocumentVersion[] targets = await context.DocumentVersions.AsNoTracking()
+            .Where(value => targetIds.Contains(value.Id))
+            .ToArrayAsync(cancellationToken);
+        bool directEdgesMatch = targets.Length == targetIds.Length &&
+            projection.DirectReferenceEdges.All(expected =>
+            {
+                DocumentVersion? target = targets.SingleOrDefault(value =>
+                    value.Id == expected.TargetDocumentVersionId);
+                return target is not null && edges.Any(actual =>
+                    actual.Id == expected.Id &&
+                    actual.SourceDocumentVersionId == request.DocumentVersionId &&
+                    actual.SourceRepositoryId == request.Packet.RepositoryId &&
+                    actual.SourceScanRunId == request.Packet.ScanRunId &&
+                    actual.TargetDocumentVersionId == target.Id &&
+                    actual.TargetRepositoryId == target.RepositoryId &&
+                    actual.TargetScanRunId == target.ScanRunId &&
+                    actual.EdgeType == expected.EdgeType &&
+                    actual.CreatedAt == request.CommittedAt);
+            });
+        if (!directEdgesMatch)
+        {
+            return false;
+        }
+
+        return outcome is null
+            ? edges.Length == projection.DirectReferenceEdges.Count
+            : await ReconciledUnionMatchesAsync(
+                request.Packet.PairExecutionId,
+                outcome,
+                cancellationToken);
+    }
+
+    private async Task<bool> ReconciledUnionMatchesAsync(
+        Guid pairExecutionId,
+        Pass1Outcome outcome,
+        CancellationToken cancellationToken)
+    {
+        if (outcome.Status == Pass1OutcomeStatus.FailedPass1)
+        {
+            return false;
+        }
+
+        Pass1PairExecution? pair = await context.Pass1PairExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == pairExecutionId, cancellationToken);
+        if (pair is null || pair.Phase != Pass1PairExecutionPhase.ReadyForResolution)
+        {
+            return false;
+        }
+
+        PreparedScanManifestEntry[] entries = await context.PreparedScanManifestEntries.AsNoTracking()
+            .Where(value => value.PreparedScanManifestId == pair.ManifestOneId ||
+                value.PreparedScanManifestId == pair.ManifestTwoId)
+            .ToArrayAsync(cancellationToken);
+        TwoRepositoryScanCoordination? coordination =
+            await context.TwoRepositoryScanCoordinations.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == pair.CoordinationId, cancellationToken);
+        if (coordination is null)
+        {
+            return false;
+        }
+
+        Guid[] unitIds = entries.Select(value => value.FileCodeUnitId).ToArray();
+        ScanJobExecution[] jobs = await context.ScanJobExecutions.AsNoTracking()
+            .Where(value => unitIds.Contains(value.FileCodeUnitId) &&
+                (value.ScanExecutionId == coordination.ScanExecutionOneId ||
+                    value.ScanExecutionId == coordination.ScanExecutionTwoId))
+            .ToArrayAsync(cancellationToken);
+        Dictionary<Guid, PreparedScanManifestEntry> entriesByUnit = entries
+            .ToDictionary(value => value.FileCodeUnitId);
+        ScanJobExecution[] completedJobs = jobs
+            .Where(value => entriesByUnit.ContainsKey(value.FileCodeUnitId) &&
+                value.State == ScanJobExecutionState.Completed &&
+                value.CommittedDocumentVersionId is not null)
+            .OrderBy(value => entriesByUnit[value.FileCodeUnitId].PairSelectionOrdinal)
+            .ToArray();
+        Guid[] sourceIds = completedJobs
+            .Select(value => value.CommittedDocumentVersionId!.Value)
+            .ToArray();
+        DocumentVersion[] sources = await context.DocumentVersions.AsNoTracking()
+            .Where(value => sourceIds.Contains(value.Id))
+            .ToArrayAsync(cancellationToken);
+        if (entries.Length != pair.DispatchedFileCount ||
+            jobs.Length != pair.DispatchedFileCount ||
+            completedJobs.Length != outcome.CompletedCount ||
+            sources.Length != completedJobs.Length)
+        {
+            return false;
+        }
+
+        Guid[] repositoryIds = jobs.Select(value => value.RepositoryId).Distinct().ToArray();
+        Guid[] currentIds = await context.LogicalDocuments.AsNoTracking()
+            .Where(value => value.CurrentVersionId != null &&
+                repositoryIds.Contains(value.RepositoryId))
+            .Select(value => value.CurrentVersionId!.Value)
+            .ToArrayAsync(cancellationToken);
+        DocumentVersion[] currentVersions = await context.DocumentVersions.AsNoTracking()
+            .Where(value => currentIds.Contains(value.Id) &&
+                value.SchemaIdentity == pair.DocumentSchemaIdentity)
+            .ToArrayAsync(cancellationToken);
+        Guid[] currentVersionIds = currentVersions.Select(value => value.Id).ToArray();
+        SourceAnchor[] currentAnchors = await context.SourceAnchors.AsNoTracking()
+            .Where(value => currentVersionIds.Contains(value.DocumentVersionId))
+            .ToArrayAsync(cancellationToken);
+
+        var observations = new List<Pass1ReferenceObservation>();
+        foreach (ScanJobExecution completedJob in completedJobs)
+        {
+            DocumentVersion source = sources.Single(value =>
+                value.Id == completedJob.CommittedDocumentVersionId);
+            observations.AddRange(ReadReferenceObservations(
+                source,
+                completedJob.FileCodeUnitId,
+                entriesByUnit[completedJob.FileCodeUnitId].PairSelectionOrdinal));
+        }
+
+        Pass1ReferenceObservation[] orderedObservations = observations
+            .OrderBy(value => value.SourceRepositoryId.ToString("D"), StringComparer.Ordinal)
+            .ThenBy(value => value.PairSelectionOrdinal)
+            .ThenBy(value => value.SourceDocumentVersionId.ToString("D"), StringComparer.Ordinal)
+            .ThenBy(value => value.ObservationFingerprint, StringComparer.Ordinal)
+            .ThenBy(value => value.TargetCanonicalPath, StringComparer.Ordinal)
+            .ThenBy(value => value.NormalizedTargetSymbol, StringComparer.Ordinal)
+            .ThenBy(value => value.DirectTargetDocumentVersionId?.ToString("D"), StringComparer.Ordinal)
+            .ToArray();
+        IReadOnlyList<PreparedPass1ReconciledEdge> expectedEdges =
+            PreparedPass1ReconciliationProjector.ProjectExpectedUnion(
+                orderedObservations,
+                currentVersions,
+                currentAnchors);
+        DocumentEdge[] actualEdges = await context.DocumentEdges.AsNoTracking()
+            .Where(value => sourceIds.Contains(value.SourceDocumentVersionId))
+            .ToArrayAsync(cancellationToken);
+        return outcome.ReconciledEdgeCount == expectedEdges.Count &&
+            PreparedPass1ReconciliationProjector.MatchesDurableUnion(
+                expectedEdges,
+                actualEdges,
+                orderedObservations,
+                sources,
+                currentVersions,
+                outcome.CompletedAt);
     }
 
     private async Task<bool> DurableBindingsMatchAsync(

@@ -1,0 +1,34 @@
+{
+  "evidence_id": "12-3/implement/12",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "4a92cd171dfb13579700868d34f645e9a376fe65",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Core/DomainServices/CodeLogicFileV2Projector.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ReconciliationProjector.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Core/DomainServices/CodeLogicFileV2Projector.cs": "32383711783fd708691314bff9172ecc29fca737687fa0b07395c62f406a6efa",
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs": "a8608430c9f84ec34b00daaff67959f00c6337a5e1dd6d19060e0c2287f76a5c",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ReconciliationProjector.cs": "1b2c05d184686ffba855e222ae9588b02d2b4ce74b7f3ffb3593f48a838284a4",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "7afe7d27e680b7230b10642b34c5900f5eb87630ea68a219c8a53ab6f4424552"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PostgreSql17_CompletedReplay_RejectsCanonicalGraphCorruptionWithoutMutation|FullyQualifiedName~PostgreSql17_ReconciliationReplay_RejectsEdgeUnionCorruptionWithoutMutation --no-build --no-restore --logger trx",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1DocumentCommitTests|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests|FullyQualifiedName~Pass1ReconciliationTests|FullyQualifiedName~CodeLogicFileV2ProjectionTests --no-build --no-restore --logger trx",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --verbosity minimal"
+  ],
+  "result": {
+    "exact_t060_passed": 25,
+    "document_projection_reconciliation_postgresql_passed": 168,
+    "failed": 0,
+    "skipped": 0,
+    "build_errors": 0,
+    "build_warnings": 9,
+    "classification": "green"
+  },
+  "observed_at": "2026-08-22T15:32:23Z",
+  "summary": "T061 reconstructs and compares the complete persisted canonical Document graph and the pair-wide direct-plus-reconciled REFERENCES Edge union before replay. It compares identities, scalars, ordered arrays, cardinality, canonical creation provenance, and exact current targets; missing, extra, mutated, reordered, or duplicate rows conflict without writes while immutable Documents remain unchanged."
+}

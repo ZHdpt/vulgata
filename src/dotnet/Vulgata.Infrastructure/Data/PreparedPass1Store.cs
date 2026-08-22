@@ -643,7 +643,14 @@ public sealed class PreparedPass1Store(
             {
                 bool exactReplay = durableOutcome.ReconciliationFingerprint == fingerprint &&
                     durableOutcome.ReconciledEdgeCount == edges.Length &&
-                    missing.Count == 0;
+                    missing.Count == 0 &&
+                    PreparedPass1ReconciliationProjector.MatchesDurableUnion(
+                        edges,
+                        existingEdges,
+                        observations,
+                        sources,
+                        currentVersions,
+                        durableOutcome.CompletedAt);
                 await transaction.RollbackAsync(CancellationToken.None);
                 context.ChangeTracker.Clear();
                 return ReconciliationResult(

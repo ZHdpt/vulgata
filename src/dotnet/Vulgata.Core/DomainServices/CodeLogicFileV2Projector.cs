@@ -67,6 +67,27 @@ public static partial class CodeLogicFileV2Projector
 {
     private static readonly UTF8Encoding _strictUtf8 = new(false, true);
 
+    /// <summary>
+    /// Compares a persisted JSON array by scalar value, order, and
+    /// cardinality without depending on storage-normalized whitespace.
+    /// </summary>
+    public static bool MatchesOrderedJsonArray<T>(
+        string persistedJson,
+        IReadOnlyList<T> expected)
+    {
+        ArgumentNullException.ThrowIfNull(persistedJson);
+        ArgumentNullException.ThrowIfNull(expected);
+        try
+        {
+            T[]? actual = JsonSerializer.Deserialize<T[]>(persistedJson);
+            return actual is not null && actual.SequenceEqual(expected);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
     public static CodeLogicFileV2Projection Project(
         string authoritativeJson,
         Guid pairExecutionId,
