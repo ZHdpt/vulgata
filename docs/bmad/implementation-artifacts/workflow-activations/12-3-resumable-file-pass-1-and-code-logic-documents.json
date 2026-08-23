@@ -5,7 +5,7 @@
   "story_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
   "proposed_feature_short_name": "resumable-file-pass1-code-logic",
   "stage": "conditional-e2e",
-  "source_commit": "4b464e608486b01d8241264537f0b299eb80ca49",
+  "source_commit": "8969d2eaec45699030fda75297d055aefe6460d6",
   "preflight": {
     "branch": "demo0831/story-12-3",
     "head": "f65094ea3460aba48b8e6ff00e3e502679933f4b",
@@ -19,6 +19,9 @@
   "owned_paths": [
     "docs/bmad/implementation-artifacts/workflow-activations/12-3-resumable-file-pass-1-and-code-logic-documents.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json",
+    "specs/012-resumable-file-pass1-code-logic/e2e-decision.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-04.json",
+    "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md",
     "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
     "tests/Vulgata.Tests/PreparedPass1/Pass1ExecutionApiTests.cs",
     "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs"
@@ -29,7 +32,7 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-3-e2e-blocked-20260823T024446Z",
     "stage": "conditional-e2e",
-    "commit_sha": "4b464e608486b01d8241264537f0b299eb80ca49",
+    "commit_sha": "8969d2eaec45699030fda75297d055aefe6460d6",
     "binding_status": "bound"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
@@ -38,5 +41,5 @@
     "stage": "conditional-e2e",
     "reason": "Quality review attempt 4 accepted. Authenticated API is 11/11; required real-pair E2E awaits fresh Story 12.2 manifests and DeepSeek/T046 environment inputs."
   },
-  "updated_at": "2026-08-23T02:44:46Z"
+  "updated_at": "2026-08-23T02:50:50Z"
 }
