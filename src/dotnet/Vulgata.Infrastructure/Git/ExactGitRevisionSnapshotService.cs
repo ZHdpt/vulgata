@@ -285,7 +285,7 @@ public sealed class ExactGitRevisionSnapshotService : IExactGitRevisionSnapshotS
 
                 Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
                 EnsureSafeAncestors(snapshotRoot, destinationPath);
-                if (entry.DataStream is null)
+                if (entry.DataStream is null && entry.Length > 0)
                 {
                     throw new InvalidDataException("精确版本快照条目无效。");
                 }
@@ -297,11 +297,15 @@ public sealed class ExactGitRevisionSnapshotService : IExactGitRevisionSnapshotS
                     FileShare.None,
                     bufferSize: 64 * 1024,
                     FileOptions.Asynchronous | FileOptions.SequentialScan);
-                await CopyExactlyAsync(
-                    entry.DataStream,
-                    destination,
-                    entry.Length,
-                    cancellationToken);
+                if (entry.DataStream is not null)
+                {
+                    await CopyExactlyAsync(
+                        entry.DataStream,
+                        destination,
+                        entry.Length,
+                        cancellationToken);
+                }
+
                 RejectReparsePoint(destinationPath);
             }
         }

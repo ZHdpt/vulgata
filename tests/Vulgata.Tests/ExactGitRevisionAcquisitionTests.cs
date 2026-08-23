@@ -184,6 +184,41 @@ public sealed class ExactGitRevisionAcquisitionTests
     }
 
     [Fact]
+    public async Task AcquireAsync_EmptyCommittedBlob_MaterializesZeroLengthFileAsync()
+    {
+        await using ExactCrossRepositoryTemporaryGitRepository source =
+            await ExactCrossRepositoryTemporaryGitRepository.CreateAsync(
+                "zero-byte",
+                new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["src/empty.xml"] = string.Empty,
+                },
+                CancellationToken.None);
+        string storageRoot = ExactCrossRepositoryCleanup.CreateUniqueRoot("exact-git-zero-byte");
+        try
+        {
+            RepositoryEntity repository = CreateRepository(source.RootPath);
+            var service = new ExactGitRevisionSnapshotService(
+                new GitWorkingCopyOptions(storageRoot));
+
+            await using ICommittedRepositorySnapshotLease lease = await service.AcquireAsync(
+                repository,
+                Guid.NewGuid(),
+                ExactCrossRepositoryTestValues.ExpectedRef,
+                source.Commit,
+                CancellationToken.None);
+
+            var snapshotFile = new FileInfo(Path.Combine(lease.RootPath, "src", "empty.xml"));
+            Assert.True(snapshotFile.Exists);
+            Assert.Equal(0, snapshotFile.Length);
+        }
+        finally
+        {
+            await ExactCrossRepositoryCleanup.DeleteAsync(storageRoot);
+        }
+    }
+
+    [Fact]
     public async Task AcquireAsync_MissingMovedSimilarWrongAndArchiveFailures_AreSanitizedAndCleanedAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
