@@ -15,7 +15,6 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
 using Vulgata.Shared.Scans;
-using Vulgata.Tests.PreparedPass1.Fixtures;
 using Vulgata.Tests.PreparedScanning;
 using Vulgata.Web.Data;
 
@@ -46,7 +45,8 @@ public sealed class Pass1ProductionExecutionTests
         await ConfigureWorkerProviderAsync(
             host,
             qualification.SystemId,
-            qualification.ProviderEndpoint);
+            qualification.ProviderEndpoint,
+            qualification.ProviderModel);
         using HttpClient client = await CreateAuthenticatedClientAsync(
             host,
             qualification.SystemId);
@@ -117,6 +117,7 @@ public sealed class Pass1ProductionExecutionTests
             .Select(value => new
             {
                 value.Id,
+                value.RepositoryId,
                 value.RepositoryRelativePath,
                 value.ProfiledRevision,
                 value.SchemaIdentity,
@@ -127,9 +128,16 @@ public sealed class Pass1ProductionExecutionTests
         Assert.NotEmpty(documents);
         Assert.All(documents, document =>
         {
+            T062RepositoryQualification repository = qualification.ForRepository(document.RepositoryId);
             Assert.Equal("code-logic/file-v2", document.SchemaIdentity);
-            Assert.Equal(PreparedPass1ManifestPairFixtures.ProfiledRevision, document.ProfiledRevision);
+            Assert.Equal(repository.ProfiledRevision, document.ProfiledRevision);
             Assert.Null(document.SupersededById);
+            Assert.True(
+                File.Exists(Path.Combine(
+                    repository.SourceRoot,
+                    document.RepositoryRelativePath.Replace('/', Path.DirectorySeparatorChar))),
+                $"T062 document path is not present in its approved Repository root: " +
+                $"repository={document.RepositoryId:D}, path={document.RepositoryRelativePath}");
         });
 
         var anchors = await verification.SourceAnchors
@@ -144,9 +152,16 @@ public sealed class Pass1ProductionExecutionTests
             StringComparison.OrdinalIgnoreCase));
         Assert.All(anchors, anchor =>
         {
-            Assert.Equal(PreparedPass1ManifestPairFixtures.ProfiledRevision, anchor.ProfiledRevision);
+            T062RepositoryQualification repository = qualification.ForRepository(anchor.RepositoryId);
+            Assert.Equal(repository.ProfiledRevision, anchor.ProfiledRevision);
             Assert.Equal(64, anchor.SourceHash.Length);
             Assert.True(anchor.LineStart >= 1 && anchor.LineEnd >= anchor.LineStart);
+            Assert.True(
+                File.Exists(Path.Combine(
+                    repository.SourceRoot,
+                    anchor.RepositoryRelativePath.Replace('/', Path.DirectorySeparatorChar))),
+                $"T062 Source Anchor path is not present in its approved Repository root: " +
+                $"repository={anchor.RepositoryId:D}, path={anchor.RepositoryRelativePath}");
         });
 
         var receipts = await verification.Pass1NavigationReceipts
@@ -198,6 +213,7 @@ public sealed class Pass1ProductionExecutionTests
         ];
         Uri providerEndpoint = new(
             Environment.GetEnvironmentVariable("VULGATA_T062_WORKER_PROVIDER_ENDPOINT")!);
+        string providerModel = Required("VULGATA_T062_WORKER_PROVIDER_MODEL");
 
         await using VulgataDbContext context =
             PreparedScanPostgreSqlFixture.CreateContext(connectionString);
@@ -216,19 +232,39 @@ public sealed class Pass1ProductionExecutionTests
             Assert.True(manifest.SelectedCount >= 25);
         });
 
-        PreparedScanManifest[] orderedManifests = manifests
-            .OrderBy(manifest => manifest.RepositoryId)
+        Assert.Equal(2, manifestIds.Distinct().Count());
+        Dictionary<Guid, string> rootsByManifest = manifestIds
+            .Zip(roots)
+            .ToDictionary(value => value.First, value => value.Second);
+        T062RepositoryQualification[] repositories = manifests
+            .Select(manifest =>
+            {
+                Assert.True(
+                    rootsByManifest.TryGetValue(manifest.Id, out string? root),
+                    $"T062 loaded an unexpected manifest: {manifest.Id:D}");
+                Assert.False(
+                    string.IsNullOrWhiteSpace(manifest.ProfiledRevision),
+                    $"T062 manifest has no Profiled Revision: {manifest.Id:D}");
+                return new T062RepositoryQualification(
+                    manifest.Id,
+                    manifest.RepositoryId,
+                    root!,
+                    manifest.ProfiledRevision);
+            })
+            .OrderBy(value => value.RepositoryId)
             .ToArray();
-        string profiledRevision = orderedManifests[0].ProfiledRevision;
-        Assert.All(orderedManifests, manifest => Assert.Equal(profiledRevision, manifest.ProfiledRevision));
+        Assert.Equal(2, repositories.Select(value => value.RepositoryId).Distinct().Count());
         int exactJavaXmlCount = 0;
-        foreach ((PreparedScanManifest manifest, string root) in orderedManifests.Zip(roots))
+        foreach (T062RepositoryQualification repository in repositories)
         {
+            PreparedScanManifest manifest = manifests.Single(value => value.Id == repository.ManifestId);
             foreach (PreparedScanManifestEntry entry in manifest.Entries)
             {
                 CodeUnit unit = entry.FileCodeUnit
                     ?? throw new Xunit.Sdk.XunitException("T062 manifest entry has no File Code Unit.");
-                string fullPath = Path.Combine(root, unit.FilePath.Replace('/', Path.DirectorySeparatorChar));
+                string fullPath = Path.Combine(
+                    repository.SourceRoot,
+                    unit.FilePath.Replace('/', Path.DirectorySeparatorChar));
                 Assert.True(File.Exists(fullPath), $"T062 source byte prerequisite missing: {fullPath}");
                 byte[] bytes = await File.ReadAllBytesAsync(fullPath);
                 string sourceHash = Convert.ToHexStringLower(
@@ -244,7 +280,13 @@ public sealed class Pass1ProductionExecutionTests
         }
 
         Assert.True(exactJavaXmlCount >= 2, "T062 requires exact Java and XML source evidence in the approved pair.");
-        return new(connectionString, systemId, manifestIds, profiledRevision, roots, providerEndpoint);
+        return new(
+            connectionString,
+            systemId,
+            manifestIds,
+            repositories,
+            providerEndpoint,
+            providerModel);
     }
 
     private static Guid ParseRequiredGuid(string variableName) =>
@@ -252,10 +294,16 @@ public sealed class Pass1ProductionExecutionTests
             ? value
             : throw new Xunit.Sdk.XunitException($"T062 requires a non-empty {variableName}.");
 
+    private static string Required(string variableName) =>
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(variableName))
+            ? Environment.GetEnvironmentVariable(variableName)!
+            : throw new Xunit.Sdk.XunitException($"T062 requires a non-empty {variableName}.");
+
     internal static async Task ConfigureWorkerProviderAsync(
         WebApplicationFactory<Program> host,
         Guid systemId,
-        Uri endpoint)
+        Uri endpoint,
+        string model)
     {
         await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
         VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
@@ -267,11 +315,11 @@ public sealed class Pass1ProductionExecutionTests
         string encryptedApiKey = await encryption.EncryptAsync(SecretPurposes.LlmApiKey, apiKey);
         DateTimeOffset now = DateTimeOffset.UtcNow;
         LlmProvider? provider = await context.LlmProviders
-            .SingleOrDefaultAsync(value => value.Name == "t062-worker-provider");
+            .SingleOrDefaultAsync(value => value.Name == model);
         if (provider is null)
         {
             provider = new LlmProvider(
-                "t062-worker-provider",
+                model,
                 endpoint.ToString(),
                 encryptedApiKey,
                 ApiType.ChatCompletions,
@@ -282,7 +330,7 @@ public sealed class Pass1ProductionExecutionTests
         else
         {
             provider.UpdateDetails(
-                "t062-worker-provider",
+                model,
                 endpoint.ToString(),
                 encryptedApiKey,
                 ApiType.ChatCompletions,
@@ -342,6 +390,7 @@ public sealed class Pass1ProductionExecutionTests
         string? firstRoot = Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_ONE_ROOT");
         string? secondRoot = Environment.GetEnvironmentVariable("VULGATA_T062_REPOSITORY_TWO_ROOT");
         string? providerEndpoint = Environment.GetEnvironmentVariable("VULGATA_T062_WORKER_PROVIDER_ENDPOINT");
+        string? providerModel = Environment.GetEnvironmentVariable("VULGATA_T062_WORKER_PROVIDER_MODEL");
         string? sourceBinding = Environment.GetEnvironmentVariable("VULGATA_T062_SOURCE_BINDING_READY");
         if (!string.Equals(
                 Environment.GetEnvironmentVariable("VULGATA_T062_APPROVED_PAIR_REAL"),
@@ -354,7 +403,8 @@ public sealed class Pass1ProductionExecutionTests
             !Guid.TryParse(manifestTwoId, out Guid parsedManifestTwoId) || parsedManifestTwoId == Guid.Empty ||
             parsedManifestOneId == parsedManifestTwoId ||
             string.IsNullOrWhiteSpace(firstRoot) || string.IsNullOrWhiteSpace(secondRoot) ||
-            string.IsNullOrWhiteSpace(providerEndpoint) || !string.Equals(sourceBinding, "1", StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(providerEndpoint) || string.IsNullOrWhiteSpace(providerModel) ||
+            !string.Equals(sourceBinding, "1", StringComparison.Ordinal) ||
             !Uri.TryCreate(providerEndpoint, UriKind.Absolute, out Uri? endpoint) ||
             endpoint.Scheme is not ("http" or "https"))
         {
@@ -363,7 +413,8 @@ public sealed class Pass1ProductionExecutionTests
                 "VULGATA_T062_QUALIFICATION_CONNECTION, VULGATA_T062_SYSTEM_ID, " +
                 "VULGATA_T062_MANIFEST_ONE_ID, and VULGATA_T062_MANIFEST_TWO_ID, plus " +
                 "VULGATA_T062_REPOSITORY_ONE_ROOT, VULGATA_T062_REPOSITORY_TWO_ROOT, " +
-                "VULGATA_T062_WORKER_PROVIDER_ENDPOINT, and VULGATA_T062_SOURCE_BINDING_READY=1. " +
+                "VULGATA_T062_WORKER_PROVIDER_ENDPOINT, VULGATA_T062_WORKER_PROVIDER_MODEL, and " +
+                "VULGATA_T062_SOURCE_BINDING_READY=1. " +
                 "The roots must be the approved profiled revisions with revision-bound Java/XML " +
                 "bytes; the endpoint must be an explicitly controlled Worker provider. PostgreSQL " +
                 "17 still requires VULGATA_TEST_POSTGRES_ADMIN.";
@@ -480,22 +531,29 @@ public sealed class Pass1ProductionExecutionTests
         string html = await loginPage.Content.ReadAsStringAsync();
         Match form = Regex.Match(
             html,
-            "<form[^>]*>(?<content>.*?)</form>",
+            "<form\\b(?=[^>]*\\bmethod\\s*=\\s*[\"']post[\"'])[^>]*>(?<content>.*?)</form>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
         Assert.True(form.Success, $"T062 authenticated host login unavailable: {loginPage.StatusCode}.");
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
         foreach (Match input in Regex.Matches(
             form.Groups["content"].Value,
-            "<input[^>]*>",
-            RegexOptions.IgnoreCase))
+            "<input\\b(?<attributes>[^>]*)>",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline))
         {
-            Match name = Regex.Match(input.Value, "name=\"(?<value>[^\"]+)\"", RegexOptions.IgnoreCase);
+            string attributes = input.Groups["attributes"].Value;
+            Match name = Regex.Match(
+                attributes,
+                "\\bname\\s*=\\s*[\"'](?<value>[^\"']+)[\"']",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
             if (!name.Success)
             {
                 continue;
             }
 
-            Match value = Regex.Match(input.Value, "value=\"(?<value>[^\"]*)\"", RegexOptions.IgnoreCase);
+            Match value = Regex.Match(
+                attributes,
+                "\\bvalue\\s*=\\s*[\"'](?<value>[^\"']*)[\"']",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
             fields[name.Groups["value"].Value] = value.Success
                 ? WebUtility.HtmlDecode(value.Groups["value"].Value)
                 : string.Empty;
@@ -543,9 +601,19 @@ internal sealed record T062QualificationInputs(
     string ConnectionString,
     Guid SystemId,
     IReadOnlyList<Guid> ManifestIds,
-    string ProfiledRevision,
-    IReadOnlyList<string> SourceRoots,
-    Uri ProviderEndpoint);
+    IReadOnlyList<T062RepositoryQualification> Repositories,
+    Uri ProviderEndpoint,
+    string ProviderModel)
+{
+    public T062RepositoryQualification ForRepository(Guid repositoryId) =>
+        Repositories.Single(value => value.RepositoryId == repositoryId);
+}
+
+internal sealed record T062RepositoryQualification(
+    Guid ManifestId,
+    Guid RepositoryId,
+    string SourceRoot,
+    string ProfiledRevision);
 
 internal sealed class T062HostQualificationTheoryAttribute : TheoryAttribute
 {

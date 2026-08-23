@@ -255,17 +255,33 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
     {
         Match form = Regex.Match(
             html,
-            "<form[^>]*method=\"post\"[^>]*>(?<content>.*?)</form>",
+            "<form\\b(?=[^>]*\\bmethod\\s*=\\s*[\"']post[\"'])[^>]*>(?<content>.*?)</form>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
         Assert.True(form.Success, "Expected a POST login form.");
 
         Dictionary<string, string> fields = new(StringComparer.Ordinal);
         foreach (Match input in Regex.Matches(
             form.Groups["content"].Value,
-            "<input[^>]*name=\"(?<name>[^\"]+)\"[^>]*value=\"(?<value>[^\"]*)\"[^>]*>",
+            "<input\\b(?<attributes>[^>]*)>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline))
         {
-            fields[input.Groups["name"].Value] = WebUtility.HtmlDecode(input.Groups["value"].Value);
+            string attributes = input.Groups["attributes"].Value;
+            Match name = Regex.Match(
+                attributes,
+                "\\bname\\s*=\\s*[\"'](?<value>[^\"']+)[\"']",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            if (!name.Success)
+            {
+                continue;
+            }
+
+            Match value = Regex.Match(
+                attributes,
+                "\\bvalue\\s*=\\s*[\"'](?<value>[^\"']*)[\"']",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            fields[name.Groups["value"].Value] = value.Success
+                ? WebUtility.HtmlDecode(value.Groups["value"].Value)
+                : string.Empty;
         }
 
         return fields;

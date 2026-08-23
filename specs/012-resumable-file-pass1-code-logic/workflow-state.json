@@ -3,13 +3,13 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "conditional-e2e",
+  "stage": "quality-review",
   "preflight": {
     "branch": "demo0831/story-12-3",
-    "head": "aa82fe5c9181d0c257e6882fc0f8bb2bd41c9060",
-    "git_identity_sha256": "8289bde1db62cefae8327730315b66fecc98fd1b3fc436566c888f91cb783350",
-    "status_sha256": "f568d5fc885ee0a988e0da3e502f5916bab2718a70dac364f024b27b08d61450",
-    "observed_at": "2026-08-22T20:43:26Z"
+    "head": "f65094ea3460aba48b8e6ff00e3e502679933f4b",
+    "git_identity_sha256": "62d03504afad2bd87a3a7e384d50ad5f27af77368bb8b0f38f19e85e1e6a99b0",
+    "status_sha256": "ffbc6a538dfd7457d5885d4d21cd4bcac9054bb778bd722f34286b77003ed033",
+    "observed_at": "2026-08-23T02:31:22Z"
   },
   "artifacts": {
     "spec": {
@@ -27,7 +27,7 @@
   },
   "gates": {
     "plan-review": {
-      "status": "accepted",
+      "status": "invalidated",
       "attempt": 4,
       "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-04.json"
     },
@@ -118,20 +118,20 @@
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-09.json",
     "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md",
     "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json",
     "specs/012-resumable-file-pass1-code-logic/e2e-decision.json",
-    "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md",
-    "artifacts/qualification/story-12.3/production-boundary-inspection.json"
+    "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-e2e-blocked-20260822T204326Z",
-    "stage": "conditional-e2e",
-    "commit_sha": "88e957dc757ef78d989891e7a6598c85512ceda4",
-    "binding_status": "bound"
+    "checkpoint_id": "bmad-12-3-e2e-harness-correction-20260823T023122Z",
+    "stage": "quality-review",
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
-    "stage": "conditional-e2e",
-    "reason": "Required E2E is blocked by absent T046/T062 host prerequisites and an existing authenticated API login-form test-harness failure.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/e2e-decision.json"
+    "stage": "quality-review",
+    "reason": "The test-only E2E harness correction invalidated quality review; rerun independent quality review before required E2E.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json"
   },
-  "updated_at": "2026-08-22T20:48:32Z"
+  "updated_at": "2026-08-23T02:31:22Z"
 }

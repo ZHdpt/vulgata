@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "story": "12.3",
+  "kind": "e2e-test-harness-correction",
+  "source_commit": "f65094ea3460aba48b8e6ff00e3e502679933f4b",
+  "observed_at": "2026-08-23T02:31:22Z",
+  "root_causes": [
+    "The authenticated API extractor assumed one fixed HTML attribute order and rejected the current login form.",
+    "The real approved-pair harness used one synthetic pair-wide Profiled Revision instead of each Repository manifest's exact revision.",
+    "The Worker provider test label was incorrectly reused as the OpenAI-compatible model identifier."
+  ],
+  "correction": {
+    "production_changed": false,
+    "paths": [
+      "tests/Vulgata.Tests/PreparedPass1/Pass1ExecutionApiTests.cs",
+      "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs"
+    ],
+    "model_variable": "VULGATA_T062_WORKER_PROVIDER_MODEL",
+    "source_roots": {
+      "mbs_account": "G:/AIplayground/vulgata/sample/mbs_account",
+      "mbs_channel": "G:/AIplayground/vulgata/sample/mbs_channel"
+    },
+    "profiled_revisions": {
+      "mbs_account": "19c60cd3f3976b7697c487c7bafd96142e3a7625",
+      "mbs_channel": "47f6b627a7598f862873610413eec1e1e7bf46bf"
+    }
+  },
+  "red": {
+    "source": "specs/012-resumable-file-pass1-code-logic/e2e-decision.json",
+    "authenticated_api": {
+      "total": 11,
+      "passed": 2,
+      "failed": 9,
+      "failure": "Existing login-form extractor stopped before Story 12.3 assertions."
+    }
+  },
+  "green": {
+    "build": {
+      "errors": 0,
+      "warnings": 44
+    },
+    "authenticated_api": {
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0
+    },
+    "real_approved_pair": {
+      "total": 1,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 1,
+      "reason": "No approved Prepared Scan Manifests or controlled DeepSeek qualification inputs are currently supplied."
+    },
+    "git_diff_check": "passed"
+  }
+}
