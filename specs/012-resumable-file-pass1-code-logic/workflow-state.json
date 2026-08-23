@@ -38,14 +38,14 @@
     },
     "quality-review": {
       "status": "accepted",
-      "attempt": 4,
-      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-04.json"
+      "attempt": 5,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-05.json"
     }
   },
   "attempts": {
     "definition-review": 10,
     "converge": 3,
-    "quality-review": 4
+    "quality-review": 5
   },
   "approvals": [
     {
@@ -105,33 +105,30 @@
     "report_path": "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md"
   },
   "e2e": {
-    "result": "blocked",
+    "result": "failed-product",
     "decision_path": "specs/012-resumable-file-pass1-code-logic/e2e-decision.json"
   },
   "current_evidence_paths": [
     "specs/012-resumable-file-pass1-code-logic/spec.md",
     "specs/012-resumable-file-pass1-code-logic/plan.md",
     "specs/012-resumable-file-pass1-code-logic/tasks.md",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-08.json",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-08.json",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-09.json",
-    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-09.json",
     "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md",
-    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-04.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-05.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/e2e/approved-pair-deepseek-qualification-01.json",
     "specs/012-resumable-file-pass1-code-logic/e2e-decision.json",
     "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-e2e-blocked-20260823T024446Z",
+    "checkpoint_id": "bmad-12-3-e2e-failed-20260823T094306Z",
     "stage": "conditional-e2e",
-    "commit_sha": "8969d2eaec45699030fda75297d055aefe6460d6",
+    "commit_sha": "b1773615557589fad055bc9087c6cdefde89883a",
     "binding_status": "bound"
   },
   "resume": {
     "stage": "conditional-e2e",
-    "reason": "Quality review attempt 4 accepted. Authenticated API is 11/11; required real-pair E2E awaits fresh Story 12.2 manifests and DeepSeek/T046 environment inputs.",
+    "reason": "Quality review attempt 5 accepted all qualification corrections. Corrected r8 real-pair DeepSeek E2E involved the LLM and failed honestly because zero code-logic/file-v2 Documents passed strict acceptance.",
     "evidence_path": "specs/012-resumable-file-pass1-code-logic/e2e-decision.json"
   },
-  "updated_at": "2026-08-23T02:50:50Z"
+  "updated_at": "2026-08-23T09:43:06Z"
 }
