@@ -1,3 +1,7 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.IO.Pipes;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.Java;
 
@@ -188,6 +192,220 @@ public sealed class JdtLsAdapterTests
         Assert.False(Directory.Exists(workspaceRoot));
     }
 
+    [Fact]
+    public async Task PreparedRevisionWorkspace_UsesContainedMutableProjectMirror_AndPreservesExactSnapshotIdentity()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story123-jdt-snapshot-" + Guid.NewGuid().ToString("N"));
+        string runtimeRoot = Path.Combine(root, "runtime");
+        string evidenceRoot = Path.Combine(root, "evidence");
+        Directory.CreateDirectory(evidenceRoot);
+        Directory.CreateDirectory(Path.Combine(evidenceRoot, "src"));
+        await File.WriteAllTextAsync(
+            Path.Combine(evidenceRoot, "src", "Fixture.java"),
+            "package example;\nclass Fixture {}\n");
+
+        AnalysisScope scope = new(
+            _repositoryId,
+            Guid.Parse("12000000-0000-4000-8000-000000000013"),
+            ProfiledRevision,
+            "binding-prepared-jdt",
+            new string('a', 64),
+            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
+        TrackingSnapshotLease snapshot = new(scope, evidenceRoot);
+        PreparedRevisionJdtLsWorkspaceLeaseProvider provider =
+            new(new FixedPreparedRevisionLeaseResolver(snapshot), runtimeRoot);
+
+        try
+        {
+            await using IJdtLsWorkspaceLease workspace =
+                await provider.AcquireAsync(scope, CancellationToken.None);
+
+            string projectRoot = Path.GetFullPath(workspace.Binding.WorkspacePath);
+            string runtimePrefix = Path.GetFullPath(runtimeRoot).TrimEnd(Path.DirectorySeparatorChar) +
+                Path.DirectorySeparatorChar;
+            Assert.StartsWith(runtimePrefix, projectRoot, StringComparison.OrdinalIgnoreCase);
+            Assert.NotEqual(Path.GetFullPath(evidenceRoot), projectRoot);
+
+            Directory.CreateDirectory(projectRoot);
+            await File.WriteAllTextAsync(Path.Combine(projectRoot, ".project"), "generated");
+            await File.WriteAllTextAsync(Path.Combine(projectRoot, ".classpath"), "generated");
+
+            await snapshot.VerifyIdentityAsync(CancellationToken.None);
+        }
+        finally
+        {
+            DeleteDirectory(root);
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task PreparedRevisionWorkspace_PreExistingReparsePointCleanup_FailsClosedWithoutTouchingExternalSentinel(
+        bool projectRootIsReparsePoint)
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story123-jdt-cleanup-" + Guid.NewGuid().ToString("N"));
+        string runtimeRoot = Path.Combine(root, "runtime");
+        string evidenceRoot = Path.Combine(root, "evidence");
+        string externalRoot = Path.Combine(root, "external");
+        Directory.CreateDirectory(evidenceRoot);
+        Directory.CreateDirectory(externalRoot);
+        await File.WriteAllTextAsync(Path.Combine(evidenceRoot, "Fixture.java"), "class Fixture {}\n");
+        string sentinelPath = Path.Combine(externalRoot, "sentinel.txt");
+        await File.WriteAllTextAsync(sentinelPath, "external sentinel\n");
+        File.SetAttributes(sentinelPath, FileAttributes.ReadOnly);
+
+        AnalysisScope scope = new(
+            _repositoryId,
+            Guid.Parse("12000000-0000-4000-8000-000000000013"),
+            ProfiledRevision,
+            "binding-prepared-jdt",
+            new string('a', 64),
+            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
+        TrackingSnapshotLease snapshot = new(scope, evidenceRoot);
+        PreparedRevisionJdtLsWorkspaceLeaseProvider provider =
+            new(new FixedPreparedRevisionLeaseResolver(snapshot), runtimeRoot);
+        string projectRoot = Path.Combine(
+            runtimeRoot,
+            scope.RepositoryId.ToString("N"),
+            scope.ProfiledRevision + ".jdtls-project");
+        Directory.CreateDirectory(Path.GetDirectoryName(projectRoot)!);
+        IJdtLsWorkspaceLease? acquired = null;
+
+        try
+        {
+            if (projectRootIsReparsePoint)
+            {
+                Directory.CreateSymbolicLink(projectRoot, externalRoot);
+            }
+            else
+            {
+                Directory.CreateDirectory(projectRoot);
+                Directory.CreateSymbolicLink(
+                    Path.Combine(projectRoot, "nested-external"),
+                    externalRoot);
+            }
+
+            Exception? failure = await Record.ExceptionAsync(async () =>
+                acquired = await provider.AcquireAsync(scope, CancellationToken.None));
+
+            Assert.Equal("external sentinel\n", await File.ReadAllTextAsync(sentinelPath));
+            Assert.True(
+                File.GetAttributes(sentinelPath).HasFlag(FileAttributes.ReadOnly),
+                "Cleanup must not traverse a pre-existing mirror reparse point and mutate an external file.");
+            Assert.NotNull(failure);
+        }
+        finally
+        {
+            // An unsafe implementation may unexpectedly return a lease; release it before
+            // deleting the test tree so the lock file cannot mask the cleanup assertion.
+            if (acquired is not null)
+            {
+                await acquired.DisposeAsync();
+            }
+
+            DeleteWithoutFollowingReparsePoints(root);
+        }
+    }
+
+    [Fact]
+    public async Task StreamJsonRpcJdtLsClient_UsesEvidenceBytesAndRejectsMirrorGeneratedResponseUri()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story123-jdt-rpc-" + Guid.NewGuid().ToString("N"));
+        string evidenceRoot = Path.Combine(root, "evidence");
+        string mirrorRoot = Path.Combine(root, "mirror");
+        Directory.CreateDirectory(evidenceRoot);
+        Directory.CreateDirectory(mirrorRoot);
+        string evidenceText = "class Evidence {}\n";
+        await File.WriteAllTextAsync(Path.Combine(evidenceRoot, "Fixture.java"), evidenceText);
+        await File.WriteAllTextAsync(Path.Combine(mirrorRoot, "Fixture.java"), "class Mirror {}\n");
+        await File.WriteAllTextAsync(Path.Combine(mirrorRoot, ".project"), "generated\n");
+
+        AnonymousPipeServerStream serverInput =
+            new(PipeDirection.In, HandleInheritability.None);
+        AnonymousPipeClientStream clientInput = new(
+            PipeDirection.Out,
+            serverInput.GetClientHandleAsString());
+        AnonymousPipeServerStream serverOutput =
+            new(PipeDirection.Out, HandleInheritability.None);
+        AnonymousPipeClientStream clientOutput = new(
+            PipeDirection.In,
+            serverOutput.GetClientHandleAsString());
+        RpcProcess process = new(clientInput, clientOutput);
+        using CancellationTokenSource serverCancellation = new(TimeSpan.FromSeconds(5));
+        List<string> openedTexts = [];
+        Task server = RunRpcServerAsync(
+            serverInput,
+            serverOutput,
+            mirrorRoot,
+            openedTexts,
+            serverCancellation.Token);
+        StreamJsonRpcJdtLsProtocolClient client =
+            new(process, responseByteLimit: 16_384);
+        AnalysisScope scope = new(
+            _repositoryId,
+            Guid.Parse("12000000-0000-4000-8000-000000000013"),
+            ProfiledRevision,
+            "binding-prepared-jdt",
+            new string('a', 64),
+            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
+        JdtLsWorkspaceBinding binding = new(
+            scope.RepositoryId,
+            scope.ScanRunId,
+            scope.ProfiledRevision,
+            scope.WorkingCopyBindingToken,
+            mirrorRoot,
+            evidenceRoot);
+        AnalysisOperationBounds bounds = new(itemLimit: 8, byteLimit: 4_096);
+        JavaNavigationRequest request = new(
+            "Fixture.java",
+            new AnalysisSourcePosition(1, 1),
+            bounds);
+
+        try
+        {
+            await client.InitializeAsync(binding, TimeSpan.FromSeconds(2), CancellationToken.None);
+            await client.InitializedAsync(CancellationToken.None);
+            JavaNavigationResult first = await client.NavigateAsync(
+                "textDocument/definition",
+                scope,
+                request,
+                TimeSpan.FromSeconds(2),
+                CancellationToken.None);
+            JavaNavigationResult generatedResponse = await client.NavigateAsync(
+                "textDocument/definition",
+                scope,
+                request,
+                TimeSpan.FromSeconds(2),
+                CancellationToken.None);
+            await client.ShutdownAsync(TimeSpan.FromSeconds(2), CancellationToken.None);
+            await client.ExitAsync(CancellationToken.None);
+            await server;
+
+            Assert.Equal(AnalysisOperationStatus.Succeeded, first.Status);
+            Assert.Equal(evidenceText, Assert.Single(openedTexts));
+            Assert.Equal(AnalysisOperationStatus.Failed, generatedResponse.Status);
+            Assert.Equal(AnalysisPortFailureReason.MalformedResponse, generatedResponse.Failure?.Reason);
+            Assert.Equal("jdt_response_invalid", generatedResponse.Failure?.FailureCode);
+        }
+        finally
+        {
+            await client.DisposeAsync();
+            serverCancellation.Cancel();
+            clientInput.Dispose();
+            clientOutput.Dispose();
+            serverInput.Dispose();
+            serverOutput.Dispose();
+            DeleteWithoutFollowingReparsePoints(root);
+        }
+    }
+
     private static AnalysisRuntimeIdentity CreateIdentity(
         string? jdtLsDistributionArchiveName =
             "jdt-language-server-1.61.0-202608141332.zip",
@@ -218,6 +436,230 @@ public sealed class JdtLsAdapterTests
             "StreamJsonRpc",
             "2.25.29",
             "stdio");
+
+    private static void DeleteDirectory(string path)
+    {
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, recursive: true);
+        }
+    }
+
+    private static void DeleteWithoutFollowingReparsePoints(string path)
+    {
+        if (!File.Exists(path) && !Directory.Exists(path))
+        {
+            return;
+        }
+
+        FileAttributes attributes = File.GetAttributes(path);
+        if (attributes.HasFlag(FileAttributes.ReparsePoint))
+        {
+            if (attributes.HasFlag(FileAttributes.Directory))
+            {
+                Directory.Delete(path, recursive: false);
+            }
+            else
+            {
+                File.Delete(path);
+            }
+
+            return;
+        }
+
+        if (!attributes.HasFlag(FileAttributes.Directory))
+        {
+            if (attributes.HasFlag(FileAttributes.ReadOnly))
+            {
+                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+            }
+
+            File.Delete(path);
+            return;
+        }
+
+        foreach (FileSystemInfo entry in new DirectoryInfo(path).EnumerateFileSystemInfos())
+        {
+            DeleteWithoutFollowingReparsePoints(entry.FullName);
+        }
+
+        Directory.Delete(path, recursive: false);
+    }
+
+    private static async Task RunRpcServerAsync(
+        Stream input,
+        Stream output,
+        string mirrorRoot,
+        List<string> openedTexts,
+        CancellationToken cancellationToken)
+    {
+        int definitionResponse = 0;
+        while (true)
+        {
+            using JsonDocument message = await ReadRpcMessageAsync(input, cancellationToken);
+            JsonElement root = message.RootElement;
+            string method = root.GetProperty("method").GetString()!;
+            if (method == "initialize")
+            {
+                await SendRpcResponseAsync(output, root.GetProperty("id"), new { }, cancellationToken);
+            }
+            else if (method == "textDocument/didOpen")
+            {
+                openedTexts.Add(root.GetProperty("params").GetProperty("textDocument").GetProperty("text").GetString()!);
+            }
+            else if (method == "textDocument/definition")
+            {
+                definitionResponse++;
+                string relativePath = definitionResponse == 1 ? "Fixture.java" : ".project";
+                string responseUri = new Uri(Path.Combine(mirrorRoot, relativePath)).AbsoluteUri;
+                await SendRpcResponseAsync(
+                    output,
+                    root.GetProperty("id"),
+                    new[]
+                    {
+                        new
+                        {
+                            name = "Fixture",
+                            location = new
+                            {
+                                uri = responseUri,
+                                range = new
+                                {
+                                    start = new { line = 0, character = 0 },
+                                    end = new { line = 0, character = 6 },
+                                },
+                            },
+                        },
+                    },
+                    cancellationToken);
+            }
+            else if (method == "shutdown")
+            {
+                await SendRpcResponseAsync(output, root.GetProperty("id"), null, cancellationToken);
+            }
+            else if (method == "exit")
+            {
+                return;
+            }
+        }
+    }
+
+    private static async Task<JsonDocument> ReadRpcMessageAsync(
+        Stream input,
+        CancellationToken cancellationToken)
+    {
+        List<byte> header = [];
+        byte[] one = new byte[1];
+        while (true)
+        {
+            int read = await input.ReadAsync(one, cancellationToken);
+            if (read == 0)
+            {
+                throw new EndOfStreamException("RPC stream ended before the message header.");
+            }
+
+            header.Add(one[0]);
+            if (header.Count >= 4 &&
+                header[^4] == '\r' && header[^3] == '\n' &&
+                header[^2] == '\r' && header[^1] == '\n')
+            {
+                break;
+            }
+        }
+
+        string headerText = Encoding.ASCII.GetString([.. header]);
+        string contentLength = headerText.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+            .Split(':', 2)[1]
+            .Trim();
+        byte[] payload = new byte[int.Parse(contentLength, System.Globalization.CultureInfo.InvariantCulture)];
+        int offset = 0;
+        while (offset < payload.Length)
+        {
+            int read = await input.ReadAsync(payload.AsMemory(offset), cancellationToken);
+            if (read == 0)
+            {
+                throw new EndOfStreamException("RPC stream ended before the message body.");
+            }
+
+            offset += read;
+        }
+
+        return JsonDocument.Parse(payload);
+    }
+
+    private static async Task SendRpcResponseAsync(
+        Stream output,
+        JsonElement id,
+        object? result,
+        CancellationToken cancellationToken)
+    {
+        byte[] payload = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            jsonrpc = "2.0",
+            id,
+            result,
+        });
+        byte[] header = Encoding.ASCII.GetBytes($"Content-Length: {payload.Length}\r\n\r\n");
+        await output.WriteAsync(header, cancellationToken);
+        await output.WriteAsync(payload, cancellationToken);
+        await output.FlushAsync(cancellationToken);
+    }
+
+    private sealed class FixedPreparedRevisionLeaseResolver(ICommittedRepositorySnapshotLease lease)
+        : IPreparedRevisionLeaseResolver
+    {
+        public bool TryResolveLease(
+            string bindingToken,
+            out ICommittedRepositorySnapshotLease? resolved)
+        {
+            resolved = string.Equals(bindingToken, "binding-prepared-jdt", StringComparison.Ordinal)
+                ? lease
+                : null;
+            return resolved is not null;
+        }
+    }
+
+    private sealed class TrackingSnapshotLease(AnalysisScope scope, string root)
+        : ICommittedRepositorySnapshotLease
+    {
+        private readonly string _identity = ComputeIdentity(root);
+
+        public Guid RepositoryId => scope.RepositoryId;
+
+        public Guid ScanRunId => scope.ScanRunId;
+
+        public string ProfiledRevision => scope.ProfiledRevision;
+
+        public string RootPath => root;
+
+        public Task VerifyIdentityAsync(CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!string.Equals(_identity, ComputeIdentity(root), StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("exact snapshot identity changed");
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+        private static string ComputeIdentity(string path)
+        {
+            using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            foreach (string file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
+                         .Order(StringComparer.Ordinal))
+            {
+                string relative = Path.GetRelativePath(path, file).Replace(Path.DirectorySeparatorChar, '/');
+                hash.AppendData(Encoding.UTF8.GetBytes(relative));
+                hash.AppendData(File.ReadAllBytes(file));
+            }
+
+            return Convert.ToHexString(hash.GetHashAndReset());
+        }
+    }
 
     private sealed class RecordingWorkspaceLeaseProvider(JdtLsWorkspaceBinding binding)
         : IJdtLsWorkspaceLeaseProvider
@@ -270,6 +712,32 @@ public sealed class JdtLsAdapterTests
             cancellationToken.ThrowIfCancellationRequested();
             StartInfo = startInfo;
             return Task.FromResult<IJdtLsProcess>(process);
+        }
+    }
+
+    private sealed class RpcProcess(
+        Stream standardInput,
+        Stream standardOutput) : IJdtLsProcess
+    {
+        public Stream StandardInput { get; } = standardInput;
+
+        public Stream StandardOutput { get; } = standardOutput;
+
+        public Task<string> ReadBoundedStandardErrorAsync(
+            int byteLimit,
+            CancellationToken cancellationToken) => Task.FromResult(string.Empty);
+
+        public Task<int> WaitForExitAsync(
+            TimeSpan timeout,
+            CancellationToken cancellationToken) => Task.FromResult(0);
+
+        public Task KillTreeAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public ValueTask DisposeAsync()
+        {
+            StandardInput.Dispose();
+            StandardOutput.Dispose();
+            return ValueTask.CompletedTask;
         }
     }
 

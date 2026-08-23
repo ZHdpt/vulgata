@@ -24,7 +24,8 @@ internal sealed record JdtLsWorkspaceBinding(
     Guid ScanRunId,
     string ProfiledRevision,
     string WorkingCopyBindingToken,
-    string WorkspacePath);
+    string WorkspacePath,
+    string? EvidenceRootPath = null);
 
 internal interface IJdtLsWorkspaceLeaseProvider
 {
@@ -447,41 +448,150 @@ internal sealed class PreparedRevisionJdtLsWorkspaceLeaseProvider(
         }
 
         await revisionLease.VerifyIdentityAsync(cancellationToken).ConfigureAwait(false);
-        string workspacePath = Path.GetFullPath(revisionLease.RootPath);
+        string evidenceRootPath = Path.GetFullPath(revisionLease.RootPath);
         string runtimePath = Path.GetFullPath(Path.Combine(
             _runtimeWorkspaceRoot,
             scope.RepositoryId.ToString("N"),
             scope.ProfiledRevision + ".jdtls-data"));
+        string workspacePath = Path.GetFullPath(Path.Combine(
+            _runtimeWorkspaceRoot,
+            scope.RepositoryId.ToString("N"),
+            scope.ProfiledRevision + ".jdtls-project"));
         string runtimePrefix = _runtimeWorkspaceRoot.TrimEnd(Path.DirectorySeparatorChar) +
             Path.DirectorySeparatorChar;
-        if (!runtimePath.StartsWith(runtimePrefix, StringComparison.OrdinalIgnoreCase))
+        if (!runtimePath.StartsWith(runtimePrefix, StringComparison.OrdinalIgnoreCase) ||
+            !workspacePath.StartsWith(runtimePrefix, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("jdt_runtime_workspace_escape");
         }
 
+        JdtLsProjectMirrorDirectory.RequireSafeAncestors(Path.GetDirectoryName(runtimePath)!);
         Directory.CreateDirectory(runtimePath);
+        JdtLsProjectMirrorDirectory.RequireSafeAncestors(runtimePath);
+        FileStream? lockStream = null;
         try
         {
-            FileStream lockStream = new(
+            lockStream = new FileStream(
                 Path.Combine(runtimePath, ".vulgata-lease"),
                 FileMode.OpenOrCreate,
                 FileAccess.ReadWrite,
                 FileShare.None,
                 bufferSize: 1,
                 FileOptions.Asynchronous);
+            JdtLsProjectMirrorDirectory.Delete(workspacePath);
+            await CopySnapshotAsync(
+                evidenceRootPath,
+                workspacePath,
+                cancellationToken).ConfigureAwait(false);
+            await revisionLease.VerifyIdentityAsync(cancellationToken).ConfigureAwait(false);
             return new PreparedRevisionJdtLsWorkspaceLease(
                 new JdtLsWorkspaceBinding(
                     scope.RepositoryId,
                     scope.ScanRunId,
                     scope.ProfiledRevision,
                     scope.WorkingCopyBindingToken,
-                    workspacePath),
+                    workspacePath,
+                    evidenceRootPath),
                 revisionLease,
-                lockStream);
+                lockStream,
+                workspacePath);
         }
         catch (IOException)
         {
+            if (lockStream is not null)
+            {
+                await lockStream.DisposeAsync().ConfigureAwait(false);
+                JdtLsProjectMirrorDirectory.Delete(workspacePath);
+            }
+
             throw new InvalidOperationException("jdt_workspace_in_use");
+        }
+        catch
+        {
+            if (lockStream is not null)
+            {
+                await lockStream.DisposeAsync().ConfigureAwait(false);
+                JdtLsProjectMirrorDirectory.Delete(workspacePath);
+            }
+
+            throw;
+        }
+    }
+
+    private static async Task CopySnapshotAsync(
+        string evidenceRootPath,
+        string workspacePath,
+        CancellationToken cancellationToken)
+    {
+        const int maximumEntries = 10_000;
+        const long maximumFileBytes = 8 * 1024 * 1024;
+        const long maximumTotalBytes = 64 * 1024 * 1024;
+        DirectoryInfo evidenceRoot = new(evidenceRootPath);
+        if (!evidenceRoot.Exists ||
+            (evidenceRoot.Attributes & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new InvalidOperationException("jdt_evidence_root_invalid");
+        }
+
+        Directory.CreateDirectory(workspacePath);
+        string workspacePrefix = workspacePath.TrimEnd(Path.DirectorySeparatorChar) +
+            Path.DirectorySeparatorChar;
+        Queue<DirectoryInfo> pending = new();
+        pending.Enqueue(evidenceRoot);
+        int entries = 0;
+        long totalBytes = 0;
+        while (pending.Count != 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            DirectoryInfo sourceDirectory = pending.Dequeue();
+            foreach (FileSystemInfo entry in sourceDirectory.EnumerateFileSystemInfos())
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (++entries > maximumEntries ||
+                    (entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                {
+                    throw new InvalidOperationException("jdt_evidence_outside_bounds");
+                }
+
+                string relativePath = Path.GetRelativePath(evidenceRootPath, entry.FullName);
+                string targetPath = Path.GetFullPath(Path.Combine(workspacePath, relativePath));
+                if (!targetPath.StartsWith(workspacePrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("jdt_project_mirror_escape");
+                }
+
+                if (entry is DirectoryInfo directory)
+                {
+                    Directory.CreateDirectory(targetPath);
+                    pending.Enqueue(directory);
+                    continue;
+                }
+
+                FileInfo file = (FileInfo)entry;
+                totalBytes = checked(totalBytes + file.Length);
+                if (file.Length > maximumFileBytes || totalBytes > maximumTotalBytes)
+                {
+                    throw new InvalidOperationException("jdt_evidence_outside_bounds");
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+                await using FileStream source = new(
+                    file.FullName,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read,
+                    64 * 1024,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan);
+                await using FileStream target = new(
+                    targetPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    64 * 1024,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan);
+                await source.CopyToAsync(target, 64 * 1024, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
     }
 
@@ -494,14 +604,17 @@ internal sealed class PreparedRevisionJdtLsWorkspaceLeaseProvider(
                 nameof(value));
         }
 
-        return Path.GetFullPath(value);
+        string path = Path.GetFullPath(value);
+        JdtLsProjectMirrorDirectory.RequireSafeAncestors(path);
+        return path;
     }
 }
 
 internal sealed class PreparedRevisionJdtLsWorkspaceLease(
     JdtLsWorkspaceBinding binding,
     ICommittedRepositorySnapshotLease revisionLease,
-    FileStream lockStream) : IJdtLsWorkspaceLease
+    FileStream lockStream,
+    string workspacePath) : IJdtLsWorkspaceLease
 {
     public JdtLsWorkspaceBinding Binding { get; } = binding;
 
@@ -513,7 +626,116 @@ internal sealed class PreparedRevisionJdtLsWorkspaceLease(
         }
         finally
         {
-            await lockStream.DisposeAsync().ConfigureAwait(false);
+            try
+            {
+                JdtLsProjectMirrorDirectory.Delete(workspacePath);
+            }
+            finally
+            {
+                await lockStream.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+    }
+
+}
+
+internal static class JdtLsProjectMirrorDirectory
+{
+    public static void RequireSafeAncestors(string path)
+    {
+        string fullPath = Path.GetFullPath(path);
+        string? root = Path.GetPathRoot(fullPath);
+        if (string.IsNullOrEmpty(root))
+        {
+            throw new InvalidOperationException("jdt_runtime_workspace_invalid");
+        }
+
+        string current = root;
+        foreach (string segment in fullPath[root.Length..].Split(
+                     Path.DirectorySeparatorChar,
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            current = Path.Combine(current, segment);
+            if (TryGetAttributes(current, out FileAttributes attributes) &&
+                (attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                throw new InvalidOperationException("jdt_runtime_workspace_reparse_point");
+            }
+        }
+    }
+
+    public static void Delete(string path)
+    {
+        if (!TryGetAttributes(path, out FileAttributes rootAttributes))
+        {
+            return;
+        }
+        if ((rootAttributes & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new InvalidOperationException("jdt_project_mirror_reparse_point");
+        }
+        if ((rootAttributes & FileAttributes.Directory) == 0)
+        {
+            throw new InvalidOperationException("jdt_project_mirror_invalid");
+        }
+
+        RequireSafeAncestors(path);
+        List<FileInfo> files = [];
+        List<DirectoryInfo> directories = [];
+        Queue<DirectoryInfo> pending = new();
+        pending.Enqueue(new DirectoryInfo(path));
+        while (pending.Count != 0)
+        {
+            DirectoryInfo directory = pending.Dequeue();
+            foreach (FileSystemInfo entry in directory.EnumerateFileSystemInfos())
+            {
+                if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                {
+                    throw new InvalidOperationException("jdt_project_mirror_reparse_point");
+                }
+
+                if (entry is DirectoryInfo child)
+                {
+                    directories.Add(child);
+                    pending.Enqueue(child);
+                }
+                else
+                {
+                    files.Add((FileInfo)entry);
+                }
+            }
+        }
+
+        foreach (FileInfo file in files)
+        {
+            file.Attributes = FileAttributes.Normal;
+            file.Delete();
+        }
+
+        for (int index = directories.Count - 1; index >= 0; index--)
+        {
+            directories[index].Delete(recursive: false);
+        }
+
+        Directory.Delete(path, recursive: false);
+    }
+
+    private static bool TryGetAttributes(string path, out FileAttributes attributes)
+    {
+        try
+        {
+            attributes = File.GetAttributes(path);
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            attributes = default;
+            return false;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            attributes = default;
+            return false;
         }
     }
 }
@@ -750,6 +972,7 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
     private readonly int _responseByteLimit;
     private readonly HashSet<string> _openedDocuments = new(StringComparer.OrdinalIgnoreCase);
     private string? _workspacePath;
+    private string? _evidenceRootPath;
 
     public StreamJsonRpcJdtLsProtocolClient(IJdtLsProcess process, int responseByteLimit)
     {
@@ -764,6 +987,7 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
     {
         using CancellationTokenSource linked = CreateBoundedToken(timeout, cancellationToken);
         _workspacePath = binding.WorkspacePath;
+        _evidenceRootPath = binding.EvidenceRootPath ?? binding.WorkspacePath;
         Uri workspaceUri = new(binding.WorkspacePath);
         object parameters = new
         {
@@ -808,13 +1032,17 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
             string documentUri = new Uri(documentPath).AbsoluteUri;
             if (_openedDocuments.Add(documentUri))
             {
-                var file = new FileInfo(documentPath);
+                string evidencePath = ResolveContainedPath(
+                    _evidenceRootPath ?? throw new JsonException("jdt_evidence_root_unavailable"),
+                    request.RelativePath,
+                    "jdt_document_outside_evidence");
+                var file = new FileInfo(evidencePath);
                 if (!file.Exists || file.Length is <= 0 or > 4_194_304)
                 {
                     throw new JsonException("jdt_document_outside_bounds");
                 }
 
-                byte[] documentBytes = await File.ReadAllBytesAsync(documentPath, linked.Token)
+                byte[] documentBytes = await File.ReadAllBytesAsync(evidencePath, linked.Token)
                     .ConfigureAwait(false);
                 string documentText = _strictUtf8.GetString(documentBytes);
                 await _rpc.NotifyWithParameterObjectAsync(
@@ -871,7 +1099,11 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
                 return Failed(AnalysisPortFailureReason.MalformedResponse, "jdt_response_too_large");
             }
 
-            return ParseEvidence(response, request, _workspacePath);
+            return ParseEvidence(
+                response,
+                request,
+                _workspacePath,
+                _evidenceRootPath);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -911,7 +1143,8 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
     private static JavaNavigationResult ParseEvidence(
         JsonElement response,
         JavaNavigationRequest request,
-        string? workspacePath)
+        string? workspacePath,
+        string? evidenceRootPath)
     {
         if (response.ValueKind == JsonValueKind.Null)
         {
@@ -939,6 +1172,15 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
                 ? name.GetString() ?? "java-symbol"
                 : "java-symbol";
             string relativePath = ResolveRelativePath(location, request.RelativePath, workspacePath);
+            string evidencePath = ResolveContainedPath(
+                evidenceRootPath ?? throw new JsonException("jdt_evidence_root_unavailable"),
+                relativePath,
+                "jdt_location_outside_evidence");
+            if (!File.Exists(evidencePath))
+            {
+                throw new JsonException("jdt_location_outside_evidence");
+            }
+
             int startCharacter = range.GetProperty("start").GetProperty("character").GetInt32();
             int endCharacter = range.GetProperty("end").GetProperty("character").GetInt32();
             evidence.Add(new AnalysisSymbolEvidence(
@@ -984,6 +1226,19 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
         }
 
         return Path.GetRelativePath(workspacePath, fullPath).Replace('\\', '/');
+    }
+
+    private static string ResolveContainedPath(string rootPath, string relativePath, string error)
+    {
+        string root = Path.GetFullPath(rootPath).TrimEnd(Path.DirectorySeparatorChar) +
+            Path.DirectorySeparatorChar;
+        string fullPath = Path.GetFullPath(Path.Combine(rootPath, relativePath));
+        if (!fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new JsonException(error);
+        }
+
+        return fullPath;
     }
 
     private static JavaNavigationResult Failed(
