@@ -182,13 +182,23 @@ public sealed class PreparedPass1Coordinator(
             return null;
         }
 
-        ScanJobExecution[] pairJobs = await LoadPairJobsAsync(pair, cancellationToken);
-        Guid[] repositoryIds = pairJobs
-            .Select(job => job.RepositoryId)
+        PreparedScanManifest[] manifests = await context.PreparedScanManifests
+            .AsNoTracking()
+            .Where(manifest =>
+                manifest.Id == pair.ManifestOneId ||
+                manifest.Id == pair.ManifestTwoId)
+            .ToArrayAsync(cancellationToken);
+        Guid[] repositoryIds = manifests
+            .Select(manifest => manifest.RepositoryId)
             .Distinct()
             .OrderBy(id => id)
             .ToArray();
-        if (repositoryIds.Length != 2 ||
+        if (manifests.Length != 2 ||
+            manifests.Any(manifest =>
+                manifest.CoordinationId != pair.CoordinationId ||
+                manifest.ApprovalState != PreparedScanManifestApprovalState.Approved ||
+                manifest.SchemaIdentity != PreparedScanManifest.CurrentSchemaIdentity) ||
+            repositoryIds.Length != 2 ||
             await context.Repositories.AsNoTracking().CountAsync(
                 repository => repositoryIds.Contains(repository.Id) &&
                     repository.SystemId == pair.SystemId,

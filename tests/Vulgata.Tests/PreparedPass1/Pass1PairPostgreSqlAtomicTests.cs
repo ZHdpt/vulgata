@@ -131,6 +131,300 @@ public sealed class Pass1PairPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_Claim_ReturnsExactDurableLeaseTimestampAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        IPreparedPass1Store store = CreatePass1Store(fixture.Context);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+
+        DateTimeOffset observedAt = PreparedScanTestHost.FixedUtcNow.AddTicks(7);
+        PreparedPass1ClaimResult claim = await store.ClaimNextAsync(
+            started.PairExecutionId!.Value,
+            observedAt,
+            TimeSpan.FromMinutes(5),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ClaimOutcome.Claimed, claim.Outcome);
+
+        await using VulgataDbContext verification =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        DateTimeOffset durableLease = (await verification.ScanJobExecutions
+            .AsNoTracking()
+            .SingleAsync(value => value.Id == claim.JobId)).LeaseExpiresAt!.Value;
+        Assert.Equal(durableLease, claim.LeaseExpiresAt);
+    }
+
+    [Fact]
+    public async Task PostgreSql17_PolicyDrain_RestartBeforeAndAfterLeaseExpiry_ClosesAndAccountsTerminalStateAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        IPreparedPass1Store store = CreatePass1Store(fixture.Context);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Guid pairExecutionId = Assert.IsType<Guid>(started.PairExecutionId);
+
+        PreparedPass1ClaimResult held = await store.ClaimNextAsync(
+            pairExecutionId,
+            PreparedScanTestHost.FixedUtcNow.AddSeconds(30),
+            TimeSpan.FromMinutes(5),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ClaimOutcome.Claimed, held.Outcome);
+
+        int failureBudget = Math.Min(5, fixture.Package.SelectedCount / 10);
+        PreparedPass1FailureResult? failure = null;
+        for (int index = 0; index <= failureBudget; index++)
+        {
+            DateTimeOffset observedAt = PreparedScanTestHost.FixedUtcNow
+                .AddMinutes(1)
+                .AddSeconds(index * 2);
+            PreparedPass1ClaimResult claim = await store.ClaimNextAsync(
+                pairExecutionId,
+                observedAt,
+                TimeSpan.FromMinutes(5),
+                CancellationToken.None);
+            Assert.Equal(PreparedPass1ClaimOutcome.Claimed, claim.Outcome);
+
+            failure = await store.RecordFailureAsync(
+                pairExecutionId,
+                claim.JobId,
+                claim.JobStateVersion,
+                claim.LeaseToken,
+                ScanJobFailureCategory.JobPermanent,
+                observedAt.AddSeconds(1),
+                CancellationToken.None);
+        }
+
+        Assert.NotNull(failure);
+        Assert.Equal(PreparedPass1FailureOutcome.Paused, failure!.Outcome);
+        Assert.Equal(Pass1PairExecutionPhase.Running, failure.PairState);
+        PreparedPass1ClaimResult next = await store.ClaimNextAsync(
+            pairExecutionId,
+            PreparedScanTestHost.FixedUtcNow.AddMinutes(2),
+            TimeSpan.FromMinutes(5),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ClaimOutcome.Ineligible, next.Outcome);
+
+        await using VulgataDbContext beforeExpiryContext =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        IPreparedPass1Store beforeExpiryStore = CreatePass1Store(beforeExpiryContext);
+        Pass1PairExecution persistedDrain = await beforeExpiryContext.Pass1PairExecutions.AsNoTracking()
+            .SingleAsync(value => value.Id == pairExecutionId);
+        PreparedScanManifest[] persistedManifests = await beforeExpiryContext.PreparedScanManifests
+            .AsNoTracking()
+            .Where(value => value.Id == persistedDrain.ManifestOneId || value.Id == persistedDrain.ManifestTwoId)
+            .OrderBy(value => value.RepositoryId)
+            .ToArrayAsync();
+        Assert.Equal(persistedDrain.ManifestOneId, persistedManifests[0].Id);
+        Assert.Equal(persistedDrain.ManifestTwoId, persistedManifests[1].Id);
+        TwoRepositoryScanCoordination persistedCoordination = await beforeExpiryContext
+            .TwoRepositoryScanCoordinations.AsNoTracking().SingleAsync();
+        ScanExecution[] persistedExecutions = await beforeExpiryContext.ScanExecutions.AsNoTracking()
+            .Where(value => value.Id == persistedCoordination.ScanExecutionOneId ||
+                value.Id == persistedCoordination.ScanExecutionTwoId)
+            .OrderBy(value => value.RepositoryId)
+            .ToArrayAsync();
+        Assert.Equal(persistedCoordination.RepositoryOneId, persistedManifests[0].RepositoryId);
+        Assert.Equal(persistedCoordination.RepositoryTwoId, persistedManifests[1].RepositoryId);
+        Assert.Equal(persistedCoordination.ScanExecutionOneId, persistedExecutions[0].Id);
+        Assert.Equal(persistedCoordination.ScanExecutionTwoId, persistedExecutions[1].Id);
+        Assert.All(persistedExecutions, value => Assert.Equal(ScanExecutionPhase.Running, value.Phase));
+        PreparedPass1RecoveryResult beforeExpiry = await beforeExpiryStore.RecoverAsync(
+            pairExecutionId,
+            fixture.Authorization,
+            providerAvailable: true,
+            held.LeaseExpiresAt,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1RecoveryOutcome.Continued, beforeExpiry.Outcome);
+        Assert.Equal(0, beforeExpiry.RecoveredExpiredLeaseCount);
+        Assert.True(beforeExpiry.IsReplay);
+        PreparedPass1ClaimResult beforeExpiryClaim = await beforeExpiryStore.ClaimNextAsync(
+            pairExecutionId,
+            held.LeaseExpiresAt,
+            TimeSpan.FromMinutes(5),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ClaimOutcome.Ineligible, beforeExpiryClaim.Outcome);
+        Assert.Equal(held.LeaseExpiresAt, beforeExpiryClaim.NextEligibleAt);
+
+        await using VulgataDbContext afterExpiryContext =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        IPreparedPass1Store afterExpiryStore = CreatePass1Store(afterExpiryContext);
+        DateTimeOffset afterExpiryAt = held.LeaseExpiresAt.AddTicks(1);
+        PreparedPass1RecoveryResult afterExpiry = await afterExpiryStore.RecoverAsync(
+            pairExecutionId,
+            fixture.Authorization,
+            providerAvailable: true,
+            afterExpiryAt,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1RecoveryOutcome.Continued, afterExpiry.Outcome);
+        Assert.Equal(1, afterExpiry.RecoveredExpiredLeaseCount);
+        Assert.False(afterExpiry.IsReplay);
+        PreparedPass1ClaimResult afterExpiryClaim = await afterExpiryStore.ClaimNextAsync(
+            pairExecutionId,
+            afterExpiryAt,
+            TimeSpan.FromMinutes(5),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ClaimOutcome.Ineligible, afterExpiryClaim.Outcome);
+        Assert.Null(afterExpiryClaim.NextEligibleAt);
+
+        Pass1PairExecution draining = await afterExpiryContext.Pass1PairExecutions.AsNoTracking()
+            .SingleAsync(value => value.Id == pairExecutionId);
+        PreparedPass1ReconciliationResult reconciled = await afterExpiryStore.ReconcileAsync(
+            pairExecutionId,
+            new(
+                fixture.Authorization,
+                draining.StateVersion,
+                ExpectedReconciliationFingerprint: null,
+                afterExpiryAt.AddTicks(1)),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Reconciled, reconciled.Outcome);
+        Assert.Equal(Pass1PairExecutionPhase.FailedPass1, reconciled.PairState);
+
+        Pass1Outcome outcome = await afterExpiryContext.Pass1Outcomes.AsNoTracking()
+            .SingleAsync(value => value.PairExecutionId == pairExecutionId);
+        Assert.Equal(Pass1OutcomeStatus.FailedPass1, outcome.Status);
+        Assert.Equal(failureBudget + 1, outcome.OrdinaryFailureCount);
+        Assert.Equal(failureBudget, outcome.OrdinaryFailureBudget);
+        Assert.Equal(failureBudget + 1, await afterExpiryContext.Pass1FailureInventoryEntries
+            .AsNoTracking()
+            .CountAsync(value => value.PairExecutionId == pairExecutionId));
+        Assert.Equal(failureBudget + 1, await afterExpiryContext.ScanJobExecutions.AsNoTracking()
+            .CountAsync(value => value.State == ScanJobExecutionState.Failed));
+        Assert.Equal(
+            fixture.Package.SelectedCount - failureBudget - 1,
+            await afterExpiryContext.ScanJobExecutions.AsNoTracking()
+                .CountAsync(value => value.State == ScanJobExecutionState.Cancelled));
+        Assert.False(await afterExpiryContext.ScanJobExecutions.AsNoTracking().AnyAsync(value =>
+            value.State == ScanJobExecutionState.Pending ||
+            value.State == ScanJobExecutionState.Running ||
+            value.State == ScanJobExecutionState.RetryScheduled));
+        Assert.All(
+            await afterExpiryContext.ScanExecutions.AsNoTracking().ToArrayAsync(),
+            value => Assert.Equal(ScanExecutionPhase.FailedPass1, value.Phase));
+        Assert.Equal(
+            TwoRepositoryScanCoordinationPhase.FailedPass1,
+            (await afterExpiryContext.TwoRepositoryScanCoordinations.AsNoTracking().SingleAsync()).Phase);
+
+        long terminalPairStateVersion = await afterExpiryContext.Pass1PairExecutions.AsNoTracking()
+            .Where(value => value.Id == pairExecutionId)
+            .Select(value => value.StateVersion)
+            .SingleAsync();
+        PreparedPass1ReconciliationResult replay = await afterExpiryStore.ReconcileAsync(
+            pairExecutionId,
+            new(
+                fixture.Authorization,
+                terminalPairStateVersion,
+                reconciled.ReconciliationFingerprint,
+                afterExpiryAt.AddTicks(1)),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Replay, replay.Outcome);
+
+        PreparedPass1FailureResult postTerminal = await afterExpiryStore.RecordFailureAsync(
+            pairExecutionId,
+            held.JobId,
+            held.JobStateVersion + 1,
+            Guid.NewGuid(),
+            ScanJobFailureCategory.JobPermanent,
+            PreparedScanTestHost.FixedUtcNow.AddMinutes(4),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1FailureOutcome.Conflict, postTerminal.Outcome);
+        Assert.Equal(failureBudget + 1, await afterExpiryContext.Pass1FailureInventoryEntries
+            .AsNoTracking()
+            .CountAsync(value => value.PairExecutionId == pairExecutionId));
+    }
+
+    [Fact]
+    public async Task PostgreSql17_OrdinaryFailureBeyondBudgetDuringProviderProbe_EntersPolicyDrainImmediatelyAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        IPreparedPass1Store store = CreatePass1Store(fixture.Context);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Guid pairExecutionId = Assert.IsType<Guid>(started.PairExecutionId);
+        DateTimeOffset observedAt = PreparedScanTestHost.FixedUtcNow.AddMinutes(1);
+
+        PreparedPass1ClaimResult held = await store.ClaimNextAsync(
+            pairExecutionId,
+            observedAt,
+            TimeSpan.FromMinutes(5));
+        Assert.Equal(PreparedPass1ClaimOutcome.Claimed, held.Outcome);
+        int failureBudget = Math.Min(5, fixture.Package.SelectedCount / 10);
+        for (int index = 0; index < failureBudget; index++)
+        {
+            PreparedPass1ClaimResult ordinary = await store.ClaimNextAsync(
+                pairExecutionId,
+                observedAt.AddSeconds(index + 1),
+                TimeSpan.FromMinutes(5));
+            PreparedPass1FailureResult recorded = await store.RecordFailureAsync(
+                pairExecutionId,
+                ordinary.JobId,
+                ordinary.JobStateVersion,
+                ordinary.LeaseToken,
+                ScanJobFailureCategory.JobPermanent,
+                observedAt.AddSeconds(index + 1));
+            Assert.Equal(PreparedPass1FailureOutcome.Recorded, recorded.Outcome);
+        }
+
+        PreparedPass1ClaimResult provider = await store.ClaimNextAsync(
+            pairExecutionId,
+            observedAt.AddSeconds(10),
+            TimeSpan.FromMinutes(5));
+        PreparedPass1FailureResult probing = await store.RecordFailureAsync(
+            pairExecutionId,
+            provider.JobId,
+            provider.JobStateVersion,
+            provider.LeaseToken,
+            ScanJobFailureCategory.ProviderTransient,
+            observedAt.AddSeconds(10));
+        Assert.Equal(PreparedPass1FailureOutcome.Paused, probing.Outcome);
+        Assert.Equal(Pass1PairExecutionPhase.ProbingProvider, probing.PairState);
+
+        PreparedPass1FailureResult threshold = await store.RecordFailureAsync(
+            pairExecutionId,
+            held.JobId,
+            held.JobStateVersion,
+            held.LeaseToken,
+            ScanJobFailureCategory.JobPermanent,
+            observedAt.AddSeconds(11));
+        Assert.Equal(PreparedPass1FailureOutcome.Paused, threshold.Outcome);
+        Assert.Equal(Pass1PairExecutionPhase.Running, threshold.PairState);
+        Assert.Equal(failureBudget + 1, threshold.OrdinaryFailureCount);
+
+        PreparedPass1ClaimResult blocked = await store.ClaimNextAsync(
+            pairExecutionId,
+            observedAt.AddSeconds(12),
+            TimeSpan.FromMinutes(5));
+        Assert.Equal(PreparedPass1ClaimOutcome.Ineligible, blocked.Outcome);
+        Assert.Null(blocked.NextEligibleAt);
+
+        fixture.Context.ChangeTracker.Clear();
+        Pass1PairExecution drain = await fixture.Context.Pass1PairExecutions.AsNoTracking()
+            .SingleAsync(value => value.Id == pairExecutionId);
+        Assert.Equal(Pass1CircuitState.Paused, drain.CircuitState);
+        Assert.Equal(Pass1PairReasonCategory.Pass1Policy, drain.ReasonCategory);
+        Assert.Equal("pass1-policy-failed", drain.ReasonCode);
+        Assert.Equal(0, drain.ProbeOrdinal);
+        Assert.Null(drain.NextProbeAt);
+        Assert.Null(drain.RetryAfterAt);
+    }
+
+    [Fact]
     public async Task PostgreSql17_RejectedExactPairBinding_FailsBothScansAndNeverDispatchesOrCommitsAsync()
     {
         MethodInfo failureMethod = RequireRevisionBindingFailureMethod();
@@ -542,6 +836,14 @@ public sealed class Pass1PairPostgreSqlAtomicTests
                     .SetProperty(execution => execution.UpdatedAt, now));
             Assert.Equal(1, updated);
         }
+
+        int updatedManifests = await fixture.Context.PreparedScanManifests
+            .Where(manifest => repositoryIds.Contains(manifest.RepositoryId))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(manifest => manifest.RuntimeIdentityHash, runtimeIdentityHash)
+                .SetProperty(manifest => manifest.CodeGraphRuntimeIdentityHash, runtimeIdentityHash)
+                .SetProperty(manifest => manifest.JavaReadinessRuntimeIdentityHash, runtimeIdentityHash));
+        Assert.Equal(2, updatedManifests);
 
         fixture.Context.ChangeTracker.Clear();
     }

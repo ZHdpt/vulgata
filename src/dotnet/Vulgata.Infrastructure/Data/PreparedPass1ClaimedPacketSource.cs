@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -14,9 +15,41 @@ namespace Vulgata.Infrastructure.Data;
 public sealed class PreparedPass1ClaimedPacketSource(
     VulgataDbContext context,
     IRevisionBoundSourceReader sourceReader,
-    TimeProvider timeProvider) : IPreparedPass1ClaimedPacketSource
+    TimeProvider timeProvider,
+    Microsoft.Extensions.Logging.ILogger<PreparedPass1ClaimedPacketSource> logger) :
+    IPreparedPass1ClaimedPacketSource
 {
     private static readonly TimeSpan _sourceDeadline = TimeSpan.FromMinutes(5);
+    private static readonly Action<ILogger, Guid, Exception?> _claimEnvelopeRejected =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Warning,
+            new EventId(120301, nameof(_claimEnvelopeRejected)),
+            "Prepared Pass 1 packet hydration rejected the claim envelope for {PairExecutionId}.");
+    private static readonly Action<ILogger, Guid, Guid, Exception?> _bindingMissing =
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Warning,
+            new EventId(120302, nameof(_bindingMissing)),
+            "Prepared Pass 1 packet hydration could not reconstruct the durable binding for {PairExecutionId} and {JobId}.");
+    private static readonly Action<ILogger, Guid, Guid, AnalysisOperationStatus, string, Exception?>
+        _sourceRejected = LoggerMessage.Define<Guid, Guid, AnalysisOperationStatus, string>(
+            LogLevel.Warning,
+            new EventId(120303, nameof(_sourceRejected)),
+            "Prepared Pass 1 packet hydration rejected exact source evidence for {PairExecutionId} and {JobId}; source outcome {SourceStatus}/{SourceFailureCode}.");
+    private static readonly Action<ILogger, Guid, Guid, Exception?> _revalidationRejected =
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Warning,
+            new EventId(120304, nameof(_revalidationRejected)),
+            "Prepared Pass 1 packet hydration rejected durable revalidation for {PairExecutionId} and {JobId}.");
+    private static readonly Action<ILogger, Guid, Guid, Exception?> _hydrationCancelled =
+        LoggerMessage.Define<Guid, Guid>(
+            LogLevel.Warning,
+            new EventId(120305, nameof(_hydrationCancelled)),
+            "Prepared Pass 1 packet hydration was cancelled for {PairExecutionId} and {JobId}.");
+    private static readonly Action<ILogger, string, Guid, Guid, Exception?> _hydrationRejected =
+        LoggerMessage.Define<string, Guid, Guid>(
+            LogLevel.Warning,
+            new EventId(120306, nameof(_hydrationRejected)),
+            "Prepared Pass 1 packet hydration rejected {FailureType} for {PairExecutionId} and {JobId}.");
     private static readonly IReadOnlyList<PreparedPass1CommunicationClassificationProjection>
         _noClassifications = [];
     private readonly TimeProvider _timeProvider =
@@ -40,6 +73,7 @@ public sealed class PreparedPass1ClaimedPacketSource(
             claim.LeaseExpiresAt.Offset != TimeSpan.Zero ||
             claim.LeaseExpiresAt <= observedAt)
         {
+            _claimEnvelopeRejected(logger, pairExecutionId, null);
             return null;
         }
 
@@ -52,6 +86,7 @@ public sealed class PreparedPass1ClaimedPacketSource(
                 cancellationToken);
             if (binding is null)
             {
+                _bindingMissing(logger, pairExecutionId, claim.JobId, null);
                 return null;
             }
 
@@ -72,12 +107,21 @@ public sealed class PreparedPass1ClaimedPacketSource(
                     binding.RepositoryRelativePath,
                     new AnalysisLineRange(binding.LineStart, binding.LineEnd),
                     binding.FileHash,
-                    checked((int)(binding.ByteEnd - binding.ByteStart))),
+                    checked((int)(binding.ByteEnd - binding.ByteStart)),
+                    binding.ByteStart,
+                    binding.ByteEnd),
                 cancellationToken);
 
             byte[] sourceUtf8 = Encoding.UTF8.GetBytes(source.Excerpt);
             if (!IsExactSource(binding, source, sourceUtf8))
             {
+                _sourceRejected(
+                    logger,
+                    pairExecutionId,
+                    claim.JobId,
+                    source.Status,
+                    source.Failure?.FailureCode ?? "none",
+                    null);
                 return null;
             }
 
@@ -95,6 +139,7 @@ public sealed class PreparedPass1ClaimedPacketSource(
                 cancellationToken);
             if (revalidated is null || !Matches(binding, revalidated))
             {
+                _revalidationRejected(logger, pairExecutionId, claim.JobId, null);
                 return null;
             }
 
@@ -131,11 +176,18 @@ public sealed class PreparedPass1ClaimedPacketSource(
         }
         catch (OperationCanceledException)
         {
+            _hydrationCancelled(logger, pairExecutionId, claim.JobId, null);
             return null;
         }
         catch (Exception exception) when (
             exception is ArgumentException or InvalidOperationException or OverflowException)
         {
+            _hydrationRejected(
+                logger,
+                exception.GetType().Name,
+                pairExecutionId,
+                claim.JobId,
+                null);
             return null;
         }
     }

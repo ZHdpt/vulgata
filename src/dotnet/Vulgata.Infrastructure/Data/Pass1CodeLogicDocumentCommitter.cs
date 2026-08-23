@@ -200,7 +200,8 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
                 : Conflict("changed-completed-replay");
         }
 
-        if (job.State != ScanJobExecutionState.Running ||
+        if (!CanAcceptInFlightResult(lockedPair) ||
+            job.State != ScanJobExecutionState.Running ||
             job.StateVersion != request.ExpectedJobStateVersion ||
             job.LeaseToken != request.ExpectedLeaseToken ||
             !JobMatchesPacket(job, request.Packet) ||
@@ -726,6 +727,13 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
             .ToArrayAsync(cancellationToken);
         return currentTargetIds.Order().SequenceEqual(targetIds.Distinct().Order());
     }
+
+    private static bool CanAcceptInFlightResult(Pass1PairExecution pair) =>
+        pair.Phase == Pass1PairExecutionPhase.Running &&
+        (pair.CircuitState == Pass1CircuitState.Closed ||
+         pair.CircuitState == Pass1CircuitState.Paused &&
+         pair.ReasonCategory == Pass1PairReasonCategory.Pass1Policy &&
+         string.Equals(pair.ReasonCode, "pass1-policy-failed", StringComparison.Ordinal));
 
     private static bool JobMatchesPacket(ScanJobExecution job, PreparedPass1WorkerPacket packet) =>
         job.ScanExecutionId == packet.ScanExecutionId &&

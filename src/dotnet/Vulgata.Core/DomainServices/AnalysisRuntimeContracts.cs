@@ -199,10 +199,31 @@ public sealed class RevisionBoundSourceRequest
         ByteLimit = AnalysisContractGuard.RequireLimit(byteLimit, 1_048_576, nameof(byteLimit));
     }
 
+    public RevisionBoundSourceRequest(
+        string relativePath,
+        AnalysisLineRange range,
+        string expectedSourceSha256,
+        int byteLimit,
+        long byteStart,
+        long byteEndExclusive)
+        : this(relativePath, range, expectedSourceSha256, byteLimit)
+    {
+        if (byteStart < 0 || byteEndExclusive <= byteStart ||
+            byteEndExclusive - byteStart > ByteLimit)
+        {
+            throw new ArgumentOutOfRangeException(nameof(byteEndExclusive));
+        }
+
+        ByteStart = byteStart;
+        ByteEndExclusive = byteEndExclusive;
+    }
+
     public string RelativePath { get; }
     public AnalysisLineRange Range { get; }
     public string ExpectedSourceSha256 { get; }
     public int ByteLimit { get; }
+    public long? ByteStart { get; }
+    public long? ByteEndExclusive { get; }
 }
 
 public sealed class AnalysisPortFailure
@@ -726,7 +747,8 @@ internal static class AnalysisContractGuard
         }
 
         if (value.Length > maximumLength ||
-            value.Any(character => char.IsControl(character) && character != '\n'))
+            value.Any(character =>
+                char.IsControl(character) && character is not ('\r' or '\n' or '\t')))
         {
             throw new ArgumentException("The value is outside its bounded contract.", parameterName);
         }

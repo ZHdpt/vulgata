@@ -61,7 +61,7 @@
       "gate": "may-skip",
       "triggered": true,
       "affected_paths": ["tests/Vulgata.Tests/PreparedPass1"],
-      "affected_behavior": "Focused and authenticated API coverage pass; approved-pair host execution remains unavailable until fresh Story 12.2 manifests and DeepSeek inputs are supplied.",
+      "affected_behavior": "Focused and authenticated API coverage pass; the corrected authorized approved-pair DeepSeek execution exercised the real Worker/tool path but produced no accepted Code Logic Document.",
       "evidence": [
         "story-12-3/e2e/01-focused-integration",
         "story-12-3/e2e/02-api-harness-correction",
@@ -79,7 +79,7 @@
     }
   ],
   "coverage_override": null,
-  "rationale": "Required E2E remains blocked only on real approved-pair prerequisites. The focused PostgreSQL and production lifecycle boundary passed 95/95 tests. Provider-outage composition passed 9/9 with one intentional approved-pair skip. After the test-only harness correction, authenticated API coverage passed 11/11. The real pair still has no fresh Story 12.2 Prepared Scan Manifest IDs, and DeepSeek plus T046 host-tool inputs are absent, so no complete current-boundary coverage override is valid.",
+  "rationale": "Required E2E was rerun against the independently accepted correction with two approved Story 12.2 manifests, the pinned host runtime, and the user-authorized DeepSeek endpoint/model. The model initiated six bounded navigate_code calls, but no code-logic/file-v2 result passed acceptance. The sixth ordinary failure above the budget of five immediately stopped new claims; one already-leased job closed as the seventh failure, then 143 remaining jobs were atomically cancelled and exact FailedPass1 outcome/inventory were persisted with probe state cleared. The affected Pass 1 regression slice passed 149/149 and the Web build has 0 errors. No coverage override is valid because the real provider path has not produced an accepted Code Logic Document.",
   "covering_tests": [
     "Vulgata.Tests.PreparedPass1.Pass1ExecutionApiTests",
     "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests",
@@ -120,30 +120,16 @@
       "tests/Vulgata.Tests/Migrations"
     ]
   },
-  "result": "blocked",
+  "result": "failed",
   "evidence_ids": [
     "story-12-3/e2e/01-focused-integration",
     "story-12-3/e2e/02-api-harness-correction",
-    "story-12-3/e2e/03-host-prerequisites"
+    "story-12-3/e2e/03-host-prerequisites",
+    "story-12-3/e2e/06-approved-pair-deepseek"
   ],
-  "decided_at": "2026-08-23T02:44:46.2150817Z",
-  "completed_at": null,
-  "blocker_prerequisites": [
-    "VULGATA_T046_CODEGRAPH_COMMAND",
-    "VULGATA_T046_JAVA_EXECUTABLE",
-    "VULGATA_T046_JDT_LS_ROOT",
-    "VULGATA_T046_JDT_LS_ARCHIVE",
-    "VULGATA_T062_SYSTEM_ID",
-    "VULGATA_T062_MANIFEST_ONE_ID",
-    "VULGATA_T062_MANIFEST_TWO_ID",
-    "VULGATA_T062_REPOSITORY_ONE_ROOT",
-    "VULGATA_T062_REPOSITORY_TWO_ROOT",
-    "VULGATA_T062_WORKER_PROVIDER_ENDPOINT",
-    "VULGATA_T062_WORKER_PROVIDER_MODEL",
-    "VULGATA_T062_WORKER_PROVIDER_API_KEY",
-    "VULGATA_T062_APPROVED_PAIR_REAL",
-    "VULGATA_T062_SOURCE_BINDING_READY"
-  ],
+  "decided_at": "2026-08-23T09:37:58.6689000Z",
+  "completed_at": "2026-08-23T09:37:58.6689000Z",
+  "blocker_prerequisites": [],
   "execution_evidence": [
     {
       "evidence_id": "story-12-3/e2e/01-focused-integration",
@@ -186,6 +172,20 @@
       "skipped": 2,
       "result": "blocked",
       "failure": "VULGATA_T046_CODEGRAPH_COMMAND and approved-pair host prerequisites absent"
+    },
+    {
+      "evidence_id": "story-12-3/e2e/06-approved-pair-deepseek",
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "result": "failed",
+      "llm_involved": true,
+      "navigation_receipts": 6,
+      "accepted_documents": 0,
+      "terminal_phase": "FailedPass1",
+      "failure": "Seven JobTransient failures were durably accounted: the sixth immediately entered policy drain above the budget of five, one already-leased job closed as the seventh, and no code-logic/file-v2 Document passed acceptance.",
+      "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/e2e/approved-pair-deepseek-qualification-01.json"
     }
   ]
 }

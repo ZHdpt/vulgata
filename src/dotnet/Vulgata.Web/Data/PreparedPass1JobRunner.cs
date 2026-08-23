@@ -79,6 +79,36 @@ public sealed class PreparedPass1JobRunner(
                     continue;
                 }
 
+                if (claim.Outcome == PreparedPass1ClaimOutcome.Ineligible)
+                {
+                    RemoveCompleted(runners);
+                    if (runners.Count > 0)
+                    {
+                        await WaitForLocalCompletionOrActivationAsync(
+                            slot,
+                            observedActivation,
+                            runners.Values,
+                            cancellationToken);
+                        RemoveCompleted(runners);
+                        continue;
+                    }
+
+                    if (await CompleteAndReconcileAsync(slot.Current, cancellationToken))
+                    {
+                        return;
+                    }
+
+                    if (claim.NextEligibleAt is not null)
+                    {
+                        await WaitForActivationOrEligibilityAsync(
+                            slot,
+                            observedActivation,
+                            claim.NextEligibleAt,
+                            cancellationToken);
+                        continue;
+                    }
+                }
+
                 return;
             }
         }
@@ -266,9 +296,15 @@ public sealed class PreparedPass1JobRunner(
                 null,
                 timeProvider.GetUtcNow()),
             cancellationToken);
-        if (reconciled.Outcome != PreparedPass1ReconciliationOutcome.Conflict)
+        if (reconciled.Outcome is PreparedPass1ReconciliationOutcome.Reconciled or
+            PreparedPass1ReconciliationOutcome.Replay)
         {
             return true;
+        }
+
+        if (reconciled.Outcome != PreparedPass1ReconciliationOutcome.Conflict)
+        {
+            return false;
         }
 
         PairSnapshot? reloaded = await LoadEligibleReconciliationAsync(
@@ -278,7 +314,7 @@ public sealed class PreparedPass1JobRunner(
             return true;
         }
 
-        _ = await store.ReconcileAsync(
+        PreparedPass1ReconciliationResult retried = await store.ReconcileAsync(
             activation.PairExecutionId,
             new(
                 activation.AuthorizationScope,
@@ -286,7 +322,8 @@ public sealed class PreparedPass1JobRunner(
                 null,
                 timeProvider.GetUtcNow()),
             cancellationToken);
-        return true;
+        return retried.Outcome is PreparedPass1ReconciliationOutcome.Reconciled or
+            PreparedPass1ReconciliationOutcome.Replay;
     }
 
     private static PreparedPass1DispatchRequest CreateDispatchRequest(
@@ -380,8 +417,13 @@ public sealed class PreparedPass1JobRunner(
     {
         Pass1PairExecution? pair = await context.Pass1PairExecutions.AsNoTracking()
             .SingleOrDefaultAsync(value => value.Id == activation.PairExecutionId, cancellationToken);
+        bool policyDrain = pair is not null &&
+            pair.Phase == Pass1PairExecutionPhase.Running &&
+            pair.CircuitState == Pass1CircuitState.Paused &&
+            pair.ReasonCategory == Pass1PairReasonCategory.Pass1Policy &&
+            string.Equals(pair.ReasonCode, "pass1-policy-failed", StringComparison.Ordinal);
         if (pair is null || pair.Phase != Pass1PairExecutionPhase.Running ||
-            pair.CircuitState != Pass1CircuitState.Closed ||
+            (pair.CircuitState != Pass1CircuitState.Closed && !policyDrain) ||
             pair.SystemId != activation.AuthorizationScope.SystemId)
         {
             return null;

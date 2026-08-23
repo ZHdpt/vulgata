@@ -600,6 +600,94 @@ public sealed class Pass1ProductionExecutionCapacityTests
     }
 
     [Fact]
+    public async Task RestartedPolicyDrain_OneActivation_WaitsForLeaseExpiryAndReachesFailedPass1Async()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
+        ManualTimeProvider time = new(PreparedScanTestHost.FixedUtcNow);
+        using WebApplicationFactory<Program> host = CreateConfiguredHost(
+            fixture.ConnectionString,
+            fixture.Package,
+            time);
+
+        Guid pairExecutionId;
+        PreparedPass1ClaimResult abandonedLease;
+        await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
+        {
+            IPreparedPass1Store store = scope.ServiceProvider.GetRequiredService<IPreparedPass1Store>();
+            PreparedPass1StartResult started = await store.StartAsync(
+                fixture.Authorization,
+                CreateHandoff(fixture.Package),
+                concurrencyLimit: 2);
+            Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+            pairExecutionId = started.PairExecutionId!.Value;
+            abandonedLease = await store.ClaimNextAsync(
+                pairExecutionId,
+                time.GetUtcNow(),
+                TimeSpan.FromMinutes(30));
+            Assert.Equal(PreparedPass1ClaimOutcome.Claimed, abandonedLease.Outcome);
+
+            int ordinaryFailureBudget = Math.Min(5, fixture.Package.SelectedCount / 10);
+            for (int index = 0; index <= ordinaryFailureBudget; index++)
+            {
+                PreparedPass1ClaimResult claim = await store.ClaimNextAsync(
+                    pairExecutionId,
+                    time.GetUtcNow(),
+                    TimeSpan.FromMinutes(30));
+                Assert.Equal(PreparedPass1ClaimOutcome.Claimed, claim.Outcome);
+                PreparedPass1FailureResult failed = await store.RecordFailureAsync(
+                    pairExecutionId,
+                    claim.JobId,
+                    claim.JobStateVersion,
+                    claim.LeaseToken,
+                    ScanJobFailureCategory.JobPermanent,
+                    time.GetUtcNow());
+                Assert.Equal(
+                    index == ordinaryFailureBudget
+                        ? PreparedPass1FailureOutcome.Paused
+                        : PreparedPass1FailureOutcome.Recorded,
+                    failed.Outcome);
+            }
+        }
+
+        host.Services.GetRequiredService<PreparedPass1ExecutionActivator>()
+            .Signal(pairExecutionId, fixture.Authorization, CreateHandoff(fixture.Package));
+        await time.WaitForTimerAsync(TimeSpan.FromSeconds(3));
+        Assert.Equal(abandonedLease.LeaseExpiresAt - time.GetUtcNow(), time.LastDueTime);
+
+        time.Advance(abandonedLease.LeaseExpiresAt.AddTicks(1) - time.GetUtcNow());
+        DateTimeOffset deadline = DateTimeOffset.UtcNow.AddSeconds(5);
+        Pass1PairExecutionPhase phase;
+        do
+        {
+            await Task.Delay(50);
+            await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+            VulgataDbContext context = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            phase = await context.Pass1PairExecutions.AsNoTracking()
+                .Where(value => value.Id == pairExecutionId)
+                .Select(value => value.Phase)
+                .SingleAsync();
+        }
+        while (phase != Pass1PairExecutionPhase.FailedPass1 && DateTimeOffset.UtcNow < deadline);
+
+        Assert.Equal(Pass1PairExecutionPhase.FailedPass1, phase);
+        await using (AsyncServiceScope verificationScope = host.Services.CreateAsyncScope())
+        {
+            VulgataDbContext context = verificationScope.ServiceProvider
+                .GetRequiredService<VulgataDbContext>();
+            Assert.False(await context.ScanJobExecutions.AsNoTracking().AnyAsync(value =>
+                value.State == ScanJobExecutionState.Pending ||
+                value.State == ScanJobExecutionState.Running ||
+                value.State == ScanJobExecutionState.RetryScheduled));
+            Assert.Equal(
+                Pass1OutcomeStatus.FailedPass1,
+                await context.Pass1Outcomes.AsNoTracking()
+                    .Where(value => value.PairExecutionId == pairExecutionId)
+                    .Select(value => value.Status)
+                    .SingleAsync());
+        }
+    }
+
+    [Fact]
     public async Task Shutdown_WithCancellationResistantWorker_RetainsRevisionBindingsUntilLocalDrain()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -1812,11 +1900,134 @@ public sealed class Pass1ProductionExecutionCapacityTests
 
     private sealed class ManualTimeProvider(DateTimeOffset current) : TimeProvider
     {
+        private readonly object _sync = new();
+        private readonly List<ManualTimer> _timers = [];
         private DateTimeOffset _current = current;
+        private readonly TaskCompletionSource _timerCreated =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public override DateTimeOffset GetUtcNow() => _current;
+        public TimeSpan? LastDueTime { get; private set; }
 
-        public void Advance(TimeSpan amount) =>
-            _current = _current.Add(amount);
+        public override DateTimeOffset GetUtcNow()
+        {
+            lock (_sync)
+            {
+                return _current;
+            }
+        }
+
+        public override ITimer CreateTimer(
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            var timer = new ManualTimer(this, callback, state, dueTime, period);
+            lock (_sync)
+            {
+                _timers.Add(timer);
+                LastDueTime = dueTime;
+            }
+
+            _timerCreated.TrySetResult();
+            return timer;
+        }
+
+        public async Task WaitForTimerAsync(TimeSpan timeout) =>
+            await _timerCreated.Task.WaitAsync(timeout);
+
+        public void Advance(TimeSpan amount)
+        {
+            ManualTimer[] due;
+            lock (_sync)
+            {
+                _current = _current.Add(amount);
+                due = _timers.Where(timer => timer.IsDue(_current)).ToArray();
+            }
+
+            foreach (ManualTimer timer in due)
+            {
+                timer.Fire();
+            }
+        }
+
+        private sealed class ManualTimer : ITimer
+        {
+            private readonly ManualTimeProvider _owner;
+            private readonly TimerCallback _callback;
+            private readonly object? _state;
+            private DateTimeOffset _dueAt;
+            private TimeSpan _period;
+            private bool _disposed;
+
+            public ManualTimer(
+                ManualTimeProvider owner,
+                TimerCallback callback,
+                object? state,
+                TimeSpan dueTime,
+                TimeSpan period)
+            {
+                _owner = owner;
+                _callback = callback;
+                _state = state;
+                _dueAt = owner._current.Add(dueTime);
+                _period = period;
+            }
+
+            public bool IsDue(DateTimeOffset now) => !_disposed && _dueAt <= now;
+
+            public void Fire()
+            {
+                lock (_owner._sync)
+                {
+                    if (_disposed)
+                    {
+                        return;
+                    }
+
+                    if (_period == Timeout.InfiniteTimeSpan)
+                    {
+                        _disposed = true;
+                        _owner._timers.Remove(this);
+                    }
+                    else
+                    {
+                        _dueAt = _owner._current.Add(_period);
+                    }
+                }
+
+                _callback(_state);
+            }
+
+            public bool Change(TimeSpan dueTime, TimeSpan period)
+            {
+                lock (_owner._sync)
+                {
+                    if (_disposed)
+                    {
+                        return false;
+                    }
+
+                    _dueAt = _owner._current.Add(dueTime);
+                    _period = period;
+                    return true;
+                }
+            }
+
+            public void Dispose()
+            {
+                lock (_owner._sync)
+                {
+                    _disposed = true;
+                    _owner._timers.Remove(this);
+                }
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                Dispose();
+                return ValueTask.CompletedTask;
+            }
+        }
     }
 }

@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "21e51796a6ba1eecd610dd542a693d53e44e778c",
+  "reviewed_boundary": "live Story 12.3 qualification-correction worktree",
+  "correction_findings_closed": [
+    {
+      "id": "QR-001",
+      "severity": "High",
+      "resolution": "Ordinary-failure budget breach now enters nonterminal policy drain; terminal FailedPass1 outcome, exact inventory, child states, coordination, and pending-job cancellation are committed only after all leases close."
+    },
+    {
+      "id": "QR-002",
+      "severity": "High",
+      "resolution": "Policy drain is restart-safe: valid leases are preserved, strictly expired leases are closed without reopening dispatch, and recovery exposes a durable eligibility wake-up."
+    },
+    {
+      "id": "QR-003",
+      "severity": "High",
+      "resolution": "The production runner treats reconciliation Ineligible as nonterminal, waits for the durable lease expiry, and completes policy drain after one activation without a second resume signal."
+    },
+    {
+      "id": "QR-004",
+      "severity": "Medium",
+      "resolution": "An over-budget failure while ProbingProvider immediately supersedes probing through the provider-circuit transition seam, resets probe ordinal to zero, and clears NextProbeAt and RetryAfterAt."
+    }
+  ],
+  "accepted_evidence": [
+    "PostgreSQL policy-drain restart proof preserves the lease at exact expiry and closes it strictly after expiry.",
+    "Production-host runner proof reaches FailedPass1 after one activation and TimeProvider advancement.",
+    "Provider-probe threshold race proof stops claims on the first ordinary failure above budget and clears obsolete probe eligibility.",
+    "Post-terminal Document/failure mutations are rejected and immutable graph state is unchanged.",
+    "Affected Pass 1 boundary passed 149/149; Web build completed with zero errors; git diff check was clean apart from line-ending notices.",
+    "Corrected r8 DeepSeek execution reached exact policy drain at the sixth failure, closed one pre-existing lease as the seventh failure, atomically cancelled 143 jobs, and left zero active work."
+  ],
+  "findings": [],
+  "truthful_limitation": "The accepted correction is production-safe, but Story 12.3 remains incomplete because DeepSeek produced zero accepted code-logic/file-v2 Documents in the required real-provider qualification.",
+  "summary": "ACCEPT. Restart, drain, runner wake-up, terminal accounting, and provider-probe race corrections are closed without weakening strict Worker result acceptance."
+}

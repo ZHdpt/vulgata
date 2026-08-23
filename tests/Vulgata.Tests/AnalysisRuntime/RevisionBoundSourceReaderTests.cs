@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Git;
@@ -132,6 +133,50 @@ public sealed class RevisionBoundSourceReaderTests
         Assert.DoesNotContain("stderr", missing.Failure.Diagnostic, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("/", missing.Failure.Diagnostic, StringComparison.Ordinal);
         Assert.DoesNotContain("\\", missing.Failure.Diagnostic, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ReadAsync_FullCrLfFileRange_PreservesExactSourceBytes()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-tests",
+            "revision-source-crlf",
+            Guid.NewGuid().ToString("N"));
+        string relativePath = "src/example.xml";
+        string fullPath = Path.Combine(root, "src", "example.xml");
+        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+        const string source = "<root>\r\n\t<value>通讯</value>\r\n</root>\r\n";
+        byte[] sourceBytes = Encoding.UTF8.GetBytes(source);
+        await File.WriteAllBytesAsync(fullPath, sourceBytes);
+        string sourceHash = Convert.ToHexStringLower(SHA256.HashData(sourceBytes));
+        const string bindingToken = "crlf-binding-1200000000000000000000000000000000000002";
+        TestSnapshotLease lease = new(_repositoryId, _scanRunId, ProfiledRevision, root);
+        IRevisionBoundSourceReader reader = CreateReader(lease, bindingToken);
+
+        try
+        {
+            SourceExcerptResult result = await reader.ReadAsync(
+                CreateScope(_repositoryId, _scanRunId, ProfiledRevision, bindingToken),
+                new RevisionBoundSourceRequest(
+                    relativePath,
+                    new AnalysisLineRange(1, 3),
+                    sourceHash,
+                    sourceBytes.Length,
+                    byteStart: 0,
+                    byteEndExclusive: sourceBytes.Length),
+                CancellationToken.None);
+
+            Assert.Equal(AnalysisOperationStatus.Succeeded, result.Status);
+            Assert.Equal(source, result.Excerpt);
+            Assert.Equal(sourceBytes.Length, result.ByteCount);
+            Assert.Equal(sourceHash, Convert.ToHexStringLower(
+                SHA256.HashData(Encoding.UTF8.GetBytes(result.Excerpt))));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 
     [Fact]

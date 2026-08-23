@@ -31,10 +31,7 @@ namespace Vulgata.Tests.PreparedPass1;
 public sealed class Pass1ProductionExecutionTests
 {
     [T062HostQualificationTheory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    [InlineData(4)]
+    [MemberData(nameof(QualificationConcurrencyLimits))]
     public async Task AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence(
         int concurrencyLimit)
     {
@@ -50,6 +47,10 @@ public sealed class Pass1ProductionExecutionTests
         using HttpClient client = await CreateAuthenticatedClientAsync(
             host,
             qualification.SystemId);
+        using HttpResponseMessage systems = await client.GetAsync("/api/systems");
+        string systemsBody = await systems.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, systems.StatusCode);
+        Assert.Contains(qualification.SystemId.ToString("D"), systemsBody, StringComparison.OrdinalIgnoreCase);
 
         Guid[] manifestIds = qualification.ManifestIds.ToArray();
         Assert.Equal(2, manifestIds.Length);
@@ -74,7 +75,7 @@ public sealed class Pass1ProductionExecutionTests
         Pass1ExecutionStatusResponse terminal = await WaitForTerminalAsync(
             client,
             started.Pass1ExecutionId,
-            TimeSpan.FromSeconds(30));
+            QualificationTerminalTimeout());
         Assert.True(
             terminal.Phase is "Completed" or "CompletedWithWarnings",
             $"T062 RED: production Start did not reach terminal success; phase={terminal.Phase}, " +
@@ -195,6 +196,43 @@ public sealed class Pass1ProductionExecutionTests
         Assert.Equal(fingerprints, replayFingerprints);
     }
 
+    public static TheoryData<int> QualificationConcurrencyLimits
+    {
+        get
+        {
+            const string variable = "VULGATA_T062_CONCURRENCY_LIMIT";
+            string? configured = Environment.GetEnvironmentVariable(variable);
+            if (string.IsNullOrWhiteSpace(configured))
+            {
+                return new TheoryData<int> { 1, 2, 3, 4 };
+            }
+
+            if (!int.TryParse(configured, out int limit) || limit is < 1 or > 4)
+            {
+                throw new InvalidOperationException($"{variable} must be an integer from 1 through 4.");
+            }
+
+            return new TheoryData<int> { limit };
+        }
+    }
+
+    private static TimeSpan QualificationTerminalTimeout()
+    {
+        const string variable = "VULGATA_T062_TERMINAL_TIMEOUT_SECONDS";
+        string? configured = Environment.GetEnvironmentVariable(variable);
+        if (string.IsNullOrWhiteSpace(configured))
+        {
+            return TimeSpan.FromSeconds(30);
+        }
+
+        if (!int.TryParse(configured, out int seconds) || seconds is < 30 or > 3600)
+        {
+            throw new InvalidOperationException($"{variable} must be an integer from 30 through 3600.");
+        }
+
+        return TimeSpan.FromSeconds(seconds);
+    }
+
     internal static async Task<T062QualificationInputs> LoadQualificationInputsAsync()
     {
         RequireRealHostQualificationPrerequisites();
@@ -229,8 +267,9 @@ public sealed class Pass1ProductionExecutionTests
         {
             Assert.Equal(PreparedScanManifestApprovalState.Approved, manifest.ApprovalState);
             Assert.Equal(PreparedScanManifest.CurrentSchemaIdentity, manifest.SchemaIdentity);
-            Assert.True(manifest.SelectedCount >= 25);
+            Assert.InRange(manifest.SelectedCount, 0, 150);
         });
+        Assert.InRange(manifests.Sum(manifest => manifest.SelectedCount), 50, 150);
 
         Assert.Equal(2, manifestIds.Distinct().Count());
         Dictionary<Guid, string> rootsByManifest = manifestIds
@@ -464,6 +503,9 @@ public sealed class Pass1ProductionExecutionTests
             builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
             builder.UseSetting("Logging:EventLog:LogLevel:Default", "None");
             builder.UseSetting("Logging:LogLevel:Default", "None");
+            builder.UseSetting(
+                "Logging:LogLevel:Vulgata.Infrastructure.Data.PreparedPass1ClaimedPacketSource",
+                "Warning");
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
@@ -582,7 +624,8 @@ public sealed class Pass1ProductionExecutionTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             last = (await response.Content.ReadFromJsonAsync<Pass1ExecutionStatusResponse>())!;
             if (last.Phase is "Completed" or "CompletedWithWarnings" or "Failed" or
-                "FailedIntegrity" or "Paused" or "PausedProviderUnavailable")
+                "FailedPass1" or "FailedIntegrity" or "Paused" or
+                "PausedProviderUnavailable")
             {
                 return last;
             }

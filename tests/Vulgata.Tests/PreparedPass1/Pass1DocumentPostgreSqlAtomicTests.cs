@@ -197,6 +197,46 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_PolicyDrain_AcceptsLeasedSuccessButTerminalFailureRejectsLateCommit()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using (CommitFixture draining = await CommitFixture.CreateAsync(administrator))
+        {
+            await SetPairPhaseAsync(
+                draining,
+                Pass1PairExecutionPhase.Running,
+                Pass1CircuitState.Paused,
+                Pass1PairReasonCategory.Pass1Policy,
+                "pass1-policy-failed",
+                terminalAt: null);
+
+            Pass1DocumentCommitResult accepted = await draining.Committer.CommitAsync(
+                draining.Request,
+                CancellationToken.None);
+            Assert.Equal(Pass1DocumentCommitStatus.Committed, accepted.Status);
+        }
+
+        await using CommitFixture terminal = await CommitFixture.CreateAsync(administrator);
+        await SetPairPhaseAsync(
+            terminal,
+            Pass1PairExecutionPhase.FailedPass1,
+            Pass1CircuitState.Paused,
+            Pass1PairReasonCategory.Pass1Policy,
+            "pass1-policy-failed",
+            PreparedScanTestHost.FixedUtcNow.AddMinutes(2));
+        GraphCounts before = await GraphCounts.ReadAsync(terminal.ConnectionString);
+
+        Pass1DocumentCommitResult rejected = await terminal.Committer.CommitAsync(
+            terminal.Request,
+            CancellationToken.None);
+
+        Assert.Equal(Pass1DocumentCommitStatus.Rejected, rejected.Status);
+        Assert.Equal("durable-binding-mismatch", rejected.ReasonCode);
+        Assert.Equal(before, await GraphCounts.ReadAsync(terminal.ConnectionString));
+        Assert.Equal(ScanJobExecutionState.Running, await terminal.ReadJobStateAsync());
+    }
+
+    [Fact]
     public async Task PostgreSql17_ConcurrentExactAndDifferentCommits_HaveOneWinnerAndMutationFreeConflict()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -464,6 +504,27 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         {
             yield return current;
         }
+    }
+
+    private static async Task SetPairPhaseAsync(
+        CommitFixture fixture,
+        Pass1PairExecutionPhase phase,
+        Pass1CircuitState circuitState,
+        Pass1PairReasonCategory reasonCategory,
+        string reasonCode,
+        DateTimeOffset? terminalAt)
+    {
+        await fixture.Prepared.Context.Pass1PairExecutions
+            .Where(value => value.Id == fixture.PairExecutionId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(value => value.Phase, phase)
+                .SetProperty(value => value.CircuitState, circuitState)
+                .SetProperty(value => value.ReasonCategory, reasonCategory)
+                .SetProperty(value => value.ReasonCode, reasonCode)
+                .SetProperty(value => value.StateVersion, value => value.StateVersion + 1)
+                .SetProperty(value => value.UpdatedAt, PreparedScanTestHost.FixedUtcNow.AddMinutes(2))
+                .SetProperty(value => value.TerminalAt, terminalAt));
+        fixture.Prepared.Context.ChangeTracker.Clear();
     }
 
     private static async Task<int> CountAsync(string connectionString, string table, string? predicate = null)

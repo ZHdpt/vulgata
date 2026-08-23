@@ -1,0 +1,67 @@
+{
+  "schema_version": "story-12.3-approved-pair-qualification/1.0",
+  "evidence_id": "story-12-3/e2e/06-approved-pair-deepseek",
+  "observed_at_utc": "2026-08-23T09:37:58.6689000Z",
+  "branch": "demo0831/story-12-3",
+  "source_head": "21e51796a6ba1eecd610dd542a693d53e44e778c",
+  "authorization": {
+    "source_payload_transmission_authorized": true,
+    "repository_roots": [
+      "G:\\AIplayground\\vulgata\\sample\\mbs_account",
+      "G:\\AIplayground\\vulgata\\sample\\mbs_channel"
+    ],
+    "endpoint": "https://api.deepseek.com",
+    "model": "deepseek-v4-flash-vision-exp",
+    "credential_persisted": false,
+    "raw_provider_content_persisted": false
+  },
+  "approved_pair": {
+    "system_id": "c586fbde-b101-42bc-84ca-9946f5348bce",
+    "manifest_ids": [
+      "9df7491d-3a24-8fce-a456-d06821659235",
+      "2e5df92a-d0e7-8608-963d-18847cdffbfd"
+    ],
+    "pair_execution_id": "e8027a57-62dd-8564-9989-e3ad1e26627a",
+    "profiled_revisions": [
+      "19c60cd3f3976b7697c487c7bafd96142e3a7625",
+      "47f6b627a7598f862873610413eec1e1e7bf46bf"
+    ],
+    "prepared_file_code_units": 150,
+    "concurrency_limit": 2
+  },
+  "llm_involvement": {
+    "confirmed": true,
+    "durable_navigation_receipts": 6,
+    "symbol_search_calls": 4,
+    "exact_source_evidence_calls": 2,
+    "maximum_depth_observed": 1,
+    "maximum_results_observed": 1,
+    "maximum_evidence_bytes_observed": 10181
+  },
+  "terminal_state": {
+    "pair_phase": "FailedPass1",
+    "circuit_state": "Paused",
+    "reason_category": "Pass1Policy",
+    "reason_code": "pass1-policy-failed",
+    "probe_ordinal": 0,
+    "next_probe_at": null,
+    "retry_after_at": null,
+    "ordinary_failures": 7,
+    "ordinary_failure_budget": 5,
+    "policy_cancelled_jobs": 143,
+    "scan_executions_failed_pass1": 2,
+    "coordination_phase": "FailedPass1",
+    "document_versions": 0,
+    "logical_documents": 0,
+    "document_sections": 0,
+    "index_entries": 0,
+    "terminal_at_utc": "2026-08-23T09:37:58.668900Z"
+  },
+  "verification": {
+    "focused_tests": "policy restart, runner wake-up, probe-threshold race, and terminal commit tests passed",
+    "pass1_regression_tests": "149 passed, 0 failed",
+    "web_build": "0 errors, 9 existing package/assembly warnings"
+  },
+  "result": "failed",
+  "blocking_reason": "The corrected real Worker and navigate_code path was exercised for 29m35s, but no code-logic/file-v2 result passed strict acceptance. The sixth ordinary failure immediately stopped new claims; one already-leased job then closed as the seventh failure before 143 remaining jobs were atomically cancelled. Concurrency variants 1, 3, and 4 were not run after concurrency 2 failed."
+}

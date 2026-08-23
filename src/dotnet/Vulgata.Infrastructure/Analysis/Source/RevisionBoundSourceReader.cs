@@ -148,8 +148,33 @@ public sealed class RevisionBoundSourceReader(
                     "source_hash_mismatch");
             }
 
-            string sourceText = _strictUtf8.GetString(sourceBytes);
-            if (!TryExtractRange(sourceText, request.Range, out string excerpt))
+            string excerpt;
+            if (request.ByteStart is long byteStart &&
+                request.ByteEndExclusive is long byteEndExclusive)
+            {
+                if (byteEndExclusive > sourceBytes.LongLength)
+                {
+                    return Failed(
+                        scope,
+                        request,
+                        AnalysisPortFailureReason.Rejected,
+                        "source_range_rejected");
+                }
+
+                excerpt = _strictUtf8.GetString(sourceBytes.AsSpan(
+                    checked((int)byteStart),
+                    checked((int)(byteEndExclusive - byteStart))));
+            }
+            else
+            {
+                string sourceText = _strictUtf8.GetString(sourceBytes);
+                if (!TryExtractRange(sourceText, request.Range, out excerpt))
+                {
+                    return Failed(scope, request, AnalysisPortFailureReason.Rejected, "source_range_rejected");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(excerpt))
             {
                 return Failed(scope, request, AnalysisPortFailureReason.Rejected, "source_range_rejected");
             }

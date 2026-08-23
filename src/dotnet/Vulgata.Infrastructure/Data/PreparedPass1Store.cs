@@ -452,17 +452,22 @@ public sealed class PreparedPass1Store(
             PairJob[] pairJobs = await LoadPairJobsAsync(pair, cancellationToken);
             Pass1Outcome? durableOutcome = await context.Pass1Outcomes.AsNoTracking()
                 .SingleOrDefaultAsync(value => value.PairExecutionId == pairExecutionId, cancellationToken);
+            bool policyDrain = IsPass1PolicyDrain(pair);
             if (pairJobs.Length != pair.DispatchedFileCount ||
                 pair.Phase is not (Pass1PairExecutionPhase.Running or
                     Pass1PairExecutionPhase.Reconciling or
-                    Pass1PairExecutionPhase.ReadyForResolution) ||
-                pairJobs.Any(value => value.Job.State is
-                    ScanJobExecutionState.Pending or
-                    ScanJobExecutionState.Running or
-                    ScanJobExecutionState.RetryScheduled) ||
+                    Pass1PairExecutionPhase.ReadyForResolution or
+                    Pass1PairExecutionPhase.FailedPass1) ||
+                pairJobs.Any(value => value.Job.State == ScanJobExecutionState.Running) ||
+                !policyDrain && pairJobs.Any(value => value.Job.State is
+                    ScanJobExecutionState.Pending or ScanJobExecutionState.RetryScheduled) ||
                 reconciliation.ReconciledAt < pair.UpdatedAt ||
-                durableOutcome is null && pair.Phase == Pass1PairExecutionPhase.ReadyForResolution ||
-                durableOutcome is not null && pair.Phase != Pass1PairExecutionPhase.ReadyForResolution)
+                durableOutcome is null && pair.Phase is
+                    (Pass1PairExecutionPhase.ReadyForResolution or
+                     Pass1PairExecutionPhase.FailedPass1) ||
+                durableOutcome is not null && pair.Phase is not
+                    (Pass1PairExecutionPhase.ReadyForResolution or
+                     Pass1PairExecutionPhase.FailedPass1))
             {
                 await transaction.RollbackAsync(CancellationToken.None);
                 context.ChangeTracker.Clear();
@@ -694,6 +699,19 @@ public sealed class PreparedPass1Store(
                     pair: pair,
                     childCount: pairJobs.Length,
                     bindingValid: true);
+            }
+
+            if (policyDrain)
+            {
+                foreach (PairJob unfinished in pairJobs.Where(value => value.Job.State is
+                             ScanJobExecutionState.Pending or ScanJobExecutionState.RetryScheduled))
+                {
+                    unfinished.Job.Cancel(
+                        unfinished.Job.StateVersion,
+                        expectedLeaseToken: null,
+                        "pass1-policy-cancelled",
+                        reconciliation.ReconciledAt);
+                }
             }
 
             Dictionary<Guid, CodeUnit> unitsById = units.ToDictionary(value => value.Id);
@@ -1091,7 +1109,9 @@ public sealed class PreparedPass1Store(
                 return ClaimResult(PreparedPass1ClaimOutcome.NotFound);
             }
 
-            if (pair.Phase != Pass1PairExecutionPhase.Running || pair.CircuitState != Pass1CircuitState.Closed)
+            bool policyDrain = IsPass1PolicyDrain(pair);
+            if (pair.Phase != Pass1PairExecutionPhase.Running ||
+                pair.CircuitState != Pass1CircuitState.Closed && !policyDrain)
             {
                 await transaction.RollbackAsync(CancellationToken.None);
                 context.ChangeTracker.Clear();
@@ -1102,6 +1122,36 @@ public sealed class PreparedPass1Store(
             }
 
             PairJob[] jobs = await LoadPairJobsAsync(pair, cancellationToken);
+            if (policyDrain)
+            {
+                foreach (PairJob expired in jobs.Where(value =>
+                             value.Job.State == ScanJobExecutionState.Running &&
+                             value.Job.LeaseExpiresAt is DateTimeOffset expiresAt &&
+                             expiresAt < now))
+                {
+                    expired.Job.Cancel(
+                        expired.Job.StateVersion,
+                        expired.Job.LeaseToken,
+                        "pass1-policy-cancelled",
+                        now);
+                }
+
+                DateTimeOffset? nextEligibleAt = jobs
+                    .Where(value => value.Job.State == ScanJobExecutionState.Running)
+                    .Select(value => value.Job.LeaseExpiresAt)
+                    .Where(value => value is not null)
+                    .Min();
+                int drainingLeaseCount = jobs.Count(value =>
+                    value.Job.State == ScanJobExecutionState.Running);
+                await context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return ClaimResult(
+                    PreparedPass1ClaimOutcome.Ineligible,
+                    activeLeaseCount: drainingLeaseCount,
+                    concurrencyLimit: pair.ConcurrencyLimit,
+                    nextEligibleAt: nextEligibleAt);
+            }
+
             foreach (PairJob expired in jobs.Where(value =>
                          value.Job.State == ScanJobExecutionState.Running &&
                          value.Job.LeaseExpiresAt is DateTimeOffset expiresAt &&
@@ -1168,12 +1218,13 @@ public sealed class PreparedPass1Store(
             DateTimeOffset leaseExpiresAt = now.Add(leaseDuration);
             next.Job.AcquireLease(leaseToken, leaseExpiresAt, now);
             await context.SaveChangesAsync(cancellationToken);
+            await context.Entry(next.Job).ReloadAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return new(
                 PreparedPass1ClaimOutcome.Claimed,
                 next.Job.Id,
                 leaseToken,
-                leaseExpiresAt,
+                next.Job.LeaseExpiresAt!.Value,
                 next.PairSelectionOrdinal,
                 next.Job.ManifestOrdinal,
                 activeLeaseCount + 1,
@@ -1270,6 +1321,47 @@ public sealed class PreparedPass1Store(
             int expired = 0;
             int dueRetries = 0;
             bool changed = false;
+            bool policyDrain = IsPass1PolicyDrain(pair);
+
+            if (policyDrain)
+            {
+                foreach (PairJob item in jobs.Where(value =>
+                             value.Job.State == ScanJobExecutionState.Running &&
+                             value.Job.LeaseExpiresAt is DateTimeOffset leaseExpiresAt &&
+                             leaseExpiresAt < observedAt))
+                {
+                    item.Job.Cancel(
+                        item.Job.StateVersion,
+                        item.Job.LeaseToken,
+                        "pass1-policy-cancelled",
+                        observedAt);
+                    expired++;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    await context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                }
+
+                int drainingRemaining = CountRemaining(jobs);
+                context.ChangeTracker.Clear();
+                return RecoveryResult(
+                    PreparedPass1RecoveryOutcome.Continued,
+                    DurableScanReason.None,
+                    pair,
+                    expired,
+                    completedJobCount: completed,
+                    pendingJobCount: drainingRemaining,
+                    continued: drainingRemaining > 0,
+                    isReplay: !changed,
+                    pairBindingValid: true);
+            }
 
             if (!providerAvailable)
             {
@@ -1525,6 +1617,15 @@ public sealed class PreparedPass1Store(
             PreparedPass1FailureOutcome outcome;
             switch (failureCategory)
             {
+                case ScanJobFailureCategory.JobTransient when IsPass1PolicyDrain(pair):
+                    job.Fail(
+                        expectedStateVersion,
+                        expectedLeaseToken,
+                        failureCategory,
+                        failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.Recorded;
+                    break;
                 case ScanJobFailureCategory.JobTransient when job.AttemptCount == 1:
                     job.ScheduleRetry(
                         expectedStateVersion,
@@ -1542,6 +1643,17 @@ public sealed class PreparedPass1Store(
                         expectedLeaseToken,
                         failureCategory,
                         failureCode,
+                        observedAt);
+                    outcome = PreparedPass1FailureOutcome.Recorded;
+                    break;
+                case ScanJobFailureCategory.ProviderTransient when IsPass1PolicyDrain(pair):
+                case ScanJobFailureCategory.ProviderConfiguration when IsPass1PolicyDrain(pair):
+                case ScanJobFailureCategory.Unclassified when IsPass1PolicyDrain(pair):
+                case ScanJobFailureCategory.Cancellation when IsPass1PolicyDrain(pair):
+                    job.Cancel(
+                        expectedStateVersion,
+                        expectedLeaseToken,
+                        "pass1-policy-cancelled",
                         observedAt);
                     outcome = PreparedPass1FailureOutcome.Recorded;
                     break;
@@ -1633,6 +1745,25 @@ public sealed class PreparedPass1Store(
                         budgetValue.PairExecutionId == pairExecutionId &&
                         budgetValue.ScanJobExecutionId == value.Id),
                     cancellationToken);
+            int ordinaryFailureBudget = Math.Min(5, pair.DispatchedFileCount / 10);
+            if (ordinaryFailures > ordinaryFailureBudget &&
+                (pair.Phase is Pass1PairExecutionPhase.Running or
+                    Pass1PairExecutionPhase.ProbingProvider) &&
+                !IsPass1PolicyDrain(pair))
+            {
+                TransitionProviderCircuit(
+                    pair,
+                    Pass1PairExecutionPhase.Running,
+                    Pass1CircuitState.Paused,
+                    probeOrdinal: 0,
+                    nextProbeAt: null,
+                    retryAfterAt: null,
+                    Pass1PairReasonCategory.Pass1Policy,
+                    "pass1-policy-failed",
+                    observedAt);
+                outcome = PreparedPass1FailureOutcome.Paused;
+                await context.SaveChangesAsync(cancellationToken);
+            }
             await transaction.CommitAsync(cancellationToken);
             return FailureResult(
                 outcome,
@@ -3159,6 +3290,12 @@ public sealed class PreparedPass1Store(
         Pass1PairExecutionPhase.FailedIntegrity or
         Pass1PairExecutionPhase.FailedSecurity or
         Pass1PairExecutionPhase.Cancelled;
+
+    private static bool IsPass1PolicyDrain(Pass1PairExecution pair) =>
+        pair.Phase == Pass1PairExecutionPhase.Running &&
+        pair.CircuitState == Pass1CircuitState.Paused &&
+        pair.ReasonCategory == Pass1PairReasonCategory.Pass1Policy &&
+        string.Equals(pair.ReasonCode, "pass1-policy-failed", StringComparison.Ordinal);
 
     private static string GetFailureCode(ScanJobFailureCategory failureCategory) => failureCategory switch
     {

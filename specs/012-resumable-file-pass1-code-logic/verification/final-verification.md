@@ -1,5 +1,48 @@
 # Story 12.3 final verification
 
+## T062 authorized DeepSeek qualification and correction result
+
+Observed on `2026-08-23` on branch `demo0831/story-12-3`. The user authorized
+source-derived Worker Agent payloads from the prepared `mbs_account` and
+`mbs_channel` roots to `https://api.deepseek.com` with model
+`deepseek-v4-flash-vision-exp`. The API key remained environment-only and
+neither the credential nor raw provider responses were persisted.
+
+The corrected real LLM path was exercised for 29m35s. The isolated
+concurrency-two r8 run durably recorded six model-initiated `navigate_code`
+receipts: four `SymbolSearch` calls and two `ExactSourceEvidence` calls, all at
+depth one and within the result/evidence bounds (maximum one result and 10,181
+evidence bytes). This supersedes the older statement below that no LLM had
+been called.
+
+The qualification did **not** pass. DeepSeek produced no result accepted by
+the strict `code-logic/file-v2` identity, authorization, evidence, and schema
+boundary. The sixth `JobTransient/job-transient` failure, above the budget of
+five, immediately stopped new claims and entered exact policy drain. One
+already-leased job then closed as the seventh ordinary failure; the remaining
+143 jobs were atomically cancelled. The pair persisted `FailedPass1`,
+`Paused`, probe ordinal zero, null probe/retry eligibility, and
+`Pass1Policy/pass1-policy-failed`; both Scan Executions and the two-Repository
+coordination atomically reached `FailedPass1`. No Logical Document, Document
+Version, Document Section, Index Entry, or job Document association was
+committed. Concurrency variants one, three, and four were not run after this
+required acceptance path failed.
+
+The qualification exposed and corrected exact CRLF/tab byte hydration,
+PostgreSQL microsecond lease precision, restart-safe policy drain, one-signal
+runner wake-up at durable lease expiry, immediate ordinary-failure-budget
+drain while provider probing, cleared obsolete provider-probe eligibility,
+approved-manifest Repository authorization when one manifest selects zero
+files, and T062 terminal-phase recognition. Correction evidence includes the
+focused PostgreSQL/production-host proofs, 149/149 affected Pass 1 tests, and a
+Web build with 0 errors and 9 existing package/assembly warnings. The durable sanitized record is
+`specs/012-resumable-file-pass1-code-logic/evidence/e2e/approved-pair-deepseek-qualification-01.json`.
+
+Story 12.3 remains incomplete at the required conditional E2E gate because a
+real provider run has not produced even one accepted Code Logic Document; the
+evidence is a genuine LLM-involved failed qualification, not a synthetic or
+LLM-free test.
+
 ## T062 harness correction and current blocker
 
 Observed at `2026-08-23T02:44:46Z` on branch

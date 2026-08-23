@@ -154,6 +154,7 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Type contract = RequireClaimedPacketSourceContract();
         Type implementation = RequireClaimedPacketSourceImplementation();
         using ServiceProvider provider = new ServiceCollection()
+            .AddLogging()
             .AddSingleton(context)
             .AddSingleton<IRevisionBoundSourceReader>(reader)
             .AddSingleton<TimeProvider>(new FixedTimeProvider(PreparedScanTestHost.FixedUtcNow))

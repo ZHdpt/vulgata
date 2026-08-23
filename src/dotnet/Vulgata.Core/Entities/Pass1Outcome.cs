@@ -48,7 +48,10 @@ public sealed class Pass1Outcome
     {
         if (pairExecutionId == Guid.Empty || !Enum.IsDefined(status) || dispatchedCount < 1 ||
             completedCount < 0 || completedCount > dispatchedCount || ordinaryFailureCount < 0 ||
-            ordinaryFailureCount > dispatchedCount || completedCount + ordinaryFailureCount != dispatchedCount ||
+            ordinaryFailureCount > dispatchedCount ||
+            completedCount + ordinaryFailureCount > dispatchedCount ||
+            status != Pass1OutcomeStatus.FailedPass1 &&
+                completedCount + ordinaryFailureCount != dispatchedCount ||
             highValueSeedCount < 0 || highValueSeedCount > dispatchedCount ||
             succeededHighValueSeedCount < 0 || succeededHighValueSeedCount > highValueSeedCount ||
             reconciledEdgeCount < 0 || completedAt.Offset != TimeSpan.Zero)
