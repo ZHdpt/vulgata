@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "e4a7a7ee61848557500acec616f9401a399e8d2c",
+  "reviewed_boundary": {
+    "base_commit": "29e889badc00db671fcabf80f50918e15381052c",
+    "candidate_commit": "e4a7a7ee61848557500acec616f9401a399e8d2c",
+    "correction_commit": "5f7acd4a7728498814346b10ddf72e2407c0f147",
+    "diff_sha256": "23aa8f809eafc9893dd1c9ce1570cd93fca28ae33c8141aa698bdc188ca7bb98",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "fd46fa773182880f7cd6a0113793b45e83432f5efcb2ec867881ebcb9ca964f6",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "9a1ea96d61e27c4e17203ff40b57fecba88e34e195e6e2287c17d3554412e065",
+      "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md": "f4b98ff1fe1b5646194158ec2d6325e464c2d54cc26be29fa15b300eb818a878",
+      "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json": "dc32fb11ad7c73b2fca47a28dd3b1977b60e06bde0d039bd8e63888e8ab46e73",
+      "specs/012-resumable-file-pass1-code-logic/e2e-decision.json": "edc66e0c2f1c82a4d628e53ab3751b6ef8b205db441f750ae67d5cb5f3fd2669",
+      "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json": "f2b5d4989365136da49f757575f885ca87bbdd01492dfd0bc5f4e4d84498751a",
+      "tests/Vulgata.Tests/PreparedPass1/Pass1ExecutionApiTests.cs": "93018583624906239a3a2d2223efe174eb91d33b905b72fd50ae923e6b131a5f",
+      "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs": "65ce69bcb09d7e804b01211e383873ffbf6beedb1de67a136226225b31662e59"
+    },
+    "correction_scope": {
+      "production_paths_changed": [],
+      "test_paths_changed": [
+        "tests/Vulgata.Tests/PreparedPass1/Pass1ExecutionApiTests.cs",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs"
+      ],
+      "provider_model_variable": "VULGATA_T062_WORKER_PROVIDER_MODEL",
+      "repository_bindings": [
+        {
+          "repository": "mbs_account",
+          "root": "G:/AIplayground/vulgata/sample/mbs_account",
+          "observed_head": "19c60cd3f3976b7697c487c7bafd96142e3a7625"
+        },
+        {
+          "repository": "mbs_channel",
+          "root": "G:/AIplayground/vulgata/sample/mbs_channel",
+          "observed_head": "47f6b627a7598f862873610413eec1e1e7bf46bf"
+        }
+      ]
+    },
+    "verification": {
+      "test_project_build": "passed: 0 errors, 10 existing package/version warnings",
+      "authenticated_api": "passed: 11/11",
+      "real_approved_pair": "blocked-skipped: 0 passed, 0 failed, 1 theory skipped",
+      "git_diff_check": "passed",
+      "t062_inputs": "all manifest, source-root, provider endpoint/model/key, approval, and source-binding environment inputs absent"
+    }
+  },
+  "findings": [],
+  "summary": "ACCEPT. The test-only correction at 5f7acd4a7728498814346b10ddf72e2407c0f147 changes no production path and correctly removes three harness defects. VULGATA_T062_WORKER_PROVIDER_MODEL is now a required nonblank input and reaches the existing production provider seam as the OpenAI-compatible model identifier; the encrypted API-key and System Worker override behavior remain unchanged. Manifest-one/root-one and manifest-two/root-two are bound positionally before any Repository ordering, then each Repository qualification retains its own manifest Profiled Revision. Every selected File Code Unit is checked against exact bytes and hashes under its bound root, and persisted Documents and Source Anchors are checked against the corresponding Repository root and Profiled Revision. The requested account and channel worktrees were observed at 19c60cd3f3976b7697c487c7bafd96142e3a7625 and 47f6b627a7598f862873610413eec1e1e7bf46bf respectively. Login extraction now tolerates HTML attribute order and quote style while still selecting a POST form, posting all rendered hidden fields including antiforgery data, requiring a redirect from valid Identity credentials, retaining cookies, and exercising the existing authorization assertions; independent execution passed 11/11 authenticated API tests, so authentication was not bypassed or weakened. The test project built with zero errors. The approved-pair test remains honestly blocked and skipped because current T062 manifest IDs, qualification database, source-root bindings, DeepSeek endpoint/model/key, approval, and source-binding inputs are absent; no real Worker/LLM execution is claimed. The stale e2e-decision remains prior-gate evidence and must be replaced by the required post-review E2E rerun rather than treated as completion."
+}
