@@ -29,8 +29,8 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-3-e2e-harness-correction-20260823T023122Z",
     "stage": "quality-review",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "5f7acd4a7728498814346b10ddf72e2407c0f147",
+    "binding_status": "bound"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
@@ -38,5 +38,5 @@
     "stage": "quality-review",
     "reason": "The test-only E2E harness correction invalidated quality review; rerun independent quality review before required E2E."
   },
-  "updated_at": "2026-08-23T02:31:22Z"
+  "updated_at": "2026-08-23T02:34:50Z"
 }
