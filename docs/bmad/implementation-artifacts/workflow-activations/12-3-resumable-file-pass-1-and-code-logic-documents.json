@@ -4,8 +4,8 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
   "proposed_feature_short_name": "resumable-file-pass1-code-logic",
-  "stage": "quality-review",
-  "source_commit": "f65094ea3460aba48b8e6ff00e3e502679933f4b",
+  "stage": "conditional-e2e",
+  "source_commit": "4b464e608486b01d8241264537f0b299eb80ca49",
   "preflight": {
     "branch": "demo0831/story-12-3",
     "head": "f65094ea3460aba48b8e6ff00e3e502679933f4b",
@@ -27,16 +27,16 @@
     "artifacts/qualification/story-12.2/production-literal-inspection.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-e2e-harness-correction-20260823T023122Z",
-    "stage": "quality-review",
-    "commit_sha": "5f7acd4a7728498814346b10ddf72e2407c0f147",
+    "checkpoint_id": "bmad-12-3-e2e-blocked-20260823T024446Z",
+    "stage": "conditional-e2e",
+    "commit_sha": "4b464e608486b01d8241264537f0b299eb80ca49",
     "binding_status": "bound"
   },
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
   "superseded_by_state": "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
   "resume": {
-    "stage": "quality-review",
-    "reason": "The test-only E2E harness correction invalidated quality review; rerun independent quality review before required E2E."
+    "stage": "conditional-e2e",
+    "reason": "Quality review attempt 4 accepted. Authenticated API is 11/11; required real-pair E2E awaits fresh Story 12.2 manifests and DeepSeek/T046 environment inputs."
   },
-  "updated_at": "2026-08-23T02:34:50Z"
+  "updated_at": "2026-08-23T02:44:46Z"
 }

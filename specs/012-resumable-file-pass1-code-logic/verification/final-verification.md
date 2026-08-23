@@ -1,5 +1,27 @@
 # Story 12.3 final verification
 
+## T062 harness correction and current blocker
+
+Observed at `2026-08-23T02:44:46Z` on branch
+`demo0831/story-12-3`. Independent quality-review attempt 4 accepted the
+test-only correction with no findings. The authenticated Pass 1 API lane now
+passes 11/11; no production path changed.
+
+The real approved-pair qualification has not called an LLM. It remains blocked
+until Story 12.2 prepares and approves manifests for the detached, clean source
+worktrees below and the DeepSeek provider inputs are supplied:
+
+- `G:/AIplayground/vulgata/sample/mbs_account` at
+  `19c60cd3f3976b7697c487c7bafd96142e3a7625`
+- `G:/AIplayground/vulgata/sample/mbs_channel` at
+  `47f6b627a7598f862873610413eec1e1e7bf46bf`
+
+`VULGATA_T062_WORKER_PROVIDER_MODEL` is required and is passed to the existing
+OpenAI-compatible provider model seam. No synthetic `t062-worker-provider`
+model identifier is used. `VULGATA_T062_MANIFEST_ONE_ID` is positionally bound
+to account/root one, and `VULGATA_T062_MANIFEST_TWO_ID` to channel/root two;
+each manifest retains its own Repository and Profiled Revision identity.
+
 ## T069 correction requalification
 
 Observed at `2026-08-22T20:04:00Z` on branch

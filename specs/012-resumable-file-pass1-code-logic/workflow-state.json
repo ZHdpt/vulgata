@@ -3,7 +3,7 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "quality-review",
+  "stage": "conditional-e2e",
   "preflight": {
     "branch": "demo0831/story-12-3",
     "head": "f65094ea3460aba48b8e6ff00e3e502679933f4b",
@@ -38,14 +38,14 @@
     },
     "quality-review": {
       "status": "accepted",
-      "attempt": 3,
-      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json"
+      "attempt": 4,
+      "verdict_path": "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-04.json"
     }
   },
   "attempts": {
     "definition-review": 10,
     "converge": 3,
-    "quality-review": 3
+    "quality-review": 4
   },
   "approvals": [
     {
@@ -117,21 +117,21 @@
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-09.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-09.json",
     "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md",
-    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-04.json",
     "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json",
     "specs/012-resumable-file-pass1-code-logic/e2e-decision.json",
     "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-3-e2e-harness-correction-20260823T023122Z",
-    "stage": "quality-review",
-    "commit_sha": "5f7acd4a7728498814346b10ddf72e2407c0f147",
+    "checkpoint_id": "bmad-12-3-e2e-blocked-20260823T024446Z",
+    "stage": "conditional-e2e",
+    "commit_sha": "4b464e608486b01d8241264537f0b299eb80ca49",
     "binding_status": "bound"
   },
   "resume": {
-    "stage": "quality-review",
-    "reason": "The test-only E2E harness correction invalidated quality review; rerun independent quality review before required E2E.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json"
+    "stage": "conditional-e2e",
+    "reason": "Quality review attempt 4 accepted. Authenticated API is 11/11; required real-pair E2E awaits fresh Story 12.2 manifests and DeepSeek/T046 environment inputs.",
+    "evidence_path": "specs/012-resumable-file-pass1-code-logic/e2e-decision.json"
   },
-  "updated_at": "2026-08-23T02:34:50Z"
+  "updated_at": "2026-08-23T02:44:46Z"
 }

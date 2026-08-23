@@ -61,10 +61,10 @@
       "gate": "may-skip",
       "triggered": true,
       "affected_paths": ["tests/Vulgata.Tests/PreparedPass1"],
-      "affected_behavior": "Focused coverage passes, but authenticated API and approved-pair host execution do not fully pass at this boundary.",
+      "affected_behavior": "Focused and authenticated API coverage pass; approved-pair host execution remains unavailable until fresh Story 12.2 manifests and DeepSeek inputs are supplied.",
       "evidence": [
         "story-12-3/e2e/01-focused-integration",
-        "story-12-3/e2e/02-api-harness",
+        "story-12-3/e2e/02-api-harness-correction",
         "story-12-3/e2e/03-host-prerequisites"
       ]
     },
@@ -79,7 +79,7 @@
     }
   ],
   "coverage_override": null,
-  "rationale": "Required E2E remains blocked. The focused PostgreSQL and production lifecycle boundary passed 95/95 tests. Provider-outage composition passed 9/9 with one intentional approved-pair skip. Authenticated API coverage is incomplete: with Windows EventLog disabled for the restricted runner, 2/11 tests passed and 9/11 failed before assertions at the existing login-form extractor. Host qualification reported 1 pass, 1 missing T046 prerequisite failure, and 2 skips. Approved-pair execution and real host-tool variables are absent, so no complete current-boundary coverage override is valid.",
+  "rationale": "Required E2E remains blocked only on real approved-pair prerequisites. The focused PostgreSQL and production lifecycle boundary passed 95/95 tests. Provider-outage composition passed 9/9 with one intentional approved-pair skip. After the test-only harness correction, authenticated API coverage passed 11/11. The real pair still has no fresh Story 12.2 Prepared Scan Manifest IDs, and DeepSeek plus T046 host-tool inputs are absent, so no complete current-boundary coverage override is valid.",
   "covering_tests": [
     "Vulgata.Tests.PreparedPass1.Pass1ExecutionApiTests",
     "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests",
@@ -92,8 +92,8 @@
   "owner": "e2e-runner",
   "source_boundary": {
     "base_commit": "29e889badc00db671fcabf80f50918e15381052c",
-    "candidate_commit": "99a2bc4e3072688783df40f12cbc30132279ed85",
-    "diff_sha256": "c5a6f50bb650a217103fccd86fffba03bfdc7e1945b376adeda934dd2f601365",
+    "candidate_commit": "4b464e608486b01d8241264537f0b299eb80ca49",
+    "diff_sha256": "5d84e1fa3bd7317cf1eb6312aeb39d724b2bd5388b6acac26cd4dae5e39b346f",
     "artifact_hashes": {
       "specs/012-resumable-file-pass1-code-logic/spec.md": "7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1",
       "specs/012-resumable-file-pass1-code-logic/plan.md": "9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f",
@@ -101,7 +101,8 @@
       "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "9a1ea96d61e27c4e17203ff40b57fecba88e34e195e6e2287c17d3554412e065",
       "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md": "f4b98ff1fe1b5646194158ec2d6325e464c2d54cc26be29fa15b300eb818a878",
       "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md": "7385bf772d04f89e5fd90a5b44ceb8019e228d182917495eddf51eb725ed67ae",
-      "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-03.json": "dc32fb11ad7c73b2fca47a28dd3b1977b60e06bde0d039bd8e63888e8ab46e73",
+      "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-04.json": "0bc4ac8ac3634b1903dfe66597e902d5d32a5d0a6788b070ec7715738bcfed5a",
+      "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json": "f2b5d4989365136da49f757575f885ca87bbdd01492dfd0bc5f4e4d84498751a",
       "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "06ce25ef7dc41d604254cff213641ab51c6c82877e290bc1929991a739b441bf",
       "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "04816ecc1de96b5bd04febee9f383a7b7775b7f487a701453726821a4fc52944",
       "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "907ef68c6470c8fda8585f95cd660f7e5726bb9e9e9b79c185c199ddcde5c2be"
@@ -122,16 +123,24 @@
   "result": "blocked",
   "evidence_ids": [
     "story-12-3/e2e/01-focused-integration",
-    "story-12-3/e2e/02-api-harness",
+    "story-12-3/e2e/02-api-harness-correction",
     "story-12-3/e2e/03-host-prerequisites"
   ],
-  "decided_at": "2026-08-22T20:34:30.9353477Z",
+  "decided_at": "2026-08-23T02:44:46.2150817Z",
   "completed_at": null,
   "blocker_prerequisites": [
     "VULGATA_T046_CODEGRAPH_COMMAND",
     "VULGATA_T046_JAVA_EXECUTABLE",
     "VULGATA_T046_JDT_LS_ROOT",
     "VULGATA_T046_JDT_LS_ARCHIVE",
+    "VULGATA_T062_SYSTEM_ID",
+    "VULGATA_T062_MANIFEST_ONE_ID",
+    "VULGATA_T062_MANIFEST_TWO_ID",
+    "VULGATA_T062_REPOSITORY_ONE_ROOT",
+    "VULGATA_T062_REPOSITORY_TWO_ROOT",
+    "VULGATA_T062_WORKER_PROVIDER_ENDPOINT",
+    "VULGATA_T062_WORKER_PROVIDER_MODEL",
+    "VULGATA_T062_WORKER_PROVIDER_API_KEY",
     "VULGATA_T062_APPROVED_PAIR_REAL",
     "VULGATA_T062_SOURCE_BINDING_READY"
   ],
@@ -146,14 +155,12 @@
       "result": "passed"
     },
     {
-      "evidence_id": "story-12-3/e2e/02-api-harness",
+      "evidence_id": "story-12-3/e2e/02-api-harness-correction",
       "total": 11,
-      "passed": 2,
-      "failed": 9,
+      "passed": 11,
+      "failed": 0,
       "skipped": 0,
-      "duration": "25s",
-      "result": "failed-test-harness",
-      "failure": "Expected a POST login form at Pass1ExecutionApiTests.ExtractFormFields line 260"
+      "result": "passed"
     },
     {
       "evidence_id": "story-12-3/e2e/03-approved-pair",
